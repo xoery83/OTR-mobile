@@ -3,6 +3,7 @@ import {
   withAccountApplyGate,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
+import { runCaptureFlightAssembly } from "@/domain/capture/captureFlightAssembly";
 import { hashCaptureBytes } from "@/data/files/capturePayloadReader";
 import { createCaptureSubmissionTransactionStore } from "./captureSubmissionRepository";
 import type {
@@ -21,9 +22,7 @@ import { LocalCaptureError } from "@/domain/capture/localCapture";
 import { ZodError } from "zod";
 import { createSyncOperationClaimOwner } from "../sync/syncOperationRepository";
 import {
-  attachCaptureLocalModelEvidence,
   buildCaptureLocalResult,
-  needsCaptureLocalEnrichment,
   projectCaptureLocalFlightInterpretation,
   type CaptureLocalResult,
 } from "@/domain/capture/captureLocalInterpretation";
@@ -524,20 +523,12 @@ export function createCaptureProcessingRepository(
         textSha256,
         capability.status,
       );
-      if (capability.status === "AVAILABLE" && needsCaptureLocalEnrichment(result)) {
-        try {
-          result = attachCaptureLocalModelEvidence(
-            result,
-            await bridge.enrichCaptureFlightLocal(result.text),
-          );
-        } catch {
-          result = attachCaptureLocalModelEvidence(result, {
-            status: "FAILED",
-            reason: "LOCAL_MODEL_VALIDATION_FAILED",
-            observations: [],
-          });
-        }
-      }
+      const assemblyDiagnostics = await runCaptureFlightAssembly(
+        result,
+        capability,
+        bridge.proposeCaptureFlightAssemblyLocal,
+      );
+      result = { ...result, assemblyDiagnostics };
       staged.set(operation.id, { owner: operation.claimOwner!, result });
     },
     async settle(

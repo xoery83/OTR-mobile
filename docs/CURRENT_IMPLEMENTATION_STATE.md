@@ -1,3 +1,18 @@
+# Flight Assembly / Apple semantic checkpoint — 2026-10-16
+
+- Reviewed local candidate reuses one deterministic assembler across Capture,
+  CP13 adapter and Workbench. Real pinned NZ5069 Mac run d910137b:3 observations,
+  proposed reference3M27HH,2 legs; NEEDS_REVIEW for service/header association,
+  missing return service and departure time basis. No Source/Candidate/Admission
+  or Day Feed Runtime PASS claimed.
+- Apple capability AVAILABLE; actual semantic calls failed context limit, then
+  existing20s deadline after lossless prompt compression. Accepted contribution0;
+  deterministic fallback preserved. No Remote/Storage/Canonical writes.
+- Source/Booking interface continuation: see
+  docs/ops/FLIGHT_ASSEMBLY_DELIVERY_20261016.md. Binary original profile and
+  Source-backed Booking purpose gaps remain explicit. iOS semantic/physical test
+  outstanding. Trip Home R2 candidate191a557 remains separately frozen for Owner.
+
 # Flight parser / Apple correction R1 — 2026-10-16
 
 - Isolated correction uses production extractor adapter3 and shared Swift guided

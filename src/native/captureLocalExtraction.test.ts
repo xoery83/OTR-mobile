@@ -206,3 +206,29 @@ it.each([
     });
   },
 );
+
+it("keeps semantic assembly errors distinct from unavailable capability and invalid output", async () => {
+  const base = fixture();
+  const proposeCaptureFlightAssemblyLocal = vi
+    .fn()
+    .mockResolvedValue({ error: "LOCAL_MODEL_CONTEXT_LIMIT" });
+  const extractor = createCaptureLocalExtractor({
+    hash: base.hash,
+    bridge: { ...base.bridge, proposeCaptureFlightAssemblyLocal },
+  });
+  expect(await extractor.proposeAssembly("{}")).toEqual({
+    status: "FAILED",
+    reason: "LOCAL_MODEL_CONTEXT_LIMIT",
+  });
+  proposeCaptureFlightAssemblyLocal.mockResolvedValue({ json: "not-json" });
+  expect(await extractor.proposeAssembly("{}")).toEqual({
+    status: "FAILED",
+    reason: "LOCAL_MODEL_OUTPUT_INVALID",
+  });
+  proposeCaptureFlightAssemblyLocal.mockResolvedValue({ json: '{"segments":[]}' });
+  expect(await extractor.proposeAssembly("{}")).toEqual({
+    status: "SUCCEEDED",
+    reason: "ASSEMBLY_PROPOSAL_REQUIRES_VALIDATION",
+    proposal: { segments: [] },
+  });
+});

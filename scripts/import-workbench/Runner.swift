@@ -17,6 +17,11 @@ import Foundation
           let media = request["mediaType"] as? String
         else { reply(["error": "DIAGNOSTIC_INPUT_INVALID"]); continue }
         reply(CaptureLocalExtractor.extract(bytes, mediaType: media))
+      case "assembly":
+        guard let requestJSON = request["requestJSON"] as? String else {
+          reply(["error": "LOCAL_MODEL_INPUT_LIMIT"]); continue
+        }
+        reply(await CaptureLocalExtractor.assemble(requestJSON))
       case "enrich":
         guard let text = request["text"] as? String else {
           reply(["error": "LOCAL_MODEL_INPUT_LIMIT"]); continue

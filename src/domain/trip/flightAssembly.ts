@@ -152,7 +152,8 @@ export function assembleFlightDocuments(documents: FlightAssemblyDocument[]) {
           at !== index &&
           other.inputId === block.inputId &&
           other.start > block.end &&
-          has(other.observation, "origin.place_label") &&
+          (has(other.observation, "origin.airport") ||
+            has(other.observation, "origin.place_label")) &&
           same(unique(other.observation, "origin.local_date")) ===
             same(unique(item, "origin.local_date")),
       );
@@ -162,22 +163,23 @@ export function assembleFlightDocuments(documents: FlightAssemblyDocument[]) {
     const between = new TextDecoder().decode(text.slice(block.end, target.other.start));
     if (
       !/\b(?:Your flights|Flight details)\b/.test(between) ||
-      /\b(?:Booking reference|Your trains|Your hotels)\b/.test(between)
+      /\b(?:Your trains|Your hotels)\b/.test(between)
     )
       continue;
-    const foreignRef = references.some(
+    const betweenRefs = references.filter(
       (r) =>
         r.inputId === block.inputId &&
         r.start > block.end &&
-        r.start < target.other.start &&
-        !references.some(
-          (own) =>
-            own.inputId === block.inputId &&
-            own.start >= block.start &&
-            own.end <= block.end &&
-            own.literal === r.literal,
-        ),
+        r.start < target.other.start,
     );
+    const priorRef = references
+      .filter((r) => r.inputId === block.inputId && r.start <= block.end)
+      .at(-1);
+    const foreignRef =
+      new Set([
+        ...betweenRefs.map((r) => r.literal),
+        ...(priorRef ? [priorRef.literal] : []),
+      ]).size > 1;
     if (foreignRef) continue;
     if (
       has(target.other.observation, "service") &&
@@ -223,7 +225,24 @@ export function assembleFlightDocuments(documents: FlightAssemblyDocument[]) {
         !docA.originalByteCount ||
         docA.originalByteCount !== docB.originalByteCount ||
         docA.text !== docB.text ||
-        key(a) !== key(b)
+        key(a) !== key(b) ||
+        same(
+          blocks
+            .filter(
+              (block) =>
+                block.inputId === docA.inputId && a.observationTokens.includes(block.id),
+            )
+            .map((block) => [block.start, block.end]),
+        ) !==
+          same(
+            blocks
+              .filter(
+                (block) =>
+                  block.inputId === docB.inputId &&
+                  b.observationTokens.includes(block.id),
+              )
+              .map((block) => [block.start, block.end]),
+          )
       )
         continue;
       a.fields.push(...b.fields);

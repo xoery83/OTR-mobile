@@ -126,6 +126,8 @@ export async function runMac(
         request("extract", { bytes: Buffer.from(v).toString("base64"), mediaType }),
       captureLocalModelCapability: () => request("capability"),
       enrichCaptureFlightLocal: (text) => request("enrich", { text }),
+      proposeCaptureFlightAssemblyLocal: (requestJSON) =>
+        request("assembly", { requestJSON }),
     }),
   });
   try {

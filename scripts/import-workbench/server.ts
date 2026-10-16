@@ -25,6 +25,7 @@ import {
   createCaptureLocalExtractorCore,
   validateCaptureLocalModelResponse,
 } from "../../src/native/captureLocalExtractionCore";
+import { runCaptureFlightAssembly } from "../../src/domain/capture/captureFlightAssembly";
 import type { DiagnosticJob, DiagnosticTrace } from "../../src/native/importWorkbenchRun";
 
 export const PORT = 49184;
@@ -342,9 +343,10 @@ export function createWorkbench(store = new PrivateStore()) {
         );
         const model = z
           .strictObject({
-            status: z.enum(["SUCCEEDED", "FAILED", "UNAVAILABLE"]),
+            status: z.enum(["SUCCEEDED", "FAILED", "UNAVAILABLE", "NOT_RUN"]),
             reason: z.enum([
               "VERBATIM_SERVICE_EVIDENCE_ONLY",
+              "SEMANTIC_ASSEMBLY_REPLACES_SERVICE_EXTRACTION",
               "LOCAL_MODEL_TIMEOUT",
               "LOCAL_MODEL_FAILED",
               "LOCAL_MODEL_UNAVAILABLE",
@@ -398,7 +400,32 @@ export function createWorkbench(store = new PrivateStore()) {
           )
             throw new Error("TRACE_MODEL_INVALID");
         }
-        const result = attachCaptureLocalModelEvidence(deterministic, model);
+        if (
+          model.status === "NOT_RUN" &&
+          model.reason !== "SEMANTIC_ASSEMBLY_REPLACES_SERVICE_EXTRACTION"
+        )
+          throw new Error("TRACE_MODEL_INVALID");
+        const baseResult =
+          model.status === "NOT_RUN"
+            ? deterministic
+            : attachCaptureLocalModelEvidence(deterministic, {
+                ...model,
+                status: model.status,
+              });
+        // Rebuild all evidence and validation on the host; never trust caller verdicts.
+        const incomingAssembly = raw.result?.assemblyDiagnostics;
+        const assemblyDiagnostics = incomingAssembly
+          ? await runCaptureFlightAssembly(baseResult, capability, async () =>
+              z
+                .strictObject({
+                  status: z.enum(["SUCCEEDED", "FAILED", "UNAVAILABLE"]),
+                  reason: z.string().min(1).max(100),
+                  proposal: z.unknown().optional(),
+                })
+                .parse(incomingAssembly.execution),
+            )
+          : null;
+        const result = { ...baseResult, assemblyDiagnostics };
         nativeRun.trace = {
           ...raw,
           extraction: extracted,

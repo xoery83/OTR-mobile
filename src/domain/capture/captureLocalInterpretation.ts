@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { FlightSemanticAssemblyDiagnostic } from "@/domain/trip/flightSemanticAssembly";
 import { assembleFlightDocuments } from "@/domain/trip/flightAssembly";
 import { interpretationResponseSchema } from "@/domain/intelligence/interpretation";
 import {
@@ -197,6 +198,7 @@ export function buildCaptureLocalResult(
     modelCapability,
     modelExecution: "NOT_RUN" as "NOT_RUN" | "SUCCEEDED" | "UNAVAILABLE" | "FAILED",
     modelReason: null as string | null,
+    assemblyDiagnostics: null as FlightSemanticAssemblyDiagnostic | null,
     supplementalServiceObservations: [] as {
       literal: string;
       normalized: ReturnType<typeof normalizeFlightObservation>["value"];

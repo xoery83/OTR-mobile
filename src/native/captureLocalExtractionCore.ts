@@ -14,6 +14,7 @@ export type CaptureLocalBridge = {
   extractCaptureLocal(bytes: Uint8Array, mediaType: string): Promise<unknown>;
   captureLocalModelCapability(): Promise<unknown>;
   enrichCaptureFlightLocal?(text: string): Promise<unknown>;
+  proposeCaptureFlightAssemblyLocal?(requestJSON: string): Promise<unknown>;
 };
 export type CaptureLocalExtraction = {
   engine: "apple-pdfkit" | "apple-vision" | "utf8-text";
@@ -168,6 +169,62 @@ export function createCaptureLocalExtractorCore(dependencies: {
           ...(error instanceof LocalModelEvidenceError
             ? { evidenceFailure: error.evidenceFailure }
             : {}),
+        };
+      } finally {
+        if (timer !== undefined) clearTimeout(timer);
+      }
+    },
+    async proposeAssembly(requestJSON: string): Promise<{
+      status: "SUCCEEDED" | "UNAVAILABLE" | "FAILED";
+      reason: string;
+      proposal?: unknown;
+    }> {
+      if (new TextEncoder().encode(requestJSON).length > 16384)
+        return { status: "FAILED", reason: "LOCAL_MODEL_INPUT_LIMIT" };
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const bridge = dependencies.getBridge();
+        if (!bridge.proposeCaptureFlightAssemblyLocal)
+          return { status: "UNAVAILABLE", reason: "CAPABILITY_NOT_INSTALLED" };
+        const raw = await Promise.race([
+          bridge.proposeCaptureFlightAssemblyLocal(requestJSON),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new Error("LOCAL_MODEL_TIMEOUT")), 20000);
+          }),
+        ]);
+        if (typeof raw === "object" && raw !== null && "error" in raw) {
+          const reason = String(raw.error);
+          return {
+            status: "FAILED",
+            reason: [
+              "LOCAL_MODEL_FAILED",
+              "LOCAL_MODEL_UNAVAILABLE",
+              "LOCAL_MODEL_INPUT_LIMIT",
+              "LOCAL_MODEL_OUTPUT_LIMIT",
+              "LOCAL_MODEL_CONTEXT_LIMIT",
+              "LOCAL_MODEL_SCHEMA_UNSUPPORTED",
+              "LOCAL_MODEL_REFUSED",
+              "LOCAL_MODEL_RATE_LIMITED",
+              "LOCAL_MODEL_TIMEOUT",
+              "LOCAL_MODEL_OUTPUT_INVALID",
+            ].includes(reason)
+              ? reason
+              : "LOCAL_MODEL_OUTPUT_INVALID",
+          };
+        }
+        const envelope = z.strictObject({ json: z.string().max(16384) }).parse(raw);
+        return {
+          status: "SUCCEEDED",
+          reason: "ASSEMBLY_PROPOSAL_REQUIRES_VALIDATION",
+          proposal: JSON.parse(envelope.json) as unknown,
+        };
+      } catch (error) {
+        return {
+          status: "FAILED",
+          reason:
+            error instanceof Error && error.message === "LOCAL_MODEL_TIMEOUT"
+              ? "LOCAL_MODEL_TIMEOUT"
+              : "LOCAL_MODEL_OUTPUT_INVALID",
         };
       } finally {
         if (timer !== undefined) clearTimeout(timer);

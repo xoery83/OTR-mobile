@@ -42,3 +42,6 @@ export const readCaptureLocalModelCapability = () =>
 
 export const enrichCaptureFlightLocal = (text: string) =>
   createCaptureLocalExtractor().enrich(text);
+
+export const proposeCaptureFlightAssemblyLocal = (requestJSON: string) =>
+  createCaptureLocalExtractor().proposeAssembly(requestJSON);

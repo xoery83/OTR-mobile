@@ -1,10 +1,9 @@
 // Shared diagnostic orchestration. No Auth, Repository, network or business writes.
 import {
-  attachCaptureLocalModelEvidence,
   buildCaptureLocalResult,
-  needsCaptureLocalEnrichment,
   projectCaptureLocalFlightInterpretation,
 } from "@/domain/capture/captureLocalInterpretation";
+import { runCaptureFlightAssembly } from "@/domain/capture/captureFlightAssembly";
 import type { createCaptureLocalExtractorCore } from "@/native/captureLocalExtractionCore";
 
 export type DiagnosticJob = {
@@ -44,19 +43,36 @@ export async function runImportDiagnostic(
     capability.status,
   );
   timings.deterministicAndCapabilityMs = Date.now() - start;
-  let model: Awaited<ReturnType<typeof extractor.enrich>> = {
-    status: "UNAVAILABLE",
-    reason: capability.reason,
+  const model:
+    | {
+        status: "NOT_RUN";
+        reason: "SEMANTIC_ASSEMBLY_REPLACES_SERVICE_EXTRACTION";
+        observations: never[];
+      }
+    | Awaited<ReturnType<typeof extractor.enrich>> = {
+    status: "NOT_RUN" as const,
+    reason: "SEMANTIC_ASSEMBLY_REPLACES_SERVICE_EXTRACTION" as const,
     observations: [],
   };
-  if (capability.status === "AVAILABLE" && needsCaptureLocalEnrichment(deterministic)) {
-    stage("APPLE_MODEL");
-    start = Date.now();
-    model = await extractor.enrich(deterministic.text);
-    timings.modelDeadlineInclusiveMs = Date.now() - start;
-  }
+  stage("ASSEMBLY");
+  start = Date.now();
+  const assemblyDiagnostics = await runCaptureFlightAssembly(
+    deterministic,
+    capability,
+    async (requestJSON) => {
+      stage("APPLE_ASSEMBLY");
+      const begin = Date.now();
+      const proposal = await extractor.proposeAssembly(requestJSON);
+      timings.appleAssemblyMs = Date.now() - begin;
+      return proposal;
+    },
+  );
+  timings.assemblyDeadlineInclusiveMs = Date.now() - start;
   stage("TYPED_PROJECTION");
-  const result = attachCaptureLocalModelEvidence(deterministic, model);
+  const result = {
+    ...deterministic,
+    assemblyDiagnostics,
+  };
   const typed = projectCaptureLocalFlightInterpretation(result);
   return {
     schema: "OTR_IMPORT_DIAGNOSTIC_TRACE" as const,
@@ -72,7 +88,11 @@ export async function runImportDiagnostic(
     capability,
     extraction,
     textSha256,
-    model,
+    model: model as {
+      status: "NOT_RUN" | "SUCCEEDED" | "UNAVAILABLE" | "FAILED";
+      reason: string;
+      observations: { literal: string; start: number; end: number }[];
+    },
     result,
     typed,
     remote: "NOT_USED" as const,

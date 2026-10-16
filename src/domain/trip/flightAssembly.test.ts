@@ -113,3 +113,23 @@ it("rejects forged evidence spans without a model or canonical writer", () => {
   d.parsed.items[0].fields[1].raw = "AB999";
   expect(() => assembleFlightDocuments([d])).toThrow("ASSEMBLY_EVIDENCE_INVALID");
 });
+
+it("joins a header with a repeated same-PNR label and route plus endpoint labels", () => {
+  const actualShape = booking.replace(
+    "Your flights",
+    "Booking reference\nAB12CD\nYour flights",
+  );
+  const a = assembleFlightDocuments([doc("one", actualShape)]);
+  expect(a.segments).toHaveLength(2);
+  expect(a.segments[0].fields.some((f) => f.path === "service")).toBe(true);
+});
+
+it("deduplicates pinned repeated documents by occurrence position, preserving distinct bookings", () => {
+  const text =
+    "Air New Zealand\nBooking reference: AB12CD\nAB123 route=AKL -> NSN date=2030-12-14\nBooking reference: CD34EF\nAB123 route=AKL -> NSN date=2030-12-14";
+  const a = assembleFlightDocuments([doc("one", text, true), doc("two", text, true)]);
+  expect(a.segments).toHaveLength(2);
+  expect(a.segments.every((s) => s.observationTokens.length === 2)).toBe(true);
+  expect(a.bookingGroups).toHaveLength(2);
+  expect(a.bookingGroups.every((g) => g.segmentIds.length === 1)).toBe(true);
+});

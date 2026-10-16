@@ -12,11 +12,13 @@ const native = vi.hoisted(() => ({
   extract: vi.fn(),
   capability: vi.fn(),
   enrich: vi.fn(),
+  assembly: vi.fn(),
 }));
 vi.mock("@/native/captureLocalExtraction", () => ({
   extractCaptureLocal: native.extract,
   readCaptureLocalModelCapability: native.capability,
   enrichCaptureFlightLocal: native.enrich,
+  proposeCaptureFlightAssemblyLocal: native.assembly,
 }));
 const pdf = new TextEncoder().encode(
   "%PDF-Flight: NZ123 route: AKL -> WLG date: 2026-10-16",
@@ -271,9 +273,9 @@ it("retains deterministic partial evidence when optional local-model hints fail 
   });
   expect((await repo.run(context)).processedCount).toBe(1);
   const [result] = await repo.localResults(context, request.jobId);
-  expect(native.enrich).toHaveBeenCalledTimes(1);
+  expect(native.enrich).not.toHaveBeenCalled();
   expect(result.fields.some((field) => field.path === "service")).toBe(true);
-  expect(result.modelExecution).toBe("FAILED");
+  expect(result.modelExecution).toBe("NOT_RUN");
   expect(result.supplementalServiceObservations).toEqual([]);
   expect((await repo.localEvents(context, request.jobId)).at(-1)?.state).toBe(
     "LOCAL_RESULT_RECORDED",
@@ -338,7 +340,7 @@ it("runs accepted TEXT through the same local queue and retains typed items and 
     originalByteCount: bytes.length,
   });
   native.capability.mockResolvedValue({ status: "AVAILABLE" });
-  native.enrich.mockResolvedValue({
+  native.assembly.mockResolvedValue({
     status: "FAILED",
     reason: "LOCAL_MODEL_TIMEOUT",
     observations: [],
@@ -346,7 +348,11 @@ it("runs accepted TEXT through the same local queue and retains typed items and 
   expect((await repo.run(context)).processedCount).toBe(1);
   expect(native.extract).toHaveBeenLastCalledWith(bytes, "text/plain");
   const [result] = await repo.localResults(context, request.jobId);
-  expect(result.modelExecution).toBe("FAILED");
+  expect(result.modelExecution).toBe("NOT_RUN");
+  expect(result.assemblyDiagnostics?.execution).toMatchObject({
+    status: "FAILED",
+    reason: "LOCAL_MODEL_TIMEOUT",
+  });
   expect(result.flightInterpretation.status).toBe("PARTIAL");
   expect(result.flightInterpretation.items).toHaveLength(2);
   expect(result.flightInterpretation.items[0].deferred[0]).toMatchObject({

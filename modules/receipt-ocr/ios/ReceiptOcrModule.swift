@@ -31,6 +31,10 @@ public class ReceiptOcrModule: Module {
       return CaptureLocalExtractor.modelCapability()
     }
 
+    AsyncFunction("proposeCaptureFlightAssemblyLocal") { (requestJSON: String) -> [String: Any] in
+      return await CaptureLocalExtractor.assemble(requestJSON)
+    }
+
     AsyncFunction("enrichCaptureFlightLocal") { (text: String) -> [String: Any] in
       return await CaptureLocalExtractor.enrich(text)
     }

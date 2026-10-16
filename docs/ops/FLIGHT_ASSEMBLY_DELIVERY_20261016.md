@@ -27,3 +27,25 @@ Schema, Provider, permission or direct canonical writer is introduced.
 
 Runtime remains NOT VERIFIED until exact real pipeline receipts establish each
 stage. Assembly advisory readiness never means authorization to write Canonical data.
+
+## Verified local checkpoint
+
+Real pinned NZ5069 PDF run d910137b-70a3-43a0-a582-19221ea80e1e used production
+PDFKit/parser/assembler on Mac: 3 raw observations → 1 proposed reference group
+3M27HH → 2 proposed legs. Outbound service/header association is review-required;
+return service and departure timeline basis remain missing. No Candidate/Admission
+or Canonical objects were created. The source PDF and traces remain in the existing
+private Workbench store, outside Git.
+
+Apple semantic invocation is separate from engine availability. Available host
+model returned context-limit failure in run99869ef9; lossless compact evidence and
+bounded output still reached the existing20s deadline in run7da259a3/d910137b.
+No accepted semantic proposal or added relationships are claimed. Deterministic
+results survive. No further repeated model attempts in this checkpoint. iOS26.5
+new semantic bridge and physical iPhone16Pro are NOT VERIFIED.
+
+Source review closed cross-booking omission, unknown-issuer namespace and repeated
+original occurrence-position issues. Workbench shows deterministic structure and
+validated-but-unapplied model suggestions separately; old traces remain readable.
+Source original registration and Source-backed Booking publication remain owning
+interface gaps, not permission to bypass Source or use manual canonical writes.

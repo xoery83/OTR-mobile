@@ -417,6 +417,11 @@ function appleDiagnostic(trace) {
   };
 }
 function renderAppleDiagnostic(host, trace) {
+  if (trace.result?.assemblyDiagnostics) {
+    renderSemanticAssembly(host, trace.result.assemblyDiagnostics, trace);
+    return;
+  }
+
   const d = appleDiagnostic(trace),
     card = node("div", undefined, "lineage-note");
   card.append(
@@ -623,7 +628,189 @@ function renderExpectedStructure(host) {
   }
   host.append(card);
 }
+function renderSemanticAssembly(host, d, trace) {
+  const card = node("div", undefined, "lineage-note"),
+    execution = d.execution;
+  card.append(node("h3", message("Apple semantic assembly", "Apple 语义组装")));
+  card.append(
+    node(
+      "p",
+      message("Model available: ", "模型可用性：") +
+        readableState(trace.capability?.status),
+    ),
+  );
+  card.append(
+    node(
+      "p",
+      message("Invocation / output: ", "调用／输出：") +
+        execution.status +
+        " · " +
+        execution.reason,
+    ),
+  );
+  card.append(
+    node(
+      "p",
+      message("Proposal validation: ", "组装建议校验：") +
+        (d.validation?.status || message("Not Run", "未运行")),
+    ),
+  );
+  if (d.validation?.status === "REJECTED")
+    card.append(
+      node(
+        "p",
+        message(
+          "Model-output evidence or relationship validation failed. The deterministic result is retained.",
+          "模型输出的证据或关联校验失败；确定性结果保留。",
+        ),
+      ),
+    );
+  card.append(
+    node(
+      "p",
+      message("Duration: ", "耗时：") + milliseconds(trace.timings?.appleAssemblyMs),
+    ),
+  );
+  card.append(
+    node("p", message("Available assembly result: ", "可用组装结果：") + d.finalBasis),
+  );
+  card.append(
+    node(
+      "p",
+      message(
+        "An accepted proposal remains advisory and grants no Admission. Field extraction and deterministic assembly work without Apple.",
+        "通过校验的建议仍需遵守 Review／Admission 合同。字段提取和确定性组装不依赖 Apple。",
+      ),
+    ),
+  );
+  const proposal = d.validation?.status === "ACCEPTED" ? d.validation.proposal : null;
+  if (proposal) {
+    card.append(
+      node(
+        "h4",
+        message(
+          "Validated model suggestions — not applied to the deterministic structure",
+          "已校验的模型建议——尚未应用到确定性结构",
+        ),
+      ),
+    );
+    card.append(
+      node(
+        "p",
+        message("Suggested booking groups / segments: ", "建议预订组／航段：") +
+          proposal.bookingGroups.length +
+          " / " +
+          proposal.segments.length,
+      ),
+    );
+    for (const segment of proposal.segments) {
+      const fields = d.request.partB.fields.filter((f) =>
+        segment.fieldIds.includes(f.id),
+      );
+      card.append(
+        node(
+          "p",
+          segment.id +
+            ": " +
+            fields
+              .map(
+                (f) =>
+                  fieldName(f.path) +
+                  " " +
+                  fieldValue({ path: f.path, normalized: f.value }),
+              )
+              .join(" · "),
+        ),
+      );
+    }
+  } else
+    card.append(
+      node(
+        "p",
+        message(
+          "Effective accepted model relationships: 0. Deterministic results remain available.",
+          "模型实际新增的已接受关联：0。确定性结果仍可使用。",
+        ),
+      ),
+    );
+  details(card, {
+    partA: d.request.partA,
+    partB: d.request.partB,
+    sourceIds: d.request.sourceIds,
+    deterministic: d.deterministic,
+    proposal: execution.proposal,
+    validation: d.validation,
+  });
+  host.append(card);
+}
+
 function renderBusinessStructure(host, trace, inputId) {
+  if (trace.typed?.assembly) {
+    const a = trace.typed.assembly,
+      card = node("div", undefined, "lineage-note");
+    card.append(
+      node(
+        "h3",
+        message("Deterministic business structure proposal", "确定性业务结构建议"),
+      ),
+    );
+    card.append(
+      node(
+        "p",
+        message("Original observations: ", "原始观察：") +
+          a.contentBlocks.length +
+          message(" · Proposed booking groups: ", " · 建议预订组：") +
+          a.bookingGroups.length +
+          message(" · Segments: ", " · 航段：") +
+          a.segments.length,
+      ),
+    );
+    for (const group of a.bookingGroups)
+      card.append(
+        node(
+          "p",
+          message("Booking reference: ", "预订编号：") +
+            (group.reference || message("Not found", "未识别")),
+        ),
+      );
+    for (const [index, segment] of a.segments.entries()) {
+      const section = node("div", undefined, "lineage-note");
+      section.append(node("h4", message("Segment ", "航段 ") + (index + 1)));
+      for (const field of segment.fields || [])
+        section.append(node("p", fieldName(field.path) + ": " + fieldValue(field)));
+      section.append(
+        node("p", message("Readiness: ", "就绪判断：") + segment.readiness.decision),
+      );
+      section.append(
+        node(
+          "p",
+          message("Missing: ", "缺失：") +
+            segment.readiness.missingFields.map(fieldName).join("、"),
+        ),
+      );
+      details(section, {
+        reasons: segment.readiness.reasonCodes,
+        nextActions: segment.readiness.nextActions,
+        observations: segment.observationTokens,
+        links: a.links,
+      });
+      card.append(section);
+    }
+    card.append(
+      node(
+        "p",
+        message(
+          "Candidate / Admission / Canonical Booking and Trip Items: Not Run. These are evidence-backed proposals, not saved business objects.",
+          "Candidate／Admission／正式 Booking 和 Trip Items：未运行。以上是带证据的结构建议，尚非已保存业务对象。",
+        ),
+      ),
+    );
+    host.append(card);
+    if (trace.result?.assemblyDiagnostics)
+      renderSemanticAssembly(host, trace.result.assemblyDiagnostics, trace);
+    return;
+  }
+
   const known = hasDiagnosticLineage(trace),
     results = businessResults(trace),
     flow = node("div", undefined, "lineage-note");
