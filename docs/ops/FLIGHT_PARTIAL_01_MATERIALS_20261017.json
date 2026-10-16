@@ -1,0 +1,20 @@
+{
+  "authority": "Owner2026-10-17 parallel delivery directive; conditional FP02/03 only after compatibility",
+  "materials": [
+    {
+      "file": "docs/trip/contracts/FLIGHT_PARTIAL_01_PRODUCT_DELTA_V1_1.md",
+      "original": "/Users/xoery/Downloads/FLIGHT_PARTIAL_01_PRODUCT_DELTA_V1_1.md",
+      "sha256": "e45e2fcb8c51f88e8850f3c6da714e6232c10c882aaeefbbe611adca8df9463d"
+    },
+    {
+      "file": "docs/trip/contracts/P2_FLIGHT_JOURNEY_UI_BLUEPRINT_V1_1.md",
+      "original": "/Users/xoery/Downloads/P2_FLIGHT_JOURNEY_UI_BLUEPRINT_V1_1.md",
+      "sha256": "a93fc0e466501d6027f2b50581858275656cddea315a7ed1afc029c7ff150a29"
+    },
+    {
+      "file": "docs/trip/contracts/FLIGHT_PARTIAL_01_CONTRACT_COMPATIBILITY_DECISIONS.md",
+      "original": "/Users/xoery/Downloads/FLIGHT_PARTIAL_01_CONTRACT_COMPATIBILITY_DECISIONS.md",
+      "sha256": "ce2b61be14bdc6a06971c6351bc4b77938c4bd74442b9a6242dd2138687a9bce"
+    }
+  ]
+}

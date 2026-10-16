@@ -1,3 +1,34 @@
+# FLIGHT-PARTIAL-01 phased Owner approval — 2026-10-17
+
+- FP-02A approved for isolated versioned Sparse Anchor Proof implementation,
+  tests and independent review. Keep physical V2, historical claims and cross-version
+  collision protection unchanged; service/date equality is only a collision bucket.
+  Schema/Migration, permissions or Hosted changes require a separate exact approval.
+- FP-03A Phase A approved: bounded PROPOSED_ONLY owning diagnostic Reader, exact
+  real proposal/evidence pins, no commercial Booking or confirmed relation identity.
+  B1 is read-only feasibility only; submit lawful persistence contract or minimal B2
+  Schema/API delta and stop at Owner approval. No schema or cloud writes authorized.
+- Placement direction approved: proven lead departure-local date anchors the group;
+  retain legal cross-day endpoint discoverability, no duplicate occurrence or
+  Arrival Continuation. Core/TTR occurrence/dedup contract precedes implementation.
+- C4-RB/NZ5069 retain P0. P2 UI remains deferred. Candidate/test completion does not
+  mean Admission, Confirmed Journey or Native Runtime PASS.
+
+# FLIGHT-PARTIAL-01 V1.1 — registered 2026-10-17
+
+Owner approved product direction and independent FP-01 compatibility audit;
+FP-02/03 are conditional on existing contracts permitting implementation.
+[D1–D6 decisions](../trip/contracts/FLIGHT_PARTIAL_01_CONTRACT_COMPATIBILITY_DECISIONS.md),
+[Product Delta](../trip/contracts/FLIGHT_PARTIAL_01_PRODUCT_DELTA_V1_1.md),
+[P2 Blueprint](../trip/contracts/P2_FLIGHT_JOURNEY_UI_BLUEPRINT_V1_1.md).
+Minimum useful Flight, reference-less Journey distinct from commercial Booking,
+per-slot partial success, grouped P2, focused Review and stable-identity enrichment
+are product directions, not proof of existing schema/runtime support. No new
+Admission/Source/permission/Validator relaxation, migration, P2 rewrite or automatic
+Arrival Continuation is authorized by registration. Audit must map D1–D6 to exact
+existing contracts and return protected deltas; C4-RB/NZ5069 retain P0 ownership.
+Original material hashes: ../ops/FLIGHT_PARTIAL_01_MATERIALS_20261017.json.
+
 # OTR Beta — Unified Decisions and Scope Baseline
 
 ## TIME-01A Day entry clarification — Owner / 2026-10-16

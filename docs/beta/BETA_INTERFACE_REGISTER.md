@@ -1,3 +1,34 @@
+# FP-02A / FP-03A isolated implementation ownership — 2026-10-17
+
+- FP-02A builder owns new adjacent sparse-proof modules/tests in an isolated
+  Worktree. Existing Source publication/authority/registration files remain with
+  the NZ5069 Source Builder; shared integration is serialized by Coordinator.
+- FP-03A builder owns new diagnostic Journey projection/Reader/tests only, plus
+  B1 read-only feasibility report. No P2/Day/TTR, Source writer, schema or cloud
+  mutation; WORKBENCH_INPUT and formal SOURCE identities never alias.
+- Independent review follows each candidate; report SHA, interface, tests and
+  remaining gates separately. No confirmed relation/Admission authority is implied.
+- B1 persistence implementation and P2 rendering wait for subsequent approval and
+  owning occurrence/dedup contract. Original proposal packets remain retained at
+  /private/tmp/otr-flight-partial-01-audit-20261017/.
+
+# FLIGHT-PARTIAL-01 / C4-RB shared ownership — 2026-10-17
+
+- FP-01 read-only audit pins main0c27117; no Source/Admission/Provider/P2/TTR writer.
+  Deliver D1–D6 matrix, per-slot admission/remaining Candidate compatibility,
+  evidence-backed noncommercial Journey association and minimal Reader DTO proposal.
+- Provider Builder exclusively owns DeepSeek adapter, ModelTask profile/versioned
+  dispatch/recovery candidates; Coordinator owns shared Backend routes/startup/C3
+  bridge and integration. Source/Core Builder owns versioned PDF/source registration
+  and existing Candidate/Review composition. Shared extraction validator changes
+  belong only to Source Builder; original Native engine allowlist stays intact.
+- FP-02 conditional on lawful existing minimum admission/proof. FP-03 conditional
+  on persistence/lineage authority; v1.1 semantic advisory group is not that authority.
+  FP-04 waits for owning Journey Reader, consumes actual Canonical Items; UI cannot
+  infer grouping. FP-05 correction/enrichment must keep canonical identity/authority.
+- No FP Native/Hosted work or general UI Builder competes with C4-RB. Any shared
+  file handoff is explicit; reviewed candidates integrate in Gate order.
+
 # OTR Beta — Cross-Module Interface Register
 
 ## C4-R visual escalation — queued / Runtime NOT VERIFIED

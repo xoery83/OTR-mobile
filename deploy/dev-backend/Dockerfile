@@ -7,6 +7,7 @@ RUN npm ci --ignore-scripts
 COPY backend ./backend
 COPY src/data/api ./src/data/api
 COPY src/domain ./src/domain
+COPY scripts/source-pdf-v2-linux/profile.mjs ./scripts/source-pdf-v2-linux/profile.mjs
 COPY src/data/auth/accountGeneration.ts src/data/auth/accountRequestContext.ts ./src/data/auth/
 RUN npm run backend:build && npm run backend:build:capture
 
