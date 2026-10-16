@@ -75,6 +75,7 @@ vi.mock("react-native", () => ({
     },
   },
 }));
+vi.mock("expo-router/react-navigation", () => ({ useHeaderHeight: () => 103 }));
 vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
   usePathname: () => "/trip-home",
@@ -108,7 +109,11 @@ vi.mock("@/ui/locale", () => ({
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/theme", () => ({
   useThemedStyles: () => ({}),
-  useUiTheme: () => ({ transparent: "transparent", surface: "surface" }),
+  useUiTheme: () => ({
+    transparent: "transparent",
+    surface: "surface",
+    background: "background",
+  }),
 }));
 vi.mock("./TodaysJourneyWidget", () => ({ TodaysJourneyWidget: "TodaysJourney" }));
 vi.mock("@/ui/controls", () => ({ UiButton: "Button", UiText: "ThemedText" }));
@@ -259,8 +264,8 @@ it("marks the Today destination explicitly so the ordinary root stays My Trips",
   const workspace = find(await loaded(), LocalTripWorkspace);
   workspace.onOpenToday(reference, { date: "2027-02-06", zone: "Asia/Tokyo" });
   expect(state.navigate).toHaveBeenCalledWith({
-    pathname: "/",
-    params: { view: "day", tripId: reference },
+    pathname: "/trip-home",
+    params: { view: "day", tripId: reference, date: "2027-02-06", zone: "Asia/Tokyo" },
   });
   expect(state.saveReading).not.toHaveBeenCalled();
 });
@@ -645,6 +650,23 @@ it("keeps status information readable after the measured Hero scrolls away and o
   find(node, LocalTripWorkspace).onHomeHeroHeight(300);
   const scroll = find(node, "ScrollView");
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  expect(state.setOptions.mock.lastCall?.[0].headerTransparent).toBe(true);
+  expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
+    "transparent",
+  );
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 196 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
+    "transparent",
+  );
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 197 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
+    "background",
+  );
+  expect(state.setOptions.mock.lastCall?.[0].headerTransparent).toBe(true);
   scroll.onScroll({ nativeEvent: { contentOffset: { y: 242 } } });
   state.mount = true;
   render();

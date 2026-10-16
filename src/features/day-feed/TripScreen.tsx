@@ -19,6 +19,7 @@ import {
 } from "react";
 import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams, useNavigation, usePathname } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { openTripHome } from "@/components/openTripHome";
 import {
   getAccountGeneration,
@@ -98,15 +99,16 @@ function TripContent({ today = false }: { today?: boolean }) {
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const insets = useSafeAreaInsets();
+  const headerBottom = Math.max(useHeaderHeight(), insets.top);
   const heroHeight = useRef(0);
   const homeScrollOffset = useRef(0);
   const [heroBehindStatus, setHeroBehindStatus] = useState(true);
   const onHomeHeroHeight = useCallback(
     (height: number) => {
       heroHeight.current = height;
-      setHeroBehindStatus(homeScrollOffset.current < height - insets.top);
+      setHeroBehindStatus(homeScrollOffset.current < height - headerBottom);
     },
-    [insets.top],
+    [headerBottom],
   );
   const navigation = useNavigation();
   const bottomBarHeight = useBottomShellHeight();
@@ -163,7 +165,11 @@ function TripContent({ today = false }: { today?: boolean }) {
     navigation.setOptions({
       headerTransparent: true,
       headerStyle: {
-        backgroundColor: immersiveHome ? colors.transparent : colors.surface,
+        backgroundColor: immersiveHome
+          ? heroBehindStatus
+            ? colors.transparent
+            : colors.background
+          : colors.surface,
       },
       headerShadowVisible: false,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
@@ -306,10 +312,12 @@ function TripContent({ today = false }: { today?: boolean }) {
     if (generation !== getAccountGeneration()) return;
     enterHeader({ tripId: id, ...context, generation }, "EXPLICIT_TODAY_HEADER");
     router.navigate({
-      pathname: "/",
+      pathname: "/trip-home",
       params: {
         view: "day",
         tripId: id,
+        date: context.date,
+        zone: context.zone,
         ...(homePerspective ? { homeQaScenario: value(params.homeQaScenario) } : {}),
       },
     });
@@ -763,7 +771,7 @@ function TripContent({ today = false }: { today?: boolean }) {
                   homeScrollOffset.current = nativeEvent.contentOffset.y;
                   if (heroHeight.current > 0)
                     setHeroBehindStatus(
-                      nativeEvent.contentOffset.y < heroHeight.current - insets.top,
+                      nativeEvent.contentOffset.y < heroHeight.current - headerBottom,
                     );
                 }
               : undefined

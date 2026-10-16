@@ -110,6 +110,8 @@ export function switchWorkingTrip(
   tripId: string,
   generation: number,
 ): TripNavigation {
+  if (state.workingTrip?.tripId === tripId && state.workingTrip.generation === generation)
+    return state;
   const saved = state.bookmarks[tripId];
   return {
     ...state,

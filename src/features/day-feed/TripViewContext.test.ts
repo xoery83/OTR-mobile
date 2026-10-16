@@ -206,3 +206,11 @@ it("whole-Trip reading retains absolute offset and the observed civil anchor in 
   });
   expect(invalid.bookmarks.a.view.date).toBe(a.date);
 });
+
+it("confirming the same working Trip cannot reset a newly opened Today header", () => {
+  let state = switchWorkingTrip(emptyTripNavigation, "a", 1);
+  state = enterTripDay(state, a, "EXPLICIT_TODAY_HEADER");
+  expect(switchWorkingTrip(state, "a", 1)).toBe(state);
+  expect(state.entry.kind).toBe("EXPLICIT_TODAY_HEADER");
+  expect(switchWorkingTrip(state, "a", 2).view).toBeNull();
+});
