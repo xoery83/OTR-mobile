@@ -35,14 +35,16 @@ runtimeStatus=BLOCKED_TRUSTED_DECODER. It is not VERIFIED, DERIVED registration,
 a seal, a Core proof or Candidate admission. There is intentionally no constructor
 that turns this result, a Boolean or a caller's attestation into one of those.
 
-The future trusted producer must independently reread exact Source custody,
-validate the full PDF under a reviewed decoder profile, then reproduce exact
-text/page mapping under a pinned executable/OS/options/resource manifest. Required
-reviewed ceilings include object/xref recursion32, objects20,000, expanded streams
-64MiB, metadata64KiB, memory256MiB, wall20s and output1MiB; these are deployment
-requirements, **not controls enforced by this local PDFKit component**. Unsupported,
-encrypted, scanned/empty-page, malformed, ambiguous, resource-failed or mismatched
-material fails closed. Diagnostics contain fixed codes, no raw errors or text.
+The subsequent production slice should select one executable versioned
+decoder/producer profile, independently reread exact Source custody and reproduce
+exact text/page mapping, then integrate with the existing retained-read,
+registration and fresh seal path. The selected implementation and its evidence
+determine its resource limits; this local candidate defines no additional future
+numeric limits or universal sandbox/complete-container approval checklist.
+The result's missingProofs describe limitations of this particular PDFKit local
+component, not newly approved requirements for every producer. Unsupported,
+encrypted, scanned/empty-page, malformed, resource-failed or mismatched material
+fails closed. Diagnostics contain fixed codes, no raw errors or text.
 
 After trusted runtime proof and separate protected authorization, reuse the
 existing ACQUIRE/UPLOAD_ORIGINAL→independent retained GET→VERIFY→registerDerived→
