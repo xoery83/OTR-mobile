@@ -438,6 +438,14 @@ export function createWorkbench(store = new PrivateStore()) {
           send({ saved: true, kind: labels.kind });
           return;
         }
+        if (req.method === "GET" && match[2] === "labels") {
+          try {
+            send(labelSchema.parse(store.read(`labels-${run.id}.json`)));
+          } catch {
+            send(null);
+          }
+          return;
+        }
         if (req.method === "GET" && match[2] === "stats" && run.trace) {
           let labels;
           try {

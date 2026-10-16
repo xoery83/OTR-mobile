@@ -263,6 +263,22 @@ it("accepts only the pending pinned diagnostic job and revalidates posted Native
     vi.useRealTimers();
   }
   expect((await sendTrace(trace)).status).toBe(400);
+  const labelsUrl = ORIGIN + "/api/run/" + claimed.job.runId + "/labels";
+  expect(await (await testFetch(labelsUrl)).json()).toBe(null);
+  const labels = {
+    kind: "HUMAN_GROUND_TRUTH",
+    fields: [{ path: "service", raw: "NZ5069" }],
+  };
+  expect(
+    (
+      await testFetch(labelsUrl, {
+        method: "POST",
+        headers: { Origin: ORIGIN, "Content-Type": "application/json" },
+        body: JSON.stringify(labels),
+      })
+    ).status,
+  ).toBe(200);
+  expect(await (await testFetch(labelsUrl)).json()).toEqual(labels);
 });
 
 it("pins the actual core runtime closure and lock; dependency-only changes change the manifest", () => {

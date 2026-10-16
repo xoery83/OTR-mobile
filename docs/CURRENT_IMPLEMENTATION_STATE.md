@@ -1,3 +1,23 @@
+# Local Import Workbench — W1/W2 functional checkpoint / 2026-10-16
+
+- Reviewed source a2cc709 +01ef3df +1961279 +7c9068d: loopback49184 multi-input
+  diagnostic runner, production Swift/TS core reuse, retained inputs/Trace viewer,
+  same-file compare/explicit human labels, escaped JSON/HTML export, pinned originals.
+- W1 real PDF/JPEG repeated and single-click serial batch PASS. W2 same installed
+  isolated418 iOS26.5 App completed JPEG twice(8fields/4anchors) and PDF(20fields;
+  strict Apple evidence rejection retains deterministic output). No paid/remote
+  model, Storage or diagnostic Repository write path. No C2/C3 repeat.
+- Runtime scope is DIAGNOSTIC_ONLY/SourceNONE, not original Batch Repository Runtime.
+  Host dependency manifest is not executed Native/JS build attestation; those remain
+  UNVERIFIED. DB digests, system-resource cold state and physical iPhone unverified.
+- Owner explicitly approved only8084/418 short-term Caller switch; old755 stopped,
+  current diagnostic processes and evidence are in private workbench receipts.
+  Original Auth/App installation/data retained. Raw originals/Traces stay outside Git.
+- Human-readable Test/Inspect/Compare UX is a separate in-flight presentation packet;
+  do not call the engineering baseline Owner UX Accepted. Runbook docs/ops/IMPORT_WORKBENCH.md.
+- Trip Home functional4b96259 is pushed; existing Experience Session is actively
+  implementing isolated V1.1 preview. Coordinator is not writing its UI files.
+
 # Trip Home V1.1 functional integration candidate — 2026-10-16
 
 - Owner approved four Widget business contracts and V1.1 visual delivery. Preparation
