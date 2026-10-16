@@ -643,3 +643,93 @@ it("persists diagnostic zero/many group annotations without treating unchecked o
     }),
   ).toThrow();
 });
+
+it("does not score swapped cross-result, segment or participant values as pooled100percent", async () => {
+  const bytes = new TextEncoder().encode("Flight NZ5069\nFlight NZ5070");
+  const job = {
+    runId: randomUUID(),
+    inputId: randomUUID(),
+    mediaType: "text/plain",
+    byteCount: bytes.length,
+    sha256: await hash(bytes),
+    hostSourceManifest: {},
+  };
+  const extractor = createCaptureLocalExtractorCore({
+    hash,
+    getBridge: () => ({
+      extractCaptureLocal: async () => ({}),
+      captureLocalModelCapability: async () => ({
+        status: "UNAVAILABLE",
+        reason: "DEVICE_NOT_ELIGIBLE",
+      }),
+    }),
+  });
+  const trace = await runImportDiagnostic(job, bytes, extractor, hash, "MAC_COMPONENT");
+  const fields = trace.result.fields.map((field) => ({
+    path: field.path,
+    raw: field.raw,
+    status: "CONFIRMED" as const,
+  }));
+  expect(new Set(fields.map((f) => f.raw)).size).toBeGreaterThanOrEqual(2);
+  const result = {
+    id: "first",
+    type: "FLIGHT" as const,
+    status: "CONFIRMED" as const,
+    fields,
+    segments: [],
+  };
+  const annotations = [
+    {
+      documentStatus: "RESULTS",
+      results: [
+        { ...result, fields: [fields[1]] },
+        { ...result, id: "second", fields: [fields[0]] },
+      ],
+    },
+    {
+      documentStatus: "RESULTS",
+      results: [
+        {
+          ...result,
+          fields: [],
+          segments: [
+            { id: "first-leg", fields: [fields[1]] },
+            { id: "second-leg", fields: [fields[0]] },
+          ],
+        },
+      ],
+    },
+    {
+      documentStatus: "RESULTS",
+      results: [
+        {
+          ...result,
+          fields: fields.map((field, index) => ({
+            ...field,
+            participantId: index ? "first-person" : "second-person",
+          })),
+        },
+      ],
+    },
+  ];
+  for (const annotation of annotations) {
+    const labels = labelSchema.parse({
+      kind: "HUMAN_GROUND_TRUTH",
+      fields: fields.map(({ path, raw }) => ({ path, raw })),
+      annotation,
+    });
+    expect(statistics(trace, labels)).toMatchObject({
+      status: "N/A",
+      precision: null,
+      recall: null,
+      reasonCode: "IDENTITY_ALIGNMENT_NOT_IMPLEMENTED",
+      annotationSummary: { documentStatus: "RESULTS" },
+    });
+  }
+  const single = labelSchema.parse({
+    kind: "HUMAN_GROUND_TRUTH",
+    fields: [],
+    annotation: { documentStatus: "RESULTS", results: [result] },
+  });
+  expect(statistics(trace, single)).toMatchObject({ precision: 1, recall: 1 });
+});

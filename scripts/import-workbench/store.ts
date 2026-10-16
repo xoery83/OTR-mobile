@@ -185,6 +185,18 @@ export function statistics(trace: DiagnosticTrace, labels?: z.infer<typeof label
   let expectedFields = labels.fields;
   let paths: Set<string> | undefined;
   if (annotation) {
+    if (
+      annotation.results.length > 1 ||
+      annotation.results.some((result) => result.segments.length > 0) ||
+      reviewedFields.some((field) => field.participantId !== undefined)
+    ) {
+      return {
+        ...notApplicable(
+          "Identity alignment across results, segments or participants is not implemented; precision/recall are not scored.",
+        ),
+        reasonCode: "IDENTITY_ALIGNMENT_NOT_IMPLEMENTED" as const,
+      };
+    }
     if (annotation.documentStatus !== "RESULTS" || !annotation.results.length)
       return notApplicable("No applicable reviewed business-result field ground truth.");
     if (
