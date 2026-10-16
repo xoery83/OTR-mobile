@@ -1,32 +1,41 @@
 # Night delivery checkpoint — 2026-10-16
 
-- main `c463fc9`; origin/main remains approved Push `f231520`. R2 combined visual/
-  owning candidate `c6eea97` stays isolated pending Owner visual review; signed
-  embedded Release installed in original AD5, preserving account/database.
-- Original Auckland Trip/Sky City Hotel: Today date-only Stay summary, original
-  detail, direct bottom Day without prior time/zone form, Day detail/return and
-  cold persistent read PASS. No copied Item. Editor name/destination/Undated
-  saved, cold read, original values restored through Editor by explicit Owner
-  approval; metadata queue remains dependency-blocked, Hosted update NOT VERIFIED.
-- Nelson real NZ25 Finance/Today named-tab clicks and Japan real Preparation
-  counts/single-widget layout/accepted Feb1 Day direct entry PASS in same candidate.
-  Edge return, pager touch gesture, offline device and full R2 acceptance remain
-  unverified; do not substitute tests/AX clicks for those actual gestures.
-- TIME01A original null-zone veto fixed; full TIME01 audit is READY_FOR_OWNER_REVIEW
-  under `/private/tmp/otr-time01-v11-audit-20261016/`, including pinned main/R2
-  boundary addendum. C–F are planned only, not implemented or Runtime PASS.
-- Flight deterministic real PDF remains 1 proposed BookingGroup/2 Segments with
-  strict NEEDS_REVIEW. Source V2 local profile is non-authoritative; trusted decoder/
-  Source registration and Source-backed Booking purpose still block Admission/Day.
-- Apple isolated26.5 production component invocation and follow-up controlled
-  tests are LIMITED: valid minimal ordinary/guided and controlled relations, but
-  real PDF model increment0. Version mismatch is a risk, not established cause.
-  Owner stopped environment investigation; current approved owning work is Native
-  timeout/cancellation/late-result fencing and per-input ID-constrained proposals.
-  Evidence: `/private/tmp/otr-apple-correct-usage-20261016/REPORT.md`.
-- C4-R Delta image escalation is queued, not run: actual image-capable Provider/
-  credentials/privacy/cost scope still unverified. No Remote, Hosted or Storage
-  operation added. Existing C2/C3 PASS preserved; no repeated runtime acceptance.
+- Reviewed Apple repair integrated main `332c67f`; origin/main remains approved
+  Push `f231520` at this checkpoint. R2 combined visual/owning candidate `90cbc54`
+  stays isolated pending Owner review; signed Release installed original AD5,
+  bundleSHA7ad1c439172513fd3cd2566f9e9c6f7a9ae3b1057e1f3b7ae41fa2d60eba2556.
+- Original Auckland/Sky City Hotel: same pending Item, Today Stay summary/detail,
+  direct Day without prior time/zone form, detail/return and cold read PASS. Editor
+  name/destination/Undated saved/cold-read then restored original values through
+  Editor under explicit Owner approval; two metadata intents dependency-blocked.
+  Cover picker opens four existing assets; no new cover or data/Session copy.
+- Actual hot Auckland→AllTrips→Nelson→AllTrips→Japan→Day→Home→AllTrips→Auckland
+  now retains Home/Day/Ledger/Updates and legal Editor. Root cause was omitted
+  /trip-home menu handling and unfocused retained screens republishing context.
+  Prior render-loop and hot-Shell failures remain in evidence, not erased.
+- Nelson real NZ25 Finance/Today tab clicks and Japan real Preparation counts/
+  single-widget/accepted Feb1 Day PASS. Edge return, pager touch gesture, device
+  offline, Past/Settlement and Hosted metadata sync remain unverified; no full R2
+  READY/UX acceptance claim. AD5 left at original Auckland Home for Owner preview.
+- Apple cancellation/absolute deadline/closed request IDs/late-result fences and
+  per-current-evidence dynamic guided schema are code/test/independent-review
+  complete. Native/Mac errors distinguish App deadline, cancellation, SDK timeout,
+  generation, bridge decode and evidence rejection. Old binary degrades safely.
+- Exactly one repaired iOS26.5 production-component real-PDF invocation: AVAILABLE,
+  bytes/SHA/TextSHA match; PDFKit55ms;5,891ms LOCAL_MODEL_CONTEXT_LIMIT, no20s timeout,
+  no Proposal/ref validation, accepted relations0/increment0. Deterministic1+2 and
+  NEEDS_REVIEW preserved. NO_VALID_INCREMENT; no further prompt/environment trials.
+  Normal installed App new Native export/timeout path and physical remain unverified.
+- Flight Source V2 remains non-authoritative local-only; trusted decoder/Source
+  registration, Source-backed Booking purpose and actual Review still block lawful
+  Admission/Day Feed. C2/C3 PASS preserved, no repeated uploads/deployment.
+- TIME01 read-only audit READY_FOR_OWNER_REVIEW under
+  /private/tmp/otr-time01-v11-audit-20261016/; main/R2 boundary addendum retained.
+  C–F planning only. C4-R Delta visual escalation queued; real image Provider/key/
+  privacy/cost scope unverified. No Remote, Hosted, Auth/RLS or Storage widening.
+- Receipts: /private/tmp/otr-r2-auckland-time01a-20261016/receipt.json and
+  /private/tmp/otr-apple-semantic-repair-20261016/REPORT.md. Next: Owner R2 preview,
+  separately scoped protected owning capabilities; no idle Agent expansion.
 
 # Local Source PDF V2 / Native bridge checkpoint — 2026-10-16
 
