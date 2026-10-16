@@ -40,6 +40,26 @@ function fieldName(path) {
   const pair = fieldNames[path];
   return pair ? message(...pair) : message("Other extracted field", "其他识别字段");
 }
+function fieldValue(field) {
+  if (Object.prototype.hasOwnProperty.call(field, "normalized")) {
+    const value = field.normalized;
+    if (value === null) return message("Undetermined", "未确定");
+    if (field.path === "transport_subtype" && value === "FLIGHT")
+      return message("Flight", "航班");
+    if (["string", "number", "boolean"].includes(typeof value)) return String(value);
+    if (value && typeof value === "object") {
+      if (
+        ["service", "operating_service"].includes(field.path) &&
+        typeof value.service_literal === "string"
+      )
+        return value.service_literal;
+      if (typeof value.value === "string" || typeof value.value === "number")
+        return String(value.value);
+    }
+  }
+  return message("Original text: ", "原文：") + (field.raw ?? field.literal ?? "");
+}
+
 const readableStates = {
   FINISHED: ["Completed — inspect quality below", "运行完成 — 请查看下方质量"],
   FAILED: ["Run failed", "运行失败"],
@@ -299,7 +319,7 @@ function fieldTable(parent, fields, trace, inputId, source = "deterministic") {
   table.append(head);
   for (const field of fields) {
     const row = node("tr"),
-      value = field.raw ?? field.literal ?? "";
+      value = fieldValue(field);
     row.append(node("td", fieldName(field.path || "service")), node("td", value));
     const evidence = node("td");
     evidence.append(
@@ -640,7 +660,7 @@ function renderInspection(run, imported = false) {
     const group = node("div", undefined, "card");
     group.append(node("h3", message("Travel item ", "旅行信息项 ") + (index + 1)));
     for (const f of item.fields || [])
-      group.append(node("p", fieldName(f.path) + ": " + f.raw));
+      group.append(node("p", fieldName(f.path) + ": " + fieldValue(f)));
     // Display only the three existing local-enrichment conditions, not Admission requirements.
     const paths = new Set((item.fields || []).map((f) => f.path));
     const missing = ["service", "origin.airport", "destination.airport"].filter(

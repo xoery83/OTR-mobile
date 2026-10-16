@@ -357,6 +357,86 @@ describe("human-readable workbench presentation", () => {
     expect(allText(b.elements.get("stats")!)).toContain("B_CURRENT");
     expect(allText(b.elements.get("stats")!)).not.toContain("A_LATE");
   });
+  it("shows normalized flight type and places instead of the shared raw route", () => {
+    const b = browser();
+    b.context.fields = [
+      { path: "transport_subtype", raw: "NZ 5069", normalized: "FLIGHT", evidence: [] },
+      {
+        path: "origin.place_label",
+        raw: "Auckland to Nelson",
+        normalized: "Auckland",
+        evidence: [],
+      },
+      {
+        path: "destination.place_label",
+        raw: "Auckland to Nelson",
+        normalized: "Nelson",
+        evidence: [],
+      },
+    ];
+    b.context.trace = trace;
+    b.run('fieldTable(el("table"),fields,trace,"file")');
+    const rows = b.elements.get("table")!.children[0].children;
+    expect(rows[1].children[1].textContent).toBe("航班");
+    expect(rows[2].children[1].textContent).toBe("Auckland");
+    expect(rows[3].children[1].textContent).toBe("Nelson");
+    expect(allText(b.elements.get("table")!)).not.toContain("Auckland to Nelson");
+    b.context.run = {
+      trace: {
+        ...trace,
+        typed: { status: "PARTIAL", items: [{ fields: b.context.fields }] },
+      },
+    };
+    b.run("renderInspection(run)");
+    const typed = descendants(b.elements.get("inspection")!).find(
+      (n) => (n as Element & { id: string }).id === "stage-typed",
+    )!;
+    expect(allText(typed)).toContain("交通类型: 航班");
+    expect(allText(typed)).toContain("出发地点: Auckland");
+    expect(allText(typed)).not.toContain("Auckland to Nelson");
+  });
+  it("formats existing service / airport / clock values but retains the raw evidence span", () => {
+    const b = browser();
+    expect(
+      b.run(
+        'fieldValue({path:"service",raw:"Flight: NZ 5069",normalized:{service_literal:"NZ 5069"}})',
+      ),
+    ).toBe("NZ 5069");
+    expect(
+      b.run(
+        'fieldValue({path:"origin.airport",raw:"AKL -> NSN",normalized:{namespace:"IATA_AIRPORT",value:"AKL"}})',
+      ),
+    ).toBe("AKL");
+    expect(
+      b.run(
+        'fieldValue({path:"origin.local_time",raw:"departure: 01:27 PM",normalized:{value:"13:27",precision:-1,quality:"EXACT"}})',
+      ),
+    ).toBe("13:27");
+    const raw = "departure: 01:27 PM";
+    b.context.clockTrace = { result: { text: raw } };
+    b.context.clockField = {
+      path: "origin.local_time",
+      raw,
+      normalized: { value: "13:27" },
+      evidence: [{ start: 0, end: new TextEncoder().encode(raw).length }],
+    };
+    b.run('locateEvidence(clockTrace,clockField,"unattached")');
+    expect(allText(b.elements.get("evidence-view")!)).toContain(raw);
+  });
+  it("does not invent a normalized value when null or unknown", () => {
+    const b = browser();
+    expect(
+      b.run('fieldValue({path:"origin.local_date",normalized:null,raw:"date: someday"})'),
+    ).toBe("未确定");
+    expect(b.run('fieldValue({path:"origin.local_date",raw:"date: someday"})')).toBe(
+      "原文：date: someday",
+    );
+    expect(
+      b.run(
+        'fieldValue({path:"service",normalized:{unknown:"x"},raw:"Flight: unknown"})',
+      ),
+    ).toBe("原文：Flight: unknown");
+  });
   it("renders hostile file names, values and trace text as literal text nodes", () => {
     const b = browser();
     const hostile = '<img src=x onerror="alert(1)">';
