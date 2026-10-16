@@ -23,8 +23,10 @@ import {
 import { remoteFlightPinsSchema } from "../../src/domain/intelligence/interpretation";
 import {
   attemptSchema,
+  attemptMutableColumns,
   executionReportSchema,
   type Attempt,
+  type Task,
 } from "../../src/domain/intelligence/persistence";
 import {
   flightAssemblyProposalSchema,
@@ -92,7 +94,20 @@ const callSchema = z.object({
 // Same CP15 reservation and private custody; no secondary job journal or host issuer.
 export function createFlightSemanticExecutor(deps: {
   gateway: ReturnType<typeof createClosedPersistenceGateway>;
-  repo: Pick<Repo, "readAttempt" | "authorizeResultDisclosure" | "admitExecution">;
+  repo: Pick<Repo, "readAttempt" | "authorizeResultDisclosure" | "admitExecution"> & {
+    snapshot(
+      context: AccountRequestContext,
+      taskId: string,
+    ): Promise<{
+      task: Pick<
+        Task,
+        | "publication_fence"
+        | "cancellation_disposition"
+        | "current_attempt_id"
+        | "work_disposition"
+      >;
+    }>;
+  };
   stores: Pick<Stores, "custody" | "retained" | "readRaw" | "retainRaw">;
   load(a: Attempt): Promise<Loaded>;
   authorizeMaterial(
@@ -249,12 +264,48 @@ export function createFlightSemanticExecutor(deps: {
       throw new Error("POLICY_BLOCKED");
     return r;
   }
+  async function currentAttempt(context: AccountRequestContext, expected: Attempt) {
+    const current = attemptSchema.parse(
+      await deps.repo.readAttempt(context, expected.attempt_id),
+    );
+    const immutable = (a: Attempt) =>
+      Object.fromEntries(
+        Object.entries(a).filter(
+          ([key]) => !(attemptMutableColumns as readonly string[]).includes(key),
+        ),
+      );
+    if (
+      current.row_revision < expected.row_revision ||
+      persistenceDigest(immutable(current)) !== persistenceDigest(immutable(expected))
+    )
+      throw new Error("POLICY_BLOCKED");
+    const { task } = await deps.repo.snapshot(context, current.task_id);
+    if (
+      task.publication_fence !== expected.task_publication_fence ||
+      task.cancellation_disposition !== "NONE" ||
+      task.current_attempt_id !== current.attempt_id
+    )
+      throw new Error("POLICY_BLOCKED");
+    await deps.repo.authorizeResultDisclosure(context, current);
+    assertAccountRequestGeneration(context);
+    return current;
+  }
+  function recoveredReference(domain: string, a: Attempt, sha256: string) {
+    const h = persistenceDigest({
+      domain,
+      account: a.account_id,
+      attempt: a.attempt_id,
+      sha256,
+    });
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
+  }
   async function save(
     a: Attempt,
     result: FlightProviderResult,
     identity: FlightAssemblyJobIdentity,
     bodySha256: string,
     commandSha256: string,
+    recoveringUnknown = false,
   ) {
     const interpretation = result.status === "SUCCEEDED" ? result.output : null;
     let technicalOutput = null;
@@ -266,7 +317,9 @@ export function createFlightSemanticExecutor(deps: {
       const sha256 = await deps.hash(bytes);
       const pin = await deps.stores.custody.put({
         accountId: a.account_id,
-        reservationId: deps.id(),
+        reservationId: recoveringUnknown
+          ? recoveredReference("assembly-technical", a, sha256)
+          : deps.id(),
         sha256,
         byteCount: bytes.length,
         bytes,
@@ -334,16 +387,19 @@ export function createFlightSemanticExecutor(deps: {
     );
     const pin = await deps.stores.custody.put({
       accountId: a.account_id,
-      reservationId: deps.id(),
+      reservationId: recoveringUnknown
+        ? recoveredReference("assembly-recovered-result", a, await deps.hash(bytes))
+        : deps.id(),
       sha256: await deps.hash(bytes),
       byteCount: bytes.length,
       bytes,
     });
-    await deps.stores.retained.put(a, {
-      reference: pin.reference,
-      sha256: await deps.hash(bytes),
-      byteCount: bytes.length,
-    });
+    if (!recoveringUnknown)
+      await deps.stores.retained.put(a, {
+        reference: pin.reference,
+        sha256: await deps.hash(bytes),
+        byteCount: bytes.length,
+      });
     const persisted = {
       ...report,
       response_material_reference: pin.reference,
@@ -351,14 +407,24 @@ export function createFlightSemanticExecutor(deps: {
     };
     try {
       await deps.appendMeter(a, result, persisted);
-      return { ...persisted, metering_disposition: "COMPLETE" as const };
+      return {
+        stored: {
+          ...JSON.parse(bytes.toString()),
+          report: { ...persisted, metering_disposition: "COMPLETE" as const },
+        },
+        report: { ...persisted, metering_disposition: "COMPLETE" as const },
+      };
     } catch {
-      return persisted;
+      return {
+        stored: { ...JSON.parse(bytes.toString()), report: persisted },
+        report: persisted,
+      };
     }
   }
   async function recover(context: AccountRequestContext, id: string) {
     const { a, l, prepared, command } = await load(context, id);
     const pin = await deps.stores.retained.read(a);
+    let unknownStored: ReturnType<typeof JSON.parse> | null = null;
     if (pin) {
       const bytes = await deps.stores.custody.read({ accountId: a.account_id, ...pin });
       if ((await deps.hash(bytes)) !== pin.sha256) throw new Error("CUSTODY_INTEGRITY");
@@ -374,7 +440,7 @@ export function createFlightSemanticExecutor(deps: {
         throw new Error("CUSTODY_INTEGRITY");
       await deps.repo.authorizeResultDisclosure(context, a);
       assertAccountRequestGeneration(context);
-      return {
+      const disclosed = {
         ...stored,
         report: executionReportSchema.parse({
           ...stored.report,
@@ -382,10 +448,19 @@ export function createFlightSemanticExecutor(deps: {
           response_material_sha256: pin.sha256,
         }),
       };
+      if (stored.report.execution_observation !== "UNKNOWN") return disclosed;
+      unknownStored = disclosed;
     }
     const r = await call(a, command.row);
     if (r.dispatch_state === "RESERVED") throw new Error("OUTBOUND_RECOVERY_REQUIRED");
-    const raw = await deps.stores.readRaw(a.account_id, r.call_id);
+    let raw;
+    try {
+      raw = await deps.stores.readRaw(a.account_id, r.call_id);
+    } catch (error) {
+      if (unknownStored && (error as NodeJS.ErrnoException).code === "ENOENT")
+        return unknownStored;
+      throw error;
+    }
     if (
       persistenceDigest(raw.binding) !==
       persistenceDigest({
@@ -412,8 +487,16 @@ export function createFlightSemanticExecutor(deps: {
       null,
       flightModelWitness,
     );
-    await save(a, result, l.material.identity, prepared.sha256, command.request_sha256);
-    return recover(context, id);
+    const saved = await save(
+      a,
+      result,
+      l.material.identity,
+      prepared.sha256,
+      command.request_sha256,
+      unknownStored !== null,
+    );
+    await currentAttempt(context, a);
+    return saved.stored;
   }
   async function prepareAdapter(
     context: AccountRequestContext,
@@ -433,8 +516,10 @@ export function createFlightSemanticExecutor(deps: {
       deadline: Math.min(l.deadline, deps.monotonic() + 30000),
       signal: l.signal,
       assertCurrent: async () => {
-        await deps.repo.authorizeResultDisclosure(context, a);
-        await deps.authorizeMaterial(context, a, l.material.identity);
+        const current = await currentAttempt(context, a);
+        if (current.execution_observation !== "RUNNING")
+          throw new Error("POLICY_BLOCKED");
+        await deps.authorizeMaterial(context, current, l.material.identity);
         assertAccountRequestGeneration(context);
       },
       assertDispatched: async () => {
@@ -556,13 +641,15 @@ export function createFlightSemanticExecutor(deps: {
         executionCertainty: r.execution_certainty,
         rowRevision: r.row_revision,
       });
-      return save(
-        a,
-        result,
-        l.material.identity,
-        prepared.sha256,
-        e.command.request_sha256,
-      );
+      return (
+        await save(
+          a,
+          result,
+          l.material.identity,
+          prepared.sha256,
+          e.command.request_sha256,
+        )
+      ).report;
     },
   };
 }

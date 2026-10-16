@@ -157,7 +157,17 @@ async function fixture() {
   });
   const deps = {
     gateway,
-    repo: f.repo,
+    repo: {
+      ...f.repo,
+      snapshot: async () => ({
+        task: {
+          publication_fence: f.a.task_publication_fence,
+          cancellation_disposition: "NONE" as const,
+          current_attempt_id: f.a.attempt_id,
+          work_disposition: "RUNNING" as const,
+        },
+      }),
+    },
     stores: {
       custody: {
         ...f.deps.custody,
@@ -168,6 +178,8 @@ async function fixture() {
       },
       retained: {
         put: async (_a: unknown, pin: NonNullable<typeof retained>) => {
+          if (retained && JSON.stringify(retained) !== JSON.stringify(pin))
+            throw new Error("IMMUTABLE_INDEX");
           retained = pin;
         },
         read: async () => retained,
@@ -180,7 +192,10 @@ async function fixture() {
       ) => {
         raw = { version: 1, pin, binding };
       },
-      readRaw: async () => raw as never,
+      readRaw: async () => {
+        if (!raw) throw Object.assign(new Error("NO_RAW"), { code: "ENOENT" });
+        return raw as never;
+      },
     },
     load,
     authorizeMaterial: async () => {},
@@ -264,5 +279,243 @@ it("missing credential denies before creating a provider reservation", async () 
     "AUTH_FAILED",
   );
   expect(invoke).not.toHaveBeenCalled();
+  expect(f.send).not.toHaveBeenCalled();
+});
+
+it("uses the real SQLite continuation CAS revision and exact disclosure authorization", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { migrations } = await import("../../src/data/db/migrations");
+  const { createIntelligenceContinuationRepository } =
+    await import("../../src/data/repositories/intelligenceContinuationRepository");
+  const { taskSchema, taskJsonColumns, attemptJsonColumns } =
+    await import("../../src/domain/intelligence/persistence");
+  const { persistenceDigest } = await import("./externalIntegrationPersistence");
+  const f = await fixture();
+  const sql = new DatabaseSync(":memory:");
+  try {
+    sql.exec("PRAGMA foreign_keys=ON");
+    for (const migration of migrations) sql.exec(migration.sql);
+    const at = "2026-10-07T00:00:00Z";
+    const task = taskSchema.parse({
+      account_id: f.a.account_id,
+      task_id: f.a.task_id,
+      format_version: 1,
+      import_id: f.material.identity.batchId,
+      manifest_version: 1,
+      manifest_sha256: "a".repeat(64),
+      trip_id: f.context.tripId,
+      stage: "INTERPRETATION",
+      logical_request_id: randomUUID(),
+      logical_idempotency_key: randomUUID(),
+      input_pins: [],
+      input_sha256: persistenceDigest([]),
+      consumer_id: "import",
+      consumer_version: 2,
+      schema_id: "FLIGHT_ASSEMBLY_PROPOSAL_V1",
+      schema_version: 1,
+      schema_dialect: "OTR_TYPED_V1",
+      schema_sha256: f.modelBinding.request.schema.sha256,
+      capability_requirements: ["INTERPRET"],
+      policy_snapshot: f.modelBinding.request.policy_snapshot,
+      policy_sha256: f.modelBinding.request.policy_sha256,
+      run_id: null,
+      expected_run_generation: null,
+      candidate_id: null,
+      expected_candidate_sha256: null,
+      event_id: null,
+      expected_event_revision: null,
+      created_at: at,
+      creation_clock: "DEVICE_WALL",
+      row_revision: 1,
+      publication_fence: f.a.task_publication_fence,
+      current_pass_complete: false,
+      work_disposition: "RUNNING",
+      wait_reason: null,
+      wait_reasons: [],
+      sync_operation_id: f.a.sync_operation_id,
+      dependencies: [],
+      current_attempt_id: f.a.attempt_id,
+      cancellation_disposition: "NONE",
+      safe_reason: null,
+      publication_id: null,
+      publication_sha256: null,
+      result_sha256: null,
+      updated_at: at,
+      update_clock: "DEVICE_WALL",
+      completed_at: null,
+    });
+    const insert = (
+      table: string,
+      object: Record<string, unknown>,
+      jsonColumns: readonly string[],
+    ) => {
+      const values = Object.entries(object).map(([k, v]) =>
+        jsonColumns.includes(k) && v !== null
+          ? JSON.stringify(v)
+          : typeof v === "boolean"
+            ? Number(v)
+            : v,
+      );
+      sql
+        .prepare(
+          `INSERT INTO ${table}(${Object.keys(object).join(",")}) VALUES(${values.map((v) => (typeof v === "number" ? "CAST(? AS INTEGER)" : "?")).join(",")})`,
+        )
+        .run(...(values as never[]));
+    };
+    sql.exec("BEGIN");
+    sql
+      .prepare(
+        "INSERT INTO sync_operations(id,owner_user_id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,status,created_at,updated_at) VALUES(?,?,?,'INTELLIGENCE_CONTINUATION',?,'CP14_CLOSED',?,'{}','PROCESSING',?,?)",
+      )
+      .run(
+        f.a.sync_operation_id,
+        f.a.account_id,
+        f.context.tripId,
+        f.a.task_id,
+        randomUUID(),
+        at,
+        at,
+      );
+    insert(
+      "intelligence_continuations",
+      { ...task, current_attempt_id: null },
+      taskJsonColumns,
+    );
+    insert("intelligence_continuation_attempts", f.a, attemptJsonColumns);
+    sql
+      .prepare(
+        "UPDATE intelligence_continuations SET current_attempt_id=?,row_revision=row_revision+1 WHERE account_id=? AND task_id=?",
+      )
+      .run(f.a.attempt_id, f.a.account_id, f.a.task_id);
+    sql.exec("COMMIT");
+    const db = {
+      async getFirstAsync<T>(q: string, ...p: unknown[]) {
+        return (sql.prepare(q).get(...(p as never[])) ?? null) as T | null;
+      },
+      async getAllAsync<T>(q: string, ...p: unknown[]) {
+        return sql.prepare(q).all(...(p as never[])) as T[];
+      },
+      async runAsync(q: string, ...p: unknown[]) {
+        return sql.prepare(q).run(...(p as never[])) as never;
+      },
+      async withTransactionAsync(work: () => Promise<void>) {
+        sql.exec("BEGIN");
+        try {
+          await work();
+          sql.exec("COMMIT");
+        } catch (e) {
+          sql.exec("ROLLBACK");
+          throw e;
+        }
+      },
+    };
+    const repo = createIntelligenceContinuationRepository(db, {
+      getAccountId: async () => f.a.account_id,
+      now: () => at,
+      sha256: fixtureHash,
+      validateAdmission: async () => {},
+      validateAttemptAdmission: async () => {},
+      eligibleWait: async () => true,
+      verifyRecovery: async () => {},
+    });
+    const executor = createFlightSemanticExecutor({ ...f.deps, repo });
+    await executor.prepareUsage(f.context, f.a.attempt_id);
+    const report = await executor.execute(f.context, f.a.attempt_id);
+    expect(report.execution_observation).toBe("TERMINAL");
+    const current = await repo.readAttempt(f.context, f.a.attempt_id);
+    expect(current.row_revision).toBe(f.a.row_revision + 1);
+    await expect(repo.authorizeResultDisclosure(f.context, f.a)).rejects.toThrow(
+      "INTELLIGENCE_RECOVERY_IDENTITY",
+    );
+    await repo.authorizeResultDisclosure(f.context, current);
+    expect(f.send).toHaveBeenCalledTimes(1);
+  } finally {
+    sql.close();
+  }
+});
+
+it.each(["cancel", "deadline"])(
+  "recovers a durable raw response after %s without replacing the immutable UNKNOWN index or resending",
+  async (mode) => {
+    const f = await fixture();
+    let clock = 1;
+    f.deps.monotonic = () => clock;
+    const retainRaw = f.deps.stores.retainRaw;
+    f.deps.stores.retainRaw = async (...args) => {
+      await retainRaw(...args);
+      if (mode === "cancel") f.signal.abort();
+      else clock = 2000;
+    };
+    const put = f.deps.stores.custody.put;
+    f.deps.stores.custody.put = async (p) => {
+      const old = f.blobs.get(p.reservationId);
+      if (
+        old &&
+        (old.sha256 !== p.sha256 ||
+          Buffer.compare(Buffer.from(old.bytes), Buffer.from(p.bytes)))
+      )
+        throw new Error("IMMUTABLE_CUSTODY");
+      return put(p);
+    };
+    await f.executor.prepareUsage(f.context, f.a.attempt_id);
+    const unknown = await f.executor.execute(f.context, f.a.attempt_id);
+    expect(unknown.execution_observation).toBe("UNKNOWN");
+    const index = await f.deps.stores.retained.read();
+    const recovered = await f.executor.recover(f.context, f.a.attempt_id);
+    expect(recovered.report.execution_observation).toBe("TERMINAL");
+    expect(recovered.report.reported_usage_summary).toMatchObject({
+      input_tokens: 100,
+      output_tokens: 20,
+      total_tokens: 120,
+    });
+    expect(recovered.interpretation.validation.status).toBe("ACCEPTED");
+    expect(await f.deps.stores.retained.read()).toEqual(index);
+    const count = f.blobs.size;
+    const again = await f.executor.recover(f.context, f.a.attempt_id);
+    expect(again.report.response_material_reference).toBe(
+      recovered.report.response_material_reference,
+    );
+    expect(f.blobs.size).toBe(count);
+    expect(f.send).toHaveBeenCalledTimes(1);
+  },
+);
+it("missing raw keeps the original UNKNOWN and never retries the paid call", async () => {
+  const f = await fixture();
+  f.deps.send = vi.fn(async () => {
+    throw new Error("CONNECTION_LOST");
+  });
+  const executor = createFlightSemanticExecutor(f.deps);
+  await executor.prepareUsage(f.context, f.a.attempt_id);
+  expect((await executor.execute(f.context, f.a.attempt_id)).execution_observation).toBe(
+    "UNKNOWN",
+  );
+  expect(
+    (await executor.recover(f.context, f.a.attempt_id)).report.execution_observation,
+  ).toBe("UNKNOWN");
+  await executor.execute(f.context, f.a.attempt_id);
+  expect(f.deps.send).toHaveBeenCalledTimes(1);
+});
+it("rechecks owning task cancellation after the real dispatch handoff", async () => {
+  const f = await fixture();
+  let cancelled = false;
+  f.deps.repo.snapshot = async () => ({
+    task: {
+      publication_fence: f.a.task_publication_fence,
+      cancellation_disposition: cancelled ? ("REQUESTED" as never) : "NONE",
+      current_attempt_id: f.a.attempt_id,
+      work_disposition: "RUNNING",
+    },
+  });
+  const admit = f.deps.repo.admitExecution;
+  f.deps.repo.admitExecution = vi.fn(async (context, a, handoff) =>
+    admit(context, a, () => {
+      cancelled = true;
+      handoff();
+    }),
+  );
+  await f.executor.prepareUsage(f.context, f.a.attempt_id);
+  expect(
+    (await f.executor.execute(f.context, f.a.attempt_id)).execution_observation,
+  ).toBe("UNKNOWN");
   expect(f.send).not.toHaveBeenCalled();
 });
