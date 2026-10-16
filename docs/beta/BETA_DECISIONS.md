@@ -1,5 +1,15 @@
 # OTR Beta — Unified Decisions and Scope Baseline
 
+## TIME-01A Day entry clarification — Owner / 2026-10-16
+
+A Day context needs a calendar date, not a resolved timezone. There is no
+prerequisite time-origin/date-plus-zone form before entering Day. Resume a lawful
+Trip date/bookmark; Undated selection belongs inside Day. Keep existing Item
+endpoint-local date/clock/zone facts and source/permissions. Unknown context must
+not hide lawful committed Items or create precise NOW/countdowns/reminders.
+This supersedes the earlier accepted-only/null-zone chooser fallback, while
+preserving D1–D4 and the separate TIME-01C–F planning boundary.
+
 ## Complex visual documents — bounded C4-R escalation / 2026-10-16
 
 Owner approves the direction of a controlled multimodal escalation when relevant
