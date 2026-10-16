@@ -24,6 +24,10 @@ const selectedInputs = new Set(),
 const el = (id) => document.getElementById(id);
 const message = (en, zh) => (language === "zh" ? zh : en);
 const fieldNames = {
+  "origin.timeline": [
+    "Departure time basis (zone or independent instant)",
+    "出发时间依据（时区或独立时刻）",
+  ],
   transport_subtype: ["Transport type", "交通类型"],
   service: ["Flight number", "航班号"],
   operating_service: ["Operating flight", "实际承运航班"],
@@ -643,9 +647,11 @@ function renderSemanticAssembly(host, d, trace) {
     node(
       "p",
       message("Invocation / output: ", "调用／输出：") +
-        execution.status +
-        " · " +
-        execution.reason,
+        (execution.reason === "LOCAL_MODEL_TIMEOUT"
+          ? message("Invoked; deadline reached", "已调用；达到截止时间")
+          : execution.reason === "LOCAL_MODEL_CONTEXT_LIMIT"
+            ? message("Invoked; context window exceeded", "已调用；超出上下文窗口")
+            : execution.status + " · " + execution.reason),
     ),
   );
   card.append(
@@ -682,6 +688,9 @@ function renderSemanticAssembly(host, d, trace) {
         "通过校验的建议仍需遵守 Review／Admission 合同。字段提取和确定性组装不依赖 Apple。",
       ),
     ),
+  );
+  card.append(
+    node("p", message("Business contract: ", "业务合同：") + d.contractVersion),
   );
   const proposal = d.validation?.status === "ACCEPTED" ? d.validation.proposal : null;
   if (proposal) {
@@ -779,7 +788,13 @@ function renderBusinessStructure(host, trace, inputId) {
       for (const field of segment.fields || [])
         section.append(node("p", fieldName(field.path) + ": " + fieldValue(field)));
       section.append(
-        node("p", message("Readiness: ", "就绪判断：") + segment.readiness.decision),
+        node(
+          "p",
+          message("Readiness: ", "就绪判断：") +
+            (segment.readiness.decision === "NEEDS_REVIEW"
+              ? message("Needs review", "需要确认")
+              : segment.readiness.decision),
+        ),
       );
       section.append(
         node(
@@ -889,6 +904,8 @@ function resultType(item) {
     : message("Unclassified interpretation", "未分类解释");
 }
 function businessResults(trace) {
+  const blocks = trace.typed?.assembly?.contentBlocks;
+  if (Array.isArray(blocks)) return blocks.map((b) => b.observation);
   const typed = Array.isArray(trace.typed?.items) ? trace.typed.items : [];
   if (typed.length) return typed;
   const groups = new Map();
