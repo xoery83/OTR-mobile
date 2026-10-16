@@ -617,6 +617,13 @@ describe("human-readable workbench presentation", () => {
     expect(text).not.toContain("未标注／仅推测");
     expect(text).not.toContain("0.0%");
   });
+  it("preserves a selected failed no-trace run in the Inspect history selector", () => {
+    const b = browser();
+    b.run(
+      'el("inspect-input").value="file";inspected={id:"failed",inputId:"file"};latestState={runs:[{id:"new",inputId:"file",createdAt:2,stage:"FINISHED"},{id:"failed",inputId:"file",createdAt:1,stage:"FAILED"}]};populateInspectionRuns()',
+    );
+    expect(b.elements.get("inspect-run")!.value).toBe("failed");
+  });
   it("renders hostile file names, values and trace text as literal text nodes", () => {
     const b = browser();
     const hostile = '<img src=x onerror="alert(1)">';

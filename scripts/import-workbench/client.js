@@ -1749,6 +1749,16 @@ function renderStats(stats) {
           message("No compatible evaluation recorded", "未记录相应评估"),
       ),
     );
+  if (stats.reasonCode === "IDENTITY_ALIGNMENT_NOT_IMPLEMENTED")
+    root.append(
+      node(
+        "p",
+        message(
+          "Identity alignment across results, segments or participants is not implemented; precision / recall are not scored.",
+          "尚未实现结果／分段／参与人身份对齐，暂不计算精确率／召回率。",
+        ),
+      ),
+    );
   if (stats.annotationSummary) {
     const summary = stats.annotationSummary;
     root.append(
@@ -1880,7 +1890,8 @@ function populateInspectionRuns() {
     option.value = run.id;
     el("inspect-run").append(option);
   }
-  if (runs.some((r) => r.id === selectedRun)) el("inspect-run").value = selectedRun;
+  const currentRun = selectedRun || (!inspectedImported ? inspected?.id : undefined);
+  if (runs.some((r) => r.id === currentRun)) el("inspect-run").value = currentRun;
 }
 // Event wiring is deliberately separate so presentation can be tested without a browser runner.
 for (const name of ["test", "inspect", "compare", "ground", "runs"])
