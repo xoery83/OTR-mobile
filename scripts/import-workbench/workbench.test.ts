@@ -1,5 +1,5 @@
 import { request as httpRequest } from "node:http";
-import { afterAll, beforeAll, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import {
   mkdtempSync,
   realpathSync,
@@ -250,7 +250,18 @@ it("accepts only the pending pinned diagnostic job and revalidates posted Native
       })
     ).status,
   ).toBe(400);
-  expect((await sendTrace(trace)).status).toBe(200);
+  // A model call can outlast heartbeat freshness. Its authenticated completion
+  // must refresh readiness before a serial batch submits the next input.
+  vi.setSystemTime(Date.now() + 6000);
+  try {
+    expect((await sendTrace(trace)).status).toBe(200);
+    const state = (await (await testFetch(ORIGIN + "/api/state")).json()) as {
+      native: { ready: boolean };
+    };
+    expect(state.native.ready).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
   expect((await sendTrace(trace)).status).toBe(400);
 });
 
@@ -345,4 +356,54 @@ it("serves only pinned originals by UUID with safe inline MIME and same-origin f
   expect((await testFetch(ORIGIN + "/api/input/not-a-uuid/original")).status).not.toBe(
     200,
   );
+});
+
+it("revalidates adapted PDF traces including their derived text pins without rejecting valid Native output", async () => {
+  const bytes = Buffer.from("%PDF-unit-only");
+  const input = store.add(bytes, "application/pdf", "unit-only.pdf");
+  app.armNative(Date.now() + 60_000);
+  await testFetch(ORIGIN + "/native/job", {
+    headers: { "X-OTR-Diagnostic": app.nativeToken },
+  });
+  await testFetch(ORIGIN + "/api/run", {
+    method: "POST",
+    headers: { Origin: ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ inputId: input.id, runtime: "IOS_DIAGNOSTIC_COMPONENT" }),
+  });
+  const claimed = (await (
+    await testFetch(ORIGIN + "/native/job", {
+      headers: { "X-OTR-Diagnostic": app.nativeToken },
+    })
+  ).json()) as { job: Parameters<typeof runImportDiagnostic>[0] };
+  const extractor = createCaptureLocalExtractorCore({
+    hash,
+    getBridge: () => ({
+      extractCaptureLocal: async () => ({
+        engine: "apple-pdfkit",
+        version: 1,
+        text: "Flight NZ5069",
+        pages: [{ pageIndex: 0, start: 0, end: 13 }],
+        originalSha256: input.sha256,
+        originalByteCount: bytes.length,
+      }),
+      captureLocalModelCapability: async () => ({
+        status: "UNAVAILABLE",
+        reason: "DEVICE_NOT_ELIGIBLE",
+      }),
+    }),
+  });
+  const trace = await runImportDiagnostic(
+    claimed.job,
+    bytes,
+    extractor,
+    hash,
+    "IOS_DIAGNOSTIC_COMPONENT",
+  );
+  expect(trace.extraction).toHaveProperty("textSha256");
+  const response = await testFetch(ORIGIN + "/native/trace", {
+    method: "POST",
+    headers: { "X-OTR-Diagnostic": app.nativeToken, "Content-Type": "application/json" },
+    body: JSON.stringify(trace),
+  });
+  expect(response.status).toBe(200);
 });

@@ -109,6 +109,7 @@ export function createWorkbench(store = new PrivateStore()) {
       if (native) {
         if (req.headers["x-otr-diagnostic"] !== nativeToken || !nativeStatus().armed)
           throw new Error("NATIVE_GATE_REQUIRED");
+        lastNativeSeen = new Date().toISOString();
       } else if (req.headers.origin && req.headers.origin !== ORIGIN)
         throw new Error("ORIGIN_REJECTED");
       if (req.method !== "GET" && !native && req.headers.origin !== ORIGIN)
@@ -296,10 +297,15 @@ export function createWorkbench(store = new PrivateStore()) {
           throw new Error("TRACE_SCOPE_INVALID");
         // Revalidate Native extraction and model anchors through the SAME production core.
         const bytes = store.bytes(store.input(nativeRun.inputId));
+        // Trace carries the adapter's validated PDF output, including derived text pins.
+        // Remove only those two known adapter fields before reusing the strict Native schema.
+        const bridgeExtraction = { ...raw.extraction } as Record<string, unknown>;
+        delete bridgeExtraction.textSha256;
+        delete bridgeExtraction.textByteCount;
         const extractor = createCaptureLocalExtractorCore({
           hash,
           getBridge: () => ({
-            extractCaptureLocal: async () => raw.extraction,
+            extractCaptureLocal: async () => bridgeExtraction,
             captureLocalModelCapability: async () => raw.capability,
           }),
         });
@@ -363,6 +369,10 @@ export function createWorkbench(store = new PrivateStore()) {
         const result = attachCaptureLocalModelEvidence(deterministic, model);
         nativeRun.trace = {
           ...raw,
+          extraction: extracted,
+          capability,
+          textSha256,
+          model,
           sourceAuthority: "NONE",
           executedVersion: { native: "UNVERIFIED", javascript: "UNVERIFIED" },
           admission: "NOT_AVAILABLE",
