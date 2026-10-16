@@ -38,10 +38,18 @@ export type TodaysJourneyCopy = {
   multipleStays: string;
   loading: string;
   unavailable: string;
+  planningTitle?: string;
+  planningDate?: string;
+  planningStay?: string;
+  planningEmpty?: string;
+  planningLater?: string;
+  timezoneUnknown?: string;
+  chooseDay?: string;
 };
 export type TodaysJourneyWidgetProps = {
   tripId: string;
   zone: string | null;
+  planningDate?: string | null;
   // Only the owning, identity-guarded DEV Reference perspective supplies this.
   now?: string;
   copy: TodaysJourneyCopy;
@@ -71,6 +79,7 @@ const formatTime = (instant: string, zone: string) =>
 export function TodaysJourneyWidget({
   tripId,
   zone,
+  planningDate,
   now,
   copy,
   onOpenToday,
@@ -86,14 +95,14 @@ export function TodaysJourneyWidget({
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const readKey = `${tripId}/${zone}/${now ?? ""}/${refreshKey}`;
+  const readKey = `${tripId}/${zone}/${planningDate ?? ""}/${now ?? ""}/${refreshKey}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [read, setRead] = useState<AnyTodayRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const request = useRef(0);
   const clock = useCallback(
-    () => ({ now: now ?? new Date().toISOString(), zone }),
-    [now, zone],
+    () => ({ now: now ?? new Date().toISOString(), zone, planningDate }),
+    [now, zone, planningDate],
   );
   const load = useCallback(async () => {
     const ticket = ++request.current;
@@ -182,22 +191,31 @@ export function TodaysJourneyWidget({
   return (
     <View style={styles.widget}>
       <Text accessibilityRole="header" style={styles.heading}>
-        {copy.title}
+        {zone === null ? (copy.planningTitle ?? copy.plans) : copy.title}
       </Text>
       {visible ? (
         <>
+          {visible.today.zone === null ? (
+            <Text style={styles.meta}>{copy.timezoneUnknown ?? copy.unavailable}</Text>
+          ) : null}
+          {visible.today.zone === null && copy.planningDate ? (
+            <Text style={styles.meta}>{copy.planningDate}</Text>
+          ) : null}
           <Text style={styles.meta}>{formatDay(visible.today.date)}</Text>
           <Text style={visible.today.primary ? styles.label : styles.freeDay}>
             {visible.today.primaryKind === "UPCOMING"
               ? copy.upcoming
               : visible.today.primaryKind === "PLANS"
-                ? copy.plans
-                : copy.free}
+                ? visible.today.zone === null
+                  ? (copy.planningTitle ?? copy.plans)
+                  : copy.plans
+                : visible.today.zone === null
+                  ? (copy.planningEmpty ?? copy.free)
+                  : copy.free}
           </Text>
           {visible.today.primary ? (
             <TodayRow
               item={visible.today.primary}
-              zone={visible.today.zone}
               pending={
                 localRead(visible) && visible.today.primary.certificateGeneration === 0
               }
@@ -206,12 +224,15 @@ export function TodaysJourneyWidget({
           ) : null}
           {visible.today.later.length ? (
             <>
-              <Text style={styles.label}>{copy.later}</Text>
+              <Text style={styles.label}>
+                {visible.today.zone === null
+                  ? (copy.planningLater ?? copy.plans)
+                  : copy.later}
+              </Text>
               {visible.today.later.map((item) => (
                 <TodayRow
                   key={item.itemRef}
                   item={item}
-                  zone={visible.today.zone}
                   pending={localRead(visible) && item.certificateGeneration === 0}
                   onOpen={open}
                 />
@@ -220,11 +241,14 @@ export function TodaysJourneyWidget({
           ) : null}
           {visible.today.tonight ? (
             <>
-              <Text style={styles.label}>{copy.tonight}</Text>
+              <Text style={styles.label}>
+                {visible.today.zone === null
+                  ? (copy.planningStay ?? copy.plans)
+                  : copy.tonight}
+              </Text>
               {
                 <TodayRow
                   item={visible.today.tonight}
-                  zone={visible.today.zone}
                   pending={
                     localRead(visible) &&
                     visible.today.tonight.certificateGeneration === 0
@@ -245,13 +269,13 @@ export function TodaysJourneyWidget({
       )}
       <View style={styles.actions}>
         <UiButton
-          label={copy.openToday}
+          label={zone === null ? t("tripHome.preparation.day") : copy.openToday}
           onPress={() => void open()}
           disabled={!visible || (localRead(visible) && !onOpenLocalToday)}
         />
-        {!visible && onOpenDayChooser ? (
+        {(!visible || zone === null) && onOpenDayChooser ? (
           <UiButton
-            label={t("tripHome.preparation.day")}
+            label={copy.chooseDay ?? t("tripHome.preparation.day")}
             variant="secondary"
             onPress={() => void onOpenDayChooser()}
           />
@@ -262,13 +286,11 @@ export function TodaysJourneyWidget({
 }
 function TodayRow({
   item,
-  zone,
   onOpen,
   pending = false,
 }: {
   pending?: boolean;
   item: CoreDayRow;
-  zone: string;
   onOpen: (id: string) => Promise<void>;
 }) {
   const styles = useThemedStyles(createStyles);
@@ -285,8 +307,14 @@ function TodayRow({
           {item.title}
         </Text>
         {pending ? <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text> : null}
-        {item.displayTime?.instant && item.displayTime.comparable ? (
-          <Text style={styles.meta}>{formatTime(item.displayTime.instant, zone)}</Text>
+        {item.displayTime?.localTime ? (
+          <Text style={styles.meta}>{item.displayTime.localTime}</Text>
+        ) : item.displayTime?.instant &&
+          item.displayTime.comparable &&
+          item.displayTime.zoneId ? (
+          <Text style={styles.meta}>
+            {formatTime(item.displayTime.instant, item.displayTime.zoneId)}
+          </Text>
         ) : null}
       </View>
       <AppIcon name="chevron.right" size={16} color={colors.textSecondary} />

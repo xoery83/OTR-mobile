@@ -8,8 +8,12 @@ import { coreUuid } from "@/domain/trip/tripCoreV2";
 import type { CoreActor } from "@/domain/trip/tripCoreV2Mutation";
 import { projectCoreDay } from "@/domain/trip/tripCoreV2Day";
 import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
-import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
-import { selectTodaysJourneyRows, type TodayClock } from "@/domain/trip/todaysJourney";
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import {
+  journeyCalendarDate,
+  selectTodaysJourneyRows,
+  type TodayClock,
+} from "@/domain/trip/todaysJourney";
 import type { CoreDatabase, createTripCoreV2Repository } from "./tripCoreV2Repository";
 
 type Core = Pick<
@@ -134,18 +138,13 @@ export function createTripLocalManualReader(
           rows,
           today(clock: TodayClock) {
             assertAccountRequestGeneration(scope);
-            if (
-              !clock.zone ||
-              clock.zone !== clock.zone.trim() ||
-              /^[+-]/.test(clock.zone)
-            )
-              return null;
-            let date: string;
+            let date: string | null;
             try {
-              date = localCalendarDate(clock.now, clock.zone);
+              date = journeyCalendarDate(clock);
             } catch {
               return null;
             }
+            if (!date) return null;
             return selectTodaysJourneyRows(
               projectCoreDay(
                 graph,

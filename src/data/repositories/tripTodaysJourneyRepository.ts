@@ -19,6 +19,7 @@ export function createTripTodaysJourneyReader(
     const result = await days.trip(tripId);
     await assertAccountRequestContext(result.scope, account);
     if (
+      result.localManualStatus === "UNAVAILABLE" ||
       !result.observed ||
       result.observed.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
       result.observed.projection.version !== 2

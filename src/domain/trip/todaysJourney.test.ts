@@ -113,3 +113,58 @@ it("Trip date is not the device/UTC calendar date", () => {
   });
   expect(result?.date).toBe("2026-10-16");
 });
+
+it("unknown travel zone uses only an explicit planning day and preserves owning order without upcoming", () => {
+  const floating = row("coffee");
+  floating.displayTime = {
+    localDate: "2026-10-16",
+    localTime: "09:00:00",
+    comparable: false,
+  };
+  const exact = row("flight", "2026-10-16T02:00:00Z");
+  const result = selectTodaysJourney(projection([floating, exact]), {
+    now: "2026-10-15T23:00:00Z",
+    zone: null,
+    planningDate: "2026-10-16",
+  })!;
+  expect(result).toMatchObject({ date: "2026-10-16", zone: null, primaryKind: "PLANS" });
+  expect(result.primary).toBe(floating);
+  expect(result.primary?.displayTime?.localTime).toBe("09:00:00");
+  expect(result.later).toEqual([exact]);
+  expect(() =>
+    selectTodaysJourney(projection([]), {
+      ...clock,
+      zone: null,
+      planningDate: "2026-02-30",
+    }),
+  ).toThrow();
+});
+it.each(["2026-04-05", "2026-09-27"])(
+  "planning date %s survives DST boundaries without manufacturing an instant",
+  (planningDate) => {
+    const floating = row("floating");
+    floating.displayTime = {
+      localDate: planningDate,
+      localTime: "02:30:00",
+      comparable: false,
+    };
+    const result = selectTodaysJourney(projection([floating]), {
+      ...clock,
+      zone: null,
+      planningDate,
+    });
+    expect(result?.primaryKind).toBe("PLANS");
+    expect(result?.primary?.displayTime).toEqual(floating.displayTime);
+    expect(result?.date).toBe(planningDate);
+  },
+);
+it("a cancelled Stay cannot be the date-coverage summary", () => {
+  const stay = row("stay", undefined, "P3");
+  stay.status = "cancelled";
+  expect(
+    selectTodaysJourney(
+      projection([stay], [{ id: "stay", start: "2026-10-16", end: "2026-10-18" }]),
+      { ...clock, zone: null, planningDate: "2026-10-16" },
+    )?.tonight,
+  ).toBeNull();
+});

@@ -14,6 +14,10 @@ import {
   type CoreActor,
 } from "@/domain/trip/tripCoreV2Mutation";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
+import { projectCoreP6Feed } from "@/domain/trip/tripCoreV2P6DayFeed";
+import { selectTodaysJourney } from "@/domain/trip/todaysJourney";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
+import { coreDefaults } from "@/domain/trip/tripCoreV2";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
@@ -337,4 +341,100 @@ it("mapped owner mismatch and known Core revocation cannot use creator fallback"
   await acceptTripBeforeFirstCertificate(revoked);
   await revoked.core.revoke(await revoked.core.captureContext(revoked.tripId), 2);
   await expect(revoked.read(revoked.tripId)).rejects.toThrow("CORE_ACCESS_REVOKED");
+});
+
+it("committed pending hotel and floating 09:00 survive a fresh local reader with no travel timezone", async () => {
+  const f = await fixture();
+  const activityId = randomUUID();
+  const context = await f.core.captureContext(f.tripId);
+  await f.core.enqueue(context, {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id: activityId },
+    baseVector: [{ kind: "ITEM", id: activityId, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P1",
+      core: { title: "Coffee" },
+      schedule: {
+        start: {
+          ...coreDateBoundary("2026-10-16"),
+          local_time: "09:00",
+          clock_precision: -1,
+          quality: "ESTIMATED",
+        },
+      },
+      ...coreDefaults("organizer"),
+    },
+  });
+  const clock = { now: "2026-10-15T10:00:00Z", zone: null, planningDate: "2026-10-16" };
+  const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+  const local = (await f.read(f.tripId))!;
+  const today = (await f.today.readLocal(f.tripId, clock))!;
+  expect(today.today).toMatchObject({
+    date: clock.planningDate,
+    zone: null,
+    primaryKind: "PLANS",
+  });
+  expect(today.today.tonight).toMatchObject({
+    itemRef: f.itemId,
+    certificateGeneration: 0,
+  });
+  expect(
+    local.rows(clock.planningDate).find((row) => row.itemRef === activityId)?.displayTime,
+  ).toMatchObject({ localTime: "09:00:00", comparable: false });
+  expect(today.today.primary?.displayTime?.localTime).toBe("09:00:00");
+  expect(
+    (await f.today.resolveLocalItem(f.tripId, f.itemId, today))?.item.localState,
+  ).toBe("PENDING");
+  expect((await f.read(f.tripId))!.today(clock)).toEqual(local.today(clock));
+  expect(
+    (await f.read(f.tripId))!.today({ ...clock, planningDate: "2026-10-19" }),
+  ).toMatchObject({ primaryKind: "FREE", tonight: null });
+  const personId = f.sql
+    .prepare("SELECT person_id FROM local_trip_ledger_bindings WHERE trip_id=?")
+    .get(f.tripId)!.person_id as string;
+  const actor: CoreActor = {
+    accountId: f.account,
+    tripId: f.tripId,
+    active: true,
+    canManageShared: true,
+    personId,
+    personIds: [personId],
+  };
+  const snapshot = await f.core.manualReadSnapshot(context, actor);
+  // Synthetic adapter input only: this does not install a certificate or admit an Item.
+  const projection = projectCoreP6Feed(
+    snapshot.graph,
+    actor,
+    {
+      epoch: randomUUID(),
+      revision: "1",
+      accessRevision: 1,
+      generation: 1,
+      actorPersonBindingHash: "binding",
+      participatingRosterHash: "roster",
+      manifestSha256: "manifest",
+    },
+    [personId],
+  );
+  const query = vi.spyOn(projection, "query");
+  const planned = selectTodaysJourney(projection, clock)!;
+  expect(query).toHaveBeenCalledWith("2026-10-16", "UTC");
+  expect(planned).toMatchObject({ date: "2026-10-16", zone: null, primaryKind: "PLANS" });
+  expect(planned.primary?.displayTime).toMatchObject({
+    localDate: "2026-10-16",
+    localTime: "09:00:00",
+    comparable: false,
+  });
+  expect(planned.tonight?.itemRef).toBe(f.itemId);
+  expect(
+    selectTodaysJourney(projection, { ...clock, planningDate: "2026-10-19" }),
+  ).toMatchObject({ primary: null, tonight: null });
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+    before,
+  );
 });

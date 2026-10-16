@@ -19,7 +19,7 @@ const source = {
   participatingRosterHash: "roster",
   manifestSha256: "manifest",
 };
-function setup(coreGeneration = getAccountGeneration()) {
+function setup(coreGeneration = getAccountGeneration(), localUnavailable = false) {
   let active = "actor";
   let projection = {
     version: 2,
@@ -44,6 +44,11 @@ function setup(coreGeneration = getAccountGeneration()) {
   const days = createTripDayFeedReader({
     account,
     projection: async () => null,
+    localManual: localUnavailable
+      ? async () => {
+          throw new Error("LOCAL_READ_UNAVAILABLE");
+        }
+      : undefined,
     coreProjection: async () => ({ projection, sourceStatus: status }) as never,
     candidates: async () => [],
     services: async () => ({}),
@@ -97,4 +102,15 @@ it("rejects a saved Today tap after the Auth generation changes", async () => {
   advanceAccountGeneration();
   expect(await reader.resolveItem(tripId, "item", expected, clock)).toBeNull();
   expect(resolveItem).not.toHaveBeenCalled();
+});
+
+it("accepted planning day stays useful without guessing today, but failed local read cannot become an empty day", async () => {
+  const clock = { now: "2027-02-05T23:00:00Z", zone: null, planningDate: "2027-02-06" };
+  const result = await setup().reader.read(tripId, clock);
+  expect(result?.today).toMatchObject({
+    date: "2027-02-06",
+    zone: null,
+    primaryKind: "FREE",
+  });
+  expect(await setup(getAccountGeneration(), true).reader.read(tripId, clock)).toBeNull();
 });
