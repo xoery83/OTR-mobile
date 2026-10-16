@@ -8,17 +8,27 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 };
 const state = vi.hoisted(() => ({
   props: {} as any,
+  cellLayouts: [] as ((event: any) => void)[],
   effects: [] as (() => void)[],
   frames: [] as (() => void)[],
   refs: [] as { current: any }[],
   refCursor: 0,
   layoutDeps: [] as (readonly unknown[] | undefined)[],
   layoutCursor: 0,
+  memos: [] as { deps: readonly unknown[]; value: unknown }[],
+  memoCursor: 0,
   scrollToIndex: vi.fn(),
   scrollToOffset: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useCallback: (callback: unknown, deps: readonly unknown[]) => {
+    const index = state.memoCursor++,
+      previous = state.memos[index];
+    if (!previous || deps.some((value, i) => !Object.is(value, previous.deps[i])))
+      state.memos[index] = { deps, value: callback };
+    return state.memos[index].value;
+  },
   useRef: (initial: unknown) => {
     const index = state.refCursor++;
     return state.refs[index] ?? (state.refs[index] = { current: initial });
@@ -41,7 +51,16 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", async () => {
   const { createElement, forwardRef } = await import("react");
   return {
-    View: ({ children }: { children: ReactNode }) => createElement("div", {}, children),
+    View: ({
+      children,
+      onLayout,
+    }: {
+      children: ReactNode;
+      onLayout?: (event: any) => void;
+    }) => {
+      if (onLayout) state.cellLayouts.push(onLayout);
+      return createElement("div", {}, children);
+    },
     FlatList: forwardRef((props: any, ref: any) => {
       state.props = props;
       if (ref)
@@ -72,6 +91,8 @@ beforeEach(() => {
   state.refCursor = 0;
   state.layoutDeps = [];
   state.layoutCursor = 0;
+  state.memos = [];
+  state.memoCursor = 0;
   state.frames = [];
   state.scrollToIndex.mockReset();
   state.scrollToOffset.mockReset();
@@ -92,13 +113,16 @@ function setup() {
   const render = vi.fn(() => createElement("span", {}, "day"));
   const count = vi.fn(),
     result = vi.fn();
-  const rerender = (nextRows = rows) => {
+  const rerender = (nextRows = rows, layoutRevision?: string) => {
     state.effects = [];
+    state.cellLayouts = [];
     state.refCursor = 0;
     state.layoutCursor = 0;
+    state.memoCursor = 0;
     renderToStaticMarkup(
       createElement(WindowedDayList, {
         rows: nextRows,
+        layoutRevision,
         renderRow: render,
         listRef: ref,
         scopeKey: "account/trip",
@@ -202,4 +226,89 @@ it("does not redirect to another date if a pending target date disappears", () =
   });
   expect(result).not.toHaveBeenCalledWith("REACHED", expect.anything());
   expect(result).toHaveBeenLastCalledWith("UNMEASURED", rows[50].date);
+});
+
+it("does not restore on fresh row arrays or callbacks caused by ordinary reading updates", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
+    changed: [],
+  });
+  state.scrollToIndex.mockClear();
+  rerender(rows.map((row) => ({ ...row })));
+  rerender([...rows]);
+  for (const frame of state.frames.splice(0)) frame();
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+});
+it.each(["insert", "delete", "reorder"])(
+  "preserves the same Item anchor after a logical %s",
+  (change) => {
+    const { rows, ref, rerender } = setup();
+    ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
+    state.props.onViewableItemsChanged({
+      viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
+      changed: [],
+    });
+    state.scrollToIndex.mockClear();
+    const changed =
+      change === "insert"
+        ? [{ key: "new", date: rows[0].date, value: "ITEM" }, ...rows]
+        : change === "delete"
+          ? rows.slice(1)
+          : [rows[50], ...rows.filter((_, index) => index !== 50)];
+    rerender(changed);
+    expect(state.scrollToIndex).not.toHaveBeenCalled();
+    state.frames.shift()?.();
+    expect(state.scrollToIndex).toHaveBeenLastCalledWith({
+      index: change === "insert" ? 51 : change === "delete" ? 49 : 0,
+      animated: false,
+      viewOffset: -12,
+    });
+  },
+);
+it("restores after an explicit Focus-height revision but not its repeated rerender", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
+    changed: [],
+  });
+  state.scrollToIndex.mockClear();
+  rerender([...rows], "source-1/focus-item-2");
+  state.frames.shift()?.();
+  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
+    changed: [],
+  });
+  state.scrollToIndex.mockClear();
+  rerender([...rows], "source-1/focus-item-2");
+  for (const frame of state.frames.splice(0)) frame();
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+});
+
+it("does not overwrite an anchor with pre-revision cell offsets while Native remeasures", () => {
+  const { rows, ref, rerender } = setup();
+  state.cellLayouts[5]({ nativeEvent: { layout: { y: 500, height: 100 } } });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 510 } } });
+  expect(ref.current!.saveAnchor()).toEqual({
+    key: rows[5].key,
+    date: rows[5].date,
+    within: 10,
+  });
+  rerender([...rows], "expanded");
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[5], index: 5, isViewable: true }],
+    changed: [],
+  });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 550 } } });
+  expect(ref.current!.saveAnchor()!.within).toBe(10);
+  state.cellLayouts[5]({ nativeEvent: { layout: { y: 900, height: 150 } } });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 910 } } });
+  expect(ref.current!.saveAnchor()).toEqual({
+    key: rows[5].key,
+    date: rows[5].date,
+    within: 10,
+  });
 });

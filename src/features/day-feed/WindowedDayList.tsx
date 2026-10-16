@@ -40,6 +40,7 @@ export function WindowedDayList<T>({
   listRef,
   scopeKey,
   initialAnchor,
+  layoutRevision,
   topInset = 0,
   bottomInset = 0,
   style,
@@ -58,6 +59,7 @@ export function WindowedDayList<T>({
   listRef?: Ref<DayListHandle>;
   scopeKey: string;
   initialAnchor?: DayScrollAnchor | null;
+  layoutRevision?: string | number;
   topInset?: number;
   bottomInset?: number;
   style?: StyleProp<ViewStyle>;
@@ -144,6 +146,7 @@ export function WindowedDayList<T>({
     [attempt],
   );
   const index = indexDayRows(rows);
+  const rowSignature = JSON.stringify(rows.map(({ key, date }) => [key, date]));
   const retry = useCallback(() => {
     if (!pending.current || scheduled.current !== null) return;
     scheduled.current = requestAnimationFrame(() => {
@@ -204,12 +207,14 @@ export function WindowedDayList<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeKey]);
   useLayoutEffect(() => {
-    const keys = new Set(rows.map((row) => row.key));
-    for (const key of layouts.current.keys())
-      if (!keys.has(key)) layouts.current.delete(key);
-    if (saved.current && !pending.current) restore(saved.current);
-    // Preserve the stable row anchor when sync inserts/reorders rows or Focus changes heights.
-  }, [rows, restore]);
+    // Old absolute cell offsets cannot describe an inserted/reordered or resized stream.
+    layouts.current.clear();
+    if (saved.current && !pending.current) {
+      pending.current = { anchor: saved.current, attempts: 0 };
+      retry();
+    }
+    // Array/callback identity changes caused by reading updates are not layout changes.
+  }, [rowSignature, layoutRevision, retry]);
   const viewability = useCallback<
     NonNullable<FlatListProps<DayWindowRow<T>>["onViewableItemsChanged"]>
   >(

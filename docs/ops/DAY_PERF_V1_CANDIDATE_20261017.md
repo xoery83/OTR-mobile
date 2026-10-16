@@ -31,7 +31,7 @@ Coordinator exclusively writes DayFeed, LocalManualDayFeed integration, TripScre
 
 `npx vitest run src/features/day-feed/dayFeedWindow.test.ts src/features/day-feed/WindowedDayList.test.ts src/features/day-feed/DayFeed.navigation.test.ts`
 
-29 tests PASS (15 new + 14 unchanged navigation). Local command duration ~185 ms; this is **test-runner duration, not Native performance**.
+35 tests PASS (21 new + 14 unchanged navigation). Local command duration ~178 ms; this is **test-runner duration, not Native performance**.
 
 | Case                      | Executed evidence                                                                                                                     | Native gap                                                |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
@@ -50,3 +50,7 @@ Candidate can be integrated by the single Screen Root writer. DAY-PERF PASS requ
 ## Independent Review correction
 
 Deleted-row restoration now normalizes pending key/date/offset to the actual same-date Header in both scroll attempts and viewability completion. A disappearing target date reports UNMEASURED and never chooses a different date. Directed component regressions cover deletion before restore, immutable sync snapshot deletion while pending, cleared retries after REACHED and removal of the entire target date. Independent re-review remains required for the fixed commit.
+
+## Stable layout revision contract
+
+A new `rows` array alone is not a layout change and never triggers programmatic restoration. Key/date order changes trigger bounded restoration of the existing anchor after one animation frame. Root passes optional `layoutRevision` using actual source revision plus Focus/Immersive key (and other known size-affecting presentation context if applicable); this handles same-key content/height changes. Do not use a fresh object, reading offset or viewport callback counter as the revision. Logical layout changes invalidate old absolute-y cache before fresh Native cell measurements. Native `maintainVisibleContentPosition` remains active. Tests cover same logical rows with fresh arrays, insertion/deletion/reordering, explicit Focus-height revisions, and stale-offset isolation during remeasurement. Native smoothness remains an integrated acceptance item.
