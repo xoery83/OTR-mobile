@@ -1,3 +1,27 @@
+# C4-L normal App Runtime — 2026-10-16
+
+- PASS_SCOPED_C4_L_NORMAL_APP_RUNTIME on isolated iOS26.5/23F77/418CF. Normal
+  existing QA Auth, exact original Batch/Job/Input/request and two original byte
+  fingerprints; no Session copy. Four C4 production file hashes match reviewed
+  candidate3364ac1 and integrated main321ab89; not a whole-tree Native claim.
+- PDFKit:2628 UTF8 bytes/1page/20 deterministic fields. Apple AVAILABLE but rejected
+  for LOCAL_MODEL_EVIDENCE_INVALID; all20 retained. Vision:610 bytes/44boxes/8fields;
+  Apple SUCCEEDED with4 exact anchored service observations. Local interpretation
+  remains PARTIAL; SourceAuthorityNONE, no formal Candidate/Review/Admission.
+- Normal cold App6697→15907 then existing Repository CURRENT_PARSER_READ passed
+  under APP_FETCH_DENY with intercepted positive control and fetch restored.
+  All8 table digests unchanged; no repeated completed Input/model work. This is
+  scoped denied business fetch, not device-wide airplane/offline acceptance.
+- Whole queue pipeline PDF15356ms/JPEG5976ms; pure-model timing not captured.
+  Separate component first/warm measurements remain separate evidence.
+- Temporary source/config/env restored; worktree clean, credentials/QA staging
+  removed, owning durable original BLOBs and normal Session/results retained.
+  No remote LLM/upload/Backend changes; iPhone16Pro remains UNVERIFIED. Receipt:
+  docs/ops/CAPTURE_C4_L_NORMAL_APP_RUNTIME_RECEIPT_20261016.json.
+- Search321ab89 stable embedded Release Native preview now verified on AD5 with
+  original account/data retained and8083 stopped. Receipt remains local:
+  /private/tmp/otr-search-stable-release-receipt-20261016.json. No push yet.
+
 # Global Search VQA V1 — integrated / 2026-10-16
 
 - Reviewed source98c94d5 integrated onto ca4a7e9; Experience owns stable Native preview.
@@ -19,15 +43,15 @@
   original+text fingerprint-bound typed read projection. Schema/immutable result JSON
   unchanged.91 targeted checks/types/lint/format/UIguard and independent review PASS.
   Formal Trip/Source-bound Candidate remains unavailable for unassigned Inputs.
-- Same-A1A normal App Repository typed-read QA is now proceeding without new model
-  calls, upload or work. Isolated26.5 full authenticated App Runtime and iPhone16Pro
-  remain pending; component/replay results are not those Runtime PASS outcomes.
+- Same-A1A retained typed-read evidence remains separate. Isolated26.5 normal App
+  local-processing/cold-read Runtime is now PASS in the scoped checkpoint above;
+  component/replay results do not substitute for that Runtime or iPhone16Pro QA.
 - TCL02 recovery proposal5e697e7 is docs-only, not SQL/deploy permission or applied
   changes. Actual503 is missing serverCapture tripCreatePort. NOLOGIN/finite concerns
   are source-proven dormant-contract contradictions, not observed Hosted preimages.
-- TCL01 Nelson/Test/NZD25 read-only persistence recheck PASS. Cold App reopen waits
-  the independent Search Session's AD5 handoff; no Metro/App interruption while it
-  owns Native VQA. Full network-offline acceptance not yet demonstrated.
+- TCL01 Nelson/Test/NZD25 read-only persistence and normal cold reopen PASS,
+  oldPID65770→new88640; scoped digest unchanged, original operations still blocked
+  at attempt0. Full network-offline/Hosted sync unverified; receipt sourcebfb790e.
 - Storage major scan ended. Internal available last38.4GiB;32 exact duplicate vendor
   binary files removed after matching SHA and retained restore source. Historical
   candidates need those exact files restored before Native rebuild; restore map:
