@@ -32,7 +32,11 @@ outside Git. Limits: 10 MiB/input, 64 saved inputs, 256 runs, 64 imported traces
 server paths use generated UUIDs. The server binds `127.0.0.1`, checks exact Host
 and Origin for browser writes, provides no CORS, and accepts no executable or
 arbitrary filesystem-path parameters. HTML exports escape all untrusted content
-and forbid scripts. Do not proxy/expose the server to another interface.
+and forbid scripts. The same-origin read-only endpoint
+`GET /api/input/:UUID/original` verifies retained byte pins and serves the fixed
+MIME with a generated safe inline filename for PDF/image evidence viewing; no
+filesystem path or Native token is exposed. Do not proxy/expose the server to
+another interface.
 
 Compare two completed runs of the **same original SHA/bytes**. It reports text
 SHA/version differences, and added/removed field values, normalized values and

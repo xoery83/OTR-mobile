@@ -28,7 +28,12 @@ const testFetch = (
   url: string,
   init: { method?: string; headers?: Record<string, string>; body?: string } = {},
 ) =>
-  new Promise<{ status: number; json: () => Promise<unknown> }>((resolve, reject) => {
+  new Promise<{
+    status: number;
+    headers: import("node:http").IncomingHttpHeaders;
+    bytes: () => Buffer;
+    json: () => Promise<unknown>;
+  }>((resolve, reject) => {
     const req = httpRequest(
       url.replace(ORIGIN, testOrigin),
       {
@@ -41,6 +46,8 @@ const testFetch = (
         res.on("end", () =>
           resolve({
             status: res.statusCode!,
+            headers: res.headers,
+            bytes: () => Buffer.concat(chunks),
             json: async () => JSON.parse(Buffer.concat(chunks).toString()),
           }),
         );
@@ -316,4 +323,26 @@ it("does not launch another input after unresolved transport failure", async () 
   );
   expect(queued).toBe(1);
   expect(result[0].stage).toBe("BATCH_STOPPED_UNRESOLVED");
+});
+
+it("serves only pinned originals by UUID with safe inline MIME and same-origin framing", async () => {
+  const input = store.add(Buffer.from("original bytes"), "text/plain", "../../evil.html");
+  const response = await testFetch(ORIGIN + "/api/input/" + input.id + "/original");
+  expect(response.status).toBe(200);
+  expect(response.bytes()).toEqual(store.bytes(input));
+  expect(response.headers["content-type"]).toBe("text/plain");
+  expect(response.headers["content-disposition"]).toBe(
+    `inline; filename="${input.id}.txt"`,
+  );
+  expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'self'");
+  expect(
+    (
+      await testFetch(ORIGIN + "/api/input/" + input.id + "/original", {
+        headers: { Origin: "http://evil.test" },
+      })
+    ).status,
+  ).toBe(400);
+  expect((await testFetch(ORIGIN + "/api/input/not-a-uuid/original")).status).not.toBe(
+    200,
+  );
 });

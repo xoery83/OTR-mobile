@@ -163,6 +163,30 @@ export function createWorkbench(store = new PrivateStore()) {
         });
         return;
       }
+      const originalMatch = /^\/api\/input\/([a-f0-9-]+)\/original$/.exec(url.pathname);
+      if (req.method === "GET" && originalMatch) {
+        const input = store.input(idSchema.parse(originalMatch[1]));
+        const bytes = store.bytes(input);
+        const extension = {
+          "application/pdf": "pdf",
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "text/plain": "txt",
+        }[input.mediaType];
+        res.setHeader("Content-Type", input.mediaType);
+        res.setHeader("Content-Length", bytes.length);
+        res.setHeader(
+          "Content-Disposition",
+          `inline; filename="${input.id}.${extension}"`,
+        );
+        res.setHeader(
+          "Content-Security-Policy",
+          "default-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+        );
+        res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+        res.end(bytes);
+        return;
+      }
       if (req.method === "POST" && url.pathname === "/api/input") {
         if (req.headers["content-type"] !== "application/octet-stream")
           throw new Error("BINARY_REQUIRED");
