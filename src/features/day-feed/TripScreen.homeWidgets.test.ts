@@ -28,6 +28,11 @@ const state = vi.hoisted(() => ({
   saveReading: vi.fn(),
   switchTrip: vi.fn(),
   params: vi.fn(),
+  push: vi.fn(),
+  navigate: vi.fn(),
+  back: vi.fn(),
+  replace: vi.fn(),
+  canGoBack: true,
   routeMode: "home" as "home" | "day",
   appActive: null as (() => void) | null,
   resume: null as any,
@@ -70,6 +75,7 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
+  usePathname: () => "/trip-home",
   useNavigation: () => ({ setOptions: state.setOptions }),
   useLocalSearchParams: () => ({
     tripId: state.view.tripId,
@@ -77,7 +83,14 @@ vi.mock("expo-router", () => ({
     zone: state.view.zone,
     view: state.routeMode,
   }),
-  router: { setParams: (...args: any[]) => state.params(...args), navigate: vi.fn() },
+  router: {
+    setParams: (...args: any[]) => state.params(...args),
+    navigate: (...args: any[]) => state.navigate(...args),
+    push: (...args: any[]) => state.push(...args),
+    back: () => state.back(),
+    replace: (...args: any[]) => state.replace(...args),
+    canGoBack: () => state.canGoBack,
+  },
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.liveGeneration,
@@ -205,12 +218,44 @@ beforeEach(() => {
   state.saveReading.mockReset();
   state.switchTrip.mockReset();
   state.params.mockReset();
+  state.push.mockReset();
+  state.navigate.mockReset();
+  state.back.mockReset();
+  state.replace.mockReset();
+  state.canGoBack = true;
   state.resume = null;
 });
 afterEach(() => vi.unstubAllGlobals());
 
 const page = (node: ReactNode) =>
   find(node, LocalTripWorkspace)?.widgetsForHome(reference, "Past")[0];
+it("pushes Home without replacing My Trips params and returns through the native stack", async () => {
+  state.view.tripId = "";
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  workspace.onOpen(reference);
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: { tripId: reference, view: "home" },
+  });
+  expect(state.params).not.toHaveBeenCalled();
+  workspace.onBackToTrips();
+  expect(state.back).toHaveBeenCalledOnce();
+  state.canGoBack = false;
+  workspace.onBackToTrips();
+  expect(state.replace).toHaveBeenCalledWith({
+    pathname: "/trip",
+    params: { view: "trips", tripId: "" },
+  });
+});
+it("marks the Today destination explicitly so the ordinary root stays My Trips", async () => {
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  workspace.onOpenToday(reference, { date: "2027-02-06", zone: "Asia/Tokyo" });
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/",
+    params: { view: "day", tripId: reference },
+  });
+  expect(state.saveReading).not.toHaveBeenCalled();
+});
 it("connects only a current owning Snapshot page and disables Review without a lawful saved zone", async () => {
   const p = page(await loaded());
   expect(p.id).toBe("journey-snapshot");

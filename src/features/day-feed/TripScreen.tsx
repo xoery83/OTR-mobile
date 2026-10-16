@@ -11,7 +11,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router, useLocalSearchParams, useNavigation } from "expo-router";
+import { router, useLocalSearchParams, useNavigation, usePathname } from "expo-router";
+import { openTripHome } from "@/components/openTripHome";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -67,6 +68,7 @@ export function TripScreen({ today = false }: { today?: boolean }) {
   );
 }
 function TripContent({ today = false }: { today?: boolean }) {
+  const pathname = usePathname();
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
@@ -171,9 +173,12 @@ function TripContent({ today = false }: { today?: boolean }) {
     useState<WorkspaceResolution | null>(null);
   const knownTrip = useCallback(
     (kind: WorkspaceKind) => {
+      if (generation !== getAccountGeneration()) return;
       setWorkspaceResolution({ tripId: requested, generation, kind });
+      if (requested && (kind === "LOCAL" || kind === "CACHED"))
+        switchTrip(requested, generation);
     },
-    [requested, generation],
+    [requested, generation, switchTrip],
   );
   const workspaceKind = resolvedWorkspaceKind(workspaceResolution, requested, generation);
   const localChecked = workspaceKind !== null;
@@ -234,14 +239,24 @@ function TripContent({ today = false }: { today?: boolean }) {
     };
   }, [load, generation]);
   const open = (id: string) => {
+    if (generation !== getAccountGeneration()) return;
     switchTrip(id.trim(), generation);
-    router.setParams({ tripId: id.trim(), date: "", zone: "", view: "home" });
+    if (params.view === "create") router.setParams({ view: "trips" });
+    router.push({
+      pathname: "/trip-home",
+      params: { tripId: id.trim(), view: "home" },
+    });
   };
   const backToTrips = useCallback(() => {
     if (generation !== getAccountGeneration()) return;
     select(null);
-    router.setParams({ tripId: "", date: "", zone: "", view: "" });
-  }, [select, generation]);
+    if (pathname === "/trip-home" && router.canGoBack()) router.back();
+    else
+      router.replace({
+        pathname: "/trip",
+        params: { view: "trips", tripId: "" },
+      });
+  }, [select, generation, pathname]);
   const createTrip = () => {
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "create" });
@@ -249,11 +264,14 @@ function TripContent({ today = false }: { today?: boolean }) {
   const openToday = (id: string, context: TodayEntry) => {
     if (generation !== getAccountGeneration()) return;
     enterHeader({ tripId: id, ...context, generation }, "EXPLICIT_TODAY_HEADER");
-    router.navigate(
-      homePerspective
-        ? { pathname: "/", params: { homeQaScenario: value(params.homeQaScenario) } }
-        : "/",
-    );
+    router.navigate({
+      pathname: "/",
+      params: {
+        view: "day",
+        tripId: id,
+        ...(homePerspective ? { homeQaScenario: value(params.homeQaScenario) } : {}),
+      },
+    });
   };
   const enterDay = () => {
     if (
@@ -519,19 +537,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           <UiButton
             label={t("dayFeed.tripHome")}
             variant="text"
-            onPress={() =>
-              today
-                ? router.navigate({
-                    pathname: "/trip",
-                    params: {
-                      tripId: selected.tripId,
-                      date: selected.date,
-                      zone: selected.zone,
-                      view: "home",
-                    },
-                  })
-                : router.setParams({ view: "home" })
-            }
+            onPress={() => openTripHome(selected.tripId, pathname, params.view)}
           />
         </View>
         <DayFeed

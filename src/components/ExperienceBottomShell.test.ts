@@ -566,3 +566,24 @@ it("a direct Trip link cannot reuse another Trip's navigation scope", () => {
   );
   expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain("shell.day");
 });
+
+it.each([0, 1])(
+  "Ledger uses the authorized current Trip rather than old working scope generation %s",
+  (generation) => {
+    state.workingTrip = { tripId: "old", generation };
+    state.params = { tripId: "current", view: "home" };
+    state.quickActions = { tripId: "current", generation: 1, chooseDay: vi.fn() };
+    const ledger = pressables(
+      ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+    ).find((button) => button.props.accessibilityLabel === "navigation.ledger")!;
+    ledger.props.onPress();
+    expect(state.navigate).toHaveBeenCalledWith({
+      pathname: "/expenses",
+      params: { journeyId: "current" },
+    });
+    state.navigate.mockClear();
+    state.generation = 2;
+    ledger.props.onPress();
+    expect(state.navigate).not.toHaveBeenCalled();
+  },
+);

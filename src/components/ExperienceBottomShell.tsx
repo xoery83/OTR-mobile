@@ -352,12 +352,17 @@ export function ExperienceBottomShell({
                 accessibilityRole="button"
                 accessibilityLabel={t("navigation.ledger")}
                 accessibilityState={{ selected: pathname.startsWith("/expenses") }}
-                onPress={() =>
+                onPress={() => {
+                  if (
+                    generation !== getAccountGeneration() ||
+                    renderedTarget !== currentTarget.current
+                  )
+                    return;
                   router.navigate({
                     pathname: "/expenses",
-                    params: { journeyId: workingTrip?.tripId ?? contextualTripId ?? "" },
-                  })
-                }
+                    params: { journeyId: shellTripId },
+                  });
+                }}
                 style={[
                   styles.destination,
                   largeText && styles.largeDestination,
