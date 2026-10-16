@@ -5,6 +5,8 @@ import {
   persistenceDigest,
 } from "./externalIntegrationPersistence";
 import type { FlightProviderResult } from "./deepSeekFlight";
+import { remoteFlightPinsSchema } from "../../src/domain/intelligence/interpretation";
+import type { createClosedPersistenceGateway } from "./externalIntegrationPersistence";
 import type { Attempt, ExecutionReport } from "../../src/domain/intelligence/persistence";
 const scheduleSchema = z.strictObject({
   id: z.uuid(),
@@ -49,6 +51,15 @@ export function flightUsageCommand(
     schedule.sha256 !== a.descriptor_snapshot.remote_run.remote.price_sha256
   )
     throw new Error("POLICY_BLOCKED");
+  return buildFlightUsageCommand(a, result, report, schedule, observation);
+}
+function buildFlightUsageCommand(
+  a: Attempt,
+  result: FlightProviderResult,
+  report: ExecutionReport,
+  schedule: z.infer<typeof scheduleSchema>,
+  observation: { id: string; request_id: string; at: string },
+) {
   const u = result.usage;
   const separateCache = schedule.units.some(
     (unit) =>
@@ -160,6 +171,105 @@ export function flightUsageCommand(
   };
   return { ...c, request_sha256: commandDigest(c) };
 }
+// Semantic callers supply exact retained execution pins; no Source/Admission authority is added.
+export function flightSemanticUsageCommand(
+  a: Attempt,
+  result: FlightProviderResult,
+  report: ExecutionReport,
+  rawSchedule: z.input<typeof scheduleSchema>,
+  rawPins: z.infer<typeof remoteFlightPinsSchema>,
+  observation: { id: string; request_id: string; at: string },
+) {
+  const p = remoteFlightPinsSchema.parse(rawPins),
+    schedule = scheduleSchema.parse(rawSchedule);
+  if (
+    a.descriptor_snapshot.version !== 1 ||
+    a.descriptor_snapshot.provider_class !== "COMMERCIAL_REMOTE" ||
+    !a.descriptor_snapshot.network_required ||
+    !a.descriptor_snapshot.capabilities.includes("INTERPRET") ||
+    a.shadow ||
+    a.provider_id !== "DeepSeek" ||
+    a.model_id !== "deepseek-flash" ||
+    a.usage_correlation_id !== p.call_id ||
+    a.attempt_id !== p.attempt_id ||
+    a.request_sha256 !== p.request_sha256 ||
+    a.provider_config_id !== p.provider_config_id ||
+    a.adapter_version !== p.adapter_version ||
+    schedule.id !== p.price_schedule_id ||
+    schedule.sha256 !== p.price_sha256 ||
+    report.account_id !== a.account_id ||
+    report.attempt_id !== a.attempt_id ||
+    report.task_id !== a.task_id ||
+    report.request_id !== a.request_id ||
+    report.request_sha256 !== a.request_sha256 ||
+    report.usage_correlation_id !== a.usage_correlation_id
+  )
+    throw new Error("POLICY_BLOCKED");
+  return buildFlightUsageCommand(a, result, report, schedule, observation);
+}
+export function createFlightSemanticUsageAppender(deps: {
+  gateway: ReturnType<typeof createClosedPersistenceGateway>;
+  authorize(a: Attempt): Promise<void>;
+  loadPrice(a: Attempt): Promise<{
+    pins: z.infer<typeof remoteFlightPinsSchema>;
+    schedule: z.input<typeof scheduleSchema>;
+  }>;
+  readCompletion(
+    a: Attempt,
+  ): Promise<ReturnType<typeof flightSemanticUsageCommand>["row"] | null>;
+  id(): string;
+  now(): string;
+}) {
+  return async (a: Attempt, result: FlightProviderResult, report: ExecutionReport) => {
+    await deps.authorize(a);
+    const { pins, schedule } = await deps.loadPrice(a);
+    const previous = await deps.readCompletion(a);
+    const observation = previous
+      ? {
+          id: previous.observation_id,
+          request_id: previous.observation_id,
+          at: previous.observed_at,
+        }
+      : { id: deps.id(), request_id: deps.id(), at: deps.now() };
+    let command = flightSemanticUsageCommand(
+      a,
+      result,
+      report,
+      schedule,
+      pins,
+      observation,
+    );
+    if (previous) {
+      if (
+        previous.call_id !== a.usage_correlation_id ||
+        previous.observation_key !== "cp15-completion" ||
+        previous.price_schedule_id !== schedule.id
+      )
+        throw new Error("POLICY_BLOCKED");
+      if (
+        previous.status === "UNKNOWN" &&
+        command.row.usage_quality === "ACTUAL_REPORTED"
+      )
+        throw new Error("USAGE_UNKNOWN_TO_ACTUAL_CONTRACT_REQUIRED");
+      // Recovered raw may not have a measured latency; retain the prior actual duration, never invent zero.
+      if (command.row.latency_ms === null) {
+        command = flightSemanticUsageCommand(
+          a,
+          { ...result, latency_ms: previous.latency_ms },
+          report,
+          schedule,
+          pins,
+          observation,
+        );
+      }
+      if (persistenceDigest(command.row) !== persistenceDigest(previous))
+        throw new Error("CP14_CHANGED_OBSERVATION");
+    }
+    await deps.authorize(a);
+    await deps.gateway.invoke("external_integration_usage_append", command);
+  };
+}
+
 // Operational facts deliberately omit raw fields, prompts, model prose and source IDs.
 export function flightOperationalFacts(
   descriptor: { model_version: string; configuration_sha256: string },

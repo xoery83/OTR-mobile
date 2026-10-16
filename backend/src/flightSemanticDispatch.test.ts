@@ -519,3 +519,93 @@ it("rechecks owning task cancellation after the real dispatch handoff", async ()
   ).toBe("UNKNOWN");
   expect(f.send).not.toHaveBeenCalled();
 });
+
+it("normal semantic appendMeter uses the real gateway builder and honestly leaves recovered UNKNOWN usage pending its contract gate", async () => {
+  const { createFlightSemanticUsageAppender } = await import("./flightUsage");
+  const f = await fixture();
+  let stored:
+    | ReturnType<(typeof import("./flightUsage"))["flightSemanticUsageCommand"]>["row"]
+    | null = null;
+  let inserts = 0;
+  const gateway = createClosedPersistenceGateway({
+    gatewayIdentity: "otr_external_integration_call_gateway",
+    now: () => "2026-10-07T00:00:00Z",
+    verify: async (r) =>
+      verifiedCallContextSchema.parse({
+        ...f.host,
+        request_id: r.requestId,
+        request_sha256: r.requestSha256,
+        command_kind: r.command,
+      }),
+    execute: async (kind, _context, command) => {
+      expect(kind).toBe("external_integration_usage_append");
+      if (stored && JSON.stringify(stored) !== JSON.stringify(command.row))
+        throw new Error("CP14_CHANGED_OBSERVATION");
+      if (!stored) {
+        stored = command.row as NonNullable<typeof stored>;
+        inserts++;
+      }
+      return stored;
+    },
+  });
+  const appendMeter = createFlightSemanticUsageAppender({
+    gateway,
+    authorize: async (a) => {
+      const { task } = await f.deps.repo.snapshot();
+      if (
+        task.cancellation_disposition !== "NONE" ||
+        task.publication_fence !== a.task_publication_fence
+      )
+        throw new Error("POLICY_BLOCKED");
+    },
+    loadPrice: async () => ({
+      pins: f.descriptor.remote,
+      schedule: {
+        id: f.descriptor.remote.price_schedule_id,
+        sha256: f.descriptor.remote.price_sha256,
+        currency: "USD",
+        units: [
+          {
+            measurement_unit: "input_tokens",
+            unit_quantity: 1000000,
+            price_per_quantity: "0.3",
+            relationship: "DISJOINT",
+            billable: true,
+          },
+          {
+            measurement_unit: "output_tokens",
+            unit_quantity: 1000000,
+            price_per_quantity: "1.2",
+            relationship: "DISJOINT",
+            billable: true,
+          },
+        ],
+      },
+    }),
+    readCompletion: async () => stored,
+    id: randomUUID,
+    now: () => "2026-10-07T00:00:00Z",
+  });
+  const retained = f.deps.stores.retainRaw;
+  f.deps.stores.retainRaw = async (...args) => {
+    await retained(...args);
+    f.signal.abort();
+  };
+  const executor = createFlightSemanticExecutor({ ...f.deps, appendMeter });
+  await executor.prepareUsage(f.context, f.a.attempt_id);
+  const unknown = await executor.execute(f.context, f.a.attempt_id);
+  expect(unknown.execution_observation).toBe("UNKNOWN");
+  expect(unknown.metering_disposition).toBe("COMPLETE");
+  const recovered = await executor.recover(f.context, f.a.attempt_id);
+  expect(recovered.report.execution_observation).toBe("TERMINAL");
+  expect(recovered.report.reported_usage_summary.total_tokens).toBe(120);
+  expect(recovered.report.metering_disposition).toBe("COMPLETION_PENDING");
+  expect(inserts).toBe(1);
+  expect(stored).toMatchObject({
+    status: "UNKNOWN",
+    usage_quality: "UNKNOWN",
+    cost_quality: "UNKNOWN",
+    cost_nanos: null,
+  });
+  expect(f.send).toHaveBeenCalledTimes(1);
+});

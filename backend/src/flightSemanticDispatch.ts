@@ -300,6 +300,7 @@ export function createFlightSemanticExecutor(deps: {
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
   }
   async function save(
+    context: AccountRequestContext,
     a: Attempt,
     result: FlightProviderResult,
     identity: FlightAssemblyJobIdentity,
@@ -406,7 +407,7 @@ export function createFlightSemanticExecutor(deps: {
       response_material_sha256: await deps.hash(bytes),
     };
     try {
-      await deps.appendMeter(a, result, persisted);
+      await deps.appendMeter(await currentAttempt(context, a), result, persisted);
       return {
         stored: {
           ...JSON.parse(bytes.toString()),
@@ -488,6 +489,7 @@ export function createFlightSemanticExecutor(deps: {
       flightModelWitness,
     );
     const saved = await save(
+      context,
       a,
       result,
       l.material.identity,
@@ -643,6 +645,7 @@ export function createFlightSemanticExecutor(deps: {
       });
       return (
         await save(
+          context,
           a,
           result,
           l.material.identity,
