@@ -845,3 +845,24 @@ it("Today saved-zone fallback accepts only same Trip/current generation and neve
       .zone,
   ).toBeNull();
 });
+
+it("opens an explicitly planned local Day without inventing a timezone-bearing context", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.view.zone = "";
+  state.view.date = "2026-10-16";
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  const today = workspace.widgetsForHome(reference, "Active", "2026-10-01")[0].content
+    .props;
+  expect(today.zone).toBeNull();
+  expect(today.planningDate).toBe("2026-10-16");
+  await today.onOpenLocalToday({
+    ...localRead(),
+    today: { date: "2026-10-16", zone: null },
+  });
+  expect(state.navigate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      params: expect.objectContaining({ date: "2026-10-16", zone: "", view: "day" }),
+    }),
+  );
+});

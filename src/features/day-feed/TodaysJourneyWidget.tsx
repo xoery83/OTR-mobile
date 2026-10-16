@@ -188,6 +188,7 @@ export function TodaysJourneyWidget({
       }
     }
   };
+  const needsDayChooser = !!visible && !localRead(visible) && zone === null;
   return (
     <View style={styles.widget}>
       <Text accessibilityRole="header" style={styles.heading}>
@@ -269,11 +270,25 @@ export function TodaysJourneyWidget({
       )}
       <View style={styles.actions}>
         <UiButton
-          label={zone === null ? t("tripHome.preparation.day") : copy.openToday}
-          onPress={() => void open()}
-          disabled={!visible || (localRead(visible) && !onOpenLocalToday)}
+          label={
+            needsDayChooser
+              ? (copy.chooseDay ?? t("tripHome.preparation.day"))
+              : zone === null
+                ? t("tripHome.preparation.day")
+                : copy.openToday
+          }
+          onPress={() => {
+            if (needsDayChooser) void onOpenDayChooser?.();
+            else void open();
+          }}
+          disabled={
+            !visible ||
+            (needsDayChooser
+              ? !onOpenDayChooser
+              : localRead(visible) && !onOpenLocalToday)
+          }
         />
-        {(!visible || zone === null) && onOpenDayChooser ? (
+        {(!visible || (zone === null && !needsDayChooser)) && onOpenDayChooser ? (
           <UiButton
             label={copy.chooseDay ?? t("tripHome.preparation.day")}
             variant="secondary"

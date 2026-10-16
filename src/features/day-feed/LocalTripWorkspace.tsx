@@ -20,7 +20,6 @@ import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadMo
 import { createUuid } from "@/domain/localId";
 import {
   readLocalTripRepository,
-  type TripRepository,
 } from "@/data/repositories/tripRepository";
 import {
   readLocalTripDiscoveryRepository,
@@ -31,7 +30,7 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiFormRow, UiTextInput } from "@/ui/forms";
+import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
@@ -46,7 +45,6 @@ import { TripBasicEditor } from "./TripBasicEditor";
 import { LocalTripPhotos } from "./LocalTripPhotos";
 import { tripCoverSource } from "./tripCovers";
 
-type Pending = Awaited<ReturnType<TripRepository["pendingItems"]>>;
 const displayDate = (value: string) =>
   formatUiDate(new Date(`${value}T12:00:00Z`), {
     year: "numeric",
@@ -67,6 +65,7 @@ type Props = {
   widgetsForHome?: (
     tripId: string,
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
+    planningDate?: string | null,
   ) => readonly TripHomeWidget[];
   onOpenHomeItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
   tripId: string | null;
@@ -116,7 +115,6 @@ function LocalTripContent({
     [remoteTrips, setRemoteTrips] = useState<TripListSummary[]>([]),
     [selected, setSelected] = useState<Trip | null>(null),
     [remoteSelected, setRemoteSelected] = useState<TripListSummary | null>(null),
-    [pending, setPending] = useState<Pending>([]),
     [eligibleToday, setEligibleToday] = useState<Record<string, TodayEntry>>({});
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [name, setName] = useState(""),
@@ -164,7 +162,6 @@ function LocalTripContent({
       const local = tripId ? await repo.getTrip(tripId) : null;
       const list = tripId ? [] : await repo.listTrips();
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
-      const intents = local ? await repo.pendingItems(local.id) : [];
       const discovery = await readLocalTripDiscoveryRepository()
         .then((reader) => reader.readMerged())
         .catch(() => null);
@@ -193,7 +190,6 @@ function LocalTripContent({
       setEligibleToday({});
       setSelected(local);
       setRemoteSelected(cached);
-      setPending(intents);
       setStatus("READY");
       onKnownTrip(local ? "LOCAL" : cached ? "CACHED" : "NONE");
       if (!tripId && list.length) {
@@ -243,7 +239,6 @@ function LocalTripContent({
       setRemoteTrips([]);
       setSelected(null);
       setRemoteSelected(null);
-      setPending([]);
       setEligibleToday({});
       setStatus("UNAVAILABLE");
       onKnownTrip("NONE");
@@ -473,7 +468,9 @@ function LocalTripContent({
   const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
   const pages = [
     ...(preparation ? [preparation] : []),
-    ...(metadata && lifecycle ? (widgetsForHome?.(metadata.id, lifecycle) ?? []) : []),
+    ...(metadata && lifecycle
+      ? (widgetsForHome?.(metadata.id, lifecycle, metadata.startDate) ?? [])
+      : []),
     ...(finance ? [finance] : []),
   ];
   if (mode === "PAST")
@@ -532,14 +529,10 @@ function LocalTripContent({
             modules={
               <View style={styles.root}>
                 <LocalTripPhotos
+                  compact
                   tripId={selected.id}
                   registerAdd={registerPhotos}
                   onSaved={photosSaved}
-                />
-                <UiFormRow
-                  label={t("tripHome.coverTools")}
-                  value=""
-                  onPress={() => setCoverOpen(true)}
                 />
               </View>
             }
@@ -601,34 +594,6 @@ function LocalTripContent({
               </ScrollView>
             </SafeAreaProvider>
           </Modal>
-          {pending.length ? (
-            <UiSection title={t("tripCreate.pendingItems")}>
-              {pending.map((p) => {
-                return (
-                  <View key={p.command.operationId}>
-                    <Text style={styles.body}>{p.payload.core.title}</Text>
-                    {p.payload.schedule.start.local_date ? (
-                      <Text style={styles.body}>
-                        {displayDate(p.payload.schedule.start.local_date)}
-                      </Text>
-                    ) : null}
-                    {p.payload.schedule.end?.local_date ? (
-                      <Text style={styles.body}>
-                        {displayDate(p.payload.schedule.end.local_date)}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.status}>
-                      {t(
-                        ["FAILED", "CONFLICT", "DENIED"].includes(p.state)
-                          ? "tripCreate.itemNeedsAttention"
-                          : "tripCreate.itemPending",
-                      )}
-                    </Text>
-                  </View>
-                );
-              })}
-            </UiSection>
-          ) : null}
           <Modal
             visible={itemFormOpen}
             onRequestClose={closeItemForm}

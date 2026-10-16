@@ -14,6 +14,7 @@ vi.mock("./useTripPreparationWidget", () => ({ useTripPreparationWidget: () => n
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
     state.nodes.push({ frameWidgets: p.widgets ?? [] });
+    if (p.onEdit) state.nodes.push({ label: "tripHome.edit", onPress: p.onEdit });
     if (p.onBack) state.nodes.push({ label: "dayFeed.myTrips", onPress: p.onBack });
     return createElement(
       "div",
@@ -476,7 +477,7 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
     render();
     expect(state.nodes.find((node) => node.frameWidgets)?.frameWidgets).toEqual([]);
   }
-  expect(props.widgetsForHome).toHaveBeenLastCalledWith("undated", "Undated");
+  expect(props.widgetsForHome).toHaveBeenLastCalledWith("undated", "Undated", null);
 });
 
 vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
@@ -525,7 +526,7 @@ it("normal Home keeps cover editing behind its action and preserves the owning s
   const html = render();
   expect(html).not.toContain("tripCreate.pendingItems");
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
-  button("tripHome.coverTools").onPress();
+  button("tripHome.edit").onPress();
   render();
   const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
   await picker.onSelect("coast");

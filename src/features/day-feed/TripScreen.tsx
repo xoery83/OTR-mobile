@@ -506,6 +506,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const widgetsForHome = (
     id: string,
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
+    tripStartDate?: string | null,
   ) => {
     if (id !== requested) return [];
     if (lifecycle === "Active")
@@ -525,17 +526,37 @@ function TripContent({ today = false }: { today?: boolean }) {
                   ? boundaryZone(visibleTrip.observed.projection)
                   : null)
               }
+              planningDate={
+                homePerspective?.date ??
+                (view?.tripId === requested && view.generation === generation
+                  ? view.date
+                  : null) ??
+                (resumeView?.tripId === requested && resumeView.generation === generation
+                  ? resumeView.date
+                  : null) ??
+                tripStartDate
+              }
               now={homePerspective?.now}
               refreshKey={revision}
               onOpenDayChooser={canChooseDay ? chooseDay : undefined}
               onOpenLocalToday={async (read) => {
                 const result = await freshLocalRead(read);
-                viewContext(read.today.date, read.today.zone);
+                if (read.today.zone) viewContext(read.today.date, read.today.zone);
                 setTrip(result);
-                openToday(requested, { date: read.today.date, zone: read.today.zone });
+                openToday(requested, {
+                  date: read.today.date,
+                  zone: read.today.zone ?? "",
+                });
               }}
               onOpenLocalItem={(value) => openLocalItem(value.item.itemId, value)}
               copy={{
+                planningTitle: t("tripHome.today.planningTitle"),
+                planningDate: t("tripHome.today.planningDate"),
+                planningStay: t("tripHome.today.planningStay"),
+                planningEmpty: t("tripHome.today.planningEmpty"),
+                planningLater: t("tripHome.today.planningLater"),
+                timezoneUnknown: t("tripHome.today.timezoneUnknown"),
+                chooseDay: t("tripHome.today.chooseDay"),
                 title: t("tripHome.today.title"),
                 openToday: t("tripHome.today.open"),
                 upcoming: t("tripHome.today.upcoming"),
@@ -549,7 +570,10 @@ function TripContent({ today = false }: { today?: boolean }) {
               }}
               onOpenToday={async (read) => {
                 await freshHomeRead(read.scope, read.source.epoch);
-                openToday(requested, { date: read.today.date, zone: read.today.zone });
+                openToday(requested, {
+                  date: read.today.date,
+                  zone: read.today.zone ?? "",
+                });
               }}
               onOpenItem={openHomeItem}
             />

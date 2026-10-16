@@ -9,6 +9,7 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
+import { UiFormRow } from "@/ui/forms";
 import { UiButton, UiSection } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -20,10 +21,12 @@ export function LocalTripPhotos({
   tripId,
   registerAdd,
   onSaved,
+  compact = false,
 }: {
   tripId: string;
   registerAdd?: (add: (() => void) | null) => void;
   onSaved?: () => void;
+  compact?: boolean;
 }) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
@@ -35,6 +38,7 @@ export function LocalTripPhotos({
       tripId={tripId}
       registerAdd={registerAdd}
       onSaved={onSaved}
+      compact={compact}
     />
   );
 }
@@ -43,10 +47,12 @@ function LocalTripPhotoContent({
   tripId,
   registerAdd,
   onSaved,
+  compact = false,
 }: {
   tripId: string;
   registerAdd?: (add: (() => void) | null) => void;
   onSaved?: () => void;
+  compact?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -57,6 +63,7 @@ function LocalTripPhotoContent({
   const [photos, setPhotos] = useState<TripPhoto[]>([]);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [adding, setAdding] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [addError, setAddError] = useState(false);
   const [broken, setBroken] = useState<Set<string>>(new Set());
   const current = useCallback(
@@ -135,43 +142,56 @@ function LocalTripPhotoContent({
     return () => registerAdd?.(null);
   }, [registerAdd, status, add]);
   return (
-    <UiSection title={t("tripPhotos.title")}>
-      <UiButton
-        label={t("tripPhotos.choose")}
-        disabled={adding || status !== "READY"}
-        onPress={() => void add()}
-      />
-      {addError ? (
-        <Text accessibilityRole="alert" style={styles.status}>
-          {t("tripPhotos.addFailed")}
-        </Text>
+    <>
+      {compact ? (
+        <UiFormRow
+          label={t("tripPhotos.title")}
+          value={status === "READY" ? String(photos.length) : ""}
+          onPress={() => setExpanded((v) => !v)}
+        />
       ) : null}
-      {status !== "READY" ? (
-        <Text style={styles.status}>
-          {t(status === "LOADING" ? "dayFeed.loading" : "tripPhotos.unavailable")}
-        </Text>
-      ) : photos.length === 0 ? (
-        <Text style={styles.status}>{t("tripPhotos.empty")}</Text>
-      ) : (
-        photos.map((photo, index) => (
-          <View key={photo.assetId}>
-            {photo.localUri && !broken.has(photo.assetId) ? (
-              <Image
-                source={{ uri: photo.localUri }}
-                style={styles.photo}
-                resizeMode="contain"
-                accessibilityLabel={t("tripPhotos.photoNumber", { number: index + 1 })}
-                onError={() =>
-                  setBroken((previous) => new Set(previous).add(photo.assetId))
-                }
-              />
-            ) : (
-              <Text style={styles.status}>{t("tripPhotos.missing")}</Text>
-            )}
-          </View>
-        ))
-      )}
-    </UiSection>
+      {!compact || expanded || addError ? (
+        <UiSection title={t("tripPhotos.title")}>
+          <UiButton
+            label={t("tripPhotos.choose")}
+            disabled={adding || status !== "READY"}
+            onPress={() => void add()}
+          />
+          {addError ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {t("tripPhotos.addFailed")}
+            </Text>
+          ) : null}
+          {status !== "READY" ? (
+            <Text style={styles.status}>
+              {t(status === "LOADING" ? "dayFeed.loading" : "tripPhotos.unavailable")}
+            </Text>
+          ) : photos.length === 0 ? (
+            <Text style={styles.status}>{t("tripPhotos.empty")}</Text>
+          ) : (
+            photos.map((photo, index) => (
+              <View key={photo.assetId}>
+                {photo.localUri && !broken.has(photo.assetId) ? (
+                  <Image
+                    source={{ uri: photo.localUri }}
+                    style={styles.photo}
+                    resizeMode="contain"
+                    accessibilityLabel={t("tripPhotos.photoNumber", {
+                      number: index + 1,
+                    })}
+                    onError={() =>
+                      setBroken((previous) => new Set(previous).add(photo.assetId))
+                    }
+                  />
+                ) : (
+                  <Text style={styles.status}>{t("tripPhotos.missing")}</Text>
+                )}
+              </View>
+            ))
+          )}
+        </UiSection>
+      ) : null}
+    </>
   );
 }
 
