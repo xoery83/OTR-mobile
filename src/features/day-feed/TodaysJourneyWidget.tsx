@@ -1,0 +1,243 @@
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AppState, Pressable, StyleSheet, View } from "react-native";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import {
+  readTripTodaysJourney,
+  type createTripTodaysJourneyReader,
+} from "@/data/repositories/tripTodaysJourneyRepository";
+import { UiButton, UiText as Text } from "@/ui/controls";
+import { formatUiDate } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { visual } from "@/ui/visual";
+import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
+
+type Reader = ReturnType<typeof createTripTodaysJourneyReader>;
+export type TodaysJourneyRead = NonNullable<Awaited<ReturnType<Reader["read"]>>>;
+type Item = NonNullable<Awaited<ReturnType<Reader["resolveItem"]>>>;
+export type TodaysJourneyCopy = {
+  title: string;
+  openToday: string;
+  upcoming: string;
+  plans: string;
+  free: string;
+  later: string;
+  tonight: string;
+  multipleStays: string;
+  loading: string;
+  unavailable: string;
+};
+export type TodaysJourneyWidgetProps = {
+  tripId: string;
+  zone: string | null;
+  // Only the owning, identity-guarded DEV Reference perspective supplies this.
+  now?: string;
+  copy: TodaysJourneyCopy;
+  onOpenToday: (read: TodaysJourneyRead) => Promise<void> | void;
+  onOpenItem: (item: Item) => Promise<void> | void;
+};
+const formatDay = (date: string) =>
+  formatUiDate(new Date(`${date}T12:00:00Z`), {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+const formatTime = (instant: string, zone: string) =>
+  formatUiDate(new Date(instant), {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: zone,
+  });
+export function TodaysJourneyWidget({
+  tripId,
+  zone,
+  now,
+  copy,
+  onOpenToday,
+  onOpenItem,
+}: TodaysJourneyWidgetProps) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+  );
+  const readKey = `${tripId}/${zone}/${now ?? ""}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [read, setRead] = useState<TodaysJourneyRead | null>(null);
+  const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
+  const request = useRef(0);
+  const clock = useCallback(
+    () => ({ now: now ?? new Date().toISOString(), zone }),
+    [now, zone],
+  );
+  const load = useCallback(async () => {
+    const ticket = ++request.current;
+    try {
+      const value = await (await readTripTodaysJourney()).read(tripId, clock());
+      if (ticket !== request.current || generation !== getAccountGeneration()) return;
+      setLoadedKey(readKey);
+      setRead(value);
+      setStatus(value ? "READY" : "UNAVAILABLE");
+    } catch {
+      if (ticket === request.current && generation === getAccountGeneration()) {
+        setRead(null);
+        setStatus("UNAVAILABLE");
+      }
+    }
+  }, [tripId, clock, generation, readKey]);
+  const cancelPending = useCallback(() => {
+    request.current++;
+  }, []);
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void load();
+    });
+    const interval = setInterval(() => {
+      void load();
+    }, 60000);
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") void load();
+    });
+    return () => {
+      active = false;
+      cancelPending();
+      clearInterval(interval);
+      sub.remove();
+    };
+  }, [load, cancelPending]);
+  const visible =
+    loadedKey === readKey &&
+    read?.scope.tripId === tripId &&
+    read.scope.generation === generation &&
+    read.today.zone === zone
+      ? read
+      : null;
+  const open = async (itemId?: string) => {
+    if (!visible || generation !== getAccountGeneration()) return;
+    const ticket = request.current;
+    try {
+      const reader = await readTripTodaysJourney();
+      if (itemId) {
+        const item = await reader.resolveItem(tripId, itemId, visible, clock());
+        if (!item) throw new Error("TODAY_ITEM_UNAVAILABLE");
+        if (ticket === request.current && generation === getAccountGeneration())
+          await onOpenItem(item);
+      } else {
+        const current = await reader.read(tripId, clock());
+        if (
+          !current ||
+          current.scope.accountId !== visible.scope.accountId ||
+          JSON.stringify(current.source) !== JSON.stringify(visible.source)
+        )
+          throw new Error("TODAY_HEADER_UNAVAILABLE");
+        if (ticket === request.current && generation === getAccountGeneration())
+          await onOpenToday(current);
+      }
+    } catch {
+      if (ticket === request.current && generation === getAccountGeneration()) {
+        setRead(null);
+        setStatus("UNAVAILABLE");
+      }
+    }
+  };
+  return (
+    <View style={styles.widget}>
+      <Text accessibilityRole="header" style={styles.heading}>
+        {copy.title}
+      </Text>
+      {visible ? (
+        <>
+          <Text style={styles.meta}>{formatDay(visible.today.date)}</Text>
+          <Text style={styles.label}>
+            {visible.today.primaryKind === "UPCOMING"
+              ? copy.upcoming
+              : visible.today.primaryKind === "PLANS"
+                ? copy.plans
+                : copy.free}
+          </Text>
+          {visible.today.primary ? (
+            <TodayRow
+              item={visible.today.primary}
+              zone={visible.today.zone}
+              onOpen={open}
+            />
+          ) : null}
+          {visible.today.later.length ? (
+            <>
+              <Text style={styles.label}>{copy.later}</Text>
+              {visible.today.later.map((item) => (
+                <TodayRow
+                  key={item.itemRef}
+                  item={item}
+                  zone={visible.today.zone}
+                  onOpen={open}
+                />
+              ))}
+            </>
+          ) : null}
+          {visible.today.tonight ? (
+            <>
+              <Text style={styles.label}>{copy.tonight}</Text>
+              {
+                <TodayRow
+                  item={visible.today.tonight}
+                  zone={visible.today.zone}
+                  onOpen={open}
+                />
+              }
+            </>
+          ) : null}
+          {visible.today.multipleStays ? (
+            <Text style={styles.meta}>{copy.multipleStays}</Text>
+          ) : null}
+        </>
+      ) : (
+        <Text style={styles.meta}>
+          {status === "LOADING" ? copy.loading : copy.unavailable}
+        </Text>
+      )}
+      <UiButton label={copy.openToday} onPress={() => void open()} disabled={!visible} />
+    </View>
+  );
+}
+function TodayRow({
+  item,
+  zone,
+  onOpen,
+}: {
+  item: CoreDayRow;
+  zone: string;
+  onOpen: (id: string) => Promise<void>;
+}) {
+  const styles = useThemedStyles(createStyles);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      style={styles.row}
+      onPress={() => void onOpen(item.itemRef)}
+    >
+      <Text style={styles.item}>{item.title}</Text>
+      {item.displayTime?.instant && item.displayTime.comparable ? (
+        <Text style={styles.meta}>{formatTime(item.displayTime.instant, zone)}</Text>
+      ) : null}
+    </Pressable>
+  );
+}
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    widget: { flex: 1, gap: visual.space.heading },
+    heading: { ...visual.type.section, color: colors.textPrimary },
+    label: { ...visual.type.action, color: colors.textSecondary },
+    item: { ...visual.type.row, color: colors.textPrimary, flexShrink: 1 },
+    meta: { ...visual.type.meta, color: colors.textSecondary },
+    row: { minHeight: 44, justifyContent: "center", gap: 4 },
+  });
