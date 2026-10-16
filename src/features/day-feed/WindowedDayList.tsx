@@ -4,6 +4,7 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
   type ReactNode,
   type ComponentProps,
   type Ref,
@@ -80,6 +81,7 @@ export function WindowedDayList<T>({
   const list = useRef<FlatList<DayWindowRow<T>>>(null);
   const live = useRef({
     rows,
+    scopeKey,
     topInset,
     onAnchorChange,
     onVisibleDates,
@@ -91,6 +93,7 @@ export function WindowedDayList<T>({
   useLayoutEffect(() => {
     live.current = {
       rows,
+      scopeKey,
       topInset,
       onAnchorChange,
       onVisibleDates,
@@ -100,55 +103,86 @@ export function WindowedDayList<T>({
       onViewportChange,
     };
   });
+  const [windowStart, setWindowStart] = useState({ scopeKey, index: 0, revision: 0 });
   const mounted = useRef(0);
   const visibleDates = useRef<string[]>([]);
   const layouts = useRef(new Map<string, { y: number; height: number }>());
   const offset = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
-  const pending = useRef<{ anchor: DayScrollAnchor; attempts: number } | null>(null);
+  const pending = useRef<{
+    anchor: DayScrollAnchor;
+    attempts: number;
+    remounted: boolean;
+    aligned: boolean;
+  } | null>(null);
+  const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visibleKeys = useRef(new Set<string>());
+  const finish = useCallback((result?: "REACHED" | "UNMEASURED") => {
+    const request = pending.current;
+    pending.current = null;
+    if (deadline.current !== null) clearTimeout(deadline.current);
+    deadline.current = null;
+    if (request && result) {
+      if (result === "REACHED") saved.current = request.anchor;
+      live.current.onJumpResult?.(result, request.anchor.date);
+    }
+  }, []);
   const scheduled = useRef<number | null>(null);
   const resolveRequest = useCallback(() => {
     const request = pending.current;
     if (!request) return null;
     const target = resolveDayAnchor(live.current.rows, request.anchor);
     if (!target) {
-      pending.current = null;
-      live.current.onJumpResult?.("UNMEASURED", request.anchor.date);
+      finish("UNMEASURED");
       return null;
     }
     const row = live.current.rows[target.index];
     request.anchor = { key: row.key, date: row.date, within: target.within };
     return { request, target };
-  }, []);
+  }, [finish]);
   const attempt = useCallback(() => {
     const resolved = resolveRequest();
     if (!resolved) return;
     const { request, target } = resolved;
+    if (request.aligned) return;
     if (request.attempts >= 3) {
-      pending.current = null;
-      live.current.onJumpResult?.("UNMEASURED", request.anchor.date);
+      finish("UNMEASURED");
       return;
     }
     request.attempts++;
+    request.aligned = true;
     list.current?.scrollToIndex({
       index: target.index,
       animated: false,
       viewOffset: live.current.topInset - target.within,
     });
-  }, [resolveRequest]);
+    if (request.aligned && visibleKeys.current.has(request.anchor.key)) finish("REACHED");
+  }, [resolveRequest, finish]);
   const restore = useCallback(
-    (anchor: DayScrollAnchor) => {
+    (anchor: DayScrollAnchor, defer = false) => {
       if (!resolveDayAnchor(live.current.rows, anchor)) return false;
-      pending.current = { anchor, attempts: 0 };
-      attempt();
+      finish();
+      const request = { anchor, attempts: 0, remounted: false, aligned: false };
+      pending.current = request;
+      deadline.current = setTimeout(() => {
+        if (pending.current === request) finish("UNMEASURED");
+      }, 5000);
+      if (defer) {
+        scheduled.current = requestAnimationFrame(() => {
+          scheduled.current = null;
+          attempt();
+        });
+      } else attempt();
       return true;
     },
-    [attempt],
+    [attempt, finish],
   );
   const index = indexDayRows(rows);
   const rowSignature = JSON.stringify(rows.map(({ key, date }) => [key, date]));
   const retry = useCallback(() => {
-    if (!pending.current || scheduled.current !== null) return;
+    const request = pending.current;
+    if (!request || request.aligned || scheduled.current !== null) return;
+    if (request.remounted && !layouts.current.has(request.anchor.key)) return;
     scheduled.current = requestAnimationFrame(() => {
       scheduled.current = null;
       attempt();
@@ -201,7 +235,7 @@ export function WindowedDayList<T>({
     return () => {
       if (scheduled.current !== null) cancelAnimationFrame(scheduled.current);
       scheduled.current = null;
-      pending.current = null;
+      finish();
     };
     // The scope is account/Trip identity; sync and timezone revisions must not reset reading.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,11 +244,10 @@ export function WindowedDayList<T>({
     // Old absolute cell offsets cannot describe an inserted/reordered or resized stream.
     layouts.current.clear();
     if (saved.current && !pending.current) {
-      pending.current = { anchor: saved.current, attempts: 0 };
-      retry();
+      restore(saved.current, true);
     }
     // Array/callback identity changes caused by reading updates are not layout changes.
-  }, [rowSignature, layoutRevision, retry]);
+  }, [rowSignature, layoutRevision, restore]);
   const viewability = useCallback<
     NonNullable<FlatListProps<DayWindowRow<T>>["onViewableItemsChanged"]>
   >(
@@ -222,6 +255,7 @@ export function WindowedDayList<T>({
       const visible = viewableItems
         .filter((token) => token.isViewable && token.index !== null)
         .sort((a, b) => a.index! - b.index!);
+      visibleKeys.current = new Set(visible.map(({ item }) => item.key));
       visibleDates.current = [...new Set(visible.map(({ item }) => item.date))];
       live.current.onVisibleDates?.(visibleDates.current);
       if (visibleDates.current.length)
@@ -231,17 +265,20 @@ export function WindowedDayList<T>({
           scrollOffset: offset.current,
         });
       const request = resolveRequest()?.request;
-      if (request && visible.some(({ item }) => item.key === request.anchor.key)) {
-        pending.current = null;
-        saved.current = request.anchor;
-        live.current.onJumpResult?.("REACHED", request.anchor.date);
-      } else retry();
+      if (request?.aligned && visibleKeys.current.has(request.anchor.key))
+        finish("REACHED");
+      else retry();
     },
-    [retry, resolveRequest],
+    [retry, resolveRequest, finish],
   );
   return (
     <FlatList
-      key={scopeKey}
+      key={`${scopeKey}:${windowStart.scopeKey === scopeKey ? windowStart.revision : 0}`}
+      initialScrollIndex={
+        windowStart.scopeKey === scopeKey
+          ? Math.min(windowStart.index, Math.max(0, rows.length - 1))
+          : 0
+      }
       ref={list}
       data={rows}
       keyExtractor={(row) => row.key}
@@ -256,7 +293,7 @@ export function WindowedDayList<T>({
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
       onScrollBeginDrag={() => {
-        pending.current = null;
+        finish();
         onInteraction?.();
       }}
       onScroll={(event) => {
@@ -281,11 +318,21 @@ export function WindowedDayList<T>({
       }}
       onViewableItemsChanged={viewability}
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
-      onScrollToIndexFailed={({ index, averageItemLength }) => {
-        list.current?.scrollToOffset({
-          offset: Math.max(0, index * averageItemLength - live.current.topInset),
-          animated: false,
-        });
+      onScrollToIndexFailed={({ index }) => {
+        const request = pending.current;
+        if (!request) return;
+        request.aligned = false;
+        if (!request.remounted) {
+          // RN constrains an unmeasured tail: mount the target window once, not every earlier day.
+          request.remounted = true;
+          layouts.current.clear();
+          visibleKeys.current.clear();
+          setWindowStart((previous) => ({
+            scopeKey: live.current.scopeKey,
+            index,
+            revision: previous.revision + 1,
+          }));
+        }
         retry();
       }}
       onContentSizeChange={retry}
