@@ -262,7 +262,19 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
       "COMPLETED",
     );
     const next = await f.repo.captureContext(trip);
+    // A valid receipt completes delivery before the accepted collection arrives.
+    expect((await f.repo.pending(next))[0].state).toBe("APPLIED");
+    const waitingForCollection = await f.repo.manualReadSnapshot(next, actor);
+    expect(waitingForCollection.predictedIds.has(item)).toBe(true);
+    expect(waitingForCollection.graph.itinerary_events).toHaveLength(1);
+    expect(waitingForCollection.operations[0].receiptSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(await f.repo.day(next, actor, "2026-12-14")).toHaveLength(1);
+    expect((await f.repo.day(next, actor, "2026-12-14"))[0].localState).toBe("PENDING");
     await f.repo.refresh(next, { collection: async () => collection(true, server) });
+    const reconciled = await f.repo.manualReadSnapshot(next, actor, true);
+    expect(reconciled.operations).toEqual([]);
+    expect(reconciled.predictedIds.size).toBe(0);
+    expect(await f.repo.day(next, actor, "2026-12-14")).toHaveLength(1);
     expect((await f.repo.item(next, actor, item))?.localState).toBe("ACCEPTED");
     expect((await f.repo.day(next, actor, "2026-12-14"))[0].localState).toBe("ACCEPTED");
   });

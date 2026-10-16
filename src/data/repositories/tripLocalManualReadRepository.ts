@@ -117,7 +117,16 @@ export function createTripLocalManualReader(
               return null;
             }
             return selectTodaysJourneyRows(
-              projectCoreDay(graph, actor!, date, snapshot.cert?.applied_generation ?? 0),
+              projectCoreDay(
+                graph,
+                actor!,
+                date,
+                snapshot.cert?.applied_generation ?? 0,
+              ).map((row) =>
+                predictedIds.has(row.itemRef)
+                  ? { ...row, certificateGeneration: 0 }
+                  : row,
+              ),
               clock.now,
               date,
               clock.zone,

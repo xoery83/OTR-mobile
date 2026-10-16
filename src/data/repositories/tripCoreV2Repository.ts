@@ -827,19 +827,29 @@ export function createTripCoreV2Repository(
       payload_json: string | null;
       entity_id: string | null;
       idempotency_key: string | null;
+      queue_status: string | null;
+      receipt_body: string | null;
+      receipt_sha256: string | null;
     }>(
       `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,i.state,
-       op.id AS queue_id,op.payload_json,op.entity_id,op.idempotency_key
+       op.id AS queue_id,op.payload_json,op.entity_id,op.idempotency_key,op.status AS queue_status,
+       r.body_json AS receipt_body,r.receipt_sha256
        FROM trip_core_pending_intents i LEFT JOIN sync_operations op
        ON op.id=i.queue_operation_id AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
        AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND'
-       AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')
+       LEFT JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id
+       AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
        WHERE i.account_id=? AND i.trip_id=? AND i.reconciled_revision IS NULL
-       AND i.state IN ('BLOCKED','PENDING','IN_FLIGHT') ORDER BY i.created_at,i.operation_id`,
+       AND i.state IN ('BLOCKED','PENDING','IN_FLIGHT','APPLIED') ORDER BY i.created_at,i.operation_id`,
       ctx.accountId,
       ctx.tripId,
     );
-    const operations: { operationId: string; sha256: string; state: string }[] = [];
+    const operations: {
+      operationId: string;
+      sha256: string;
+      state: string;
+      receiptSha256?: string;
+    }[] = [];
     for (const row of rows) {
       const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
       if (command.admission.mode !== "MANUAL") continue;
@@ -854,10 +864,35 @@ export function createTripCoreV2Repository(
           row.intent_sha256
       )
         throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+      const activeQueue = [
+        "PENDING",
+        "DEPENDENCY_BLOCKED",
+        "PROCESSING",
+        "RETRYABLE",
+      ].includes(row.queue_status ?? "");
+      if (!activeQueue && !(row.state === "APPLIED" && row.queue_status === "COMPLETED"))
+        throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+      let receiptSha256: string | undefined;
+      if (row.state === "APPLIED") {
+        if (!row.receipt_body) throw new Error("LOCAL_MANUAL_RECEIPT_PIN");
+        const receipt = await validateCoreReceipt(JSON.parse(row.receipt_body), hash);
+        if (
+          receipt.actorAccountId !== ctx.accountId ||
+          receipt.tripId !== ctx.tripId ||
+          receipt.operationId !== row.operation_id ||
+          receipt.intentSha256 !== row.intent_sha256 ||
+          receipt.receiptSha256 !== row.receipt_sha256 ||
+          receipt.command !== command.command ||
+          !["APPLIED", "NO_CHANGE"].includes(receipt.outcome)
+        )
+          throw new Error("LOCAL_MANUAL_RECEIPT_PIN");
+        receiptSha256 = receipt.receiptSha256;
+      }
       operations.push({
         operationId: row.operation_id,
         sha256: row.intent_sha256,
         state: row.state,
+        ...(receiptSha256 ? { receiptSha256 } : {}),
       });
     }
     const projected = await projection(

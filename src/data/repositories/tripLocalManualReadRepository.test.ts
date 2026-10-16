@@ -8,6 +8,12 @@ import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repos
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
 import { createTripTodaysJourneyReader } from "./tripTodaysJourneyRepository";
 import { createTripRepository } from "./tripRepository";
+import {
+  applyCoreCommand,
+  emptyCoreGraph,
+  type CoreActor,
+} from "@/domain/trip/tripCoreV2Mutation";
+import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
@@ -86,6 +92,8 @@ async function fixture() {
   );
   return {
     today,
+    core,
+    account,
     sql,
     tripId,
     itemId,
@@ -206,4 +214,71 @@ it("normal Day/Today consumer resolves local Item without accepted admission and
     startDate: "2026-10-16",
   });
   expect(await f.today.resolveLocalItem(f.tripId, f.itemId, read)).toBeNull();
+});
+
+it("mixed certified hotel and newly committed activity retain distinct Today pending provenance", async () => {
+  const f = await fixture();
+  const ctx = await f.core.captureContext(f.tripId);
+  const personId = f.sql
+    .prepare("SELECT person_id FROM local_trip_ledger_bindings WHERE trip_id=?")
+    .get(f.tripId)!.person_id as string;
+  const actor: CoreActor = {
+    accountId: f.account,
+    tripId: f.tripId,
+    active: true,
+    canManageShared: true,
+    personId,
+    personIds: [personId],
+  };
+  const command = (await f.core.pending(ctx))[0].command;
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    command,
+    actor,
+    "2026-10-16T00:00:00Z",
+  ).graph;
+  const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
+  const bundle = await buildCoreActorCollection(
+    graph,
+    actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-16T00:00:00Z",
+    },
+    [
+      {
+        person_id: personId,
+        account_id: f.account,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+    ],
+    hash,
+  );
+  await f.core.install(await f.core.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  const activityId = randomUUID();
+  await f.trips.addItem(f.tripId, {
+    operationId: randomUUID(),
+    itemId: activityId,
+    family: "P1",
+    title: "New local walk",
+    startDate: "2026-10-16",
+  });
+  const today = (await f.read(f.tripId))!.today({
+    now: "2026-10-16T01:00:00Z",
+    zone: "Pacific/Auckland",
+  })!;
+  expect(today.primary).toMatchObject({ itemRef: activityId, certificateGeneration: 0 });
+  expect(today.tonight?.itemRef).toBe(f.itemId);
+  expect(today.tonight!.certificateGeneration).toBeGreaterThan(0);
+});
+it("APPLIED without a verified owning receipt cannot become read authority", async () => {
+  const f = await fixture();
+  f.sql.exec(
+    "UPDATE trip_core_pending_intents SET state='APPLIED'; UPDATE sync_operations SET status='COMPLETED' WHERE operation_type='CORE_V2_COMMAND'",
+  );
+  await expect(f.read(f.tripId)).rejects.toThrow("LOCAL_MANUAL_RECEIPT_PIN");
 });
