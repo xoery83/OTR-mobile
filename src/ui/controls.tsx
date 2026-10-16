@@ -20,11 +20,13 @@ export function UiButton({
   onPress,
   variant = "primary",
   disabled = false,
+  size = "regular",
 }: {
   label: string;
   onPress: () => void;
   variant?: "primary" | "secondary" | "text" | "destructive";
   disabled?: boolean;
+  size?: "regular" | "large";
 }) {
   const styles = useThemedStyles(createStyles);
   return (
@@ -34,7 +36,12 @@ export function UiButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, styles[variant], disabled && styles.disabled]}
+      style={[
+        styles.button,
+        size === "large" && styles.largeButton,
+        styles[variant],
+        disabled && styles.disabled,
+      ]}
     >
       <Text
         style={[
@@ -71,6 +78,7 @@ const createStyles = (colors: UiColors) =>
       paddingVertical: 12,
       borderRadius: visual.radius.control,
     },
+    largeButton: { minHeight: 88 },
     primary: { backgroundColor: colors.accent },
     secondary: { backgroundColor: colors.selected },
     text: {},

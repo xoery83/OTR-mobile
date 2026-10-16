@@ -6,6 +6,7 @@ import {
   type ImageSourcePropType,
   type ImageStyle,
   type StyleProp,
+  type ViewProps,
 } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -15,16 +16,18 @@ export function TripCoverVisual({
   source,
   style,
   children,
+  onLayout,
 }: {
   source: ImageSourcePropType;
   style: StyleProp<ImageStyle>;
   children?: ReactNode;
+  onLayout?: ViewProps["onLayout"];
 }) {
   const [failedSource, setFailedSource] = useState<ImageSourcePropType | null>(null);
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
   return (
-    <View style={[style, styles.cover]}>
+    <View onLayout={onLayout} style={[style, styles.cover]}>
       {failedSource === source ? (
         <View style={[StyleSheet.absoluteFill, styles.fallback]} accessible={false}>
           <AppIcon name="suitcase" color={colors.accent} size={32} />

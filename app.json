@@ -15,6 +15,7 @@
       "bundleIdentifier": "com.xoery.otrmobile",
       "appleTeamId": "U9D5C58Z94",
       "infoPlist": {
+        "UIViewControllerBasedStatusBarAppearance": true,
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Take a photo of a receipt to attach to a trip expense.",
         "NSPhotoLibraryUsageDescription": "Choose a receipt to attach to a trip expense.",

@@ -217,11 +217,8 @@ export function JourneySnapshotWidget({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     widget: {
-      backgroundColor: c.surface,
-      borderRadius: visual.radius.hero,
-      padding: visual.space.page,
+      flex: 1,
       gap: visual.space.section,
-      minHeight: visual.space.section * 16,
     },
     heading: { ...visual.type.section, color: c.textPrimary },
     stats: {
@@ -244,7 +241,7 @@ const createStyles = (c: UiColors) =>
     },
     tag: {
       minHeight: 44,
-      maxWidth: "100%",
+      maxWidth: "48%",
       flexDirection: "row",
       alignItems: "center",
       gap: visual.space.heading,
@@ -254,8 +251,8 @@ const createStyles = (c: UiColors) =>
       backgroundColor: c.elevatedSurface,
     },
     offset: { marginTop: visual.space.card },
-    tagText: { ...visual.type.row, color: c.textPrimary, flexShrink: 1 },
-    featured: { ...visual.type.section },
+    tagText: { ...visual.type.meta, color: c.textPrimary, flexShrink: 1 },
+    featured: { fontWeight: "600" },
     empty: {
       ...visual.type.row,
       color: c.textSecondary,

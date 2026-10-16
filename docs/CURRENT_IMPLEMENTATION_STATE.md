@@ -1,3 +1,19 @@
+# Trip Home V1.1 visual candidate — Owner accepted / 2026-10-16
+
+- Owner confirmed current isolated preview and authorized Coordinator integration.
+  Candidate branch codex/trip-home-v11-visual, baseline4b96259. Coordinator owns
+  canonical merge; no push authorized/performed by Experience.
+- Full-bleed Hero, independent native Edit/Search, adaptive status bar and named
+  compact Widget tags; existing readers, authority and callbacks retained.
+  -60 targeted tests pass; types/UI guard/scoped lint and independent review pass.
+  Native Preparation item/Immersive return, scoped Search return, toolbar and
+  scroll contrast verified. Stable embedded Release installation tracked separately.
+- Today/Past DEV perspectives not Native-verified: apparent Account versus Core
+  generation guard mismatch reported to owning Coordinator; no guard bypass.
+- Existing full Trip editor, unavailable modules and lawful saved Settlement
+  evidence remain gaps. Detailed bounded report in beta/visual-acceptance/
+  OTR_TRIP_HOME_V11_VISUAL_2026-10-16.md. No business-data mutation.
+
 # Trip Home V1.1 functional integration candidate — 2026-10-16
 
 - Owner approved four Widget business contracts and V1.1 visual delivery. Preparation

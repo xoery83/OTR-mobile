@@ -56,6 +56,11 @@ Root/bottom navigation is separate: active icons/labels use accent, inactive
 icons/labels use textSecondary. The diagnostics acceptance fixture requires both
 Dev transport and persisted Debug Mode, even when reached directly.
 
+`UiChoiceChip`'s compact presentation supports quiet named workspace tabs: a
+small neutral label surface within an unchanged 44pt touch target. `UiButton`
+offers `size="large"` for equal, prominent empty-workspace choices (88pt minimum);
+the default action size, semantic variants and disabled behavior stay unchanged.
+
 ## Localization and formatting
 
 `src/ui/catalogs.ts` contains populated `en` and `zh-Hans` dictionaries with

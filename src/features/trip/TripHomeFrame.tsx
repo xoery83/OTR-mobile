@@ -6,7 +6,7 @@ import {
   useWindowDimensions,
   type ImageSourcePropType,
 } from "react-native";
-import { UiButton, UiText } from "@/ui/controls";
+import { UiText } from "@/ui/controls";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
@@ -21,29 +21,31 @@ export function TripHomeFrame({
   cover,
   widgets = [],
   modules,
-  onEdit,
   notice,
-  onBack,
+  onHeroHeight,
 }: {
   title: string;
   metadata: readonly string[];
   cover: ImageSourcePropType;
   widgets?: readonly TripHomeWidget[];
   modules?: ReactNode;
-  onEdit?: () => void;
   notice?: string;
-  onBack?: () => void;
+  onHeroHeight?: (height: number) => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const { width, height, fontScale } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const detailsBelow = fontScale > 1 || width > height;
   return (
     <View style={styles.frame}>
       <TripCoverVisual
+        onLayout={
+          onHeroHeight
+            ? (event) => onHeroHeight(event.nativeEvent.layout.height)
+            : undefined
+        }
         source={cover}
-        style={[styles.hero, { width, height: Math.min(232, height * 0.4) }]}
+        style={[styles.hero, { width, minHeight: height * 0.32 }]}
       >
         <View
           style={[
@@ -51,43 +53,23 @@ export function TripHomeFrame({
             {
               paddingLeft: Math.max(visual.space.page, insets.left),
               paddingRight: Math.max(visual.space.page, insets.right),
+              paddingTop: insets.top + 60,
             },
           ]}
         >
-          <UiText
-            accessibilityRole="header"
-            style={styles.title}
-            numberOfLines={detailsBelow ? 1 : 2}
-          >
-            {title}
-          </UiText>
-          {!detailsBelow
-            ? metadata.map((line, index) => (
-                <UiText key={index} style={styles.meta} numberOfLines={1}>
-                  {line}
-                </UiText>
-              ))
-            : null}
-        </View>
-      </TripCoverVisual>
-      {detailsBelow ? (
-        <View style={styles.details}>
-          <UiText accessibilityRole="header" style={styles.heading}>
+          <UiText accessibilityRole="header" style={styles.title}>
             {title}
           </UiText>
           {metadata.map((line, index) => (
-            <UiText key={index} style={styles.notice}>
+            <UiText
+              key={index}
+              style={index === metadata.length - 1 ? styles.date : styles.meta}
+            >
               {line}
             </UiText>
           ))}
         </View>
-      ) : null}
-      {onBack ? (
-        <UiButton variant="text" label={t("dayFeed.myTrips")} onPress={onBack} />
-      ) : null}
-      {onEdit ? (
-        <UiButton variant="secondary" label={t("tripHome.edit")} onPress={onEdit} />
-      ) : null}
+      </TripCoverVisual>
       {notice ? <UiText style={styles.notice}>{notice}</UiText> : null}
       <View style={styles.workspace}>
         <TripHomeWidgetHost widgets={widgets} />
@@ -106,16 +88,26 @@ export function TripHomeFrame({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     frame: { gap: visual.space.section },
-    hero: { alignSelf: "center", borderRadius: visual.radius.hero },
+    hero: { alignSelf: "center", borderRadius: 0 },
     copy: {
       paddingHorizontal: visual.space.page,
       paddingVertical: visual.space.card,
-      gap: visual.space.heading,
+      gap: visual.space.heading / 2,
     },
-    title: { ...visual.type.section, color: colors.mediaText },
-    meta: { ...visual.type.meta, color: colors.mediaText },
-    details: { gap: visual.space.heading },
-    notice: { ...visual.type.meta, color: colors.textSecondary },
-    workspace: { gap: visual.space.card },
+    title: {
+      ...visual.type.tripHeroTitle,
+      color: colors.mediaText,
+      textShadowColor: colors.mediaBackground,
+      textShadowRadius: 4,
+      textShadowOffset: { width: 0, height: 1 },
+    },
+    meta: { ...visual.type.meta, color: colors.mediaText, opacity: 0.85 },
+    date: { ...visual.type.tripDate, color: colors.mediaText },
+    notice: {
+      ...visual.type.meta,
+      color: colors.textSecondary,
+      paddingHorizontal: visual.space.page,
+    },
+    workspace: { gap: visual.space.card, paddingHorizontal: visual.space.page },
     heading: { ...visual.type.section, color: colors.textPrimary },
   });

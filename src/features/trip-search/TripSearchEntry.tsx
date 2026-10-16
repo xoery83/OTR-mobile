@@ -15,10 +15,12 @@ export function TripSearchEntry({
   entry,
   tripId,
   nativeToolbar = false,
+  showUnavailableTripEdit = false,
 }: {
   entry: "MY_TRIPS" | "HOME" | "DAY";
   tripId?: string;
   nativeToolbar?: boolean;
+  showUnavailableTripEdit?: boolean;
 }) {
   useUiLocale();
   const colors = useUiTheme();
@@ -47,9 +49,19 @@ export function TripSearchEntry({
   if (nativeToolbar)
     return (
       <Stack.Toolbar placement="right">
+        {showUnavailableTripEdit ? (
+          <Stack.Toolbar.Button
+            icon="pencil"
+            separateBackground
+            disabled
+            accessibilityLabel={t("tripHome.editUnavailable")}
+          />
+        ) : null}
+        {showUnavailableTripEdit ? <Stack.Toolbar.Spacer width={8} /> : null}
         <Stack.Toolbar.Button
           tintColor={colors.accent}
           icon="magnifyingglass"
+          separateBackground={showUnavailableTripEdit}
           accessibilityLabel={t("comprehensiveSearch.title")}
           onPress={open}
         />

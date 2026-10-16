@@ -37,6 +37,7 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
       >
         {widgets.map((widget) => (
           <UiChoiceChip
+            compact
             key={widget.id}
             label={widget.title}
             selected={widget.id === currentId}
@@ -86,7 +87,7 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     host: { gap: visual.space.card },
-    tags: { gap: visual.space.heading },
+    tags: { gap: visual.space.heading, alignItems: "center" },
     page: {
       padding: visual.space.page,
       backgroundColor: colors.surface,

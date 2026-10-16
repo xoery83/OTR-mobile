@@ -102,6 +102,7 @@ it("keeps named tag selection synchronized with manual swipe and stable qualifie
   state.nodes.find((p) => p.label === "Approved B").onPress();
   render(pages);
   expect(state.nodes.find((p) => p.label === "Approved B").selected).toBe(true);
+  expect(state.nodes.find((p) => p.label === "Approved B").compact).toBe(true);
   expect(state.scrollTo).toHaveBeenLastCalledWith({ x: 380, animated: false });
   state.nodes
     .find((p) => p.onMomentumScrollEnd)
@@ -129,24 +130,7 @@ it("renders truthful hero metadata and only actual supplied module/edit capabili
   expect(html).not.toContain("tripHome.tools");
 });
 
-it("exposes only explicitly supplied working module and edit callbacks", () => {
-  const edit = vi.fn();
-  const html = renderToStaticMarkup(
-    createElement(TripHomeFrame, {
-      title: "Known Trip",
-      metadata: [],
-      cover: { uri: "offline" },
-      onEdit: edit,
-      modules: createElement("span", null, "Actual local Photos"),
-    }),
-  );
-  expect(html).toContain("Actual local Photos");
-  expect(html).toContain("tripHome.tools");
-  state.nodes.find((p) => p.label === "tripHome.edit").onPress();
-  expect(edit).toHaveBeenCalledExactlyOnceWith();
-});
-
-it("keeps the photo full window width and within forty percent under enlargement and rotation, with complete copy below", () => {
+it("keeps one full-bleed identity with untruncated metadata under enlargement and rotation", () => {
   for (const window of [
     { width: 402, height: 874, fontScale: 1 },
     { width: 402, height: 874, fontScale: 2.143 },
@@ -157,23 +141,23 @@ it("keeps the photo full window width and within forty percent under enlargement
     state.cursor = 0;
     state.values = [];
     state.nodes = [];
-    const back = vi.fn();
     const html = renderToStaticMarkup(
       createElement(TripHomeFrame, {
         title: "Long authorized Trip identity",
         metadata: ["Known full destination", "Known date range"],
         cover: { uri: "offline" },
-        onBack: back,
+        modules: createElement("span", null, "Actual local Photos"),
       }),
     );
     const hero = state.nodes.find((p) => p.isHero);
     const geometry = hero.style[1];
     expect(geometry.width).toBe(window.width);
-    expect(geometry.height).toBeLessThanOrEqual(window.height * 0.4);
-    expect(html.indexOf("data-hero")).toBeLessThan(html.indexOf("dayFeed.myTrips"));
+    expect(geometry.minHeight).toBeCloseTo(window.height * 0.32);
+    expect(geometry.height).toBeUndefined();
+    expect(html.match(/Long authorized Trip identity/g)).toHaveLength(1);
     expect(html).toContain("Known full destination");
     expect(html).toContain("Known date range");
-    state.nodes.find((p) => p.label === "dayFeed.myTrips").onPress();
-    expect(back).toHaveBeenCalledOnce();
+    expect(html).toContain("Actual local Photos");
+    expect(html).not.toContain("tripHome.edit");
   }
 });

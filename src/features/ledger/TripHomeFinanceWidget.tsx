@@ -237,39 +237,52 @@ export function TripHomeFinanceWidget({
           </UiText>
         </View>
       ) : null}
-      <UiButton label={t("ledger.spending")} variant="secondary" onPress={openSpending} />
-      {lifecycle === "Past" ? (
+      <View style={styles.actions}>
         <UiButton
-          label={t("ledger.settlement")}
+          label={t("tripHome.finance.openSpending")}
+          variant="secondary"
+          onPress={openSpending}
+        />
+        {lifecycle === "Past" ? (
+          <UiButton
+            label={t("ledger.settlement")}
+            variant="text"
+            onPress={() =>
+              open({
+                pathname: "/expenses/settlement",
+                params: { journeyId: journey.journeyId, journeyTitle: journey.title },
+              })
+            }
+          />
+        ) : null}
+        <UiButton
+          label={t("ledger.seeAnalysis")}
           variant="text"
           onPress={() =>
             open({
-              pathname: "/expenses/settlement",
-              params: { journeyId: journey.journeyId, journeyTitle: journey.title },
+              pathname: "/expenses/analysis",
+              params: {
+                journeyId: journey.journeyId,
+                memberId: data.memberId,
+                scope: "MINE",
+              },
             })
           }
         />
-      ) : null}
-      <UiButton
-        label={t("ledger.seeAnalysis")}
-        variant="text"
-        onPress={() =>
-          open({
-            pathname: "/expenses/analysis",
-            params: {
-              journeyId: journey.journeyId,
-              memberId: data.memberId,
-              scope: "MINE",
-            },
-          })
-        }
-      />
+      </View>
     </View>
   );
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    content: { gap: visual.space.card },
+    content: { flex: 1, gap: visual.space.card },
+    actions: {
+      marginTop: "auto",
+      paddingTop: visual.space.card,
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: visual.space.heading,
+    },
     section: { gap: visual.space.heading },
     metrics: { gap: visual.space.card, flexDirection: "row", flexWrap: "wrap" },
     metric: { gap: visual.space.heading, minWidth: 0, flexBasis: "45%", flexGrow: 1 },

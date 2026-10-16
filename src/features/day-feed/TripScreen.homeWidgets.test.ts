@@ -91,7 +91,11 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (value: Date) => value.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({
+  useThemedStyles: () => ({}),
+  useUiTheme: () => ({ transparent: "transparent", surface: "surface" }),
+}));
+vi.mock("./TodaysJourneyWidget", () => ({ TodaysJourneyWidget: "TodaysJourney" }));
 vi.mock("@/ui/controls", () => ({ UiButton: "Button", UiText: "ThemedText" }));
 vi.mock("@/ui/forms", () => ({ UiTextInput: "Input", UiChoiceChip: "Choice" }));
 vi.mock("./LocalTripWorkspace", () => ({ LocalTripWorkspace: "Workspace" }));
@@ -206,7 +210,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 const page = (node: ReactNode) =>
-  find(node, LocalTripWorkspace)?.widgetsForHome(reference)[0];
+  find(node, LocalTripWorkspace)?.widgetsForHome(reference, "Past")[0];
 it("connects only a current owning Snapshot page and disables Review without a lawful saved zone", async () => {
   const p = page(await loaded());
   expect(p.id).toBe("journey-snapshot");
@@ -494,7 +498,10 @@ it("normal Home hides internal accepted IDs and defers date inputs to the Day ac
   expect(state.select).not.toHaveBeenCalled();
 });
 
-vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
+vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaProvider: "div",
+  useSafeAreaInsets: () => ({ top: 59, bottom: 34, left: 0, right: 0 }),
+}));
 
 function choices(node: ReactNode): any[] {
   if (!isValidElement(node)) return [];
@@ -550,7 +557,10 @@ it("switches the My Trips native title only after the body heading leaves, rever
   const node = await loaded();
   const scroll = find(node, "ScrollView");
   const heading = find(node, "Text");
-  expect(scroll.contentContainerStyle[1].paddingBottom).toBe(106);
+  expect(
+    scroll.contentContainerStyle.find((style: any) => style?.paddingBottom)
+      ?.paddingBottom,
+  ).toBe(106);
   expect(scroll.scrollIndicatorInsets.bottom).toBe(90);
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
     "myTrips.appTitle",
@@ -574,4 +584,29 @@ it("switches the My Trips native title only after the body heading leaves, rever
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
     "myTrips.appTitle",
   );
+});
+
+it("keeps status information readable after the measured Hero scrolls away and on return", async () => {
+  const node = await loaded();
+  find(node, LocalTripWorkspace).onHomeHeroHeight(300);
+  const scroll = find(node, "ScrollView");
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 242 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
+  find(node, LocalTripWorkspace).onHomeHeroHeight(500);
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  find(node, LocalTripWorkspace).onHomeHeroHeight(300);
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  expect(state.select).not.toHaveBeenCalled();
+  expect(state.saveReading).not.toHaveBeenCalled();
 });

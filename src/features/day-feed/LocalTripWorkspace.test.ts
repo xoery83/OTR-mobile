@@ -9,6 +9,7 @@ import {
   getAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
+vi.mock("./useTripPreparationWidget", () => ({ useTripPreparationWidget: () => null }));
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
@@ -203,7 +204,9 @@ const props = {
   onOpenToday: vi.fn(),
   onKnownTrip: vi.fn(),
   onBackToTrips: vi.fn(),
-  widgetsForHome: vi.fn((): readonly TripHomeWidget[] => []),
+  widgetsForHome: vi.fn(
+    (_id: string, _lifecycle: string): readonly TripHomeWidget[] => [],
+  ),
 };
 function render() {
   const element = LocalTripWorkspace(props);
@@ -305,14 +308,14 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(props.onOpen).toHaveBeenCalledOnce();
 });
 
-it("remounts when leaving a trip, rejects its late item save, and exposes My Trips", async () => {
+it("remounts when the owning navigation leaves a trip and rejects its late item save", async () => {
   const repo = repository([trip("local-a", "Local pending trip")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
   render();
   await flush();
   expect(render()).toContain("Local pending trip");
-  button("dayFeed.myTrips").onPress();
+  props.onBackToTrips();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
   state.forceEffects = true;
   render();
@@ -457,9 +460,11 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
       trip("undated", "Undated"),
     ]),
   );
-  props.widgetsForHome.mockReturnValue([
-    { id: "journey-snapshot", title: "Snapshot", content: null },
-  ]);
+  props.widgetsForHome.mockImplementation((_id: string, lifecycle: string) =>
+    lifecycle === "Past"
+      ? [{ id: "journey-snapshot", title: "Snapshot", content: null }]
+      : [],
+  );
   for (const id of ["future", "undated"]) {
     props.tripId = id;
     render();
@@ -467,7 +472,7 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
     render();
     expect(state.nodes.find((node) => node.frameWidgets)?.frameWidgets).toEqual([]);
   }
-  expect(props.widgetsForHome).not.toHaveBeenCalled();
+  expect(props.widgetsForHome).toHaveBeenLastCalledWith("undated", "Undated");
 });
 
 vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));

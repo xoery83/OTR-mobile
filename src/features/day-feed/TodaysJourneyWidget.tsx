@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
+import { AppIcon } from "@/components/AppIcon";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -11,7 +12,7 @@ import {
 import { UiButton, UiText as Text } from "@/ui/controls";
 import { formatUiDate } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
@@ -156,7 +157,7 @@ export function TodaysJourneyWidget({
       {visible ? (
         <>
           <Text style={styles.meta}>{formatDay(visible.today.date)}</Text>
-          <Text style={styles.label}>
+          <Text style={visible.today.primary ? styles.label : styles.freeDay}>
             {visible.today.primaryKind === "UPCOMING"
               ? copy.upcoming
               : visible.today.primaryKind === "PLANS"
@@ -204,7 +205,13 @@ export function TodaysJourneyWidget({
           {status === "LOADING" ? copy.loading : copy.unavailable}
         </Text>
       )}
-      <UiButton label={copy.openToday} onPress={() => void open()} disabled={!visible} />
+      <View style={styles.actions}>
+        <UiButton
+          label={copy.openToday}
+          onPress={() => void open()}
+          disabled={!visible}
+        />
+      </View>
     </View>
   );
 }
@@ -218,6 +225,7 @@ function TodayRow({
   onOpen: (id: string) => Promise<void>;
 }) {
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -225,19 +233,40 @@ function TodayRow({
       style={styles.row}
       onPress={() => void onOpen(item.itemRef)}
     >
-      <Text style={styles.item}>{item.title}</Text>
-      {item.displayTime?.instant && item.displayTime.comparable ? (
-        <Text style={styles.meta}>{formatTime(item.displayTime.instant, zone)}</Text>
-      ) : null}
+      <View style={styles.rowCopy}>
+        <Text style={styles.item} numberOfLines={2}>
+          {item.title}
+        </Text>
+        {item.displayTime?.instant && item.displayTime.comparable ? (
+          <Text style={styles.meta}>{formatTime(item.displayTime.instant, zone)}</Text>
+        ) : null}
+      </View>
+      <AppIcon name="chevron.right" size={16} color={colors.textSecondary} />
     </Pressable>
   );
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    widget: { flex: 1, gap: visual.space.heading },
+    widget: { flex: 1, gap: visual.space.card },
     heading: { ...visual.type.section, color: colors.textPrimary },
     label: { ...visual.type.action, color: colors.textSecondary },
     item: { ...visual.type.row, color: colors.textPrimary, flexShrink: 1 },
     meta: { ...visual.type.meta, color: colors.textSecondary },
-    row: { minHeight: 44, justifyContent: "center", gap: 4 },
+    freeDay: {
+      ...visual.type.row,
+      color: colors.textPrimary,
+      textAlign: "center",
+      paddingVertical: visual.space.section * 2,
+    },
+    actions: { marginTop: "auto", paddingTop: visual.space.card },
+    rowCopy: { flex: 1, gap: 4 },
+    row: {
+      minHeight: 52,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.card,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+      paddingVertical: visual.space.heading,
+    },
   });
