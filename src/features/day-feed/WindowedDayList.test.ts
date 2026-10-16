@@ -127,9 +127,9 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-function setup() {
+function setup(topInset = 0, days = 90) {
   let date = "2026-10-01";
-  const rows = Array.from({ length: 90 }, () => {
+  const rows = Array.from({ length: days }, () => {
     const own = date;
     date = nextCalendarDate(date);
     return { key: `header:${own}`, date: own, value: "HEADER" };
@@ -152,6 +152,7 @@ function setup() {
         renderRow: render,
         listRef: ref,
         scopeKey: "account/trip",
+        topInset,
         onMountedRowsChange: count,
         onJumpResult: result,
       }),
@@ -160,6 +161,28 @@ function setup() {
   };
   rerender();
   return { rows, ref, render, count, result, rerender };
+}
+function flushFrames(count = 4) {
+  for (let frame = 0; frame < count; frame++)
+    for (const callback of state.frames.splice(0)) callback();
+}
+function nativeVisible(row: { key: string; date: string; value: string }, index: number) {
+  renderToStaticMarkup(
+    createElement(state.props.CellRendererComponent, {
+      item: row,
+      index,
+      cellKey: row.key,
+    }),
+  );
+  state.cellLayouts.at(-1)!({ nativeEvent: { layout: { y: 1000, height: 100 } } });
+  flushFrames(1);
+  const offset = state.scrollToOffset.mock.lastCall?.[0].offset ?? 1000;
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: offset } } });
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: row, index, isViewable: true }],
+    changed: [],
+  });
+  flushFrames();
 }
 it("hands 90 day descriptors to one FlatList, rendering only its initial native window", () => {
   const { rows, ref, render, count } = setup();
@@ -192,10 +215,7 @@ it("marks a target reached only after native viewability reports that row", () =
   const { rows, ref, result } = setup();
   ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 22 });
   expect(result).not.toHaveBeenCalled();
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-    changed: [],
-  });
+  nativeVisible(rows[50], 50);
   expect(result).toHaveBeenLastCalledWith("REACHED", rows[50].date);
   expect(ref.current!.saveAnchor()).toEqual({
     key: rows[50].key,
@@ -212,10 +232,7 @@ it("normalizes a deleted-item restore to its actual same-day header", () => {
     animated: false,
     viewOffset: 0,
   });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-    changed: [],
-  });
+  nativeVisible(rows[50], 50);
   expect(result).toHaveBeenLastCalledWith("REACHED", rows[50].date);
   expect(ref.current!.saveAnchor()).toEqual({
     key: rows[50].key,
@@ -229,10 +246,7 @@ it("normalizes an in-flight restore after a sync snapshot removes its Item", () 
   rerender([...rows.slice(0, 51), target, ...rows.slice(51)]);
   ref.current!.restoreAnchor({ key: target.key, date: target.date, within: 22 });
   rerender([...rows]);
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-    changed: [],
-  });
+  nativeVisible(rows[50], 50);
   expect(result).toHaveBeenLastCalledWith("REACHED", rows[50].date);
   expect(ref.current!.saveAnchor()).toEqual({
     key: rows[50].key,
@@ -259,10 +273,7 @@ it("does not redirect to another date if a pending target date disappears", () =
 it("does not restore on fresh row arrays or callbacks caused by ordinary reading updates", () => {
   const { rows, ref, rerender } = setup();
   ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-    changed: [],
-  });
+  nativeVisible(rows[50], 50);
   state.scrollToIndex.mockClear();
   rerender(rows.map((row) => ({ ...row })));
   rerender([...rows]);
@@ -274,10 +285,7 @@ it.each(["insert", "delete", "reorder"])(
   (change) => {
     const { rows, ref, rerender } = setup();
     ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
-    state.props.onViewableItemsChanged({
-      viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-      changed: [],
-    });
+    nativeVisible(rows[50], 50);
     state.scrollToIndex.mockClear();
     const changed =
       change === "insert"
@@ -298,18 +306,12 @@ it.each(["insert", "delete", "reorder"])(
 it("restores after an explicit Focus-height revision but not its repeated rerender", () => {
   const { rows, ref, rerender } = setup();
   ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-    changed: [],
-  });
+  nativeVisible(rows[50], 50);
   state.scrollToIndex.mockClear();
   rerender([...rows], "source-1/focus-item-2");
   state.frames.shift()?.();
   expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[50], index: 50, isViewable: true }],
-    changed: [],
-  });
+  nativeVisible(rows[50], 50);
   state.scrollToIndex.mockClear();
   rerender([...rows], "source-1/focus-item-2");
   for (const frame of state.frames.splice(0)) frame();
@@ -371,17 +373,15 @@ it("waits for an asynchronously mounted target window despite unrelated layout s
   // Native finally measures the actual target; only now can exact alignment run.
   state.cellLayouts[0]({ nativeEvent: { layout: { y: 760, height: 90 } } });
   for (const next of state.frames.splice(0)) next();
-  expect(state.scrollToIndex).toHaveBeenLastCalledWith({
-    index: 74,
-    animated: false,
-    viewOffset: 0,
-  });
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(2);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 760, animated: false });
+  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
   expect(result).not.toHaveBeenCalled();
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 760 } } });
   state.props.onViewableItemsChanged({
     viewableItems: [{ item: rows[74], index: 74, isViewable: true }],
     changed: [],
   });
+  flushFrames();
   expect(result).toHaveBeenLastCalledWith("REACHED", rows[74].date);
   await vi.advanceTimersByTimeAsync(5000);
   expect(result).toHaveBeenCalledTimes(1);
@@ -422,4 +422,72 @@ it("bounds temporary DEV diagnostics and records geometry without row values", (
   } finally {
     log.mockRestore();
   }
+});
+
+it("replays Native y211→8301.667 reflow and never reports the stale offset80 as reached", () => {
+  const { rows, ref, result, rerender } = setup(131, 110);
+  ref.current!.jumpToDayHeader(rows[99].date);
+  state.props.onScrollToIndexFailed({
+    index: 99,
+    highestMeasuredFrameIndex: 35,
+    averageItemLength: 92,
+  });
+  rerender(rows);
+  state.props.onScrollToIndexFailed({
+    index: 99,
+    highestMeasuredFrameIndex: 0,
+    averageItemLength: 0,
+  });
+  state.props.onContentSizeChange(390, 838);
+  state.cellLayouts[0]({ nativeEvent: { layout: { y: 211, height: 64 } } });
+  flushFrames(1);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 80, animated: false });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 80 } } });
+  state.props.onContentSizeChange(390, 8928);
+  state.cellLayouts[0]({ nativeEvent: { layout: { y: 8301.667, height: 64 } } });
+  state.props.onContentSizeChange(390, 9231);
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[0], index: 0, isViewable: true }],
+    changed: [],
+  });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 570 } } });
+  flushFrames(1);
+  expect(state.scrollToOffset.mock.lastCall![0].offset).toBeCloseTo(8170.667, 3);
+  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
+  expect(result).not.toHaveBeenCalled();
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 8170.667 } } });
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[99], index: 99, isViewable: true }],
+    changed: [],
+  });
+  flushFrames(1);
+  expect(result).not.toHaveBeenCalled();
+  flushFrames(1);
+  expect(result).toHaveBeenLastCalledWith("REACHED", rows[99].date);
+  vi.advanceTimersByTime(5000);
+  expect(result).toHaveBeenCalledTimes(1);
+});
+
+it("accepts a stable visible final date at the measured native bottom clamp", () => {
+  const { rows, ref, result } = setup(131);
+  ref.current!.jumpToDayHeader(rows[89].date);
+  state.props.onLayout({ nativeEvent: { layout: { height: 500 } } });
+  state.props.onContentSizeChange(390, 1200);
+  renderToStaticMarkup(
+    createElement(state.props.CellRendererComponent, {
+      item: rows[89],
+      index: 89,
+      cellKey: rows[89].key,
+    }),
+  );
+  state.cellLayouts.at(-1)!({ nativeEvent: { layout: { y: 1100, height: 70 } } });
+  flushFrames(1);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 700, animated: false });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 700 } } });
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: rows[89], index: 89, isViewable: true }],
+    changed: [],
+  });
+  flushFrames();
+  expect(result).toHaveBeenLastCalledWith("REACHED", rows[89].date);
 });

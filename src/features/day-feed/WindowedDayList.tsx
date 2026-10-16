@@ -108,6 +108,9 @@ export function WindowedDayList<T>({
   const visibleDates = useRef<string[]>([]);
   const layouts = useRef(new Map<string, { y: number; height: number }>());
   const offset = useRef(0);
+  const viewportHeight = useRef(0);
+  const contentHeight = useRef(0);
+  const confirmation = useRef<number | null>(null);
   const saved = useRef<DayScrollAnchor | null>(null);
   const pending = useRef<{
     anchor: DayScrollAnchor;
@@ -169,29 +172,73 @@ export function WindowedDayList<T>({
     request.anchor = { key: row.key, date: row.date, within: target.within };
     return { request, target };
   }, [finish]);
+  const measuredOffset = useCallback((anchor: DayScrollAnchor) => {
+    const layout = layouts.current.get(anchor.key);
+    if (!layout) return null;
+    const desired = Math.max(0, layout.y + anchor.within - live.current.topInset);
+    return viewportHeight.current > 0 && contentHeight.current > 0
+      ? Math.min(desired, Math.max(0, contentHeight.current - viewportHeight.current))
+      : desired;
+  }, []);
+  const confirm = useCallback(() => {
+    const request = pending.current;
+    if (!request?.aligned || confirmation.current !== null) return;
+    const layout = layouts.current.get(request.anchor.key);
+    const expected = measuredOffset(request.anchor);
+    if (
+      !layout ||
+      expected === null ||
+      !visibleKeys.current.has(request.anchor.key) ||
+      Math.abs(offset.current - expected) > 2
+    )
+      return;
+    const y = layout.y;
+    confirmation.current = requestAnimationFrame(() => {
+      confirmation.current = requestAnimationFrame(() => {
+        confirmation.current = null;
+        const current = layouts.current.get(request.anchor.key);
+        const expected = measuredOffset(request.anchor);
+        if (
+          pending.current === request &&
+          request.aligned &&
+          current &&
+          Math.abs(current.y - y) < 0.5 &&
+          expected !== null &&
+          Math.abs(offset.current - expected) <= 2 &&
+          visibleKeys.current.has(request.anchor.key)
+        )
+          finish("REACHED");
+      });
+    });
+  }, [finish, measuredOffset]);
   const attempt = useCallback(() => {
     const resolved = resolveRequest();
     if (!resolved) return;
     const { request, target } = resolved;
     if (request.aligned) return;
-    if (request.attempts >= 3) {
+    if (request.attempts >= 8) {
       finish("UNMEASURED");
       return;
     }
+    const measured = measuredOffset(request.anchor);
     trace("ATTEMPT", {
       index: target.index,
       attempt: request.attempts + 1,
       remounted: request.remounted,
+      measuredOffset: measured ?? -1,
     });
     request.attempts++;
     request.aligned = true;
-    list.current?.scrollToIndex({
-      index: target.index,
-      animated: false,
-      viewOffset: live.current.topInset - target.within,
-    });
-    if (request.aligned && visibleKeys.current.has(request.anchor.key)) finish("REACHED");
-  }, [resolveRequest, finish, trace]);
+    if (measured !== null)
+      list.current?.scrollToOffset({ offset: measured, animated: false });
+    else
+      list.current?.scrollToIndex({
+        index: target.index,
+        animated: false,
+        viewOffset: live.current.topInset - target.within,
+      });
+    confirm();
+  }, [resolveRequest, finish, trace, measuredOffset, confirm]);
   const restore = useCallback(
     (anchor: DayScrollAnchor, defer = false) => {
       const target = resolveDayAnchor(live.current.rows, anchor);
@@ -250,6 +297,7 @@ export function WindowedDayList<T>({
           {...props}
           onLayout={(event) => {
             onLayout?.(event);
+            const previous = layouts.current.get(item.key);
             layouts.current.set(item.key, event.nativeEvent.layout);
             if (item.key === diagnostic.current.targetKey)
               trace("TARGET_LAYOUT", {
@@ -257,6 +305,17 @@ export function WindowedDayList<T>({
                 y: event.nativeEvent.layout.y,
                 height: event.nativeEvent.layout.height,
               });
+            if (
+              pending.current?.anchor.key === item.key &&
+              (!previous ||
+                Math.abs(previous.y - event.nativeEvent.layout.y) >= 0.5 ||
+                previous.height !== event.nativeEvent.layout.height)
+            ) {
+              pending.current.aligned = false;
+              if (confirmation.current !== null)
+                cancelAnimationFrame(confirmation.current);
+              confirmation.current = null;
+            }
             retry();
           }}
         >
@@ -327,11 +386,10 @@ export function WindowedDayList<T>({
           scrollOffset: offset.current,
         });
       const request = resolveRequest()?.request;
-      if (request?.aligned && visibleKeys.current.has(request.anchor.key))
-        finish("REACHED");
+      if (request?.aligned) confirm();
       else retry();
     },
-    [retry, resolveRequest, finish, trace],
+    [retry, resolveRequest, confirm, trace],
   );
   return (
     <FlatList
@@ -354,6 +412,9 @@ export function WindowedDayList<T>({
       contentContainerStyle={[contentContainerStyle, { paddingBottom: bottomInset }]}
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
+      onLayout={(event) => {
+        viewportHeight.current = event.nativeEvent.layout.height;
+      }}
       onScrollBeginDrag={() => {
         finish();
         onInteraction?.();
@@ -368,7 +429,15 @@ export function WindowedDayList<T>({
             lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
             scrollOffset: offset.current,
           });
-        if (pending.current) return;
+        if (pending.current) {
+          const expected = measuredOffset(pending.current.anchor);
+          if (expected !== null && Math.abs(offset.current - expected) > 2) {
+            pending.current.aligned = false;
+            retry();
+          }
+          confirm();
+          return;
+        }
         const anchor = captureDayAnchor(
           live.current.rows,
           layouts.current,
@@ -405,8 +474,15 @@ export function WindowedDayList<T>({
         retry();
       }}
       onContentSizeChange={(_width, height) => {
+        contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
+        if (pending.current) {
+          const expected = measuredOffset(pending.current.anchor);
+          if (expected !== null && Math.abs(offset.current - expected) > 2)
+            pending.current.aligned = false;
+        }
         retry();
+        confirm();
       }}
       debug={false}
     />
