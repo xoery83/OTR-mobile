@@ -7,12 +7,20 @@ const mocks = vi.hoisted(() => ({
   requireActiveUserId: vi.fn(),
   getAllAsync: vi.fn(),
   getQueueActivity: vi.fn(),
+  getMetadataActivity: vi.fn(),
+  metadataEnabled: vi.fn(),
+  metadataRun: vi.fn(),
   queueListeners: new Set<() => void>(),
   generation: 7,
 }));
 
+vi.mock("./tripMetadataCoordinator", () => ({
+  isTripMetadataSyncEnabled: mocks.metadataEnabled,
+  runNativeTripMetadataSync: mocks.metadataRun,
+}));
 vi.mock("./ledgerQueueActivity", () => ({
   getLedgerQueueActivity: mocks.getQueueActivity,
+  getTripMetadataQueueActivity: mocks.getMetadataActivity,
   subscribeLedgerQueueWorkAvailable: (listener: () => void) => {
     mocks.queueListeners.add(listener);
     return () => mocks.queueListeners.delete(listener);
@@ -76,6 +84,13 @@ describe("Ledger mutation sync kick", () => {
   beforeEach(() => {
     setTripCreateSyncRunner(null);
     vi.clearAllMocks();
+    mocks.metadataEnabled.mockResolvedValue(false);
+    mocks.metadataRun.mockResolvedValue({ status: "closed", processedCount: 0 });
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
     vi.mocked(runLedgerExpenseSync).mockResolvedValue({
       status: "syncing",
       processedCount: 0,
@@ -209,6 +224,54 @@ describe("Ledger mutation sync kick", () => {
 
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+
+  it("wakes metadata retry on the existing timer and isolates its failure from Ledger", async () => {
+    vi.useFakeTimers();
+    mocks.metadataEnabled.mockResolvedValue(true);
+    mocks.metadataRun.mockRejectedValueOnce(new Error("503"));
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4000,
+    });
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(3999);
+    expect(mocks.metadataRun).toHaveBeenCalledOnce();
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(mocks.metadataRun).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+  it("does not lose metadata queued while the normal operational cycle is running", async () => {
+    vi.useFakeTimers();
+    mocks.metadataEnabled.mockResolvedValue(true);
+    let release!: () => void;
+    vi.mocked(runLedgerExpenseSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 0 });
+      }) as never,
+    );
+    const first = runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(0);
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 1,
+      nextActionableAt: null,
+    });
+    for (const listener of mocks.queueListeners) listener();
+    release();
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mocks.metadataRun).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
   });
 
   it("wakes a due retry independently of foreground reads", async () => {

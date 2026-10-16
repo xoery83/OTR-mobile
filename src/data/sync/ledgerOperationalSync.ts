@@ -1,3 +1,7 @@
+import {
+  runNativeTripMetadataSync,
+  isTripMetadataSyncEnabled,
+} from "./tripMetadataCoordinator";
 import { assertAccountRequestGeneration } from "@/data/auth/accountRequestContext";
 import { openDatabase } from "@/data/db/database";
 import { requireActiveUserId } from "@/data/auth/authRepository";
@@ -17,6 +21,7 @@ import { runPersonalSettlementReviewSync } from "./personalSettlementReviewCoord
 import { createSyncOperationRepository } from "./syncOperationRepository";
 import {
   getLedgerQueueActivity,
+  getTripMetadataQueueActivity,
   subscribeLedgerQueueWorkAvailable,
 } from "./ledgerQueueActivity";
 
@@ -47,19 +52,28 @@ export async function setIntelligenceSchedulingAdapter(
 }
 async function scheduledQueueActivity() {
   const ledger = await getLedgerQueueActivity();
-  if (!intelligenceScheduling) return ledger;
-  const intelligence = await intelligenceScheduling.activity();
+  const extras = [];
+  if (await isTripMetadataSyncEnabled())
+    extras.push(
+      await getTripMetadataQueueActivity(
+        await openDatabase(),
+        await requireActiveUserId(),
+      ),
+    );
+  if (intelligenceScheduling) extras.push(await intelligenceScheduling.activity());
+  const times = [ledger, ...extras]
+    .map((activity) => activity.nextActionableAt)
+    .filter((time): time is number => time !== null);
   return {
     ...ledger,
-    actionableNow: ledger.actionableNow + intelligence.actionableNow,
-    nextActionableAt:
-      ledger.nextActionableAt === null
-        ? intelligence.nextActionableAt
-        : intelligence.nextActionableAt === null
-          ? ledger.nextActionableAt
-          : Math.min(ledger.nextActionableAt, intelligence.nextActionableAt),
+    actionableNow: extras.reduce(
+      (total, activity) => total + activity.actionableNow,
+      ledger.actionableNow,
+    ),
+    nextActionableAt: times.length ? Math.min(...times) : null,
   };
 }
+
 let running: Promise<void> | null = null;
 let paused = false;
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
@@ -212,6 +226,7 @@ async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
   const completion = await captureEligibleScopes();
   // Receipt mapping commits before any dependent Expense can be selected for dispatch.
   await tripCreateSync?.().catch(() => undefined);
+  await runNativeTripMetadataSync().catch(() => undefined);
   await Promise.allSettled([
     Promise.resolve().then(() => runLedgerPersonalPaymentSync()),
     runLedgerExpenseSync().then(() => runLedgerReceiptSync()),
