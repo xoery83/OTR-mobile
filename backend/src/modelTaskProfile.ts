@@ -10,6 +10,10 @@ import {
   modelTaskRequestSchema,
   type ModelTaskRequest,
 } from "../../src/domain/intelligence/modelTask";
+import {
+  FLIGHT_ASSEMBLY_BUSINESS_CONTRACT,
+  flightAssemblyProposalSchema,
+} from "../../src/domain/trip/flightSemanticAssembly";
 import { taskSchema, type Task } from "../../src/domain/intelligence/persistence";
 const hashText = (text: string) => createHash("sha256").update(text).digest("hex");
 export const registeredFlightModelProfile = Object.freeze({
@@ -106,4 +110,88 @@ export function projectModelTaskRequest(
     policy_snapshot: t.policy_snapshot,
     policy_sha256: t.policy_sha256,
   }).request;
+}
+
+// Local candidate profiles only: the deployed CP-LLM registry remains remote-v2 until separately approved.
+export function flightAssemblyModelProfile(mode: "TEXT" | "VISION") {
+  return Object.freeze({
+    version: 1,
+    consumer_id: "import",
+    consumer_version: 2,
+    boundary_version: "otr-flight-assembly-v1",
+    capability: "INTERPRET",
+    modality: mode === "VISION" ? "IMAGE" : "TEXT",
+    execution_scope: "FLIGHT_IMPORT_V1",
+    prompt_sha256: persistenceDigest(FLIGHT_ASSEMBLY_BUSINESS_CONTRACT),
+    envelope_version: `FLIGHT_ASSEMBLY_${mode}_V1`,
+    envelope_sha256: hashText(`FLIGHT_ASSEMBLY_${mode}_V1`),
+    output_schema_version: "FLIGHT_ASSEMBLY_PROPOSAL_V1",
+    output_schema_sha256: persistenceDigest(z.toJSONSchema(flightAssemblyProposalSchema)),
+    minimizer_version: "OTR_ASSEMBLY_FIELD_EVIDENCE_IDS_V1",
+    minimizer_sha256: hashText("OTR_ASSEMBLY_FIELD_EVIDENCE_IDS_V1"),
+    privacy_profile:
+      mode === "VISION"
+        ? "REMOTE_AUTHORIZED_IMAGE_EVIDENCE_V1"
+        : "REMOTE_MINIMIZED_ASSEMBLY_EVIDENCE_V1",
+    privacy_sha256: hashText(
+      mode === "VISION"
+        ? "REMOTE_AUTHORIZED_IMAGE_EVIDENCE_V1"
+        : "REMOTE_MINIMIZED_ASSEMBLY_EVIDENCE_V1",
+    ),
+  });
+}
+export const flightAssemblyModelBindingSchema = z
+  .strictObject({
+    version: z.literal(1),
+    request: modelTaskRequestSchema,
+    request_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    profile: z.record(z.string(), z.union([z.string(), z.number()])),
+    profile_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .superRefine((b, ctx) => {
+    const q = b.request,
+      p = q.policy_snapshot;
+    const expected = flightAssemblyModelProfile(
+      b.profile.modality === "IMAGE" ? "VISION" : "TEXT",
+    );
+    if (
+      persistenceDigest(b.profile) !== persistenceDigest(expected) ||
+      b.profile_sha256 !== persistenceDigest(expected) ||
+      b.request_sha256 !== persistenceDigest(q) ||
+      q.consumer_id !== "import" ||
+      q.consumer_version !== 2 ||
+      q.policy_sha256 !== persistenceDigest(p) ||
+      persistenceDigest(q.schema) !==
+        persistenceDigest({
+          id: expected.output_schema_version,
+          version: 1,
+          dialect: "OTR_TYPED_V1",
+          sha256: expected.output_schema_sha256,
+        }) ||
+      p.max_attempts !== 1 ||
+      p.privacy !== "REMOTE_ALLOWED" ||
+      !p.network_required ||
+      !p.budget_currency ||
+      !p.budget_nanos ||
+      !/^[0-9]{1,60}$/.test(p.budget_nanos) ||
+      BigInt(p.budget_nanos) <= 0n ||
+      !p.deadline ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/.test(p.deadline)
+    )
+      ctx.addIssue({ code: "custom", message: "ASSEMBLY_MODEL_TASK_CHANGED_BINDING" });
+  });
+export type FlightAssemblyModelBinding = z.infer<typeof flightAssemblyModelBindingSchema>;
+export function bindFlightAssemblyModelTask(
+  raw: ModelTaskRequest,
+  mode: "TEXT" | "VISION",
+) {
+  const request = modelTaskRequestSchema.parse(structuredClone(raw));
+  const profile = flightAssemblyModelProfile(mode);
+  return flightAssemblyModelBindingSchema.parse({
+    version: 1,
+    request,
+    request_sha256: persistenceDigest(request),
+    profile,
+    profile_sha256: persistenceDigest(profile),
+  });
 }

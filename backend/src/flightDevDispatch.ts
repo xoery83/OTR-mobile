@@ -26,6 +26,7 @@ import {
 } from "../../src/domain/intelligence/remoteFlightText";
 import {
   interpretationRequestSchema,
+  remoteFlightPinsSchema,
   type InterpretationRequest,
 } from "../../src/domain/intelligence/interpretation";
 import {
@@ -102,6 +103,44 @@ export function flightReservationCommand(
     binding.request.policy_sha256 !== e.binding.descriptor.remote.policy_sha256
   )
     throw new Error("POLICY_BLOCKED");
+  return flightVersionedReservationCommand(
+    a,
+    {
+      ...e,
+      binding: {
+        input_sha256: e.binding.input_sha256,
+        descriptor: { remote: e.binding.descriptor.remote },
+      },
+    },
+    scope,
+    binding,
+    flightRemoteExecutionPins(e.binding.descriptor),
+  );
+}
+
+export type FlightReservationEnvelope = {
+  binding: {
+    input_sha256: string;
+    descriptor: { remote: z.infer<typeof remoteFlightPinsSchema> };
+  };
+  envelope_sha256: string;
+  input_ceiling: number;
+  output_ceiling: number;
+};
+// Shared immutable call/start row construction; legacy and Assembly each validate their own binding first.
+export function flightVersionedReservationCommand(
+  a: Attempt,
+  e: FlightReservationEnvelope,
+  scope: {
+    integration_version: number;
+    grant_revision: number;
+    trip_id: string;
+    import_id: string;
+    currency: string;
+  },
+  binding: ModelTaskBinding,
+  executionPins: ReturnType<typeof flightRemoteExecutionPins>,
+) {
   const p = e.binding.descriptor.remote;
   const row = {
     call_id: p.call_id,
@@ -191,10 +230,8 @@ export function flightReservationCommand(
     grant_revision: scope.grant_revision,
     input_ceiling: e.input_ceiling,
     output_ceiling: e.output_ceiling,
-    execution_pins: flightRemoteExecutionPins(e.binding.descriptor),
-    execution_pins_sha256: persistenceDigest(
-      flightRemoteExecutionPins(e.binding.descriptor),
-    ),
+    execution_pins: executionPins,
+    execution_pins_sha256: persistenceDigest(executionPins),
   };
   return { ...c, request_sha256: commandDigest(c) };
 }
