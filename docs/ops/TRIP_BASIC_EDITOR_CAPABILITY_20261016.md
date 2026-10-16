@@ -99,9 +99,11 @@ This requires protected Hosted schema/EXECUTE and finite Backend installation
 approval after independent review and exact target/image verification. None is
 claimed or executed here. Recovery disables Native dispatch, unbinds the new port
 and revokes new EXECUTE; it retains user edits and receipt evidence, with no bulk
-metadata undo or evidence table deletion. The corrected rollback restores the exact
-current finite CREATE-result contract. Both SQL-level finite checks are retained
-in the proposed replacement; only metadata values become immutable. SQL runtime itself remains unverified.
+metadata undo or evidence table deletion. The rollback retains the four-field immutable CREATE receipt compatibility fix
+and both original SQL-level finite checks. It must not restore mutable receipt
+metadata: an old legitimate CREATE replay must return its original metadata even
+after accepted updates. Metadata dispatch is disabled, its Backend port unbound
+and new EXECUTE grants revoked, while accepted data and all receipts remain. SQL runtime itself remains unverified.
 
 ## Verification
 
@@ -113,4 +115,4 @@ receipts, finite Backend leases, normal startup CLOSED and failure isolation.
 These are engineering checks, not Native or Hosted Runtime PASS. Exact final test
 counts are reported with the candidate handoff.
 
-SQL review recovery pins (not executed): up.sql SHA-256 `96733200c3edae75fb2f2a527ed440a3bd1bd91043d6b5b76aac792ebaf5887f`; rollback.sql SHA-256 `8c83404cf8c2946bf1e0acb67630dcbcb2afdd289d5d4195f1e7071caa1b0679`.
+SQL review recovery pins (not executed): up.sql SHA-256 `96733200c3edae75fb2f2a527ed440a3bd1bd91043d6b5b76aac792ebaf5887f`; rollback.sql SHA-256 `c8b856069e8bc8b1d425caa43d2328aad74aaaf06276d2229e8f73fadbe4ca7a`.
