@@ -295,7 +295,7 @@ function TodayRow({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    widget: { flex: 1, gap: visual.space.card },
+    widget: { gap: visual.space.card },
     heading: { ...visual.type.section, color: colors.textPrimary },
     label: { ...visual.type.action, color: colors.textSecondary },
     item: { ...visual.type.row, color: colors.textPrimary, flexShrink: 1 },
@@ -304,9 +304,9 @@ const createStyles = (colors: UiColors) =>
       ...visual.type.row,
       color: colors.textPrimary,
       textAlign: "center",
-      paddingVertical: visual.space.section * 2,
+      paddingVertical: visual.space.section,
     },
-    actions: { marginTop: "auto", paddingTop: visual.space.card },
+    actions: { paddingTop: visual.space.heading },
     rowCopy: { flex: 1, gap: 4 },
     row: {
       minHeight: 52,
