@@ -1,3 +1,33 @@
+# Night delivery checkpoint — 2026-10-16
+
+- main `c463fc9`; origin/main remains approved Push `f231520`. R2 combined visual/
+  owning candidate `c6eea97` stays isolated pending Owner visual review; signed
+  embedded Release installed in original AD5, preserving account/database.
+- Original Auckland Trip/Sky City Hotel: Today date-only Stay summary, original
+  detail, direct bottom Day without prior time/zone form, Day detail/return and
+  cold persistent read PASS. No copied Item. Editor name/destination/Undated
+  saved, cold read, original values restored through Editor by explicit Owner
+  approval; metadata queue remains dependency-blocked, Hosted update NOT VERIFIED.
+- Nelson real NZ25 Finance/Today named-tab clicks and Japan real Preparation
+  counts/single-widget layout/accepted Feb1 Day direct entry PASS in same candidate.
+  Edge return, pager touch gesture, offline device and full R2 acceptance remain
+  unverified; do not substitute tests/AX clicks for those actual gestures.
+- TIME01A original null-zone veto fixed; full TIME01 audit is READY_FOR_OWNER_REVIEW
+  under `/private/tmp/otr-time01-v11-audit-20261016/`, including pinned main/R2
+  boundary addendum. C–F are planned only, not implemented or Runtime PASS.
+- Flight deterministic real PDF remains 1 proposed BookingGroup/2 Segments with
+  strict NEEDS_REVIEW. Source V2 local profile is non-authoritative; trusted decoder/
+  Source registration and Source-backed Booking purpose still block Admission/Day.
+- Apple isolated26.5 production component invocation and follow-up controlled
+  tests are LIMITED: valid minimal ordinary/guided and controlled relations, but
+  real PDF model increment0. Version mismatch is a risk, not established cause.
+  Owner stopped environment investigation; current approved owning work is Native
+  timeout/cancellation/late-result fencing and per-input ID-constrained proposals.
+  Evidence: `/private/tmp/otr-apple-correct-usage-20261016/REPORT.md`.
+- C4-R Delta image escalation is queued, not run: actual image-capable Provider/
+  credentials/privacy/cost scope still unverified. No Remote, Hosted or Storage
+  operation added. Existing C2/C3 PASS preserved; no repeated runtime acceptance.
+
 # Local Source PDF V2 / Native bridge checkpoint — 2026-10-16
 
 - Source local V2 component305770b + docs7227916 independently reviewed; integrated
