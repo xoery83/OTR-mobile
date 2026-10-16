@@ -103,12 +103,35 @@ stay committed: the caller is dormant without both DEV opt-in and private gate.
 
 ## Limited human labels (W3)
 
-Inspect a completed run, enter an exhaustive JSON array of `{ "path": "…",
-"raw": "…" }`, choose `HUMAN_GROUND_TRUTH`, then save. Precision/recall compare
-unique exact path/raw pairs; they do not score itinerary completeness or admission.
-No labels gives `N/A`. `HYPOTHESIS` is explicit speculation and always gives `N/A`.
-Synthetic unit labels are not real-world ground truth. Exported diagnostics do not
-establish product-level flight accuracy.
+The interface defaults to Chinese; **中文 / English** switches language.
+
+1. **Test / 测试**: choose multiple originals and run on Mac or the connected isolated
+   iOS runner. Saved inputs can be rerun without selecting the originals again.
+2. **Inspect / 检查结果**: select a file/run. Read extracted text, deterministic
+   fields, Apple suggestions, evidence checks and partial typed flight results.
+   Click a field to see its exact UTF-8 span, recorded PDF page (one-based display)
+   or Vision region (bottom-left native coordinates mapped to browser top-left).
+   No locator is synthesized. Imported traces without a saved local input have
+   text evidence only. Raw IDs, hashes, codes, full trace and version pins remain
+   in collapsed **Developer Details**. JSON and safe HTML exports are unchanged.
+3. **Compare / 运行对比**: defaults to the current file's latest two different
+   completed runs. Added/missing/changed values and model evidence status are
+   human-readable; original comparison details remain expandable. A change in
+   locator alone is not labelled a quality improvement. The form accepts expected
+   field/value rows; enter a complete list and save confirmed ground truth to
+   calculate the existing exact-match statistics. Blank rows are ignored; empty
+   form does not erase previously saved labels. Hypotheses and unlabelled runs
+   are not scored. Saved labels are read back into the ordinary form for editing. Saving replaces
+   the complete expected list rather than appending.
+
+Apple suggestions are supplementary observations, not accepted fields or flights.
+Rejected model raw output is not retained by the production trace; the UI shows
+only its recorded reason. Parser/evidence/capability timings that the trace
+combines remain combined. Typed missing-field guidance uses only the three existing
+local-enrichment checks (flight number/departure airport/arrival airport), not an
+invented complete Admission validation. Model-resource cold state stays unverified.
+Synthetic unit labels are not real-world ground truth. Diagnostic statistics do
+not establish product-level flight accuracy.
 
 ## Verification and limits
 
