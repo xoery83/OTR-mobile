@@ -1,3 +1,4 @@
+import { useTripPreparationWidget } from "./useTripPreparationWidget";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
@@ -130,8 +131,13 @@ function CalendarField({
 }
 
 type Props = {
-  widgetsForHome?: (tripId: string) => readonly TripHomeWidget[];
+  widgetsForHome?: (
+    tripId: string,
+    lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
+  ) => readonly TripHomeWidget[];
+  onOpenHomeItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
   tripId: string | null;
+  homePerspective?: { now: string; date: string; zone: string };
   mode?: "LIST" | "CREATE" | "PAST";
   onOpen(id: string): void;
   onCreate(): void;
@@ -163,6 +169,8 @@ function LocalTripContent({
   onBackToTrips,
   onChooseDay,
   widgetsForHome,
+  onOpenHomeItem,
+  homePerspective,
   generation,
 }: Props & { generation: number }) {
   useUiLocale();
@@ -489,7 +497,7 @@ function LocalTripContent({
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
   const metadata = selected ?? remoteSelected;
   const lifecycleGroups = metadata
-    ? groupLocalTrips([metadata], calendarDate(new Date()))
+    ? groupLocalTrips([metadata], homePerspective?.date ?? calendarDate(new Date()))
     : null;
   const lifecycle = lifecycleGroups?.past.length
     ? "Past"
@@ -497,10 +505,31 @@ function LocalTripContent({
       ? "Active"
       : lifecycleGroups?.upcoming.length
         ? "Upcoming"
-        : null;
+        : metadata
+          ? "Undated"
+          : null;
+  const preparation = useTripPreparationWidget({
+    tripId:
+      lifecycle === "Upcoming" || lifecycle === "Undated" ? (metadata?.id ?? null) : null,
+    undated: lifecycle === "Undated",
+    onImport: selected
+      ? () => {
+          if (generation === getAccountGeneration())
+            router.push({ pathname: "/capture", params: { tripId: selected.id } });
+        }
+      : undefined,
+    onBuild: selected
+      ? () => {
+          if (generation === getAccountGeneration()) setItemFormOpen(true);
+        }
+      : undefined,
+    onOpenDay: onChooseDay,
+    onOpenItem: onOpenHomeItem,
+  });
   const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
   const pages = [
-    ...(lifecycle === "Past" && metadata ? (widgetsForHome?.(metadata.id) ?? []) : []),
+    ...(preparation ? [preparation] : []),
+    ...(metadata && lifecycle ? (widgetsForHome?.(metadata.id, lifecycle) ?? []) : []),
     ...(finance ? [finance] : []),
   ];
   if (mode === "PAST")

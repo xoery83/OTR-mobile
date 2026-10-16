@@ -28,7 +28,7 @@ import {
   type SettlementSummaryProjection,
 } from "./settlementSummaryProjection";
 
-type Lifecycle = "Upcoming" | "Active" | "Past";
+type Lifecycle = "Upcoming" | "Active" | "Past" | "Undated";
 export type TripHomeFinanceData = TripHomeLedgerSnapshot & {
   settlement: SettlementSummaryProjection | null;
 };

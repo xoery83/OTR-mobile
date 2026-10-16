@@ -1,3 +1,24 @@
+# Trip Home V1.1 functional integration candidate — 2026-10-16
+
+- Owner approved four Widget business contracts and V1.1 visual delivery. Preparation
+  Delta recovered and byte-verified; HOME02 missing-file dependency closed. Undated
+  reuses real Preparation counts/actions without date inference or completion score.
+- Preparation and Today new readers/selectors/components now wired through production
+  Home. Existing Snapshot/Finance retained; lifecycle ordering and explicit Today
+  Header versus Day bookmark preserved. Read-only write controls are withheld.
+- Exact Reference-only DEV QA perspective covers Future/Today/Past, guarded by actor,
+  Trip, accepted certificate and three fixed instants; no business-date change.
+- Functional independent review and targeted checks are recorded at integration.
+  Render/Native and Hero/Host V1.1 visual conformance are NOT claimed by code tests.
+- Existing Experience Session confirmed receipt/no active writer. Dispatch latest main
+  SHA after functional integration; packet docs/ops/TRIP_HOME_V11_EXPERIENCE_HANDOFF_20261016.md.
+  Visual candidate stays isolated until Owner basic visual confirmation.
+- Owning gaps: full Trip basic editor/update command; remote-only planning entry;
+  empty local Trip accepted Day/timezone; real saved Settlement Native evidence.
+  Destination remains existing nullable string; no new field/migration/inference.
+- Import Workbench runs in separate Capture files/worktree. C4 scoped results and
+  protected TCL02 blocker below remain unchanged; no ordinary UI queue expansion.
+
 # C4-L normal App Runtime — 2026-10-16
 
 - PASS_SCOPED_C4_L_NORMAL_APP_RUNTIME on isolated iOS26.5/23F77/418CF. Normal

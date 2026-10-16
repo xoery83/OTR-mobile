@@ -1,5 +1,10 @@
 # OTR Beta — Unified Decisions and Scope Baseline
 
+## Trip Home V1.1 — Owner delivery authority / 2026-10-16
+
+Owner authorizes Preparation Upcoming and Today Active baseline, existing Snapshot/Finance qualification and normal navigation wiring; independent visual delivery follows functional integration. Materials and hashes: `../ops/TRIP_HOME_V11_MATERIALS_20261016.json`. Named tabs remain mandatory; reference-image dots are supplemental. Hero Menu left and separate Edit/Search right override the image. Owner subsequently approved Undated reuse of the same real counts/planning entries, with date copy only; no date inference or completion scoring. No new Destination fields, migrations, automatic inference, Review promotion or fabricated permissions. Visual candidate stays isolated pending Owner basic preview.
+
+
 ### Owner-approved UPD-UX-02 V2 and implementation boundary — 2026-10-15
 
 **UPD-UX-02 approved 2026-10-15 — WP-UPD02A/B:** Product Delta and Blueprint V2 govern; historical Blueprint V1 is superseded where conflicting. Full-screen pushed Review hides Shell; one continuous full-width list/one inline accordion, neutral type icons, horizontal source tabs and existing OTR primary controls. No three-status tabs/universal Later/Skip/Dismiss/Exclude/TYPE06/auto-next. Durable decision saved, applying, Review resolved, canonical admitted and Batch completed remain distinct; remaining decreases only on owning resolution. Actual results/evidence/original links require current owning permissions; no fake receipt or new generic Review engine.
@@ -52,7 +57,7 @@ Original META/B0, necessary named writer subset and DEV97 finite metadata ran; c
 
 The trusted migration administrator retains ADMIN regrant/replacement capability; INHERIT/SET flags do not remove that residual. App/runtime topology, NOLOGIN attributes, CLOSED/empty gate and existing Creator73de/NZD are verified only within fixed metadata scope. No new credentials, LOGIN, deployment, Doc101 or runtime activation is authorized by this result.
 
-Owner-approved Search01–13 replaces the earlier Search deferral; implemented function review does not release UI/entry icons. Latest Owner Reference-first schedule supersedes the earlier all-module pause: targeted Native base/defect/permission checks are permitted, then an explicitly ready normal Reference smoke; broad matrices wait for normal data/navigation and Owner basic feedback. REF-C QA proves explicitly synthetic local admission, not real Trip acceptance/Auth/roles. I66 Home correction remains bounded, not UX acceptance; HOME03A/03B/04/05 keep their owning authority and single shared navigation author. Trip/Journey UUID is not Ledger permission. HOME02 WAITING_DESIGN_FILE.
+Owner-approved Search01–13 replaces the earlier Search deferral; implemented function review does not release UI/entry icons. Latest Owner Reference-first schedule supersedes the earlier all-module pause: targeted Native base/defect/permission checks are permitted, then an explicitly ready normal Reference smoke; broad matrices wait for normal data/navigation and Owner basic feedback. REF-C QA proves explicitly synthetic local admission, not real Trip acceptance/Auth/roles. I66 Home correction remains bounded, not UX acceptance; HOME03A/03B/04/05 keep their owning authority and single shared navigation author. Trip/Journey UUID is not Ledger permission. HOME02 design-file dependency CLOSED on 2026-10-16: byte-verified Owner Preparation Delta is now available; implementation/Native states remain separate.
 
 
 ## Owner product correction — 2026-10-15

@@ -1,3 +1,5 @@
+import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
+import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
@@ -82,6 +84,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     date?: string;
     zone?: string;
     view?: string;
+    homeQaScenario?: string;
   }>();
   const [dayChooser, setDayChooser] = useState(false);
   const chooseDay = useCallback(() => {
@@ -132,6 +135,11 @@ function TripContent({ today = false }: { today?: boolean }) {
     trip.observed?.projection.tripId === requested
       ? trip
       : null;
+  const homePerspective = referenceTripHomePerspective(
+    visibleTrip,
+    params.homeQaScenario,
+    generation,
+  );
   const [workspaceResolution, setWorkspaceResolution] =
     useState<WorkspaceResolution | null>(null);
   const knownTrip = useCallback(
@@ -214,7 +222,11 @@ function TripContent({ today = false }: { today?: boolean }) {
   const openToday = (id: string, context: TodayEntry) => {
     if (generation !== getAccountGeneration()) return;
     enterHeader({ tripId: id, ...context, generation }, "EXPLICIT_TODAY_HEADER");
-    router.navigate("/");
+    router.navigate(
+      homePerspective
+        ? { pathname: "/", params: { homeQaScenario: value(params.homeQaScenario) } }
+        : "/",
+    );
   };
   const enterDay = () => {
     if (
@@ -254,10 +266,18 @@ function TripContent({ today = false }: { today?: boolean }) {
       throw new Error("HOME_NAV_UNAVAILABLE");
     return result;
   };
+  const homeProjection =
+    visibleTrip?.observed?.projection.version === 2
+      ? visibleTrip.observed.projection
+      : null;
   const reviewZone =
     resumeView?.tripId === requested && resumeView.generation === generation
       ? resumeView.zone
-      : null;
+      : homeProjection
+        ? (acceptedHomeHeader(homeProjection.events, (date, zone) =>
+            homeProjection.query(date, zone),
+          )?.zone ?? null)
+        : null;
   const reviewItinerary = reviewZone
     ? async ({
         scope,
@@ -323,9 +343,50 @@ function TripContent({ today = false }: { today?: boolean }) {
       itemRevision,
     });
   };
-  const widgetsForHome = (id: string) => {
+  const widgetsForHome = (
+    id: string,
+    lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
+  ) => {
+    if (id !== requested) return [];
+    if (lifecycle === "Active")
+      return [
+        {
+          id: "todays-journey",
+          title: t("tripHome.today.title"),
+          content: (
+            <TodaysJourneyWidget
+              key={JSON.stringify([generation, requested])}
+              tripId={requested}
+              zone={
+                homePerspective?.zone ??
+                (visibleTrip?.observed
+                  ? boundaryZone(visibleTrip.observed.projection)
+                  : null)
+              }
+              now={homePerspective?.now}
+              copy={{
+                title: t("tripHome.today.title"),
+                openToday: t("tripHome.today.open"),
+                upcoming: t("tripHome.today.upcoming"),
+                plans: t("tripHome.today.plans"),
+                free: t("tripHome.today.free"),
+                later: t("tripHome.today.later"),
+                tonight: t("tripHome.today.tonight"),
+                multipleStays: t("tripHome.today.multipleStays"),
+                loading: t("tripHome.today.loading"),
+                unavailable: t("tripHome.today.unavailable"),
+              }}
+              onOpenToday={async (read) => {
+                await freshHomeRead(read.scope, read.source.epoch);
+                openToday(requested, { date: read.today.date, zone: read.today.zone });
+              }}
+              onOpenItem={openHomeItem}
+            />
+          ),
+        },
+      ];
+    if (lifecycle !== "Past") return [];
     if (
-      id !== requested ||
       visibleTrip?.observed?.projection.version !== 2 ||
       visibleTrip.observed.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
       !homeSnapshot ||
@@ -447,6 +508,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           />
         </View>
         <DayFeed
+          instant={homePerspective?.now}
           key={`${requested}/${selected.date}/${selected.zone}/${generation}`}
           entry={entry}
           onReadingChange={(reading) => saveReading(selected, reading)}
@@ -528,7 +590,16 @@ function TripContent({ today = false }: { today?: boolean }) {
                 ? chooseDay
                 : undefined
             }
+            homePerspective={homePerspective}
             widgetsForHome={widgetsForHome}
+            onOpenHomeItem={async (tripId, itemId, epoch) => {
+              if (tripId !== requested || generation !== getAccountGeneration()) return;
+              const item = await (
+                await readTripJourneySnapshot()
+              ).resolveItem(tripId, itemId, epoch);
+              if (!item) throw new Error("HOME_ITEM_UNAVAILABLE");
+              await openHomeItem(item);
+            }}
           />
         ) : null}
         {today ? (
@@ -609,6 +680,7 @@ function TripContent({ today = false }: { today?: boolean }) {
       </ScrollView>
       {visibleOverlay?.read.observed ? (
         <DayFeed
+          instant={homePerspective?.now}
           projection={visibleOverlay.read.observed.projection}
           date={visibleOverlay.date}
           zone={visibleOverlay.zone}

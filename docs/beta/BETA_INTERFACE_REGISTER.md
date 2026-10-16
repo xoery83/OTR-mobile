@@ -1,5 +1,13 @@
 # OTR Beta — Cross-Module Interface Register
 
+## Trip Home V1.1 active ownership — 2026-10-16
+
+- Baseline580a148; Coordinator owns Widget business readers, qualification, ordering and navigation. Preparation and Today builders have separate new-file ownership; shared LocalTripWorkspace/TripScreen/catalogs stay with Coordinator until functional handoff.
+- Experience Session `01a13d3f-438f-7e00-883d-be75f1d87b3d` confirmed cross-session receipt, no current writer/Native QA. Visual work starts only from the integrated exact SHA and explicit file handoff.
+- HOME02 Preparation design-file blocker closed with verified original; no product redesign. Existing accepted Core/Day/Ledger readers remain authoritative. Recent Imports/Review promotion excluded until owning interfaces exist.
+- Destination root has nullable single-string `destination`, create/read round-trip and local built-in cover selection. No Trip Basic Information update command or existing complete editor found in current domain/Repository/routes. Auto/manual provenance and priority fields absent. Do not substitute cover-only editing or invent an enabled editor. Owning update/permission interface is the remaining editor capability gap; no new schema/inference authorized.
+- See `../ops/TRIP_HOME_V11_MATERIALS_20261016.json`; functional tests are distinct from real render/Native acceptance.
+
 ## Current owning boundaries after Push91 — 2026-10-15 NZDT
 
 Production code baseline **3f6e9b9fc9e03f69870749a6b4d2f971c25f86fe (Push91)**; this records-only publication changes no runtime code (its Git tip is recorded in `/private/tmp/otr-beta-records-intake-92-source61/push-receipt.json`); index empty and original dirtysix preserved. Source SQLite registry is63; Camera64 is an isolated forward reservation, not a device-schema claim. Full real Create→accepted Day→Offline **0**; full-L1/protected ready requests **0**; current stable Owner prototype READY **0**. Root product code0, prior technical scopes39/solicited Owner responses10 unchanged; no new manual intervention counted this cycle.
