@@ -1,3 +1,28 @@
+# C4-RB / Flight Partial integration checkpoint — 2026-10-17
+
+- Main/origin0c27117 includes the three explicitly approved commits; current
+  isolated Coordinator candidate includes reviewed authenticated Capture Processing
+  seam99ad739, Provider throughd2f5b25 and Source0390b78. No new push/deployment.
+- Provider real SQLite CAS/disclosure regression and retained-raw UNKNOWN recovery
+  independently PASS. Semantic cost-pinning/usage compatibility remains owning work;
+  current protected profile/config/issuer/metering activation is NOT Runtime PASS.
+- Backend HTTP + normal authenticated Native transport + C3 Repository method seam
+  independently37tests PASS; default port CLOSED. Backend/profile/SQL/workload/key/
+  approved budget and real persisted issuer composition are not installed. DEV
+  image012f2d remains healthy; expired Capture metadata not recreated.
+- Source /2 exact Linux extraction, registration/seal/Coreproof and Native derived
+  text code independently reviewed:51tests+3worker checks PASS (one optional skip).
+  Formal worker DEV channel, Source acquisition, Booking-purpose and usable Review
+  remain blocked; custody is not Source authority. No Docker socket grant.
+- FP-02A Owner approved isolated implementation: fe73a7c new sparse proof module,
+  independent46tests PASS; production wiring not complete. Separate isolated owning
+  compatibility/integration assessment is active; physicalV2 unchanged.
+- FP-03A Owner approved diagnostic PROPOSED_ONLY Reader plus B1 feasibility only;
+  isolated implementation active. No confirmed relation/schema/P2 writer. P2 lead
+  departure placement direction approved; occurrence/dedup contract still required.
+- Original A1A/AD5/418, C2/C3 PASS and Workbench49184 retained; no new real Provider
+  invocation, Storage operation, Hosted SQL or Canonical/Admission write.
+
 # Source PDF /2 Linux implementation candidate — 2026-10-17
 
 - Fixed linux/amd64 qpdf/Poppler isolated producer ran original NZ5069: bytes/SHA
