@@ -18,7 +18,13 @@ import { tripCoreSha256Hex } from "./tripCoreSha256";
 import type { ObservedCoreFlightProjection } from "./tripCoreV2DayFeedRepository";
 import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
 
+import {
+  createTripLocalManualReader,
+  type LocalManualRead,
+} from "./tripLocalManualReadRepository";
+
 type Dependencies = {
+  localManual?: (id: string) => Promise<LocalManualRead | null>;
   account: () => Promise<string>;
   projection: (id: string) => Promise<ObservedDayProjection | null>;
   coreProjection?: (id: string) => Promise<ObservedCoreFlightProjection | null>;
@@ -42,8 +48,25 @@ export function createTripDayFeedReader(deps: Dependencies) {
       const scope = await captureAccountScope(deps.account);
       const observed =
         (await deps.coreProjection?.(tripId)) ?? (await deps.projection(tripId));
+      let localManual: LocalManualRead | null = null;
+      let localManualStatus: "AVAILABLE" | "NONE" | "UNAVAILABLE" = "NONE";
+      try {
+        localManual = (await deps.localManual?.(tripId)) ?? null;
+        if (localManual) localManualStatus = "AVAILABLE";
+      } catch {
+        await assertAccountRequestContext(scope, deps.account);
+        localManualStatus = "UNAVAILABLE";
+      }
       await assertAccountRequestContext(scope, deps.account);
-      if (!observed) return { scope, observed: null, services: {} };
+      if (
+        localManual &&
+        (localManual.scope.accountId !== scope.accountId ||
+          localManual.scope.generation !== scope.generation ||
+          localManual.scope.tripId !== tripId)
+      )
+        throw new Error("DAY_FEED_SCOPE");
+      if (!observed)
+        return { scope, observed: null, services: {}, localManual, localManualStatus };
       if (
         observed.projection.accountId !== scope.accountId ||
         observed.projection.tripId !== tripId
@@ -65,7 +88,7 @@ export function createTripDayFeedReader(deps: Dependencies) {
         await assertAccountRequestContext(scope, deps.account);
       }
       await assertAccountRequestContext(scope, deps.account);
-      return { scope, observed, services };
+      return { scope, observed, services, localManual, localManualStatus };
     },
   };
 }
@@ -83,6 +106,7 @@ export async function readTripDayFeed() {
     account: requireActiveUserId,
     projection: days.getProjection,
     coreProjection: createCoreP6DayFeedReader(core),
+    localManual: createTripLocalManualReader(database, requireActiveUserId, core),
     candidates: ledger.listJourneys,
     services: async (scope, observed) =>
       withAccountApplyGate(async () => {

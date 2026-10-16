@@ -740,20 +740,23 @@ export function createTripCoreV2Repository(
       });
     });
   }
-  async function projection(ctx: AccountRequestContext, actor: CoreActor) {
+  async function projection(
+    ctx: AccountRequestContext,
+    actor: CoreActor,
+    committed?: ReadonlySet<string>,
+    certifiedBase = true,
+  ) {
     if (actor.accountId !== ctx.accountId || actor.tripId !== ctx.tripId)
       throw new Error("CORE_SCOPE_MISMATCH");
     const graph = await readGraph(ctx);
-    const cert = await database.getFirstAsync<{
-      applied_generation: number;
-      roster_hash: string;
-    }>(
-      "SELECT applied_generation,roster_hash FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+    const cert = await database.getFirstAsync<CoreAcceptedCertificate>(
+      "SELECT * FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
       ctx.accountId,
       ctx.tripId,
     );
+    if (committed && !certifiedBase) Object.assign(graph, emptyCoreGraph());
     let participatingPersonIds: string[] = [];
-    if (cert) {
+    if (cert && (!committed || certifiedBase)) {
       const bindings = await database.getAllAsync<{
         person_id: string;
         linked_account_id: string | null;
@@ -782,6 +785,7 @@ export function createTripCoreV2Repository(
     const predictedIds = new Set<string>();
     for (const intent of await pending(ctx)) {
       if (
+        (committed && !committed.has(intent.command.operationId)) ||
         intent.state === "CONFLICT" ||
         intent.state === "REVIEW" ||
         intent.command.admission.mode !== "MANUAL"
@@ -806,6 +810,73 @@ export function createTripCoreV2Repository(
     }
     await assertContext(ctx);
     return { graph, cert, predictedIds, participatingPersonIds };
+  }
+  // Read-only local authority: only durable MANUAL intents with their owning queue pin.
+  async function manualReadSnapshot(
+    ctx: AccountRequestContext,
+    actor: CoreActor,
+    certifiedBase = false,
+  ) {
+    await assertContext(ctx);
+    const rows = await database.getAllAsync<{
+      operation_id: string;
+      canonical_intent_text: string;
+      intent_sha256: string;
+      state: string;
+      queue_id: string | null;
+      payload_json: string | null;
+      entity_id: string | null;
+      idempotency_key: string | null;
+    }>(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,i.state,
+       op.id AS queue_id,op.payload_json,op.entity_id,op.idempotency_key
+       FROM trip_core_pending_intents i LEFT JOIN sync_operations op
+       ON op.id=i.queue_operation_id AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
+       AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND'
+       AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')
+       WHERE i.account_id=? AND i.trip_id=? AND i.reconciled_revision IS NULL
+       AND i.state IN ('BLOCKED','PENDING','IN_FLIGHT') ORDER BY i.created_at,i.operation_id`,
+      ctx.accountId,
+      ctx.tripId,
+    );
+    const operations: { operationId: string; sha256: string; state: string }[] = [];
+    for (const row of rows) {
+      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      if (command.admission.mode !== "MANUAL") continue;
+      if (
+        command.tripId !== ctx.tripId ||
+        command.operationId !== row.operation_id ||
+        row.queue_id !== row.operation_id ||
+        row.idempotency_key !== row.operation_id ||
+        row.entity_id !== command.target.id ||
+        row.payload_json !== row.canonical_intent_text ||
+        (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !==
+          row.intent_sha256
+      )
+        throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+      operations.push({
+        operationId: row.operation_id,
+        sha256: row.intent_sha256,
+        state: row.state,
+      });
+    }
+    const projected = await projection(
+      ctx,
+      actor,
+      new Set(operations.map((o) => o.operationId)),
+      certifiedBase,
+    );
+    const fingerprint = await coreHashValue(
+      "otr-local-manual-read-v1",
+      {
+        operations,
+        actor,
+        certificate: projected.cert ?? null,
+      },
+      hash,
+    );
+    await assertContext(ctx);
+    return { ...projected, operations, fingerprint };
   }
   async function item(ctx: AccountRequestContext, actor: CoreActor, itemId: string) {
     const p = await projection(ctx, actor);
@@ -866,6 +937,7 @@ export function createTripCoreV2Repository(
   return {
     captureContext,
     readGraph,
+    manualReadSnapshot,
     acceptedSnapshot,
     readTtr,
     guardTtrPublication,

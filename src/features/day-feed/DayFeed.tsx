@@ -1,3 +1,5 @@
+import { LocalManualDayFeed } from "./LocalManualDayFeed";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useLayoutEffect, useRef, useState } from "react";
 import {
   Modal,
@@ -57,7 +59,32 @@ function BlockSlot({
   return <Renderer {...props} />;
 }
 
-export function DayFeed({
+type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & {
+  projection?: DayProjection | CoreFlightDayProjection;
+  localManual?: LocalManualRead | null;
+  onOpenLocalItem?: (
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => void;
+};
+export function DayFeed(props: DayFeedProps) {
+  if (props.localManual)
+    return (
+      <LocalManualDayFeed
+        read={props.localManual}
+        date={props.date}
+        dates={props.dates}
+        projection={props.projection}
+        zone={props.zone}
+        onOpenItem={props.onOpenLocalItem}
+        emptyMessage={props.emptyMessage}
+      />
+    );
+  if (!props.projection) return null;
+  return <AcceptedDayFeed {...props} projection={props.projection} />;
+}
+
+function AcceptedDayFeed({
   projection,
   date,
   dates,

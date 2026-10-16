@@ -10,7 +10,7 @@ import {
   type createTripTodaysJourneyReader,
 } from "@/data/repositories/tripTodaysJourneyRepository";
 import { UiButton, UiText as Text } from "@/ui/controls";
-import { formatUiDate } from "@/ui/locale";
+import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -19,6 +19,13 @@ import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
 
 type Reader = ReturnType<typeof createTripTodaysJourneyReader>;
 export type TodaysJourneyRead = NonNullable<Awaited<ReturnType<Reader["read"]>>>;
+export type LocalTodaysJourneyRead = NonNullable<
+  Awaited<ReturnType<Reader["readLocal"]>>
+>;
+type AnyTodayRead = TodaysJourneyRead | LocalTodaysJourneyRead;
+function localRead(value: AnyTodayRead): value is LocalTodaysJourneyRead {
+  return "kind" in value.source && value.source.kind === "LOCAL_MANUAL_COMMITTED";
+}
 type Item = NonNullable<Awaited<ReturnType<Reader["resolveItem"]>>>;
 export type TodaysJourneyCopy = {
   title: string;
@@ -38,6 +45,12 @@ export type TodaysJourneyWidgetProps = {
   // Only the owning, identity-guarded DEV Reference perspective supplies this.
   now?: string;
   copy: TodaysJourneyCopy;
+  refreshKey?: number;
+  onOpenLocalItem?: (
+    item: NonNullable<Awaited<ReturnType<Reader["resolveLocalItem"]>>>,
+  ) => Promise<void> | void;
+  onOpenDayChooser?: () => Promise<void> | void;
+  onOpenLocalToday?: (read: LocalTodaysJourneyRead) => Promise<void> | void;
   onOpenToday: (read: TodaysJourneyRead) => Promise<void> | void;
   onOpenItem: (item: Item) => Promise<void> | void;
 };
@@ -61,6 +74,10 @@ export function TodaysJourneyWidget({
   now,
   copy,
   onOpenToday,
+  onOpenLocalToday,
+  onOpenLocalItem,
+  onOpenDayChooser,
+  refreshKey = 0,
   onOpenItem,
 }: TodaysJourneyWidgetProps) {
   useUiLocale();
@@ -69,9 +86,9 @@ export function TodaysJourneyWidget({
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const readKey = `${tripId}/${zone}/${now ?? ""}`;
+  const readKey = `${tripId}/${zone}/${now ?? ""}/${refreshKey}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const [read, setRead] = useState<TodaysJourneyRead | null>(null);
+  const [read, setRead] = useState<AnyTodayRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const request = useRef(0);
   const clock = useCallback(
@@ -81,7 +98,9 @@ export function TodaysJourneyWidget({
   const load = useCallback(async () => {
     const ticket = ++request.current;
     try {
-      const value = await (await readTripTodaysJourney()).read(tripId, clock());
+      const reader = await readTripTodaysJourney();
+      const value =
+        (await reader.readLocal(tripId, clock())) ?? (await reader.read(tripId, clock()));
       if (ticket !== request.current || generation !== getAccountGeneration()) return;
       setLoadedKey(readKey);
       setRead(value);
@@ -127,20 +146,31 @@ export function TodaysJourneyWidget({
     try {
       const reader = await readTripTodaysJourney();
       if (itemId) {
-        const item = await reader.resolveItem(tripId, itemId, visible, clock());
-        if (!item) throw new Error("TODAY_ITEM_UNAVAILABLE");
-        if (ticket === request.current && generation === getAccountGeneration())
-          await onOpenItem(item);
+        if (localRead(visible)) {
+          const item = await reader.resolveLocalItem(tripId, itemId, visible);
+          if (!item || !onOpenLocalItem) throw new Error("TODAY_ITEM_UNAVAILABLE");
+          if (ticket === request.current && generation === getAccountGeneration())
+            await onOpenLocalItem(item);
+        } else {
+          const item = await reader.resolveItem(tripId, itemId, visible, clock());
+          if (!item) throw new Error("TODAY_ITEM_UNAVAILABLE");
+          if (ticket === request.current && generation === getAccountGeneration())
+            await onOpenItem(item);
+        }
       } else {
-        const current = await reader.read(tripId, clock());
+        const current = localRead(visible)
+          ? await reader.readLocal(tripId, clock())
+          : await reader.read(tripId, clock());
         if (
           !current ||
           current.scope.accountId !== visible.scope.accountId ||
           JSON.stringify(current.source) !== JSON.stringify(visible.source)
         )
           throw new Error("TODAY_HEADER_UNAVAILABLE");
-        if (ticket === request.current && generation === getAccountGeneration())
-          await onOpenToday(current);
+        if (ticket === request.current && generation === getAccountGeneration()) {
+          if (localRead(current)) await onOpenLocalToday?.(current);
+          else await onOpenToday(current);
+        }
       }
     } catch {
       if (ticket === request.current && generation === getAccountGeneration()) {
@@ -168,6 +198,9 @@ export function TodaysJourneyWidget({
             <TodayRow
               item={visible.today.primary}
               zone={visible.today.zone}
+              pending={
+                localRead(visible) && visible.today.primary.certificateGeneration === 0
+              }
               onOpen={open}
             />
           ) : null}
@@ -179,6 +212,7 @@ export function TodaysJourneyWidget({
                   key={item.itemRef}
                   item={item}
                   zone={visible.today.zone}
+                  pending={localRead(visible) && item.certificateGeneration === 0}
                   onOpen={open}
                 />
               ))}
@@ -191,6 +225,10 @@ export function TodaysJourneyWidget({
                 <TodayRow
                   item={visible.today.tonight}
                   zone={visible.today.zone}
+                  pending={
+                    localRead(visible) &&
+                    visible.today.tonight.certificateGeneration === 0
+                  }
                   onOpen={open}
                 />
               }
@@ -209,8 +247,15 @@ export function TodaysJourneyWidget({
         <UiButton
           label={copy.openToday}
           onPress={() => void open()}
-          disabled={!visible}
+          disabled={!visible || (localRead(visible) && !onOpenLocalToday)}
         />
+        {!visible && onOpenDayChooser ? (
+          <UiButton
+            label={t("tripHome.preparation.day")}
+            variant="secondary"
+            onPress={() => void onOpenDayChooser()}
+          />
+        ) : null}
       </View>
     </View>
   );
@@ -219,7 +264,9 @@ function TodayRow({
   item,
   zone,
   onOpen,
+  pending = false,
 }: {
+  pending?: boolean;
   item: CoreDayRow;
   zone: string;
   onOpen: (id: string) => Promise<void>;
@@ -237,6 +284,7 @@ function TodayRow({
         <Text style={styles.item} numberOfLines={2}>
           {item.title}
         </Text>
+        {pending ? <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text> : null}
         {item.displayTime?.instant && item.displayTime.comparable ? (
           <Text style={styles.meta}>{formatTime(item.displayTime.instant, zone)}</Text>
         ) : null}

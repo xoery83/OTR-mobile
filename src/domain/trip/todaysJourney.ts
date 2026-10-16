@@ -21,9 +21,26 @@ export function selectTodaysJourney(
   if (!clock.zone || clock.zone !== clock.zone.trim() || /^[+-]/.test(clock.zone))
     return null;
   const date = localCalendarDate(clock.now, clock.zone);
-  const now = instantMicroseconds(clock.now);
   const query = projection.query(date, clock.zone);
-  const eligible = query.coreRows.filter(
+  return selectTodaysJourneyRows(query.coreRows, clock.now, date, clock.zone, (id) => {
+    const event = projection.events.find((event) => event.id === id);
+    return {
+      from: event?.boundaries.find((b) => b.role === "START")?.local_date,
+      until: event?.boundaries.find((b) => b.role === "END")?.local_date,
+    };
+  });
+}
+
+// Both accepted Day and committed local manual Day use the same selection rules.
+export function selectTodaysJourneyRows(
+  coreRows: CoreDayRow[],
+  nowText: string,
+  date: string,
+  zone: string,
+  stayCoverage: (id: string) => { from?: string | null; until?: string | null },
+): TodaysJourney {
+  const now = instantMicroseconds(nowText);
+  const eligible = coreRows.filter(
     (row) => row.family !== "P3" && !["cancelled", "skipped"].includes(row.status),
   );
   const trustedUpcoming = (row: CoreDayRow) =>
@@ -40,7 +57,7 @@ export function selectTodaysJourney(
         eligible.find((row) => row.itemRef === id && trustedUpcoming(row)) ??
         eligible.find((row) => row.itemRef === id)!,
     )
-    .sort((a, b) => query.coreRows.indexOf(a) - query.coreRows.indexOf(b));
+    .sort((a, b) => coreRows.indexOf(a) - coreRows.indexOf(b));
   const upcoming = rows.filter(trustedUpcoming).sort((a, b) => {
     const left = instantMicroseconds(a.displayTime!.instant!);
     const right = instantMicroseconds(b.displayTime!.instant!);
@@ -48,17 +65,15 @@ export function selectTodaysJourney(
   })[0];
   const primary = upcoming ?? rows[0] ?? null;
   const start = primary ? rows.indexOf(primary) + 1 : 0;
-  const stays = query.coreRows.filter((row, index, all) => {
+  const stays = coreRows.filter((row, index, all) => {
     if (row.family !== "P3" || all.findIndex((r) => r.itemRef === row.itemRef) !== index)
       return false;
-    const event = projection.events.find((event) => event.id === row.itemRef);
-    const from = event?.boundaries.find((b) => b.role === "START")?.local_date;
-    const until = event?.boundaries.find((b) => b.role === "END")?.local_date;
+    const { from, until } = stayCoverage(row.itemRef);
     return !!from && !!until && from <= date && date < until;
   });
   return {
     date,
-    zone: clock.zone,
+    zone,
     primary,
     primaryKind: upcoming ? "UPCOMING" : primary ? "PLANS" : "FREE",
     later: rows.slice(start, start + 3),
