@@ -131,9 +131,6 @@ export function TripHomeFinanceWidget({
     });
   return (
     <View style={styles.content}>
-      <UiText accessibilityRole="header" style={styles.heading}>
-        {t("ledger.spending")}
-      </UiText>
       <View style={styles.metrics}>
         {[
           { label: t("ui.groupSpending"), summary: group },
@@ -175,7 +172,7 @@ export function TripHomeFinanceWidget({
       {group.openConflictCount ? (
         <UiText style={styles.secondary}>{t("ui.changesNeedReview")}</UiText>
       ) : null}
-      <UiText style={styles.heading}>{formatExpenseCount(data.expenseCount)}</UiText>
+      <UiText style={styles.secondary}>{formatExpenseCount(data.expenseCount)}</UiText>
       {data.categories.map(({ category, count }) => (
         <View key={category} style={styles.category}>
           <UiText style={styles.body}>{categoryLabel(category)}</UiText>
@@ -275,9 +272,8 @@ export function TripHomeFinanceWidget({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    content: { flex: 1, gap: visual.space.card },
+    content: { gap: visual.space.card },
     actions: {
-      marginTop: "auto",
       paddingTop: visual.space.card,
       flexDirection: "row",
       flexWrap: "wrap",

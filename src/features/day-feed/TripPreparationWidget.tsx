@@ -156,13 +156,12 @@ export function TripPreparationWidget({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     widget: {
-      flex: 1,
       gap: visual.space.card,
     },
     heading: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
     metric: { ...visual.type.metric, color: c.textPrimary },
-    empty: { flexGrow: 1, justifyContent: "center", gap: visual.space.section },
+    empty: { gap: visual.space.card },
     startAction: { minHeight: 88, justifyContent: "center" },
     counts: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.section },
     count: { alignItems: "center", gap: 4, flexBasis: "28%", flexGrow: 1 },
@@ -180,6 +179,5 @@ const createStyles = (c: UiColors) =>
       flexDirection: "row",
       flexWrap: "wrap",
       gap: visual.space.card,
-      marginTop: "auto",
     },
   });

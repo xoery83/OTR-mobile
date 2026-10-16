@@ -182,6 +182,7 @@ it("omits NoData, keeps all-incomplete unavailable instead of zero, and preserve
   expect(html).toContain("ui.waitingForConfirmedJourneyCurrencyValue");
   expect(html).toContain("analysis.excludedDescription:1");
   expect(html).not.toContain("Add Expense");
+  expect(html).not.toContain("ledger.spending");
 });
 it("uses only current actor/Journey/generation cached Settlement in Past, no history, recent list or settled assertion", () => {
   const data = snapshot(0);

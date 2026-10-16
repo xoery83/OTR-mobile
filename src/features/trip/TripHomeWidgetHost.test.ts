@@ -19,7 +19,12 @@ vi.mock("react", async (importOriginal) => ({
   useState: (initial: any) => {
     const at = state.cursor++;
     if (!(at in state.values)) state.values[at] = initial;
-    return [state.values[at], (value: any) => (state.values[at] = value)];
+    return [
+      state.values[at],
+      (value: any) =>
+        (state.values[at] =
+          typeof value === "function" ? value(state.values[at]) : value),
+    ];
   },
   useRef: () => ({ current: { scrollTo: state.scrollTo } }),
   useEffect: (fn: () => void) => state.effects.push(fn),
@@ -54,7 +59,7 @@ vi.mock("@/ui/forms", () => ({
     return createElement("button", { "aria-pressed": p.selected }, p.label);
   },
 }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create({}) }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("react-native-safe-area-context", () => ({
@@ -89,6 +94,13 @@ it("has a plain truthful zero-widget fallback without tags, pager or invented mo
   expect(state.nodes).toHaveLength(0);
   expect(state.scrollTo).not.toHaveBeenCalled();
 });
+it("renders one widget directly without a selector or a pager", () => {
+  const html = render([{ id: "only", title: "Only widget", content: "Actual content" }]);
+  expect(html).toContain("Actual content");
+  expect(html).not.toContain("Only widget");
+  expect(state.nodes.some((p) => p.pagingEnabled || p.horizontal)).toBe(false);
+  expect(state.nodes[0].style.minHeight).toBeUndefined();
+});
 it("keeps named tag selection synchronized with manual swipe and stable qualified IDs", () => {
   const pages = [
     { id: "a", title: "Approved A", content: "Content A" },
@@ -112,9 +124,50 @@ it("keeps named tag selection synchronized with manual swipe and stable qualifie
   render([...pages].reverse());
   expect(state.nodes.find((p) => p.label === "Approved A").selected).toBe(true);
   render([pages[1]]);
-  expect(state.nodes.find((p) => p.label === "Approved B").selected).toBe(true);
+  expect(state.nodes.some((p) => p.label)).toBe(false);
   render(pages);
   expect(state.nodes.find((p) => p.label === "Approved B").selected).toBe(true);
+});
+it("fits each selected page to its natural height and remeasures after width or text changes", () => {
+  const pages = [
+    { id: "rich", title: "Preparation", content: "Rich real content" },
+    { id: "short", title: "Spending", content: "One expense" },
+  ];
+  const pager = () => state.nodes.find((p) => p.pagingEnabled);
+  const page = (index: number) =>
+    state.nodes.filter((p) => p.importantForAccessibility)[index];
+  const height = () => pager().style.find((s: any) => s?.height !== undefined)?.height;
+  render(pages);
+  pager().onLayout({ nativeEvent: { layout: { width: 380 } } });
+  render(pages);
+  page(0).onLayout({ nativeEvent: { layout: { height: 610 } } });
+  page(1).onLayout({ nativeEvent: { layout: { height: 210 } } });
+  render(pages);
+  expect(height()).toBe(610);
+  expect(page(0).accessibilityElementsHidden).toBe(false);
+  expect(page(1).accessibilityElementsHidden).toBe(true);
+  state.nodes.find((p) => p.label === "Spending").onPress();
+  render(pages);
+  expect(height()).toBe(210);
+  page(1).onLayout({ nativeEvent: { layout: { height: 245 } } });
+  render(pages);
+  expect(height()).toBe(245);
+  state.window.fontScale = 2;
+  render(pages);
+  expect(height()).toBeUndefined();
+  page(1).onLayout({ nativeEvent: { layout: { height: 410 } } });
+  render(pages);
+  expect(height()).toBe(410);
+  pager().onLayout({ nativeEvent: { layout: { width: 640 } } });
+  render(pages);
+  expect(height()).toBeUndefined();
+  page(1).onLayout({ nativeEvent: { layout: { height: 300 } } });
+  render(pages);
+  expect(height()).toBe(300);
+  pager().onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: 0 } } });
+  render(pages);
+  expect(state.nodes.find((p) => p.label === "Preparation").selected).toBe(true);
+  expect(height()).toBeUndefined();
 });
 it("renders truthful hero metadata and only actual supplied module/edit capabilities", () => {
   const html = renderToStaticMarkup(

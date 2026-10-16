@@ -217,7 +217,6 @@ export function JourneySnapshotWidget({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     widget: {
-      flex: 1,
       gap: visual.space.section,
     },
     heading: { ...visual.type.section, color: c.textPrimary },
@@ -231,7 +230,6 @@ const createStyles = (c: UiColors) =>
     metric: { ...visual.type.metric, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
     cloud: {
-      flexGrow: 1,
       flexDirection: "row",
       flexWrap: "wrap",
       alignItems: "center",
