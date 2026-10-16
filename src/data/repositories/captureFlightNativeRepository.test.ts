@@ -625,3 +625,77 @@ it("reassignment cannot silently allocate replacement import identities in the s
     .get()!;
   expect(JSON.parse(row.identities_json as string)).toEqual(first.identities);
 });
+async function independentLinuxBatch(f: Awaited<ReturnType<typeof fixture>>) {
+  const batch = await admittedPdfBatch(f);
+  const material = batch.request.materials[0];
+  // Distinct genuine text identity protocol fixture; original bytes remain unchanged.
+  material.text += "\n";
+  const hash = createHash("sha256").update(material.text).digest("hex");
+  const count = new TextEncoder().encode(material.text).length;
+  material.pin.payload_sha256 = hash;
+  material.pin.byte_count = count;
+  Object.assign(batch.catalog.trip_source_representations[1], {
+    text_content: material.text,
+    payload_sha256: hash,
+    byte_count: count,
+    transform_key: "otr.pdf.qpdf-poppler",
+    transform_version: "2",
+  });
+  await bindFlightBatch(batch);
+  return batch;
+}
+it("uses independently registered Linux text spans without reusing PDFKit text identity", async () => {
+  const f = await fixture(),
+    batch = await independentLinuxBatch(f);
+  const result = await f
+    .native()
+    .build(await f.context(), f.capture.id, f.capture.revision, batch);
+  expect(result.set.candidates).toHaveLength(2);
+  expect(result.built.publication.sourceId).toBe(
+    batch.request.materials[0].pin.source_id,
+  );
+  for (const evidence of result.built.publication.evidence)
+    expect(evidence.locator.end!).toBeLessThanOrEqual(
+      batch.request.materials[0].pin.byte_count,
+    );
+  expect(f.count("trip_sources")).toBe(0);
+  expect(f.count("trip_core_itinerary_events")).toBe(0);
+  f.reopen();
+  expect(
+    await f.native().build(await f.context(), f.capture.id, f.capture.revision, batch),
+  ).toEqual(result);
+});
+it.each(["text", "hash", "count", "source", "parent", "version", "limit"])(
+  "rejects independent derivative %s mismatch before Candidate preparation",
+  async (failure) => {
+    const f = await fixture(),
+      batch = await independentLinuxBatch(f);
+    const derived = batch.catalog.trip_source_representations[1];
+    if (failure === "text") derived.text_content += "changed";
+    if (failure === "hash") derived.payload_sha256 = "a".repeat(64);
+    if (failure === "count") derived.byte_count = (derived.byte_count ?? 0) + 1;
+    if (failure === "source") derived.source_id = randomUUID();
+    if (failure === "parent") derived.parent_ids = [randomUUID()];
+    if (failure === "version") derived.transform_version = "unknown";
+    if (failure === "limit") {
+      const text = "é".repeat(140000),
+        count = Buffer.byteLength(text),
+        hash = createHash("sha256").update(text).digest("hex");
+      batch.request.materials[0].text = text;
+      Object.assign(batch.request.materials[0].pin, {
+        byte_count: count,
+        payload_sha256: hash,
+      });
+      Object.assign(derived, {
+        text_content: text,
+        byte_count: count,
+        payload_sha256: hash,
+      });
+    }
+    await expect(
+      f.native().build(await f.context(), f.capture.id, f.capture.revision, batch),
+    ).rejects.toThrow("NATIVE_FLIGHT_SOURCE_ADMISSION_REQUIRED");
+    expect(f.count("trip_sources")).toBe(0);
+    expect(f.count("trip_core_itinerary_events")).toBe(0);
+  },
+);

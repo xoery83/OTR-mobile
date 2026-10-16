@@ -32,7 +32,17 @@ export async function validateFlightPdfExtraction(
   original: { sha256: string; byteCount: number },
   hash: CaptureSha256,
 ) {
-  const extraction = flightPdfExtractionSchema.parse(raw);
+  return validatePdfExtractionContent(
+    flightPdfExtractionSchema.parse(raw),
+    original,
+    hash,
+  );
+}
+
+// Engine allowlists remain at each owning parser boundary; content proof is shared.
+export async function validatePdfExtractionContent<
+  T extends Omit<FlightPdfExtraction, "engine"> & { engine: string },
+>(extraction: T, original: { sha256: string; byteCount: number }, hash: CaptureSha256) {
   if (
     extraction.originalSha256 !== original.sha256 ||
     extraction.originalByteCount !== original.byteCount

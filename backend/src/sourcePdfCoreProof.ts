@@ -1,3 +1,4 @@
+import { readSourcePdfV2CoreProof } from "./sourcePdfV2CoreProof";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import { sourcePdfSealSchema } from "../../src/domain/trip/sourcePdfAuthority";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
@@ -40,6 +41,15 @@ export async function readSourcePdfCoreProof(
     )
   ).rows;
   if (rows.length !== 1) throw new Error("CONTRACT_UNSUPPORTED");
+  if ((rows[0].body as { derivativeVersion?: unknown })?.derivativeVersion === 2)
+    return readSourcePdfV2CoreProof(
+      lease,
+      catalog,
+      representationId,
+      hash,
+      historical,
+      expectedSha,
+    );
   const body = sourcePdfSealSchema.parse(rows[0].body),
     q = body.request;
   const original = (

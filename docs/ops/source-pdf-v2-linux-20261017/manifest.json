@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_REVIEW_CANDIDATE_NOT_AUTHORIZED_DEPLOYMENT",
+  "baseline": "0c2711712fd2a730f87402607ef492056574f463",
+  "workerImage": "sha256:d27ddd7b09410b0a3b220b2768c0f6b2b25c32da528a42041bc50ea19eefc1b7",
+  "profileSha256": "ca5a7b63bda8ed5c5b9018b82fbbd14c1a01f054a37b1c2ed76445152b36539c",
+  "files": {
+    "scripts/source-pdf-v2-linux/worker.mjs": "838e585d3d00f73e5c978e5fbead853a6359489a0c25bfafe167c5fece64aeb8",
+    "scripts/source-pdf-v2-linux/profile.mjs": "ad13e5d6a752f73ede51605d1d7d741272b8a6a2973d7a169ec52c7feb91cc3e",
+    "scripts/source-pdf-v2-linux/Dockerfile": "383a6f76f0e4419117f6c93229f407058a55f9954a36852d4cdea5eeb081db29",
+    "scripts/source-pdf-v2-linux/extract.mjs": "61d8347a6b4e0c4e3d26ec145109e16539588ea200e47aeac2e3fba3253699f1",
+    "scripts/source-pdf-v2-linux/profile.test.mjs": "362be9c329c9c7b8f7e5c38a61f7b34ed918d961f20b4ffc0eef74e6844f81a7",
+    "docs/ops/source-pdf-v2-linux-20261017/registration-authority-candidate.sql": "666f03c8da02b20633ff1980a636d9c72fcfbe076a776ba2388a90fbbeca2a8b",
+    "docs/ops/source-pdf-v2-linux-20261017/rollback-candidate.sql": "951da436c36870e170adbf0c67f8cef9f263a7f70b3bc8ca0a4902d75383dd72"
+  }
+}

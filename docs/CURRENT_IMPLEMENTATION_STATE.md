@@ -1,3 +1,17 @@
+# Source PDF /2 Linux implementation candidate — 2026-10-17
+
+- Fixed linux/amd64 qpdf/Poppler isolated producer ran original NZ5069: bytes/SHA
+  unchanged,1page/3347UTF8 bytes,2223ms. Generic aligned-column parser adapter4
+  now yields1 proposedBooking reference3M27HH+2segments; strictNEEDS_REVIEW remains.
+- Versioned Verify/Register/Seal, ordinary Core proof dispatch and Native exact
+  independent-Derived preparation implemented locally; preserved /1. SQL/rollback
+  fixed candidate passes disposable closed-gate/permissions/map checks only.
+- 176 targeted assertions/13files +3 worker-policy tests, types/lint/Backend build
+  PASS; one existing optional Native fixture skipped. No Hosted/Source/Candidate/
+  Review/Admission/Day Runtime claim. No Producer worker bound in DEV; no socket
+  permission added. Initial formal PDF acquisition/upload, Booking-purpose and
+  owning Review remain explicit gaps. See docs/ops/source-pdf-v2-linux-20261017/REPORT.md.
+
 # Workbench Remote inspection / Source local continuation — 2026-10-17
 
 - Reviewed Workbench/Validator candidate94f2f2c integrated c10679b. Inspect now

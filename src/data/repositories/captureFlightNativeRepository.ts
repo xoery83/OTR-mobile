@@ -198,6 +198,28 @@ export function createCaptureFlightNativeRepository(
     const derived = batch.catalog.trip_source_representations.find(
       (r) => r.id === ids.derivedRepresentationId,
     );
+    const localDerivationMatches =
+      derived?.transform_key === "apple-pdfkit" &&
+      derived.transform_version === "1" &&
+      material?.text === local.extraction.text &&
+      material.pin.payload_sha256 === local.extraction.textSha256 &&
+      material.pin.byte_count === local.extraction.textByteCount;
+    // An independent registered derivative has its own text identity and spans.
+    // Publication still requires the Backend's fresh Source/seal proof.
+    const independentDerivationMatches =
+      derived?.transform_key === "otr.pdf.qpdf-poppler" &&
+      derived.transform_version === "2" &&
+      derived.material_kind === "TEXT" &&
+      derived.byte_count !== null &&
+      derived.byte_count > 0 &&
+      derived.byte_count <= 262144 &&
+      typeof material?.text === "string" &&
+      material.text.length <= 262144 &&
+      material.text === derived.text_content &&
+      material.pin.payload_sha256 === derived.payload_sha256 &&
+      material.pin.byte_count === derived.byte_count &&
+      new TextEncoder().encode(material.text).length === derived.byte_count &&
+      (await sha256(new TextEncoder().encode(material.text))) === derived.payload_sha256;
     if (
       batch.request.materials.length !== 1 ||
       batch.batch_id !== ids.batchId ||
@@ -210,9 +232,7 @@ export function createCaptureFlightNativeRepository(
       material.pin.source_id !== ids.sourceId ||
       material.pin.representation_id !== ids.derivedRepresentationId ||
       material.pin.material_revision !== 1 ||
-      material.text !== local.extraction.text ||
-      material.pin.payload_sha256 !== local.extraction.textSha256 ||
-      material.pin.byte_count !== local.extraction.textByteCount ||
+      (!localDerivationMatches && !independentDerivationMatches) ||
       root?.source_id !== ids.sourceId ||
       root.role !== "ORIGINAL" ||
       root.material_kind !== "BINARY" ||
@@ -223,9 +243,7 @@ export function createCaptureFlightNativeRepository(
       derived.role !== "DERIVED" ||
       derived.material_kind !== "TEXT" ||
       derived.parent_ids.length !== 1 ||
-      derived.parent_ids[0] !== root.id ||
-      derived.transform_key !== "apple-pdfkit" ||
-      derived.transform_version !== "1"
+      derived.parent_ids[0] !== root.id
     )
       throw new Error("NATIVE_FLIGHT_SOURCE_ADMISSION_REQUIRED");
     const batchSha256 = await sha256(new TextEncoder().encode(json(batch)));

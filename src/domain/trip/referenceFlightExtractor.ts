@@ -14,7 +14,7 @@ import { canonicalEventJson, type Json } from "./eventIntentJson";
 export const REFERENCE_FLIGHT_DESCRIPTOR = {
   plugin_id: "otr-reference-flight",
   boundary_version: "otr-intelligence-v1",
-  adapter_version: "3",
+  adapter_version: "4",
   model_version: "NO_MODEL",
   execution_location: "DETERMINISTIC_LOCAL",
   capabilities: ["STRUCTURED_EXTRACTION", "BATCH_N_TO_M_EXTRACTION", "EVIDENCE_MAPPING"],
@@ -241,6 +241,48 @@ function localSpan(text: string, inputId: string, start: number, end: number) {
     region: null,
   };
 }
+type PrintedFlightCell = { raw: string; at: number; lineNumber: number };
+function flightTableCells(lines: RegExpMatchArray[], start: number): PrintedFlightCell[] {
+  const selected = lines
+    .slice(start, start + 16)
+    .map((row, offset) => ({ row, lineNumber: start + offset }))
+    .filter(({ row }) => row[0].trim())
+    .slice(0, 10);
+  const rows = selected.map(({ row }) => row);
+  const paired = rows.slice(0, 5).map((row, offset) => {
+    const pair = /^\s*(\S(?:.*?\S)?) {2,}(\S(?:.*?\S)?)\s*$/.exec(row[0]);
+    if (!pair) return null;
+    return [1, 2].map((column) => ({
+      raw: pair[column],
+      at:
+        row.index! +
+        (column === 1 ? row[0].indexOf(pair[column]) : row[0].lastIndexOf(pair[column])),
+      lineNumber: selected[offset].lineNumber,
+    }));
+  });
+  if (
+    paired.length === 5 &&
+    paired.every((row) => row !== null) &&
+    paired[0]![0].raw === "Departure" &&
+    paired[0]![1].raw === "Arrival"
+  ) {
+    const right = paired[0]![1].at - rows[0].index!;
+    if (
+      paired.every(
+        (row, offset) =>
+          row![1].at - rows[offset].index! === right &&
+          row![0].at - rows[offset].index! + row![0].raw.length <= right,
+      )
+    )
+      return [0, 1].flatMap((column) => paired.map((row) => row![column]));
+    return [];
+  }
+  return rows.map((row, offset) => ({
+    raw: row[0],
+    at: row.index!,
+    lineNumber: selected[offset].lineNumber,
+  }));
+}
 // Pure document grammar. No Trip, Source or representation identity is inferred here.
 export function parseReferenceFlightText(inputId: string, text: string) {
   const localItems: InterpretationItem[] = [];
@@ -288,19 +330,21 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       /^([A-Za-z][A-Za-z .'-]{0,127}) to ([A-Za-z][A-Za-z .'-]{0,127})$/.test(
         body.trim(),
       );
-    const table = placeRoute && lines.slice(lineNumber + 1, lineNumber + 11);
+    const table = placeRoute && flightTableCells(lines, lineNumber + 1);
     const tableLeg =
       table &&
       table.length === 10 &&
       [table[3], table[8]].every((l) =>
-        /^[A-Za-z][A-Za-z .'-]{0,127}$/.test(l[0].trim()),
+        /^[A-Za-z][A-Za-z .'-]{0,127}$/.test(l.raw.trim()),
       ) &&
-      /^Departure$/i.test(table[0][0].trim()) &&
-      /^Arrival$/i.test(table[5][0].trim()) &&
-      [table[1], table[6]].every((l) => /^\d{1,2}:\d{2}\s+(AM|PM)$/i.test(l[0].trim())) &&
+      /^Departure$/i.test(table[0].raw.trim()) &&
+      /^Arrival$/i.test(table[5].raw.trim()) &&
+      [table[1], table[6]].every((l) =>
+        /^\d{1,2}:\d{2}\s+(AM|PM)$/i.test(l.raw.trim()),
+      ) &&
       [table[2], table[7]].every((l) =>
         /^(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+)?\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i.test(
-          l[0].trim(),
+          l.raw.trim(),
         ),
       );
     if (!tableLeg) tableMarker = undefined;
@@ -399,6 +443,12 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       add("origin.local_date", raw, line.index! + body.indexOf(raw));
     }
     if (tableLeg && table) {
+      for (
+        let index = lineNumber + 1;
+        index <= Math.max(...table.map((cell) => cell.lineNumber));
+        index++
+      )
+        consumed.add(index);
       const route = body.trim();
       add("origin.place_label", route, line.index! + body.indexOf(route));
       add("destination.place_label", route, line.index! + body.indexOf(route));
@@ -407,26 +457,26 @@ export function parseReferenceFlightText(inputId: string, text: string) {
         ["destination", 8],
       ] as const) {
         const entry = table[index],
-          raw = entry[0].trim();
-        add(`${role}.place_label`, raw, entry.index! + entry[0].indexOf(raw));
+          raw = entry.raw.trim();
+        add(`${role}.place_label`, raw, entry.at + entry.raw.indexOf(raw));
       }
       for (const [role, index] of [
         ["origin", 4],
         ["destination", 9],
       ] as const) {
         const entry = table[index],
-          raw = entry[0].trim();
+          raw = entry.raw.trim();
         if (/^[A-Z]{3}$/.test(raw))
-          add(`${role}.airport`, raw, entry.index! + entry[0].indexOf(raw));
+          add(`${role}.airport`, raw, entry.at + entry.raw.indexOf(raw));
       }
-      for (let index = 0; index < table.length; index++) {
-        consumed.add(lineNumber + 1 + index);
-        if (
-          [0, 5].includes(index) ||
-          ([4, 9].includes(index) && !/^[A-Z]{3}$/.test(table[index][0].trim()))
+      table
+        .filter(
+          (entry, index) =>
+            [0, 5].includes(index) ||
+            ([4, 9].includes(index) && !/^[A-Z]{3}$/.test(entry.raw.trim())),
         )
-          ignore(table[index].index!, table[index].index! + table[index][0].length);
-      }
+        .sort((a, b) => a.at - b.at)
+        .forEach((entry) => ignore(entry.at, entry.at + entry.raw.length));
       for (const [role, clockIndex, dateIndex] of [
         ["origin", 1, 2],
         ["destination", 6, 7],
@@ -436,9 +486,9 @@ export function parseReferenceFlightText(inputId: string, text: string) {
           [dateIndex, `${role}.local_date`],
         ] as const) {
           const entry = table[index];
-          const raw = entry[0].trim();
-          add(path, raw, entry.index! + entry[0].indexOf(raw));
-          consumed.add(lineNumber + 1 + index);
+          const raw = entry.raw.trim();
+          add(path, raw, entry.at + entry.raw.indexOf(raw));
+          consumed.add(table[index].lineNumber);
         }
       }
     }
