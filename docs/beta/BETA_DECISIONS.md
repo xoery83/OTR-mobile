@@ -1,5 +1,11 @@
 # OTR Beta — Unified Decisions and Scope Baseline
 
+## TIME-01 V1.1 — Owner product baseline / 2026-10-16
+
+Approved [original V1.1](../trip/contracts/OTR_TIME_01_CONTEXTUAL_TIMEZONE_FLOATING_TIME_PRODUCT_DELTA_V1_1_2026-10-16.md); SHA-256 `53d8319fb0c4a791a56cbb5a6214ec30822c092e692bcd61073477a3ea2ad150`. Replaces the initial TIME-01 draft. Preserve D1 endpoint-local single Transport Item/no automatic Arrival Continuation; D2 explicit plan order/Floating stable position; D3 trustworthy travel context/explicit planning-date fallback; D4 risk-proportionate reminders with reliable unique time for high risk. Missing Trip zone is not a lawful Item display veto. Preserve the document's distinction between approved direction and proposed implementation details.
+
+Current authority: independent read-only cross-module contract/code audit, staged C–F retrofit planning and separately allowed TIME-01A minimal fallback only. No broad code, Schema, Migration or engine rewrite is authorized by this registration. Product approved; Engineering/Runtime completion not claimed. Existing Import/Trip Editor work continues and checks applicability.
+
 ## Trip Home V1.1 — Owner delivery authority / 2026-10-16
 
 Owner authorizes Preparation Upcoming and Today Active baseline, existing Snapshot/Finance qualification and normal navigation wiring; independent visual delivery follows functional integration. Materials and hashes: `../ops/TRIP_HOME_V11_MATERIALS_20261016.json`. Named tabs remain mandatory; reference-image dots are supplemental. Hero Menu left and separate Edit/Search right override the image. Owner subsequently approved Undated reuse of the same real counts/planning entries, with date copy only; no date inference or completion scoring. No new Destination fields, migrations, automatic inference, Review promotion or fabricated permissions. Visual candidate stays isolated pending Owner basic preview.

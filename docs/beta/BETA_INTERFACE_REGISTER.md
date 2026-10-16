@@ -1,5 +1,9 @@
 # OTR Beta — Cross-Module Interface Register
 
+## TIME-01 V1.1 reconciliation — audit OPEN / 2026-10-16
+
+Owning baseline: [approved V1.1](../trip/contracts/OTR_TIME_01_CONTEXTUAL_TIMEZONE_FLOATING_TIME_PRODUCT_DELTA_V1_1_2026-10-16.md). Coordinator owns registration/priority handoff; independent TIME-01 audit owns read-only P1–P6/TTR/Editor/Import/Today/NOW/notifications/actual consumers/offline propagation matrix. Existing owning teams retain their files. Deliver impact/conflict/ownership/staged retrofit/test–Native gap matrices; NOT IMPLEMENTED/DEFERRED must remain explicit. No automatic TIME-01A PASS from whole-module tests; no precise instant/reminder inferred from floating data. Main Product Chat reviews implementation priorities after audit.
+
 ## Trip Home V1.1 active ownership — 2026-10-16
 
 - Baseline580a148; Coordinator owns Widget business readers, qualification, ordering and navigation. Preparation and Today builders have separate new-file ownership; shared LocalTripWorkspace/TripScreen/catalogs stay with Coordinator until functional handoff.
