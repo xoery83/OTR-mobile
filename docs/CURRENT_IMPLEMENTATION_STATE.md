@@ -1,3 +1,44 @@
+# Trip Basic Editor field capability candidate — 2026-10-16
+
+- Bounded check: name, nullable calendar dates and the existing manual destination
+  string are readable/create-writable, but have no metadata update command,
+  repository or sync contract. They remain individually read-only in the Editor.
+- Existing Account-local bundled cover selection is independently available and
+  durable offline. The normal cover modal now hosts that bounded Editor, reusing
+  its sole owning writer; cover does not sync. Discovery preserves all four IDs.
+- Matrix and one minimal remaining-field decision packet:
+  docs/ops/TRIP_BASIC_EDITOR_CAPABILITY_20261016.md. No schema/Hosted/device change;
+  frozen R2 candidate191a557 and its Hero/Router remain separate. Native unverified.
+
+# Flight Assembly / Apple semantic checkpoint — 2026-10-16
+
+- Reviewed local candidate reuses one deterministic assembler across Capture,
+  CP13 adapter and Workbench. Real pinned NZ5069 Mac run d910137b:3 observations,
+  proposed reference3M27HH,2 legs; NEEDS_REVIEW for service/header association,
+  missing return service and departure time basis. No Source/Candidate/Admission
+  or Day Feed Runtime PASS claimed.
+- Apple capability AVAILABLE; actual semantic calls failed context limit, then
+  existing20s deadline after lossless prompt compression. Accepted contribution0;
+  deterministic fallback preserved. No Remote/Storage/Canonical writes.
+- Source/Booking interface continuation: see
+  docs/ops/FLIGHT_ASSEMBLY_DELIVERY_20261016.md. Binary original profile and
+  Source-backed Booking purpose gaps remain explicit. iOS semantic/physical test
+  outstanding. Trip Home R2 candidate191a557 remains separately frozen for Owner.
+
+# Flight parser / Apple correction R1 — 2026-10-16
+
+- Isolated correction uses production extractor adapter3 and shared Swift guided
+  Foundation Models generation. Printed airport cells and adjacent booked date
+  retain exact evidence; booked reference remains deferred, no business identity
+  merge or Admission. Strict literal/unique anchoring stays intact.
+- Two actual originals via Mac components: PDF20→25 deterministic fields; JPG8
+  unchanged. Final Apple1/4 observations evidence-valid but duplicate deterministic
+  services, zero new model business facts. Timings2889/964ms are per-call, not a
+  controlled cold/warm comparison. No Remote/Storage/Canonical writes.
+- Focused tests58 + Workbench64, types/guard/lint and independent review pass.
+  Private before/after runs retained; iOS26.5/physical regression pending. Runbook
+  docs/ops/IMPORT_WORKBENCH.md. DeepSeek remains closed pending Owner new key.
+
 # Import Workbench V2.1 — Universal Inspect / 2026-10-16
 
 - Observation-lineage follow-up: default actual business structure and separate human
