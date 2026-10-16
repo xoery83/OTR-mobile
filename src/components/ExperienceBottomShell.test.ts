@@ -199,7 +199,7 @@ it("My Trips keeps only the real Start Trip action without redundant left naviga
   expect(ExperienceBottomShell({ visible: false, pathname: "/trip" })).toBeNull();
 });
 
-it("opens the actual Trip list from another tab and only exposes a selected Day", () => {
+it("keeps Home, Day and Ledger available for the generation-scoped accepted Day", () => {
   state.view = {
     tripId: "accepted-trip",
     date: "2026-10-13",
@@ -210,24 +210,19 @@ it("opens the actual Trip list from another tab and only exposes a selected Day"
     ExperienceBottomShell({ visible: true, pathname: "/expenses" }),
   );
   expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual([
-    "dayFeed.myTrips",
+    "shell.home",
     "shell.day",
-  ]);
-  expect(buttons.map((button) => button.props.accessibilityState)).toEqual([
-    { selected: false },
-    { selected: false },
+    "navigation.ledger",
+    "updates.title",
   ]);
   buttons[0].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith({
-    pathname: "/trip",
-    params: { view: "trips" },
+  expect(state.navigate).toHaveBeenCalledWith("/trip");
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: { tripId: "accepted-trip", view: "home" },
   });
   buttons[1].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith("/");
-  expect(
-    pressables(ExperienceBottomShell({ visible: true, pathname: "/" }))[1].props
-      .accessibilityState,
-  ).toEqual({ selected: true });
+  expect(state.navigate).toHaveBeenCalledWith({ pathname: "/", params: { view: "day" } });
 });
 
 it("uses the explicit working Trip for Home and Ledger while Day resumes its own bookmark", () => {
@@ -243,14 +238,18 @@ it("uses the explicit working Trip for Home and Ledger while Day resumes its own
     "updates.title",
   ]);
   buttons[0].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith({
-    pathname: "/trip",
+  expect(state.navigate).toHaveBeenCalledWith("/trip");
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/trip-home",
     params: { tripId: "a", view: "home" },
   });
   buttons[1].props.onPress?.();
   expect(state.resume).toHaveBeenCalledOnce();
   buttons[2].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith("/expenses");
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/expenses",
+    params: { journeyId: "a" },
+  });
 });
 it("does not offer Start or navigation over the active Create form", () => {
   state.params = { view: "create" };
@@ -525,4 +524,45 @@ it("iOS Start Trip uses the system Action Sheet and ignores a stale account call
   state.generation++;
   invoke(0);
   expect(state.navigate).not.toHaveBeenCalled();
+});
+
+it("an authorized empty Trip keeps Home Day Ledger without accepted data or a bookmark", () => {
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.params = { tripId: "a", view: "home" };
+  const buttons = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).toEqual([
+    "shell.home",
+    "shell.day",
+    "navigation.ledger",
+    "updates.title",
+  ]);
+  buttons[1].props.onPress?.();
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: { tripId: "a", view: "day" },
+  });
+});
+it("raw URL parameters do not manufacture a selected Trip authority", () => {
+  state.params = { tripId: "forged", view: "home" };
+  const buttons = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain("shell.day");
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain(
+    "navigation.ledger",
+  );
+});
+
+it("a direct Trip link cannot reuse another Trip's navigation scope", () => {
+  state.workingTrip = { tripId: "b", generation: 1 };
+  state.params = { tripId: "a", view: "home" };
+  const buttons = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain(
+    "navigation.ledger",
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain("shell.day");
 });

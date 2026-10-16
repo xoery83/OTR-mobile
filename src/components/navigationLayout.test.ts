@@ -13,6 +13,9 @@ vi.mock("expo-router", () => ({
   Tabs: Object.assign(() => null, { Screen: () => null }),
   usePathname: () => state.pathname,
 }));
+vi.mock("@/features/trip-search/TripSearchEntry", () => ({
+  TripSearchEntry: () => null,
+}));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/components/ExperienceBottomShell", () => ({
   ExperienceBottomShell: () => null,
@@ -20,25 +23,25 @@ vi.mock("@/components/ExperienceBottomShell", () => ({
 vi.mock("@/components/GlobalMenu", () => ({ GlobalMenu: () => null }));
 
 it("updates only the tab bar option as navigation enters and leaves deep pages", () => {
-  const visible = TabsLayout().props.children;
+  const visible = TabsLayout();
+  expect(visible.props.initialRouteName).toBe("trip");
   expect(visible.props.screenOptions.tabBarActiveTintColor).toBe(lightPalette.accent);
   expect(visible.props.screenOptions.tabBarInactiveTintColor).toBe(
     lightPalette.textSecondary,
   );
   expect(visible.props.screenOptions.tabBarStyle).toEqual({
-    backgroundColor: lightPalette.surface,
-    borderTopColor: lightPalette.separator,
+    backgroundColor: lightPalette.transparent,
+    borderTopWidth: 0,
+    position: "absolute",
   });
   state.pathname = "/expenses/review";
-  const hidden = TabsLayout().props.children;
+  const hidden = TabsLayout();
   expect(hidden.type).toBe(visible.type);
   expect(hidden.props.screenOptions.tabBarStyle).toEqual({ display: "none" });
   state.pathname = "/expenses/journey/j1";
-  expect(TabsLayout().props.children.props.screenOptions.tabBarStyle).toEqual(
+  expect(TabsLayout().props.screenOptions.tabBarStyle).toEqual(
     visible.props.screenOptions.tabBarStyle,
   );
   expect(hidden.props.tabBar().props.visible).toBe(false);
-  expect(TabsLayout().props.children.props.tabBar().props.pathname).toBe(
-    "/expenses/journey/j1",
-  );
+  expect(TabsLayout().props.tabBar().props.pathname).toBe("/expenses/journey/j1");
 });

@@ -1,3 +1,5 @@
+import { openTripHome } from "./openTripHome";
+import { isTripWorkspacePath } from "./tripShellNavigation";
 import { shellShowsUpdates } from "./bottomBarVisibility";
 import { useUpdatesSignal } from "@/features/updates/useUpdatesSignal";
 import { requireOptionalNativeModule } from "expo-modules-core";
@@ -110,22 +112,36 @@ export function ExperienceBottomShell({
     typeof params.journeyId === "string"
       ? params.journeyId
       : (workingTrip?.tripId ?? null);
-  const isDay = pathname === "/" || (pathname === "/trip" && params.view === "day");
+  const isDay =
+    pathname === "/" || (isTripWorkspacePath(pathname) && params.view === "day");
   const contextualTripId = isDay
-    ? view?.tripId
-    : pathname === "/trip" &&
+    ? (view?.tripId ??
+      (workingTrip?.generation === getAccountGeneration() ? workingTrip.tripId : null))
+    : isTripWorkspacePath(pathname) &&
         !["trips", "create"].includes(params.view ?? "") &&
         typeof params.tripId === "string"
       ? params.tripId
       : null;
   const activeQuickActions =
-    quickActions?.tripId === contextualTripId ? quickActions : null;
+    quickActions?.tripId === contextualTripId &&
+    quickActions.generation === getAccountGeneration()
+      ? quickActions
+      : null;
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
   );
+  const matchesRoute = (tripId: string) =>
+    !isTripWorkspacePath(pathname) || !params.tripId || params.tripId === tripId;
+  const shellTripId =
+    activeQuickActions?.tripId ??
+    (workingTrip?.generation === generation && matchesRoute(workingTrip.tripId)
+      ? workingTrip.tripId
+      : view?.generation === generation && matchesRoute(view.tripId)
+        ? view.tripId
+        : null);
   const unreadActionable = useUpdatesSignal(
-    workingTrip?.generation === generation ? workingTrip.tripId : null,
+    shellTripId ?? null,
     pathname,
     visible && params.view !== "create" && workingTrip?.generation === generation,
   );
@@ -221,11 +237,10 @@ export function ExperienceBottomShell({
   };
   if (!visible || params.view === "create") return null;
   const openMyTrips = () => {
-    if (workingTrip) {
-      router.navigate({
-        pathname: "/trip",
-        params: { tripId: workingTrip.tripId, view: "home" },
-      });
+    if (generation !== getAccountGeneration() || renderedTarget !== currentTarget.current)
+      return;
+    if (shellTripId) {
+      openTripHome(shellTripId, pathname, params.view);
       return;
     }
     if (pathname === "/trip") router.setParams({ view: "trips" });
@@ -256,46 +271,61 @@ export function ExperienceBottomShell({
           >
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t(workingTrip ? "shell.home" : "dayFeed.myTrips")}
+              accessibilityLabel={t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
               accessibilityHint={t("shell.openMyTrips")}
-              accessibilityState={{ selected: pathname === "/trip" && !isDay }}
+              accessibilityState={{ selected: isTripWorkspacePath(pathname) && !isDay }}
               onPress={openMyTrips}
               style={[
                 styles.destination,
                 largeText && styles.largeDestination,
-                pathname === "/trip" && !isDay && styles.selectedDestination,
+                isTripWorkspacePath(pathname) && !isDay && styles.selectedDestination,
               ]}
             >
               <AppIcon
                 size={visual.bottomShell.icon}
                 name="house"
                 color={
-                  pathname === "/trip" && !isDay ? colors.accent : colors.textPrimary
+                  isTripWorkspacePath(pathname) && !isDay
+                    ? colors.accent
+                    : colors.textPrimary
                 }
               />
               <Text
                 numberOfLines={largeText ? undefined : 1}
                 style={[
                   styles.label,
-                  pathname === "/trip" && !isDay && styles.activeLabel,
+                  isTripWorkspacePath(pathname) && !isDay && styles.activeLabel,
                 ]}
               >
-                {t(workingTrip ? "shell.home" : "dayFeed.myTrips")}
+                {t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
               </Text>
             </Pressable>
-            {resumeView || view || activeQuickActions?.chooseDay ? (
+            {shellTripId ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("shell.day")}
                 accessibilityHint={t("shell.openSelectedDay")}
                 accessibilityState={{ selected: isDay }}
                 onPress={() => {
-                  if (generation !== getAccountGeneration()) return;
-                  if (resumeView || view) {
+                  if (
+                    generation !== getAccountGeneration() ||
+                    renderedTarget !== currentTarget.current
+                  )
+                    return;
+                  const savedDay = resumeView ?? view;
+                  if (
+                    savedDay?.tripId === shellTripId &&
+                    savedDay.generation === generation
+                  ) {
                     resume();
-                    router.navigate("/");
+                    router.navigate({ pathname: "/", params: { view: "day" } });
+                  } else if (activeQuickActions?.chooseDay) {
+                    activeQuickActions.chooseDay();
                   } else {
-                    activeQuickActions?.chooseDay?.();
+                    router.navigate({
+                      pathname: "/trip-home",
+                      params: { tripId: shellTripId, view: "day" },
+                    });
                   }
                 }}
                 style={[
@@ -317,12 +347,17 @@ export function ExperienceBottomShell({
                 </Text>
               </Pressable>
             ) : null}
-            {workingTrip ? (
+            {shellTripId ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("navigation.ledger")}
                 accessibilityState={{ selected: pathname.startsWith("/expenses") }}
-                onPress={() => router.navigate("/expenses")}
+                onPress={() =>
+                  router.navigate({
+                    pathname: "/expenses",
+                    params: { journeyId: workingTrip?.tripId ?? contextualTripId ?? "" },
+                  })
+                }
                 style={[
                   styles.destination,
                   largeText && styles.largeDestination,
@@ -347,7 +382,7 @@ export function ExperienceBottomShell({
                 </Text>
               </Pressable>
             ) : null}
-            {shellShowsUpdates(pathname, params, Boolean(workingTrip)) ? (
+            {shellShowsUpdates(pathname, params, Boolean(shellTripId)) ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("updates.title")}
@@ -422,7 +457,7 @@ export function ExperienceBottomShell({
                 activeQuickActions
                   ? (date) => {
                       router.navigate({
-                        pathname: "/trip",
+                        pathname: "/trip-home",
                         params: { tripId: contextualTripId, view: "home" },
                       });
                       activeQuickActions.itinerary(date);
@@ -433,7 +468,7 @@ export function ExperienceBottomShell({
                 activeQuickActions?.photos
                   ? () => {
                       router.navigate({
-                        pathname: "/trip",
+                        pathname: "/trip-home",
                         params: { tripId: contextualTripId, view: "home" },
                       });
                       activeQuickActions.photos?.();
@@ -501,7 +536,7 @@ const createStyles = (c: UiColors) =>
       backgroundColor: c.transparent,
     },
     nativeMaterial: { backgroundColor: c.transparent },
-    reducedMaterial: { backgroundColor: c.surface },
+    reducedMaterial: { backgroundColor: c.floatingSurface },
     actionsOnly: { justifyContent: "flex-end" },
     row: {
       paddingHorizontal: visual.space.page,
