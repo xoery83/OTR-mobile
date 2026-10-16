@@ -899,6 +899,13 @@ function TripContent({ today = false }: { today?: boolean }) {
                 </View>
               ),
               onSummaries: setDaySummaries,
+              onMountedRowsChange:
+                typeof __DEV__ !== "undefined" && __DEV__
+                  ? (count) =>
+                      console.info(
+                        JSON.stringify({ event: "day_window_mount", mountedRows: count }),
+                      )
+                  : undefined,
               onInteraction: () => {
                 dayUserDriven.current = true;
               },
