@@ -1,4 +1,5 @@
 import { ApiClientError } from "@/data/api/client";
+import { localPersonCreateKind } from "@/domain/trip/localTripPerson";
 import {
   assertAccountRequestContext,
   captureAccountRequestContext,
@@ -554,8 +555,13 @@ export function createLedgerReadRepository(
          LEFT JOIN ledger_household_members hm
            ON hm.journey_id = m.journey_id AND hm.member_id = m.id
          WHERE m.journey_id = ?
+           AND NOT EXISTS (SELECT 1 FROM sync_operations op
+             WHERE op.trip_id=m.journey_id AND op.entity_id=m.id
+               AND op.entity_type='TRIP_PERSON' AND op.operation_type=?
+               AND op.status<>'COMPLETED' AND m.status='local')
          ORDER BY m.display_name ASC`,
         journeyId,
+        localPersonCreateKind,
       );
     },
     async listHouseholds(journeyId: string) {
@@ -730,6 +736,14 @@ async function applyJourney(
     );
     if (existing && existing.journeyId !== response.journey.id)
       throw new Error("Member belongs to a different Trip.");
+    const pendingPerson = await database.getFirstAsync<{ id: string }>(
+      `SELECT id FROM sync_operations WHERE entity_type='TRIP_PERSON'
+        AND entity_id=? AND operation_type=?
+        AND status<>'COMPLETED' LIMIT 1`,
+      member.id,
+      localPersonCreateKind,
+    );
+    if (pendingPerson) throw new Error("TRIP_PERSON_PENDING_ID_COLLISION");
     let active = existing?.active ?? null;
     let revision = existing?.revision ?? null;
     if (member.participationRevision !== undefined) {

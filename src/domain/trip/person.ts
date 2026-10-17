@@ -15,6 +15,8 @@ export type TripPerson = {
   tripId: TripId;
   personId: TripPersonId;
   displayName: string;
+  /** Only explicitly retained local Person-create intents carry this marker. */
+  localState?: "LOCAL_PENDING";
   /** null describes unavailable lifecycle observation, not a business state. */
   participation: { isParticipating: boolean; revision: number } | null;
 };
