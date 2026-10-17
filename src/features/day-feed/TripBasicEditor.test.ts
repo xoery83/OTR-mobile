@@ -7,9 +7,16 @@ import { TripCurrencyRow } from "./TripSetupRows";
 import { TripMetadataFields } from "./TripMetadataFields";
 import { UiButton } from "@/ui/controls";
 
-const state = vi.hoisted(() => ({ values: [] as unknown[], cursor: 0, alert: vi.fn() }));
+const state = vi.hoisted(() => ({
+  values: [] as unknown[],
+  cursor: 0,
+  refs: [] as { current: any }[],
+  refCursor: 0,
+  alert: vi.fn(),
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.values)) state.values[i] = initial;
@@ -41,6 +48,9 @@ vi.mock("@/ui/controls", () => ({
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: "TripCoverPicker" }));
 vi.mock("./TripMetadataFields", () => ({ TripMetadataFields: "TripMetadataFields" }));
 vi.mock("./TripSetupRows", () => ({ TripCurrencyRow: "TripCurrencyRow" }));
+vi.mock("./tripCovers", () => ({
+  tripCoverSource: (trip: any) => trip.selectedCoverAssetId ?? "fallback",
+}));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: "TripCoverVisual" }));
 type Element = ReactElement<Record<string, unknown> & { children?: ReactNode }>;
 const elements = (node: ReactNode): Element[] => {
@@ -49,6 +59,7 @@ const elements = (node: ReactNode): Element[] => {
   return [element, ...Children.toArray(element.props.children).flatMap(elements)];
 };
 const trip = {
+  id: "00000000-0000-4000-8000-000000000001",
   name: "Nelson summer",
   destination: "Nelson",
   startDate: "2026-10-16",
@@ -65,7 +76,7 @@ const render = (
   onSaveMetadata = vi.fn().mockResolvedValue(undefined),
   onSelectCover = vi.fn().mockResolvedValue(undefined),
 ) => {
-  state.cursor = 0;
+  state.cursor = state.refCursor = 0;
   return elements(
     TripBasicEditor({ trip, metadataEditable: true, onSaveMetadata, onSelectCover }),
   );
@@ -76,34 +87,35 @@ const flush = async () => {
 beforeEach(() => {
   state.alert.mockReset();
   state.values = [];
-  state.cursor = 0;
+  state.refs = [];
+  state.cursor = state.refCursor = 0;
 });
-it("edits real metadata through one local owning callback and keeps cover on its independent writer", async () => {
+it("stages cover and metadata together through one owning callback, without an independent write", async () => {
   const save = vi.fn().mockResolvedValue(undefined),
     cover = vi.fn().mockResolvedValue(undefined);
-  let nodes = render(save, cover);
-  const fields = nodes.find((node) => node.type === TripMetadataFields)!;
+  let view = render(save, cover);
+  const fields = view.find((n) => n.type === TripMetadataFields)!;
   (fields.props.onName as (s: string) => void)("  Nelson updated  ");
-  (fields.props.onRange as (r: { start: string; end: string }) => void)({
-    start: "",
-    end: "",
-  });
-  nodes = render(save, cover);
-  (nodes.find((node) => node.type === UiButton)!.props.onPress as () => void)();
+  (fields.props.onRange as (r: any) => void)({ start: "", end: "" });
+  await (
+    view.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
+      s: string,
+    ) => Promise<void>
+  )("coast");
+  expect(cover).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
+  view = render(save, cover);
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.selected).toBe("coast");
+  (view.find((n) => n.type === UiButton)!.props.onPress as () => void)();
   await flush();
-  expect(save).toHaveBeenCalledExactlyOnceWith(before, {
-    ...before,
-    name: "Nelson updated",
-    startDate: null,
-  });
-  const picker = nodes.find((node) => node.type === TripCoverPicker)!;
-  expect(picker.props.selected).toBe("cultural-oldtown");
-  await (picker.props.onSelect as (s: string) => Promise<void>)("coast");
-  expect(cover).toHaveBeenCalledExactlyOnceWith("coast");
+  expect(save).toHaveBeenCalledExactlyOnceWith(
+    before,
+    { ...before, name: "Nelson updated", startDate: null },
+    { before: "cultural-oldtown", after: "coast" },
+    expect.any(String),
+  );
   expect(
-    render(save, cover).some(
-      (node) => node.props.children === "actionIsland.savedLocally",
-    ),
+    render(save, cover).some((n) => n.props.children === "actionIsland.savedLocally"),
   ).toBe(true);
 });
 it("retains unsaved fields after a failed local save and blocks invalid date ranges", async () => {
@@ -133,7 +145,7 @@ it("retains unsaved fields after a failed local save and blocks invalid date ran
 });
 
 it("withholds metadata edits without local creator provenance while retaining the independent cover choice", () => {
-  state.cursor = 0;
+  state.cursor = state.refCursor = 0;
   const nodes = elements(
     TripBasicEditor({
       trip,
@@ -152,7 +164,7 @@ it("withholds metadata edits without local creator provenance while retaining th
 it("retains a dirty editor when Currency is opened unless the user explicitly discards", () => {
   const open = vi.fn();
   const renderEditor = () => {
-    state.cursor = 0;
+    state.cursor = state.refCursor = 0;
     return elements(
       TripBasicEditor({
         trip,

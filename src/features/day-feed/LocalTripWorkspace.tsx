@@ -152,6 +152,8 @@ function LocalTripContent({
     "tripForm.travelerCountRange" | "tripForm.travelerNamesRetained" | null
   >(null);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [editorSaving, setEditorSaving] = useState(false);
+  const editorBusy = useRef(false);
   const [metadataEditable, setMetadataEditable] = useState(false);
   const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
   const receiveSetup = useCallback(
@@ -617,6 +619,8 @@ function LocalTripContent({
             modules={
               <View style={styles.root}>
                 <TripMembersSummary
+                  tripId={selected.id}
+                  generation={generation}
                   setup={setup?.context.tripId === selected.id ? setup : null}
                 />
                 <LocalTripPhotos
@@ -654,13 +658,18 @@ function LocalTripContent({
           <Modal
             visible={coverOpen}
             presentationStyle="pageSheet"
-            onRequestClose={() => setCoverOpen(false)}
+            allowSwipeDismissal={!editorSaving}
+            onRequestClose={() => {
+              if (!editorBusy.current) setCoverOpen(false);
+            }}
             animationType="slide"
           >
             <SafeAreaProvider style={styles.modal}>
               <SheetHeader
                 title={t("tripHome.edit")}
-                onLeft={() => setCoverOpen(false)}
+                onLeft={() => {
+                  if (!editorBusy.current) setCoverOpen(false);
+                }}
               />
               <ScrollView
                 style={styles.modal}
@@ -669,37 +678,45 @@ function LocalTripContent({
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
               >
-                <TripBasicEditor
-                  trip={selected}
-                  cover={tripCoverSource(selected)}
-                  setup={setup?.context.tripId === selected.id ? setup : null}
-                  onOpenCurrency={() => {
-                    if (alive.current && generation === getAccountGeneration()) {
-                      setCoverOpen(false);
-                      router.push({
-                        pathname: "/expenses/settings",
-                        params: { journeyId: selected.id },
-                      });
-                    }
-                  }}
-                  metadataEditable={metadataEditable}
-                  onSelectCover={selectCover}
-                  onSaveMetadata={async (before, after) => {
-                    if (!alive.current || generation !== getAccountGeneration())
-                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    const repo = await readLocalTripRepository();
-                    if (!alive.current || generation !== getAccountGeneration())
-                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    await repo.updateMetadata({
-                      operationId: createUuid(),
-                      tripId: selected.id,
-                      before,
-                      after,
-                    });
-                    if (alive.current && generation === getAccountGeneration())
-                      await load();
-                  }}
-                />
+                {coverOpen ? (
+                  <TripBasicEditor
+                    trip={selected}
+                    onSavingChange={(saving) => {
+                      editorBusy.current = saving;
+                      setEditorSaving(saving);
+                    }}
+                    setup={setup?.context.tripId === selected.id ? setup : null}
+                    onOpenCurrency={() => {
+                      if (alive.current && generation === getAccountGeneration()) {
+                        setCoverOpen(false);
+                        router.push({
+                          pathname: "/expenses/settings",
+                          params: { journeyId: selected.id },
+                        });
+                      }
+                    }}
+                    metadataEditable={metadataEditable}
+                    onSelectCover={selectCover}
+                    onSaveMetadata={async (before, after, cover, operationId) => {
+                      if (!alive.current || generation !== getAccountGeneration())
+                        throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                      const repo = await readLocalTripRepository();
+                      if (!alive.current || generation !== getAccountGeneration())
+                        throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                      await repo.updateMetadata(
+                        {
+                          operationId,
+                          tripId: selected.id,
+                          before,
+                          after,
+                        },
+                        cover,
+                      );
+                      if (alive.current && generation === getAccountGeneration())
+                        await load();
+                    }}
+                  />
+                ) : null}
               </ScrollView>
             </SafeAreaProvider>
           </Modal>
@@ -773,6 +790,8 @@ function LocalTripContent({
             onHeroHeight={onHomeHeroHeight}
             modules={
               <TripMembersSummary
+                tripId={remoteSelected.id}
+                generation={generation}
                 setup={setup?.context.tripId === remoteSelected.id ? setup : null}
               />
             }

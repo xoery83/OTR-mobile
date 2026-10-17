@@ -1,6 +1,17 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripCurrencyRow, TripMembersSummary } from "./TripSetupRows";
+const state = vi.hoisted(() => ({ open: false, key: null as string | null }));
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useState: () => [
+    state.open,
+    (value: boolean) => {
+      state.open = value;
+    },
+  ],
+}));
+vi.mock("./TripMembersSheet", () => ({ TripMembersSheet: "TripMembersSheet" }));
 vi.mock("react-native", () => ({ View: "View", StyleSheet: { create: (s: any) => s } }));
 vi.mock("@/ui/controls", () => ({ UiText: "UiText" }));
 vi.mock("@/ui/forms", () => ({ UiFormRow: "UiFormRow" }));
@@ -13,6 +24,8 @@ vi.mock("@/ui/locale", () => ({
 }));
 let setup: TripPreparationSetup;
 beforeEach(() => {
+  state.open = false;
+  state.key = null;
   setup = {
     context: { accountId: "actor", generation: 1, tripId: "trip" },
     currency: {
@@ -48,15 +61,21 @@ it("displays actual currency and routes only an observed eligible owner to exist
   }
   expect(open).toHaveBeenCalledOnce();
 });
+function summary(setup: TripPreparationSetup | null, tripId = "trip", generation = 1) {
+  const scoped = TripMembersSummary({ setup, tripId, generation });
+  if (state.key !== scoped.key) {
+    state.key = scoped.key;
+    state.open = false;
+  }
+  return (scoped.type as any)(scoped.props);
+}
 it("never substitutes fake currency or invitation counts for unknown facts", () => {
   const row = TripCurrencyRow({ setup: null, onOpen: vi.fn() });
   expect(row.props.value).toBe("tripForm.currencyUnknown");
   expect(row.props.disabled).toBe(true);
-  const named = JSON.stringify(TripMembersSummary({ setup }));
+  const named = JSON.stringify(summary(setup));
   expect(named).toContain("tripForm.namedPeople:3");
   expect(named).toContain("tripForm.namedPeopleHint");
   expect(named).not.toContain("invited");
-  expect(JSON.stringify(TripMembersSummary({ setup: null }))).toContain(
-    "tripForm.membersUnknown",
-  );
+  expect(JSON.stringify(summary(null))).toContain("tripForm.membersUnknown");
 });

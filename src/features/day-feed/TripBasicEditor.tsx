@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Alert, StyleSheet, View, type ImageSourcePropType } from "react-native";
+import { useRef, useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import {
   tripMetadataSchema,
@@ -16,26 +16,33 @@ import { TripMetadataFields } from "./TripMetadataFields";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripCurrencyRow } from "./TripSetupRows";
 import { TripCoverVisual } from "./TripCoverVisual";
+import { tripCoverSource } from "./tripCovers";
+import { createUuid } from "@/domain/localId";
 
 export function TripBasicEditor({
   trip,
   onSelectCover,
   onSaveMetadata,
   metadataEditable,
-  cover,
   setup = null,
   onOpenCurrency,
+  onSavingChange,
 }: {
   trip: Pick<
     Trip,
-    "name" | "destination" | "startDate" | "endDate" | "selectedCoverAssetId"
+    "id" | "name" | "destination" | "startDate" | "endDate" | "selectedCoverAssetId"
   >;
   metadataEditable: boolean;
   onSelectCover(id: BuiltInTripCoverId): Promise<void>;
-  onSaveMetadata(before: TripMetadata, after: TripMetadata): Promise<void>;
-  cover?: ImageSourcePropType;
+  onSaveMetadata(
+    before: TripMetadata,
+    after: TripMetadata,
+    cover: { before: BuiltInTripCoverId | null; after: BuiltInTripCoverId | null },
+    operationId: string,
+  ): Promise<void>;
   setup?: TripPreparationSetup | null;
   onOpenCurrency?: () => void;
+  onSavingChange?(saving: boolean): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -45,6 +52,10 @@ export function TripBasicEditor({
     startDate: trip.startDate,
     endDate: trip.endDate,
   });
+  const [beforeCover, setBeforeCover] = useState(trip.selectedCoverAssetId ?? null);
+  const [draftCover, setDraftCover] = useState(trip.selectedCoverAssetId ?? null);
+  const busy = useRef(false);
+  const saveIntent = useRef<{ fingerprint: string; operationId: string } | null>(null);
   const [name, setName] = useState(trip.name),
     [destination, setDestination] = useState(trip.destination ?? ""),
     [start, setStart] = useState(trip.startDate ?? ""),
@@ -59,14 +70,15 @@ export function TripBasicEditor({
     endDate: end || null,
   };
   const valid = tripMetadataSchema.safeParse(after).success;
+  const dirty =
+    after.name !== before.name ||
+    after.destination !== before.destination ||
+    after.startDate !== before.startDate ||
+    after.endDate !== before.endDate ||
+    (metadataEditable && draftCover !== beforeCover);
   const openCurrency = () => {
     if (!onOpenCurrency || saving) return;
-    if (
-      after.name === before.name &&
-      after.destination === before.destination &&
-      after.startDate === before.startDate &&
-      after.endDate === before.endDate
-    ) {
+    if (!dirty) {
       onOpenCurrency();
       return;
     }
@@ -99,9 +111,31 @@ export function TripBasicEditor({
         />
       </UiSection>
       <UiSection title={t("tripHome.coverTools")}>
-        {cover ? <TripCoverVisual source={cover} style={styles.cover} /> : null}
-        <UiText style={styles.hint}>{t("tripHome.editor.coverLocalOnly")}</UiText>
-        <TripCoverPicker selected={trip.selectedCoverAssetId} onSelect={onSelectCover} />
+        <TripCoverVisual
+          source={tripCoverSource({
+            ...trip,
+            selectedCoverAssetId: metadataEditable
+              ? draftCover
+              : trip.selectedCoverAssetId,
+          })}
+          style={styles.cover}
+        />
+        <UiText style={styles.hint}>
+          {t(metadataEditable ? "tripForm.coverDraft" : "tripHome.editor.coverLocalOnly")}
+        </UiText>
+        <TripCoverPicker
+          selected={metadataEditable ? draftCover : trip.selectedCoverAssetId}
+          onSelect={
+            metadataEditable
+              ? async (id) => {
+                  if (!busy.current) {
+                    setDraftCover(id);
+                    setSaved(false);
+                  }
+                }
+              : onSelectCover
+          }
+        />
       </UiSection>
       <TripCurrencyRow
         setup={setup}
@@ -111,19 +145,31 @@ export function TripBasicEditor({
         {metadataEditable ? (
           <UiButton
             label={t("tripCreate.saveTrip")}
-            disabled={saving || !valid}
+            disabled={saving || !valid || !dirty}
             onPress={() => {
-              if (saving || !valid) return;
+              if (busy.current || !valid || !dirty) return;
+              busy.current = true;
+              onSavingChange?.(true);
               setSaving(true);
               setError(false);
               setSaved(false);
-              void onSaveMetadata(before, after)
+              const cover = { before: beforeCover, after: draftCover };
+              const fingerprint = JSON.stringify({ before, after, cover });
+              if (saveIntent.current?.fingerprint !== fingerprint)
+                saveIntent.current = { fingerprint, operationId: createUuid() };
+              void onSaveMetadata(before, after, cover, saveIntent.current.operationId)
                 .then(() => {
                   setBefore(after);
+                  setBeforeCover(draftCover);
+                  saveIntent.current = null;
                   setSaved(true);
                 })
                 .catch(() => setError(true))
-                .finally(() => setSaving(false));
+                .finally(() => {
+                  busy.current = false;
+                  onSavingChange?.(false);
+                  setSaving(false);
+                });
             }}
           />
         ) : null}

@@ -1,4 +1,11 @@
 export const en = {
+  "tripForm.coverDraft":
+    "Cover changes save with your other details when you tap Save Trip.",
+  "tripMembers.currentActor": "Your trip identity",
+  "tripMembers.otherPeople": "Other named people",
+  "tripMembers.localPending": "Saved on this device",
+  "tripMembers.managementUnavailable":
+    "Member management and invitations are not available yet.",
   "tripForm.travelers": "Travelers · Optional",
   "tripForm.travelerCount": "Number of name fields",
   "tripForm.fewerTravelers": "Fewer name fields",
@@ -2341,6 +2348,11 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "tripForm.coverDraft": "点击“保存旅行”时，封面会与其他详情一起保存。",
+  "tripMembers.currentActor": "你在此旅行中的身份",
+  "tripMembers.otherPeople": "其他已命名人员",
+  "tripMembers.localPending": "已保存在本设备",
+  "tripMembers.managementUnavailable": "成员管理和邀请功能尚未开放。",
   "tripForm.travelers": "旅行成员 · 可选",
   "tripForm.travelerCount": "姓名栏数量",
   "tripForm.fewerTravelers": "减少姓名栏",

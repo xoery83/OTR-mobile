@@ -557,8 +557,9 @@ it("the mounted local Quick Add callback opens the existing form with an editabl
   expect(render()).toContain("actionIsland.savedLocally");
 });
 
-it("normal Home keeps cover editing behind its action and preserves the owning selection", async () => {
+it("non-Creator Home preserves the legitimate independent local Cover scope", async () => {
   const repo = repository([trip("local-a", "Local A")]);
+  vi.mocked(repo.canUpdateMetadata).mockResolvedValue(false);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
   render();
@@ -571,6 +572,7 @@ it("normal Home keeps cover editing behind its action and preserves the owning s
   const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
   await picker.onSelect("coast");
   expect(repo.selectBuiltInCover).toHaveBeenCalledWith("local-a", "coast");
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
 });
 
 vi.mock("react-native-safe-area-context", () => ({
@@ -602,6 +604,7 @@ it("normal Home Hero action opens the same Editor and saves through the owning m
       before: { name: current.name, destination: null, startDate: null, endDate: null },
       after: { name: "Updated", destination: null, startDate: null, endDate: null },
     }),
+    { before: null, after: null },
   );
 });
 
@@ -869,4 +872,42 @@ it("clears private Traveler names and allocates a new intent after account gener
   expect(fresh.tripId).not.toBe(old.tripId);
   expect(fresh.travelers?.[0].personId).not.toBe(old.travelers?.[0].personId);
   expect(fresh.travelers?.[0].operationId).not.toBe(old.travelers?.[0].operationId);
+});
+
+it("Creator Close discards staged cover without an independent write and cannot dismiss an in-flight atomic save", async () => {
+  const current = trip("local-a", "Original"),
+    repo = repository([current]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = current.id;
+  render();
+  await flush();
+  render();
+  button("tripHome.edit").onPress();
+  render();
+  await state.nodes.find((node) => node.coverPicker)!.coverPicker.onSelect("coast");
+  render();
+  const close = button("common.close").onPress;
+  close();
+  render();
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
+  expect(repo.selectBuiltInCover).not.toHaveBeenCalled();
+  button("tripHome.edit").onPress();
+  render();
+  input("tripCreate.name", "Saved name");
+  render();
+  const pending = deferred<void>();
+  vi.mocked(repo.updateMetadata).mockReturnValueOnce(pending.promise);
+  button("tripCreate.saveTrip").onPress();
+  await flush();
+  render();
+  button("common.close").onPress();
+  render();
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
+  expect(
+    state.nodes.find((node) => node.modal?.presentationStyle === "pageSheet")!.modal
+      .allowSwipeDismissal,
+  ).toBe(false);
+  pending.resolve();
+  await flush();
 });
