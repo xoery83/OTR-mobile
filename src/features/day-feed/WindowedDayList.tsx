@@ -13,6 +13,7 @@ import {
   FlatList,
   View,
   type FlatListProps,
+  type GestureResponderEvent,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -178,6 +179,17 @@ export function WindowedDayList<T>({
     },
     [],
   );
+  const traceTouch = (phase: string, event: GestureResponderEvent | undefined) => {
+    const native = event?.nativeEvent;
+    trace(phase, {
+      touches: native?.touches?.length ?? -1,
+      identifier: native?.identifier ?? "UNAVAILABLE",
+      pageY: native?.pageY ?? "UNAVAILABLE",
+      dragging: dragging.current,
+      epoch: renderedEpoch,
+      currentEpoch: listEpoch.current,
+    });
+  };
   const scheduled = useRef<number | null>(null);
   const finish = useCallback(
     (result?: "REACHED" | "UNMEASURED") => {
@@ -596,6 +608,7 @@ export function WindowedDayList<T>({
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
       onTouchStart={(event) => {
+        traceTouch("TOUCH_START", event);
         if (renderedEpoch !== listEpoch.current) return;
         dragging.current = false;
         const { touches, pageY, identifier } = event.nativeEvent;
@@ -605,6 +618,7 @@ export function WindowedDayList<T>({
             : null;
       }}
       onTouchMove={(event) => {
+        traceTouch("TOUCH_MOVE", event);
         if (renderedEpoch !== listEpoch.current) return;
         const touch = readingTouch.current;
         const { touches, pageY, identifier } = event.nativeEvent;
@@ -628,13 +642,15 @@ export function WindowedDayList<T>({
           touch.pendingDelta += delta;
         }
       }}
-      onTouchEnd={() => {
+      onTouchEnd={(event) => {
+        traceTouch("TOUCH_END", event);
         if (renderedEpoch === listEpoch.current) {
           readingTouch.current = null;
           dragging.current = false;
         }
       }}
-      onTouchCancel={() => {
+      onTouchCancel={(event) => {
+        traceTouch("TOUCH_CANCEL", event);
         if (renderedEpoch === listEpoch.current) {
           readingTouch.current = null;
           dragging.current = false;

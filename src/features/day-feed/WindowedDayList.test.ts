@@ -292,6 +292,66 @@ it("cannot flush another finger or a retired list touch into a new drag", () => 
   expect(readingMotion).not.toHaveBeenCalled();
 });
 
+it("traces touch shape and ordering only within the existing bounded DEV diagnostic", () => {
+  vi.stubGlobal("__DEV__", true);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const { ref, rerender } = setup();
+    state.props.onTouchStart(touch(700));
+    expect(log).not.toHaveBeenCalled();
+    ref.current!.jumpToDayHeader("2026-10-02");
+    rerender();
+    log.mockClear();
+    state.props.onTouchStart(touch(700));
+    state.props.onTouchMove(touch(660));
+    state.props.onScrollBeginDrag();
+    state.props.onScrollEndDrag();
+    state.props.onTouchEnd(touch(660, "1", 0));
+    const entries = log.mock.calls.map(([line]) => JSON.parse(line));
+    expect(entries.filter(({ phase }) => phase.startsWith("TOUCH_"))).toEqual([
+      expect.objectContaining({
+        phase: "TOUCH_START",
+        touches: 1,
+        identifier: "1",
+        pageY: 700,
+        dragging: false,
+      }),
+      expect.objectContaining({
+        phase: "TOUCH_MOVE",
+        touches: 1,
+        identifier: "1",
+        pageY: 660,
+        dragging: false,
+      }),
+      expect.objectContaining({
+        phase: "TOUCH_END",
+        touches: 0,
+        identifier: "1",
+        pageY: 660,
+        dragging: false,
+      }),
+    ]);
+    expect(entries.findIndex(({ phase }) => phase === "TOUCH_MOVE")).toBeLessThan(
+      entries.findIndex(({ phase }) => phase === "DRAG_BEGIN"),
+    );
+    for (let i = 0; i < 250; i++) state.props.onTouchMove(touch(650));
+    const capped = log.mock.calls.length;
+    state.props.onTouchMove(touch(640));
+    expect(log).toHaveBeenCalledTimes(capped);
+    state.props.onScrollBeginDrag();
+    log.mockClear();
+    vi.advanceTimersByTime(10001);
+    state.props.onTouchMove(touch(630));
+    expect(log).not.toHaveBeenCalled();
+    vi.stubGlobal("__DEV__", false);
+    state.props.onScrollBeginDrag();
+    state.props.onTouchStart(touch(700));
+    expect(log).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
+
 function flushFrames(count = 4) {
   for (let frame = 0; frame < count; frame++)
     for (const callback of state.frames.splice(0)) callback();
