@@ -537,3 +537,32 @@ it("keeps missing zone/date-only rows and changes no business descriptor while r
   expect(JSON.stringify(rows)).toBe(before);
   expect(render.mock.calls.slice(-1)[0][0]).toBe(rows[89]);
 });
+
+it("prepends at most one previous date per drag despite a content-layout/overscroll storm", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  scroll(0);
+  const listKey = state.props.key;
+  state.props.onScrollBeginDrag();
+  scroll(-12);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[73]);
+  // A held drag can emit many native content-size/negative-offset cycles.
+  for (let frame = 1; frame <= 12; frame++) {
+    state.props.onContentSizeChange(390, 10000 + frame * 100);
+    scroll(-12 - frame * 3);
+    rerender();
+  }
+  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.key).toBe(listKey);
+  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+  // A new deliberate gesture can continue into the next preceding date.
+  state.props.onScrollEndDrag();
+  state.props.onScrollBeginDrag();
+  scroll(-60);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[72]);
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+});

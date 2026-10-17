@@ -566,10 +566,17 @@ export function WindowedDayList<T>({
       onScrollBeginDrag={() => {
         if (renderedEpoch !== listEpoch.current) return;
         dragging.current = true;
+        // Layout/overscroll from this gesture must not unlock another previous-date prepend.
+        prepending.current = false;
+        diagnostic.current.count = 0;
+        diagnostic.current.until = Date.now() + 10000;
+        trace("DRAG_BEGIN", { origin, listEpoch: renderedEpoch });
         finish();
         onInteraction?.();
       }}
       onScrollEndDrag={() => {
+        if (renderedEpoch !== listEpoch.current) return;
+        trace("DRAG_END", { origin, listEpoch: renderedEpoch });
         dragging.current = false;
       }}
       onScroll={(event) => {
@@ -614,7 +621,6 @@ export function WindowedDayList<T>({
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
       onContentSizeChange={(_width, height) => {
         if (renderedEpoch !== listEpoch.current) return;
-        prepending.current = false;
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
         retry();
