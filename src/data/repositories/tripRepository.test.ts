@@ -1911,7 +1911,9 @@ it("saves cover-only without a Hosted metadata intent and permits unchanged repl
       .get()!.n,
   ).toBe(0);
   await f.repo.updateMetadata(request, { before: null, after: "city" });
-  await f.repo.updateMetadata(request, { before: "city", after: "city" });
+  await expect(
+    f.repo.updateMetadata(request, { before: "city", after: "city" }),
+  ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
 });
 
 it("rolls back the cover when metadata queue insertion fails", async () => {
@@ -1982,4 +1984,87 @@ it("rejects stale cover drafts, invalid built-ins and account changes without pa
   await expect(
     f.repo.updateMetadata(request, { before: "city", after: "coast" }),
   ).rejects.toThrow("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
+});
+
+it("consumes cover-only operation identities durably across ABA and cold reopen without network eligibility", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-trip-cover-aba-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const saved = await f.repo.createTrip(input());
+  const metadata = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const first = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: metadata,
+    after: metadata,
+  };
+  await f.repo.updateMetadata(first, { before: null, after: "city" });
+  await f.repo.updateMetadata(
+    { ...first, operationId: randomUUID() },
+    { before: "city", after: null },
+  );
+  f.sql.close();
+  connections.splice(connections.indexOf(f.sql), 1);
+  f = local(path, false);
+  await f.repo.updateMetadata(first, { before: null, after: "city" });
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBeNull();
+  expect(
+    f.sql
+      .prepare(
+        "SELECT COUNT(*) AS n FROM sync_operations WHERE operation_type='TRIP_COVER_LOCAL_SAVE' AND status='COMPLETED'",
+      )
+      .get()!.n,
+  ).toBe(2);
+  await expect(
+    f.repo.updateMetadata(first, { before: null, after: "coast" }),
+  ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
+  // Even an accidentally reactivated consumed action must never become network work.
+  f.sql
+    .prepare("UPDATE sync_operations SET status='PENDING' WHERE id=?")
+    .run(first.operationId);
+  expect((await f.queue.listPending()).some((row) => row.id === first.operationId)).toBe(
+    false,
+  );
+  expect(await f.queue.claim(first.operationId)).toBe(false);
+});
+
+it("rolls back cover-only consumed identity on receipt write and account fence failures", async () => {
+  const f = local();
+  const saved = await f.repo.createTrip(input());
+  const metadata = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: metadata,
+    after: metadata,
+  };
+  f.failNextQueue();
+  await expect(
+    f.repo.updateMetadata(request, { before: null, after: "city" }),
+  ).rejects.toThrow("QUEUE_WRITE_FAILED");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBeNull();
+  expect(
+    f.sql.prepare("SELECT id FROM sync_operations WHERE id=?").get(request.operationId),
+  ).toBeUndefined();
+  f.abaNextAccept();
+  await expect(
+    f.repo.updateMetadata(request, { before: null, after: "city" }),
+  ).rejects.toThrow("Account changed");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBeNull();
+  expect(
+    f.sql.prepare("SELECT id FROM sync_operations WHERE id=?").get(request.operationId),
+  ).toBeUndefined();
+  await f.repo.updateMetadata(request, { before: null, after: "city" });
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
 });

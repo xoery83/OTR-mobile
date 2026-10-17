@@ -20,10 +20,21 @@ Experience owns these exact caller changes (not applied by this candidate):
 
 ## Concurrency and retries
 
-Metadata-only behavior and durable operation payloads are unchanged. A stale metadata baseline still conflicts. Cover uses compare-and-set against the original or already-achieved cover value; unrelated newer cover changes conflict instead of being overwritten. Cover-only creates no `UPDATE_TRIP_METADATA` intent, and repeating the unchanged cover-only save is harmless. A replay of an already-recorded metadata operation is a no-op, including cover: it never reapplies an old cover over a newer edit. The optional local cover tuple is not part of the server operation identity; retry a known operation with its original tuple, never use that ID for a new edit.
+Metadata-only behavior and durable operation payloads are unchanged. A stale metadata baseline still conflicts. Cover uses compare-and-set against the original or already-achieved cover value; unrelated newer cover changes conflict instead of being overwritten. Cover-only creates no `UPDATE_TRIP_METADATA` intent. It records a consumed device-local action in the existing `sync_operations` journal: entity `TRIP_LOCAL_PREFERENCE`, kind `TRIP_COVER_LOCAL_SAVE`, status `COMPLETED` means local application only, not a Hosted receipt or Cloud Synced claim. The full request plus cover tuple is bound to that operation ID. Exact replay is a no-op even across cover ABA and cold restart; changing the tuple under an already-consumed ID is rejected. Such rows must be retained by normal maintenance and hard-excluded by queue list/claim and the engine closed set, regardless of status or a permissive scheduler. A replay of an already-recorded metadata operation is a no-op, including cover: it never reapplies an old cover over a newer edit. The optional cover tuple is never part of the Hosted metadata payload. Retry a known operation with its original tuple; never reuse its ID for a new edit. Metadata-changing saves retain their original durable metadata operation identity and replay behavior.
 
 ## Validation
 
-- `tripRepository.test.ts`: 34 PASS (4 additional tests): combined save and real-file cold recovery; unchanged immutable create and metadata payload; replay preserving a newer cover; cover-only without Hosted intent; queue failure rollback; stale/invalid cover; ABA account switch rollback; foreign account rejection. Existing metadata/proof/queue tests remain green.
+- `tripRepository.test.ts`, `syncEngine.test.ts`, `ledgerMaintenance.test.ts`, `syncOperationRepository.test.ts`: 77 PASS. Original 34 repository tests plus cover-only ABA/cold-reopen, identity-reuse rejection, local receipt-write/account-fence rollback, forced PENDING queue/claim exclusion, permissive network scheduler rejection, and real SQLite maintenance retention. Original coverage: combined save and real-file cold recovery; unchanged immutable create and metadata payload; replay preserving a newer cover; cover-only without Hosted intent; queue failure rollback; stale/invalid cover; ABA account switch rollback; foreign account rejection. Existing metadata/proof/queue tests remain green.
 - TypeScript, narrow ESLint and `git diff --check`: PASS.
 - Shared UI files, current-state/catalog, Source, Hosted and Simulator untouched. UI wiring / Cancel behavior / integrated Native verification remain for the serial UI owner; this candidate alone does not close the full Editor acceptance.
+
+
+## Independent Review correction
+
+The first candidate `b05c59e` had a reproduced P2 defect: cover-only lacked a consumed operation identity, so null → city → null followed by replay of the first action restored city. The independent regression failed; do not integrate the original candidate alone. This corrected candidate includes both the local receipt and the following required closed-set/retention changes; they are one logical fix and must be integrated together:
+
+- `syncOperationRepository.ts`: `listPending` and `claim` always exclude `TRIP_COVER_LOCAL_SAVE`.
+- `syncEngine.ts`: add that kind to the hard closed operation set, before caller-supplied `shouldProcess`.
+- `ledgerMaintenance.ts`: never prune this consumed local action as reconstructible completed sync history.
+
+No new schema or generic journal infrastructure. The correction has not yet undergone its second independent review or integrated Native validation.

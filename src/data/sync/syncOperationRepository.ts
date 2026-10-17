@@ -141,6 +141,7 @@ export function createSyncOperationRepository(
           updated_at AS updatedAt
         FROM sync_operations
         WHERE owner_user_id = ? AND status IN (?, ?)
+          AND operation_type <> 'TRIP_COVER_LOCAL_SAVE'
           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
         ORDER BY created_at ASC, rowid ASC`,
         userId,
@@ -169,6 +170,7 @@ export function createSyncOperationRepository(
           lease_expires_at = ?, last_attempt_at = ?, updated_at = ?
          WHERE id = ? AND owner_user_id = ?
            AND status IN ('PENDING', 'RETRYABLE')
+           AND operation_type <> 'TRIP_COVER_LOCAL_SAVE'
            AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
         processClaimOwner,
         new Date(Date.parse(now) + 5 * 60_000).toISOString(),

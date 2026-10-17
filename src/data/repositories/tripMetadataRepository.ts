@@ -68,13 +68,26 @@ export function createTripMetadataRepository(
       await withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         await database.withTransactionAsync(async () => {
-          const existing = await database.getFirstAsync<{ payload_json: string }>(
-            "SELECT payload_json FROM sync_operations WHERE id=? AND owner_user_id=? AND entity_type='TRIP' AND operation_type='UPDATE_TRIP_METADATA'",
+          const existing = await database.getFirstAsync<{
+            payload_json: string;
+            entity_type: string;
+            operation_type: string;
+          }>(
+            "SELECT payload_json,entity_type,operation_type FROM sync_operations WHERE id=? AND owner_user_id=?",
             request.operationId,
             scope.accountId,
           );
           if (existing) {
-            if (existing.payload_json !== json(request))
+            const matchesMetadata =
+              existing.entity_type === "TRIP" &&
+              existing.operation_type === "UPDATE_TRIP_METADATA" &&
+              existing.payload_json === json(request);
+            const matchesLocalCover =
+              existing.entity_type === "TRIP_LOCAL_PREFERENCE" &&
+              existing.operation_type === "TRIP_COVER_LOCAL_SAVE" &&
+              !!cover &&
+              existing.payload_json === json({ request, cover });
+            if (!matchesMetadata && !matchesLocalCover)
               throw new Error("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
             await assertAccountRequestContext(scope, account);
             return;
@@ -118,6 +131,22 @@ export function createTripMetadataRepository(
               row.selected_cover_asset_id !== cover.after
             )
               throw new Error("TRIP_COVER_LOCAL_CONFLICT");
+            if (json(before) === json(request.after)) {
+              // Consumed device-local action: never dispatched or pruned as reconstructible sync history.
+              const now = clock();
+              await database.runAsync(
+                `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,created_at,updated_at)
+                 VALUES(?,?,'TRIP_LOCAL_PREFERENCE',?,'TRIP_COVER_LOCAL_SAVE',?,?,?,'COMPLETED',0,?,?)`,
+                request.operationId,
+                request.tripId,
+                request.tripId,
+                request.operationId,
+                json({ request, cover }),
+                scope.accountId,
+                now,
+                now,
+              );
+            }
             await database.runAsync(
               "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
               cover.after,
