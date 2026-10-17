@@ -56,6 +56,7 @@ import { visual } from "@/ui/visual";
 import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { wholeTripCalendarDates } from "./tripListPresentation";
+import { tripCoreDayNumber } from "./tripCoreDayNumber";
 import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
 import { acceptedHomeHeader, useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
@@ -881,6 +882,19 @@ function TripContent({ today = false }: { today?: boolean }) {
           <DayFeed
             bottomInset={bottomBarHeight}
             presentation={{
+              formatDayHeading: (date) => {
+                const day = tripCoreDayNumber(date, dayFacts);
+                const label = formatUiDate(new Date(`${date}T12:00:00Z`), {
+                  dateStyle: "medium",
+                  timeZone: "UTC",
+                });
+                return day === null
+                  ? label
+                  : t("dayShell.coreDay", {
+                      day: formatUiNumber(day),
+                      date: label,
+                    });
+              },
               listRef: (value) => {
                 dayList.current = value;
               },

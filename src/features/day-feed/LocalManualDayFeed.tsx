@@ -78,7 +78,7 @@ export function LocalManualDayFeed({
       isDayHeader: true,
       date: day,
       value: () => (
-        <UiSection title={civil(day)}>
+        <UiSection title={presentation?.formatDayHeading?.(day) ?? civil(day)}>
           {!items.length ? (
             <Text style={styles.meta}>{emptyMessage ?? t("tripHome.today.free")}</Text>
           ) : null}

@@ -69,6 +69,7 @@ function BlockSlot({
 export type DayFeedPresentation = {
   listRef?: (value: DayListHandle | null) => void;
   header?: ReactNode;
+  formatDayHeading?: (date: string) => string;
   topInset?: number;
   onViewportChange?: (viewport: {
     firstVisibleDate: string;
@@ -485,7 +486,7 @@ function AcceptedDayFeed({
         <View>
           {dates ? (
             <Text accessibilityRole="header" style={styles.dateHeading}>
-              {section.date}
+              {presentation?.formatDayHeading?.(section.date) ?? section.date}
             </Text>
           ) : null}
           {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
