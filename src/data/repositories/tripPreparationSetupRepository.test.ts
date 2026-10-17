@@ -94,6 +94,80 @@ it("reads actual currency/scale, owner and named people without guessing invitat
   });
 });
 
+it("preserves three local-pending identities separately from the exact current Actor", async () => {
+  const f = fixture();
+  f.sql.exec(`
+    UPDATE ledger_members SET status='local' WHERE id='named';
+    INSERT INTO ledger_members (id,journey_id,display_name,role,status,updated_at)
+      VALUES ('second','${tripId}','Bob',NULL,'local','2026-10-17'),
+        ('third','${tripId}','旅行者',NULL,'local','2026-10-17');
+  `);
+  for (const id of ["named", "second", "third"])
+    f.sql
+      .prepare(
+        `INSERT INTO sync_operations
+      (id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,
+       owner_user_id,status,attempt_count,created_at,updated_at)
+      VALUES (?,?,'TRIP_PERSON',?,'TRIP_PERSON_CREATE',?,'{}','actor',
+        'DEPENDENCY_BLOCKED',0,'2026-10-17','2026-10-17')`,
+      )
+      .run(`create-${id}`, tripId, id, `create-${id}`);
+  const setup = await f.read();
+  expect(setup.members.state).toBe("AVAILABLE");
+  if (setup.members.state !== "AVAILABLE") throw new Error("Expected real roster");
+  expect(setup.members.namedCount).toBe(4);
+  expect(setup.members.people.filter((p) => p.localState === "LOCAL_PENDING")).toEqual(
+    expect.arrayContaining([
+      {
+        personId: "named",
+        displayName: "Tina",
+        localState: "LOCAL_PENDING",
+        isCurrentActor: false,
+      },
+      {
+        personId: "second",
+        displayName: "Bob",
+        localState: "LOCAL_PENDING",
+        isCurrentActor: false,
+      },
+      {
+        personId: "third",
+        displayName: "旅行者",
+        localState: "LOCAL_PENDING",
+        isCurrentActor: false,
+      },
+    ]),
+  );
+  expect(setup.members.people.filter((p) => p.isCurrentActor)).toEqual([
+    { personId: "owner", displayName: "Local owner", isCurrentActor: true },
+  ]);
+  expect(setup.invitations).toBe("UNKNOWN");
+  expect(setup.connections).toBe("UNKNOWN");
+});
+
+it("does not label unmarked existing people as synced, canonical or connected", async () => {
+  const setup = await fixture().read();
+  if (setup.members.state !== "AVAILABLE") throw new Error("Expected real roster");
+  expect(setup.members.people).toEqual([
+    { personId: "owner", displayName: "Local owner", isCurrentActor: true },
+    { personId: "named", displayName: "Tina", isCurrentActor: false },
+  ]);
+  expect(setup.members.people.every((p) => !Object.hasOwn(p, "localState"))).toBe(true);
+  expect(setup.connections).toBe("UNKNOWN");
+});
+
+it("matches the Actor by Member ID, never a matching name or Person role", async () => {
+  const f = fixture();
+  f.sql.exec(
+    "UPDATE ledger_actor_context SET member_id='named'; UPDATE ledger_members SET display_name='Same name'",
+  );
+  const setup = await f.read();
+  if (setup.members.state !== "AVAILABLE") throw new Error("Expected real roster");
+  expect(setup.members.people.filter((p) => p.isCurrentActor)).toEqual([
+    { personId: "named", displayName: "Same name", isCurrentActor: true },
+  ]);
+});
+
 it("never borrows another account's currency or roster, or substitutes another Trip", async () => {
   const f = fixture();
   expect(await f.read(missingTrip)).toMatchObject({

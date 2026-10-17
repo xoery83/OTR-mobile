@@ -30,7 +30,12 @@ export type TripPreparationSetup = {
     | {
         state: "AVAILABLE";
         namedCount: number;
-        people: { personId: string; displayName: string }[];
+        people: {
+          personId: string;
+          displayName: string;
+          localState?: "LOCAL_PENDING";
+          isCurrentActor: boolean;
+        }[];
       };
   // The existing Person projection does not expose Account links or invitations.
   invitations: "UNKNOWN";
@@ -91,9 +96,11 @@ export function createTripPreparationSetupRepository(
                 result.members = {
                   state: "AVAILABLE",
                   namedCount: named.length,
-                  people: named.map(({ personId, displayName }) => ({
+                  people: named.map(({ personId, displayName, localState }) => ({
                     personId,
                     displayName,
+                    ...(localState ? { localState } : {}),
+                    isCurrentActor: personId === actor.memberId,
                   })),
                 };
               }
