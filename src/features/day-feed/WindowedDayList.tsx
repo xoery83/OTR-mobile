@@ -134,7 +134,12 @@ export function WindowedDayList<T>({
   const [jumping, setJumping] = useState(false);
   const offset = useRef(0);
   const dragging = useRef(false);
-  const readingTouch = useRef<{ y: number; id: string; epoch: number } | null>(null);
+  const readingTouch = useRef<{
+    y: number;
+    id: string;
+    epoch: number;
+    pendingDelta: number;
+  } | null>(null);
   const lastNativeOffset = useRef(0);
   const prepending = useRef(false);
   const contentHeight = useRef(0);
@@ -596,7 +601,7 @@ export function WindowedDayList<T>({
         const { touches, pageY, identifier } = event.nativeEvent;
         readingTouch.current =
           touches.length === 1 && Number.isFinite(pageY)
-            ? { y: pageY, id: identifier, epoch: renderedEpoch }
+            ? { y: pageY, id: identifier, epoch: renderedEpoch, pendingDelta: 0 }
             : null;
       }}
       onTouchMove={(event) => {
@@ -618,6 +623,9 @@ export function WindowedDayList<T>({
         if (dragging.current && delta) {
           trace("READING_MOTION", { delta });
           live.current.onReadingMotion?.(delta);
+        } else if (!dragging.current) {
+          // iOS may deliver the only touch move before its drag-begin notification.
+          touch.pendingDelta += delta;
         }
       }}
       onTouchEnd={() => {
@@ -643,6 +651,13 @@ export function WindowedDayList<T>({
         diagnostic.current.count = 0;
         diagnostic.current.until = Date.now() + 10000;
         trace("DRAG_BEGIN", { origin, listEpoch: renderedEpoch });
+        const touch = readingTouch.current;
+        if (touch?.epoch === renderedEpoch && touch.pendingDelta) {
+          const delta = touch.pendingDelta;
+          touch.pendingDelta = 0;
+          trace("READING_MOTION", { delta });
+          live.current.onReadingMotion?.(delta);
+        }
         finish();
         onInteraction?.();
         prependPrevious(offset.current, "drag-begin");
@@ -651,6 +666,7 @@ export function WindowedDayList<T>({
         if (renderedEpoch !== listEpoch.current) return;
         trace("DRAG_END", { origin, listEpoch: renderedEpoch });
         dragging.current = false;
+        readingTouch.current = null;
       }}
       onScroll={(event) => {
         if (renderedEpoch !== listEpoch.current) return;

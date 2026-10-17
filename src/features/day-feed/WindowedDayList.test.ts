@@ -223,6 +223,44 @@ it("uses actual reading gestures rather than native offset compensation or momen
   expect(readingMotion).toHaveBeenCalledTimes(2);
 });
 
+it("retains the sole real touch move delivered before native drag begins", () => {
+  const { readingMotion } = setup();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(660));
+  scroll(899.6667);
+  expect(readingMotion).not.toHaveBeenCalled();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  scroll(1800);
+  expect(readingMotion.mock.calls).toEqual([[40]]);
+
+  state.props.onTouchEnd();
+  state.props.onTouchStart(touch(660));
+  state.props.onTouchMove(touch(668));
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  expect(readingMotion.mock.calls).toEqual([[40], [-8]]);
+});
+
+it("does not turn a tap, cancellation or multi-touch into buffered reading motion", () => {
+  const { readingMotion } = setup();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(698));
+  state.props.onTouchEnd();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(650));
+  state.props.onTouchCancel();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(650));
+  state.props.onTouchMove(touch(640, "1", 2));
+  state.props.onScrollBeginDrag();
+  expect(readingMotion).not.toHaveBeenCalled();
+});
+
 it("rejects cancelled, multi-touch and retired list gestures", () => {
   const { readingMotion, rerender, rows } = setup();
   state.props.onTouchStart(touch(700));
@@ -238,6 +276,22 @@ it("rejects cancelled, multi-touch and retired list gestures", () => {
   retired.onTouchMove(touch(600));
   expect(readingMotion).not.toHaveBeenCalled();
 });
+it("cannot flush another finger or a retired list touch into a new drag", () => {
+  const { readingMotion, rerender, rows } = setup();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(650, "other"));
+  state.props.onScrollBeginDrag();
+  expect(readingMotion).not.toHaveBeenCalled();
+  state.props.onScrollEndDrag();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(650));
+  const retired = state.props;
+  rerender(rows, undefined, undefined, "other/trip");
+  retired.onScrollBeginDrag();
+  state.props.onScrollBeginDrag();
+  expect(readingMotion).not.toHaveBeenCalled();
+});
+
 function flushFrames(count = 4) {
   for (let frame = 0; frame < count; frame++)
     for (const callback of state.frames.splice(0)) callback();
