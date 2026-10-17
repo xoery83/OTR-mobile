@@ -432,6 +432,18 @@ it("explicit date entry supplies a header anchor without rendering preceding dat
 });
 
 it.each(["accepted", "local"])(
+  "%s forwards real reading motion from the owning native list",
+  (kind) => {
+    const motion = vi.fn();
+    render({
+      ...(kind === "local" ? { projection: undefined, localManual: localManual() } : {}),
+      presentation: { onReadingMotion: motion },
+    });
+    state.window.onReadingMotion(-8);
+    expect(motion).toHaveBeenCalledWith(-8);
+  },
+);
+it.each(["accepted", "local"])(
   "fresh %s RESUME preserves the initial Introduction",
   (kind) => {
     render({

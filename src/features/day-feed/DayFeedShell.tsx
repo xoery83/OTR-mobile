@@ -12,6 +12,7 @@ import {
   initialDayFeedShellScroll,
   updateDayFeedShellDates,
   updateDayFeedShellScroll,
+  updateDayFeedShellReadingMotion,
   type DayFeedShellVisibleDates,
 } from "./dayFeedShellState";
 
@@ -138,6 +139,19 @@ export function useDayFeedShellState(resetKey: string) {
   );
   return {
     observeScroll,
+    observeReadingMotion: (delta: number) => {
+      const previous = scroll.current;
+      const next = updateDayFeedShellReadingMotion(
+        previous.key === resetKey ? previous.value : initialDayFeedShellScroll,
+        delta,
+      );
+      scroll.current = { key: resetKey, value: next };
+      if (
+        previous.key !== resetKey ||
+        previous.value.navigationVisible !== next.navigationVisible
+      )
+        setNavigation({ key: resetKey, visible: next.navigationVisible });
+    },
     observeVisibleDates,
     navigationVisible: navigation.key === resetKey ? navigation.visible : true,
     visibleDates: visible.key === resetKey ? visible.range : null,

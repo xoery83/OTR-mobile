@@ -22,8 +22,16 @@ export function updateDayFeedShellScroll(
   offset = Math.max(0, offset);
   if (offset <= 4) return { ...initialDayFeedShellScroll, offset, turnOffset: offset };
   if (!userDriven) return { ...previous, offset, turnOffset: offset, direction: 0 };
-  const delta = offset - previous.offset;
+  return updateDayFeedShellReadingMotion(previous, offset - previous.offset);
+}
+
+export function updateDayFeedShellReadingMotion(
+  previous: DayFeedShellScroll,
+  delta: number,
+): DayFeedShellScroll {
+  if (!Number.isFinite(delta)) return previous;
   if (!delta) return previous;
+  const offset = previous.offset + delta;
   const direction = delta > 0 ? 1 : -1;
   const turnOffset =
     direction === previous.direction ? previous.turnOffset : previous.offset;

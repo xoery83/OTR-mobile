@@ -158,7 +158,6 @@ function TripContent({ today = false }: { today?: boolean }) {
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [daySummaries, setDaySummaries] = useState<DaySummary[]>([]);
   const dayList = useRef<DayListHandle>(null);
-  const dayUserDriven = useRef(false);
   const dayOffset = useRef(0);
   const dayOrigin = useRef(0);
   const [dayPastIntroduction, setDayPastIntroduction] = useState(false);
@@ -907,16 +906,15 @@ function TripContent({ today = false }: { today?: boolean }) {
                         JSON.stringify({ event: "day_window_mount", mountedRows: count }),
                       )
                   : undefined,
-              onInteraction: () => {
-                dayUserDriven.current = true;
-              },
+              onReadingMotion: dayShell.observeReadingMotion,
               onOffsetChange: (value) => {
                 if (dayOffset.current > 32 !== value > 32)
                   setDayPastIntroduction(dayOrigin.current > 0 || value > 32);
                 dayOffset.current = value;
-                dayShell.observeScroll(value, dayUserDriven.current);
               },
               onViewportChange: (viewport) => {
+                if (viewport.originIndex === 0 && viewport.scrollOffset <= 4)
+                  dayShell.observeScroll(0, false);
                 if (dayOrigin.current !== viewport.originIndex) {
                   dayOrigin.current = viewport.originIndex;
                   setDayPastIntroduction(
@@ -973,7 +971,6 @@ function TripContent({ today = false }: { today?: boolean }) {
           onClose={() => setCalendarVisible(false)}
           onSelect={(target) => {
             setCalendarVisible(false);
-            dayUserDriven.current = false;
             dayList.current?.jumpToDayHeader(target);
           }}
         />

@@ -127,3 +127,18 @@ it("retains hidden navigation at rest and avoids rerendering on every reading pi
   shell.observeScroll(6000, false);
   expect(renderShell().navigationVisible).toBe(true);
 });
+
+it("accumulates small real gestures and restores navigation on a slight non-top reversal", () => {
+  const shell = renderShell();
+  for (let i = 0; i < 32; i++) shell.observeReadingMotion(1);
+  expect(renderShell().navigationVisible).toBe(false);
+  const hidden = state.values[0];
+  shell.observeReadingMotion(1);
+  shell.observeReadingMotion(NaN);
+  expect(state.values[0]).toBe(hidden);
+  for (let i = 0; i < 8; i++) shell.observeReadingMotion(-1);
+  expect(renderShell().navigationVisible).toBe(true);
+  shell.observeReadingMotion(40);
+  expect(renderShell().navigationVisible).toBe(false);
+  expect(renderShell("account/other/gen2").navigationVisible).toBe(true);
+});

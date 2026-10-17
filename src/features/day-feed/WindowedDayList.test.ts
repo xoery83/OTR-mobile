@@ -168,6 +168,7 @@ function setup(
   const render = vi.fn((_row: { key: string }) => createElement("span", {}, "day"));
   const count = vi.fn(),
     result = vi.fn(),
+    readingMotion = vi.fn(),
     anchorChanged = vi.fn();
   const rerender = (
     nextRows = rows,
@@ -193,14 +194,50 @@ function setup(
         onMountedRowsChange: count,
         onJumpResult: result,
         onAnchorChange: anchorChanged,
+        onReadingMotion: readingMotion,
       }),
     );
     for (const effect of state.effects) effect();
   };
   state.rerender = () => rerender();
   rerender();
-  return { rows, ref, render, count, result, rerender, anchorChanged };
+  return { rows, ref, render, count, result, rerender, anchorChanged, readingMotion };
 }
+function touch(pageY: number, identifier = "1", count = 1) {
+  return { nativeEvent: { pageY, identifier, touches: Array(count).fill({}) } };
+}
+
+it("uses actual reading gestures rather than native offset compensation or momentum", () => {
+  const { readingMotion } = setup();
+  state.props.onTouchStart(touch(700));
+  state.props.onScrollBeginDrag();
+  scroll(899.6667);
+  state.props.onContentSizeChange(400, 3859.3333);
+  expect(readingMotion).not.toHaveBeenCalled();
+  state.props.onTouchMove(touch(660));
+  state.props.onTouchMove(touch(668));
+  expect(readingMotion.mock.calls).toEqual([[40], [-8]]);
+  state.props.onScrollEndDrag();
+  state.props.onTouchMove(touch(600));
+  scroll(1300);
+  expect(readingMotion).toHaveBeenCalledTimes(2);
+});
+
+it("rejects cancelled, multi-touch and retired list gestures", () => {
+  const { readingMotion, rerender, rows } = setup();
+  state.props.onTouchStart(touch(700));
+  state.props.onScrollBeginDrag();
+  state.props.onTouchCancel();
+  state.props.onTouchMove(touch(600));
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(600, "1", 2));
+  state.props.onTouchMove(touch(500));
+  state.props.onTouchStart(touch(700));
+  const retired = state.props;
+  rerender(rows, undefined, undefined, "other/trip");
+  retired.onTouchMove(touch(600));
+  expect(readingMotion).not.toHaveBeenCalled();
+});
 function flushFrames(count = 4) {
   for (let frame = 0; frame < count; frame++)
     for (const callback of state.frames.splice(0)) callback();

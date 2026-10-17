@@ -78,6 +78,7 @@ export type DayFeedPresentation = {
   }) => void;
   onInteraction?: () => void;
   onOffsetChange?: (offset: number) => void;
+  onReadingMotion?: (delta: number) => void;
   onSummaries?: (summaries: DaySummary[]) => void;
   onMountedRowsChange?: (count: number) => void;
 };
@@ -586,6 +587,7 @@ function AcceptedDayFeed({
             style={styles.root}
             contentContainerStyle={styles.content}
             onViewportChange={presentation?.onViewportChange}
+            onReadingMotion={presentation?.onReadingMotion}
             onMountedRowsChange={presentation?.onMountedRowsChange}
             onInteraction={() => {
               interactedContext.current = viewContext;

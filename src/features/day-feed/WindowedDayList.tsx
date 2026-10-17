@@ -50,6 +50,7 @@ export function WindowedDayList<T>({
   onAnchorChange,
   onVisibleDates,
   onOffsetChange,
+  onReadingMotion,
   onViewportChange,
   onInteraction,
   onMountedRowsChange,
@@ -69,6 +70,7 @@ export function WindowedDayList<T>({
   onAnchorChange?(anchor: DayScrollAnchor): void;
   onVisibleDates?(dates: readonly string[]): void;
   onOffsetChange?(offset: number): void;
+  onReadingMotion?(delta: number): void;
   onViewportChange?(viewport: {
     firstVisibleDate: string;
     lastVisibleDate: string;
@@ -102,6 +104,7 @@ export function WindowedDayList<T>({
     onAnchorChange,
     onVisibleDates,
     onOffsetChange,
+    onReadingMotion,
     onJumpResult,
     onMountedRowsChange,
     onViewportChange,
@@ -116,6 +119,7 @@ export function WindowedDayList<T>({
       onAnchorChange,
       onVisibleDates,
       onOffsetChange,
+      onReadingMotion,
       onJumpResult,
       onMountedRowsChange,
       onViewportChange,
@@ -130,6 +134,7 @@ export function WindowedDayList<T>({
   const [jumping, setJumping] = useState(false);
   const offset = useRef(0);
   const dragging = useRef(false);
+  const readingTouch = useRef<{ y: number; id: string; epoch: number } | null>(null);
   const lastNativeOffset = useRef(0);
   const prepending = useRef(false);
   const contentHeight = useRef(0);
@@ -585,6 +590,48 @@ export function WindowedDayList<T>({
       contentContainerStyle={[contentContainerStyle, { paddingBottom: bottomInset }]}
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
+      onTouchStart={(event) => {
+        if (renderedEpoch !== listEpoch.current) return;
+        dragging.current = false;
+        const { touches, pageY, identifier } = event.nativeEvent;
+        readingTouch.current =
+          touches.length === 1 && Number.isFinite(pageY)
+            ? { y: pageY, id: identifier, epoch: renderedEpoch }
+            : null;
+      }}
+      onTouchMove={(event) => {
+        if (renderedEpoch !== listEpoch.current) return;
+        const touch = readingTouch.current;
+        const { touches, pageY, identifier } = event.nativeEvent;
+        if (
+          touch?.epoch !== renderedEpoch ||
+          touches.length !== 1 ||
+          touch.id !== identifier ||
+          !Number.isFinite(pageY)
+        ) {
+          readingTouch.current = null;
+          return;
+        }
+        const delta = touch.y - pageY;
+        touch.y = pageY;
+        // Native content offsets also contain MVCP compensation; finger movement does not.
+        if (dragging.current && delta) {
+          trace("READING_MOTION", { delta });
+          live.current.onReadingMotion?.(delta);
+        }
+      }}
+      onTouchEnd={() => {
+        if (renderedEpoch === listEpoch.current) {
+          readingTouch.current = null;
+          dragging.current = false;
+        }
+      }}
+      onTouchCancel={() => {
+        if (renderedEpoch === listEpoch.current) {
+          readingTouch.current = null;
+          dragging.current = false;
+        }
+      }}
       onLayout={() => {
         if (renderedEpoch === listEpoch.current) retry();
       }}

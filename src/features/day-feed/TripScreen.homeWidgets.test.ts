@@ -49,6 +49,8 @@ const state = vi.hoisted(() => ({
   routeMode: "home" as "home" | "day",
   appActive: null as (() => void) | null,
   resume: null as any,
+  observeShellScroll: vi.fn(),
+  observeReadingMotion: vi.fn(),
 }));
 vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
   readLocalTripDiscoveryRepository: async () => ({
@@ -67,7 +69,8 @@ vi.mock("./DayFeedShell", () => ({
   useDayFeedShellState: () => ({
     navigationVisible: true,
     visibleDates: null,
-    observeScroll: vi.fn(),
+    observeScroll: state.observeShellScroll,
+    observeReadingMotion: state.observeReadingMotion,
     observeVisibleDates: vi.fn(),
   }),
 }));
@@ -219,6 +222,8 @@ async function loaded() {
   return render();
 }
 beforeEach(() => {
+  state.observeShellScroll.mockClear();
+  state.observeReadingMotion.mockClear();
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
   state.discovery = [];
@@ -942,6 +947,24 @@ it("a blurred Trip with a late Day read cannot switch the new active Trip", asyn
   finish(state.result);
   for (let i = 0; i < 16; i++) await Promise.resolve();
   expect(state.switchTrip).not.toHaveBeenCalled();
+});
+
+it("keeps native compensation out of Shell direction and resets only at the whole-feed top", async () => {
+  state.routeMode = "day";
+  const feed = find(await loaded(), DayFeed);
+  feed.presentation.onOffsetChange(899.6667);
+  const viewport = {
+    firstVisibleDate: "2027-02-06",
+    lastVisibleDate: "2027-02-06",
+    originIndex: 34,
+    scrollOffset: 0,
+  };
+  feed.presentation.onViewportChange(viewport);
+  expect(state.observeShellScroll).not.toHaveBeenCalled();
+  feed.presentation.onReadingMotion(40);
+  expect(state.observeReadingMotion).toHaveBeenCalledWith(40);
+  feed.presentation.onViewportChange({ ...viewport, originIndex: 0 });
+  expect(state.observeShellScroll).toHaveBeenCalledWith(0, false);
 });
 
 it("local-only calendar range has a real empty Header target, without optimistic date acknowledgement", async () => {
