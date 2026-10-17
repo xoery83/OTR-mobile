@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  Fragment,
 } from "react";
 import {
   Alert,
@@ -20,11 +21,14 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
+import type { LocalPersonNameSlot } from "@/domain/trip/localTripPerson";
+import { AppIcon } from "@/components/AppIcon";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
@@ -38,9 +42,9 @@ import {
 } from "@/data/auth/accountGeneration";
 import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
-import { formatUiDate, t } from "@/ui/locale";
+import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
@@ -71,6 +75,11 @@ const knownDate = (value: string | null) => {
     return null;
   }
 };
+const blankTraveler = (): LocalPersonNameSlot => ({
+  operationId: createUuid(),
+  personId: createUuid(),
+  displayName: "",
+});
 
 type Props = {
   widgetsForHome?: (
@@ -122,6 +131,7 @@ function LocalTripContent({
 }: Props & { generation: number }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const [trips, setTrips] = useState<Trip[]>([]),
     [remoteTrips, setRemoteTrips] = useState<TripListSummary[]>([]),
     [selected, setSelected] = useState<Trip | null>(null),
@@ -132,6 +142,15 @@ function LocalTripContent({
     [destination, setDestination] = useState(""),
     [start, setStart] = useState(""),
     [end, setEnd] = useState("");
+  const [travelersOpen, setTravelersOpen] = useState(false);
+  const [travelerCount, setTravelerCount] = useState(1);
+  const [travelerCountText, setTravelerCountText] = useState("1");
+  const [travelers, setTravelers] = useState<LocalPersonNameSlot[]>(() => [
+    blankTraveler(),
+  ]);
+  const [travelerCountError, setTravelerCountError] = useState<
+    "tripForm.travelerCountRange" | "tripForm.travelerNamesRetained" | null
+  >(null);
   const [coverOpen, setCoverOpen] = useState(false);
   const [metadataEditable, setMetadataEditable] = useState(false);
   const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
@@ -162,6 +181,37 @@ function LocalTripContent({
     itemOperation = useRef({ operationId: createUuid(), itemId: createUuid() });
   const alive = useRef(true),
     saveOwner = useRef<symbol | null>(null);
+  const changeTravelerCount = (value: string) => {
+    if (busy.current) return;
+    setTravelerCountText(value);
+    const count = Number(value);
+    // shortcut: cap this mounted form at 100 inputs; use a virtualized editor for larger groups.
+    if (
+      !/^\d+$/.test(value) ||
+      !Number.isSafeInteger(count) ||
+      count < 1 ||
+      count > 100
+    ) {
+      // ui-foundation-exception: string -- Catalog key retained in state; rendered through t after locale changes.
+      setTravelerCountError("tripForm.travelerCountRange");
+      return;
+    }
+    if (travelers.slice(count, travelerCount).some((slot) => slot.displayName.trim())) {
+      // ui-foundation-exception: string -- Catalog key retained in state; rendered through t after locale changes.
+      setTravelerCountError("tripForm.travelerNamesRetained");
+      return;
+    }
+    setTravelerCountError(null);
+    setTravelerCount(count);
+    setTravelers((previous) =>
+      previous.length >= count
+        ? previous
+        : [
+            ...previous,
+            ...Array.from({ length: count - previous.length }, blankTraveler),
+          ],
+    );
+  };
   useLayoutEffect(() => {
     alive.current = true;
     return () => {
@@ -271,6 +321,7 @@ function LocalTripContent({
     };
   }, [load, generation]);
   const save = async (item: boolean) => {
+    if (!item && travelerCountError !== null) return;
     if (busy.current || !alive.current || generation !== getAccountGeneration()) return;
     busy.current = true;
     setSaving(true);
@@ -309,9 +360,16 @@ function LocalTripContent({
           destination,
           startDate: start || null,
           endDate: end || null,
+          ...(travelers.some((slot) => slot.displayName.trim())
+            ? {
+                travelers: travelers
+                  .slice(0, travelerCount)
+                  .filter((slot) => slot.displayName.trim())
+                  .map((slot) => ({ ...slot, displayName: slot.displayName.trim() })),
+              }
+            : {}),
         });
         if (!current()) return;
-        tripOperation.current = { operationId: createUuid(), tripId: createUuid() };
         onOpen(trip.id);
       }
     } catch {
@@ -822,6 +880,94 @@ function LocalTripContent({
                         setEnd(range.end);
                       }}
                     />
+                    <UiButton
+                      label={t("tripForm.travelers")}
+                      variant="text"
+                      disabled={saving}
+                      onPress={() => setTravelersOpen(!travelersOpen)}
+                    />
+                    {travelersOpen ? (
+                      <View style={styles.travelers}>
+                        <Text style={styles.status}>{t("tripForm.travelersHint")}</Text>
+                        <View style={styles.travelerCount}>
+                          {[-1, 1].map((step) => (
+                            <Fragment key={step}>
+                              <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={t(
+                                  step < 0
+                                    ? "tripForm.fewerTravelers"
+                                    : "tripForm.moreTravelers",
+                                )}
+                                disabled={
+                                  saving ||
+                                  (step < 0 ? travelerCount <= 1 : travelerCount >= 100)
+                                }
+                                accessibilityState={{
+                                  disabled:
+                                    saving ||
+                                    (step < 0
+                                      ? travelerCount <= 1
+                                      : travelerCount >= 100),
+                                }}
+                                onPress={() =>
+                                  changeTravelerCount(String(travelerCount + step))
+                                }
+                                style={styles.travelerStep}
+                              >
+                                <AppIcon
+                                  name={step < 0 ? "minus" : "plus"}
+                                  color={colors.textSecondary}
+                                />
+                              </Pressable>
+                              {step < 0 ? (
+                                <UiTextInput
+                                  accessibilityLabel={t("tripForm.travelerCount")}
+                                  inputMode="numeric"
+                                  keyboardType="number-pad"
+                                  value={travelerCountText}
+                                  editable={!saving}
+                                  onChangeText={changeTravelerCount}
+                                  style={styles.travelerCountInput}
+                                />
+                              ) : null}
+                            </Fragment>
+                          ))}
+                        </View>
+                        {travelers.slice(0, travelerCount).map((slot, index) => (
+                          <View key={slot.personId} style={styles.travelers}>
+                            <Text style={styles.body}>
+                              {t("tripForm.travelerName", {
+                                number: formatUiNumber(index + 1),
+                              })}
+                            </Text>
+                            <UiTextInput
+                              accessibilityLabel={t("tripForm.travelerName", {
+                                number: formatUiNumber(index + 1),
+                              })}
+                              value={slot.displayName}
+                              maxLength={256}
+                              editable={!saving}
+                              autoComplete="off"
+                              onChangeText={(displayName) =>
+                                setTravelers((previous) =>
+                                  previous.map((person) =>
+                                    person.personId === slot.personId
+                                      ? { ...person, displayName }
+                                      : person,
+                                  ),
+                                )
+                              }
+                            />
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
+                    {travelerCountError ? (
+                      <Text accessibilityRole="alert" style={styles.status}>
+                        {t(travelerCountError)}
+                      </Text>
+                    ) : null}
                     {error ? (
                       <Text accessibilityRole="alert" style={styles.status}>
                         {t("tripCreate.saveFailed")}
@@ -833,6 +979,7 @@ function LocalTripContent({
                       label={t("tripCreate.newTrip")}
                       disabled={
                         saving ||
+                        travelerCountError !== null ||
                         status !== "READY" ||
                         !tripMetadataSchema.safeParse({
                           name,
@@ -862,4 +1009,18 @@ const createStyles = (colors: UiColors) =>
     root: { gap: visual.space.section },
     body: { color: colors.textPrimary, ...visual.type.row },
     status: { color: colors.textSecondary, ...visual.type.meta },
+    travelers: { gap: visual.space.heading },
+    travelerCount: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: visual.space.heading,
+    },
+    travelerStep: {
+      minWidth: 44,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    travelerCountInput: { flexGrow: 1, minWidth: 72, textAlign: "center" },
   });

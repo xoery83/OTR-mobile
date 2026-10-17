@@ -1,4 +1,16 @@
 export const en = {
+  "tripForm.travelers": "Travelers · Optional",
+  "tripForm.travelerCount": "Number of name fields",
+  "tripForm.fewerTravelers": "Fewer name fields",
+  "tripForm.moreTravelers": "More name fields",
+  "tripForm.travelerName": "Traveler {number}",
+  "tripForm.travelersHint":
+    "Only names you enter are saved on this device. No invitations are sent.",
+  "tripForm.travelerCountRange": "Enter a whole number from 1 to 100.",
+  "tripForm.travelerNamesRetained":
+    "Names were kept. Clear the last entered names before reducing the number of fields.",
+  "tripForm.namedPeopleHint":
+    "Includes the creator when listed. Names do not indicate account connections or invitations.",
   "tripForm.dates": "Travel dates · Optional",
   "tripForm.chooseStart": "Choose a start date, then an end date.",
   "tripForm.chooseEnd": "Choose an end date.",
@@ -2329,6 +2341,17 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "tripForm.travelers": "旅行成员 · 可选",
+  "tripForm.travelerCount": "姓名栏数量",
+  "tripForm.fewerTravelers": "减少姓名栏",
+  "tripForm.moreTravelers": "增加姓名栏",
+  "tripForm.travelerName": "旅行成员 {number}",
+  "tripForm.travelersHint": "仅将你输入的姓名保存在本设备，不会发送邀请。",
+  "tripForm.travelerCountRange": "请输入 1 到 100 之间的整数。",
+  "tripForm.travelerNamesRetained":
+    "姓名已保留。请先清空末尾已填写的姓名，再减少姓名栏数量。",
+  "tripForm.namedPeopleHint":
+    "创建者在名单中时也计入人数。姓名不代表账号已连接或已发出邀请。",
   "tripForm.dates": "旅行日期 · 可选",
   "tripForm.chooseStart": "先选择开始日期，再选择结束日期。",
   "tripForm.chooseEnd": "选择结束日期。",

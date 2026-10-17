@@ -1,5 +1,9 @@
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
+import { DatabaseSync } from "node:sqlite";
+import { randomUUID } from "node:crypto";
+import { migrations } from "@/data/db/migrations";
+import { createTripPersonRepository } from "@/data/repositories/tripPersonRepository";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
 import type { Trip } from "@/domain/trip/types";
@@ -86,6 +90,10 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", () => ({
   KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
   Platform: { OS: "ios" },
+  Pressable: (p: any) => {
+    state.nodes.push(p);
+    return createElement("button", { disabled: p.disabled }, p.children);
+  },
   Alert: { alert: (...args: any[]) => state.alert(...args) },
   Modal: (p: any) => {
     if (p.visible) state.nodes.push({ modal: p });
@@ -121,12 +129,27 @@ vi.mock("@/ui/forms", () => ({
   UiChoiceChip: () => null,
 }));
 vi.mock("@/ui/locale", () => ({
-  t: (key: string) => key,
+  t: (key: string, params?: Record<string, unknown>) =>
+    params?.number ? `${key}:${params.number}` : key,
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
+  formatUiNumber: String,
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
-vi.mock("@/domain/localId", () => ({ createUuid: () => `test-uuid-${++state.serial}` }));
+vi.mock("@/ui/theme", () => ({
+  useThemedStyles: () => ({}),
+  useUiTheme: () => ({ textSecondary: "currentColor" }),
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("@/domain/localId", async (original) => ({
+  ...(await original<typeof import("@/domain/localId")>()),
+  createUuid: () =>
+    `00000000-0000-4000-8000-${(++state.serial).toString(16).padStart(12, "0")}`,
+}));
+vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(),
+  readLocalSession: vi.fn(),
+}));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: () => state.repo(),
 }));
@@ -270,7 +293,7 @@ beforeEach(() => {
   props.widgetsForHome.mockReturnValue([]);
   props.tripId = null;
   props.mode = "LIST";
-  props.onOpen.mockClear();
+  props.onOpen.mockReset();
   props.onKnownTrip.mockClear();
   props.onBackToTrips.mockClear();
   advanceAccountGeneration();
@@ -635,4 +658,215 @@ it("Create is one native sheet, Cancel writes nothing, and immediate double tap 
   pending.resolve(trip(payload.tripId, payload.name));
   await flush();
   expect(props.onOpen).toHaveBeenCalledExactlyOnceWith(payload.tripId);
+});
+
+it("sends seven slots with three nonblank names through the real atomic Trip Repository and reads four distinct Persons", async () => {
+  const sql = new DatabaseSync(":memory:");
+  try {
+    for (const migration of migrations) sql.exec(migration.sql);
+    const database = {
+      async getFirstAsync<T>(query: string, ...args: unknown[]) {
+        return (sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+      },
+      async getAllAsync<T>(query: string, ...args: unknown[]) {
+        return sql.prepare(query).all(...(args as never[])) as T[];
+      },
+      async runAsync(query: string, ...args: unknown[]) {
+        return sql.prepare(query).run(...(args as never[])) as never;
+      },
+      async withTransactionAsync(work: () => Promise<void>) {
+        sql.exec("BEGIN");
+        try {
+          await work();
+          sql.exec("COMMIT");
+        } catch (error) {
+          sql.exec("ROLLBACK");
+          throw error;
+        }
+      },
+    };
+    const { createTripRepository } = await vi.importActual<
+      typeof import("@/data/repositories/tripRepository")
+    >("@/data/repositories/tripRepository");
+    const account = randomUUID();
+    const identity = async () => account;
+    const repo = createTripRepository(
+      database,
+      identity,
+      { captureContext: vi.fn(), enqueue: vi.fn(), pending: vi.fn() },
+      () => "2026-10-17T09:00:00Z",
+      async () => "Account creator",
+    );
+    const create = vi.spyOn(repo, "createTrip");
+    state.repo.mockResolvedValue(repo);
+    props.mode = "CREATE";
+    render();
+    await vi.waitFor(() => expect(props.onKnownTrip).toHaveBeenCalledWith("NONE"));
+    render();
+    expect(
+      state.nodes.some((node) => node.accessibilityLabel === "tripForm.travelerName:1"),
+    ).toBe(false);
+    input("tripCreate.name", "Local Travelers");
+    button("tripForm.travelers").onPress();
+    render();
+    expect(
+      state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:1")!
+        .value,
+    ).toBe("");
+    input("tripForm.travelerCount", "7");
+    render();
+    input("tripForm.travelerName:1", " Tina ");
+    render();
+    input("tripForm.travelerName:3", "同行者");
+    render();
+    input("tripForm.travelerName:7", "Tina");
+    render();
+    props.onOpen.mockImplementationOnce(() => {
+      throw new Error("navigation");
+    });
+    button("tripCreate.newTrip").onPress();
+    await vi.waitFor(() => expect(props.onOpen).toHaveBeenCalledOnce());
+    const payload = create.mock.calls[0][0];
+    expect(payload.travelers?.map((slot) => slot.displayName)).toEqual([
+      "Tina",
+      "同行者",
+      "Tina",
+    ]);
+    const people = await createTripPersonRepository(database, identity).listTripPersons(
+      payload.tripId,
+    );
+    expect(people).toHaveLength(4);
+    expect(people.filter((person) => person.localState === "LOCAL_PENDING")).toHaveLength(
+      3,
+    );
+    expect(
+      people.filter((person) => person.displayName === "Account creator"),
+    ).toHaveLength(1);
+    render();
+    button("tripCreate.newTrip").onPress();
+    await vi.waitFor(() => expect(props.onOpen).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0]).toEqual(payload);
+    expect(
+      await createTripPersonRepository(database, identity).listTripPersons(
+        payload.tripId,
+      ),
+    ).toEqual(people);
+    const proof = JSON.parse(
+      String(
+        sql
+          .prepare("SELECT payload_json p FROM sync_operations WHERE id=?")
+          .get(payload.operationId)?.p,
+      ),
+    );
+    expect(proof).not.toHaveProperty("travelers");
+  } finally {
+    sql.close();
+  }
+});
+
+it("preserves names and stable intent IDs on retry and rejects a count that would discard names", async () => {
+  const repo = repository();
+  vi.mocked(repo.createTrip).mockRejectedValueOnce(new Error("disk"));
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("tripCreate.name", "Retry trip");
+  button("tripForm.travelers").onPress();
+  render();
+  input("tripForm.travelerCount", "7");
+  render();
+  input("tripForm.travelerName:7", "Last traveler");
+  render();
+  button("tripCreate.newTrip").onPress();
+  await flush();
+  render();
+  const first = vi.mocked(repo.createTrip).mock.calls[0][0];
+  input("tripForm.travelerCount", "3");
+  expect(render()).toContain("tripForm.travelerNamesRetained");
+  expect(
+    state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:7")!
+      .value,
+  ).toBe("Last traveler");
+  expect(button("tripCreate.newTrip").disabled).toBe(true);
+  button("tripCreate.newTrip").onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledTimes(1);
+  input("tripForm.travelerCount", "7");
+  render();
+  button("tripCreate.newTrip").onPress();
+  await flush();
+  expect(vi.mocked(repo.createTrip).mock.calls[1][0]).toEqual(first);
+});
+
+it("rejects invalid counts without submitting old slots and supports more than ten fields", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("tripCreate.name", "Large group");
+  button("tripForm.travelers").onPress();
+  render();
+  for (const count of ["101", "1000", "-1", "2.5", ""]) {
+    input("tripForm.travelerCount", count);
+    expect(render()).toContain("tripForm.travelerCountRange");
+    expect(
+      state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerCount")!
+        .value,
+    ).toBe(count);
+    button("tripCreate.newTrip").onPress();
+    await flush();
+  }
+  expect(repo.createTrip).not.toHaveBeenCalled();
+  input("tripForm.travelerCount", "11");
+  render();
+  expect(
+    state.nodes.filter((node) =>
+      node.accessibilityLabel?.startsWith("tripForm.travelerName:"),
+    ).length,
+  ).toBe(11);
+  expect(button("tripCreate.newTrip").disabled).toBe(false);
+});
+
+it("clears private Traveler names and allocates a new intent after account generation changes", async () => {
+  const a = repository(),
+    b = repository();
+  vi.mocked(a.createTrip).mockRejectedValueOnce(new Error("disk"));
+  state.repo.mockResolvedValue(a);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("tripCreate.name", "A trip");
+  button("tripForm.travelers").onPress();
+  render();
+  input("tripForm.travelerName:1", "A private name");
+  render();
+  button("tripCreate.newTrip").onPress();
+  await flush();
+  const old = vi.mocked(a.createTrip).mock.calls[0][0];
+  advanceAccountGeneration();
+  state.repo.mockResolvedValue(b);
+  expect(render()).not.toContain("A private name");
+  await flush();
+  render();
+  button("tripForm.travelers").onPress();
+  render();
+  expect(
+    state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:1")!
+      .value,
+  ).toBe("");
+  input("tripCreate.name", "B trip");
+  input("tripForm.travelerName:1", "B own name");
+  render();
+  button("tripCreate.newTrip").onPress();
+  await flush();
+  const fresh = vi.mocked(b.createTrip).mock.calls[0][0];
+  expect(fresh.travelers?.[0].displayName).toBe("B own name");
+  expect(fresh.tripId).not.toBe(old.tripId);
+  expect(fresh.travelers?.[0].personId).not.toBe(old.travelers?.[0].personId);
+  expect(fresh.travelers?.[0].operationId).not.toBe(old.travelers?.[0].operationId);
 });

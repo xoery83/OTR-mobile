@@ -120,6 +120,9 @@ export function TripMembersSummary({ setup }: { setup: TripPreparationSetup | nu
           ? t("tripForm.namedPeople", { count: formatUiNumber(setup.members.namedCount) })
           : t("tripForm.membersUnknown")}
       </UiText>
+      {setup?.members.state === "AVAILABLE" ? (
+        <UiText style={styles.meta}>{t("tripForm.namedPeopleHint")}</UiText>
+      ) : null}
     </View>
   );
 }

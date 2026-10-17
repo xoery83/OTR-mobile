@@ -54,6 +54,7 @@ it("never substitutes fake currency or invitation counts for unknown facts", () 
   expect(row.props.disabled).toBe(true);
   const named = JSON.stringify(TripMembersSummary({ setup }));
   expect(named).toContain("tripForm.namedPeople:3");
+  expect(named).toContain("tripForm.namedPeopleHint");
   expect(named).not.toContain("invited");
   expect(JSON.stringify(TripMembersSummary({ setup: null }))).toContain(
     "tripForm.membersUnknown",
