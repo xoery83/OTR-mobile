@@ -1,3 +1,4 @@
+import type { BuiltInTripCoverId } from "@/domain/trip/types";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
@@ -49,8 +50,20 @@ export function createTripMetadataRepository(
         return false;
       }
     },
-    async updateMetadata(input: TripMetadataUpdate) {
+    async updateMetadata(
+      input: TripMetadataUpdate,
+      cover?: { before: BuiltInTripCoverId | null; after: BuiltInTripCoverId | null },
+    ) {
       const request = tripMetadataUpdateSchema.parse(input);
+      if (
+        cover &&
+        [cover.before, cover.after].some(
+          (id) =>
+            id !== null &&
+            !["city", "coast", "mountain", "cultural-oldtown"].includes(id),
+        )
+      )
+        throw new Error("TRIP_COVER_INVALID");
       const scope = await captureAccountScope(account);
       await withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
@@ -74,6 +87,7 @@ export function createTripMetadataRepository(
             end_date: string | null;
             accepted_at: string | null;
             create_operation_id: string;
+            selected_cover_asset_id: string | null;
             payload_json: string;
           }>(
             `SELECT trip.*,op.payload_json FROM local_trip_containers trip JOIN sync_operations op
@@ -98,6 +112,19 @@ export function createTripMetadataRepository(
           };
           if (json(before) !== json(request.before))
             throw new Error("TRIP_METADATA_LOCAL_CONFLICT");
+          if (cover) {
+            if (
+              row.selected_cover_asset_id !== cover.before &&
+              row.selected_cover_asset_id !== cover.after
+            )
+              throw new Error("TRIP_COVER_LOCAL_CONFLICT");
+            await database.runAsync(
+              "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+              cover.after,
+              scope.accountId,
+              request.tripId,
+            );
+          }
           if (json(before) === json(request.after)) {
             await assertAccountRequestContext(scope, account);
             return;

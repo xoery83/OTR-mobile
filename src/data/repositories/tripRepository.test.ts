@@ -1833,3 +1833,153 @@ it("rolls the new Trip and owner back if a named Person intent cannot persist", 
   ])
     expect(f.sql.prepare(`SELECT count(*) n FROM ${table}`).get()?.n).toBe(0);
 });
+
+it("atomically saves metadata and built-in cover, with durable cold recovery and original create proof", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-trip-editor-atomic-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const create = input();
+  const saved = await f.repo.createTrip(create);
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Atomic edit", startDate: null, endDate: null },
+  };
+  const proof = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(create.operationId);
+  await f.repo.updateMetadata(request, { before: null, after: "coast" });
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("coast");
+  expect(
+    f.sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(create.operationId),
+  ).toEqual(proof);
+  expect(
+    JSON.parse(
+      String(
+        f.sql
+          .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+          .get(request.operationId)!.payload_json,
+      ),
+    ),
+  ).toEqual(request);
+  f.sql.close();
+  connections.splice(connections.indexOf(f.sql), 1);
+  f = local(path, false);
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    name: "Atomic edit",
+    startDate: null,
+    endDate: null,
+    selectedCoverAssetId: "coast",
+  });
+  await f.repo.selectBuiltInCover(saved.id, "mountain");
+  await f.repo.updateMetadata(request, { before: null, after: "coast" });
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("mountain");
+});
+
+it("saves cover-only without a Hosted metadata intent and permits unchanged replay", async () => {
+  const f = local();
+  const saved = await f.repo.createTrip(input());
+  const metadata = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: metadata,
+    after: metadata,
+  };
+  await f.repo.updateMetadata(request, { before: null, after: "city" });
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  expect(
+    f.sql
+      .prepare(
+        "SELECT COUNT(*) AS n FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+      )
+      .get()!.n,
+  ).toBe(0);
+  await f.repo.updateMetadata(request, { before: null, after: "city" });
+  await f.repo.updateMetadata(request, { before: "city", after: "city" });
+});
+
+it("rolls back the cover when metadata queue insertion fails", async () => {
+  const f = local();
+  const saved = await f.repo.createTrip(input());
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  f.failNextQueue();
+  await expect(
+    f.repo.updateMetadata(
+      {
+        operationId: randomUUID(),
+        tripId: saved.id,
+        before,
+        after: { ...before, name: "Must roll back" },
+      },
+      { before: null, after: "coast" },
+    ),
+  ).rejects.toThrow("QUEUE_WRITE_FAILED");
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    name: saved.name,
+    selectedCoverAssetId: null,
+  });
+});
+
+it("rejects stale cover drafts, invalid built-ins and account changes without partial metadata changes", async () => {
+  const f = local();
+  const saved = await f.repo.createTrip(input());
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Must roll back" },
+  };
+  await f.repo.selectBuiltInCover(saved.id, "city");
+  await expect(
+    f.repo.updateMetadata(request, { before: null, after: "coast" }),
+  ).rejects.toThrow("TRIP_COVER_LOCAL_CONFLICT");
+  await expect(
+    f.repo.updateMetadata(request, { before: "city", after: "unknown" as never }),
+  ).rejects.toThrow("TRIP_COVER_INVALID");
+  f.abaNextAccept();
+  await expect(
+    f.repo.updateMetadata(request, { before: "city", after: "coast" }),
+  ).rejects.toThrow("Account changed");
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    name: saved.name,
+    selectedCoverAssetId: "city",
+  });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT COUNT(*) AS n FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+      )
+      .get()!.n,
+  ).toBe(0);
+  f.switchTo(accountB);
+  await expect(
+    f.repo.updateMetadata(request, { before: "city", after: "coast" }),
+  ).rejects.toThrow("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
+});
