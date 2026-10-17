@@ -1778,3 +1778,58 @@ it("keeps later dirty edits when earlier metadata receipts arrive and resumes de
   ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
   expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
 });
+
+it("atomically creates Trip/owner/named Persons and preserves names across cold replay", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-trip-travelers-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const names = [" Tina ", "", "旅行者", " ", "Tina", "", ""];
+  const command = {
+    ...input(),
+    travelers: names.map((displayName) => ({
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName,
+    })),
+  };
+  await f.repo.createTrip(command);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(4);
+  const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+  const proof = JSON.parse(
+    String(
+      f.sql
+        .prepare("SELECT payload_json p FROM sync_operations WHERE id=?")
+        .get(command.operationId)?.p,
+    ),
+  );
+  expect(proof).not.toHaveProperty("travelers");
+  f.sql.close();
+  f = local(path, false);
+  expect((await f.repo.createTrip(command)).id).toBe(command.tripId);
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+    before,
+  );
+});
+
+it("rolls the new Trip and owner back if a named Person intent cannot persist", async () => {
+  const f = local();
+  const operationId = randomUUID();
+  f.sql.exec(`CREATE TRIGGER fail_named_person BEFORE INSERT ON sync_operations
+    WHEN NEW.id='${operationId}' BEGIN SELECT RAISE(ABORT,'NAMED_PERSON_QUEUE_FAILURE'); END`);
+  await expect(
+    f.repo.createTrip({
+      ...input(),
+      travelers: [{ operationId, personId: randomUUID(), displayName: "Tina" }],
+    }),
+  ).rejects.toThrow("NAMED_PERSON_QUEUE_FAILURE");
+  for (const table of [
+    "local_trip_containers",
+    "local_trip_ledger_bindings",
+    "ledger_members",
+    "ledger_actor_context",
+    "ledger_journeys",
+    "sync_operations",
+  ])
+    expect(f.sql.prepare(`SELECT count(*) n FROM ${table}`).get()?.n).toBe(0);
+});

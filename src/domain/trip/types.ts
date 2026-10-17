@@ -1,3 +1,4 @@
+import type { LocalPersonNameSlot } from "./localTripPerson";
 import type { SyncableRecord } from "@/domain/sync/syncStatus";
 
 export type BuiltInTripCoverId = "city" | "coast" | "mountain" | "cultural-oldtown";
@@ -13,6 +14,8 @@ export type Trip = SyncableRecord & {
 };
 
 export type CreateTripInput = {
+  /** Local-only named slots; never part of the Hosted CREATE proof. */
+  travelers?: readonly LocalPersonNameSlot[];
   operationId: string;
   tripId: string;
   name: string;

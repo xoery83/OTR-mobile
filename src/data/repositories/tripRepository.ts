@@ -29,6 +29,7 @@ import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { createTripMetadataRepository } from "./tripMetadataRepository";
 import { mapLocalTripLedgerPerson } from "./tripLedgerAcceptance";
+import { initializeLocalTripPersons } from "./localTripPersonRepository";
 
 type Database = Pick<
   SQLite.SQLiteDatabase,
@@ -316,6 +317,15 @@ export function createTripRepository(
           );
           if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
           await initializeLedger(scope.accountId, row, name);
+          if (input.travelers) {
+            await initializeLocalTripPersons(
+              database,
+              { ...scope, tripId: input.tripId },
+              account,
+              input.travelers,
+              clock,
+            );
+          }
           await assertAccountRequestContext(scope, account);
         });
         return result!;

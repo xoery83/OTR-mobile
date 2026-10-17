@@ -137,6 +137,7 @@ export function syncFailureDetails(error: Error) {
 }
 
 const closedImportOperations = new Set([
+  "TRIP_PERSON_CREATE",
   "C_PREPARE_CONFIRMATION",
   "C_EXECUTE_EVENT_SLOT",
   "C_FINALIZE_EVENT_SLOT",
