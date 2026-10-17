@@ -2,6 +2,8 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -16,6 +18,10 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
+import {
+  dayNavigationBookmarkRepository,
+  type DayNavigationBookmark,
+} from "@/data/repositories/dayNavigationBookmarkRepository";
 export type TripView = { tripId: string; date: string; zone: string; generation: number };
 export type DayReading = {
   offset: number;
@@ -41,6 +47,46 @@ export const emptyTripNavigation: TripNavigation = {
   bookmarks: {},
   lastTrip: null,
 };
+export function hydrateDayReadingHints(
+  state: TripNavigation,
+  hints: readonly DayNavigationBookmark[],
+  generation: number,
+): TripNavigation {
+  if (generation !== getAccountGeneration()) return state;
+  const bookmarks = { ...state.bookmarks };
+  for (const hint of hints) {
+    if (bookmarks[hint.tripId]?.view.generation === generation) continue;
+    bookmarks[hint.tripId] = {
+      view: { tripId: hint.tripId, date: hint.date, zone: hint.zone, generation },
+      reading: {
+        offset: 0,
+        focus: null,
+        layout: "WHOLE_TRIP",
+        anchoredDate: hint.date,
+        ...(hint.anchor ? { anchor: hint.anchor } : {}),
+      },
+    };
+  }
+  // Preferences never select a route, working Trip or an explicit Today entry.
+  return { ...state, bookmarks };
+}
+export function dayReadingHint(state: TripNavigation): DayNavigationBookmark | null {
+  if (state.entry.kind !== "RESUME" || !state.view) return null;
+  const saved = state.bookmarks[state.view.tripId];
+  if (
+    !saved ||
+    saved.view.generation !== state.view.generation ||
+    saved.reading.layout !== "WHOLE_TRIP" ||
+    !saved.reading.anchoredDate
+  )
+    return null;
+  return {
+    tripId: saved.view.tripId,
+    date: saved.reading.anchoredDate,
+    zone: saved.view.zone,
+    ...(saved.reading.anchor ? { anchor: saved.reading.anchor } : {}),
+  };
+}
 export function enterTripDay(
   state: TripNavigation,
   view: TripView | null,
@@ -198,6 +244,74 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     getAccountGeneration,
   );
   const [state, setState] = useState(emptyTripNavigation);
+  const lastPersisted = useRef("");
+  useEffect(() => {
+    let cancelled = false;
+    lastPersisted.current = "";
+    void dayNavigationBookmarkRepository
+      .list()
+      .then((hints) => {
+        if (!cancelled && generation === getAccountGeneration())
+          setState((previous) => hydrateDayReadingHints(previous, hints, generation));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [generation]);
+  const hint = state.view?.generation === generation ? dayReadingHint(state) : null;
+  const hintJson = hint ? JSON.stringify(hint) : "";
+  const pendingHint = useRef<{
+    json: string;
+    tripId: string;
+    generation: number;
+    timer: ReturnType<typeof setTimeout> | null;
+  } | null>(null);
+  const flushHint = useCallback(() => {
+    const pending = pendingHint.current;
+    pendingHint.current = null;
+    if (!pending) return;
+    if (pending.timer !== null) clearTimeout(pending.timer);
+    if (pending.generation !== getAccountGeneration()) return;
+    void dayNavigationBookmarkRepository
+      .record(JSON.parse(pending.json))
+      .then((saved) => {
+        if (
+          pending.generation === getAccountGeneration() &&
+          saved.some((hint) => JSON.stringify(hint) === pending.json)
+        )
+          lastPersisted.current = pending.json;
+      })
+      .catch(() => {});
+  }, []);
+  useEffect(() => {
+    const previous = pendingHint.current;
+    if (previous) {
+      if (
+        previous.generation !== generation ||
+        !hintJson ||
+        JSON.parse(hintJson).tripId !== previous.tripId
+      )
+        flushHint();
+      else {
+        // Coalesce same-Trip reading frames; leaving the Trip must flush its last accepted hint.
+        if (previous.timer !== null) clearTimeout(previous.timer);
+        pendingHint.current = null;
+      }
+    }
+    if (!hintJson || hintJson === lastPersisted.current) return;
+    const pending = {
+      json: hintJson,
+      tripId: JSON.parse(hintJson).tripId as string,
+      generation,
+      timer: null as ReturnType<typeof setTimeout> | null,
+    };
+    pendingHint.current = pending;
+    pending.timer = setTimeout(() => {
+      if (pendingHint.current === pending) flushHint();
+    }, 350);
+  }, [generation, hintJson, flushHint]);
+  useEffect(() => () => flushHint(), [generation, flushHint]);
   const [localOutcome, setLocalOutcome] = useState<{
     tripId: string;
     generation: number;
@@ -264,7 +378,7 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     if (captured !== getAccountGeneration() || !tripId) return;
     setState((previous) => switchWorkingTrip(previous, tripId, captured));
   }, []);
-  // One generation-fenced transient navigation owner; never canonical/business persistence.
+  // One navigation owner; bounded account preferences confer no business/read authority.
   return (
     <Context.Provider
       value={{

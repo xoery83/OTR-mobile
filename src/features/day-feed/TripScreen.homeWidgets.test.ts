@@ -5,6 +5,12 @@ import { TripScreen } from "./TripScreen";
 import { DayFeed } from "./DayFeed";
 import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
+vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
+  dayNavigationBookmarkRepository: {
+    list: vi.fn(async () => []),
+    record: vi.fn(async () => []),
+  },
+}));
 const reference = "b61a0000-0061-4000-8000-000000000001";
 const actor = "3a44420f-ec2b-4d7e-9770-410a5ed5e77e";
 const state = vi.hoisted(() => ({

@@ -160,6 +160,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const dayList = useRef<DayListHandle>(null);
   const dayUserDriven = useRef(false);
   const dayOffset = useRef(0);
+  const dayOrigin = useRef(0);
   const [dayPastIntroduction, setDayPastIntroduction] = useState(false);
   const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
@@ -911,15 +912,22 @@ function TripContent({ today = false }: { today?: boolean }) {
               },
               onOffsetChange: (value) => {
                 if (dayOffset.current > 32 !== value > 32)
-                  setDayPastIntroduction(value > 32);
+                  setDayPastIntroduction(dayOrigin.current > 0 || value > 32);
                 dayOffset.current = value;
                 dayShell.observeScroll(value, dayUserDriven.current);
               },
-              onViewportChange: (viewport) =>
+              onViewportChange: (viewport) => {
+                if (dayOrigin.current !== viewport.originIndex) {
+                  dayOrigin.current = viewport.originIndex;
+                  setDayPastIntroduction(
+                    viewport.originIndex > 0 || viewport.scrollOffset > 32,
+                  );
+                }
                 dayShell.observeVisibleDates({
                   first: viewport.firstVisibleDate,
                   last: viewport.lastVisibleDate,
-                }),
+                });
+              },
             }}
             instant={homePerspective?.now}
             key={`${requested}/${generation}`}

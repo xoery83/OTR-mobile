@@ -74,6 +74,7 @@ export type DayFeedPresentation = {
     firstVisibleDate: string;
     lastVisibleDate: string;
     scrollOffset: number;
+    originIndex: number;
   }) => void;
   onInteraction?: () => void;
   onOffsetChange?: (offset: number) => void;
