@@ -16,6 +16,7 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import { wholeTripCalendarDates } from "./tripListPresentation";
 
 export type DayFeedCalendarMarker = "Plans" | "Stay" | "Transport";
 export type DayFeedCalendarSummary = Readonly<{
@@ -59,6 +60,42 @@ export function dayFeedCalendarCells(month: string): (string | null)[] {
     return day >= 1 && day <= count ? `${month}-${String(day).padStart(2, "0")}` : null;
   });
 }
+// Core bounds stay the confirmed Trip range; coverage only exposes supplied reader dates.
+export function dayFeedCalendarCoverage(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  readerDates: readonly string[],
+  selected?: string | null,
+) {
+  const core = dayFeedCalendarBounds(start, end);
+  const candidates = readerDates.flatMap((date) => {
+    try {
+      return [validateCalendarDate(date)];
+    } catch {
+      return [];
+    }
+  });
+  let anchor = core?.start ?? candidates[0];
+  try {
+    if (selected) anchor = validateCalendarDate(selected);
+  } catch {
+    // Invalid route state cannot create a selectable date.
+  }
+  const dates = anchor
+    ? wholeTripCalendarDates(
+        { startDate: core?.start ?? null, endDate: core?.end ?? null },
+        candidates,
+        anchor,
+      )
+    : [];
+  return {
+    core,
+    dates: new Set(dates),
+    months: dates.length
+      ? dayFeedCalendarMonths({ start: dates[0], end: dates[dates.length - 1] })
+      : [],
+  };
+}
 const dateValue = (date: string) => new Date(`${date}T12:00:00Z`);
 const accessibleDay = (date: string) =>
   formatUiDate(dateValue(date), { dateStyle: "full", timeZone: "UTC" });
@@ -74,6 +111,7 @@ export function DayFeedCalendarSheet({
   tripStart,
   tripEnd,
   selectedDate,
+  dates = [],
   summaries,
   copy,
 }: {
@@ -85,6 +123,7 @@ export function DayFeedCalendarSheet({
   tripStart?: string | null;
   tripEnd?: string | null;
   selectedDate?: string | null;
+  dates?: readonly string[];
   summaries: readonly DayFeedCalendarSummary[];
   copy: DayFeedCalendarCopy;
 }) {
@@ -100,8 +139,9 @@ export function DayFeedCalendarSheet({
   const scroll = useRef<ScrollView>(null);
   const positioned = useRef(false);
   const offsets = useRef<Record<string, number>>({});
-  const bounds = dayFeedCalendarBounds(tripStart, tripEnd);
-  const months = bounds ? dayFeedCalendarMonths(bounds) : [];
+  const coverage = dayFeedCalendarCoverage(tripStart, tripEnd, dates, selectedDate);
+  const bounds = coverage.core;
+  const months = coverage.months;
   const selectedMonth = months.includes(selectedDate?.slice(0, 7) ?? "")
     ? selectedDate!.slice(0, 7)
     : months[0];
@@ -149,111 +189,112 @@ export function DayFeedCalendarSheet({
         >
           {!bounds ? (
             <UiText style={styles.secondary}>{copy.unknownBounds}</UiText>
-          ) : (
-            months.map((month) => (
-              <View
-                key={month}
-                style={styles.month}
-                onLayout={({ nativeEvent }) => {
-                  offsets.current[month] = nativeEvent.layout.y;
-                  position();
-                }}
+          ) : null}
+          {months.map((month) => (
+            <View
+              key={month}
+              style={styles.month}
+              onLayout={({ nativeEvent }) => {
+                offsets.current[month] = nativeEvent.layout.y;
+                position();
+              }}
+            >
+              <UiText accessibilityRole="header" style={styles.monthTitle}>
+                {formatUiDate(dateValue(`${month}-01`), {
+                  year: "numeric",
+                  month: "long",
+                  timeZone: "UTC",
+                })}
+              </UiText>
+              <ScrollView
+                horizontal
+                style={styles.horizontal}
+                showsHorizontalScrollIndicator={
+                  gridWidth > sheetWidth - visual.space.page * 2
+                }
               >
-                <UiText accessibilityRole="header" style={styles.monthTitle}>
-                  {formatUiDate(dateValue(`${month}-01`), {
-                    year: "numeric",
-                    month: "long",
-                    timeZone: "UTC",
-                  })}
-                </UiText>
-                <ScrollView
-                  horizontal
-                  style={styles.horizontal}
-                  showsHorizontalScrollIndicator={
-                    gridWidth > sheetWidth - visual.space.page * 2
-                  }
-                >
-                  <View style={[styles.grid, { width: gridWidth }]}>
-                    {Array.from({ length: 7 }, (_, day) => (
-                      <UiText key={day} style={styles.weekday}>
-                        {formatUiDate(dateValue(`2021-11-0${day + 1}`), {
-                          weekday: "narrow",
-                          timeZone: "UTC",
-                        })}
-                      </UiText>
-                    ))}
-                    {dayFeedCalendarCells(month).map((date, index) => {
-                      if (!date)
-                        return <View key={`blank-${index}`} style={styles.blank} />;
-                      const allowed = date >= bounds.start && date <= bounds.end;
-                      const summary = allowed ? summaryByDate.get(date) : undefined;
-                      const hints = markers.filter((marker) =>
-                        summary?.markers.includes(marker),
-                      );
-                      const selected = allowed && date === selectedDate;
-                      return (
-                        <Pressable
-                          key={date}
+                <View style={[styles.grid, { width: gridWidth }]}>
+                  {Array.from({ length: 7 }, (_, day) => (
+                    <UiText key={day} style={styles.weekday}>
+                      {formatUiDate(dateValue(`2021-11-0${day + 1}`), {
+                        weekday: "narrow",
+                        timeZone: "UTC",
+                      })}
+                    </UiText>
+                  ))}
+                  {dayFeedCalendarCells(month).map((date, index) => {
+                    if (!date)
+                      return <View key={`blank-${index}`} style={styles.blank} />;
+                    const allowed = coverage.dates.has(date);
+                    const inCoreRange =
+                      !!bounds && date >= bounds.start && date <= bounds.end;
+                    const summary = allowed ? summaryByDate.get(date) : undefined;
+                    const hints = markers.filter((marker) =>
+                      summary?.markers.includes(marker),
+                    );
+                    const selected = allowed && date === selectedDate;
+                    return (
+                      <Pressable
+                        key={date}
+                        style={[
+                          styles.cell,
+                          inCoreRange && styles.inRange,
+                          selected && styles.selected,
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected, disabled: !allowed }}
+                        disabled={!allowed}
+                        accessibilityLabel={[
+                          accessibleDay(date),
+                          summary?.placeTransitionLabel,
+                          ...hints.map((marker) => copy.markers[marker]),
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                        onPress={() => {
+                          if (!allowed) return;
+                          onClose();
+                          onSelect(date);
+                        }}
+                      >
+                        <UiText
                           style={[
-                            styles.cell,
-                            allowed && styles.inRange,
-                            selected && styles.selected,
+                            styles.day,
+                            !allowed && styles.muted,
+                            selected && styles.selectedText,
                           ]}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected, disabled: !allowed }}
-                          disabled={!allowed}
-                          accessibilityLabel={[
-                            accessibleDay(date),
-                            summary?.placeTransitionLabel,
-                            ...hints.map((marker) => copy.markers[marker]),
-                          ]
-                            .filter(Boolean)
-                            .join(", ")}
-                          onPress={() => {
-                            if (!allowed) return;
-                            onClose();
-                            onSelect(date);
-                          }}
                         >
+                          {formatUiNumber(+date.slice(8))}
+                        </UiText>
+                        {summary?.placeTransitionLabel ? (
                           <UiText
-                            style={[
-                              styles.day,
-                              !allowed && styles.muted,
-                              selected && styles.selectedText,
-                            ]}
+                            numberOfLines={1}
+                            style={[styles.place, selected && styles.selectedText]}
                           >
-                            {formatUiNumber(+date.slice(8))}
+                            {summary.placeTransitionLabel}
                           </UiText>
-                          {summary?.placeTransitionLabel ? (
-                            <UiText
-                              numberOfLines={1}
-                              style={[styles.place, selected && styles.selectedText]}
-                            >
-                              {summary.placeTransitionLabel}
-                            </UiText>
-                          ) : null}
-                          {hints.length ? (
-                            <View style={styles.markers}>
-                              {hints.map((marker) => (
-                                <View
-                                  key={marker}
-                                  style={[
-                                    styles.marker,
-                                    styles[marker],
-                                    selected && styles.selectedMarker,
-                                  ]}
-                                />
-                              ))}
-                            </View>
-                          ) : null}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
-              </View>
-            ))
-          )}
+                        ) : null}
+                        {hints.length ? (
+                          <View style={styles.markers}>
+                            {hints.map((marker) => (
+                              <View
+                                key={marker}
+                                style={[
+                                  styles.marker,
+                                  styles[marker],
+                                  selected && styles.selectedMarker,
+                                ]}
+                              />
+                            ))}
+                          </View>
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
+          ))}
         </ScrollView>
       </View>
     </Modal>

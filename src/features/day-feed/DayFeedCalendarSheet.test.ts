@@ -5,6 +5,7 @@ import {
   DayFeedCalendarSheet,
   dayFeedCalendarBounds,
   dayFeedCalendarCells,
+  dayFeedCalendarCoverage,
   dayFeedCalendarMonths,
 } from "./DayFeedCalendarSheet";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
@@ -60,6 +61,7 @@ const props = {
   tripStart: "2027-01-28",
   tripEnd: "2027-02-08",
   selectedDate: "2027-02-03",
+  dates: ["2027-02-03"],
   summaries: [
     {
       date: "2027-02-03",
@@ -123,7 +125,7 @@ it("selects an empty in-range date once without confirmation and blocks off-rang
     allowSwipeDismissal: true,
   });
 });
-it("uses only supplied transition labels and deduplicated markers; unknown bounds never synthesize a calendar", () => {
+it("uses only supplied transition labels and deduplicated markers; unknown core bounds stay honest", () => {
   let html = render();
   expect(html.match(/Sapporo/g)).toHaveLength(1);
   const selected = state.nodes.find(
@@ -132,7 +134,13 @@ it("uses only supplied transition labels and deduplicated markers; unknown bound
   expect(selected.accessibilityLabel).toContain("Sapporo, Plans, Stay, Transport");
   expect(selected.children[2].props.children).toHaveLength(3);
   state.nodes = [];
-  html = render({ tripStart: null, tripEnd: null });
+  html = render({
+    tripStart: null,
+    tripEnd: null,
+    selectedDate: undefined,
+    summaries: [],
+    dates: [],
+  });
   expect(html).toContain("Unknown bounds");
   expect(state.nodes.some((p) => p.kind === "Pressable")).toBe(false);
 });
@@ -168,4 +176,90 @@ it("opens around the measured selected month once and never pulls back after she
   state.nodes.find((p) => p.kind === "ScrollView" && !p.horizontal).onScrollBeginDrag();
   months[2].onLayout({ nativeEvent: { layout: { y: 920 } } });
   expect(state.scrollTo).toHaveBeenCalledTimes(1);
+});
+
+it("keeps eight confirmed core days while admitting lawful flights on Dec13 and Dec22", () => {
+  const core = { start: "2026-12-14", end: "2026-12-21" };
+  const summaries = [
+    { date: "2026-12-13", markers: ["Transport"] as const },
+    { date: "2026-12-22", markers: ["Transport"] as const },
+  ];
+  const coverage = dayFeedCalendarCoverage(
+    core.start,
+    core.end,
+    summaries.map(({ date }) => date),
+  );
+  expect(coverage.core).toEqual(core);
+  expect([...coverage.dates]).toHaveLength(10);
+  render({
+    tripStart: core.start,
+    tripEnd: core.end,
+    summaries,
+    dates: summaries.map(({ date }) => date),
+    selectedDate: core.start,
+  });
+  const cells = state.nodes.filter((p) => p.kind === "Pressable");
+  for (const date of ["2026-12-13", "2026-12-22"]) {
+    const label = new Intl.DateTimeFormat(undefined, {
+      dateStyle: "full",
+      timeZone: "UTC",
+    }).format(new Date(`${date}T12:00:00Z`));
+    const cell = cells.find((p) => p.accessibilityLabel.startsWith(label));
+    expect(cell.disabled).toBe(false);
+    cell.onPress();
+    expect(state.select).toHaveBeenLastCalledWith(date);
+  }
+});
+it("reaches item months outside the core year without making unrelated empty dates eligible", () => {
+  const summaries = [{ date: "2026-12-31" }, { date: "2027-03-02" }];
+  const coverage = dayFeedCalendarCoverage(
+    "2027-01-02",
+    "2027-01-04",
+    summaries.map(({ date }) => date),
+  );
+  expect(coverage.months).toEqual(["2026-12", "2027-01", "2027-02", "2027-03"]);
+  expect([...coverage.dates]).toEqual([
+    "2026-12-31",
+    "2027-01-02",
+    "2027-01-03",
+    "2027-01-04",
+    "2027-03-02",
+  ]);
+  expect(coverage.core).toEqual({ start: "2027-01-02", end: "2027-01-04" });
+});
+it("undated Trips expose supplied date-only coverage without inferring core bounds or device time", () => {
+  const coverage = dayFeedCalendarCoverage(null, null, ["2027-02-03"]);
+  expect(coverage.core).toBeNull();
+  expect([...coverage.dates]).toEqual(["2027-02-03"]);
+  const html = render({ tripStart: null, tripEnd: null, selectedDate: undefined });
+  expect(html).toContain("Unknown bounds");
+  expect(state.nodes.filter((p) => p.kind === "Pressable" && !p.disabled)).toHaveLength(
+    1,
+  );
+});
+it("invalid evidence and route dates do not create selectable days", () => {
+  const coverage = dayFeedCalendarCoverage(null, null, ["2027-02-30"], "bad");
+  expect(coverage.dates.size).toBe(0);
+  expect(coverage.months).toEqual([]);
+  expect(dayFeedCalendarCoverage("2027-02-01", "2027-02-02", [], "bad").dates.size).toBe(
+    2,
+  );
+});
+it("an explicit empty date can remain selected without changing the core anchor", () => {
+  const coverage = dayFeedCalendarCoverage("2027-02-01", "2027-02-02", [], "2027-03-04");
+  expect([...coverage.dates]).toEqual(["2027-02-01", "2027-02-02", "2027-03-04"]);
+  expect(coverage.core?.start).toBe("2027-02-01");
+});
+
+it("unscoped summary dates cannot expand the selectable coverage", () => {
+  render({ dates: [], summaries: [{ date: "2027-05-09", markers: ["Transport"] }] });
+  expect(state.nodes.filter((p) => p.kind === "Pressable")).not.toHaveLength(0);
+  const coverage = dayFeedCalendarCoverage(
+    props.tripStart,
+    props.tripEnd,
+    [],
+    props.selectedDate,
+  );
+  expect(coverage.months).toEqual(["2027-01", "2027-02"]);
+  expect(coverage.dates.has("2027-05-09")).toBe(false);
 });

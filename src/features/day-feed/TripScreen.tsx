@@ -959,6 +959,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           tripStart={dayFacts?.startDate}
           tripEnd={dayFacts?.endDate}
           selectedDate={dayShell.visibleDates?.first ?? dayContext.date}
+          dates={calendarDates}
           summaries={daySummaries}
           copy={{
             unknownBounds: t("dayShell.calendar.unknownBounds"),
