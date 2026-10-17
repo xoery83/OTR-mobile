@@ -1,0 +1,75 @@
+--- a/src/features/day-feed/DayFeed.tsx
++++ b/src/features/day-feed/DayFeed.tsx
+@@ -69,6 +69,7 @@
+ export type DayFeedPresentation = {
+   listRef?: (value: DayListHandle | null) => void;
+   header?: ReactNode;
++  formatDayHeading?: (date: string) => string;
+   topInset?: number;
+   onViewportChange?: (viewport: {
+     firstVisibleDate: string;
+@@ -485,7 +486,7 @@
+         <View>
+           {dates ? (
+             <Text accessibilityRole="header" style={styles.dateHeading}>
+-              {section.date}
++              {presentation?.formatDayHeading?.(section.date) ?? section.date}
+             </Text>
+           ) : null}
+           {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
+--- a/src/features/day-feed/LocalManualDayFeed.tsx
++++ b/src/features/day-feed/LocalManualDayFeed.tsx
+@@ -78,7 +78,7 @@
+       isDayHeader: true,
+       date: day,
+       value: () => (
+-        <UiSection title={civil(day)}>
++        <UiSection title={presentation?.formatDayHeading?.(day) ?? civil(day)}>
+           {!items.length ? (
+             <Text style={styles.meta}>{emptyMessage ?? t("tripHome.today.free")}</Text>
+           ) : null}
+--- a/src/features/day-feed/TripScreen.tsx
++++ b/src/features/day-feed/TripScreen.tsx
+@@ -56,6 +56,7 @@
+ import { boundaryZone, viewContext } from "./presentation";
+ import { DayFeed } from "./DayFeed";
+ import { wholeTripCalendarDates } from "./tripListPresentation";
++import { tripCoreDayNumber } from "./tripCoreDayNumber";
+ import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
+ import { acceptedHomeHeader, useTripView } from "./TripViewContext";
+ import { LocalTripWorkspace } from "./LocalTripWorkspace";
+@@ -881,6 +882,16 @@
+           <DayFeed
+             bottomInset={bottomBarHeight}
+             presentation={{
++              formatDayHeading: (date) => {
++                const day = tripCoreDayNumber(date, dayFacts);
++                const label = formatUiDate(new Date(`${date}T12:00:00Z`), {
++                  dateStyle: "medium",
++                  timeZone: "UTC",
++                });
++                return day === null ? label : t("dayShell.coreDay", {
++                  day: formatUiNumber(day), date: label,
++                });
++              },
+               listRef: (value) => {
+                 dayList.current = value;
+               },
+--- a/src/ui/catalogs.ts
++++ b/src/ui/catalogs.ts
+@@ -22,6 +22,7 @@
+   "dayShell.calendar.transport": "Transport",
+   "dayShell.range.one": "{start} – {end} · 1 day",
+   "dayShell.range.many": "{start} – {end} · {days} days",
++  "dayShell.coreDay": "Day {day} · {date}",
+   "tripHome.preparation.title": "Preparation",
+   "tripHome.preparation.undated": "Plan your trip",
+   "tripHome.preparation.empty": "Start with your travel plans or build your itinerary.",
+@@ -2351,6 +2352,7 @@
+   "dayShell.calendar.transport": "交通",
+   "dayShell.range.one": "{start} – {end} · 1 天",
+   "dayShell.range.many": "{start} – {end} · {days} 天",
++  "dayShell.coreDay": "第 {day} 天 · {date}",
+   "tripHome.preparation.title": "出行准备",
+   "tripHome.preparation.undated": "规划旅行",
+   "tripHome.preparation.empty": "导入旅行计划，或开始编排行程。",
