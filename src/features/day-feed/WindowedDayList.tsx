@@ -140,6 +140,7 @@ export function WindowedDayList<T>({
     id: string;
     epoch: number;
     pendingDelta: number;
+    ended: boolean;
   } | null>(null);
   const lastNativeOffset = useRef(0);
   const prepending = useRef(false);
@@ -614,7 +615,13 @@ export function WindowedDayList<T>({
         const { touches, pageY, identifier } = event.nativeEvent;
         readingTouch.current =
           touches.length === 1 && Number.isFinite(pageY)
-            ? { y: pageY, id: identifier, epoch: renderedEpoch, pendingDelta: 0 }
+            ? {
+                y: pageY,
+                id: identifier,
+                epoch: renderedEpoch,
+                pendingDelta: 0,
+                ended: false,
+              }
             : null;
       }}
       onTouchMove={(event) => {
@@ -624,6 +631,7 @@ export function WindowedDayList<T>({
         const { touches, pageY, identifier } = event.nativeEvent;
         if (
           touch?.epoch !== renderedEpoch ||
+          touch.ended ||
           touches.length !== 1 ||
           touch.id !== identifier ||
           !Number.isFinite(pageY)
@@ -645,7 +653,20 @@ export function WindowedDayList<T>({
       onTouchEnd={(event) => {
         traceTouch("TOUCH_END", event);
         if (renderedEpoch === listEpoch.current) {
-          readingTouch.current = null;
+          const touch = readingTouch.current;
+          const native = event?.nativeEvent;
+          // iOS can finish the single-finger touch before reporting its native drag.
+          if (
+            !dragging.current &&
+            touch?.epoch === renderedEpoch &&
+            !touch.ended &&
+            touch.pendingDelta &&
+            native?.touches.length === 0 &&
+            native.identifier === touch.id &&
+            Number.isFinite(native.pageY)
+          )
+            touch.ended = true;
+          else readingTouch.current = null;
           dragging.current = false;
         }
       }}

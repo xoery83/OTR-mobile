@@ -203,7 +203,7 @@ function setup(
   rerender();
   return { rows, ref, render, count, result, rerender, anchorChanged, readingMotion };
 }
-function touch(pageY: number, identifier = "1", count = 1) {
+function touch(pageY: number, identifier: string | number = "1", count = 1) {
   return { nativeEvent: { pageY, identifier, touches: Array(count).fill({}) } };
 }
 
@@ -240,6 +240,66 @@ it("retains the sole real touch move delivered before native drag begins", () =>
   state.props.onScrollBeginDrag();
   state.props.onScrollEndDrag();
   expect(readingMotion.mock.calls).toEqual([[40], [-8]]);
+});
+
+it("retains the real Native touch-end-before-drag-begin sequence exactly once", () => {
+  const { readingMotion } = setup();
+  state.props.onTouchStart(touch(536.33, 0));
+  state.props.onTouchMove(touch(327, 0));
+  state.props.onTouchEnd(touch(327, 0, 0));
+  expect(readingMotion).not.toHaveBeenCalled();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  scroll(899.6667);
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  expect(readingMotion).toHaveBeenCalledTimes(1);
+  expect(readingMotion).toHaveBeenNthCalledWith(1, expect.closeTo(209.33, 2));
+
+  state.props.onTouchStart(touch(327, 0));
+  state.props.onTouchMove(touch(335, 0));
+  state.props.onTouchEnd(touch(335, 0, 0));
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  expect(readingMotion).toHaveBeenCalledTimes(2);
+  expect(readingMotion).toHaveBeenNthCalledWith(2, -8);
+});
+
+it("never lends an ended gesture to a new touch, cancellation, invalid end or scope", () => {
+  const { readingMotion, rerender, rows } = setup();
+  const endedMove = () => {
+    state.props.onTouchStart(touch(700));
+    state.props.onTouchMove(touch(650));
+    state.props.onTouchEnd(touch(650, "1", 0));
+  };
+  endedMove();
+  state.props.onTouchStart(touch(650));
+  state.props.onTouchEnd(touch(650, "1", 0));
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  endedMove();
+  state.props.onTouchCancel();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  endedMove();
+  state.props.onTouchStart(touch(650, "2", 2));
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  state.props.onTouchStart(touch(700));
+  state.props.onTouchMove(touch(650));
+  state.props.onTouchEnd(touch(650, "other", 0));
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  endedMove();
+  state.props.onTouchMove(touch(640));
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  endedMove();
+  const retired = state.props;
+  rerender(rows, undefined, undefined, "other/trip");
+  retired.onScrollBeginDrag();
+  state.props.onScrollBeginDrag();
+  expect(readingMotion).not.toHaveBeenCalled();
 });
 
 it("does not turn a tap, cancellation or multi-touch into buffered reading motion", () => {
