@@ -19,6 +19,7 @@ import {
 import {
   dayListWindow,
   indexDayRows,
+  previousDayOrigin,
   resolveDayAnchor,
   type DayScrollAnchor,
   type DayWindowRow,
@@ -72,14 +73,30 @@ export function WindowedDayList<T>({
     firstVisibleDate: string;
     lastVisibleDate: string;
     scrollOffset: number;
+    originIndex: number;
   }): void;
   onInteraction?(): void;
   onMountedRowsChange?(count: number): void;
   onJumpResult?(result: "REACHED" | "UNMEASURED", date: string): void;
 }) {
+  const index = indexDayRows(rows);
+  const listEpoch = useRef(0);
+  const [windowStart, setWindowStart] = useState({
+    scopeKey,
+    key: "",
+    date: "",
+    revision: 0,
+  });
+  const renderedEpoch = windowStart.scopeKey === scopeKey ? windowStart.revision : -1;
+  const origin =
+    windowStart.scopeKey === scopeKey
+      ? (index.keys.get(windowStart.key) ?? index.dates.get(windowStart.date) ?? 0)
+      : 0;
   const list = useRef<FlatList<DayWindowRow<T>>>(null);
   const live = useRef({
     rows,
+    origin,
+    epoch: renderedEpoch,
     scopeKey,
     topInset,
     onAnchorChange,
@@ -92,6 +109,8 @@ export function WindowedDayList<T>({
   useLayoutEffect(() => {
     live.current = {
       rows,
+      origin,
+      epoch: renderedEpoch,
       scopeKey,
       topInset,
       onAnchorChange,
@@ -102,20 +121,23 @@ export function WindowedDayList<T>({
       onViewportChange,
     };
   });
-  const [windowStart, setWindowStart] = useState({ scopeKey, index: 0, revision: 0 });
   const mounted = useRef(0);
   const visibleDates = useRef<string[]>([]);
-  const cells = useRef(new Map<string, { node: View; epoch: number }>());
+  const cells = useRef(
+    new Map<string, { node: View; epoch: number; listEpoch: number }>(),
+  );
   const cellEpoch = useRef(0);
   const [jumping, setJumping] = useState(false);
   const offset = useRef(0);
+  const dragging = useRef(false);
+  const lastNativeOffset = useRef(0);
+  const prepending = useRef(false);
   const contentHeight = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
   const pending = useRef<{
     anchor: DayScrollAnchor;
     attempts: number;
-    remounted: boolean;
-    started: boolean;
+    epoch: number;
     serial: number;
     confirmed: boolean;
     lastOffset: number | null;
@@ -187,18 +209,15 @@ export function WindowedDayList<T>({
       const { request, target } = resolved;
       const cell = cells.current.get(request.anchor.key);
       const viewport = list.current?.getNativeScrollRef();
-      if (!cell || !viewport || !("measureInWindow" in viewport)) {
-        if (!request.started) {
-          request.started = true;
-          trace("INDEX_REQUEST", { index: target.index });
-          list.current?.scrollToIndex({
-            index: target.index,
-            animated: false,
-            viewOffset: live.current.topInset - target.within,
-          });
-        }
+      if (
+        !cell ||
+        !viewport ||
+        !("measureInWindow" in viewport) ||
+        cell.listEpoch !== request.epoch ||
+        live.current.epoch !== request.epoch ||
+        listEpoch.current !== request.epoch
+      )
         return;
-      }
       // Native window coordinates remain authoritative when virtual spacers replace prior rows.
       const serial = ++request.serial;
       const startOffset = offset.current;
@@ -206,6 +225,8 @@ export function WindowedDayList<T>({
         cell.node.measureInWindow((_cx, cellY, _cw, cellHeight) => {
           if (
             pending.current !== request ||
+            listEpoch.current !== request.epoch ||
+            live.current.epoch !== request.epoch ||
             request.serial !== serial ||
             cells.current.get(request.anchor.key) !== cell ||
             offset.current !== startOffset
@@ -239,6 +260,9 @@ export function WindowedDayList<T>({
             cellY < viewportY + viewportHeight;
           trace("NATIVE_GEOMETRY", {
             index: target.index,
+            localIndex: target.index - live.current.origin,
+            origin: live.current.origin,
+            listEpoch: request.epoch,
             epoch: cell.epoch,
             cellY,
             cellHeight,
@@ -296,11 +320,27 @@ export function WindowedDayList<T>({
         targetKey: live.current.rows[target.index].key,
       };
       trace("REQUEST", { index: target.index, within: target.within });
+      const epoch = ++listEpoch.current;
+      cells.current.clear();
+      visibleKeys.current.clear();
+      visibleDates.current = [];
+      offset.current = 0;
+      lastNativeOffset.current = 0;
+      contentHeight.current = 0;
+      dragging.current = false;
+      prepending.current = false;
+      const row = live.current.rows[target.index];
+      setWindowStart({
+        scopeKey: live.current.scopeKey,
+        key: row.key,
+        date: row.date,
+        revision: epoch,
+      });
+      trace("DATA_ORIGIN", { index: target.index, localIndex: 0, listEpoch: epoch });
       const request = {
         anchor,
         attempts: 0,
-        remounted: false,
-        started: false,
+        epoch,
         serial: 0,
         confirmed: false,
         lastOffset: null,
@@ -315,7 +355,6 @@ export function WindowedDayList<T>({
     },
     [finish, trace, retry],
   );
-  const index = indexDayRows(rows);
   const rowSignature = JSON.stringify(rows.map(({ key, date }) => [key, date]));
   const Cell = useCallback(
     function Cell({
@@ -326,21 +365,36 @@ export function WindowedDayList<T>({
       onLayout,
       ...props
     }: DayCellProps<T>) {
-      const ownCell = useRef<{ node: View; epoch: number } | null>(null);
+      const ownCell = useRef<{ node: View; epoch: number; listEpoch: number } | null>(
+        null,
+      );
       const attach = useCallback(
         (node: View | null) => {
           if (node) {
-            const cell = { node, epoch: ++cellEpoch.current };
+            const cell = {
+              node,
+              epoch: ++cellEpoch.current,
+              listEpoch: listEpoch.current,
+            };
             ownCell.current = cell;
             cells.current.set(item.key, cell);
             if (item.key === diagnostic.current.targetKey)
-              trace("TARGET_MOUNT", { index: cellIndex, epoch: cell.epoch });
+              trace("TARGET_MOUNT", {
+                localIndex: cellIndex,
+                origin: live.current.origin,
+                epoch: cell.epoch,
+                listEpoch: cell.listEpoch,
+              });
             retry();
           } else {
             const cell = ownCell.current;
             if (cells.current.get(item.key) === cell) cells.current.delete(item.key);
             if (cell && item.key === diagnostic.current.targetKey)
-              trace("TARGET_UNMOUNT", { index: cellIndex, epoch: cell.epoch });
+              trace("TARGET_UNMOUNT", {
+                localIndex: cellIndex,
+                epoch: cell.epoch,
+                listEpoch: cell.listEpoch,
+              });
             ownCell.current = null;
           }
         },
@@ -380,13 +434,25 @@ export function WindowedDayList<T>({
   }));
   useLayoutEffect(() => {
     trace("WINDOW_COMMITTED", {
-      index: windowStart.index,
+      index: origin,
       revision: windowStart.revision,
     });
-  }, [windowStart, trace]);
+  }, [windowStart, origin, trace]);
   useLayoutEffect(() => {
     saved.current = initialAnchor ?? null;
     if (initialAnchor) restore(initialAnchor);
+    else if (windowStart.scopeKey !== scopeKey) {
+      const epoch = ++listEpoch.current;
+      cells.current.clear();
+      visibleKeys.current.clear();
+      visibleDates.current = [];
+      offset.current = 0;
+      contentHeight.current = 0;
+      lastNativeOffset.current = 0;
+      dragging.current = false;
+      prepending.current = false;
+      setWindowStart({ scopeKey, key: "", date: "", revision: epoch });
+    }
     return () => {
       if (scheduled.current !== null) cancelAnimationFrame(scheduled.current);
       scheduled.current = null;
@@ -407,7 +473,8 @@ export function WindowedDayList<T>({
     const viewport = list.current?.getNativeScrollRef();
     if (!viewport || !("measureInWindow" in viewport)) return;
     const startOffset = offset.current,
-      scope = live.current.scopeKey;
+      scope = live.current.scopeKey,
+      epoch = listEpoch.current;
     viewport.measureInWindow((_x, viewportY) => {
       for (const key of visibleKeys.current) {
         const cell = cells.current.get(key);
@@ -417,6 +484,7 @@ export function WindowedDayList<T>({
             pending.current ||
             offset.current !== startOffset ||
             live.current.scopeKey !== scope ||
+            listEpoch.current !== epoch ||
             cells.current.get(key) !== cell
           )
             return;
@@ -434,12 +502,18 @@ export function WindowedDayList<T>({
     NonNullable<FlatListProps<DayWindowRow<T>>["onViewableItemsChanged"]>
   >(
     ({ viewableItems }) => {
+      if (renderedEpoch !== listEpoch.current) return;
       const visible = viewableItems
         .filter((token) => token.isViewable && token.index !== null)
         .sort((a, b) => a.index! - b.index!);
       trace("VISIBLE", {
-        first: visible[0]?.index ?? -1,
-        last: visible[visible.length - 1]?.index ?? -1,
+        first: visible.length ? live.current.origin + visible[0].index! : -1,
+        last: visible.length
+          ? live.current.origin + visible[visible.length - 1].index!
+          : -1,
+        localFirst: visible[0]?.index ?? -1,
+        origin: live.current.origin,
+        listEpoch: renderedEpoch,
         targetPresent: visible.some(
           ({ item }) => item.key === diagnostic.current.targetKey,
         ),
@@ -453,27 +527,32 @@ export function WindowedDayList<T>({
           firstVisibleDate: visibleDates.current[0],
           lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
           scrollOffset: offset.current,
+          originIndex: live.current.origin,
         });
       resolveRequest();
       retry();
       recordAnchor();
     },
-    [retry, resolveRequest, trace, recordAnchor],
+    [retry, resolveRequest, trace, recordAnchor, renderedEpoch],
   );
   return (
     <FlatList
       key={`${scopeKey}:${windowStart.scopeKey === scopeKey ? windowStart.revision : 0}`}
-      initialScrollIndex={
-        windowStart.scopeKey === scopeKey
-          ? Math.min(windowStart.index, Math.max(0, rows.length - 1))
-          : 0
-      }
+      initialScrollIndex={0}
       ref={list}
-      data={rows}
+      data={rows.slice(origin)}
       keyExtractor={(row) => row.key}
       renderItem={({ item }) => <>{renderRow(item)}</>}
       CellRendererComponent={Cell}
-      ListHeaderComponent={header ? <>{header}</> : null}
+      ListHeaderComponent={
+        origin === 0 ? (
+          header ? (
+            <>{header}</>
+          ) : null
+        ) : (
+          <View style={{ height: topInset }} />
+        )
+      }
       {...dayListWindow}
       removeClippedSubviews={false}
       maintainVisibleContentPosition={jumping ? undefined : { minIndexForVisible: 0 }}
@@ -481,12 +560,40 @@ export function WindowedDayList<T>({
       contentContainerStyle={[contentContainerStyle, { paddingBottom: bottomInset }]}
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
-      onLayout={retry}
+      onLayout={() => {
+        if (renderedEpoch === listEpoch.current) retry();
+      }}
       onScrollBeginDrag={() => {
+        if (renderedEpoch !== listEpoch.current) return;
+        dragging.current = true;
         finish();
         onInteraction?.();
       }}
+      onScrollEndDrag={() => {
+        dragging.current = false;
+      }}
       onScroll={(event) => {
+        if (renderedEpoch !== listEpoch.current) return;
+        const rawOffset = event.nativeEvent.contentOffset.y;
+        const movingUp = dragging.current && rawOffset < lastNativeOffset.current - 1;
+        lastNativeOffset.current = rawOffset;
+        if (
+          !pending.current &&
+          movingUp &&
+          rawOffset <= 200 &&
+          origin > 0 &&
+          !prepending.current
+        ) {
+          const previous = previousDayOrigin(live.current.rows, origin);
+          const row = live.current.rows[previous];
+          prepending.current = true;
+          trace("PREPEND", {
+            fromOrigin: origin,
+            origin: previous,
+            listEpoch: renderedEpoch,
+          });
+          setWindowStart((current) => ({ ...current, key: row.key, date: row.date }));
+        }
         offset.current = Math.max(0, event.nativeEvent.contentOffset.y);
         trace("SCROLL", { offset: offset.current });
         live.current.onOffsetChange?.(offset.current);
@@ -495,6 +602,7 @@ export function WindowedDayList<T>({
             firstVisibleDate: visibleDates.current[0],
             lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
             scrollOffset: offset.current,
+            originIndex: live.current.origin,
           });
         if (pending.current) {
           retry();
@@ -504,30 +612,9 @@ export function WindowedDayList<T>({
       }}
       onViewableItemsChanged={viewability}
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
-      onScrollToIndexFailed={({
-        index,
-        highestMeasuredFrameIndex,
-        averageItemLength,
-      }) => {
-        trace("FAILED", { index, highestMeasuredFrameIndex, averageItemLength });
-        const resolved = resolveRequest();
-        if (!resolved || resolved.target.index !== index) return;
-        const request = resolved.request;
-        if (!request.remounted) {
-          // RN constrains an unmeasured tail: mount the target window once, not every earlier day.
-          trace("WINDOW_REMOUNT", { index });
-          request.remounted = true;
-          cells.current.clear();
-          visibleKeys.current.clear();
-          setWindowStart((previous) => ({
-            scopeKey: live.current.scopeKey,
-            index,
-            revision: previous.revision + 1,
-          }));
-        }
-        retry();
-      }}
       onContentSizeChange={(_width, height) => {
+        if (renderedEpoch !== listEpoch.current) return;
+        prepending.current = false;
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
         retry();

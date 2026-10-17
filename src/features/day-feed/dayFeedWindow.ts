@@ -99,3 +99,11 @@ export const dayListWindow = {
   maxToRenderPerBatch: 8,
   windowSize: 5,
 } as const;
+
+// Presentation-only prefix restoration; dates and row membership remain owning Reader facts.
+export function previousDayOrigin<T>(rows: readonly DayWindowRow<T>[], origin: number) {
+  let previous = 0;
+  for (const position of indexDayRows(rows).dates.values())
+    if (position < origin && position > previous) previous = position;
+  return previous;
+}

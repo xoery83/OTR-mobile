@@ -4,6 +4,7 @@ import {
   captureDayAnchor,
   dayListWindow,
   indexDayRows,
+  previousDayOrigin,
   resolveDayAnchor,
   summarizeDay,
   type DayWindowRow,
@@ -137,4 +138,16 @@ it("keeps a date-only Flight or scheduled transport in the Transport calendar ca
     itemCount: 2,
     markers: ["Transport"],
   });
+});
+
+it("restores one preceding date/header without inventing heights or duplicate rows", () => {
+  const rows = fixture(30),
+    index = indexDayRows(rows);
+  const positions = [...index.dates.values()];
+  const target = positions[25];
+  expect(previousDayOrigin(rows, target)).toBe(positions[24]);
+  const item = target + 1;
+  if (rows[item]?.date === rows[target].date)
+    expect(previousDayOrigin(rows, item)).toBe(target);
+  expect(previousDayOrigin(rows, 0)).toBe(0);
 });

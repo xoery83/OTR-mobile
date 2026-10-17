@@ -8,6 +8,7 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 };
 const state = vi.hoisted(() => ({
   props: {} as any,
+  rerender: (() => {}) as () => void,
   cellLayouts: [] as ((event: any) => void)[],
   effects: [] as (() => void)[],
   frames: [] as (() => void)[],
@@ -196,6 +197,7 @@ function setup(
     );
     for (const effect of state.effects) effect();
   };
+  state.rerender = () => rerender();
   rerender();
   return { rows, ref, render, count, result, rerender, anchorChanged };
 }
@@ -210,10 +212,20 @@ function scroll(y: number) {
 }
 function visible(row: any, index: number) {
   state.props.onViewableItemsChanged({
-    viewableItems: [{ item: row, index, isViewable: true }],
+    viewableItems: [
+      {
+        item: row,
+        index:
+          state.props.data.findIndex((item: any) => item.key === row.key) >= 0
+            ? state.props.data.findIndex((item: any) => item.key === row.key)
+            : index,
+        isViewable: true,
+      },
+    ],
   });
 }
 function mount(row: any, index: number, nativeY = 1000, reportedY = nativeY) {
+  state.rerender();
   renderToStaticMarkup(
     createElement(state.props.CellRendererComponent, {
       item: row,
@@ -226,13 +238,7 @@ function mount(row: any, index: number, nativeY = 1000, reportedY = nativeY) {
   state.cellLayouts.at(-1)!({ nativeEvent: { layout: { y: reportedY, height: 100 } } });
   return node;
 }
-function fail(index: number) {
-  state.props.onScrollToIndexFailed({
-    index,
-    highestMeasuredFrameIndex: 7,
-    averageItemLength: 92,
-  });
-}
+
 function reach(row: any, index: number, within = 0, inset = 0) {
   const node = mount(row, index);
   flushFrames(1);
@@ -249,20 +255,18 @@ it("keeps one bounded FlatList and does not mount all 90 days for a date request
   rerender();
   expect(state.props.maintainVisibleContentPosition).toBeUndefined();
   flushFrames(1);
-  expect(state.scrollToIndex).toHaveBeenLastCalledWith({
-    index: 74,
-    animated: false,
-    viewOffset: 0,
-  });
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+  expect(state.props.initialScrollIndex).toBe(0);
+  expect(state.props.data[0].key).toBe(rows[74].key);
   expect(ref.current!.jumpToDayHeader("2027-01-01")).toBe(false);
 });
 it("uses live native target/viewport geometry, ignoring stale virtual-spacer absolute y", () => {
   const { rows, ref, result, rerender } = setup(131, 110);
   ref.current!.jumpToDayHeader(rows[99].date);
   flushFrames(1);
-  fail(99);
   rerender();
-  expect(state.props.initialScrollIndex).toBe(99);
+  expect(state.props.initialScrollIndex).toBe(0);
+  expect(state.props.data[0].key).toBe(rows[99].key);
   state.props.onContentSizeChange(390, 12000);
   // RN can report an old cell layout while current native coordinates have changed.
   const node = mount(rows[99], 99, 10100, 8301.667);
@@ -352,20 +356,17 @@ it("does not report stale measurements if native offset changes during the callb
   state.measurements.shift()!();
   expect(state.scrollToOffset).not.toHaveBeenCalled();
 });
-it("mounts at most one target window and times out honestly if no live target arrives", () => {
+it("has no unknown prefix or index-based retry when a target window never produces live geometry", () => {
   const { rows, ref, result, rerender } = setup();
   ref.current!.jumpToDayHeader(rows[74].date);
-  flushFrames(1);
-  fail(74);
   rerender();
-  // No target cell actually lays out/mounts in this contract test.
+  expect(state.props.data[0]).toBe(rows[74]);
   for (const node of state.nodes.slice(-8)) node.detach();
   for (let i = 0; i < 20; i++) {
-    fail(74);
     state.props.onContentSizeChange(390, 5000);
     flushFrames(1);
   }
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
   expect(state.scrollToOffset).not.toHaveBeenCalled();
   vi.advanceTimersByTime(5000);
   expect(result).toHaveBeenCalledTimes(1);
@@ -406,11 +407,10 @@ it("preserves stable Focus/sync anchors but ignores ordinary fresh array identit
   target.detach();
   rerender([...rows], "focus-height-revision");
   flushFrames();
-  expect(state.scrollToIndex).toHaveBeenLastCalledWith({
-    index: 50,
-    animated: false,
-    viewOffset: -12,
-  });
+  rerender([...rows], "focus-height-revision");
+  expect(state.props.data[0].key).toBe(rows[50].key);
+  expect(state.props.initialScrollIndex).toBe(0);
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
 });
 it("saves anchors from live visible geometry rather than old layout coordinates", () => {
   const { rows, ref } = setup(131);
@@ -429,6 +429,7 @@ it("bounds DEV diagnostics to numeric geometry, not Trip IDs or row text", () =>
   try {
     const { rows, ref } = setup();
     ref.current!.jumpToDayHeader(rows[74].date);
+    state.rerender();
     for (let i = 0; i < 300; i++) state.props.onContentSizeChange(390, 1000 + i);
     expect(log).toHaveBeenCalledTimes(200);
     expect(JSON.stringify(log.mock.calls)).not.toContain(rows[74].key);
@@ -483,4 +484,56 @@ it("publishes the measured anchor and clamps an expanded-row offset after Focus 
     date: rows[50].date,
     within: 99,
   });
+});
+
+it("replays old list offset1615 during a jump and starts global99 at local0 with fresh metrics", () => {
+  const { rows, ref, result, rerender } = setup(131, 110);
+  const old = state.props;
+  scroll(1615);
+  ref.current!.jumpToDayHeader(rows[99].date);
+  rerender();
+  expect(state.props.initialScrollIndex).toBe(0);
+  expect(state.props.data[0]).toBe(rows[99]);
+  // Old FlatList callbacks cannot mutate the new list's zero offset/content facts.
+  old.onScroll({ nativeEvent: { contentOffset: { y: 1615 } } });
+  old.onContentSizeChange(390, 838);
+  state.nativeOffset = 0;
+  mount(rows[99], 0, 131);
+  state.props.onContentSizeChange(390, 1400);
+  visible(rows[99], 0);
+  flushFrames();
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+  expect(result).toHaveBeenCalledWith("REACHED", rows[99].date);
+});
+it("only prepends previous lawful date rows after a real upward gesture, retaining the same list", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  rerender();
+  state.props.onContentSizeChange(390, 2000);
+  visible(rows[74], 0);
+  flushFrames();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[74]);
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: -10 } } });
+  rerender();
+  expect(state.props.data[0]).toBe(rows[74]);
+  const listKey = state.props.key;
+  state.props.onScrollBeginDrag();
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
+  state.props.onScroll({ nativeEvent: { contentOffset: { y: -12 } } });
+  rerender();
+  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.data[1]).toBe(rows[74]);
+  expect(state.props.key).toBe(listKey);
+  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+});
+it("keeps missing zone/date-only rows and changes no business descriptor while relocating origin", () => {
+  const { rows, ref, rerender, render } = setup(131, 90);
+  const before = JSON.stringify(rows);
+  ref.current!.jumpToDayHeader(rows[89].date);
+  rerender();
+  expect(state.props.data).toEqual([rows[89]]);
+  expect(JSON.stringify(rows)).toBe(before);
+  expect(render.mock.calls.slice(-1)[0][0]).toBe(rows[89]);
 });
