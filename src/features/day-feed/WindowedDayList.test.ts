@@ -19,6 +19,11 @@ const state = vi.hoisted(() => ({
   memoCursor: 0,
   states: [] as unknown[],
   stateCursor: 0,
+  nativeOffset: 0,
+  nativeHeight: 500,
+  nodes: [] as any[],
+  deferMeasurements: false,
+  measurements: [] as (() => void)[],
   scrollToIndex: vi.fn(),
   scrollToOffset: vi.fn(),
 }));
@@ -64,13 +69,21 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", async () => {
   const { createElement, forwardRef } = await import("react");
   return {
-    View: ({
-      children,
-      onLayout,
-    }: {
-      children: ReactNode;
-      onLayout?: (event: any) => void;
-    }) => {
+    View: ({ children, onLayout, ref }: any) => {
+      const node = {
+        y: 1000,
+        height: 100,
+        measureInWindow: vi.fn((callback: (...values: number[]) => void) => {
+          const y = node.y - state.nativeOffset,
+            height = node.height;
+          const done = () => callback(0, y, 390, height);
+          if (state.deferMeasurements) state.measurements.push(done);
+          else done();
+        }),
+        detach: () => ref?.(null),
+      };
+      state.nodes.push(node);
+      ref?.(node);
       if (onLayout) state.cellLayouts.push(onLayout);
       return createElement("div", {}, children);
     },
@@ -78,6 +91,13 @@ vi.mock("react-native", async () => {
       state.props = props;
       if (ref)
         ref.current = {
+          getNativeScrollRef: () => ({
+            measureInWindow: (callback: (...values: number[]) => void) => {
+              const done = () => callback(0, 0, 390, state.nativeHeight);
+              if (state.deferMeasurements) state.measurements.push(done);
+              else done();
+            },
+          }),
           scrollToIndex: state.scrollToIndex,
           scrollToOffset: state.scrollToOffset,
         };
@@ -105,6 +125,11 @@ vi.mock("react-native", async () => {
 });
 beforeEach(() => {
   vi.useFakeTimers();
+  state.nativeOffset = 0;
+  state.nativeHeight = 500;
+  state.nodes = [];
+  state.deferMeasurements = false;
+  state.measurements = [];
   state.states = [];
   state.stateCursor = 0;
   state.effects = [];
@@ -127,7 +152,11 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-function setup(topInset = 0, days = 90) {
+function setup(
+  topInset = 0,
+  days = 90,
+  coldAnchor?: { key: string; date: string; within: number },
+) {
   let date = "2026-10-01";
   const rows = Array.from({ length: days }, () => {
     const own = date;
@@ -137,8 +166,14 @@ function setup(topInset = 0, days = 90) {
   const ref = { current: null as DayListHandle | null };
   const render = vi.fn((_row: { key: string }) => createElement("span", {}, "day"));
   const count = vi.fn(),
-    result = vi.fn();
-  const rerender = (nextRows = rows, layoutRevision?: string) => {
+    result = vi.fn(),
+    anchorChanged = vi.fn();
+  const rerender = (
+    nextRows = rows,
+    layoutRevision?: string,
+    initialAnchor = coldAnchor,
+    scopeKey = "account/trip",
+  ) => {
     state.effects = [];
     state.cellLayouts = [];
     state.refCursor = 0;
@@ -151,22 +186,34 @@ function setup(topInset = 0, days = 90) {
         layoutRevision,
         renderRow: render,
         listRef: ref,
-        scopeKey: "account/trip",
+        scopeKey,
+        initialAnchor,
         topInset,
         onMountedRowsChange: count,
         onJumpResult: result,
+        onAnchorChange: anchorChanged,
       }),
     );
     for (const effect of state.effects) effect();
   };
   rerender();
-  return { rows, ref, render, count, result, rerender };
+  return { rows, ref, render, count, result, rerender, anchorChanged };
 }
 function flushFrames(count = 4) {
   for (let frame = 0; frame < count; frame++)
     for (const callback of state.frames.splice(0)) callback();
 }
-function nativeVisible(row: { key: string; date: string; value: string }, index: number) {
+
+function scroll(y: number) {
+  state.nativeOffset = y;
+  state.props.onScroll({ nativeEvent: { contentOffset: { y } } });
+}
+function visible(row: any, index: number) {
+  state.props.onViewableItemsChanged({
+    viewableItems: [{ item: row, index, isViewable: true }],
+  });
+}
+function mount(row: any, index: number, nativeY = 1000, reportedY = nativeY) {
   renderToStaticMarkup(
     createElement(state.props.CellRendererComponent, {
       item: row,
@@ -174,320 +221,266 @@ function nativeVisible(row: { key: string; date: string; value: string }, index:
       cellKey: row.key,
     }),
   );
-  state.cellLayouts.at(-1)!({ nativeEvent: { layout: { y: 1000, height: 100 } } });
-  flushFrames(1);
-  const offset = state.scrollToOffset.mock.lastCall?.[0].offset ?? 1000;
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: offset } } });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: row, index, isViewable: true }],
-    changed: [],
-  });
-  flushFrames();
+  const node = state.nodes.at(-1)!;
+  node.y = nativeY;
+  state.cellLayouts.at(-1)!({ nativeEvent: { layout: { y: reportedY, height: 100 } } });
+  return node;
 }
-it("hands 90 day descriptors to one FlatList, rendering only its initial native window", () => {
-  const { rows, ref, render, count } = setup();
+function fail(index: number) {
+  state.props.onScrollToIndexFailed({
+    index,
+    highestMeasuredFrameIndex: 7,
+    averageItemLength: 92,
+  });
+}
+function reach(row: any, index: number, within = 0, inset = 0) {
+  const node = mount(row, index);
+  flushFrames(1);
+  scroll(node.y + within - inset);
+  visible(row, index);
+  flushFrames();
+  return node;
+}
+it("keeps one bounded FlatList and does not mount all 90 days for a date request", () => {
+  const { rows, ref, render, rerender } = setup();
   expect(render).toHaveBeenCalledTimes(8);
-  expect(count).toHaveBeenLastCalledWith(8);
   expect(state.props.maxToRenderPerBatch).toBe(8);
-  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
-  expect(ref.current!.jumpToDayHeader(rows[74].date)).toBe(true);
+  ref.current!.jumpToDayHeader(rows[74].date);
+  rerender();
+  expect(state.props.maintainVisibleContentPosition).toBeUndefined();
+  flushFrames(1);
   expect(state.scrollToIndex).toHaveBeenLastCalledWith({
     index: 74,
     animated: false,
     viewOffset: 0,
   });
-  expect(render).toHaveBeenCalledTimes(8);
   expect(ref.current!.jumpToDayHeader("2027-01-01")).toBe(false);
 });
-it("bounds an unmeasured jump by deadline rather than consuming unrelated layout frames", () => {
-  const { rows, ref, result } = setup();
-  ref.current!.jumpToDayHeader(rows[74].date);
-  for (let i = 0; i < 4; i++) {
-    state.props.onScrollToIndexFailed({ index: 74, averageItemLength: 100 });
-    state.frames.shift()?.();
-  }
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
+it("uses live native target/viewport geometry, ignoring stale virtual-spacer absolute y", () => {
+  const { rows, ref, result, rerender } = setup(131, 110);
+  ref.current!.jumpToDayHeader(rows[99].date);
+  flushFrames(1);
+  fail(99);
+  rerender();
+  expect(state.props.initialScrollIndex).toBe(99);
+  state.props.onContentSizeChange(390, 12000);
+  // RN can report an old cell layout while current native coordinates have changed.
+  const node = mount(rows[99], 99, 10100, 8301.667);
+  scroll(8185.667);
+  visible(rows[79], 79);
+  flushFrames(1);
+  expect(state.scrollToOffset.mock.lastCall![0].offset).toBeCloseTo(9969);
   expect(result).not.toHaveBeenCalled();
-  vi.advanceTimersByTime(5000);
-  expect(result).toHaveBeenLastCalledWith("UNMEASURED", rows[74].date);
+  scroll(9969);
+  visible(rows[99], 99);
+  flushFrames();
+  expect(node.measureInWindow).toHaveBeenCalled();
+  expect(result).toHaveBeenLastCalledWith("REACHED", rows[99].date);
 });
-it("marks a target reached only after native viewability reports that row", () => {
-  const { rows, ref, result } = setup();
-  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 22 });
+it("re-measures a changed native spacer without reusing a cached target y", () => {
+  const { rows, ref, result } = setup(131, 110);
+  ref.current!.jumpToDayHeader(rows[99].date);
+  const node = mount(rows[99], 99, 211);
+  state.props.onContentSizeChange(390, 12000);
+  flushFrames(1);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 80, animated: false });
+  node.y = 10100;
+  scroll(80);
+  state.props.onContentSizeChange(390, 14000);
+  flushFrames(1);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: 9969,
+    animated: false,
+  });
   expect(result).not.toHaveBeenCalled();
-  nativeVisible(rows[50], 50);
-  expect(result).toHaveBeenLastCalledWith("REACHED", rows[50].date);
+});
+it("requires both actual target visibility and geometry alignment before reporting REACHED", () => {
+  const { rows, ref, result } = setup(131);
+  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 22 });
+  mount(rows[50], 50);
+  state.props.onContentSizeChange(390, 12000);
+  flushFrames(1);
+  scroll(891);
+  visible(rows[49], 49);
+  flushFrames();
+  expect(result).not.toHaveBeenCalled();
+  visible(rows[50], 50);
+  flushFrames(1);
+  expect(result).not.toHaveBeenCalled();
+  flushFrames(1);
+  expect(result).toHaveBeenCalledWith("REACHED", rows[50].date);
   expect(ref.current!.saveAnchor()).toEqual({
     key: rows[50].key,
     date: rows[50].date,
     within: 22,
   });
 });
-
-it("normalizes a deleted-item restore to its actual same-day header", () => {
+it("does not scroll or complete from a late measurement after the target unmounts", () => {
   const { rows, ref, result } = setup();
-  ref.current!.restoreAnchor({ key: "deleted-item", date: rows[50].date, within: 22 });
+  ref.current!.jumpToDayHeader(rows[74].date);
+  const node = mount(rows[74], 74);
+  state.deferMeasurements = true;
+  flushFrames(1);
+  state.measurements.shift()!(); // viewport callback schedules cell callback
+  node.detach();
+  state.measurements.shift()!();
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(5000);
+  expect(result).toHaveBeenLastCalledWith("UNMEASURED", rows[74].date);
+});
+it.each(["drag", "supersede"])("isolates late native results after %s", (reason) => {
+  const { rows, ref, result } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  mount(rows[74], 74);
+  state.deferMeasurements = true;
+  flushFrames(1);
+  state.measurements.shift()!();
+  if (reason === "drag") state.props.onScrollBeginDrag();
+  else ref.current!.jumpToDayHeader(rows[10].date);
+  state.measurements.shift()!();
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+  expect(result).not.toHaveBeenCalledWith("REACHED", rows[74].date);
+});
+it("does not report stale measurements if native offset changes during the callbacks", () => {
+  const { rows, ref } = setup();
+  ref.current!.jumpToDayHeader(rows[50].date);
+  mount(rows[50], 50);
+  state.deferMeasurements = true;
+  flushFrames(1);
+  state.measurements.shift()!();
+  scroll(200);
+  state.measurements.shift()!();
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+});
+it("mounts at most one target window and times out honestly if no live target arrives", () => {
+  const { rows, ref, result, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  flushFrames(1);
+  fail(74);
+  rerender();
+  // No target cell actually lays out/mounts in this contract test.
+  for (const node of state.nodes.slice(-8)) node.detach();
+  for (let i = 0; i < 20; i++) {
+    fail(74);
+    state.props.onContentSizeChange(390, 5000);
+    flushFrames(1);
+  }
+  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(5000);
+  expect(result).toHaveBeenCalledTimes(1);
+  expect(result).toHaveBeenCalledWith("UNMEASURED", rows[74].date);
+});
+it("supports an empty final date at the real native bottom clamp", () => {
+  const { rows, ref, result } = setup(131);
+  ref.current!.jumpToDayHeader(rows[89].date);
+  mount(rows[89], 89, 1100);
+  state.props.onContentSizeChange(390, 1200);
+  flushFrames(1);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 700, animated: false });
+  scroll(700);
+  visible(rows[89], 89);
+  flushFrames();
+  expect(result).toHaveBeenCalledWith("REACHED", rows[89].date);
+});
+it("normalizes a deleted Item to the same date header, never a different date", () => {
+  const { rows, ref, result } = setup();
+  ref.current!.restoreAnchor({ key: "deleted", date: rows[50].date, within: 22 });
+  reach(rows[50], 50);
+  expect(ref.current!.saveAnchor()).toEqual({
+    key: rows[50].key,
+    date: rows[50].date,
+    within: 0,
+  });
+  expect(result).toHaveBeenCalledWith("REACHED", rows[50].date);
+});
+it("preserves stable Focus/sync anchors but ignores ordinary fresh array identities", () => {
+  const { rows, ref, rerender, result } = setup();
+  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
+  const target = reach(rows[50], 50, 12);
+  expect(result).toHaveBeenCalledWith("REACHED", rows[50].date);
+  state.scrollToIndex.mockClear();
+  rerender([...rows]);
+  flushFrames();
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+  target.detach();
+  rerender([...rows], "focus-height-revision");
+  flushFrames();
   expect(state.scrollToIndex).toHaveBeenLastCalledWith({
     index: 50,
     animated: false,
-    viewOffset: 0,
-  });
-  nativeVisible(rows[50], 50);
-  expect(result).toHaveBeenLastCalledWith("REACHED", rows[50].date);
-  expect(ref.current!.saveAnchor()).toEqual({
-    key: rows[50].key,
-    date: rows[50].date,
-    within: 0,
+    viewOffset: -12,
   });
 });
-it("normalizes an in-flight restore after a sync snapshot removes its Item", () => {
-  const { rows, ref, result, rerender } = setup();
-  const target = { key: "item-before-sync", date: rows[50].date, value: "ITEM" };
-  rerender([...rows.slice(0, 51), target, ...rows.slice(51)]);
-  ref.current!.restoreAnchor({ key: target.key, date: target.date, within: 22 });
-  rerender([...rows]);
-  nativeVisible(rows[50], 50);
-  expect(result).toHaveBeenLastCalledWith("REACHED", rows[50].date);
-  expect(ref.current!.saveAnchor()).toEqual({
-    key: rows[50].key,
-    date: rows[50].date,
-    within: 0,
-  });
-  const attempts = state.scrollToIndex.mock.calls.length;
-  state.props.onContentSizeChange();
-  for (const frame of state.frames.splice(0)) frame();
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(attempts);
-});
-it("does not redirect to another date if a pending target date disappears", () => {
-  const { rows, ref, result, rerender } = setup();
-  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 22 });
-  rerender(rows.filter((row) => row.date !== rows[50].date));
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[51], index: 50, isViewable: true }],
-    changed: [],
-  });
-  expect(result).not.toHaveBeenCalledWith("REACHED", expect.anything());
-  expect(result).toHaveBeenLastCalledWith("UNMEASURED", rows[50].date);
-});
-
-it("does not restore on fresh row arrays or callbacks caused by ordinary reading updates", () => {
-  const { rows, ref, rerender } = setup();
-  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
-  nativeVisible(rows[50], 50);
-  state.scrollToIndex.mockClear();
-  rerender(rows.map((row) => ({ ...row })));
-  rerender([...rows]);
-  for (const frame of state.frames.splice(0)) frame();
-  expect(state.scrollToIndex).not.toHaveBeenCalled();
-});
-it.each(["insert", "delete", "reorder"])(
-  "preserves the same Item anchor after a logical %s",
-  (change) => {
-    const { rows, ref, rerender } = setup();
-    ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
-    nativeVisible(rows[50], 50);
-    state.scrollToIndex.mockClear();
-    const changed =
-      change === "insert"
-        ? [{ key: "new", date: rows[0].date, value: "ITEM" }, ...rows]
-        : change === "delete"
-          ? rows.slice(1)
-          : [rows[50], ...rows.filter((_, index) => index !== 50)];
-    rerender(changed);
-    expect(state.scrollToIndex).not.toHaveBeenCalled();
-    state.frames.shift()?.();
-    expect(state.scrollToIndex).toHaveBeenLastCalledWith({
-      index: change === "insert" ? 51 : change === "delete" ? 49 : 0,
-      animated: false,
-      viewOffset: -12,
-    });
-  },
-);
-it("restores after an explicit Focus-height revision but not its repeated rerender", () => {
-  const { rows, ref, rerender } = setup();
-  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 12 });
-  nativeVisible(rows[50], 50);
-  state.scrollToIndex.mockClear();
-  rerender([...rows], "source-1/focus-item-2");
-  state.frames.shift()?.();
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
-  nativeVisible(rows[50], 50);
-  state.scrollToIndex.mockClear();
-  rerender([...rows], "source-1/focus-item-2");
-  for (const frame of state.frames.splice(0)) frame();
-  expect(state.scrollToIndex).not.toHaveBeenCalled();
-});
-
-it("does not overwrite an anchor with pre-revision cell offsets while Native remeasures", () => {
-  const { rows, ref, rerender } = setup();
-  state.cellLayouts[5]({ nativeEvent: { layout: { y: 500, height: 100 } } });
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 510 } } });
+it("saves anchors from live visible geometry rather than old layout coordinates", () => {
+  const { rows, ref } = setup(131);
+  mount(rows[5], 5, 1000, 200);
+  visible(rows[5], 5);
+  scroll(891);
   expect(ref.current!.saveAnchor()).toEqual({
     key: rows[5].key,
     date: rows[5].date,
-    within: 10,
-  });
-  rerender([...rows], "expanded");
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[5], index: 5, isViewable: true }],
-    changed: [],
-  });
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 550 } } });
-  expect(ref.current!.saveAnchor()!.within).toBe(10);
-  state.cellLayouts[5]({ nativeEvent: { layout: { y: 900, height: 150 } } });
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 910 } } });
-  expect(ref.current!.saveAnchor()).toEqual({
-    key: rows[5].key,
-    date: rows[5].date,
-    within: 10,
+    within: 22,
   });
 });
-
-it("waits for an asynchronously mounted target window despite unrelated layout storms", async () => {
-  const { rows, ref, render, result, rerender } = setup();
-  ref.current!.jumpToDayHeader(rows[74].date);
-  state.props.onScrollToIndexFailed({
-    index: 74,
-    highestMeasuredFrameIndex: 7,
-    averageItemLength: 180,
-  });
-  rerender(rows);
-  expect(state.props.initialScrollIndex).toBe(74);
-  const mounted = render.mock.calls
-    .slice(-8)
-    .map((args) => (args as unknown as [(typeof rows)[number]])[0].key);
-  expect(mounted).toEqual(rows.slice(74, 82).map((row) => row.key));
-  // Neighbor cells/content can arrive on many frames before the target cell itself.
-  for (let frame = 0; frame < 12; frame++) {
-    state.cellLayouts[1]({ nativeEvent: { layout: { y: 1000, height: 240 } } });
-    state.props.onContentSizeChange();
-    state.props.onViewableItemsChanged({
-      viewableItems: [{ item: rows[75], index: 75, isViewable: true }],
-      changed: [],
-    });
-    for (const next of state.frames.splice(0)) next();
-    await vi.advanceTimersByTimeAsync(25);
-  }
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
-  expect(result).not.toHaveBeenCalled();
-  // Native finally measures the actual target; only now can exact alignment run.
-  state.cellLayouts[0]({ nativeEvent: { layout: { y: 760, height: 90 } } });
-  for (const next of state.frames.splice(0)) next();
-  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 760, animated: false });
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
-  expect(result).not.toHaveBeenCalled();
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 760 } } });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[74], index: 74, isViewable: true }],
-    changed: [],
-  });
-  flushFrames();
-  expect(result).toHaveBeenLastCalledWith("REACHED", rows[74].date);
-  await vi.advanceTimersByTimeAsync(5000);
-  expect(result).toHaveBeenCalledTimes(1);
-});
-it("cancels late target completion after a user begins dragging", () => {
-  const { rows, ref, result } = setup();
-  ref.current!.jumpToDayHeader(rows[74].date);
-  state.props.onScrollToIndexFailed({ index: 74 });
-  state.props.onScrollBeginDrag();
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[74], index: 74, isViewable: true }],
-    changed: [],
-  });
-  vi.advanceTimersByTime(5000);
-  expect(result).not.toHaveBeenCalled();
-});
-it("bounds temporary DEV diagnostics and records geometry without row values", () => {
+it("bounds DEV diagnostics to numeric geometry, not Trip IDs or row text", () => {
   vi.stubGlobal("__DEV__", true);
   const log = vi.spyOn(console, "info").mockImplementation(() => {});
   try {
     const { rows, ref } = setup();
     ref.current!.jumpToDayHeader(rows[74].date);
-    state.props.onScrollToIndexFailed({
-      index: 74,
-      highestMeasuredFrameIndex: 7,
-      averageItemLength: 180,
-    });
-    for (let i = 0; i < 300; i++) state.props.onContentSizeChange(300, 1000 + i);
+    for (let i = 0; i < 300; i++) state.props.onContentSizeChange(390, 1000 + i);
     expect(log).toHaveBeenCalledTimes(200);
-    const events = log.mock.calls.map(([value]) => JSON.parse(value));
-    expect(events[0]).toMatchObject({ phase: "REQUEST", index: 74 });
-    expect(events.find((event) => event.phase === "FAILED")).toMatchObject({
-      highestMeasuredFrameIndex: 7,
-      averageItemLength: 180,
-    });
-    expect(JSON.stringify(events)).not.toContain(rows[74].key);
-    expect(JSON.stringify(events)).not.toContain("account/trip");
+    expect(JSON.stringify(log.mock.calls)).not.toContain(rows[74].key);
+    expect(JSON.stringify(log.mock.calls)).not.toContain("account/trip");
   } finally {
     log.mockRestore();
   }
 });
 
-it("replays Native y211→8301.667 reflow and never reports the stale offset80 as reached", () => {
-  const { rows, ref, result, rerender } = setup(131, 110);
-  ref.current!.jumpToDayHeader(rows[99].date);
-  state.props.onScrollToIndexFailed({
-    index: 99,
-    highestMeasuredFrameIndex: 35,
-    averageItemLength: 92,
-  });
-  rerender(rows);
-  state.props.onScrollToIndexFailed({
-    index: 99,
-    highestMeasuredFrameIndex: 0,
-    averageItemLength: 0,
-  });
-  state.props.onContentSizeChange(390, 838);
-  state.cellLayouts[0]({ nativeEvent: { layout: { y: 211, height: 64 } } });
+it("restores a cold saved anchor using the same live measurement path", () => {
+  const anchor = { key: "header:2026-11-20", date: "2026-11-20", within: 18 };
+  const { rows, ref, result } = setup(131, 90, anchor);
+  reach(rows[50], 50, 18, 131);
+  expect(result).toHaveBeenCalledWith("REACHED", anchor.date);
+  expect(ref.current!.saveAnchor()).toEqual(anchor);
+});
+it("rejects an old mount epoch even when a new cell uses the same row key", () => {
+  const { rows, ref } = setup();
+  ref.current!.jumpToDayHeader(rows[50].date);
+  mount(rows[50], 50);
+  state.deferMeasurements = true;
   flushFrames(1);
-  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 80, animated: false });
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 80 } } });
-  state.props.onContentSizeChange(390, 8928);
-  state.cellLayouts[0]({ nativeEvent: { layout: { y: 8301.667, height: 64 } } });
-  state.props.onContentSizeChange(390, 9231);
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[0], index: 0, isViewable: true }],
-    changed: [],
-  });
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 570 } } });
-  flushFrames(1);
-  expect(state.scrollToOffset.mock.lastCall![0].offset).toBeCloseTo(8170.667, 3);
-  expect(state.scrollToIndex).toHaveBeenCalledTimes(1);
-  expect(result).not.toHaveBeenCalled();
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 8170.667 } } });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[99], index: 99, isViewable: true }],
-    changed: [],
-  });
-  flushFrames(1);
-  expect(result).not.toHaveBeenCalled();
-  flushFrames(1);
-  expect(result).toHaveBeenLastCalledWith("REACHED", rows[99].date);
-  vi.advanceTimersByTime(5000);
-  expect(result).toHaveBeenCalledTimes(1);
+  state.measurements.shift()!();
+  mount(rows[50], 50, 9000);
+  state.measurements.shift()!();
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+});
+it("does not redirect a disappeared pending date to another date", () => {
+  const { rows, ref, rerender, result } = setup();
+  ref.current!.jumpToDayHeader(rows[50].date);
+  rerender(rows.filter((row) => row.date !== rows[50].date));
+  visible(rows[51], 50);
+  expect(result).toHaveBeenCalledWith("UNMEASURED", rows[50].date);
+  expect(result).not.toHaveBeenCalledWith("REACHED", expect.anything());
 });
 
-it("accepts a stable visible final date at the measured native bottom clamp", () => {
-  const { rows, ref, result } = setup(131);
-  ref.current!.jumpToDayHeader(rows[89].date);
-  state.props.onLayout({ nativeEvent: { layout: { height: 500 } } });
-  state.props.onContentSizeChange(390, 1200);
-  renderToStaticMarkup(
-    createElement(state.props.CellRendererComponent, {
-      item: rows[89],
-      index: 89,
-      cellKey: rows[89].key,
-    }),
-  );
-  state.cellLayouts.at(-1)!({ nativeEvent: { layout: { y: 1100, height: 70 } } });
+it("publishes the measured anchor and clamps an expanded-row offset after Focus shrinks", () => {
+  const { rows, ref, result, anchorChanged } = setup();
+  ref.current!.restoreAnchor({ key: rows[50].key, date: rows[50].date, within: 300 });
+  mount(rows[50], 50);
   flushFrames(1);
-  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 700, animated: false });
-  state.props.onScroll({ nativeEvent: { contentOffset: { y: 700 } } });
-  state.props.onViewableItemsChanged({
-    viewableItems: [{ item: rows[89], index: 89, isViewable: true }],
-    changed: [],
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: 1099,
+    animated: false,
   });
+  scroll(1099);
+  visible(rows[50], 50);
   flushFrames();
-  expect(result).toHaveBeenLastCalledWith("REACHED", rows[89].date);
+  expect(result).toHaveBeenCalledWith("REACHED", rows[50].date);
+  expect(anchorChanged).toHaveBeenCalledWith({
+    key: rows[50].key,
+    date: rows[50].date,
+    within: 99,
+  });
 });

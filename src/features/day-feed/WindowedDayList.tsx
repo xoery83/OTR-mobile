@@ -17,7 +17,6 @@ import {
   type ViewStyle,
 } from "react-native";
 import {
-  captureDayAnchor,
   dayListWindow,
   indexDayRows,
   resolveDayAnchor,
@@ -106,17 +105,20 @@ export function WindowedDayList<T>({
   const [windowStart, setWindowStart] = useState({ scopeKey, index: 0, revision: 0 });
   const mounted = useRef(0);
   const visibleDates = useRef<string[]>([]);
-  const layouts = useRef(new Map<string, { y: number; height: number }>());
+  const cells = useRef(new Map<string, { node: View; epoch: number }>());
+  const cellEpoch = useRef(0);
+  const [jumping, setJumping] = useState(false);
   const offset = useRef(0);
-  const viewportHeight = useRef(0);
   const contentHeight = useRef(0);
-  const confirmation = useRef<number | null>(null);
   const saved = useRef<DayScrollAnchor | null>(null);
   const pending = useRef<{
     anchor: DayScrollAnchor;
     attempts: number;
     remounted: boolean;
-    aligned: boolean;
+    started: boolean;
+    serial: number;
+    confirmed: boolean;
+    lastOffset: number | null;
   } | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
   const visibleKeys = useRef(new Set<string>());
@@ -144,22 +146,28 @@ export function WindowedDayList<T>({
     },
     [],
   );
+  const scheduled = useRef<number | null>(null);
   const finish = useCallback(
     (result?: "REACHED" | "UNMEASURED") => {
       const request = pending.current;
       if (request)
         trace("FINISH", { result: result ?? "CANCELLED", attempts: request.attempts });
       pending.current = null;
+      if (scheduled.current !== null) cancelAnimationFrame(scheduled.current);
+      scheduled.current = null;
       if (deadline.current !== null) clearTimeout(deadline.current);
       deadline.current = null;
+      setJumping(false);
       if (request && result) {
-        if (result === "REACHED") saved.current = request.anchor;
+        if (result === "REACHED") {
+          saved.current = request.anchor;
+          live.current.onAnchorChange?.(request.anchor);
+        }
         live.current.onJumpResult?.(result, request.anchor.date);
       }
     },
     [trace],
   );
-  const scheduled = useRef<number | null>(null);
   const resolveRequest = useCallback(() => {
     const request = pending.current;
     if (!request) return null;
@@ -172,75 +180,112 @@ export function WindowedDayList<T>({
     request.anchor = { key: row.key, date: row.date, within: target.within };
     return { request, target };
   }, [finish]);
-  const measuredOffset = useCallback((anchor: DayScrollAnchor) => {
-    const layout = layouts.current.get(anchor.key);
-    if (!layout) return null;
-    const desired = Math.max(0, layout.y + anchor.within - live.current.topInset);
-    return viewportHeight.current > 0 && contentHeight.current > 0
-      ? Math.min(desired, Math.max(0, contentHeight.current - viewportHeight.current))
-      : desired;
-  }, []);
-  const confirm = useCallback(() => {
-    const request = pending.current;
-    if (!request?.aligned || confirmation.current !== null) return;
-    const layout = layouts.current.get(request.anchor.key);
-    const expected = measuredOffset(request.anchor);
-    if (
-      !layout ||
-      expected === null ||
-      !visibleKeys.current.has(request.anchor.key) ||
-      Math.abs(offset.current - expected) > 2
-    )
-      return;
-    const y = layout.y;
-    confirmation.current = requestAnimationFrame(() => {
-      confirmation.current = requestAnimationFrame(() => {
-        confirmation.current = null;
-        const current = layouts.current.get(request.anchor.key);
-        const expected = measuredOffset(request.anchor);
-        if (
-          pending.current === request &&
-          request.aligned &&
-          current &&
-          Math.abs(current.y - y) < 0.5 &&
-          expected !== null &&
-          Math.abs(offset.current - expected) <= 2 &&
-          visibleKeys.current.has(request.anchor.key)
-        )
-          finish("REACHED");
+  const attempt = useCallback(
+    function measureTarget() {
+      const resolved = resolveRequest();
+      if (!resolved) return;
+      const { request, target } = resolved;
+      const cell = cells.current.get(request.anchor.key);
+      const viewport = list.current?.getNativeScrollRef();
+      if (!cell || !viewport || !("measureInWindow" in viewport)) {
+        if (!request.started) {
+          request.started = true;
+          trace("INDEX_REQUEST", { index: target.index });
+          list.current?.scrollToIndex({
+            index: target.index,
+            animated: false,
+            viewOffset: live.current.topInset - target.within,
+          });
+        }
+        return;
+      }
+      // Native window coordinates remain authoritative when virtual spacers replace prior rows.
+      const serial = ++request.serial;
+      const startOffset = offset.current;
+      viewport.measureInWindow((_vx, viewportY, _vw, viewportHeight) => {
+        cell.node.measureInWindow((_cx, cellY, _cw, cellHeight) => {
+          if (
+            pending.current !== request ||
+            request.serial !== serial ||
+            cells.current.get(request.anchor.key) !== cell ||
+            offset.current !== startOffset
+          )
+            return;
+          if (
+            ![viewportY, viewportHeight, cellY, cellHeight].every(Number.isFinite) ||
+            viewportHeight <= 0 ||
+            cellHeight <= 0
+          )
+            return;
+          request.anchor.within = Math.min(
+            request.anchor.within,
+            Math.max(0, cellHeight - 1),
+          );
+          const desired = Math.max(
+            0,
+            startOffset +
+              cellY -
+              viewportY +
+              request.anchor.within -
+              live.current.topInset,
+          );
+          const expected =
+            contentHeight.current > 0
+              ? Math.min(desired, Math.max(0, contentHeight.current - viewportHeight))
+              : desired;
+          const targetVisible =
+            visibleKeys.current.has(request.anchor.key) &&
+            cellY + cellHeight > viewportY + live.current.topInset &&
+            cellY < viewportY + viewportHeight;
+          trace("NATIVE_GEOMETRY", {
+            index: target.index,
+            epoch: cell.epoch,
+            cellY,
+            cellHeight,
+            viewportY,
+            viewportHeight,
+            offset: startOffset,
+            expected,
+            targetVisible,
+          });
+          if (Math.abs(expected - startOffset) <= 2 && targetVisible) {
+            if (request.confirmed) finish("REACHED");
+            else {
+              request.confirmed = true;
+              scheduled.current = requestAnimationFrame(() => {
+                scheduled.current = null;
+                measureTarget();
+              });
+            }
+            return;
+          }
+          request.confirmed = false;
+          if (
+            Math.abs(expected - startOffset) <= 2 ||
+            (request.lastOffset !== null && Math.abs(request.lastOffset - expected) < 0.5)
+          )
+            return;
+          if (request.attempts >= 8) {
+            finish("UNMEASURED");
+            return;
+          }
+          request.lastOffset = expected;
+          request.attempts++;
+          list.current?.scrollToOffset({ offset: expected, animated: false });
+        });
       });
+    },
+    [resolveRequest, trace, finish],
+  );
+  const retry = useCallback(() => {
+    if (!pending.current || scheduled.current !== null) return;
+    scheduled.current = requestAnimationFrame(() => {
+      scheduled.current = null;
+      attempt();
     });
-  }, [finish, measuredOffset]);
-  const attempt = useCallback(() => {
-    const resolved = resolveRequest();
-    if (!resolved) return;
-    const { request, target } = resolved;
-    if (request.aligned) return;
-    if (request.attempts >= 8) {
-      finish("UNMEASURED");
-      return;
-    }
-    const measured = measuredOffset(request.anchor);
-    trace("ATTEMPT", {
-      index: target.index,
-      attempt: request.attempts + 1,
-      remounted: request.remounted,
-      measuredOffset: measured ?? -1,
-    });
-    request.attempts++;
-    request.aligned = true;
-    if (measured !== null)
-      list.current?.scrollToOffset({ offset: measured, animated: false });
-    else
-      list.current?.scrollToIndex({
-        index: target.index,
-        animated: false,
-        viewOffset: live.current.topInset - target.within,
-      });
-    confirm();
-  }, [resolveRequest, finish, trace, measuredOffset, confirm]);
+  }, [attempt]);
   const restore = useCallback(
-    (anchor: DayScrollAnchor, defer = false) => {
+    (anchor: DayScrollAnchor) => {
       const target = resolveDayAnchor(live.current.rows, anchor);
       if (!target) return false;
       finish();
@@ -250,42 +295,57 @@ export function WindowedDayList<T>({
         until: Date.now() + 10000,
         targetKey: live.current.rows[target.index].key,
       };
-      trace("REQUEST", { index: target.index, within: target.within, defer });
-      const request = { anchor, attempts: 0, remounted: false, aligned: false };
+      trace("REQUEST", { index: target.index, within: target.within });
+      const request = {
+        anchor,
+        attempts: 0,
+        remounted: false,
+        started: false,
+        serial: 0,
+        confirmed: false,
+        lastOffset: null,
+      };
       pending.current = request;
+      setJumping(true);
       deadline.current = setTimeout(() => {
         if (pending.current === request) finish("UNMEASURED");
       }, 5000);
-      if (defer) {
-        scheduled.current = requestAnimationFrame(() => {
-          scheduled.current = null;
-          attempt();
-        });
-      } else attempt();
+      retry();
       return true;
     },
-    [attempt, finish, trace],
+    [finish, trace, retry],
   );
   const index = indexDayRows(rows);
   const rowSignature = JSON.stringify(rows.map(({ key, date }) => [key, date]));
-  const retry = useCallback(() => {
-    const request = pending.current;
-    if (!request || request.aligned || scheduled.current !== null) return;
-    if (request.remounted && !layouts.current.has(request.anchor.key)) return;
-    scheduled.current = requestAnimationFrame(() => {
-      scheduled.current = null;
-      attempt();
-    });
-  }, [attempt]);
   const Cell = useCallback(
     function Cell({
       item,
       cellKey: _cellKey,
-      index: _index,
+      index: cellIndex,
       children,
       onLayout,
       ...props
     }: DayCellProps<T>) {
+      const ownCell = useRef<{ node: View; epoch: number } | null>(null);
+      const attach = useCallback(
+        (node: View | null) => {
+          if (node) {
+            const cell = { node, epoch: ++cellEpoch.current };
+            ownCell.current = cell;
+            cells.current.set(item.key, cell);
+            if (item.key === diagnostic.current.targetKey)
+              trace("TARGET_MOUNT", { index: cellIndex, epoch: cell.epoch });
+            retry();
+          } else {
+            const cell = ownCell.current;
+            if (cells.current.get(item.key) === cell) cells.current.delete(item.key);
+            if (cell && item.key === diagnostic.current.targetKey)
+              trace("TARGET_UNMOUNT", { index: cellIndex, epoch: cell.epoch });
+            ownCell.current = null;
+          }
+        },
+        [item.key, cellIndex],
+      );
       useEffect(() => {
         live.current.onMountedRowsChange?.(++mounted.current);
         return () => {
@@ -295,27 +355,10 @@ export function WindowedDayList<T>({
       return (
         <View
           {...props}
+          ref={attach}
+          collapsable={false}
           onLayout={(event) => {
             onLayout?.(event);
-            const previous = layouts.current.get(item.key);
-            layouts.current.set(item.key, event.nativeEvent.layout);
-            if (item.key === diagnostic.current.targetKey)
-              trace("TARGET_LAYOUT", {
-                index: _index,
-                y: event.nativeEvent.layout.y,
-                height: event.nativeEvent.layout.height,
-              });
-            if (
-              pending.current?.anchor.key === item.key &&
-              (!previous ||
-                Math.abs(previous.y - event.nativeEvent.layout.y) >= 0.5 ||
-                previous.height !== event.nativeEvent.layout.height)
-            ) {
-              pending.current.aligned = false;
-              if (confirmation.current !== null)
-                cancelAnimationFrame(confirmation.current);
-              confirmation.current = null;
-            }
             retry();
           }}
         >
@@ -342,7 +385,6 @@ export function WindowedDayList<T>({
     });
   }, [windowStart, trace]);
   useLayoutEffect(() => {
-    layouts.current.clear();
     saved.current = initialAnchor ?? null;
     if (initialAnchor) restore(initialAnchor);
     return () => {
@@ -354,13 +396,40 @@ export function WindowedDayList<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeKey]);
   useLayoutEffect(() => {
-    // Old absolute cell offsets cannot describe an inserted/reordered or resized stream.
-    layouts.current.clear();
+    // Re-resolve the stable identity; only mounted native geometry can describe this revision.
     if (saved.current && !pending.current) {
-      restore(saved.current, true);
+      restore(saved.current);
     }
     // Array/callback identity changes caused by reading updates are not layout changes.
   }, [rowSignature, layoutRevision, restore]);
+  const recordAnchor = useCallback(() => {
+    if (pending.current) return;
+    const viewport = list.current?.getNativeScrollRef();
+    if (!viewport || !("measureInWindow" in viewport)) return;
+    const startOffset = offset.current,
+      scope = live.current.scopeKey;
+    viewport.measureInWindow((_x, viewportY) => {
+      for (const key of visibleKeys.current) {
+        const cell = cells.current.get(key);
+        if (!cell) continue;
+        cell.node.measureInWindow((_cx, cellY, _w, height) => {
+          if (
+            pending.current ||
+            offset.current !== startOffset ||
+            live.current.scopeKey !== scope ||
+            cells.current.get(key) !== cell
+          )
+            return;
+          const within = viewportY + live.current.topInset - cellY;
+          const row = live.current.rows.find((row) => row.key === key);
+          if (!row || !Number.isFinite(within) || within < 0 || within >= height) return;
+          const anchor = { key, date: row.date, within };
+          saved.current = anchor;
+          live.current.onAnchorChange?.(anchor);
+        });
+      }
+    });
+  }, []);
   const viewability = useCallback<
     NonNullable<FlatListProps<DayWindowRow<T>>["onViewableItemsChanged"]>
   >(
@@ -385,11 +454,11 @@ export function WindowedDayList<T>({
           lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
           scrollOffset: offset.current,
         });
-      const request = resolveRequest()?.request;
-      if (request?.aligned) confirm();
-      else retry();
+      resolveRequest();
+      retry();
+      recordAnchor();
     },
-    [retry, resolveRequest, confirm, trace],
+    [retry, resolveRequest, trace, recordAnchor],
   );
   return (
     <FlatList
@@ -407,14 +476,12 @@ export function WindowedDayList<T>({
       ListHeaderComponent={header ? <>{header}</> : null}
       {...dayListWindow}
       removeClippedSubviews={false}
-      maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+      maintainVisibleContentPosition={jumping ? undefined : { minIndexForVisible: 0 }}
       style={style}
       contentContainerStyle={[contentContainerStyle, { paddingBottom: bottomInset }]}
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
-      onLayout={(event) => {
-        viewportHeight.current = event.nativeEvent.layout.height;
-      }}
+      onLayout={retry}
       onScrollBeginDrag={() => {
         finish();
         onInteraction?.();
@@ -430,23 +497,10 @@ export function WindowedDayList<T>({
             scrollOffset: offset.current,
           });
         if (pending.current) {
-          const expected = measuredOffset(pending.current.anchor);
-          if (expected !== null && Math.abs(offset.current - expected) > 2) {
-            pending.current.aligned = false;
-            retry();
-          }
-          confirm();
+          retry();
           return;
         }
-        const anchor = captureDayAnchor(
-          live.current.rows,
-          layouts.current,
-          offset.current + live.current.topInset,
-        );
-        if (anchor) {
-          saved.current = anchor;
-          live.current.onAnchorChange?.(anchor);
-        }
+        recordAnchor();
       }}
       onViewableItemsChanged={viewability}
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
@@ -456,14 +510,14 @@ export function WindowedDayList<T>({
         averageItemLength,
       }) => {
         trace("FAILED", { index, highestMeasuredFrameIndex, averageItemLength });
-        const request = pending.current;
-        if (!request) return;
-        request.aligned = false;
+        const resolved = resolveRequest();
+        if (!resolved || resolved.target.index !== index) return;
+        const request = resolved.request;
         if (!request.remounted) {
           // RN constrains an unmeasured tail: mount the target window once, not every earlier day.
           trace("WINDOW_REMOUNT", { index });
           request.remounted = true;
-          layouts.current.clear();
+          cells.current.clear();
           visibleKeys.current.clear();
           setWindowStart((previous) => ({
             scopeKey: live.current.scopeKey,
@@ -476,13 +530,7 @@ export function WindowedDayList<T>({
       onContentSizeChange={(_width, height) => {
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
-        if (pending.current) {
-          const expected = measuredOffset(pending.current.anchor);
-          if (expected !== null && Math.abs(offset.current - expected) > 2)
-            pending.current.aligned = false;
-        }
         retry();
-        confirm();
       }}
       debug={false}
     />
