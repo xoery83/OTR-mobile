@@ -1,25 +1,30 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View, type ImageSourcePropType } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import {
   tripMetadataSchema,
   type TripMetadata,
 } from "@/domain/trip/tripMetadataContract";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
-import { UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { TripCoverPicker } from "./TripCoverPicker";
-import { CalendarField } from "./TripCalendarField";
+import { TripMetadataFields } from "./TripMetadataFields";
+import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { TripCurrencyRow } from "./TripSetupRows";
+import { TripCoverVisual } from "./TripCoverVisual";
 
 export function TripBasicEditor({
   trip,
   onSelectCover,
   onSaveMetadata,
   metadataEditable,
+  cover,
+  setup = null,
+  onOpenCurrency,
 }: {
   trip: Pick<
     Trip,
@@ -28,6 +33,9 @@ export function TripBasicEditor({
   metadataEditable: boolean;
   onSelectCover(id: BuiltInTripCoverId): Promise<void>;
   onSaveMetadata(before: TripMetadata, after: TripMetadata): Promise<void>;
+  cover?: ImageSourcePropType;
+  setup?: TripPreparationSetup | null;
+  onOpenCurrency?: () => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -51,6 +59,22 @@ export function TripBasicEditor({
     endDate: end || null,
   };
   const valid = tripMetadataSchema.safeParse(after).success;
+  const openCurrency = () => {
+    if (!onOpenCurrency || saving) return;
+    if (
+      after.name === before.name &&
+      after.destination === before.destination &&
+      after.startDate === before.startDate &&
+      after.endDate === before.endDate
+    ) {
+      onOpenCurrency();
+      return;
+    }
+    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
+      { text: t("actionIsland.stay"), style: "cancel" },
+      { text: t("actionIsland.discard"), style: "destructive", onPress: onOpenCurrency },
+    ]);
+  };
   return (
     <View style={styles.root}>
       <UiSection>
@@ -61,32 +85,29 @@ export function TripBasicEditor({
               : "tripHome.editor.metadataReadOnly",
           )}
         </UiText>
-        <UiText style={styles.label}>{t("tripCreate.name")}</UiText>
-        <UiTextInput
-          accessibilityLabel={t("tripCreate.name")}
-          value={name}
-          onChangeText={setName}
-          editable={metadataEditable && !saving}
-        />
-        <UiText style={styles.label}>{t("tripCreate.destination")}</UiText>
-        <UiTextInput
-          accessibilityLabel={t("tripCreate.destination")}
-          value={destination}
-          onChangeText={setDestination}
-          editable={metadataEditable && !saving}
-        />
-        <CalendarField
+        <TripMetadataFields
+          name={name}
+          destination={destination}
+          range={{ start, end }}
           disabled={!metadataEditable || saving}
-          label={t("tripCreate.start")}
-          value={start}
-          onChange={setStart}
+          onName={setName}
+          onDestination={setDestination}
+          onRange={(range) => {
+            setStart(range.start);
+            setEnd(range.end);
+          }}
         />
-        <CalendarField
-          disabled={!metadataEditable || saving}
-          label={t("tripCreate.end")}
-          value={end}
-          onChange={setEnd}
-        />
+      </UiSection>
+      <UiSection title={t("tripHome.coverTools")}>
+        {cover ? <TripCoverVisual source={cover} style={styles.cover} /> : null}
+        <UiText style={styles.hint}>{t("tripHome.editor.coverLocalOnly")}</UiText>
+        <TripCoverPicker selected={trip.selectedCoverAssetId} onSelect={onSelectCover} />
+      </UiSection>
+      <TripCurrencyRow
+        setup={setup}
+        onOpen={saving || !onOpenCurrency ? undefined : openCurrency}
+      />
+      <UiSection>
         {metadataEditable ? (
           <UiButton
             label={t("tripCreate.saveTrip")}
@@ -115,10 +136,6 @@ export function TripBasicEditor({
           </UiText>
         ) : null}
       </UiSection>
-      <UiSection title={t("tripHome.coverTools")}>
-        <UiText style={styles.hint}>{t("tripHome.editor.coverLocalOnly")}</UiText>
-        <TripCoverPicker selected={trip.selectedCoverAssetId} onSelect={onSelectCover} />
-      </UiSection>
     </View>
   );
 }
@@ -126,6 +143,7 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     root: { gap: visual.space.section },
     label: { ...visual.type.meta, color: colors.textPrimary },
+    cover: { height: 128, borderRadius: visual.radius.card, overflow: "hidden" },
     hint: { ...visual.type.meta, color: colors.textSecondary },
     error: { ...visual.type.meta, color: colors.destructive },
   });

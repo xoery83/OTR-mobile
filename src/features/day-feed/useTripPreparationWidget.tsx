@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import {
+  readTripPreparationSetupRepository,
+  type TripPreparationSetup,
+} from "@/data/repositories/tripPreparationSetupRepository";
+import type { TripSetupMetadata } from "./TripSetupRows";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -20,6 +26,10 @@ export function useTripPreparationWidget({
   onBuild,
   onOpenDay,
   onOpenItem,
+  metadata,
+  onEdit,
+  onCover,
+  onSetup,
 }: {
   tripId: string | null;
   undated: boolean;
@@ -27,6 +37,10 @@ export function useTripPreparationWidget({
   onBuild?: () => void;
   onOpenDay?: () => void;
   onOpenItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
+  metadata?: TripSetupMetadata;
+  onEdit?: () => void;
+  onCover?: () => void;
+  onSetup?: (value: TripPreparationSetup | null) => void;
 }): TripHomeWidget | null {
   useUiLocale();
   const generation = useSyncExternalStore(
@@ -35,42 +49,69 @@ export function useTripPreparationWidget({
   );
   const [read, setRead] = useState<TripPreparationRead | null>(null);
   const [state, setState] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
+  const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
   const request = useRef(0);
   const load = useCallback(async () => {
     const ticket = ++request.current;
     if (!tripId) return;
     setState("LOADING");
     try {
-      const value = await (await readTripPreparation()).read(tripId);
+      const [value, facts] = await Promise.all([
+        readTripPreparation().then((reader) => reader.read(tripId)),
+        readTripPreparationSetupRepository()
+          .then((reader) => reader.read(tripId))
+          .catch(() => null),
+      ]);
       if (request.current !== ticket || generation !== getAccountGeneration()) return;
       setRead(value);
+      const scopedFacts =
+        facts &&
+        value &&
+        facts.context.tripId === value.scope.tripId &&
+        facts.context.accountId === value.scope.accountId &&
+        facts.context.generation === generation
+          ? facts
+          : null;
+      setSetup(scopedFacts);
+      onSetup?.(scopedFacts);
       setState(value ? "READY" : "UNAVAILABLE");
     } catch {
       if (request.current === ticket && generation === getAccountGeneration()) {
         setRead(null);
+        setSetup(null);
+        onSetup?.(null);
         setState("UNAVAILABLE");
       }
     }
-  }, [tripId, generation]);
+  }, [tripId, generation, onSetup]);
   const cancelPending = useCallback(() => {
     request.current++;
   }, []);
-  useEffect(() => {
-    let active = true;
-    void Promise.resolve().then(() => {
-      if (active) void load();
-    });
-    const sub = AppState.addEventListener("change", (value) => {
-      if (value === "active") void load();
-    });
-    return () => {
-      active = false;
-      cancelPending();
-      sub.remove();
-    };
-  }, [load, cancelPending]);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void Promise.resolve().then(() => {
+        if (active) void load();
+      });
+      const sub = AppState.addEventListener("change", (value) => {
+        if (value === "active") void load();
+      });
+      return () => {
+        active = false;
+        cancelPending();
+        sub.remove();
+      };
+    }, [load, cancelPending]),
+  );
   const visible =
     read?.scope.tripId === tripId && read.scope.generation === generation ? read : null;
+  const visibleSetup =
+    visible &&
+    setup?.context.tripId === tripId &&
+    setup.context.accountId === visible.scope.accountId &&
+    setup.context.generation === generation
+      ? setup
+      : null;
   const act = async (callback: () => void, needsPlan = false, itemId?: string) => {
     if (!tripId || generation !== getAccountGeneration()) return;
     const ticket = request.current;
@@ -98,13 +139,45 @@ export function useTripPreparationWidget({
   };
   if (!tripId) return null;
   const title = t(
-    undated ? "tripHome.preparation.undated" : "tripHome.preparation.title",
+    visible?.preparation.itemCount === 0
+      ? "tripForm.prepare"
+      : undated
+        ? "tripHome.preparation.undated"
+        : "tripHome.preparation.title",
   );
   return {
     id: "preparation",
     title,
     content: (
       <TripPreparationWidget
+        setup={visibleSetup}
+        metadata={metadata}
+        onEdit={
+          visible?.canPlan && onEdit
+            ? () => {
+                void act(onEdit, true);
+              }
+            : undefined
+        }
+        onCover={
+          visible && onCover
+            ? () => {
+                void act(onCover);
+              }
+            : undefined
+        }
+        onCurrency={
+          visible && visibleSetup
+            ? () => {
+                void act(() =>
+                  router.push({
+                    pathname: "/expenses/settings",
+                    params: { journeyId: tripId },
+                  }),
+                );
+              }
+            : undefined
+        }
         value={visible?.preparation ?? null}
         state={visible ? state : state === "READY" ? "UNAVAILABLE" : state}
         copy={{

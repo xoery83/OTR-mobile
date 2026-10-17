@@ -5,16 +5,46 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   values: [] as unknown[],
   read: vi.fn(),
+  setup: vi.fn(),
+  effects: [] as (() => () => void)[],
+  active: null as ((value: string) => void) | null,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useState: () => [state.values[state.cursor++], vi.fn()],
+  useState: (initial: unknown) => {
+    const i = state.cursor++;
+    if (!(i in state.values)) state.values[i] = initial;
+    return [
+      state.values[i],
+      (next: unknown) => {
+        state.values[i] = next;
+      },
+    ];
+  },
   useRef: () => ({ current: 0 }),
   useCallback: (fn: unknown) => fn,
-  useEffect: () => {},
+  useEffect: (fn: () => () => void) => {
+    state.effects.push(fn);
+  },
   useSyncExternalStore: () => state.generation,
 }));
-vi.mock("react-native", () => ({ AppState: { addEventListener: vi.fn() } }));
+vi.mock("react-native", () => ({
+  AppState: {
+    addEventListener: (_: string, callback: (s: string) => void) => {
+      state.active = callback;
+      return { remove: vi.fn() };
+    },
+  },
+}));
+vi.mock("expo-router", () => ({
+  router: { push: vi.fn() },
+  useFocusEffect: (fn: () => () => void) => {
+    state.effects.push(fn);
+  },
+}));
+vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
+  readTripPreparationSetupRepository: async () => ({ read: state.setup }),
+}));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
   subscribeAccountGeneration: vi.fn(),
@@ -25,7 +55,7 @@ vi.mock("@/data/repositories/tripPreparationRepository", () => ({
 vi.mock("./TripPreparationWidget", () => ({ TripPreparationWidget: () => null }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
-function PreparationHarness(canPlan: boolean) {
+function PreparationHarness(canPlan: boolean, onSetup = vi.fn()) {
   const read = {
     scope: { tripId: "trip", accountId: "actor", generation: 1 },
     epoch: "epoch",
@@ -41,6 +71,7 @@ function PreparationHarness(canPlan: boolean) {
     undated: true,
     onImport,
     onBuild,
+    onSetup,
   });
   return {
     read,
@@ -57,6 +88,63 @@ function PreparationHarness(canPlan: boolean) {
 beforeEach(() => {
   state.generation = 1;
   state.read.mockReset();
+  state.setup.mockReset();
+  state.effects = [];
+  state.active = null;
+});
+
+it("keeps real setup facts in the same request fence and drops late refresh or account results", async () => {
+  const receive = vi.fn();
+  const view = PreparationHarness(true, receive);
+  state.read.mockResolvedValue(view.read);
+  let resolveFirst!: (value: any) => void;
+  const first = new Promise((resolve) => {
+    resolveFirst = resolve;
+  });
+  const latest = {
+    context: view.read.scope,
+    currency: {
+      state: "AVAILABLE",
+      code: "JPY",
+      scale: 0,
+      permission: "OWNER",
+      lock: "NOT_OBSERVED",
+    },
+    members: { state: "UNKNOWN" },
+    invitations: "UNKNOWN",
+    connections: "UNKNOWN",
+  };
+  state.setup.mockReturnValueOnce(first).mockResolvedValueOnce(latest);
+  state.effects[0]();
+  await vi.waitFor(() => expect(state.setup).toHaveBeenCalledOnce());
+  state.active!("active");
+  await vi.waitFor(() => expect(receive).toHaveBeenCalledExactlyOnceWith(latest));
+  resolveFirst({ ...latest, currency: { ...latest.currency, code: "NZD" } });
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(receive).toHaveBeenCalledTimes(1);
+  let resolveNext!: (value: any) => void;
+  state.setup.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveNext = resolve;
+    }),
+  );
+  state.active!("active");
+  await vi.waitFor(() => expect(state.setup).toHaveBeenCalledTimes(3));
+  state.generation = 2;
+  resolveNext(latest);
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(receive).toHaveBeenCalledTimes(1);
+});
+
+it("leaves itinerary and its actions available when setup facts cannot be read", async () => {
+  const receive = vi.fn();
+  const view = PreparationHarness(true, receive);
+  state.read.mockResolvedValue(view.read);
+  state.setup.mockRejectedValue(new Error("unavailable"));
+  state.effects[0]();
+  await vi.waitFor(() => expect(receive).toHaveBeenCalledExactlyOnceWith(null));
+  expect(state.values[0]).toEqual(view.read);
+  expect(state.values[1]).toBe("READY");
 });
 it("hides write actions from read-only participants and preserves them for authorized local planning", () => {
   expect(PreparationHarness(false).props.onImport).toBeUndefined();
@@ -74,4 +162,33 @@ it("rechecks permissions before a visible action and rejects a changed account",
   view.props.onBuildItinerary!();
   await Promise.resolve();
   expect(view.onBuild).not.toHaveBeenCalled();
+});
+
+it("refreshes actual currency on route focus after returning from Ledger settings", async () => {
+  const receive = vi.fn();
+  const view = PreparationHarness(true, receive);
+  state.read.mockResolvedValue(view.read);
+  const facts = {
+    context: view.read.scope,
+    currency: {
+      state: "AVAILABLE",
+      code: "NZD",
+      scale: 2,
+      permission: "OWNER",
+      lock: "NOT_OBSERVED",
+    },
+    members: { state: "UNKNOWN" },
+    invitations: "UNKNOWN",
+    connections: "UNKNOWN",
+  };
+  state.setup.mockResolvedValueOnce(facts).mockResolvedValueOnce({
+    ...facts,
+    currency: { ...facts.currency, code: "JPY", scale: 0 },
+  });
+  const blur = state.effects[0]();
+  await vi.waitFor(() => expect(receive).toHaveBeenCalledOnce());
+  blur();
+  state.effects[0]();
+  await vi.waitFor(() => expect(receive).toHaveBeenCalledTimes(2));
+  expect(receive.mock.calls[1][0].currency.code).toBe("JPY");
 });

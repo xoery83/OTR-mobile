@@ -8,6 +8,8 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { snapshotItemDate } from "@/domain/trip/journeySnapshot";
 import type { PreparationFamily, TripPreparation } from "@/domain/trip/tripPreparation";
+import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { TripSetupRows, type TripSetupMetadata } from "./TripSetupRows";
 
 export type TripPreparationCopy = {
   title: string;
@@ -47,6 +49,11 @@ export function TripPreparationWidget({
   onBuildItinerary,
   onOpenDay,
   onOpenItem,
+  setup = null,
+  metadata,
+  onEdit,
+  onCurrency,
+  onCover,
 }: {
   value: TripPreparation | null;
   state: "LOADING" | "READY" | "UNAVAILABLE";
@@ -55,6 +62,11 @@ export function TripPreparationWidget({
   onBuildItinerary?: () => void;
   onOpenDay?: () => void;
   onOpenItem?: (itemId: string) => void;
+  setup?: TripPreparationSetup | null;
+  metadata?: TripSetupMetadata;
+  onEdit?: () => void;
+  onCurrency?: () => void;
+  onCover?: () => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
@@ -150,6 +162,15 @@ export function TripPreparationWidget({
           </View>
         </>
       )}
+      {ready && value.itemCount === 0 ? (
+        <TripSetupRows
+          setup={setup}
+          metadata={metadata}
+          onEdit={onEdit}
+          onCurrency={onCurrency}
+          onCover={onCover}
+        />
+      ) : null}
     </View>
   );
 }

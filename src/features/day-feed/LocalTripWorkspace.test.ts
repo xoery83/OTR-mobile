@@ -9,6 +9,10 @@ import {
   getAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
+vi.mock("./TripCalendarRangeField", () => ({
+  TripCalendarRangeField: () => null,
+  tripRangeLabel: () => "range",
+}));
 vi.mock("./useTripPreparationWidget", () => ({ useTripPreparationWidget: () => null }));
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
@@ -80,8 +84,13 @@ vi.mock("react", async (original) => ({
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
 vi.mock("react-native", () => ({
+  KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
+  Platform: { OS: "ios" },
   Alert: { alert: (...args: any[]) => state.alert(...args) },
-  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
+  Modal: (p: any) => {
+    if (p.visible) state.nodes.push({ modal: p });
+    return p.visible ? createElement("div", null, p.children) : null;
+  },
   ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => createElement("div", null, p.children),
   Text: (p: any) => createElement("span", null, p.children),
@@ -281,9 +290,9 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   render();
   const old = deferred<TripRepository>();
   state.repo.mockImplementationOnce(() => old.promise);
-  button("tripCreate.saveTrip").onPress();
+  button("tripCreate.newTrip").onPress();
   render();
-  expect(button("tripCreate.saveTrip").disabled).toBe(true);
+  expect(button("tripCreate.newTrip").disabled).toBe(true);
   const oldKey = key;
   advanceAccountGeneration();
   state.repo.mockResolvedValue(b);
@@ -297,13 +306,13 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   render();
   const bSave = deferred<TripRepository>();
   state.repo.mockImplementationOnce(() => bSave.promise);
-  button("tripCreate.saveTrip").onPress();
+  button("tripCreate.newTrip").onPress();
   render();
   old.resolve(b);
   await flush();
   render();
   expect(b.createTrip).not.toHaveBeenCalled();
-  expect(button("tripCreate.saveTrip").disabled).toBe(true);
+  expect(button("tripCreate.newTrip").disabled).toBe(true);
   bSave.resolve(b);
   await flush();
   render();
@@ -311,7 +320,7 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(b.createTrip).toHaveBeenCalledWith(
     expect.objectContaining({ name: "B own draft" }),
   );
-  expect(button("tripCreate.saveTrip").disabled).toBe(false);
+  expect(button("tripCreate.newTrip").disabled).toBe(false);
   expect(props.onOpen).toHaveBeenCalledOnce();
 });
 
@@ -494,7 +503,7 @@ vi.mock("./TripViewContext", () => ({
 }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
-    state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
+    state.nodes.push({ label: p.leftLabel ?? "common.close", onPress: p.onLeft });
     return null;
   },
 }));
@@ -541,7 +550,10 @@ it("normal Home keeps cover editing behind its action and preserves the owning s
   expect(repo.selectBuiltInCover).toHaveBeenCalledWith("local-a", "coast");
 });
 
-vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
+vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaProvider: "div",
+  SafeAreaView: "div",
+}));
 it("normal Home Hero action opens the same Editor and saves through the owning metadata repository", async () => {
   const current = trip("local-a", "Original"),
     repo = repository([current]);
@@ -586,4 +598,41 @@ it("an unfocused retained Workspace cannot publish actions over another Trip", a
   expect(state.publish.mock.calls.some(([actions]) => actions?.tripId === "trip-a")).toBe(
     true,
   );
+});
+
+it("Create is one native sheet, Cancel writes nothing, and immediate double tap saves one undated Trip", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  expect(
+    state.nodes.filter((node) => node.modal).map((node) => node.modal.presentationStyle),
+  ).toEqual(["pageSheet"]);
+  expect(
+    state.nodes.some((node) => node.accessibilityLabel === "tripCreate.baseCurrency"),
+  ).toBe(false);
+  button("common.close").onPress();
+  expect(props.onBackToTrips).toHaveBeenCalledOnce();
+  expect(repo.createTrip).not.toHaveBeenCalled();
+  input("tripCreate.name", "Name only");
+  render();
+  const pending = deferred<Trip>();
+  vi.mocked(repo.createTrip).mockImplementationOnce(() => pending.promise);
+  const create = button("tripCreate.newTrip");
+  create.onPress();
+  create.onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledTimes(1);
+  const payload = vi.mocked(repo.createTrip).mock.calls[0][0];
+  expect(payload).toMatchObject({ name: "Name only", startDate: null, endDate: null });
+  expect(payload).not.toHaveProperty("travelers");
+  expect(payload).not.toHaveProperty("currency");
+  expect(payload).not.toHaveProperty("cover");
+  button("common.close").onPress();
+  expect(props.onBackToTrips).toHaveBeenCalledTimes(1);
+  pending.resolve(trip(payload.tripId, payload.name));
+  await flush();
+  expect(props.onOpen).toHaveBeenCalledExactlyOnceWith(payload.tripId);
 });

@@ -3,10 +3,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { lightPalette } from "@/ui/palette";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripCoverPicker } from "./TripCoverPicker";
-import { UiTextInput } from "@/ui/forms";
+import { TripCurrencyRow } from "./TripSetupRows";
+import { TripMetadataFields } from "./TripMetadataFields";
 import { UiButton } from "@/ui/controls";
-import { CalendarField } from "./TripCalendarField";
-const state = vi.hoisted(() => ({ values: [] as unknown[], cursor: 0 }));
+
+const state = vi.hoisted(() => ({ values: [] as unknown[], cursor: 0, alert: vi.fn() }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {
@@ -21,6 +22,7 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
+  Alert: { alert: (...args: any[]) => state.alert(...args) },
   View: "View",
   StyleSheet: { create: (s: unknown) => s },
 }));
@@ -37,7 +39,9 @@ vi.mock("@/ui/controls", () => ({
   UiButton: "UiButton",
 }));
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: "TripCoverPicker" }));
-vi.mock("./TripCalendarField", () => ({ CalendarField: "CalendarField" }));
+vi.mock("./TripMetadataFields", () => ({ TripMetadataFields: "TripMetadataFields" }));
+vi.mock("./TripSetupRows", () => ({ TripCurrencyRow: "TripCurrencyRow" }));
+vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: "TripCoverVisual" }));
 type Element = ReactElement<Record<string, unknown> & { children?: ReactNode }>;
 const elements = (node: ReactNode): Element[] => {
   if (!isValidElement(node)) return [];
@@ -70,6 +74,7 @@ const flush = async () => {
   for (let i = 0; i < 5; i++) await Promise.resolve();
 };
 beforeEach(() => {
+  state.alert.mockReset();
   state.values = [];
   state.cursor = 0;
 });
@@ -77,15 +82,12 @@ it("edits real metadata through one local owning callback and keeps cover on its
   const save = vi.fn().mockResolvedValue(undefined),
     cover = vi.fn().mockResolvedValue(undefined);
   let nodes = render(save, cover);
-  const name = nodes.find(
-    (node) =>
-      node.type === UiTextInput && node.props.accessibilityLabel === "tripCreate.name",
-  )!;
-  (name.props.onChangeText as (s: string) => void)("  Nelson updated  ");
-  const date = nodes.find(
-    (node) => node.type === CalendarField && node.props.label === "tripCreate.start",
-  )!;
-  (date.props.onChange as (s: string) => void)("");
+  const fields = nodes.find((node) => node.type === TripMetadataFields)!;
+  (fields.props.onName as (s: string) => void)("  Nelson updated  ");
+  (fields.props.onRange as (r: { start: string; end: string }) => void)({
+    start: "",
+    end: "",
+  });
   nodes = render(save, cover);
   (nodes.find((node) => node.type === UiButton)!.props.onPress as () => void)();
   await flush();
@@ -108,7 +110,7 @@ it("retains unsaved fields after a failed local save and blocks invalid date ran
   const save = vi.fn().mockRejectedValue(new Error("disk"));
   let nodes = render(save);
   (
-    nodes.find((node) => node.type === UiTextInput)!.props.onChangeText as (
+    nodes.find((node) => node.type === TripMetadataFields)!.props.onName as (
       s: string,
     ) => void
   )("Keep draft");
@@ -116,14 +118,17 @@ it("retains unsaved fields after a failed local save and blocks invalid date ran
   (nodes.find((node) => node.type === UiButton)!.props.onPress as () => void)();
   await flush();
   nodes = render(save);
-  expect(nodes.find((node) => node.type === UiTextInput)!.props.value).toBe("Keep draft");
+  expect(nodes.find((node) => node.type === TripMetadataFields)!.props.name).toBe(
+    "Keep draft",
+  );
   expect(nodes.some((node) => node.props.children === "tripCreate.saveFailed")).toBe(
     true,
   );
-  const end = nodes.find(
-    (node) => node.type === CalendarField && node.props.label === "tripCreate.end",
-  )!;
-  (end.props.onChange as (s: string) => void)("2026-10-15");
+  const fields = nodes.find((node) => node.type === TripMetadataFields)!;
+  (fields.props.onRange as (r: { start: string; end: string }) => void)({
+    start: trip.startDate,
+    end: "2026-10-15",
+  });
   expect(render(save).find((node) => node.type === UiButton)!.props.disabled).toBe(true);
 });
 
@@ -137,16 +142,42 @@ it("withholds metadata edits without local creator provenance while retaining th
       onSelectCover: vi.fn(),
     }),
   );
-  expect(
-    nodes
-      .filter((node) => node.type === UiTextInput)
-      .every((node) => node.props.editable === false),
-  ).toBe(true);
-  expect(
-    nodes
-      .filter((node) => node.type === CalendarField)
-      .every((node) => node.props.disabled === true),
-  ).toBe(true);
+  expect(nodes.find((node) => node.type === TripMetadataFields)!.props.disabled).toBe(
+    true,
+  );
   expect(nodes.some((node) => node.type === UiButton)).toBe(false);
   expect(nodes.some((node) => node.type === TripCoverPicker)).toBe(true);
+});
+
+it("retains a dirty editor when Currency is opened unless the user explicitly discards", () => {
+  const open = vi.fn();
+  const renderEditor = () => {
+    state.cursor = 0;
+    return elements(
+      TripBasicEditor({
+        trip,
+        metadataEditable: true,
+        onSaveMetadata: vi.fn(),
+        onSelectCover: vi.fn(),
+        onOpenCurrency: open,
+      }),
+    );
+  };
+  let nodes = renderEditor();
+  (nodes.find((n) => n.type === TripCurrencyRow)!.props.onOpen as () => void)();
+  expect(open).toHaveBeenCalledOnce();
+  open.mockClear();
+  (nodes.find((n) => n.type === TripMetadataFields)!.props.onName as (s: string) => void)(
+    "Unsaved name",
+  );
+  nodes = renderEditor();
+  (nodes.find((n) => n.type === TripCurrencyRow)!.props.onOpen as () => void)();
+  expect(open).not.toHaveBeenCalled();
+  const actions = state.alert.mock.calls[0][2];
+  expect(actions[0].style).toBe("cancel");
+  expect(renderEditor().find((n) => n.type === TripMetadataFields)!.props.name).toBe(
+    "Unsaved name",
+  );
+  actions[1].onPress();
+  expect(open).toHaveBeenCalledOnce();
 });

@@ -1,5 +1,5 @@
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
 import { router, useFocusEffect } from "expo-router";
@@ -14,7 +14,16 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Alert, AppState, Modal, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  AppState,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
@@ -40,6 +49,10 @@ import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { CalendarField, calendarDate } from "./TripCalendarField";
 import { TripBasicEditor } from "./TripBasicEditor";
+import { TripMetadataFields } from "./TripMetadataFields";
+import { tripMetadataSchema } from "@/domain/trip/tripMetadataContract";
+import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { TripMembersSummary } from "./TripSetupRows";
 import { LocalTripPhotos } from "./LocalTripPhotos";
 import { tripCoverSource } from "./tripCovers";
 
@@ -121,6 +134,11 @@ function LocalTripContent({
     [end, setEnd] = useState("");
   const [coverOpen, setCoverOpen] = useState(false);
   const [metadataEditable, setMetadataEditable] = useState(false);
+  const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
+  const receiveSetup = useCallback(
+    (value: TripPreparationSetup | null) => setSetup(value),
+    [],
+  );
   const [family, setFamily] = useState<"P1" | "P3">("P1"),
     [itemTitle, setItemTitle] = useState(""),
     [itemStart, setItemStart] = useState(""),
@@ -449,8 +467,17 @@ function LocalTripContent({
           ? "Undated"
           : null;
   const preparation = useTripPreparationWidget({
-    tripId:
-      lifecycle === "Upcoming" || lifecycle === "Undated" ? (metadata?.id ?? null) : null,
+    tripId: metadata?.id ?? null,
+    metadata: metadata
+      ? {
+          startDate: metadata.startDate,
+          endDate: metadata.endDate,
+          destination: metadata.destination,
+        }
+      : undefined,
+    onSetup: receiveSetup,
+    onEdit: selected && metadataEditable ? () => setCoverOpen(true) : undefined,
+    onCover: selected ? () => setCoverOpen(true) : undefined,
     undated: lifecycle === "Undated",
     onImport: selected
       ? () => {
@@ -468,7 +495,9 @@ function LocalTripContent({
   });
   const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
   const pages = [
-    ...(preparation ? [preparation] : []),
+    ...(preparation && (lifecycle === "Upcoming" || lifecycle === "Undated")
+      ? [preparation]
+      : []),
     ...(metadata && lifecycle
       ? (widgetsForHome?.(metadata.id, lifecycle, metadata.startDate) ?? [])
       : []),
@@ -529,6 +558,9 @@ function LocalTripContent({
             ]}
             modules={
               <View style={styles.root}>
+                <TripMembersSummary
+                  setup={setup?.context.tripId === selected.id ? setup : null}
+                />
                 <LocalTripPhotos
                   compact
                   tripId={selected.id}
@@ -563,6 +595,7 @@ function LocalTripContent({
           ) : null}
           <Modal
             visible={coverOpen}
+            presentationStyle="pageSheet"
             onRequestClose={() => setCoverOpen(false)}
             animationType="slide"
           >
@@ -571,9 +604,26 @@ function LocalTripContent({
                 title={t("tripHome.edit")}
                 onLeft={() => setCoverOpen(false)}
               />
-              <ScrollView contentContainerStyle={styles.form}>
+              <ScrollView
+                style={styles.modal}
+                contentContainerStyle={styles.form}
+                automaticallyAdjustKeyboardInsets
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="interactive"
+              >
                 <TripBasicEditor
                   trip={selected}
+                  cover={tripCoverSource(selected)}
+                  setup={setup?.context.tripId === selected.id ? setup : null}
+                  onOpenCurrency={() => {
+                    if (alive.current && generation === getAccountGeneration()) {
+                      setCoverOpen(false);
+                      router.push({
+                        pathname: "/expenses/settings",
+                        params: { journeyId: selected.id },
+                      });
+                    }
+                  }}
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}
                   onSaveMetadata={async (before, after) => {
@@ -663,6 +713,11 @@ function LocalTripContent({
         <>
           <TripHomeFrame
             onHeroHeight={onHomeHeroHeight}
+            modules={
+              <TripMembersSummary
+                setup={setup?.context.tripId === remoteSelected.id ? setup : null}
+              />
+            }
             widgets={pages}
             title={remoteSelected.name}
             cover={tripCoverSource(remoteSelected)}
@@ -718,33 +773,81 @@ function LocalTripContent({
         )
       ) : (
         <>
-          <UiSection title={t("tripCreate.newTrip")}>
-            <UiTextInput
-              accessibilityLabel={t("tripCreate.name")}
-              placeholder={t("tripCreate.name")}
-              value={name}
-              onChangeText={setName}
-              editable={!saving}
-            />
-            <UiTextInput
-              accessibilityLabel={t("tripCreate.destination")}
-              placeholder={t("tripCreate.destination")}
-              value={destination}
-              onChangeText={setDestination}
-              editable={!saving}
-            />
-            <CalendarField
-              label={t("tripCreate.start")}
-              value={start}
-              onChange={setStart}
-            />
-            <CalendarField label={t("tripCreate.end")} value={end} onChange={setEnd} />
-            <UiButton
-              label={t("tripCreate.saveTrip")}
-              disabled={saving || status !== "READY" || !name.trim()}
-              onPress={() => void save(false)}
-            />
-          </UiSection>
+          <MyTripsList
+            trips={trips}
+            remoteTrips={remoteTrips}
+            today={calendarDate(new Date())}
+            eligibleToday={eligibleToday}
+            onOpen={onOpen}
+            onOpenToday={(id) => void openToday(id)}
+            onCreate={onCreate}
+          />
+          <Modal
+            visible
+            presentationStyle="pageSheet"
+            animationType="slide"
+            allowSwipeDismissal={!saving}
+            onRequestClose={() => {
+              if (!busy.current) onBackToTrips();
+            }}
+          >
+            <SafeAreaProvider style={styles.modal}>
+              <SafeAreaView edges={["bottom"]} style={styles.modal}>
+                <SheetHeader
+                  safeTop={false}
+                  title={t("tripCreate.newTrip")}
+                  onLeft={() => {
+                    if (!busy.current) onBackToTrips();
+                  }}
+                />
+                <KeyboardAvoidingView
+                  style={styles.modal}
+                  behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
+                  <ScrollView
+                    style={styles.modal}
+                    contentContainerStyle={styles.form}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="interactive"
+                  >
+                    <TripMetadataFields
+                      name={name}
+                      destination={destination}
+                      range={{ start, end }}
+                      disabled={saving}
+                      onName={setName}
+                      onDestination={setDestination}
+                      onRange={(range) => {
+                        setStart(range.start);
+                        setEnd(range.end);
+                      }}
+                    />
+                    {error ? (
+                      <Text accessibilityRole="alert" style={styles.status}>
+                        {t("tripCreate.saveFailed")}
+                      </Text>
+                    ) : null}
+                  </ScrollView>
+                  <View style={styles.formFooter}>
+                    <UiButton
+                      label={t("tripCreate.newTrip")}
+                      disabled={
+                        saving ||
+                        status !== "READY" ||
+                        !tripMetadataSchema.safeParse({
+                          name,
+                          destination: destination.trim() || null,
+                          startDate: start || null,
+                          endDate: end || null,
+                        }).success
+                      }
+                      onPress={() => void save(false)}
+                    />
+                  </View>
+                </KeyboardAvoidingView>
+              </SafeAreaView>
+            </SafeAreaProvider>
+          </Modal>
         </>
       )}
     </View>
@@ -754,6 +857,7 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     modal: { flex: 1, backgroundColor: colors.background },
     form: { padding: visual.space.page, gap: visual.space.card },
+    formFooter: { padding: visual.space.page, backgroundColor: colors.background },
     pastRoot: { flex: 1, backgroundColor: colors.background, padding: visual.space.page },
     root: { gap: visual.space.section },
     body: { color: colors.textPrimary, ...visual.type.row },
