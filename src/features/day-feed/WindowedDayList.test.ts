@@ -566,3 +566,59 @@ it("prepends at most one previous date per drag despite a content-layout/overscr
   expect(state.props.data[0]).toBe(rows[72]);
   expect(state.scrollToIndex).not.toHaveBeenCalled();
 });
+
+it("prefetches one preceding date on a real top drag even when a short final window emits no scroll", () => {
+  const { rows, ref, rerender } = setup(100);
+  state.nativeHeight = 874;
+  ref.current!.jumpToDayHeader(rows[89].date);
+  mount(rows[89], 0, 100);
+  state.props.onContentSizeChange(390, 727.67);
+  visible(rows[89], 0);
+  flushFrames();
+  rerender();
+  const listKey = state.props.key;
+  expect(state.props.data[0]).toBe(rows[89]);
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[88]);
+  expect(state.props.data[1]).toBe(rows[89]);
+  expect(state.props.key).toBe(listKey);
+  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+});
+
+it("waits until scrolling reaches the top threshold when a gesture begins farther down", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  scroll(400);
+  state.props.onScrollBeginDrag();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[74]);
+  scroll(190);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[73]);
+  state.props.onContentSizeChange(390, 12000);
+  scroll(100);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[73]);
+});
+it("ignores retired list drag-begin events after a new jump epoch or account/Trip scope", () => {
+  const { rows, ref, rerender } = setup();
+  const retired = state.props;
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  retired.onScrollBeginDrag();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[74]);
+  const priorScope = state.props;
+  rerender(rows, undefined, undefined, "different-account/trip");
+  rerender(rows, undefined, undefined, "different-account/trip");
+  priorScope.onScrollBeginDrag();
+  rerender(rows, undefined, undefined, "different-account/trip");
+  expect(state.props.data[0]).toBe(rows[0]);
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+});

@@ -498,6 +498,31 @@ export function WindowedDayList<T>({
       }
     });
   }, []);
+  const prependPrevious = useCallback(
+    (position: number, trigger: "drag-begin" | "scroll") => {
+      const current = live.current;
+      if (
+        current.epoch !== listEpoch.current ||
+        pending.current ||
+        !dragging.current ||
+        prepending.current ||
+        position > 200 ||
+        current.origin <= 0
+      )
+        return;
+      const previous = previousDayOrigin(current.rows, current.origin);
+      const row = current.rows[previous];
+      prepending.current = true;
+      trace("PREPEND", {
+        fromOrigin: current.origin,
+        origin: previous,
+        listEpoch: current.epoch,
+        trigger,
+      });
+      setWindowStart((window) => ({ ...window, key: row.key, date: row.date }));
+    },
+    [trace],
+  );
   const viewability = useCallback<
     NonNullable<FlatListProps<DayWindowRow<T>>["onViewableItemsChanged"]>
   >(
@@ -573,6 +598,7 @@ export function WindowedDayList<T>({
         trace("DRAG_BEGIN", { origin, listEpoch: renderedEpoch });
         finish();
         onInteraction?.();
+        prependPrevious(offset.current, "drag-begin");
       }}
       onScrollEndDrag={() => {
         if (renderedEpoch !== listEpoch.current) return;
@@ -584,23 +610,7 @@ export function WindowedDayList<T>({
         const rawOffset = event.nativeEvent.contentOffset.y;
         const movingUp = dragging.current && rawOffset < lastNativeOffset.current - 1;
         lastNativeOffset.current = rawOffset;
-        if (
-          !pending.current &&
-          movingUp &&
-          rawOffset <= 200 &&
-          origin > 0 &&
-          !prepending.current
-        ) {
-          const previous = previousDayOrigin(live.current.rows, origin);
-          const row = live.current.rows[previous];
-          prepending.current = true;
-          trace("PREPEND", {
-            fromOrigin: origin,
-            origin: previous,
-            listEpoch: renderedEpoch,
-          });
-          setWindowStart((current) => ({ ...current, key: row.key, date: row.date }));
-        }
+        if (movingUp) prependPrevious(rawOffset, "scroll");
         offset.current = Math.max(0, event.nativeEvent.contentOffset.y);
         trace("SCROLL", { offset: offset.current });
         live.current.onOffsetChange?.(offset.current);
