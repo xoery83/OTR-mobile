@@ -3,12 +3,18 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { UiButton } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
 import { SheetHeader } from "@/components/SheetHeader";
+import { lightPalette } from "@/ui/palette";
 import {
   TripCalendarRangeField,
   adjacentTripMonth,
   selectTripRange,
 } from "./TripCalendarRangeField";
-const state = vi.hoisted(() => ({ values: [] as any[], cursor: 0 }));
+const state = vi.hoisted(() => ({
+  values: [] as any[],
+  cursor: 0,
+  width: 390,
+  fontScale: 1,
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: any) => {
@@ -23,7 +29,7 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
-  useWindowDimensions: () => ({ fontScale: 1, width: 390 }),
+  useWindowDimensions: () => ({ fontScale: state.fontScale, width: state.width }),
   View: "View",
   Modal: "Modal",
   FlatList: "FlatList",
@@ -35,7 +41,7 @@ vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" 
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("@/ui/controls", () => ({ UiText: "UiText", UiButton: "UiButton" }));
 vi.mock("@/ui/forms", () => ({ UiFormRow: "UiFormRow" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create(lightPalette) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({
   t: (s: string) => s,
@@ -59,6 +65,8 @@ function nodes(node: ReactNode): Element[] {
 beforeEach(() => {
   state.values = [];
   state.cursor = 0;
+  state.width = 390;
+  state.fontScale = 1;
 });
 it("selects an interval across year boundaries with one explicit Done; Cancel and Clear stay draft-only", () => {
   const onChange = vi.fn();
@@ -163,3 +171,99 @@ it("clamps browsing to valid four-digit calendar years without looping at either
     expect(list.props.initialScrollIndex).toBe(day.startsWith("0001") ? 0 : 12);
   }
 });
+
+const style = (value: any): Record<string, any> =>
+  Object.assign({}, ...[value].flat(Infinity).filter(Boolean));
+function openedCalendar(value = { start: "2026-10-01", end: "2026-10-31" }) {
+  const render = () => {
+    state.cursor = 0;
+    return nodes(TripCalendarRangeField({ value, onChange: vi.fn() }));
+  };
+  render()
+    .find((node) => node.type === UiFormRow)!
+    .props.onPress();
+  return () => render().find((node) => node.type === "FlatList")!;
+}
+it.each([1, 2.5, 4])(
+  "gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale %s",
+  (fontScale) => {
+    state.fontScale = fontScale;
+    state.width = 320;
+    const list = openedCalendar()();
+    const month = list.props.renderItem({ item: "2026-10" });
+    const [title, scroll] = Children.toArray(month.props.children) as Element[];
+    const grid = scroll.props.children;
+    const weeks = Children.toArray(grid.props.children) as Element[];
+    const size = Math.max(44, Math.ceil(24 * fontScale));
+    expect(weeks).toHaveLength(7);
+    const geometry = style(month.props.style);
+    expect(list.props.getItemLayout(null, 5)).toEqual({
+      index: 5,
+      length: geometry.height,
+      offset: 5 * geometry.height,
+    });
+    expect(geometry.height).toBe(
+      style(title.props.style).height + geometry.gap + style(scroll.props.style).height,
+    );
+    expect(scroll.props.style).toMatchObject({
+      height: 7 * size,
+      flexGrow: 0,
+      flexShrink: 0,
+    });
+    expect(scroll.props.contentContainerStyle.height).toBe(7 * size);
+    expect(grid.props.style.height).toBe(7 * size);
+    const dates: string[] = [];
+    for (const week of weeks) {
+      expect(style(week.props.style)).toMatchObject({
+        height: size,
+        flexDirection: "row",
+      });
+      const cells = Children.toArray(week.props.children) as Element[];
+      expect(cells).toHaveLength(7);
+      for (const cell of cells) {
+        expect(style(cell.props.style).height).toBe(size);
+        expect(style(cell.props.style).width).toBeCloseTo(grid.props.style.width / 7);
+        expect(style(cell.props.style).width).toBeGreaterThanOrEqual(44);
+        if (cell.type === "Pressable") dates.push(cell.props.accessibilityLabel);
+      }
+    }
+    expect(dates).toEqual(
+      Array.from(
+        { length: 31 },
+        (_, index) => `2026-10-${String(index + 1).padStart(2, "0")}`,
+      ),
+    );
+  },
+);
+it("preserves one opening index and chronological month identities while edge callbacks expand the same list", () => {
+  const renderList = openedCalendar();
+  const before = renderList();
+  const anchor = "2026-10";
+  const index = before.props.data.indexOf(anchor);
+  const beforeOffset = before.props.getItemLayout(null, index).offset;
+  before.props.onStartReached();
+  const prepended = renderList();
+  expect(prepended.props.initialScrollIndex).toBe(before.props.initialScrollIndex);
+  const nextIndex = prepended.props.data.indexOf(anchor);
+  expect(nextIndex).toBe(index + 12);
+  expect(prepended.props.getItemLayout(null, nextIndex).offset - beforeOffset).toBe(
+    12 * prepended.props.getItemLayout(null, 0).length,
+  );
+  prepended.props.onEndReached();
+  const appended = renderList();
+  expect(appended.props.initialScrollIndex).toBe(before.props.initialScrollIndex);
+  expect(appended.props.data.indexOf(anchor)).toBe(nextIndex);
+  expect(appended.props.data).toEqual([...appended.props.data].sort());
+  expect(new Set(appended.props.data).size).toBe(appended.props.data.length);
+});
+it.each(["0001-01-01", "9999-12-31"])(
+  "does not mutate exhausted edge bounds at %s",
+  (day) => {
+    const renderList = openedCalendar({ start: day, end: day });
+    const before = state.values[2];
+    const list = renderList();
+    if (day.startsWith("0001")) list.props.onStartReached();
+    else list.props.onEndReached();
+    expect(state.values[2]).toBe(before);
+  },
+);

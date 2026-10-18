@@ -1,3 +1,14 @@
+# ER02 Range Picker local correction — 2026-10-18 / PARTIAL
+
+- Root Native window exposed year-scale calendar movement; original AD5/8083
+  restored. No new device/window operation in this local task. Exact Native
+  cause and GUI inertia remain unproven; do not claim Native fixed.
+- Explicit seven calendar rows/cell geometry, frozen opening index and no-op
+  exhausted bounds repair a proven layout/test qualification gap. Range10 and
+  related36 tests PASS; original source rejects6 new checks. Independent review
+  and a separately authorized Native rerun remain required. Receipt:
+  `docs/ops/experience-range-fix-20261018/ROOT_CAUSE_AND_CANDIDATE.md`.
+
 # EXPERIENCE-REVIEW-02 isolated implementation — 2026-10-18 / PARTIAL
 
 - Owner approved finite TH01–13 / ET01–04 / DS01–09 correction; originals preserved

@@ -27,14 +27,10 @@ export function selectTripRange(range: TripDateRange, date: string): TripDateRan
     ? { start: date, end: range.start }
     : { start: range.start, end: date };
 }
+const monthNumber = (month: string) =>
+  (Number(month.slice(0, 4)) - 1) * 12 + Number(month.slice(5, 7)) - 1;
 export function adjacentTripMonth(month: string, step: number) {
-  const index = Math.min(
-    9999 * 12 - 1,
-    Math.max(
-      0,
-      (Number(month.slice(0, 4)) - 1) * 12 + Number(month.slice(5, 7)) - 1 + step,
-    ),
-  );
+  const index = Math.min(9999 * 12 - 1, Math.max(0, monthNumber(month) + step));
   return `${String(Math.floor(index / 12) + 1).padStart(4, "0")}-${String((index % 12) + 1).padStart(2, "0")}`;
 }
 const displayDate = (date: string) =>
@@ -77,7 +73,11 @@ export function TripCalendarRangeField({
     months.push(at);
     if (at === bounds.last) break;
   }
-  const monthHeight = cellSize * 8 + visual.space.card;
+  const [initialMonthIndex, setInitialMonthIndex] = useState(
+    monthNumber(seed) - monthNumber(adjacentTripMonth(seed, -12)),
+  );
+  const gridHeight = cellSize * 7;
+  const monthHeight = cellSize + visual.space.card + gridHeight;
   return (
     <View>
       <UiFormRow
@@ -87,6 +87,9 @@ export function TripCalendarRangeField({
         disabled={disabled}
         onPress={() => {
           setDraft(value);
+          setInitialMonthIndex(
+            monthNumber(seed) - monthNumber(adjacentTripMonth(seed, -12)),
+          );
           setBounds({
             first: adjacentTripMonth(seed, -12),
             last: adjacentTripMonth(
@@ -128,7 +131,7 @@ export function TripCalendarRangeField({
               style={styles.sheet}
               data={months}
               keyExtractor={(month) => month}
-              initialScrollIndex={Math.max(0, months.indexOf(seed))}
+              initialScrollIndex={initialMonthIndex}
               getItemLayout={(_, index) => ({
                 length: monthHeight,
                 offset: monthHeight * index,
@@ -139,16 +142,16 @@ export function TripCalendarRangeField({
               windowSize={5}
               maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
               onStartReached={() =>
-                setBounds((previous) => ({
-                  ...previous,
-                  first: adjacentTripMonth(previous.first, -12),
-                }))
+                setBounds((previous) => {
+                  const first = adjacentTripMonth(previous.first, -12);
+                  return first === previous.first ? previous : { ...previous, first };
+                })
               }
               onEndReached={() =>
-                setBounds((previous) => ({
-                  ...previous,
-                  last: adjacentTripMonth(previous.last, 12),
-                }))
+                setBounds((previous) => {
+                  const last = adjacentTripMonth(previous.last, 12);
+                  return last === previous.last ? previous : { ...previous, last };
+                })
               }
               renderItem={({ item: month }) => {
                 const dates = dayFeedCalendarCells(month);
@@ -165,62 +168,72 @@ export function TripCalendarRangeField({
                         timeZone: "UTC",
                       })}
                     </UiText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={[styles.grid, { width: gridWidth }]}>
-                        {Array.from({ length: 7 }, (_, index) => (
-                          <UiText
-                            key={index}
-                            style={[
-                              styles.weekday,
-                              { width: "14.2857%", height: cellSize },
-                            ]}
-                          >
-                            {formatUiDate(new Date(`2021-11-0${index + 1}T12:00:00Z`), {
-                              weekday: "narrow",
-                              timeZone: "UTC",
-                            })}
-                          </UiText>
-                        ))}
-                        {Array.from(
-                          { length: 42 },
-                          (_, index) => dates[index] ?? null,
-                        ).map((date, index) =>
-                          date ? (
-                            <Pressable
-                              key={date}
-                              accessibilityRole="button"
-                              accessibilityLabel={accessibleDate(date)}
-                              accessibilityState={{
-                                selected: date === draft.start || date === draft.end,
-                              }}
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={{ height: gridHeight, flexGrow: 0, flexShrink: 0 }}
+                      contentContainerStyle={{ height: gridHeight }}
+                    >
+                      <View style={{ width: gridWidth, height: gridHeight }}>
+                        <View style={[styles.week, { height: cellSize }]}>
+                          {Array.from({ length: 7 }, (_, index) => (
+                            <UiText
+                              key={index}
                               style={[
-                                styles.day,
-                                { width: "14.2857%", height: cellSize },
-                                draft.start &&
-                                draft.end &&
-                                date >= draft.start &&
-                                date <= draft.end
-                                  ? styles.inRange
-                                  : null,
-                                (date === draft.start || date === draft.end) &&
-                                  styles.endpoint,
+                                styles.weekday,
+                                { width: gridWidth / 7, height: cellSize },
                               ]}
-                              onPress={() => setDraft(selectTripRange(draft, date))}
                             >
-                              <UiText style={styles.label}>
-                                {formatUiNumber(+date.slice(8))}
-                              </UiText>
-                            </Pressable>
-                          ) : (
-                            <View
-                              key={`blank-${index}`}
-                              style={[
-                                styles.day,
-                                { width: "14.2857%", height: cellSize },
-                              ]}
-                            />
-                          ),
-                        )}
+                              {formatUiDate(new Date(`2021-11-0${index + 1}T12:00:00Z`), {
+                                weekday: "narrow",
+                                timeZone: "UTC",
+                              })}
+                            </UiText>
+                          ))}
+                        </View>
+                        {Array.from({ length: 6 }, (_, week) => (
+                          <View key={week} style={[styles.week, { height: cellSize }]}>
+                            {Array.from({ length: 7 }, (_, day) => {
+                              const index = week * 7 + day;
+                              const date = dates[index] ?? null;
+                              return date ? (
+                                <Pressable
+                                  key={date}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={accessibleDate(date)}
+                                  accessibilityState={{
+                                    selected: date === draft.start || date === draft.end,
+                                  }}
+                                  style={[
+                                    styles.day,
+                                    { width: gridWidth / 7, height: cellSize },
+                                    draft.start &&
+                                    draft.end &&
+                                    date >= draft.start &&
+                                    date <= draft.end
+                                      ? styles.inRange
+                                      : null,
+                                    (date === draft.start || date === draft.end) &&
+                                      styles.endpoint,
+                                  ]}
+                                  onPress={() => setDraft(selectTripRange(draft, date))}
+                                >
+                                  <UiText style={styles.label}>
+                                    {formatUiNumber(+date.slice(8))}
+                                  </UiText>
+                                </Pressable>
+                              ) : (
+                                <View
+                                  key={`blank-${index}`}
+                                  style={[
+                                    styles.day,
+                                    { width: gridWidth / 7, height: cellSize },
+                                  ]}
+                                />
+                              );
+                            })}
+                          </View>
+                        ))}
                       </View>
                     </ScrollView>
                   </View>
@@ -245,7 +258,7 @@ const createStyles = (c: UiColors) =>
     sheet: { flex: 1, backgroundColor: c.background },
     content: { padding: visual.space.page, gap: visual.space.card },
     month: { paddingHorizontal: visual.space.page, gap: visual.space.card },
-    grid: { flexDirection: "row", flexWrap: "wrap" },
+    week: { flexDirection: "row" },
     weekday: {
       textAlign: "center",
       ...visual.type.meta,
