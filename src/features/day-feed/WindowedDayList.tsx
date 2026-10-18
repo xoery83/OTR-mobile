@@ -27,7 +27,7 @@ import {
 } from "./dayFeedWindow";
 
 export type DayListHandle = {
-  jumpToDayHeader(date: string): boolean;
+  jumpToDayHeader(date: string, includeTripHeader?: boolean): boolean;
   restoreAnchor(anchor: DayScrollAnchor): boolean;
   saveAnchor(): DayScrollAnchor | null;
 };
@@ -152,6 +152,7 @@ export function WindowedDayList<T>({
     epoch: number;
     serial: number;
     confirmed: boolean;
+    tripHeader: boolean;
     lastOffset: number | null;
   } | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -207,6 +208,15 @@ export function WindowedDayList<T>({
         if (result === "REACHED") {
           saved.current = request.anchor;
           live.current.onAnchorChange?.(request.anchor);
+          if (visibleDates.current.length) {
+            live.current.onVisibleDates?.(visibleDates.current);
+            live.current.onViewportChange?.({
+              firstVisibleDate: visibleDates.current[0],
+              lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
+              scrollOffset: offset.current,
+              originIndex: live.current.origin,
+            });
+          }
         }
         live.current.onJumpResult?.(result, request.anchor.date);
       }
@@ -265,22 +275,25 @@ export function WindowedDayList<T>({
             request.anchor.within,
             Math.max(0, cellHeight - 1),
           );
-          const desired = Math.max(
-            0,
-            startOffset +
-              cellY -
-              viewportY +
-              request.anchor.within -
-              live.current.topInset,
-          );
+          const desired = request.tripHeader
+            ? 0
+            : Math.max(
+                0,
+                startOffset +
+                  cellY -
+                  viewportY +
+                  request.anchor.within -
+                  live.current.topInset,
+              );
           const expected =
             contentHeight.current > 0
               ? Math.min(desired, Math.max(0, contentHeight.current - viewportHeight))
               : desired;
           const targetVisible =
-            visibleKeys.current.has(request.anchor.key) &&
-            cellY + cellHeight > viewportY + live.current.topInset &&
-            cellY < viewportY + viewportHeight;
+            request.tripHeader ||
+            (visibleKeys.current.has(request.anchor.key) &&
+              cellY + cellHeight > viewportY + live.current.topInset &&
+              cellY < viewportY + viewportHeight);
           trace("NATIVE_GEOMETRY", {
             index: target.index,
             localIndex: target.index - live.current.origin,
@@ -332,7 +345,7 @@ export function WindowedDayList<T>({
     });
   }, [attempt]);
   const restore = useCallback(
-    (anchor: DayScrollAnchor) => {
+    (anchor: DayScrollAnchor, preserveWindow = false, tripHeader = false) => {
       const target = resolveDayAnchor(live.current.rows, anchor);
       if (!target) return false;
       finish();
@@ -343,29 +356,38 @@ export function WindowedDayList<T>({
         targetKey: live.current.rows[target.index].key,
       };
       trace("REQUEST", { index: target.index, within: target.within });
-      const epoch = ++listEpoch.current;
-      cells.current.clear();
-      visibleKeys.current.clear();
-      visibleDates.current = [];
-      offset.current = 0;
-      lastNativeOffset.current = 0;
-      contentHeight.current = 0;
-      dragging.current = false;
-      prepending.current = false;
-      const row = live.current.rows[target.index];
-      setWindowStart({
-        scopeKey: live.current.scopeKey,
-        key: row.key,
-        date: row.date,
-        revision: epoch,
-      });
-      trace("DATA_ORIGIN", { index: target.index, localIndex: 0, listEpoch: epoch });
+      // A local layout refresh can remeasure the mounted identity without replacing its list.
+      const keepWindow =
+        preserveWindow &&
+        cells.current.get(live.current.rows[target.index].key)?.listEpoch ===
+          listEpoch.current &&
+        live.current.epoch === listEpoch.current;
+      const epoch = keepWindow ? listEpoch.current : ++listEpoch.current;
+      if (!keepWindow) {
+        cells.current.clear();
+        visibleKeys.current.clear();
+        visibleDates.current = [];
+        offset.current = 0;
+        lastNativeOffset.current = 0;
+        contentHeight.current = 0;
+        dragging.current = false;
+        prepending.current = false;
+        const row = live.current.rows[target.index];
+        setWindowStart({
+          scopeKey: live.current.scopeKey,
+          key: row.key,
+          date: row.date,
+          revision: epoch,
+        });
+        trace("DATA_ORIGIN", { index: target.index, localIndex: 0, listEpoch: epoch });
+      }
       const request = {
         anchor,
         attempts: 0,
         epoch,
         serial: 0,
         confirmed: false,
+        tripHeader,
         lastOffset: null,
       };
       pending.current = request;
@@ -446,11 +468,15 @@ export function WindowedDayList<T>({
     [retry, trace],
   );
   useImperativeHandle(listRef, () => ({
-    jumpToDayHeader(date) {
+    jumpToDayHeader(date, includeTripHeader = false) {
       const target = index.dates.get(date);
-      return target === undefined
-        ? false
-        : restore({ key: rows[target].key, date, within: 0 });
+      if (target === undefined) return false;
+      const row = rows[includeTripHeader && header != null ? 0 : target];
+      return restore(
+        { key: row.key, date: row.date, within: 0 },
+        false,
+        includeTripHeader && header != null,
+      );
     },
     restoreAnchor: restore,
     saveAnchor: () => saved.current,
@@ -487,7 +513,7 @@ export function WindowedDayList<T>({
   useLayoutEffect(() => {
     // Re-resolve the stable identity; only mounted native geometry can describe this revision.
     if (saved.current && !pending.current) {
-      restore(saved.current);
+      restore(saved.current, true);
     }
     // Array/callback identity changes caused by reading updates are not layout changes.
   }, [rowSignature, layoutRevision, restore]);
@@ -569,8 +595,8 @@ export function WindowedDayList<T>({
       });
       visibleKeys.current = new Set(visible.map(({ item }) => item.key));
       visibleDates.current = [...new Set(visible.map(({ item }) => item.date))];
-      live.current.onVisibleDates?.(visibleDates.current);
-      if (visibleDates.current.length)
+      if (!pending.current) live.current.onVisibleDates?.(visibleDates.current);
+      if (!pending.current && visibleDates.current.length)
         live.current.onViewportChange?.({
           firstVisibleDate: visibleDates.current[0],
           lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
@@ -714,7 +740,7 @@ export function WindowedDayList<T>({
         offset.current = Math.max(0, event.nativeEvent.contentOffset.y);
         trace("SCROLL", { offset: offset.current });
         live.current.onOffsetChange?.(offset.current);
-        if (visibleDates.current.length)
+        if (!pending.current && visibleDates.current.length)
           live.current.onViewportChange?.({
             firstVisibleDate: visibleDates.current[0],
             lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],

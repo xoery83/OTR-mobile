@@ -996,3 +996,30 @@ it("historical accepted Day keeps the original localized disclosure", async () =
   expect(feed.projection).toBe(state.result.observed.projection);
   expect(JSON.stringify(feed.presentation.header)).toContain("dayFeed.historical");
 });
+
+it("keeps unresolved Day entry in its loading shell rather than the legacy Today/Home fallback", () => {
+  state.routeMode = "day";
+  const node = render();
+  expect(find(node, "ScrollView")).toBeNull();
+  expect(find(node, LocalTripWorkspace)).toBeNull();
+  expect(find(node, "ThemedText").children).toBe("dayFeed.loading");
+});
+
+it("keeps Day header title blank until the actual textual introduction has scrolled off", async () => {
+  state.routeMode = "day";
+  const feed = find(await loaded(), DayFeed);
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
+  feed.presentation.header.props.onLayout({ nativeEvent: { layout: { height: 303 } } });
+  feed.presentation.onOffsetChange(199);
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
+  feed.presentation.onOffsetChange(200);
+  // Visible dates are supplied by the real list; unresolved dates must not fall back to duplicate Trip name.
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+});

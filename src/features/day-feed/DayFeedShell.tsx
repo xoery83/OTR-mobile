@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiText } from "@/ui/controls";
-import { formatUiDate } from "@/ui/locale";
+import { formatUiDate, getFormatLocale } from "@/ui/locale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import type { UiColors } from "@/ui/palette";
@@ -36,7 +36,7 @@ export function DayFeedShellTitle({
       onPress={onOpenCalendar}
       style={styles.titleTarget}
     >
-      <UiText style={styles.title} numberOfLines={2}>
+      <UiText style={styles.title} numberOfLines={1} ellipsizeMode="tail">
         {label}
       </UiText>
       <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
@@ -49,35 +49,55 @@ export function DayFeedIntroduction({
   tripName,
   rangeLabel,
   locationSummary,
+  openCalendarLabel,
+  onOpenCalendar,
 }: {
   tripName: string;
   rangeLabel?: string | null;
   locationSummary?: string | null;
+  openCalendarLabel?: string;
+  onOpenCalendar?(): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   return (
     <View style={styles.introduction}>
       <UiText accessibilityRole="header" style={styles.heading}>
         {tripName}
       </UiText>
-      {rangeLabel ? <UiText style={styles.meta}>{rangeLabel}</UiText> : null}
+      {rangeLabel ? (
+        onOpenCalendar ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={openCalendarLabel}
+            onPress={onOpenCalendar}
+            style={styles.rangeTarget}
+          >
+            <UiText style={styles.meta}>{rangeLabel}</UiText>
+            <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
+          </Pressable>
+        ) : (
+          <UiText style={styles.meta}>{rangeLabel}</UiText>
+        )
+      ) : null}
       {locationSummary ? <UiText style={styles.meta}>{locationSummary}</UiText> : null}
     </View>
   );
 }
 
 export function formatDayFeedVisibleDates(range: DayFeedShellVisibleDates): string {
-  const date = (value: string) =>
-    formatUiDate(new Date(`${value}T12:00:00Z`), {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    });
-  return range.first === range.last
-    ? date(range.first)
-    : `${date(range.first)} – ${date(range.last)}`;
+  const date = (value: string) => new Date(`${value}T12:00:00Z`);
+  const formatter = new Intl.DateTimeFormat(getFormatLocale(), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  if (range.first === range.last) return formatter.format(date(range.first));
+  return typeof formatter.formatRange === "function"
+    ? formatter.formatRange(date(range.first), date(range.last))
+    : `${formatUiDate(date(range.first))} – ${formatUiDate(date(range.last))}`;
 }
 
 export function useDayFeedShellState(resetKey: string) {
@@ -162,6 +182,7 @@ const createStyles = (colors: UiColors) =>
     titleTarget: {
       minHeight: 44,
       minWidth: 44,
+      maxWidth: "100%",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -176,6 +197,13 @@ const createStyles = (colors: UiColors) =>
     introduction: {
       paddingHorizontal: visual.space.page,
       paddingVertical: visual.space.card,
+      gap: visual.space.heading,
+    },
+    rangeTarget: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
       gap: visual.space.heading,
     },
     heading: { ...visual.type.section, color: colors.textPrimary },

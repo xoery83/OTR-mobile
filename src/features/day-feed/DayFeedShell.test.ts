@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
   DayFeedIntroduction,
+  formatDayFeedVisibleDates,
   DayFeedShellTitle,
   useDayFeedShellState as runShellHook,
 } from "./DayFeedShell";
@@ -141,4 +142,29 @@ it("accumulates small real gestures and restores navigation on a slight non-top 
   shell.observeReadingMotion(40);
   expect(renderShell().navigationVisible).toBe(false);
   expect(renderShell("account/other/gen2").navigationVisible).toBe(true);
+});
+
+it("compresses same-month and same-year ranges while retaining both years across New Year", () => {
+  const compact = formatDayFeedVisibleDates({ first: "2027-02-02", last: "2027-02-03" });
+  expect(compact.match(/2027/g)).toHaveLength(1);
+  expect(compact.match(/Feb/g)).toHaveLength(1);
+  expect(formatDayFeedVisibleDates({ first: "2026-12-31", last: "2027-01-02" })).toMatch(
+    /2026.*2027/,
+  );
+});
+
+it("opens Calendar from the initial Trip date row while the floating title is blank", () => {
+  const open = vi.fn();
+  renderToStaticMarkup(
+    createElement(DayFeedIntroduction, {
+      tripName: "Japan",
+      rangeLabel: "Feb 1–12, 2027",
+      openCalendarLabel: "Choose date",
+      onOpenCalendar: open,
+    }),
+  );
+  const row = state.nodes.find((node) => node.accessibilityLabel === "Choose date");
+  expect(row.style.minHeight).toBe(44);
+  row.onPress();
+  expect(open).toHaveBeenCalledOnce();
 });

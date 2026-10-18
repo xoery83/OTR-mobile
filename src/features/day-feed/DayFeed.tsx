@@ -295,12 +295,17 @@ function AcceptedDayFeed({
     offset = useRef(entry?.reading.offset ?? 0),
     returnAnchor = useRef<DayScrollAnchor | null>(null);
   const interactedContext = useRef<string | null>(null);
-  const initialAnchor =
+  const savedEntryAnchor =
     entry?.reading.anchor ??
     (entry &&
     (entry.kind !== "RESUME" || entry.reading.offset > 0 || entry.reading.anchoredDate)
       ? { key: `day:${date}`, date, within: entry.reading.offset }
       : null);
+  // Tab/Home resume restores the browsed Day below navigation; Focus/Immersive keeps its Item anchor.
+  const initialAnchor =
+    dates && entry?.kind === "RESUME" && !entry.reading.focus && savedEntryAnchor
+      ? { key: `day:${savedEntryAnchor.date}`, date: savedEntryAnchor.date, within: 0 }
+      : savedEntryAnchor;
   useLayoutEffect(() => {
     interactedContext.current = null;
     if (initialAnchor) scroll.current?.restoreAnchor(initialAnchor);

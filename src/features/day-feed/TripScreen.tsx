@@ -161,6 +161,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const dayList = useRef<DayListHandle>(null);
   const dayOffset = useRef(0);
   const dayOrigin = useRef(0);
+  const dayIntroductionBottom = useRef<number | null>(null);
   const [dayPastIntroduction, setDayPastIntroduction] = useState(false);
   const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
@@ -216,7 +217,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const dayTitle =
     dayPastIntroduction && dayShell.visibleDates
       ? formatDayFeedVisibleDates(dayShell.visibleDates)
-      : dayName;
+      : "";
   useLayoutEffect(() => {
     if (!dayActive || !navigation.isFocused()) return;
     publishDayShellChrome(
@@ -261,7 +262,7 @@ function TripContent({ today = false }: { today?: boolean }) {
             : colors.surface,
       },
       headerShadowVisible: false,
-      headerBlurEffect: dayActive ? "systemUltraThinMaterial" : undefined,
+      headerBlurEffect: dayActive ? "systemMaterial" : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,
@@ -269,11 +270,13 @@ function TripContent({ today = false }: { today?: boolean }) {
         onLayout?: import("react-native").TextProps["onLayout"];
       }) =>
         dayActive ? (
-          <DayFeedShellTitle
-            label={dayTitle}
-            openCalendarLabel={t("dayShell.calendar.open")}
-            onOpenCalendar={() => setCalendarVisible(true)}
-          />
+          dayTitle ? (
+            <DayFeedShellTitle
+              label={dayTitle}
+              openCalendarLabel={t("dayShell.calendar.open")}
+              onOpenCalendar={() => setCalendarVisible(true)}
+            />
+          ) : null
         ) : (
           <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
             {headerTitle}
@@ -900,11 +903,25 @@ function TripContent({ today = false }: { today?: boolean }) {
               },
               topInset: headerBottom,
               header: (
-                <View style={{ paddingTop: headerBottom }}>
+                <View
+                  style={{ paddingTop: headerBottom }}
+                  onLayout={({ nativeEvent }) => {
+                    dayIntroductionBottom.current = Math.max(
+                      0,
+                      nativeEvent.layout.height - headerBottom,
+                    );
+                    setDayPastIntroduction(
+                      dayOrigin.current > 0 ||
+                        dayOffset.current >= dayIntroductionBottom.current,
+                    );
+                  }}
+                >
                   <DayFeedIntroduction
                     tripName={dayName}
                     rangeLabel={dayRangeLabel}
                     locationSummary={dayFacts?.destination}
+                    openCalendarLabel={t("dayShell.calendar.open")}
+                    onOpenCalendar={() => setCalendarVisible(true)}
                   />
                   {visibleTrip.observed?.sourceStatus ===
                   "HISTORICAL_ACCEPTED_PROJECTION" ? (
@@ -922,8 +939,10 @@ function TripContent({ today = false }: { today?: boolean }) {
                   : undefined,
               onReadingMotion: dayShell.observeReadingMotion,
               onOffsetChange: (value) => {
-                if (dayOffset.current > 32 !== value > 32)
-                  setDayPastIntroduction(dayOrigin.current > 0 || value > 32);
+                if (dayIntroductionBottom.current !== null)
+                  setDayPastIntroduction(
+                    dayOrigin.current > 0 || value >= dayIntroductionBottom.current,
+                  );
                 dayOffset.current = value;
               },
               onViewportChange: (viewport) => {
@@ -932,7 +951,9 @@ function TripContent({ today = false }: { today?: boolean }) {
                 if (dayOrigin.current !== viewport.originIndex) {
                   dayOrigin.current = viewport.originIndex;
                   setDayPastIntroduction(
-                    viewport.originIndex > 0 || viewport.scrollOffset > 32,
+                    viewport.originIndex > 0 ||
+                      (dayIntroductionBottom.current !== null &&
+                        viewport.scrollOffset >= dayIntroductionBottom.current),
                   );
                 }
                 dayShell.observeVisibleDates({
@@ -986,11 +1007,23 @@ function TripContent({ today = false }: { today?: boolean }) {
           onClose={() => setCalendarVisible(false)}
           onSelect={(target) => {
             setCalendarVisible(false);
-            dayList.current?.jumpToDayHeader(target);
+            dayList.current?.jumpToDayHeader(target, target === dayFacts?.startDate);
           }}
         />
         {localPreview}
       </>
+    );
+  // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
+  if (dayActive && !visibleTrip)
+    return (
+      <View style={[styles.root, { paddingTop: headerBottom }]}>
+        <ThemedText
+          accessibilityRole={status === "UNAVAILABLE" ? "alert" : undefined}
+          style={styles.meta}
+        >
+          {t(status === "UNAVAILABLE" ? "dayFeed.unavailable" : "dayFeed.loading")}
+        </ThemedText>
+      </View>
     );
   if (!home && !today && visibleTrip && canChooseDay)
     return (

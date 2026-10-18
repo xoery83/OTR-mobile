@@ -229,7 +229,7 @@ it("whole owning calendar retains all twelve days and known outlying candidates 
     ),
   ).toEqual(["2027-02-02", "2027-02-04"]);
 });
-it("continuous dated sections share one Focus and one scroll; legacy reading restores relative to its explicit header", () => {
+it("continuous dated sections share one Focus and one scroll; tab resume aligns its semantic Day header", () => {
   const otherDate = "2027-02-04";
   const baseQuery = itemsForLocalDate(fixture.day, syntheticDate, "UTC");
   const reading = vi.fn();
@@ -245,7 +245,7 @@ it("continuous dated sections share one Focus and one scroll; legacy reading res
   expect(state.window.initialAnchor).toEqual({
     key: `day:${otherDate}`,
     date: otherDate,
-    within: 172,
+    within: 0,
   });
   state.anchor = { key: `day:${otherDate}`, date: otherDate, within: 172 };
   const occurrences = state.nodes.filter((p) => p.event?.id === fixture.before.id);
@@ -469,4 +469,26 @@ it("unknown-schedule prefix cannot replace the explicit first date Header index"
   expect(state.window.rows[index.dates.get(syntheticDate)!].key).toBe(
     `day:${syntheticDate}`,
   );
+});
+
+it("resumes the saved Day identity rather than the obsolete pixel position inside an Item", () => {
+  render({
+    dates: [syntheticDate],
+    entry: {
+      revision: 1,
+      kind: "RESUME",
+      reading: {
+        offset: 1900,
+        focus: null,
+        layout: "WHOLE_TRIP",
+        anchoredDate: syntheticDate,
+        anchor: { key: "item:still-existing", date: syntheticDate, within: 90 },
+      },
+    },
+  });
+  expect(state.window.initialAnchor).toEqual({
+    key: `day:${syntheticDate}`,
+    date: syntheticDate,
+    within: 0,
+  });
 });

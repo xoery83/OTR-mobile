@@ -157,6 +157,7 @@ function setup(
   topInset = 0,
   days = 90,
   coldAnchor?: { key: string; date: string; within: number },
+  header?: ReactNode,
 ) {
   let date = "2026-10-01";
   const rows = Array.from({ length: days }, () => {
@@ -191,6 +192,7 @@ function setup(
         scopeKey,
         initialAnchor,
         topInset,
+        header,
         onMountedRowsChange: count,
         onJumpResult: result,
         onAnchorChange: anchorChanged,
@@ -832,4 +834,51 @@ it("ignores retired list drag-begin events after a new jump epoch or account/Tri
   rerender(rows, undefined, undefined, "different-account/trip");
   expect(state.props.data[0]).toBe(rows[0]);
   expect(state.scrollToIndex).not.toHaveBeenCalled();
+});
+
+it("selecting the first lawful day restores the full Trip introduction, not the first Day row", () => {
+  const { rows, ref, result, rerender } = setup(
+    100,
+    90,
+    undefined,
+    createElement("span", {}, "Trip introduction"),
+  );
+  ref.current!.jumpToDayHeader(rows[0].date, true);
+  rerender();
+  state.props.onContentSizeChange(390, 3000);
+  mount(rows[0], 0, 400);
+  visible(rows[0], 0);
+  flushFrames();
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+  expect(result).toHaveBeenCalledWith("REACHED", rows[0].date);
+});
+
+it("remeasures a live refresh in place without replacing the list or resetting its date origin", () => {
+  const { rows, ref, rerender } = setup(100);
+  ref.current!.jumpToDayHeader(rows[50].date);
+  rerender();
+  mount(rows[50], 0, 100);
+  visible(rows[50], 0);
+  flushFrames();
+  const origin = state.props.data[0];
+  const windowIdentity = state.states[0];
+  state.scrollToOffset.mockClear();
+  rerender(rows, "new-local-revision");
+  rerender(rows, "new-local-revision");
+  flushFrames();
+  expect(state.props.data[0]).toBe(origin);
+  expect(state.states[0]).toBe(windowIdentity);
+});
+
+it("Core Day1 restores the Trip header even when legal out-of-bounds dates precede it", () => {
+  const { rows, ref, rerender } = setup(
+    100,
+    90,
+    undefined,
+    createElement("span", {}, "Trip introduction"),
+  );
+  ref.current!.jumpToDayHeader(rows[3].date, true);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[0]);
+  expect(state.props.ListHeaderComponent).not.toBeNull();
 });
