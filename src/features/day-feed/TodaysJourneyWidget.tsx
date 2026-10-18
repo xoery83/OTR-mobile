@@ -9,6 +9,7 @@ import {
   readTripTodaysJourney,
   type createTripTodaysJourneyReader,
 } from "@/data/repositories/tripTodaysJourneyRepository";
+import { readDiagnosticsDebugMode } from "@/data/repositories/defaultLedgerReportingRepository";
 import { UiButton, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -99,6 +100,11 @@ export function TodaysJourneyWidget({
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [read, setRead] = useState<AnyTodayRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
+  const [debug, setDebug] = useState<{
+    key: string;
+    generation: number;
+    enabled: boolean;
+  } | null>(null);
   const request = useRef(0);
   const clock = useCallback(
     () => ({ now: now ?? new Date().toISOString(), zone, planningDate }),
@@ -108,14 +114,20 @@ export function TodaysJourneyWidget({
     const ticket = ++request.current;
     try {
       const reader = await readTripTodaysJourney();
-      const value =
-        (await reader.readLocal(tripId, clock())) ?? (await reader.read(tripId, clock()));
+      const [value, debugMode] = await Promise.all([
+        reader
+          .readLocal(tripId, clock())
+          .then((local) => local ?? reader.read(tripId, clock())),
+        readDiagnosticsDebugMode().catch(() => false),
+      ]);
       if (ticket !== request.current || generation !== getAccountGeneration()) return;
+      setDebug({ key: readKey, generation, enabled: debugMode });
       setLoadedKey(readKey);
       setRead(value);
       setStatus(value ? "READY" : "UNAVAILABLE");
     } catch {
       if (ticket === request.current && generation === getAccountGeneration()) {
+        setDebug(null);
         setRead(null);
         setStatus("UNAVAILABLE");
       }
@@ -196,6 +208,19 @@ export function TodaysJourneyWidget({
       </Text>
       {visible ? (
         <>
+          {debug?.enabled &&
+          debug.key === readKey &&
+          debug.generation === generation &&
+          visible.today.zone === null ? (
+            <>
+              {copy.timezoneUnknown ? (
+                <Text style={styles.meta}>{copy.timezoneUnknown}</Text>
+              ) : null}
+              {copy.planningDate ? (
+                <Text style={styles.meta}>{copy.planningDate}</Text>
+              ) : null}
+            </>
+          ) : null}
           <Text style={styles.meta}>{formatDay(visible.today.date)}</Text>
           {visible.today.primary ||
           (!visible.today.tonight && !visible.today.multipleStays) ? (

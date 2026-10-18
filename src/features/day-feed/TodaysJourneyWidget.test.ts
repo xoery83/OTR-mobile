@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   refs: [] as { current: any }[],
   refCursor: 0,
   generation: 1,
+  readDebug: vi.fn(),
   effects: [] as (() => () => void)[],
   cleanups: [] as (() => void)[],
 }));
@@ -47,6 +48,9 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/tripTodaysJourneyRepository", () => ({
   readTripTodaysJourney: vi.fn(),
 }));
+vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
+  readDiagnosticsDebugMode: state.readDebug,
+}));
 beforeEach(() => {
   state.hooks = [];
   state.refs = [];
@@ -54,6 +58,7 @@ beforeEach(() => {
   state.cleanups = [];
   state.cursor = state.refCursor = 0;
   state.generation = 1;
+  state.readDebug.mockReset().mockResolvedValue(false);
   vi.useFakeTimers();
 });
 afterEach(() => {
@@ -262,4 +267,62 @@ it("ignores the old refresh completion after the mounted Trip identity changes",
     "Sky City Hotel",
   );
   expect(state.hooks[1]).toBeNull();
+});
+
+it.each(["on", "off", "failure"])(
+  "shows technical Today diagnostics only with the existing Debug preference: %s",
+  async (mode) => {
+    if (mode === "failure")
+      state.readDebug.mockRejectedValue(new Error("Preference unavailable"));
+    else state.readDebug.mockResolvedValue(mode === "on");
+    await loadReady();
+    const result = JSON.stringify(
+      renderRefresh({
+        copy: {
+          ...copy,
+          timezoneUnknown: "Internal timezone detail",
+          planningDate: "Internal planning detail",
+        },
+      }),
+    );
+    if (mode === "on") {
+      expect(result).toContain("Internal timezone detail");
+      expect(result).toContain("Internal planning detail");
+    } else {
+      expect(result).not.toContain("Internal timezone detail");
+      expect(result).not.toContain("Internal planning detail");
+    }
+    expect(result).toContain("Sky City Hotel");
+  },
+);
+
+it("does not show prior-scope Debug details after a generation change", async () => {
+  state.readDebug.mockResolvedValue(true);
+  await loadReady();
+  state.generation = 2;
+  expect(
+    JSON.stringify(
+      renderRefresh({ copy: { ...copy, timezoneUnknown: "Internal timezone detail" } }),
+    ),
+  ).not.toContain("Internal timezone detail");
+});
+
+it("ignores a late Debug preference read after effect cleanup", async () => {
+  await loadReady();
+  let complete!: (enabled: boolean) => void;
+  state.readDebug.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        complete = resolve;
+      }),
+  );
+  state.cleanups.pop()!();
+  renderRefresh({ refreshKey: 1 });
+  runEffect();
+  await settle();
+  const previousDebug = state.hooks[3];
+  state.cleanups.pop()!();
+  complete(true);
+  await settle();
+  expect(state.hooks[3]).toBe(previousDebug);
 });
