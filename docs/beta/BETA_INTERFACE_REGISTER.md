@@ -1,3 +1,7 @@
+## EXPERIENCE-REVIEW-02 interfaces / 2026-10-18
+
+Existing local repository commit is Edit success boundary, Hosted pending is nonblocking. Retain Account/Trip/version fencing for projection caches and semantic Day anchor identities. No new data model/API/schema authorized. File owners and field-level preflight: `../ops/experience-review02-20261018/PREFLIGHT.md`.
+
 # OTR Beta — Cross-Module Interface Register
 
 ## Trip Home R2 current ownership — 2026-10-16

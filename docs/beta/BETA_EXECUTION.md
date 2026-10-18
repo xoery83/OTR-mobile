@@ -1,3 +1,7 @@
+## EXPERIENCE-REVIEW-02 / IN_PROGRESS / 2026-10-18
+
+Isolated f87e119 baseline; A Day and B Home builders active, C Edit queued for finite builder slot. P0 first; shared root integration serial. Import P0 resources remain exclusive. Native Gate waits for independent simulator coordination; no AD5 installation/operation.
+
 ## C3 Runtime PASS — 2026-10-16
 
 Original A1A/same real C2 Batch: normal Repository/owning local queue claims,

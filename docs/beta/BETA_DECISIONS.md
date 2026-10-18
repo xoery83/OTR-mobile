@@ -1,3 +1,7 @@
+## EXPERIENCE-REVIEW-02 approved / 2026-10-18
+
+Owner approved finite TH01–13, ET01–04 and DS01–09 correction. Originals: `experience-review02-20261018/`. Existing P1–P6/Reader/Composer/TIME-01/NOW/TTR/NTC and Admission contracts remain unchanged. AD5 exclusive Owner preview retained. Cover Gallery/Tag Matching remains open under TH09.
+
 # OTR Beta — Unified Decisions and Scope Baseline
 
 ## Trip Home V1.1 — Owner delivery authority / 2026-10-16
