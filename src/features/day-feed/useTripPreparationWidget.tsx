@@ -54,7 +54,8 @@ export function useTripPreparationWidget({
   const load = useCallback(async () => {
     const ticket = ++request.current;
     if (!tripId) return;
-    setState("LOADING");
+    // Keep a scoped local projection visible during refresh; failure still clears it.
+    setState((previous) => (previous === "READY" ? previous : "LOADING"));
     try {
       const [value, facts] = await Promise.all([
         readTripPreparation().then((reader) => reader.read(tripId)),

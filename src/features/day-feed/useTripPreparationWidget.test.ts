@@ -17,7 +17,7 @@ vi.mock("react", async (original) => ({
     return [
       state.values[i],
       (next: unknown) => {
-        state.values[i] = next;
+        state.values[i] = typeof next === "function" ? next(state.values[i]) : next;
       },
     ];
   },
@@ -191,4 +191,13 @@ it("refreshes actual currency on route focus after returning from Ledger setting
   state.effects[0]();
   await vi.waitFor(() => expect(receive).toHaveBeenCalledTimes(2));
   expect(receive.mock.calls[1][0].currency.code).toBe("JPY");
+});
+
+it("retains the scoped ready projection while a local focus refresh is pending", async () => {
+  const view = PreparationHarness(true);
+  state.read.mockReturnValue(new Promise(() => {}));
+  state.effects[0]();
+  await vi.waitFor(() => expect(state.read).toHaveBeenCalledOnce());
+  expect(state.values[0]).toBe(view.read);
+  expect(state.values[1]).toBe("READY");
 });

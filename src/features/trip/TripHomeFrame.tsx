@@ -73,10 +73,7 @@ export function TripHomeFrame({
             {title}
           </UiText>
           {metadata.map((line, index) => (
-            <UiText
-              key={index}
-              style={index === metadata.length - 1 ? styles.date : styles.meta}
-            >
+            <UiText key={index} style={index === 0 ? styles.date : styles.meta}>
               {line}
             </UiText>
           ))}

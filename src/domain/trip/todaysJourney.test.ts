@@ -168,3 +168,40 @@ it("a cancelled Stay cannot be the date-coverage summary", () => {
     )?.tonight,
   ).toBeNull();
 });
+
+it("keeps a real checkout event on its day without retaining the checked-out stay", () => {
+  const checkout = row("hotel", undefined, "P3");
+  checkout.rowKey = {
+    itemId: "hotel",
+    projectionRole: "CHECKOUT",
+    localDate: "2026-10-17",
+  };
+  const stays = [{ id: "hotel", start: "2026-10-16", end: "2026-10-17" }];
+  const selected = selectTodaysJourney(projection([checkout], stays), {
+    ...clock,
+    zone: null,
+    planningDate: "2026-10-17",
+  })!;
+  expect(selected.primary).toBe(checkout);
+  expect(selected.primaryKind).toBe("PLANS");
+  expect(selected.tonight).toBeNull();
+  const afterCheckout = selectTodaysJourney(projection([checkout], stays), {
+    ...clock,
+    zone: null,
+    planningDate: "2026-10-18",
+  })!;
+  expect(afterCheckout.primary).toBeNull();
+  expect(afterCheckout.tonight).toBeNull();
+});
+it("unknown-zone plan selection keeps its explicit date instead of claiming clock-today", () => {
+  const checkin = row("hotel", undefined, "P3");
+  checkin.rowKey.projectionRole = "CHECKIN";
+  const selected = selectTodaysJourney(
+    projection([checkin], [{ id: "hotel", start: "2026-10-16", end: "2026-10-17" }]),
+    { now: "2026-10-18T01:00:00Z", zone: null, planningDate: "2026-10-16" },
+  )!;
+  expect(selected.date).toBe("2026-10-16");
+  expect(selected.primary).toBeNull();
+  expect(selected.tonight).toBe(checkin);
+  expect(selected.primaryKind).toBe("FREE");
+});

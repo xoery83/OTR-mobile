@@ -60,7 +60,11 @@ export function selectTodaysJourneyRows(
 ): TodaysJourney {
   const now = instantMicroseconds(nowText);
   const eligible = coreRows.filter(
-    (row) => row.family !== "P3" && !["cancelled", "skipped"].includes(row.status),
+    (row) =>
+      !["cancelled", "skipped"].includes(row.status) &&
+      (row.family !== "P3" ||
+        (row.rowKey.localDate === date &&
+          row.rowKey.projectionRole === "CHECKOUT")),
   );
   const trustedUpcoming = (row: CoreDayRow) =>
     zone !== null &&

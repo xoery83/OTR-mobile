@@ -151,9 +151,6 @@ export function TripHomeFinanceWidget({
             ) : (
               <UiText style={styles.body}>{t("ui.spendingTotalUnavailable")}</UiText>
             )}
-            <UiText style={styles.secondary}>
-              {t("analysis.includedCount", { count: summary.expenseCount })}
-            </UiText>
           </View>
         ))}
       </View>
@@ -172,7 +169,6 @@ export function TripHomeFinanceWidget({
       {group.openConflictCount ? (
         <UiText style={styles.secondary}>{t("ui.changesNeedReview")}</UiText>
       ) : null}
-      <UiText style={styles.secondary}>{formatExpenseCount(data.expenseCount)}</UiText>
       {data.categories.map(({ category, count }) => (
         <View key={category} style={styles.category}>
           <UiText style={styles.body}>{categoryLabel(category)}</UiText>
@@ -254,7 +250,7 @@ export function TripHomeFinanceWidget({
         ) : null}
         <UiButton
           label={t("ledger.seeAnalysis")}
-          variant="text"
+          variant="secondary"
           onPress={() =>
             open({
               pathname: "/expenses/analysis",

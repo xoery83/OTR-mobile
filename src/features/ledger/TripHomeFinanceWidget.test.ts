@@ -295,3 +295,13 @@ it("renders an owning known zero only when accepted valued entries exist", () =>
   expect(state.money.slice(0, 2).map((item) => item.minor)).toEqual([2000, 0]);
   expect(html).not.toContain("ui.spendingTotalUnavailable");
 });
+
+it("keeps Group/My totals without repeated included/overall expense counts", () => {
+  const html = render(snapshot(), "Active");
+  expect(html).toContain("ui.groupSpending");
+  expect(html).toContain("ui.mySpending");
+  expect(html).not.toContain("analysis.includedCount");
+  expect(
+    state.buttons.find((button) => button.label === "ledger.seeAnalysis"),
+  ).toBeDefined();
+});

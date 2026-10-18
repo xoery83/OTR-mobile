@@ -82,9 +82,15 @@ it("opens accepted-only unknown-zone plans directly through the normal reader", 
         loading: "Loading",
         unavailable: "Unavailable",
         chooseDay: "Choose date",
+        timezoneUnknown: "Internal timezone diagnostic",
+        planningDate: "Internal planning diagnostic",
       },
     });
   const actions = buttons(renderWidget());
+  state.cursor = 0;
+  expect(JSON.stringify(renderWidget())).not.toContain("Internal timezone diagnostic");
+  state.cursor = 0;
+  expect(JSON.stringify(renderWidget())).not.toContain("Internal planning diagnostic");
   expect(actions).toHaveLength(1);
   expect(actions[0]).toMatchObject({
     label: "tripHome.preparation.day",

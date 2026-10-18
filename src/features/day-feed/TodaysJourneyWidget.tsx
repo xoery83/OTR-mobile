@@ -196,12 +196,6 @@ export function TodaysJourneyWidget({
       </Text>
       {visible ? (
         <>
-          {visible.today.zone === null ? (
-            <Text style={styles.meta}>{copy.timezoneUnknown ?? copy.unavailable}</Text>
-          ) : null}
-          {visible.today.zone === null && copy.planningDate ? (
-            <Text style={styles.meta}>{copy.planningDate}</Text>
-          ) : null}
           <Text style={styles.meta}>{formatDay(visible.today.date)}</Text>
           {visible.today.primary ||
           (!visible.today.tonight && !visible.today.multipleStays) ? (
