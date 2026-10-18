@@ -95,7 +95,7 @@ export function TodaysJourneyWidget({
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const readKey = `${tripId}/${zone}/${planningDate ?? ""}/${now ?? ""}/${refreshKey}`;
+  const readKey = `${tripId}/${zone}/${planningDate ?? ""}/${now ?? ""}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [read, setRead] = useState<AnyTodayRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
@@ -141,7 +141,7 @@ export function TodaysJourneyWidget({
       clearInterval(interval);
       sub.remove();
     };
-  }, [load, cancelPending]);
+  }, [load, cancelPending, refreshKey]);
   const visible =
     loadedKey === readKey &&
     read?.scope.tripId === tripId &&
