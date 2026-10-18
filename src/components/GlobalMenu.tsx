@@ -153,8 +153,34 @@ export function GlobalMenu({
           : router.push(destination.path as never),
     }),
   );
+  const tripContextId = selectedTripMenuId(pathname, params);
+  const tripItems: AppNavigationMenuItem[] = [];
+  if (
+    module === "TRIP" &&
+    tripContextId &&
+    quickActions?.tripId === tripContextId &&
+    quickActions.generation === generation
+  ) {
+    const invoke = (action: () => void) => {
+      if (currentReturn.current === returnLease && generation === getAccountGeneration())
+        action();
+    };
+    if (quickActions.editTrip)
+      tripItems.push({
+        icon: "square.and.pencil",
+        label: t("tripHome.edit"),
+        onPress: () => invoke(quickActions.editTrip!),
+      });
+    if (quickActions.chooseDay)
+      tripItems.push({
+        icon: "calendar",
+        label: t("dayFeed.openDay"),
+        onPress: () => invoke(quickActions.chooseDay!),
+      });
+  }
   const returnTo = moduleReturnPath(module);
   const sections: AppNavigationMenuItem[][] = [
+    ...(tripItems.length ? [tripItems] : []),
     ...(contextItems.length ? [contextItems] : []),
     ...(pathname === "/trip" &&
     !selectedTripMenuId(pathname, params) &&

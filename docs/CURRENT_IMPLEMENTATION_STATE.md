@@ -1,3 +1,17 @@
+# EXPERIENCE-REVIEW-02 isolated implementation — 2026-10-18 / PARTIAL
+
+- Owner approved finite TH01–13 / ET01–04 / DS01–09 correction; originals preserved
+  in `docs/beta/experience-review02-20261018/`. Baseline f87e119 retains latest
+  Day/Create Owner preview; canonical main not overwritten. Register/ownership:
+  `docs/ops/experience-review02-20261018/PREFLIGHT.md`.
+- Separate Day/Home/Edit writers; shared root integrations serial. Home bounded
+  candidate fd14aab integrated 0731b65, coordinator independent direct tests27 PASS.
+  Local checkout event eligibility and mounted Preparation refresh corrected;
+  complete cross-remount widget invalidation/cache remains explicit PARTIAL.
+- AD5 Owner preview and A1A Import/Hosted/Metros remain untouched. No new Native
+  acceptance or UX Accepted. Import P0 stays Root priority. Tracker delta held
+  separately for Root integration; old Cover Gallery/Tag Matching remains open.
+
 # TIME-01A direct Day entry candidate — 2026-10-16
 
 - Hot cross-Trip candidate: Native Home All Trips now uses Workspace return;

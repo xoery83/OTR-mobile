@@ -159,3 +159,24 @@ it("Native Home All Trips preserves the current owner guard across a hot cross-T
     expect(state.navigate).not.toHaveBeenCalled();
   }
 });
+
+it("Trip menu exposes only live scoped existing Edit and Day actions", () => {
+  const editTrip = vi.fn(),
+    chooseDay = vi.fn();
+  state.actions = { tripId: "a", generation: 1, editTrip, chooseDay };
+  const items = () => (render().props.sections as any[][]).flat();
+  const edit = items().find((item) => item.label === "tripHome.edit");
+  edit.onPress();
+  expect(editTrip).toHaveBeenCalledOnce();
+  items()
+    .find((item) => item.label === "dayFeed.openDay")
+    .onPress();
+  expect(chooseDay).toHaveBeenCalledOnce();
+  state.actions = { tripId: "b", generation: 1, editTrip, chooseDay };
+  expect(items().some((item) => item.label === "tripHome.edit")).toBe(false);
+  edit.onPress();
+  expect(editTrip).toHaveBeenCalledOnce();
+  state.params.view = "trips";
+  state.actions = { tripId: "a", generation: 1, editTrip, chooseDay };
+  expect(items().some((item) => item.label === "tripHome.edit")).toBe(false);
+});
