@@ -73,29 +73,29 @@ export function TripSetupRows({
   const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.rows}>
-      <UiText accessibilityRole="header" style={styles.title}>
-        {t("tripForm.setup")}
-      </UiText>
-      {metadata ? (
-        <>
-          <UiFormRow
-            label={t("tripForm.dates")}
-            value={tripRangeLabel({
-              start: metadata.startDate ?? "",
-              end: metadata.endDate ?? "",
-            })}
-            disabled={!onEdit}
-            onPress={() => onEdit?.()}
-            stacked
-          />
-          <UiFormRow
-            label={t("tripCreate.destination")}
-            value={metadata.destination || t("tripCreate.notSet")}
-            disabled={!onEdit}
-            onPress={() => onEdit?.()}
-            stacked
-          />
-        </>
+      {metadata &&
+      ((!metadata.startDate && !metadata.endDate) || !metadata.destination?.trim()) ? (
+        <UiText accessibilityRole="header" style={styles.title}>
+          {t("tripForm.setup")}
+        </UiText>
+      ) : null}
+      {metadata && !metadata.startDate && !metadata.endDate ? (
+        <UiFormRow
+          label={t("tripForm.dates")}
+          value={tripRangeLabel({ start: "", end: "" })}
+          disabled={!onEdit}
+          onPress={() => onEdit?.()}
+          stacked
+        />
+      ) : null}
+      {metadata && !metadata.destination?.trim() ? (
+        <UiFormRow
+          label={t("tripCreate.destination")}
+          value={t("tripCreate.notSet")}
+          disabled={!onEdit}
+          onPress={() => onEdit?.()}
+          stacked
+        />
       ) : null}
       <TripCurrencyRow setup={setup} onOpen={onCurrency} />
       {onCover ? (

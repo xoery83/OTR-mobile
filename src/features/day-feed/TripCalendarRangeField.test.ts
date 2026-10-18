@@ -17,15 +17,16 @@ vi.mock("react", async (original) => ({
     return [
       state.values[i],
       (value: any) => {
-        state.values[i] = value;
+        state.values[i] = typeof value === "function" ? value(state.values[i]) : value;
       },
     ];
   },
 }));
 vi.mock("react-native", () => ({
-  useWindowDimensions: () => ({ fontScale: 1 }),
+  useWindowDimensions: () => ({ fontScale: 1, width: 390 }),
   View: "View",
   Modal: "Modal",
+  FlatList: "FlatList",
   Pressable: "Pressable",
   ScrollView: "ScrollView",
   StyleSheet: { create: (s: any) => s },
@@ -47,6 +48,11 @@ function nodes(node: ReactNode): Element[] {
     ? [
         node as Element,
         ...Children.toArray((node as Element).props.children).flatMap(nodes),
+        ...((node as Element).type === "FlatList"
+          ? (node as Element).props.data.flatMap((item: string) =>
+              nodes((node as Element).props.renderItem({ item })),
+            )
+          : []),
       ]
     : [];
 }
@@ -67,9 +73,7 @@ it("selects an interval across year boundaries with one explicit Done; Cancel an
   view
     .find((n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-12-30")!
     .props.onPress();
-  render()
-    .find((n) => n.type === UiButton && n.props.label === "tripForm.nextMonth")!
-    .props.onPress();
+  expect(render().some((n) => n.props.label === "tripForm.nextMonth")).toBe(false);
   render()
     .find((n) => n.type === "Pressable" && n.props.accessibilityLabel === "2027-01-03")!
     .props.onPress();
@@ -114,4 +118,48 @@ it("supports reversed taps, single-day intervals and restarting an existing inte
   });
   expect(adjacentTripMonth("2026-12", 1)).toBe("2027-01");
   expect(adjacentTripMonth("2027-01", -1)).toBe("2026-12");
+});
+
+it("keeps a bounded virtualized continuous calendar and extends both ends without altering the draft", () => {
+  const onChange = vi.fn();
+  const value = { start: "2026-12-14", end: "2027-12-21" };
+  const render = () => {
+    state.cursor = 0;
+    return nodes(TripCalendarRangeField({ value, onChange }));
+  };
+  render()
+    .find((n) => n.type === UiFormRow)!
+    .props.onPress();
+  let list = render().find((n) => n.type === "FlatList")!;
+  expect(list.props.data).toEqual(expect.arrayContaining(["2026-12", "2027-12"]));
+  expect(list.props.initialScrollIndex).toBe(12);
+  expect(list.props.initialNumToRender).toBe(3);
+  const first = list.props.data[0],
+    last = list.props.data.at(-1);
+  list.props.onStartReached();
+  list = render().find((n) => n.type === "FlatList")!;
+  expect(list.props.data[0]).toBe(adjacentTripMonth(first, -12));
+  list.props.onEndReached();
+  list = render().find((n) => n.type === "FlatList")!;
+  expect(list.props.data.at(-1)).toBe(adjacentTripMonth(last, 12));
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+it("clamps browsing to valid four-digit calendar years without looping at either boundary", () => {
+  expect(adjacentTripMonth("0001-01", -12)).toBe("0001-01");
+  expect(adjacentTripMonth("9999-12", 12)).toBe("9999-12");
+  for (const day of ["0001-01-01", "9999-12-31"]) {
+    state.values = [];
+    state.cursor = 0;
+    const value = { start: day, end: day };
+    nodes(TripCalendarRangeField({ value, onChange: vi.fn() }))
+      .find((node) => node.type === UiFormRow)!
+      .props.onPress();
+    state.cursor = 0;
+    const list = nodes(TripCalendarRangeField({ value, onChange: vi.fn() })).find(
+      (node) => node.type === "FlatList",
+    )!;
+    expect(list.props.data).toHaveLength(13);
+    expect(list.props.initialScrollIndex).toBe(day.startsWith("0001") ? 0 : 12);
+  }
 });

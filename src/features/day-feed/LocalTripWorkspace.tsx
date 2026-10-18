@@ -602,7 +602,6 @@ function LocalTripContent({
             title={selected.name}
             cover={tripCoverSource(selected)}
             metadata={[
-              ...(selected.destination ? [selected.destination] : []),
               ...(selected.startDate && selected.endDate
                 ? [
                     t("myTrips.dateRange", {
@@ -615,6 +614,7 @@ function LocalTripContent({
                   : selected.endDate
                     ? [t("myTrips.ends", { date: displayDate(selected.endDate) })]
                     : [t("myTrips.datesToBeDecided")]),
+              ...(selected.destination ? [selected.destination] : []),
             ]}
             modules={
               <View style={styles.root}>
@@ -665,59 +665,57 @@ function LocalTripContent({
             animationType="slide"
           >
             <SafeAreaProvider style={styles.modal}>
-              <SheetHeader
-                title={t("tripHome.edit")}
-                onLeft={() => {
-                  if (!editorBusy.current) setCoverOpen(false);
-                }}
-              />
-              <ScrollView
-                style={styles.modal}
-                contentContainerStyle={styles.form}
-                automaticallyAdjustKeyboardInsets
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="interactive"
-              >
-                {coverOpen ? (
-                  <TripBasicEditor
-                    trip={selected}
-                    onSavingChange={(saving) => {
-                      editorBusy.current = saving;
-                      setEditorSaving(saving);
-                    }}
-                    setup={setup?.context.tripId === selected.id ? setup : null}
-                    onOpenCurrency={() => {
-                      if (alive.current && generation === getAccountGeneration()) {
-                        setCoverOpen(false);
-                        router.push({
-                          pathname: "/expenses/settings",
-                          params: { journeyId: selected.id },
-                        });
-                      }
-                    }}
-                    metadataEditable={metadataEditable}
-                    onSelectCover={selectCover}
-                    onSaveMetadata={async (before, after, cover, operationId) => {
-                      if (!alive.current || generation !== getAccountGeneration())
-                        throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                      const repo = await readLocalTripRepository();
-                      if (!alive.current || generation !== getAccountGeneration())
-                        throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                      await repo.updateMetadata(
-                        {
-                          operationId,
-                          tripId: selected.id,
-                          before,
-                          after,
-                        },
-                        cover,
-                      );
-                      if (alive.current && generation === getAccountGeneration())
-                        await load();
-                    }}
-                  />
-                ) : null}
-              </ScrollView>
+              {coverOpen ? (
+                <TripBasicEditor
+                  trip={selected}
+                  onClose={() => {
+                    if (!editorBusy.current) setCoverOpen(false);
+                  }}
+                  onSavingChange={(saving) => {
+                    editorBusy.current = saving;
+                    setEditorSaving(saving);
+                  }}
+                  setup={setup?.context.tripId === selected.id ? setup : null}
+                  onOpenCurrency={() => {
+                    if (alive.current && generation === getAccountGeneration()) {
+                      setCoverOpen(false);
+                      router.push({
+                        pathname: "/expenses/settings",
+                        params: { journeyId: selected.id },
+                      });
+                    }
+                  }}
+                  metadataEditable={metadataEditable}
+                  onSelectCover={selectCover}
+                  onSaveMetadata={async (before, after, cover, operationId) => {
+                    if (!alive.current || generation !== getAccountGeneration())
+                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                    const repo = await readLocalTripRepository();
+                    if (!alive.current || generation !== getAccountGeneration())
+                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                    await repo.updateMetadata(
+                      {
+                        operationId,
+                        tripId: selected.id,
+                        before,
+                        after,
+                      },
+                      cover,
+                    );
+                    if (alive.current && generation === getAccountGeneration()) {
+                      // Fence an older focus read that started before this local commit.
+                      request.current++;
+                      setSelected({
+                        ...selected,
+                        ...after,
+                        selectedCoverAssetId: cover.after,
+                      });
+                      setCoverOpen(false);
+                      // The committed value is visible now; normal focus reads refresh later.
+                    }
+                  }}
+                />
+              ) : null}
             </SafeAreaProvider>
           </Modal>
           <Modal
@@ -800,7 +798,6 @@ function LocalTripContent({
             cover={tripCoverSource(remoteSelected)}
             notice={t("myTrips.cachedDetails")}
             metadata={[
-              ...(remoteSelected.destination ? [remoteSelected.destination] : []),
               ...(remoteStart && remoteEnd
                 ? [
                     t("myTrips.dateRange", {
@@ -813,6 +810,7 @@ function LocalTripContent({
                   : remoteEnd
                     ? [t("myTrips.ends", { date: displayDate(remoteEnd) })]
                     : [t("myTrips.datesToBeDecided")]),
+              ...(remoteSelected.destination ? [remoteSelected.destination] : []),
             ]}
           />
           {localOutcome?.tripId === remoteSelected.id &&

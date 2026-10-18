@@ -1,6 +1,8 @@
+import { Children, isValidElement, type ReactNode } from "react";
+import { TripPreparationWidget } from "./TripPreparationWidget";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
-import { TripCurrencyRow, TripMembersSummary } from "./TripSetupRows";
+import { TripCurrencyRow, TripMembersSummary, TripSetupRows } from "./TripSetupRows";
 const state = vi.hoisted(() => ({ open: false, key: null as string | null }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -11,11 +13,12 @@ vi.mock("react", async (original) => ({
     },
   ],
 }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("./TripMembersSheet", () => ({ TripMembersSheet: "TripMembersSheet" }));
 vi.mock("react-native", () => ({ View: "View", StyleSheet: { create: (s: any) => s } }));
 vi.mock("@/ui/controls", () => ({ UiText: "UiText" }));
 vi.mock("@/ui/forms", () => ({ UiFormRow: "UiFormRow" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("./TripCalendarRangeField", () => ({ tripRangeLabel: () => "range" }));
 vi.mock("@/ui/locale", () => ({
@@ -78,4 +81,53 @@ it("never substitutes fake currency or invitation counts for unknown facts", () 
   expect(named).toContain("tripForm.namedPeopleHint");
   expect(named).not.toContain("invited");
   expect(JSON.stringify(summary(null))).toContain("tripForm.membersUnknown");
+});
+
+it("offers only missing metadata setup without treating intentional one-sided dates as missing", () => {
+  const complete = JSON.stringify(
+    TripSetupRows({
+      setup,
+      metadata: { startDate: "2026-12-14", endDate: null, destination: "Auckland" },
+      onEdit: vi.fn(),
+    }),
+  );
+  expect(complete).not.toContain("tripForm.setup");
+  expect(complete).not.toContain("tripForm.dates");
+  expect(complete).not.toContain("tripCreate.destination");
+  const missing = JSON.stringify(
+    TripSetupRows({
+      setup,
+      metadata: { startDate: null, endDate: null, destination: "" },
+      onEdit: vi.fn(),
+    }),
+  );
+  expect(missing).toContain("tripForm.setup");
+  expect(missing).toContain("tripForm.dates");
+  expect(missing).toContain("tripCreate.destination");
+});
+
+it("keeps unmet setup reachable after real Preparation counts are populated", () => {
+  const containsSetup = (node: ReactNode): boolean =>
+    isValidElement<{ children?: ReactNode }>(node) &&
+    (node.type === TripSetupRows ||
+      Children.toArray(node.props.children).some(containsSetup));
+  const widget = TripPreparationWidget({
+    value: { itemCount: 1, counts: [], recent: [] },
+    state: "READY",
+    setup,
+    metadata: { startDate: null, endDate: null, destination: null },
+    copy: {
+      title: "Preparation",
+      empty: "Empty",
+      recent: "Recent",
+      loading: "Loading",
+      unavailable: "Unavailable",
+      importPlans: "Import",
+      buildItinerary: "Build",
+      importMore: "More",
+      openDay: "Day",
+      families: { P1: "P1", P2: "P2", P3: "P3", P4: "P4", P5: "P5", P6: "P6" },
+    },
+  });
+  expect(containsSetup(widget)).toBe(true);
 });

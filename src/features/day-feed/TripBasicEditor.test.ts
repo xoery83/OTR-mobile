@@ -5,7 +5,7 @@ import { TripBasicEditor } from "./TripBasicEditor";
 import { TripCoverPicker } from "./TripCoverPicker";
 import { TripCurrencyRow } from "./TripSetupRows";
 import { TripMetadataFields } from "./TripMetadataFields";
-import { UiButton } from "@/ui/controls";
+import { SheetHeader } from "@/components/SheetHeader";
 
 const state = vi.hoisted(() => ({
   values: [] as unknown[],
@@ -31,6 +31,7 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: any[]) => state.alert(...args) },
   View: "View",
+  ScrollView: "ScrollView",
   StyleSheet: { create: (s: unknown) => s },
 }));
 vi.mock("@/ui/theme", () => ({
@@ -45,6 +46,7 @@ vi.mock("@/ui/controls", () => ({
   UiSection: "UiSection",
   UiButton: "UiButton",
 }));
+vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: "TripCoverPicker" }));
 vi.mock("./TripMetadataFields", () => ({ TripMetadataFields: "TripMetadataFields" }));
 vi.mock("./TripSetupRows", () => ({ TripCurrencyRow: "TripCurrencyRow" }));
@@ -106,7 +108,7 @@ it("stages cover and metadata together through one owning callback, without an i
   expect(save).not.toHaveBeenCalled();
   view = render(save, cover);
   expect(view.find((n) => n.type === TripCoverPicker)!.props.selected).toBe("coast");
-  (view.find((n) => n.type === UiButton)!.props.onPress as () => void)();
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
   await flush();
   expect(save).toHaveBeenCalledExactlyOnceWith(
     before,
@@ -127,7 +129,7 @@ it("retains unsaved fields after a failed local save and blocks invalid date ran
     ) => void
   )("Keep draft");
   nodes = render(save);
-  (nodes.find((node) => node.type === UiButton)!.props.onPress as () => void)();
+  (nodes.find((node) => node.type === SheetHeader)!.props.onRight as () => void)();
   await flush();
   nodes = render(save);
   expect(nodes.find((node) => node.type === TripMetadataFields)!.props.name).toBe(
@@ -141,7 +143,7 @@ it("retains unsaved fields after a failed local save and blocks invalid date ran
     start: trip.startDate,
     end: "2026-10-15",
   });
-  expect(render(save).find((node) => node.type === UiButton)!.props.disabled).toBe(true);
+  expect(render(save).find((node) => node.type === SheetHeader)!.props.rightDisabled).toBe(true);
 });
 
 it("withholds metadata edits without local creator provenance while retaining the independent cover choice", () => {
@@ -157,7 +159,7 @@ it("withholds metadata edits without local creator provenance while retaining th
   expect(nodes.find((node) => node.type === TripMetadataFields)!.props.disabled).toBe(
     true,
   );
-  expect(nodes.some((node) => node.type === UiButton)).toBe(false);
+  expect(nodes.find((node) => node.type === SheetHeader)!.props.onRight).toBeUndefined();
   expect(nodes.some((node) => node.type === TripCoverPicker)).toBe(true);
 });
 

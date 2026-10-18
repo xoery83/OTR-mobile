@@ -16,7 +16,7 @@ import {
   type TripPreparationSetup,
 } from "@/data/repositories/tripPreparationSetupRepository";
 import type { Trip } from "@/domain/trip/types";
-import { UiButton, UiText } from "@/ui/controls";
+import { UiText } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
 import { Modal } from "react-native";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -180,8 +180,8 @@ function editor(f: ReturnType<typeof fixture>, trip: Trip) {
       .props.onSelect(id);
   const save = () =>
     render()
-      .find((n) => n.type === UiButton)!
-      .props.onPress();
+      .find((n) => n.type === SheetHeader)!
+      .props.onRight();
   const settled = () =>
     vi.waitFor(() =>
       expect(render().some((n) => n.props.children === "actionIsland.savedLocally")).toBe(

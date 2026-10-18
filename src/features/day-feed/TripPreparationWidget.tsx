@@ -162,7 +162,7 @@ export function TripPreparationWidget({
           </View>
         </>
       )}
-      {ready && value.itemCount === 0 ? (
+      {ready ? (
         <TripSetupRows
           setup={setup}
           metadata={metadata}

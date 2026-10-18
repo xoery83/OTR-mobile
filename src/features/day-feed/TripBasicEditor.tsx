@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import {
   tripMetadataSchema,
   type TripMetadata,
 } from "@/domain/trip/tripMetadataContract";
-import { UiButton, UiSection, UiText } from "@/ui/controls";
+import { UiSection, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
@@ -17,6 +17,7 @@ import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSe
 import { TripCurrencyRow } from "./TripSetupRows";
 import { TripCoverVisual } from "./TripCoverVisual";
 import { tripCoverSource } from "./tripCovers";
+import { SheetHeader } from "@/components/SheetHeader";
 import { createUuid } from "@/domain/localId";
 
 export function TripBasicEditor({
@@ -27,6 +28,7 @@ export function TripBasicEditor({
   setup = null,
   onOpenCurrency,
   onSavingChange,
+  onClose,
 }: {
   trip: Pick<
     Trip,
@@ -43,6 +45,7 @@ export function TripBasicEditor({
   setup?: TripPreparationSetup | null;
   onOpenCurrency?: () => void;
   onSavingChange?(saving: boolean): void;
+  onClose?(): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -87,107 +90,118 @@ export function TripBasicEditor({
       { text: t("actionIsland.discard"), style: "destructive", onPress: onOpenCurrency },
     ]);
   };
+  const save = () => {
+    if (busy.current || !valid || !dirty) return;
+    busy.current = true;
+    onSavingChange?.(true);
+    setSaving(true);
+    setError(false);
+    setSaved(false);
+    const cover = { before: beforeCover, after: draftCover };
+    const fingerprint = JSON.stringify({ before, after, cover });
+    if (saveIntent.current?.fingerprint !== fingerprint)
+      saveIntent.current = { fingerprint, operationId: createUuid() };
+    void onSaveMetadata(before, after, cover, saveIntent.current.operationId)
+      .then(() => {
+        setBefore(after);
+        setBeforeCover(draftCover);
+        saveIntent.current = null;
+        setSaved(true);
+      })
+      .catch(() => setError(true))
+      .finally(() => {
+        busy.current = false;
+        onSavingChange?.(false);
+        setSaving(false);
+      });
+  };
   return (
-    <View style={styles.root}>
-      <UiSection>
-        <UiText style={styles.hint}>
-          {t(
-            metadataEditable
-              ? "tripHome.editor.localFirst"
-              : "tripHome.editor.metadataReadOnly",
-          )}
-        </UiText>
-        <TripMetadataFields
-          name={name}
-          destination={destination}
-          range={{ start, end }}
-          disabled={!metadataEditable || saving}
-          onName={setName}
-          onDestination={setDestination}
-          onRange={(range) => {
-            setStart(range.start);
-            setEnd(range.end);
-          }}
-        />
-      </UiSection>
-      <UiSection title={t("tripHome.coverTools")}>
-        <TripCoverVisual
-          source={tripCoverSource({
-            ...trip,
-            selectedCoverAssetId: metadataEditable
-              ? draftCover
-              : trip.selectedCoverAssetId,
-          })}
-          style={styles.cover}
-        />
-        <UiText style={styles.hint}>
-          {t(metadataEditable ? "tripForm.coverDraft" : "tripHome.editor.coverLocalOnly")}
-        </UiText>
-        <TripCoverPicker
-          selected={metadataEditable ? draftCover : trip.selectedCoverAssetId}
-          onSelect={
-            metadataEditable
-              ? async (id) => {
-                  if (!busy.current) {
-                    setDraftCover(id);
-                    setSaved(false);
-                  }
-                }
-              : onSelectCover
-          }
-        />
-      </UiSection>
-      <TripCurrencyRow
-        setup={setup}
-        onOpen={saving || !onOpenCurrency ? undefined : openCurrency}
+    <View style={styles.container}>
+      <SheetHeader
+        title={t("tripHome.edit")}
+        leftLabel={t("common.cancel")}
+        onLeft={() => {
+          if (!busy.current) onClose?.();
+        }}
+        rightLabel={t("ui.save")}
+        onRight={metadataEditable ? save : undefined}
+        rightDisabled={saving || !valid || !dirty}
       />
-      <UiSection>
-        {metadataEditable ? (
-          <UiButton
-            label={t("tripCreate.saveTrip")}
-            disabled={saving || !valid || !dirty}
-            onPress={() => {
-              if (busy.current || !valid || !dirty) return;
-              busy.current = true;
-              onSavingChange?.(true);
-              setSaving(true);
-              setError(false);
-              setSaved(false);
-              const cover = { before: beforeCover, after: draftCover };
-              const fingerprint = JSON.stringify({ before, after, cover });
-              if (saveIntent.current?.fingerprint !== fingerprint)
-                saveIntent.current = { fingerprint, operationId: createUuid() };
-              void onSaveMetadata(before, after, cover, saveIntent.current.operationId)
-                .then(() => {
-                  setBefore(after);
-                  setBeforeCover(draftCover);
-                  saveIntent.current = null;
-                  setSaved(true);
-                })
-                .catch(() => setError(true))
-                .finally(() => {
-                  busy.current = false;
-                  onSavingChange?.(false);
-                  setSaving(false);
-                });
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.root}
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+      >
+        <UiSection>
+          {!metadataEditable ? (
+            <UiText style={styles.hint}>{t("tripHome.editor.metadataReadOnly")}</UiText>
+          ) : null}
+          <TripMetadataFields
+            name={name}
+            destination={destination}
+            range={{ start, end }}
+            disabled={!metadataEditable || saving}
+            onName={setName}
+            onDestination={setDestination}
+            onRange={(range) => {
+              setStart(range.start);
+              setEnd(range.end);
             }}
           />
-        ) : null}
-        {saved ? (
-          <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
-        ) : null}
-        {error ? (
-          <UiText accessibilityRole="alert" style={styles.error}>
-            {t("tripCreate.saveFailed")}
+        </UiSection>
+        <UiSection title={t("tripHome.coverTools")}>
+          <TripCoverVisual
+            source={tripCoverSource({
+              ...trip,
+              selectedCoverAssetId: metadataEditable
+                ? draftCover
+                : trip.selectedCoverAssetId,
+            })}
+            style={styles.cover}
+          />
+          <UiText style={styles.hint}>
+            {t(
+              metadataEditable ? "tripForm.coverDraft" : "tripHome.editor.coverLocalOnly",
+            )}
           </UiText>
-        ) : null}
-      </UiSection>
+          <TripCoverPicker
+            selected={metadataEditable ? draftCover : trip.selectedCoverAssetId}
+            onSelect={
+              metadataEditable
+                ? async (id) => {
+                    if (!busy.current) {
+                      setDraftCover(id);
+                      setSaved(false);
+                    }
+                  }
+                : onSelectCover
+            }
+          />
+        </UiSection>
+        <TripCurrencyRow
+          setup={setup}
+          onOpen={saving || !onOpenCurrency ? undefined : openCurrency}
+        />
+        <UiSection>
+          {saved ? (
+            <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
+          ) : null}
+          {error ? (
+            <UiText accessibilityRole="alert" style={styles.error}>
+              {t("tripCreate.saveFailed")}
+            </UiText>
+          ) : null}
+        </UiSection>
+      </ScrollView>
     </View>
   );
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    root: { gap: visual.space.section },
+    container: { flex: 1, backgroundColor: colors.background },
+    root: { padding: visual.space.page, gap: visual.space.section },
     label: { ...visual.type.meta, color: colors.textPrimary },
     cover: { height: 128, borderRadius: visual.radius.card, overflow: "hidden" },
     hint: { ...visual.type.meta, color: colors.textSecondary },

@@ -527,6 +527,12 @@ vi.mock("./TripViewContext", () => ({
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
     state.nodes.push({ label: p.leftLabel ?? "common.close", onPress: p.onLeft });
+    if (p.onRight)
+      state.nodes.push({
+        label: p.rightLabel,
+        onPress: p.onRight,
+        disabled: p.rightDisabled,
+      });
     return null;
   },
 }));
@@ -596,8 +602,14 @@ it("normal Home Hero action opens the same Editor and saves through the owning m
   render();
   input("tripCreate.name", "Updated");
   render();
-  button("tripCreate.saveTrip").onPress();
+  const commit = button("ui.save").onPress;
+  commit();
+  commit();
   await flush();
+  const html = render();
+  expect(html).toContain("Updated");
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+  expect(repo.updateMetadata).toHaveBeenCalledOnce();
   expect(repo.updateMetadata).toHaveBeenCalledWith(
     expect.objectContaining({
       tripId: current.id,
@@ -886,7 +898,7 @@ it("Creator Close discards staged cover without an independent write and cannot 
   render();
   await state.nodes.find((node) => node.coverPicker)!.coverPicker.onSelect("coast");
   render();
-  const close = button("common.close").onPress;
+  const close = button("common.cancel").onPress;
   close();
   render();
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
@@ -898,10 +910,10 @@ it("Creator Close discards staged cover without an independent write and cannot 
   render();
   const pending = deferred<void>();
   vi.mocked(repo.updateMetadata).mockReturnValueOnce(pending.promise);
-  button("tripCreate.saveTrip").onPress();
+  button("ui.save").onPress();
   await flush();
   render();
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   render();
   expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
   expect(
@@ -910,4 +922,42 @@ it("Creator Close discards staged cover without an independent write and cannot 
   ).toBe(false);
   pending.resolve();
   await flush();
+});
+
+it("keeps an Editor draft after local failure and never closes a different Trip on late commit", async () => {
+  const a = trip("local-a", "A"),
+    b = trip("local-b", "B"),
+    repo = repository([a, b]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = a.id;
+  render();
+  await flush();
+  render();
+  button("tripHome.edit").onPress();
+  render();
+  input("tripCreate.name", "Keep draft");
+  render();
+  vi.mocked(repo.updateMetadata).mockRejectedValueOnce(new Error("disk"));
+  button("ui.save").onPress();
+  await flush();
+  let html = render();
+  expect(html).toContain("tripCreate.saveFailed");
+  expect(
+    state.nodes.find((node) => node.accessibilityLabel === "tripCreate.name")!.value,
+  ).toBe("Keep draft");
+  const pending = deferred<void>();
+  vi.mocked(repo.updateMetadata).mockReturnValueOnce(pending.promise);
+  button("ui.save").onPress();
+  await flush();
+  props.tripId = b.id;
+  render();
+  await flush();
+  render();
+  button("tripHome.edit").onPress();
+  render();
+  pending.resolve();
+  await flush();
+  html = render();
+  expect(html).toContain("B");
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
 });
