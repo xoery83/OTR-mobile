@@ -49,6 +49,7 @@ const state = vi.hoisted(() => ({
   routeMode: "home" as "home" | "day",
   appActive: null as (() => void) | null,
   resume: null as any,
+  quickActions: null as any,
   observeShellScroll: vi.fn(),
   observeReadingMotion: vi.fn(),
 }));
@@ -194,6 +195,7 @@ vi.mock("./TripViewContext", async (original) => ({
     saveReading: state.saveReading,
     enterHeader: state.enterHeader,
     publishDayShellChrome: vi.fn(),
+    quickActions: state.quickActions,
   }),
 }));
 function render() {
@@ -227,6 +229,7 @@ beforeEach(() => {
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
   state.discovery = [];
+  state.quickActions = null;
   state.focused = true;
   state.navigation = { setOptions: state.setOptions, isFocused: () => state.focused };
   state.routeMode = "home";
@@ -693,6 +696,7 @@ it("switches the My Trips native title only after the body heading leaves, rever
 });
 
 it("keeps status information readable after the measured Hero scrolls away and on return", async () => {
+  state.discovery = [{ id: reference, name: "Actual saved Trip" }];
   const node = await loaded();
   find(node, LocalTripWorkspace).onHomeHeroHeight(300);
   const scroll = find(node, "ScrollView");
@@ -711,9 +715,29 @@ it("keeps status information readable after the measured Hero scrolls away and o
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
-    "background",
+    "transparent",
+  );
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "Actual saved Trip",
   );
   expect(state.setOptions.mock.lastCall?.[0].headerTransparent).toBe(true);
+  state.quickActions = {
+    tripId: reference,
+    generation: 5,
+    tripName: "Locally edited Trip",
+  };
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "Locally edited Trip",
+  );
+  state.quickActions = { tripId: "other-trip", generation: 5, tripName: "Other Trip" };
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "Actual saved Trip",
+  );
   scroll.onScroll({ nativeEvent: { contentOffset: { y: 242 } } });
   state.mount = true;
   render();
@@ -730,6 +754,8 @@ it("keeps status information readable after the measured Hero scrolls away and o
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe("");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.select).not.toHaveBeenCalled();
   expect(state.saveReading).not.toHaveBeenCalled();
 });

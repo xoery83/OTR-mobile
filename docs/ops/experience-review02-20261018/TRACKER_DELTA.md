@@ -8,19 +8,19 @@ Append/merge into Root `docs/ops/DELTA_DELIVERY_TRACKER.md`; do not replace hist
 | ER02-TH-02 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Trusted plan date and accepted/local committed projection | Real pending hotel/check-out Native; no device-zone substitution | Trip Today |
 | ER02-TH-03 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Account/Trip/date/permission/version fencing | Native widget switch; cross-remount revision invalidation seam remains | Trip Widgets |
 | ER02-TH-04 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Honest selected plan date and lawful Day action | Native empty vs unavailable/actionable state | Trip Today |
-| ER02-TH-05 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | IN_PROGRESS | Real counts/recent/setup facts | Unmet-only setup and populated Preparation regression | Trip Preparation |
+| ER02-TH-05 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Real counts/recent/setup facts | Unmet-only setup and populated Preparation regression | Trip Preparation |
 | ER02-TH-06 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Owning Person/Actor/connection facts | Native real named members/status; do not invent invitation state | Members/Trip |
-| ER02-TH-07 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Live scoped existing navigation callbacks | Native Edit/Open Day menu; Members/Documents routes remain gaps | Experience Navigation |
+| ER02-TH-07 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Live scoped existing navigation callbacks | Review/Native existing Edit/Open Day/Members callbacks; Documents route remains gap | Experience Navigation |
 | ER02-TH-08 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Ledger settings authority/lock | Real currency read and authorized settings Native | Ledger/Trip Edit |
 | ER02-TH-09 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Lawful asset/photo persistence and location-tag catalogue | Retain Cover Gallery/Tag Matching historical TODO; report exact capability gap | Trip Cover |
 | ER02-TH-10 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Real finance read model | Integrated Native spending content/actions | Ledger Experience |
-| ER02-TH-11 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | IN_PROGRESS | Caller metadata order and collapsed-header state | Review C date/destination caller reorder; Native Hero/title | Trip Experience |
+| ER02-TH-11 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Caller metadata order and collapsed-header state | Review C date/destination caller reorder; Native Hero/title | Trip Experience |
 | ER02-TH-12 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Canonical native toolbar/icon primitives | Native glyph/tint/glass/44pt controls | Experience Navigation |
-| ER02-TH-13 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | IN_PROGRESS | Existing Settings Debug preference | Default-hidden diagnostics vs Debug ON regression | Experience Diagnostics |
-| ER02-ET-01 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | IN_PROGRESS | Existing repository local commit | Review C fixed top Save/close/error/draft tests; Native | Trip Edit |
-| ER02-ET-02 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | IN_PROGRESS | Existing date-only month/grid helpers | Review continuous range across years; Native Done/Cancel | Trip Edit |
+| ER02-TH-13 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Existing Settings Debug preference | Default-hidden diagnostics vs Debug ON regression | Experience Diagnostics |
+| ER02-ET-01 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Existing repository local commit | Review C fixed top Save/close/error/draft tests; Native | Trip Edit |
+| ER02-ET-02 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Existing date-only month/grid helpers | Review continuous range across years; Native Done/Cancel | Trip Edit |
 | ER02-ET-03 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Existing nullable manual destination contract | Retain manual text; multi-identity/disambiguation owning gap | Trip Core/Edit |
-| ER02-ET-04 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | IN_PROGRESS | Existing debug settings/cover and Members boundaries | Review C production copy; Native | Trip Edit |
+| ER02-ET-04 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Existing debug settings/cover and Members boundaries | Review C production copy; Native | Trip Edit |
 | ER02-DS-01 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Day intent and existing local reader | Native cold/warm/offline no legacy Today flash | Day Shell |
 | ER02-DS-02 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Measured introduction/header | Native title threshold/date-row Calendar/glass | Day Shell |
 | ER02-DS-03 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Intl range and canonical native material | Native cross-year/Chinese/large text single line | Day Shell |

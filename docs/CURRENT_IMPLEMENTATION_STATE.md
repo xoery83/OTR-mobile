@@ -4,10 +4,11 @@
   in `docs/beta/experience-review02-20261018/`. Baseline f87e119 retains latest
   Day/Create Owner preview; canonical main not overwritten. Register/ownership:
   `docs/ops/experience-review02-20261018/PREFLIGHT.md`.
-- Separate Day/Home/Edit writers; shared root integrations serial. Home bounded
-  candidate fd14aab integrated 0731b65, coordinator independent direct tests27 PASS.
-  Local checkout event eligibility and mounted Preparation refresh corrected;
-  complete cross-remount widget invalidation/cache remains explicit PARTIAL.
+- A/B/C fixed candidates0af7ddc/fd14aab/f572466 integrated in isolated tree;
+  independent reviews and combined16 suites/195 tests PASS. Final type/menu
+  refinements verified separately. Receipt: `docs/ops/experience-review02-20261018/DELIVERY_RECEIPT.md`.
+  Code/WIRED local save/close, continuous range, semantic Day restore and mounted
+  widget refresh corrected; cross-remount invalidation and owning data gaps remain PARTIAL.
 - AD5 Owner preview and A1A Import/Hosted/Metros remain untouched. No new Native
   acceptance or UX Accepted. Import P0 stays Root priority. Tracker delta held
   separately for Root integration; old Cover Gallery/Tag Matching remains open.

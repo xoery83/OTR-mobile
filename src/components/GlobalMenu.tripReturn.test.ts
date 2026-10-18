@@ -180,3 +180,16 @@ it("Trip menu exposes only live scoped existing Edit and Day actions", () => {
   state.actions = { tripId: "a", generation: 1, editTrip, chooseDay };
   expect(items().some((item) => item.label === "tripHome.edit")).toBe(false);
 });
+
+it("shows an existing scoped Members callback without fabricating a destination or invitation capability", () => {
+  const members = vi.fn();
+  state.actions = { tripId: "a", generation: 1, members };
+  const items = (render().props.sections as any[][]).flat();
+  const entry = items.find((item) => item.label === "tripHome.members");
+  expect(items.some((item) => item.label === "tripHome.documents")).toBe(false);
+  entry.onPress();
+  expect(members).toHaveBeenCalledOnce();
+  state.generation = 2;
+  entry.onPress();
+  expect(members).toHaveBeenCalledOnce();
+});

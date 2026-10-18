@@ -117,7 +117,7 @@ export function TodaysJourneyWidget({
       const [value, debugMode] = await Promise.all([
         reader
           .readLocal(tripId, clock())
-          .then((local) => local ?? reader.read(tripId, clock())),
+          .then<AnyTodayRead | null>((local) => local ?? reader.read(tripId, clock())),
         readDiagnosticsDebugMode().catch(() => false),
       ]);
       if (ticket !== request.current || generation !== getAccountGeneration()) return;

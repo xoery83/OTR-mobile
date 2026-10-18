@@ -144,6 +144,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     saveReading,
     enterHeader,
     publishDayShellChrome,
+    quickActions,
   } = useTripView();
   const params = useLocalSearchParams<{
     tripId?: string;
@@ -244,7 +245,11 @@ function TripContent({ today = false }: { today?: boolean }) {
   const headerTitle = isMyTrips
     ? t(headingHidden ? "dayFeed.myTrips" : "myTrips.appTitle")
     : requested && home
-      ? ""
+      ? heroBehindStatus
+        ? ""
+        : quickActions?.tripId === requested && quickActions.generation === generation
+          ? quickActions.tripName
+          : (dayFacts?.name ?? "")
       : dayActive
         ? dayTitle
         : t("navigation.trip");
@@ -253,16 +258,11 @@ function TripContent({ today = false }: { today?: boolean }) {
     navigation.setOptions({
       headerTransparent: true,
       headerStyle: {
-        backgroundColor: immersiveHome
-          ? heroBehindStatus
-            ? colors.transparent
-            : colors.background
-          : dayActive
-            ? colors.transparent
-            : colors.surface,
+        backgroundColor: immersiveHome || dayActive ? colors.transparent : colors.surface,
       },
       headerShadowVisible: false,
-      headerBlurEffect: dayActive ? "systemMaterial" : undefined,
+      headerBlurEffect:
+        dayActive || (immersiveHome && !heroBehindStatus) ? "systemMaterial" : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,

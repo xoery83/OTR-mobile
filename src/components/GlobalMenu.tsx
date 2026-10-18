@@ -154,33 +154,64 @@ export function GlobalMenu({
     }),
   );
   const tripContextId = selectedTripMenuId(pathname, params);
-  const tripItems: AppNavigationMenuItem[] = [];
-  if (
+  const hasTripItems =
     module === "TRIP" &&
     tripContextId &&
     quickActions?.tripId === tripContextId &&
-    quickActions.generation === generation
-  ) {
-    const invoke = (action: () => void) => {
-      if (currentReturn.current === returnLease && generation === getAccountGeneration())
-        action();
-    };
-    if (quickActions.editTrip)
-      tripItems.push({
-        icon: "square.and.pencil",
-        label: t("tripHome.edit"),
-        onPress: () => invoke(quickActions.editTrip!),
-      });
-    if (quickActions.chooseDay)
-      tripItems.push({
-        icon: "calendar",
-        label: t("dayFeed.openDay"),
-        onPress: () => invoke(quickActions.chooseDay!),
-      });
-  }
+    quickActions.generation === generation &&
+    (!!quickActions.editTrip || !!quickActions.chooseDay || !!quickActions.members);
+  const tripItems: AppNavigationMenuItem[] = hasTripItems
+    ? [
+        ...(quickActions.editTrip
+          ? [
+              {
+                icon: "square.and.pencil" as const,
+                label: t("tripHome.edit"),
+                onPress: () => {
+                  if (
+                    currentReturn.current === returnLease &&
+                    generation === getAccountGeneration()
+                  )
+                    quickActions.editTrip?.();
+                },
+              },
+            ]
+          : []),
+        ...(quickActions.members
+          ? [
+              {
+                icon: "person.2" as const,
+                label: t("tripHome.members"),
+                onPress: () => {
+                  if (
+                    currentReturn.current === returnLease &&
+                    generation === getAccountGeneration()
+                  )
+                    quickActions.members?.();
+                },
+              },
+            ]
+          : []),
+        ...(quickActions.chooseDay
+          ? [
+              {
+                icon: "calendar" as const,
+                label: t("dayFeed.openDay"),
+                onPress: () => {
+                  if (
+                    currentReturn.current === returnLease &&
+                    generation === getAccountGeneration()
+                  )
+                    quickActions.chooseDay?.();
+                },
+              },
+            ]
+          : []),
+      ]
+    : [];
   const returnTo = moduleReturnPath(module);
   const sections: AppNavigationMenuItem[][] = [
-    ...(tripItems.length ? [tripItems] : []),
+    ...(hasTripItems ? [tripItems] : []),
     ...(contextItems.length ? [contextItems] : []),
     ...(pathname === "/trip" &&
     !selectedTripMenuId(pathname, params) &&

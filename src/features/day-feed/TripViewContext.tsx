@@ -185,6 +185,7 @@ export function switchWorkingTrip(
 }
 export type TripQuickActions = {
   editTrip?: () => void;
+  members?: () => void;
   backToTrips?: () => void;
   chooseDay?: () => void;
   tripName: string;

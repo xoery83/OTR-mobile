@@ -57,6 +57,7 @@ import { TripMetadataFields } from "./TripMetadataFields";
 import { tripMetadataSchema } from "@/domain/trip/tripMetadataContract";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripMembersSummary } from "./TripSetupRows";
+import { TripMembersSheet } from "./TripMembersSheet";
 import { LocalTripPhotos } from "./LocalTripPhotos";
 import { tripCoverSource } from "./tripCovers";
 
@@ -177,6 +178,7 @@ function LocalTripContent({
   const photosSaved = useCallback(() => setSavedNotice(true), []);
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(false);
+  const [menuMembersTrip, setMenuMembersTrip] = useState<string | null>(null);
   const request = useRef(0),
     busy = useRef(false),
     tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() }),
@@ -480,6 +482,16 @@ function LocalTripContent({
             if (alive.current && generation === getAccountGeneration())
               setCoverOpen(true);
           },
+          ...(setup?.context.tripId === owner &&
+          setup.context.generation === generation &&
+          setup.members.state === "AVAILABLE"
+            ? {
+                members: () => {
+                  if (alive.current && generation === getAccountGeneration())
+                    setMenuMembersTrip(owner);
+                },
+              }
+            : {}),
           ...(onChooseDay ? { chooseDay: () => onChooseDay(selected.startDate) } : {}),
           itinerary: (date) => {
             if (!alive.current || generation !== getAccountGeneration()) return;
@@ -505,6 +517,7 @@ function LocalTripContent({
       status,
       generation,
       photosReady,
+      setup,
       publishQuickActions,
       quickActionsOwner,
       leaveHome,
@@ -655,6 +668,21 @@ function LocalTripContent({
               {t("tripCreate.saveFailed")}
             </Text>
           ) : null}
+          <TripMembersSheet
+            visible={
+              menuMembersTrip === selected.id &&
+              setup?.context.tripId === selected.id &&
+              setup.context.generation === generation &&
+              setup.members.state === "AVAILABLE"
+            }
+            members={
+              setup?.context.tripId === selected.id &&
+              setup.context.generation === generation
+                ? setup.members
+                : null
+            }
+            onClose={() => setMenuMembersTrip(null)}
+          />
           <Modal
             visible={coverOpen}
             presentationStyle="pageSheet"

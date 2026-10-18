@@ -17,7 +17,18 @@ vi.mock("./TripCalendarRangeField", () => ({
   TripCalendarRangeField: () => null,
   tripRangeLabel: () => "range",
 }));
-vi.mock("./useTripPreparationWidget", () => ({ useTripPreparationWidget: () => null }));
+vi.mock("./useTripPreparationWidget", () => ({
+  useTripPreparationWidget: (props: any) => {
+    state.preparation = props;
+    return null;
+  },
+}));
+vi.mock("./TripMembersSheet", () => ({
+  TripMembersSheet: (props: any) => {
+    state.nodes.push({ membersSheet: props });
+    return null;
+  },
+}));
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
@@ -60,6 +71,7 @@ const state = vi.hoisted(() => ({
   forceEffects: false,
   focused: true,
   finance: null as TripHomeWidget | null,
+  preparation: null as any,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -960,4 +972,53 @@ it("keeps an Editor draft after local failure and never closes a different Trip 
   html = render();
   expect(html).toContain("B");
   expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
+});
+
+it("opens the existing Members sheet from a scoped local menu only when real setup facts are available", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.preparation.onSetup({
+    context: {
+      accountId: "actor",
+      tripId: "local-a",
+      generation: getAccountGeneration(),
+    },
+    currency: { state: "UNAVAILABLE" },
+    members: {
+      state: "AVAILABLE",
+      namedCount: 1,
+      people: [
+        {
+          personId: "person-a",
+          displayName: "Local Name",
+          isCurrentActor: true,
+          localState: "LOCAL_PENDING",
+        },
+      ],
+    },
+    invitations: "UNKNOWN",
+    connections: "UNKNOWN",
+  });
+  render();
+  const action = state.publish.mock.calls
+    .filter(([actions]: any[]) => actions?.members)
+    .at(-1)?.[0];
+  expect(action).toBeDefined();
+  action.members();
+  render();
+  const sheets = state.nodes.filter((node) => node.membersSheet?.visible);
+  expect(sheets).toHaveLength(1);
+  const sheet = sheets[0].membersSheet;
+  expect(sheet.visible).toBe(true);
+  expect(sheet.members.people[0].displayName).toBe("Local Name");
+  props.tripId = "other";
+  render();
+  action.members();
+  render();
+  expect(state.nodes.some((node) => node.membersSheet?.visible)).toBe(false);
 });
