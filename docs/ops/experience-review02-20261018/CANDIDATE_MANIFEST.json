@@ -1,8 +1,8 @@
 {
-  "codeCandidate": "2929eeb0353fad863bf680dde376b210149721e9",
+  "codeCandidate": "5cce9e67",
   "previewRollback": "f87e119f",
   "branch": "codex/experience-review02-20261018",
-  "sourceTree": "31a6f9f8454cdb977095a2ad03ec98b041129076",
+  "sourceTree": "ac4e73ebd455303796c1d1bbb777d3bc8bfd94b9",
   "appTree": "7407403b823f619a7d77d4e5a1d5facaddd5b389",
   "nativeDependencyConfigMigrationDiffAgainstPreview": [],
   "localTests": {
@@ -10,11 +10,23 @@
     "passed": 197,
     "typecheckExit": 0,
     "scopedLintExit": 0,
-    "uiGuard": "PASS"
+    "uiGuard": "PASS",
+    "scope": "Prior2929eeb197tests; Range correction36relatedtests plus independent21tests, not a summed full-suite rerun"
   },
   "membersIndependentReview": "QUALIFIED_LOCAL_CODE_NO_P1_P2",
   "nativeVerified": false,
   "uxAccepted": false,
   "resourceApprovalRequired": true,
-  "devicesOrProcessesMutated": false
+  "devicesOrProcessesMutated": false,
+  "priorCodeCandidate": "2929eeb0353fad863bf680dde376b210149721e9",
+  "nativeWindow": "CLOSED_ORIGINAL_F87E119_8083_RESTORED",
+  "nativePartial": [
+    "Auckland selected-date pending stay summary and legal detail",
+    "Open Day without start-time chooser; Day1/2 readable"
+  ],
+  "nativeFailure": [
+    "Create calendar year-scale movement; local correction not Native verified"
+  ],
+  "resourceApprovalRequiredForFurtherNative": true,
+  "rangeReview": "docs/ops/experience-range-fix-20261018/INDEPENDENT_REVIEW.md"
 }
