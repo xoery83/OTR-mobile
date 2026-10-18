@@ -26,9 +26,9 @@ Base f87e119 (actual Owner Day/Create preview); main e81eeb9 inspected but lacks
 
 ## Validation
 
-- Combined16 focused suites /195 tests PASS. Independent C rerun33 tests PASS. After final type/menu refinements, focused Today+Menu22 tests PASS and final Menu11 tests PASS.
+- Final combined16 focused suites /197 tests PASS at source2929eeb. Earlier195 tests excluded the final two Members checks. Independent C rerun33 tests PASS. After final type/menu refinements, focused Today+Menu22 tests PASS and final Menu11 tests PASS.
 - Final TypeScript exit0 after explicit accepted/local Today union annotation; original61d0d80 did not itself satisfy that final-byte check, recorded transparently in independent review.
-- Final Members integration: focused27 tests PASS, TypeScript exit0, scoped ESLint exit0, UI guard PASS. Members5-file independent review PENDING because platform refused follow-up agent thread; Root will reuse a current Reviewer before Native qualification.
+- Final Members integration: focused27 tests PASS, TypeScript exit0, scoped ESLint exit0, UI guard PASS. Members5-file independent review QUALIFIED/no P1/P2; Root reused an existing Reviewer after platform refused a follow-up thread. Independent27 tests PASS, receipt `MEMBERS_INDEPENDENT_REVIEW.md`.
 - UI guard PASS; final GlobalMenu ESLint exit0 after pure eligibility flag/conditional array construction (no rule suppression). All builders scoped lint passed; final Coordinator changed-file checks recorded separately.
 - One broader existing unknown-zone test expected UTC while baseline passes empty zone; untouched baseline reproduced the same failure. It was not changed to force PASS.
 
@@ -36,7 +36,7 @@ Base f87e119 (actual Owner Day/Create preview); main e81eeb9 inspected but lacks
 
 Code and real production callbacks are IMPLEMENTED/WIRED for the bounded fixes above; RENDERED/NATIVE VERIFIED are NOT VERIFIED. No Simulator installed/booted, no actual user data edited and no Hosted/Metro change. No UX Accepted.
 
-Remaining P0 gate: independent integrated Native verification of actual geometry, pending hotel/readback, save/close/cold restore and scrolling. Owner AD5 remains reserved. See NATIVE_GATE.md and NATIVE_RESOURCE_PLAN.md.
+Remaining P0 gate: independent integrated Native verification of actual geometry, pending hotel/readback, save/close/cold restore and scrolling. Owner AD5 remains reserved. See NATIVE_GATE.md, NATIVE_RESOURCE_PLAN.md and OWNER_NATIVE_REQUEST.md.
 
 Known partials: cross-remount permission/version cache; trusted Calendar place-transition source; loading-more feedback and measured long-trip behavior; real Members invitation/connection status and legal Documents menu navigation; Cover Gallery/Tag Matching/photo persistence; multi-place identity/disambiguation; full Debug placement outside Today. Existing historic TODOs stay open. These gaps are not hidden by tested component existence.
 

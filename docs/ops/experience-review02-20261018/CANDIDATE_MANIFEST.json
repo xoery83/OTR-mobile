@@ -1,0 +1,20 @@
+{
+  "codeCandidate": "2929eeb0353fad863bf680dde376b210149721e9",
+  "previewRollback": "f87e119f",
+  "branch": "codex/experience-review02-20261018",
+  "sourceTree": "31a6f9f8454cdb977095a2ad03ec98b041129076",
+  "appTree": "7407403b823f619a7d77d4e5a1d5facaddd5b389",
+  "nativeDependencyConfigMigrationDiffAgainstPreview": [],
+  "localTests": {
+    "suites": 16,
+    "passed": 197,
+    "typecheckExit": 0,
+    "scopedLintExit": 0,
+    "uiGuard": "PASS"
+  },
+  "membersIndependentReview": "QUALIFIED_LOCAL_CODE_NO_P1_P2",
+  "nativeVerified": false,
+  "uxAccepted": false,
+  "resourceApprovalRequired": true,
+  "devicesOrProcessesMutated": false
+}

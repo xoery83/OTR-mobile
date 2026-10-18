@@ -10,7 +10,7 @@ Append/merge into Root `docs/ops/DELTA_DELIVERY_TRACKER.md`; do not replace hist
 | ER02-TH-04 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Honest selected plan date and lawful Day action | Native empty vs unavailable/actionable state | Trip Today |
 | ER02-TH-05 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Real counts/recent/setup facts | Unmet-only setup and populated Preparation regression | Trip Preparation |
 | ER02-TH-06 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Owning Person/Actor/connection facts | Native real named members/status; do not invent invitation state | Members/Trip |
-| ER02-TH-07 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Live scoped existing navigation callbacks | Review/Native existing Edit/Open Day/Members callbacks; Documents route remains gap | Experience Navigation |
+| ER02-TH-07 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Live scoped existing navigation callbacks | Native existing Edit/Open Day/Members callbacks (Review PASS); Documents route remains gap | Experience Navigation |
 | ER02-TH-08 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Ledger settings authority/lock | Real currency read and authorized settings Native | Ledger/Trip Edit |
 | ER02-TH-09 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Lawful asset/photo persistence and location-tag catalogue | Retain Cover Gallery/Tag Matching historical TODO; report exact capability gap | Trip Cover |
 | ER02-TH-10 | EXPERIENCE-REVIEW-02 Product/Blueprint 2026-10-18 | PARTIAL | Real finance read model | Integrated Native spending content/actions | Ledger Experience |

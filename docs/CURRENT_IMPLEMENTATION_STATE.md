@@ -5,7 +5,7 @@
   Day/Create Owner preview; canonical main not overwritten. Register/ownership:
   `docs/ops/experience-review02-20261018/PREFLIGHT.md`.
 - A/B/C fixed candidates0af7ddc/fd14aab/f572466 integrated in isolated tree;
-  independent reviews and combined16 suites/195 tests PASS. Final type/menu
+  independent reviews and final16 suites/197 tests PASS. Final type/menu
   refinements verified separately. Receipt: `docs/ops/experience-review02-20261018/DELIVERY_RECEIPT.md`.
   Code/WIRED local save/close, continuous range, semantic Day restore and mounted
   widget refresh corrected; cross-remount invalidation and owning data gaps remain PARTIAL.
