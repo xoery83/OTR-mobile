@@ -1,0 +1,38 @@
+{
+  "issue": "ER02 TH05 local MANUAL pending Preparation read integration",
+  "owning_module": "Trip Preparation Repository/Core Reader",
+  "file": "src/data/repositories/tripPreparationRepository.ts",
+  "current_seam": "createTripPreparationReader.read calls core.acceptedSnapshot only; null branch returns selectTripPreparation([]) for PENDING_CREATE local Trip",
+  "existing_reusable_capability": "tripLocalManualReadRepository scoped original CREATE provenance/actor fences plus Core.manualReadSnapshot, immutable LOCAL_MANUAL_COMMITTED source fingerprint, lawful pending items. Existing d8250e1 cold Reader tests, not yet this integration.",
+  "minimal_request": "Owning Writer qualify and consume lawful existing local manual projection in Preparation counts/recent/resolveItem with correct source/account/trip invalidation and formal navigation; retain accepted certificate/epoch distinction. Do not create admitted Items/remote authority or require Hosted receipt merely to display saved local plans.",
+  "dependencies": [
+    "Current unique Repository Writer via Coordinator",
+    "Shared existing normal item detail navigation source/fingerprint contract"
+  ],
+  "runtime_evidence": {
+    "item_id": "cd1d8549-4cb8-4166-8d79-c1adc10391e7",
+    "operation_id": "12709234-da8d-4854-b8dc-48ee4022eee5",
+    "title": "ER02 local pending walk",
+    "family": "P1",
+    "admission": "MANUAL",
+    "local_date": "2026-10-20",
+    "local_time": null,
+    "zone_id": null,
+    "instant": null,
+    "state": "BLOCKED",
+    "outside_explicit_trip_bounds": true,
+    "bounds_unchanged": true,
+    "path": "Existing LocalTripWorkspace Add Itinerary → tripRepository.addItem → Core.enqueue; no direct table writes",
+    "cold_preparation": "Still empty; not Native PASS",
+    "day_outlying_discoverability": "NOT VERIFIED; current remembered Dec31 empty is not proof of missing item",
+    "no_69_authority_receipt_claim": true
+  },
+  "acceptance": [
+    "Normal UI save on same QA Trip, local pending no network needed",
+    "Preparation count/recent agrees with legal manual Reader across cold reopen",
+    "Tap same item resolves legal detail and Back restores same Home/Day",
+    "Explicit Trip dates unchanged for outlying event"
+  ],
+  "schedule_suggestion": "Next smallest owning Reader/Preparation integration before TH05 and TH02 full Native acceptance; no Experience Core edits in this pass",
+  "not_proven": "Outlying Calendar discoverability is separately unverified, not asserted broken"
+}

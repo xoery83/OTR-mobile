@@ -12,7 +12,8 @@
     "metro_pid": 23824,
     "metro_workdir": "/private/tmp/otr-er02-cover70-20261020",
     "metro_log": "/private/tmp/otr-er02-native-20261020/e59b884-metro.log",
-    "account_actor": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e"
+    "account_actor": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+    "final_visible_state": "English Trip Home: ER02 Cover QA · Iceland Winter. Original Host/account retained; DeviceHub GUI can be yielded after receipt."
   },
   "qa_data": {
     "only_mutated_trip": "24617633-94fd-477d-bfc8-c7e974d6212e",
@@ -25,7 +26,25 @@
     "selected_cover_asset_id": "owner-photo-dbfdcd6ae067",
     "path": "Normal UI existing repositories; SQLite only read-only corroboration",
     "hosted_sync_pass": false,
-    "no_session_or_database_copy": true
+    "no_session_or_database_copy": true,
+    "additional_normal_ui_pending_item": {
+      "item_id": "cd1d8549-4cb8-4166-8d79-c1adc10391e7",
+      "operation_id": "12709234-da8d-4854-b8dc-48ee4022eee5",
+      "title": "ER02 local pending walk",
+      "family": "P1",
+      "admission": "MANUAL",
+      "local_date": "2026-10-20",
+      "local_time": null,
+      "zone_id": null,
+      "instant": null,
+      "state": "BLOCKED",
+      "outside_explicit_trip_bounds": true,
+      "bounds_unchanged": true,
+      "path": "Existing LocalTripWorkspace Add Itinerary → tripRepository.addItem → Core.enqueue; no direct table writes",
+      "cold_preparation": "Still empty; not Native PASS",
+      "day_outlying_discoverability": "NOT VERIFIED; current remembered Dec31 empty is not proof of missing item",
+      "no_69_authority_receipt_claim": true
+    }
   },
   "static_cover_sources": {
     "resource_sha": "6ea7217a869b08fe8cbf2d6889b20add1e79f551",
@@ -52,7 +71,8 @@
       "Range draft Cancel restores persisted bounds"
     ],
     "known_failures": [
-      "DS06 120-day full mounting remains FAIL"
+      "DS06 120-day full mounting remains FAIL",
+      "TH05 Preparation acceptedSnapshot-only fallback shows empty despite lawful locally saved MANUAL Pending Item; owning Repository integration requested"
     ],
     "unverified": [
       "Iceberg full-subject rendering",
@@ -71,7 +91,7 @@
     {
       "id": "TH-02",
       "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
-      "native_scope": "No new local pending/stay-checkout evidence on this candidate. Earlier scoped evidence remains bounded."
+      "native_scope": "Normal UI saved one real MANUAL P1 DateOnly pending item; cold pending intent persisted. Day/details and checkout still NOT VERIFIED. No TH02 PASS."
     },
     {
       "id": "TH-03",
@@ -87,7 +107,7 @@
     {
       "id": "TH-05",
       "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
-      "native_scope": "Empty Upcoming Preparation actual visible; populated counts/recent/unmet-only setup still require qualification."
+      "native_scope": "Cold Preparation still empty despite one persisted legal MANUAL pending item. Exact read seam tripPreparationRepository.read acceptedSnapshot-null branch returns selectTripPreparation([]); owning integration request, not a fixture or authority bypass."
     },
     {
       "id": "TH-06",
@@ -139,7 +159,7 @@
     {
       "id": "ET-02",
       "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
-      "native_scope": "Existing saved 120-day cross-year range reopened; choose Jan1 draft then Cancel restores Dec30-Apr28 and disabled Save. Earlier Done/save persistence evidence retained; outlying Item bounds not exercised."
+      "native_scope": "Existing saved 120-day cross-year range reopened; choose Jan1 draft then Cancel restores Dec30-Apr28 and disabled Save. Earlier Done/save persistence evidence retained; outlying Item bounds not exercised. Real Oct20 item save leaves explicit Dec30-Apr28 metadata unchanged; outlying Calendar navigation not qualified."
     },
     {
       "id": "ET-03",
@@ -215,6 +235,10 @@
     {
       "path": "e59b884-range-cancel.ax.txt",
       "sha256": "cdfacce4fa83b98e81df0314d6892648498abca5e42f7a9624534fa5fa4ae1eb"
+    },
+    {
+      "path": "e59b884-pending-cold-home.ax.txt",
+      "sha256": "c74baebea069d72fc89ebdd8504cc2153b5f11ea941716fd10c8c78590442056"
     }
   ],
   "rollback": {
@@ -222,5 +246,13 @@
     "worktree": "/private/tmp/otr-er02-day-native-fixes-20261020",
     "procedure": "Normal close only AD5 OTR, stop only owned8083, start previous frozen source on8083/private cache, open original App icon. Preserve SQLite/Keychain/account. No reinstall or data rollback."
   },
-  "acceptance": "No whole-clause Owner Accepted. ER02 remains active."
+  "acceptance": "No whole-clause Owner Accepted. ER02 remains active.",
+  "release_gate": {
+    "result": "No installable Release artifact",
+    "reported_by": "Coordinator",
+    "failure": "Standard isolated build exit65 missing folly/dynamic.h after bounded same-lock SwiftUIIntrospect path restoration",
+    "spare_63A5_booted": false,
+    "ad5_changed": false,
+    "embedded_no_metro": "INTEGRATED_NOT_NATIVE_VERIFIED"
+  }
 }
