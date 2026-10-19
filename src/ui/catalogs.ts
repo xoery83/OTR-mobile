@@ -380,11 +380,16 @@ export const en = {
   "coverLibrary.geoLicense": "GeoNames licence · CC BY 4.0",
   "coverLibrary.preview": "Preview library · rights and crop review pending",
   "coverLibrary.automatic": "Automatic cover",
-  "coverLibrary.unavailable": "Your saved cover is unavailable in this version. It has not been changed.",
+  "coverLibrary.unavailable":
+    "Your saved cover is unavailable in this version. It has not been changed.",
   "coverLibrary.recommended": "Suggested for this Trip",
+  "coverLibrary.ownerPhoto": "Owner photograph",
+  "coverLibrary.ownerScope":
+    "Authorized for this Native preview. Publication and people/property review pending.",
   "coverLibrary.illustration": "Generated illustration · not a destination photograph",
   "coverLibrary.credits": "Sources and credits",
-  "coverLibrary.geoCredits": "Location matching uses GeoNames (CC BY 4.0) and Wikidata (CC0). Photographs retain their source licences. JPEG compression and display cropping may apply. Review status is unchanged.",
+  "coverLibrary.geoCredits":
+    "Location matching uses GeoNames (CC BY 4.0) and Wikidata (CC0). Photographs retain their source licences. JPEG compression and display cropping may apply. Review status is unchanged.",
   "coverLibrary.source": "Original source",
   "coverLibrary.license": "Licence",
   "myTrips.coverFailed": "Could not save this cover. Try again.",
@@ -2726,9 +2731,12 @@ export const zhHans: Record<MessageKey, string> = {
   "coverLibrary.automatic": "自动选择封面",
   "coverLibrary.unavailable": "已保存的封面在此版本不可用。原选择未被更改。",
   "coverLibrary.recommended": "此旅行的推荐封面",
+  "coverLibrary.ownerPhoto": "Owner 原创摄影",
+  "coverLibrary.ownerScope": "已授权本次 Native 预览；公开发布及人物／场所权利仍待审核。",
   "coverLibrary.illustration": "生成插画 · 并非目的地实景照片",
   "coverLibrary.credits": "来源与署名",
-  "coverLibrary.geoCredits": "地点匹配使用 GeoNames（CC BY 4.0）和 Wikidata（CC0）。照片保留其来源许可，可能经过 JPEG 压缩和显示裁剪。审核状态保持不变。",
+  "coverLibrary.geoCredits":
+    "地点匹配使用 GeoNames（CC BY 4.0）和 Wikidata（CC0）。照片保留其来源许可，可能经过 JPEG 压缩和显示裁剪。审核状态保持不变。",
   "coverLibrary.source": "原始来源",
   "coverLibrary.license": "许可协议",
   "myTrips.coverFailed": "无法保存此封面，请重试。",

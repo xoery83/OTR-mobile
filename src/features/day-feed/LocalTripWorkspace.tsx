@@ -59,7 +59,7 @@ import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSe
 import { TripMembersSummary } from "./TripSetupRows";
 import { TripMembersSheet } from "./TripMembersSheet";
 import { LocalTripPhotos } from "./LocalTripPhotos";
-import { tripCoverSource } from "./tripCovers";
+import { tripCoverId, tripCoverSource } from "./tripCovers";
 
 const displayDate = (value: string) =>
   formatUiDate(new Date(`${value}T12:00:00Z`), {
@@ -614,6 +614,7 @@ function LocalTripContent({
             widgets={pages}
             title={selected.name}
             cover={tripCoverSource(selected)}
+            coverAssetId={tripCoverId(selected)}
             metadata={[
               ...(selected.startDate && selected.endDate
                 ? [
@@ -829,6 +830,7 @@ function LocalTripContent({
             widgets={pages}
             title={remoteSelected.name}
             cover={tripCoverSource(remoteSelected)}
+            coverAssetId={tripCoverId(remoteSelected)}
             notice={t("myTrips.cachedDetails")}
             metadata={[
               ...(remoteStart && remoteEnd

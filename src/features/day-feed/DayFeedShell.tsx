@@ -36,7 +36,13 @@ export function DayFeedShellTitle({
       onPress={onOpenCalendar}
       style={styles.titleTarget}
     >
-      <UiText style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+      <UiText
+        style={styles.title}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
+      >
         {label}
       </UiText>
       <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />

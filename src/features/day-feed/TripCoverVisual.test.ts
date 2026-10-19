@@ -52,3 +52,14 @@ it("retains overlay content after image failure and allows another selected cove
     ),
   ).toBe(true);
 });
+
+it("keeps the frozen wide iceberg uncropped while other registered covers retain cover fit", () => {
+  const image = (assetId: "owner-photo-593487a64e45" | "city") =>
+    descendants(TripCoverVisual({ source: 2, assetId, style: {} })).find(
+      (node) => node.type === "Image",
+    )!;
+  expect(
+    (image("owner-photo-593487a64e45").props as { resizeMode?: string }).resizeMode,
+  ).toBe("contain");
+  expect((image("city").props as { resizeMode?: string }).resizeMode).toBe("cover");
+});

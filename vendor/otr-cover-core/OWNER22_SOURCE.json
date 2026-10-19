@@ -1,0 +1,15 @@
+{
+  "supplementCommit": "6ea7217a869b08fe8cbf2d6889b20add1e79f551",
+  "owner22AllowlistSha256": "1d9fcbe05882645f7846d253989a2720bb8bf55765c1fd8b1677b4c085051927",
+  "previous48CanonicalSha256": "fb8ab8b7650a9caf0eeee66d2243eb1e6096c1feaa321b77de571a2e7254a995",
+  "previous52Preserved": true,
+  "ownerImages": 22,
+  "ownerImageBytes": 5579363,
+  "totalCatalog": 70,
+  "totalRegisteredIds": 74,
+  "cropContainIds": [
+    "owner-photo-593487a64e45"
+  ],
+  "nativeVerified": false,
+  "scope": "Static Native preview only; no personal photo upload, Schema, Auth, Source or Sync change"
+}

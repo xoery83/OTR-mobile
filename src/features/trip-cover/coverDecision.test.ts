@@ -4,6 +4,7 @@ import ts from "typescript";
 import { createHash } from "node:crypto";
 import {
   nativeTripCoverAllowlistSha256,
+  ownerPhotoTripCoverAllowlistSha256,
   tripCoverAssetIds,
   isTripCoverAssetId,
 } from "@/domain/trip/tripCoverAssets";
@@ -20,7 +21,7 @@ const automatic = (name: string, destination: string | null) => ({
   destination,
   selectedCoverAssetIdRaw: null,
 });
-it("keeps 48 frozen images byte exact and all52 literal resource mappings finite", () => {
+it("keeps 48 frozen images byte exact and all74 literal resource mappings finite", () => {
   const allow = JSON.parse(readFileSync("vendor/otr-cover-core/allowlist.json", "utf8"));
   const map = readFileSync("src/features/trip-cover/tripCoverSources.ts", "utf8");
   expect(allow.items).toHaveLength(48);
@@ -29,7 +30,7 @@ it("keeps 48 frozen images byte exact and all52 literal resource mappings finite
       .update(readFileSync("vendor/otr-cover-core/allowlist.json"))
       .digest("hex"),
   ).toBe(nativeTripCoverAllowlistSha256);
-  expect(tripCoverAssetIds).toHaveLength(52);
+  expect(tripCoverAssetIds).toHaveLength(74);
   let bytes = 0;
   for (const item of allow.items) {
     expect(isTripCoverAssetId(item.id)).toBe(true);
@@ -39,7 +40,7 @@ it("keeps 48 frozen images byte exact and all52 literal resource mappings finite
     bytes += content.length;
   }
   expect(bytes).toBe(12750269);
-  expect(coverCatalog).toHaveLength(48);
+  expect(coverCatalog).toHaveLength(70);
 });
 it("distinguishes true automatic null from future/manual or uncertified legacy DTOs", () => {
   const trip = automatic("Tokyo winter", "Tokyo");
@@ -103,4 +104,46 @@ it("retains the frozen TypeScript bytes and emits only type-erased portable JS",
       }).outputText,
     );
   }
+});
+
+it("keeps the authorized Owner22 supplement finite, byte-exact and geographically unknown", () => {
+  const root = "vendor/otr-cover-core/";
+  const allow = JSON.parse(readFileSync(root + "owner22-allowlist.json", "utf8"));
+  const origin = JSON.parse(readFileSync(root + "OWNER22_SOURCE.json", "utf8"));
+  expect(
+    createHash("sha256")
+      .update(readFileSync(root + "owner22-allowlist.json"))
+      .digest("hex"),
+  ).toBe(ownerPhotoTripCoverAllowlistSha256);
+  expect(allow.items).toHaveLength(22);
+  expect(
+    createHash("sha256")
+      .update(JSON.stringify(coverCatalog.slice(0, 48)))
+      .digest("hex"),
+  ).toBe(origin.previous48CanonicalSha256);
+  const map = readFileSync("src/features/trip-cover/tripCoverSources.ts", "utf8");
+  expect(map.match(/require\(/g)).toHaveLength(74);
+  let bytes = 0;
+  for (const item of allow.items) {
+    const image = readFileSync(`assets/trips/covers/v2/${item.id}.jpg`);
+    expect(createHash("sha256").update(image).digest("hex")).toBe(item.sha256);
+    expect(isTripCoverAssetId(item.id)).toBe(true);
+    expect(map).toContain(`v2/${item.id}.jpg`);
+    const asset = coverCatalog.find((row) => row.id === item.id)!;
+    expect(asset.provenance.kind).toBe("owner_photograph");
+    expect(asset.provenance.sourceUrl).toBe("");
+    expect(asset.provenance.licenseUrl).toBe("");
+    expect(asset.geoSpecificity).toBe("generic");
+    expect(asset.actualCaptureGeo.entityIds).toEqual([]);
+    expect(asset.actualCaptureGeo.confidence).toBe("unknown");
+    expect(asset.recommendationEligibility.exactGeoIds).toEqual([]);
+    expect(asset.provenance.humanReview).toBe("pending");
+    bytes += image.length;
+  }
+  expect(bytes).toBe(5579363);
+  expect(
+    allow.items
+      .filter((item: any) => item.cropQA.mobileFit === "contain")
+      .map((item: any) => item.id),
+  ).toEqual(origin.cropContainIds);
 });

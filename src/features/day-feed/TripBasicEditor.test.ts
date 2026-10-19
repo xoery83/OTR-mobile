@@ -52,6 +52,7 @@ vi.mock("./TripMetadataFields", () => ({ TripMetadataFields: "TripMetadataFields
 vi.mock("./TripSetupRows", () => ({ TripCurrencyRow: "TripCurrencyRow" }));
 vi.mock("./tripCovers", () => ({
   tripCoverSource: (trip: any) => trip.selectedCoverAssetId ?? "fallback",
+  tripCoverId: (trip: any) => trip.selectedCoverAssetId ?? "coast",
 }));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: "TripCoverVisual" }));
 type Element = ReactElement<Record<string, unknown> & { children?: ReactNode }>;

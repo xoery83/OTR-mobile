@@ -159,6 +159,7 @@ export function TripCoverPicker({
                   >
                     <TripCoverVisual
                       source={builtInTripCoverSource(id)}
+                      assetId={id}
                       style={styles.image}
                     />
                     <View style={styles.body}>
@@ -170,7 +171,14 @@ export function TripCoverPicker({
                       ) : null}
                       {asset ? (
                         <UiText style={styles.meta}>
-                          {asset.provenance.author} · {asset.provenance.license}
+                          {asset.provenance.kind === "owner_photograph"
+                            ? t("coverLibrary.ownerPhoto")
+                            : `${asset.provenance.author} · ${asset.provenance.license}`}
+                        </UiText>
+                      ) : null}
+                      {asset?.provenance.kind === "owner_photograph" ? (
+                        <UiText style={styles.meta}>
+                          {t("coverLibrary.ownerScope")}
                         </UiText>
                       ) : null}
                       {asset?.provenance.kind === "generated_illustration" ? (
@@ -182,7 +190,11 @@ export function TripCoverPicker({
                   </Pressable>
                   {credits && asset ? (
                     <View style={styles.credits}>
-                      <UiText style={styles.meta}>{asset.provenance.attribution}</UiText>
+                      <UiText style={styles.meta}>
+                        {asset.provenance.kind === "owner_photograph"
+                          ? t("coverLibrary.ownerScope")
+                          : asset.provenance.attribution}
+                      </UiText>
                       {asset.provenance.sourceUrl.startsWith("https://") ? (
                         <UiButton
                           label={t("coverLibrary.source")}

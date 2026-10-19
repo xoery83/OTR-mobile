@@ -200,7 +200,7 @@ vi.mock("./TripCoverPicker", () => ({
   },
 }));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: () => null }));
-vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1 }));
+vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1, tripCoverId: () => "coast" }));
 
 const trip = (id: string, name: string): Trip => ({
   id,

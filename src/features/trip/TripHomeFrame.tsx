@@ -1,3 +1,4 @@
+import type { TripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ReactNode } from "react";
 import {
@@ -20,6 +21,7 @@ export function TripHomeFrame({
   title,
   metadata,
   cover,
+  coverAssetId,
   widgets = [],
   modules,
   notice,
@@ -29,6 +31,7 @@ export function TripHomeFrame({
   title: string;
   metadata: readonly string[];
   cover: ImageSourcePropType;
+  coverAssetId?: TripCoverAssetId;
   widgets?: readonly TripHomeWidget[];
   modules?: ReactNode;
   notice?: string;
@@ -48,6 +51,7 @@ export function TripHomeFrame({
             : undefined
         }
         source={cover}
+        assetId={coverAssetId}
         style={[styles.hero, { width, minHeight: height * 0.32 }]}
       >
         <Pressable

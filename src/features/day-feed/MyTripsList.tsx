@@ -123,6 +123,7 @@ export function MyTripsList({
       <TripCoverVisual
         key={tripCoverId(trip)}
         source={tripCoverSource(trip)}
+        assetId={tripCoverId(trip)}
         style={styles.thumbnail}
       />
       <View style={styles.compactBody}>
@@ -172,6 +173,7 @@ export function MyTripsList({
               <TripCoverVisual
                 key={`${trip.id}:${tripCoverId(trip)}`}
                 source={tripCoverSource(trip)}
+                assetId={tripCoverId(trip)}
                 style={styles.heroImage}
               >
                 <Pressable

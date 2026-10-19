@@ -16,7 +16,7 @@ import { TripMetadataFields } from "./TripMetadataFields";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripCurrencyRow } from "./TripSetupRows";
 import { TripCoverVisual } from "./TripCoverVisual";
-import { tripCoverSource } from "./tripCovers";
+import { tripCoverId, tripCoverSource } from "./tripCovers";
 import { SheetHeader } from "@/components/SheetHeader";
 import { rawTripCover } from "@/features/trip-cover/coverDecision";
 import type { TripCoverUpdate } from "@/domain/trip/tripCoverAssets";
@@ -80,6 +80,17 @@ export function TripBasicEditor({
     destination: destination.trim() || null,
     startDate: start || null,
     endDate: end || null,
+  };
+  const previewTrip = {
+    ...trip,
+    name: after.name,
+    destination: after.destination,
+    ...(metadataEditable && coverChanged
+      ? {
+          selectedCoverAssetId: draftCover,
+          selectedCoverAssetIdRaw: draftCover,
+        }
+      : {}),
   };
   const valid = tripMetadataSchema.safeParse(after).success;
   const dirty =
@@ -166,17 +177,8 @@ export function TripBasicEditor({
         </UiSection>
         <UiSection title={t("tripHome.coverTools")}>
           <TripCoverVisual
-            source={tripCoverSource({
-              ...trip,
-              name: after.name,
-              destination: after.destination,
-              ...(metadataEditable && coverChanged
-                ? {
-                    selectedCoverAssetId: draftCover,
-                    selectedCoverAssetIdRaw: draftCover,
-                  }
-                : {}),
-            })}
+            source={tripCoverSource(previewTrip)}
+            assetId={tripCoverId(previewTrip)}
             style={styles.cover}
           />
           <UiText style={styles.hint}>
