@@ -21,6 +21,7 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 };
 const state = vi.hoisted(() => ({
   buttons: [] as { label: string; onPress(): void }[],
+  rows: [] as { onPress(): void; accessibilityRole: string }[],
   money: [] as any[],
   push: vi.fn(),
   values: [] as any[],
@@ -51,6 +52,10 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   View: (p: any) => createElement("div", null, p.children),
+  Pressable: (p: any) => {
+    state.rows.push(p);
+    return createElement("button", null, p.children);
+  },
   StyleSheet: { create: (s: any) => s },
   useWindowDimensions: () => ({ fontScale: 1 }),
 }));
@@ -155,6 +160,7 @@ beforeEach(() => {
   state.cursor = 0;
   state.focus = [];
   state.buttons = [];
+  state.rows = [];
   state.money = [];
   state.push.mockReset();
   state.read.mockReset();
@@ -201,9 +207,23 @@ it("uses only current actor/Journey/generation cached Settlement in Past, no his
   advanceAccountGeneration();
   expect(financeDataForHome(data, "Past")).toBeNull();
 });
+it("keeps real amounts and recent category context without repeated expense counts", () => {
+  const html = render(snapshot(), "Active");
+  expect(html).toContain("Dinner");
+  expect(html).toContain("food");
+  expect(html).not.toContain("search.expenseCountOne");
+  expect(html).not.toContain("search.expenseCountOther");
+  expect(state.money.map(({ minor, currency }) => [minor, currency])).toEqual([
+    [2000, "NZD"],
+    [800, "NZD"],
+    [1000, "EUR"],
+  ]);
+  expect(state.rows[0].accessibilityRole).toBe("button");
+});
 it("opens real scoped Spending, Settlement, Analysis and expense detail; stale account callbacks cannot navigate", () => {
   render(snapshot(), "Active");
-  state.buttons.find((b) => b.label === "Dinner")!.onPress();
+  const expenseOpen = state.rows[0].onPress;
+  expenseOpen();
   expect(state.push).toHaveBeenLastCalledWith({
     pathname: "/expenses/expense/[id]",
     params: { id: "a" },
@@ -229,6 +249,7 @@ it("opens real scoped Spending, Settlement, Analysis and expense detail; stale a
   state.push.mockClear();
   advanceAccountGeneration();
   open();
+  expenseOpen();
   expect(state.push).not.toHaveBeenCalled();
 });
 function HookHarness({
