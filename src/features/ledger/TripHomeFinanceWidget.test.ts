@@ -225,7 +225,7 @@ it("opens real scoped Spending, Settlement, Analysis and expense detail; stale a
   const expenseOpen = state.rows[0].onPress;
   expenseOpen();
   expect(state.push).toHaveBeenLastCalledWith({
-    pathname: "/expenses/expense/[id]",
+    pathname: "/trip-expense/[id]",
     params: { id: "a" },
   });
   state.buttons.find((b) => b.label === "tripHome.finance.openSpending")!.onPress();

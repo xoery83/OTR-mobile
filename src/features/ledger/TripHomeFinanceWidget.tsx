@@ -182,7 +182,7 @@ export function TripHomeFinanceWidget({
               accessibilityRole="button"
               onPress={() =>
                 open({
-                  pathname: "/expenses/expense/[id]",
+                  pathname: "/trip-expense/[id]",
                   params: { id: expense.id },
                 })
               }

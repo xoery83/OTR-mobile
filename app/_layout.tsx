@@ -107,6 +107,10 @@ export default function RootLayout() {
               />
             ) : null}
             <Stack.Screen
+              name="trip-expense/[id]"
+              options={{ headerShown: true, headerTitle: t("common.expense") }}
+            />
+            <Stack.Screen
               name="trip-currency"
               options={{ headerShown: true, headerTitle: t("navigation.currency") }}
             />
