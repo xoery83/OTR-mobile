@@ -2,7 +2,11 @@ import { expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { createHash } from "node:crypto";
-import { tripCoverAssetIds, isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
+import {
+  nativeTripCoverAllowlistSha256,
+  tripCoverAssetIds,
+  isTripCoverAssetId,
+} from "@/domain/trip/tripCoverAssets";
 import {
   coverCatalog,
   rankedTripCovers,
