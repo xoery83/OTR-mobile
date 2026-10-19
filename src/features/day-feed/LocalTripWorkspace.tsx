@@ -417,7 +417,7 @@ function LocalTripContent({
       // A stale or revoked Day action simply stays on My Trips.
     }
   };
-  const selectCover = async (id: BuiltInTripCoverId) => {
+  const selectCover = async (id: BuiltInTripCoverId | null) => {
     const trip = selected;
     if (!trip || !alive.current || generation !== getAccountGeneration()) return;
     const repo = await readLocalTripRepository();
@@ -736,7 +736,12 @@ function LocalTripContent({
                       setSelected({
                         ...selected,
                         ...after,
-                        selectedCoverAssetId: cover.after,
+                        ...(cover
+                          ? {
+                              selectedCoverAssetId: cover.after,
+                              selectedCoverAssetIdRaw: cover.after,
+                            }
+                          : {}),
                       });
                       setCoverOpen(false);
                       // The committed value is visible now; normal focus reads refresh later.

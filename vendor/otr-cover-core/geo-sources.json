@@ -1,0 +1,47 @@
+[
+  {
+    "file": "cities15000.zip",
+    "url": "https://download.geonames.org/export/dump/cities15000.zip",
+    "sha256": "e900af1e095974fe987247255de6de022b35f5dde5099ab0d186e17ecf06ce96",
+    "bytes": 3362224,
+    "retrieved": "2026-10-19",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "file": "admin1CodesASCII.txt",
+    "url": "https://download.geonames.org/export/dump/admin1CodesASCII.txt",
+    "sha256": "b577baa3476bbe94f0454545e517e1835401d79c5b1105c8e02cf1d4a505e8ec",
+    "bytes": 151583,
+    "retrieved": "2026-10-19",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "file": "countryInfo.txt",
+    "url": "https://download.geonames.org/export/dump/countryInfo.txt",
+    "sha256": "c55f638cfaafb4fe45a9aa15120a0f1f78e8a34a8e1847d7b9320cf740fbc9ab",
+    "bytes": 31690,
+    "retrieved": "2026-10-19",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "file": "readme.txt",
+    "url": "https://download.geonames.org/export/dump/readme.txt",
+    "sha256": "b1957379b6c1242c700c98ac9a8aa0a09f56c3c0a50ee72175527005f48ef2c5",
+    "bytes": 8843,
+    "retrieved": "2026-10-19",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "file": "cities5000.zip",
+    "url": "https://download.geonames.org/export/dump/cities5000.zip",
+    "sha256": "4def736fcf8a6ab5e95fb4870903516f0a0e460cbb90ee26e4e80a7c9e305fab",
+    "bytes": 5714830,
+    "retrieved": "2026-10-19",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  }
+]

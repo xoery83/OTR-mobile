@@ -77,10 +77,16 @@ const before = {
 const render = (
   onSaveMetadata = vi.fn().mockResolvedValue(undefined),
   onSelectCover = vi.fn().mockResolvedValue(undefined),
+  tripOverride: Parameters<typeof TripBasicEditor>[0]["trip"] = trip,
 ) => {
   state.cursor = state.refCursor = 0;
   return elements(
-    TripBasicEditor({ trip, metadataEditable: true, onSaveMetadata, onSelectCover }),
+    TripBasicEditor({
+      trip: tripOverride,
+      metadataEditable: true,
+      onSaveMetadata,
+      onSelectCover,
+    }),
   );
 };
 const flush = async () => {
@@ -107,7 +113,7 @@ it("stages cover and metadata together through one owning callback, without an i
   expect(cover).not.toHaveBeenCalled();
   expect(save).not.toHaveBeenCalled();
   view = render(save, cover);
-  expect(view.find((n) => n.type === TripCoverPicker)!.props.selected).toBe("coast");
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBe("coast");
   (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
   await flush();
   expect(save).toHaveBeenCalledExactlyOnceWith(
@@ -143,7 +149,9 @@ it("retains unsaved fields after a failed local save and blocks invalid date ran
     start: trip.startDate,
     end: "2026-10-15",
   });
-  expect(render(save).find((node) => node.type === SheetHeader)!.props.rightDisabled).toBe(true);
+  expect(
+    render(save).find((node) => node.type === SheetHeader)!.props.rightDisabled,
+  ).toBe(true);
 });
 
 it("withholds metadata edits without local creator provenance while retaining the independent cover choice", () => {
@@ -194,4 +202,67 @@ it("retains a dirty editor when Currency is opened unless the user explicitly di
   );
   actions[1].onPress();
   expect(open).toHaveBeenCalledOnce();
+});
+
+it("metadata-only edits preserve an unsupported raw manual selection without cover intent", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const current = {
+    ...trip,
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: "future-cover",
+  };
+  let view = render(save, undefined, current);
+  (view.find((n) => n.type === TripMetadataFields)!.props.onName as (s: string) => void)(
+    "New name",
+  );
+  view = render(save, undefined, current);
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.trip).toEqual(
+    expect.objectContaining({
+      name: "New name",
+      selectedCoverAssetIdRaw: "future-cover",
+    }),
+  );
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save).toHaveBeenCalledWith(
+    before,
+    { ...before, name: "New name" },
+    undefined,
+    expect.any(String),
+  );
+});
+it("explicit replacement of a future raw selection preserves its exact CAS identity", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const current = {
+    ...trip,
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: "future-cover",
+  };
+  let view = render(save, undefined, current);
+  await (
+    view.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
+      id: string,
+    ) => Promise<void>
+  )("wc-142191115");
+  view = render(save, undefined, current);
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save).toHaveBeenCalledWith(
+    before,
+    before,
+    { before: "future-cover", after: "wc-142191115" },
+    expect.any(String),
+  );
+});
+it("does not turn an uncertified decoded null into an explicit cover save", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const view = render(save, undefined, { ...trip, selectedCoverAssetId: null });
+  await expect(
+    (
+      view.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
+        id: string,
+      ) => Promise<void>
+    )("city"),
+  ).rejects.toThrow("TRIP_COVER_STATE_UNAVAILABLE");
+  expect(save).not.toHaveBeenCalled();
 });

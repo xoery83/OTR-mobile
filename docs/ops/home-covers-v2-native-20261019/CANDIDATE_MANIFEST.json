@@ -1,0 +1,34 @@
+{
+  "baseER02": "c58f8064",
+  "coreSource": "3a2b4fac952b658523d48d1512001d9faa730174",
+  "coreIntegrated": "9bd21394",
+  "labFrozenSha": "9555ed42197bb0c955f12146317d2889757a7fd8",
+  "policy": "pending-landmark-preview (explicit consumer opt-in; production default unchanged)",
+  "reviewStatus": "NATIVE_COMBINATION_REVIEW_PENDING",
+  "nativeStatus": "NOT_INSTALLED_NOT_NATIVE_VERIFIED",
+  "imagesNew": 48,
+  "imagesNewBytes": 12750269,
+  "imagesLegacy": 4,
+  "imagesLegacyBytes": 2330224,
+  "imagesDistinctHashes": 52,
+  "geoJsonBytes": 6217584,
+  "catalogJsonBytes": 291796,
+  "pureSourceTsBytes": 113788,
+  "typeErasedJsBytes": 117474,
+  "compiler": "typescript/6.0.3",
+  "excludes": [
+    "Owner22 photos",
+    "raw/source images",
+    "Web UI/server",
+    "compiler/Node runtime",
+    "new Schema/Auth/Sync/Create payload"
+  ],
+  "remaining": [
+    "rights/human/crop approvals pending",
+    "user photo persistence not implemented",
+    "Native index/startup/scroll/decode/memory unmeasured",
+    "Release/IPA resource delta unmeasured",
+    "old clients still cannot edit unknown raw selected IDs",
+    "remote-only cover save needs an existing local row"
+  ]
+}

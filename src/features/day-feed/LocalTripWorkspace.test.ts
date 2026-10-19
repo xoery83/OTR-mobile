@@ -204,6 +204,8 @@ vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1 }));
 
 const trip = (id: string, name: string): Trip => ({
   id,
+  selectedCoverAssetId: null,
+  selectedCoverAssetIdRaw: null,
   name,
   destination: null,
   startDate: null,
@@ -629,7 +631,7 @@ it("normal Home Hero action opens the same Editor and saves through the owning m
       before: { name: current.name, destination: null, startDate: null, endDate: null },
       after: { name: "Updated", destination: null, startDate: null, endDate: null },
     }),
-    { before: null, after: null },
+    undefined,
   );
 });
 

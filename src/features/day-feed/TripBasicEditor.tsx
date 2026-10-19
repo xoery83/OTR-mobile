@@ -18,6 +18,8 @@ import { TripCurrencyRow } from "./TripSetupRows";
 import { TripCoverVisual } from "./TripCoverVisual";
 import { tripCoverSource } from "./tripCovers";
 import { SheetHeader } from "@/components/SheetHeader";
+import { rawTripCover } from "@/features/trip-cover/coverDecision";
+import type { TripCoverUpdate } from "@/domain/trip/tripCoverAssets";
 import { createUuid } from "@/domain/localId";
 
 export function TripBasicEditor({
@@ -32,14 +34,20 @@ export function TripBasicEditor({
 }: {
   trip: Pick<
     Trip,
-    "id" | "name" | "destination" | "startDate" | "endDate" | "selectedCoverAssetId"
+    | "id"
+    | "name"
+    | "destination"
+    | "startDate"
+    | "endDate"
+    | "selectedCoverAssetId"
+    | "selectedCoverAssetIdRaw"
   >;
   metadataEditable: boolean;
-  onSelectCover(id: BuiltInTripCoverId): Promise<void>;
+  onSelectCover(id: BuiltInTripCoverId | null): Promise<void>;
   onSaveMetadata(
     before: TripMetadata,
     after: TripMetadata,
-    cover: { before: BuiltInTripCoverId | null; after: BuiltInTripCoverId | null },
+    cover: TripCoverUpdate | undefined,
     operationId: string,
   ): Promise<void>;
   setup?: TripPreparationSetup | null;
@@ -55,8 +63,9 @@ export function TripBasicEditor({
     startDate: trip.startDate,
     endDate: trip.endDate,
   });
-  const [beforeCover, setBeforeCover] = useState(trip.selectedCoverAssetId ?? null);
+  const [beforeCover, setBeforeCover] = useState(rawTripCover(trip));
   const [draftCover, setDraftCover] = useState(trip.selectedCoverAssetId ?? null);
+  const [coverChanged, setCoverChanged] = useState(false);
   const busy = useRef(false);
   const saveIntent = useRef<{ fingerprint: string; operationId: string } | null>(null);
   const [name, setName] = useState(trip.name),
@@ -78,7 +87,7 @@ export function TripBasicEditor({
     after.destination !== before.destination ||
     after.startDate !== before.startDate ||
     after.endDate !== before.endDate ||
-    (metadataEditable && draftCover !== beforeCover);
+    (metadataEditable && coverChanged && draftCover !== beforeCover);
   const openCurrency = () => {
     if (!onOpenCurrency || saving) return;
     if (!dirty) {
@@ -97,14 +106,18 @@ export function TripBasicEditor({
     setSaving(true);
     setError(false);
     setSaved(false);
-    const cover = { before: beforeCover, after: draftCover };
+    const cover: TripCoverUpdate | undefined =
+      coverChanged && beforeCover !== undefined && draftCover !== beforeCover
+        ? { before: beforeCover, after: draftCover }
+        : undefined;
     const fingerprint = JSON.stringify({ before, after, cover });
     if (saveIntent.current?.fingerprint !== fingerprint)
       saveIntent.current = { fingerprint, operationId: createUuid() };
     void onSaveMetadata(before, after, cover, saveIntent.current.operationId)
       .then(() => {
         setBefore(after);
-        setBeforeCover(draftCover);
+        if (cover) setBeforeCover(cover.after);
+        setCoverChanged(false);
         saveIntent.current = null;
         setSaved(true);
       })
@@ -155,9 +168,14 @@ export function TripBasicEditor({
           <TripCoverVisual
             source={tripCoverSource({
               ...trip,
-              selectedCoverAssetId: metadataEditable
-                ? draftCover
-                : trip.selectedCoverAssetId,
+              name: after.name,
+              destination: after.destination,
+              ...(metadataEditable && coverChanged
+                ? {
+                    selectedCoverAssetId: draftCover,
+                    selectedCoverAssetIdRaw: draftCover,
+                  }
+                : {}),
             })}
             style={styles.cover}
           />
@@ -167,12 +185,22 @@ export function TripBasicEditor({
             )}
           </UiText>
           <TripCoverPicker
-            selected={metadataEditable ? draftCover : trip.selectedCoverAssetId}
+            trip={{ ...trip, name: after.name, destination: after.destination }}
+            selectedRaw={
+              metadataEditable
+                ? coverChanged
+                  ? draftCover
+                  : beforeCover
+                : rawTripCover(trip)
+            }
             onSelect={
               metadataEditable
                 ? async (id) => {
+                    if (beforeCover === undefined)
+                      throw new Error("TRIP_COVER_STATE_UNAVAILABLE");
                     if (!busy.current) {
                       setDraftCover(id);
+                      setCoverChanged(true);
                       setSaved(false);
                     }
                   }

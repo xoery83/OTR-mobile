@@ -218,7 +218,9 @@ it("keeps canceled cover/name drafts out of SQLite, saves both once, and reopens
   remount();
   ui = editor(f, (await f.repo.getTrip(trip.id))!);
   expect(ui.fields().name).toBe("Original");
-  expect(ui.render().find((n) => n.type === TripCoverPicker)!.props.selected).toBeNull();
+  expect(
+    ui.render().find((n) => n.type === TripCoverPicker)!.props.selectedRaw,
+  ).toBeNull();
   ui.fields().onName("Saved name");
   await ui.select("coast");
   ui.save();
@@ -274,7 +276,7 @@ it("retains both failed drafts and reuses the original atomic operation identity
     selectedCoverAssetId: null,
   });
   expect(ui.fields().name).toBe("Keep draft");
-  expect(ui.render().find((n) => n.type === TripCoverPicker)!.props.selected).toBe(
+  expect(ui.render().find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBe(
     "mountain",
   );
   ui.save();

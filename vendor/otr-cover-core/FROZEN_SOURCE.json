@@ -1,0 +1,50 @@
+{
+  "commit": "9555ed42197bb0c955f12146317d2889757a7fd8",
+  "sourceHashes": {
+    "frozenExports.ts": "4a080562219199caaaf00772bddb9ecde242f2a0510f684c7f245c68ec8b4ffe",
+    "themeVocabularyV2.ts": "5af7d1beb840baed8ce084cceb085f1bd62a55080e14ddd6be2f36e4889679fc",
+    "taxonomyV2.ts": "7db54da161b1bed8b8c047915d3da7704409a1427876767a1218dc79a8ccb4eb",
+    "production.ts": "5fe6ec652a7cd057e347e58d6558f6a0334781a97bb5a115fc4f00a46d612964",
+    "core.ts": "350d00e95efc3483f8f88dbb047de5e68d8499869cd914389f93ca8a5f682e53",
+    "geo.ts": "2a49e0251cd3c9754027300e981fc23b8b50c296efc4c60303edf05a5ed35614",
+    "tags.ts": "5cca71d1e54a15e4b4e97f6d11bef045940c22558ccb0efb6f966e543113c109",
+    "themes.ts": "064f46b02451e82cea3da10a047fd139325fee9e030b9d939b68ee9607c91c96",
+    "themeResolverV2.ts": "d9424b8e597dee184317ff2dbcdd0dc37c75176497ec7c80beeed7e7b271dd03",
+    "geoSceneV2.ts": "2c5b11d92d06a34d06346fc28101a72c255c3852d6da7b4e5bbf84735327e14f"
+  },
+  "policy": "pending-landmark-preview",
+  "rightsAndHumanApprovalUnchanged": true,
+  "nativeImages": 48,
+  "nativeImageBytes": 12750269,
+  "excluded": [
+    "Owner personal photos",
+    "raw images",
+    "Web UI",
+    "Node/compiler/runtime tools"
+  ],
+  "packaging": {
+    "compiler": "typescript/6.0.3",
+    "target": "ES2020",
+    "module": "ESNext",
+    "note": "Original TypeScript byte-exact; adjacent JS is type-erased output for original .js import specifiers. No compiler or Node runtime shipped."
+  },
+  "generatedJsHashes": {
+    "core.js": "88ebd0ba5007954a1c90328d24d21159d4e5951f5eda92aa3568df9060da04ae",
+    "frozenExports.js": "af12a98648c0e33a2312b5a21f65889cad52cd32da2e7e7550a3c22a0ae5b219",
+    "geo.js": "138fb20d89fb1666e7135cb3bc03e9c550367c836b547979a60eed9073cfb4d4",
+    "geoSceneV2.js": "cfa87cdd6ce3921793d6cf2c4077dcc1b2e9d00ea519921d6c2a96ee11a33f6b",
+    "production.js": "b3633485e008775227ca809f59669aabd778fc227868f3bae5b426b48a32ce6f",
+    "tags.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "taxonomyV2.js": "4961672bfaa71565fdd62a583994d854a5fbfd69d55687611c8c5397d3d839f8",
+    "themeResolverV2.js": "16368584dbcc89f1481008d128e7274030b5a5d6e2671620d48b0cba1daf5831",
+    "themeVocabularyV2.js": "58ca5e8a1869c81ddbd3035fb4adc8e628d35ceb53c79133b3a0f1cfd5018f8e",
+    "themes.js": "1323ca8b1e3fa25c377a1b1302c9df78deb823c9accfcda02e571c77c8717781"
+  },
+  "dataHashes": {
+    "geo.json": "d030fadf56d69375af40953db5f4aee999d90584e04d1558f74312987f4e3773",
+    "catalog.json": "2276d1a868e1cf1602b4ee271da62c6d9ced5f702b615343877687127bf552f1",
+    "allowlist.json": "25a8ebf674d33369c8369eeae245ff586de90a788db04ea1feb843e8390a445a",
+    "geo-sources.json": "54c53f0617786bd82590ca3f87b746ff2b2f3587ec3eec466365a0047b986d2e",
+    "NATURAL_PROVENANCE.md": "98575270b3539b4c132010f328d1015d8a8ae147eb3d448c6ba33c98a3e19475"
+  }
+}
