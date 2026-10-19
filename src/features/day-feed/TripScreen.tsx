@@ -258,6 +258,8 @@ function TripContent({ today = false }: { today?: boolean }) {
   useLayoutEffect(() => {
     if (today && !dayActive) return;
     navigation.setOptions({
+      // Native Stack falls back to the route name when a custom title renders null.
+      title: headerTitle,
       headerTransparent: true,
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: {

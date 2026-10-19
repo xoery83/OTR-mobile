@@ -1057,6 +1057,7 @@ it("keeps Day header title blank until the actual textual introduction has scrol
   const feed = find(await loaded(), DayFeed);
   state.mount = true;
   render();
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
   feed.presentation.header.props.onLayout({ nativeEvent: { layout: { height: 303 } } });
   feed.presentation.onOffsetChange(199);

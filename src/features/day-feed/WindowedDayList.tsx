@@ -707,8 +707,13 @@ export function WindowedDayList<T>({
           dragging.current = false;
         }
       }}
-      onLayout={() => {
-        if (renderedEpoch === listEpoch.current) retry();
+      onLayout={({ nativeEvent }) => {
+        if (renderedEpoch !== listEpoch.current) return;
+        trace("VIEWPORT_LAYOUT", {
+          height: nativeEvent.layout.height,
+          rows: rows.length,
+        });
+        retry();
       }}
       onScrollBeginDrag={() => {
         if (renderedEpoch !== listEpoch.current) return;
