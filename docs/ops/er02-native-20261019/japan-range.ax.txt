@@ -1,0 +1,246 @@
+Window: "OTR MT Correction 01 QA", App: Device Hub.
+0 standard window OTR MT Correction 01 QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area Secondary Actions: Scroll Up, Scroll Down
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					8 row (selected) Description: iphone.gen3, Value: OTR MT Correction 01 QA
+27.0
+Simulator
+					9 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					10 row (selectable) Description: iphone.gen3, Value: Leon's iPhone16pro
+27.0.1
+iPhone 16 Pro
+					11 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					12 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - B
+27.0
+Simulator
+					13 row (selectable) Description: iphone.gen3, Value: OTR Apple Local Model Probe 26.5
+26.5
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: OTR Flexible CP02 Held QA
+27.0
+Simulator
+					15 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR 02 Anonymous
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR Synthetic QA
+27.0
+Simulator
+					17 row (selectable) Description: iphone.gen3, Value: OTR Day Feed Lab DL1
+27.0
+Simulator
+					18 row (selectable) Description: iphone.gen3, Value: OTR Flight Native03 CLOSED
+27.0
+Simulator
+					19 row (selectable) Description: iphone.gen3, Value: OTR G2 FLEX Main Integration
+27.0
+Simulator
+					20 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro Max
+27.0
+Simulator
+					21 row (selectable) Description: iphone.gen1, Value: OTR N1 NOW Compact QA
+27.0
+Simulator
+					22 row (selectable) Description: iphone.gen3, Value: OTR N1 NOW Large QA
+27.0
+Simulator
+					23 row (selectable) Description: iphone.gen1, Value: OTR P1 V1R5 Compact QA
+27.0
+Simulator
+					24 row (selectable) Description: iphone.gen1, Value: OTR P2 Flight Small QA
+27.0
+Simulator
+					25 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - A
+27.0
+Simulator
+					26 row (selectable) Description: iphone.gen1, Value: OTR Capture C3 Small QA
+27.0
+Simulator
+					27 row (selectable) Description: iphone.gen3, Value: OTR Capture C3 Synthetic QA
+27.0
+Simulator
+				28 scroll bar (settable, float) 0
+					29 value indicator (settable, float) 0
+					30 increment arrow button
+					31 decrement arrow button
+					32 increment page button
+					33 decrement page button
+			34 search text field (settable) Search
+				35 button Search
+			36 splitter (disabled, settable, float) 308
+			37 container
+				38 container (showing 133-236 of 352 items)
+					39 button Description: Monday, January 4, 2027, Secondary Actions: Cancel
+					40 button Description: Tuesday, January 5, 2027, Secondary Actions: Cancel
+					41 button Description: Wednesday, January 6, 2027, Secondary Actions: Cancel
+					42 button Description: Thursday, January 7, 2027, Secondary Actions: Cancel
+					43 button Description: Friday, January 8, 2027, Secondary Actions: Cancel
+					44 button Description: Saturday, January 9, 2027, Secondary Actions: Cancel
+					45 button Description: Sunday, January 10, 2027, Secondary Actions: Cancel
+					46 button Description: Monday, January 11, 2027, Secondary Actions: Cancel
+					47 button Description: Tuesday, January 12, 2027, Secondary Actions: Cancel
+					48 button Description: Wednesday, January 13, 2027, Secondary Actions: Cancel
+					49 button Description: Thursday, January 14, 2027, Secondary Actions: Cancel
+					50 button Description: Friday, January 15, 2027, Secondary Actions: Cancel
+					51 button Description: Saturday, January 16, 2027, Secondary Actions: Cancel
+					52 button Description: Sunday, January 17, 2027, Secondary Actions: Cancel
+					53 button Description: Monday, January 18, 2027, Secondary Actions: Cancel
+					54 button Description: Tuesday, January 19, 2027, Secondary Actions: Cancel
+					55 button Description: Wednesday, January 20, 2027, Secondary Actions: Cancel
+					56 button Description: Thursday, January 21, 2027, Secondary Actions: Cancel
+					57 button Description: Friday, January 22, 2027, Secondary Actions: Cancel
+					58 button Description: Saturday, January 23, 2027, Secondary Actions: Cancel
+					59 button Description: Sunday, January 24, 2027, Secondary Actions: Cancel
+					60 button Description: Monday, January 25, 2027, Secondary Actions: Cancel
+					61 button Description: Tuesday, January 26, 2027, Secondary Actions: Cancel
+					62 button Description: Wednesday, January 27, 2027, Secondary Actions: Cancel
+					63 button Description: Thursday, January 28, 2027, Secondary Actions: Cancel
+					64 button Description: Friday, January 29, 2027, Secondary Actions: Cancel
+					65 button Description: Saturday, January 30, 2027, Secondary Actions: Cancel
+					66 button Description: Sunday, January 31, 2027, Secondary Actions: Cancel
+					67 heading Description: February 2027, Secondary Actions: Cancel
+					68 text Description: M, Secondary Actions: Cancel
+					69 text Description: T, Secondary Actions: Cancel
+					70 text Description: W, Secondary Actions: Cancel
+					71 text Description: T, Secondary Actions: Cancel
+					72 text Description: F, Secondary Actions: Cancel
+					73 text Description: S, Secondary Actions: Cancel
+					74 text Description: S, Secondary Actions: Cancel
+					75 button (selected) Description: Monday, February 1, 2027, Secondary Actions: Cancel
+					76 button Description: Tuesday, February 2, 2027, Secondary Actions: Cancel
+					77 button Description: Wednesday, February 3, 2027, Secondary Actions: Cancel
+					78 button Description: Thursday, February 4, 2027, Secondary Actions: Cancel
+					79 button Description: Friday, February 5, 2027, Secondary Actions: Cancel
+					80 button Description: Saturday, February 6, 2027, Secondary Actions: Cancel
+					81 button Description: Sunday, February 7, 2027, Secondary Actions: Cancel
+					82 button Description: Monday, February 8, 2027, Secondary Actions: Cancel
+					83 button Description: Tuesday, February 9, 2027, Secondary Actions: Cancel
+					84 button Description: Wednesday, February 10, 2027, Secondary Actions: Cancel
+					85 button Description: Thursday, February 11, 2027, Secondary Actions: Cancel
+					86 button (selected) Description: Friday, February 12, 2027, Secondary Actions: Cancel
+					87 button Description: Saturday, February 13, 2027, Secondary Actions: Cancel
+					88 button Description: Sunday, February 14, 2027, Secondary Actions: Cancel
+					89 button Description: Monday, February 15, 2027, Secondary Actions: Cancel
+					90 button Description: Tuesday, February 16, 2027, Secondary Actions: Cancel
+					91 button Description: Wednesday, February 17, 2027, Secondary Actions: Cancel
+					92 button Description: Thursday, February 18, 2027, Secondary Actions: Cancel
+					93 button Description: Friday, February 19, 2027, Secondary Actions: Cancel
+					94 button Description: Saturday, February 20, 2027, Secondary Actions: Cancel
+					95 button Description: Sunday, February 21, 2027, Secondary Actions: Cancel
+					96 button Description: Monday, February 22, 2027, Secondary Actions: Cancel
+					97 button Description: Tuesday, February 23, 2027, Secondary Actions: Cancel
+					98 button Description: Wednesday, February 24, 2027, Secondary Actions: Cancel
+					99 button Description: Thursday, February 25, 2027, Secondary Actions: Cancel
+					100 button Description: Friday, February 26, 2027, Secondary Actions: Cancel
+					101 button Description: Saturday, February 27, 2027, Secondary Actions: Cancel
+					102 button Description: Sunday, February 28, 2027, Secondary Actions: Cancel
+					103 heading Description: March 2027, Secondary Actions: Cancel
+					104 text Description: M, Secondary Actions: Cancel
+					105 text Description: T, Secondary Actions: Cancel
+					106 text Description: W, Secondary Actions: Cancel
+					107 text Description: T, Secondary Actions: Cancel
+					108 text Description: F, Secondary Actions: Cancel
+					109 text Description: S, Secondary Actions: Cancel
+					110 text Description: S, Secondary Actions: Cancel
+					111 button Description: Monday, March 1, 2027, Secondary Actions: Cancel
+					112 button Description: Tuesday, March 2, 2027, Secondary Actions: Cancel
+					113 button Description: Wednesday, March 3, 2027, Secondary Actions: Cancel
+					114 button Description: Thursday, March 4, 2027, Secondary Actions: Cancel
+					115 button Description: Friday, March 5, 2027, Secondary Actions: Cancel
+					116 button Description: Saturday, March 6, 2027, Secondary Actions: Cancel
+					117 button Description: Sunday, March 7, 2027, Secondary Actions: Cancel
+					118 button Description: Monday, March 8, 2027, Secondary Actions: Cancel
+					119 button Description: Tuesday, March 9, 2027, Secondary Actions: Cancel
+					120 button Description: Wednesday, March 10, 2027, Secondary Actions: Cancel
+					121 button Description: Thursday, March 11, 2027, Secondary Actions: Cancel
+					122 button Description: Friday, March 12, 2027, Secondary Actions: Cancel
+					123 button Description: Saturday, March 13, 2027, Secondary Actions: Cancel
+					124 button Description: Sunday, March 14, 2027, Secondary Actions: Cancel
+					125 button Description: Monday, March 15, 2027, Secondary Actions: Cancel
+					126 button Description: Tuesday, March 16, 2027, Secondary Actions: Cancel
+					127 button Description: Wednesday, March 17, 2027, Secondary Actions: Cancel
+					128 button Description: Thursday, March 18, 2027, Secondary Actions: Cancel
+					129 button Description: Friday, March 19, 2027, Secondary Actions: Cancel
+					130 button Description: Saturday, March 20, 2027, Secondary Actions: Cancel
+					131 button Description: Sunday, March 21, 2027, Secondary Actions: Cancel
+					132 button Description: Monday, March 22, 2027, Secondary Actions: Cancel
+					133 button Description: Tuesday, March 23, 2027, Secondary Actions: Cancel
+					134 button Description: Wednesday, March 24, 2027, Secondary Actions: Cancel
+					135 button Description: Thursday, March 25, 2027, Secondary Actions: Cancel
+					136 button Description: Friday, March 26, 2027, Secondary Actions: Cancel
+					137 button Description: Saturday, March 27, 2027, Secondary Actions: Cancel
+					138 button Description: Sunday, March 28, 2027, Secondary Actions: Cancel
+					139 button Description: Monday, March 29, 2027, Secondary Actions: Cancel
+					140 button Description: Tuesday, March 30, 2027, Secondary Actions: Cancel
+					141 button Description: Wednesday, March 31, 2027, Secondary Actions: Cancel
+				142 button Description: Home, ID: app.grid.3x3
+				143 button Description: Screenshot, ID: camera.viewfinder
+				144 button Description: Record, ID: record.circle
+				145 button Rotate Left
+		146 splitter (disabled, settable, float) 820
+		147 container
+			148 Inspector Subcategory
+				149 radio button Description: Info, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.info
+				150 radio button Description: Apps, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				151 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			152 scroll area Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+				153 container
+					154 text Name, Help: OTR MT Correction 01 QA, Value: OTR MT Correction 01 QA iOS 27.0, ID: info.inspector.item.name.value
+				155 container
+					156 text Model, Help: iPhone 18 Pro, Value: iPhone 18 Pro AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A
+				157 heading Paired Simulators
+				158 container
+					159 scroll area
+						160 list
+							161 row (selectable) No Paired Watch Simulators
+					162 button (disabled) Description: Add, Help: Pair Apple Watch
+					163 button (disabled) Description: Remove, Help: Unpair Apple Watch
+				164 button Edit Visibility
+			165 container Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+	166 toolbar
+		167 menu button Add, Help: Add Device, ID: plus
+		168 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		169 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		170 toggle button Description: Capture Keyboard, Value: off
+		171 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		172 Zoom
+			173 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			174 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 0
+			175 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 1, ID: 1.magnifyingglass
+			176 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		177 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		178 menu button More, Help: More Actions, ID: ellipsis
+		179 Inspector Category
+			180 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			181 radio button Description: text.document, Help: Reports, Value: 0
+			182 radio button Description: Info, Value: 1, ID: info
+	183 close button
+	184 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	185 minimize button
+	186 text OTR MT Correction 01 QA iOS 27.0
+187 menu bar
+	188 Device Hub
+	189 File
+	190 Edit
+	191 View
+	192 Device
+	193 Controls
+	194 Window
+	195 Help
+
+Selected:
+	8 row (selected)
+
+Note: Pay special attention to the content selected by the user. If the user asks a question or refers to the content they are looking at on-screen, they might be referring to the selected content (but they might be referring to something else that's visible, too).
