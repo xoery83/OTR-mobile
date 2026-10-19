@@ -126,6 +126,8 @@ it("committed date-only hotel reads Day and Tonight with explicit clock; no cert
   const local = (await f.read(f.tripId))!;
   expect(local.source.kind).toBe("LOCAL_MANUAL_COMMITTED");
   expect(local.items[0]).toMatchObject({ itemId: f.itemId, localState: "PENDING" });
+  expect(local.itemCreatedAt[f.itemId]).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  expect(local.hasPendingItem(f.itemId)).toBe(true);
   expect(local.rows("2026-10-16")).toEqual([
     expect.objectContaining({
       itemRef: f.itemId,

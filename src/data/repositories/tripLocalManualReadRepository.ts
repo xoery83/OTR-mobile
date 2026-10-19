@@ -142,6 +142,22 @@ export function createTripLocalManualReader(
           source,
           operations: snapshot.operations,
           items,
+          // Only current readable Item metadata; no graph or foreign Item enumeration.
+          itemCreatedAt: Object.freeze(
+            Object.fromEntries(
+              items.map((item) => {
+                const row = graph.itinerary_events.find((row) => row.id === item.itemId);
+                return [
+                  item.itemId,
+                  typeof row?.created_at === "string" ? row.created_at : null,
+                ];
+              }),
+            ),
+          ),
+          hasPendingItem(itemId: string) {
+            assertAccountRequestGeneration(scope);
+            return predictedIds.has(itemId);
+          },
           rows,
           today(clock: TodayClock) {
             assertAccountRequestGeneration(scope);
