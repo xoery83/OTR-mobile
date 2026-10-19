@@ -99,6 +99,7 @@ export function LocalManualDayFeed({
         ),
       });
   }
+  // Cell measurements must include spacing; FlatList estimates omit container gaps.
   return (
     <WindowedDayList
       rows={rows}
@@ -116,6 +117,7 @@ export function LocalManualDayFeed({
       initialAnchor={initialAnchor}
       topInset={presentation?.topInset ?? 0}
       bottomInset={visual.space.section + bottomInset}
+      rowSpacing={visual.space.section}
       header={presentation?.header}
       style={styles.body}
       contentContainerStyle={styles.content}
@@ -205,7 +207,7 @@ export function LocalManualDayRows({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
-    content: { padding: visual.space.section, gap: visual.space.section },
+    content: { padding: visual.space.section },
     row: {
       minHeight: 44,
       gap: visual.space.heading,

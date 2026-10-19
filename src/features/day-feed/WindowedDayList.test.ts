@@ -70,10 +70,11 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", async () => {
   const { createElement, forwardRef } = await import("react");
   return {
-    View: ({ children, onLayout, ref }: any) => {
+    View: ({ children, onLayout, ref, style }: any) => {
       const node = {
         y: 1000,
         height: 100,
+        style,
         measureInWindow: vi.fn((callback: (...values: number[]) => void) => {
           const y = node.y - state.nativeOffset,
             height = node.height;
@@ -158,6 +159,7 @@ function setup(
   days = 90,
   coldAnchor?: { key: string; date: string; within: number },
   header?: ReactNode,
+  rowSpacing = 0,
 ) {
   let date = "2026-10-01";
   const rows = Array.from({ length: days }, () => {
@@ -194,6 +196,8 @@ function setup(
         initialAnchor,
         topInset,
         header,
+        rowSpacing,
+        bottomInset: rowSpacing ? 100 : 0,
         onMountedRowsChange: count,
         onJumpResult: result,
         onAnchorChange: anchorChanged,
@@ -921,4 +925,24 @@ it("Core Day1 restores the Trip header even when legal out-of-bounds dates prece
   rerender();
   expect(state.props.data[0]).toBe(rows[0]);
   expect(state.props.ListHeaderComponent).not.toBeNull();
+});
+
+it("measures row spacing inside each cell while preserving header spacing and bottom safe area", () => {
+  const { rows, ref } = setup(
+    80,
+    120,
+    undefined,
+    createElement("span", {}, "Trip header"),
+    24,
+  );
+  expect(state.props.contentContainerStyle.at(-1).paddingBottom).toBe(76);
+  expect(state.props.ListHeaderComponent.props.style.paddingBottom).toBe(24);
+  mount(rows[0], 0);
+  expect(state.nodes.at(-1).style).toContainEqual({ paddingBottom: 24 });
+  ref.current!.jumpToDayHeader(rows[119].date);
+  state.rerender();
+  expect(state.props.ListHeaderComponent.props.style.height).toBe(104);
+  mount(rows[119], 0);
+  expect(state.nodes.at(-1).style).toContainEqual({ paddingBottom: 24 });
+  expect(state.props.maintainVisibleContentPosition).toBeUndefined();
 });

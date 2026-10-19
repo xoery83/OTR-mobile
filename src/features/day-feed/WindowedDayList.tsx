@@ -45,6 +45,7 @@ export function WindowedDayList<T>({
   layoutRevision,
   topInset = 0,
   bottomInset = 0,
+  rowSpacing = 0,
   style,
   contentContainerStyle,
   header,
@@ -66,6 +67,7 @@ export function WindowedDayList<T>({
   layoutRevision?: string | number;
   topInset?: number;
   bottomInset?: number;
+  rowSpacing?: number;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   header?: ReactNode;
@@ -458,6 +460,7 @@ export function WindowedDayList<T>({
       return (
         <View
           {...props}
+          style={[props.style, rowSpacing ? { paddingBottom: rowSpacing } : null]}
           ref={attach}
           collapsable={false}
           onLayout={(event) => {
@@ -469,7 +472,7 @@ export function WindowedDayList<T>({
         </View>
       );
     },
-    [retry, trace],
+    [retry, trace, rowSpacing],
   );
   useImperativeHandle(listRef, () => ({
     jumpToDayHeader(date, includeTripHeader = false) {
@@ -625,17 +628,24 @@ export function WindowedDayList<T>({
       ListHeaderComponent={
         origin === 0 ? (
           header ? (
-            <>{header}</>
+            rowSpacing ? (
+              <View style={{ paddingBottom: rowSpacing }}>{header}</View>
+            ) : (
+              <>{header}</>
+            )
           ) : null
         ) : (
-          <View style={{ height: topInset }} />
+          <View style={{ height: topInset + rowSpacing }} />
         )
       }
       {...dayListWindow}
       removeClippedSubviews={false}
       maintainVisibleContentPosition={jumping ? undefined : { minIndexForVisible: 0 }}
       style={style}
-      contentContainerStyle={[contentContainerStyle, { paddingBottom: bottomInset }]}
+      contentContainerStyle={[
+        contentContainerStyle,
+        { paddingBottom: Math.max(0, bottomInset - rowSpacing) },
+      ]}
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}
       onTouchStart={(event) => {
