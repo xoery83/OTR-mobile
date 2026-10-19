@@ -259,8 +259,13 @@ function TripContent({ today = false }: { today?: boolean }) {
     if (today && !dayActive) return;
     navigation.setOptions({
       headerTransparent: true,
+      fullScreenGestureEnabled: immersiveHome,
       headerStyle: {
-        backgroundColor: immersiveHome || dayActive ? colors.transparent : colors.surface,
+        backgroundColor: dayActive
+          ? colors.floatingSurface
+          : immersiveHome
+            ? colors.transparent
+            : colors.surface,
       },
       headerShadowVisible: false,
       headerBlurEffect:

@@ -163,6 +163,7 @@ vi.mock("@/ui/theme", () => ({
   useUiTheme: () => ({
     transparent: "transparent",
     surface: "surface",
+    floatingSurface: "floatingSurface",
     background: "background",
   }),
 }));
@@ -1108,4 +1109,24 @@ it("does not discard accepted v1 when a local read coexists with an explicit Flo
   expect(state.params).not.toHaveBeenCalled();
   state.routeMode = "day";
   expect(find(render(), DayFeed)).toBeNull();
+});
+
+it("keeps native material and a themed Day header backdrop without adding another inset owner", async () => {
+  state.routeMode = "day";
+  const node = await loaded();
+  const options = state.setOptions.mock.lastCall![0];
+  expect(options.headerTransparent).toBe(true);
+  expect(options.fullScreenGestureEnabled).toBe(false);
+  expect(options.headerBlurEffect).toBe("systemMaterial");
+  expect(options.headerStyle.backgroundColor).toBe("floatingSurface");
+  expect(find(node, DayFeed).presentation.topInset).toBe(103);
+});
+
+it("enables the existing native right-swipe only on immersive Home, preserving Day gesture ownership", async () => {
+  await loaded();
+  expect(state.setOptions.mock.lastCall![0].fullScreenGestureEnabled).toBe(true);
+  state.routeMode = "day";
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall![0].fullScreenGestureEnabled).toBe(false);
 });
