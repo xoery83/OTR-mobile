@@ -82,10 +82,17 @@ export function createTripLocalManualReader(
             operationId: local.create_operation_id,
             ...JSON.parse(local.payload_json),
           });
+          const capabilities = JSON.parse(local.capabilities_json);
+          // A normal Ledger bootstrap replaces the provisional capability marker.
+          // Original CREATE provenance and the current mapped owner are still
+          // required by the scoped join; Ledger readability alone grants nothing.
+          const creatorReadable =
+            capabilities.authority === "LOCAL_CREATOR" ||
+            (local.accepted_at !== null && capabilities.canRead === true);
           if (
             request.tripId !== tripId ||
             request.operationId !== local.create_operation_id ||
-            JSON.parse(local.capabilities_json).authority !== "LOCAL_CREATOR"
+            !creatorReadable
           )
             throw new Error("LOCAL_MANUAL_TRIP_PIN");
           coreUuid.parse(local.person_id);

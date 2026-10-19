@@ -8,6 +8,7 @@ import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repos
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
 import { createTripTodaysJourneyReader } from "./tripTodaysJourneyRepository";
 import { createTripRepository } from "./tripRepository";
+import { createLedgerReadRepository } from "./ledgerReadRepository";
 import {
   applyCoreCommand,
   emptyCoreGraph,
@@ -23,7 +24,7 @@ vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const connections: DatabaseSync[] = [];
 afterEach(() => connections.splice(0).forEach((sql) => sql.close()));
-async function fixture() {
+async function fixture(includeItem = true) {
   const sql = new DatabaseSync(":memory:");
   connections.push(sql);
   for (const migration of migrations) sql.exec(migration.sql);
@@ -73,14 +74,15 @@ async function fixture() {
     startDate: "2026-10-16",
     endDate: "2026-10-18",
   });
-  await trips.addItem(tripId, {
-    operationId,
-    itemId,
-    family: "P3",
-    title: "Manual hotel",
-    startDate: "2026-10-16",
-    endDate: "2026-10-18",
-  });
+  if (includeItem)
+    await trips.addItem(tripId, {
+      operationId,
+      itemId,
+      family: "P3",
+      title: "Manual hotel",
+      startDate: "2026-10-16",
+      endDate: "2026-10-18",
+    });
   const manual = createTripLocalManualReader(database, identity, core);
   const days = createTripDayFeedReader({
     account: identity,
@@ -95,6 +97,8 @@ async function fixture() {
     identity,
   );
   return {
+    database,
+    identity,
     today,
     core,
     account,
@@ -437,4 +441,102 @@ it("committed pending hotel and floating 09:00 survive a fresh local reader with
   expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
     before,
   );
+});
+
+async function bootstrapAcceptedLedger(
+  f: Awaited<ReturnType<typeof fixture>>,
+  ownerPersonId: string,
+  canRead = true,
+) {
+  const capabilities = {
+    canRead,
+    canCreateExpense: true,
+    canEditOwnExpense: true,
+    canCorrectAnyExpense: false,
+    canSuggestCorrection: false,
+    canResolveOwnExpenseConflict: true,
+    canAddOwnPaymentEvidence: false,
+    canManageExpenseValuation: false,
+    canManageLedgerValuationPolicy: false,
+  };
+  await createLedgerReadRepository(f.database, f.identity).applyBootstrap({
+    journey: {
+      id: f.tripId,
+      title: "Accepted local Trip",
+      startDate: "2026-10-16",
+      endDate: "2026-10-18",
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      valuationPolicy: "REFERENCE_RATE",
+      updatedAt: "2026-10-20T00:00:00Z",
+    },
+    members: [
+      {
+        id: ownerPersonId,
+        displayName: "Owner",
+        role: "owner",
+        status: "linked",
+        capabilities,
+        updatedAt: "2026-10-20T00:00:00Z",
+      },
+    ],
+    households: [],
+    expenses: [],
+    corrections: [],
+    rateQuotes: [],
+    actor: { memberId: ownerPersonId, role: "owner", capabilities },
+    cursor: "accepted",
+    serverTime: "2026-10-20T00:00:00Z",
+  });
+}
+
+it("keeps accepted local Day readable after normal Ledger bootstrap replaces the provisional marker", async () => {
+  for (const includeItem of [false, true]) {
+    const f = await fixture(includeItem);
+    const receipt = await acceptTripBeforeFirstCertificate(f);
+    await bootstrapAcceptedLedger(f, receipt.ownerPersonId);
+    const capabilities = JSON.parse(
+      String(
+        f.sql.prepare("SELECT capabilities_json FROM ledger_actor_context").get()!
+          .capabilities_json,
+      ),
+    );
+    expect(capabilities.authority).toBeUndefined();
+    expect(capabilities.canRead).toBe(true);
+    const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+    const freshCore = createTripCoreV2Repository(f.database, f.identity, async (bytes) =>
+      createHash("sha256").update(bytes).digest("hex"),
+    );
+    const freshManual = createTripLocalManualReader(f.database, f.identity, freshCore);
+    const days = createTripDayFeedReader({
+      account: f.identity,
+      projection: async () => null,
+      localManual: freshManual,
+      candidates: async () => [],
+      services: async () => ({}),
+    });
+    const read = await days.trip(f.tripId);
+    expect(read.observed).toBeNull();
+    expect(read.localManualStatus).toBe("AVAILABLE");
+    expect(read.localManual?.scope.tripId).toBe(f.tripId);
+    expect(read.localManual?.rows("2026-10-16")).toHaveLength(includeItem ? 1 : 0);
+    expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+      before,
+    );
+    expect(
+      f.sql.prepare("SELECT COUNT(*) AS n FROM trip_core_read_certificates").get()!.n,
+    ).toBe(0);
+  }
+});
+
+it("does not treat absent provisional markers as new rights for pending or unreadable Trips", async () => {
+  const pending = await fixture();
+  pending.sql
+    .prepare("UPDATE ledger_actor_context SET capabilities_json=?")
+    .run(JSON.stringify({ canRead: true }));
+  await expect(pending.read(pending.tripId)).rejects.toThrow("LOCAL_MANUAL_TRIP_PIN");
+  const denied = await fixture();
+  const receipt = await acceptTripBeforeFirstCertificate(denied);
+  await bootstrapAcceptedLedger(denied, receipt.ownerPersonId, false);
+  await expect(denied.read(denied.tripId)).rejects.toThrow("LOCAL_MANUAL_TRIP_PIN");
 });
