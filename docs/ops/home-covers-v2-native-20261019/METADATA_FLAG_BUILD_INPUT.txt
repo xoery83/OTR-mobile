@@ -1,0 +1,7 @@
+async function isTripMetadataSyncEnabled() {
+    return false;
+    var {
+      getSyncTransportMode
+    } = await require(_dependencyMap[1])(_dependencyMap[7], _dependencyMap.paths);
+    return getSyncTransportMode() === "dev";
+  }
