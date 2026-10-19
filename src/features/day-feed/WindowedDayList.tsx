@@ -753,7 +753,13 @@ export function WindowedDayList<T>({
         lastNativeOffset.current = rawOffset;
         if (movingUp) prependPrevious(rawOffset, "scroll");
         offset.current = Math.max(0, event.nativeEvent.contentOffset.y);
-        trace("SCROLL", { offset: offset.current });
+        trace("SCROLL", {
+          offset: offset.current,
+          zoomScale: event.nativeEvent.zoomScale ?? "MISSING",
+          viewportHeight: event.nativeEvent.layoutMeasurement?.height ?? "MISSING",
+          contentHeight: event.nativeEvent.contentSize?.height ?? "MISSING",
+          mountedRows: mounted.current,
+        });
         live.current.onOffsetChange?.(offset.current);
         if (!pending.current && visibleDates.current.length)
           live.current.onViewportChange?.({
