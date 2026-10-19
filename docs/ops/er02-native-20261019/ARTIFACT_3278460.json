@@ -1,0 +1,20 @@
+{
+  "status": "BUILD_SUCCEEDED_NOT_INSTALLED_NOT_NATIVE_RELEASE_VERIFIED",
+  "productSha": "3278460f4829a7f0e4899e285271e155ed777ca6",
+  "sourceHead": "c21b1f378ed7fefdff7b90575aa40cab5e39d6cb",
+  "sourceRoot": "/private/tmp/otr-er02-native-header-20261019",
+  "appPath": "/private/tmp/otr-er02-release-3278460-20261019/derived/Build/Products/Release-iphonesimulator/OTRMobile.app",
+  "bundleId": "com.xoery.otrmobile",
+  "version": "0.1.0",
+  "build": "1",
+  "sdk": "iphonesimulator27.1",
+  "minimumOS": "16.4",
+  "infoSha256": "b452ba08381c69b73a2b29f95e7f8599528f0e140b58acebc7d7566dabea70c7",
+  "executableSha256": "5a44c07587160067925ff93baff822f6026d52dc02412b410b4d4cb28ee3f66a",
+  "embeddedBundleSha256": "a45479876387aa22f6b80bfa7a42c4bb6251c0ad98a1e6cc69d478619590972d",
+  "embeddedBundleBytes": 7777501,
+  "podLockSha256": "2e37092bf151193b747b9f1b25f23b162933efd319152215b3691c7594a6fa0e",
+  "architectures": "x86_64 arm64",
+  "codesignVerifyExit": 0,
+  "codesignVerifyOutput": ""
+}
