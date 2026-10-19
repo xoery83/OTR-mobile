@@ -1131,3 +1131,31 @@ it("enables the existing native right-swipe only on immersive Home, preserving D
   render();
   expect(state.setOptions.mock.lastCall![0].fullScreenGestureEnabled).toBe(false);
 });
+
+it("Preparation local Recent reuses the existing current local detail and Close returns to Home", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  const resolved = { ...localRead(), item: localRead().items[0] };
+  state.resolveLocalItem.mockResolvedValue(resolved);
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  await workspace.onOpenLocalHomeItem(reference, "manual-hotel", localRead());
+  expect(state.resolveLocalItem).toHaveBeenCalledWith(
+    reference,
+    "manual-hotel",
+    expect.objectContaining({ scope: localRead().scope, source: localRead().source }),
+  );
+  const preview = find(render(), "LocalItemPreview");
+  expect(preview.item.title).toBe("Actual saved hotel");
+  preview.onClose();
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+  expect(find(render(), LocalTripWorkspace)).not.toBeNull();
+  expect(state.push).not.toHaveBeenCalled();
+});
+it("Preparation local Recent rejects a foreign Trip or late account before invoking local details", async () => {
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  await workspace.onOpenLocalHomeItem("foreign", "manual-hotel", localRead());
+  state.liveGeneration = 6;
+  await workspace.onOpenLocalHomeItem(reference, "manual-hotel", localRead());
+  expect(state.resolveLocalItem).not.toHaveBeenCalled();
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+});

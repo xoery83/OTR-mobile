@@ -1,3 +1,4 @@
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
 import { router, useFocusEffect } from "expo-router";
@@ -26,6 +27,7 @@ export function useTripPreparationWidget({
   onBuild,
   onOpenDay,
   onOpenItem,
+  onOpenLocalItem,
   metadata,
   onEdit,
   onCover,
@@ -37,6 +39,11 @@ export function useTripPreparationWidget({
   onBuild?: () => void;
   onOpenDay?: () => void;
   onOpenItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
+  onOpenLocalItem?: (
+    tripId: string,
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => Promise<void>;
   metadata?: TripSetupMetadata;
   onEdit?: () => void;
   onCover?: () => void;
@@ -118,6 +125,39 @@ export function useTripPreparationWidget({
     const ticket = request.current;
     try {
       const reader = await readTripPreparation();
+      if (itemId) {
+        const expected = visible?.sourceToken;
+        if (
+          !expected ||
+          expected.scope.tripId !== tripId ||
+          expected.scope.generation !== generation
+        )
+          return;
+        const resolved = await reader.resolveItemFromSource(tripId, itemId, expected);
+        if (
+          !resolved ||
+          request.current !== ticket ||
+          generation !== getAccountGeneration()
+        )
+          return;
+        if (
+          resolved.item.localState === "PENDING" &&
+          expected.kind !== "ACCEPTED" &&
+          onOpenLocalItem
+        ) {
+          await onOpenLocalItem(tripId, itemId, {
+            scope: expected.scope,
+            source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: expected.fingerprint },
+          });
+        } else if (
+          resolved.item.localState === "ACCEPTED" &&
+          resolved.epoch &&
+          onOpenItem
+        ) {
+          await onOpenItem(tripId, itemId, resolved.epoch);
+        }
+        return;
+      }
       const current = await reader.read(tripId);
       if (
         !current ||
@@ -128,11 +168,7 @@ export function useTripPreparationWidget({
       )
         return;
       if (request.current !== ticket || generation !== getAccountGeneration()) return;
-      if (itemId && current.epoch && onOpenItem) {
-        const item = await reader.resolveItem(tripId, itemId, current.epoch);
-        if (item && request.current === ticket && generation === getAccountGeneration())
-          await onOpenItem(tripId, itemId, current.epoch);
-      } else callback();
+      callback();
     } catch {
       if (request.current === ticket && generation === getAccountGeneration())
         setState("UNAVAILABLE");
@@ -222,7 +258,7 @@ export function useTripPreparationWidget({
             : undefined
         }
         onOpenItem={
-          visible?.epoch && onOpenItem
+          visible?.sourceToken && (onOpenItem || onOpenLocalItem)
             ? (itemId) => {
                 void act(() => {}, false, itemId);
               }

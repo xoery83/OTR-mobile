@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   values: [] as unknown[],
   read: vi.fn(),
+  resolveSource: vi.fn(),
   setup: vi.fn(),
   effects: [] as (() => () => void)[],
   active: null as ((value: string) => void) | null,
@@ -51,7 +52,10 @@ vi.mock("@/data/auth/accountGeneration", () => ({
   subscribeAccountGeneration: vi.fn(),
 }));
 vi.mock("@/data/repositories/tripPreparationRepository", () => ({
-  readTripPreparation: async () => ({ read: state.read }),
+  readTripPreparation: async () => ({
+    read: state.read,
+    resolveItemFromSource: state.resolveSource,
+  }),
 }));
 vi.mock("./TripPreparationWidget", () => ({ TripPreparationWidget: () => null }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
@@ -89,6 +93,7 @@ function PreparationHarness(canPlan: boolean, onSetup = vi.fn()) {
 beforeEach(() => {
   state.generation = 1;
   state.read.mockReset();
+  state.resolveSource.mockReset();
   state.setup.mockReset();
   state.effects = [];
   state.active = null;
@@ -233,4 +238,121 @@ it("retains the scoped ready projection while a local focus refresh is pending",
   await vi.waitFor(() => expect(state.read).toHaveBeenCalledOnce());
   expect(state.values[0]).toBe(view.read);
   expect(state.values[1]).toBe("READY");
+});
+
+function RecentNavigationHarness(
+  kind: "LOCAL_MANUAL" | "ACCEPTED" | "MIXED" = "LOCAL_MANUAL",
+) {
+  const scope = { tripId: "trip", accountId: "actor", generation: 1 };
+  const token =
+    kind === "LOCAL_MANUAL"
+      ? { kind, scope, fingerprint: "rendered" }
+      : kind === "MIXED"
+        ? { kind, scope, fingerprint: "rendered", certificate: { epoch: "real-epoch" } }
+        : { kind, scope, certificate: { epoch: "real-epoch" } };
+  const read = {
+    scope,
+    epoch: kind === "LOCAL_MANUAL" ? null : "real-epoch",
+    sourceToken: token,
+    canPlan: true,
+    preparation: { itemCount: 1, counts: [{ family: "P1", count: 1 }], recent: [] },
+  };
+  const local = vi.fn(),
+    accepted = vi.fn();
+  state.cursor = 0;
+  state.values = [read, "READY"];
+  const widget = useTripPreparationWidget({
+    tripId: "trip",
+    undated: false,
+    onOpenItem: accepted,
+    onOpenLocalItem: local,
+  });
+  const props = (
+    widget!.content as import("react").ReactElement<{ onOpenItem?: (id: string) => void }>
+  ).props;
+  return { read, token, scope, local, accepted, props };
+}
+it("opens a pending Recent using the rendered fingerprint and existing local-detail callback, never a null epoch", async () => {
+  const view = RecentNavigationHarness();
+  state.resolveSource.mockResolvedValue({
+    scope: view.scope,
+    epoch: null,
+    sourceToken: view.token,
+    item: { itemId: "item", localState: "PENDING" },
+  });
+  view.props.onOpenItem!("item");
+  await vi.waitFor(() =>
+    expect(view.local).toHaveBeenCalledExactlyOnceWith("trip", "item", {
+      scope: view.scope,
+      source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "rendered" },
+    }),
+  );
+  expect(state.resolveSource).toHaveBeenCalledExactlyOnceWith("trip", "item", view.token);
+  expect(state.read).not.toHaveBeenCalled();
+  expect(view.accepted).not.toHaveBeenCalled();
+});
+it("preserves the accepted detail callback with the actual epoch after source resolution", async () => {
+  const view = RecentNavigationHarness("ACCEPTED");
+  state.resolveSource.mockResolvedValue({
+    epoch: "real-epoch",
+    item: { localState: "ACCEPTED" },
+  });
+  view.props.onOpenItem!("item");
+  await vi.waitFor(() =>
+    expect(view.accepted).toHaveBeenCalledExactlyOnceWith("trip", "item", "real-epoch"),
+  );
+  expect(view.local).not.toHaveBeenCalled();
+});
+it("routes pending in a mixed read to local details rather than the accepted epoch path", async () => {
+  const view = RecentNavigationHarness("MIXED");
+  state.resolveSource.mockResolvedValue({
+    epoch: "real-epoch",
+    item: { localState: "PENDING" },
+  });
+  view.props.onOpenItem!("item");
+  await vi.waitFor(() => expect(view.local).toHaveBeenCalledOnce());
+  expect(view.accepted).not.toHaveBeenCalled();
+});
+it("does not navigate when source/permission/recent membership revalidation fails", async () => {
+  const view = RecentNavigationHarness();
+  state.resolveSource.mockResolvedValue(null);
+  view.props.onOpenItem!("item");
+  await vi.waitFor(() => expect(state.resolveSource).toHaveBeenCalledOnce());
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(view.local).not.toHaveBeenCalled();
+  expect(view.accepted).not.toHaveBeenCalled();
+});
+it("drops a late source resolution after account generation changes", async () => {
+  const view = RecentNavigationHarness();
+  let done!: (value: unknown) => void;
+  state.resolveSource.mockReturnValue(
+    new Promise((resolve) => {
+      done = resolve;
+    }),
+  );
+  view.props.onOpenItem!("item");
+  await vi.waitFor(() => expect(done).toBeTypeOf("function"));
+  state.generation = 3;
+  done({ epoch: null, item: { localState: "PENDING" } });
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(view.local).not.toHaveBeenCalled();
+  expect(view.accepted).not.toHaveBeenCalled();
+});
+it("drops a late source resolution after the widget leaves focus", async () => {
+  const view = RecentNavigationHarness();
+  state.read.mockReturnValue(new Promise(() => {}));
+  const blur = state.effects.at(-1)!();
+  let done!: (value: unknown) => void;
+  state.resolveSource.mockReturnValue(
+    new Promise((resolve) => {
+      done = resolve;
+    }),
+  );
+  view.props.onOpenItem!("item");
+  await vi.waitFor(() => expect(done).toBeTypeOf("function"));
+  blur();
+  done({ epoch: null, item: { localState: "PENDING" } });
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(view.local).not.toHaveBeenCalled();
+  expect(view.accepted).not.toHaveBeenCalled();
 });

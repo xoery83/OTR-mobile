@@ -1172,6 +1172,10 @@ function TripContent({ today = false }: { today?: boolean }) {
             onChooseDay={canChooseDay ? chooseDay : undefined}
             homePerspective={homePerspective}
             widgetsForHome={widgetsForHome}
+            onOpenLocalHomeItem={async (tripId, itemId, expected) => {
+              if (tripId !== requested || generation !== getAccountGeneration()) return;
+              await openLocalItem(itemId, expected);
+            }}
             onOpenHomeItem={async (tripId, itemId, epoch) => {
               if (tripId !== requested || generation !== getAccountGeneration()) return;
               const item = await (

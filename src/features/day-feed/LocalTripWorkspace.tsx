@@ -1,3 +1,4 @@
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
@@ -89,6 +90,11 @@ type Props = {
     planningDate?: string | null,
   ) => readonly TripHomeWidget[];
   onOpenHomeItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
+  onOpenLocalHomeItem?: (
+    tripId: string,
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => Promise<void>;
   tripId: string | null;
   homePerspective?: { now: string; date: string; zone: string };
   mode?: "LIST" | "CREATE" | "PAST";
@@ -127,6 +133,7 @@ function LocalTripContent({
   onManualItemSaved,
   widgetsForHome,
   onOpenHomeItem,
+  onOpenLocalHomeItem,
   homePerspective,
   generation,
 }: Props & { generation: number }) {
@@ -565,6 +572,7 @@ function LocalTripContent({
       : undefined,
     onOpenDay: onChooseDay ? () => onChooseDay(metadata?.startDate) : undefined,
     onOpenItem: onOpenHomeItem,
+    onOpenLocalItem: onOpenLocalHomeItem,
   });
   const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
   const pages = [
