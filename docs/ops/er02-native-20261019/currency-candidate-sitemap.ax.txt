@@ -1,0 +1,169 @@
+Window: "OTR MT Correction 01 QA", App: Device Hub.
+0 standard window OTR MT Correction 01 QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area Secondary Actions: Scroll Up, Scroll Down
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					8 row (selected) Description: iphone.gen3, Value: OTR MT Correction 01 QA
+27.0
+Simulator
+					9 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					10 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					11 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - B
+27.0
+Simulator
+					12 row (selectable) Description: iphone.gen3, Value: OTR Apple Local Model Probe 26.5
+26.5
+Simulator
+					13 row (selectable) Description: iphone.gen3, Value: OTR Flexible CP02 Held QA
+27.0
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR 02 Anonymous
+27.0
+Simulator
+					15 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR Synthetic QA
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen3, Value: OTR Day Feed Lab DL1
+27.0
+Simulator
+					17 row (selectable) Description: iphone.gen3, Value: OTR Flight Native03 CLOSED
+27.0
+Simulator
+					18 row (selectable) Description: iphone.gen3, Value: OTR G2 FLEX Main Integration
+27.0
+Simulator
+					19 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro Max
+27.0
+Simulator
+					20 row (selectable) Description: iphone.gen1, Value: OTR N1 NOW Compact QA
+27.0
+Simulator
+					21 row (selectable) Description: iphone.gen3, Value: OTR N1 NOW Large QA
+27.0
+Simulator
+					22 row (selectable) Description: iphone.gen1, Value: OTR P1 V1R5 Compact QA
+27.0
+Simulator
+					23 row (selectable) Description: iphone.gen1, Value: OTR P2 Flight Small QA
+27.0
+Simulator
+					24 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - A
+27.0
+Simulator
+					25 row (selectable) Description: iphone.gen1, Value: OTR Capture C3 Small QA
+27.0
+Simulator
+					26 row (selectable) Description: iphone.gen3, Value: OTR Capture C3 Synthetic QA
+27.0
+Simulator
+					27 row (selectable) Description: Unavailable, Value: Collapsed
+				28 scroll bar (settable, float) 0
+					29 value indicator (settable, float) 0
+					30 increment arrow button
+					31 decrement arrow button
+					32 increment page button
+					33 decrement page button
+			34 search text field (settable) Search
+				35 button Search
+			36 splitter (disabled, settable, float) 308
+			37 container
+				38 container
+					39 button Description: (tabs)/_layout.tsx, Secondary Actions: Cancel
+					40 button Description: ./search.tsx, Secondary Actions: Cancel
+					41 button Description: ./account.tsx, Secondary Actions: Cancel
+					42 button Description: ./settings.tsx, Secondary Actions: Cancel
+					43 link Description: ./data-sync.tsx, Secondary Actions: Cancel
+					44 button Description: ./trip-home.tsx, Secondary Actions: Cancel
+					45 button Description: ./foundation.tsx, Secondary Actions: Cancel
+					46 button Description: ./past-trips.tsx, Secondary Actions: Cancel
+					47 button Description: ./diagnostics.tsx, Secondary Actions: Cancel
+					48 link Description: ./search-trip.tsx, Secondary Actions: Cancel
+					49 link Description: ./day-feed-lab.tsx, Secondary Actions: Cancel
+					50 button Description: ./trip-validation.tsx, Secondary Actions: Cancel
+					51 button Description: ./stage3-acceptance.tsx, Secondary Actions: Cancel
+					52 button Description: ./stage8-acceptance.tsx, Secondary Actions: Cancel
+					53 button Description: ./stage4a-acceptance.tsx, Secondary Actions: Cancel
+					54 link Description: ./stage4b-acceptance.tsx, Secondary Actions: Cancel
+					55 link Description: ./stage4c-acceptance.tsx, Secondary Actions: Cancel
+					56 link Description: ./stage5-1-acceptance.tsx, Secondary Actions: Cancel
+					57 link Description: ./stage5-2-acceptance.tsx, Secondary Actions: Cancel
+					58 button Description: ./stage7-3-acceptance.tsx, Secondary Actions: Cancel
+					59 link Description: ./ui-foundation-check.tsx, Secondary Actions: Cancel
+					60 link Description: ./stage4b-physical-smoke.tsx, Secondary Actions: Cancel
+					61 link Description: ./stage4c-physical-smoke.tsx, Secondary Actions: Cancel
+					62 link Description: ./settlement-participation-acceptance.tsx, Secondary Actions: Cancel
+					63 text Description: System Information, Secondary Actions: Cancel
+					64 text Description: Mode, Secondary Actions: Cancel
+					65 text Description: development, Secondary Actions: Cancel
+					66 text Description: Expo SDK, Secondary Actions: Cancel
+					67 text Description: 57.0.0, Secondary Actions: Cancel
+					68 text Description: Hermes version, Secondary Actions: Cancel
+					69 text Description: 250829098.0.17 (shermes), Secondary Actions: Cancel
+					70 text Description: Location origin, Secondary Actions: Cancel
+					71 text Description: http://localhost:8083, Secondary Actions: Cancel
+				72 button Description: Home, ID: app.grid.3x3
+				73 button Description: Screenshot, ID: camera.viewfinder
+				74 button Description: Record, ID: record.circle
+				75 button Rotate Left
+		76 splitter (disabled, settable, float) 820
+		77 container
+			78 Inspector Subcategory
+				79 radio button Description: Info, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.info
+				80 radio button Description: Apps, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				81 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			82 scroll area Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+				83 container
+					84 text Name, Help: OTR MT Correction 01 QA, Value: OTR MT Correction 01 QA iOS 27.0, ID: info.inspector.item.name.value
+				85 container
+					86 text Model, Help: iPhone 18 Pro, Value: iPhone 18 Pro AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A
+				87 heading Paired Simulators
+				88 container
+					89 scroll area
+						90 list
+							91 row (selectable) No Paired Watch Simulators
+					92 button (disabled) Description: Add, Help: Pair Apple Watch
+					93 button (disabled) Description: Remove, Help: Unpair Apple Watch
+				94 button Edit Visibility
+			95 container Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+	96 toolbar
+		97 menu button Add, Help: Add Device, ID: plus
+		98 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		99 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		100 toggle button Description: Capture Keyboard, Value: off
+		101 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		102 Zoom
+			103 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			104 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 0
+			105 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 1, ID: 1.magnifyingglass
+			106 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		107 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		108 menu button More, Help: More Actions, ID: ellipsis
+		109 Inspector Category
+			110 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			111 radio button Description: text.document, Help: Reports, Value: 0
+			112 radio button Description: Info, Value: 1, ID: info
+	113 close button
+	114 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	115 minimize button
+	116 text OTR MT Correction 01 QA iOS 27.0
+117 menu bar
+	118 Device Hub
+	119 File
+	120 Edit
+	121 View
+	122 Device
+	123 Controls
+	124 Window
+	125 Help

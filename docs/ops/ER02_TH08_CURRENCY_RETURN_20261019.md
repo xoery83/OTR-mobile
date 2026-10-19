@@ -49,3 +49,12 @@ Recovery: preserve fixed043 tree and original installed App/account/database.
 The correction has no migration or data rollback. Preview source updates use
 only coordinated8083 with existing public DEV configuration and exact candidate;
 failed qualification restores043, not a reset or a different QA account.
+
+## Subsequent Native qualification
+
+Normal Home and unchanged Editor settings entry/native Back passed on original
+AD5, unchanged ca7875a, after isolating the Metro transform cache per source tree.
+See er02-native-20261019/CURRENCY_NATIVE_BINDING.md for the reproduced stale
+router-context cache failure, safe043 rollback, fresh-cache qualification and
+explicit remaining limits. Current resident source is ca7875a/8083; no new host
+binary was installed. This supersedes NATIVE_PENDING for entry/return only.
