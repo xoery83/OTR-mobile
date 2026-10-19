@@ -17,7 +17,8 @@ const storage = {
 const hint = {
   tripId: a,
   date: "2027-02-12",
-  zone: "",
+  zone: null,
+  viewMode: "FLOATING" as const,
   anchor: { key: "day:2027-02-12", date: "2027-02-12", within: 12 },
 };
 const key = `otr-day-bookmarks-v1-${a}`;
@@ -51,8 +52,10 @@ it("partitions accounts, replaces same-Trip hints and removes only the selected 
   expect(await make().list()).toEqual([]);
   await make().record({ ...hint, tripId: b });
   user = a;
-  await make().record({ ...hint, zone: "Pacific/Auckland" });
-  expect(await make().list()).toEqual([{ ...hint, zone: "Pacific/Auckland" }]);
+  await make().record({ ...hint, zone: "Pacific/Auckland", viewMode: undefined });
+  expect(await make().list()).toEqual([
+    { ...hint, zone: "Pacific/Auckland", viewMode: undefined },
+  ]);
   await make().remove(a);
   expect(await make().list()).toEqual([]);
   user = b;
@@ -76,7 +79,7 @@ it.each([
   { anchor: { ...hint.anchor, within: Infinity } },
   { anchor: { ...hint.anchor, within: -1 } },
 ])("does not persist invalid navigation hint %j", async (change) => {
-  await make().record({ ...hint, ...change });
+  await make().record({ ...hint, ...change } as any);
   expect(storage.setItemAsync).not.toHaveBeenCalled();
   expect(await make().list()).toEqual([]);
 });
@@ -111,9 +114,31 @@ it("tolerates SecureStore failures, never overwriting unread data", async () => 
   await make().record(hint);
   const before = values.get(key);
   storage.getItemAsync.mockRejectedValueOnce(new Error("locked"));
-  expect(await make().record({ ...hint, zone: "Pacific/Auckland" })).toEqual([]);
+  expect(
+    await make().record({ ...hint, zone: "Pacific/Auckland", viewMode: undefined }),
+  ).toEqual([]);
   expect(values.get(key)).toBe(before);
   storage.setItemAsync.mockRejectedValueOnce(new Error("unavailable"));
-  expect(await make().record({ ...hint, zone: "Pacific/Auckland" })).toEqual([]);
+  expect(
+    await make().record({ ...hint, zone: "Pacific/Auckland", viewMode: undefined }),
+  ).toEqual([]);
   expect(values.get(key)).toBe(before);
+});
+
+it("retains old valid named hints but rejects untagged civil and malformed mode preferences", async () => {
+  const base = { tripId: a, date: hint.date, updatedAt: clock };
+  values.set(key, JSON.stringify([{ ...base, zone: "Pacific/Auckland" }]));
+  expect(await make().list()).toEqual([
+    { tripId: a, date: hint.date, zone: "Pacific/Auckland" },
+  ]);
+  for (const context of [
+    { zone: "" },
+    { zone: null },
+    { zone: null, viewMode: "NAMED_ZONE" },
+    { zone: "UTC", viewMode: "FLOATING" },
+    { zone: "UTC", viewMode: "INVALID" },
+  ]) {
+    values.set(key, JSON.stringify([{ ...base, ...context }]));
+    expect(await make().list()).toEqual([]);
+  }
 });

@@ -144,7 +144,8 @@ describe("cold reading hints are preferences, never navigation authority", () =>
   const hint = {
     tripId: "a",
     date: "2027-02-12",
-    zone: "",
+    zone: null,
+    viewMode: "FLOATING" as const,
     anchor: { key: "day-2027-02-12", date: "2027-02-12", within: 0 },
   };
   it("hydrates without navigating and restores on the normal same-Trip open", () => {
@@ -156,7 +157,7 @@ describe("cold reading hints are preferences, never navigation authority", () =>
     const restored = enterTripDay(state, state.bookmarks.a.view);
     expect(restored.entry.reading.anchor).toEqual(hint.anchor);
     expect(restored.entry.reading.offset).toBe(0);
-    expect(restored.view?.zone).toBe("");
+    expect(restored.view?.zone).toBeNull();
   });
   it("late disk hints cannot replace a current session bookmark", () => {
     const state = saveTripReading(enterTripDay(emptyTripNavigation, a), a, {
@@ -187,7 +188,7 @@ describe("cold reading hints are preferences, never navigation authority", () =>
       anchoredDate: hint.date,
       anchor: hint.anchor,
     });
-    expect(dayReadingHint(state)).toEqual({ ...hint, zone: a.zone });
+    expect(dayReadingHint(state)).toEqual({ ...hint, zone: a.zone, viewMode: undefined });
   });
 });
 describe("single transient Day reading owner", () => {
@@ -497,5 +498,41 @@ describe("accepted reading persistence across Provider lifecycle", () => {
     renderProvider();
     unmountProvider();
     expect(dayNavigationBookmarkRepository.record).toHaveBeenCalledTimes(1);
+  });
+});
+
+it("preserves confirmed Floating anchor through Home/resume and rejects old revisions and modes", () => {
+  const floating = { ...a, zone: null, viewMode: "FLOATING" as const };
+  let state = enterTripDay(emptyTripNavigation, floating);
+  const oldRevision = state.entry.revision;
+  state = saveTripReading(state, floating, {
+    offset: 22,
+    focus: null,
+    layout: "WHOLE_TRIP",
+    anchoredDate: "2026-10-20",
+    anchor: { key: "day:2026-10-20", date: "2026-10-20", within: 8 },
+  });
+  const saved = state.bookmarks.a;
+  const resumed = enterTripDay(state, saved.view);
+  expect(resumed.view).toMatchObject({
+    date: "2026-10-20",
+    zone: null,
+    viewMode: "FLOATING",
+  });
+  expect(resumed.entry.reading.anchor).toEqual(saved.reading.anchor);
+  expect(
+    saveTripReading(resumed, floating, { offset: 0, focus: null }, oldRevision),
+  ).toBe(resumed);
+  expect(
+    saveTripReading(
+      resumed,
+      { ...saved.view, zone: "UTC", viewMode: undefined },
+      { offset: 0, focus: null },
+    ),
+  ).toBe(resumed);
+  expect(dayReadingHint(resumed)).toMatchObject({
+    date: "2026-10-20",
+    zone: null,
+    viewMode: "FLOATING",
   });
 });

@@ -55,6 +55,7 @@ export function placeNow(
   const hide = (
     reason: Extract<NowPlacement, { mode: "HIDDEN" }>["reason"],
   ): NowPlacement => ({ mode: "HIDDEN", reason });
+  if (query.zone === null) return hide("CONTEXT");
   try {
     const current = instantMicroseconds(now);
     if (localCalendarDate(now, query.zone) !== query.date) return hide("OTHER_DAY");

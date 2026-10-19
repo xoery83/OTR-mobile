@@ -17,7 +17,7 @@ import {
   Text,
   View,
 } from "react-native";
-import type { DayProjection } from "@/domain/trip/dayReadModel";
+import type { DayProjection, DayViewContext } from "@/domain/trip/dayReadModel";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import type {
@@ -117,6 +117,7 @@ function AcceptedDayFeed({
   date,
   dates,
   zone,
+  viewMode,
   services,
   instant,
   emptyMessage,
@@ -143,7 +144,8 @@ function AcceptedDayFeed({
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
   dates?: readonly string[];
-  zone: string;
+  zone: string | null;
+  viewMode?: DayViewContext["viewMode"];
   services: Record<string, FlightService[]>;
   instant?: string;
   emptyMessage?: string;
@@ -167,11 +169,17 @@ function AcceptedDayFeed({
   const continuous = Boolean(dates);
   const pendingIds = new Set(localManual?.items.map((item) => item.itemId) ?? []);
   const queryForDate = (day: string): DayFeedQuery => {
+    if (zone === null && (viewMode !== "FLOATING" || projection.version !== 2))
+      throw new Error("DAY_ZONE_INVALID");
+    if (zone === null && contributedQuery) throw new Error("DAY_ZONE_INVALID");
     const query: DayFeedQuery = contributedQuery
-      ? contributedQuery(day, zone)
+      ? contributedQuery(day, zone!)
       : projection.version === 2
-        ? projection.query(day, zone)
-        : itemsForLocalDate(projection, day, zone);
+        ? projection.query(
+            day,
+            zone === null ? { zone: null, viewMode: "FLOATING" } : zone,
+          )
+        : itemsForLocalDate(projection, day, zone!);
     if (!pendingIds.size) return query;
     return {
       ...query,
@@ -197,6 +205,7 @@ function AcceptedDayFeed({
     continuous,
     date,
     zone,
+    viewMode,
     entry?.revision,
     directItem?.itemId,
     flexiblePublication?.scope?.generation,

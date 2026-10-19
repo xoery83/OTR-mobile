@@ -13,6 +13,7 @@ import {
   validateCalendarDate,
   type DayEvent,
   type DayQuery,
+  type DayViewContext,
 } from "@/domain/trip/dayReadModel";
 import {
   getAccountGeneration,
@@ -22,7 +23,11 @@ import {
   dayNavigationBookmarkRepository,
   type DayNavigationBookmark,
 } from "@/data/repositories/dayNavigationBookmarkRepository";
-export type TripView = { tripId: string; date: string; zone: string; generation: number };
+export type TripView = DayViewContext & {
+  tripId: string;
+  date: string;
+  generation: number;
+};
 export type DayReading = {
   offset: number;
   focus: string | null;
@@ -57,7 +62,14 @@ export function hydrateDayReadingHints(
   for (const hint of hints) {
     if (bookmarks[hint.tripId]?.view.generation === generation) continue;
     bookmarks[hint.tripId] = {
-      view: { tripId: hint.tripId, date: hint.date, zone: hint.zone, generation },
+      view: {
+        tripId: hint.tripId,
+        date: hint.date,
+        generation,
+        ...(hint.zone === null
+          ? { zone: null, viewMode: "FLOATING" }
+          : { zone: hint.zone }),
+      },
       reading: {
         offset: 0,
         focus: null,
@@ -83,7 +95,9 @@ export function dayReadingHint(state: TripNavigation): DayNavigationBookmark | n
   return {
     tripId: saved.view.tripId,
     date: saved.reading.anchoredDate,
-    zone: saved.view.zone,
+    ...(saved.view.zone === null
+      ? { zone: null, viewMode: "FLOATING" as const }
+      : { zone: saved.view.zone }),
     ...(saved.reading.anchor ? { anchor: saved.reading.anchor } : {}),
   };
 }
@@ -98,7 +112,8 @@ export function enterTripDay(
     kind === "RESUME" &&
     saved?.view.generation === view.generation &&
     saved.view.date === view.date &&
-    saved.view.zone === view.zone
+    saved.view.zone === view.zone &&
+    (saved.view.viewMode ?? "NAMED_ZONE") === (view.viewMode ?? "NAMED_ZONE")
       ? saved.reading
       : { offset: 0, focus: null };
   return {
@@ -125,7 +140,8 @@ export function saveTripReading(
     state.view?.tripId !== view.tripId ||
     state.view.generation !== view.generation ||
     state.view.date !== view.date ||
-    state.view.zone !== view.zone
+    state.view.zone !== view.zone ||
+    (state.view.viewMode ?? "NAMED_ZONE") !== (view.viewMode ?? "NAMED_ZONE")
   )
     return state;
   let anchoredDate: string | undefined;

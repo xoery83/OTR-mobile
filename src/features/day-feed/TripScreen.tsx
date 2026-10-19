@@ -84,11 +84,12 @@ type TripRead = Awaited<ReturnType<Reader["trip"]>>;
 const value = (p: string | string[] | undefined) => (typeof p === "string" ? p : "");
 
 function savedTripZone(
-  view: { tripId: string; zone: string; generation: number } | null,
+  view: { tripId: string; zone: string | null; generation: number } | null,
   tripId: string,
   generation: number,
 ) {
-  if (!view || view.tripId !== tripId || view.generation !== generation) return null;
+  if (!view || !view.zone || view.tripId !== tripId || view.generation !== generation)
+    return null;
   try {
     return viewContext("2000-01-01", view.zone).zone;
   } catch {
@@ -150,6 +151,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     tripId?: string;
     date?: string;
     zone?: string;
+    viewMode?: string;
     view?: string;
     homeQaScenario?: string;
   }>();
@@ -437,31 +439,40 @@ function TripContent({ today = false }: { today?: boolean }) {
     !!visibleTrip?.localManual ||
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE";
   const enterDay = useCallback(
-    async (requestedDate?: string | null, requestedZone = zone) => {
+    async (requestedDate?: string | null, requestedZone: string | null = zone) => {
       if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
       try {
         const selectedDate = requestedDate || date;
         const dateValue = selectedDate ? validateCalendarDate(selectedDate) : "";
-        const context =
-          dateValue && requestedZone ? viewContext(dateValue, requestedZone) : null;
+        const context = dateValue
+          ? viewContext(dateValue, requestedZone || { zone: null, viewMode: "FLOATING" })
+          : null;
         const ticket = request.current;
         const result = await (await readTripDayFeed()).trip(requested);
         if (
           ticket !== request.current ||
           generation !== getAccountGeneration() ||
+          (result.observed?.projection.tripId !== requested &&
+            result.localManual?.scope.tripId !== requested) ||
           result.scope.accountId !== visibleTrip.scope.accountId ||
           result.scope.generation !== generation ||
           (!result.localManual &&
             result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE")
         )
           return;
+        if (context?.zone === null && result.observed?.projection.version === 1) {
+          setContextError(true);
+          return;
+        }
         setTrip(result);
         if (context) select({ tripId: requested, ...context, generation });
-        // Civil-only navigation does not create a timezone-bearing bookmark.
         router.setParams({
           tripId: requested,
           date: dateValue,
           zone: context?.zone ?? "",
+          ...(context?.zone === null
+            ? { viewMode: "FLOATING" }
+            : { viewMode: "NAMED_ZONE" }),
           view: "day",
         });
         setContextError(false);
@@ -753,7 +764,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     if (view?.tripId !== requested || view.generation !== generation) return null;
     try {
       validateCalendarDate(view.date);
-      if (view.zone) viewContext(view.date, view.zone);
+      if (view.zone !== "") viewContext(view.date, view);
       return view;
     } catch {
       return null;
@@ -792,14 +803,29 @@ function TripContent({ today = false }: { today?: boolean }) {
       const routeZone = value(params.zone);
       if (routeZone)
         return { tripId: requested, ...viewContext(routeDate, routeZone), generation };
-      return { tripId: requested, date: routeDate, zone: "", generation };
+      if (visibleTrip.observed?.projection.version === 1)
+        return params.viewMode === "FLOATING"
+          ? null
+          : { tripId: requested, date: routeDate, zone: "", generation };
+      if (params.viewMode !== "FLOATING" && !visibleTrip.localManual) return null;
+      return {
+        tripId: requested,
+        ...viewContext(routeDate, { zone: null, viewMode: "FLOATING" }),
+        generation,
+      };
     } catch {
       return null;
     }
   })();
-  const dayContext = today ? savedDay : !home ? (routeDay ?? savedDay) : null;
+  const candidateDay = today ? savedDay : !home ? (routeDay ?? savedDay) : null;
+  const dayContext =
+    candidateDay?.zone === null && visibleTrip?.observed?.projection.version === 1
+      ? null
+      : candidateDay;
   const selected =
-    savedDay?.date === dayContext?.date && savedDay?.zone === dayContext?.zone
+    savedDay?.date === dayContext?.date &&
+    savedDay?.zone === dayContext?.zone &&
+    savedDay?.viewMode === dayContext?.viewMode
       ? savedDay
       : null;
   const visibleLocalItem =
@@ -852,12 +878,12 @@ function TripContent({ today = false }: { today?: boolean }) {
   const routeDate = value(params.date);
   const chooseDay = useCallback(
     (tripStartDate?: string | null) => {
-      const bookmark = [view, resumeView].find(
+      const bookmark = [resumeView, view].find(
         (saved) => saved?.tripId === requested && saved.generation === generation,
       );
       void enterDay(
         bookmark?.date || routeDate || tripStartDate || firstItemDate,
-        bookmark?.zone ?? zone,
+        bookmark ? bookmark.zone : zone,
       );
     },
     [view, resumeView, requested, generation, routeDate, zone, firstItemDate, enterDay],
@@ -980,6 +1006,7 @@ function TripContent({ today = false }: { today?: boolean }) {
             date={dayContext.date}
             dates={calendarDates ?? [dayContext.date]}
             zone={dayContext.zone}
+            viewMode={dayContext.viewMode}
             services={visibleTrip.services}
             renderer={
               visibleTrip.observed?.projection.version === 2

@@ -173,8 +173,10 @@ export function composeDayStream(
   const now = placeNow(query, members, instant);
   let context: "FUTURE" | "TODAY" | "PAST" | "UNKNOWN" = "UNKNOWN";
   try {
-    const today = localCalendarDate(instant, query.zone);
-    context = query.date < today ? "PAST" : query.date > today ? "FUTURE" : "TODAY";
+    if (query.zone !== null) {
+      const today = localCalendarDate(instant, query.zone);
+      context = query.date < today ? "PAST" : query.date > today ? "FUTURE" : "TODAY";
+    }
   } catch {
     // Invalid view time cannot qualify a Transition presentation.
   }
@@ -343,6 +345,7 @@ export function composeDayStream(
     focusedChoiceKey: block.choices.find((c) => c.key === focus)?.key ?? null,
   }));
   const time = (instant: string) => {
+    if (query.zone === null) return null;
     const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: query.zone,
       hour: "2-digit",
@@ -372,7 +375,7 @@ export function composeDayStream(
     const minute = !query.zone
       ? -1
       : positioned.length && row.item.anchor
-        ? time(row.item.anchor)
+        ? (time(row.item.anchor) ?? -1)
         : 1440;
     while (positioned.length && positioned[0].minute <= minute)
       entries.push({ kind: "BLOCK", block: positioned.shift()!.block });

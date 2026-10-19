@@ -63,6 +63,20 @@ vi.mock("react-native", async () => {
     View: primitive,
     Text: primitive,
     ScrollView: primitive,
+    FlatList: (p: Record<string, any>) =>
+      primitive({
+        ...p,
+        children: [
+          p.ListHeaderComponent,
+          ...p.data.map((item: any, index: number) =>
+            createElement(
+              "div",
+              { key: p.keyExtractor(item) },
+              p.renderItem({ item, index }),
+            ),
+          ),
+        ],
+      }),
     Pressable: primitive,
     Modal: (p: Record<string, any>) => (p.visible ? primitive(p) : null),
     StyleSheet: { create: (s: unknown) => s, hairlineWidth: 0.5 },

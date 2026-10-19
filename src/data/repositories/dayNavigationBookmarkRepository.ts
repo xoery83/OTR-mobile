@@ -6,12 +6,15 @@ import {
   withAccountApplyGate,
 } from "@/data/auth/accountRequestContext";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
-import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import {
+  validateCalendarDate,
+  dayViewContext,
+  type DayViewContext,
+} from "@/domain/trip/dayReadModel";
 
-export type DayNavigationBookmark = {
+export type DayNavigationBookmark = DayViewContext & {
   tripId: string;
   date: string;
-  zone: string;
   anchor?: { key: string; date: string; within: number };
 };
 type SavedBookmark = DayNavigationBookmark & { updatedAt: number };
@@ -21,23 +24,27 @@ const maxAge = 30 * 24 * 60 * 60 * 1000;
 function parseHint(value: unknown): DayNavigationBookmark | null {
   if (!value || typeof value !== "object") return null;
   const row = value as Partial<DayNavigationBookmark>;
-  if (
-    !coreUuid.safeParse(row.tripId).success ||
-    typeof row.date !== "string" ||
-    typeof row.zone !== "string" ||
-    row.zone.length > 100
-  )
+  if (!coreUuid.safeParse(row.tripId).success || typeof row.date !== "string")
     return null;
+  let context: DayViewContext;
   try {
     validateCalendarDate(row.date);
-    if (row.zone) new Intl.DateTimeFormat("en", { timeZone: row.zone });
+    if (row.zone === null && row.viewMode === "FLOATING")
+      context = dayViewContext({ zone: null, viewMode: "FLOATING" });
+    else if (
+      typeof row.zone === "string" &&
+      row.zone.length <= 100 &&
+      (row.viewMode === undefined || row.viewMode === "NAMED_ZONE")
+    )
+      context = dayViewContext(row.zone);
+    else return null;
   } catch {
     return null;
   }
   const hint: DayNavigationBookmark = {
     tripId: row.tripId!,
     date: row.date,
-    zone: row.zone,
+    ...context,
   };
   const anchor = row.anchor;
   if (anchor !== undefined) {

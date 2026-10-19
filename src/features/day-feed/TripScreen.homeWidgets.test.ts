@@ -132,7 +132,8 @@ vi.mock("expo-router", () => ({
   useLocalSearchParams: () => ({
     tripId: state.routeTrip ?? state.view.tripId,
     date: state.view.date,
-    zone: state.view.zone,
+    zone: state.view.zone ?? "",
+    viewMode: (state.view as any).viewMode,
     view: state.routeMode,
   }),
   router: {
@@ -614,6 +615,7 @@ it("Home Day action enters the saved plan directly without a date/zone sheet", a
     tripId: reference,
     date: "2027-02-06",
     zone: "Asia/Tokyo",
+    viewMode: "NAMED_ZONE",
     view: "day",
   });
   expect(find(render(), "Modal")).toBeNull();
@@ -634,17 +636,26 @@ it("Day entry prefers Trip start over item dates when no saved or explicit date 
     tripId: reference,
     date: "2026-10-16",
     zone: "",
+    viewMode: "FLOATING",
     view: "day",
   });
-  expect(state.select).not.toHaveBeenCalled();
+  expect(state.select).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2026-10-16",
+    zone: null,
+    viewMode: "FLOATING",
+    generation: 5,
+  });
+  state.view = state.select.mock.lastCall![0];
   state.params.mockClear();
   state.liveGeneration = 6;
   workspace.onChooseDay("2026-10-16");
   expect(state.params).not.toHaveBeenCalled();
 });
-it("unknown-zone accepted Day retains its owning projection and renderer", async () => {
+it("unknown-zone legacy accepted Day retains its owning projection and renderer", async () => {
   state.routeMode = "day";
   state.view.zone = "";
+  state.result.observed.projection.version = 1;
   const feed = find(await loaded(), DayFeed);
   expect(feed.projection).toBe(state.result.observed.projection);
   expect(feed.zone).toBe("");
@@ -781,7 +792,7 @@ function localRead() {
     rows: () => [],
   };
 }
-it("a genuine local read enters Day directly without accepted projection and date-only route does not create a timezone bookmark", async () => {
+it("a genuine local read selects explicit Floating context and connects actual reading", async () => {
   state.result.observed = null;
   state.result.localManual = localRead();
   state.result.localManualStatus = "AVAILABLE";
@@ -794,15 +805,24 @@ it("a genuine local read enters Day directly without accepted projection and dat
     tripId: reference,
     date: "2027-02-06",
     zone: "",
+    viewMode: "FLOATING",
     view: "day",
   });
-  expect(state.select).not.toHaveBeenCalled();
+  expect(state.select).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2027-02-06",
+    zone: null,
+    viewMode: "FLOATING",
+    generation: 5,
+  });
+  state.view = state.select.mock.lastCall![0];
   state.routeMode = "day";
   const feed = find(render(), DayFeed);
   expect(feed.bottomInset).toBe(90);
   expect(feed.localManual).toBe(state.result.localManual);
   expect(feed.projection).toBeUndefined();
-  expect(feed.zone).toBe("");
+  expect(feed.zone).toBeNull();
+  expect(feed.viewMode).toBe("FLOATING");
   expect(feed.onReadingChange).toBeTypeOf("function");
 });
 it("accepted Day passes pending increments into the original normal feed and save refreshes Today with generation fence", async () => {
@@ -1048,4 +1068,44 @@ it("keeps Day header title blank until the actual textual introduction has scrol
   render();
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+});
+
+it("Home returns to the current same-Trip Floating bookmark before its stale entry date", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.view = {
+    tripId: reference,
+    date: "2027-02-01",
+    zone: "Asia/Tokyo",
+    generation: 5,
+  } as any;
+  state.resume = { ...state.view, date: "2027-02-12", zone: null, viewMode: "FLOATING" };
+  find(await loaded(), LocalTripWorkspace).onChooseDay();
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.select).toHaveBeenCalledWith({ ...state.resume });
+  expect(state.params).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2027-02-12",
+    zone: "",
+    viewMode: "FLOATING",
+    view: "day",
+  });
+});
+it("does not discard accepted v1 when a local read coexists with an explicit Floating selection", async () => {
+  state.result.observed.projection.version = 1;
+  state.result.localManual = localRead();
+  state.view = {
+    tripId: reference,
+    date: "2027-02-06",
+    zone: null,
+    viewMode: "FLOATING",
+    generation: 5,
+  } as any;
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  workspace.onChooseDay();
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.select).not.toHaveBeenCalled();
+  expect(state.params).not.toHaveBeenCalled();
+  state.routeMode = "day";
+  expect(find(render(), DayFeed)).toBeNull();
 });

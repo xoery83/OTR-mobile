@@ -492,3 +492,9 @@ it("resumes the saved Day identity rather than the obsolete pixel position insid
     within: 0,
   });
 });
+
+it("rejects explicit Floating on legacy accepted projection without dropping it for local rows", () => {
+  expect(() =>
+    render({ zone: null, viewMode: "FLOATING", localManual: localManual() }),
+  ).toThrow("DAY_ZONE_INVALID");
+});

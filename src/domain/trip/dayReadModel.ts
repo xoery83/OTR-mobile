@@ -85,13 +85,26 @@ export type DayItem = {
   occupancyBasis: "INSTANT_INTERVAL" | "NAMED_DAY" | "CALENDAR_NIGHTS" | null;
   anchor: string | null;
 };
-export type DayQuery = {
+// Read context only: floating civil dates carry no inferred named zone or Today authority.
+export type DayViewContext =
+  { zone: string; viewMode?: "NAMED_ZONE" } | { zone: null; viewMode: "FLOATING" };
+export type DayQuery = DayViewContext & {
   date: string;
-  zone: string;
   timed: DayItem[];
   nonComparable: DayItem[];
   unresolved: DayEvent[];
 };
+export function dayViewContext(input: string | DayViewContext): DayViewContext {
+  if (typeof input !== "string" && input.viewMode === "FLOATING") {
+    if (input.zone !== null) throw new Error("DAY_ZONE_INVALID");
+    return { zone: null, viewMode: "FLOATING" };
+  }
+  const zone = typeof input === "string" ? input : input.zone;
+  if (typeof zone !== "string" || !zone || zone !== zone.trim() || /^[+-]/.test(zone))
+    throw new Error("DAY_ZONE_INVALID");
+  localCalendarDate("2000-01-01T00:00:00Z", zone);
+  return { zone };
+}
 
 export function validateCalendarDate(date: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("DAY_DATE_INVALID");

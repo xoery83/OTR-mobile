@@ -582,7 +582,7 @@ it("whole-Trip occurrence keys keep one Focus for a repeated canonical Item on d
 
 it("unknown Day context preserves rows and blocks without absolute clock placement", () => {
   const { query, scope, transition } = setup();
-  const stream = composeDayStream({ ...query, zone: "" }, now, {
+  const stream = composeDayStream({ ...query, zone: "", viewMode: "NAMED_ZONE" }, now, {
     scope,
     transitions: [transition],
     flexible: [

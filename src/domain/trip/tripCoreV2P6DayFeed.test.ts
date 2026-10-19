@@ -46,7 +46,14 @@ it("accepted endpoint facts remain intact in a date-only Day without precise NOW
   const { composeDayStream } = await import("@/features/day-feed/composition");
   const fixture = ticketedActivityContribution("FUTURE");
   const zoned = fixture.query!(fixture.selectedDate, fixture.zone);
-  const civil = fixture.query!(fixture.selectedDate, "");
+  // Lab entry remains named-only; exercise its underlying production query context.
+  const civil = Reflect.apply(fixture.query!, undefined, [
+    fixture.selectedDate,
+    {
+      zone: null,
+      viewMode: "FLOATING",
+    },
+  ]);
   expect(civil.coreRows).toEqual(zoned.coreRows);
   expect(civil.timed).toEqual(zoned.timed);
   const stream = composeDayStream(civil, "2026-10-16T10:00:00Z");

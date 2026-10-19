@@ -9,7 +9,8 @@ import { projectCoreItem } from "./tripCoreV2Views";
 import type { CoreActor, CoreGraph, CoreRow } from "./tripCoreV2Mutation";
 import {
   validateCalendarDate,
-  localCalendarDate,
+  dayViewContext,
+  type DayViewContext,
   unresolvedCandidates,
   type DayBoundary,
   type DayEvent,
@@ -42,7 +43,10 @@ export type CoreFlightDayProjection = {
   events: DayEvent[];
   items: NonNullable<ReturnType<typeof projectCoreItem>>[];
   flightFacts: Record<string, CoreFlightFacts>;
-  query(date: string, zone: string): DayQuery & { coreRows: CoreDayRow[] };
+  query(
+    date: string,
+    context: string | DayViewContext,
+  ): DayQuery & { coreRows: CoreDayRow[] };
 };
 const spatialKeys = Object.keys(itinerary_transport_endpointsSchema.shape).filter(
   (key) =>
@@ -167,7 +171,7 @@ export function projectCoreFlightFeed(
     flightFacts,
     query(date, zone) {
       validateCalendarDate(date);
-      if (zone) localCalendarDate("2000-01-01T00:00:00Z", zone);
+      const context = dayViewContext(zone);
       const day = projectCoreDay(graph, actor, date, certificate.generation).filter(
         (r) => r.family === "P2",
       );
@@ -198,7 +202,7 @@ export function projectCoreFlightFeed(
         );
       return {
         date,
-        zone,
+        ...context,
         timed,
         nonComparable,
         coreRows: day,

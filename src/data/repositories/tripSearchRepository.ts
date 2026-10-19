@@ -282,7 +282,7 @@ export function createTripSearchRepository(
     async resolve(
       result: SearchResult,
       proof: SearchProof,
-      view?: { tripId: string; zone: string; generation: number },
+      view?: { tripId: string; zone: string | null; generation: number },
     ) {
       if (result.tripId !== proof.tripId) return null;
       if (result.category === "TRIPS" && result.id !== result.tripId) return null;
