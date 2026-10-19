@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiText } from "@/ui/controls";
-import { formatUiDate, getFormatLocale } from "@/ui/locale";
+import { getFormatLocale } from "@/ui/locale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import type { UiColors } from "@/ui/palette";
@@ -95,9 +95,37 @@ export function formatDayFeedVisibleDates(range: DayFeedShellVisibleDates): stri
     timeZone: "UTC",
   });
   if (range.first === range.last) return formatter.format(date(range.first));
-  return typeof formatter.formatRange === "function"
-    ? formatter.formatRange(date(range.first), date(range.last))
-    : `${formatUiDate(date(range.first))} – ${formatUiDate(date(range.last))}`;
+  if (typeof formatter.formatRange === "function")
+    return formatter.formatRange(date(range.first), date(range.last));
+  if (range.first.slice(0, 4) !== range.last.slice(0, 4))
+    return `${formatter.format(date(range.first))} – ${formatter.format(date(range.last))}`;
+  // Hermes may lack formatRange; preserve locale order while sharing only year/month parts.
+  const first = formatter.formatToParts(date(range.first));
+  const last = formatter.formatToParts(date(range.last));
+  const sameMonth = range.first.slice(0, 7) === range.last.slice(0, 7);
+  const shared = (a: Intl.DateTimeFormatPart, b: Intl.DateTimeFormatPart) =>
+    a.type === b.type &&
+    a.value === b.value &&
+    (a.type === "literal" || a.type === "year" || (sameMonth && a.type === "month"));
+  let head = 0,
+    tail = 0;
+  while (head < first.length && head < last.length && shared(first[head], last[head]))
+    head++;
+  while (
+    tail < first.length - head &&
+    tail < last.length - head &&
+    shared(first[first.length - tail - 1], last[last.length - tail - 1])
+  )
+    tail++;
+  const text = (parts: Intl.DateTimeFormatPart[]) =>
+    parts.map((part) => part.value).join("");
+  return (
+    text(first.slice(0, head)) +
+    text(first.slice(head, first.length - tail)) +
+    (sameMonth ? "–" : " – ") +
+    text(last.slice(head, last.length - tail)) +
+    text(first.slice(first.length - tail))
+  );
 }
 
 export function useDayFeedShellState(resetKey: string) {

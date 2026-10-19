@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import * as uiLocale from "@/ui/locale";
 import {
   DayFeedIntroduction,
   formatDayFeedVisibleDates,
@@ -169,6 +170,36 @@ it("compresses same-month and same-year ranges while retaining both years across
   expect(formatDayFeedVisibleDates({ first: "2026-12-31", last: "2027-01-02" })).toMatch(
     /2026.*2027/,
   );
+});
+
+it("keeps compact EN/ZH date ranges on Hermes without Intl.formatRange", () => {
+  vi.useRealTimers();
+  const descriptor = Object.getOwnPropertyDescriptor(
+    Intl.DateTimeFormat.prototype,
+    "formatRange",
+  );
+  Object.defineProperty(Intl.DateTimeFormat.prototype, "formatRange", {
+    configurable: true,
+    ...descriptor,
+    value: undefined,
+  });
+  const locale = vi.spyOn(uiLocale, "getFormatLocale").mockReturnValue("en-US");
+  const range = (first: string, last: string) =>
+    formatDayFeedVisibleDates({ first, last });
+  try {
+    expect(range("2027-02-02", "2027-02-03")).toBe("Feb 2–3, 2027");
+    expect(range("2027-02-28", "2027-03-02")).toBe("Feb 28 – Mar 2, 2027");
+    expect(range("2026-12-02", "2027-12-02")).toBe("Dec 2, 2026 – Dec 2, 2027");
+    locale.mockReturnValue("zh-Hans");
+    expect(range("2027-02-02", "2027-02-03")).toBe("2027年2月2–3日");
+    expect(range("2027-02-28", "2027-03-02")).toBe("2027年2月28 – 3月2日");
+    expect(range("2026-12-31", "2027-01-02")).toBe("2026年12月31日 – 2027年1月2日");
+  } finally {
+    if (descriptor)
+      Object.defineProperty(Intl.DateTimeFormat.prototype, "formatRange", descriptor);
+    else Reflect.deleteProperty(Intl.DateTimeFormat.prototype, "formatRange");
+    locale.mockRestore();
+  }
 });
 
 it("opens Calendar from the initial Trip date row while the floating title is blank", () => {
