@@ -1,4 +1,4 @@
-import type { BuiltInTripCoverId } from "@/domain/trip/types";
+import { isTripCoverAssetId, type TripCoverUpdate } from "@/domain/trip/tripCoverAssets";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
@@ -50,18 +50,14 @@ export function createTripMetadataRepository(
         return false;
       }
     },
-    async updateMetadata(
-      input: TripMetadataUpdate,
-      cover?: { before: BuiltInTripCoverId | null; after: BuiltInTripCoverId | null },
-    ) {
+    async updateMetadata(input: TripMetadataUpdate, cover?: TripCoverUpdate) {
       const request = tripMetadataUpdateSchema.parse(input);
       if (
         cover &&
-        [cover.before, cover.after].some(
-          (id) =>
-            id !== null &&
-            !["city", "coast", "mountain", "cultural-oldtown"].includes(id),
-        )
+        ((cover.before !== null &&
+          (typeof cover.before !== "string" ||
+            !/^[a-z0-9_-]{1,64}$/.test(cover.before))) ||
+          (cover.after !== null && !isTripCoverAssetId(cover.after)))
       )
         throw new Error("TRIP_COVER_INVALID");
       const scope = await captureAccountScope(account);
@@ -125,7 +121,9 @@ export function createTripMetadataRepository(
           };
           if (json(before) !== json(request.before))
             throw new Error("TRIP_METADATA_LOCAL_CONFLICT");
-          if (cover) {
+          // A metadata-only save must not write a derived recommendation or erase
+          // an unrecognised stored preference decoded by an older caller as null.
+          if (cover && cover.before !== cover.after) {
             if (
               row.selected_cover_asset_id !== cover.before &&
               row.selected_cover_asset_id !== cover.after

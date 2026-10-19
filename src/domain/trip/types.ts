@@ -1,7 +1,9 @@
 import type { LocalPersonNameSlot } from "./localTripPerson";
 import type { SyncableRecord } from "@/domain/sync/syncStatus";
 
-export type BuiltInTripCoverId = "city" | "coast" | "mountain" | "cultural-oldtown";
+import type { TripCoverAssetId } from "./tripCoverAssets";
+
+export type BuiltInTripCoverId = TripCoverAssetId;
 
 export type Trip = SyncableRecord & {
   name: string;
@@ -11,6 +13,8 @@ export type Trip = SyncableRecord & {
   baseCurrency: string | null;
   ownerPersonId: string | null;
   selectedCoverAssetId?: BuiltInTripCoverId | null;
+  /** Read-only stored preference, including unknown IDs; null alone means AUTO. */
+  readonly selectedCoverAssetIdRaw?: string | null;
 };
 
 export type CreateTripInput = {

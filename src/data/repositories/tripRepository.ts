@@ -1,3 +1,4 @@
+import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import type * as SQLite from "expo-sqlite";
 import { createUuid } from "@/domain/localId";
 import type {
@@ -52,11 +53,6 @@ type Row = {
   selected_cover_asset_id?: string | null;
   metadata_pending?: number;
 };
-const isBuiltInCover = (value: unknown): value is BuiltInTripCoverId =>
-  value === "city" ||
-  value === "coast" ||
-  value === "mountain" ||
-  value === "cultural-oldtown";
 const trip = (row: Row): Trip => ({
   id: row.id,
   serverId: row.accepted_at ? row.id : null,
@@ -75,7 +71,8 @@ const trip = (row: Row): Trip => ({
   syncVersion: 0,
   baseCurrency: null,
   ownerPersonId: row.owner_person_id,
-  selectedCoverAssetId: isBuiltInCover(row.selected_cover_asset_id)
+  selectedCoverAssetIdRaw: row.selected_cover_asset_id ?? null,
+  selectedCoverAssetId: isTripCoverAssetId(row.selected_cover_asset_id)
     ? row.selected_cover_asset_id
     : null,
 });
@@ -210,7 +207,7 @@ export function createTripRepository(
     },
     async selectBuiltInCover(tripId: string, coverAssetId: BuiltInTripCoverId | null) {
       coreUuid.parse(tripId);
-      if (coverAssetId !== null && !isBuiltInCover(coverAssetId))
+      if (coverAssetId !== null && !isTripCoverAssetId(coverAssetId))
         throw new Error("TRIP_COVER_INVALID");
       const scope = await captureAccountScope(account);
       await withAccountApplyGate(async () => {

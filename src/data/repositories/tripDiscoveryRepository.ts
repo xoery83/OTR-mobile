@@ -1,3 +1,4 @@
+import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import type * as SQLite from "expo-sqlite";
 import type { BuiltInTripCoverId } from "@/domain/trip/types";
 import {
@@ -33,6 +34,7 @@ type LocalRow = SummaryRow & {
 export type TripListSummary = TripDiscoverySummary & {
   localStatus: "PENDING_CREATE" | "SYNCED" | null;
   selectedCoverAssetId: BuiltInTripCoverId | null;
+  readonly selectedCoverAssetIdRaw?: string | null;
   remoteListed: boolean;
 };
 export type CachedTripList = {
@@ -40,10 +42,6 @@ export type CachedTripList = {
   trips: TripListSummary[];
 };
 
-const cover = (id: string | null): BuiltInTripCoverId | null =>
-  id === "city" || id === "coast" || id === "mountain" || id === "cultural-oldtown"
-    ? id
-    : null;
 const summary = (row: SummaryRow): TripDiscoverySummary => ({
   id: row.id,
   name: row.name,
@@ -115,13 +113,17 @@ export function createTripDiscoveryRepository(
           ...summary(row),
           localStatus: null,
           selectedCoverAssetId: null,
+          selectedCoverAssetIdRaw: null,
           remoteListed: true,
         });
       for (const row of local)
         entries.set(row.id, {
           ...summary(row), // The local source of truth wins on equal UUID, especially pending CREATE.
           localStatus: row.accepted_at ? "SYNCED" : "PENDING_CREATE",
-          selectedCoverAssetId: cover(row.selected_cover_asset_id),
+          selectedCoverAssetId: isTripCoverAssetId(row.selected_cover_asset_id)
+            ? row.selected_cover_asset_id
+            : null,
+          selectedCoverAssetIdRaw: row.selected_cover_asset_id,
           remoteListed: entries.has(row.id),
         });
       return {

@@ -1,3 +1,4 @@
+import { tripCoverAssetIds } from "@/domain/trip/tripCoverAssets";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -2067,4 +2068,143 @@ it("rolls back cover-only consumed identity on receipt write and account fence f
   ).toBeUndefined();
   await f.repo.updateMetadata(request, { before: null, after: "city" });
   expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+});
+
+it("accepts every registered cover in both direct selection and atomic metadata saves with cold recovery", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-cover52-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const command = input();
+  const saved = await f.repo.createTrip(command);
+  let metadata = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const original = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(command.operationId);
+  for (const id of tripCoverAssetIds) {
+    await f.repo.selectBuiltInCover(saved.id, id);
+    expect(await f.repo.getTrip(saved.id)).toMatchObject({
+      selectedCoverAssetId: id,
+      selectedCoverAssetIdRaw: id,
+    });
+    await f.repo.selectBuiltInCover(saved.id, null);
+    const after = { ...metadata, name: `Cover ${id}` };
+    await f.repo.updateMetadata(
+      { operationId: randomUUID(), tripId: saved.id, before: metadata, after },
+      { before: null, after: id },
+    );
+    expect(await f.repo.getTrip(saved.id)).toMatchObject({
+      ...after,
+      selectedCoverAssetId: id,
+      selectedCoverAssetIdRaw: id,
+    });
+    metadata = after;
+  }
+  expect(
+    f.sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(command.operationId),
+  ).toEqual(original);
+  f.sql.close();
+  connections.splice(connections.indexOf(f.sql), 1);
+  f = local(path, false);
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    selectedCoverAssetId: tripCoverAssetIds.at(-1),
+    ...metadata,
+  });
+  f.switchTo(accountB);
+  expect(await f.repo.getTrip(saved.id)).toBeNull();
+  await expect(f.repo.selectBuiltInCover(saved.id, "gen-b1-001")).rejects.toThrow(
+    "TRIP_LOCAL_RECORD_MISSING",
+  );
+  f.switchTo(accountA);
+  f.abaNextAccept();
+  await expect(f.repo.selectBuiltInCover(saved.id, "wc-142191115")).rejects.toThrow(
+    "Account changed",
+  );
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe(
+    tripCoverAssetIds.at(-1),
+  );
+});
+
+it("distinguishes unknown stored IDs from AUTO and leaves them untouched on metadata-only saves", async () => {
+  const f = local();
+  const saved = await f.repo.createTrip(input());
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: null,
+  });
+  f.sql
+    .prepare(
+      "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+    )
+    .run("future-cover-v3", accountA, saved.id);
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: "future-cover-v3",
+  });
+  // No cover UPDATE is allowed here, including a legacy caller's null-to-null tuple.
+  f.sql.exec(
+    "CREATE TRIGGER reject_cover_write BEFORE UPDATE OF selected_cover_asset_id ON local_trip_containers BEGIN SELECT RAISE(ABORT,'UNEXPECTED_COVER_WRITE'); END",
+  );
+  let metadata = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  for (const cover of [
+    undefined,
+    { before: null, after: null },
+    { before: "city", after: "city" },
+  ] as const) {
+    const after = { ...metadata, name: `${metadata.name} edited` };
+    await f.repo.updateMetadata(
+      { operationId: randomUUID(), tripId: saved.id, before: metadata, after },
+      cover,
+    );
+    metadata = after;
+    expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetIdRaw).toBe(
+      "future-cover-v3",
+    );
+  }
+  f.sql.exec("DROP TRIGGER reject_cover_write");
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: metadata,
+    after: metadata,
+  };
+  await expect(
+    f.repo.updateMetadata(request, { before: null, after: "gen-b1-001" }),
+  ).rejects.toThrow("TRIP_COVER_LOCAL_CONFLICT");
+  await expect(
+    f.repo.updateMetadata(request, {
+      before: "future-cover-v3",
+      after: "future-cover-v3" as never,
+    }),
+  ).rejects.toThrow("TRIP_COVER_INVALID");
+  await expect(
+    f.repo.updateMetadata(request, { before: "../invalid", after: "gen-b1-001" }),
+  ).rejects.toThrow("TRIP_COVER_INVALID");
+  await f.repo.updateMetadata(request, {
+    before: "future-cover-v3",
+    after: "gen-b1-001",
+  });
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    selectedCoverAssetId: "gen-b1-001",
+    selectedCoverAssetIdRaw: "gen-b1-001",
+  });
+  await f.repo.updateMetadata(request, {
+    before: "future-cover-v3",
+    after: "gen-b1-001",
+  });
+  await expect(
+    f.repo.updateMetadata(request, { before: "future-cover-v3", after: "wc-142191115" }),
+  ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
 });
