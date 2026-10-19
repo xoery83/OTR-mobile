@@ -4,7 +4,7 @@
   "coreIntegrated": "9bd21394",
   "labFrozenSha": "9555ed42197bb0c955f12146317d2889757a7fd8",
   "policy": "pending-landmark-preview (explicit consumer opt-in; production default unchanged)",
-  "reviewStatus": "NATIVE_COMBINATION_REVIEW_PENDING",
+  "reviewStatus": "INDEPENDENT_COMBINATION_CODE_REVIEW_PASS",
   "nativeStatus": "NOT_INSTALLED_NOT_NATIVE_VERIFIED",
   "imagesNew": 48,
   "imagesNewBytes": 12750269,
@@ -30,5 +30,6 @@
     "Release/IPA resource delta unmeasured",
     "old clients still cannot edit unknown raw selected IDs",
     "remote-only cover save needs an existing local row"
-  ]
+  ],
+  "releaseBuildStatus": "RELEASE_BUILD_PASS_NOT_INSTALLED"
 }
