@@ -5,6 +5,8 @@ import {
   legacyTripCoverAssetIds,
   nativeTripCoverAllowlistSha256,
   nativeTripCoverAssetIds,
+  ownerPhotoTripCoverAllowlistSha256,
+  ownerPhotoTripCoverAssetIds,
   tripCoverAssetIds,
 } from "./tripCoverAssets";
 
@@ -21,10 +23,12 @@ it("pins the approved 48-ID candidate pool alongside the unchanged legacy four",
   expect(nativeTripCoverAssetIds).toHaveLength(48);
   expect(nativeTripCoverAssetIds.filter((id) => id.startsWith("wc-"))).toHaveLength(31);
   expect(nativeTripCoverAssetIds.filter((id) => id.startsWith("gen-"))).toHaveLength(17);
-  expect(new Set(tripCoverAssetIds).size).toBe(52);
+  const original52 = [...legacyTripCoverAssetIds, ...nativeTripCoverAssetIds];
+  expect(new Set(original52).size).toBe(52);
+  expect(tripCoverAssetIds.slice(0, 52)).toEqual(original52);
   expect(
     createHash("sha256")
-      .update([...tripCoverAssetIds].sort().join("\n"))
+      .update([...original52].sort().join("\n"))
       .digest("hex"),
   ).toBe("f08794d8e11b57f67e3439cd9f54dca147a45fc6993398bfe46d4d3ae8e9368d");
   for (const id of tripCoverAssetIds) expect(id).toMatch(/^[a-z0-9_-]{1,64}$/);
@@ -48,4 +52,33 @@ it("recognises only registered IDs, without accepting pattern-valid future or ex
     "../city",
   ])
     expect(isTripCoverAssetId(value)).toBe(false);
+});
+
+it("appends exactly the authorized22 static Owner IDs without replacing the original52", () => {
+  expect(ownerPhotoTripCoverAllowlistSha256).toBe(
+    "1d9fcbe05882645f7846d253989a2720bb8bf55765c1fd8b1677b4c085051927",
+  );
+  expect(ownerPhotoTripCoverAssetIds).toHaveLength(22);
+  expect(new Set(tripCoverAssetIds).size).toBe(74);
+  expect(tripCoverAssetIds.slice(52)).toEqual(ownerPhotoTripCoverAssetIds);
+  expect(
+    createHash("sha256")
+      .update([...ownerPhotoTripCoverAssetIds].sort().join("\n"))
+      .digest("hex"),
+  ).toBe("fcbce5092af365700fe8853bdef7f87e00f7593a37867fb7781df9b68d0bee98");
+  for (const id of ownerPhotoTripCoverAssetIds) {
+    expect(id).toMatch(/^owner-photo-[0-9a-f]{12}$/);
+    expect(isTripCoverAssetId(id)).toBe(true);
+    expect(legacyTripCoverAssetIds.some((legacy) => legacy === String(id))).toBe(false);
+    expect(nativeTripCoverAssetIds.some((native) => native === String(id))).toBe(false);
+  }
+  expect(Object.isFrozen(ownerPhotoTripCoverAssetIds)).toBe(true);
+  for (const invalid of [
+    "owner-photo-a348f66b8ca6",
+    "OWNER-PHOTO-A348F66B8CA5",
+    " owner-photo-a348f66b8ca5",
+    "owner-photo-a348f66b8ca5.jpg",
+    "owner-photo-a348f66b8ca5/..",
+  ])
+    expect(isTripCoverAssetId(invalid)).toBe(false);
 });

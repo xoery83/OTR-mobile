@@ -57,9 +57,36 @@ export const nativeTripCoverAssetIds = Object.freeze([
   "gen-b1-018",
   "gen-b1-019",
 ] as const);
+export const ownerPhotoTripCoverAllowlistSha256 =
+  "1d9fcbe05882645f7846d253989a2720bb8bf55765c1fd8b1677b4c085051927";
+export const ownerPhotoTripCoverAssetIds = Object.freeze([
+  "owner-photo-a348f66b8ca5",
+  "owner-photo-5e628170d2d6",
+  "owner-photo-50aad6a676e3",
+  "owner-photo-2fce9bae87de",
+  "owner-photo-dc3432ce914a",
+  "owner-photo-00b85fe9d39f",
+  "owner-photo-ad070c44ed0d",
+  "owner-photo-8c2f49c1c398",
+  "owner-photo-04647dfa363b",
+  "owner-photo-d2ee69b2dc93",
+  "owner-photo-09ff913a4afd",
+  "owner-photo-06bfb201f85e",
+  "owner-photo-e3829c69b852",
+  "owner-photo-593487a64e45",
+  "owner-photo-ac283d3eb13a",
+  "owner-photo-4c2b29ed6902",
+  "owner-photo-dbfdcd6ae067",
+  "owner-photo-f3bd568e51b0",
+  "owner-photo-294588f753cc",
+  "owner-photo-c52bee97d049",
+  "owner-photo-4ce2b7680dde",
+  "owner-photo-80dc5b807b13",
+] as const);
 export const tripCoverAssetIds = Object.freeze([
   ...legacyTripCoverAssetIds,
   ...nativeTripCoverAssetIds,
+  ...ownerPhotoTripCoverAssetIds,
 ] as const);
 export type TripCoverAssetId = (typeof tripCoverAssetIds)[number];
 const registeredIds: ReadonlySet<string> = new Set(tripCoverAssetIds);
