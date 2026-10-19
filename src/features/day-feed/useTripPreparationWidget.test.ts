@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
+import { router } from "expo-router";
 const state = vi.hoisted(() => ({
   generation: 1,
   cursor: 0,
@@ -91,6 +92,38 @@ beforeEach(() => {
   state.setup.mockReset();
   state.effects = [];
   state.active = null;
+  vi.mocked(router.push).mockReset();
+});
+
+it("opens currency on the parent Stack with the same Trip, rejecting a late account change", async () => {
+  const view = PreparationHarness(true);
+  const CurrencyHarness = () => {
+    return (
+      useTripPreparationWidget({ tripId: "trip", undated: true })!
+        .content as import("react").ReactElement<{ onCurrency(): void }>
+    ).props.onCurrency;
+  };
+  state.read.mockResolvedValue(view.read);
+  state.cursor = 0;
+  state.values = [view.read, "READY", { context: view.read.scope }];
+  CurrencyHarness()();
+  await vi.waitFor(() =>
+    expect(router.push).toHaveBeenCalledExactlyOnceWith({
+      pathname: "/trip-currency",
+      params: { journeyId: "trip" },
+    }),
+  );
+  vi.mocked(router.push).mockClear();
+  let resolve!: (value: typeof view.read) => void;
+  state.read.mockReturnValue(new Promise((done) => (resolve = done)));
+  state.cursor = 0;
+  state.values = [view.read, "READY", { context: view.read.scope }];
+  CurrencyHarness()();
+  await vi.waitFor(() => expect(resolve).toBeTypeOf("function"));
+  state.generation = 2;
+  resolve(view.read);
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(router.push).not.toHaveBeenCalled();
 });
 
 it("keeps real setup facts in the same request fence and drops late refresh or account results", async () => {

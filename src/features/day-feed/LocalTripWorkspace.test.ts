@@ -13,6 +13,7 @@ import {
   getAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
+import { router } from "expo-router";
 vi.mock("./TripCalendarRangeField", () => ({
   TripCalendarRangeField: () => null,
   tripRangeLabel: () => "range",
@@ -1021,4 +1022,49 @@ it("opens the existing Members sheet from a scoped local menu only when real set
   action.members();
   render();
   expect(state.nodes.some((node) => node.membersSheet?.visible)).toBe(false);
+});
+
+it("leaves the unchanged Editor for same-Trip parent currency without saving, and fences its stale callback", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  render();
+  state.preparation.onSetup({
+    context: {
+      accountId: "actor",
+      tripId: "local-a",
+      generation: getAccountGeneration(),
+    },
+    currency: {
+      state: "AVAILABLE",
+      code: "NZD",
+      scale: 2,
+      permission: "OWNER",
+      lock: "NOT_OBSERVED",
+    },
+    members: { state: "UNKNOWN" },
+    invitations: "UNKNOWN",
+    connections: "UNKNOWN",
+  });
+  render();
+  button("tripHome.edit").onPress();
+  render();
+  const currency = state.nodes.find((node) => node.label === "tripForm.currency")!;
+  expect(currency.disabled).toBe(false);
+  vi.mocked(router.push).mockClear();
+  currency.onPress();
+  render();
+  expect(router.push).toHaveBeenCalledExactlyOnceWith({
+    pathname: "/trip-currency",
+    params: { journeyId: "local-a" },
+  });
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
+  vi.mocked(router.push).mockClear();
+  advanceAccountGeneration();
+  render();
+  currency.onPress();
+  expect(router.push).not.toHaveBeenCalled();
 });

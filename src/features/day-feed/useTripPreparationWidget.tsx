@@ -172,7 +172,7 @@ export function useTripPreparationWidget({
             ? () => {
                 void act(() =>
                   router.push({
-                    pathname: "/expenses/settings",
+                    pathname: "/trip-currency",
                     params: { journeyId: tripId },
                   }),
                 );

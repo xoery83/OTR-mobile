@@ -708,7 +708,7 @@ function LocalTripContent({
                     if (alive.current && generation === getAccountGeneration()) {
                       setCoverOpen(false);
                       router.push({
-                        pathname: "/expenses/settings",
+                        pathname: "/trip-currency",
                         params: { journeyId: selected.id },
                       });
                     }
