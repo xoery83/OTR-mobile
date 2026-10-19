@@ -177,12 +177,12 @@ it("compresses Chinese ranges even when Intl.formatRange exists", () => {
   const locale = vi.spyOn(uiLocale, "getFormatLocale").mockReturnValue("zh-Hans");
   try {
     expect(typeof Intl.DateTimeFormat.prototype.formatRange).toBe("function");
-    expect(
-      formatDayFeedVisibleDates({ first: "2027-02-03", last: "2027-02-04" }),
-    ).toBe("2027年2月3–4日");
-    expect(
-      formatDayFeedVisibleDates({ first: "2027-02-28", last: "2027-03-02" }),
-    ).toBe("2027年2月28 – 3月2日");
+    expect(formatDayFeedVisibleDates({ first: "2027-02-03", last: "2027-02-04" })).toBe(
+      "2027年2月3–4日",
+    );
+    expect(formatDayFeedVisibleDates({ first: "2027-02-28", last: "2027-03-02" })).toBe(
+      "2027年2月28 – 3月2日",
+    );
   } finally {
     locale.mockRestore();
   }
@@ -232,4 +232,31 @@ it("opens Calendar from the initial Trip date row while the floating title is bl
   expect(row.style.minHeight).toBe(44);
   row.onPress();
   expect(open).toHaveBeenCalledOnce();
+});
+
+it("compresses Native Chinese parts that mislabel the full date as year", () => {
+  vi.useRealTimers();
+  const locale = vi.spyOn(uiLocale, "getFormatLocale").mockReturnValue("zh-Hans");
+  const parts = vi
+    .spyOn(Intl.DateTimeFormat.prototype, "formatToParts")
+    .mockImplementation(function (this: Intl.DateTimeFormat, date) {
+      return [{ type: "year", value: this.format(date) }];
+    });
+  try {
+    expect(formatDayFeedVisibleDates({ first: "2027-01-21", last: "2027-01-29" })).toBe(
+      "2027年1月21–29日",
+    );
+    expect(formatDayFeedVisibleDates({ first: "2027-01-31", last: "2027-02-02" })).toBe(
+      "2027年1月31 – 2月2日",
+    );
+    expect(formatDayFeedVisibleDates({ first: "2026-12-31", last: "2027-01-02" })).toBe(
+      "2026年12月31日 – 2027年1月2日",
+    );
+    expect(formatDayFeedVisibleDates({ first: "2027-01-21", last: "2027-01-21" })).toBe(
+      "2027年1月21日",
+    );
+  } finally {
+    parts.mockRestore();
+    locale.mockRestore();
+  }
 });

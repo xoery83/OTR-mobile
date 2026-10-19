@@ -98,8 +98,29 @@ export function formatDayFeedVisibleDates(range: DayFeedShellVisibleDates): stri
   if (range.first.slice(0, 4) !== range.last.slice(0, 4))
     return `${formatter.format(date(range.first))} – ${formatter.format(date(range.last))}`;
   // Native formatRange can repeat Chinese years/months; share parts in locale order.
-  const first = formatter.formatToParts(date(range.first));
-  const last = formatter.formatToParts(date(range.last));
+  const parts = (value: string): Intl.DateTimeFormatPart[] => {
+    const raw = formatter.formatToParts(date(value));
+    if (
+      !getFormatLocale().startsWith("zh") ||
+      (raw.some((part) => part.type === "month") &&
+        raw.some((part) => part.type === "day"))
+    )
+      return raw;
+    // Native can label the whole Chinese date as year; retain Intl literals and verify civil fields.
+    const match = formatter.format(date(value)).match(/^(\d+)(\D+)(\d+)(\D+)(\d+)(\D*)$/);
+    const civil = value.split("-").map(Number);
+    if (!match || [1, 3, 5].some((at, i) => Number(match[at]) !== civil[i])) return raw;
+    return [
+      { type: "year", value: match[1] },
+      { type: "literal", value: match[2] },
+      { type: "month", value: match[3] },
+      { type: "literal", value: match[4] },
+      { type: "day", value: match[5] },
+      { type: "literal", value: match[6] },
+    ];
+  };
+  const first = parts(range.first);
+  const last = parts(range.last);
   const sameMonth = range.first.slice(0, 7) === range.last.slice(0, 7);
   const shared = (a: Intl.DateTimeFormatPart, b: Intl.DateTimeFormatPart) =>
     a.type === b.type &&
