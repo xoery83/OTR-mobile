@@ -1,0 +1,44 @@
+{
+  "trip": {
+    "id": "24617633-94fd-477d-bfc8-c7e974d6212e",
+    "account_id": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+    "name": "ER02 Cover QA \u00b7 Iceland Winter",
+    "destination": "Iceland",
+    "start_date": "2026-12-30",
+    "end_date": "2027-04-28",
+    "selected_cover_asset_id": null
+  },
+  "pending": {
+    "operation_id": "12709234-da8d-4854-b8dc-48ee4022eee5",
+    "intent_sha256": "b2883f7984a01b8665c8ff696ebce09f9dc53d0124f95fc994e2b2e7ef302e97",
+    "state": "BLOCKED",
+    "itemId": "cd1d8549-4cb8-4166-8d79-c1adc10391e7",
+    "family": "P1",
+    "title": "ER02 local pending walk",
+    "admission": {
+      "mode": "MANUAL",
+      "policyVersion": null,
+      "sourceIntentId": null
+    },
+    "schedule": {
+      "start": {
+        "basis": "DERIVED_CIVIL",
+        "civil_resolution": "PENDING",
+        "clock_precision": null,
+        "instant": null,
+        "interpretation_input_sha256": null,
+        "interpretation_key": null,
+        "local_date": "2026-10-20",
+        "local_time": null,
+        "provenance_refs": null,
+        "quality": "UNKNOWN",
+        "resolution_offset_seconds": null,
+        "source_instant": null,
+        "source_instant_precision": null,
+        "supplied_offset_seconds": null,
+        "zone_id": null
+      }
+    }
+  },
+  "capture": "read-only sqlite mode=ro corroboration; Native path used existing normal repositories"
+}
