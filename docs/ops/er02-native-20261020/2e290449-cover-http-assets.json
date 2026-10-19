@@ -1,0 +1,318 @@
+{
+  "sha": "2e2904496b73bbacf9fb03c6a67b0f1b426dc257",
+  "scope": "localhost Metro HTTP byte availability; not native paint of every asset or no-Metro offline acceptance",
+  "assets": [
+    {
+      "asset": "assets/trips/covers/city.jpg",
+      "status": 200,
+      "bytes": 676130,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/coast.jpg",
+      "status": 200,
+      "bytes": 669301,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/mountain.jpg",
+      "status": 200,
+      "bytes": 569568,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/cultural-oldtown.jpg",
+      "status": 200,
+      "bytes": 415225,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-142191115.jpg",
+      "status": 200,
+      "bytes": 200564,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-142949336.jpg",
+      "status": 200,
+      "bytes": 155270,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-124361528.jpg",
+      "status": 200,
+      "bytes": 109227,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-80558488.jpg",
+      "status": 200,
+      "bytes": 238865,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-94201576.jpg",
+      "status": 200,
+      "bytes": 283438,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-93673865.jpg",
+      "status": 200,
+      "bytes": 297469,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-10073035.jpg",
+      "status": 200,
+      "bytes": 133564,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-67613001.jpg",
+      "status": 200,
+      "bytes": 213238,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-67612997.jpg",
+      "status": 200,
+      "bytes": 223414,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-67612999.jpg",
+      "status": 200,
+      "bytes": 302746,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-37839083.jpg",
+      "status": 200,
+      "bytes": 175612,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-31260300.jpg",
+      "status": 200,
+      "bytes": 164804,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-132537700.jpg",
+      "status": 200,
+      "bytes": 146438,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-129045078.jpg",
+      "status": 200,
+      "bytes": 176571,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-126724911.jpg",
+      "status": 200,
+      "bytes": 176489,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-122637248.jpg",
+      "status": 200,
+      "bytes": 165954,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-21375035.jpg",
+      "status": 200,
+      "bytes": 466071,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-121485754.jpg",
+      "status": 200,
+      "bytes": 208419,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-79286039.jpg",
+      "status": 200,
+      "bytes": 150501,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-74555821.jpg",
+      "status": 200,
+      "bytes": 169232,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-143514327.jpg",
+      "status": 200,
+      "bytes": 205809,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-130572554.jpg",
+      "status": 200,
+      "bytes": 243975,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-5420726.jpg",
+      "status": 200,
+      "bytes": 167123,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-88746958.jpg",
+      "status": 200,
+      "bytes": 105304,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-438293.jpg",
+      "status": 200,
+      "bytes": 70212,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-82284289.jpg",
+      "status": 200,
+      "bytes": 126365,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-154986747.jpg",
+      "status": 200,
+      "bytes": 306284,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-134682226.jpg",
+      "status": 200,
+      "bytes": 243680,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-38498608.jpg",
+      "status": 200,
+      "bytes": 79954,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-38767181.jpg",
+      "status": 200,
+      "bytes": 283855,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/wc-49380370.jpg",
+      "status": 200,
+      "bytes": 220370,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-001.jpg",
+      "status": 200,
+      "bytes": 300628,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-002.jpg",
+      "status": 200,
+      "bytes": 520964,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-003.jpg",
+      "status": 200,
+      "bytes": 307738,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-004.jpg",
+      "status": 200,
+      "bytes": 466165,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-005.jpg",
+      "status": 200,
+      "bytes": 377693,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-006.jpg",
+      "status": 200,
+      "bytes": 438450,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-007.jpg",
+      "status": 200,
+      "bytes": 293752,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-008.jpg",
+      "status": 200,
+      "bytes": 264904,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-009.jpg",
+      "status": 200,
+      "bytes": 319361,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-010.jpg",
+      "status": 200,
+      "bytes": 314632,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-013.jpg",
+      "status": 200,
+      "bytes": 551278,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-014.jpg",
+      "status": 200,
+      "bytes": 551932,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-015.jpg",
+      "status": 200,
+      "bytes": 356959,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-016.jpg",
+      "status": 200,
+      "bytes": 362811,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-017.jpg",
+      "status": 200,
+      "bytes": 310115,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-018.jpg",
+      "status": 200,
+      "bytes": 485243,
+      "matches_source": true
+    },
+    {
+      "asset": "assets/trips/covers/v2/gen-b1-019.jpg",
+      "status": 200,
+      "bytes": 316827,
+      "matches_source": true
+    }
+  ]
+}
