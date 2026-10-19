@@ -6,7 +6,7 @@ import {
   updateDayFeedShellScroll,
 } from "./dayFeedShellState";
 
-it("hides only after sustained forward reading, stays hidden at rest and restores on a small reverse", () => {
+it("hides after sustained forward reading, ignores unchanged offsets and restores on a small reverse", () => {
   let state = initialDayFeedShellScroll;
   for (const offset of [5, 12, 24]) state = updateDayFeedShellScroll(state, offset, true);
   expect(state.navigationVisible).toBe(true);

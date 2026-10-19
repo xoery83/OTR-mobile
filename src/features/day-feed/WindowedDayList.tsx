@@ -52,6 +52,7 @@ export function WindowedDayList<T>({
   onVisibleDates,
   onOffsetChange,
   onReadingMotion,
+  onReadingStopped,
   onViewportChange,
   onInteraction,
   onMountedRowsChange,
@@ -72,6 +73,7 @@ export function WindowedDayList<T>({
   onVisibleDates?(dates: readonly string[]): void;
   onOffsetChange?(offset: number): void;
   onReadingMotion?(delta: number): void;
+  onReadingStopped?(): void;
   onViewportChange?(viewport: {
     firstVisibleDate: string;
     lastVisibleDate: string;
@@ -106,6 +108,7 @@ export function WindowedDayList<T>({
     onVisibleDates,
     onOffsetChange,
     onReadingMotion,
+    onReadingStopped,
     onJumpResult,
     onMountedRowsChange,
     onViewportChange,
@@ -121,6 +124,7 @@ export function WindowedDayList<T>({
       onVisibleDates,
       onOffsetChange,
       onReadingMotion,
+      onReadingStopped,
       onJumpResult,
       onMountedRowsChange,
       onViewportChange,
@@ -725,11 +729,17 @@ export function WindowedDayList<T>({
         onInteraction?.();
         prependPrevious(offset.current, "drag-begin");
       }}
-      onScrollEndDrag={() => {
+      onScrollEndDrag={(event) => {
         if (renderedEpoch !== listEpoch.current) return;
         trace("DRAG_END", { origin, listEpoch: renderedEpoch });
         dragging.current = false;
         readingTouch.current = null;
+        // A nonzero release velocity is still reading until native momentum ends.
+        if (event?.nativeEvent.velocity?.y === 0) live.current.onReadingStopped?.();
+      }}
+      onMomentumScrollEnd={() => {
+        if (renderedEpoch === listEpoch.current && !dragging.current)
+          live.current.onReadingStopped?.();
       }}
       onScroll={(event) => {
         if (renderedEpoch !== listEpoch.current) return;

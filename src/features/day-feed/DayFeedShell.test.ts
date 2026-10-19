@@ -114,7 +114,7 @@ it("settles a visible range after scrolling stops and cancels stale range timers
   vi.advanceTimersByTime(200);
   expect(renderShell("account/other/gen2").visibleDates).toEqual(a);
 });
-it("retains hidden navigation at rest and avoids rerendering on every reading pixel", () => {
+it("retains hidden navigation through offset compensation and avoids per-pixel rerenders", () => {
   const shell = renderShell();
   shell.observeScroll(40, true);
   expect(renderShell().navigationVisible).toBe(false);
@@ -127,6 +127,24 @@ it("retains hidden navigation at rest and avoids rerendering on every reading pi
   expect(renderShell().navigationVisible).toBe(true);
   shell.observeScroll(6000, false);
   expect(renderShell().navigationVisible).toBe(true);
+});
+
+it("restores navigation at a real reading stop, resets the next gesture and fences old scopes", () => {
+  const shell = renderShell();
+  shell.observeReadingMotion(40);
+  expect(renderShell().navigationVisible).toBe(false);
+  shell.observeReadingStopped();
+  expect(renderShell().navigationVisible).toBe(true);
+  shell.observeReadingMotion(1);
+  expect(renderShell().navigationVisible).toBe(true);
+  shell.observeReadingMotion(31);
+  expect(renderShell().navigationVisible).toBe(false);
+  const other = renderShell("account/other/gen2");
+  other.observeReadingMotion(40);
+  shell.observeReadingStopped();
+  expect(renderShell("account/other/gen2").navigationVisible).toBe(false);
+  other.observeReadingStopped();
+  expect(renderShell("account/other/gen2").navigationVisible).toBe(true);
 });
 
 it("accumulates small real gestures and restores navigation on a slight non-top reversal", () => {

@@ -122,6 +122,7 @@ export function LocalManualDayFeed({
       onViewportChange={presentation?.onViewportChange}
       onOffsetChange={presentation?.onOffsetChange}
       onReadingMotion={presentation?.onReadingMotion}
+      onReadingStopped={presentation?.onReadingStopped}
       onInteraction={presentation?.onInteraction}
       onMountedRowsChange={presentation?.onMountedRowsChange}
       onAnchorChange={(anchor) => {

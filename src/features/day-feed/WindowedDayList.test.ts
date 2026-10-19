@@ -170,6 +170,7 @@ function setup(
   const count = vi.fn(),
     result = vi.fn(),
     readingMotion = vi.fn(),
+    readingStopped = vi.fn(),
     anchorChanged = vi.fn();
   const rerender = (
     nextRows = rows,
@@ -197,17 +198,56 @@ function setup(
         onJumpResult: result,
         onAnchorChange: anchorChanged,
         onReadingMotion: readingMotion,
+        onReadingStopped: readingStopped,
       }),
     );
     for (const effect of state.effects) effect();
   };
   state.rerender = () => rerender();
   rerender();
-  return { rows, ref, render, count, result, rerender, anchorChanged, readingMotion };
+  return {
+    rows,
+    ref,
+    render,
+    count,
+    result,
+    rerender,
+    anchorChanged,
+    readingMotion,
+    readingStopped,
+  };
 }
 function touch(pageY: number, identifier: string | number = "1", count = 1) {
   return { nativeEvent: { pageY, identifier, touches: Array(count).fill({}) } };
 }
+
+it("reports a native stop after zero-velocity release or momentum, ignoring old list epochs", () => {
+  const { readingStopped, rerender, rows } = setup();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag({ nativeEvent: { velocity: { y: 1 } } });
+  expect(readingStopped).not.toHaveBeenCalled();
+  state.props.onMomentumScrollEnd();
+  expect(readingStopped).toHaveBeenCalledTimes(1);
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag({ nativeEvent: { velocity: { y: 0 } } });
+  expect(readingStopped).toHaveBeenCalledTimes(2);
+  const old = state.props;
+  rerender(rows, undefined, undefined, "account/other-trip");
+  old.onMomentumScrollEnd();
+  old.onScrollEndDrag({ nativeEvent: { velocity: { y: 0 } } });
+  expect(readingStopped).toHaveBeenCalledTimes(2);
+});
+
+it("does not end a new drag when interrupted prior momentum finishes", () => {
+  const { readingStopped } = setup();
+  state.props.onScrollBeginDrag();
+  state.props.onScrollEndDrag({ nativeEvent: { velocity: { y: 1 } } });
+  state.props.onScrollBeginDrag();
+  state.props.onMomentumScrollEnd();
+  expect(readingStopped).not.toHaveBeenCalled();
+  state.props.onScrollEndDrag({ nativeEvent: { velocity: { y: 0 } } });
+  expect(readingStopped).toHaveBeenCalledOnce();
+});
 
 it("uses actual reading gestures rather than native offset compensation or momentum", () => {
   const { readingMotion } = setup();

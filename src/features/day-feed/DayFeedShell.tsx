@@ -172,6 +172,20 @@ export function useDayFeedShellState(resetKey: string) {
       )
         setNavigation({ key: resetKey, visible: next.navigationVisible });
     },
+    observeReadingStopped: () => {
+      const previous = scroll.current;
+      if (previous.key !== resetKey) return;
+      scroll.current = {
+        key: resetKey,
+        value: {
+          ...initialDayFeedShellScroll,
+          offset: previous.value.offset,
+          turnOffset: previous.value.offset,
+        },
+      };
+      if (!previous.value.navigationVisible)
+        setNavigation({ key: resetKey, visible: true });
+    },
     observeVisibleDates,
     navigationVisible: navigation.key === resetKey ? navigation.visible : true,
     visibleDates: visible.key === resetKey ? visible.range : null,

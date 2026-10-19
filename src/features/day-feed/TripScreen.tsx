@@ -938,6 +938,7 @@ function TripContent({ today = false }: { today?: boolean }) {
                       )
                   : undefined,
               onReadingMotion: dayShell.observeReadingMotion,
+              onReadingStopped: dayShell.observeReadingStopped,
               onOffsetChange: (value) => {
                 if (dayIntroductionBottom.current !== null)
                   setDayPastIntroduction(
