@@ -172,6 +172,22 @@ it("compresses same-month and same-year ranges while retaining both years across
   );
 });
 
+it("compresses Chinese ranges even when Intl.formatRange exists", () => {
+  vi.useRealTimers();
+  const locale = vi.spyOn(uiLocale, "getFormatLocale").mockReturnValue("zh-Hans");
+  try {
+    expect(typeof Intl.DateTimeFormat.prototype.formatRange).toBe("function");
+    expect(
+      formatDayFeedVisibleDates({ first: "2027-02-03", last: "2027-02-04" }),
+    ).toBe("2027年2月3–4日");
+    expect(
+      formatDayFeedVisibleDates({ first: "2027-02-28", last: "2027-03-02" }),
+    ).toBe("2027年2月28 – 3月2日");
+  } finally {
+    locale.mockRestore();
+  }
+});
+
 it("keeps compact EN/ZH date ranges on Hermes without Intl.formatRange", () => {
   vi.useRealTimers();
   const descriptor = Object.getOwnPropertyDescriptor(

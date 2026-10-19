@@ -95,11 +95,9 @@ export function formatDayFeedVisibleDates(range: DayFeedShellVisibleDates): stri
     timeZone: "UTC",
   });
   if (range.first === range.last) return formatter.format(date(range.first));
-  if (typeof formatter.formatRange === "function")
-    return formatter.formatRange(date(range.first), date(range.last));
   if (range.first.slice(0, 4) !== range.last.slice(0, 4))
     return `${formatter.format(date(range.first))} – ${formatter.format(date(range.last))}`;
-  // Hermes may lack formatRange; preserve locale order while sharing only year/month parts.
+  // Native formatRange can repeat Chinese years/months; share parts in locale order.
   const first = formatter.formatToParts(date(range.first));
   const last = formatter.formatToParts(date(range.last));
   const sameMonth = range.first.slice(0, 7) === range.last.slice(0, 7);
