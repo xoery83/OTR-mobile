@@ -59,6 +59,7 @@ export function TripSearchEntry({
       <Stack.Toolbar placement="right">
         {showUnavailableTripEdit ? (
           <Stack.Toolbar.Button
+            tintColor={colors.accent}
             icon="square.and.pencil"
             separateBackground
             disabled={!edit}
