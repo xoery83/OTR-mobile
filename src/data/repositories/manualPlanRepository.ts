@@ -13,10 +13,7 @@ import {
 } from "@/domain/trip/tripCoreV2Temporal";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
-import {
-  corePayloadSchemas,
-  validateCoreCommand,
-} from "@/domain/trip/tripCoreV2Commands";
+import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { applyCoreCommand, coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import {
   assertAccountRequestContext,
@@ -108,7 +105,6 @@ type DraftState = {
   revision: number | null;
   original: ManualItemFields;
   ids: string[];
-  linkedStayName: boolean;
   attempt?: { fields: string; commands: Command[] };
 };
 function fieldsFor(
@@ -147,58 +143,6 @@ function fieldsFor(
       selfPersonId: row.self_person_id,
     },
   });
-}
-// Derive the alias only from committed-to-projection MANUAL operation history.
-function hasLinkedStayName(
-  commands: Command[],
-  itemId: string,
-  fields: ManualItemFields,
-  revision: number,
-) {
-  let title: string | null = null;
-  let property: string | null = null;
-  let linked = false;
-  const history = commands
-    .filter((c) => c.target.id === itemId && c.admission.mode === "MANUAL")
-    .sort(
-      (a, b) =>
-        (a.baseVector.find((v) => v.kind === "ITEM" && v.id === itemId)?.revision ?? -1) -
-        (b.baseVector.find((v) => v.kind === "ITEM" && v.id === itemId)?.revision ?? -1),
-    );
-  // A failed/conflicting command is not evidence of a projected alias change.
-  if (
-    history.length !== revision ||
-    history.some(
-      (command, i) =>
-        command.baseVector.find((v) => v.kind === "ITEM" && v.id === itemId)?.revision !==
-        (i === 0 ? null : i),
-    )
-  )
-    return false;
-  for (const command of history) {
-    if (command.command === "CREATE_ITEM") {
-      const payload = corePayloadSchemas.CREATE_ITEM.parse(command.payload);
-      title = payload.core.title;
-      property =
-        payload.family === "P3" ? (payload.details?.property_name ?? null) : null;
-      linked = property !== null && property === title;
-    } else if (command.command === "SET_ITEM_TEXT") {
-      title = corePayloadSchemas.SET_ITEM_TEXT.parse(command.payload).title ?? title;
-    } else if (command.command === "SET_STAY_DETAILS") {
-      const next = corePayloadSchemas.SET_STAY_DETAILS.parse(command.payload).details
-        .property_name;
-      if (next !== undefined) {
-        if (next !== property && next !== title) linked = false;
-        property = next;
-      }
-    }
-  }
-  return (
-    linked &&
-    title === fields.title &&
-    property === fields.stayDetails?.propertyName &&
-    property === title
-  );
 }
 function editable(
   snapshot: Snapshot,
@@ -280,20 +224,14 @@ export function createManualItemRepository(
         const snapshot = await current(context);
         const row = itemId ? editable(snapshot, itemId, context.accountId, family) : null;
         // Exact MANUAL CREATE provenance is retained independently from accepted facts.
-        const projectedCommands = row
-          ? (await core.pending(context))
-              .filter((p) =>
-                snapshot.operations.some((o) => o.operationId === p.command.operationId),
-              )
-              .map((p) => p.command)
-          : [];
         if (
           row &&
-          !projectedCommands.some(
-            (command) =>
-              command.target.id === itemId &&
-              command.command === "CREATE_ITEM" &&
-              command.admission.mode === "MANUAL",
+          !(await core.pending(context)).some(
+            (p) =>
+              snapshot.operations.some((o) => o.operationId === p.command.operationId) &&
+              p.command.target.id === itemId &&
+              p.command.command === "CREATE_ITEM" &&
+              p.command.admission.mode === "MANUAL",
           )
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");
@@ -338,15 +276,6 @@ export function createManualItemRepository(
           revision: row ? (row.semantic_revision as number) : null,
           original: structuredClone(fields),
           ids: Array.from({ length: family === "P3" ? 5 : 4 }, () => newId()),
-          linkedStayName:
-            family === "P3" &&
-            !!row &&
-            hasLinkedStayName(
-              projectedCommands,
-              draft.itemId,
-              fields,
-              row.semantic_revision as number,
-            ),
         });
         await assertAccountRequestContext(context, account);
       });
@@ -366,21 +295,6 @@ export function createManualItemRepository(
       const fields: ManualItemFields = (
         family === "P3" ? manualStayFieldsSchema : manualPlanFieldsSchema
       ).parse(input);
-      // Create's single accommodation name is explicit authored property text; Edit retains historical fields.
-      if (
-        draft.mode === "CREATE" &&
-        fields.stayDetails &&
-        fields.stayDetails.propertyName === null
-      )
-        fields.stayDetails.propertyName = fields.title;
-      if (
-        draft.mode === "EDIT" &&
-        state.linkedStayName &&
-        fields.stayDetails &&
-        fields.title !== state.original.title &&
-        fields.stayDetails.propertyName === state.original.stayDetails?.propertyName
-      )
-        fields.stayDetails.propertyName = fields.title;
       fields.participation.people.sort();
       fields.location = fields.location || null;
       const fieldsText = json(fields);
