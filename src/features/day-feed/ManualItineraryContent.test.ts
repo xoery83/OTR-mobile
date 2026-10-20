@@ -48,6 +48,7 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: state.read,
 }));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "aside" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {

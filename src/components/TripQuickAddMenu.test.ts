@@ -208,7 +208,7 @@ it("the open Modal protects header and actions with viewport safe areas and Canc
   expect(html.indexOf("data-modal-inset-provider")).toBeLessThan(
     html.indexOf("data-safe-area"),
   );
-  expect(html).toContain('data-safe-area="top,bottom,left,right"');
+  expect(html).toContain('data-safe-area="bottom,left,right"');
   expect(html).toContain("actionIsland.itinerary");
   button("common.cancel").onPress();
   const closed = render();

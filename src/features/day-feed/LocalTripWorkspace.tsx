@@ -796,13 +796,14 @@ function LocalTripContent({
             <Modal
               visible
               animationType="slide"
-              presentationStyle="pageSheet"
+              transparent
+              presentationStyle="overFullScreen"
               onRequestClose={() => {
                 if (itemDismiss.current) itemDismiss.current();
                 else setItemFormOpen(false);
               }}
             >
-              <SafeAreaProvider style={styles.modal}>
+              <SafeAreaProvider style={styles.manualModal}>
                 <ManualItineraryContent
                   key={`${selected.id}:${generation}:${itemStart}`}
                   tripId={selected.id}
@@ -1070,6 +1071,7 @@ function LocalTripContent({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     modal: { flex: 1, backgroundColor: colors.background },
+    manualModal: { flex: 1 },
     form: { padding: visual.space.page, gap: visual.space.card },
     formFooter: { padding: visual.space.page, backgroundColor: colors.background },
     pastRoot: { flex: 1, backgroundColor: colors.background, padding: visual.space.page },
