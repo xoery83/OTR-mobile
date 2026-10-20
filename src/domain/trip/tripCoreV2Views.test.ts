@@ -270,3 +270,44 @@ it("P4 public Details maps Notes and independent vehicle/place facts without ren
   });
   expect(item.bookingSummaries).toEqual([]);
 });
+
+it("P5 public Notes and endpoint DTO preserve unknown arrival without manufacturing service or Ticket", () => {
+  const segment = create(emptyCoreGraph(), "P5", "2026-10-20", undefined, {
+    core: { title: "Train segment", description: "Board at the signed entrance" },
+    endpoints: {
+      origin: { time: coreDateBoundary("2026-10-20"), place: place("Station") },
+      destination: {
+        time: { ...coreDateBoundary("2026-10-20"), local_date: null },
+        place: place(),
+      },
+    },
+    service: {
+      service_key: "manual.segment",
+      transport_subtype: "TRAIN",
+      attribution: "UNSPECIFIED",
+      operator_namespace: "NAME",
+      operator_issuer: "",
+      operator_value: "",
+      operator_literal: "",
+      service_number: "",
+      service_literal: "",
+      codeshare_operating_key: null,
+    },
+  });
+  const item = projectCoreItem(segment.graph, actor, segment.id)!;
+  expect(item.description).toBe("Board at the signed entrance");
+  expect(item.title).toBe("Train segment");
+  expect(item.schedule).toMatchObject({
+    shape: "TRANSPORT",
+    origin: { time: { localDate: "2026-10-20" } },
+    destination: { time: { comparable: false } },
+  });
+  expect(item.schedule).not.toHaveProperty("destination.time.localDate");
+  expect(item.entitlementSummaries).toEqual([]);
+  expect(item.bookingSummaries).toEqual([]);
+  expect(
+    projectCoreDay(segment.graph, actor, "2026-10-20", 1).map(
+      (r) => r.rowKey.projectionRole,
+    ),
+  ).toEqual(["ORIGIN"]);
+});

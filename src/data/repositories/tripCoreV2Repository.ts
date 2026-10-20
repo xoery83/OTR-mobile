@@ -548,9 +548,12 @@ export function createTripCoreV2Repository(
                 "SET_ITEM_PARTICIPATION",
                 "SET_STAY_DETAILS",
                 "SET_RENTAL_DETAILS",
+                "SET_TRANSPORT_DETAILS",
               ].includes(c.command) ||
               (c.command === "CREATE_ITEM" &&
-                !["P1", "P3", "P4"].includes((c.payload as { family: string }).family)),
+                !["P1", "P3", "P4", "P5"].includes(
+                  (c.payload as { family: string }).family,
+                )),
           ) ||
           new Set(commands.map((c) => c.target.id)).size > 1
         )
@@ -578,9 +581,16 @@ export function createTripCoreV2Repository(
             )?.experience_family;
           }
           if (
-            !["P1", "P3", "P4"].includes(String(family)) ||
+            !["P1", "P3", "P4", "P5"].includes(String(family)) ||
             (family !== "P3" && commands.some((c) => c.command === "SET_STAY_DETAILS")) ||
-            (family !== "P4" && commands.some((c) => c.command === "SET_RENTAL_DETAILS"))
+            (family !== "P4" &&
+              commands.some((c) => c.command === "SET_RENTAL_DETAILS")) ||
+            (family !== "P5" &&
+              commands.some((c) => c.command === "SET_TRANSPORT_DETAILS")) ||
+            (family === "P5" &&
+              commands.some((c) =>
+                ["SET_ITEM_SCHEDULE", "SET_ITEM_PLACE"].includes(c.command),
+              ))
           )
             throw new Error("MANUAL_BATCH_INVALID");
         }

@@ -971,3 +971,102 @@ it("finite Forms batch refuses Rental detail mutation on an actual P3 target", a
     0,
   );
 });
+
+it("finite Forms batch adds P5 with transport endpoint commands but refuses them on actual P4", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const blankPlace = ordinaryPlace();
+  const service = {
+    service_key: "segment.1",
+    transport_subtype: "TRAIN",
+    attribution: "UNSPECIFIED",
+    operator_namespace: "NAME",
+    operator_issuer: "",
+    operator_value: "",
+    operator_literal: "",
+    service_number: "",
+    service_literal: "",
+    codeshare_operating_key: null,
+  };
+  const create = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P5",
+      core: { title: "Single segment" },
+      endpoints: {
+        origin: { time: coreDateBoundary("2026-10-20"), place: blankPlace },
+        destination: {
+          time: { ...coreDateBoundary("2026-10-20"), local_date: null },
+          place: blankPlace,
+        },
+      },
+      service,
+      ...coreDefaults("member"),
+    },
+  };
+  const detail = {
+    ...create,
+    operationId: randomUUID(),
+    command: "SET_TRANSPORT_DETAILS",
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    payload: {
+      annotations: {
+        origin: { airport_code: null, terminal: null, platform: "2", pier: null },
+      },
+    },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [create, detail],
+      result: async () => true,
+    })),
+  ).resolves.toBe(true);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    2,
+  );
+  const g = fixture(),
+    gctx = await g.repo.captureContext(trip),
+    rental = randomUUID();
+  const rentalCommand = {
+    ...create,
+    operationId: randomUUID(),
+    target: { kind: "ITEM", id: rental },
+    baseVector: [{ kind: "ITEM", id: rental, revision: null }],
+    payload: {
+      family: "P4",
+      core: { title: "Rental" },
+      schedule: {
+        start: coreDateBoundary("2026-10-20"),
+        end: coreDateBoundary("2026-10-21"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const graph = applyCoreCommand(emptyCoreGraph(), rentalCommand, actor, stamp).graph,
+    bundle = await collection(true, graph);
+  await g.repo.install(await g.repo.beginRefresh(gctx, 1), bundle.manifest, bundle.pages);
+  await expect(
+    g.repo.commitManualBatch(gctx, async () => ({
+      commands: [
+        {
+          ...detail,
+          operationId: randomUUID(),
+          target: { kind: "ITEM", id: rental },
+          baseVector: [{ kind: "ITEM", id: rental, revision: 1 }],
+        },
+      ],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(g.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    0,
+  );
+});
