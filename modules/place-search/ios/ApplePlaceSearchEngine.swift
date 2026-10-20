@@ -186,6 +186,9 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
     if CLLocationCoordinate2DIsValid(point), point.latitude.isFinite, point.longitude.isFinite {
       result["point"] = ["latitude": point.latitude, "longitude": point.longitude]
     }
+    if #available(iOS 18.0, macOS 15.0, *), let identifier = item.identifier {
+      result["providerPlaceId"] = identifier.rawValue
+    }
     if let category = item.pointOfInterestCategory { result["category"] = category.rawValue }
     return result
   }

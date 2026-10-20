@@ -206,3 +206,18 @@ it("supports a real precreation draft binding without manufacturing a Trip", asy
     } as never),
   ).toThrow("INVALID_BINDING");
 });
+
+it("retains a genuine optional provider Place ID separately from opaque handles", async () => {
+  const f = fixture();
+  f.native.search.mockImplementation(async (i) => ({
+    ...f.reply(i),
+    candidates: [{ ...f.row, providerPlaceId: "apple-stable-place" }],
+  }));
+  const [row] = await f.provider.search({ text: "Auckland" });
+  expect(row.providerPlaceId).toBe("apple-stable-place");
+  expect(row.providerPlaceId).not.toBe(row.handle);
+  const legacy = fixture();
+  expect(
+    (await legacy.provider.search({ text: "Auckland" }))[0].providerPlaceId,
+  ).toBeUndefined();
+});
