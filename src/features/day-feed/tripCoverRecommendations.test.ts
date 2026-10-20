@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { rankedTripCovers } from "@/features/trip-cover/coverDecision";
-import { suggestedCoverIds } from "./tripCoverRecommendations";
+import { suggestedCoverIds, tripCoverDescription } from "./tripCoverRecommendations";
 const trip = { id: "qa", name: "Iceland winter", destination: "Iceland" };
 it("shows the other six of the ranked seven when the current built-in is recommended", () => {
   const firstSeven = rankedTripCovers(trip, 7).map((r) => r.asset.id);
@@ -25,4 +25,10 @@ it("keeps personal cover outside ranking and recomputes suggestions with draft m
     rankedTripCovers(changed, 6).map((r) => r.asset.id),
   );
   expect(suggestedCoverIds(changed, photo)).not.toEqual(suggestedCoverIds(trip, photo));
+});
+
+it("uses human descriptions without generated IDs or filename suffixes", () => {
+  expect(tripCoverDescription("gen-b1-001")).toBe("City");
+  expect(tripCoverDescription("gen-b1-013")).toBe("Coast");
+  expect(tripCoverDescription("wc-142191115")).toBe("Minato City, Tokyo, Japan");
 });

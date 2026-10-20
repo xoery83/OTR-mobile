@@ -40,7 +40,8 @@ vi.mock("@/ui/theme", () => ({
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({
-  t: (key: string, p: any = {}) => key + (p.number ?? ""),
+  t: (key: string, p: any = {}) =>
+    key + (p.number ?? "") + (p.description ? ":" + p.description : ""),
 }));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: "TripCoverVisual" }));
 vi.mock("./tripCovers", () => ({
@@ -88,6 +89,12 @@ it("opens from a cover edit glyph and shows current plus exactly six other ranke
   expect(
     v.filter((n) => n.props.accessibilityLabel?.startsWith("coverLibrary.option")),
   ).toHaveLength(6);
+  expect(v.some((n) => n.props.accessibilityLabel?.includes("myTrips.cover.coast"))).toBe(
+    true,
+  );
+  expect(
+    v.some((n) => n.props.accessibilityLabel?.includes("myTrips.cover.mountain")),
+  ).toBe(true);
   const choices = v
     .filter((n) => n.type === "TripCoverVisual")
     .map((n) => n.props.assetId);

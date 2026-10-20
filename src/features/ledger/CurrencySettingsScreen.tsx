@@ -37,7 +37,11 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
   const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const [journey, setJourney] = useState<JourneySetting | null>(null);
+  const [journeyRead, setJourney] = useState<JourneySetting | null>(null);
+  const journey =
+    journeyRead && (journeyId === undefined || journeyRead.journeyId === journeyId)
+      ? journeyRead
+      : null;
   const [locked, setLocked] = useState(false);
   const [canChange, setCanChange] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -57,8 +61,14 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
         ]);
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-        const entry = chooseJourneyEntry(journeys, today, selectedId, journeyId);
-        const activeJourneyId = entry.kind === "JOURNEY" ? entry.journeyId : null;
+        const entry = chooseJourneyEntry(journeys, today, selectedId);
+        // A task opened for a specific Trip must never fall back to another Ledger.
+        const activeJourneyId =
+          journeyId !== undefined
+            ? journeyId
+            : entry.kind === "JOURNEY"
+              ? entry.journeyId
+              : null;
         const selected =
           journeys.find((item) => item.journeyId === activeJourneyId) ?? null;
         setJourney(selected);

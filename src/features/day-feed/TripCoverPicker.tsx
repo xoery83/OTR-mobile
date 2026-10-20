@@ -17,7 +17,7 @@ import {
 } from "@/domain/trip/tripCoverAssets";
 import { coverCatalog, type CoverMetadata } from "@/features/trip-cover/coverDecision";
 import { builtInTripCoverSource, tripCoverId, tripCoverSource } from "./tripCovers";
-import { suggestedCoverIds } from "./tripCoverRecommendations";
+import { suggestedCoverIds, tripCoverDescription } from "./tripCoverRecommendations";
 import { TripCoverVisual } from "./TripCoverVisual";
 
 export function TripCoverPicker({
@@ -155,7 +155,10 @@ export function TripCoverPicker({
                 <Pressable
                   key={id}
                   accessibilityRole="button"
-                  accessibilityLabel={t("coverLibrary.option", { number: index + 1 })}
+                  accessibilityLabel={t("coverLibrary.option", {
+                    number: index + 1,
+                    description: tripCoverDescription(id),
+                  })}
                   accessibilityState={{ disabled: saving }}
                   disabled={saving}
                   onPress={() => void select(id)}

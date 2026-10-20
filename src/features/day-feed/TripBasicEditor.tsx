@@ -285,7 +285,9 @@ export function TripBasicEditor({
             safeTop={false}
             onLeft={closeCurrency}
           />
-          {currencyOpen ? <CurrencySettingsScreen journeyId={trip.id} /> : null}
+          {currencyOpen ? (
+            <CurrencySettingsScreen key={trip.id} journeyId={trip.id} />
+          ) : null}
         </SafeAreaView>
       </Modal>
     </View>
