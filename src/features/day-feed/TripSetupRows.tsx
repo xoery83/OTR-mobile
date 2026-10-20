@@ -72,7 +72,7 @@ export function TripSetupRows({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   return (
-    <View style={styles.rows}>
+    <View style={styles.setupRows}>
       {metadata &&
       ((!metadata.startDate && !metadata.endDate) || !metadata.destination?.trim()) ? (
         <UiText accessibilityRole="header" style={styles.title}>
@@ -80,30 +80,38 @@ export function TripSetupRows({
         </UiText>
       ) : null}
       {metadata && !metadata.startDate && !metadata.endDate ? (
-        <UiFormRow
-          label={t("tripForm.dates")}
-          value={tripRangeLabel({ start: "", end: "" })}
-          disabled={!onEdit}
-          onPress={() => onEdit?.()}
-          stacked
-        />
+        <View style={styles.setupRow}>
+          <UiFormRow
+            label={t("tripForm.dates")}
+            value={tripRangeLabel({ start: "", end: "" })}
+            disabled={!onEdit}
+            onPress={() => onEdit?.()}
+            stacked
+          />
+        </View>
       ) : null}
       {metadata && !metadata.destination?.trim() ? (
-        <UiFormRow
-          label={t("tripCreate.destination")}
-          value={t("tripCreate.notSet")}
-          disabled={!onEdit}
-          onPress={() => onEdit?.()}
-          stacked
-        />
+        <View style={styles.setupRow}>
+          <UiFormRow
+            label={t("tripCreate.destination")}
+            value={t("tripCreate.notSet")}
+            disabled={!onEdit}
+            onPress={() => onEdit?.()}
+            stacked
+          />
+        </View>
       ) : null}
-      <TripCurrencyRow setup={setup} onOpen={onCurrency} />
+      <View style={styles.setupRow}>
+        <TripCurrencyRow setup={setup} onOpen={onCurrency} />
+      </View>
       {onCover ? (
-        <UiFormRow
-          label={t("tripHome.coverTools")}
-          value={t("tripForm.changeCover")}
-          onPress={onCover}
-        />
+        <View style={styles.setupRow}>
+          <UiFormRow
+            label={t("tripHome.coverTools")}
+            value={t("tripForm.changeCover")}
+            onPress={onCover}
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -160,6 +168,16 @@ function ScopedMembersSummary({ setup }: { setup: TripPreparationSetup | null })
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     rows: { gap: visual.space.card },
+    setupRows: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.separator,
+      paddingTop: visual.space.heading,
+    },
+    setupRow: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.separator,
+      paddingVertical: visual.space.heading,
+    },
     title: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
   });

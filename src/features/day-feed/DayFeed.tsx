@@ -587,7 +587,13 @@ function AcceptedDayFeed({
               presentation?.listRef?.(value);
             }}
             rows={windowRows}
-            renderRow={({ value }) => value()}
+            renderRow={({ value }) =>
+              presentation?.header ? (
+                <View style={styles.rowInset}>{value()}</View>
+              ) : (
+                value()
+              )
+            }
             scopeKey={JSON.stringify([projection.accountId, projection.tripId])}
             layoutRevision={JSON.stringify([
               projection.version === 2 ? projection.source : null,
@@ -601,7 +607,10 @@ function AcceptedDayFeed({
             bottomInset={visual.space.section + bottomInset}
             header={presentation?.header}
             style={styles.root}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[
+              styles.content,
+              presentation?.header ? styles.withIntroduction : undefined,
+            ]}
             onViewportChange={presentation?.onViewportChange}
             onReadingMotion={presentation?.onReadingMotion}
             onReadingStopped={presentation?.onReadingStopped}
@@ -670,6 +679,8 @@ const createStyles = (c: UiColors) =>
       paddingVertical: visual.space.row,
     },
     root: { flex: 1, backgroundColor: c.background },
+    rowInset: { paddingHorizontal: visual.space.page },
+    withIntroduction: { paddingTop: 0, paddingHorizontal: 0 },
     content: {
       paddingHorizontal: visual.space.page,
       paddingBottom: visual.space.section,

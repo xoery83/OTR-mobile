@@ -24,7 +24,7 @@ export default function TripRoute() {
         </View>
       ) : (
         <NavigationContentFrame>
-          <TripScreen />
+          <TripScreen contentFrameManaged />
         </NavigationContentFrame>
       )}
     </>

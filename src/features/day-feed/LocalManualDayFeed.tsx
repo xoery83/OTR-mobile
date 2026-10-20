@@ -3,7 +3,7 @@ import type { DayFeedPresentation } from "./DayFeed";
 import type { DayEntry, DayReading } from "./TripViewContext";
 import { WindowedDayList, type DayListHandle } from "./WindowedDayList";
 import { summarizeDay, type DayWindowRow } from "./dayFeedWindow";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { UiSection, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
@@ -103,7 +103,9 @@ export function LocalManualDayFeed({
   return (
     <WindowedDayList
       rows={rows}
-      renderRow={({ value }) => value()}
+      renderRow={({ value }) =>
+        presentation?.header ? <View style={styles.rowInset}>{value()}</View> : value()
+      }
       listRef={(value) => {
         list.current = value;
         presentation?.listRef?.(value);
@@ -120,7 +122,10 @@ export function LocalManualDayFeed({
       rowSpacing={visual.space.section}
       header={presentation?.header}
       style={styles.body}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        presentation?.header ? styles.withIntroduction : undefined,
+      ]}
       onViewportChange={presentation?.onViewportChange}
       onOffsetChange={presentation?.onOffsetChange}
       onReadingMotion={presentation?.onReadingMotion}
@@ -208,6 +213,8 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.section },
+    withIntroduction: { paddingTop: 0, paddingHorizontal: 0 },
+    rowInset: { paddingHorizontal: visual.space.section },
     row: {
       minHeight: 44,
       gap: visual.space.heading,

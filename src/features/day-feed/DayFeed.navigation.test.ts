@@ -452,6 +452,13 @@ it.each(["accepted", "local"])(
       entry: { revision: 1, kind: "RESUME", reading: { offset: 0, focus: null } },
     });
     expect(state.window.initialAnchor).toBeNull();
+    const style = Object.assign({}, ...state.window.contentContainerStyle);
+    expect(style.paddingHorizontal).toBe(0);
+    expect(style.paddingTop).toBe(0);
+    const row = state.window.renderRow(state.window.rows[0]);
+    expect(row.props.style.paddingHorizontal).toBe(
+      kind === "local" ? visual.space.section : visual.space.page,
+    );
   },
 );
 it("unknown-schedule prefix cannot replace the explicit first date Header index", async () => {

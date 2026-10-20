@@ -65,6 +65,7 @@ export function AppNavigationMenu({
           <Stack.Toolbar.Button
             tintColor={colors.accent}
             icon="line.3.horizontal"
+            separateBackground
             accessibilityLabel={t("navigation.openMenu")}
             onPress={() => {
               setAnchor({ x: 12, y: headerHeight, height: 0 });

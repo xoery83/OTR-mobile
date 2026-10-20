@@ -69,6 +69,13 @@ export function DayFeedIntroduction({
   const colors = useUiTheme();
   return (
     <View style={styles.introduction}>
+      <View
+        pointerEvents="none"
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.decoration}
+      />
       <UiText accessibilityRole="header" style={styles.heading}>
         {tripName}
       </UiText>
@@ -80,14 +87,23 @@ export function DayFeedIntroduction({
             onPress={onOpenCalendar}
             style={styles.rangeTarget}
           >
-            <UiText style={styles.meta}>{rangeLabel}</UiText>
+            <AppIcon name="calendar" size={18} color={colors.textSecondary} />
+            <UiText style={[styles.meta, styles.flexible]}>{rangeLabel}</UiText>
             <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
           </Pressable>
         ) : (
-          <UiText style={styles.meta}>{rangeLabel}</UiText>
+          <View style={styles.contextRow}>
+            <AppIcon name="calendar" size={18} color={colors.textSecondary} />
+            <UiText style={[styles.meta, styles.flexible]}>{rangeLabel}</UiText>
+          </View>
         )
       ) : null}
-      {locationSummary ? <UiText style={styles.meta}>{locationSummary}</UiText> : null}
+      {locationSummary ? (
+        <View style={styles.contextRow}>
+          <AppIcon name="mappin.and.ellipse" size={18} color={colors.textSecondary} />
+          <UiText style={[styles.meta, styles.flexible]}>{locationSummary}</UiText>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -265,14 +281,29 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: visual.space.page,
       paddingVertical: visual.space.card,
       gap: visual.space.heading,
+      backgroundColor: colors.accentSurface,
+      borderBottomLeftRadius: visual.radius.card,
+      borderBottomRightRadius: visual.radius.card,
+      overflow: "hidden",
     },
+    decoration: {
+      position: "absolute",
+      right: "-15%",
+      bottom: "-70%",
+      width: "75%",
+      aspectRatio: 1,
+      borderRadius: 999,
+      backgroundColor: colors.accent,
+      opacity: 0.035,
+    },
+    flexible: { flex: 1, flexShrink: 1 },
+    contextRow: { flexDirection: "row", alignItems: "center", gap: visual.space.heading },
     rangeTarget: {
       minHeight: 44,
       flexDirection: "row",
       alignItems: "center",
-      flexWrap: "wrap",
       gap: visual.space.heading,
     },
-    heading: { ...visual.type.section, color: colors.textPrimary },
+    heading: { ...visual.type.tripHeroTitle, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
   });

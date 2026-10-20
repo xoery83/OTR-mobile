@@ -97,7 +97,13 @@ function savedTripZone(
   }
 }
 
-export function TripScreen({ today = false }: { today?: boolean }) {
+export function TripScreen({
+  today = false,
+  contentFrameManaged = false,
+}: {
+  today?: boolean;
+  contentFrameManaged?: boolean;
+}) {
   const params = useLocalSearchParams();
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
@@ -108,16 +114,24 @@ export function TripScreen({ today = false }: { today?: boolean }) {
     <TripContent
       key={JSON.stringify([generation, today ? view : params])}
       today={today}
+      contentFrameManaged={contentFrameManaged}
     />
   );
 }
-function TripContent({ today = false }: { today?: boolean }) {
+function TripContent({
+  today = false,
+  contentFrameManaged = false,
+}: {
+  today?: boolean;
+  contentFrameManaged?: boolean;
+}) {
   const pathname = usePathname();
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const insets = useSafeAreaInsets();
   const headerBottom = Math.max(useHeaderHeight(), insets.top);
+  const dayTopInset = contentFrameManaged ? 0 : headerBottom;
   const heroHeight = useRef(0);
   const homeScrollOffset = useRef(0);
   const [heroBehindStatus, setHeroBehindStatus] = useState(true);
@@ -262,16 +276,9 @@ function TripContent({ today = false }: { today?: boolean }) {
       title: headerTitle,
       headerTransparent: true,
       fullScreenGestureEnabled: immersiveHome,
-      headerStyle: {
-        backgroundColor: dayActive
-          ? colors.floatingSurface
-          : immersiveHome
-            ? colors.transparent
-            : colors.surface,
-      },
+      headerStyle: { backgroundColor: colors.transparent },
       headerShadowVisible: false,
-      headerBlurEffect:
-        dayActive || (immersiveHome && !heroBehindStatus) ? "systemMaterial" : undefined,
+      headerBlurEffect: undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,
@@ -934,14 +941,14 @@ function TripContent({ today = false }: { today?: boolean }) {
               listRef: (value) => {
                 dayList.current = value;
               },
-              topInset: headerBottom,
+              topInset: dayTopInset,
               header: (
                 <View
-                  style={{ paddingTop: headerBottom }}
+                  style={{ paddingTop: dayTopInset }}
                   onLayout={({ nativeEvent }) => {
                     dayIntroductionBottom.current = Math.max(
                       0,
-                      nativeEvent.layout.height - headerBottom,
+                      nativeEvent.layout.height - dayTopInset,
                     );
                     setDayPastIntroduction(
                       dayOrigin.current > 0 ||
@@ -1051,7 +1058,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
   if (dayActive && !visibleTrip)
     return (
-      <View style={[styles.root, { paddingTop: headerBottom }]}>
+      <View style={[styles.root, { paddingTop: dayTopInset }]}>
         <ThemedText
           accessibilityRole={status === "UNAVAILABLE" ? "alert" : undefined}
           style={styles.meta}

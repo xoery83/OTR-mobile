@@ -1,3 +1,4 @@
+import { lightPalette, darkPalette } from "@/ui/palette";
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -11,6 +12,9 @@ import {
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   nodes: [] as any[],
+  texts: [] as any[],
+  views: [] as any[],
+  palette: {} as any,
   values: [] as any[],
   refs: [] as any[],
   cursor: 0,
@@ -37,7 +41,10 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
-  View: (p: any) => createElement("div", null, p.children),
+  View: (p: any) => {
+    state.views.push(p);
+    return createElement("div", null, p.children);
+  },
   Pressable: (p: any) => {
     state.nodes.push(p);
     return createElement("button", null, p.children);
@@ -46,15 +53,21 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/ui/controls", () => ({
-  UiText: (p: any) => createElement("span", null, p.children),
+  UiText: (p: any) => {
+    state.texts.push(p);
+    return createElement("span", null, p.children);
+  },
 }));
 vi.mock("@/ui/theme", () => ({
-  useThemedStyles: (fn: any) => fn({}),
-  useUiTheme: () => ({}),
+  useThemedStyles: (fn: any) => fn(state.palette),
+  useUiTheme: () => state.palette,
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 beforeEach(() => {
   state.nodes = [];
+  state.texts = [];
+  state.views = [];
+  state.palette = lightPalette;
   state.values = [];
   state.refs = [];
   state.cursor = state.refCursor = 0;
@@ -260,3 +273,34 @@ it("compresses Native Chinese parts that mislabel the full date as year", () => 
     locale.mockRestore();
   }
 });
+
+it.each([lightPalette, darkPalette])(
+  "keeps the Day context readable and theme-aware with decorative content excluded",
+  (palette) => {
+    state.palette = palette;
+    const name = "A very long bilingual Trip name · 与朋友同行的奥克兰海岸山地旅行";
+    const open = vi.fn();
+    const html = renderToStaticMarkup(
+      createElement(DayFeedIntroduction, {
+        tripName: name,
+        rangeLabel: "Oct 29, 2026 – Nov 1, 2026 · 4 days",
+        locationSummary: "Auckland · 奥克兰",
+        onOpenCalendar: open,
+        openCalendarLabel: "Calendar",
+      }),
+    );
+    expect(html).toContain(name);
+    expect(html).toContain("Auckland · 奥克兰");
+    expect(state.views[0].style.backgroundColor).toBe(palette.accentSurface);
+    expect(state.views[0].style.height).toBeUndefined();
+    const decoration = state.views.find((v) => v.pointerEvents === "none");
+    expect(decoration.accessible).toBe(false);
+    expect(decoration.accessibilityElementsHidden).toBe(true);
+    for (const text of state.texts) {
+      expect(text.numberOfLines).toBeUndefined();
+      expect(text.adjustsFontSizeToFit).toBeUndefined();
+    }
+    state.nodes[0].onPress();
+    expect(open).toHaveBeenCalledOnce();
+  },
+);

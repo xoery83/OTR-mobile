@@ -47,6 +47,8 @@ const state = vi.hoisted(() => ({
   canGoBack: true,
   routeTrip: null as string | null,
   routeMode: "home" as "home" | "day",
+  headerHeight: 103,
+  shellVisibleDates: null as null | { first: string; last: string },
   appActive: null as (() => void) | null,
   resume: null as any,
   quickActions: null as any,
@@ -69,7 +71,7 @@ vi.mock("./DayFeedShell", () => ({
   formatDayFeedVisibleDates: () => "visible dates",
   useDayFeedShellState: () => ({
     navigationVisible: true,
-    visibleDates: null,
+    visibleDates: state.shellVisibleDates,
     observeScroll: state.observeShellScroll,
     observeReadingMotion: state.observeReadingMotion,
     observeVisibleDates: vi.fn(),
@@ -121,7 +123,9 @@ vi.mock("react-native", () => ({
     },
   },
 }));
-vi.mock("expo-router/react-navigation", () => ({ useHeaderHeight: () => 103 }));
+vi.mock("expo-router/react-navigation", () => ({
+  useHeaderHeight: () => state.headerHeight,
+}));
 vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
   usePathname: () => "/trip-home",
@@ -200,9 +204,9 @@ vi.mock("./TripViewContext", async (original) => ({
     quickActions: state.quickActions,
   }),
 }));
-function render() {
+function render(contentFrameManaged = false) {
   state.cursor = state.refCursor = state.callbackCursor = 0;
-  const outer = TripScreen({});
+  const outer = TripScreen({ contentFrameManaged });
   const content = outer.type as (props: typeof outer.props) => ReactElement;
   const node = content(outer.props);
   for (const effect of state.effects.splice(0)) effect();
@@ -220,10 +224,10 @@ function find(node: ReactNode, type: any): any {
   }
   return null;
 }
-async function loaded() {
-  render();
+async function loaded(contentFrameManaged = false) {
+  render(contentFrameManaged);
   await new Promise<void>((resolve) => setImmediate(resolve));
-  return render();
+  return render(contentFrameManaged);
 }
 beforeEach(() => {
   state.observeShellScroll.mockClear();
@@ -235,6 +239,8 @@ beforeEach(() => {
   state.focused = true;
   state.navigation = { setOptions: state.setOptions, isFocused: () => state.focused };
   state.routeMode = "home";
+  state.headerHeight = 103;
+  state.shellVisibleDates = null;
   state.routeTrip = null;
   state.hooks = [];
   state.callbacks = [];
@@ -729,7 +735,7 @@ it("keeps status information readable after the measured Hero scrolls away and o
   expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
     "transparent",
   );
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
     "Actual saved Trip",
   );
@@ -1069,7 +1075,7 @@ it("keeps Day header title blank until the actual textual introduction has scrol
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
 });
 
 it("Home returns to the current same-Trip Floating bookmark before its stale entry date", async () => {
@@ -1112,14 +1118,14 @@ it("does not discard accepted v1 when a local read coexists with an explicit Flo
   expect(find(render(), DayFeed)).toBeNull();
 });
 
-it("keeps native material and a themed Day header backdrop without adding another inset owner", async () => {
+it("keeps the native toolbar transparent with a single measured Day boundary", async () => {
   state.routeMode = "day";
   const node = await loaded();
   const options = state.setOptions.mock.lastCall![0];
   expect(options.headerTransparent).toBe(true);
   expect(options.fullScreenGestureEnabled).toBe(false);
-  expect(options.headerBlurEffect).toBe("systemMaterial");
-  expect(options.headerStyle.backgroundColor).toBe("floatingSurface");
+  expect(options.headerBlurEffect).toBeUndefined();
+  expect(options.headerStyle.backgroundColor).toBe("transparent");
   expect(find(node, DayFeed).presentation.topInset).toBe(103);
 });
 
@@ -1158,4 +1164,37 @@ it("Preparation local Recent rejects a foreign Trip or late account before invok
   await workspace.onOpenLocalHomeItem(reference, "manual-hotel", localRead());
   expect(state.resolveLocalItem).not.toHaveBeenCalled();
   expect(find(render(), "LocalItemPreview")).toBeNull();
+});
+
+it.each([103, 147])(
+  "reserves the measured %s native boundary once when the owning Frame is present",
+  async (height) => {
+    state.routeMode = "day";
+    state.headerHeight = height;
+    state.shellVisibleDates = { first: "2027-02-01", last: "2027-02-01" };
+    const feed = find(await loaded(true), DayFeed);
+    expect(feed.presentation.topInset).toBe(0);
+    expect(feed.presentation.header.props.style.paddingTop).toBe(0);
+    feed.presentation.header.props.onLayout({ nativeEvent: { layout: { height: 92 } } });
+    expect(find(render(true), DayFeed).presentation.topInset).toBe(0);
+    feed.presentation.onOffsetChange(91);
+    state.mount = true;
+    render(true);
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+    feed.presentation.onOffsetChange(92);
+    state.mount = true;
+    render(true);
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("visible dates");
+    feed.presentation.onOffsetChange(0);
+    state.mount = true;
+    render(true);
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+  },
+);
+it("retains the measured boundary for a route without an owning Frame", async () => {
+  state.routeMode = "day";
+  state.headerHeight = 147;
+  const feed = find(await loaded(false), DayFeed);
+  expect(feed.presentation.topInset).toBe(147);
+  expect(feed.presentation.header.props.style.paddingTop).toBe(147);
 });

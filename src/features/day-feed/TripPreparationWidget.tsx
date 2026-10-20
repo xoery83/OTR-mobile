@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText as Text } from "@/ui/controls";
-import { formatUiDate, formatUiNumber } from "@/ui/locale";
+import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import type { UiColors } from "@/ui/palette";
@@ -85,18 +85,40 @@ export function TripPreparationWidget({
         <View style={styles.empty}>
           <Text style={styles.meta}>{copy.empty}</Text>
           {onImport ? (
-            <View style={styles.startAction}>
-              <UiButton size="large" label={copy.importPlans} onPress={onImport} />
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.importPlans}
+              accessibilityHint={t("tripHome.preparation.importHint")}
+              onPress={onImport}
+              style={styles.startAction}
+            >
+              <View style={styles.startIcon}>
+                <AppIcon name="square.and.arrow.down" size={26} color={colors.accent} />
+              </View>
+              <View style={styles.itemText}>
+                <Text style={styles.row}>{copy.importPlans}</Text>
+                <Text style={styles.meta}>{t("tripHome.preparation.importHint")}</Text>
+              </View>
+              <AppIcon name="chevron.right" size={16} color={colors.textSecondary} />
+            </Pressable>
           ) : null}
           {onBuildItinerary ? (
-            <View style={styles.startAction}>
-              <UiButton
-                size="large"
-                label={copy.buildItinerary}
-                onPress={onBuildItinerary}
-              />
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.buildItinerary}
+              accessibilityHint={t("tripHome.preparation.buildHint")}
+              onPress={onBuildItinerary}
+              style={styles.startAction}
+            >
+              <View style={styles.startIcon}>
+                <AppIcon name="map" size={26} color={colors.accent} />
+              </View>
+              <View style={styles.itemText}>
+                <Text style={styles.row}>{copy.buildItinerary}</Text>
+                <Text style={styles.meta}>{t("tripHome.preparation.buildHint")}</Text>
+              </View>
+              <AppIcon name="chevron.right" size={16} color={colors.textSecondary} />
+            </Pressable>
           ) : null}
         </View>
       ) : (
@@ -183,7 +205,20 @@ const createStyles = (c: UiColors) =>
     meta: { ...visual.type.meta, color: c.textSecondary },
     metric: { ...visual.type.metric, color: c.textPrimary },
     empty: { gap: visual.space.card },
-    startAction: { minHeight: 88, justifyContent: "center" },
+    startAction: {
+      minHeight: 88,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.card,
+      padding: visual.space.card,
+      borderRadius: visual.radius.card,
+      backgroundColor: c.accentSurface,
+    },
+    startIcon: {
+      padding: visual.space.card,
+      borderRadius: visual.radius.control,
+      backgroundColor: c.surface,
+    },
     counts: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.section },
     count: { alignItems: "center", gap: 4, flexBasis: "28%", flexGrow: 1 },
     recent: { gap: visual.space.heading },
