@@ -41,11 +41,33 @@ function setup() {
   let sql = new DatabaseSync(path);
   sql.exec("PRAGMA foreign_keys=ON");
   for (const migration of migrations) sql.exec(migration.sql);
+  const createOperationId = randomUUID();
   sql
     .prepare(
       "INSERT INTO local_trip_containers(account_id,id,create_operation_id,name,created_at,updated_at) VALUES(?,?,?,?,?,?)",
     )
-    .run(accountA, tripId, randomUUID(), "Trip", stamp, stamp);
+    .run(accountA, tripId, createOperationId, "Trip", stamp, stamp);
+  sql
+    .prepare(
+      `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,created_at,updated_at)
+   VALUES(?,?,'TRIP',?,'CREATE_TRIP',?,?,?,'PENDING',0,?,?)`,
+    )
+    .run(
+      createOperationId,
+      tripId,
+      tripId,
+      createOperationId,
+      JSON.stringify({
+        tripId,
+        name: "Trip",
+        destination: null,
+        startDate: null,
+        endDate: null,
+      }),
+      accountA,
+      stamp,
+      stamp,
+    );
   let account: string = accountA;
   let failInsert = false;
   let abaRead = false;

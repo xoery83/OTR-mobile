@@ -19,6 +19,7 @@ import {
 } from "../auth/accountRequestContext";
 import { readInitializedDatabase } from "../db/database";
 import { requireActiveUserId } from "../auth/authRepository";
+import { createPersonalTripCoverAccess } from "./tripPersonalCoverAccess";
 
 type Database = Pick<
   SQLite.SQLiteDatabase,
@@ -102,20 +103,9 @@ async function readCoverState(
   database: Database,
   scope: AccountRequestContext,
   assetId: string,
+  account: () => Promise<string>,
 ): Promise<CoverState | null> {
-  const access = await database.getFirstAsync<{
-    id: string;
-    selected_cover_asset_id: string | null;
-    refresh_generation: number | null;
-    access_revision: number | null;
-  }>(
-    `SELECT t.id,t.selected_cover_asset_id,s.refresh_generation,s.access_revision
-     FROM local_trip_containers t LEFT JOIN trip_core_scopes s
-       ON s.account_id=t.account_id AND s.trip_id=t.id
-     WHERE t.account_id=? AND t.id=? AND (s.revoked IS NULL OR s.revoked=0)`,
-    scope.accountId,
-    scope.tripId,
-  );
+  const access = await createPersonalTripCoverAccess(database, account)(scope);
   if (!access) return null;
   const row = await database.getFirstAsync<Row>(
     "SELECT * FROM local_trip_photos WHERE account_id=? AND trip_id=? AND asset_id=?",
@@ -123,7 +113,15 @@ async function readCoverState(
     scope.tripId,
     assetId,
   );
-  return row ? { row, access } : null;
+  const preference = await database.getFirstAsync<{
+    selected_cover_asset_id: string | null;
+    selection_revision: number;
+  }>(
+    "SELECT selected_cover_asset_id,selection_revision FROM account_trip_cover_preferences WHERE account_id=? AND trip_id=?",
+    scope.accountId,
+    scope.tripId,
+  );
+  return row ? { row, access: [access, preference] } : null;
 }
 function probe(row: Row, fileStore: PhotoFiles) {
   try {
@@ -145,7 +143,7 @@ async function readCachedCover(
   const lease = cacheLease(cache, scope.tripId);
   const assetId = parseTripPhotoCoverRef(raw);
   if (!assetId) return null;
-  const state = await readCoverState(database, scope, assetId);
+  const state = await readCoverState(database, scope, assetId, account);
   await assertAccountRequestContext(scope, account);
   if (!state) {
     delete lease.entry;
@@ -153,7 +151,7 @@ async function readCachedCover(
   }
   const signature = JSON.stringify([raw, state]);
   const cached = lease.entry;
-  const latest = await readCoverState(database, scope, assetId);
+  const latest = await readCoverState(database, scope, assetId, account);
   await assertAccountRequestContext(scope, account);
   if (
     coverCaches.get(fileStore) !== cache ||
@@ -178,6 +176,45 @@ async function readCachedCover(
     lease.entry = { signature, identity: before, photo: { ...photo } };
   } else delete lease.entry;
   return photo.localUri ? photo : null;
+}
+
+type PersonalCoverListener = { context: AccountRequestContext; callback: () => void };
+const personalCoverListeners = new Set<PersonalCoverListener>();
+export function subscribePersonalTripCover(
+  context: AccountRequestContext,
+  callback: () => void,
+) {
+  assertAccountRequestGeneration(context);
+  const listener = { context: Object.freeze({ ...context }), callback };
+  personalCoverListeners.add(listener);
+  return () => {
+    personalCoverListeners.delete(listener);
+  };
+}
+/** Synchronous post-commit handoff only. Listener failure cannot undo a successful save. */
+export function announcePersonalTripCoverAfterCommit(context: AccountRequestContext) {
+  try {
+    assertAccountRequestGeneration(context);
+  } catch {
+    return;
+  }
+  const cache = coverCaches.get(files);
+  if (cache?.accountId === context.accountId && cache.generation === context.generation)
+    cache.trips.delete(context.tripId);
+  for (const listener of personalCoverListeners) {
+    if (
+      listener.context.accountId !== context.accountId ||
+      listener.context.tripId !== context.tripId ||
+      listener.context.generation !== context.generation
+    )
+      continue;
+    try {
+      assertAccountRequestGeneration(context);
+      listener.callback();
+    } catch {
+      /* Preserve the committed result. */
+    }
+  }
 }
 
 function decode(
@@ -212,15 +249,8 @@ export async function readSelectedTripCoverPhotoInScope(
   await assertAccountRequestContext(scope, account);
   const assetId = parseTripPhotoCoverRef(raw);
   if (!assetId) return null;
-  const trip = await database.getFirstAsync<{ id: string }>(
-    `SELECT id FROM local_trip_containers WHERE account_id=? AND id=?
-     AND NOT EXISTS(SELECT 1 FROM trip_core_scopes WHERE account_id=? AND trip_id=? AND revoked<>0)`,
-    scope.accountId,
-    scope.tripId,
-    scope.accountId,
-    scope.tripId,
-  );
-  const row = trip
+  const access = await createPersonalTripCoverAccess(database, account)(scope);
+  const row = access
     ? await database.getFirstAsync<Row>(
         "SELECT * FROM local_trip_photos WHERE account_id=? AND trip_id=? AND asset_id=?",
         scope.accountId,
@@ -271,27 +301,37 @@ export function createTripPhotoRepository(
     },
     async listTripPhotos(tripId: string): Promise<TripPhoto[]> {
       coreUuid.parse(tripId);
-      const scope = await captureAccountScope(account);
-      const rows = await database.getAllAsync<Row>(
-        "SELECT * FROM local_trip_photos WHERE account_id=? AND trip_id=? ORDER BY created_at DESC,asset_id",
-        scope.accountId,
-        tripId,
-      );
-      await assertAccountRequestContext(scope, account);
-      return rows.map((row) => decode(row, fileStore));
+      const scope = { ...(await captureAccountScope(account)), tripId };
+      return withAccountApplyGate(async () => {
+        let photos: TripPhoto[] = [];
+        await database.withTransactionAsync(async () => {
+          const access = await createPersonalTripCoverAccess(database, account)(scope);
+          if (!access) return;
+          const rows = await database.getAllAsync<Row>(
+            "SELECT * FROM local_trip_photos WHERE account_id=? AND trip_id=? ORDER BY created_at DESC,asset_id",
+            scope.accountId,
+            tripId,
+          );
+          await assertAccountRequestContext(scope, account);
+          photos = rows.map((row) => decode(row, fileStore));
+          await assertAccountRequestContext(scope, account);
+        });
+        await assertAccountRequestContext(scope, account);
+        return photos;
+      });
     },
     async addTripPhoto(tripId: string, temporaryFileUri: string): Promise<TripPhoto> {
       coreUuid.parse(tripId);
       const assetId = coreUuid.parse(uuid());
-      const scope = await captureAccountScope(account);
+      const scope = { ...(await captureAccountScope(account)), tripId };
       return withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
-        const trip = await database.getFirstAsync<{ id: string }>(
-          "SELECT id FROM local_trip_containers WHERE account_id=? AND id=?",
-          scope.accountId,
-          tripId,
-        );
-        if (!trip) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+        const readAccess = createPersonalTripCoverAccess(database, account);
+        let accessToken: string | null = null;
+        await database.withTransactionAsync(async () => {
+          accessToken = (await readAccess(scope))?.token ?? null;
+        });
+        if (!accessToken) throw new Error("TRIP_LOCAL_RECORD_MISSING");
         let retained: RetainTripPhotoResult | null = null;
         let row: Row;
         try {
@@ -313,6 +353,15 @@ export function createTripPhotoRepository(
             created_at: clock(),
           };
           await database.withTransactionAsync(async () => {
+            if ((await readAccess(scope))?.token !== accessToken)
+              throw new Error("TRIP_COVER_ACCESS_CHANGED");
+            await database.runAsync(
+              `INSERT INTO account_trip_cover_preferences(account_id,trip_id,selected_cover_asset_id,selection_revision,updated_at)
+               VALUES(?,?,NULL,1,?) ON CONFLICT(account_id,trip_id) DO NOTHING`,
+              scope.accountId,
+              tripId,
+              clock(),
+            );
             await database.runAsync(
               "INSERT INTO local_trip_photos(account_id,trip_id,asset_id,mime_type,size_bytes,sha256,local_uri,created_at) VALUES(?,?,?,?,?,?,?,?)",
               row.account_id,

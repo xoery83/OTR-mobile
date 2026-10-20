@@ -35,6 +35,7 @@ export type TripListSummary = TripDiscoverySummary & {
   localStatus: "PENDING_CREATE" | "SYNCED" | null;
   selectedCoverAssetId: BuiltInTripCoverId | null;
   readonly selectedCoverAssetIdRaw?: string | null;
+  readonly personalCoverRevision?: number;
   remoteListed: boolean;
 };
 export type CachedTripList = {
@@ -126,6 +127,34 @@ export function createTripDiscoveryRepository(
           selectedCoverAssetIdRaw: row.selected_cover_asset_id,
           remoteListed: entries.has(row.id),
         });
+      // Raw personal choices only: this overlay never grants photo-read or write authority.
+      const ids = [...entries.keys()];
+      for (let start = 0; start < ids.length; start += 250) {
+        const chunk = ids.slice(start, start + 250);
+        const preferences = await database.getAllAsync<{
+          trip_id: string;
+          selected_cover_asset_id: string | null;
+          selection_revision: number;
+        }>(
+          `SELECT trip_id,selected_cover_asset_id,selection_revision FROM account_trip_cover_preferences
+           WHERE account_id=? AND trip_id IN (${chunk.map(() => "?").join(",")})`,
+          scope.accountId,
+          ...chunk,
+        );
+        await assertAccountRequestContext(scope, account);
+        for (const preference of preferences) {
+          const entry = entries.get(preference.trip_id);
+          if (!entry) continue;
+          entries.set(preference.trip_id, {
+            ...entry,
+            selectedCoverAssetIdRaw: preference.selected_cover_asset_id,
+            selectedCoverAssetId: isTripCoverAssetId(preference.selected_cover_asset_id)
+              ? preference.selected_cover_asset_id
+              : null,
+            personalCoverRevision: preference.selection_revision,
+          });
+        }
+      }
       return {
         cachedAt: snapshot?.refreshed_at ?? null,
         trips: [...entries.values()].sort(

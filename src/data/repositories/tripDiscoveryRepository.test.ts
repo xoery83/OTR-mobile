@@ -80,6 +80,7 @@ it("caches a complete actor snapshot without inventing a local CREATE, and merge
           localStatus: "PENDING_CREATE",
           selectedCoverAssetId: "city",
           selectedCoverAssetIdRaw: "city",
+          personalCoverRevision: 1,
           remoteListed: true,
         },
         {

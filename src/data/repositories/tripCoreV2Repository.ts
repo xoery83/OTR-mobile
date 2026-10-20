@@ -974,6 +974,8 @@ export function createTripCoreV2Repository(
     readGraph,
     manualReadSnapshot,
     acceptedSnapshot,
+    // Caller must hold the Account apply gate and the database transaction.
+    readAcceptedSnapshotWithinTransaction: acceptedWithinTransaction,
     readTtr,
     guardTtrPublication,
     ttrWithinTransaction,
