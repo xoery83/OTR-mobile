@@ -110,7 +110,9 @@ export function ManualItineraryContent({
         ) : (
           <AppIcon name={type.icon} color={colors.textPrimary} size={28} />
         )}
-        <UiText style={styles.label}>{t(type.labelKey)}</UiText>
+        <UiText style={compact ? styles.compactLabel : styles.label}>
+          {t(type.labelKey)}
+        </UiText>
         {"hintKey" in type ? (
           <UiText style={styles.meta}>{t(type.hintKey)}</UiText>
         ) : null}
@@ -176,6 +178,7 @@ const createStyles = (colors: UiColors) =>
       borderRadius: visual.radius.card,
     },
     label: { ...visual.type.row, color: colors.textPrimary },
+    compactLabel: { ...visual.type.meta, color: colors.textPrimary, textAlign: "center" },
     meta: { ...visual.type.meta, color: colors.textSecondary },
     disabled: { opacity: 0.5 },
   });
