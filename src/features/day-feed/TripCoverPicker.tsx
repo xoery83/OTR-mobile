@@ -24,16 +24,20 @@ export function TripCoverPicker({
   selectedRaw,
   onSelect,
   onChoosePhoto,
+  presentation = "editor",
+  onClose,
 }: {
   trip: CoverMetadata;
   selectedRaw?: string | null;
   onSelect(id: TripCoverChoice | null): Promise<void>;
   onChoosePhoto?(): Promise<boolean>;
+  presentation?: "editor" | "standalone";
+  onClose?(): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(presentation === "standalone");
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
   const [error, setError] = useState(false);
@@ -41,6 +45,10 @@ export function TripCoverPicker({
   const currentId = tripCoverId(current);
   const personal = parseTripPhotoCoverRef(selectedRaw) !== null;
   const order = open ? suggestedCoverIds(trip, personal ? selectedRaw : currentId) : [];
+  const dismiss = () => {
+    setOpen(false);
+    onClose?.();
+  };
   const select = async (id: TripCoverChoice | null, closeAfter = true) => {
     if (busy.current) return;
     busy.current = true;
@@ -48,7 +56,7 @@ export function TripCoverPicker({
     setError(false);
     try {
       await onSelect(id);
-      if (closeAfter) setOpen(false);
+      if (closeAfter) dismiss();
     } catch {
       setError(true);
     } finally {
@@ -62,7 +70,7 @@ export function TripCoverPicker({
     setSaving(true);
     setError(false);
     try {
-      if (await onChoosePhoto()) setOpen(false);
+      if (await onChoosePhoto()) dismiss();
     } catch {
       setError(true);
     } finally {
@@ -71,30 +79,32 @@ export function TripCoverPicker({
     }
   };
   const close = () => {
-    if (!busy.current) setOpen(false);
+    if (!busy.current) dismiss();
   };
   return (
     <View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t("myTrips.chooseCover")}
-        onPress={() => {
-          setError(false);
-          setOpen(true);
-        }}
-        style={styles.preview}
-      >
-        <TripCoverVisual
-          tripId={trip.id}
-          rawSelection={selectedRaw}
-          source={tripCoverSource(current)}
-          assetId={currentId}
-          style={styles.cover}
-        />
-        <View pointerEvents="none" style={styles.edit}>
-          <AppIcon name="square.and.pencil" color={colors.mediaText} size={22} />
-        </View>
-      </Pressable>
+      {presentation === "editor" ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("myTrips.chooseCover")}
+          onPress={() => {
+            setError(false);
+            setOpen(true);
+          }}
+          style={styles.preview}
+        >
+          <TripCoverVisual
+            tripId={trip.id}
+            rawSelection={selectedRaw}
+            source={tripCoverSource(current)}
+            assetId={currentId}
+            style={styles.cover}
+          />
+          <View pointerEvents="none" style={styles.edit}>
+            <AppIcon name="square.and.pencil" color={colors.mediaText} size={22} />
+          </View>
+        </Pressable>
+      ) : null}
       <Modal
         visible={open}
         presentationStyle="pageSheet"

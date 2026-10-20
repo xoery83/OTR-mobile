@@ -76,10 +76,17 @@ function render(
   onSelect = vi.fn().mockResolvedValue(undefined),
   onChoosePhoto?: () => Promise<boolean>,
   selectedRaw: string | null | undefined = "city",
+  extra: Pick<Parameters<typeof TripCoverPicker>[0], "presentation" | "onClose"> = {},
 ) {
   state.cursor = state.refCursor = 0;
   return nodes(
-    TripCoverPicker({ trip: { id: "qa" }, selectedRaw, onSelect, onChoosePhoto }),
+    TripCoverPicker({
+      trip: { id: "qa" },
+      selectedRaw,
+      onSelect,
+      onChoosePhoto,
+      ...extra,
+    }),
   );
 }
 it("opens from a cover edit glyph and shows current plus exactly six other ranked images", () => {
@@ -190,4 +197,56 @@ it("turning AUTO off locks the currently displayed registered image, and on clea
   expect(select).toHaveBeenLastCalledWith(null);
   v = render(select, undefined, null);
   expect(v.find((n) => n.type === "Switch")!.props.value).toBe(true);
+});
+
+it("opens the existing Gallery directly in standalone mode and closes without a write", () => {
+  const save = vi.fn(),
+    onClose = vi.fn();
+  const v = render(save, undefined, "city", { presentation: "standalone", onClose });
+  expect(v.filter((n) => n.type === "Modal")).toHaveLength(1);
+  expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
+  expect(v.some((n) => n.props.accessibilityLabel === "myTrips.chooseCover")).toBe(false);
+  v.find((n) => n.type === "SheetHeader")!.props.onLeft();
+  expect(onClose).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+});
+it("standalone selection closes only after its owning save succeeds, and keeps failures visible", async () => {
+  const save = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("owning rejection"))
+    .mockResolvedValue(undefined);
+  const onClose = vi.fn();
+  const extra = { presentation: "standalone" as const, onClose };
+  let v = render(save, undefined, "city", extra);
+  v.find((n) =>
+    n.props.accessibilityLabel?.startsWith("coverLibrary.option"),
+  )!.props.onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+  v = render(save, undefined, "city", extra);
+  expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
+  expect(v.some((n) => n.props.children === "myTrips.coverFailed")).toBe(true);
+  expect(onClose).not.toHaveBeenCalled();
+  v.find((n) =>
+    n.props.accessibilityLabel?.startsWith("coverLibrary.option"),
+  )!.props.onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(onClose).toHaveBeenCalledOnce();
+});
+it("standalone AUTO stages through the injected save and stays open for the refreshed revision", async () => {
+  const save = vi.fn().mockResolvedValue(undefined),
+    onClose = vi.fn();
+  const extra = { presentation: "standalone" as const, onClose };
+  render(save, undefined, "city", extra)
+    .find((n) => n.type === "Switch")!
+    .props.onValueChange(true);
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(save).toHaveBeenCalledExactlyOnceWith(null);
+  expect(onClose).not.toHaveBeenCalled();
+  expect(
+    render(save, undefined, null, extra).find((n) => n.type === "Switch")!.props.value,
+  ).toBe(true);
 });
