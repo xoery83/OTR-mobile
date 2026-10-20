@@ -183,9 +183,9 @@ export function createApplePlaceProvider(
   };
 }
 export async function readApplePlaceProvider(binding: PlaceSearchBinding) {
-  const { requireNativeModule } = await import("expo");
   let native: ApplePlaceNative;
   try {
+    const { requireNativeModule } = await import("expo-modules-core");
     native = requireNativeModule<ApplePlaceNative>("OTRPlaceSearch");
   } catch {
     throw new ApplePlaceError("NATIVE_UNAVAILABLE");
