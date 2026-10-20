@@ -280,7 +280,9 @@ export function ExperienceBottomShell({
               ? {
                   glassEffectStyle: "clear" as const,
                   isInteractive: true,
-                  tintColor: reducedTransparency ? colors.surface : colors.transparent,
+                  tintColor: reducedTransparency
+                    ? colors.surface
+                    : colors.floatingSurface,
                 }
               : {})}
             accessibilityElementsHidden={
@@ -488,7 +490,9 @@ export function ExperienceBottomShell({
               ? {
                   glassEffectStyle: "clear" as const,
                   isInteractive: true,
-                  tintColor: reducedTransparency ? colors.surface : colors.transparent,
+                  tintColor: reducedTransparency
+                    ? colors.surface
+                    : colors.floatingSurface,
                 }
               : {})}
             style={[
@@ -552,7 +556,9 @@ export function ExperienceBottomShell({
               ? {
                   glassEffectStyle: "clear" as const,
                   isInteractive: true,
-                  tintColor: reducedTransparency ? colors.surface : colors.transparent,
+                  tintColor: reducedTransparency
+                    ? colors.surface
+                    : colors.floatingSurface,
                 }
               : {})}
             style={[

@@ -79,3 +79,31 @@ it("lets an explicit Day underlap reach the native bar without changing default 
     });
   }
 });
+
+it("reports only development underlap geometry and leaves default frames silent", () => {
+  vi.stubGlobal("__DEV__", true);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    chrome.headerHeight = 103;
+    const day = NavigationContentFrame({ children: "Day", underlapHeader: true });
+    day.props.onLayout({
+      currentTarget: {
+        measureInWindow: (callback: (...values: number[]) => void) =>
+          callback(0, 0, 402, 874),
+      },
+    });
+    expect(log).toHaveBeenCalledExactlyOnceWith("[ExperienceChromeFrame]", {
+      y: 0,
+      height: 874,
+      headerHeight: 103,
+    });
+    expect(NavigationContentFrame({ children: "Other" }).props.onLayout).toBeUndefined();
+    vi.stubGlobal("__DEV__", false);
+    expect(
+      NavigationContentFrame({ children: "Day", underlapHeader: true }).props.onLayout,
+    ).toBeUndefined();
+  } finally {
+    log.mockRestore();
+    vi.unstubAllGlobals();
+  }
+});

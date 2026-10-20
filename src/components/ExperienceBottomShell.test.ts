@@ -727,7 +727,7 @@ it("selects clear native glass for each island branch and retains reduced-transp
         expect(node.props).toMatchObject({
           glassEffectStyle: "clear",
           isInteractive: true,
-          tintColor: lightPalette.transparent,
+          tintColor: lightPalette.floatingSurface,
         });
       }
     }

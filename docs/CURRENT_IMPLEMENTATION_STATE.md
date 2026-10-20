@@ -1,3 +1,10 @@
+## Experience Chrome Native correction follow-up — 21 October 2026 / PARTIAL
+
+- Coordinator loaded combined ddab489fc6f49e5aec2da2e3e76cc54a9eb57363 on AD5. Runtime confirmed nativeGlass=true and reduceTransparency=false. Actual clear-glass refraction enlarged the underlying Day heading across bottom navigation labels; no Chrome Native PASS.
+- The next narrow candidate uses existing floatingSurface solely as native clear-glass tint in normal mode, with no extra View fill. Reduced-transparency/unavailable-native surfaces and canonical label roles remain intact. Readability/translucency still require actual Native verification.
+- Top underlap remains unproven at runtime: static Day wiring has frame padding zero, one scroll-header inset and a translucent native host. No speculative clip/inset change. A development-only Day Frame onLayout reports measureInWindow y/height and measured headerHeight to distinguish frame offset from native material appearance. It carries no business values and is absent in release.
+- Evidence: /private/tmp/otr-owner-cover-chrome-sheet-evidence-20261021/03-chrome-clear-readability-fail.jpg. Coordinator remains sole GUI/Metro operator. No business data, Reader, anchoring, Forms or Native host change.
+
 ## Experience Chrome material follow-up — 21 October 2026 / NATIVE PENDING
 
 - Owner found the integrated b201ff71 preview visually opaque. This isolated follow-up preserves its Forms/Entry callbacks, data and existing Day underlap; no Metro/device switch is performed by Experience.
