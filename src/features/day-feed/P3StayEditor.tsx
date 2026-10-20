@@ -95,6 +95,7 @@ export function P3StayEditor({
   onSaved,
   onChoosePlan,
   onChooseRental,
+  onChooseTransport,
   onFindPlace,
 }: {
   tripId: string;
@@ -106,6 +107,7 @@ export function P3StayEditor({
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
   onChooseRental?(): void;
+  onChooseTransport?(): void;
   onFindPlace?(current: string): void;
 }) {
   useUiLocale();
@@ -283,6 +285,14 @@ export function P3StayEditor({
                   variant="text"
                   disabled={saving}
                   onPress={() => close(onChooseRental)}
+                />
+              ) : null}
+              {onChooseTransport ? (
+                <UiButton
+                  label={t("tripCreate.transport")}
+                  variant="text"
+                  disabled={saving}
+                  onPress={() => close(onChooseTransport)}
                 />
               ) : null}
               <UiSection title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}>

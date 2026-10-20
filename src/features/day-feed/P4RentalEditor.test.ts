@@ -173,6 +173,21 @@ beforeEach(() => {
   state.alert.mockReset();
 });
 
+it("opens Transport from a clean P4 draft", async () => {
+  const p = { ...props(), onChooseTransport: vi.fn() };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "rental",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  node("tripCreate.transport").onPress();
+  expect(p.onChooseTransport).toHaveBeenCalledOnce();
+  expect(p.onClose).not.toHaveBeenCalled();
+});
+
 it("requires both authored pickup/return dates, times and places before local Save", async () => {
   const p = props();
   const draft = { mode: "CREATE", itemId: "rental-one", fields: fields() };

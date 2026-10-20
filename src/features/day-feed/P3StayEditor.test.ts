@@ -176,6 +176,21 @@ it("opens the sibling Rental form without changing a clean P3 draft", async () =
   expect(p.onClose).not.toHaveBeenCalled();
 });
 
+it("opens Transport from a clean P3 draft", async () => {
+  const p = { ...props(), onChooseTransport: vi.fn() };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  node("tripCreate.transport").onPress();
+  expect(p.onChooseTransport).toHaveBeenCalledOnce();
+  expect(p.onClose).not.toHaveBeenCalled();
+});
+
 it("navigates to Trip Start without selecting and requires both stay dates", async () => {
   const p = props();
   const draft = {

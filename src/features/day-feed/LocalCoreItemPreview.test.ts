@@ -201,3 +201,71 @@ it("renders real P4 pickup, return, vehicle and Notes projection without renamin
   expect(markup).toContain("TEST123");
   expect(markup).toContain("Keep the contract.");
 });
+
+it("renders a real P5 origin and preserves unknown arrival", () => {
+  const tripId = randomUUID();
+  const itemId = randomUUID();
+  const actor = {
+    accountId: randomUUID(),
+    tripId,
+    personId: null,
+    personIds: [],
+    active: true,
+    canManageShared: true,
+  };
+  const place = (authored_label: string) => ({
+    ...Object.fromEntries(Object.keys(corePlaceSchema.shape).map((key) => [key, null])),
+    authored_label,
+  });
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P5",
+        core: { title: "Train to town", description: "Use platform signs." },
+        endpoints: {
+          origin: {
+            time: coreDateBoundary("2026-10-20"),
+            place: place("Central Station"),
+          },
+          destination: {
+            time: { ...coreDateBoundary("2026-10-20"), local_date: null },
+            place: place("Unknown arrival"),
+          },
+        },
+        service: {
+          service_key: "manual.segment",
+          transport_subtype: "TRAIN",
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "",
+          operator_value: "",
+          operator_literal: "",
+          service_number: "",
+          service_literal: "",
+          codeshare_operating_key: null,
+        },
+        ...coreDefaults("organizer"),
+      },
+    },
+    actor,
+    "2026-10-21T00:00:00Z",
+  ).graph;
+  const projected = projectCoreItem(graph, actor, itemId)!;
+  const markup = renderToStaticMarkup(
+    createElement(LocalCoreItemPreview, { item: projected, onClose: () => {} }),
+  );
+  expect(markup).toContain("tripCreate.transport");
+  expect(markup).toContain("Central Station");
+  expect(markup).toContain("Unknown arrival");
+  expect(markup).toContain("Use platform signs.");
+  expect(projected.schedule).not.toHaveProperty("destination.time.localDate");
+});

@@ -42,6 +42,12 @@ vi.mock("./P4RentalEditor", () => ({
     return null;
   },
 }));
+vi.mock("./P5TransportEditor", () => ({
+  P5TransportEditor: (props: any) => {
+    state.nodes.push({ transportEditor: props });
+    return null;
+  },
+}));
 vi.mock("./useTripPreparationWidget", () => ({
   useTripPreparationWidget: (props: any) => {
     state.preparation = props;
@@ -688,6 +694,29 @@ it("switches local Quick Add to the typed Rental form and refreshes the same Tri
   const rental = state.nodes.find((entry) => entry.rentalEditor)?.rentalEditor;
   expect(rental).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   rental.onSaved("rental-a");
+  expect(render()).toContain("actionIsland.savedLocally");
+  expect(repo.addItem).not.toHaveBeenCalled();
+});
+
+it("switches local Quick Add to the typed Transport form with the same Day context", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  const actions = state.publish.mock.calls.find(
+    (call) => call[0]?.tripId === "local-a",
+  )![0];
+  actions.itinerary("2027-01-02");
+  render();
+  state.nodes.find((entry) => entry.planEditor)?.planEditor.onChooseTransport();
+  render();
+  const transport = state.nodes.find((entry) => entry.transportEditor)?.transportEditor;
+  expect(transport).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
+  transport.onSaved("transport-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });

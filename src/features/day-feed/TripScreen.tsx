@@ -15,6 +15,7 @@ import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { P3StayEditor } from "./P3StayEditor";
 import { P4RentalEditor } from "./P4RentalEditor";
+import { P5TransportEditor } from "./P5TransportEditor";
 import {
   createDefaultManualPlanRepository,
   type ManualPlanDraft,
@@ -30,6 +31,11 @@ import {
   type ManualRentalDraft,
   type ManualRentalRepository,
 } from "@/data/repositories/manualRentalRepository";
+import {
+  createDefaultManualTransportRepository,
+  type ManualTransportDraft,
+  type ManualTransportRepository,
+} from "@/data/repositories/manualTransportRepository";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import {
   readTripTodaysJourney,
@@ -219,6 +225,12 @@ function TripContent({
     generation: number;
     repository: ManualRentalRepository;
     draft: ManualRentalDraft;
+  } | null>(null);
+  const [transportEdit, setTransportEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualTransportRepository;
+    draft: ManualTransportDraft;
   } | null>(null);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
@@ -846,8 +858,12 @@ function TripContent({
           currentSnapshot?.candidateDays[0] ||
           visibleTrip.localManual?.items
             .flatMap((item) => {
-              const schedule = item.schedule as { start?: { localDate?: string } };
-              return schedule.start?.localDate ? [schedule.start.localDate] : [];
+              const schedule = item.schedule as {
+                start?: { localDate?: string };
+                origin?: { time?: { localDate?: string } };
+              };
+              const first = schedule.start?.localDate ?? schedule.origin?.time?.localDate;
+              return first ? [first] : [];
             })
             .sort()[0] ||
           "",
@@ -890,13 +906,13 @@ function TripContent({
       ? localItem
       : null;
   const localPreview =
-    visibleLocalItem && !planEdit && !stayEdit && !rentalEdit ? (
+    visibleLocalItem && !planEdit && !stayEdit && !rentalEdit && !transportEdit ? (
       <LocalCoreItemPreview
         item={visibleLocalItem.item}
         onClose={() => setLocalItem(null)}
         editError={planEditError}
         onEdit={
-          ["P1", "P3", "P4"].includes(visibleLocalItem.item.family) &&
+          ["P1", "P3", "P4", "P5"].includes(visibleLocalItem.item.family) &&
           visibleLocalItem.item.localState === "PENDING"
             ? () => {
                 setPlanEditError(false);
@@ -908,7 +924,17 @@ function TripContent({
                       ticket === request.current &&
                       generation === getAccountGeneration() &&
                       draftId === itemId;
-                    if (visibleLocalItem.item.family === "P4") {
+                    if (visibleLocalItem.item.family === "P5") {
+                      const repository = await createDefaultManualTransportRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setTransportEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    } else if (visibleLocalItem.item.family === "P4") {
                       const repository = await createDefaultManualRentalRepository();
                       const draft = await repository.read(requested, itemId);
                       if (!current(draft.itemId)) return;
@@ -1003,6 +1029,23 @@ function TripContent({
         }}
       />
     ) : null;
+  const transportEditor =
+    transportEdit?.tripId === requested && transportEdit.generation === generation ? (
+      <P5TransportEditor
+        key={`${transportEdit.tripId}:${transportEdit.draft.itemId}:${generation}`}
+        tripId={transportEdit.tripId}
+        itemId={transportEdit.draft.itemId}
+        opened={transportEdit}
+        onClose={() => setTransportEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setTransportEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
   const homeContextCurrent =
     homeSnapshot &&
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
@@ -1027,10 +1070,15 @@ function TripContent({
               const schedule = item.schedule as {
                 start?: { localDate?: string };
                 end?: { localDate?: string };
+                origin?: { time?: { localDate?: string } };
+                destination?: { time?: { localDate?: string } };
               };
-              return [schedule.start?.localDate, schedule.end?.localDate].filter(
-                (date): date is string => !!date,
-              );
+              return [
+                schedule.start?.localDate,
+                schedule.end?.localDate,
+                schedule.origin?.time?.localDate,
+                schedule.destination?.time?.localDate,
+              ].filter((date): date is string => !!date);
             }) ?? [],
           ),
         ].sort();
@@ -1202,6 +1250,7 @@ function TripContent({
         {planEditor}
         {stayEditor}
         {rentalEditor}
+        {transportEditor}
       </>
     );
   // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
@@ -1358,6 +1407,7 @@ function TripContent({
       {planEditor}
       {stayEditor}
       {rentalEditor}
+      {transportEditor}
       {visibleOverlay?.read.observed ? (
         <DayFeed
           instant={homePerspective?.now}

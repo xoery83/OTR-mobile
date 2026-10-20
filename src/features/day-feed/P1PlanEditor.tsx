@@ -95,6 +95,7 @@ export function P1PlanEditor({
   onSaved,
   onChooseStay,
   onChooseRental,
+  onChooseTransport,
   onFindPlace,
 }: {
   tripId: string;
@@ -106,6 +107,7 @@ export function P1PlanEditor({
   onSaved(itemId: string): void;
   onChooseStay?(): void;
   onChooseRental?(): void;
+  onChooseTransport?(): void;
   onFindPlace?(current: string): void;
 }) {
   useUiLocale();
@@ -275,6 +277,14 @@ export function P1PlanEditor({
                   variant="text"
                   disabled={saving}
                   onPress={() => close(onChooseRental)}
+                />
+              ) : null}
+              {onChooseTransport ? (
+                <UiButton
+                  label={t("tripCreate.transport")}
+                  variant="text"
+                  disabled={saving}
+                  onPress={() => close(onChooseTransport)}
                 />
               ) : null}
               <UiSection title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}>

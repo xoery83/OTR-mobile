@@ -94,6 +94,7 @@ export function P4RentalEditor({
   onClose,
   onSaved,
   onChoosePlan,
+  onChooseTransport,
 }: {
   tripId: string;
   itemId?: string;
@@ -103,6 +104,7 @@ export function P4RentalEditor({
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
+  onChooseTransport?(): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -272,6 +274,14 @@ export function P4RentalEditor({
                   variant="text"
                   disabled={saving}
                   onPress={() => close(onChoosePlan)}
+                />
+              ) : null}
+              {onChooseTransport ? (
+                <UiButton
+                  label={t("tripCreate.transport")}
+                  variant="text"
+                  disabled={saving}
+                  onPress={() => close(onChooseTransport)}
                 />
               ) : null}
               <UiSection

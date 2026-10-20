@@ -8,6 +8,7 @@ import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
 import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
 import { createDefaultManualRentalRepository } from "@/data/repositories/manualRentalRepository";
+import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
 vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
   dayNavigationBookmarkRepository: {
     list: vi.fn(async () => []),
@@ -192,6 +193,7 @@ vi.mock("./LocalCoreItemPreview", () => ({ LocalCoreItemPreview: "LocalItemPrevi
 vi.mock("./P1PlanEditor", () => ({ P1PlanEditor: "PlanEditor" }));
 vi.mock("./P3StayEditor", () => ({ P3StayEditor: "StayEditor" }));
 vi.mock("./P4RentalEditor", () => ({ P4RentalEditor: "RentalEditor" }));
+vi.mock("./P5TransportEditor", () => ({ P5TransportEditor: "TransportEditor" }));
 vi.mock("@/data/repositories/manualPlanRepository", () => ({
   createDefaultManualPlanRepository: vi.fn(),
 }));
@@ -200,6 +202,9 @@ vi.mock("@/data/repositories/manualStayRepository", () => ({
 }));
 vi.mock("@/data/repositories/manualRentalRepository", () => ({
   createDefaultManualRentalRepository: vi.fn(),
+}));
+vi.mock("@/data/repositories/manualTransportRepository", () => ({
+  createDefaultManualTransportRepository: vi.fn(),
 }));
 vi.mock("@/data/repositories/tripTodaysJourneyRepository", () => ({
   readTripTodaysJourney: async () => ({ resolveLocalItem: state.resolveLocalItem }),
@@ -1260,6 +1265,30 @@ it("opens same-ID P4 edit only after the owning rental repository returns an edi
   });
   editor.onClose();
   expect(find(render(), "LocalItemPreview").item.itemId).toBe(rental.itemId);
+});
+it("opens same-ID P5 edit only after the owning transport repository returns an editable draft", async () => {
+  state.result.observed = null;
+  const transport = { ...localRead().items[0], family: "P5", itemId: "manual-transport" };
+  state.result.localManual = { ...localRead(), items: [transport] };
+  state.resolveLocalItem.mockResolvedValue({ ...localRead(), item: transport });
+  const draft = { mode: "EDIT", itemId: transport.itemId, fields: {} };
+  const repository = { read: vi.fn(async () => draft) };
+  vi.mocked(createDefaultManualTransportRepository).mockResolvedValue(repository as any);
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  await workspace.onOpenLocalHomeItem(
+    reference,
+    transport.itemId,
+    state.result.localManual,
+  );
+  find(render(), "LocalItemPreview").onEdit();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(repository.read).toHaveBeenCalledWith(reference, transport.itemId);
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+  expect(find(render(), "TransportEditor")).toMatchObject({
+    tripId: reference,
+    itemId: transport.itemId,
+    opened: { draft, repository },
+  });
 });
 it("Preparation local Recent rejects a foreign Trip or late account before invoking local details", async () => {
   const workspace = find(await loaded(), LocalTripWorkspace);
