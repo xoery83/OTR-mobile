@@ -1,5 +1,10 @@
+import { ManualItineraryContent } from "@/features/day-feed/ManualItineraryContent";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 import { readCaptureTripPrior } from "@/features/capture/captureTripPrior";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   Modal,
   Pressable,
@@ -48,6 +53,7 @@ export function TripQuickAddMenu({
   date,
   showDate,
   itinerary,
+  onManualSaved,
   photos,
   expense,
   capture,
@@ -57,6 +63,7 @@ export function TripQuickAddMenu({
   date?: string;
   showDate: boolean;
   itinerary?: (date: string | null) => void;
+  onManualSaved?: (itemId: string) => void;
   photos?: () => void;
   expense: (date: string | null) => void;
   capture?: () => void;
@@ -65,6 +72,15 @@ export function TripQuickAddMenu({
   useUiLocale();
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+  );
+  const [manual, setManual] = useState(false);
+  const [openedScope, setOpenedScope] = useState<{
+    tripId: string;
+    generation: number;
+  } | null>(null);
   const [visible, setVisible] = useState(false),
     [suggested, setSuggested] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -72,6 +88,17 @@ export function TripQuickAddMenu({
   const [expenseReady, setExpenseReady] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
   const request = useRef(0);
+  const openedContext = useRef<{ tripId: string; generation: number } | null>(null);
+  const manualDismiss = useRef<(() => void) | null>(null);
+  const current = () =>
+    openedContext.current?.tripId === tripId &&
+    openedContext.current.generation === getAccountGeneration();
+  const registerDismissHandler = (handler: () => void) => {
+    manualDismiss.current = handler;
+    return () => {
+      if (manualDismiss.current === handler) manualDismiss.current = null;
+    };
+  };
   useLayoutEffect(
     () => () => {
       request.current += 1;
@@ -80,11 +107,18 @@ export function TripQuickAddMenu({
   );
   const close = () => {
     request.current += 1;
+    openedContext.current = null;
+    setOpenedScope(null);
+    manualDismiss.current = null;
     setVisible(false);
     setPickerOpen(false);
+    setManual(false);
   };
   const open = async () => {
     const ticket = ++request.current;
+    openedContext.current = { tripId, generation };
+    setOpenedScope({ tripId, generation });
+    setManual(false);
     setSuggested(validSuggestedDate(date ?? "") ?? "");
     setExpenseReady(false);
     setCaptureReady(false);
@@ -111,7 +145,7 @@ export function TripQuickAddMenu({
     }
   };
   const invoke = (action: (() => void) | undefined) => {
-    if (!action) return;
+    if (!action || !current()) return;
     close();
     action();
   };
@@ -128,133 +162,170 @@ export function TripQuickAddMenu({
       >
         <AppIcon size={visual.bottomShell.icon} name="plus" color={colors.accent} />
       </Pressable>
-      <Modal visible={visible} onRequestClose={close} animationType="slide">
+      <Modal
+        visible={
+          visible &&
+          openedScope?.tripId === tripId &&
+          openedScope?.generation === generation
+        }
+        onRequestClose={() => {
+          if (manualDismiss.current) manualDismiss.current();
+          else close();
+        }}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
         <SafeAreaProvider style={styles.body}>
-          <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.body}>
-            <SheetHeader
-              title={t("actionIsland.addToTrip")}
-              leftLabel={t("common.cancel")}
-              onLeft={close}
-              safeTop={false}
+          {manual &&
+          onManualSaved &&
+          openedScope?.tripId === tripId &&
+          openedScope?.generation === generation ? (
+            <ManualItineraryContent
+              key={`${tripId}:${generation}`}
+              tripId={tripId}
+              generation={generation}
+              initialDate={showDate ? knownDate : null}
+              onClose={close}
+              registerDismissHandler={registerDismissHandler}
+              onSaved={(id) => {
+                if (!current()) return;
+                close();
+                onManualSaved(id);
+              }}
             />
-            <ScrollView contentContainerStyle={styles.content}>
-              {showDate ? (
-                <View style={styles.dates}>
-                  <UiText style={styles.heading}>
-                    {t("actionIsland.suggestedDate")}
-                  </UiText>
-                  <UiFormRow
-                    label={t("actionIsland.suggestedDate")}
-                    value={
-                      knownDate
-                        ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            timeZone: "UTC",
-                          })
-                        : t("actionIsland.selectDate")
-                    }
-                    onPress={() => {
-                      setPickerValue(
+          ) : (
+            <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.body}>
+              <SheetHeader
+                title={t("actionIsland.addToTrip")}
+                leftLabel={t("common.cancel")}
+                onLeft={close}
+                safeTop={false}
+              />
+              <ScrollView contentContainerStyle={styles.content}>
+                {showDate ? (
+                  <View style={styles.dates}>
+                    <UiText style={styles.heading}>
+                      {t("actionIsland.suggestedDate")}
+                    </UiText>
+                    <UiFormRow
+                      label={t("actionIsland.suggestedDate")}
+                      value={
                         knownDate
-                          ? new Date(
-                              +knownDate.slice(0, 4),
-                              +knownDate.slice(5, 7) - 1,
-                              +knownDate.slice(8, 10),
-                              12,
-                            )
-                          : new Date(),
-                      );
-                      setPickerOpen(true);
-                    }}
-                  />
-                  {pickerOpen ? (
-                    <View>
-                      <UiDatePicker
-                        value={pickerValue}
-                        mode="date"
-                        display="spinner"
-                        accessibilityLabel={t("actionIsland.suggestedDate")}
-                        onChange={(_, value) => {
-                          if (value) setPickerValue(value);
-                        }}
+                          ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              timeZone: "UTC",
+                            })
+                          : t("actionIsland.selectDate")
+                      }
+                      onPress={() => {
+                        setPickerValue(
+                          knownDate
+                            ? new Date(
+                                +knownDate.slice(0, 4),
+                                +knownDate.slice(5, 7) - 1,
+                                +knownDate.slice(8, 10),
+                                12,
+                              )
+                            : new Date(),
+                        );
+                        setPickerOpen(true);
+                      }}
+                    />
+                    {pickerOpen ? (
+                      <View>
+                        <UiDatePicker
+                          value={pickerValue}
+                          mode="date"
+                          display="spinner"
+                          accessibilityLabel={t("actionIsland.suggestedDate")}
+                          onChange={(_, value) => {
+                            if (value) setPickerValue(value);
+                          }}
+                        />
+                        <UiButton
+                          label={t("common.done")}
+                          onPress={() => {
+                            setSuggested(
+                              [
+                                pickerValue.getFullYear(),
+                                String(pickerValue.getMonth() + 1).padStart(2, "0"),
+                                String(pickerValue.getDate()).padStart(2, "0"),
+                              ].join("-"),
+                            );
+                            setPickerOpen(false);
+                          }}
+                        />
+                      </View>
+                    ) : null}
+                    <View style={styles.arrows}>
+                      <UiButton
+                        variant="text"
+                        label={t("actionIsland.previousDate")}
+                        disabled={!knownDate}
+                        onPress={() =>
+                          setSuggested(shiftSuggestedDate(suggested, -1) ?? "")
+                        }
                       />
                       <UiButton
-                        label={t("common.done")}
-                        onPress={() => {
-                          setSuggested(
-                            [
-                              pickerValue.getFullYear(),
-                              String(pickerValue.getMonth() + 1).padStart(2, "0"),
-                              String(pickerValue.getDate()).padStart(2, "0"),
-                            ].join("-"),
-                          );
-                          setPickerOpen(false);
-                        }}
+                        variant="text"
+                        label={t("actionIsland.nextDate")}
+                        disabled={!knownDate}
+                        onPress={() =>
+                          setSuggested(shiftSuggestedDate(suggested, 1) ?? "")
+                        }
                       />
                     </View>
-                  ) : null}
-                  <View style={styles.arrows}>
-                    <UiButton
-                      variant="text"
-                      label={t("actionIsland.previousDate")}
-                      disabled={!knownDate}
-                      onPress={() =>
-                        setSuggested(shiftSuggestedDate(suggested, -1) ?? "")
-                      }
-                    />
-                    <UiButton
-                      variant="text"
-                      label={t("actionIsland.nextDate")}
-                      disabled={!knownDate}
-                      onPress={() => setSuggested(shiftSuggestedDate(suggested, 1) ?? "")}
-                    />
+                    <UiText style={styles.meta}>
+                      {t(knownDate ? "actionIsland.weakDate" : "actionIsland.selectDate")}
+                    </UiText>
                   </View>
-                  <UiText style={styles.meta}>
-                    {t(knownDate ? "actionIsland.weakDate" : "actionIsland.selectDate")}
-                  </UiText>
-                </View>
-              ) : null}
-              <UiFormRow
-                value=""
-                label={t("actionIsland.importCapture")}
-                disabled={!capture || !captureReady}
-                onPress={() => invoke(capture)}
-              />
-              <UiText style={styles.meta}>
-                {t(
-                  captureReady
-                    ? "actionIsland.tripCapturePrior"
-                    : "actionIsland.tripCaptureUnavailable",
-                )}
-              </UiText>
-              <UiFormRow
-                value=""
-                label={t("actionIsland.itinerary")}
-                disabled={!itinerary || (showDate && !knownDate)}
-                onPress={() => invoke(itinerary ? () => itinerary(knownDate) : undefined)}
-              />
-              <UiFormRow
-                value=""
-                label={t("ledger.addExpense")}
-                disabled={!expenseReady || (showDate && !knownDate)}
-                onPress={() => invoke(() => expense(knownDate))}
-              />
-              <UiFormRow
-                value={t("cleanup.unavailable")}
-                label={t("actionIsland.member")}
-                disabled
-                onPress={() => {}}
-              />
-              <UiFormRow
-                value=""
-                label={t("tripPhotos.choose")}
-                disabled={!photos}
-                onPress={() => invoke(photos)}
-              />
-            </ScrollView>
-          </SafeAreaView>
+                ) : null}
+                <UiFormRow
+                  value=""
+                  label={t("actionIsland.importCapture")}
+                  disabled={!capture || !captureReady}
+                  onPress={() => invoke(capture)}
+                />
+                <UiText style={styles.meta}>
+                  {t(
+                    captureReady
+                      ? "actionIsland.tripCapturePrior"
+                      : "actionIsland.tripCaptureUnavailable",
+                  )}
+                </UiText>
+                <UiFormRow
+                  value=""
+                  label={t("actionIsland.itinerary")}
+                  disabled={(!itinerary && !onManualSaved) || (showDate && !knownDate)}
+                  onPress={() => {
+                    if (!current()) return;
+                    if (onManualSaved) setManual(true);
+                    else invoke(itinerary ? () => itinerary(knownDate) : undefined);
+                  }}
+                />
+                <UiFormRow
+                  value=""
+                  label={t("ledger.addExpense")}
+                  disabled={!expenseReady || (showDate && !knownDate)}
+                  onPress={() => invoke(() => expense(knownDate))}
+                />
+                <UiFormRow
+                  value={t("cleanup.unavailable")}
+                  label={t("actionIsland.member")}
+                  disabled
+                  onPress={() => {}}
+                />
+                <UiFormRow
+                  value=""
+                  label={t("tripPhotos.choose")}
+                  disabled={!photos}
+                  onPress={() => invoke(photos)}
+                />
+              </ScrollView>
+            </SafeAreaView>
+          )}
         </SafeAreaProvider>
       </Modal>
     </>

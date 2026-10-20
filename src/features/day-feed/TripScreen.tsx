@@ -48,6 +48,7 @@ import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -184,6 +185,7 @@ function TripContent({
     enterHeader,
     publishDayShellChrome,
     quickActions,
+    manualOutcome,
   } = useTripView();
   const params = useLocalSearchParams<{
     tripId?: string;
@@ -593,6 +595,17 @@ function TripContent({
     },
     [requested, generation, load],
   );
+  const handledManualOutcome = useRef<typeof manualOutcome>(null);
+  useEffect(() => {
+    if (
+      manualOutcome?.tripId === requested &&
+      manualOutcome.generation === generation &&
+      handledManualOutcome.current !== manualOutcome
+    ) {
+      handledManualOutcome.current = manualOutcome;
+      manualItemSaved(requested, generation);
+    }
+  }, [manualOutcome, requested, generation, manualItemSaved]);
   const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string) => {
     if (
       scope.tripId !== requested ||

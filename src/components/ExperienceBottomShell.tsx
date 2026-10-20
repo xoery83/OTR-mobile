@@ -102,8 +102,15 @@ export function ExperienceBottomShell({
       subscription?.remove();
     };
   }, []);
-  const { view, workingTrip, resumeView, resume, quickActions, dayShellChrome } =
-    useTripView();
+  const {
+    view,
+    workingTrip,
+    resumeView,
+    resume,
+    quickActions,
+    dayShellChrome,
+    reportManualOutcome,
+  } = useTripView();
   const params = useGlobalSearchParams<{
     journeyId?: string;
     view?: string;
@@ -474,7 +481,7 @@ export function ExperienceBottomShell({
             ]}
           >
             <TripQuickAddMenu
-              key={contextualTripId}
+              key={`${targetKey}:${generation}`}
               tripId={contextualTripId}
               date={
                 isDay
@@ -486,17 +493,14 @@ export function ExperienceBottomShell({
               }
               showDate={isDay}
               triggerStyle={styles.action}
-              itinerary={
-                activeQuickActions
-                  ? (date) => {
-                      router.navigate({
-                        pathname: "/trip-home",
-                        params: { tripId: contextualTripId, view: "home" },
-                      });
-                      activeQuickActions.itinerary(date);
-                    }
-                  : undefined
-              }
+              onManualSaved={(id) => {
+                if (
+                  generation !== getAccountGeneration() ||
+                  renderedTarget !== currentTarget.current
+                )
+                  return;
+                reportManualOutcome(contextualTripId, generation, id);
+              }}
               photos={
                 activeQuickActions?.photos
                   ? () => {

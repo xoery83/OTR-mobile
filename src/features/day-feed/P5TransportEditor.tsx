@@ -1,5 +1,6 @@
+import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Modal, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -87,6 +88,8 @@ function TimeField({
 
 export function P5TransportEditor({
   tripId,
+  embedded = false,
+  registerDismissHandler,
   itemId,
   initialDate,
   tripStartDate,
@@ -97,6 +100,8 @@ export function P5TransportEditor({
   onChooseRental,
 }: {
   tripId: string;
+  embedded?: boolean;
+  registerDismissHandler?: (handler: () => void) => () => void;
   itemId?: string;
   initialDate?: string | null;
   tripStartDate?: string | null;
@@ -227,7 +232,11 @@ export function P5TransportEditor({
     (fields.participation.mode !== "SELECTED_MEMBERS" ||
       fields.participation.people.length > 0);
   return (
-    <Modal visible animationType="slide" onRequestClose={() => close()}>
+    <ManualEditorPresentation
+      embedded={embedded}
+      registerDismissHandler={registerDismissHandler}
+      onClose={() => close()}
+    >
       <SafeAreaProvider style={styles.body}>
         <SheetHeader
           title={t(itemId ? "tripCreate.editTransport" : "tripCreate.newTransport")}
@@ -431,7 +440,7 @@ export function P5TransportEditor({
           ) : null}
         </ScrollView>
       </SafeAreaProvider>
-    </Modal>
+    </ManualEditorPresentation>
   );
 }
 

@@ -1,5 +1,6 @@
+import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Modal, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -87,6 +88,8 @@ function TimeField({
 
 export function P3StayEditor({
   tripId,
+  embedded = false,
+  registerDismissHandler,
   itemId,
   initialDate,
   tripStartDate,
@@ -99,6 +102,8 @@ export function P3StayEditor({
   onFindPlace,
 }: {
   tripId: string;
+  embedded?: boolean;
+  registerDismissHandler?: (handler: () => void) => () => void;
   itemId?: string;
   initialDate?: string | null;
   tripStartDate?: string | null;
@@ -247,7 +252,11 @@ export function P3StayEditor({
       fields.endTime < fields.startTime
     );
   return (
-    <Modal visible animationType="slide" onRequestClose={() => close()}>
+    <ManualEditorPresentation
+      embedded={embedded}
+      registerDismissHandler={registerDismissHandler}
+      onClose={() => close()}
+    >
       <SafeAreaProvider style={styles.body}>
         <SheetHeader
           title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}
@@ -479,7 +488,7 @@ export function P3StayEditor({
           ) : null}
         </ScrollView>
       </SafeAreaProvider>
-    </Modal>
+    </ManualEditorPresentation>
   );
 }
 

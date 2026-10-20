@@ -1,3 +1,9 @@
+vi.mock("./ManualItineraryContent", () => ({
+  ManualItineraryContent: (props: any) => {
+    state.nodes.push({ manualEntry: props });
+    return null;
+  },
+}));
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
@@ -421,9 +427,7 @@ it("remounts when navigation leaves a trip and rejects a late typed Stay save", 
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary(null);
   render();
-  state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
-  render();
-  const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
+  const stayEditor = state.nodes.find((node) => node.manualEntry)?.manualEntry;
   expect(stayEditor).toMatchObject({ tripId: "local-a" });
   const generation = getAccountGeneration(),
     oldKey = key;
@@ -630,7 +634,7 @@ vi.mock("@/components/SheetHeader", () => ({
   },
 }));
 
-it("the mounted local Quick Add opens the typed P1 form with explicit Day context", async () => {
+it("the mounted local Quick Add opens the shared chooser with explicit Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -645,14 +649,14 @@ it("the mounted local Quick Add opens the typed P1 form with explicit Day contex
   expect(actions.photos).toBeUndefined();
   actions.itinerary("2027-01-02");
   render();
-  const editor = state.nodes.find((node) => node.planEditor)?.planEditor;
+  const editor = state.nodes.find((node) => node.manualEntry)?.manualEntry;
   expect(editor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   editor.onSaved("item-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });
 
-it("switches the local Quick Add to the typed Stay form with the same Day context", async () => {
+it("opens the shared chooser from local Quick Add with the same Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -666,16 +670,14 @@ it("switches the local Quick Add to the typed Stay form with the same Day contex
   )![0];
   actions.itinerary("2027-01-02");
   render();
-  state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
-  render();
-  const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
+  const stayEditor = state.nodes.find((node) => node.manualEntry)?.manualEntry;
   expect(stayEditor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   stayEditor.onSaved("stay-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });
 
-it("switches local Quick Add to the typed Rental form and refreshes the same Trip", async () => {
+it("opens the shared chooser and refreshes the same Trip", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -689,16 +691,14 @@ it("switches local Quick Add to the typed Rental form and refreshes the same Tri
   )![0];
   actions.itinerary("2027-01-02");
   render();
-  state.nodes.find((entry) => entry.planEditor)?.planEditor.onChooseRental();
-  render();
-  const rental = state.nodes.find((entry) => entry.rentalEditor)?.rentalEditor;
+  const rental = state.nodes.find((entry) => entry.manualEntry)?.manualEntry;
   expect(rental).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   rental.onSaved("rental-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });
 
-it("switches local Quick Add to the typed Transport form with the same Day context", async () => {
+it("opens the shared chooser with the same Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -712,9 +712,7 @@ it("switches local Quick Add to the typed Transport form with the same Day conte
   )![0];
   actions.itinerary("2027-01-02");
   render();
-  state.nodes.find((entry) => entry.planEditor)?.planEditor.onChooseTransport();
-  render();
-  const transport = state.nodes.find((entry) => entry.transportEditor)?.transportEditor;
+  const transport = state.nodes.find((entry) => entry.manualEntry)?.manualEntry;
   expect(transport).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   transport.onSaved("transport-a");
   expect(render()).toContain("actionIsland.savedLocally");
@@ -1259,7 +1257,7 @@ it("P1 Home passes Trip Start only as picker navigation, not selected date", asy
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary(null);
   render();
-  expect(state.nodes.find((node) => node.planEditor)?.planEditor).toMatchObject({
+  expect(state.nodes.find((node) => node.manualEntry)?.manualEntry).toMatchObject({
     tripId: "local-a",
     initialDate: null,
     tripStartDate: "2027-12-30",
@@ -1282,7 +1280,7 @@ it("P1 passes explicit Day context ahead of Trip Start without changing Trip dat
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary("2027-12-29");
   render();
-  expect(state.nodes.find((node) => node.planEditor)?.planEditor).toMatchObject({
+  expect(state.nodes.find((node) => node.manualEntry)?.manualEntry).toMatchObject({
     tripId: "local-a",
     initialDate: "2027-12-29",
     tripStartDate: "2027-12-30",

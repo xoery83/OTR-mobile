@@ -1,3 +1,4 @@
+import { ManualItineraryContent } from "./ManualItineraryContent";
 import * as ImagePicker from "expo-image-picker";
 import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepository";
 import { TripCoverPicker } from "./TripCoverPicker";
@@ -58,10 +59,6 @@ import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { calendarDate } from "./TripCalendarField";
-import { P1PlanEditor } from "./P1PlanEditor";
-import { P3StayEditor } from "./P3StayEditor";
-import { P4RentalEditor } from "./P4RentalEditor";
-import { P5TransportEditor } from "./P5TransportEditor";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripMetadataFields } from "./TripMetadataFields";
 import { tripMetadataSchema } from "@/domain/trip/tripMetadataContract";
@@ -179,11 +176,17 @@ function LocalTripContent({
     (value: TripPreparationSetup | null) => setSetup(value),
     [],
   );
-  const [family, setFamily] = useState<"P1" | "P3" | "P4" | "P5">("P1"),
-    [itemStart, setItemStart] = useState("");
+  const [itemStart, setItemStart] = useState("");
   const { publishQuickActions, localOutcome } = useTripView();
   const [quickActionsOwner] = useState(() => Symbol("mounted-trip-quick-actions"));
   const [itemFormOpen, setItemFormOpen] = useState(false);
+  const itemDismiss = useRef<(() => void) | null>(null);
+  const registerItemDismiss = (handler: () => void) => {
+    itemDismiss.current = handler;
+    return () => {
+      if (itemDismiss.current === handler) itemDismiss.current = null;
+    };
+  };
   const [photosReady, setPhotosReady] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
   const photoAdd = useRef<(() => void) | null>(null);
@@ -474,7 +477,8 @@ function LocalTripContent({
           ...(onChooseDay ? { chooseDay: () => onChooseDay(selected.startDate) } : {}),
           itinerary: (date) => {
             if (!alive.current || generation !== getAccountGeneration()) return;
-            if (date) setItemStart((previous) => previous || date);
+            if (selected.id !== tripId) return;
+            setItemStart(date ?? "");
             setItemFormOpen(true);
           },
           ...(photosReady
@@ -493,6 +497,7 @@ function LocalTripContent({
       return () => publishQuickActions(null, owner, generation, quickActionsOwner);
     }, [
       selected,
+      tripId,
       status,
       generation,
       metadataEditable,
@@ -552,7 +557,10 @@ function LocalTripContent({
       : undefined,
     onBuild: selected
       ? () => {
-          if (generation === getAccountGeneration()) setItemFormOpen(true);
+          if (generation === getAccountGeneration()) {
+            setItemStart("");
+            setItemFormOpen(true);
+          }
         }
       : undefined,
     onOpenDay: onChooseDay ? () => onChooseDay(metadata?.startDate) : undefined,
@@ -784,95 +792,39 @@ function LocalTripContent({
               ) : null}
             </SafeAreaProvider>
           </Modal>
-          {itemFormOpen && family === "P3" ? (
-            <P3StayEditor
-              key={`${selected.id}:${generation}:${itemStart}`}
-              tripId={selected.id}
-              initialDate={itemStart || null}
-              tripStartDate={selected.startDate}
-              onChoosePlan={() => setFamily("P1")}
-              onChooseRental={() => setFamily("P4")}
-              onChooseTransport={() => setFamily("P5")}
-              onClose={() => {
-                setItemFormOpen(false);
-                setItemStart("");
+          {itemFormOpen ? (
+            <Modal
+              visible
+              animationType="slide"
+              presentationStyle="pageSheet"
+              onRequestClose={() => {
+                if (itemDismiss.current) itemDismiss.current();
+                else setItemFormOpen(false);
               }}
-              onSaved={() => {
-                if (!alive.current || generation !== getAccountGeneration()) return;
-                onManualItemSaved?.(selected.id, generation);
-                setItemFormOpen(false);
-                setItemStart("");
-                setSavedNotice(true);
-                void load();
-              }}
-            />
-          ) : null}
-          {itemFormOpen && family === "P4" ? (
-            <P4RentalEditor
-              key={`${selected.id}:${generation}:${itemStart}`}
-              tripId={selected.id}
-              initialDate={itemStart || null}
-              tripStartDate={selected.startDate}
-              onChoosePlan={() => setFamily("P1")}
-              onChooseTransport={() => setFamily("P5")}
-              onClose={() => {
-                setItemFormOpen(false);
-                setItemStart("");
-              }}
-              onSaved={() => {
-                if (!alive.current || generation !== getAccountGeneration()) return;
-                onManualItemSaved?.(selected.id, generation);
-                setItemFormOpen(false);
-                setItemStart("");
-                setSavedNotice(true);
-                void load();
-              }}
-            />
-          ) : null}
-          {itemFormOpen && family === "P5" ? (
-            <P5TransportEditor
-              key={`${selected.id}:${generation}:${itemStart}`}
-              tripId={selected.id}
-              initialDate={itemStart || null}
-              tripStartDate={selected.startDate}
-              onChooseStay={() => setFamily("P3")}
-              onChooseRental={() => setFamily("P4")}
-              onClose={() => {
-                setItemFormOpen(false);
-                setItemStart("");
-              }}
-              onSaved={() => {
-                if (!alive.current || generation !== getAccountGeneration()) return;
-                onManualItemSaved?.(selected.id, generation);
-                setItemFormOpen(false);
-                setItemStart("");
-                setSavedNotice(true);
-                void load();
-              }}
-            />
-          ) : null}
-          {itemFormOpen && family === "P1" ? (
-            <P1PlanEditor
-              key={`${selected.id}:${generation}:${itemStart}`}
-              tripId={selected.id}
-              initialDate={itemStart || null}
-              tripStartDate={selected.startDate}
-              onChooseStay={() => setFamily("P3")}
-              onChooseRental={() => setFamily("P4")}
-              onChooseTransport={() => setFamily("P5")}
-              onClose={() => {
-                setItemFormOpen(false);
-                setItemStart("");
-              }}
-              onSaved={() => {
-                if (!alive.current || generation !== getAccountGeneration()) return;
-                onManualItemSaved?.(selected.id, generation);
-                setItemFormOpen(false);
-                setItemStart("");
-                setSavedNotice(true);
-                void load();
-              }}
-            />
+            >
+              <SafeAreaProvider style={styles.modal}>
+                <ManualItineraryContent
+                  key={`${selected.id}:${generation}:${itemStart}`}
+                  tripId={selected.id}
+                  generation={generation}
+                  registerDismissHandler={registerItemDismiss}
+                  initialDate={itemStart || null}
+                  tripStartDate={selected.startDate}
+                  onClose={() => {
+                    setItemFormOpen(false);
+                    setItemStart("");
+                  }}
+                  onSaved={() => {
+                    if (!alive.current || generation !== getAccountGeneration()) return;
+                    onManualItemSaved?.(selected.id, generation);
+                    setItemFormOpen(false);
+                    setItemStart("");
+                    setSavedNotice(true);
+                    void load();
+                  }}
+                />
+              </SafeAreaProvider>
+            </Modal>
           ) : null}
         </>
       ) : remoteSelected ? (
