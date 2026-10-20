@@ -1,3 +1,10 @@
+## Experience Topbar native-edge / Start Trip caller — 21 October 2026 / NATIVE PENDING
+
+- Existing 4eb27ecd evidence proves Day underlap (Frame y0, cell y64 inside header116); legacy rectangular header material still failed actual transparency. No Frame/Reader/scroll-anchor or NativeHost change.
+- Isolated follow-up uses only native soft top scroll-edge effect on iOS26+ Day/collapsed Home, clearing explicit legacy headerBlurEffect. Older iOS retains systemUltraThinMaterial. Hero/default states reset effects; only public installed navigation options change. This API-selection candidate requires serial Native comparison, not another color adjustment.
+- My Trips Start Trip caller replaces ActionSheetIOS/Alert with the separately owned StartTripSheet from fixed 349003d22a52c9376eaa258cb14c0c4d8d1bbd2c. Import still navigates to existing /capture; Create still uses its existing cleared route parameters. Account/current-target fences are retained; cancellation, consumed callbacks, hidden Shell and route changes invalidate selection.
+- Sheet component and createTripV2 catalog namespace remain the Create UI Writer's dependency, not authored/copied into the Experience commit. No Capture, Trip creation repository, Auth, schema or data changes. Coordinator exclusively controls combined integration and GUI/8083.
+
 ## Experience Chrome edge-effect correction — 21 October 2026 / NATIVE PENDING
 
 - Coordinator measured combined 579beee on AD5: Day Frame y=0, height=874, headerHeight=116; actual Day cells reached y=64.33. Underlap is physically present. No Frame/FlatList/inset/anchor correction is justified.

@@ -54,7 +54,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, ScrollView, StyleSheet, Text, View } from "react-native";
+import { AppState, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   router,
   useLocalSearchParams,
@@ -323,6 +323,8 @@ function TripContent({
   useLayoutEffect(() => {
     if (today && !dayActive) return;
     const blurHeader = dayActive || (immersiveHome && !heroBehindStatus);
+    const nativeEdge =
+      Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
     navigation.setOptions({
       // Native Stack falls back to the route name when a custom title renders null.
       title: headerTitle,
@@ -330,10 +332,15 @@ function TripContent({
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: { backgroundColor: colors.transparent },
       headerShadowVisible: false,
-      headerBlurEffect: blurHeader ? "systemUltraThinMaterial" : undefined,
-      // iOS 26+ edge scrims otherwise overlap the explicit native header material.
+      // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
+      headerBlurEffect: blurHeader && !nativeEdge ? "systemUltraThinMaterial" : undefined,
       scrollEdgeEffects: blurHeader
-        ? { top: "hidden", bottom: "hidden", left: "hidden", right: "hidden" }
+        ? {
+            top: nativeEdge ? "soft" : "hidden",
+            bottom: "hidden",
+            left: "hidden",
+            right: "hidden",
+          }
         : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({

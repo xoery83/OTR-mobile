@@ -30,6 +30,9 @@ const state = vi.hoisted(() => ({
   setParams: vi.fn(),
   fontScale: 1,
   reduced: false,
+  startTripTarget: null as symbol | null,
+  refCalls: 0,
+  startTripRef: { current: null as symbol | null },
   resolveReduced: null as null | ((value: boolean) => void),
   reducedListener: null as null | ((value: boolean) => void),
   effectCleanup: null as null | (() => void),
@@ -57,16 +60,25 @@ vi.mock("@/features/updates/useUpdatesSignal", () => ({
   useUpdatesSignal: () => state.signal,
 }));
 vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
+vi.mock("./StartTripSheet", () => ({ StartTripSheet: "StartTripSheet" }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: () => state.targetRef,
+  useRef: () => (state.refCalls++ % 2 === 0 ? state.targetRef : state.startTripRef),
   useContext: () => state.reportHeight,
-  useState: () => [
-    state.reduced,
-    (value: boolean) => {
-      state.reduced = value;
-    },
-  ],
+  useState: (initial: unknown) =>
+    initial === null
+      ? [
+          state.startTripTarget,
+          (value: symbol | null) => {
+            state.startTripTarget = value;
+          },
+        ]
+      : [
+          state.reduced,
+          (value: boolean) => {
+            state.reduced = value;
+          },
+        ],
   useEffect: (effect: () => () => void) => {
     state.effectCleanup?.();
     state.effectCleanup = effect();
@@ -162,7 +174,28 @@ function pressables(node: ReactNode): ShellElement[] {
   ];
 }
 
+type StartSheetElement = ReactElement<{
+  visible: boolean;
+  onClose(): void;
+  onImport(): void;
+  onCreate(): void;
+}>;
+function startSheet(node: ReactNode): StartSheetElement {
+  const queue = Children.toArray(node);
+  while (queue.length) {
+    const current = queue.shift();
+    if (!isValidElement(current)) continue;
+    const element = current as ShellElement;
+    if (element.type === "StartTripSheet") return element as unknown as StartSheetElement;
+    queue.push(...Children.toArray(element.props.children));
+  }
+  throw new Error("Start Trip Sheet is absent");
+}
+
 beforeEach(() => {
+  state.refCalls = 0;
+  state.startTripTarget = null;
+  state.startTripRef.current = null;
   state.glassCapability = null;
   state.dark = false;
   state.view = null;
@@ -205,15 +238,17 @@ it("My Trips keeps only the real Start Trip action without redundant left naviga
   ]);
   expect(buttons).toHaveLength(1);
   buttons[0].props.onPress?.();
-  const choices = state.alerts.mock.calls[0][2];
-  expect(choices.map((choice: { text: string }) => choice.text)).toEqual([
-    "actionIsland.importPlans",
-    "actionIsland.createManually",
-    "common.cancel",
-  ]);
-  choices[0].onPress();
+  let sheet = startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(sheet.props.visible).toBe(true);
+  sheet.props.onImport();
   expect(state.navigate).toHaveBeenCalledWith("/capture");
-  choices[1].onPress();
+  sheet.props.onCreate();
+  expect(state.setParams).not.toHaveBeenCalled();
+  const closed = ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  expect(startSheet(closed).props.visible).toBe(false);
+  pressables(closed)[0].props.onPress?.();
+  sheet = startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  sheet.props.onCreate();
   expect(state.setParams).toHaveBeenCalledWith({
     tripId: "",
     date: "",
@@ -578,23 +613,45 @@ it("hidden and Create routes release the previous overlay height", () => {
   expect(state.reportHeight).toHaveBeenCalledTimes(2);
 });
 
-it("iOS Start Trip uses the system Action Sheet and ignores a stale account callback", () => {
-  state.platform = "ios";
-  pressables(
-    ExperienceBottomShell({ visible: true, pathname: "/trip" }),
-  )[0].props.onPress?.();
-  expect(state.alerts).not.toHaveBeenCalled();
-  const [options, invoke] = state.sheet.mock.calls[0];
-  expect(options.cancelButtonIndex).toBe(2);
-  expect(options.options).toEqual([
-    "actionIsland.importPlans",
-    "actionIsland.createManually",
-    "common.cancel",
-  ]);
-  state.navigate.mockClear();
-  state.generation++;
-  invoke(0);
+it("Start Trip cancellation and a stale account cannot execute a sheet action", () => {
+  const open = () => {
+    pressables(
+      ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+    )[0].props.onPress?.();
+    return startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  };
+  const cancelled = open();
+  cancelled.props.onClose();
+  cancelled.props.onImport();
   expect(state.navigate).not.toHaveBeenCalled();
+  const stale = open();
+  state.generation++;
+  stale.props.onImport();
+  stale.props.onCreate();
+  expect(state.navigate).not.toHaveBeenCalled();
+  expect(state.setParams).not.toHaveBeenCalled();
+  expect(state.alerts).not.toHaveBeenCalled();
+  expect(state.sheet).not.toHaveBeenCalled();
+});
+
+it("a later module target or hidden Shell invalidates the open Start Trip callbacks", () => {
+  const open = () => {
+    pressables(
+      ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+    )[0].props.onPress?.();
+    return startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  };
+  const stale = open();
+  ExperienceBottomShell({ visible: true, pathname: "/search" });
+  stale.props.onImport();
+  expect(state.navigate).not.toHaveBeenCalled();
+  const hidden = open();
+  ExperienceBottomShell({ visible: false, pathname: "/trip" });
+  hidden.props.onCreate();
+  expect(state.setParams).not.toHaveBeenCalled();
+  expect(
+    startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" })).props.visible,
+  ).toBe(false);
 });
 
 it("an authorized empty Trip keeps Home Day Ledger without accepted data or a bookmark", () => {

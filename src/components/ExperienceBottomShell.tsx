@@ -10,6 +10,7 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { TripQuickAddMenu } from "./TripQuickAddMenu";
+import { StartTripSheet } from "./StartTripSheet";
 import {
   useContext,
   useEffect,
@@ -32,8 +33,6 @@ import { router, useGlobalSearchParams } from "expo-router";
 import {
   AccessibilityInfo,
   Alert,
-  ActionSheetIOS,
-  Platform,
   Pressable,
   StyleSheet,
   View,
@@ -81,6 +80,7 @@ export function ExperienceBottomShell({
   const largeText = useWindowDimensions().fontScale > 1.5;
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [reducedTransparency, setReducedTransparency] = useState(false);
+  const [startTripTarget, setStartTripTarget] = useState<symbol | null>(null);
   useEffect(() => {
     let active = true,
       eventObserved = false;
@@ -159,9 +159,12 @@ export function ExperienceBottomShell({
     workingTrip?.tripId,
     contextualTripId,
     generation,
+    visible,
+    params.view,
   ]);
   const renderedTarget = useMemo(() => Symbol(targetKey), [targetKey]);
   const currentTarget = useRef<symbol | null>(null);
+  const startTripLease = useRef<symbol | null>(null);
   useLayoutEffect(() => {
     currentTarget.current = renderedTarget;
     return () => {
@@ -169,43 +172,38 @@ export function ExperienceBottomShell({
     };
   }, [renderedTarget]);
   useLayoutEffect(() => {
-    if (!visible || params.view === "create") onHeightChange?.(0);
+    if (!visible || params.view === "create") {
+      startTripLease.current = null;
+      onHeightChange?.(0);
+    }
   }, [visible, params.view, onHeightChange]);
   const tripList =
     pathname === "/trip" &&
     (!params.tripId || params.view === "trips" || params.view === "create");
   const ledger = pathname.startsWith("/expenses") && Boolean(journeyId);
   const startTrip = () => {
-    const invoke = (index: number) => {
-      if (
-        generation !== getAccountGeneration() ||
-        renderedTarget !== currentTarget.current
-      )
-        return;
-      if (index === 0) router.navigate("/capture");
-      if (index === 1)
-        router.setParams({ tripId: "", date: "", zone: "", view: "create" });
-    };
-    if (Platform.OS === "ios")
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          title: t("actionIsland.startTrip"),
-          options: [
-            t("actionIsland.importPlans"),
-            t("actionIsland.createManually"),
-            t("common.cancel"),
-          ],
-          cancelButtonIndex: 2,
-        },
-        invoke,
-      );
-    else
-      Alert.alert(t("actionIsland.startTrip"), undefined, [
-        { text: t("actionIsland.importPlans"), onPress: () => invoke(0) },
-        { text: t("actionIsland.createManually"), onPress: () => invoke(1) },
-        { text: t("common.cancel"), style: "cancel" },
-      ]);
+    if (generation !== getAccountGeneration() || renderedTarget !== currentTarget.current)
+      return;
+    startTripLease.current = renderedTarget;
+    setStartTripTarget(renderedTarget);
   };
+  const closeStartTrip = () => {
+    if (startTripLease.current !== renderedTarget) return;
+    startTripLease.current = null;
+    setStartTripTarget(null);
+  };
+  const invokeStartTrip = (index: 0 | 1) => {
+    if (
+      generation !== getAccountGeneration() ||
+      renderedTarget !== currentTarget.current ||
+      startTripLease.current !== renderedTarget
+    )
+      return;
+    closeStartTrip();
+    if (index === 0) router.navigate("/capture");
+    else router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+  };
+
   const openExpense = async (
     targetId = journeyId,
     suggestedDate: string | null = null,
@@ -577,6 +575,12 @@ export function ExperienceBottomShell({
           </Material>
         ) : null}
       </View>
+      <StartTripSheet
+        visible={tripList && startTripTarget === renderedTarget}
+        onClose={closeStartTrip}
+        onImport={() => invokeStartTrip(0)}
+        onCreate={() => invokeStartTrip(1)}
+      />
     </SafeAreaView>
   );
 }

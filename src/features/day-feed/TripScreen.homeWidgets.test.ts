@@ -18,6 +18,8 @@ vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
 const reference = "b61a0000-0061-4000-8000-000000000001";
 const actor = "3a44420f-ec2b-4d7e-9770-410a5ed5e77e";
 const state = vi.hoisted(() => ({
+  platform: "ios",
+  platformVersion: "25.0",
   hooks: [] as unknown[],
   setOptions: vi.fn(),
   refs: [] as { current: unknown }[],
@@ -115,6 +117,14 @@ vi.mock("react", async (original) => ({
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
 vi.mock("react-native", () => ({
+  Platform: {
+    get OS() {
+      return state.platform;
+    },
+    get Version() {
+      return state.platformVersion;
+    },
+  },
   View: "View",
   Text: "Text",
   ScrollView: "ScrollView",
@@ -250,6 +260,8 @@ async function loaded(contentFrameManaged = false) {
   return render(contentFrameManaged);
 }
 beforeEach(() => {
+  state.platform = "ios";
+  state.platformVersion = "25.0";
   state.observeShellScroll.mockClear();
   state.observeReadingMotion.mockClear();
   vi.stubGlobal("__DEV__", true);
@@ -1411,3 +1423,46 @@ it("separates native blur from edge effects and resets both on warm Home–Day s
     right: "hidden",
   });
 });
+
+it.each(["26.0", "27.0"])(
+  "uses only the native soft top edge on iOS %s and restores Hero defaults",
+  async (version) => {
+    state.platformVersion = version;
+    state.routeMode = "day";
+    const day = await loaded(false);
+    const feed = find(day, DayFeed);
+    expect(feed.presentation.topInset).toBe(103);
+    expect(feed.presentation.header.props.style.paddingTop).toBe(103);
+    expect(state.setOptions.mock.lastCall?.[0]).toMatchObject({
+      headerTransparent: true,
+      headerStyle: { backgroundColor: "transparent" },
+      headerBlurEffect: undefined,
+      scrollEdgeEffects: {
+        top: "soft",
+        bottom: "hidden",
+        left: "hidden",
+        right: "hidden",
+      },
+    });
+    state.routeMode = "home";
+    state.mount = true;
+    const home = render(false);
+    expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
+      "scrollEdgeEffects",
+      undefined,
+    );
+    expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
+      "headerBlurEffect",
+      undefined,
+    );
+    find(home, LocalTripWorkspace).onHomeHeroHeight(500);
+    find(home, "ScrollView").onScroll({ nativeEvent: { contentOffset: { y: 600 } } });
+    state.mount = true;
+    render(false);
+    expect(state.setOptions.mock.lastCall?.[0].scrollEdgeEffects?.top).toBe("soft");
+    expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
+      "headerBlurEffect",
+      undefined,
+    );
+  },
+);
