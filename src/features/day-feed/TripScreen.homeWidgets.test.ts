@@ -756,7 +756,9 @@ it("keeps status information readable after the measured Hero scrolls away and o
   expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
     "transparent",
   );
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+    "systemUltraThinMaterial",
+  );
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
     "Actual saved Trip",
   );
@@ -781,7 +783,9 @@ it("keeps status information readable after the measured Hero scrolls away and o
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+    "systemUltraThinMaterial",
+  );
   find(node, LocalTripWorkspace).onHomeHeroHeight(500);
   state.mount = true;
   render();
@@ -791,7 +795,9 @@ it("keeps status information readable after the measured Hero scrolls away and o
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+    "systemUltraThinMaterial",
+  );
   scroll.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
   state.mount = true;
   render();
@@ -1100,7 +1106,9 @@ it("keeps Day header title blank until the actual textual introduction has scrol
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+    "systemUltraThinMaterial",
+  );
 });
 
 it("Home returns to the current same-Trip Floating bookmark before its stale entry date", async () => {
@@ -1149,7 +1157,7 @@ it("keeps the native toolbar transparent with a single measured Day boundary", a
   const options = state.setOptions.mock.lastCall![0];
   expect(options.headerTransparent).toBe(true);
   expect(options.fullScreenGestureEnabled).toBe(false);
-  expect(options.headerBlurEffect).toBe("systemMaterial");
+  expect(options.headerBlurEffect).toBe("systemUltraThinMaterial");
   expect(options.headerStyle.backgroundColor).toBe("transparent");
   expect(find(node, DayFeed).presentation.topInset).toBe(103);
 });
@@ -1353,7 +1361,9 @@ it.each([103, 147])(
     state.mount = true;
     render(false);
     expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
-    expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+    expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+      "systemUltraThinMaterial",
+    );
     feed.presentation.onOffsetChange(92);
     state.mount = true;
     render(false);
@@ -1368,7 +1378,9 @@ it.each([103, 147])(
 it("clears native Day blur when returning to Home and restores it on another Day entry", async () => {
   state.routeMode = "day";
   await loaded(false);
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+    "systemUltraThinMaterial",
+  );
   state.routeMode = "home";
   state.mount = true;
   render(false);
@@ -1379,5 +1391,7 @@ it("clears native Day blur when returning to Home and restores it on another Day
   state.routeMode = "day";
   state.mount = true;
   render(false);
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
+    "systemUltraThinMaterial",
+  );
 });

@@ -330,7 +330,9 @@ function TripContent({
       headerStyle: { backgroundColor: colors.transparent },
       headerShadowVisible: false,
       headerBlurEffect:
-        dayActive || (immersiveHome && !heroBehindStatus) ? "systemMaterial" : undefined,
+        dayActive || (immersiveHome && !heroBehindStatus)
+          ? "systemUltraThinMaterial"
+          : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,

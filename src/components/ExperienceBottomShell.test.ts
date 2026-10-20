@@ -59,7 +59,8 @@ vi.mock("@/features/updates/useUpdatesSignal", () => ({
 vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: () => state.targetRef,
+  useRef: (initial: unknown) =>
+    typeof initial === "boolean" ? { current: initial } : state.targetRef,
   useContext: () => state.reportHeight,
   useState: () => [
     state.reduced,
@@ -691,7 +692,7 @@ it("Day chrome hides only its current navigation island while retaining Capture 
   expect(hidden).toHaveLength(0);
 });
 
-it("selects regular native glass for each island branch and retains reduced-transparency surfaces", async () => {
+it("selects clear native glass for each island branch and retains reduced-transparency surfaces", async () => {
   const require = createRequire(import.meta.url);
   const path = require.resolve("expo-glass-effect");
   const previous = require.cache[path];
@@ -724,7 +725,7 @@ it("selects regular native glass for each island branch and retains reduced-tran
       expect(nodes).toHaveLength(count);
       for (const node of nodes) {
         expect(node.props).toMatchObject({
-          glassEffectStyle: "regular",
+          glassEffectStyle: "clear",
           isInteractive: true,
           tintColor: lightPalette.transparent,
         });
@@ -783,3 +784,48 @@ it.each([
     expect(nodes[0].type).toBe("View");
   },
 );
+
+it.each([false, true])(
+  "keeps canonical label colors with a glyph halo and no island fill (dark=%s)",
+  (dark) => {
+    state.dark = dark;
+    state.workingTrip = { tripId: "a", generation: 1 };
+    state.params = { tripId: "a", view: "home" };
+    const palette = dark ? darkPalette : lightPalette;
+    const labels: any[] = [];
+    const visit = (node: ReactNode) => {
+      if (!isValidElement(node)) return;
+      const element = node as ReactElement<any>;
+      for (const style of Array.isArray(element.props.style) ? element.props.style : [])
+        if (style?.textShadowRadius === 1) labels.push(style);
+      Children.toArray(element.props.children).forEach(visit);
+    };
+    visit(ExperienceBottomShell({ visible: true, pathname: "/trip-home" }));
+    expect(labels.length).toBeGreaterThan(0);
+    for (const style of labels) {
+      expect(style.color).toBe(palette.textSecondary);
+      expect(style.textShadowColor).toBe(palette.background);
+      expect(style.backgroundColor).toBeUndefined();
+    }
+  },
+);
+
+it("logs one development-only presentation snapshot without business context", async () => {
+  vi.stubGlobal("__DEV__", true);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    ExperienceBottomShell({ visible: true, pathname: "/trip" });
+    state.resolveReduced!(true);
+    await Promise.resolve();
+    expect(log).toHaveBeenCalledExactlyOnceWith("[ExperienceChrome]", {
+      nativeGlass: false,
+      reduceTransparency: true,
+      visible: true,
+    });
+    state.reducedListener!(false);
+    expect(log).toHaveBeenCalledTimes(1);
+  } finally {
+    log.mockRestore();
+    vi.unstubAllGlobals();
+  }
+});

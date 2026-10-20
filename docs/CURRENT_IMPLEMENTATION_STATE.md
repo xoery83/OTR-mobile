@@ -1,3 +1,11 @@
+## Experience Chrome material follow-up — 21 October 2026 / NATIVE PENDING
+
+- Owner found the integrated b201ff71 preview visually opaque. This isolated follow-up preserves its Forms/Entry callbacks, data and existing Day underlap; no Metro/device switch is performed by Experience.
+- Native top header uses systemUltraThinMaterial over Day and collapsed Home. All three bottom island branches use native clear glass with the existing transparent tint; canonical secondary labels gain a small theme-background glyph halo without adding a fill to the island.
+- System Reduce Transparency and unavailable-native fallbacks retain their opaque semantic surface. No accessibility settings, native dependencies or business interfaces change.
+- A development-only initial presentation log remains intentionally in this candidate: nativeGlass, reduceTransparency and visible only; no account, Trip, session or other business values. It is silent in release builds.
+- Four targeted suites / 101 tests, typecheck and ui:guard pass. These establish structure and fallback behavior only. Independent Review and Coordinator-controlled Native continuous-scroll/readability/navigation checks remain required; clear glass alone does not establish UX acceptance. The preceding b201ff71 candidate remains the rollback baseline.
+
 ## Experience Chrome translucency correction — 21 October 2026 / REVIEW PENDING
 
 - Independent candidate starts at full Forms P1/P3/P4/P5 preview 3423f273; keeps its normal repositories, forms and QA data. No resident preview switch during implementation.

@@ -81,13 +81,22 @@ export function ExperienceBottomShell({
   const largeText = useWindowDimensions().fontScale > 1.5;
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [reducedTransparency, setReducedTransparency] = useState(false);
+  const initialVisibility = useRef(visible);
   useEffect(() => {
     let active = true,
       eventObserved = false;
     const initial = AccessibilityInfo?.isReduceTransparencyEnabled?.();
     void initial
       ?.then((value) => {
-        if (active && !eventObserved) setReducedTransparency(value);
+        if (active && !eventObserved) {
+          setReducedTransparency(value);
+          if (typeof __DEV__ !== "undefined" && __DEV__)
+            console.info("[ExperienceChrome]", {
+              nativeGlass: Boolean(Glass),
+              reduceTransparency: value,
+              visible: initialVisibility.current,
+            });
+        }
       })
       .catch(() => {});
     const subscription = AccessibilityInfo?.addEventListener?.(
@@ -269,7 +278,7 @@ export function ExperienceBottomShell({
           <Material
             {...(Glass
               ? {
-                  glassEffectStyle: "regular" as const,
+                  glassEffectStyle: "clear" as const,
                   isInteractive: true,
                   tintColor: reducedTransparency ? colors.surface : colors.transparent,
                 }
@@ -477,7 +486,7 @@ export function ExperienceBottomShell({
           <Material
             {...(Glass
               ? {
-                  glassEffectStyle: "regular" as const,
+                  glassEffectStyle: "clear" as const,
                   isInteractive: true,
                   tintColor: reducedTransparency ? colors.surface : colors.transparent,
                 }
@@ -541,7 +550,7 @@ export function ExperienceBottomShell({
           <Material
             {...(Glass
               ? {
-                  glassEffectStyle: "regular" as const,
+                  glassEffectStyle: "clear" as const,
                   isInteractive: true,
                   tintColor: reducedTransparency ? colors.surface : colors.transparent,
                 }
@@ -665,6 +674,9 @@ const createStyles = (c: UiColors) =>
     label: {
       ...visual.type.navigation,
       color: c.textSecondary,
+      textShadowColor: c.background,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 1,
       textAlign: "center",
       flexShrink: 1,
     },
