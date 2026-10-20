@@ -11,7 +11,7 @@ import { personalTripCoverPreferencesMigration } from "./personalTripCoverPrefer
 const stamp = "2026-10-20T01:00:00Z";
 const columns =
   "account_id,trip_id,asset_id,mime_type,size_bytes,sha256,local_uri,created_at";
-function fixture() {
+function fixture(skip69 = false) {
   const dir = mkdtempSync(join(tmpdir(), "otr-cover70-")),
     path = join(dir, "db.sqlite");
   let sql = new DatabaseSync(path);
@@ -20,6 +20,7 @@ function fixture() {
     "CREATE TABLE schema_migrations(id INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL)",
   );
   for (const migration of migrations.filter((m) => m.id < 70)) {
+    if (skip69 && migration.id === 69) continue;
     sql.exec(migration.sql);
     sql
       .prepare("INSERT INTO schema_migrations VALUES(?,?,?)")
@@ -273,35 +274,31 @@ it("legacy updates and retained-root CREATE reconcile exactly once with recursiv
 });
 
 it("does not skip a later missing migration ID below70 and preserves70 private rows", async () => {
-  const f = fixture();
-  const fixture69 = {
-    id: 69,
-    name: "test_future_missing_id_only",
-    sql: "CREATE TABLE test_future69_marker(id TEXT PRIMARY KEY)",
-  };
+  const f = fixture(true);
   try {
-    await runMigrations(f.database);
+    f.sql.exec(personalTripCoverPreferencesMigration.sql);
+    f.sql
+      .prepare("INSERT INTO schema_migrations VALUES(70,?,?)")
+      .run(personalTripCoverPreferencesMigration.name, stamp);
     f.sql
       .prepare("INSERT INTO account_trip_cover_preferences VALUES(?,?,NULL,1,?)")
       .run(randomUUID(), randomUUID(), stamp);
-    migrations.splice(
-      migrations.indexOf(personalTripCoverPreferencesMigration),
-      0,
-      fixture69,
-    );
     await runMigrations(f.database);
+    expect(f.sql.prepare("SELECT name FROM schema_migrations WHERE id=69").get()).toEqual(
+      { name: "local_core_authority_v1" },
+    );
     expect(
       f.sql
-        .prepare("SELECT name FROM sqlite_master WHERE name='test_future69_marker'")
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE name='local_core_authority_commits'",
+        )
         .get(),
     ).toBeTruthy();
     expect(
       f.sql.prepare("SELECT count(*) AS n FROM account_trip_cover_preferences").get(),
     ).toEqual({ n: 1 });
-    // This proves per-ID runner sequencing only, not actual LocalCore69 compatibility.
+    await runMigrations(f.database);
   } finally {
-    const index = migrations.indexOf(fixture69);
-    if (index >= 0) migrations.splice(index, 1);
     f.close();
   }
 });

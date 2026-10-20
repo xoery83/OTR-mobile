@@ -99,7 +99,9 @@ function render() {
   state.refCursor = 0;
   state.nodes = [];
   const html = renderToStaticMarkup(
-    createElement(editorMode ? ManualFlightEditor : ManualFlightForm, props),
+    editorMode
+      ? createElement(ManualFlightEditor, props)
+      : createElement(ManualFlightForm, props),
   );
   for (const f of state.effects.splice(0)) {
     const cleanup = f();

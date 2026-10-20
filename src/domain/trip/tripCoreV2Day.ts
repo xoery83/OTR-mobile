@@ -39,7 +39,8 @@ export type CoreDayRow = {
   rowKey: { itemId: string; projectionRole: string; localDate: string };
   itemRevision: number;
   projectionVersion: 2;
-  certificateGeneration: number;
+  certificateGeneration: number | null;
+  localReadGeneration?: number;
   family: string;
   title: string;
   status: string;

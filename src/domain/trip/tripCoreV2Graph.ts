@@ -1,4 +1,9 @@
-import { coreTableSchemas, coreKindTables, type CoreTable } from "./tripCoreV2";
+import {
+  coreTableSchemas,
+  coreKindTables,
+  localFlightIntentSchema,
+  type CoreTable,
+} from "./tripCoreV2";
 import type { CoreGraph, CoreRow } from "./tripCoreV2Mutation";
 import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 export const coreTableKeys: Record<CoreTable, readonly string[]> = {
@@ -51,10 +56,27 @@ export function validateCoreGraph(
   tripId: string,
   actorProjection = false,
 ): CoreGraph {
+  return validateGraph(graph, tripId, actorProjection, false);
+}
+export function validateLocalCoreGraph(
+  graph: CoreGraph,
+  tripId: string,
+  actorProjection = false,
+): CoreGraph {
+  return validateGraph(graph, tripId, actorProjection, true);
+}
+function validateGraph(
+  graph: CoreGraph,
+  tripId: string,
+  actorProjection: boolean,
+  local: boolean,
+): CoreGraph {
   for (const [table, schema] of Object.entries(coreTableSchemas)) {
     const seen = new Set<string>();
     for (const row of graph[table as CoreTable]) {
-      schema.parse(row);
+      (local && table === "trip_flight_intents" ? localFlightIntentSchema : schema).parse(
+        row,
+      );
       if ((table === "expense_links" ? row.journey_id : row.trip_id) !== tripId)
         throw new Error("CROSS_TRIP_REFERENCE");
       const key = coreMirrorKey(table as CoreTable, row);

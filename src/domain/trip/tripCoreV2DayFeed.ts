@@ -19,8 +19,9 @@ import {
 import type { FlightService } from "./flightAdmission";
 
 export type CoreFlightFacts = {
-  qualification: "SPARSE" | "QUALIFIED";
-  flightNumberLiteral: string;
+  qualification: "SPARSE" | "QUALIFIED" | "BOOKING_EVIDENCED_ROUTE_TIME";
+  flightNumberLiteral: string | null;
+  qualificationBasis?: "IDENTIFIED_SERVICE" | "BOOKING_EVIDENCED_ROUTE_TIME_LOCAL/1";
   services: FlightService[];
   endpoints: Record<
     "ORIGIN" | "DESTINATION",
@@ -33,12 +34,16 @@ export type CoreFlightDayProjection = {
   tripId: string;
   generation: number;
   source: {
-    epoch: string;
-    revision: string;
-    accessRevision: number;
-    actorPersonBindingHash: string;
+    epoch: string | null;
+    revision: string | null;
+    accessRevision: number | null;
+    actorPersonBindingHash: string | null;
     participatingRosterHash: string;
-    manifestSha256: string;
+    manifestSha256: string | null;
+    authority?: "SERVER_ACCEPTED" | "LOCAL_COMMITTED" | "MIXED";
+    localRevision?: number;
+    localTargetIds?: readonly string[];
+    serverGeneration?: number | null;
   };
   events: DayEvent[];
   items: NonNullable<ReturnType<typeof projectCoreItem>>[];
@@ -48,6 +53,28 @@ export type CoreFlightDayProjection = {
     context: string | DayViewContext,
   ): DayQuery & { coreRows: CoreDayRow[] };
 };
+// Only real accepted rows carry certificate generation; local rows have a separate read revision.
+export function projectCoreDisplayDay(
+  graph: CoreGraph,
+  actor: CoreActor,
+  date: string,
+  context: CoreFlightDayProjection["source"] & { generation: number },
+) {
+  return projectCoreDay(
+    graph,
+    actor,
+    date,
+    context.serverGeneration ?? context.generation,
+  ).map((row) =>
+    context.localTargetIds?.includes(row.itemRef)
+      ? {
+          ...row,
+          certificateGeneration: null,
+          localReadGeneration: context.localRevision,
+        }
+      : row,
+  );
+}
 const spatialKeys = Object.keys(itinerary_transport_endpointsSchema.shape).filter(
   (key) =>
     ![...Object.keys(coreBoundarySchema.shape), "event_id", "trip_id", "role"].includes(
@@ -70,10 +97,16 @@ export function projectCoreFlightFeed(
   const items = graph.itinerary_events
     .filter((row) => row.experience_family === "P2")
     .map((row) =>
-      projectCoreItem(graph, actor, String(row.id), {
-        rosterHash: certificate.participatingRosterHash,
-        participatingPersonIds,
-      }),
+      projectCoreItem(
+        graph,
+        actor,
+        String(row.id),
+        {
+          rosterHash: certificate.participatingRosterHash,
+          participatingPersonIds,
+        },
+        certificate.localTargetIds?.includes(String(row.id)) ? "PENDING" : "ACCEPTED",
+      ),
     )
     .filter(
       (item): item is NonNullable<typeof item> =>
@@ -146,7 +179,16 @@ export function projectCoreFlightFeed(
         item.itemId,
         {
           qualification: intent.qualification as CoreFlightFacts["qualification"],
-          flightNumberLiteral: String(intent.flight_number_literal),
+          flightNumberLiteral:
+            intent.flight_number_literal == null
+              ? null
+              : String(intent.flight_number_literal),
+          ...(intent.qualification_basis
+            ? {
+                qualificationBasis:
+                  intent.qualification_basis as CoreFlightFacts["qualificationBasis"],
+              }
+            : {}),
           services,
           endpoints: { ORIGIN: facts("ORIGIN"), DESTINATION: facts("DESTINATION") },
         },
@@ -165,6 +207,16 @@ export function projectCoreFlightFeed(
       actorPersonBindingHash: certificate.actorPersonBindingHash,
       participatingRosterHash: certificate.participatingRosterHash,
       manifestSha256: certificate.manifestSha256,
+      ...(certificate.authority ? { authority: certificate.authority } : {}),
+      ...(certificate.localRevision !== undefined
+        ? { localRevision: certificate.localRevision }
+        : {}),
+      ...(certificate.localTargetIds
+        ? { localTargetIds: certificate.localTargetIds }
+        : {}),
+      ...(certificate.serverGeneration !== undefined
+        ? { serverGeneration: certificate.serverGeneration }
+        : {}),
     },
     events,
     items,
@@ -172,7 +224,7 @@ export function projectCoreFlightFeed(
     query(date, zone) {
       validateCalendarDate(date);
       const context = dayViewContext(zone);
-      const day = projectCoreDay(graph, actor, date, certificate.generation).filter(
+      const day = projectCoreDisplayDay(graph, actor, date, certificate).filter(
         (r) => r.family === "P2",
       );
       const timed: DayQuery["timed"] = [],

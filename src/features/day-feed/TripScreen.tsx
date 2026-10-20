@@ -607,7 +607,7 @@ function TripContent({
       manualItemSaved(requested, generation);
     }
   }, [manualOutcome, requested, generation, manualItemSaved]);
-  const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string) => {
+  const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string | null) => {
     if (
       scope.tripId !== requested ||
       scope.generation !== getAccountGeneration() ||
@@ -682,7 +682,7 @@ function TripContent({
       itemRevision < 1
     )
       throw new Error("HOME_ITEM_REVISION_UNAVAILABLE");
-    const result = await freshHomeRead(value.scope, value.certificate.epoch);
+    const result = await freshHomeRead(value.scope, value.certificate?.epoch ?? null);
     const projection = result.observed!.projection;
     if (projection.version !== 2) throw new Error("HOME_ITEM_UNAVAILABLE");
     const current = projection.items.find(

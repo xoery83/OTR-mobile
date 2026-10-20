@@ -1,3 +1,4 @@
+import { localCoreAuthorityMigration } from "./migrations/localCoreAuthority";
 import { personalTripCoverPreferencesMigration } from "./migrations/personalTripCoverPreferences";
 import { requiredDateDecisionsMigration } from "./migrations/requiredDateDecisions";
 import { localTripLedgerMigration } from "./migrations/localTripLedger";
@@ -1720,5 +1721,6 @@ export const migrations: Migration[] = [
   captureProcessingMigration,
   captureLocalInterpretationMigration,
   localTripLedgerMigration,
+  localCoreAuthorityMigration,
   personalTripCoverPreferencesMigration,
 ];

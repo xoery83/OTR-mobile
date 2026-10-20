@@ -1,4 +1,10 @@
-import { validateCoreGraph } from "./tripCoreV2Graph";
+import {
+  isVerifiedLocalOperation,
+  localBookedFlightPayloadSchema,
+  type VerifiedLocalOperation,
+  type LocalMutationCommand,
+} from "./localCoreAuthority";
+import { validateCoreGraph, validateLocalCoreGraph } from "./tripCoreV2Graph";
 import * as f from "./tripCoreV2";
 import { validateCoreCommand } from "./tripCoreV2Commands";
 import {
@@ -104,7 +110,54 @@ export function applyCoreCommand(
   actorProjection = false,
   privateDocumentCustody?: VerifiedPrivateDocumentCustody,
 ): CoreMutation {
-  const q = validateCoreCommand(input);
+  return executeCoreMutation(
+    given,
+    validateCoreCommand(input),
+    actor,
+    now,
+    sourceAuthorized,
+    lifecycleGraphHash,
+    actorProjection,
+    privateDocumentCustody,
+    false,
+  );
+}
+export function applyLocalCoreOperation(
+  given: CoreGraph,
+  operation: VerifiedLocalOperation,
+  actor: CoreActor,
+  now: string,
+): CoreMutation {
+  if (
+    !isVerifiedLocalOperation(operation) ||
+    operation.command.tripId !== actor.tripId ||
+    canonicalCoreJson(operation.actor as unknown as Json) !==
+      canonicalCoreJson(actor as unknown as Json)
+  )
+    throw new Error("LOCAL_CAPABILITY_REQUIRED");
+  return executeCoreMutation(
+    given,
+    operation.command,
+    actor,
+    now,
+    true,
+    undefined,
+    false,
+    undefined,
+    true,
+  );
+}
+function executeCoreMutation(
+  given: CoreGraph,
+  q: ReturnType<typeof validateCoreCommand> | LocalMutationCommand,
+  actor: CoreActor,
+  now: string,
+  sourceAuthorized: boolean,
+  lifecycleGraphHash: string | undefined,
+  actorProjection: boolean,
+  privateDocumentCustody: VerifiedPrivateDocumentCustody | undefined,
+  local: boolean,
+): CoreMutation {
   if (!actor.active || q.tripId !== actor.tripId) throw new Error("TRIP_NOT_AUTHORIZED");
   if (q.admission.mode !== "MANUAL" && !sourceAuthorized)
     throw new Error("INVALID_PROVENANCE");
@@ -563,6 +616,37 @@ export function applyCoreCommand(
     r.event_type = "transport";
   };
   switch (q.command) {
+    case "CREATE_BOOKING_EVIDENCED_FLIGHT_LOCAL": {
+      if (!local || q.admission.mode !== "LOCAL_REVIEWED_SOURCE")
+        throw new Error("LOCAL_CAPABILITY_REQUIRED");
+      const b = localBookedFlightPayloadSchema.parse(p);
+      const r = newItem("P2", b.core.title);
+      setParticipants(r, b.participation);
+      setAcl("ITEM", r, b.acl);
+      mark("ITEM", r, { title: r.title });
+      for (const [input, role] of [
+        ["origin", "ORIGIN"],
+        ["destination", "DESTINATION"],
+      ] as const) {
+        detail("itinerary_transport_endpoints", r.id, b[input].time, role);
+        detail(
+          "trip_endpoint_details",
+          r.id,
+          { airport_code: b[input].airportCode },
+          role,
+        );
+      }
+      r.temporal_shape = "TRANSPORT";
+      r.event_type = "flight";
+      g.trip_flight_intents.push({
+        trip_id: actor.tripId,
+        event_id: r.id,
+        flight_number_literal: b.flightNumberLiteral,
+        qualification: "BOOKING_EVIDENCED_ROUTE_TIME",
+        qualification_basis: "BOOKING_EVIDENCED_ROUTE_TIME_LOCAL/1",
+      });
+      break;
+    }
     case "CREATE_SPARSE_FLIGHT": {
       const r = newItem("P2", p.core?.title ?? p.flightNumberLiteral);
       setParticipants(r, p.participation);
@@ -1233,7 +1317,10 @@ export function applyCoreCommand(
   }
   for (const [t, rows] of Object.entries(g))
     for (const row of rows) {
-      f.coreTableSchemas[t as f.CoreTable].parse(row);
+      (local && t === "trip_flight_intents"
+        ? f.localFlightIntentSchema
+        : f.coreTableSchemas[t as f.CoreTable]
+      ).parse(row);
       if ((t === "expense_links" ? row.journey_id : row.trip_id) !== actor.tripId)
         throw new Error("CROSS_TRIP_REFERENCE");
       if (
@@ -1313,6 +1400,6 @@ export function applyCoreCommand(
   }
   if (q.baseVector.some((v) => !usedBases.has(v.kind + ":" + v.id)))
     throw new Error("UNUSED_BASE_VECTOR");
-  validateCoreGraph(g, actor.tripId, actorProjection);
+  (local ? validateLocalCoreGraph : validateCoreGraph)(g, actor.tripId, actorProjection);
   return { graph: g, changed: [...changed.values()] };
 }

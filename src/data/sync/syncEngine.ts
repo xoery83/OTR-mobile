@@ -137,6 +137,7 @@ export function syncFailureDetails(error: Error) {
 }
 
 const closedImportOperations = new Set([
+  "LOCAL_CORE_COMMIT",
   "TRIP_COVER_LOCAL_SAVE",
   "TRIP_PERSON_CREATE",
   "C_PREPARE_CONFIRMATION",

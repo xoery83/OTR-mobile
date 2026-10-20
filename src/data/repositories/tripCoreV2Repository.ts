@@ -1,3 +1,9 @@
+import {
+  createLocalCoreCommitRepository,
+  type LocalCoreAuthorityDependencies,
+  type LocalCoreBaseline,
+  type LocalCoreSnapshot,
+} from "./localCoreCommitRepository";
 import { qualifyCoreTtr, type CoreTtrResult } from "../../domain/trip/tripCoreTtr";
 import type { TtrInput } from "../../domain/trip/ttr";
 import type * as SQLite from "expo-sqlite";
@@ -136,6 +142,10 @@ export function createTripCoreV2Repository(
   getAccountId: () => Promise<string>,
   hash: ImportHash,
   clock = () => new Date().toISOString(),
+  localAuthority: Omit<
+    LocalCoreAuthorityDependencies,
+    "readBaselineWithinTransaction"
+  > = {},
 ) {
   const captureContext = (tripId: string) =>
     captureAccountRequestContext(tripId, getAccountId);
@@ -187,6 +197,72 @@ export function createTripCoreV2Repository(
     }
     await assertContext(ctx);
     return graph;
+  }
+  async function localBaselineWithinTransaction(
+    ctx: AccountRequestContext,
+  ): Promise<LocalCoreBaseline | null> {
+    await assertContext(ctx);
+    await scope(ctx);
+    const accepted = await acceptedWithinTransaction(ctx);
+    const manual = await readLocalManualSnapshotWithinTransaction(
+      database,
+      getAccountId,
+      { manualReadSnapshot },
+      ctx,
+      accepted,
+    );
+    if (!manual) return null;
+    return {
+      graph: accepted?.graph ?? emptyCoreGraph(),
+      actor: manual.actor,
+      participatingPersonIds: manual.participatingPersonIds.length
+        ? manual.participatingPersonIds
+        : [...manual.actor.personIds],
+      certificate: accepted?.certificate ?? null,
+    };
+  }
+  const localCommits = createLocalCoreCommitRepository(
+    database,
+    getAccountId,
+    hash,
+    {
+      ...localAuthority,
+      readBaselineWithinTransaction: localBaselineWithinTransaction,
+    },
+    () => clock().replace(/\.(\d{3})Z$/, ".$1000Z"),
+  );
+  async function readLocalCombinedWithinTransaction(ctx: AccountRequestContext) {
+    if (
+      !("isInTransactionAsync" in database) ||
+      typeof database.isInTransactionAsync !== "function" ||
+      !(await database.isInTransactionAsync())
+    )
+      throw new Error("LOCAL_SOURCE_TRANSACTION_CAPABILITY_UNAVAILABLE");
+    await assertContext(ctx);
+    const baseline = await localBaselineWithinTransaction(ctx);
+    if (!baseline) return null;
+    const snapshot = await localCommits.readCommittedWithinTransaction(ctx, baseline);
+    await assertContext(ctx);
+    return snapshot;
+  }
+  async function combinedSnapshot(
+    ctx: AccountRequestContext,
+  ): Promise<LocalCoreSnapshot | null> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result: Awaited<
+        ReturnType<typeof localCommits.readCommittedWithinTransaction>
+      > | null = null;
+      await database.withTransactionAsync(async () => {
+        const baseline = await localBaselineWithinTransaction(ctx);
+        if (!baseline) return;
+        const snapshot = await localCommits.readCommittedWithinTransaction(ctx, baseline);
+        if (snapshot.certificate || snapshot.localRevision) result = snapshot;
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
   }
   async function acceptedTripIds() {
     return withAccountApplyGate(async () => {
@@ -1079,6 +1155,10 @@ export function createTripCoreV2Repository(
     readGraph,
     manualReadSnapshot,
     acceptedSnapshot,
+    combinedSnapshot,
+    readLocalCombinedWithinTransaction,
+    commitLocal: localCommits.commit,
+    prepareLocalManualSparse: localCommits.prepareManualSparse,
     // Caller must hold the Account apply gate and the database transaction.
     readAcceptedSnapshotWithinTransaction: acceptedWithinTransaction,
     readTtr,
