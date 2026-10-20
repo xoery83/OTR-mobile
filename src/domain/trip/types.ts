@@ -18,6 +18,8 @@ export type Trip = SyncableRecord & {
 };
 
 export type CreateTripInput = {
+  /** Local creator nickname only; never changes Account identity or Hosted CREATE proof. */
+  creatorDisplayName?: string;
   /** Local-only named slots; never part of the Hosted CREATE proof. */
   travelers?: readonly LocalPersonNameSlot[];
   operationId: string;

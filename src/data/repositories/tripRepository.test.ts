@@ -2392,3 +2392,96 @@ it("rolls photo cover and metadata back on queue failure or Account ABA during v
     selectedCoverAssetIdRaw: null,
   });
 });
+
+it("local creator nickname preserves independent identity, strict proof and cold exact replay", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-creator-nickname-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const command = { ...input(), creatorDisplayName: "  Kiwi  " };
+  await f.repo.createTrip(command);
+  const before = f.sql.prepare("SELECT * FROM ledger_members").get();
+  expect(before).toMatchObject({ display_name: "Kiwi", role: "owner", status: "local" });
+  expect(before?.id).not.toBe(accountA);
+  expect(
+    f.sql.prepare("SELECT user_id,member_id FROM ledger_actor_context").get(),
+  ).toEqual({ user_id: accountA, member_id: before?.id });
+  const proof = JSON.parse(
+    String(
+      f.sql
+        .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+        .get(command.operationId)?.payload_json,
+    ),
+  );
+  expect(proof).not.toHaveProperty("creatorDisplayName");
+  f.sql.close();
+  f = local(path, false);
+  await f.repo.createTrip(command);
+  await f.repo.createTrip({ ...command, creatorDisplayName: undefined });
+  expect(f.sql.prepare("SELECT * FROM ledger_members").get()).toEqual(before);
+  await expect(
+    f.repo.createTrip({ ...command, creatorDisplayName: "Changed" }),
+  ).rejects.toThrow("TRIP_CREATOR_NAME_REPLAY_MISMATCH");
+  expect(f.sql.prepare("SELECT * FROM ledger_members").get()).toEqual(before);
+});
+it("blank nickname uses the existing known name, invalid names and queue errors leave no partial creator", async () => {
+  const f = local();
+  const repo = createTripRepository(
+    f.database,
+    async () => accountA,
+    f.core,
+    () => stamp,
+    async () => "Known profile name",
+  );
+  await repo.createTrip({ ...input(), creatorDisplayName: "  " });
+  expect(f.sql.prepare("SELECT display_name FROM ledger_members").get()).toEqual({
+    display_name: "Known profile name",
+  });
+  const bad = local();
+  await expect(
+    bad.repo.createTrip({ ...input(), creatorDisplayName: "x".repeat(257) }),
+  ).rejects.toThrow("TRIP_CREATOR_NAME_INVALID");
+  bad.failNextQueue();
+  await expect(
+    bad.repo.createTrip({ ...input(), creatorDisplayName: "Kiwi" }),
+  ).rejects.toThrow();
+  for (const table of [
+    "local_trip_containers",
+    "local_trip_ledger_bindings",
+    "ledger_members",
+    "ledger_actor_context",
+    "sync_operations",
+  ])
+    expect(bad.sql.prepare(`SELECT count(*) n FROM ${table}`).get()?.n).toBe(0);
+  const missing = local();
+  const unknown = createTripRepository(
+    missing.database,
+    async () => accountA,
+    missing.core,
+    () => stamp,
+    async () => "",
+  );
+  await expect(unknown.createTrip(input())).rejects.toThrow(
+    "TRIP_CREATOR_NAME_UNAVAILABLE",
+  );
+});
+it("a late profile result after Account change cannot create even an explicitly nicknamed creator", async () => {
+  const f = local();
+  let active = accountA;
+  const repo = createTripRepository(
+    f.database,
+    async () => active,
+    f.core,
+    () => stamp,
+    async () => {
+      active = accountB;
+      advanceAccountGeneration();
+      return "Known";
+    },
+  );
+  await expect(
+    repo.createTrip({ ...input(), creatorDisplayName: "Kiwi" }),
+  ).rejects.toThrow("Account changed");
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(0);
+});

@@ -92,14 +92,39 @@ export function createTripRepository(
   clock = () => new Date().toISOString(),
   displayName = async (accountId: string) => accountId,
 ) {
-  async function initializeLedger(accountId: string, row: Row, name: string) {
+  async function initializeLedger(
+    accountId: string,
+    row: Row,
+    name: string,
+    explicitName?: string,
+  ) {
     if (row.accepted_at) return;
     const binding = await database.getFirstAsync<{ person_id: string }>(
       "SELECT person_id FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=?",
       accountId,
       row.id,
     );
-    if (binding) return;
+    if (binding) {
+      if (explicitName !== undefined) {
+        const member = await database.getFirstAsync<{
+          display_name: string;
+          role: string;
+          status: string;
+        }>(
+          "SELECT display_name,role,status FROM ledger_members WHERE id=? AND journey_id=?",
+          binding.person_id,
+          row.id,
+        );
+        if (
+          !member ||
+          member.role !== "owner" ||
+          member.status !== "local" ||
+          member.display_name !== explicitName
+        )
+          throw new Error("TRIP_CREATOR_NAME_REPLAY_MISMATCH");
+      }
+      return;
+    }
     const intent = await database.getFirstAsync<{ id: string; payload_json: string }>(
       `SELECT op.id,op.payload_json FROM sync_operations op
        JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id
@@ -230,6 +255,14 @@ export function createTripRepository(
       });
     },
     async createTrip(input: CreateTripInput): Promise<Trip> {
+      if (
+        input.creatorDisplayName !== undefined &&
+        typeof input.creatorDisplayName !== "string"
+      )
+        throw new Error("TRIP_CREATOR_NAME_INVALID");
+      const explicitName = input.creatorDisplayName?.trim() || undefined;
+      if (explicitName && explicitName.length > 256)
+        throw new Error("TRIP_CREATOR_NAME_INVALID");
       coreUuid.parse(input.operationId);
       coreUuid.parse(input.tripId);
       const startDate = date(input.startDate),
@@ -247,7 +280,9 @@ export function createTripRepository(
         throw new Error("TRIP_DESTINATION_INVALID");
       const text = canonicalCoreJson(payload as Json);
       const scope = await captureAccountScope(account);
-      const name = await displayName(scope.accountId);
+      const profileName = await displayName(scope.accountId);
+      const name = explicitName ?? profileName;
+      if (!name.trim()) throw new Error("TRIP_CREATOR_NAME_UNAVAILABLE");
       return withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         let result: Trip | null = null;
@@ -313,7 +348,7 @@ export function createTripRepository(
             input.tripId,
           );
           if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
-          await initializeLedger(scope.accountId, row, name);
+          await initializeLedger(scope.accountId, row, name, explicitName);
           if (input.travelers) {
             await initializeLocalTripPersons(
               database,
