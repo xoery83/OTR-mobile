@@ -1,0 +1,818 @@
+{
+  "branch": "codex/cp-flight-pdf-native-join-01",
+  "canonicalBaseline": "eb4c8eb889ed700e1949eee71d2fa6e0e37d86b9",
+  "acceptedPdfCommit": "51256f982bab85a9e11cec2e535f69e24137213d",
+  "acceptedPdfTree": "c678e519fb00712f0eb33c8d5035391db0383f4d",
+  "acceptedNativeCommit": "94d30a3bf48e1923eb94c61f881d7dfbb49b75fd",
+  "acceptedNativeTree": "3f0431a30cc3832714a225fa9b0a98e004287872",
+  "joinedImplementationCommit": "ef86c03170ee87a434d8baf59a95b0335fa3e69c",
+  "joinedImplementationTree": "44e19d6e713a4d77550b7c6dddc4226ce342b6e6",
+  "preparedFiles": [
+    {
+      "status": "M",
+      "path": ".gitattributes",
+      "sha256": "1430bfeb25385ce115cfb53cb707737697821e73e9dca4870a2e8c56f29eeea8",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "M",
+      "path": ".gitignore",
+      "sha256": "2f037ed4a249096e404c6511ab8052d576c0591227c626b1923c02df96a0da13",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/flightCoreDayAcceptance.ts",
+      "sha256": "9b12f81576fc6ff00e57e850b0ba0210d91b6696293741c9df135a07f7a19c17",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf",
+      "sha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/__fixtures__/sourcePdfAcceptance.ts",
+      "sha256": "c04112e28d6823192769adbed630eb174412df847fca506cdc23676c2b06de55",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "sha256": "c131632d0d95195b203e9a12e93f55bd8e9e935e4a44b3c549b7ac315c2e2a77",
+      "acceptedFrom": ["PDF Authority", "Native"]
+    },
+    {
+      "status": "M",
+      "path": "backend/src/captureFlightCoreV2.sql.test.ts",
+      "sha256": "4aa776f8aefe60bd567241c94ba4ff08a21df44d1aec4f38f59534ebb26b575f",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/nativeFlightInstalledReview.sql.test.ts",
+      "sha256": "9d04798ee952a998c346dbdc88be16762bb9103c639e8a9c23960a2f91759b0e",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfAuthority.ts",
+      "sha256": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfCoreProof.ts",
+      "sha256": "44b2dd66706bad3e28d8ce251ef2abfd3ed966f9a43f9b0a80175f7a24bd901d",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfProfile.test.ts",
+      "sha256": "8b999b8448c20a4c547b28d87b71d7976310543499bb34ebdeb397f1c213aecb",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfProfile.ts",
+      "sha256": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "M",
+      "path": "backend/src/tripCoreV2SourcePgAuthority.ts",
+      "sha256": "5a47e2fa27756a156956437bd61e0c438437756464927bc6a7c3e8390814f7e5",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "M",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "c43de67dcb0f18237e8482532235af49b466c3f89118c27d842880d278129935",
+      "acceptedFrom": ["PDF Authority", "Native"]
+    },
+    {
+      "status": "M",
+      "path": "docs/DATA_MODEL.md",
+      "sha256": "d182ee9d727d0fa300facb3f4cdf50b167e3718a83f995094fd4d93e1b5da066",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/adr/2026-10-12-source-owned-pdf-derivative-seal.md",
+      "sha256": "19796a29c60e090b5651f99b51616a5efb7233a83502a096646f05f3ee71114d",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md",
+      "sha256": "a74fdb44b3615b2222a64f10307bbc34551e3fcca7314ecb5848ba5a70905900",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_CHANGED_FILES.txt",
+      "sha256": "61d614b0b2754777b152eeacc3f510c85864d09bfa87466047ee8583e1ae84e1",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json",
+      "sha256": "a670ef181b8d4a56a049d03dc763335291be2859a71d6a192d5af86dce02fd27",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md",
+      "sha256": "d9418acd72badd81ec89c301e6b0769e8f0c056801db557a9183491d5e4936ea",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md",
+      "sha256": "924d44f50a0eb1c43f5f68e00c47ea846d4d666bd6ac3a7d46d1f605678dd2e7",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_CHANGED_FILES.txt",
+      "sha256": "f4b41e92040d3f58ba174787fa0438f308f5bda0a14f565435762024089bdf2b",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_EVIDENCE.json",
+      "sha256": "d0fb0e25a3c6abdd805f73524dcec3e422a687da899978b17c0ef811843d9ffb",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_READINESS_REPORT.md",
+      "sha256": "4127b9ab57c21348428808d8a5de8831064db8069f88c8dec57ef22a496b531f",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_03_CHANGED_FILES.txt",
+      "sha256": "4499accdd3ad440e203a93999a739057c86dc44d2c922acdced881cb60b128b9",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_03_EVIDENCE.json",
+      "sha256": "f633566bef97f0033c5789526f31fd77789d2c14eaae0755460d349478dead98",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_03_REPORT.md",
+      "sha256": "68f8cb20ed21d02ceb239a29c4fdecc4c2cebad781bb8d8ae621863dcc3dac32",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_04_CHANGED_FILES.txt",
+      "sha256": "1f45f02850a93b38d5cbeaed70369f66b2747d63cdc48d1b6e6a6f7115ca5ed0",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_04_EVIDENCE.json",
+      "sha256": "1967c954937d367805deb8de5149659acc7739a34e16ec2524f587398f865bc6",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_04_INTEGRATION_READINESS_REPORT.md",
+      "sha256": "4beb3d72860aa6fef47511a99e1f9d16aecfe26565181215b1436c67ab81a566",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_EVIDENCE.json",
+      "sha256": "e7b27b496d9c0da1a88de0c06884762f1ae2342c759f6dfe03e92332bb422153",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_MANIFEST.json",
+      "sha256": "0d68d3b26b8cd88ddb98ebf7ef312d9770fcf0ead6195dffa6acde59d9e3398f",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md",
+      "sha256": "35fb687194563e9ddb75aaa645e1843062bb9cab221d785e00b2ac1e923c5c0e",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_02_EVIDENCE.json",
+      "sha256": "9a9bd1b9df50d5f7784a273346c28585d3eb55171c2ea48494a9e2e94f5a09ea",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_02_INTEGRATION_READINESS_REPORT.md",
+      "sha256": "338d4e96be1b1133173b7d28a5ce96d9b1cc9ab0aa623b64d7dc45395aa4a2a1",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_02_MANIFEST.json",
+      "sha256": "4444121bfc648b4d304b47b835c62801d5373cafae6615179f64dc2e75ef75e8",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+      "sha256": "b699b0944d78d52739d278594e5237628f9b8375f28a14b9e82c7c614878b707",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "modules/receipt-ocr/ios/ReceiptOcrModule.swift",
+      "sha256": "09f192abbfd95d28c0c2fa763f3de52ea749960ab5b19f488532b305c67de368",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "modules/receipt-ocr/tests/README.md",
+      "sha256": "5609dec7cb505dc98d160bb140c56c3705c4611a99e2223824236365366c1f97",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "modules/receipt-ocr/tests/main.swift",
+      "sha256": "3911a95911c5361b27926310c0a58539548525c76761c90fae6917a48f5c031e",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "sha256": "6dc6f8bcac21538a6fb24590c6592df04ef3502044f9e72ea316aa966448ee16",
+      "acceptedFrom": ["PDF Authority", "Native"]
+    },
+    {
+      "status": "A",
+      "path": "scripts/trip/native-flight-03/README.md",
+      "sha256": "150f9dab3777ad3c662e1ae2b03d5b30ff55dd183ee3b3041389d32d8debed26",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "scripts/trip/native-flight-03/batch.template.json",
+      "sha256": "8f8818cd197f05685dff6337d16374a79464056eb0c2fd2cea435842d4b920bc",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "scripts/trip/native-flight-03/entry.ts",
+      "sha256": "1acae6a7f809b55ef577b769c661d738cdff71dafe59aeb1b1f529bf00b56d08",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "scripts/trip/verify-source-pdf-fixture.swift",
+      "sha256": "79847e1302ba5221e121375ae8fd99a3829b293feeb5068c16ff31b2c725ccb5",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/bootstrap/participationWakeAcceptance.test.ts",
+      "sha256": "137c8b2cf8b0f75fa906905b03427ba47f23a354093a8f570391394fdc22b5f1",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/db/checkpoint11Integration.test.ts",
+      "sha256": "37827e127c274ce3853d6a5fc25d4869d7ad03ea44a49ebb40c00b97d70dba84",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/db/database.test.ts",
+      "sha256": "5bd90220675d6b3d51d6064daf7a26310a7a4921dd13d275cec7bd283c2294f9",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/db/migrations.ts",
+      "sha256": "bafc1d732b2e790f11b332a0a590a9c29af22cda2b0554e3c64d23891569493f",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/data/db/migrations/captureFlightNative.ts",
+      "sha256": "c075a7bec486863a833458444bec8ee6af66514ae8dbb9b1e5c47a514caf03b6",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/db/publicationMembershipMigration.test.ts",
+      "sha256": "c3abbac846e4dd55015c7548eb5b7fe65e394051bca1fe2e13b0ba88fc84319a",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/foundation/diagnosticsReadOnly.test.ts",
+      "sha256": "d704bff8eb02fd023504435aafb8501fdb619c3127521a8fc10e15c66a064c2e",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/data/interpretation/__fixtures__/nativeFlightPdf.json",
+      "sha256": "6d517adcd52c561364b843c51e0fc52204dcdfa0fd877efaa38467402aeed947",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/data/interpretation/flightPdfExtraction.ts",
+      "sha256": "97f24c98295525af1e9fa1a2c6aa3a5c599534e6c3052a874f7d4fa797e4765b",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/data/operations/defaultCaptureFlightNative.ts",
+      "sha256": "43793edb77d7562ac8582d90e1ef16ccdfecbafdcaf7a6ae127b81503dcf4997",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts",
+      "sha256": "c933cf1d7316e736636a713ef1e5fe38ef664ec113b7388b48cb98aced005eda",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/data/repositories/captureFlightNativeRepository.test.ts",
+      "sha256": "8cdf1a49462a14d87ce7f1e33da7d03a28b94f583c86743ae5755fbb319f7132",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/data/repositories/captureFlightNativeRepository.ts",
+      "sha256": "f097f862c119926d5efd7172be5fe449806b778dc9c87ea0fc19eb5f78fa4a0b",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/repositories/intelligenceContinuationRepository.test.ts",
+      "sha256": "adc3110bce27efaf2b4662a189b0c3d3f69f464c4442bb860d28baab714eb6bb",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/repositories/tripCanonicalEventRepository.test.ts",
+      "sha256": "df93d6723070ef65151afa05e02b9c968adaaddad18bcd3d6561a21ac78c18f8",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "M",
+      "path": "src/data/repositories/tripPublicationMembershipRepository.test.ts",
+      "sha256": "2f18516b59f57ca7b59176ac1eca53a31e5c81747c728277dd80103929acea39",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/domain/trip/sourcePdfAuthority.ts",
+      "sha256": "fccc80649e62e7e553b9f21a4a33df94d44a88b0c8e9b770473f2a7fb4d212da",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "M",
+      "path": "src/domain/trip/tripCoreV2CandidatePublication.ts",
+      "sha256": "cc2259df007d34f37f56c634288eb6c32df95f450218a38322ae2d9e85d54b14",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "src/native/flightPdf.test.ts",
+      "sha256": "7b275d9cc83650a683e95f86a445d0a18b5e25c9703f432a55ae9c369bc5da06",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "src/native/flightPdf.ts",
+      "sha256": "6b78128ce9ac1e875611ced6d8cc5ef345d8b221302d8e97c046833ad25f104d",
+      "acceptedFrom": ["Native"]
+    },
+    {
+      "status": "A",
+      "path": "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql",
+      "sha256": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+      "acceptedFrom": ["PDF Authority"]
+    },
+    {
+      "status": "A",
+      "path": "supabase/tests/source-pdf/authority.sql",
+      "sha256": "6d5318ff3cda1cf7942f52b5eb0a908f4cb4accb6dc357016d7d27a372fad52c",
+      "acceptedFrom": ["PDF Authority"]
+    }
+  ],
+  "handoffFiles": [
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_NATIVE_JOIN_01_INTEGRATION_READINESS_REPORT.md"
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_NATIVE_JOIN_01_MANIFEST.json"
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_NATIVE_JOIN_01_EVIDENCE.json"
+    }
+  ],
+  "finalChangedPathCount": 70,
+  "productionAndAcceptedEquivalence": {
+    "pdf": {
+      ".gitattributes": {
+        "acceptedSha256": "1430bfeb25385ce115cfb53cb707737697821e73e9dca4870a2e8c56f29eeea8",
+        "joinedSha256": "1430bfeb25385ce115cfb53cb707737697821e73e9dca4870a2e8c56f29eeea8",
+        "exact": true
+      },
+      "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf": {
+        "acceptedSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "joinedSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "exact": true
+      },
+      "backend/src/__fixtures__/sourcePdfAcceptance.ts": {
+        "acceptedSha256": "c04112e28d6823192769adbed630eb174412df847fca506cdc23676c2b06de55",
+        "joinedSha256": "c04112e28d6823192769adbed630eb174412df847fca506cdc23676c2b06de55",
+        "exact": true
+      },
+      "backend/src/__fixtures__/tripCoreV2Sql.ts": {
+        "acceptedSha256": "89fa78153499c6dcea8bab146013eadf176397652c810f4b437f1641e6dc3092",
+        "joinedSha256": "c131632d0d95195b203e9a12e93f55bd8e9e935e4a44b3c549b7ac315c2e2a77",
+        "exact": false
+      },
+      "backend/src/captureFlightCoreV2.sql.test.ts": {
+        "acceptedSha256": "4aa776f8aefe60bd567241c94ba4ff08a21df44d1aec4f38f59534ebb26b575f",
+        "joinedSha256": "4aa776f8aefe60bd567241c94ba4ff08a21df44d1aec4f38f59534ebb26b575f",
+        "exact": true
+      },
+      "backend/src/sourcePdfAuthority.ts": {
+        "acceptedSha256": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb",
+        "joinedSha256": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb",
+        "exact": true
+      },
+      "backend/src/sourcePdfCoreProof.ts": {
+        "acceptedSha256": "44b2dd66706bad3e28d8ce251ef2abfd3ed966f9a43f9b0a80175f7a24bd901d",
+        "joinedSha256": "44b2dd66706bad3e28d8ce251ef2abfd3ed966f9a43f9b0a80175f7a24bd901d",
+        "exact": true
+      },
+      "backend/src/sourcePdfProfile.test.ts": {
+        "acceptedSha256": "8b999b8448c20a4c547b28d87b71d7976310543499bb34ebdeb397f1c213aecb",
+        "joinedSha256": "8b999b8448c20a4c547b28d87b71d7976310543499bb34ebdeb397f1c213aecb",
+        "exact": true
+      },
+      "backend/src/sourcePdfProfile.ts": {
+        "acceptedSha256": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6",
+        "joinedSha256": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6",
+        "exact": true
+      },
+      "backend/src/tripCoreV2SourcePgAuthority.ts": {
+        "acceptedSha256": "5a47e2fa27756a156956437bd61e0c438437756464927bc6a7c3e8390814f7e5",
+        "joinedSha256": "5a47e2fa27756a156956437bd61e0c438437756464927bc6a7c3e8390814f7e5",
+        "exact": true
+      },
+      "docs/CURRENT_IMPLEMENTATION_STATE.md": {
+        "acceptedSha256": "f3c96fa17332832e667199768e00445ca63cfd8a39d1bdd8141fc3d5c4180cb4",
+        "joinedSha256": "7e08223321476dd7f7b25ed267daa75573c30eb57166af29e7fbb3189aa32c0e",
+        "exact": false
+      },
+      "docs/adr/2026-10-12-source-owned-pdf-derivative-seal.md": {
+        "acceptedSha256": "19796a29c60e090b5651f99b51616a5efb7233a83502a096646f05f3ee71114d",
+        "joinedSha256": "19796a29c60e090b5651f99b51616a5efb7233a83502a096646f05f3ee71114d",
+        "exact": true
+      },
+      "docs/trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md": {
+        "acceptedSha256": "a74fdb44b3615b2222a64f10307bbc34551e3fcca7314ecb5848ba5a70905900",
+        "joinedSha256": "a74fdb44b3615b2222a64f10307bbc34551e3fcca7314ecb5848ba5a70905900",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_EVIDENCE.json": {
+        "acceptedSha256": "e7b27b496d9c0da1a88de0c06884762f1ae2342c759f6dfe03e92332bb422153",
+        "joinedSha256": "e7b27b496d9c0da1a88de0c06884762f1ae2342c759f6dfe03e92332bb422153",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_MANIFEST.json": {
+        "acceptedSha256": "0d68d3b26b8cd88ddb98ebf7ef312d9770fcf0ead6195dffa6acde59d9e3398f",
+        "joinedSha256": "0d68d3b26b8cd88ddb98ebf7ef312d9770fcf0ead6195dffa6acde59d9e3398f",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md": {
+        "acceptedSha256": "35fb687194563e9ddb75aaa645e1843062bb9cab221d785e00b2ac1e923c5c0e",
+        "joinedSha256": "35fb687194563e9ddb75aaa645e1843062bb9cab221d785e00b2ac1e923c5c0e",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_02_EVIDENCE.json": {
+        "acceptedSha256": "9a9bd1b9df50d5f7784a273346c28585d3eb55171c2ea48494a9e2e94f5a09ea",
+        "joinedSha256": "9a9bd1b9df50d5f7784a273346c28585d3eb55171c2ea48494a9e2e94f5a09ea",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_02_INTEGRATION_READINESS_REPORT.md": {
+        "acceptedSha256": "338d4e96be1b1133173b7d28a5ce96d9b1cc9ab0aa623b64d7dc45395aa4a2a1",
+        "joinedSha256": "338d4e96be1b1133173b7d28a5ce96d9b1cc9ab0aa623b64d7dc45395aa4a2a1",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_02_MANIFEST.json": {
+        "acceptedSha256": "4444121bfc648b4d304b47b835c62801d5373cafae6615179f64dc2e75ef75e8",
+        "joinedSha256": "4444121bfc648b4d304b47b835c62801d5373cafae6615179f64dc2e75ef75e8",
+        "exact": true
+      },
+      "scripts/trip/core-v2-sql-acceptance.py": {
+        "acceptedSha256": "24ff8899a3035b5129d6cae936c7f4fa6a3ce4ffafb5d3604cdc00441b5bf41e",
+        "joinedSha256": "6dc6f8bcac21538a6fb24590c6592df04ef3502044f9e72ea316aa966448ee16",
+        "exact": false
+      },
+      "scripts/trip/verify-source-pdf-fixture.swift": {
+        "acceptedSha256": "79847e1302ba5221e121375ae8fd99a3829b293feeb5068c16ff31b2c725ccb5",
+        "joinedSha256": "79847e1302ba5221e121375ae8fd99a3829b293feeb5068c16ff31b2c725ccb5",
+        "exact": true
+      },
+      "src/domain/trip/sourcePdfAuthority.ts": {
+        "acceptedSha256": "fccc80649e62e7e553b9f21a4a33df94d44a88b0c8e9b770473f2a7fb4d212da",
+        "joinedSha256": "fccc80649e62e7e553b9f21a4a33df94d44a88b0c8e9b770473f2a7fb4d212da",
+        "exact": true
+      },
+      "src/domain/trip/tripCoreV2CandidatePublication.ts": {
+        "acceptedSha256": "cc2259df007d34f37f56c634288eb6c32df95f450218a38322ae2d9e85d54b14",
+        "joinedSha256": "cc2259df007d34f37f56c634288eb6c32df95f450218a38322ae2d9e85d54b14",
+        "exact": true
+      },
+      "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql": {
+        "acceptedSha256": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+        "joinedSha256": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+        "exact": true
+      },
+      "supabase/tests/source-pdf/authority.sql": {
+        "acceptedSha256": "6d5318ff3cda1cf7942f52b5eb0a908f4cb4accb6dc357016d7d27a372fad52c",
+        "joinedSha256": "6d5318ff3cda1cf7942f52b5eb0a908f4cb4accb6dc357016d7d27a372fad52c",
+        "exact": true
+      }
+    },
+    "native": {
+      ".gitignore": {
+        "acceptedSha256": "2f037ed4a249096e404c6511ab8052d576c0591227c626b1923c02df96a0da13",
+        "joinedSha256": "2f037ed4a249096e404c6511ab8052d576c0591227c626b1923c02df96a0da13",
+        "exact": true
+      },
+      "backend/src/__fixtures__/flightCoreDayAcceptance.ts": {
+        "acceptedSha256": "9b12f81576fc6ff00e57e850b0ba0210d91b6696293741c9df135a07f7a19c17",
+        "joinedSha256": "9b12f81576fc6ff00e57e850b0ba0210d91b6696293741c9df135a07f7a19c17",
+        "exact": true
+      },
+      "backend/src/__fixtures__/tripCoreV2Sql.ts": {
+        "acceptedSha256": "2fc2fdfdf3d11bcb9c09798b15ef2f2d6840d79174d63659c96549965ee0b66d",
+        "joinedSha256": "c131632d0d95195b203e9a12e93f55bd8e9e935e4a44b3c549b7ac315c2e2a77",
+        "exact": false
+      },
+      "backend/src/nativeFlightInstalledReview.sql.test.ts": {
+        "acceptedSha256": "9d04798ee952a998c346dbdc88be16762bb9103c639e8a9c23960a2f91759b0e",
+        "joinedSha256": "9d04798ee952a998c346dbdc88be16762bb9103c639e8a9c23960a2f91759b0e",
+        "exact": true
+      },
+      "docs/CURRENT_IMPLEMENTATION_STATE.md": {
+        "acceptedSha256": "78d6bc04ef06dfed83f5fd6c3fdf8d82124cb005bb871c969b60b3b571ba0110",
+        "joinedSha256": "7e08223321476dd7f7b25ed267daa75573c30eb57166af29e7fbb3189aa32c0e",
+        "exact": false
+      },
+      "docs/DATA_MODEL.md": {
+        "acceptedSha256": "d182ee9d727d0fa300facb3f4cdf50b167e3718a83f995094fd4d93e1b5da066",
+        "joinedSha256": "d182ee9d727d0fa300facb3f4cdf50b167e3718a83f995094fd4d93e1b5da066",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_CHANGED_FILES.txt": {
+        "acceptedSha256": "61d614b0b2754777b152eeacc3f510c85864d09bfa87466047ee8583e1ae84e1",
+        "joinedSha256": "61d614b0b2754777b152eeacc3f510c85864d09bfa87466047ee8583e1ae84e1",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json": {
+        "acceptedSha256": "a670ef181b8d4a56a049d03dc763335291be2859a71d6a192d5af86dce02fd27",
+        "joinedSha256": "a670ef181b8d4a56a049d03dc763335291be2859a71d6a192d5af86dce02fd27",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md": {
+        "acceptedSha256": "d9418acd72badd81ec89c301e6b0769e8f0c056801db557a9183491d5e4936ea",
+        "joinedSha256": "d9418acd72badd81ec89c301e6b0769e8f0c056801db557a9183491d5e4936ea",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md": {
+        "acceptedSha256": "924d44f50a0eb1c43f5f68e00c47ea846d4d666bd6ac3a7d46d1f605678dd2e7",
+        "joinedSha256": "924d44f50a0eb1c43f5f68e00c47ea846d4d666bd6ac3a7d46d1f605678dd2e7",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_CHANGED_FILES.txt": {
+        "acceptedSha256": "f4b41e92040d3f58ba174787fa0438f308f5bda0a14f565435762024089bdf2b",
+        "joinedSha256": "f4b41e92040d3f58ba174787fa0438f308f5bda0a14f565435762024089bdf2b",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_EVIDENCE.json": {
+        "acceptedSha256": "d0fb0e25a3c6abdd805f73524dcec3e422a687da899978b17c0ef811843d9ffb",
+        "joinedSha256": "d0fb0e25a3c6abdd805f73524dcec3e422a687da899978b17c0ef811843d9ffb",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_READINESS_REPORT.md": {
+        "acceptedSha256": "4127b9ab57c21348428808d8a5de8831064db8069f88c8dec57ef22a496b531f",
+        "joinedSha256": "4127b9ab57c21348428808d8a5de8831064db8069f88c8dec57ef22a496b531f",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_CHANGED_FILES.txt": {
+        "acceptedSha256": "4499accdd3ad440e203a93999a739057c86dc44d2c922acdced881cb60b128b9",
+        "joinedSha256": "4499accdd3ad440e203a93999a739057c86dc44d2c922acdced881cb60b128b9",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_EVIDENCE.json": {
+        "acceptedSha256": "f633566bef97f0033c5789526f31fd77789d2c14eaae0755460d349478dead98",
+        "joinedSha256": "f633566bef97f0033c5789526f31fd77789d2c14eaae0755460d349478dead98",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_REPORT.md": {
+        "acceptedSha256": "68f8cb20ed21d02ceb239a29c4fdecc4c2cebad781bb8d8ae621863dcc3dac32",
+        "joinedSha256": "68f8cb20ed21d02ceb239a29c4fdecc4c2cebad781bb8d8ae621863dcc3dac32",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_04_CHANGED_FILES.txt": {
+        "acceptedSha256": "1f45f02850a93b38d5cbeaed70369f66b2747d63cdc48d1b6e6a6f7115ca5ed0",
+        "joinedSha256": "1f45f02850a93b38d5cbeaed70369f66b2747d63cdc48d1b6e6a6f7115ca5ed0",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_04_EVIDENCE.json": {
+        "acceptedSha256": "1967c954937d367805deb8de5149659acc7739a34e16ec2524f587398f865bc6",
+        "joinedSha256": "1967c954937d367805deb8de5149659acc7739a34e16ec2524f587398f865bc6",
+        "exact": true
+      },
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_04_INTEGRATION_READINESS_REPORT.md": {
+        "acceptedSha256": "4beb3d72860aa6fef47511a99e1f9d16aecfe26565181215b1436c67ab81a566",
+        "joinedSha256": "4beb3d72860aa6fef47511a99e1f9d16aecfe26565181215b1436c67ab81a566",
+        "exact": true
+      },
+      "modules/receipt-ocr/ios/FlightPdfExtractor.swift": {
+        "acceptedSha256": "b699b0944d78d52739d278594e5237628f9b8375f28a14b9e82c7c614878b707",
+        "joinedSha256": "b699b0944d78d52739d278594e5237628f9b8375f28a14b9e82c7c614878b707",
+        "exact": true
+      },
+      "modules/receipt-ocr/ios/ReceiptOcrModule.swift": {
+        "acceptedSha256": "09f192abbfd95d28c0c2fa763f3de52ea749960ab5b19f488532b305c67de368",
+        "joinedSha256": "09f192abbfd95d28c0c2fa763f3de52ea749960ab5b19f488532b305c67de368",
+        "exact": true
+      },
+      "modules/receipt-ocr/tests/README.md": {
+        "acceptedSha256": "5609dec7cb505dc98d160bb140c56c3705c4611a99e2223824236365366c1f97",
+        "joinedSha256": "5609dec7cb505dc98d160bb140c56c3705c4611a99e2223824236365366c1f97",
+        "exact": true
+      },
+      "modules/receipt-ocr/tests/main.swift": {
+        "acceptedSha256": "3911a95911c5361b27926310c0a58539548525c76761c90fae6917a48f5c031e",
+        "joinedSha256": "3911a95911c5361b27926310c0a58539548525c76761c90fae6917a48f5c031e",
+        "exact": true
+      },
+      "scripts/trip/core-v2-sql-acceptance.py": {
+        "acceptedSha256": "5222bda6c48432d506707ff86045c1d4c51d6ef3e25519a8270d410e810d4c71",
+        "joinedSha256": "6dc6f8bcac21538a6fb24590c6592df04ef3502044f9e72ea316aa966448ee16",
+        "exact": false
+      },
+      "scripts/trip/native-flight-03/README.md": {
+        "acceptedSha256": "150f9dab3777ad3c662e1ae2b03d5b30ff55dd183ee3b3041389d32d8debed26",
+        "joinedSha256": "150f9dab3777ad3c662e1ae2b03d5b30ff55dd183ee3b3041389d32d8debed26",
+        "exact": true
+      },
+      "scripts/trip/native-flight-03/batch.template.json": {
+        "acceptedSha256": "8f8818cd197f05685dff6337d16374a79464056eb0c2fd2cea435842d4b920bc",
+        "joinedSha256": "8f8818cd197f05685dff6337d16374a79464056eb0c2fd2cea435842d4b920bc",
+        "exact": true
+      },
+      "scripts/trip/native-flight-03/entry.ts": {
+        "acceptedSha256": "1acae6a7f809b55ef577b769c661d738cdff71dafe59aeb1b1f529bf00b56d08",
+        "joinedSha256": "1acae6a7f809b55ef577b769c661d738cdff71dafe59aeb1b1f529bf00b56d08",
+        "exact": true
+      },
+      "src/data/bootstrap/participationWakeAcceptance.test.ts": {
+        "acceptedSha256": "137c8b2cf8b0f75fa906905b03427ba47f23a354093a8f570391394fdc22b5f1",
+        "joinedSha256": "137c8b2cf8b0f75fa906905b03427ba47f23a354093a8f570391394fdc22b5f1",
+        "exact": true
+      },
+      "src/data/db/checkpoint11Integration.test.ts": {
+        "acceptedSha256": "37827e127c274ce3853d6a5fc25d4869d7ad03ea44a49ebb40c00b97d70dba84",
+        "joinedSha256": "37827e127c274ce3853d6a5fc25d4869d7ad03ea44a49ebb40c00b97d70dba84",
+        "exact": true
+      },
+      "src/data/db/database.test.ts": {
+        "acceptedSha256": "5bd90220675d6b3d51d6064daf7a26310a7a4921dd13d275cec7bd283c2294f9",
+        "joinedSha256": "5bd90220675d6b3d51d6064daf7a26310a7a4921dd13d275cec7bd283c2294f9",
+        "exact": true
+      },
+      "src/data/db/migrations.ts": {
+        "acceptedSha256": "bafc1d732b2e790f11b332a0a590a9c29af22cda2b0554e3c64d23891569493f",
+        "joinedSha256": "bafc1d732b2e790f11b332a0a590a9c29af22cda2b0554e3c64d23891569493f",
+        "exact": true
+      },
+      "src/data/db/migrations/captureFlightNative.ts": {
+        "acceptedSha256": "c075a7bec486863a833458444bec8ee6af66514ae8dbb9b1e5c47a514caf03b6",
+        "joinedSha256": "c075a7bec486863a833458444bec8ee6af66514ae8dbb9b1e5c47a514caf03b6",
+        "exact": true
+      },
+      "src/data/db/publicationMembershipMigration.test.ts": {
+        "acceptedSha256": "c3abbac846e4dd55015c7548eb5b7fe65e394051bca1fe2e13b0ba88fc84319a",
+        "joinedSha256": "c3abbac846e4dd55015c7548eb5b7fe65e394051bca1fe2e13b0ba88fc84319a",
+        "exact": true
+      },
+      "src/data/foundation/diagnosticsReadOnly.test.ts": {
+        "acceptedSha256": "d704bff8eb02fd023504435aafb8501fdb619c3127521a8fc10e15c66a064c2e",
+        "joinedSha256": "d704bff8eb02fd023504435aafb8501fdb619c3127521a8fc10e15c66a064c2e",
+        "exact": true
+      },
+      "src/data/interpretation/__fixtures__/nativeFlightPdf.json": {
+        "acceptedSha256": "6d517adcd52c561364b843c51e0fc52204dcdfa0fd877efaa38467402aeed947",
+        "joinedSha256": "6d517adcd52c561364b843c51e0fc52204dcdfa0fd877efaa38467402aeed947",
+        "exact": true
+      },
+      "src/data/interpretation/flightPdfExtraction.ts": {
+        "acceptedSha256": "97f24c98295525af1e9fa1a2c6aa3a5c599534e6c3052a874f7d4fa797e4765b",
+        "joinedSha256": "97f24c98295525af1e9fa1a2c6aa3a5c599534e6c3052a874f7d4fa797e4765b",
+        "exact": true
+      },
+      "src/data/operations/defaultCaptureFlightNative.ts": {
+        "acceptedSha256": "43793edb77d7562ac8582d90e1ef16ccdfecbafdcaf7a6ae127b81503dcf4997",
+        "joinedSha256": "43793edb77d7562ac8582d90e1ef16ccdfecbafdcaf7a6ae127b81503dcf4997",
+        "exact": true
+      },
+      "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts": {
+        "acceptedSha256": "c933cf1d7316e736636a713ef1e5fe38ef664ec113b7388b48cb98aced005eda",
+        "joinedSha256": "c933cf1d7316e736636a713ef1e5fe38ef664ec113b7388b48cb98aced005eda",
+        "exact": true
+      },
+      "src/data/repositories/captureFlightNativeRepository.test.ts": {
+        "acceptedSha256": "8cdf1a49462a14d87ce7f1e33da7d03a28b94f583c86743ae5755fbb319f7132",
+        "joinedSha256": "8cdf1a49462a14d87ce7f1e33da7d03a28b94f583c86743ae5755fbb319f7132",
+        "exact": true
+      },
+      "src/data/repositories/captureFlightNativeRepository.ts": {
+        "acceptedSha256": "f097f862c119926d5efd7172be5fe449806b778dc9c87ea0fc19eb5f78fa4a0b",
+        "joinedSha256": "f097f862c119926d5efd7172be5fe449806b778dc9c87ea0fc19eb5f78fa4a0b",
+        "exact": true
+      },
+      "src/data/repositories/intelligenceContinuationRepository.test.ts": {
+        "acceptedSha256": "adc3110bce27efaf2b4662a189b0c3d3f69f464c4442bb860d28baab714eb6bb",
+        "joinedSha256": "adc3110bce27efaf2b4662a189b0c3d3f69f464c4442bb860d28baab714eb6bb",
+        "exact": true
+      },
+      "src/data/repositories/tripCanonicalEventRepository.test.ts": {
+        "acceptedSha256": "df93d6723070ef65151afa05e02b9c968adaaddad18bcd3d6561a21ac78c18f8",
+        "joinedSha256": "df93d6723070ef65151afa05e02b9c968adaaddad18bcd3d6561a21ac78c18f8",
+        "exact": true
+      },
+      "src/data/repositories/tripPublicationMembershipRepository.test.ts": {
+        "acceptedSha256": "2f18516b59f57ca7b59176ac1eca53a31e5c81747c728277dd80103929acea39",
+        "joinedSha256": "2f18516b59f57ca7b59176ac1eca53a31e5c81747c728277dd80103929acea39",
+        "exact": true
+      },
+      "src/native/flightPdf.test.ts": {
+        "acceptedSha256": "7b275d9cc83650a683e95f86a445d0a18b5e25c9703f432a55ae9c369bc5da06",
+        "joinedSha256": "7b275d9cc83650a683e95f86a445d0a18b5e25c9703f432a55ae9c369bc5da06",
+        "exact": true
+      },
+      "src/native/flightPdf.ts": {
+        "acceptedSha256": "6b78128ce9ac1e875611ced6d8cc5ef345d8b221302d8e97c046833ad25f104d",
+        "joinedSha256": "6b78128ce9ac1e875611ced6d8cc5ef345d8b221302d8e97c046833ad25f104d",
+        "exact": true
+      }
+    }
+  },
+  "initialJoinedImplementationCommit": "be86edaac5f68771a8beba576b5afa6a143cd35e",
+  "g2Dl4AcceptedSource": "e984ed1bb377518c855af76f0cd9fd6366a73b58",
+  "g2Dl4PreservedPaths": [
+    "docs/PRODUCT.md",
+    "docs/adr/2026-10-12-day-feed-lab-shared-experience-port.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_DL4_MAIN_INTEGRATION.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_DL4_PORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_DL4_REPORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_SHARED_HANDOFF.md",
+    "docs/qa/day-feed-lab-dl4-integration/01-nonzero-scroll-after-immersive-return.png",
+    "docs/qa/day-feed-lab-dl4-integration/acceptance.json",
+    "docs/qa/day-feed-lab-dl4/01-p3-base-focus-light.png",
+    "docs/qa/day-feed-lab-dl4/02-p3-immersive-light.png",
+    "docs/qa/day-feed-lab-dl4/03-p3-immersive-dark.png",
+    "docs/qa/day-feed-lab-dl4/04-p3-checkout-focus-dark.png",
+    "docs/qa/day-feed-lab-dl4/acceptance.json",
+    "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+    "src/features/day-feed-lab/StayFixtureRow.tsx",
+    "src/features/day-feed-lab/contribution.test.ts",
+    "src/features/day-feed-lab/contribution.ts",
+    "src/features/day-feed-lab/fixtureCatalog.test.ts",
+    "src/features/day-feed-lab/fixtureCatalog.ts",
+    "src/features/day-feed-lab/fixtureFacts.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed-lab/stayContribution.ts",
+    "src/features/day-feed/DayFeed.tsx",
+    "src/features/day-feed/P1Row.tsx",
+    "src/features/day-feed/composition.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/features/day-feed/rendererContribution.ts",
+    "src/ui/catalogs.ts"
+  ]
+}

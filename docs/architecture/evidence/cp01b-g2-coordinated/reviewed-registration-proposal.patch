@@ -1,0 +1,16 @@
+diff --git a/src/features/day-feed-lab/fixtureRegistration.ts b/src/features/day-feed-lab/fixtureRegistration.ts
+index c5111fb..495884c 100644
+--- a/src/features/day-feed-lab/fixtureRegistration.ts
++++ b/src/features/day-feed-lab/fixtureRegistration.ts
+@@ -1,3 +1,4 @@
++import { flexibleLabContributions } from "@/features/flexible-native-gallery/labAdapter";
+ import { collectFixtureContributions } from "./contribution";
+ import { getDl1FixtureCatalog } from "./fixtureCatalog";
+ import { stayContribution } from "./stayContribution";
+@@ -20,5 +21,6 @@ export function getLabFixtures() {
+       title: t(`dayLab.ttr.${fixture.supplemental!.caseId}`),
+     })),
+     { ...flexibleReactiveContribution(), flexibleRenderer: FlexibleSnapshotFixtureRow },
++    ...flexibleLabContributions(),
+   ]);
+ }

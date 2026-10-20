@@ -1,0 +1,74 @@
+{
+  "packet": "META-01 original exact-scope DEV metadata refresh",
+  "status": "PARTIAL_READ_PASS_NO_ACTIVATION",
+  "recordedAtUtc": "2026-10-13T20:38:12.579885+00:00",
+  "recordedAtNZDT": "2026-10-14T09:38:12.579885+13:00",
+  "queryCompletedAtUtc": {
+    "primary-output.json": "2026-10-13T20:35:47.567924+00:00",
+    "visibility-output.json": "2026-10-13T20:35:48.751778+00:00",
+    "backend-health.json": "2026-10-13T20:36:09.127119+00:00"
+  },
+  "authority": "Standing Owner-approved META-01 / BD51; Root refresh delegation; Source confirms original exact SQL only",
+  "target": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "backendHost": "api-dev.xoery.art",
+    "environment": "development"
+  },
+  "existingOpsPath": "Installed Supabase CLI2.117.0; db query --linked --project-ref explicit DEV ref --file exact approved SQL; existing Management API identity resolver only",
+  "queries": [
+    {
+      "path": "/private/tmp/otr-beta-meta01-refresh-61/primary.sql",
+      "sha256": "bc462e902a43d21cf1cf8e8455fa7f2f7d6c5c19452d9774dd6868dabcb35235"
+    },
+    {
+      "path": "/private/tmp/otr-beta-meta01-refresh-61/visibility.sql",
+      "sha256": "03af9daf26ea340689d041b6533ad9b48ea9334f16ea70aa3e488e20caed873a"
+    }
+  ],
+  "observed": {
+    "columns": [],
+    "external_membership_edge_counts": {},
+    "functions": [],
+    "migrations": [],
+    "roles": [],
+    "selected_role_memberships": [],
+    "transaction_read_only": "on"
+  },
+  "visibility": {
+    "migration_forced_rls": false,
+    "migration_rls_enabled": false,
+    "migration_select_allowed": true,
+    "migration_table_exists": true,
+    "role_catalog_select_allowed": true,
+    "selected_core_table_exists": false,
+    "selected_trip_receipt_table_exists": false,
+    "transaction_read_only": "on"
+  },
+  "publicBackendHealth": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "publicTls": {
+    "curlVerifiedHttps": true,
+    "httpStatus": 200,
+    "sslVerifyResult": 0,
+    "scope": "Public frontend TLS only; no internal PG principal/TLS inference"
+  },
+  "unknown": {
+    "deployedBackendBuild": "UNKNOWN",
+    "tripCreateReceiptPortConfigured": "UNKNOWN",
+    "restrictedBackendOpsMetadataChannel": "UNAVAILABLE/UNPROVEN; not replaced with host/env/credential inspection",
+    "internalPgPrincipalTlsBinding": "UNKNOWN; outside original META-01",
+    "rollbackBuildIdentity": "UNKNOWN; outside original META-01"
+  },
+  "notExecuted": {
+    "sourceExpandedStageASql": true,
+    "additionalVersionsObjectsRoutineHashes": true,
+    "extraGateRows": true,
+    "businessRowsAuthUsers": true,
+    "credentialEnvDbUrlRead": true,
+    "DDL_DMLRoleCredentialDeploymentRuntimeChange": true,
+    "localFullProofRerun": true
+  },
+  "interpretation": "Successful READ ONLY execution and effective catalog visibility support absence only of the original two selected migration versions, two tables, two Trip functions and three named roles. Not full-schema absence, deployed Core absence or runtime acceptance. Existing real full user journeys remain0; Core/TTR activation remains CLOSED."
+}

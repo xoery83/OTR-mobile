@@ -1,0 +1,43 @@
+{
+  "productSha": "21df3051d55cb7df6d2cdd803ee581da7002177a",
+  "scope": "Existing build/configuration/static startup read-only verification; no rebuild/test/install or business operation",
+  "metadataFeatureFlag": {
+    "fieldName": "EXPO_PUBLIC_OTR_TRIP_METADATA_UPDATE",
+    "providedInEnvFiles": false,
+    "effectiveEnabled": false,
+    "compiledBuildInputReturnsFalseBeforeTransportImport": true,
+    "compiledBuildInputPath": "/private/tmp/otr-cover-release-21df305-20261019/derived/Build/Products/Release-iphonesimulator/main.jsbundle",
+    "compiledBuildInputSha256": "9ee03d00e2406ab4747cec6c79cd3922a2db020c4936e98adb0dcf360b8e6d2b",
+    "closedFunctionExcerptSha256": "23650987127b745be4ce6bb3afb20a31f674bb79a7464e25407b9a76eb97aad7",
+    "hermesEmbeddedBundleSha256": "b3b1a0c22ccd05c51b6e2482d30170e92cf4d89f0861d2ee71bea9b9616a7273"
+  },
+  "publicBuildEnvFieldNames": [
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL",
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY"
+  ],
+  "commandEnvFieldNames": [
+    "CI",
+    "EXPO_OFFLINE",
+    "EXPO_NO_TELEMETRY",
+    "TMPDIR"
+  ],
+  "currentInheritedMetadataFlagPresent": false,
+  "normalTripCreate": {
+    "runnerInitialValue": "null",
+    "startupSetterCallers": [],
+    "normalStartupInstallsRunner": false,
+    "factoryPortDefault": "false",
+    "factoryRequiresExplicitFrozenTripCreateTarget": true,
+    "closedBeforeBackendDispatch": true,
+    "sourceFiles": [
+      "src/data/sync/ledgerOperationalSync.ts",
+      "src/data/sync/tripCreateCoordinator.ts"
+    ]
+  },
+  "artifactManifestSha256": "71e90b064a80400350bee0f52a15064c7abb52e3eaa5a479c283bf5bc8f44d15",
+  "appDirectoryManifestPath": "/private/tmp/otr-cover-release-21df305-20261019/APP_DIRECTORY_MANIFEST.json",
+  "appDirectoryManifestSha256": "220542b0f72d50b19d4e8b14372fab5e405001176f16d303c617f04b6d4481a9",
+  "appDirectoryEntryCount": 155,
+  "appDirectoryManifestFormat": "UTF-8 JSON sorted by relative path, sort_keys=true, compact separators, final newline; regular file bytes/SHA256 plus symlink targets",
+  "noDeviceAuthSessionDatabaseOrHostedMutation": true
+}

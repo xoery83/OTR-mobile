@@ -1,0 +1,8 @@
+{
+  "runtime": "v24.18.0",
+  "scope": "Node only; not Native startup/scroll/memory acceptance",
+  "firstGeoIndexAndTop1Ms": 248.592542,
+  "cachedTop1Ms": 0.03137499999996862,
+  "gallery48Ms": 9.12537500000002,
+  "heapDeltaBytes": 49551488
+}

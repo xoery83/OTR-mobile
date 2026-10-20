@@ -1,0 +1,829 @@
+{
+  "confirmation": {
+    "id": "ca130000-0000-4000-8000-000000000006",
+    "slots": [
+      {
+        "slot_id": "ca130000-0000-4000-8000-000000000007",
+        "slot_key": "occurrence-1",
+        "adapter_key": "itinerary-event-v1",
+        "disposition": "CREATE",
+        "candidate_id": "ca130000-0000-4000-8000-000000000005",
+        "base_revision": null,
+        "adapter_version": 1,
+        "reviewed_run_id": "ca130000-0000-4000-8000-000000000003",
+        "support_payload": {
+          "title": {
+            "origin": "ACCEPTED_EXTRACTED",
+            "locators": [
+              {
+                "end": null,
+                "kind": "WHOLE",
+                "page": null,
+                "start": null,
+                "region": null,
+                "input_id": "ca130000-0000-4000-8000-000000000010"
+              }
+            ],
+            "input_ids": ["ca130000-0000-4000-8000-000000000010"],
+            "candidate_id": "ca130000-0000-4000-8000-000000000005",
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/title",
+            "candidate_field_key": "title"
+          },
+          "origin": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/origin",
+            "candidate_field_key": null
+          },
+          "services": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/services",
+            "candidate_field_key": null
+          },
+          "destination": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/destination",
+            "candidate_field_key": null
+          }
+        },
+        "support_version": 1,
+        "reviewed_payload": {
+          "edits": {
+            "title": "NZ0289A",
+            "origin": {
+              "time": {
+                "basis": "SOURCE_INSTANT",
+                "quality": "EXACT",
+                "zone_id": null,
+                "local_date": "2026-12-17",
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": "2026-12-16T20:00:00.123456Z",
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": 6
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Auckland",
+                "accepted_place_id": null
+              }
+            },
+            "services": [
+              {
+                "attribution": "UNSPECIFIED",
+                "service_key": "primary",
+                "operator_value": "NZ",
+                "service_number": "0289A",
+                "operator_issuer": "IATA",
+                "service_literal": "NZ0289A",
+                "operator_literal": "Air New Zealand",
+                "transport_subtype": "FLIGHT",
+                "operator_namespace": "IATA_AIRLINE",
+                "codeshare_operating_key": null
+              }
+            ],
+            "destination": {
+              "time": {
+                "basis": "DERIVED_CIVIL",
+                "quality": "UNKNOWN",
+                "zone_id": null,
+                "local_date": null,
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": null,
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": null
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Shanghai",
+                "accepted_place_id": null
+              }
+            }
+          },
+          "schema_key": "flight-v1",
+          "match_policy": "import-flight-match-v1",
+          "schema_version": 1,
+          "selected_fields": ["destination", "origin", "services", "title"],
+          "association_intents": [
+            {
+              "purpose": "CONFIRMED_SUPPORT",
+              "input_id": "ca130000-0000-4000-8000-000000000010"
+            }
+          ],
+          "deferred_dimensions": [
+            {
+              "reason": "UNSUPPORTED_DIMENSION",
+              "locator": {
+                "end": null,
+                "kind": "WHOLE",
+                "page": null,
+                "start": null,
+                "region": null,
+                "input_id": "ca130000-0000-4000-8000-000000000010"
+              },
+              "input_id": "ca130000-0000-4000-8000-000000000010",
+              "dimension": "passengers",
+              "candidate_field_key": null
+            }
+          ],
+          "normalization_version": 1
+        },
+        "intended_target_id": "ca130000-0000-4000-8000-000000000009",
+        "domain_intent_sha256": "c773274ba1ce6c209211a163deaadf77ce570046efca4e980c873e4e0abf0294",
+        "domain_operation_key": "ca130000-0000-4000-8000-000000000008",
+        "intended_target_kind": "ITINERARY_EVENT"
+      }
+    ],
+    "inputs": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000010",
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "material_revision": 1,
+        "representation_id": "ca130000-0000-4000-8000-000000000002",
+        "historical_selection": false,
+        "observed_source_row_revision": 1
+      }
+    ],
+    "dependencies": [],
+    "intent_version": 1,
+    "confirmation_key": "fixture-confirmation-1",
+    "lineage_dispositions": []
+  },
+  "command": {
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "command": "CREATE_TRANSPORT",
+    "eventId": "ca130000-0000-4000-8000-000000000009",
+    "payload": {
+      "core": {
+        "title": "NZ0289A"
+      },
+      "shape": "TRANSPORT",
+      "origin": {
+        "time": {
+          "basis": "SOURCE_INSTANT",
+          "quality": "EXACT",
+          "zone_id": null,
+          "local_date": "2026-12-17",
+          "local_time": null,
+          "fold_choice": null,
+          "source_instant": "2026-12-16T20:00:00.123456Z",
+          "clock_precision": null,
+          "supplied_offset_seconds": null,
+          "source_instant_precision": 6
+        },
+        "location": {
+          "authored_text": null,
+          "authored_label": "Auckland",
+          "accepted_place_id": null
+        }
+      },
+      "proofs": {
+        "ROOT.title": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ROOT.title",
+          "kind": "TRACK_C"
+        },
+        "ORIGIN.local_date": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.local_date",
+          "kind": "TRACK_C"
+        },
+        "ORIGIN.authored_label": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.authored_label",
+          "kind": "TRACK_C"
+        },
+        "ORIGIN.source_instant": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.source_instant",
+          "kind": "TRACK_C"
+        },
+        "DESTINATION.authored_label": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/DESTINATION.authored_label",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.attribution": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.attribution",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_value": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_value",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.service_number": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_number",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_issuer": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_issuer",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.service_literal": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_literal",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_literal": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_literal",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_namespace": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_namespace",
+          "kind": "TRACK_C"
+        }
+      },
+      "subtype": "FLIGHT",
+      "services": [
+        {
+          "attribution": "UNSPECIFIED",
+          "service_key": "primary",
+          "operator_value": "NZ",
+          "service_number": "0289A",
+          "operator_issuer": "IATA",
+          "service_literal": "NZ0289A",
+          "operator_literal": "Air New Zealand",
+          "transport_subtype": "FLIGHT",
+          "operator_namespace": "IATA_AIRLINE",
+          "codeshare_operating_key": null
+        }
+      ],
+      "eventType": "TRANSPORT",
+      "destination": {
+        "time": {
+          "basis": "DERIVED_CIVIL",
+          "quality": "UNKNOWN",
+          "zone_id": null,
+          "local_date": null,
+          "local_time": null,
+          "fold_choice": null,
+          "source_instant": null,
+          "clock_precision": null,
+          "supplied_offset_seconds": null,
+          "source_instant_precision": null
+        },
+        "location": {
+          "authored_text": null,
+          "authored_label": "Shanghai",
+          "accepted_place_id": null
+        }
+      },
+      "participantScope": "UNASSIGNED"
+    },
+    "operationKey": "ca130000-0000-4000-8000-000000000008",
+    "intentVersion": 1,
+    "actorAccountId": "00000000-0000-4000-8000-000000000001",
+    "commandVersion": 1,
+    "contractVersion": 1,
+    "baseSemanticRevision": null
+  },
+  "terminal-intent": {
+    "id": "ca130000-0000-4000-8000-000000000040",
+    "slots": [
+      {
+        "slot_id": "ca130000-0000-4000-8000-000000000041",
+        "slot_key": "distinct-reviewed-output",
+        "adapter_key": "itinerary-event-v1",
+        "disposition": "CREATE",
+        "candidate_id": "ca130000-0000-4000-8000-000000000005",
+        "base_revision": null,
+        "adapter_version": 1,
+        "reviewed_run_id": "ca130000-0000-4000-8000-000000000003",
+        "support_payload": {
+          "title": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000042/slot/ca130000-0000-4000-8000-000000000041/title",
+            "candidate_field_key": null
+          },
+          "origin": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000042/slot/ca130000-0000-4000-8000-000000000041/origin",
+            "candidate_field_key": null
+          },
+          "services": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000042/slot/ca130000-0000-4000-8000-000000000041/services",
+            "candidate_field_key": null
+          },
+          "destination": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000042/slot/ca130000-0000-4000-8000-000000000041/destination",
+            "candidate_field_key": null
+          }
+        },
+        "support_version": 1,
+        "reviewed_payload": {
+          "edits": {
+            "title": "NZ0289A",
+            "origin": {
+              "time": {
+                "basis": "SOURCE_INSTANT",
+                "quality": "EXACT",
+                "zone_id": null,
+                "local_date": "2026-12-17",
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": "2026-12-16T20:00:00.123456Z",
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": 6
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Auckland",
+                "accepted_place_id": null
+              }
+            },
+            "services": [
+              {
+                "attribution": "UNSPECIFIED",
+                "service_key": "primary",
+                "operator_value": "NZ",
+                "service_number": "0289A",
+                "operator_issuer": "IATA",
+                "service_literal": "NZ0289A",
+                "operator_literal": "Air New Zealand",
+                "transport_subtype": "FLIGHT",
+                "operator_namespace": "IATA_AIRLINE",
+                "codeshare_operating_key": null
+              }
+            ],
+            "destination": {
+              "time": {
+                "basis": "DERIVED_CIVIL",
+                "quality": "UNKNOWN",
+                "zone_id": null,
+                "local_date": null,
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": null,
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": null
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Shanghai",
+                "accepted_place_id": null
+              }
+            }
+          },
+          "schema_key": "flight-v1",
+          "match_policy": "import-flight-match-v1",
+          "schema_version": 1,
+          "selected_fields": ["destination", "origin", "services", "title"],
+          "association_intents": [],
+          "deferred_dimensions": [],
+          "normalization_version": 1
+        },
+        "intended_target_id": "ca130000-0000-4000-8000-000000000049",
+        "domain_intent_sha256": "2f44ed6dbbf8865708ae0bbef032a2a83ed17ecd663a5960cb2f4ec5cc120733",
+        "domain_operation_key": "ca130000-0000-4000-8000-000000000042",
+        "intended_target_kind": "ITINERARY_EVENT"
+      }
+    ],
+    "inputs": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000043",
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "material_revision": 1,
+        "representation_id": "ca130000-0000-4000-8000-000000000002",
+        "historical_selection": false,
+        "observed_source_row_revision": 1
+      }
+    ],
+    "dependencies": [],
+    "intent_version": 1,
+    "confirmation_key": "fixture-terminal-1",
+    "lineage_dispositions": [
+      {
+        "slot_id": "ca130000-0000-4000-8000-000000000041",
+        "relation": "DISTINCT_OUTPUT",
+        "review_reason": "explicit separate output purpose",
+        "ancestor_slot_key": "occurrence-1",
+        "ancestor_candidate_id": "ca130000-0000-4000-8000-000000000005"
+      }
+    ]
+  },
+  "terminal-command": {
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "command": "CREATE_TRANSPORT",
+    "eventId": "ca130000-0000-4000-8000-000000000049",
+    "payload": {
+      "core": {
+        "title": "NZ0289A"
+      },
+      "shape": "TRANSPORT",
+      "origin": {
+        "time": {
+          "basis": "SOURCE_INSTANT",
+          "quality": "EXACT",
+          "zone_id": null,
+          "local_date": "2026-12-17",
+          "local_time": null,
+          "fold_choice": null,
+          "source_instant": "2026-12-16T20:00:00.123456Z",
+          "clock_precision": null,
+          "supplied_offset_seconds": null,
+          "source_instant_precision": 6
+        },
+        "location": {
+          "authored_text": null,
+          "authored_label": "Auckland",
+          "accepted_place_id": null
+        }
+      },
+      "proofs": {
+        "ROOT.title": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ROOT.title",
+          "kind": "TRACK_C"
+        },
+        "ORIGIN.local_date": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.local_date",
+          "kind": "TRACK_C"
+        },
+        "ORIGIN.authored_label": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.authored_label",
+          "kind": "TRACK_C"
+        },
+        "ORIGIN.source_instant": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.source_instant",
+          "kind": "TRACK_C"
+        },
+        "DESTINATION.authored_label": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/DESTINATION.authored_label",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.attribution": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.attribution",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_value": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_value",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.service_number": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_number",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_issuer": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_issuer",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.service_literal": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_literal",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_literal": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_literal",
+          "kind": "TRACK_C"
+        },
+        "SERVICE.primary.operator_namespace": {
+          "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_namespace",
+          "kind": "TRACK_C"
+        }
+      },
+      "subtype": "FLIGHT",
+      "services": [
+        {
+          "attribution": "UNSPECIFIED",
+          "service_key": "primary",
+          "operator_value": "NZ",
+          "service_number": "0289A",
+          "operator_issuer": "IATA",
+          "service_literal": "NZ0289A",
+          "operator_literal": "Air New Zealand",
+          "transport_subtype": "FLIGHT",
+          "operator_namespace": "IATA_AIRLINE",
+          "codeshare_operating_key": null
+        }
+      ],
+      "eventType": "TRANSPORT",
+      "destination": {
+        "time": {
+          "basis": "DERIVED_CIVIL",
+          "quality": "UNKNOWN",
+          "zone_id": null,
+          "local_date": null,
+          "local_time": null,
+          "fold_choice": null,
+          "source_instant": null,
+          "clock_precision": null,
+          "supplied_offset_seconds": null,
+          "source_instant_precision": null
+        },
+        "location": {
+          "authored_text": null,
+          "authored_label": "Shanghai",
+          "accepted_place_id": null
+        }
+      },
+      "participantScope": "UNASSIGNED"
+    },
+    "operationKey": "ca130000-0000-4000-8000-000000000042",
+    "intentVersion": 1,
+    "actorAccountId": "00000000-0000-4000-8000-000000000001",
+    "commandVersion": 1,
+    "contractVersion": 1,
+    "baseSemanticRevision": null
+  },
+  "create-receipt": {
+    "command": "CREATE_TRANSPORT",
+    "outcome": "APPLIED",
+    "trip_id": "10000000-0000-4000-8000-000000000001",
+    "error_code": null,
+    "committed_at": "2026-10-05T12:46:12.602588Z",
+    "confirmations": {
+      "ROOT.title": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ROOT.title",
+        "field": "ROOT.title",
+        "value": "NZ0289A",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "ORIGIN.local_date": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.local_date",
+        "field": "ORIGIN.local_date",
+        "value": "2026-12-17",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "ORIGIN.authored_label": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.authored_label",
+        "field": "ORIGIN.authored_label",
+        "value": "Auckland",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "ORIGIN.source_instant": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.source_instant",
+        "field": "ORIGIN.source_instant",
+        "value": {
+          "value": "2026-12-16T20:00:00.123456Z",
+          "precision": 6
+        },
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": false,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "DESTINATION.authored_label": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/DESTINATION.authored_label",
+        "field": "DESTINATION.authored_label",
+        "value": "Shanghai",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.attribution": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.attribution",
+        "field": "SERVICE.primary.attribution",
+        "value": "UNSPECIFIED",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.operator_value": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_value",
+        "field": "SERVICE.primary.operator_value",
+        "value": "NZ",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.service_number": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_number",
+        "field": "SERVICE.primary.service_number",
+        "value": "0289A",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.operator_issuer": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_issuer",
+        "field": "SERVICE.primary.operator_issuer",
+        "value": "IATA",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.service_literal": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_literal",
+        "field": "SERVICE.primary.service_literal",
+        "value": "NZ0289A",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.operator_literal": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_literal",
+        "field": "SERVICE.primary.operator_literal",
+        "value": "Air New Zealand",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      },
+      "SERVICE.primary.operator_namespace": {
+        "ref": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_namespace",
+        "field": "SERVICE.primary.operator_namespace",
+        "value": "IATA_AIRLINE",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "cleared": null,
+        "eventId": "ca130000-0000-4000-8000-000000000009",
+        "operationKey": "ca130000-0000-4000-8000-000000000008",
+        "actorAccountId": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    "intent_sha256": "c773274ba1ce6c209211a163deaadf77ce570046efca4e980c873e4e0abf0294",
+    "operation_key": "ca130000-0000-4000-8000-000000000008",
+    "result_fields": {
+      "id": "ca130000-0000-4000-8000-000000000009",
+      "title": "NZ0289A",
+      "origin": {
+        "role": "ORIGIN",
+        "basis": "SOURCE_INSTANT",
+        "instant": "2026-12-16T20:00:00.123456Z",
+        "quality": "EXACT",
+        "zone_id": null,
+        "event_id": "ca130000-0000-4000-8000-000000000009",
+        "local_date": "2026-12-17",
+        "local_time": null,
+        "authored_text": null,
+        "authored_label": "Auckland",
+        "source_instant": "2026-12-16T20:00:00.123456Z",
+        "candidate_label": null,
+        "candidate_state": null,
+        "clock_precision": null,
+        "provenance_refs": {
+          "local_date": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.local_date",
+          "source_instant": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.source_instant"
+        },
+        "accepted_address": null,
+        "authored_address": null,
+        "civil_resolution": null,
+        "accepted_latitude": null,
+        "accepted_place_id": null,
+        "candidate_address": null,
+        "accepted_longitude": null,
+        "candidate_latitude": null,
+        "candidate_place_id": null,
+        "candidate_provider": null,
+        "interpretation_key": null,
+        "candidate_longitude": null,
+        "candidate_confidence": null,
+        "candidate_error_code": null,
+        "candidate_observed_at": null,
+        "accepted_address_line1": null,
+        "accepted_address_line2": null,
+        "authored_address_line1": null,
+        "authored_address_line2": null,
+        "accepted_address_region": null,
+        "authored_address_region": null,
+        "location_input_revision": 1,
+        "spatial_provenance_refs": {
+          "authored_label": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.authored_label"
+        },
+        "supplied_offset_seconds": null,
+        "accepted_address_country": null,
+        "authored_address_country": null,
+        "candidate_input_revision": null,
+        "source_instant_precision": 6,
+        "accepted_address_locality": null,
+        "authored_address_locality": null,
+        "resolution_offset_seconds": null,
+        "candidate_provider_place_id": null,
+        "interpretation_input_sha256": null,
+        "accepted_address_postal_code": null,
+        "authored_address_postal_code": null
+      },
+      "trip_id": "10000000-0000-4000-8000-000000000001",
+      "services": [
+        {
+          "attribution": "UNSPECIFIED",
+          "service_key": "primary",
+          "operator_value": "NZ",
+          "service_number": "0289A",
+          "operator_issuer": "IATA",
+          "service_literal": "NZ0289A",
+          "operator_literal": "Air New Zealand",
+          "transport_subtype": "FLIGHT",
+          "operator_namespace": "IATA_AIRLINE",
+          "codeshare_operating_key": null
+        }
+      ],
+      "destination": {
+        "role": "DESTINATION",
+        "basis": "DERIVED_CIVIL",
+        "instant": null,
+        "quality": "UNKNOWN",
+        "zone_id": null,
+        "event_id": "ca130000-0000-4000-8000-000000000009",
+        "local_date": null,
+        "local_time": null,
+        "authored_text": null,
+        "authored_label": "Shanghai",
+        "source_instant": null,
+        "candidate_label": null,
+        "candidate_state": null,
+        "clock_precision": null,
+        "provenance_refs": {},
+        "accepted_address": null,
+        "authored_address": null,
+        "civil_resolution": "PENDING",
+        "accepted_latitude": null,
+        "accepted_place_id": null,
+        "candidate_address": null,
+        "accepted_longitude": null,
+        "candidate_latitude": null,
+        "candidate_place_id": null,
+        "candidate_provider": null,
+        "interpretation_key": null,
+        "candidate_longitude": null,
+        "candidate_confidence": null,
+        "candidate_error_code": null,
+        "candidate_observed_at": null,
+        "accepted_address_line1": null,
+        "accepted_address_line2": null,
+        "authored_address_line1": null,
+        "authored_address_line2": null,
+        "accepted_address_region": null,
+        "authored_address_region": null,
+        "location_input_revision": 1,
+        "spatial_provenance_refs": {
+          "authored_label": "track-c/field-evidence/ca130000-0000-4000-8000-000000000007/DESTINATION.authored_label"
+        },
+        "supplied_offset_seconds": null,
+        "accepted_address_country": null,
+        "authored_address_country": null,
+        "candidate_input_revision": null,
+        "source_instant_precision": null,
+        "accepted_address_locality": null,
+        "authored_address_locality": null,
+        "resolution_offset_seconds": null,
+        "candidate_provider_place_id": null,
+        "interpretation_input_sha256": null,
+        "accepted_address_postal_code": null,
+        "authored_address_postal_code": null
+      },
+      "semantic_revision": 1
+    },
+    "intent_version": 1,
+    "receipt_sha256": "207bd8de5809afa653bd26a3afa6a64bf60bd75b69bcdfd02b292bf6d49b6fe7",
+    "command_version": 1,
+    "receipt_version": 1,
+    "result_event_id": "ca130000-0000-4000-8000-000000000009",
+    "target_event_id": "ca130000-0000-4000-8000-000000000009",
+    "actor_account_id": "00000000-0000-4000-8000-000000000001",
+    "intended_payload": "{\"actorAccountId\":\"00000000-0000-4000-8000-000000000001\",\"baseSemanticRevision\":null,\"command\":\"CREATE_TRANSPORT\",\"commandVersion\":1,\"contractVersion\":1,\"eventId\":\"ca130000-0000-4000-8000-000000000009\",\"intentVersion\":1,\"operationKey\":\"ca130000-0000-4000-8000-000000000008\",\"payload\":{\"core\":{\"title\":\"NZ0289A\"},\"destination\":{\"location\":{\"accepted_place_id\":null,\"authored_label\":\"Shanghai\",\"authored_text\":null},\"time\":{\"basis\":\"DERIVED_CIVIL\",\"clock_precision\":null,\"fold_choice\":null,\"local_date\":null,\"local_time\":null,\"quality\":\"UNKNOWN\",\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}},\"eventType\":\"TRANSPORT\",\"origin\":{\"location\":{\"accepted_place_id\":null,\"authored_label\":\"Auckland\",\"authored_text\":null},\"time\":{\"basis\":\"SOURCE_INSTANT\",\"clock_precision\":null,\"fold_choice\":null,\"local_date\":\"2026-12-17\",\"local_time\":null,\"quality\":\"EXACT\",\"source_instant\":\"2026-12-16T20:00:00.123456Z\",\"source_instant_precision\":6,\"supplied_offset_seconds\":null,\"zone_id\":null}},\"participantScope\":\"UNASSIGNED\",\"proofs\":{\"DESTINATION.authored_label\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/DESTINATION.authored_label\"},\"ORIGIN.authored_label\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.authored_label\"},\"ORIGIN.local_date\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.local_date\"},\"ORIGIN.source_instant\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ORIGIN.source_instant\"},\"ROOT.title\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/ROOT.title\"},\"SERVICE.primary.attribution\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.attribution\"},\"SERVICE.primary.operator_issuer\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_issuer\"},\"SERVICE.primary.operator_literal\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_literal\"},\"SERVICE.primary.operator_namespace\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_namespace\"},\"SERVICE.primary.operator_value\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.operator_value\"},\"SERVICE.primary.service_literal\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_literal\"},\"SERVICE.primary.service_number\":{\"kind\":\"TRACK_C\",\"ref\":\"track-c/field-evidence/ca130000-0000-4000-8000-000000000007/SERVICE.primary.service_number\"}},\"services\":[{\"attribution\":\"UNSPECIFIED\",\"codeshare_operating_key\":null,\"operator_issuer\":\"IATA\",\"operator_literal\":\"Air New Zealand\",\"operator_namespace\":\"IATA_AIRLINE\",\"operator_value\":\"NZ\",\"service_key\":\"primary\",\"service_literal\":\"NZ0289A\",\"service_number\":\"0289A\",\"transport_subtype\":\"FLIGHT\"}],\"shape\":\"TRANSPORT\",\"subtype\":\"FLIGHT\"},\"tripId\":\"10000000-0000-4000-8000-000000000001\"}",
+    "submitted_http_status": 201,
+    "base_semantic_revision": null,
+    "observed_semantic_revision": null,
+    "committed_semantic_revision": 1
+  }
+}

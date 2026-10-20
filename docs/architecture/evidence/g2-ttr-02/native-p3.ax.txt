@@ -1,0 +1,19 @@
+					37 heading Description: Day Feed Lab, Secondary Actions: Cancel
+					38 button Description: Fixture, Secondary Actions: Cancel
+					39 button (disabled) Description: Core DEV Read, Secondary Actions: Cancel
+					40 button Description: Refresh, Secondary Actions: Cancel
+					41 text Description: An accepted compatible Core read collection is unavailable. No data source fallback is used., Secondary Actions: Cancel
+					42 button Description: Test Trip, Synthetic P3 Stay, Secondary Actions: Cancel
+					43 button Description: Previous, Secondary Actions: Cancel
+					44 button Description: Jan 15, Secondary Actions: Cancel
+					45 button (selected) Description: Jan 16, Secondary Actions: Cancel
+					46 button Description: Jan 17, Secondary Actions: Cancel
+					47 button Description: Jan 18, Secondary Actions: Cancel
+					48 button Description: Next, Secondary Actions: Cancel
+					49 text Secondary Actions: Cancel, Description: Fixture · Trip c0000000-0000-4000-8000-000000000003 · Date 2027-01-16 · Day Read v1 · NOW 2027-01-15T12:00:00Z
+					50 text Description: P3, Flexible and TTR are synthetic Lab proofs; P4–P6 remain future ports., Secondary Actions: Cancel
+					51 button Description: Synthetic Harbour Lodge, Help: Show inline place details, Secondary Actions: Cancel
+				52 button Description: Home, ID: app.grid.3x3
+				53 button Description: Screenshot, ID: camera.viewfinder
+				54 button Description: Record, ID: record.circle
+		75 toggle button Description: Filter, Help: Sort and Filter, Value: off

@@ -1,0 +1,128 @@
+{
+  "status": "C4_PARTIAL",
+  "localExtraction": "RUNTIME_PASS_TWO_REAL_INPUTS",
+  "localInterpretation": "PARTIAL_FLIGHT_OBSERVATIONS",
+  "appleModel": {
+    "capability": "AVAILABLE",
+    "actualEnrichment": "FAILED",
+    "localResultsRetained": true,
+    "scope": "actual originalA1A; not a general device availability claim"
+  },
+  "remoteProvider": {
+    "status": "NOT_USED_RUNTIME_CLOSED",
+    "existingAdapter": "DeepSeek/deepseek-flash, conformance allows DeepSeek-V4.1-Flash alias",
+    "normalHost": "initializeDevFlightLiveHost invoked without required provisioning and stays CLOSED",
+    "credentialsInspected": false,
+    "paidCalls": 0,
+    "activation": "requires separately scoped protected provisioning/execution package, no permission inferred from C2"
+  },
+  "candidateEvidence": {
+    "localFieldSpans": "VALIDATED",
+    "publishedCandidate": false,
+    "sourceAuthority": "NONE",
+    "reviewOrAdmission": false
+  },
+  "offlineFeedback": {
+    "status": "PASS_SCOPED_COLD_RETAINED_RESULT_READ",
+    "method": "normal Capture Activity; JS fetch denied only around owning localResults read, same source manifest",
+    "physicalAirplaneMode": false,
+    "initialDebugScriptUrlFailure": "retained as cold-offline-read.png; not counted as PASS",
+    "recoveredUi": "cold-offline-read-recovered.png"
+  },
+  "device": "A1A21E80-9007-4D69-87A4-2A5AF927F0A3",
+  "bundle": "com.xoery.otrmobile",
+  "binaryVersion": "0.1.0/build1; samebundle coverinstall; binaryGitSha UNKNOWN; exact Nativeoverlay+build recorded",
+  "sourceBase": "cc3b3a96d70b942638376eb189b1f277c414a218",
+  "sourceManifest": "applied.json + repair-applied.json + normal-recovery-applied.json + cold-read-source.json + cleanup.json",
+  "batchId": "e046f37a-61ac-444a-b05b-0a991d59e006",
+  "jobId": "d9fc69ea-9fe1-4c62-8c65-359ac737a9d7",
+  "accountId": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+  "schemaBefore": 66,
+  "schemaAfter": 67,
+  "originalCaptureTablesUnchanged": true,
+  "results": [
+    {
+      "inputId": "88bb7049-5cac-4b4a-a6e0-9f9ceee131d7",
+      "engine": "apple-pdfkit",
+      "originalSha256": "dd8c0250c01682d5960e05ef8b4316692151fb20b461b1f4ee1c8fb2caaf12b3",
+      "originalByteCount": 2943032,
+      "textBytes": 2626,
+      "textSha256": "f820f93b57c730bb575e12177b6c8aadb8966f52a824f5947dfbdf4d5bb95cec",
+      "pages": 1,
+      "ocrObservations": 0,
+      "fields": 18,
+      "fieldPaths": [
+        "destination.local_date",
+        "destination.local_time",
+        "destination.place_label",
+        "origin.local_date",
+        "origin.local_time",
+        "origin.place_label",
+        "transport_subtype"
+      ],
+      "exactFieldEvidence": true,
+      "parserStatus": "SUCCEEDED",
+      "status": "PARTIAL_FLIGHT_OBSERVATIONS",
+      "modelCapability": "AVAILABLE",
+      "modelExecution": "FAILED",
+      "modelReason": "LOCAL_MODEL_UNAVAILABLE_OR_INVALID",
+      "modelServices": [],
+      "sourceAuthority": "NONE",
+      "reviewAvailable": false,
+      "resultSha256": "838cb27d5ce10fe6f7b8bca8a399a385cdfab96de7ccc64478792f5372ca3687"
+    },
+    {
+      "inputId": "06bf88b6-633d-463e-af0a-21fa6efb3773",
+      "engine": "apple-vision",
+      "originalSha256": "f239e149de28012443fe45382aa7c0ea0f236ee51feec8e9d9ff77783030baa1",
+      "originalByteCount": 226541,
+      "textBytes": 645,
+      "textSha256": "ad009d22fbce6eb70b37baa6df436d8442f7f7b548fdf6b016d8423677702ad7",
+      "pages": 0,
+      "ocrObservations": 48,
+      "fields": 8,
+      "fieldPaths": ["service", "transport_subtype"],
+      "exactFieldEvidence": true,
+      "parserStatus": "SUCCEEDED",
+      "status": "PARTIAL_FLIGHT_OBSERVATIONS",
+      "modelCapability": "AVAILABLE",
+      "modelExecution": "FAILED",
+      "modelReason": "LOCAL_MODEL_FAILED",
+      "modelServices": [],
+      "sourceAuthority": "NONE",
+      "reviewAvailable": false,
+      "resultSha256": "900c2702d44bd96d6ad76a443bc5a08cd9c9d204ec5858375947910673bcc89d"
+    }
+  ],
+  "localQueueCompleted": 2,
+  "localEventsRetained": 11,
+  "coldAddedEvents": 0,
+  "coldReprocessing": 0,
+  "nativeFailureAndRecovery": "FILE-JPEG dispatch bug repaired; explicit owning failedinput retry. Live Metro update claimed before normal App restart, then original five-minute lease recovered normally; PDF retained unchanged. No direct DB repair.",
+  "checks": {
+    "builderFocused": 62,
+    "builderParserRegression": 156,
+    "finalChangedSlice": 15,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "lint": "PASS one existing ExperienceBottomShell warning",
+    "independentSource": "PASS",
+    "independentNativeBridge": "PASS",
+    "deltaReviews": "PASS"
+  },
+  "cleanup": "QAconfig null, temporary retry/fetch hooks removed, old Native build source restored; reviewed App/schema/results retained",
+  "unchanged": [
+    "C2RuntimePASS",
+    "C3RuntimePASS",
+    "BackendImage012f2d06476a",
+    "Hosted/Auth/RLS/Storage/Production",
+    "Experience Simulator and UI worktree"
+  ],
+  "limits": [
+    "Interpretation is incomplete; no full P2/segment grouping/Booking/C5/C6 PASS",
+    "Apple inference failed; JS20s timeout does not cancel an in-flight Native model task, output capped512tokens",
+    "No new remote Provider activation or cost authorization",
+    "QA autoenqueue remains null-by-default; no production automatic upload behavior"
+  ],
+  "artifactDirectory": "/private/tmp/otr-c4-native-runtime-20261016"
+}

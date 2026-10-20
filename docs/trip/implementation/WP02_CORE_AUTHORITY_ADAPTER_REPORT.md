@@ -1,0 +1,11 @@
+# WP02 dormant Core authority adapter
+
+This isolated packet depends on the sealed WP02 spatial correction `b7ae42c` and the installed local PORT02 repository API. It adds no runtime consumer, formal Selection, migration, Core write, G2 Composer change, or Hosted/DEV activation.
+
+The adapter captures `readTtr`'s coherent qualified envelope and maps Core's actual `UNKNOWN` spatial equivalence into the TTR input without using 0 m geometry as proof of `SAME_LOCATION`. Its ephemeral publication ticket pins the Account/Trip/generation, relation input, access revision and private Core envelope. The existing nine-field Selection Repository can call `isCurrentRelation` inside its own gate/transaction; that checker uses Core's `revalidateTtrWithinTransaction`, with no nested gate or independent snapshot. After a durable Selection commit and gate release, `guardAfterCommit` delegates to Core's PORT02 `guardTtrPublication` and exposes its lease for synchronous handoff and later `ifCurrent` checks. `CURRENT` is Core handoff status only, never proof of G2 publication.
+
+The dormant bundle constructor creates both Core and Selection repositories on the identical serialized SQLite connection. The independent Core-port constructor is a test/integration seam and must not be wired to a Selection repository on another connection. Captures are in-memory, bounded and discarded on teardown. Private spatial annotations and Core authority vectors are not returned as TTR presentation data. There is no operative SAME_LOCATION proof carrier; unsupported Core spatial assertions fail rather than being inferred from coordinates.
+
+The existing Controller remains unchanged. Its eventual runtime host must supply real G2 actionability, bind the captured relation to the correct presentation, call the post-commit guard after Selection confirmation, and use the lease on every deferred emission. That host is outside this dormant packet. No real accepted Day or Native runtime behavior is claimed.
+
+Author validation: four focused adapter/Core/Selection/Controller suites, 131 tests passed; typecheck, UI guard, scoped ESLint/Prettier and diff check passed. Independent functional/security review is pending.

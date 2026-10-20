@@ -1,0 +1,19 @@
+					37 text Description: Close, Secondary Actions: Cancel
+					38 heading Description: Travel mode, Secondary Actions: Cancel
+					39 text Description: Synthetic trail stop 1 → Synthetic trail stop 2, Secondary Actions: Cancel
+					40 text Description: Confirmed: Walking, Secondary Actions: Cancel
+					41 text Description: Preview: Driving, Secondary Actions: Cancel
+					42 text Description: Straight-line distance · 111.2 km, Secondary Actions: Cancel
+					43 button (disabled) Description: Walking, Secondary Actions: Cancel
+					44 button (disabled) Description: Preview: Driving, Secondary Actions: Cancel
+					45 button (disabled) Description: Transit, Secondary Actions: Cancel
+					46 text Description: Save outcome is uncertain. Check the saved choice before confirming again., Secondary Actions: Cancel
+					47 button (disabled) Description: Confirm, Secondary Actions: Cancel
+					48 button Description: Check saved choice, Secondary Actions: Cancel
+					49 button Description: Pause TTR actions, Secondary Actions: Cancel
+					50 button Description: Replace synthetic projection, Secondary Actions: Cancel
+					51 button Description: Fail next Confirm, Secondary Actions: Cancel
+				52 button Description: Home, ID: app.grid.3x3
+				53 button Description: Screenshot, ID: camera.viewfinder
+				54 button Description: Record, ID: record.circle
+		75 toggle button Description: Filter, Help: Sort and Filter, Value: off

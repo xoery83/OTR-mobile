@@ -1,0 +1,76 @@
+{
+  "checkpoint": "CP-FLIGHT-DEV-02",
+  "date": "2026-10-12",
+  "timezone": "Pacific/Auckland",
+  "canonicalBaseline": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+  "assessmentParent": "09d833a4d170da940b0ff6765668689d70b56b15",
+  "branch": "codex/flight-dev-backend",
+  "classification": "CLOSED_LOCAL_HTTP_NODE_PG_TLS_TEXT_IMPLEMENTATION",
+  "dependencies": {
+    "node": "v24.18.0",
+    "pg": "8.16.3",
+    "pgTypes": "8.15.5",
+    "added": false
+  },
+  "verification": {
+    "focusedSuites": 11,
+    "focusedPassed": 90,
+    "localRuntimeScenariosPassed": 1,
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "lintUiGuard": "PASS",
+    "historicalPublicFunctionBodiesPreserved": 329,
+    "fixtureGatesRestoredClosed": ["Source", "Import", "Core"]
+  },
+  "runtime": {
+    "sourceId": "b5dc7e8b-3be2-4d8f-8724-5a655c717bfa",
+    "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+    "itemIds": [
+      "3a2b2420-9134-47e8-89eb-19f9f72188da",
+      "f1cc3eb2-b697-4661-89a6-9e6e2f4b962a"
+    ],
+    "itemRevision": 2,
+    "sourceMaterialRevision": 1,
+    "originalCopies": 1,
+    "recoveredOperationIds": [
+      "4012681c-e894-49d1-8cc1-5104e2a7e202",
+      "b8af2338-2814-43a2-af6a-bec599b80389",
+      "67dc160d-0f5e-4484-9f03-f70589ac727f",
+      "99d578e7-aee9-401b-8d36-cb13dc504039"
+    ],
+    "backendProcessRestarts": 5,
+    "tlsVerified": true,
+    "hostnameCaPasswordNegatives": true,
+    "principalTableDenials": true,
+    "exactAcquisitionRunReplay": true,
+    "privateSourceLeakage": false
+  },
+  "fixtureScope": {
+    "cachedImage": "otr-core-v2-server84-fixture:20261012",
+    "httpBind": "127.0.0.1",
+    "postgresPublish": "127.0.0.1 random port",
+    "network": "task-owned disposable bridge; prior SQL modes remain network-none",
+    "auth": "deterministic fixture bearer identities; not Supabase session",
+    "credentials": "synthetic disposable roles only",
+    "sourceAuthority": "existing owning SQL; fixture gates/grants and unconditional deny triggers relaxed only in owned clone; structural/integrity triggers retained",
+    "historicalFunctionsChanged": false,
+    "cleanup": [
+      "container",
+      "bridge",
+      "temporary TLS certificate/key",
+      "fixture Node child processes"
+    ]
+  },
+  "boundaries": {
+    "normalStartupEnabled": false,
+    "hostedAccess": false,
+    "deployment": false,
+    "canonicalMergePush": false,
+    "historicalMigrationChanges": false,
+    "canonicalWriterChanges": false,
+    "binaryOriginalUpload": false,
+    "nativeRuntimeActivation": false,
+    "providerPaidLLMProduction": false
+  },
+  "stop": "Real Hosted principals/credential custody/grants/Source and Core gate handling/deployment/Auth acceptance require separate Owner authorization."
+}

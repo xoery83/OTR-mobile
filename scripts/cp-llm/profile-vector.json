@@ -1,0 +1,21 @@
+{
+  "profile": {
+    "version": 1,
+    "consumer_id": "import",
+    "consumer_version": 1,
+    "boundary_version": "otr-flight-remote-v2",
+    "capability": "EXTRACT",
+    "modality": "TEXT",
+    "execution_scope": "FLIGHT_IMPORT_V1",
+    "envelope_version": "FLIGHT_REMOTE_TEXT_V1",
+    "output_schema_version": "FLIGHT_REMOTE_OUTPUT_V1",
+    "minimizer_version": "OTR_FLIGHT_WHITELIST_UTF8_V1",
+    "privacy_profile": "REMOTE_ALLOWED_MINIMIZED_TEXT_V1",
+    "prompt_sha256": "a1d37069c6e255b74dc73c4ccea81ae72f7a17824b35b428f09878f6b163ab40",
+    "minimizer_sha256": "14b7822719a9d7b6e6bc5791dcd53e62a1d125475f3184be77d09397775210c0",
+    "privacy_sha256": "e112eaf04dcfc07d2347593e74f7900798f6f713bc2c62281a9c47654ece1fa5",
+    "envelope_sha256": "d83e7fa31bc0995e1c4ae87822b3dfcff85e2c73213eda514eeb54b2e8146cad",
+    "output_schema_sha256": "a9800a43f1078e8c7ea74c8c88e3671e1655014b2212655779198472d125226e"
+  },
+  "sha256": "e6c6f221c4fac6e55b84e020faa1c3f4b4bee157f59ded8112fc5399ce7f0923"
+}

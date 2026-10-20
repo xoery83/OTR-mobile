@@ -1,0 +1,22 @@
+# Review Engine v2 Foundation（Phase 1）
+
+日期：2026-09-16。以 `REVIEW_2_0_DESIGN_AND_IMPLEMENTATION_PLAN.md` 为依据；这里只实施共享 Finding 引擎，不改变个人决策、资格和 UI 收件箱。
+
+## 冻结设计（实施前）
+
+1. **规则**：`POSSIBLE_DUPLICATE/2`（Duplicate）、`AMOUNT_OUTLIER/2`（Amount）、`RATE_OUTLIER/2`（Exchange rate）、`EVIDENCE_MISMATCH/2`（Evidence）、`PARTICIPANT_ANOMALY/2`（Participants），ruleset `ledger-review-v2`。确定性 `ledger-validation-v1` 与旧启发式 `ledger-review-v1` 保持原样。
+2. **观察**：同一行增加可空 `rule_id`, `rule_version`, `rule_category`, `rule_input_fingerprint`, `observation_context jsonb`, `lifecycle`, `observation_generation`, `resolved_at`, `resolution_reason`, `superseded_at`, `superseded_by_finding_id`。v1 均为 null，不回填虚构证据。v2 context 是不可修改的 JSON 快照：Expense ID/revision/title/date/payer/originalMoney、规则 ID/version/category、evaluatedAt、输入和比较哈希、具体数值或匹配对象。数据库触发器禁止更新这些 v2 observation 字段；仅生命周期元数据与当前兼容 `status` 可变。SQLite v20 镜像必要字段，旧行可空。
+3. **身份**：规范化字段以固定数组顺序、排序后的集合和整数 minor 序列化，再 SHA-256。`ruleInputFingerprint = sha256(JSON.stringify([rule-specific observed inputs, relevant comparison inputs]))`；比较 hash 不包含任意 Expense revision。`id = UUID-from-sha256([journey, expense, ruleId, ruleVersion, inputHash, generation])`。generation 初次为 1；同规则当前 ACTIVE 且 hash 相同则原样保留；ACTIVE hash 不同则旧 SUPERSEDED、新 generation=max+1；无命中则旧 RESOLVED_BY_EXPENSE_UPDATE；无 ACTIVE 而重新命中即 max+1，绝不复活历史行。按 Journey advisory lock + 单一 DB 函数事务执行 diff/写入；重复 refresh/重启不插重复行。
+4. **规则输入**：金额 cohort 仅同 currency+scale 的 ACCEPTED Expenses，>=5，升序上中位，`minor >= median*10` 用 bigint 比较；context 含样本数/中位数/倍数及 cohort hash。Duplicate 限同 UTC 日期（`occurredAt.slice(0,10)` 仅在 canonical ISO 日期契约成立时；实际使用 UTC `Date` 格式归一）、payer、minor/currency/scale、trim/lower title，匹配较小 ID 的最小稳定匹配项；包含对方 ID/相关字段。Rate 保持 `(0,1000]`，不宣称市场比较；按已有率或结算/原金额之比，记录来源/越界方向。Payment evidence 选 posted 记录按 `postedAt,id` 排序的第一条；存记录/两金额/差额。Participant 存 payer 和排序后的参与 ID/可用名称快照。纯规则函数与存储分离。
+5. **持久化/触发**：原 `refresh` 保留读取历史；新增 v2 重算，经同一服务端函数原子关闭旧 ACTIVE 并插新项，保持原 REVIEW_FINDING change feed。成功的 canonical Expense create/update/delete/restore、估值、payment evidence 后做 best-effort 同 Journey 重算；Review 故障不得把已提交财务事实报告成失败。现有显式 refresh 是持久变更事件漏跑的恢复路径；Expense ledger_changes 是既有 durable 事实，下一次 refresh 可重放，全 Journey 扫描覆盖跨 Expense cohort。不启新 job 框架。写入后服务端同 Journey 并发锁确保 Review diff 不交错。复杂度目前 O(n²) duplicate + Journey 聚合读取，后续超过可接受规模时按货币/日期 cohort 增量化。
+6. **v1/v2 并存**：v1 evidence、action history 原样保留，`lifecycle` null；首次成功 v2 reconcile 后将旧 v1 启发式共享 `status` 标 `STALE`，避免双重 active，旧行动仍可审计，不把 ACK/DISMISS 解释为个人决定。v2 ACTIVE 兼容 `status=OPEN`，关闭时 `status=STALE`（UI 旧计数不会误计），但语义以 lifecycle 为准。v2 仍由现行全局 action RPC 改共享 status，Phase 2 才迁至个人决策；本阶段不宣称个人隔离。v2 重算只处理 v2 行；v1 refresh 不再生成新的启发式 v1，确定性校验保留，历史 v1 不删。旧 Mobile contract 新字段可选，新 Mobile v20 缓存结构化证据，当前 generic UI 继续运作。
+7. **回滚**：迁移仅加列/函数/触发器，旧数据和财务表不变。回滚 Backend 到旧版可读旧列；暂停 v2 重算但不删 v2 历史。旧版 refresh 对 v2 行的 STALE 风险需部署时先升级兼容 Backend/Mobile，再启动 v2；不得运行旧版全量 refresh 对 v2。Production 未授权、不部署。
+8. **测试矩阵**：同币/跨币/不足五笔、同日/异日 duplicate、rate 两侧、posted 选择、payer 缺席；重复/顺序、cosmetic 不变、仍触发 SUPERSEDED、消失 RESOLVED、复现新 generation、候选移除、cohort 改变；迁移 v1/action 不变、服务端重复 refresh/change feed、SQLite/API v1/v2 兼容。财务变更后的 Review 失败不能伪报财务失败。
+
+## 实施记录与剩余闸门
+
+- Supabase migration `20260916000100_review_v2_engine_foundation.sql` 扩展现有 Finding、加不可变观察触发器和 Journey advisory-lock 原子 reconciliation；Mobile SQLite v20 仅加可空镜像字段。没有新个人状态表。
+- `reviewExpensesV2` 纯规则产生五种观察；Backend 对规范化 input+comparison 做 SHA-256；SQL 根据当前 ACTIVE 和历史最大 generation 决定保留、解决或取代，新的 generation ID 由 Journey/Expense/rule/version/hash/generation 的 SHA-256 得出。当前 cohort 全 Journey ACCEPTED，同币/scale；日期按 canonical ISO `occurredAt` 前十位（日历日期）比较。
+- canonical create/update/delete/restore、冲突解决、支付证据和估值操作成功后 best-effort 评估全 Journey；已提交财务事实不因 Review 故障返回失败。跨 Expense 的 amount/duplicate 通过全 Journey 重算覆盖。服务端读取 Expense revision 快照，DB 函数拒绝已过期快照。Review 显式 refresh 是漏跑恢复点，不是持续后台队列；下一阶段若需自动重试，应依托现有 `ledger_changes` 水位增加有界补偿，而非创造新框架。
+- v1 历史证据和 append-only 行动不变；首次成功 v2 reconcile 会把旧启发式共享 status 标 STALE，v2 新 row 使用 `status=OPEN` 兼容旧 UI，结束时写 `STALE`。旧客户端权限问题在后续授权阶段处理，故本阶段不得把此迁移直接用于 Production。
+- 已运行 TypeScript、ESLint、Backend build 与 72 files/261 tests（含 canonical create 成功后触发 Review、重算失败不伪报财务失败的 Backend 单测）；新 Review/SQLite 重点测试通过。本地 Supabase 应用 migration，全部 11 个 pgTAP 文件/214 项通过（其中 Review v2 14 项），包括连续复现、事务回滚、legacy evidence/action、过期快照与不可变证据。原有 Stage 5.1 固定汇率过期日期改为相对测试时间，无财务规则变化。完整格式检查仅有既存 `AGENTS.md` 和 `src/hooks/useStage4BPhysicalSmoke.ts` 债务。未部署 Hosted Dev/Production。**Hosted Dev rollout 前仍需真实 Backend→本地 Supabase 并发/自动触发验收。**

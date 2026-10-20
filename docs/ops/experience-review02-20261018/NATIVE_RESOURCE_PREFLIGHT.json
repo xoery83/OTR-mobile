@@ -1,0 +1,36 @@
+{
+  "status": "READ_ONLY_PREFLIGHT_ONLY",
+  "deviceId": "AE11480D-B6B9-402B-BE8A-4F2BBD4D0704",
+  "name": "OTR Day Feed Lab DL1",
+  "state": "Shutdown",
+  "runtime": "iOS 27.0",
+  "lastUsed": "2026-10-12T04:10:02",
+  "bundle": "com.xoery.otrmobile.devtest",
+  "host": "historical Day Lab host; exact source pin not newly recertified",
+  "databaseBytes": 2060288,
+  "walExists": false,
+  "readMethod": "sqlite URI mode=ro&immutable=1; business schema/counts only; no Session/Auth/Token queries",
+  "businessCounts": {
+    "local_trip_containers": "NOT_INSTALLED",
+    "local_trip_items": "NOT_INSTALLED",
+    "ledger_journeys": 0,
+    "ledger_members": 0,
+    "ledger_expenses": 0,
+    "trip_canonical_events": 0,
+    "trip_day_projections": 0,
+    "trip_core_read_certificates": 0,
+    "trip_core_day_rows": 0
+  },
+  "processReferences": [],
+  "resourceSuitability": "NOT_READY_FOR_REAL_REFERENCE_OR_PENDING_HOTEL; preserve historic Lab host",
+  "operationsNotPerformed": [
+    "boot",
+    "install",
+    "erase",
+    "account switch",
+    "Session inspection/copy",
+    "database copy",
+    "Metro change",
+    "Hosted mutation"
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "mainBefore": "a878be35db92fb7e36edd5e89f26fe94f1bcb07a",
+  "originMain": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+  "liveRemoteMain": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+  "acceptedSource": "12eadff4db4fe2f297f7d2a7a4d73a0790ab2745",
+  "acceptedSourceTree": "126139ac405fcedff0673e31319aa4d90f357bb2",
+  "merge": "6801bfcdf0023fd9605f09a8b96859f22037605e",
+  "mergeParents": [
+    "a878be35db92fb7e36edd5e89f26fe94f1bcb07a",
+    "12eadff4db4fe2f297f7d2a7a4d73a0790ab2745"
+  ],
+  "acceptedManifest": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-g2-flexible-snapshot-focus-boundary.md",
+    "docs/architecture/G2_FLEX_02_SHARED_PORT_IMPLEMENTATION_REPORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md",
+    "docs/architecture/evidence/g2-flex-02/01-choice-focus-dark.png",
+    "docs/architecture/evidence/g2-flex-02/02-immersive-local-saved-dark.png",
+    "docs/architecture/evidence/g2-flex-02/03-copy-focus-restored-dark.png",
+    "docs/architecture/evidence/g2-flex-02/04-nonzero-scroll-restored-dark.png",
+    "docs/architecture/evidence/g2-flex-02/05-ttr-inert-sheet-light.png",
+    "docs/architecture/evidence/g2-flex-02/06-now-ttr-light.png",
+    "docs/architecture/evidence/g2-flex-02/07-block-delete-canonical-retained-light.png",
+    "docs/architecture/evidence/g2-flex-02/08-p3-focus-light.png",
+    "docs/architecture/evidence/g2-flex-02/09-p2-flight-focus-light.png",
+    "docs/architecture/evidence/g2-flex-02/10-p1-focus-now-light.png",
+    "docs/architecture/evidence/g2-flex-02/11-local-search-light.png",
+    "docs/architecture/evidence/g2-flex-02/12-nested-anchor-ttr-withheld-light.png",
+    "docs/architecture/evidence/g2-flex-02/validation-summary.json",
+    "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+    "src/features/day-feed-lab/FlexibleSnapshotFixtureRow.tsx",
+    "src/features/day-feed-lab/contribution.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed-lab/flexibleReactiveContribution.ts",
+    "src/features/day-feed/DayFeed.tsx",
+    "src/features/day-feed/FlexibleBlockRow.tsx",
+    "src/features/day-feed/composition.ts",
+    "src/features/day-feed/flexibleSnapshot.test.ts",
+    "src/features/day-feed/flexibleSnapshot.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/ui/catalogs.ts"
+  ],
+  "finalChangedFileManifest": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-g2-flexible-snapshot-focus-boundary.md",
+    "docs/architecture/G2_FLEX_02_MAIN_INTEGRATION_REPORT.md",
+    "docs/architecture/G2_FLEX_02_SHARED_PORT_IMPLEMENTATION_REPORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md",
+    "docs/architecture/evidence/g2-flex-02-main/01-copy-focus-restored-light.png",
+    "docs/architecture/evidence/g2-flex-02-main/02-scroll-tns-before-light.png",
+    "docs/architecture/evidence/g2-flex-02-main/03-nonzero-before-light.png",
+    "docs/architecture/evidence/g2-flex-02-main/04-nonzero-restored-light.png",
+    "docs/architecture/evidence/g2-flex-02-main/05-local-published-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/06-resize-remove-focus-cleared-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/07-delete-canonical-retained-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/08-ttr-inert-sheet-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/09-now-ttr-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/10-p1-return-now-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/11-p2-flight-focus-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/12-p3-return-dark.png",
+    "docs/architecture/evidence/g2-flex-02-main/validation-manifest.json",
+    "docs/architecture/evidence/g2-flex-02/01-choice-focus-dark.png",
+    "docs/architecture/evidence/g2-flex-02/02-immersive-local-saved-dark.png",
+    "docs/architecture/evidence/g2-flex-02/03-copy-focus-restored-dark.png",
+    "docs/architecture/evidence/g2-flex-02/04-nonzero-scroll-restored-dark.png",
+    "docs/architecture/evidence/g2-flex-02/05-ttr-inert-sheet-light.png",
+    "docs/architecture/evidence/g2-flex-02/06-now-ttr-light.png",
+    "docs/architecture/evidence/g2-flex-02/07-block-delete-canonical-retained-light.png",
+    "docs/architecture/evidence/g2-flex-02/08-p3-focus-light.png",
+    "docs/architecture/evidence/g2-flex-02/09-p2-flight-focus-light.png",
+    "docs/architecture/evidence/g2-flex-02/10-p1-focus-now-light.png",
+    "docs/architecture/evidence/g2-flex-02/11-local-search-light.png",
+    "docs/architecture/evidence/g2-flex-02/12-nested-anchor-ttr-withheld-light.png",
+    "docs/architecture/evidence/g2-flex-02/validation-summary.json",
+    "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+    "src/features/day-feed-lab/FlexibleSnapshotFixtureRow.tsx",
+    "src/features/day-feed-lab/contribution.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed-lab/flexibleReactiveContribution.ts",
+    "src/features/day-feed/DayFeed.tsx",
+    "src/features/day-feed/FlexibleBlockRow.tsx",
+    "src/features/day-feed/composition.ts",
+    "src/features/day-feed/flexibleSnapshot.test.ts",
+    "src/features/day-feed/flexibleSnapshot.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/ui/catalogs.ts"
+  ],
+  "byteIdenticalAcceptedFiles": [
+    "docs/adr/2026-10-13-g2-flexible-snapshot-focus-boundary.md",
+    "docs/architecture/G2_FLEX_02_SHARED_PORT_IMPLEMENTATION_REPORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md",
+    "docs/architecture/evidence/g2-flex-02/01-choice-focus-dark.png",
+    "docs/architecture/evidence/g2-flex-02/02-immersive-local-saved-dark.png",
+    "docs/architecture/evidence/g2-flex-02/03-copy-focus-restored-dark.png",
+    "docs/architecture/evidence/g2-flex-02/04-nonzero-scroll-restored-dark.png",
+    "docs/architecture/evidence/g2-flex-02/05-ttr-inert-sheet-light.png",
+    "docs/architecture/evidence/g2-flex-02/06-now-ttr-light.png",
+    "docs/architecture/evidence/g2-flex-02/07-block-delete-canonical-retained-light.png",
+    "docs/architecture/evidence/g2-flex-02/08-p3-focus-light.png",
+    "docs/architecture/evidence/g2-flex-02/09-p2-flight-focus-light.png",
+    "docs/architecture/evidence/g2-flex-02/10-p1-focus-now-light.png",
+    "docs/architecture/evidence/g2-flex-02/11-local-search-light.png",
+    "docs/architecture/evidence/g2-flex-02/12-nested-anchor-ttr-withheld-light.png",
+    "docs/architecture/evidence/g2-flex-02/validation-summary.json",
+    "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+    "src/features/day-feed-lab/FlexibleSnapshotFixtureRow.tsx",
+    "src/features/day-feed-lab/contribution.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed-lab/flexibleReactiveContribution.ts",
+    "src/features/day-feed/DayFeed.tsx",
+    "src/features/day-feed/FlexibleBlockRow.tsx",
+    "src/features/day-feed/composition.ts",
+    "src/features/day-feed/flexibleSnapshot.test.ts",
+    "src/features/day-feed/flexibleSnapshot.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/ui/catalogs.ts"
+  ],
+  "handoffException": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+  "fullRegression": {
+    "baseline": {
+      "passed": 3878,
+      "failed": 2,
+      "skipped": 23,
+      "failures": [
+        {
+          "file": "src/components/navigationLayout.test.ts",
+          "test": "updates only the tab bar option as navigation enters and leaves deep pages",
+          "message": "TypeError: Cannot read properties of undefined (reading 'tabBarActiveTintColor')"
+        },
+        {
+          "file": "src/domain/architectureBoundary.test.ts",
+          "test": "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure",
+          "message": "AssertionError: <worktree>/src/components/LocalOperationsDiagnostics.test.ts imports /@\\/data\\/sync/: expected 'import { createElement, type ReactNod\u2026' not to match /@\\/data\\/sync/data\\"
+        }
+      ]
+    },
+    "candidate": {
+      "passed": 3893,
+      "failed": 2,
+      "skipped": 23,
+      "failures": [
+        {
+          "file": "src/components/navigationLayout.test.ts",
+          "test": "updates only the tab bar option as navigation enters and leaves deep pages",
+          "message": "TypeError: Cannot read properties of undefined (reading 'tabBarActiveTintColor')"
+        },
+        {
+          "file": "src/domain/architectureBoundary.test.ts",
+          "test": "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure",
+          "message": "AssertionError: <worktree>/src/components/LocalOperationsDiagnostics.test.ts imports /@\\/data\\/sync/: expected 'import { createElement, type ReactNod\u2026' not to match /@\\/data\\/sync/data\\"
+        }
+      ]
+    },
+    "newRegressions": 0
+  },
+  "fullCommand": "npm test -- --maxWorkers=2 --reporter=json --outputFile=<file>",
+  "focused": {
+    "files": 14,
+    "passed": 251,
+    "command": "npx vitest run src/features/day-feed src/features/day-feed-lab src/domain/trip/dayReadModel.test.ts src/domain/trip/ttr.test.ts src/domain/trip/tripCoreV2Views.test.ts src/domain/trip/tripCoreV2FlightAcceptance.test.ts src/features/ttr"
+  },
+  "static": {
+    "typecheck": "PASS",
+    "fullLint": "PASS",
+    "uiGuard": "PASS",
+    "changedFileFormatting": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "native": {
+    "simulator": "1D01B9F0-6591-4C15-A4CD-43E86E86AA13",
+    "app": "com.xoery.otrmobile",
+    "os": "iOS 27.0",
+    "build": "existing Debug binary, merged JS from integration Metro8097",
+    "screenshots": [
+      "01-copy-focus-restored-light.png",
+      "02-scroll-tns-before-light.png",
+      "03-nonzero-before-light.png",
+      "04-nonzero-restored-light.png",
+      "05-local-published-dark.png",
+      "06-resize-remove-focus-cleared-dark.png",
+      "07-delete-canonical-retained-dark.png",
+      "08-ttr-inert-sheet-dark.png",
+      "09-now-ttr-dark.png",
+      "10-p1-return-now-dark.png",
+      "11-p2-flight-focus-dark.png",
+      "12-p3-return-dark.png"
+    ],
+    "scope": "synthetic Fixture only"
+  },
+  "rawEvidence": "/private/tmp/otr-g2-flex-02-main-evidence",
+  "concurrency": {
+    "inspectedWorktrees": 44,
+    "canonicalDirtyStatus": " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md\n?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md\n?? scripts/dev/__pycache__/\n",
+    "canonicalDirtyHashes": [
+      {
+        "path": "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+        "sha256": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3"
+      },
+      {
+        "path": "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+        "sha256": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4"
+      },
+      {
+        "path": "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+        "sha256": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573"
+      },
+      {
+        "path": "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+        "sha256": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a"
+      },
+      {
+        "path": "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc",
+        "sha256": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+      }
+    ]
+  },
+  "mainAdvance": "guarded git merge --ff-only; final HEAD in delivery message; no push"
+}

@@ -1,0 +1,92 @@
+{
+  "exception": {
+    "codes": "0x0000000000000001, 0x00000001c48c336c",
+    "rawCodes": [1, 7592489836],
+    "type": "EXC_BREAKPOINT",
+    "signal": "SIGTRAP"
+  },
+  "termination": {
+    "flags": 0,
+    "code": 5,
+    "namespace": "SIGNAL",
+    "indicator": "Trace/BPT trap: 5",
+    "byProc": "exc handler",
+    "byPid": 18106
+  },
+  "asi": null,
+  "faultingThread": 0,
+  "frames": [
+    {
+      "symbol": "___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke",
+      "imageIndex": 19
+    },
+    {
+      "symbol": "_dispatch_client_callout",
+      "imageIndex": 20
+    },
+    {
+      "symbol": "_dispatch_once_callout",
+      "imageIndex": 20
+    },
+    {
+      "symbol": "-[UIApplication workspace:didCreateScene:withTransitionContext:completion:]",
+      "imageIndex": 19
+    },
+    {
+      "symbol": "-[UIApplicationSceneClientAgent scene:didInitializeWithEvent:completion:]",
+      "imageIndex": 19
+    },
+    {
+      "symbol": "__95-[FBSScene _callOutQueue_didCreateWithTransitionContext:alternativeCreationCallout:completion:]_block_invoke",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "-[FBSScene _callOutQueue_maybeCoalesceClientSettingsUpdates:]",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "-[FBSScene _callOutQueue_didCreateWithTransitionContext:alternativeCreationCallout:completion:]",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "__93-[FBSWorkspaceScenesClient _callOutQueue_sendDidCreateForScene:transitionContext:completion:]_block_invoke.282",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "-[FBSWorkspace _calloutQueue_executeCalloutFromSource:withBlock:]",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "-[FBSWorkspaceScenesClient _callOutQueue_sendDidCreateForScene:transitionContext:completion:]",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "__92-[FBSWorkspaceScenesClient createSceneWithIdentity:parameters:transitionContext:completion:]_block_invoke_2",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "-[FBSWorkspace _calloutQueue_executeCalloutFromSource:withBlock:]",
+      "imageIndex": 21
+    },
+    {
+      "symbol": "_dispatch_client_callout",
+      "imageIndex": 20
+    },
+    {
+      "symbol": "_dispatch_block_invoke_direct",
+      "imageIndex": 20
+    },
+    {
+      "symbol": "__BSSERVICEMAINRUNLOOPQUEUE_IS_CALLING_OUT_TO_A_BLOCK__",
+      "imageIndex": 22
+    },
+    {
+      "symbol": "BSServiceMainRunLoopSourceHandler",
+      "imageIndex": 22
+    },
+    {
+      "symbol": "__CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__",
+      "imageIndex": 23
+    }
+  ]
+}

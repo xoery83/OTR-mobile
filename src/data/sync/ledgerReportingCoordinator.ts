@@ -1,0 +1,277 @@
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import {
+  captureAccountRequestContext,
+  captureAccountScope,
+  assertAccountRequestGeneration,
+  type AccountScope,
+  assertAccountRequestContext,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
+import type { MyLedgerPeriod } from "@/data/api/ledgerReadContracts";
+import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
+import { ApiClientError } from "@/data/api/client";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { refreshLedgerPersonalPayments } from "./ledgerPersonalPaymentCoordinator";
+import { refreshPersonalSettlementReview } from "./personalSettlementReviewCoordinator";
+import type {
+  ParticipationCommand,
+  ParticipationResult,
+} from "@/domain/trip/personParticipationCommand";
+
+type JourneyPullResult = {
+  changed: boolean;
+  incomplete: boolean;
+  auxiliaryErrors?: readonly unknown[];
+  pullApiRequestCount: number;
+  reviewOutcome: "review_success" | "review_blocked_stable" | "review_error";
+};
+const activePulls = new Map<string, Promise<JourneyPullResult>>();
+const cycleTails = new Map<string, Promise<void>>();
+function scopedCycle<T>(
+  journeyId: string,
+  task: (context: AccountRequestContext) => Promise<T>,
+  requestContext?: AccountRequestContext,
+) {
+  const context = requestContext
+    ? Promise.resolve(requestContext)
+    : captureAccountRequestContext(journeyId, requireActiveUserId);
+  void context.catch(() => undefined);
+  const key = `${requestContext?.generation ?? getAccountGeneration()}:${journeyId}`;
+  const previous = cycleTails.get(key) ?? Promise.resolve();
+  const run = previous.then(async () => {
+    const captured = await context;
+    await assertAccountRequestContext(captured, requireActiveUserId);
+    return task(captured);
+  });
+  const tail = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  cycleTails.set(key, tail);
+  void tail.then(() => {
+    if (cycleTails.get(key) === tail) cycleTails.delete(key);
+  });
+  return run;
+}
+
+// No runtime caller/dispatcher is installed. The result barrier and its new
+// refresh share the existing cycle tail, so an older in-flight read drains first.
+export function reconcileTripPersonParticipationResult(
+  command: ParticipationCommand,
+  result: ParticipationResult,
+  context: AccountRequestContext,
+) {
+  if (context.tripId !== command.tripId) throw new Error("Participation Trip mismatch.");
+  return scopedCycle(
+    command.tripId,
+    async (captured) => {
+      const applied = await (
+        await getDefaultLedgerReadRepository()
+      ).applyParticipationResult(command, result, captured);
+      if (!applied) return { applied: false, refresh: "UNCHANGED" as const };
+      // Network runs only after the atomic repository apply has released its gate.
+      try {
+        await pullJourneyLedger(command.tripId, captured);
+        const certificate = await (
+          await getDefaultLedgerReadRepository()
+        ).getParticipationCertificate(command.tripId);
+        await assertAccountRequestContext(captured, requireActiveUserId);
+        return {
+          applied: true,
+          refresh: certificate ? ("COMPLETE" as const) : ("PENDING" as const),
+        };
+      } catch {
+        await assertAccountRequestContext(captured, requireActiveUserId);
+        return { applied: true, refresh: "PENDING" as const };
+      }
+    },
+    context,
+  );
+}
+
+export async function ensureJourneyLedgerActor(
+  journeyId: string,
+  requestContext?: AccountRequestContext,
+) {
+  const context =
+    requestContext ??
+    (await captureAccountRequestContext(journeyId, requireActiveUserId));
+  if (context.tripId !== journeyId) throw new Error("Journey context mismatch.");
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const repository = await getDefaultLedgerReportingRepository();
+  const cached = await repository.getActorMemberId(journeyId);
+  await assertAccountRequestContext(context, requireActiveUserId);
+  if (cached?.memberId) return cached;
+  await refreshJourneyLedgerWithStatus(journeyId, context);
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const hydrated = await repository.getActorMemberId(journeyId);
+  await assertAccountRequestContext(context, requireActiveUserId);
+  return hydrated;
+}
+
+export function refreshJourneyLedger(journeyId: string) {
+  return refreshJourneyLedgerWithStatus(journeyId).then((result) => result.changed);
+}
+
+export function refreshJourneyLedgerWithStatus(
+  journeyId: string,
+  requestContext?: AccountRequestContext,
+) {
+  if (requestContext) {
+    if (requestContext.tripId !== journeyId) throw new Error("Journey context mismatch.");
+    assertAccountRequestGeneration(requestContext);
+  }
+  const key = `${requestContext?.generation ?? getAccountGeneration()}:${journeyId}`;
+  const active = activePulls.get(key);
+  if (active) return active;
+  const pull = scopedCycle(
+    journeyId,
+    (context) => pullJourneyLedger(journeyId, context),
+    requestContext,
+  ).finally(() => {
+    if (activePulls.get(key) === pull) activePulls.delete(key);
+  });
+  activePulls.set(key, pull);
+  return pull;
+}
+
+async function pullJourneyLedger(journeyId: string, context: AccountRequestContext) {
+  let personalChanged = false;
+  let personalError: unknown;
+  let reviewError: unknown;
+  let reviewOutcome: JourneyPullResult["reviewOutcome"] = "review_success";
+  let pullApiRequestCount = 0;
+  const countRequest = () => {
+    pullApiRequestCount += 1;
+  };
+  try {
+    personalChanged = await refreshLedgerPersonalPayments(
+      journeyId,
+      countRequest,
+      context,
+    );
+  } catch (error) {
+    personalError = error;
+  }
+  try {
+    countRequest();
+    await refreshPersonalSettlementReview(journeyId, context);
+  } catch (error) {
+    if (
+      error instanceof ApiClientError &&
+      error.status === 409 &&
+      error.code === "SETTLEMENT_REVIEW_BLOCKED"
+    ) {
+      reviewOutcome = "review_blocked_stable";
+    } else {
+      reviewOutcome = "review_error";
+      reviewError = error;
+    }
+  }
+  const finish = (changed: boolean): JourneyPullResult => ({
+    changed,
+    incomplete: Boolean(personalError) || Boolean(reviewError),
+    ...(personalError || reviewError
+      ? {
+          auxiliaryErrors: [personalError, reviewError].filter(
+            (error) => error !== undefined,
+          ),
+        }
+      : {}),
+    pullApiRequestCount,
+    reviewOutcome,
+  });
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const repository = await getDefaultLedgerReadRepository();
+  const cursor = (await repository.getCursor(journeyId))?.cursor ?? null;
+  if (!cursor) {
+    try {
+      countRequest();
+      const response = await createLedgerReadTransport().bootstrap(journeyId, context);
+      await assertAccountRequestContext(context, requireActiveUserId);
+      await repository.applyBootstrap(response, context);
+      return finish(true);
+    } catch (error) {
+      if (
+        error instanceof ApiClientError &&
+        error.status === 403 &&
+        error.code === "TRIP_READ_FORBIDDEN"
+      ) {
+        if (personalError) throw personalError;
+        return finish(personalChanged);
+      }
+      throw error;
+    }
+  }
+  const transport = createLedgerReadTransport();
+  let nextCursor: string | null = cursor;
+  let changed = false;
+  try {
+    do {
+      countRequest();
+      const response = await transport.pull(journeyId, nextCursor, context);
+      await assertAccountRequestContext(context, requireActiveUserId);
+      await repository.applyChanges(journeyId, response, context, nextCursor);
+      changed ||= response.changes.length > 0;
+      nextCursor = response.cursor;
+      if (!response.hasMore) break;
+    } while (true);
+  } catch (error) {
+    if (
+      error instanceof ApiClientError &&
+      error.status === 403 &&
+      error.code === "TRIP_READ_FORBIDDEN"
+    ) {
+      if (personalError) throw personalError;
+      return finish(personalChanged);
+    }
+    if (!(error instanceof ApiClientError) || error.code !== "INVALID_CURSOR")
+      throw error;
+    countRequest();
+    const response = await transport.bootstrap(journeyId, context);
+    await assertAccountRequestContext(context, requireActiveUserId);
+    await repository.applyBootstrap(response, context);
+    return finish(true);
+  }
+  return finish(changed || personalChanged);
+}
+
+export function revalidateJourneyLedger(journeyId: string) {
+  return scopedCycle(journeyId, async (context) => {
+    const response = await createLedgerReadTransport().bootstrap(journeyId, context);
+    await assertAccountRequestContext(context, requireActiveUserId);
+    await (await getDefaultLedgerReadRepository()).applyBootstrap(response, context);
+    return response;
+  });
+}
+
+const summaryReads = new Map<string, Promise<void>>();
+export async function refreshMyLedger(
+  period: MyLedgerPeriod,
+  bounds: { from: string | null; to: string | null },
+  requestContext?: AccountScope,
+) {
+  const context = requestContext ?? (await captureAccountScope(requireActiveUserId));
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const key = JSON.stringify([context.accountId, context.generation, period, bounds]);
+  let read = summaryReads.get(key);
+  if (!read) {
+    read = (async () => {
+      const response = await createLedgerReadTransport().myLedger(
+        period,
+        bounds,
+        context,
+      );
+      await assertAccountRequestContext(context, requireActiveUserId);
+      const repository = await getDefaultLedgerReadRepository();
+      await repository.cacheMyLedger(response, context);
+    })().finally(() => {
+      summaryReads.delete(key);
+    });
+    summaryReads.set(key, read);
+  }
+  await read;
+  await assertAccountRequestContext(context, requireActiveUserId);
+}

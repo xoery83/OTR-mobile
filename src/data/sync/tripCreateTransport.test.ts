@@ -1,0 +1,57 @@
+import { randomUUID } from "node:crypto";
+import { expect, it, vi } from "vitest";
+import { captureAccountScope } from "../auth/accountRequestContext";
+import { createTripCreateTransport } from "./tripCreateTransport";
+vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
+
+it("looks up missing receipt, then posts the stable key with scoped bearer auth", async () => {
+  const actor = randomUUID(),
+    operationId = randomUUID(),
+    tripId = randomUUID();
+  const request = {
+    operationId,
+    tripId,
+    name: "Harbour",
+    destination: null,
+    startDate: null,
+    endDate: null,
+  };
+  const result = {
+    ...request,
+    actorAccountId: actor,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  };
+  const fetchImplementation = vi.fn(async (url: string, options: RequestInit) => {
+    expect(options.headers).toMatchObject({ Authorization: "Bearer test-only" });
+    if (url.endsWith(`/v2/trip-create-operations/${operationId}`))
+      return new Response(
+        JSON.stringify({ error: { code: "TRIP_CREATE_RECEIPT_NOT_FOUND" } }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    expect(url).toBe("https://api.example.test/v2/trips");
+    expect(options.headers).toMatchObject({ "Idempotency-Key": operationId });
+    expect(JSON.parse(options.body as string)).toEqual(request);
+    return new Response(JSON.stringify(result), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+  const scope = await captureAccountScope(async () => actor);
+  const transport = createTripCreateTransport(
+    async () => actor,
+    {
+      baseUrl: "https://api.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "test-only", userId: actor }),
+  );
+  expect(await transport.receipt(scope, operationId)).toBeNull();
+  expect(await transport.create(scope, request)).toEqual(result);
+  expect(fetchImplementation).toHaveBeenCalledTimes(2);
+});

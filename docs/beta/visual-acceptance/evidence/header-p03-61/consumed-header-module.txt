@@ -1,0 +1,128 @@
+function TabsLayout() {
+    _s();
+    (0, _uiUseUiLocale.useUiLocale)();
+    var colors = (0, _uiTheme.useUiTheme)();
+    var pathname = (0, _expoRouter.usePathname)();
+    var dimensions = (0, _reactNative.useWindowDimensions)();
+    var {
+      fontScale
+    } = dimensions;
+    var insets = (0, _reactNativeSafeAreaContext.useSafeAreaInsets)();
+    var largeText = fontScale > 2;
+    return (0, _reactJsxRuntime.jsx)(_featuresDayFeedTripViewContext.TripViewProvider, {
+      children: (0, _reactJsxRuntime.jsxs)(_expoRouter.Tabs, {
+        tabBar: () => (0, _reactJsxRuntime.jsx)(_componentsExperienceBottomShell.ExperienceBottomShell, {
+          visible: (0, _componentsBottomBarVisibility.bottomBarVisible)(pathname),
+          pathname: pathname
+        }),
+        screenOptions: {
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.textSecondary,
+          headerStyle: {
+            backgroundColor: colors.surface
+          },
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            color: colors.textPrimary
+          },
+          tabBarStyle: (0, _componentsBottomBarVisibility.bottomBarVisible)(pathname) ? {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.separator
+          } : {
+            display: "none"
+          }
+        },
+        children: [(0, _reactJsxRuntime.jsx)(_expoRouter.Tabs.Screen, {
+          name: "index",
+          options: {
+            headerLeft: () => (0, _reactJsxRuntime.jsx)(_componentsGlobalMenu.GlobalMenu, {
+              module: "TODAY"
+            }),
+            tabBarIcon: ({
+              color
+            }) => (0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              color: color,
+              name: "calendar"
+            }),
+            title: (0, _uiLocale.t)("navigation.today")
+          }
+        }), (0, _reactJsxRuntime.jsx)(_expoRouter.Tabs.Screen, {
+          name: "expenses",
+          listeners: ({
+            navigation
+          }) => ({
+            tabPress: event => {
+              if (navigation.isFocused()) event.preventDefault();
+            }
+          }),
+          options: {
+            headerShown: false,
+            tabBarIcon: ({
+              color
+            }) => (0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              color: color,
+              name: "list.bullet.rectangle"
+            }),
+            title: (0, _uiLocale.t)("navigation.ledger")
+          }
+        }), (0, _reactJsxRuntime.jsx)(_expoRouter.Tabs.Screen, {
+          name: "capture",
+          options: {
+            headerLeft: () => (0, _reactJsxRuntime.jsx)(_componentsGlobalMenu.GlobalMenu, {
+              module: "CAPTURE"
+            }),
+            tabBarIcon: ({
+              color
+            }) => (0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              color: color,
+              name: "viewfinder"
+            }),
+            title: (0, _uiLocale.t)("navigation.capture")
+          }
+        }), (0, _reactJsxRuntime.jsx)(_expoRouter.Tabs.Screen, {
+          name: "trip",
+          options: {
+            headerLeft: () => (0, _reactJsxRuntime.jsx)(_componentsGlobalMenu.GlobalMenu, {
+              module: "TRIP"
+            }),
+            ...(largeText ? {
+              headerTitleAlign: "left",
+              headerStyle: {
+                backgroundColor: colors.surface,
+                height: Math.max((0, _expoRouterReactNavigation.getDefaultHeaderHeight)(dimensions, false, insets.top), insets.top + _uiVisual.visual.type.section.fontSize * fontScale + _uiVisual.visual.space.card * 2)
+              },
+              headerTitleContainerStyle: {
+                minWidth: 132,
+                minHeight: _uiVisual.visual.type.section.fontSize * fontScale + _uiVisual.visual.space.card
+              },
+              headerTitle: ({
+                onLayout
+              }) => (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+                onLayout: onLayout,
+                numberOfLines: 1,
+                style: {
+                  ..._uiVisual.visual.type.section,
+                  color: colors.textPrimary
+                },
+                children: (0, _uiLocale.t)("navigation.trip")
+              })
+            } : {}),
+            tabBarIcon: ({
+              color
+            }) => (0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              color: color,
+              name: "suitcase"
+            }),
+            title: (0, _uiLocale.t)("navigation.trip")
+          }
+        })]
+      })
+    });
+  }
+  _s(TabsLayout, "WCMPvay5sK1/gK2NHNogssOI02c=", false, function () {
+    return [_uiUseUiLocale.useUiLocale, _uiTheme.useUiTheme, _expoRouter.usePathname, _reactNative.useWindowDimensions, _reactNativeSafeAreaContext.useSafeAreaInsets];
+  });
+  _c = TabsLayout;
+  var _c;
+  $RefreshReg$(_c, "TabsLayout");
+},744,[745,749,751,1257,755,458,1259,1263,1267,1593,746,1266,1264,748,72],"app/(tabs)/_layout.tsx");

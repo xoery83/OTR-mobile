@@ -1,0 +1,2664 @@
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  BackendError,
+  createDevBackendHandler,
+  type DevBackendGateway,
+  type StoredCreate,
+} from "./app";
+import type { PersonalSettlementPaymentDto } from "../../src/data/api/ledgerSettlementContracts";
+
+const tripId = "10000000-0000-4000-8000-000000000001";
+const userId = "20000000-0000-4000-8000-000000000001";
+const memberA = "30000000-0000-4000-8000-000000000001";
+const memberB = "30000000-0000-4000-8000-000000000002";
+
+function createGateway(
+  options: { authorized?: boolean; writeAuthorized?: boolean } = {},
+) {
+  const expenses = new Map<string, StoredCreate>();
+  const ledgerCreates = new Map<string, { hash: string; response: unknown }>();
+  const ledgerExpenses = new Map<
+    string,
+    typeof ledgerExpenseBody & { revision: number }
+  >();
+  const itineraryItems = new Map<string, StoredCreate>();
+  const personalPayments = new Map<string, PersonalSettlementPaymentDto>();
+  const gateway: DevBackendGateway = {
+    executeExpenseCommand: vi.fn(async () => {
+      throw new Error("Typed command test not configured.");
+    }),
+    readExpenseConflictChain: vi.fn(async () => {
+      throw new Error("Chain read test not configured.");
+    }),
+    resolveExpenseConflictChain: vi.fn(async () => {
+      throw new Error("Chain resolution test not configured.");
+    }),
+    completeLedgerEconomicDate: vi.fn(async () => {
+      throw new Error("Date completion is not configured for this test.");
+    }),
+    inspectLedgerEconomicDate: vi.fn(async () => ({
+      disposition: "USER_ACTION_REQUIRED" as const,
+      economicDate: null,
+      source: null,
+      expenseRevision: 1,
+    })),
+    validateAccessToken: vi.fn(async (token) =>
+      token === "valid-token" ? { id: userId } : null,
+    ),
+    canReadTrip: vi.fn(async () => options.authorized ?? true),
+    canWriteTrip: vi.fn(
+      async () => options.writeAuthorized ?? options.authorized ?? true,
+    ),
+    canFinalizeSettlement: vi.fn(async () => options.authorized ?? true),
+    previewSettlementCorrection: vi.fn(async () => {
+      throw new Error("Correction preview is not configured for this test.");
+    }),
+    finalizeSettlementCorrection: vi.fn(async () => {
+      throw new Error("Correction confirmation is not configured for this test.");
+    }),
+    resolveSettlementFx: vi.fn(async () => ({
+      claimed: 2,
+      accepted: 2,
+      unavailableExpenseIds: [],
+      pendingPublicationExpenseIds: [],
+    })),
+    lookupLedgerRate: vi.fn(async (_userId, _tripId, input) => ({
+      ...input,
+      referenceDate: "2026-09-14",
+      decimalRate: "0.0578",
+      resolution: "NEAREST_AVAILABLE" as const,
+      policyVersion: "ECB_DAILY_V1" as const,
+      observedAt: "2026-09-15T10:00:00.000Z",
+      provider: "ECB" as const,
+      sourceReference: "https://www.ecb.europa.eu/",
+      providerReference:
+        "https://api.frankfurter.dev/v2/providers/ecb/rate/ISK/CNY?date=2026-09-15",
+    })),
+    previewJourneyCurrency: vi.fn(async (_userId, _tripId, proposedCurrency) => ({
+      currentCurrency: "NZD",
+      currentScale: 2,
+      proposedCurrency,
+      proposedScale: 2,
+      settingsRevision: 1,
+      previewDigest: "a".repeat(64),
+      affectedExpenses: 0,
+      sameCurrencyCount: 0,
+      referenceCandidateCount: 0,
+      missingEconomicDateCount: 0,
+      missingHistoricalQuoteCount: 0,
+      manualAgreedCount: 0,
+      actualPayerCostCount: 0,
+      otherPolicyCount: 0,
+      conflictCount: 0,
+      expectedUnresolvedCount: 0,
+      openSettlementCount: 0,
+      finalizedSettlementCount: 0,
+      totalsAvailable: true,
+      requiresAbandonPreview: false,
+    })),
+    commitJourneyCurrency: vi.fn(async (_userId, _tripId, _key, input) => ({
+      changeId: "70000000-0000-4000-8000-000000000009",
+      settlementCurrency: input.proposedCurrency,
+      settlementScale: 2,
+      settingsRevision: 2,
+      affectedExpenses: 0,
+      unresolvedExpenses: 0,
+      idempotentReplay: false,
+    })),
+    previewLedgerSettlement: vi.fn(async (_userId, requestedTripId, cutoff) => ({
+      state: "PREVIEW_READY" as const,
+      journeyId: requestedTripId,
+      throughTimestamp: cutoff,
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      settingsRevision: 1,
+      algorithmVersion: "ledger-settlement-greedy-v1" as const,
+      members: [],
+      inputs: [],
+      blockers: [],
+      exclusions: [],
+      balances: [],
+      transfers: [],
+      inputDigest: "a".repeat(64),
+      sourceAsOf: cutoff,
+      sourceFingerprintPolicy: "SETTLEMENT_SOURCE_V1" as const,
+      sourceFingerprint: "b".repeat(64),
+      confirmedSettlement: null,
+      confirmationDiff: [],
+    })),
+    readPersonalSettlementReview: vi.fn(async (_userId, requestedTripId) => ({
+      statement: {
+        journeyId: requestedTripId,
+        memberId: memberA,
+        currency: "NZD",
+        scale: 2,
+        settingsRevision: 1,
+        algorithmVersion: "ledger-settlement-greedy-v1",
+        settlementId: null,
+        settlementRevision: null,
+        settlementInputDigest: null,
+        paidMinor: 0,
+        shareMinor: 0,
+        balanceMinor: 0,
+        contributions: [],
+      },
+      statementFingerprint: "b".repeat(64),
+      checkpoint: null,
+      delta: null,
+      coverage: [],
+    })),
+    createPersonalSettlementCheckpoint: vi.fn(
+      async (_userId, requestedTripId, _key, input) => ({
+        statement: {
+          journeyId: requestedTripId,
+          memberId: memberA,
+          currency: "NZD",
+          scale: 2,
+          settingsRevision: 1,
+          algorithmVersion: "ledger-settlement-greedy-v1",
+          settlementId: null,
+          settlementRevision: null,
+          settlementInputDigest: null,
+          paidMinor: 0,
+          shareMinor: 0,
+          balanceMinor: 0,
+          contributions: [],
+        },
+        statementFingerprint: input.statementFingerprint,
+        checkpoint: null,
+        delta: null,
+        coverage: [],
+        idempotentReplay: false,
+      }),
+    ),
+    finalizeLedgerSettlement: vi.fn(async (_userId, requestedTripId, _key, input) => ({
+      entity: {
+        id: "70000000-0000-4000-8000-000000000001",
+        journeyId: requestedTripId,
+        status: "FINALIZED" as const,
+        throughTimestamp: input.throughTimestamp,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        settingsRevision: 1,
+        algorithmVersion: "ledger-settlement-greedy-v1" as const,
+        inputDigest: input.inputDigest,
+        revision: 1,
+        finalizedBy: userId,
+        finalizedAt: "2026-09-12T00:00:00.000Z",
+        inputs: [],
+        balances: [],
+        transfers: [],
+        auditEvents: [
+          {
+            id: "71000000-0000-4000-8000-000000000001",
+            eventType: "FINALIZED" as const,
+            actorUserId: userId,
+            actorMemberId: memberA,
+            reason: null,
+            transferId: null,
+            paymentId: null,
+            dischargeId: null,
+            authority: null,
+            revision: 1,
+            createdAt: "2026-09-12T00:00:00.000Z",
+          },
+        ],
+      },
+      idempotentReplay: false,
+    })),
+    previewSettlementAdjustment: vi.fn(async (_userId, _tripId, rootSettlementId) => ({
+      state: "PREVIEW_UNCHANGED" as const,
+      rootSettlementId,
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      expectedHeadId: null,
+      priorInputDigest: "a".repeat(64),
+      inputDigest: "a".repeat(64),
+      zeroTransfer: true,
+      inputs: [],
+      balances: [],
+      transfers: [],
+      blockers: [],
+      exclusions: [],
+      changedExpenses: [],
+    })),
+    finalizeSettlementAdjustment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    recordSettlementPayment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    actOnSettlementPayment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    correctSettlementPayment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    readPersonalSettlementPayments: vi.fn(async () => [...personalPayments.values()]),
+    pullPersonalSettlementPaymentChanges: vi.fn(async (_userId, _tripId, cursor) => ({
+      changes: [],
+      cursor,
+      hasMore: false,
+      serverTime: "2026-09-22T00:00:00.000Z",
+    })),
+    createPersonalSettlementPayment: vi.fn(
+      async (_userId, requestedTripId, _operationId, input) => {
+        const { id, auditReason: _auditReason, ...value } = input;
+        const record: PersonalSettlementPaymentDto = {
+          ...value,
+          id,
+          journeyId: requestedTripId,
+          ownerUserId: userId,
+          ownerMemberId: memberA,
+          revision: 1,
+          createdAt: "2026-09-22T00:00:00.000Z",
+          updatedAt: "2026-09-22T00:00:00.000Z",
+          deletedAt: null,
+        };
+        personalPayments.set(id, record);
+        return { record, idempotentReplay: false };
+      },
+    ),
+    updatePersonalSettlementPayment: vi.fn(
+      async (_userId, _tripId, paymentId, _operationId, input) => {
+        const current = personalPayments.get(paymentId)!;
+        const {
+          baseRevision: _baseRevision,
+          auditReason: _auditReason,
+          ...value
+        } = input;
+        const record = {
+          ...current,
+          ...value,
+          revision: current.revision + 1,
+          updatedAt: "2026-09-22T00:01:00.000Z",
+        };
+        personalPayments.set(paymentId, record);
+        return { record, idempotentReplay: false };
+      },
+    ),
+    deletePersonalSettlementPayment: vi.fn(async (_userId, _tripId, paymentId) => {
+      const current = personalPayments.get(paymentId)!;
+      const record = {
+        ...current,
+        revision: current.revision + 1,
+        updatedAt: "2026-09-22T00:02:00.000Z",
+        deletedAt: "2026-09-22T00:02:00.000Z",
+      };
+      personalPayments.set(paymentId, record);
+      return { record, idempotentReplay: false };
+    }),
+    createReceipt: vi.fn(async (_userId, requestedTripId, receiptId, input) => ({
+      entity: {
+        id: receiptId,
+        localId: input.localId,
+        journeyId: requestedTripId,
+        expenseId: null,
+        objectPath: `${requestedTripId}/${receiptId}/original`,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+        sha256: input.sha256,
+        uploadStatus: "PENDING" as const,
+        ocrStatus: "PENDING" as const,
+        ocrSuggestion: null,
+        createdAt: "2026-09-12T00:00:00.000Z",
+        updatedAt: "2026-09-12T00:00:00.000Z",
+      },
+      idempotentReplay: false,
+    })),
+    uploadReceiptContent: vi.fn(async (_userId, requestedTripId, receiptId) => ({
+      entity: {
+        id: receiptId,
+        localId: "local-receipt",
+        journeyId: requestedTripId,
+        expenseId: null,
+        objectPath: `${requestedTripId}/${receiptId}/original`,
+        mimeType: "image/jpeg" as const,
+        sizeBytes: 3,
+        sha256: "a".repeat(64),
+        uploadStatus: "PENDING" as const,
+        ocrStatus: "PENDING" as const,
+        ocrSuggestion: null,
+        createdAt: "2026-09-12T00:00:00.000Z",
+        updatedAt: "2026-09-12T00:00:00.000Z",
+      },
+      idempotentReplay: false,
+    })),
+    downloadReceiptContent: vi.fn(async () => ({
+      bytes: new Uint8Array([1, 2, 3]),
+      mimeType: "image/jpeg",
+    })),
+    statReceiptContent: vi.fn(async () => ({
+      sizeBytes: 3,
+      sha256: "a".repeat(64),
+      mimeType: "image/jpeg",
+      objectPath: "journey/receipt/original",
+    })),
+    completeReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    linkReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    deleteExpenseReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    listPersonalPaymentAttachments: vi.fn(async () => []),
+    linkPersonalPaymentAttachment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    unlinkPersonalPaymentAttachment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    ocrReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    bootstrapLedger: vi.fn(async () => ({
+      journey: {
+        id: tripId,
+        title: "Europe",
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        valuationPolicy: "REFERENCE_RATE",
+        updatedAt: "2026-09-11T00:00:00.000Z",
+      },
+      members: [],
+      households: [],
+      expenses: [],
+      corrections: [],
+      rateQuotes: [],
+      actor: {
+        memberId: memberA,
+        role: "group_member",
+        capabilities: {
+          canRead: true,
+          canCreateExpense: true,
+          canEditOwnExpense: true,
+          canCorrectAnyExpense: false,
+          canSuggestCorrection: true,
+          canResolveOwnExpenseConflict: true,
+          canAddOwnPaymentEvidence: true,
+          canManageExpenseValuation: true,
+          canManageLedgerValuationPolicy: false,
+        },
+      },
+      cursor: "cursor-1",
+      serverTime: "2026-09-11T00:00:00.000Z",
+    })),
+    pullLedgerChanges: vi.fn(async (_userId, _tripId, cursor) => ({
+      changes: [],
+      cursor: cursor === "cursor-1" ? "cursor-2" : "cursor-1",
+      serverTime: "2026-09-11T00:00:00.000Z",
+    })),
+    readLedgerExpenses: vi.fn(async () => ({ expenses: [], nextCursor: null })),
+    readLedgerAnalysis: vi.fn(async (_userId, _tripId, _filters, scope, dimension) => ({
+      scope,
+      dimension,
+      currency: "NZD",
+      summary: {
+        totalMinor: 0,
+        expenseCount: 0,
+        includedExpenseIds: [],
+        unresolvedRateCount: 0,
+        openConflictCount: 0,
+      },
+      buckets: [],
+    })),
+    readMyLedger: vi.fn(async (_userId, period, from, to) => ({
+      period,
+      from,
+      to,
+      journeys: [],
+      serverTime: "2026-09-11T00:00:00.000Z",
+    })),
+    readLedgerRateQuotes: vi.fn(async () => []),
+    readReferenceRateSnapshots: vi.fn(async () => ({
+      provider: "ECB" as const,
+      policyVersion: "ECB_LOCAL_SNAPSHOT_V1" as const,
+      baseCurrency: "EUR" as const,
+      snapshots: [
+        {
+          referenceDate: "2026-09-23",
+          rates: { EUR: "1", ISK: "143.8", NZD: "1.9821" },
+          observedAt: "2026-09-24T00:00:00.000Z",
+          expiresAt: "2026-10-24T00:00:00.000Z",
+        },
+      ],
+      sourceReference: "https://www.ecb.europa.eu/",
+      providerReference: "https://api.frankfurter.dev/v2/providers/ecb/rates",
+    })),
+    readLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
+    refreshLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
+    raiseLedgerReviewFinding: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    actOnLedgerReviewFinding: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    addLedgerPaymentRecord: vi.fn(async (_userId, _tripId, _expenseId, _key, input) => ({
+      entity: {
+        id: "53000000-0000-4000-8000-000000000001",
+        expenseRevision: 1,
+        payerMemberId: memberA,
+        instrumentLabel: input.instrumentLabel,
+        authorization: input.authorization,
+        posted: input.posted,
+        authorizedAt: input.authorizedAt,
+        postedAt: input.postedAt,
+        fee: input.fee,
+        bankFxRate: input.bankFxRate,
+        source: input.source,
+        notes: input.notes,
+        supersedesPaymentRecordId: input.supersedesPaymentRecordId,
+      },
+      serverId: "53000000-0000-4000-8000-000000000001",
+      revision: 1 as const,
+      updatedAt: "2026-09-12T01:00:00.000Z",
+      idempotentReplay: false,
+    })),
+    applyLedgerValuation: vi.fn(async () => {
+      throw new BackendError(409, "REVISION_CONFLICT", "stale");
+    }),
+    createLedgerExpense: vi.fn(async (_userId, requestedTripId, key, input) => {
+      const hash = JSON.stringify(input);
+      const existing = ledgerCreates.get(key);
+      if (existing) {
+        if (existing.hash !== hash) {
+          throw new BackendError(
+            409,
+            "IDEMPOTENCY_CONFLICT",
+            "The idempotency key conflicts.",
+          );
+        }
+        return { ...(existing.response as object), idempotentReplay: true } as never;
+      }
+      const response = {
+        entity: {
+          id: "40000000-0000-4000-8000-000000000001",
+          journeyId: requestedTripId,
+          creatorMemberId: memberA,
+          payerMemberId: input.payerMemberId,
+          title: input.title,
+          description: input.description,
+          category: input.category,
+          occurredAt: input.occurredAt,
+          economicDate: input.economicDate ?? null,
+          original: input.original,
+          businessStatus: input.businessStatus,
+          settlementParticipation: input.settlementParticipation ?? "INCLUDED",
+          revision: 1,
+          deletedAt: null,
+          createdAt: "2026-09-10T00:00:00.000Z",
+          updatedAt: "2026-09-10T00:00:00.000Z",
+          participants: input.participants,
+          splits: input.splits,
+          valuation: input.valuation
+            ? {
+                id: "50000000-0000-4000-8000-000000000001",
+                ...input.valuation,
+              }
+            : null,
+          paymentRecords: [],
+          auditEvents: [
+            {
+              id: "60000000-0000-4000-8000-000000000001",
+              expenseId: "40000000-0000-4000-8000-000000000001",
+              actorUserId: userId,
+              actorMemberId: memberA,
+              eventType: "CREATED",
+              reason: null,
+              changedGroups: ["FINANCIAL_CORE", "DESCRIPTIVE"],
+              revision: 1,
+              createdAt: "2026-09-10T00:00:00.000Z",
+            },
+          ],
+        },
+        serverId: "40000000-0000-4000-8000-000000000001",
+        revision: 1,
+        updatedAt: "2026-09-10T00:00:00.000Z",
+        idempotentReplay: false,
+      };
+      ledgerCreates.set(key, { hash, response });
+      ledgerExpenses.set(response.serverId, { ...input, revision: 1 });
+      return response;
+    }),
+    updateLedgerExpense: vi.fn(
+      async (_userId, requestedTripId, expenseId, _key, input) => {
+        if (!input.auditReason && input.title.includes("Organizer")) {
+          throw new BackendError(
+            400,
+            "INVALID_PAYLOAD",
+            "An organizer override reason is required.",
+          );
+        }
+        const current = ledgerExpenses.get(expenseId);
+        if (!current) throw new BackendError(404, "ENTITY_NOT_FOUND", "missing");
+        if (current.revision !== input.baseRevision) {
+          throw new BackendError(409, "REVISION_CONFLICT", "stale");
+        }
+        const revision = input.baseRevision + 1;
+        ledgerExpenses.set(expenseId, { ...input, revision });
+        return {
+          entity: {
+            id: expenseId,
+            journeyId: requestedTripId,
+            creatorMemberId: memberA,
+            payerMemberId: input.payerMemberId,
+            title: input.title,
+            description: input.description,
+            category: input.category,
+            occurredAt: input.occurredAt,
+            economicDate: input.economicDate ?? null,
+            original: input.original,
+            businessStatus: input.businessStatus,
+            settlementParticipation: input.settlementParticipation ?? "INCLUDED",
+            revision,
+            deletedAt: null,
+            createdAt: "2026-09-10T00:00:00.000Z",
+            updatedAt: "2026-09-10T00:01:00.000Z",
+            participants: input.participants,
+            splits: input.splits,
+            valuation: input.valuation
+              ? { id: "50000000-0000-4000-8000-000000000002", ...input.valuation }
+              : null,
+            paymentRecords: [],
+            auditEvents: [
+              {
+                id: "60000000-0000-4000-8000-000000000002",
+                expenseId,
+                actorUserId: userId,
+                actorMemberId: memberA,
+                eventType: "EDITED",
+                reason: input.auditReason,
+                changedGroups: ["FINANCIAL_CORE", "DESCRIPTIVE"],
+                revision,
+                createdAt: "2026-09-10T00:01:00.000Z",
+              },
+            ],
+          },
+          serverId: expenseId,
+          revision,
+          updatedAt: "2026-09-10T00:01:00.000Z",
+          idempotentReplay: false,
+        };
+      },
+    ),
+    deleteLedgerExpense: vi.fn(async () => {
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "missing");
+    }),
+    restoreLedgerExpense: vi.fn(async () => {
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "missing");
+    }),
+    resolveLedgerExpenseConflict: vi.fn(async () => {
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "missing");
+    }),
+    createLedgerCorrection: vi.fn(async () => {
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "missing");
+    }),
+    actOnLedgerCorrection: vi.fn(async () => {
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "missing");
+    }),
+    createFinalizedSettlementGuardFixture: vi.fn(async () => ({ ok: true as const })),
+    findExpense: vi.fn(async (id) => expenses.get(id) ?? null),
+    createExpense: vi.fn(async (id, requestedTripId, requestedUserId) => {
+      const row = {
+        id,
+        tripId: requestedTripId,
+        createdByUserId: requestedUserId,
+        updatedAt: "2026-09-10T00:00:00.000Z",
+      };
+      expenses.set(id, row);
+      return row;
+    }),
+    findItineraryItem: vi.fn(async (id) => itineraryItems.get(id) ?? null),
+    createItineraryItem: vi.fn(async (id, requestedTripId, requestedUserId) => {
+      const row = {
+        id,
+        tripId: requestedTripId,
+        createdByUserId: requestedUserId,
+        updatedAt: "2026-09-10T00:00:00.000Z",
+      };
+      itineraryItems.set(id, row);
+      return row;
+    }),
+  };
+
+  return { gateway, expenses, itineraryItems, ledgerCreates, personalPayments };
+}
+
+function post(
+  resource: "expenses" | "itinerary-items",
+  body: unknown,
+  token = "valid-token",
+) {
+  return new Request(`http://localhost/v1/trips/${tripId}/${resource}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": "operation-1",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+const expenseBody = {
+  localId: "expense-local-1",
+  title: "Train",
+  amountMinor: 2500,
+  currencyCode: "NZD",
+  paidByMemberId: null,
+  occurredAt: null,
+};
+
+const itineraryBody = {
+  localId: "itinerary-local-1",
+  title: "Museum",
+  scheduledDate: "2026-09-11",
+  startTime: null,
+  location: null,
+  notes: null,
+};
+
+const ledgerExpenseBody = {
+  localId: "ledger-expense-local-1",
+  title: "Dinner",
+  description: null,
+  category: "food",
+  occurredAt: "2026-09-11T19:00:00.000Z",
+  payerMemberId: memberA,
+  original: { minor: 1200, currency: "NZD", scale: 2 },
+  businessStatus: "ACCEPTED" as const,
+  participants: [
+    { memberId: memberA, displayNameSnapshot: "Alex", householdIdSnapshot: null },
+    { memberId: memberB, displayNameSnapshot: "Bea", householdIdSnapshot: null },
+  ],
+  splits: [
+    {
+      memberId: memberA,
+      method: "EQUAL_PERSON" as const,
+      originalMinor: 600,
+      settlementMinor: 600,
+      weightUnits: null,
+      percentageUnits: null,
+      roundingAdjustmentMinor: 0,
+    },
+    {
+      memberId: memberB,
+      method: "EQUAL_PERSON" as const,
+      originalMinor: 600,
+      settlementMinor: 600,
+      weightUnits: null,
+      percentageUnits: null,
+      roundingAdjustmentMinor: 0,
+    },
+  ],
+  valuation: {
+    policy: "SAME_CURRENCY" as const,
+    original: { minor: 1200, currency: "NZD", scale: 2 },
+    settlement: { minor: 1200, currency: "NZD", scale: 2 },
+    rateSnapshotId: null,
+    paymentRecordId: null,
+    reason: null,
+  },
+};
+
+describe("OTR Dev Backend", () => {
+  it("authenticates and creates both approved entity types", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+
+    const expense = await handle(post("expenses", expenseBody));
+    const itinerary = await handle(post("itinerary-items", itineraryBody));
+
+    expect(expense.status).toBe(201);
+    expect(await expense.json()).toMatchObject({ version: 1, idempotentReplay: false });
+    expect(itinerary.status).toBe(201);
+    expect(gateway.createExpense).toHaveBeenCalledOnce();
+    expect(gateway.createItineraryItem).toHaveBeenCalledOnce();
+  });
+
+  it("rejects invalid sessions and unauthorized trips before writing", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const handle = createDevBackendHandler({ gateway });
+
+    const invalidSession = await handle(post("expenses", expenseBody, "invalid"));
+    const forbidden = await handle(post("expenses", expenseBody));
+
+    expect(invalidSession.status).toBe(401);
+    expect(forbidden.status).toBe(403);
+    expect(gateway.createExpense).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid payloads before authorization or writes", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      post("expenses", { ...expenseBody, amountMinor: -1 }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(gateway.canWriteTrip).not.toHaveBeenCalled();
+    expect(gateway.createExpense).not.toHaveBeenCalled();
+  });
+
+  it("returns the original entity for an idempotent retry", async () => {
+    const { gateway, expenses } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+
+    const first = await handle(post("expenses", expenseBody));
+    const retried = await handle(post("expenses", expenseBody));
+    const firstBody = (await first.json()) as { serverId: string };
+
+    expect(await retried.json()).toMatchObject({
+      serverId: firstBody.serverId,
+      idempotentReplay: true,
+    });
+    expect(expenses).toHaveLength(1);
+    expect(gateway.createExpense).toHaveBeenCalledOnce();
+  });
+
+  it("logs metadata without tokens or request content", async () => {
+    const { gateway } = createGateway();
+    const log = vi.fn();
+    await createDevBackendHandler({ gateway, log })(post("expenses", expenseBody));
+
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ route: "expenses", status: 201 }),
+    );
+    expect(JSON.stringify(log.mock.calls)).not.toContain("valid-token");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("Train");
+  });
+
+  it("serves authorized Ledger bootstrap and incremental pull reads", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+
+    const bootstrap = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/bootstrap`, {
+        headers: { Authorization: "Bearer valid-token", "X-Review-Protocol": "2" },
+      }),
+    );
+    const changes = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/changes?cursor=cursor-1`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+
+    expect(bootstrap.status).toBe(200);
+    expect(await bootstrap.json()).toMatchObject({ cursor: "cursor-1" });
+    expect(changes.status).toBe(200);
+    expect(gateway.pullLedgerChanges).toHaveBeenCalledWith(userId, tripId, "cursor-1");
+  });
+
+  it("reads and checkpoints the exact personal Settlement statement", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const operationId = "80000000-0000-4000-8000-000000000001";
+    const headers = { Authorization: "Bearer valid-token" };
+    const read = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlement-review`, {
+        headers,
+      }),
+    );
+    const created = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlement-review`, {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+          "Idempotency-Key": operationId,
+        },
+        body: JSON.stringify({
+          id: operationId,
+          operationId,
+          statementFingerprint: "b".repeat(64),
+          reviewState: "LOOKS_GOOD",
+        }),
+      }),
+    );
+    expect(read.status).toBe(200);
+    expect(created.status).toBe(201);
+    expect(gateway.readPersonalSettlementReview).toHaveBeenCalledWith(userId, tripId);
+    expect(gateway.createPersonalSettlementCheckpoint).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      operationId,
+      expect.objectContaining({ statementFingerprint: "b".repeat(64) }),
+    );
+  });
+
+  it("keeps preview non-persistent and finalizes with the preview digest", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const throughTimestamp = "2026-09-12T00:00:00+00:00";
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+    };
+    const preview = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ throughTimestamp }),
+      }),
+    );
+    const previewBody = (await preview.json()) as { inputDigest: string };
+    const finalized = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements`, {
+        method: "POST",
+        headers: { ...headers, "Idempotency-Key": "settlement-finalize" },
+        body: JSON.stringify({
+          throughTimestamp,
+          inputDigest: previewBody.inputDigest,
+        }),
+      }),
+    );
+
+    expect(preview.status).toBe(200);
+    expect(gateway.previewLedgerSettlement).toHaveBeenCalledOnce();
+    expect(finalized.status).toBe(201);
+    expect(await finalized.json()).toMatchObject({
+      entity: { status: "FINALIZED", inputDigest: "a".repeat(64) },
+    });
+  });
+
+  it("requires Journey read access for settlement preview", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ throughTimestamp: "2026-09-12T00:00:00.000Z" }),
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(gateway.canReadTrip).toHaveBeenCalledWith(userId, tripId);
+    expect(gateway.previewLedgerSettlement).not.toHaveBeenCalled();
+  });
+
+  it("keeps read-only preview available without organizer mutation authority", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.canFinalizeSettlement).mockResolvedValue(false);
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ throughTimestamp: "2026-09-12T00:00:00.000Z" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.canReadTrip).toHaveBeenCalledWith(userId, tripId);
+    expect(gateway.canFinalizeSettlement).not.toHaveBeenCalled();
+  });
+
+  it("runs settlement FX preflight only for an authorized organizer", async () => {
+    const authorized = createGateway();
+    const denied = createGateway({ authorized: false });
+    const request = () =>
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/fx-preflight`, {
+        method: "POST",
+        headers: { Authorization: "Bearer valid-token" },
+      });
+    const response = await createDevBackendHandler({ gateway: authorized.gateway })(
+      request(),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      claimed: 2,
+      accepted: 2,
+      unavailableExpenseIds: [],
+      pendingPublicationExpenseIds: [],
+    });
+    expect(authorized.gateway.resolveSettlementFx).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      false,
+    );
+    const forced = await createDevBackendHandler({ gateway: authorized.gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/fx-preflight`, {
+        method: "POST",
+        headers: { Authorization: "Bearer valid-token" },
+        body: JSON.stringify({ forceRetry: true }),
+      }),
+    );
+    expect(forced.status).toBe(200);
+    expect(authorized.gateway.resolveSettlementFx).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      true,
+    );
+    expect(
+      (await createDevBackendHandler({ gateway: denied.gateway })(request())).status,
+    ).toBe(403);
+    expect(denied.gateway.resolveSettlementFx).not.toHaveBeenCalled();
+  });
+
+  it("allows Adjustment preview to readers and requires a reason to finalize", async () => {
+    const { gateway } = createGateway();
+    const rootId = "70000000-0000-4000-8000-000000000001";
+    const root = await gateway.finalizeLedgerSettlement(userId, tripId, "fixture", {
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      inputDigest: "a".repeat(64),
+    });
+    gateway.finalizeSettlementAdjustment = vi.fn(async () => ({
+      entity: { ...root.entity, id: "70000000-0000-4000-8000-000000000002" },
+      idempotentReplay: false,
+    }));
+    const handle = createDevBackendHandler({ gateway });
+    const url = `http://localhost/v2/trips/${tripId}/settlements/${rootId}/adjustments`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "adjustment-key",
+    };
+    const preview = await handle(
+      new Request(`${url}/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ throughTimestamp: "2026-09-25T00:00:00.000Z" }),
+      }),
+    );
+    const missingReason = await handle(
+      new Request(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          expectedHeadId: null,
+          inputDigest: "a".repeat(64),
+          reason: "",
+          allowZeroTransfer: false,
+        }),
+      }),
+    );
+    const finalized = await handle(
+      new Request(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          expectedHeadId: null,
+          inputDigest: "a".repeat(64),
+          throughTimestamp: "2026-09-25T00:00:00.000Z",
+          reason: "Corrected expense",
+          allowZeroTransfer: false,
+        }),
+      }),
+    );
+
+    expect(preview.status).toBe(200);
+    expect(gateway.previewSettlementAdjustment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      rootId,
+      "2026-09-25T00:00:00.000Z",
+    );
+    expect(missingReason.status).toBe(400);
+    expect(finalized.status).toBe(201);
+    expect(gateway.finalizeSettlementAdjustment).toHaveBeenCalledOnce();
+    expect(gateway.finalizeSettlementAdjustment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      rootId,
+      "adjustment-key",
+      expect.objectContaining({ throughTimestamp: "2026-09-25T00:00:00.000Z" }),
+    );
+  });
+
+  it("routes typed Paid and Received commands separately", async () => {
+    const { gateway } = createGateway();
+    const base = await gateway.finalizeLedgerSettlement(userId, tripId, "fixture", {
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      inputDigest: "a".repeat(64),
+    });
+    gateway.recordSettlementPayment = vi.fn(async () => ({
+      entity: base.entity,
+      paymentId: "73000000-0000-4000-8000-000000000001",
+      idempotentReplay: false,
+    }));
+    gateway.actOnSettlementPayment = vi.fn(async () => ({
+      entity: base.entity,
+      paymentId: "73000000-0000-4000-8000-000000000001",
+      idempotentReplay: false,
+    }));
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "payment-key",
+    };
+    const paid = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/transfers/72000000-0000-4000-8000-000000000001/payments`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            localId: "73000000-0000-4000-8000-000000000001",
+            baseTransferRevision: 1,
+            payment: { minor: 500, currency: "NZD", scale: 2 },
+            assertedDischarge: { minor: 500, currency: "NZD", scale: 2 },
+            repaymentValuation: null,
+            feeTreatment: null,
+            paidAt: "2026-09-12T01:00:00.000Z",
+            evidenceAssetId: null,
+            notes: null,
+            reportingAuthority: "PAYER",
+            reason: null,
+          }),
+        },
+      ),
+    );
+    const received = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/transfer-payments/73000000-0000-4000-8000-000000000001/confirm`,
+        {
+          method: "POST",
+          headers: { ...headers, "Idempotency-Key": "received-key" },
+          body: JSON.stringify({
+            basePaymentRevision: 1,
+            authority: "RECIPIENT",
+            reason: null,
+          }),
+        },
+      ),
+    );
+
+    expect(paid.status).toBe(201);
+    expect(received.status).toBe(200);
+    expect(gateway.recordSettlementPayment).toHaveBeenCalledOnce();
+    expect(gateway.actOnSettlementPayment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      "73000000-0000-4000-8000-000000000001",
+      "confirm",
+      "received-key",
+      { basePaymentRevision: 1, authority: "RECIPIENT", reason: null },
+    );
+  });
+
+  it("rejects reopen with one stable lifecycle error", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/settlements/70000000-0000-4000-8000-000000000001/reopen`,
+        { method: "POST", headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.code).toBe("SETTLEMENT_REOPEN_NOT_ALLOWED");
+  });
+
+  it("validates and authorizes Stage 6 reporting reads", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const headers = { Authorization: "Bearer valid-token" };
+    const list = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses?receipt=HAS&limit=25`, {
+        headers,
+      }),
+    );
+    const analysis = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/analysis?scope=GROUP&dimension=CATEGORY&valuation=VALUED`,
+        { headers },
+      ),
+    );
+    const myLedger = await handle(
+      new Request("http://localhost/v2/me/ledger?period=ALL", { headers }),
+    );
+
+    expect(list.status).toBe(200);
+    expect(analysis.status).toBe(200);
+    expect(myLedger.status).toBe(200);
+    expect(gateway.readLedgerExpenses).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expect.objectContaining({ receipt: "HAS" }),
+      25,
+      0,
+    );
+    expect(gateway.readLedgerAnalysis).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expect.objectContaining({ valuation: "VALUED" }),
+      "GROUP",
+      "CATEGORY",
+    );
+    expect(gateway.readMyLedger).toHaveBeenCalledWith(
+      userId,
+      "ALL",
+      null,
+      null,
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("coalesces identical My Ledger reads and releases the flight after success", async () => {
+    const { gateway } = createGateway();
+    let finish!: (value: Awaited<ReturnType<typeof gateway.readMyLedger>>) => void;
+    const pending = new Promise<Awaited<ReturnType<typeof gateway.readMyLedger>>>(
+      (resolve) => {
+        finish = resolve;
+      },
+    );
+    vi.mocked(gateway.readMyLedger).mockImplementation(() => pending);
+    const log = vi.fn();
+    const handle = createDevBackendHandler({ gateway, log });
+    const request = () =>
+      new Request("http://localhost/v2/me/ledger?period=ALL", {
+        headers: { Authorization: "Bearer valid-token" },
+      });
+    const reads = [handle(request()), handle(request()), handle(request())];
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(1));
+    finish({ period: "ALL", from: null, to: null, journeys: [], serverTime: "now" });
+    expect((await Promise.all(reads)).map((response) => response.status)).toEqual([
+      200, 200, 200,
+    ]);
+    expect(
+      log.mock.calls.filter(([event]) => event.singleFlightLeader === true),
+    ).toHaveLength(1);
+    expect(log.mock.calls.every(([event]) => event.singleFlightJoinCount === 2)).toBe(
+      true,
+    );
+    expect((await handle(request())).status).toBe(200);
+    expect(gateway.readMyLedger).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps shared My Ledger work alive until its last waiter aborts", async () => {
+    const { gateway } = createGateway();
+    let sharedSignal!: AbortSignal;
+    vi.mocked(gateway.readMyLedger).mockImplementation(
+      (_user, _period, _from, _to, signal) =>
+        new Promise((_resolve, reject) => {
+          sharedSignal = signal!;
+          signal!.addEventListener("abort", () => reject(new Error("cancelled")), {
+            once: true,
+          });
+        }),
+    );
+    const handle = createDevBackendHandler({ gateway });
+    const first = new AbortController();
+    const second = new AbortController();
+    const request = (controller: AbortController) =>
+      new Request("http://localhost/v2/me/ledger?period=ALL", {
+        headers: { Authorization: "Bearer valid-token" },
+        signal: controller.signal,
+      });
+    const a = handle(request(first));
+    const b = handle(request(second));
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(1));
+    first.abort();
+    expect((await a).status).toBe(503);
+    expect(sharedSignal.aborted).toBe(false);
+    second.abort();
+    expect((await b).status).toBe(503);
+    expect(sharedSignal.aborted).toBe(true);
+  });
+
+  it("separates My Ledger flights by user, period, and bounds", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.validateAccessToken).mockImplementation(async (token) =>
+      token === "valid-token" ? { id: userId } : { id: memberA },
+    );
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    vi.mocked(gateway.readMyLedger).mockImplementation(
+      async (_user, period, from, to) => {
+        await pending;
+        return { period, from, to, journeys: [], serverTime: "now" };
+      },
+    );
+    const handle = createDevBackendHandler({ gateway });
+    const get = (token: string, query: string) =>
+      handle(
+        new Request(`http://localhost/v2/me/ledger?${query}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+    const reads = [
+      get("valid-token", "period=ALL"),
+      get("other-token", "period=ALL"),
+      get("valid-token", "period=30D&from=2026-09-01&to=2026-10-01"),
+      get("valid-token", "period=30D&from=2026-09-02&to=2026-10-01"),
+    ];
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(4));
+    finish();
+    expect((await Promise.all(reads)).every((response) => response.status === 200)).toBe(
+      true,
+    );
+  });
+
+  it("clears a failed shared My Ledger flight for a later retry", async () => {
+    const { gateway } = createGateway();
+    let fail!: (error: Error) => void;
+    const pending = new Promise<never>((_resolve, reject) => {
+      fail = reject;
+    });
+    vi.mocked(gateway.readMyLedger).mockImplementationOnce(() => pending);
+    const handle = createDevBackendHandler({ gateway });
+    const request = () =>
+      new Request("http://localhost/v2/me/ledger?period=ALL", {
+        headers: { Authorization: "Bearer valid-token" },
+      });
+    const first = handle(request());
+    const joiner = handle(request());
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(1));
+    fail(new Error("report failed"));
+    expect(
+      (await Promise.all([first, joiner])).map((response) => response.status),
+    ).toEqual([503, 503]);
+    expect((await handle(request())).status).toBe(200);
+    expect(gateway.readMyLedger).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns the authenticated ECB reference snapshot bundle", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const response = await handle(
+      new Request("http://localhost/v2/ledger/reference-rate-snapshots?provider=ECB", {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      provider: "ECB",
+      policyVersion: "ECB_LOCAL_SNAPSHOT_V1",
+      snapshots: [{ rates: { ISK: "143.8" } }],
+    });
+    expect(gateway.readReferenceRateSnapshots).toHaveBeenCalledWith(userId);
+  });
+
+  it("rejects unsupported reporting conversion and invalid filters", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const headers = { Authorization: "Bearer valid-token" };
+    const conversion = await handle(
+      new Request("http://localhost/v2/me/ledger?period=ALL&reportingCurrency=NZD", {
+        headers,
+      }),
+    );
+    const filter = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses?receipt=MAYBE`, {
+        headers,
+      }),
+    );
+    expect(conversion.status).toBe(422);
+    expect(filter.status).toBe(400);
+    expect(gateway.readMyLedger).not.toHaveBeenCalled();
+    expect(gateway.readLedgerExpenses).not.toHaveBeenCalled();
+  });
+
+  it("allows receipt deletion only through existing Journey mutation access", async () => {
+    const receiptId = "40000000-0000-4000-8000-000000000001";
+    const viewer = createGateway({ authorized: true, writeAuthorized: false });
+    const denied = await createDevBackendHandler({ gateway: viewer.gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts/${receiptId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(denied.status).toBe(403);
+    expect(viewer.gateway.deleteExpenseReceipt).not.toHaveBeenCalled();
+
+    const writer = createGateway();
+    const created = await writer.gateway.createReceipt(userId, tripId, receiptId, {
+      localId: "receipt",
+      mimeType: "image/jpeg",
+      sizeBytes: 3,
+      sha256: "a".repeat(64),
+    });
+    vi.mocked(writer.gateway.deleteExpenseReceipt).mockResolvedValue({
+      entity: {
+        ...created.entity,
+        expenseId: receiptId,
+        deletedAt: "2026-09-27T00:00:00Z",
+      },
+      idempotentReplay: false,
+    });
+    const allowed = await createDevBackendHandler({ gateway: writer.gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts/${receiptId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(allowed.status).toBe(200);
+    expect(writer.gateway.deleteExpenseReceipt).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      receiptId,
+    );
+  });
+
+  it("keeps receipt metadata and authenticated binary upload on dedicated routes", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const created = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "receipt-create",
+        },
+        body: JSON.stringify({
+          localId: "local-receipt",
+          mimeType: "image/jpeg",
+          sizeBytes: 3,
+          sha256: "a".repeat(64),
+        }),
+      }),
+    );
+    const receipt = (await created.json()) as { entity: { id: string } };
+    expect(created.status).toBe(201);
+
+    const uploaded = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/receipts/${receipt.entity.id}/content`,
+        {
+          method: "PUT",
+          headers: { Authorization: "Bearer valid-token", "Content-Type": "image/jpeg" },
+          body: new Uint8Array([1, 2, 3]),
+        },
+      ),
+    );
+    expect(uploaded.status).toBe(200);
+    expect(gateway.uploadReceiptContent).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      receipt.entity.id,
+      new Uint8Array([1, 2, 3]),
+      "image/jpeg",
+    );
+
+    const stat = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/receipts/${receipt.entity.id}/content`,
+        { method: "HEAD", headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(stat.status).toBe(200);
+    expect(stat.headers.get("x-otr-sha-256")).toBe("a".repeat(64));
+    expect(stat.headers.get("x-otr-object-key")).toBe("journey/receipt/original");
+    expect(gateway.statReceiptContent).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      receipt.entity.id,
+    );
+  });
+
+  it("returns the Expense attachment limit before any binary upload", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.createReceipt).mockRejectedValueOnce(
+      new BackendError(
+        409,
+        "EXPENSE_ATTACHMENT_LIMIT_REACHED",
+        "Maximum three attachments per Expense.",
+      ),
+    );
+    const handle = createDevBackendHandler({ gateway });
+    const response = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "fourth-receipt",
+        },
+        body: JSON.stringify({
+          localId: "fourth",
+          expenseId: "40000000-0000-4000-8000-000000000001",
+          mimeType: "image/jpeg",
+          sizeBytes: 1,
+          sha256: "a".repeat(64),
+        }),
+      }),
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { code: "EXPENSE_ATTACHMENT_LIMIT_REACHED" },
+    });
+    expect(gateway.uploadReceiptContent).not.toHaveBeenCalled();
+  });
+
+  it("links and lists Personal Payment attachments through authorized private routes", async () => {
+    const { gateway } = createGateway();
+    const paymentId = "50000000-0000-4000-8000-000000000001";
+    const receiptId = "40000000-0000-4000-8000-000000000001";
+    const entity = (
+      await gateway.createReceipt(userId, tripId, receiptId, {
+        localId: "local-attachment",
+        mimeType: "image/jpeg",
+        sizeBytes: 3,
+        sha256: "a".repeat(64),
+      })
+    ).entity;
+    vi.mocked(gateway.linkPersonalPaymentAttachment).mockResolvedValue({
+      entity,
+      idempotentReplay: false,
+    });
+    vi.mocked(gateway.listPersonalPaymentAttachments).mockResolvedValue([entity]);
+    vi.mocked(gateway.unlinkPersonalPaymentAttachment).mockResolvedValue({
+      entity,
+      idempotentReplay: false,
+    });
+    const handle = createDevBackendHandler({ gateway });
+
+    const linked = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}/attachments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": "50000000-0000-4000-8000-000000000002",
+          },
+          body: JSON.stringify({ receiptId }),
+        },
+      ),
+    );
+    const listed = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}/attachments`,
+        { headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    const removed = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}/attachments/${receiptId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": "50000000-0000-4000-8000-000000000003",
+          },
+          body: "{}",
+        },
+      ),
+    );
+
+    expect(linked.status).toBe(201);
+    expect(listed.status).toBe(200);
+    expect(removed.status).toBe(200);
+    expect(gateway.linkPersonalPaymentAttachment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      paymentId,
+      receiptId,
+      "50000000-0000-4000-8000-000000000002",
+    );
+    expect(await listed.json()).toEqual({ attachments: [entity] });
+    expect(gateway.unlinkPersonalPaymentAttachment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      paymentId,
+      receiptId,
+      "50000000-0000-4000-8000-000000000003",
+    );
+  });
+
+  it("creates Ledger 2.0 expenses through the v2 idempotent aggregate route", async () => {
+    const { gateway, ledgerCreates } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const request = () =>
+      new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "ledger-operation-1",
+        },
+        body: JSON.stringify(ledgerExpenseBody),
+      });
+
+    const first = await handle(request());
+    const retried = await handle(request());
+    const body = (await first.json()) as { serverId: string };
+
+    expect(first.status).toBe(201);
+    expect(retried.status).toBe(200);
+    expect(await retried.json()).toMatchObject({
+      serverId: body.serverId,
+      revision: 1,
+      idempotentReplay: true,
+    });
+    expect(gateway.createLedgerExpense).toHaveBeenCalledTimes(2);
+    expect(ledgerCreates).toHaveLength(1);
+  });
+
+  it("round-trips a literal economic date and keeps old-client omission unknown", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const submit = (body: unknown, key: string) =>
+      handle(
+        new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": key,
+          },
+          body: JSON.stringify(body),
+        }),
+      );
+    const explicit = await submit(
+      {
+        ...ledgerExpenseBody,
+        occurredAt: "2026-07-14T23:30:00-10:00",
+        economicDate: "2026-07-15",
+      },
+      "date-explicit",
+    );
+    expect(explicit.status).toBe(201);
+    expect(await explicit.json()).toMatchObject({
+      entity: { economicDate: "2026-07-15" },
+    });
+    const oldClient = await submit(ledgerExpenseBody, "date-old-client");
+    expect(oldClient.status).toBe(201);
+    expect(await oldClient.json()).toMatchObject({ entity: { economicDate: null } });
+    expect(
+      (await submit({ ...ledgerExpenseBody, economicDate: "2026-02-30" }, "date-invalid"))
+        .status,
+    ).toBe(400);
+  });
+
+  it("rejects Ledger create idempotency key reuse with a different payload", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const request = (title: string) =>
+      new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "ledger-operation-1",
+        },
+        body: JSON.stringify({ ...ledgerExpenseBody, title }),
+      });
+
+    await handle(request("Dinner"));
+    const conflict = await handle(request("Different dinner"));
+
+    expect(conflict.status).toBe(409);
+    expect(await conflict.json()).toMatchObject({
+      error: { code: "IDEMPOTENCY_CONFLICT" },
+    });
+  });
+
+  it("accepts RATE_REQUIRED as synchronized business state and rejects invented value", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const request = (body: unknown) =>
+      new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "rate-required",
+        },
+        body: JSON.stringify(body),
+      });
+    const unresolved = {
+      ...ledgerExpenseBody,
+      original: { minor: 10_000, currency: "EUR", scale: 2 },
+      businessStatus: "RATE_REQUIRED",
+      splits: ledgerExpenseBody.splits.map((split) => ({
+        ...split,
+        originalMinor: 5_000,
+        settlementMinor: null,
+      })),
+      valuation: null,
+    };
+
+    expect((await handle(request(unresolved))).status).toBe(201);
+    expect(
+      (await handle(request({ ...unresolved, valuation: ledgerExpenseBody.valuation })))
+        .status,
+    ).toBe(400);
+  });
+
+  it("routes payment evidence independently and requires manual valuation reason", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "financial-evidence",
+    };
+    const payment = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/expenses/40000000-0000-4000-8000-000000000001/payment-records`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            localId: "payment-local-1",
+            instrumentLabel: "Visa NZ",
+            authorization: null,
+            posted: { minor: 19_943, currency: "NZD", scale: 2 },
+            postedAt: "2026-09-12T01:00:00.000Z",
+            fee: { minor: 200, currency: "NZD", scale: 2 },
+            source: "manual",
+            notes: null,
+            supersedesPaymentRecordId: null,
+          }),
+        },
+      ),
+    );
+    const manualWithoutReason = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/expenses/40000000-0000-4000-8000-000000000001/valuations`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            localValuationId: "valuation-local-1",
+            localRateSnapshotId: "rate-local-1",
+            baseRevision: 1,
+            policy: "MANUAL_AGREED",
+            rateQuoteId: null,
+            paymentRecordId: null,
+            manualRate: "1.95",
+            reason: null,
+            previewSettlement: { minor: 19_500, currency: "NZD", scale: 2 },
+          }),
+        },
+      ),
+    );
+
+    expect(payment.status).toBe(201);
+    expect(await payment.json()).toMatchObject({
+      entity: {
+        posted: { minor: 19_943, currency: "NZD" },
+        authorizedAt: null,
+        bankFxRate: null,
+      },
+    });
+    expect(gateway.addLedgerPaymentRecord).toHaveBeenCalledOnce();
+    expect(manualWithoutReason.status).toBe(400);
+    expect(gateway.applyLedgerValuation).not.toHaveBeenCalled();
+  });
+
+  it("updates Ledger expenses through the v2 aggregate route", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const created = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "ledger-operation-1",
+        },
+        body: JSON.stringify(ledgerExpenseBody),
+      }),
+    );
+    const { serverId } = (await created.json()) as { serverId: string };
+    const updated = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses/${serverId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "ledger-operation-2",
+        },
+        body: JSON.stringify({
+          ...ledgerExpenseBody,
+          title: "Dinner corrected",
+          baseRevision: 1,
+          auditReason: null,
+        }),
+      }),
+    );
+
+    expect(updated.status).toBe(200);
+    expect(await updated.json()).toMatchObject({
+      serverId,
+      revision: 2,
+      entity: { title: "Dinner corrected" },
+    });
+  });
+
+  it("keeps organizer reason and stale revision failures distinct", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const created = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "ledger-operation-1",
+        },
+        body: JSON.stringify(ledgerExpenseBody),
+      }),
+    );
+    const { serverId } = (await created.json()) as { serverId: string };
+    const request = (body: unknown) =>
+      new Request(`http://localhost/v2/trips/${tripId}/expenses/${serverId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "ledger-operation-x",
+        },
+        body: JSON.stringify(body),
+      });
+
+    const missingReason = await handle(
+      request({
+        ...ledgerExpenseBody,
+        title: "Organizer correction",
+        baseRevision: 1,
+        auditReason: null,
+      }),
+    );
+    const stale = await handle(
+      request({
+        ...ledgerExpenseBody,
+        title: "Dinner stale",
+        baseRevision: 99,
+        auditReason: null,
+      }),
+    );
+
+    expect(missingReason.status).toBe(400);
+    expect(await missingReason.json()).toMatchObject({
+      error: { code: "INVALID_PAYLOAD" },
+    });
+    expect(stale.status).toBe(409);
+    expect(await stale.json()).toMatchObject({
+      error: { code: "REVISION_CONFLICT" },
+    });
+  });
+
+  it("preserves the structured conflict envelope in a stale response", async () => {
+    const { gateway } = createGateway();
+    const current = await gateway.createLedgerExpense(
+      userId,
+      tripId,
+      "seed-conflict",
+      ledgerExpenseBody,
+    );
+    const submitted = { ...ledgerExpenseBody, localId: undefined };
+    vi.mocked(gateway.updateLedgerExpense).mockRejectedValueOnce(
+      new BackendError(409, "REVISION_CONFLICT", "stale", {
+        error: {
+          code: "REVISION_CONFLICT",
+          conflictId: "70000000-0000-4000-8000-000000000001",
+          expenseId: current.serverId,
+          baseRevision: 1,
+          currentRevision: 2,
+          submitted,
+          current: current.entity,
+          changedGroups: ["FINANCIAL_CORE"],
+          auditSummaries: current.entity.auditEvents,
+        },
+      }),
+    );
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses/${current.serverId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "conflict-key",
+        },
+        body: JSON.stringify({
+          ...ledgerExpenseBody,
+          baseRevision: 1,
+          auditReason: null,
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "REVISION_CONFLICT",
+        conflictId: "70000000-0000-4000-8000-000000000001",
+        currentRevision: 2,
+        changedGroups: ["FINANCIAL_CORE"],
+      },
+    });
+  });
+
+  it("routes explicit conflict resolution and separate correction commands", async () => {
+    const { gateway } = createGateway();
+    const current = await gateway.createLedgerExpense(
+      userId,
+      tripId,
+      "seed-collaboration",
+      ledgerExpenseBody,
+    );
+    vi.mocked(gateway.resolveLedgerExpenseConflict).mockResolvedValueOnce(current);
+    vi.mocked(gateway.createLedgerCorrection).mockResolvedValueOnce({
+      correction: {
+        id: "71000000-0000-4000-8000-000000000001",
+        journeyId: tripId,
+        expenseId: current.serverId,
+        baseExpenseRevision: 1,
+        proposedExpense: ledgerExpenseBody,
+        reason: "Wrong payer",
+        status: "OPEN",
+        requestedByUserId: userId,
+        requestedByMemberId: memberB,
+        resolvedByUserId: null,
+        resolvedByMemberId: null,
+        resolutionReason: null,
+        resultingExpenseRevision: null,
+        revision: 1,
+        createdAt: "2026-09-12T00:00:00.000Z",
+        updatedAt: "2026-09-12T00:00:00.000Z",
+        resolvedAt: null,
+      },
+      expense: null,
+      idempotentReplay: false,
+    });
+    const editable = { ...ledgerExpenseBody };
+    delete (editable as Partial<typeof ledgerExpenseBody>).localId;
+    const selectedSources = {
+      FINANCIAL_CORE: "JOURNEY",
+      DESCRIPTIVE: "JOURNEY",
+      LINKS: "JOURNEY",
+      EVIDENCE: "JOURNEY",
+      LIFECYCLE: "JOURNEY",
+    };
+
+    const resolved = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/expenses/${current.serverId}/conflict-resolution`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": "resolution-key",
+          },
+          body: JSON.stringify({
+            conflictId: "70000000-0000-4000-8000-000000000001",
+            currentRevision: 1,
+            resolution: "KEEP_JOURNEY",
+            resolvedExpense: editable,
+            selectedSources,
+            reason: "Reviewed both versions",
+          }),
+        },
+      ),
+    );
+    const proposed = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/expenses/${current.serverId}/corrections`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": "correction-key",
+          },
+          body: JSON.stringify({
+            localId: "local-correction",
+            baseRevision: 1,
+            proposedExpense: editable,
+            reason: "Wrong payer",
+          }),
+        },
+      ),
+    );
+
+    expect(resolved.status).toBe(200);
+    expect(proposed.status).toBe(201);
+    expect(gateway.resolveLedgerExpenseConflict).toHaveBeenCalledOnce();
+    expect(gateway.createLedgerCorrection).toHaveBeenCalledOnce();
+  });
+
+  it("rejects unauthorized Ledger reads before returning data", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/bootstrap`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(gateway.bootstrapLedger).not.toHaveBeenCalled();
+  });
+
+  it("authorizes Review refresh/actions and receipt re-download", async () => {
+    const { gateway } = createGateway();
+    const findingId = "60000000-0000-4000-8000-000000000001";
+    const actionId = "60000000-0000-4000-8000-000000000002";
+    vi.mocked(gateway.actOnLedgerReviewFinding).mockResolvedValue({
+      finding: {
+        id: findingId,
+        journeyId: tripId,
+        expenseId: "60000000-0000-4000-8000-000000000003",
+        settlementId: null,
+        layer: "HEURISTIC",
+        findingType: "POSSIBLE_DUPLICATE",
+        severity: "WARNING",
+        confidence: 0.9,
+        evidenceCodes: ["SAME_PAYER_AMOUNT_CURRENCY_TITLE"],
+        status: "DISMISSED",
+        rulesetVersion: "ledger-review-v1",
+        entityRevision: 1,
+        revision: 2,
+        createdAt: "2026-09-13T00:00:00.000Z",
+        updatedAt: "2026-09-13T00:00:01.000Z",
+      },
+      action: {
+        id: actionId,
+        findingId,
+        action: "DISMISSED",
+        actorUserId: userId,
+        actorMemberId: memberA,
+        actorRole: "owner",
+        reason: "False positive",
+        findingRevision: 1,
+        entityRevision: 1,
+        rulesetVersion: "ledger-review-v1",
+        operationId: actionId,
+        createdAt: "2026-09-13T00:00:01.000Z",
+      },
+      idempotentReplay: false,
+    });
+    vi.mocked(gateway.raiseLedgerReviewFinding).mockResolvedValue({
+      finding: {
+        id: findingId,
+        journeyId: tripId,
+        expenseId: "60000000-0000-4000-8000-000000000003",
+        settlementId: null,
+        layer: "HEURISTIC",
+        findingType: "HUMAN_CONCERN",
+        severity: "WARNING",
+        confidence: null,
+        evidenceCodes: ["HUMAN_REPORTED"],
+        status: "OPEN",
+        rulesetVersion: "ledger-review-human-v1",
+        entityRevision: 1,
+        revision: 1,
+        createdAt: "2026-09-13T00:00:00.000Z",
+        updatedAt: "2026-09-13T00:00:00.000Z",
+        origin: "HUMAN",
+        targetType: "EXPENSE",
+        targetSourceRevision: 1,
+      },
+      idempotentReplay: false,
+    });
+    const handle = createDevBackendHandler({ gateway });
+    const refresh = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/review/refresh`, {
+        method: "POST",
+        headers: { Authorization: "Bearer valid-token", "X-Review-Protocol": "2" },
+      }),
+    );
+    const action = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/review-findings/${findingId}/actions`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": actionId,
+            "X-Review-Protocol": "2",
+          },
+          body: JSON.stringify({
+            action: "DISMISSED",
+            baseRevision: 1,
+            reason: "False positive",
+            operationId: actionId,
+          }),
+        },
+      ),
+    );
+    const raised = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/review-findings`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": findingId,
+          "X-Review-Protocol": "2",
+        },
+        body: JSON.stringify({
+          id: findingId,
+          targetType: "EXPENSE",
+          expenseId: "60000000-0000-4000-8000-000000000003",
+          sourceRevision: 1,
+          operationId: findingId,
+        }),
+      }),
+    );
+    const content = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts/${findingId}/content`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+
+    expect([refresh.status, raised.status, action.status, content.status]).toEqual([
+      200, 201, 200, 200,
+    ]);
+    expect(await content.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer);
+  });
+
+  it("gates old Review clients without blocking financial bootstrap", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const review = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/review`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(review.status).toBe(426);
+    expect(gateway.readLedgerReview).not.toHaveBeenCalled();
+
+    const bootstrap = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/bootstrap`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(bootstrap.status).toBe(200);
+    const body = (await bootstrap.json()) as Record<string, unknown>;
+    expect(body).not.toHaveProperty("reviewFindings");
+    expect(body).not.toHaveProperty("reviewActions");
+  });
+
+  it("requires owner authorization and a revisioned preview for Journey Currency", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const url = `http://localhost/v2/trips/${tripId}/ledger/journey-currency`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+    };
+    const preview = await handle(
+      new Request(`${url}/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ proposedCurrency: "EUR" }),
+      }),
+    );
+    expect(preview.status).toBe(200);
+    expect(gateway.previewJourneyCurrency).toHaveBeenCalledWith(userId, tripId, "EUR");
+    const noKey = await handle(
+      new Request(`${url}/commit`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          proposedCurrency: "EUR",
+          baseSettingsRevision: 1,
+          previewDigest: "a".repeat(64),
+        }),
+      }),
+    );
+    expect(noKey.status).toBe(400);
+    const committed = await handle(
+      new Request(`${url}/commit`, {
+        method: "POST",
+        headers: { ...headers, "Idempotency-Key": "currency-1" },
+        body: JSON.stringify({
+          proposedCurrency: "EUR",
+          baseSettingsRevision: 1,
+          previewDigest: "a".repeat(64),
+        }),
+      }),
+    );
+    expect(committed.status).toBe(200);
+    expect(gateway.commitJourneyCurrency).toHaveBeenCalledOnce();
+    const deniedGateway = createGateway({ authorized: false }).gateway;
+    const denied = await createDevBackendHandler({ gateway: deniedGateway })(
+      new Request(`${url}/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ proposedCurrency: "EUR" }),
+      }),
+    );
+    expect(denied.status).toBe(403);
+  });
+
+  it("adapts authenticated rate lookup without requiring owner access", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const response = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/rate-lookup`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quoteCurrency: "ISK",
+          baseCurrency: "CNY",
+          requestedDate: "2026-09-15",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      requestedDate: "2026-09-15",
+      referenceDate: "2026-09-14",
+      decimalRate: "0.0578",
+      resolution: "NEAREST_AVAILABLE",
+    });
+    expect(gateway.lookupLedgerRate).toHaveBeenCalledWith(userId, tripId, {
+      quoteCurrency: "ISK",
+      baseCurrency: "CNY",
+      requestedDate: "2026-09-15",
+    });
+  });
+
+  it("creates, reads, updates, and soft-deletes Personal Payments", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const paymentId = "74000000-0000-4000-8000-000000000001";
+    const endpoint = `http://localhost/v2/trips/${tripId}/ledger/personal-payments`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+    };
+    const value = {
+      counterpartyMemberId: memberB,
+      direction: "PAID",
+      amountMinor: 30_000,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+      recordedEquivalentMinor: 17_250,
+      recordedEquivalentCurrency: "AUD",
+      recordedEquivalentScale: 2,
+      referenceRateDecimal: "0.575",
+      referenceRateDate: "2026-09-21",
+      referenceSource: "ECB",
+      referenceProvenance: { informational: true },
+    };
+    const created = await handle(
+      new Request(endpoint, {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Idempotency-Key": "74000000-0000-4000-8000-000000000011",
+        },
+        body: JSON.stringify({ id: paymentId, ...value }),
+      }),
+    );
+    const listed = await handle(
+      new Request(endpoint, { headers: { Authorization: "Bearer valid-token" } }),
+    );
+    const detailed = await handle(
+      new Request(`${endpoint}/${paymentId}`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    const updated = await handle(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "PATCH",
+        headers: {
+          ...headers,
+          "Idempotency-Key": "74000000-0000-4000-8000-000000000012",
+        },
+        body: JSON.stringify({
+          ...value,
+          direction: "RECEIVED",
+          amountMinor: 29_500,
+          baseRevision: 1,
+        }),
+      }),
+    );
+    const deleted = await handle(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "DELETE",
+        headers: {
+          ...headers,
+          "Idempotency-Key": "74000000-0000-4000-8000-000000000013",
+        },
+        body: JSON.stringify({ baseRevision: 2 }),
+      }),
+    );
+
+    expect([
+      created.status,
+      listed.status,
+      detailed.status,
+      updated.status,
+      deleted.status,
+    ]).toEqual([201, 200, 200, 200, 200]);
+    expect(await created.json()).toMatchObject({
+      record: { ownerUserId: userId, amountMinor: 30_000 },
+    });
+    expect(await listed.json()).toMatchObject({ payments: [{ id: paymentId }] });
+    expect(await detailed.json()).toMatchObject({ record: { id: paymentId } });
+    expect(await updated.json()).toMatchObject({
+      record: { direction: "RECEIVED", amountMinor: 29_500, revision: 2 },
+    });
+    expect(await deleted.json()).toMatchObject({
+      record: { id: paymentId, revision: 3, deletedAt: expect.any(String) },
+    });
+    expect(gateway.canReadTrip).not.toHaveBeenCalled();
+    expect(gateway.canWriteTrip).not.toHaveBeenCalled();
+    expect(gateway.resolveSettlementFx).not.toHaveBeenCalled();
+  });
+
+  it("does not pre-reject historical Personal Payment reads on current membership", async () => {
+    const { gateway, personalPayments } = createGateway({ authorized: false });
+    const paymentId = "74000000-0000-4000-8000-000000000002";
+    personalPayments.set(paymentId, {
+      id: paymentId,
+      journeyId: tripId,
+      ownerUserId: userId,
+      ownerMemberId: memberA,
+      counterpartyMemberId: memberB,
+      direction: "RECEIVED",
+      amountMinor: 29_500,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+      revision: 1,
+      createdAt: "2026-09-22T00:00:00Z",
+      updatedAt: "2026-09-22T00:00:00Z",
+      deletedAt: null,
+    });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}`,
+        { headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.canReadTrip).not.toHaveBeenCalled();
+    expect(gateway.readPersonalSettlementPayments).toHaveBeenCalledWith(userId, tripId);
+  });
+
+  it("rejects owner impersonation and non-UUID Personal Payment operation keys", async () => {
+    const { gateway } = createGateway();
+    const endpoint = `http://localhost/v2/trips/${tripId}/ledger/personal-payments`;
+    const body = {
+      id: "74000000-0000-4000-8000-000000000003",
+      ownerUserId: "20000000-0000-4000-8000-000000000099",
+      counterpartyMemberId: memberB,
+      direction: "PAID",
+      amountMinor: 100,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+    };
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "not-a-uuid",
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+    expect(response.status).toBe(400);
+    const { ownerUserId: _ownerUserId, ...validBody } = body;
+    const invalidKey = await createDevBackendHandler({ gateway })(
+      new Request(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "not-a-uuid",
+        },
+        body: JSON.stringify(validBody),
+      }),
+    );
+    expect(invalidKey.status).toBe(400);
+    expect(gateway.createPersonalSettlementPayment).not.toHaveBeenCalled();
+  });
+
+  it("routes the historical-safe Personal Payment change feed without trip prechecks", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/changes?cursor=cursor-1`,
+        { headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.pullPersonalSettlementPaymentChanges).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      "cursor-1",
+    );
+    expect(gateway.canReadTrip).not.toHaveBeenCalled();
+  });
+
+  it("maps Personal Payment replay, stale revision, and write authorization outcomes", async () => {
+    const { gateway } = createGateway();
+    const paymentId = "74000000-0000-4000-8000-000000000004";
+    const endpoint = `http://localhost/v2/trips/${tripId}/ledger/personal-payments`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "74000000-0000-4000-8000-000000000021",
+    };
+    gateway.createPersonalSettlementPayment = vi.fn(
+      async (_userId, requestedTripId, _key, input) => ({
+        record: {
+          ...input,
+          journeyId: requestedTripId,
+          ownerUserId: userId,
+          ownerMemberId: memberA,
+          revision: 1,
+          createdAt: "2026-09-22T00:00:00Z",
+          updatedAt: "2026-09-22T00:00:00Z",
+          deletedAt: null,
+        },
+        idempotentReplay: true,
+      }),
+    );
+    const value = {
+      counterpartyMemberId: memberB,
+      direction: "PAID",
+      amountMinor: 100,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+    };
+    const replay = await createDevBackendHandler({ gateway })(
+      new Request(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ id: paymentId, ...value }),
+      }),
+    );
+    gateway.updatePersonalSettlementPayment = vi.fn(async () => {
+      throw new BackendError(409, "REVISION_CONFLICT", "stale");
+    });
+    const stale = await createDevBackendHandler({ gateway })(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ ...value, baseRevision: 1 }),
+      }),
+    );
+    gateway.deletePersonalSettlementPayment = vi.fn(async () => {
+      throw new BackendError(403, "PERSONAL_PAYMENT_WRITE_FORBIDDEN", "owner only");
+    });
+    const forbidden = await createDevBackendHandler({ gateway })(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ baseRevision: 1 }),
+      }),
+    );
+
+    expect(replay.status).toBe(200);
+    expect(stale.status).toBe(409);
+    expect((await stale.json()).error.code).toBe("REVISION_CONFLICT");
+    expect(forbidden.status).toBe(403);
+    expect((await forbidden.json()).error.code).toBe("PERSONAL_PAYMENT_WRITE_FORBIDDEN");
+  });
+
+  it("keeps Settlement correction commands organizer-only", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `https://api.dev/v2/trips/${tripId}/settlements/70000000-0000-4000-8000-000000000001/corrections`,
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer valid-token" },
+          body: "{}",
+        },
+      ),
+    );
+    expect(response.status).toBe(403);
+    expect((await response.json()).error.code).toBe("TRIP_WRITE_FORBIDDEN");
+  });
+
+  it("inspects date evidence and accepts only an authenticated date-only command", async () => {
+    const { gateway } = createGateway();
+    const expenseId = "40000000-0000-4000-8000-000000000001";
+    const url = `https://api.dev/v2/trips/${tripId}/expenses/${expenseId}/economic-date`;
+    const handle = createDevBackendHandler({ gateway });
+    const read = await handle(
+      new Request(url, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(read.status).toBe(200);
+    expect(gateway.inspectLedgerEconomicDate).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+    );
+    gateway.completeLedgerEconomicDate = vi.fn(
+      async () =>
+        ({
+          serverId: expenseId,
+          revision: 4,
+          idempotentReplay: false,
+        }) as never,
+    );
+    const submit = (body: unknown, headers: Record<string, string> = {}) =>
+      handle(
+        new Request(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Idempotency-Key": "date-command-1",
+            ...headers,
+          },
+          body: JSON.stringify(body),
+        }),
+      );
+    expect(
+      (
+        await submit({
+          baseRevision: 3,
+          source: "USER_CONFIRMED_V1",
+          economicDate: "2026-07-25",
+        })
+      ).status,
+    ).toBe(200);
+    expect(gateway.completeLedgerEconomicDate).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+      "date-command-1",
+      { baseRevision: 3, source: "USER_CONFIRMED_V1", economicDate: "2026-07-25" },
+    );
+    expect(
+      (
+        await submit({
+          baseRevision: 3,
+          source: "USER_CONFIRMED_V1",
+          economicDate: "2026-02-30",
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await submit({
+          baseRevision: 3,
+          source: "STAGE9_DATE_ONLY_V1",
+          economicDate: "2026-07-25",
+        })
+      ).status,
+    ).toBe(400);
+    const denied = createGateway({ authorized: false }).gateway;
+    expect(
+      (
+        await createDevBackendHandler({ gateway: denied })(
+          new Request(url, {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer valid-token",
+              "Idempotency-Key": "date-command-2",
+            },
+            body: JSON.stringify({
+              baseRevision: 3,
+              source: "USER_CONFIRMED_V1",
+              economicDate: "2026-07-25",
+            }),
+          }),
+        )
+      ).status,
+    ).toBe(403);
+  });
+});
+
+describe("Expense consistency v2 HTTP contract", () => {
+  const expenseId = "89000000-0000-4000-8000-000000000001";
+  const envelope = {
+    commandId: "typed-command",
+    intentVersion: 2,
+    intentSequence: 1,
+    predecessorOperationId: null,
+    observedServerRevision: 1,
+    observedBase: null,
+    patchOrIntent: { type: "DELETE" },
+    causalBaseReceipt: null,
+    boundExecutionRevision: 1,
+    idempotencyKey: "typed-command",
+  };
+  const request = (action: string, body?: unknown, key = "typed-command") =>
+    new Request(
+      `https://backend.test/v2/trips/${tripId}/expenses/${expenseId}${action === "commands" ? "" : action === "conflict-chain-resolution" ? "/conflict-resolution" : `/${action}`}`,
+      {
+        method: action === "commands" ? "DELETE" : body ? "POST" : "GET",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": key,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      },
+    );
+  it("dispatches true DELETE without transforming its intent", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.executeExpenseCommand).mockResolvedValue({
+      entity: { businessStatus: "DELETED" },
+      receipt: { commandType: "DELETE" },
+    } as never);
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", { envelope, auditReason: null }),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.executeExpenseCommand).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+      "typed-command",
+      { envelope, auditReason: null },
+    );
+    expect(await response.json()).toMatchObject({
+      receipt: { commandType: "DELETE" },
+      entity: { businessStatus: "DELETED" },
+    });
+  });
+  it("rejects a key mismatch before gateway mutation", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", { envelope, auditReason: null }, "different-key"),
+    );
+    expect(response.status).toBe(400);
+    expect(gateway.executeExpenseCommand).not.toHaveBeenCalled();
+  });
+  it("rejects a user patch containing derived valuation/split fields", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", {
+        envelope: {
+          ...envelope,
+          patchOrIntent: {
+            type: "UPDATE",
+            patch: { descriptive: { title: "Title" }, valuation: null },
+          },
+        },
+        auditReason: null,
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(gateway.executeExpenseCommand).not.toHaveBeenCalled();
+  });
+  it("reads a full conflict chain under Journey read authorization", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.readExpenseConflictChain).mockResolvedValue({
+      contractVersion: 2,
+      canonical: { businessStatus: "DELETED" },
+      conflicts: [{ commandType: "DELETE" }],
+    } as never);
+    const response = await createDevBackendHandler({ gateway })(request("conflicts"));
+    expect(response.status).toBe(200);
+    expect(gateway.readExpenseConflictChain).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+    );
+  });
+  it("requires write authorization for typed resolution", async () => {
+    const { gateway } = createGateway({ writeAuthorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", { envelope, auditReason: null }),
+    );
+    expect(response.status).toBe(403);
+    expect(gateway.executeExpenseCommand).not.toHaveBeenCalled();
+  });
+  it("passes covered IDs and digest together to a single chain resolution", async () => {
+    const { gateway } = createGateway();
+    const body = {
+      contractVersion: 2,
+      commandId: "typed-command",
+      intentType: "DELETE",
+      submittedIntent: { type: "DELETE" },
+      observedBaseRevision: 1,
+      currentServerRevision: 2,
+      coveredConflictIds: [expenseId, memberA],
+      expectedChainDigest: "a".repeat(64),
+      choice: "CONFIRM_DELETE",
+      reason: "Confirm delete",
+    };
+    vi.mocked(gateway.resolveExpenseConflictChain).mockResolvedValue({
+      resolutionReceipt: { commandType: "DELETE" },
+      canonical: { businessStatus: "DELETED" },
+      openConflictIds: [memberB],
+    } as never);
+    const response = await createDevBackendHandler({ gateway })(
+      request("conflict-chain-resolution", body),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.resolveExpenseConflictChain).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+      "typed-command",
+      body,
+    );
+  });
+  it("rejects duplicate covered IDs and mismatched lifecycle choices", async () => {
+    const { gateway } = createGateway();
+    const body = {
+      contractVersion: 2,
+      commandId: "typed-command",
+      intentType: "DELETE",
+      submittedIntent: { type: "DELETE" },
+      observedBaseRevision: 1,
+      currentServerRevision: 2,
+      coveredConflictIds: [expenseId, expenseId],
+      expectedChainDigest: "a".repeat(64),
+      choice: "APPLY_PATCH",
+      reason: "Confirm",
+    };
+    const response = await createDevBackendHandler({ gateway })(
+      request("conflict-chain-resolution", body),
+    );
+    expect(response.status).toBe(400);
+    expect(gateway.resolveExpenseConflictChain).not.toHaveBeenCalled();
+  });
+});

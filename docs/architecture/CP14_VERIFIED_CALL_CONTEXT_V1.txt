@@ -1,0 +1,202 @@
+OWNER AUTHORIZATION CLARIFICATION — CP14 VERIFIED CALL CONTEXT V1
+
+The persistence implementation may resume.
+
+Approve the following v1 trust boundary:
+
+1. AUTHENTICATION IS A TRUSTED GATEWAY RESPONSIBILITY
+
+The protected SQL roots do NOT independently verify end-user JWTs, external
+OAuth tokens, provider credentials, or signed user attestations.
+
+A dedicated trusted Backend gateway verifies the presented credential/session
+before invoking the protected database command.
+
+The gateway constructs an internal VerifiedCallContextV1 from verifier-derived
+facts.
+
+This context is NOT client-supplied request JSON and cannot be populated by a
+mobile/web/external-AI caller.
+
+2. VERIFIED CALL CONTEXT V1
+
+The trusted host context must distinguish, where applicable:
+
+- principal_kind:
+  OTR_USER
+  OTR_ADMIN
+  EXTERNAL_CLIENT
+  TRUSTED_WORKLOAD
+
+- verified_actor_id
+- verified_client_identity / external subject binding
+- verified_account_id
+- verified_environment
+- auth_source
+- auth_config_version
+- opaque auth_session_reference where admitted
+- verified_at
+- expiry/revocation observation where applicable
+- request_id
+- request_sha256
+- dedicated gateway identity
+
+Only verifier-derived fields may populate this context.
+
+Never accept from caller payload:
+- verified=true
+- trusted=true
+- arbitrary verified_actor_id
+- arbitrary verified_client_identity
+- arbitrary gateway identity
+- arbitrary auth result
+
+3. DATABASE AUTHORIZATION RESPONSIBILITY
+
+The database trusts authentication only when BOTH are true:
+
+A. the SQL root is reached through the exact approved dedicated gateway
+principal/session; and
+
+B. the trusted host adapter supplies the verifier-derived identity/context
+associated with that gateway invocation.
+
+The protected SQL command then independently validates authorization against
+durable database state:
+
+- current admin grant, or
+- external client identity,
+- current external client grant,
+- Account/user binding,
+- Trip scope where applicable,
+- action scope,
+- expiry/revocation,
+- environment,
+- expected config/grant revision,
+- request identity/digest,
+- command CAS/idempotency.
+
+Therefore:
+
+Gateway proves authentication.
+Database proves authorization.
+
+4. NO GENERIC SERVICE-ROLE TRUST
+
+Do not use generic service_role, broad Dev Supabase credentials, caller GUCs,
+caller-provided actor UUIDs, or role labels as proof of authentication.
+
+PUBLIC / anon / authenticated / service_role remain without direct CP14 table
+or protected-root authority.
+
+5. NO SIGNED ATTESTATION PROTOCOL IN CP14
+
+CP14 does NOT require SQL to independently verify a second signed attestation
+JWT/envelope from the Backend.
+
+Do not introduce:
+- an attestation signing key
+- an attestation table
+- JWT verification SQL
+- nonce infrastructure
+- a new authentication subsystem
+
+The dedicated gateway + trusted verifier-derived host context is the v1 trust
+boundary.
+
+A future multi-service/zero-trust architecture may add signed workload
+attestation under a separate checkpoint.
+
+6. REQUEST BINDING
+
+The trusted gateway must bind the verified context to the exact protected
+command invocation using:
+
+- request_id
+- request_sha256
+- environment
+- action/command kind
+- verified principal/client identity
+- Account where applicable
+
+The SQL root must reject identity/scope fields in the command that disagree
+with the trusted verified context.
+
+Same request identity + same digest may exact-replay where the command contract
+permits it.
+
+Same request identity + changed digest must reject.
+
+7. EXTERNAL CLIENT VERIFICATION
+
+For future ChatGPT / Claude / MCP-style clients:
+
+the inbound gateway is responsible for verifying the external credential using
+the approved future issuer/audience/signature/expiry verifier.
+
+It then maps the verified external subject to:
+
+external_client_identity
+
+and SQL independently validates:
+
+external_client_grant
+→ OTR Account/user
+→ Trip/action/package scope
+→ expiry/revocation.
+
+A package sender/name/user_id claim is never authentication evidence.
+
+The real external OAuth/issuer verifier remains deferred and unprovisioned in
+CP14. The persistence implementation provides only the injectable trusted
+verification boundary.
+
+8. DISPOSABLE ACCEPTANCE HARNESS
+
+Implement an injectable test-only trusted verifier/gateway harness.
+
+Required positive case:
+
+dedicated admin gateway
++ verifier-derived actor A
++ current CONFIG_ADMIN grant for A
++ exact environment/request/digest
+→ protected command admitted.
+
+Required negative cases:
+
+- ordinary authenticated role + actor UUID → reject
+- generic service_role + actor UUID → reject
+- dedicated gateway without verified host context → host adapter rejects
+- verified actor A + command actor B → reject
+- verified external client A + package claims client B → reject
+- wrong Account → reject
+- wrong environment → reject
+- expired/revoked admin/client grant → reject
+- wrong action/scope → reject
+- same request ID + changed digest → reject
+- same request ID + same digest → exact replay only where allowed
+
+Do not treat a test-only injected verifier as a production credential verifier.
+
+9. SCOPE REMAINS CLOSED
+
+This clarification does NOT authorize:
+
+- live gateway provisioning
+- public HTTP routes
+- real OAuth/provider credential verification
+- secret resolver
+- provider calls
+- Admin Portal
+- runtime gate activation
+- Hosted Dev / Production access
+- customer billing
+
+Resume the approved CP14 persistence implementation from the existing clean
+worktree.
+
+Do not redesign the accepted preflight.
+
+STOP when ready for CP14 Persistence Implementation Review.
+Do not commit or push.

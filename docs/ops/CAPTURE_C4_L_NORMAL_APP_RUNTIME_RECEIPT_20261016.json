@@ -1,0 +1,210 @@
+{
+  "status": "PASS_SCOPED_C4_L_NORMAL_APP_RUNTIME",
+  "observedAt": "2026-10-16T01:01:22.730419+00:00",
+  "device": "418CF8AE-ED96-4E76-8D22-533EB6C08032",
+  "runtime": "iOS26.5/23F77",
+  "scope": "Actual normal authenticated Capture App -> existingRepository exactrequest submit -> owningC3/C4 queue -> Native PDFKit/Vision -> deterministic Flight -> optional Apple -> immutable local results -> normal coldtyped read",
+  "actorAccountId": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+  "batchId": "e046f37a-61ac-444a-b05b-0a991d59e006",
+  "jobId": "d9fc69ea-9fe1-4c62-8c65-359ac737a9d7",
+  "requestSha256": "b6054ad285fb0a2ed9ef64a440e2f5193d1d2af18d12a01d49e7ee714e43907b",
+  "normalAuthEvidence": "normal-auth-runtime-receipt.json; real password grant through existingAuth/owningactivateSession; staged credential consumed/deleted; no Sessioncopy",
+  "deviceLocalMappingEvidence": "normal-restore-runtime-receipt.final.json; only capture/payloadUUIDs changed through owning insert; originalBatch/Job/Input/itemKey/submissionKey/request/content pins unchanged",
+  "results": [
+    {
+      "inputId": "06bf88b6-633d-463e-af0a-21fa6efb3773",
+      "originalSha256": "f239e149de28012443fe45382aa7c0ea0f236ee51feec8e9d9ff77783030baa1",
+      "originalByteCount": 226541,
+      "engine": "apple-vision",
+      "textSha256": "631b8fec0faffad1660a5e1b45e2110209fbb416ae50901ebce23309583dad86",
+      "textBytes": 610,
+      "pages": 0,
+      "ocrBoxes": 44,
+      "fields": 8,
+      "parserStatus": "SUCCEEDED",
+      "modelCapability": "AVAILABLE",
+      "modelExecution": "SUCCEEDED",
+      "modelReason": "VERBATIM_SERVICE_EVIDENCE_ONLY",
+      "modelServiceObservations": 4,
+      "exactFieldEvidence": true,
+      "sourceAuthority": "NONE",
+      "reviewAvailable": false,
+      "resultSha256": "4badc190a8cbd7816399f24c9ef24eea4949fd2ae704b5b457ee54e6a478fa5a"
+    },
+    {
+      "inputId": "88bb7049-5cac-4b4a-a6e0-9f9ceee131d7",
+      "originalSha256": "dd8c0250c01682d5960e05ef8b4316692151fb20b461b1f4ee1c8fb2caaf12b3",
+      "originalByteCount": 2943032,
+      "engine": "apple-pdfkit",
+      "textSha256": "962327f396d58182e286902597e2c0ab668c0d4aabda8b93e17330053d41256b",
+      "textBytes": 2628,
+      "pages": 1,
+      "ocrBoxes": 0,
+      "fields": 20,
+      "parserStatus": "SUCCEEDED",
+      "modelCapability": "AVAILABLE",
+      "modelExecution": "FAILED",
+      "modelReason": "LOCAL_MODEL_EVIDENCE_INVALID",
+      "modelServiceObservations": 0,
+      "exactFieldEvidence": true,
+      "sourceAuthority": "NONE",
+      "reviewAvailable": false,
+      "resultSha256": "8f89cb97c9a69d8da1db41c66374645928ca34b5f298b39e225a6b44609ea07e"
+    }
+  ],
+  "localInterpretation": "PARTIAL_FLIGHT_OBSERVATIONS; exactevidence valid; no complete itinerary or canonical admission claimed",
+  "apple": {
+    "pdf": "AVAILABLE; modeloutputrejected LOCAL_MODEL_EVIDENCE_INVALID;20deterministicfields retained",
+    "jpeg": "AVAILABLE;SUCCEEDED;4verbatim anchored advisory service observations",
+    "nativeAndAdapterDeadlineMs": 20000,
+    "actualRuntimeTimeoutFailureObserved": false,
+    "timeoutPolicy": "Existing20s JS deadline unchanged; no extension or claimed runtime timeout injection"
+  },
+  "candidateEvidence": "Input-scoped typed observations/fragments and modeladvisory exactspans validated; SourceAuthorityNONE means no formalCandidate/Review/Admission",
+  "firstActualPipelineTimings": [
+    {
+      "inputId": "88bb7049-5cac-4b4a-a6e0-9f9ceee131d7",
+      "processingAt": "2026-10-16T00:51:50.352Z",
+      "recordedAt": "2026-10-16T00:52:05.708Z",
+      "wholeQueuePipelineMs": 15356,
+      "pureModelMs": null,
+      "systemModelResourceCold": "NOT_ASSERTED"
+    },
+    {
+      "inputId": "06bf88b6-633d-463e-af0a-21fa6efb3773",
+      "processingAt": "2026-10-16T00:52:05.722Z",
+      "recordedAt": "2026-10-16T00:52:11.698Z",
+      "wholeQueuePipelineMs": 5976,
+      "pureModelMs": null,
+      "systemModelResourceCold": "NOT_ASSERTED"
+    }
+  ],
+  "timingLimits": "Initial per-model timingfile notexported; wholequeue interval comes from real persisted events. No pure-model or systemresource-cold claim. No repeated completed Input/queue/model calls for performance. Prior separate component first/warm receipt remains separate evidence.",
+  "coldRead": {
+    "previousPID": 6697,
+    "newPID": 15907,
+    "launchRecord": "cold-launch.stdout",
+    "lifecycleRaw": "cold-process-lifecycle.raw.log",
+    "lifecycleRawSha256": "0fe17069d65747cdc00ec5a4e69b64636ac15f8867206597fc2c43a98bc49e7c",
+    "lifecycleExcerpt": "cold-process-lifecycle.excerpt.txt",
+    "readReceipt": "normal-cold-app-fetch-deny-read.json",
+    "readAt": "2026-10-16T00:56:35.170Z",
+    "accountGeneration": 0,
+    "scope": "APP_FETCH_DENY_DURING_LOCAL_RESULTS_ONLY",
+    "positiveControlIntercepted": true,
+    "deniedFetchCalls": 1,
+    "fetchRestored": true,
+    "processingConfigClosed": true,
+    "typed": [
+      {
+        "inputId": "88bb7049-5cac-4b4a-a6e0-9f9ceee131d7",
+        "items": 3,
+        "fields": 20,
+        "exactTypedSpans": true,
+        "exactModelSpans": true
+      },
+      {
+        "inputId": "06bf88b6-633d-463e-af0a-21fa6efb3773",
+        "items": 4,
+        "fields": 8,
+        "exactTypedSpans": true,
+        "exactModelSpans": true
+      }
+    ]
+  },
+  "retention": {
+    "all8TableDigestsUnchangedAcrossColdAndCleanup": true,
+    "before": "before-cold-read.json",
+    "after": "after-all-cleanup.json",
+    "tables": {
+      "capture_submission_batches": {
+        "count": 1,
+        "sha256": "733cff64c1db426bb8b2afb38ca06a10f96fec13beeb39fd18ac21442ab299d4"
+      },
+      "capture_submission_inputs": {
+        "count": 2,
+        "sha256": "4c5d9b50c4fdf49a4f16a214fe0bd80975f428a72f1544bec0fd435765f70389"
+      },
+      "local_capture_inbox": {
+        "count": 2,
+        "sha256": "71dcb426be4c03e5b279e9e3b75bc624d25595e382140b2965f497ac1545b256"
+      },
+      "local_capture_payloads": {
+        "count": 2,
+        "sha256": "bee9a3edb0126cc688c82a8b9a8bbf3657b302df6466f42739dac25ce71ff00b"
+      },
+      "sync_operations": {
+        "count": 4,
+        "sha256": "898c708954cfba181bfbf1a8bf156e2cb0426f902c1ee42884f1c94b8449529a"
+      },
+      "capture_processing_events": {
+        "count": 6,
+        "sha256": "11f02c7b58208772cf48f7806a3ea1bba32ea89548545e4cdd94f130c7d7da45"
+      },
+      "capture_local_interpretation_events": {
+        "count": 6,
+        "sha256": "d21101345d8a261231d0fc3f380786be7104f8ab860e1717b70bf92319bf675d"
+      },
+      "capture_local_interpretation_results": {
+        "count": 2,
+        "sha256": "c848dacae545f1031e562b4e3794ea92fa42b2ca7ca1a0a94d2e97191b7774ec"
+      }
+    },
+    "durableOriginalsAfterStageDeletion": "post-cleanup-durable-payloads.json; exact2 BLOBs inDocuments SQLite, notcache",
+    "newWorkAfterInitialCompletion": 0,
+    "initialOperations": 4,
+    "initialC3Events": 6,
+    "initialC4Events": 6,
+    "immutableResults": 2
+  },
+  "cleanup": {
+    "source": "final-source-cleanup.json;7restore/authfiles exactpreimage or removed +2ownconfig/timingdeltas restored +originalenvabsence",
+    "cache": "final-cache-cleanup-existence.json; exactQApathsfalse;stagingduplicatesremoved;credentialfalse",
+    "gitWorktree": "CLEAN at reviewed3364ac1",
+    "normalAppSessionAndDurableCaptureData": "RETAINED",
+    "processingAndCustody": "NULL",
+    "currentMetro8084": "PID755 retained; no8081/2/3 changes"
+  },
+  "actualProductionSource": {
+    "reviewedCandidate": "3364ac1",
+    "currentMainObserved": "321ab89d2b1e064444f61a425c1fb4d26b88841f",
+    "scope": "Only4C4productionparser/domain/repository/nativeadapter files; no fullbranch or unrelatedUI equivalence",
+    "files": {
+      "src/domain/capture/captureLocalInterpretation.ts": {
+        "sha256": "b145f07e9889019803ed1403456f75e2f60d3a14a20de7dd1e58e39ff5fdadae",
+        "equalsReviewedCandidate3364ac1": true,
+        "equalsCurrentMainForThisFile": true
+      },
+      "src/data/repositories/captureProcessingRepository.ts": {
+        "sha256": "c3aab4b8c5b93604ae903687b5623b58300126bdc191ed96bd28ae6e620e61bd",
+        "equalsReviewedCandidate3364ac1": true,
+        "equalsCurrentMainForThisFile": true
+      },
+      "src/native/captureLocalExtraction.ts": {
+        "sha256": "d9074a109d297e8f18e9c1ae39dab00838462e830069e64c814d1e7e74e50ec7",
+        "equalsReviewedCandidate3364ac1": true,
+        "equalsCurrentMainForThisFile": true
+      },
+      "src/domain/trip/referenceFlightExtractor.ts": {
+        "sha256": "2900b7fac85c272a98e9e76919a06db0ab973f07d54c05c1e018f7a6dd5858b2",
+        "equalsReviewedCandidate3364ac1": true,
+        "equalsCurrentMainForThisFile": true
+      }
+    }
+  },
+  "remoteLLM": "NOT_USED",
+  "originalUpload": "NOT_USED",
+  "fullDeviceOffline": "UNVERIFIED; only scopedAPP_FETCH_DENY positivecontrol",
+  "physicalIPhone16Pro": "UNVERIFIED",
+  "otherDevicesAndBackend": "A1A/AD5/Search/Backend unchanged by runtime stage",
+  "readyForCoordinatorReview": true,
+  "artifactRoot": "/private/tmp/otr-c4-ios265-normal-app-20261016",
+  "coordinatorValidation": {
+    "production4FileShaMatchMainAndReviewedCandidate": true,
+    "temporarySourcePreimagesRestored": true,
+    "exactQaCachePathsAbsent": true,
+    "independentRuntimeReview": "/private/tmp/otr-c4-native-caller-review-20261016.md",
+    "noFreshNativeOrModelExecution": true
+  },
+  "independentRuntimeReviewSha256": "d217fcfe304fc2d0674b957ae337b50d5a7fe209ec2541b02f9ab17f5b77c33a"
+}

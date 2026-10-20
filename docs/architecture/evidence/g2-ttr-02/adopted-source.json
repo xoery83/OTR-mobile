@@ -1,0 +1,33 @@
+{
+  "source": "6a1c80b0d327172c4bbc4ffa2257ab6473beebd9",
+  "archivalManifest": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/architecture/OTR_TTR_CP05A2A_FEATURE_PREPARATION_REPORT.md",
+    "scripts/ttr/tsconfig.json",
+    "src/data/repositories/ttrInteractionController.test.ts",
+    "src/data/repositories/ttrLabSelectionRepository.test.ts",
+    "src/data/repositories/ttrLabSelectionRepository.ts",
+    "src/data/repositories/ttrSelectionRepository.test.ts",
+    "src/data/repositories/ttrSelectionRepository.ts",
+    "src/features/ttr/TtrLabSheetContent.test.ts",
+    "src/features/ttr/TtrLabSheetContent.tsx",
+    "src/features/ttr/interactionController.ts",
+    "src/features/ttr/useTtrLabInteraction.test.ts",
+    "src/features/ttr/useTtrLabInteraction.ts"
+  ],
+  "adoptedByteExact": [
+    "docs/architecture/OTR_TTR_CP05A2A_FEATURE_PREPARATION_REPORT.md",
+    "scripts/ttr/tsconfig.json",
+    "src/data/repositories/ttrInteractionController.test.ts",
+    "src/data/repositories/ttrLabSelectionRepository.test.ts",
+    "src/data/repositories/ttrLabSelectionRepository.ts",
+    "src/data/repositories/ttrSelectionRepository.test.ts",
+    "src/data/repositories/ttrSelectionRepository.ts",
+    "src/features/ttr/TtrLabSheetContent.test.ts",
+    "src/features/ttr/TtrLabSheetContent.tsx",
+    "src/features/ttr/interactionController.ts",
+    "src/features/ttr/useTtrLabInteraction.test.ts",
+    "src/features/ttr/useTtrLabInteraction.ts"
+  ],
+  "excluded": "docs/CURRENT_IMPLEMENTATION_STATE.md (preserve newer shared handoff)"
+}

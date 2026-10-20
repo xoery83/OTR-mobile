@@ -1,0 +1,134 @@
+import { useCallback, useRef, useState } from "react";
+import { countSettlementLoad } from "./settlementLoadMetrics";
+import { useFocusEffect } from "expo-router";
+
+import type { LocalPersonalSettlementReview } from "@/data/repositories/personalSettlementReviewRepository";
+import type { PersonalSettlementReviewState } from "@/data/api/ledgerSettlementContracts";
+import { getDefaultPersonalSettlementReviewRepository } from "@/data/repositories/defaultPersonalSettlementReviewRepository";
+import {
+  refreshPersonalSettlementReview,
+  runPersonalSettlementReviewSync,
+} from "@/data/sync/personalSettlementReviewCoordinator";
+
+export function usePersonalSettlementReview(journeyId?: string, settlementId?: string) {
+  const [state, setState] = useState<LocalPersonalSettlementReview | null>(null);
+  const [source, setSource] = useState<"CURRENT_SERVER" | "CURRENT_CACHED">(
+    "CURRENT_CACHED",
+  );
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const requestRef = useRef(0);
+
+  const load = useCallback(async () => {
+    const request = ++requestRef.current;
+    setBusy(false);
+    setLoading(true);
+    setMessage(null);
+    if (!journeyId) {
+      setState(null);
+      setLoading(false);
+      return;
+    }
+    countSettlementLoad("personalReview");
+    try {
+      const repository = await getDefaultPersonalSettlementReviewRepository();
+      const cached = await repository.get(journeyId);
+      if (request !== requestRef.current) return;
+      setState(cached);
+      setSource("CURRENT_CACHED");
+      await refreshPersonalSettlementReview(journeyId);
+      const refreshed = await repository.get(journeyId);
+      if (request !== requestRef.current) return;
+      setState(refreshed);
+      setSource(
+        settlementId !== undefined && refreshed?.statement.settlementId !== settlementId
+          ? "CURRENT_CACHED"
+          : "CURRENT_SERVER",
+      );
+    } catch {
+      // Cached statement remains useful offline.
+      if (request === requestRef.current) setSource("CURRENT_CACHED");
+    } finally {
+      if (request === requestRef.current) setLoading(false);
+    }
+  }, [journeyId, settlementId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+      return () => {
+        requestRef.current += 1;
+      };
+    }, [load]),
+  );
+
+  const setReviewState = useCallback(
+    async (reviewState: PersonalSettlementReviewState) => {
+      if (
+        !journeyId ||
+        busy ||
+        loading ||
+        !state ||
+        (settlementId !== undefined && state.statement.settlementId !== settlementId)
+      )
+        return;
+      const request = ++requestRef.current;
+      setBusy(true);
+      setMessage(null);
+      try {
+        const repository = await getDefaultPersonalSettlementReviewRepository();
+        await repository.checkpoint(journeyId, reviewState, state.statementFingerprint);
+        const pending = await repository.get(journeyId);
+        if (request === requestRef.current) setState(pending);
+        try {
+          await runPersonalSettlementReviewSync(journeyId);
+          await refreshPersonalSettlementReview(journeyId);
+        } catch {
+          if (request === requestRef.current)
+            setMessage("Saved on this device · Pending sync");
+        }
+        const refreshed = await repository.get(journeyId);
+        if (request === requestRef.current) {
+          setState(refreshed);
+          if (refreshed?.lastErrorCode)
+            setMessage(
+              refreshed.lastErrorCode === "STALE_REVIEW_CHECKPOINT"
+                ? "Expenses changed before your review was saved. Review the latest statement and try again."
+                : "Review could not be saved. Check the current statement and try again.",
+            );
+          else
+            setMessage(
+              refreshed?.pendingReviewState
+                ? "Saved on this device · Pending sync"
+                : "Review saved.",
+            );
+        }
+      } catch {
+        if (request === requestRef.current)
+          setMessage("Open the latest statement and try again.");
+      } finally {
+        if (request === requestRef.current) setBusy(false);
+      }
+    },
+    [journeyId, busy, loading, state, settlementId],
+  );
+
+  const currentState = state?.statement.journeyId === journeyId ? state : null;
+
+  return {
+    state: currentState,
+    source,
+    projectionAsOf: currentState?.updatedAt ?? null,
+    busy,
+    ready:
+      !loading &&
+      Boolean(currentState) &&
+      (settlementId === undefined ||
+        currentState?.statement.settlementId === settlementId),
+    message,
+    reload: load,
+    setReviewState,
+    looksGood: () => setReviewState("LOOKS_GOOD"),
+  };
+}

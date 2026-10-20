@@ -1,0 +1,265 @@
+{
+  "status": "BLOCKED_ALLOCATION_OWNER_REVIEW",
+  "candidateCommit": "1a67a217522a4fdc851dbef3f348bf3e7a121bc3",
+  "candidateTree": "95c792120f28626706a3d52c88547322ea9071ca",
+  "baseline": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+  "acceptedCommit": "1398b2bc1bf49755b31fc74c5f67dbb0534895cc",
+  "acceptedTree": "4b151dd4ac5e04117f26c0889893adb456292fe8",
+  "changedPaths": [
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+    "backend/src/__fixtures__/sourcePdfUpload.ts",
+    "backend/src/sourcePdfUpload.sql.test.ts",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-finite-source-pdf-upload-authority.md",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_AUTHORITY_V1.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_01_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_01_REPORT.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_02_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_02_REPORT.md",
+    "scripts/trip/core-v2-sql-acceptance.py",
+    "src/domain/trip/sourcePdfUploadAuthority.ts",
+    "supabase/migrations/20261013000100_source_pdf_upload_authority.sql",
+    "supabase/tests/source-pdf/upload.sql"
+  ],
+  "acceptedNonHandoffBlobsExact": 11,
+  "preparedSha256": {
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts": "cd5ec6c3909e00d5c9b3fb787060373cacd49dfb6193ca5163ff4fb87d051377",
+    "backend/src/__fixtures__/sourcePdfUpload.ts": "d4ab9b32136fba5c3f982f6b384f5bda3f0f18a99aa9b24e503dff107d60763e",
+    "backend/src/sourcePdfUpload.sql.test.ts": "dc47127705c899372bedfe0ad4b16d320a5fc5c58dfa1d8d7f1e1a06b935effa",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md": "6fb78cc14c68812479e562f8376a7bad10ed776f55f94b57a85c4b1994353357",
+    "docs/adr/2026-10-13-finite-source-pdf-upload-authority.md": "5258df84d8f23b95a0970163dcfcd3783a2af62cafc5d06c3961b431614b19f0",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_AUTHORITY_V1.md": "f1933c3746348993c74c8d43e3ea702d523f433c0adc0beee58af6b6206b72d7",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_01_MANIFEST.json": "0bfb414b3ce84e776611d7529699917493c99c00c707fe68ec02aa2b8cd9f06a",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_01_REPORT.md": "3ef094ebe1fc517d63bdc7fb0ca3686deb012b31f33a52c95eb38e6cff1032ed",
+    "scripts/trip/core-v2-sql-acceptance.py": "e7f60a1cec089adf61cdbe12cca6f991f0ecca3111e83ef1dc9688eaa3506ff4",
+    "src/domain/trip/sourcePdfUploadAuthority.ts": "91fe41864cce452d3e4a318ce2447c724e7e833f93c4c3e515e26b277ed9803a",
+    "supabase/migrations/20261013000100_source_pdf_upload_authority.sql": "a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4",
+    "supabase/tests/source-pdf/upload.sql": "8f07ed3e467409887050d963395c8f48dce722fb179428028be327e8ee31b072"
+  },
+  "canonicalProtectedPaths": 1707,
+  "allocation": {
+    "prefix": "20261013000100",
+    "sourcePath": "/private/tmp/otr-flight-pdf-upload-source-02-20261013/supabase/migrations/20261013000100_source_pdf_upload_authority.sql",
+    "sourceSha256": "a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4",
+    "conflictingPath": "/private/tmp/otr-cp-ttr04a3-core-order-02-20261013/supabase/migrations/20261013000100_core_ordinary_order.sql",
+    "conflictingSha256": "45c36ccf6f3d0ca92f30b3e78689fb95a6490e64a811bf2b670d521dfe8093c1",
+    "allocationConflict": true,
+    "decision": "Owner must resolve shared migration timestamp; neither file modified"
+  },
+  "validation": {
+    "latestSqlPass": 49,
+    "focusedPass": 227,
+    "focusedSkipped": 3,
+    "firstSecurityRun": "28 PASS / 1 pre-dispatch source_pdf_stage_shape failure",
+    "unchangedRerun": "29 PASS",
+    "clockProbe": "200000 samples, 0 negative deltas; initial cause unproven",
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "lint": "PASS",
+    "uiGuard": "PASS",
+    "format": "PASS",
+    "diff": "PASS",
+    "activation": "CLOSED"
+  },
+  "joinedEvidence": [
+    {
+      "classification": "CLOSED_SYNTHETIC_PDF_UPLOAD",
+      "operationId": "e82f6df6-f72c-42e9-91b5-e66dfc161f87",
+      "attemptId": "1b00e7b7-0799-42e1-beab-e899b48f3259",
+      "providerWrites": 1,
+      "receiptSha256": "cc941429cda5eb983be828b6f7ddee0ed9dbdbdf3595190eb409c2c5ca7a1a53",
+      "remoteState": "PENDING"
+    },
+    {
+      "classification": "CP_FLIGHT_PDF_SOURCE_02_OWNING_REGISTRATION",
+      "sourceId": "fa692faf-6ce7-4eb3-87a5-46926dec2705",
+      "originalId": "9571ba0a-226f-4718-80e5-8a474d766b05",
+      "derivedId": "fbfde370-bb56-478c-89ee-100ab685abef",
+      "objectKey": "v1/10000000-0000-4000-8000-000000000001/fa692faf-6ce7-4eb3-87a5-46926dec2705/9571ba0a-226f-4718-80e5-8a474d766b05/payload",
+      "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "originalByteCount": 950,
+      "verificationOperationId": "c1a3d8f4-3366-4405-949b-7c1b0fb5bde9",
+      "verificationResultSha256": "8f409762d423d37f168048fb994541b62f8d7e396f71b4216097e271d8d56a08",
+      "registrationOperationId": "f2a32f7f-97f2-4884-acbf-b0ae3c879036",
+      "registrationSha256": "72db4d7505a960b51237c465462a3dd782d010ade0cff03d686180aaaac8d7e4",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "start": 0,
+          "end": 62
+        },
+        {
+          "pageIndex": 1,
+          "start": 63,
+          "end": 125
+        }
+      ],
+      "retainedFileRead": true,
+      "lostVerifyAndRegistrationResponseRecovered": true,
+      "preSealAuthority": false,
+      "sourceMaterialRevision": 1,
+      "sourceRowRevision": 1,
+      "originalRowRevision": 2,
+      "ordinaryQuartz": "REVIEW",
+      "newCanonicalItems": 0
+    },
+    {
+      "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
+      "originalId": "9571ba0a-226f-4718-80e5-8a474d766b05",
+      "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "operationId": "203d04fe-dbf8-4e24-b72a-cea0f4de91fe",
+      "sealSha256": "cae2e54442039b5f016bb8013cbd4a789a3e72717520c364c7c50467ea53bc52",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "start": 0,
+          "end": 62
+        },
+        {
+          "pageIndex": 1,
+          "start": 63,
+          "end": 125
+        }
+      ],
+      "replay": "EXACT",
+      "negativeSealWrites": 0
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "34876c98-45af-492c-9e6c-2b66853df85e",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "3942fd65-2c3d-49da-bb5d-bbb9f6ccb9ca",
+          "semanticRevision": 2
+        }
+      ],
+      "itemDateExpectations": [
+        {
+          "itemId": "3942fd65-2c3d-49da-bb5d-bbb9f6ccb9ca",
+          "semanticRevision": 2,
+          "localDate": "2026-12-20"
+        },
+        {
+          "itemId": "34876c98-45af-492c-9e6c-2b66853df85e",
+          "semanticRevision": 2,
+          "localDate": "2026-12-17"
+        }
+      ],
+      "dates": [
+        "2026-12-20",
+        "2026-12-17"
+      ],
+      "read2ManifestSha256": "080a346dfbc13d183c2b25466c1b04a0635e5cc45e33e6e7161a89ab428e2a2b",
+      "read2AccessRevision": 1,
+      "read2Epoch": "d570c7d0-5e7d-4a2a-ba2f-028d7d573807",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54,
+      "localSchemaVersion": 55
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+      "sourceId": "fa692faf-6ce7-4eb3-87a5-46926dec2705",
+      "runId": "89152cc9-a494-4258-83a4-7c585d759135",
+      "inputCatalogSha256": "1332ad2a2c044ca17820eff480b712d4d9aa7c7236d903b705f3e46a6ff938d4",
+      "candidateIds": [
+        "2fbc1d22-e43b-89f7-a2d2-f13feb980667",
+        "36dbf79e-c2c2-8d74-a0d6-bbec3d259985"
+      ],
+      "itemIds": [
+        "3942fd65-2c3d-49da-bb5d-bbb9f6ccb9ca",
+        "34876c98-45af-492c-9e6c-2b66853df85e"
+      ],
+      "recoveredOperationIds": [
+        "10081378-a05d-402d-bc16-cd806075680d",
+        "c6965a32-6cd9-496f-9fd2-05684f33918a",
+        "fcacfef0-5d91-426f-aca1-79de99f017bd",
+        "9e9bc658-be40-4f37-8edb-18e01a31ba36"
+      ],
+      "sourcePlanStatus": "COMPLETE",
+      "associations": 4,
+      "qualificationRevision": 2,
+      "negativeWrites": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority",
+        "20261012000300_source_pdf_registration",
+        "20261013000100_source_pdf_upload_authority"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 378,
+      "sourcePdfUploadInstalled": true,
+      "pdfUploadApprovedChangedRoot": "trip_source_execution_inventory()",
+      "sourcePdfRegistrationInstalled": true,
+      "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "preflight": {
+    "main": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+    "originMain": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+    "actualRemoteMain": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+    "acceptedCommit": "1398b2bc1bf49755b31fc74c5f67dbb0534895cc",
+    "acceptedTree": "4b151dd4ac5e04117f26c0889893adb456292fe8",
+    "status": " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md\n?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md\n?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc\n",
+    "dirtySha256": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "acceptedManifest": [
+      "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+      "backend/src/__fixtures__/sourcePdfUpload.ts",
+      "backend/src/sourcePdfUpload.sql.test.ts",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "docs/adr/2026-10-13-finite-source-pdf-upload-authority.md",
+      "docs/trip/CP_FLIGHT_PDF_UPLOAD_AUTHORITY_V1.md",
+      "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_01_MANIFEST.json",
+      "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_01_REPORT.md",
+      "scripts/trip/core-v2-sql-acceptance.py",
+      "src/domain/trip/sourcePdfUploadAuthority.ts",
+      "supabase/migrations/20261013000100_source_pdf_upload_authority.sql",
+      "supabase/tests/source-pdf/upload.sql"
+    ],
+    "acceptedHashes": {
+      "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts": "cd5ec6c3909e00d5c9b3fb787060373cacd49dfb6193ca5163ff4fb87d051377",
+      "backend/src/__fixtures__/sourcePdfUpload.ts": "d4ab9b32136fba5c3f982f6b384f5bda3f0f18a99aa9b24e503dff107d60763e",
+      "backend/src/sourcePdfUpload.sql.test.ts": "dc47127705c899372bedfe0ad4b16d320a5fc5c58dfa1d8d7f1e1a06b935effa",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md": "7a85258187d944be0ac308033c5f5ff1519beda8606d31a411486fe90ce760a3",
+      "docs/adr/2026-10-13-finite-source-pdf-upload-authority.md": "5258df84d8f23b95a0970163dcfcd3783a2af62cafc5d06c3961b431614b19f0",
+      "docs/trip/CP_FLIGHT_PDF_UPLOAD_AUTHORITY_V1.md": "f1933c3746348993c74c8d43e3ea702d523f433c0adc0beee58af6b6206b72d7",
+      "scripts/trip/core-v2-sql-acceptance.py": "e7f60a1cec089adf61cdbe12cca6f991f0ecca3111e83ef1dc9688eaa3506ff4",
+      "src/domain/trip/sourcePdfUploadAuthority.ts": "91fe41864cce452d3e4a318ce2447c724e7e833f93c4c3e515e26b277ed9803a",
+      "supabase/migrations/20261013000100_source_pdf_upload_authority.sql": "a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4",
+      "supabase/tests/source-pdf/upload.sql": "8f07ed3e467409887050d963395c8f48dce722fb179428028be327e8ee31b072"
+    },
+    "overlap": [
+      "docs/CURRENT_IMPLEMENTATION_STATE.md"
+    ]
+  }
+}

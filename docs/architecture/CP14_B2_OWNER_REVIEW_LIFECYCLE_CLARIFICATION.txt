@@ -1,0 +1,232 @@
+OWNER CLARIFICATION — CP14 B2 REVIEW LIFECYCLE
+
+The B2 hard stop is accepted.
+
+The original B2 instruction incorrectly conflated:
+
+1. an unconfirmed review PROPOSAL, and
+2. an authenticated confirmed REVIEW DECISION.
+
+The accepted Server83 lifecycle remains authoritative.
+
+NO Server84.
+NO SQLite51.
+NO new review authority.
+NO pre-confirmation review-decision reservation.
+
+Resume B2 in the existing:
+intelligence/cp14-inbound-ai-client
+
+with the following clarified lifecycle.
+
+1. PROPOSAL STAGE
+
+After package interpretation / consolidation / closure determines that user
+review is required:
+
+- retain the package in the accepted NEEDS_REVIEW state;
+- retain/increment the accepted review_version;
+- publish only the admitted minimized proposal/reference projection;
+- retain Candidate/Run/Input/evidence references through existing accepted
+  package/publication-reference mechanisms;
+- do NOT call inbound_ai_reserve_review;
+- do NOT assert confirmed_user_id;
+- do NOT assert confirmed_at;
+- do NOT allocate or persist a confirmed Review Decision;
+- do NOT allocate Confirmation/output-slot/operation/intended-Event authority
+  merely because a proposal is being shown.
+
+A proposal is not consent and is not canonical authority.
+
+2. PROPOSAL IDENTITY
+
+The proposal must still have stable replay identity using the existing package,
+review_version and retained publication/reference facts.
+
+Repeated STATUS/proposal retrieval for the same package/review_version must
+return the same semantic proposal.
+
+Do not invent a second proposal journal unless existing accepted persistence
+proves insufficient.
+
+If exact stable proposal replay genuinely requires new durable authority,
+STOP again before adding it.
+
+3. USER DECISION
+
+Only after an actual authenticated OTR user explicitly chooses:
+
+ACCEPT / REJECT / DEFER
+
+may B2 reserve a durable Review Decision.
+
+At that point:
+
+- require verifier-derived OTR_USER;
+- require exact current Account;
+- require current Trip access;
+- require exact package;
+- require exact review_version;
+- require exact Candidate hash/generation;
+- require exact Run/Input/material references;
+- require exact Event/base revision where applicable;
+- bind confirmation_source = EXPLICIT_USER;
+- bind confirmation_scope = EXACT_REVIEW_DECISION.
+
+The External AI client may transport the request but cannot become the
+confirming user.
+
+4. GENERATED AUTHORITY IDS
+
+For ACCEPT:
+
+Allocate/retain the exact Confirmation/output-slot/operation/intended-Event IDs
+as required by the accepted Server83 + CP13A contract at confirmed decision
+reservation time, BEFORE CP13A prepare side effects.
+
+Exact replay of the same authenticated decision returns the same IDs.
+
+Response loss must never allocate a replacement set.
+
+For REJECT / DEFER:
+
+Preserve the accepted Server83 rule that Confirmation/slot/operation/Event IDs
+are null.
+
+Do not manufacture canonical authority for nonaccept decisions.
+
+5. CP13A ORDER
+
+The accepted order is therefore:
+
+Package reservation
+→ interpretation / N→M / consolidation / augmentation
+→ closure
+→ NEEDS_REVIEW proposal
+→ authenticated explicit OTR user decision
+→ durable Review Decision reservation
+→ stable generated ACCEPT IDs where applicable
+→ CP13A prepare
+→ CP13A canonical admission / exact recovery
+
+This ordering is now authoritative for B2.
+
+6. REPLAY
+
+Required replay behavior:
+
+- proposal retrieval loss:
+  recover same package + review_version proposal;
+- ACCEPT transport loss before/after decision reservation:
+  recover exact retained Review Decision and generated IDs;
+- REJECT/DEFER transport loss:
+  recover exact retained nonaccept decision;
+- CP13A prepare response loss:
+  recover exact retained preparation;
+- canonical response loss:
+  use CP13A exact recovery.
+
+Never create a replacement Review Decision because a transport response was
+lost.
+
+7. STALE PROPOSAL
+
+If, between proposal display and user decision:
+
+- review_version changes;
+- Candidate generation/hash changes;
+- Run/Input/material identity changes;
+- Event/base revision changes;
+- Trip access changes;
+- grant/client transport authority changes where relevant;
+
+the old proposal cannot be accepted as current.
+
+Return the admitted stale/review-refresh disposition.
+
+Do not silently apply the old proposal to new truth.
+
+8. EXTERNAL CLIENT ROLE
+
+External client may:
+- submit package;
+- retrieve authorized minimized status/proposal;
+- transport an authenticated user's decision request where the trusted host
+  context proves the OTR user.
+
+External client alone may NOT:
+- reserve an ACCEPT decision as itself;
+- set confirmed_user_id;
+- set confirmed_at;
+- claim EXPLICIT_USER confirmation;
+- allocate canonical authority IDs;
+- bypass OTR user authentication.
+
+9. ORIGINAL B2 REQUIREMENTS REMAIN
+
+Resume the rest of the original B2 instruction unchanged:
+
+- trusted injected verifier
+- Server83 external-client/grant authority
+- package replay
+- MATERIAL vs SUMMARY distinction
+- N→M
+- completion/augmentation
+- CP13B reuse
+- CP13A reuse
+- minimized STATUS
+- replay/UNKNOWN
+- Account/Trip/grant fencing
+- zero automatic A2 calls
+- zero automatic OTR model usage/cost
+- no Passenger→Person inference
+- no booking persistence
+- no public ChatGPT/Claude/MCP/OAuth activation
+
+10. REQUIRED REVIEW-LIFECYCLE TESTS
+
+Add explicit tests for:
+
+- NEEDS_REVIEW proposal exists without Review Decision row;
+- proposal retrieval exact replay;
+- proposal does not allocate Confirmation/slot/operation/Event IDs;
+- EXTERNAL_CLIENT cannot reserve ACCEPT;
+- EXTERNAL_CLIENT cannot forge confirmed user/timestamp;
+- authenticated OTR_USER ACCEPT reserves exactly one decision;
+- ACCEPT replay returns same generated IDs;
+- ACCEPT changed bytes under same request rejects;
+- REJECT has null generated authority IDs;
+- DEFER has null generated authority IDs;
+- stale review_version rejects;
+- stale Candidate hash/generation rejects;
+- stale Event revision rejects;
+- Trip revoke before decision rejects;
+- proposal refresh creates/uses the admitted newer review_version without
+  rewriting historical confirmed decisions;
+- lost decision response does not create replacement IDs;
+- lost CP13A prepare response uses exact retained recovery.
+
+11. PRESERVATION
+
+Confirm:
+
+- Server83 unchanged;
+- SQLite50 unchanged;
+- no Server84;
+- no SQLite51;
+- no second scheduler;
+- no new review authority;
+- five C denials unchanged;
+- sync_operations sole scheduler;
+- A2 remains uninvolved by default;
+- runtime/provider/public-client gates CLOSED.
+
+Do not commit or push.
+Do not access Hosted Dev or Production.
+
+If implementation now discovers a genuinely different persistence/authority
+gap, STOP again.
+
+Otherwise complete B2 and stop for independent inbound review.
+
+STOP — AGENT B2 COMPLETE / READY FOR INBOUND AI REVIEW.

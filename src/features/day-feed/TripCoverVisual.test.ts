@@ -1,0 +1,89 @@
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
+import { beforeEach, expect, it, vi } from "vitest";
+import { lightPalette } from "@/ui/palette";
+import { TripCoverVisual } from "./TripCoverVisual";
+
+const state = vi.hoisted(() => ({
+  failed: null as number | null,
+  personal: false,
+  photo: null as any,
+}));
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useMemo: (fn: () => unknown) => fn(),
+  useState: () => [
+    state.failed,
+    (source: number) => {
+      state.failed = source;
+    },
+  ],
+}));
+vi.mock("./useTripCoverPhoto", () => ({
+  useTripCoverPhoto: () => ({ requested: state.personal, photo: state.photo }),
+}));
+vi.mock("react-native", () => ({
+  Image: "Image",
+  View: "View",
+  StyleSheet: {
+    absoluteFill: {},
+    create: (styles: unknown) => styles,
+  },
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
+vi.mock("@/ui/theme", () => ({
+  useUiTheme: () => lightPalette,
+  useThemedStyles: (create: (colors: typeof lightPalette) => unknown) =>
+    create(lightPalette),
+}));
+type Node = ReactElement<{ children?: ReactNode; onError?(): void }>;
+function descendants(node: ReactNode): Node[] {
+  if (!isValidElement(node)) return [];
+  const element = node as Node;
+  return [element, ...Children.toArray(element.props.children).flatMap(descendants)];
+}
+beforeEach(() => {
+  state.failed = null;
+  state.personal = false;
+  state.photo = null;
+});
+it("retains overlay content after image failure and allows another selected cover to render", () => {
+  const props = { source: 1, style: {}, children: "trip-title" };
+  const image = descendants(TripCoverVisual(props)).find(
+    (node) => node.type === "Image",
+  )!;
+  image.props.onError!();
+  const fallback = descendants(TripCoverVisual(props));
+  expect(fallback.some((node) => node.type === "Image")).toBe(false);
+  expect(fallback.some((node) => node.type === "AppIcon")).toBe(true);
+  expect(fallback.some((node) => node.props.children === "trip-title")).toBe(true);
+  expect(
+    descendants(TripCoverVisual({ ...props, source: 2 })).some(
+      (node) => node.type === "Image",
+    ),
+  ).toBe(true);
+});
+
+it("keeps the frozen wide iceberg uncropped while other registered covers retain cover fit", () => {
+  const image = (assetId: "owner-photo-593487a64e45" | "city") =>
+    descendants(TripCoverVisual({ source: 2, assetId, style: {} })).find(
+      (node) => node.type === "Image",
+    )!;
+  expect(
+    (image("owner-photo-593487a64e45").props as { resizeMode?: string }).resizeMode,
+  ).toBe("contain");
+  expect((image("city").props as { resizeMode?: string }).resizeMode).toBe("cover");
+});
+
+it("renders a legitimate retained photo and never substitutes AUTO for an unavailable personal selection", () => {
+  state.personal = true;
+  expect(
+    descendants(TripCoverVisual({ source: 2, style: {} })).some(
+      (n) => n.type === "Image",
+    ),
+  ).toBe(false);
+  state.photo = { localUri: "file://retained/photo" };
+  const image = descendants(TripCoverVisual({ source: 2, style: {} })).find(
+    (n) => n.type === "Image",
+  )!;
+  expect((image.props as any).source).toEqual({ uri: "file://retained/photo" });
+});

@@ -1,0 +1,252 @@
+{
+  "base": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+  "branch": "codex/cp01b-g2-coordinated",
+  "sourceHead": "055fa7666a2ea4c083a5727d15e41f2e952968c7",
+  "commits": [
+    {
+      "sha": "c2fc443071c0473d49b96adb2c64bd425714821e",
+      "subject": "feat(flexible): import reviewed CP01B synthetic Lab contributions"
+    },
+    {
+      "sha": "8ef0a3fb50b033865c793d6ca79c042cd169d978",
+      "subject": "integration(g2): append CP01B fixtures to the owned shared registry"
+    },
+    {
+      "sha": "693b9b5bce69109e78f95bfdcc31d49fee3d432e",
+      "subject": "test(g2): isolate feature renderer imports in shared Feed harness"
+    },
+    {
+      "sha": "d190d89a38c29037f08a8816c7cccb21ce98e156",
+      "subject": "fix(flexible): own Pool divider touches before parent scrolling"
+    },
+    {
+      "sha": "f5b4597c630ea97507c3a71b3d76b5c3c5a265b5",
+      "subject": "fix(flexible): key synthetic recovery controls in native Lab"
+    },
+    {
+      "sha": "055fa7666a2ea4c083a5727d15e41f2e952968c7",
+      "subject": "style(g2): format reviewed registry regression assertion"
+    }
+  ],
+  "files": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "8ae03e298e404d0c38b57b1cf4b177575f83077d171027809aefbc3f8501f204",
+      "bytes": 55514
+    },
+    {
+      "path": "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md",
+      "sha256": "cb6125c0397ee513211c4f5ddc0d0efe1d24a061463c1dbff8efd0d633e3e49c",
+      "bytes": 22498
+    },
+    {
+      "path": "fixtures/flexible-native/src/ui/catalogs.ts",
+      "sha256": "38d3bd424ab204eed6d1eb1a84e6c6a011d5d8f8cdabfe61c928732eabc612e7",
+      "bytes": 6521
+    },
+    {
+      "path": "src/features/day-feed-lab/fixtureRegistration.test.ts",
+      "sha256": "dbd1528fcfe7ea51c1108ec2ca709df6d107615eee9979131eaacb7e3db45b07",
+      "bytes": 2534
+    },
+    {
+      "path": "src/features/day-feed-lab/fixtureRegistration.ts",
+      "sha256": "e54b5e53aaf8d0b9dcb1cb5d6bd2c542c22e38431971e04bd80f7fdd1d166d3e",
+      "bytes": 1212
+    },
+    {
+      "path": "src/features/day-feed/render.test.ts",
+      "sha256": "e44774d32507c6bacbea443f4771b2f0ee9979ffe43e73d01e8efc4d04fcd545",
+      "bytes": 49183
+    },
+    {
+      "path": "src/features/flexible-native-gallery/Gallery.tsx",
+      "sha256": "fe1fc1e6bd70db0a65a7b15415682d3d2a6ef5148ffefd20458e0e7cbbd6d9ec",
+      "bytes": 31013
+    },
+    {
+      "path": "src/features/flexible-native-gallery/Manipulation.tsx",
+      "sha256": "4d63c89e8b9cbfb7bdc962a0db904978b9861f30f3b37ba0e5ee16ea6dbdd8ea",
+      "bytes": 3468
+    },
+    {
+      "path": "src/features/flexible-native-gallery/copy.ts",
+      "sha256": "b4926c24cf50df63c69d1b0515c294ebdd986686a27f650d0950f20eb18a6808",
+      "bytes": 467
+    },
+    {
+      "path": "src/features/flexible-native-gallery/data.json",
+      "sha256": "dc33e00c7bace4bd19d2ed6625718b2332e6a9848a9f45cd805de6615a004d09",
+      "bytes": 2356
+    },
+    {
+      "path": "src/features/flexible-native-gallery/fixtures.ts",
+      "sha256": "ad00af4807b343982a559ef1d503bc4246f0383da29dcce85ac82fdb61a2713a",
+      "bytes": 3624
+    },
+    {
+      "path": "src/features/flexible-native-gallery/images/cafe-reference.png",
+      "sha256": "84476b2465beb549860f380b0424e58029647b67cca435cf51139730df83b488",
+      "bytes": 3417
+    },
+    {
+      "path": "src/features/flexible-native-gallery/images/garden-reference.png",
+      "sha256": "c7788759e4d5ee7b0d65a878da67624ca769112888d44311db9216a224639fe3",
+      "bytes": 5931
+    },
+    {
+      "path": "src/features/flexible-native-gallery/index.ts",
+      "sha256": "b015cba06fb1a291184098874cd87efa5d926b2fb92f0289355739b6ed49c444",
+      "bytes": 429
+    },
+    {
+      "path": "src/features/flexible-native-gallery/labAdapter.tsx",
+      "sha256": "e26d83135653d9f65c17248563dd1725fe07af9dbba190a61f7e734af319e4ad",
+      "bytes": 5280
+    },
+    {
+      "path": "src/features/flexible-native-gallery/model.test.ts",
+      "sha256": "0de10edbfc018c7f4fcff6939a8310a9b129e0a5305ae868970849c84907eb4e",
+      "bytes": 6515
+    },
+    {
+      "path": "src/features/flexible-native-gallery/model.ts",
+      "sha256": "ab123ed61b4eaaa3f66758922e29cb0461646765c071250f02441d02dbb5de15",
+      "bytes": 7006
+    },
+    {
+      "path": "src/features/flexible-native-gallery/renderer.test.ts",
+      "sha256": "f1aef316b3b09f16bbfda0a12da262807adbca308d9c65cf78ad602119fa4ba7",
+      "bytes": 29323
+    },
+    {
+      "path": "src/features/flexible-native-gallery/snapshot.test.ts",
+      "sha256": "c8166e730fe5136513c9df8d33a4b61fe34f66cab3e2d2f7a33a75ffb0c18aae",
+      "bytes": 9152
+    },
+    {
+      "path": "src/features/flexible-native-gallery/snapshot.ts",
+      "sha256": "1ed8ef3650c6ef5e93f82b9d124b8a82e5f142467d2a099545f0ed5ddb2acec8",
+      "bytes": 5510
+    }
+  ],
+  "nativeImages": [
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f01-empty-immersive-dark.png",
+      "sha256": "6796c845beb5f2e4d12a72fcc7fb461fabdeea71ce895168967bba78f36a81ef"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f02-group-choice-focus-dark.png",
+      "sha256": "543ccce95aeea3da9c7fef2cd93dc819fb00c44b02c1ff8e65021e5da2f52935"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f03-two-column-focus-dark.png",
+      "sha256": "6d6ea34d0e83db147c16cec8013e092964cfcc3b694efa8588c3c7e5a54ba691"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f04-nested-item-focus-restored-dark.png",
+      "sha256": "88a3bcbc040943f2b861b2688b585eadda0d931a50d01cce2ff495a229bb9e96"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f05-carousel-scroll-dark.png",
+      "sha256": "60514df8595db1741f5437e3036302eef079d03c7bc3b55e21bdc9aee3d7f95f"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f06-pool-gesture-expanded-dark.png",
+      "sha256": "970676a4ebd7b9315b5f341af829ae0951adb28301a7a2f24bff920d5741855f"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f07-search-result-dark.png",
+      "sha256": "a2410dbaa4dfca5a9ca88f0790937dc636d336dd2463924a8cee30a46023bf2b"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f08-copy-my3-dark.png",
+      "sha256": "0a05cd6c3c58979cb9863cff15c2349ddaa6cd8997f603fdafa3afb5e24f6a6c"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f08-remove-undo-focus-cleared-dark.png",
+      "sha256": "a97ec8a628561b48b7ceecb1c2afd29a1baf8e2b8c5a429aff2658c7f66b3c03"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f09-empty-gap-excluded-dark.png",
+      "sha256": "70f0dec7fcbd15d2b832a046f84d79fad95c8697507ffce0182f9172001f81cc"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f10-now-straight-line-focus-dark.png",
+      "sha256": "a21c9d46ef25007c3eb029627351068c753dfd63059d7d23d07b409771b02cdb"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f11-past-no-evidence-dark.png",
+      "sha256": "2fd4db3b5fdafc74fa7ab8eff50a8774d5cd599dd945d9b1d98383c0f5bdec41"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f12-accessibility-type-light.png",
+      "sha256": "4f8ade0234c129a3dc294d48fdfac495970044ec463c21081b8f425a3b351885"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-immersive-final.png",
+      "sha256": "cc919d257c028910b65b5d2ed777f203daf1366918f1871ed321d3b4c902bef7"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-tns-outer-light.png",
+      "sha256": "f9848773b1c148465c5e7a6e8a4e4f97f38d41eb68c2d55eaa5815f39f8242a8"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-before-final.png",
+      "sha256": "f6d27d69e005fbca1a270d8ab50f21a6bca41574e31da57c2a60ea4b868995e1"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-restored-final.png",
+      "sha256": "f02bb2663d9342ed9d6c5a7017c8d43526d4acd0176aebeceffc09bea5936403"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-final.png",
+      "sha256": "fa3a81f3e4861f40b7b0b0f0d8e06ed9cadd48b425ead74809200eb474ac9004"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-immersive-light.png",
+      "sha256": "1a1006b58a18499e3245f930df9b328b29ffd190553e426beba0a7cb5894dd73"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/nelson-default-final.png",
+      "sha256": "613dfc97ef44ad7a2d97fe111c40dc5d9ccf2e036d673dc38e72b31b4c2d5cf4"
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/ttr-now-existing-sheet-final.png",
+      "sha256": "2e356ff6458425f52b06e63c73cad5545da2a50a74333fa40a42cb0df2c05de7"
+    }
+  ],
+  "deliveryDocumentation": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/architecture/CP01B_G2_COORDINATED_INTEGRATION_REPORT.md"
+  ],
+  "deliveryEvidenceFiles": [
+    "docs/architecture/evidence/cp01b-g2-coordinated/f01-empty-immersive-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f02-group-choice-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f03-two-column-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f04-nested-item-focus-restored-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f05-carousel-scroll-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f06-pool-gesture-expanded-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f07-search-result-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f08-copy-my3-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f08-remove-undo-focus-cleared-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f09-empty-gap-excluded-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f10-now-straight-line-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f11-past-no-evidence-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f12-accessibility-type-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-immersive-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-tns-outer-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-before-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-restored-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-immersive-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/integrated-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/nelson-default-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-proposal-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-proposal.patch",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-test-proposal.patch",
+    "docs/architecture/evidence/cp01b-g2-coordinated/ttr-now-existing-sheet-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/validation.json"
+  ]
+}

@@ -1,0 +1,11 @@
+# ADR 0022 — Canonical-demand automatic reference valuation
+
+Date: 2026-09-17. Status: accepted for Currency / FX Phase C on Hosted Dev only.
+
+The Backend uses canonical active `RATE_REQUIRED` Expenses with explicit `economic_date` as durable valuation demand. Its existing B2 scanner first acquires historical candidates, then selects eligible Expense/candidate pairs and invokes the existing Stage 5 valuation RPC. This is not a screen effect or a second valuation engine. Closing Mobile or restarting Backend cannot erase demand; duplicate scans are serialized by the Expense revision lock and a deterministic idempotency key. Offline Mobile creation still uses the existing durable create queue; canonical creation necessarily precedes server automatic valuation. Mobile receives the accepted result by existing bootstrap/change feed.
+
+The service role can no longer call unguarded Stage 5 valuation directly. The Phase C wrapper locks Expense, Journey settings and quote; REFERENCE_RATE requires the explicit matching economic date, ECB policy/source, correct direction and exact decimal, actual reference date within seven calendar days, nonexpired candidate and matching settings revision for automatic calls. The wrapper delegates accepted writes to Stage 5. A BEFORE INSERT trigger freezes economic date, reference date, source attribution, delivery provider, candidate ID and automatic flag into immutable `exchange_rate_snapshots.provenance`. Other Stage 5 policies retain their distinct semantics.
+
+Only `RATE_REQUIRED` with no active valuation is automatically selected. Explicit manual, actual payer cost, imported and already accepted reference evidence are never auto-replaced. Failed automatic attempts are keyed by Expense revision: transient and concurrent failures retry with delay; semantic failures stop until a financial correction advances the revision. No mutable quote refresh edits an accepted snapshot. The Backend records an explicit automatic reason while using the linked creator or Journey owner as the existing Stage 5 authorization principal; provenance marks the action as automated. A future dedicated system actor would require a separately reviewed audit/authorization migration.
+
+No Journey Currency mutation, personal display conversion, actual FX transaction, or Production rollout is part of this decision.

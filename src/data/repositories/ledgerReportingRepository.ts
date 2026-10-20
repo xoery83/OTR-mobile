@@ -1,0 +1,730 @@
+import {
+  captureAccountScope,
+  assertAccountRequestContext,
+  withAccountApplyGate,
+  type AccountScope,
+} from "@/data/auth/accountRequestContext";
+import { reportingDateBoundary } from "@/domain/ledger/reporting";
+import type * as SQLite from "expo-sqlite";
+import type { MyLedgerSpendingFact } from "@/data/api/ledgerReadContracts";
+import type {
+  AnalysisDataset,
+  AnalysisExpense,
+  AnalysisRange,
+} from "@/domain/ledger/spendingAnalysis";
+
+import type {
+  LedgerJourneyContext,
+  MyLedgerPeriod,
+} from "@/domain/ledger/journeyContext";
+import type {
+  ReportingAggregate,
+  ReportingBucket,
+  ReportingDimension,
+  ReportingFilters,
+  ReportingScope,
+} from "@/domain/ledger/reporting";
+
+export type LedgerReportingDatabase = Pick<
+  SQLite.SQLiteDatabase,
+  "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
+>;
+
+export type LedgerReportQuery = ReportingFilters & {
+  journeyId: string;
+  memberId: string;
+  scope: ReportingScope;
+  authoritativeOnly?: boolean;
+  shareOnly?: boolean;
+  positiveShare?: boolean;
+  order?: "OCCURRED" | "UPDATED";
+};
+
+export type LedgerJourneyOption = LedgerJourneyContext & {
+  hasActor: boolean;
+  memberCount: number;
+};
+
+export type LedgerPreferences = {
+  defaultCurrency: string;
+  debugMode: boolean;
+};
+
+export type LedgerReportListItem = {
+  id: string;
+  title: string;
+  category: string;
+  occurredAt: string;
+  payerMemberId: string;
+  payerName: string;
+  originalMinor: number;
+  originalComponentMinor: number | null;
+  originalCurrency: string;
+  originalScale: number;
+  settlementMinor: number | null;
+  settlementCurrency: string;
+  settlementScale: number;
+  componentMinor: number | null;
+  participantCount: number;
+  unevenSplit?: boolean;
+  businessStatus: string;
+  settlementParticipation: "INCLUDED" | "EXCLUDED";
+  syncStatus: string;
+  hasReceipt: boolean;
+  hasOpenConflict: boolean;
+  isAuthoritative: boolean;
+};
+
+type SummaryRow = {
+  totalMinor: number | null;
+  expenseCount: number;
+  includedExpenseIds: string | null;
+  unresolvedRateCount: number;
+  openConflictCount: number;
+};
+
+type BucketRow = SummaryRow & { key: string; label: string };
+
+const conflictSql = `EXISTS (
+  SELECT 1 FROM ledger_expense_conflicts c
+  WHERE c.expense_id = e.id AND c.status = 'OPEN'
+)`;
+const receiptSql = `EXISTS (
+  SELECT 1 FROM ledger_receipt_assets r WHERE r.expense_id = e.id
+)`;
+const authoritativeSql = `(e.business_status = 'ACCEPTED'
+  AND v.id IS NOT NULL AND NOT ${conflictSql})`;
+const currentLeafSql = (alias = "e") => `NOT EXISTS (
+  SELECT 1 FROM ledger_settlements settlement
+  WHERE settlement.journey_id = ${alias}.journey_id
+    AND settlement.correction_source_expense_id IN (${alias}.id, ${alias}.server_id)
+)`;
+
+function escapeLike(value: string) {
+  return value.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_");
+}
+
+function where(query: LedgerReportQuery, userId: string, alias = "e") {
+  const clauses = [
+    `${alias}.journey_id = ?`,
+    `(${alias}.sync_status = 'SYNCED' OR ${alias}.local_owner_user_id = ?)`,
+    `EXISTS (SELECT 1 FROM ledger_actor_context actor
+      WHERE actor.user_id = ? AND actor.journey_id = ${alias}.journey_id)`,
+    currentLeafSql(alias),
+  ];
+  const params: SQLite.SQLiteBindValue[] = [query.journeyId, userId, userId];
+  if (query.businessStatus) {
+    clauses.push(`${alias}.business_status = ?`);
+    params.push(query.businessStatus);
+  } else {
+    clauses.push(`${alias}.deleted_at IS NULL`);
+  }
+  const values: [keyof ReportingFilters, string][] = [
+    ["from", `${alias}.occurred_at >= ?`],
+    ["to", `${alias}.occurred_at < ?`],
+    ["category", `${alias}.category = ?`],
+    ["payerMemberId", `${alias}.payer_member_id = ?`],
+    ["currency", `${alias}.original_currency = ?`],
+    ["syncStatus", `${alias}.sync_status = ?`],
+  ];
+  for (const [key, sql] of values) {
+    const value = query[key];
+    if (typeof value === "string" && value) {
+      clauses.push(sql);
+      params.push(key === "from" || key === "to" ? reportingDateBoundary(value) : value);
+    }
+  }
+  if (query.participantMemberId) {
+    clauses.push(`EXISTS (SELECT 1 FROM ledger_expense_participants ep
+      WHERE ep.expense_id = ${alias}.id AND ep.member_id = ?)`);
+    params.push(query.participantMemberId);
+  }
+  if (query.categories?.length) {
+    clauses.push(`${alias}.category IN (${query.categories.map(() => "?").join(",")})`);
+    params.push(...query.categories);
+  }
+  if (query.analysisState) {
+    const amount =
+      query.scope === "GROUP"
+        ? "v.settlement_amount_minor"
+        : "mine.settlement_amount_minor";
+    const eligible = `(${authoritativeSql} AND ${amount} IS NOT NULL)`;
+    clauses.push(query.analysisState === "INCLUDED" ? eligible : `NOT ${eligible}`);
+  }
+  if (query.query?.trim()) {
+    clauses.push(`(
+      LOWER(${alias}.title || ' ' || COALESCE(${alias}.description, '') || ' ' || ${alias}.category) LIKE ? ESCAPE '\\'
+      OR EXISTS (SELECT 1 FROM ledger_members lm
+        WHERE lm.id = ${alias}.payer_member_id AND LOWER(lm.display_name) LIKE ? ESCAPE '\\')
+      OR EXISTS (SELECT 1 FROM ledger_expense_participants ep
+        WHERE ep.expense_id = ${alias}.id AND LOWER(ep.display_name_snapshot) LIKE ? ESCAPE '\\')
+    )`);
+    const needle = `%${escapeLike(query.query.trim().replace(/[A-Z]/g, (character) => character.toLowerCase()))}%`;
+    params.push(needle, needle, needle);
+  }
+  if (query.conflict === "OPEN" && query.valuation === "RATE_REQUIRED")
+    clauses.push(`(${conflictSql} OR ${alias}.business_status = 'RATE_REQUIRED')`);
+  else if (query.conflict)
+    clauses.push(`${conflictSql} = ${query.conflict === "OPEN" ? 1 : 0}`);
+  if (
+    query.valuation &&
+    !(query.conflict === "OPEN" && query.valuation === "RATE_REQUIRED")
+  )
+    clauses.push(
+      query.valuation === "RATE_REQUIRED"
+        ? `${alias}.business_status = 'RATE_REQUIRED'`
+        : `${alias}.business_status = 'ACCEPTED' AND v.id IS NOT NULL`,
+    );
+  if (query.receipt) clauses.push(`${receiptSql} = ${query.receipt === "HAS" ? 1 : 0}`);
+  if (query.authoritativeOnly)
+    clauses.push(
+      `${authoritativeSql} AND ${query.scope === "GROUP" ? "v.settlement_amount_minor" : "mine.settlement_amount_minor"} IS NOT NULL`,
+    );
+  if (query.shareOnly) {
+    clauses.push(`EXISTS (SELECT 1 FROM ledger_expense_splits selected_share
+      WHERE selected_share.expense_id = ${alias}.id
+        AND selected_share.member_id = ?
+        AND selected_share.settlement_amount_minor > 0)`);
+    params.push(query.memberId);
+  }
+  if (query.positiveShare) {
+    clauses.push(`EXISTS (SELECT 1 FROM ledger_expense_splits selected_share
+      WHERE selected_share.expense_id = ${alias}.id
+        AND selected_share.member_id = ?
+        AND (selected_share.original_amount_minor > 0 OR selected_share.settlement_amount_minor > 0))`);
+    params.push(query.memberId);
+  }
+  return { sql: clauses.join(" AND "), params };
+}
+
+function ids(value: string | null) {
+  return value ? value.split(",").sort() : [];
+}
+
+function visibleExpenseSql(
+  scope: ReportingScope,
+  analysis = false,
+  positiveShare = false,
+) {
+  return scope === "GROUP"
+    ? "1"
+    : analysis || positiveShare
+      ? "mine.expense_id IS NOT NULL"
+      : "mine.expense_id IS NOT NULL AND (mine.settlement_amount_minor IS NULL OR mine.settlement_amount_minor <> 0)";
+}
+
+export function createLedgerReportingRepository(
+  database: LedgerReportingDatabase,
+  getActiveUserId: () => Promise<string>,
+) {
+  return {
+    async loadSpendingAnalysisProjection(
+      journeyId: string,
+      memberId: string,
+      range: AnalysisRange = {},
+    ): Promise<AnalysisDataset> {
+      const userId = await getActiveUserId();
+      const base = where({ journeyId, memberId, scope: "GROUP" }, userId);
+      const filtered = where({ journeyId, memberId, scope: "GROUP", ...range }, userId);
+      const current = `e.id NOT IN (SELECT sourceId FROM predecessors)
+        AND (e.server_id IS NULL OR e.server_id NOT IN (SELECT sourceId FROM predecessors))`;
+      // One SQLite statement is one coherent read snapshot; sections never query separately.
+      const row = await database.getFirstAsync<{
+        journeyId: string;
+        title: string;
+        startDate: string | null;
+        endDate: string | null;
+        settlementCurrency: string;
+        settlementScale: number;
+        membersJson: string;
+        expensesJson: string;
+        hasExpensesOutsideRange: number;
+      }>(
+        `WITH predecessors AS MATERIALIZED (
+            SELECT correction_source_expense_id AS sourceId FROM ledger_settlements
+            WHERE journey_id = ? AND correction_source_expense_id IS NOT NULL
+          ), scoped AS MATERIALIZED (SELECT e.* FROM ledger_expenses e WHERE ${filtered.sql.replace(currentLeafSql(), current)}),
+          split_data AS (
+            SELECT s.expense_id, json_group_array(json_object('memberId', s.member_id,
+              'minor', s.settlement_amount_minor)) AS splitsJson
+            FROM scoped e CROSS JOIN ledger_expense_splits s
+            WHERE s.expense_id = e.id GROUP BY s.expense_id
+          ), open_conflicts AS (
+            SELECT c.expense_id FROM scoped e CROSS JOIN ledger_expense_conflicts c
+            WHERE c.expense_id = e.id AND c.status = 'OPEN' GROUP BY c.expense_id
+          )
+         SELECT j.journey_id AS journeyId, j.title, j.start_date AS startDate,
+          j.end_date AS endDate, j.settlement_currency AS settlementCurrency,
+          j.settlement_scale AS settlementScale,
+          (SELECT json_group_array(json_object('id', m.id, 'label', m.display_name))
+            FROM ledger_members m WHERE m.journey_id = j.journey_id) AS membersJson,
+          EXISTS (SELECT 1 FROM ledger_expenses e WHERE ${base.sql.replace(currentLeafSql(), current)}) AS hasExpensesOutsideRange,
+          (SELECT json_group_array(json_object(
+            'id', e.id, 'title', e.title, 'category', e.category, 'occurredAt', e.occurred_at,
+            'updatedAt', e.updated_at, 'createdAt', e.created_at,
+            'payerMemberId', e.payer_member_id, 'originalMinor', e.original_amount_minor,
+            'originalCurrency', e.original_currency, 'originalScale', e.original_scale,
+            'totalMinor', v.settlement_amount_minor, 'personalMinor', mine.settlement_amount_minor,
+            'businessStatus', e.business_status, 'hasOpenConflict', c.expense_id IS NOT NULL,
+            'splits', json(COALESCE(s.splitsJson, '[]'))
+          )) FROM scoped e
+            LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+            LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+            LEFT JOIN split_data s ON s.expense_id = e.id
+            LEFT JOIN open_conflicts c ON c.expense_id = e.id) AS expensesJson
+         FROM ledger_journeys j WHERE j.journey_id = ? AND EXISTS (
+           SELECT 1 FROM ledger_actor_context actor WHERE actor.user_id = ? AND actor.journey_id = j.journey_id)`,
+        journeyId,
+        ...filtered.params,
+        ...base.params,
+        memberId,
+        journeyId,
+        userId,
+      );
+      if (!row) throw new Error("Analysis Journey is not available locally.");
+      const { membersJson, expensesJson, hasExpensesOutsideRange, ...journey } = row;
+      return {
+        journey,
+        members: JSON.parse(membersJson),
+        expenses: (JSON.parse(expensesJson) as AnalysisExpense[]).map((expense) => ({
+          ...expense,
+          hasOpenConflict: Boolean(expense.hasOpenConflict),
+        })),
+        hasExpensesOutsideRange: Boolean(hasExpensesOutsideRange),
+      };
+    },
+    async listJourneys() {
+      const userId = await getActiveUserId();
+      const rows = await database.getAllAsync<
+        Omit<LedgerJourneyOption, "hasActor"> & { hasActor: number }
+      >(
+        `SELECT source.*,
+           (SELECT COUNT(*) FROM ledger_members member
+             WHERE member.journey_id = source.journeyId) AS memberCount,
+           EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = source.journeyId
+               AND actor.member_id IS NOT NULL) AS hasActor
+         FROM (
+           SELECT journey_id AS journeyId, COALESCE(title, 'Journey') AS title,
+             start_date AS startDate, end_date AS endDate,
+             settlement_currency AS settlementCurrency, settlement_scale AS settlementScale
+           FROM ledger_journeys journey
+           WHERE EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = journey.journey_id)
+           UNION ALL
+           SELECT s.journey_id, s.title, s.start_date, s.end_date, s.currency, s.scale
+           FROM ledger_my_journey_summaries s
+           WHERE NOT EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = s.journey_id)
+             AND s.user_id = ? AND s.period_key = (
+               SELECT s2.period_key FROM ledger_my_journey_summaries s2
+               WHERE s2.user_id = s.user_id AND s2.journey_id = s.journey_id
+               ORDER BY CASE s2.period_key WHEN 'YEAR' THEN 0 WHEN 'ALL' THEN 1 ELSE 2 END
+               LIMIT 1
+             )
+         ) source ORDER BY COALESCE(startDate, endDate, '') DESC, title`,
+        userId,
+        userId,
+        userId,
+        userId,
+      );
+      return rows.map((row) => ({ ...row, hasActor: Boolean(row.hasActor) }));
+    },
+
+    async getActorMemberId(journeyId: string) {
+      const userId = await getActiveUserId();
+      return database.getFirstAsync<{ memberId: string | null }>(
+        `SELECT member_id AS memberId FROM ledger_actor_context
+         WHERE user_id = ? AND journey_id = ?`,
+        userId,
+        journeyId,
+      );
+    },
+
+    async getActorContext(journeyId: string) {
+      const userId = await getActiveUserId();
+      return database.getFirstAsync<{
+        displayName: string | null;
+        memberId: string | null;
+        role: string | null;
+      }>(
+        `SELECT actor.member_id AS memberId, actor.role,
+                member.display_name AS displayName
+         FROM ledger_actor_context actor
+         LEFT JOIN ledger_members member
+           ON member.id = actor.member_id AND member.journey_id = actor.journey_id
+         WHERE actor.user_id = ? AND actor.journey_id = ?`,
+        userId,
+        journeyId,
+      );
+    },
+
+    async listFilterOptions(journeyId: string) {
+      const userId = await getActiveUserId();
+      const [categories, currencies, members] = await Promise.all([
+        database.getAllAsync<{ value: string }>(
+          `SELECT DISTINCT category AS value FROM ledger_expenses
+           WHERE journey_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
+             AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+               WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)
+           ORDER BY value`,
+          journeyId,
+          userId,
+          userId,
+        ),
+        database.getAllAsync<{ value: string }>(
+          `SELECT DISTINCT original_currency AS value FROM ledger_expenses
+           WHERE journey_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
+             AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+               WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)
+           ORDER BY value`,
+          journeyId,
+          userId,
+          userId,
+        ),
+        database.getAllAsync<{ id: string; label: string }>(
+          `SELECT id, display_name AS label FROM ledger_members
+           WHERE journey_id = ? AND EXISTS (
+             SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = ledger_members.journey_id)
+           ORDER BY label`,
+          journeyId,
+          userId,
+        ),
+      ]);
+      return {
+        categories: categories.map((item) => item.value),
+        currencies: currencies.map((item) => item.value),
+        members,
+      };
+    },
+
+    async getSelectedJourneyId() {
+      const userId = await getActiveUserId();
+      return (
+        (
+          await database.getFirstAsync<{ selectedJourneyId: string | null }>(
+            `SELECT selected_journey_id AS selectedJourneyId
+             FROM account_local_state WHERE user_id = ?`,
+            userId,
+          )
+        )?.selectedJourneyId ?? null
+      );
+    },
+
+    async getPreferences(): Promise<LedgerPreferences> {
+      const userId = await getActiveUserId();
+      const [account, device] = await Promise.all([
+        database.getFirstAsync<{ defaultCurrency: string }>(
+          `SELECT default_currency AS defaultCurrency
+           FROM account_local_state WHERE user_id = ?`,
+          userId,
+        ),
+        database.getFirstAsync<{ debugMode: number }>(
+          "SELECT debug_mode AS debugMode FROM ledger_preferences WHERE id = 1",
+        ),
+      ]);
+      return {
+        defaultCurrency: account?.defaultCurrency ?? "NZD",
+        debugMode: Boolean(device?.debugMode),
+      };
+    },
+
+    async setDefaultCurrency(defaultCurrency: string) {
+      const userId = await getActiveUserId();
+      await database.runAsync(
+        `INSERT INTO account_local_state
+           (user_id, selected_journey_id, default_currency, updated_at)
+         VALUES (?, NULL, ?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           default_currency = excluded.default_currency,
+           updated_at = excluded.updated_at`,
+        userId,
+        defaultCurrency,
+        new Date().toISOString(),
+      );
+    },
+
+    async setDebugMode(debugMode: boolean) {
+      await database.runAsync(
+        `INSERT INTO ledger_preferences
+           (id, selected_journey_id, default_currency, debug_mode, updated_at)
+         VALUES (1, NULL, 'NZD', ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           debug_mode = excluded.debug_mode,
+           updated_at = excluded.updated_at`,
+        debugMode ? 1 : 0,
+        new Date().toISOString(),
+      );
+    },
+
+    async selectJourney(journeyId: string | null, requestContext?: AccountScope) {
+      const context = requestContext ?? (await captureAccountScope(getActiveUserId));
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(context, getActiveUserId);
+          const userId = context.accountId;
+          if (
+            journeyId &&
+            !(await database.getFirstAsync(
+              `SELECT 1 FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?
+         UNION ALL SELECT 1 FROM ledger_my_journey_summaries WHERE user_id = ? AND journey_id = ? LIMIT 1`,
+              userId,
+              journeyId,
+              userId,
+              journeyId,
+            ))
+          )
+            throw new Error("Journey is not available for this Account.");
+          await database.runAsync(
+            `INSERT INTO account_local_state
+           (user_id, selected_journey_id, default_currency, updated_at)
+         VALUES (?, ?, 'NZD', ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           selected_journey_id = excluded.selected_journey_id,
+           updated_at = excluded.updated_at`,
+            userId,
+            journeyId,
+            new Date().toISOString(),
+          );
+          await assertAccountRequestContext(context, getActiveUserId);
+        }),
+      );
+    },
+
+    async hasOpenConflict(expenseId: string) {
+      const userId = await getActiveUserId();
+      return Boolean(
+        await database.getFirstAsync(
+          `SELECT 1 FROM ledger_expense_conflicts conflict
+           JOIN ledger_expenses expense ON expense.id = conflict.expense_id
+           WHERE conflict.expense_id = ? AND conflict.status = 'OPEN'
+             AND (expense.sync_status = 'SYNCED' OR expense.local_owner_user_id = ?)
+           LIMIT 1`,
+          expenseId,
+          userId,
+        ),
+      );
+    },
+
+    async listExpenses(query: LedgerReportQuery, limit = 50, offset = 0) {
+      const filtered = where(query, await getActiveUserId());
+      const component =
+        query.scope === "GROUP"
+          ? "v.settlement_amount_minor"
+          : "mine.settlement_amount_minor";
+      const rows = await database.getAllAsync<
+        Omit<
+          LedgerReportListItem,
+          "hasReceipt" | "hasOpenConflict" | "isAuthoritative" | "unevenSplit"
+        > & {
+          hasReceipt: number;
+          hasOpenConflict: number;
+          isAuthoritative: number;
+          unevenSplit: number;
+        }
+      >(
+        `SELECT e.id, e.title, e.category, e.occurred_at AS occurredAt,
+          e.payer_member_id AS payerMemberId, COALESCE(payer.display_name, 'Traveller') AS payerName,
+          e.original_amount_minor AS originalMinor, e.original_currency AS originalCurrency,
+          mine.original_amount_minor AS originalComponentMinor,
+          e.original_scale AS originalScale, v.settlement_amount_minor AS settlementMinor,
+          COALESCE(v.settlement_currency, j.settlement_currency) AS settlementCurrency,
+          COALESCE(v.settlement_scale, j.settlement_scale) AS settlementScale,
+          ${component} AS componentMinor,
+          (SELECT COUNT(*) FROM ledger_expense_participants participants
+            WHERE participants.expense_id = e.id) AS participantCount,
+          (SELECT MAX(s.original_amount_minor) - MIN(s.original_amount_minor) > 1
+            FROM ledger_expense_splits s WHERE s.expense_id = e.id) AS unevenSplit,
+          e.business_status AS businessStatus,
+          e.settlement_participation AS settlementParticipation,
+          e.sync_status AS syncStatus, ${receiptSql} AS hasReceipt,
+          ${conflictSql} AS hasOpenConflict, ${authoritativeSql} AS isAuthoritative
+         FROM ledger_expenses e
+         JOIN ledger_journeys j ON j.journey_id = e.journey_id
+         LEFT JOIN ledger_members payer ON payer.id = e.payer_member_id
+         LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+         LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState), Boolean(query.positiveShare))}
+         ORDER BY ${query.order === "UPDATED" ? "e.updated_at" : "e.occurred_at"} DESC, e.id
+         LIMIT ? OFFSET ?`,
+        query.memberId,
+        ...filtered.params,
+        limit,
+        offset,
+      );
+      return rows.map((row) => ({
+        ...row,
+        hasReceipt: Boolean(row.hasReceipt),
+        hasOpenConflict: Boolean(row.hasOpenConflict),
+        unevenSplit: Boolean(row.unevenSplit),
+        isAuthoritative: Boolean(row.isAuthoritative) && row.componentMinor !== null,
+      }));
+    },
+
+    async countExpenses(query: LedgerReportQuery) {
+      const filtered = where(query, await getActiveUserId());
+      const row = await database.getFirstAsync<{ count: number }>(
+        `SELECT COUNT(*) AS count
+         FROM ledger_expenses e
+         JOIN ledger_journeys j ON j.journey_id = e.journey_id
+         LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+         LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState), Boolean(query.positiveShare))}`,
+        query.memberId,
+        ...filtered.params,
+      );
+      return row?.count ?? 0;
+    },
+
+    async summarize(query: LedgerReportQuery): Promise<ReportingAggregate> {
+      const filtered = where(query, await getActiveUserId());
+      const component =
+        query.scope === "GROUP"
+          ? "v.settlement_amount_minor"
+          : "mine.settlement_amount_minor";
+      const eligible = `${authoritativeSql} AND ${component} IS NOT NULL`;
+      const relevant = query.scope === "GROUP" ? "1" : "mine.expense_id IS NOT NULL";
+      const row = await database.getFirstAsync<SummaryRow>(
+        `SELECT COALESCE(SUM(CASE WHEN ${eligible} THEN ${component} ELSE 0 END), 0) AS totalMinor,
+          COUNT(CASE WHEN ${eligible} THEN 1 END) AS expenseCount,
+          GROUP_CONCAT(CASE WHEN ${eligible} THEN e.id END) AS includedExpenseIds,
+          COUNT(CASE WHEN ${relevant} AND e.business_status = 'RATE_REQUIRED' THEN 1 END) AS unresolvedRateCount,
+          COUNT(CASE WHEN ${relevant} AND ${conflictSql} THEN 1 END) AS openConflictCount
+         FROM ledger_expenses e
+         LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+         LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+         WHERE ${filtered.sql}`,
+        query.memberId,
+        ...filtered.params,
+      );
+      return {
+        totalMinor: row?.totalMinor ?? 0,
+        expenseCount: row?.expenseCount ?? 0,
+        includedExpenseIds: ids(row?.includedExpenseIds ?? null),
+        unresolvedRateCount: row?.unresolvedRateCount ?? 0,
+        openConflictCount: row?.openConflictCount ?? 0,
+      };
+    },
+
+    async analyze(
+      query: LedgerReportQuery,
+      dimension: ReportingDimension,
+    ): Promise<ReportingBucket[]> {
+      const filtered = where(query, await getActiveUserId());
+      const dimensionSql = {
+        CATEGORY: ["e.category", "e.category"],
+        DAY: ["substr(e.occurred_at, 1, 10)", "substr(e.occurred_at, 1, 10)"],
+        PAYER: ["e.payer_member_id", "COALESCE(payer.display_name, 'Traveller')"],
+        CURRENCY: ["e.original_currency", "e.original_currency"],
+        PARTICIPANT: ["part.member_id", "part.display_name_snapshot"],
+      }[dimension];
+      const participantJoin =
+        dimension === "PARTICIPANT"
+          ? `JOIN ledger_expense_splits partSplit ON partSplit.expense_id = e.id
+             JOIN ledger_expense_participants part ON part.expense_id = e.id AND part.member_id = partSplit.member_id`
+          : "LEFT JOIN ledger_expense_participants part ON 0";
+      const amount =
+        dimension === "PARTICIPANT" && query.scope === "GROUP"
+          ? "partSplit.settlement_amount_minor"
+          : query.scope === "GROUP"
+            ? "v.settlement_amount_minor"
+            : "mine.settlement_amount_minor";
+      const ownParticipant =
+        dimension === "PARTICIPANT" && query.scope === "MINE"
+          ? "AND part.member_id = ?"
+          : "";
+      const params = [query.memberId, ...filtered.params];
+      if (ownParticipant) params.push(query.memberId);
+      const rows = await database.getAllAsync<BucketRow>(
+        `SELECT ${dimensionSql[0]} AS key, ${dimensionSql[1]} AS label,
+          SUM(${amount}) AS totalMinor, COUNT(DISTINCT e.id) AS expenseCount,
+          GROUP_CONCAT(DISTINCT e.id) AS includedExpenseIds,
+          0 AS unresolvedRateCount, 0 AS openConflictCount
+         FROM ledger_expenses e
+         LEFT JOIN ledger_members payer ON payer.id = e.payer_member_id
+         LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+         LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+         ${participantJoin}
+         WHERE ${filtered.sql} AND ${authoritativeSql} AND ${amount} IS NOT NULL ${ownParticipant}
+         GROUP BY ${dimensionSql[0]}, ${dimensionSql[1]}
+         ORDER BY ${dimension === "DAY" ? "key ASC" : "totalMinor DESC, label"}`,
+        ...params,
+      );
+      return rows.map((row) => ({
+        key: row.key,
+        label: row.label,
+        totalMinor: row.totalMinor ?? 0,
+        expenseCount: row.expenseCount,
+        includedExpenseIds: ids(row.includedExpenseIds),
+        unresolvedRateCount: 0,
+        openConflictCount: 0,
+      }));
+    },
+
+    async listMyLedger(period: MyLedgerPeriod) {
+      const userId = await getActiveUserId();
+      return database.getAllAsync<{
+        journeyId: string;
+        title: string;
+        startDate: string | null;
+        endDate: string | null;
+        currency: string;
+        scale: number;
+        mySpendMinor: number;
+        paidMinor: number;
+        positionMinor: number;
+        unvaluedCount: number;
+        conflictCount: number;
+        updatedAt: string;
+      }>(
+        `SELECT journey_id AS journeyId, title, start_date AS startDate,
+          end_date AS endDate, currency, scale, my_spend_minor AS mySpendMinor,
+          paid_minor AS paidMinor, position_minor AS positionMinor,
+          unvalued_count AS unvaluedCount, conflict_count AS conflictCount,
+          updated_at AS updatedAt
+         FROM ledger_my_journey_summaries WHERE user_id = ? AND period_key = ?
+         ORDER BY COALESCE(start_date, end_date, '') DESC, title`,
+        userId,
+        period,
+      );
+    },
+
+    async listMyLedgerSpendingFacts(
+      period: MyLedgerPeriod,
+    ): Promise<MyLedgerSpendingFact[]> {
+      const userId = await getActiveUserId();
+      const rows = await database.getAllAsync<
+        Omit<MyLedgerSpendingFact, "hasOpenConflict"> & {
+          hasOpenConflict: number;
+        }
+      >(
+        `SELECT expense_id AS expenseId, revision, journey_id AS journeyId,
+          category, economic_date AS economicDate, occurred_at AS occurredAt,
+          status, has_open_conflict AS hasOpenConflict,
+          original_currency AS originalCurrency, original_scale AS originalScale,
+          personal_split_minor AS personalSplitMinor
+         FROM ledger_my_spending_facts
+         WHERE user_id = ? AND period_key = ?`,
+        userId,
+        period,
+      );
+      return rows.map((row) => ({
+        ...row,
+        hasOpenConflict: Boolean(row.hasOpenConflict),
+      }));
+    },
+
+    async hasMyLedgerSpendingSnapshot(period: MyLedgerPeriod) {
+      const userId = await getActiveUserId();
+      return Boolean(
+        await database.getFirstAsync(
+          `SELECT 1 FROM ledger_my_spending_periods
+         WHERE user_id = ? AND period_key = ?`,
+          userId,
+          period,
+        ),
+      );
+    },
+  };
+}

@@ -1,0 +1,268 @@
+{
+  "checkpoint": "CP-FLIGHT-PDF-UPLOAD-RECOVERY-03A",
+  "branch": "codex/cp-flight-pdf-upload-recovery-03a",
+  "base": "e091b60e0527766bf6a055a4280e21f61933da5c",
+  "implementationCommit": "eec2516e47f38e0048f8fda90794068d93b9426f",
+  "implementationTree": "1e687e9c45bf952ab3a01caaacc9ee4c766966ab",
+  "changedPaths": [
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+    "backend/src/__fixtures__/sourcePdfUpload.ts",
+    "backend/src/__fixtures__/sourcePdfUploadBeta.ts",
+    "backend/src/sourcePdfUploadBeta.sql.test.ts",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-bounded-pdf-beta-custody.md",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md",
+    "scripts/trip/core-v2-sql-acceptance.py",
+    "src/domain/trip/sourcePdfUploadBeta.ts",
+    "supabase/migrations/20261013000300_source_pdf_beta_custody.sql",
+    "supabase/tests/source-pdf/beta.sql"
+  ],
+  "implementationSha256": {
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts": "3dfa66c1f6ea455df4e3562fb9a86629c0328637589ba34f0d576250a498a9e6",
+    "backend/src/__fixtures__/sourcePdfUpload.ts": "2acfb2b402388631055844ebc11bc44e64c2e24c2b2ce88d061313dc6ab29ada",
+    "backend/src/__fixtures__/sourcePdfUploadBeta.ts": "822f35d6bdaec50a0151361db8abeb5350bf0a807291b50603daca5e49a65274",
+    "backend/src/sourcePdfUploadBeta.sql.test.ts": "b55e6c3c6d15cd455843ac55144c778bec526292ca1fe7dcafd978d4b1581cd1",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md": "1f31541dbcac29d1c721409050fa353a5a6a5783c716338f271d8f6b950d7916",
+    "docs/adr/2026-10-13-bounded-pdf-beta-custody.md": "b619e49567a650c874ee6c563ee9f59d51e06ba8f07d485d3a3eccc2b7c6c4e8",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md": "553442e7e3d17a68b911f3dee6e171075140a03f63c48cb549dc78d0244c896f",
+    "scripts/trip/core-v2-sql-acceptance.py": "a2983c509740232488e7a31382e93bf86ac312f991fab9116a680bcea0857b88",
+    "src/domain/trip/sourcePdfUploadBeta.ts": "a1d01df5e8f4781cedda7f123b90b3312e8637412588e318cba296f6bad23152",
+    "supabase/migrations/20261013000300_source_pdf_beta_custody.sql": "840e2c22b6262aa8af486eec3a5efe001657c4567a8805a3e80ab01e0dab051a",
+    "supabase/tests/source-pdf/beta.sql": "c75111b47195f926a265172054a1574b472651d623ab8ed0254edb10430d0ba3"
+  },
+  "handoffHashesExcluded": [
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_MANIFEST.json"
+  ],
+  "evidence": {
+    "classification": "CLOSED_SYNTHETIC_NOT_REAL_SUPABASE_ACCEPTANCE",
+    "base": "e091b60e0527766bf6a055a4280e21f61933da5c",
+    "origin": "065bdd96d334cfa4818178cb715dfd7ff14b5289",
+    "actualRemote": "065bdd96d334cfa4818178cb715dfd7ff14b5289",
+    "logs": {
+      "sql-final": {
+        "path": "/private/tmp/recovery03a-sql-final.log",
+        "sha256": "e0073ca75775b7c502399b12549e29b25a5216f4db4b66277a67efb355814648"
+      },
+      "chain-final": {
+        "path": "/private/tmp/recovery03a-chain-final.log",
+        "sha256": "c237f5c75a44876295d3cb3767f01ab4c10478c37e8d5eccc39bd95e303a116d"
+      },
+      "v1": {
+        "path": "/private/tmp/recovery03a-v1.log",
+        "sha256": "4e2395b939f826744016be2ea5978a6a2048317712f2642874f4367269616103"
+      },
+      "source": {
+        "path": "/private/tmp/recovery03a-source.log",
+        "sha256": "bd8aaab2416c5b3557ac4f4294582891a97bffafc36219a8a23aae47f00e3945"
+      },
+      "text": {
+        "path": "/private/tmp/recovery03a-text.log",
+        "sha256": "33d424be91d11c81d40fca75263e75f51f15b087ea23a26da05388250344c290"
+      },
+      "ts": {
+        "path": "/private/tmp/recovery03a-ts.log",
+        "sha256": "efa3fca497b095076171e6df6f89a35f744bc8190d9a1b66bc1fc3008784db5d"
+      },
+      "llm": {
+        "path": "/private/tmp/recovery03a-llm.log",
+        "sha256": "7c684066438e920a903a286cddf6df1ad1255803696a13860efd778772ef2bc0"
+      },
+      "typecheck": {
+        "path": "/private/tmp/recovery03a-typecheck.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "build": {
+        "path": "/private/tmp/recovery03a-build.log",
+        "sha256": "0cd66b42170e7fab988080bba62bb7755b1944a20994f184d237bde6127369bd"
+      },
+      "lint": {
+        "path": "/private/tmp/recovery03a-lint.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "uiguard": {
+        "path": "/private/tmp/recovery03a-uiguard.log",
+        "sha256": "4d01abac9a20a82fa3f35ae619017c0e543db809a068fa8b72162ff5e51ba7a6"
+      },
+      "validation-caveats": {
+        "path": "/private/tmp/recovery03a-validation-caveats.txt",
+        "sha256": "e272f07c7e9842272f67df818f76c1b428f06f9204724dccfd96f15e0210d690"
+      }
+    },
+    "chain": [
+      {
+        "classification": "CLOSED_SYNTHETIC_BETA_CUSTODY",
+        "operationId": "e5f7783a-c99f-4dd2-b583-6d19876c1a0d",
+        "attemptId": "20d01796-14ec-4165-8bd1-02cfd0e9e9f9",
+        "providerWrites": 1,
+        "remoteDebt": true,
+        "receiptSha256": "604c62bdc91375f501e3ebc20a0a563114346c410a23541daf24554c516432db"
+      },
+      {
+        "classification": "CP_FLIGHT_PDF_SOURCE_02_OWNING_REGISTRATION",
+        "sourceId": "b2348dd6-500f-44b7-a9c8-cdcaa7e47606",
+        "originalId": "12c63420-daaa-464f-8152-2378849842b8",
+        "derivedId": "d26f99f4-e79b-4d6d-aaa0-e2c158862019",
+        "objectKey": "v1/10000000-0000-4000-8000-000000000001/b2348dd6-500f-44b7-a9c8-cdcaa7e47606/12c63420-daaa-464f-8152-2378849842b8/payload",
+        "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "originalByteCount": 950,
+        "verificationOperationId": "9dd351dd-db2b-46c8-b8a8-757eff223814",
+        "verificationResultSha256": "3d19ce6214d9730ae9c867676fc217bb4087ac342d98768390ce90e7ebe1e800",
+        "registrationOperationId": "add82296-92c3-44a5-be32-6c28f7b0a6e5",
+        "registrationSha256": "372a3a9c9bb339720598dc1e1458cf4a22df99564827f625b98c3cd3a2675163",
+        "pages": [
+          {
+            "pageIndex": 0,
+            "start": 0,
+            "end": 62
+          },
+          {
+            "pageIndex": 1,
+            "start": 63,
+            "end": 125
+          }
+        ],
+        "retainedFileRead": true,
+        "lostVerifyAndRegistrationResponseRecovered": true,
+        "preSealAuthority": false,
+        "sourceMaterialRevision": 1,
+        "sourceRowRevision": 1,
+        "originalRowRevision": 2,
+        "ordinaryQuartz": "REVIEW",
+        "newCanonicalItems": 0
+      },
+      {
+        "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
+        "originalId": "12c63420-daaa-464f-8152-2378849842b8",
+        "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "operationId": "a9e2a9d2-a299-4b47-beb1-c8151514e0f9",
+        "sealSha256": "165c85ad63524e1e6e82f49da65accc51a1b509ebf1cf74f3f79c1058e0362dc",
+        "pages": [
+          {
+            "pageIndex": 0,
+            "start": 0,
+            "end": 62
+          },
+          {
+            "pageIndex": 1,
+            "start": 63,
+            "end": 125
+          }
+        ],
+        "replay": "EXACT",
+        "negativeSealWrites": 0
+      },
+      {
+        "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+        "accountId": "00000000-0000-4000-8000-000000000001",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "sqlRead2SqliteDayPairs": [
+          {
+            "itemId": "30e9564d-39e5-4e51-81f6-89a76a0b7eb2",
+            "semanticRevision": 2
+          },
+          {
+            "itemId": "9f5c579d-6e31-4f4d-9335-2d85e6dea831",
+            "semanticRevision": 2
+          }
+        ],
+        "itemDateExpectations": [
+          {
+            "itemId": "9f5c579d-6e31-4f4d-9335-2d85e6dea831",
+            "semanticRevision": 2,
+            "localDate": "2026-12-20"
+          },
+          {
+            "itemId": "30e9564d-39e5-4e51-81f6-89a76a0b7eb2",
+            "semanticRevision": 2,
+            "localDate": "2026-12-17"
+          }
+        ],
+        "dates": [
+          "2026-12-20",
+          "2026-12-17"
+        ],
+        "read2ManifestSha256": "2e58aafcd9e304c44ebdfd497b00c8366ba01154cf206ab15880c2be880ba220",
+        "read2AccessRevision": 1,
+        "read2Epoch": "5c1454da-fbea-4968-8c17-40ae6ea415d0",
+        "lostCollectionResponseRecovered": true,
+        "fileColdOfflineReopen": true,
+        "privateSourceLeakage": false,
+        "sqliteMigration": 54,
+        "localSchemaVersion": 55
+      },
+      {
+        "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+        "sourceId": "b2348dd6-500f-44b7-a9c8-cdcaa7e47606",
+        "runId": "62467484-84cb-4552-bb05-ae01b2428cdc",
+        "inputCatalogSha256": "3a13c03b4adf3eea32507e4b0c6a0a4221d58e087eb06935a624229fb56fd947",
+        "candidateIds": [
+          "3a6f8e52-118d-8a88-a244-d148f10c7129",
+          "7dc34281-3706-8e7d-a343-9e7c2fd7f824"
+        ],
+        "itemIds": [
+          "9f5c579d-6e31-4f4d-9335-2d85e6dea831",
+          "30e9564d-39e5-4e51-81f6-89a76a0b7eb2"
+        ],
+        "recoveredOperationIds": [
+          "82f5fbfe-038d-4283-a158-9b7f5d2567aa",
+          "baa30c5d-cd32-4171-b969-27e358be9783",
+          "beed1e8f-b1de-4284-aaf3-30a5287d2fb4",
+          "b09cd4a3-b240-4bb2-bd60-e229f81ea0f0"
+        ],
+        "sourcePlanStatus": "COMPLETE",
+        "associations": 4,
+        "qualificationRevision": 2,
+        "negativeWrites": 0
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration",
+          "20261013000100_source_pdf_upload_authority",
+          "20261013000300_source_pdf_beta_custody"
+        ],
+        "betaCustodyInstalled": true,
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 388,
+        "sourcePdfUploadInstalled": true,
+        "pdfUploadApprovedChangedRoot": "trip_source_execution_inventory()",
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "preserved": {
+      "supabase/migrations/20261013000100_source_pdf_upload_authority.sql": "a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4",
+      "src/domain/trip/sourcePdfUploadAuthority.ts": "91fe41864cce452d3e4a318ce2447c724e7e833f93c4c3e515e26b277ed9803a",
+      "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+      "supabase/migrations/20261012000300_source_pdf_registration.sql": "d5c59775cc959ed70c7e73180168413922c8ae74def87fe9e6012d044759e82f",
+      "backend/src/sourcePdfRegistration.ts": "b43a52d97315ba456cc949e0ca6e2774c6aa133b21c4aab9d092e38b878b247e",
+      "backend/src/sourcePdfAuthority.ts": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb",
+      "backend/src/sourcePdfProfile.ts": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6"
+    },
+    "activation": "CLOSED",
+    "ttrMigration": {
+      "path": "/private/tmp/otr-cp-ttr04a3-core-order-02-20261013/supabase/migrations/20261013000200_core_ordinary_order.sql",
+      "sha256": "45c36ccf6f3d0ca92f30b3e78689fb95a6490e64a811bf2b670d521dfe8093c1"
+    }
+  }
+}

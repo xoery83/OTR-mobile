@@ -1,0 +1,20 @@
+{
+  "baseSha": "8ff13647aea2239571800e187de82dc9ac7129c0",
+  "materials": [
+    {
+      "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_UI_BLUEPRINT_V1_2_2026-10-16.md",
+      "repository": "docs/trip/OTR_TRIP_HOME_UI_BLUEPRINT_V1_2_2026-10-16.md",
+      "sha256": "f932d35551b5d51bb764795d75399d37fe0a2ff1cbbbb139ce59eb74678baa64"
+    },
+    {
+      "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_VQA_R2_MODIFICATION_DELTA_2026-10-16.md",
+      "repository": "docs/trip/OTR_TRIP_HOME_VQA_R2_MODIFICATION_DELTA_2026-10-16.md",
+      "sha256": "e5031adfb707acf47b33b447067c6823cd949ab011004d2efe8cccab96012cc1"
+    },
+    {
+      "source": "/Users/xoery/Downloads/旅行应用旅程首页 UI 设计规范.png",
+      "sha256": "3c16bb4988a9b73605ce3971f5d88b6e44cf483e381cdc34211edb5667914f18",
+      "role": "visual reference; text contract wins"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+
+ RUN  v4.1.11 /private/tmp/otr-experience-range-fix-20261018
+
+ ❯ src/features/day-feed/TripCalendarRangeField.test.ts (10 tests | 6 failed) 182ms
+   × gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale 1 10ms
+   × gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale 2.5 6ms
+   × gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale 4 6ms
+   × preserves one opening index and chronological month identities while edge callbacks expand the same list 15ms
+   × does not mutate exhausted edge bounds at 0001-01-01 3ms
+   × does not mutate exhausted edge bounds at 9999-12-31 4ms
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  19:16:11
+   Duration  355ms (transform 61ms, setup 0ms, import 87ms, tests 182ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/day-feed/TripCalendarRangeField.test.ts > gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale 1
+ FAIL  src/features/day-feed/TripCalendarRangeField.test.ts > gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale 2.5
+ FAIL  src/features/day-feed/TripCalendarRangeField.test.ts > gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale 4
+AssertionError: expected [ { …(10) }, { …(10) }, …(47) ] to have a length of 7 but got 49
+
+- Expected
++ Received
+
+- 7
++ 49
+
+ ❯ src/features/day-feed/TripCalendarRangeField.test.ts:198:19
+    196|     const weeks = Children.toArray(grid.props.children) as Element[];
+    197|     const size = Math.max(44, Math.ceil(24 * fontScale));
+    198|     expect(weeks).toHaveLength(7);
+       |                   ^
+    199|     const geometry = style(month.props.style);
+    200|     expect(list.props.getItemLayout(null, 5)).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/features/day-feed/TripCalendarRangeField.test.ts > preserves one opening index and chronological month identities while edge callbacks expand the same list
+AssertionError: expected 24 to be 12 // Object.is equality
+
+- Expected
++ Received
+
+- 12
++ 24
+
+ ❯ src/features/day-feed/TripCalendarRangeField.test.ts:246:46
+    244|   before.props.onStartReached();
+    245|   const prepended = renderList();
+    246|   expect(prepended.props.initialScrollIndex).toBe(before.props.initial…
+       |                                              ^
+    247|   const nextIndex = prepended.props.data.indexOf(anchor);
+    248|   expect(nextIndex).toBe(index + 12);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/features/day-feed/TripCalendarRangeField.test.ts > does not mutate exhausted edge bounds at 0001-01-01
+AssertionError: expected { first: '0001-01', last: '0002-01' } to be { first: '0001-01', last: '0002-01' } // Object.is equality
+
+If it should pass with deep equality, replace "toBe" with "toStrictEqual"
+
+Expected: { first: '0001-01', last: '0002-01' }
+Received: serializes to the same string
+
+
+Compared values have no visual difference.
+
+ ❯ src/features/day-feed/TripCalendarRangeField.test.ts:267:29
+    265|     if (day.startsWith("0001")) list.props.onStartReached();
+    266|     else list.props.onEndReached();
+    267|     expect(state.values[2]).toBe(before);
+       |                             ^
+    268|   },
+    269| );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/features/day-feed/TripCalendarRangeField.test.ts > does not mutate exhausted edge bounds at 9999-12-31
+AssertionError: expected { first: '9998-12', last: '9999-12' } to be { first: '9998-12', last: '9999-12' } // Object.is equality
+
+If it should pass with deep equality, replace "toBe" with "toStrictEqual"
+
+Expected: { first: '9998-12', last: '9999-12' }
+Received: serializes to the same string
+
+
+Compared values have no visual difference.
+
+ ❯ src/features/day-feed/TripCalendarRangeField.test.ts:267:29
+    265|     if (day.startsWith("0001")) list.props.onStartReached();
+    266|     else list.props.onEndReached();
+    267|     expect(state.values[2]).toBe(before);
+       |                             ^
+    268|   },
+    269| );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+

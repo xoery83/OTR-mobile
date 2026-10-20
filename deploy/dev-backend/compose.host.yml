@@ -1,0 +1,24 @@
+# Dormant alternative profile. Use alone, never merge with compose.yml.
+services:
+  backend:
+    container_name: otr-dev-backend
+    image: "${OTR_DEV_BACKEND_REVIEWED_IMAGE_ID:?Reviewed immutable image ID and forward override required}"
+    env_file:
+      - ../../../env/backend.env
+    network_mode: host
+    environment:
+      OTR_DEV_BACKEND_NETWORK_MODE: host
+      OTR_DEV_BACKEND_BIND_ADDRESS: "127.0.0.1"
+      OTR_DEV_BACKEND_PORT: "8787"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 384m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

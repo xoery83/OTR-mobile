@@ -1,0 +1,11 @@
+# Independent minimum14 Photos applicability receipt
+
+PASS bounded — currentmain950af914 + exact minimum14 manifest421561a4ec9b5157aa407881f764525966a442b6e91cb690a993de658a1113b4. Existing owning add/cold/missing/recovery proof is sealed separately5c44ceee; eleven paths are byte-identical to observedmixed28, including actual repository/native helper/SQLite62/LocalTripPhotos. Only currentmain Workspace Photos import/mount, catalog keys and focused test differ. Source38/5+checks trusted. All currentmain tracked source plus14 reverified after observation; overwritten ownedQA files backed up, no transient helper remains. Source/main untouched. Native DB62 and newfixture association/file preserved, no new add/migration/write during this applicability check.
+
+Ordinary MyTrips → same actual selected local Trip displays existing Coast through unchanged product Photos section, Choose photo present and no unavailable message. Actual light default-size image attached below. Surrounding main has its earlier lawful workspace styling; this does not adopt or certify heldr3/Hot/Shell code. Development warning toast visible (“Open debugger to view warnings”); not a crash/storage error, exact cause not inspected. No blanket warning-free startup claim.
+
+![Actual currentmain plus minimum14 local photo list](assets/currentmain-minimal14-existing-coast-light.png)
+
+Finite technical qualification YES for this complete original authorized local Photos helper/data/SQLite62/UI assembly: trusted functional scope, samehelper native copy/hash/cold/missing/recovery and now minimumcurrentmain mount actually observed. Actual picker selection remains NOT OBSERVED, no fake picker provenance or new owning rights. Account-boundary/revocation/cached-only absence have trusted structural/unit proof, no new Native positives. Full productL1 INCOMPLETE, Level2 NOTREADY. Global hot headerP0 is separately held and no gate is invented on this bounded localPhotos assembly.
+
+Single approvedA1A/com.xoery.otrmobile existing binary0.1.0/buildUNKNOWN; ownedMetro54463 retained for next correction candidate. Light/font1/captureOff. Only one previously approved Coast association retained; all669301bytes/c8fda… restored before minimum14, no existingR3 rows altered.

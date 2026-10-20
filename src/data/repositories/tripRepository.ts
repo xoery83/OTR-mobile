@@ -1,0 +1,514 @@
+import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
+import type * as SQLite from "expo-sqlite";
+import { createUuid } from "@/domain/localId";
+import type {
+  BuiltInTripCoverId,
+  CreateTripInput,
+  CreateTripItemInput,
+  Trip,
+} from "@/domain/trip/types";
+import { coreUuid, coreDefaults } from "@/domain/trip/tripCoreV2";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import { corePayloadSchemas } from "@/domain/trip/tripCoreV2Commands";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
+import {
+  tripCreateRequestSchema,
+  tripCreateResultSchema,
+  type TripCreateResult,
+  type TripCreateTarget,
+} from "@/domain/trip/tripCreateContract";
+import {
+  captureAccountScope,
+  assertAccountRequestContext,
+  withAccountApplyGate,
+  type AccountScope,
+} from "../auth/accountRequestContext";
+import { readInitializedDatabase } from "../db/database";
+import { requireActiveUserId, readLocalSession } from "../auth/authRepository";
+import { createTripCoreV2Repository } from "./tripCoreV2Repository";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
+import { createTripMetadataRepository } from "./tripMetadataRepository";
+import { mapLocalTripLedgerPerson } from "./tripLedgerAcceptance";
+import { initializeLocalTripPersons } from "./localTripPersonRepository";
+
+type Database = Pick<
+  SQLite.SQLiteDatabase,
+  "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
+>;
+type Core = Pick<
+  ReturnType<typeof createTripCoreV2Repository>,
+  "captureContext" | "enqueue" | "pending"
+>;
+type Row = {
+  id: string;
+  name: string;
+  destination: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+  owner_person_id: string | null;
+  accepted_at: string | null;
+  selected_cover_asset_id?: string | null;
+  metadata_pending?: number;
+};
+const trip = (row: Row): Trip => ({
+  id: row.id,
+  serverId: row.accepted_at ? row.id : null,
+  name: row.name,
+  destination: row.destination,
+  startDate: row.start_date,
+  endDate: row.end_date,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  deletedAt: null,
+  syncStatus: row.accepted_at
+    ? row.metadata_pending
+      ? "PENDING_UPDATE"
+      : "SYNCED"
+    : "PENDING_CREATE",
+  syncVersion: 0,
+  baseCurrency: null,
+  ownerPersonId: row.owner_person_id,
+  selectedCoverAssetIdRaw: row.selected_cover_asset_id ?? null,
+  selectedCoverAssetId: isTripCoverAssetId(row.selected_cover_asset_id)
+    ? row.selected_cover_asset_id
+    : null,
+});
+const title = (value: string) => {
+  const result = value.trim();
+  if (!result || result.length > 256) throw new Error("TRIP_NAME_INVALID");
+  return result;
+};
+const date = (value: string | null | undefined) =>
+  value ? validateCalendarDate(value) : null;
+
+// Local creator authority is separate from Hosted receipts and certified Core reads.
+export function createTripRepository(
+  database: Database,
+  account: () => Promise<string>,
+  core: Core,
+  clock = () => new Date().toISOString(),
+  displayName = async (accountId: string) => accountId,
+) {
+  async function initializeLedger(accountId: string, row: Row, name: string) {
+    if (row.accepted_at) return;
+    const binding = await database.getFirstAsync<{ person_id: string }>(
+      "SELECT person_id FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=?",
+      accountId,
+      row.id,
+    );
+    if (binding) return;
+    const intent = await database.getFirstAsync<{ id: string; payload_json: string }>(
+      `SELECT op.id,op.payload_json FROM sync_operations op
+       JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id
+         AND trip.id=op.trip_id AND trip.create_operation_id=op.id
+       WHERE op.owner_user_id=? AND op.trip_id=? AND op.entity_id=?
+         AND op.id=op.idempotency_key AND op.entity_type='TRIP'
+         AND op.operation_type='CREATE_TRIP'
+         AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')`,
+      accountId,
+      row.id,
+      row.id,
+    );
+    if (!intent) throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+    const proposed = tripCreateRequestSchema.parse({
+      operationId: intent.id,
+      ...JSON.parse(intent.payload_json),
+    });
+    if (
+      proposed.tripId !== row.id ||
+      proposed.name !== row.name ||
+      proposed.destination !== row.destination ||
+      proposed.startDate !== row.start_date ||
+      proposed.endDate !== row.end_date
+    )
+      throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+    const existing = await database.getFirstAsync<{ journey_id: string }>(
+      "SELECT journey_id FROM ledger_journeys WHERE journey_id=?",
+      row.id,
+    );
+    if (existing) throw new Error("TRIP_LEDGER_INITIALIZATION_CONFLICT");
+    const personId = createUuid();
+    const now = clock();
+    await database.runAsync(
+      "INSERT INTO local_trip_ledger_bindings(account_id,trip_id,person_id,create_operation_id,initialized_at) VALUES(?,?,?,?,?)",
+      accountId,
+      row.id,
+      personId,
+      intent.id,
+      now,
+    );
+    await database.runAsync(
+      // Match accepted r3-v1-ledger-init-1 fresh Journey settings, not display preferences.
+      "INSERT INTO ledger_journeys(journey_id,title,start_date,end_date,settlement_currency,settlement_scale,valuation_policy,updated_at) VALUES(?,?,?,?,'NZD',2,'REFERENCE_RATE',?)",
+      row.id,
+      row.name,
+      row.start_date,
+      row.end_date,
+      now,
+    );
+    await database.runAsync(
+      "INSERT INTO ledger_members(id,journey_id,display_name,role,status,updated_at) VALUES(?,?,?,'owner','local',?)",
+      personId,
+      row.id,
+      name,
+      now,
+    );
+    await database.runAsync(
+      "INSERT INTO ledger_actor_context(user_id,journey_id,member_id,role,capabilities_json,updated_at) VALUES(?,?,?,'owner',?,?)",
+      accountId,
+      row.id,
+      personId,
+      JSON.stringify({ authority: "LOCAL_CREATOR" }),
+      now,
+    );
+  }
+  async function getTrip(id: string): Promise<Trip | null> {
+    coreUuid.parse(id);
+    const scope = await captureAccountScope(account);
+    const row = await database.getFirstAsync<Row>(
+      "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
+      scope.accountId,
+      id,
+    );
+    await assertAccountRequestContext(scope, account);
+    return row ? trip(row) : null;
+  }
+  return {
+    ...createTripMetadataRepository(database, account, clock),
+    getTrip,
+    async initializeLocalLedger(tripId: string) {
+      coreUuid.parse(tripId);
+      const scope = await captureAccountScope(account);
+      const name = await displayName(scope.accountId);
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const row = await database.getFirstAsync<Row>(
+            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+            scope.accountId,
+            tripId,
+          );
+          if (row) await initializeLedger(scope.accountId, row, name);
+          await assertAccountRequestContext(scope, account);
+        });
+      });
+    },
+    async listTrips(): Promise<Trip[]> {
+      const scope = await captureAccountScope(account);
+      const rows = await database.getAllAsync<Row>(
+        "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
+        scope.accountId,
+      );
+      await assertAccountRequestContext(scope, account);
+      return rows.map(trip);
+    },
+    async selectBuiltInCover(tripId: string, coverAssetId: BuiltInTripCoverId | null) {
+      coreUuid.parse(tripId);
+      if (coverAssetId !== null && !isTripCoverAssetId(coverAssetId))
+        throw new Error("TRIP_COVER_INVALID");
+      const scope = await captureAccountScope(account);
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const row = await database.getFirstAsync<{ id: string }>(
+            "SELECT id FROM local_trip_containers WHERE account_id=? AND id=?",
+            scope.accountId,
+            tripId,
+          );
+          if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+          await database.runAsync(
+            "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+            coverAssetId,
+            scope.accountId,
+            tripId,
+          );
+          await assertAccountRequestContext(scope, account);
+        });
+      });
+    },
+    async createTrip(input: CreateTripInput): Promise<Trip> {
+      coreUuid.parse(input.operationId);
+      coreUuid.parse(input.tripId);
+      const startDate = date(input.startDate),
+        endDate = date(input.endDate);
+      if (startDate && endDate && endDate < startDate)
+        throw new Error("TRIP_DATE_RANGE_INVALID");
+      const payload = {
+        tripId: input.tripId,
+        name: title(input.name),
+        destination: input.destination?.trim() || null,
+        startDate,
+        endDate,
+      };
+      if (payload.destination && payload.destination.length > 256)
+        throw new Error("TRIP_DESTINATION_INVALID");
+      const text = canonicalCoreJson(payload as Json);
+      const scope = await captureAccountScope(account);
+      const name = await displayName(scope.accountId);
+      return withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        let result: Trip | null = null;
+        await database.withTransactionAsync(async () => {
+          const prior = await database.getFirstAsync<{ payload_json: string }>(
+            "SELECT payload_json FROM sync_operations WHERE id=? AND owner_user_id=? AND operation_type='CREATE_TRIP'",
+            input.operationId,
+            scope.accountId,
+          );
+          if (prior) {
+            if (prior.payload_json !== text)
+              throw new Error("TRIP_OPERATION_REUSE_MISMATCH");
+            const row = await database.getFirstAsync<Row>(
+              "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+              scope.accountId,
+              input.tripId,
+            );
+            if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+            result = trip(row);
+          } else {
+            const now = clock();
+            await database.runAsync(
+              "INSERT INTO local_trip_containers(account_id,id,create_operation_id,name,destination,start_date,end_date,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
+              scope.accountId,
+              input.tripId,
+              input.operationId,
+              payload.name,
+              payload.destination,
+              startDate,
+              endDate,
+              now,
+              now,
+            );
+            // The owning Backend initializer is not yet bound; generic workers cannot dispatch this intent.
+            await database.runAsync(
+              "INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,base_version,payload_json,owner_user_id,status,attempt_count,next_attempt_at,last_error_code,created_at,updated_at) VALUES(?,?,?,?,?,?,NULL,?,?,'DEPENDENCY_BLOCKED',0,NULL,'TRIP_INITIALIZATION_REQUIRED',?,?)",
+              input.operationId,
+              input.tripId,
+              "TRIP",
+              input.tripId,
+              "CREATE_TRIP",
+              input.operationId,
+              text,
+              scope.accountId,
+              now,
+              now,
+            );
+            result = trip({
+              id: input.tripId,
+              name: payload.name,
+              destination: payload.destination,
+              start_date: startDate,
+              end_date: endDate,
+              created_at: now,
+              updated_at: now,
+              owner_person_id: null,
+              accepted_at: null,
+            });
+          }
+          const row = await database.getFirstAsync<Row>(
+            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+            scope.accountId,
+            input.tripId,
+          );
+          if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+          await initializeLedger(scope.accountId, row, name);
+          if (input.travelers) {
+            await initializeLocalTripPersons(
+              database,
+              { ...scope, tripId: input.tripId },
+              account,
+              input.travelers,
+              clock,
+            );
+          }
+          await assertAccountRequestContext(scope, account);
+        });
+        return result!;
+      });
+    },
+    async addItem(tripId: string, input: CreateTripItemInput) {
+      const context = await core.captureContext(tripId);
+      if (!(await getTrip(tripId))) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+      const start = validateCalendarDate(input.startDate),
+        end = date(input.endDate);
+      if ((end && end < start) || (input.family === "P3" && !end))
+        throw new Error("STAY_DATE_RANGE_INVALID");
+      await assertAccountRequestContext(context, account);
+      return core.enqueue(context, {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: coreUuid.parse(input.operationId),
+        tripId,
+        command: "CREATE_ITEM",
+        target: { kind: "ITEM", id: coreUuid.parse(input.itemId) },
+        baseVector: [{ kind: "ITEM", id: input.itemId, revision: null }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload: {
+          family: input.family,
+          core: { title: title(input.title) },
+          schedule: {
+            start: coreDateBoundary(start),
+            ...(end ? { end: coreDateBoundary(end) } : {}),
+          },
+          ...coreDefaults("organizer"),
+        },
+      });
+    },
+    async pendingItems(tripId: string) {
+      const context = await core.captureContext(tripId);
+      if (!(await getTrip(tripId))) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+      await assertAccountRequestContext(context, account);
+      const pending = await core.pending(context);
+      return pending.flatMap((intent) => {
+        if (intent.command.command !== "CREATE_ITEM") return [];
+        const payload = corePayloadSchemas.CREATE_ITEM.parse(intent.command.payload);
+        if (payload.family !== "P1" && payload.family !== "P3") return [];
+        return [{ ...intent, payload }];
+      });
+    },
+    async acceptCreate(resultInput: TripCreateResult, requestScope?: AccountScope) {
+      const accepted = tripCreateResultSchema.parse(resultInput);
+      const scope = requestScope ?? (await captureAccountScope(account));
+      if (accepted.actorAccountId !== scope.accountId)
+        throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      const name = await displayName(scope.accountId);
+      return withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        let applied: Trip | null = null;
+        await database.withTransactionAsync(async () => {
+          const operation = await database.getFirstAsync<{
+            payload_json: string;
+            trip_id: string;
+            idempotency_key: string;
+            status: string;
+          }>(
+            "SELECT payload_json,trip_id,idempotency_key,status FROM sync_operations WHERE id=? AND owner_user_id=? AND operation_type='CREATE_TRIP'",
+            accepted.operationId,
+            scope.accountId,
+          );
+          if (
+            !operation ||
+            operation.trip_id !== accepted.tripId ||
+            operation.idempotency_key !== accepted.operationId
+          )
+            throw new Error("TRIP_CREATE_QUEUE_MISMATCH");
+          const proposed = tripCreateRequestSchema.parse({
+            operationId: accepted.operationId,
+            ...JSON.parse(operation.payload_json),
+          });
+          if (
+            proposed.tripId !== accepted.tripId ||
+            proposed.name !== accepted.name ||
+            proposed.destination !== accepted.destination ||
+            proposed.startDate !== accepted.startDate ||
+            proposed.endDate !== accepted.endDate
+          )
+            throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
+          const row = await database.getFirstAsync<Row>(
+            "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
+            scope.accountId,
+            accepted.tripId,
+            accepted.operationId,
+          );
+          if (
+            !row ||
+            (row.owner_person_id && row.owner_person_id !== accepted.ownerPersonId)
+          )
+            throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+          if (operation.status === "COMPLETED" && !row.accepted_at)
+            throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+          const now = clock();
+          if (!row.accepted_at) {
+            await initializeLedger(scope.accountId, row, name);
+            await mapLocalTripLedgerPerson(
+              database,
+              scope.accountId,
+              accepted.tripId,
+              accepted.operationId,
+              accepted.ownerPersonId,
+            );
+            await database.runAsync(
+              "UPDATE local_trip_containers SET owner_person_id=?,accepted_at=?,updated_at=? WHERE account_id=? AND id=? AND create_operation_id=?",
+              accepted.ownerPersonId,
+              now,
+              now,
+              scope.accountId,
+              accepted.tripId,
+              accepted.operationId,
+            );
+          }
+          await database.runAsync(
+            "UPDATE sync_operations SET status='COMPLETED',next_attempt_at=NULL,last_error_code=NULL,updated_at=? WHERE id=? AND owner_user_id=? AND operation_type='CREATE_TRIP'",
+            now,
+            accepted.operationId,
+            scope.accountId,
+          );
+          await assertAccountRequestContext(scope, account);
+          applied = trip({
+            ...row,
+            owner_person_id: accepted.ownerPersonId,
+            accepted_at: row.accepted_at ?? now,
+            updated_at: row.accepted_at ? row.updated_at : now,
+          });
+        });
+        return applied!;
+      });
+    },
+    async resumeCreateTrips(target?: TripCreateTarget) {
+      const scope = await captureAccountScope(account);
+      if (target && target.accountId !== scope.accountId)
+        throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      const name = await displayName(scope.accountId);
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const rows = await database.getAllAsync<Row & { create_operation_id: string }>(
+            `SELECT trip.* FROM local_trip_containers trip JOIN sync_operations op
+             ON op.id=trip.create_operation_id AND op.owner_user_id=trip.account_id
+             AND op.trip_id=trip.id AND op.entity_id=trip.id AND op.idempotency_key=op.id
+             WHERE trip.account_id=? AND trip.accepted_at IS NULL
+               AND op.entity_type='TRIP' AND op.operation_type='CREATE_TRIP'
+               AND op.status='DEPENDENCY_BLOCKED' AND op.last_error_code='TRIP_INITIALIZATION_REQUIRED'
+               AND (? IS NULL OR trip.id=?) AND (? IS NULL OR op.id=?)`,
+            scope.accountId,
+            target?.tripId ?? null,
+            target?.tripId ?? null,
+            target?.operationId ?? null,
+            target?.operationId ?? null,
+          );
+          for (const row of rows) {
+            await initializeLedger(scope.accountId, row, name);
+            await database.runAsync(
+              "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL,last_error_code=NULL,failure_category=NULL WHERE owner_user_id=? AND id=? AND operation_type='CREATE_TRIP' AND status='DEPENDENCY_BLOCKED' AND last_error_code='TRIP_INITIALIZATION_REQUIRED'",
+              scope.accountId,
+              row.create_operation_id,
+            );
+          }
+          await assertAccountRequestContext(scope, account);
+        });
+      });
+    },
+  };
+}
+export type TripRepository = ReturnType<typeof createTripRepository>;
+export async function readLocalTripRepository(): Promise<TripRepository> {
+  const database = await readInitializedDatabase();
+  const core = createTripCoreV2Repository(
+    database,
+    requireActiveUserId,
+    tripCoreSha256Hex,
+  );
+  return createTripRepository(
+    database,
+    requireActiveUserId,
+    core,
+    undefined,
+    async (id) => {
+      const identity = (await readLocalSession())?.identity;
+      if (identity?.userId !== id) throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      return identity.displayName;
+    },
+  );
+}

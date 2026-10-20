@@ -1,0 +1,391 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApiClientError } from "@/data/api/client";
+
+const { refreshPersonal, refreshReview, getActor } = vi.hoisted(() => ({
+  refreshPersonal: vi.fn(async () => false),
+  refreshReview: vi.fn(async () => undefined),
+  getActor: vi.fn(),
+}));
+const accountScope = vi.hoisted(() => ({
+  generation: 0,
+  userId: "30000000-0000-4000-8000-000000000001",
+}));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: async () => accountScope.userId,
+}));
+
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => accountScope.generation,
+}));
+
+const repository = {
+  getCursor: vi.fn(),
+  applyBootstrap: vi.fn(),
+  applyChanges: vi.fn(),
+  cacheMyLedger: vi.fn(),
+};
+const transport = { bootstrap: vi.fn(), pull: vi.fn(), myLedger: vi.fn() };
+
+vi.mock("@/data/repositories/defaultLedgerReadRepository", () => ({
+  getDefaultLedgerReadRepository: vi.fn(async () => repository),
+}));
+vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
+  getDefaultLedgerReportingRepository: vi.fn(async () => ({
+    getActorMemberId: getActor,
+  })),
+}));
+vi.mock("@/data/sync/ledgerReadTransport", () => ({
+  createLedgerReadTransport: vi.fn(() => transport),
+}));
+vi.mock("./ledgerPersonalPaymentCoordinator", () => ({
+  refreshLedgerPersonalPayments: refreshPersonal,
+}));
+vi.mock("./personalSettlementReviewCoordinator", () => ({
+  refreshPersonalSettlementReview: refreshReview,
+}));
+
+// eslint-disable-next-line import/first
+import {
+  ensureJourneyLedgerActor,
+  refreshJourneyLedger,
+  refreshJourneyLedgerWithStatus,
+  refreshMyLedger,
+} from "./ledgerReportingCoordinator";
+
+describe("Ledger pull recovery", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountScope.generation = 0;
+    accountScope.userId = "30000000-0000-4000-8000-000000000001";
+    getActor.mockReset();
+  });
+
+  it("reads a cached Journey offline and bootstraps only a missing actor", async () => {
+    getActor.mockResolvedValueOnce({ memberId: "cached" });
+    await expect(ensureJourneyLedgerActor("known")).resolves.toEqual({
+      memberId: "cached",
+    });
+    expect(transport.bootstrap).not.toHaveBeenCalled();
+    getActor.mockResolvedValueOnce(null).mockResolvedValueOnce({ memberId: "hydrated" });
+    transport.bootstrap.mockResolvedValueOnce({ cursor: "fresh" });
+    await expect(ensureJourneyLedgerActor("new")).resolves.toEqual({
+      memberId: "hydrated",
+    });
+    expect(transport.bootstrap).toHaveBeenCalledExactlyOnceWith(
+      "new",
+      expect.objectContaining({
+        tripId: "new",
+        accountId: accountScope.userId,
+        generation: 0,
+      }),
+    );
+    expect(repository.applyBootstrap).toHaveBeenCalledWith(
+      { cursor: "fresh" },
+      expect.objectContaining({ accountId: accountScope.userId }),
+    );
+  });
+
+  it("does not invent an actor after offline failure or an account switch", async () => {
+    getActor.mockResolvedValue(null);
+    transport.bootstrap.mockRejectedValueOnce(new Error("offline"));
+    await expect(ensureJourneyLedgerActor("new")).rejects.toThrow("offline");
+    expect(repository.applyBootstrap).not.toHaveBeenCalled();
+    transport.bootstrap.mockImplementationOnce(async () => {
+      accountScope.generation += 1;
+      return { cursor: "fresh" };
+    });
+    await expect(ensureJourneyLedgerActor("new")).rejects.toThrow("Account changed");
+    expect(getActor).toHaveBeenCalledTimes(2);
+  });
+
+  it("marks a swallowed Personal Review failure as incomplete without changing the boolean read result", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    refreshReview.mockRejectedValueOnce(new Error("temporary"));
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toEqual({
+      changed: false,
+      incomplete: true,
+      pullApiRequestCount: 2,
+      reviewOutcome: "review_error",
+      auxiliaryErrors: [expect.any(Error)],
+    });
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(false);
+  });
+
+  it("treats only the exact blocked Review 409 as stable during a background pull", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    refreshReview.mockRejectedValueOnce(
+      new ApiClientError("blocked", "http", 409, "SETTLEMENT_REVIEW_BLOCKED"),
+    );
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toEqual({
+      changed: false,
+      incomplete: false,
+      pullApiRequestCount: 2,
+      reviewOutcome: "review_blocked_stable",
+    });
+    expect(repository.applyBootstrap).not.toHaveBeenCalled();
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    new ApiClientError("conflict", "http", 409, "REVISION_CONFLICT"),
+    new ApiClientError("server", "http", 503),
+    new ApiClientError("timeout", "timeout"),
+    new ApiClientError("network", "network"),
+  ])("keeps other Review failures incomplete: %s", async (error) => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    refreshReview.mockRejectedValueOnce(error);
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toMatchObject({
+      incomplete: true,
+      reviewOutcome: "review_error",
+      auxiliaryErrors: [error],
+    });
+  });
+
+  it("reports ordinary Review success", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toMatchObject({
+      incomplete: false,
+      reviewOutcome: "review_success",
+    });
+  });
+
+  it("applies every page transactionally before advancing", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull
+      .mockResolvedValueOnce({
+        changes: [{ entityId: "one" }],
+        cursor: "c1",
+        hasMore: true,
+        serverTime: "now",
+      })
+      .mockResolvedValueOnce({
+        changes: [{ entityId: "two" }],
+        cursor: "c2",
+        hasMore: false,
+        serverTime: "now",
+      });
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
+    expect(transport.pull.mock.calls.map((call) => call[1])).toEqual(["c0", "c1"]);
+    expect(repository.applyChanges).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses controlled bootstrap after explicit invalid cursor", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "corrupt" });
+    transport.pull.mockRejectedValue(
+      new ApiClientError("bad", "http", 400, "INVALID_CURSOR"),
+    );
+    transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
+    await refreshJourneyLedger("journey");
+    expect(repository.applyBootstrap).toHaveBeenCalledWith(
+      { cursor: "fresh" },
+      expect.objectContaining({ accountId: accountScope.userId }),
+    );
+  });
+
+  it("keeps historical Personal Payments available after shared Journey access is revoked", async () => {
+    refreshPersonal.mockResolvedValueOnce(true);
+    repository.getCursor.mockResolvedValue(null);
+    transport.bootstrap.mockRejectedValue(
+      new ApiClientError("removed", "http", 403, "TRIP_READ_FORBIDDEN"),
+    );
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
+    expect(refreshPersonal).toHaveBeenCalledWith(
+      "journey",
+      expect.any(Function),
+      expect.objectContaining({ accountId: accountScope.userId }),
+    );
+    expect(repository.applyChanges).not.toHaveBeenCalled();
+  });
+
+  it("replays the same page after an interrupted transactional apply", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({
+      changes: [{ entityId: "one" }],
+      cursor: "c1",
+      hasMore: false,
+      serverTime: "now",
+    });
+    repository.applyChanges
+      .mockRejectedValueOnce(new Error("interrupted"))
+      .mockResolvedValueOnce(undefined);
+
+    await expect(refreshJourneyLedger("journey")).rejects.toThrow("interrupted");
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
+    expect(transport.pull.mock.calls.map((call) => call[1])).toEqual(["c0", "c0"]);
+  });
+
+  it("coalesces concurrent pulls per Journey and reports an empty cursor page", async () => {
+    let resolve!: (value: unknown) => void;
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockReturnValue(new Promise((done) => (resolve = done)));
+    const first = refreshJourneyLedger("journey");
+    const second = refreshJourneyLedger("journey");
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledOnce());
+    resolve({ changes: [], cursor: "c0", hasMore: false, serverTime: "now" });
+    await expect(Promise.all([first, second])).resolves.toEqual([false, false]);
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+  });
+
+  it("keeps concurrent Journey pulls isolated", async () => {
+    repository.getCursor.mockImplementation(async (journeyId: string) => ({
+      cursor: `${journeyId}-c0`,
+    }));
+    transport.pull.mockImplementation(async (journeyId: string) => ({
+      changes: [],
+      cursor: `${journeyId}-c1`,
+      hasMore: false,
+      serverTime: "now",
+    }));
+    await Promise.all([
+      refreshJourneyLedger("journey-a"),
+      refreshJourneyLedger("journey-b"),
+    ]);
+    expect(transport.pull.mock.calls).toEqual([
+      ["journey-a", "journey-a-c0", expect.objectContaining({ tripId: "journey-a" })],
+      ["journey-b", "journey-b-c0", expect.objectContaining({ tripId: "journey-b" })],
+    ]);
+    expect(repository.applyChanges.mock.calls.map((call) => call[0])).toEqual([
+      "journey-a",
+      "journey-b",
+    ]);
+  });
+
+  it("does not coalesce the same Journey pull across account generations", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    let finishFirst!: (value: unknown) => void;
+    let finishSecond!: (value: unknown) => void;
+    transport.pull
+      .mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            finishFirst = done;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            finishSecond = done;
+          }),
+      );
+    const first = refreshJourneyLedger("journey-a");
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(1));
+    accountScope.generation = 1;
+    const second = refreshJourneyLedger("journey-a");
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(2));
+    const rejected = expect(first).rejects.toThrow("Account changed");
+    finishFirst({ changes: [], cursor: "c0", hasMore: false });
+    finishSecond({ changes: [], cursor: "c0", hasMore: false });
+    await rejected;
+    await expect(second).resolves.toBe(false);
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+  });
+
+  it("caches authorized summaries without automatic Journey bootstrap", async () => {
+    transport.myLedger.mockResolvedValue({
+      journeys: [{ journeyId: "new" }, { journeyId: "second" }, { journeyId: "known" }],
+    });
+    repository.getCursor.mockImplementation(async (journeyId: string) =>
+      journeyId === "known" ? { cursor: "saved" } : null,
+    );
+    transport.bootstrap.mockResolvedValue({ journey: { id: "new" } });
+    let writes = 0;
+    let maxWrites = 0;
+    repository.applyBootstrap.mockImplementation(async () => {
+      writes += 1;
+      maxWrites = Math.max(maxWrites, writes);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      writes -= 1;
+    });
+    await refreshMyLedger("ALL", { from: null, to: null });
+    expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
+    expect(transport.bootstrap).not.toHaveBeenCalled();
+    expect(repository.applyBootstrap).not.toHaveBeenCalled();
+    expect(maxWrites).toBe(0);
+  });
+
+  it.each([
+    ["YEAR", { from: "2026-01-01T00:00:00Z", to: "2026-09-26T00:00:00Z" }],
+    ["ALL", { from: null, to: null }],
+  ] as const)(
+    "issues one %s request for the selected My Ledger period",
+    async (period, bounds) => {
+      transport.myLedger.mockResolvedValue({ journeys: [] });
+      await refreshMyLedger(period, bounds);
+      expect(transport.myLedger).toHaveBeenCalledExactlyOnceWith(period, bounds, {
+        accountId: accountScope.userId,
+        generation: accountScope.generation,
+      });
+      expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
+    },
+  );
+  it("recovers a missing/stale local certificate once and ends repeated invalidation without recursion", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "saved" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "page", hasMore: true });
+    const invalid = new ApiClientError("refresh", "validation", 400, "INVALID_CURSOR");
+    repository.applyChanges.mockRejectedValueOnce(invalid);
+    transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
+    repository.applyBootstrap.mockRejectedValueOnce(invalid);
+    await expect(refreshJourneyLedger("bounded")).rejects.toMatchObject({
+      code: "INVALID_CURSOR",
+    });
+    expect(transport.pull).toHaveBeenCalledOnce();
+    expect(transport.bootstrap).toHaveBeenCalledOnce();
+  });
+  it("keeps an earlier committed financial page when the next fingerprint mismatches", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "saved" });
+    transport.pull
+      .mockResolvedValueOnce({
+        changes: [{ entityType: "HOUSEHOLD" }],
+        cursor: "page1",
+        hasMore: true,
+      })
+      .mockRejectedValueOnce(
+        new ApiClientError("mismatch", "http", 400, "INVALID_CURSOR"),
+      );
+    transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
+    repository.applyChanges.mockResolvedValue(undefined);
+    repository.applyBootstrap.mockResolvedValue(undefined);
+    await expect(refreshJourneyLedger("pagination-mismatch")).resolves.toBe(true);
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+    expect(repository.applyBootstrap).toHaveBeenCalledOnce();
+    expect(repository.applyChanges.mock.calls[0][3]).toBe("saved");
+  });
+  it("coalesces discovery and My Ledger focus with the exact captured Account/period", async () => {
+    let release!: () => void;
+    transport.myLedger.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ journeys: [] });
+        }),
+    );
+    const first = refreshMyLedger("ALL", { from: null, to: null });
+    const second = refreshMyLedger("ALL", { from: null, to: null });
+    await vi.waitFor(() => expect(transport.myLedger).toHaveBeenCalledOnce());
+    release();
+    await Promise.all([first, second]);
+    expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
+  });
+  it("rejects a delayed discovery after A→B→A before applying any summary", async () => {
+    let release!: () => void;
+    transport.myLedger.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ journeys: [] });
+        }),
+    );
+    const first = refreshMyLedger("ALL", { from: null, to: null });
+    await vi.waitFor(() => expect(transport.myLedger).toHaveBeenCalledOnce());
+    accountScope.userId = "B";
+    accountScope.generation++;
+    accountScope.userId = "30000000-0000-4000-8000-000000000001";
+    accountScope.generation++;
+    release();
+    await expect(first).rejects.toThrow("Account changed");
+    expect(repository.cacheMyLedger).not.toHaveBeenCalled();
+  });
+});

@@ -1,0 +1,145 @@
+import { it, expect, vi, beforeEach } from "vitest";
+import { TripSearchEntry } from "./TripSearchEntry";
+const state = vi.hoisted(() => ({
+  generation: 1,
+  view: null as any,
+  resumeView: null as any,
+  push: vi.fn(),
+  quickActions: null as any,
+}));
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useSyncExternalStore: (_: unknown, get: () => unknown) => get(),
+}));
+vi.mock("expo-router", () => ({
+  router: { push: state.push },
+  Stack: {
+    Toolbar: Object.assign(() => null, {
+      Button: "NativeButton",
+      Spacer: "NativeSpacer",
+    }),
+  },
+}));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => state.generation,
+  subscribeAccountGeneration: () => () => {},
+}));
+vi.mock("@/features/day-feed/TripViewContext", () => ({ useTripView: () => state }));
+vi.mock("@/ui/controls", () => ({ UiButton: "Button" }));
+vi.mock("react-native", () => ({
+  Pressable: "Button",
+  StyleSheet: { create: (s: unknown) => s },
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: "Icon" }));
+vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({ accent: "accent" }) }));
+vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
+vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
+beforeEach(() => {
+  state.generation = 1;
+  state.view = state.resumeView = state.quickActions = null;
+  state.push.mockReset();
+});
+it("keeps unavailable Trip Edit separate from the working scoped native Search action", () => {
+  const entry = TripSearchEntry({
+    entry: "HOME",
+    tripId: "inspected",
+    nativeToolbar: true,
+    showUnavailableTripEdit: true,
+  })!;
+  const [edit, spacer, search] = entry.props.children;
+  expect(edit.props.disabled).toBe(true);
+  expect(edit.props.separateBackground).toBe(true);
+  expect(search.props.separateBackground).toBe(true);
+  expect(edit.props.accessibilityLabel).toBe("tripHome.editUnavailable");
+  expect(edit.props.onPress).toBeUndefined();
+  expect(spacer).toBeTruthy();
+  search.props.onPress();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/search",
+    params: { entry: "HOME", tripId: "inspected" },
+  });
+});
+it("opens the My Trips preset without silently binding a working Trip", () => {
+  state.view = { tripId: "other", generation: 1 };
+  TripSearchEntry({ entry: "MY_TRIPS" })!.props.onPress();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/search",
+    params: { entry: "MY_TRIPS" },
+  });
+  expect(state.view.tripId).toBe("other");
+});
+it("the icon entry retains its localized accessible task name", () => {
+  const entry = TripSearchEntry({ entry: "MY_TRIPS" })!;
+  expect(entry.props.accessibilityRole).toBe("button");
+  expect(entry.props.accessibilityLabel).toBe("comprehensiveSearch.title");
+  expect(entry.props.children.props.name).toBe("magnifyingglass");
+});
+it("uses explicit Home inspection target without switching the working Trip", () => {
+  state.view = { tripId: "working", generation: 1 };
+  TripSearchEntry({ entry: "HOME", tripId: "inspected" })!.props.onPress();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/search",
+    params: { entry: "HOME", tripId: "inspected" },
+  });
+  expect(state.view.tripId).toBe("working");
+});
+it("Day uses only a current generation reading context and omits an unqualified entry", () => {
+  expect(TripSearchEntry({ entry: "DAY" })).toBeNull();
+  state.resumeView = {
+    tripId: "saved",
+    date: "2027-02-02",
+    zone: "Asia/Tokyo",
+    generation: 1,
+    offset: 87,
+  };
+  TripSearchEntry({ entry: "DAY" })!.props.onPress();
+  expect(state.push.mock.calls[0][0].params.tripId).toBe("saved");
+  expect(state.resumeView.offset).toBe(87);
+  state.generation = 2;
+  expect(TripSearchEntry({ entry: "DAY" })).toBeNull();
+});
+it("an old entry callback cannot cross account generation", () => {
+  const entry = TripSearchEntry({ entry: "HOME", tripId: "inspected" })!;
+  state.generation++;
+  entry.props.onPress();
+  expect(state.push).not.toHaveBeenCalled();
+});
+
+it("opens only the matching generation's owning Editor action and fences stale callbacks", () => {
+  const editTrip = vi.fn();
+  state.quickActions = { tripId: "inspected", generation: 1, editTrip };
+  const entry = TripSearchEntry({
+    entry: "HOME",
+    tripId: "inspected",
+    nativeToolbar: true,
+    showUnavailableTripEdit: true,
+  })!;
+  const edit = entry.props.children[0];
+  expect(edit.props.disabled).toBe(false);
+  expect(edit.props.accessibilityLabel).toBe("tripHome.edit");
+  edit.props.onPress();
+  expect(editTrip).toHaveBeenCalledTimes(1);
+  state.generation++;
+  edit.props.onPress();
+  expect(editTrip).toHaveBeenCalledTimes(1);
+  state.quickActions.tripId = "other";
+  expect(
+    TripSearchEntry({
+      entry: "HOME",
+      tripId: "inspected",
+      nativeToolbar: true,
+      showUnavailableTripEdit: true,
+    })!.props.children[0].props.disabled,
+  ).toBe(true);
+});
+
+it.each(["MY_TRIPS", "HOME", "DAY"] as const)(
+  "keeps native Search on its separate system background for %s",
+  (entry) => {
+    state.view = { tripId: "target", generation: 1 };
+    const toolbar = TripSearchEntry({ entry, tripId: "target", nativeToolbar: true })!;
+    const search = toolbar.props.children[2];
+    expect(search.type).toBe("NativeButton");
+    expect(search.props.separateBackground).toBe(true);
+  },
+);

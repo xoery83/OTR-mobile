@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /private/tmp/otr-g2-ttr-02-controller-bridge-20261013
+
+
+ Test Files  3 passed (3)
+      Tests  50 passed (50)
+   Start at  12:50:03
+   Duration  1.21s (transform 628ms, setup 0ms, import 1.03s, tests 803ms, environment 0ms)
+

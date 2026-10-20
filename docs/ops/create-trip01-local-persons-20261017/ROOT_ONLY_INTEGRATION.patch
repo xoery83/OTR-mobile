@@ -1,0 +1,107 @@
+--- a/src/domain/trip/types.ts
++++ b/src/domain/trip/types.ts
+@@ -1,3 +1,4 @@
++import type { LocalPersonNameSlot } from "./localTripPerson";
+ import type { SyncableRecord } from "@/domain/sync/syncStatus";
+ 
+ export type BuiltInTripCoverId = "city" | "coast" | "mountain" | "cultural-oldtown";
+@@ -13,6 +14,8 @@
+ };
+ 
+ export type CreateTripInput = {
++  /** Local-only named slots; never part of the Hosted CREATE proof. */
++  travelers?: readonly LocalPersonNameSlot[];
+   operationId: string;
+   tripId: string;
+   name: string;
+--- a/src/data/repositories/tripRepository.ts
++++ b/src/data/repositories/tripRepository.ts
+@@ -29,6 +29,7 @@
+ import { tripCoreSha256Hex } from "./tripCoreSha256";
+ import { createTripMetadataRepository } from "./tripMetadataRepository";
+ import { mapLocalTripLedgerPerson } from "./tripLedgerAcceptance";
++import { initializeLocalTripPersons } from "./localTripPersonRepository";
+ 
+ type Database = Pick<
+   SQLite.SQLiteDatabase,
+@@ -316,6 +317,15 @@
+           );
+           if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+           await initializeLedger(scope.accountId, row, name);
++          if (input.travelers) {
++            await initializeLocalTripPersons(
++              database,
++              { ...scope, tripId: input.tripId },
++              account,
++              input.travelers,
++              clock,
++            );
++          }
+           await assertAccountRequestContext(scope, account);
+         });
+         return result!;
+--- a/src/data/sync/syncEngine.ts
++++ b/src/data/sync/syncEngine.ts
+@@ -137,6 +137,7 @@
+ }
+ 
+ const closedImportOperations = new Set([
++  "TRIP_PERSON_CREATE",
+   "C_PREPARE_CONFIRMATION",
+   "C_EXECUTE_EVENT_SLOT",
+   "C_FINALIZE_EVENT_SLOT",
+--- a/src/data/sync/syncEngine.test.ts
++++ b/src/data/sync/syncEngine.test.ts
+@@ -249,3 +249,15 @@
+   expect(worker.push).not.toHaveBeenCalled();
+   expect(repository.markProcessing).not.toHaveBeenCalled();
+ });
++
++// A manual generic retry must never expose an uninstalled Person writer.
++it("keeps local Person creation closed even with a permissive consumer", async () => {
++  const push = vi.fn();
++  const repository = {
++    listPending: async () => [{ ...operation, operationType: "TRIP_PERSON_CREATE" }],
++    markProcessing: vi.fn(), markCompleted: vi.fn(), markRetryable: vi.fn(),
++  };
++  expect((await createSyncEngine(repository, { push }, undefined, () => true)
++    .run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
++  expect(push).not.toHaveBeenCalled();
++});
+--- a/src/data/repositories/tripRepository.test.ts
++++ b/src/data/repositories/tripRepository.test.ts
+@@ -1778,3 +1778,34 @@
+   ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+   expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
+ });
++
++it("atomically creates Trip/owner/named Persons and preserves names across cold replay", async () => {
++  const folder = mkdtempSync(join(tmpdir(), "otr-trip-travelers-"));
++  folders.push(folder);
++  const path = join(folder, "trip.db");
++  let f = local(path);
++  const names = [" Tina ", "", "旅行者", " ", "Tina", "", ""];
++  const command = { ...input(), travelers: names.map((displayName) => ({
++    operationId: randomUUID(), personId: randomUUID(), displayName,
++  })) };
++  await f.repo.createTrip(command);
++  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(4);
++  const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
++  const proof = JSON.parse(String(f.sql.prepare("SELECT payload_json p FROM sync_operations WHERE id=?").get(command.operationId)?.p));
++  expect(proof).not.toHaveProperty("travelers");
++  f.sql.close();
++  f = local(path, false);
++  expect((await f.repo.createTrip(command)).id).toBe(command.tripId);
++  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(before);
++});
++
++it("rolls the new Trip and owner back if a named Person intent cannot persist", async () => {
++  const f = local();
++  const operationId = randomUUID();
++  f.sql.exec(`CREATE TRIGGER fail_named_person BEFORE INSERT ON sync_operations
++    WHEN NEW.id='${operationId}' BEGIN SELECT RAISE(ABORT,'NAMED_PERSON_QUEUE_FAILURE'); END`);
++  await expect(f.repo.createTrip({ ...input(), travelers: [{ operationId, personId:randomUUID(), displayName:"Tina" }] }))
++    .rejects.toThrow("NAMED_PERSON_QUEUE_FAILURE");
++  for (const table of ["local_trip_containers","local_trip_ledger_bindings","ledger_members","ledger_actor_context","ledger_journeys","sync_operations"])
++    expect(f.sql.prepare(`SELECT count(*) n FROM ${table}`).get()?.n).toBe(0);
++});

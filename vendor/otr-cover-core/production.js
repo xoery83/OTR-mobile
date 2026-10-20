@@ -1,0 +1,146 @@
+import { GeoIndex } from './geo.js';
+import { resolveTravelThemesV2 } from './themeResolverV2.js';
+import { TAG_SCHEMA_VERSION, TAXONOMY_V2, SCENE_AFFINITIES } from './taxonomyV2.js';
+import { geoSceneEvidence } from './geoSceneV2.js';
+export { resolveThemeEvidence } from './themeResolverV2.js';
+export const productionDefaultWeights = { exact: 60, region: 35, country: 18, activity: 24, scene: 30, affinity: 18, geoAffinity: 18, mood: 4, crop: 10, diversity: 12, coverage: 8 };
+let index = new GeoIndex([]);
+export function configureProductionGeo(entities) { index = new GeoIndex(entities); return index; }
+export function getProductionGeoIndex() { return index; }
+export function geoTag(e) { const ns = e.type === 'country' ? 'country' : e.type === 'region' ? 'region' : e.type === 'city' ? 'city' : 'place'; return { id: ns + ':' + (ns === 'country' ? e.countryCodes[0] : e.id.replace(':', '-')), category: 'geo', label: { en: e.names.en ?? e.names.primary ?? e.id, zh: e.names.zh ?? e.names.en ?? e.names.primary ?? e.id } }; }
+export function placeTypes(e) { return [e.type === 'park' ? 'national_park' : e.type === 'coast' ? 'coastal_area' : e.type]; }
+export function resolveGeoContext(input) { const explicit = (input.destination ?? '').trim(); const ids = input.trustedGeoIds?.length ? input.trustedGeoIds : input.confirmedGeoIds ?? []; const empty = (unknownParts = []) => ({ status: 'unknown', locations: [], matches: [], ambiguities: [], unknownParts }); let suggested = empty(); try {
+    suggested = index.resolve(input.name, 'name');
+}
+catch { } let geo = empty(); let authority = 'none'; if (ids.length) {
+    authority = input.trustedGeoIds?.length ? 'trusted_canonical_id' : 'explicit_user_confirmation';
+    geo = ids.some(id => !index.byId.has(id)) ? empty(['可信ID不在本地目录；未猜测']) : index.resolve('', 'destination', ids);
+}
+else if (explicit) {
+    authority = 'explicit_destination';
+    try {
+        geo = index.resolve(explicit, 'destination');
+    }
+    catch {
+        geo = empty(['地点文本过长，未部分猜测']);
+    }
+} const verifiedStops = authority === 'none' ? [] : geo.locations; return { geo, verifiedStops, suggestions: suggested, authority, geoSceneEvidence: geoSceneEvidence(verifiedStops), note: !explicit && !ids.length ? '名称地点仅是建议；确认前不获地理层级/加分' : geo.status === 'unknown' ? '未知地点：名称线索仅建议，不作为可信地点' : '' }; }
+export function resolveProductionTags(input) { const context = resolveGeoContext(input); const { geo } = context; const travelThemes = resolveTravelThemesV2(input.name); const warnings = [...travelThemes.warnings, ...geo.unknownParts.map(x => '未识别地点文本：' + x), ...(geo.ambiguities.length ? ['同名地点保留候选，不按人口/知名度猜测'] : []), ...(context.note ? [context.note] : [])]; return { schemaVersion: TAG_SCHEMA_VERSION, places: context.verifiedStops.map(e => e.id), entityRefs: context.verifiedStops.map(e => e.id), geo, context, travelThemes, themes: travelThemes.tags.map(t => t.id), tags: [...context.verifiedStops.map(geoTag), ...travelThemes.tags], warnings, evidence: [...geo.matches.map(m => ({ tag: geoTag(m.entity).id, kind: 'place', source: m.source, matched: m.matched })), ...travelThemes.evidence.map(e => ({ tag: e.canonicalId ?? 'unknown', kind: 'theme', source: e.source, matched: e.literal }))], hierarchy: context.verifiedStops.map(e => ({ id: e.id, types: placeTypes(e), countryCodes: e.countryCodes, regionIds: e.adminIds ?? [], source: e.source, sourceId: e.sourceId })) }; }
+export function projectProductionAssetTags(a) { const result = []; for (const id of a.actualCaptureGeo.entityIds) {
+    const e = index.byId.get(id);
+    if (e)
+        result.push({ tag: geoTag(e), evidence: 'actual_capture_geography', note: '摄影来源地点，不等于推荐目的地' });
+} for (const id of [...new Set([...a.sceneTags, ...(a.visible_scene ?? [])]), ...a.activityTags, ...a.moodTags, ...a.seasonTags, a.timeOfDay, ...a.paletteTags, a.composition.kind]) {
+    const tag = TAXONOMY_V2.find(t => t.id === id);
+    if (tag)
+        result.push({ tag, evidence: id.startsWith('activity:') ? 'activity_suitability' : id.startsWith('mood:') ? 'editorial_mood' : 'agent_provisional_visual_annotation', note: 'Owner humanReview pending；不证明活动发生' });
+} return result; }
+export function productionEligibility(a, geo, allowPendingLandmarkPreview = false) {
+    if (a.recommendationEligibility.quarantined)
+        return null;
+    const confident = geo.locations.length > 0;
+    const exact = confident && a.actualCaptureGeo.confidence === 'source_linked' && a.recommendationEligibility.exactGeoIds.some(id => a.actualCaptureGeo.entityIds.includes(id) && geo.locations.some(e => e.id === id));
+    const labPreview = allowPendingLandmarkPreview && a.provenance.kind === 'photograph' && a.provenance.rightsReview === 'pending' && a.provenance.humanReview === 'pending' && a.landmarkAssessment !== 'uncertain_exact_only' && !!a.license && !!a.licenseUrl;
+    if (exact && (labPreview || !['recognizable', 'dominant'].includes(a.landmarkVisibility) && a.landmarkAssessment !== 'uncertain_exact_only' || a.provenance.rightsReview === 'approved' && a.provenance.humanReview === 'approved'))
+        return { tier: 'EXACT', geoLevel: 'exact', reason: labPreview ? 'Lab精确地点预览；来源地点已关联，权利/人审仍待确认，不代表产品批准' : '来源关联的准确地点匹配' };
+    const locked = ['recognizable', 'dominant'].includes(a.landmarkVisibility) || a.landmarkAssessment === 'uncertain_exact_only';
+    if (locked)
+        return null;
+    if (confident && a.recommendationEligibility.regional) {
+        if (geo.locations.some(e => e.type === 'region' && a.actualCaptureGeo.regionIds.includes(e.id) || (e.adminIds ?? []).some(id => a.actualCaptureGeo.regionIds.includes(id))))
+            return { tier: 'REGIONAL', geoLevel: 'region', reason: '可信同行政区；非目的地照片' };
+        if (geo.locations.some(e => e.countryCodes.some(c => a.actualCaptureGeo.countryCodes.includes(c))))
+            return { tier: 'REGIONAL', geoLevel: 'country', reason: '可信同国家；非目的地照片' };
+    }
+    if (a.recommendationEligibility.generic && ['none', 'incidental'].includes(a.landmarkVisibility))
+        return { tier: a.assetRole === 'neutral_generic' ? 'GENERIC' : 'THEMATIC', geoLevel: 'generic', reason: '无误导性可识别地标的通用示意素材；非目的地照片' };
+    return null;
+}
+export function normalizedProductionWeights(w = {}) { const out = { ...productionDefaultWeights }; for (const k of Object.keys(out)) {
+    if (w[k] !== undefined) {
+        const v = w[k];
+        if (!Number.isFinite(v) || v < 0 || v > 200)
+            throw new RangeError('weights finite 0..200');
+        out[k] = v;
+    }
+} return out; }
+function hash(s) { let h = 2166136261; for (const c of s) {
+    h ^= c.codePointAt(0);
+    h = Math.imul(h, 16777619);
+} return h >>> 0; }
+export function rankProductionCovers(input, catalog, weights = {}, limit = 5) {
+    if (!Number.isInteger(limit) || limit < 0 || limit > 50)
+        throw new RangeError('limit 0..50');
+    const w = normalizedProductionWeights(weights);
+    const resolved = resolveProductionTags(input);
+    const manualId = input.manualCover?.kind === 'catalog' ? input.manualCover.assetId : input.manualAssetId;
+    const seen = new Set();
+    const candidates = [];
+    for (const a of catalog) {
+        if (seen.has(a.id))
+            throw new Error('duplicate asset ID');
+        seen.add(a.id);
+        const manual = a.id === manualId;
+        const allowed = productionEligibility(a, { ...resolved.geo, locations: resolved.context.verifiedStops }, input.allowPendingLandmarkPreview);
+        if (!manual && !allowed)
+            continue;
+        const eligibility = manual ? { tier: 'MANUAL', geoLevel: 'manual', reason: '用户手动选择始终优先；不随名称/地点改写' } : allowed;
+        const matched = resolved.travelThemes.tags.filter(t => [...a.activityTags, ...a.sceneTags, ...a.moodTags, ...(a.visible_scene ?? []), a.timeOfDay].includes(t.id));
+        const activity = Math.min(36, matched.filter(t => t.category === 'activity').length * w.activity);
+        const explicitScene = Math.min(45, matched.filter(t => t.category === 'scene').length * w.scene);
+        const mood = Math.min(8, matched.filter(t => t.category === 'mood').length * w.mood);
+        const excluded = new Set(resolved.travelThemes.evidence.filter(e => e.negated || e.conflict).map(e => e.canonicalId));
+        const affinities = [];
+        for (const scene of [...new Set([...a.sceneTags, ...(a.visible_scene ?? [])])]) {
+            if (excluded.has(scene))
+                continue;
+            let strength = 0;
+            const from = [];
+            for (const tag of resolved.travelThemes.tags) {
+                const value = SCENE_AFFINITIES[tag.id]?.[scene] ?? 0;
+                if (value) {
+                    strength = Math.max(strength, value);
+                    from.push(tag.id);
+                }
+            }
+            if (strength)
+                affinities.push({ scene, weight: strength, from });
+        }
+        affinities.sort((a, b) => b.weight - a.weight || a.scene.localeCompare(b.scene, 'en'));
+        const used = affinities.slice(0, 2);
+        const affinity = Math.min(18, used.reduce((sum, x) => sum + x.weight * w.affinity, 0));
+        const location = eligibility.geoLevel === 'exact' ? w.exact : eligibility.geoLevel === 'region' ? w.region : eligibility.geoLevel === 'country' ? w.country : 0;
+        // Pending/unknown crop QA earns no quality points. No season is inferred from dates/place type.
+        const crop = a.composition.heroCropVerified ? Math.min(10, w.crop) * (a.composition.textSafeArea === 'none' ? .5 : 1) : 0;
+        const cityFallback = resolved.context.verifiedStops.some(e => e.type === 'city') && !resolved.travelThemes.tags.some(t => t.category === 'scene' || t.category === 'activity') && !resolved.travelThemes.evidence.some(e => (e.negated || e.conflict) && (e.canonicalId ?? '').startsWith('scene:'));
+        const fallbackPolicy = cityFallback && eligibility.geoLevel === 'generic' && a.sceneTags.includes('scene:urban') ? 3.6 : 0;
+        const geoMatched = resolved.context.geoSceneEvidence.filter(e => !excluded.has(e.scene) && (a.sceneTags.includes(e.scene) || (a.visible_scene ?? []).includes(e.scene)));
+        const geoAffinity = Math.min(18, geoMatched.reduce((sum, e) => sum + e.weight * w.geoAffinity, 0));
+        const breakdown = { location, activity, explicitScene, affinity, geoAffinity, mood, crop, ...(fallbackPolicy ? { fallbackPolicy } : {}), family: 0, coverage: 0 };
+        const score = Object.values(breakdown).reduce((a, b) => a + b, 0);
+        const reasons = [eligibility.reason, ...(fallbackPolicy ? ['城市无主题回退偏好 +3.6；仅选封面风格，不推断地点景观，不代表目的地照片'] : []), ...matched.map(t => '显式意图 ' + t.id), ...geoMatched.map(g => 'Geo ' + g.entityId + ' / ' + g.placeType + ' → ' + g.scene + ' ×' + g.weight + '（' + g.mappingVersion + '）'), ...used.map(f => f.from.join('+') + ' → ' + f.scene + ' ×' + f.weight + '（软关联）'), ...(resolved.themes.includes('activity:photography') ? ['摄影不绑定固定场景；裁剪/构图质量仅在实际验证后计分'] : []), 'rightsReview=' + a.provenance.rightsReview + '；humanReview=' + a.provenance.humanReview];
+        candidates.push({ asset: a, score, reasons, manual, tier: eligibility.tier === 'THEMATIC' && !matched.length && !used.length && !geoMatched.length ? 'GENERIC' : eligibility.tier, matchLevel: eligibility.geoLevel, destinationPhoto: eligibility.tier === 'EXACT', breakdown, affinityEvidence: used, crop: { wide16x9: a.composition.cropReview.wide16x9, mobile4x5: a.composition.cropReview.mobile4x5, verified: a.composition.heroCropVerified }, rights: { review: a.provenance.rightsReview, human: a.provenance.humanReview } });
+    }
+    const chosen = [];
+    const seed = (input.tripId ?? input.name + '|' + (input.destination ?? '')).normalize('NFKC').trim().toLowerCase();
+    const unknown = resolved.geo.status === 'unknown' || resolved.geo.status === 'ambiguous';
+    const represented = new Set();
+    while (candidates.length && chosen.length < limit) {
+        const adjusted = candidates.map(c => { const family = -w.diversity * chosen.filter(x => x.asset.visualFamily === c.asset.visualFamily).length; const uncovered = resolved.context.verifiedStops.filter(e => c.asset.recommendationEligibility.exactGeoIds.includes(e.id) && !represented.has(e.id)); const coverage = resolved.context.verifiedStops.length > 1 && uncovered.length ? Math.min(8, w.coverage) : 0; return { ...c, score: c.score + family + coverage, breakdown: { ...c.breakdown, family, coverage }, reasons: [...c.reasons, ...(coverage ? ['已验证且未覆盖的站点 +' + coverage] : [])], novelty: Number(!chosen.some(x => x.asset.primaryScene === c.asset.primaryScene)) + Number(!chosen.some(x => x.asset.subject === c.asset.subject)) + Number(!chosen.some(x => x.asset.paletteTags.some(p => c.asset.paletteTags.includes(p)))) }; });
+        adjusted.sort((a, b) => Number(b.manual) - Number(a.manual) || b.score - a.score || (input.tieBreakSeed !== undefined ? hash(input.tieBreakSeed + '|' + seed + '|' + a.asset.id) - hash(input.tieBreakSeed + '|' + seed + '|' + b.asset.id) : 0) || b.novelty - a.novelty || (unknown ? hash(seed + a.asset.id) - hash(seed + b.asset.id) : 0) || a.asset.id.localeCompare(b.asset.id, 'en'));
+        const next = adjusted[0];
+        chosen.push(next);
+        for (const e of resolved.context.verifiedStops)
+            if (next.asset.recommendationEligibility.exactGeoIds.includes(e.id))
+                represented.add(e.id);
+        candidates.splice(candidates.findIndex(c => c.asset.id === next.asset.id), 1);
+    }
+    if (input.manualCover?.kind === 'external' && limit) {
+        const m = input.manualCover;
+        const a = { id: m.id, title: m.title, src: m.src, places: [], themes: [], family: 'user-manual', neutral: false, width: 0, height: 0, aspectRatio: 0, author: '用户手动照片', license: '用户提供，未验证', licenseUrl: '', source: '', schemaVersion: 'otr-cover-assets/2', assetRole: 'neutral_generic', geoSpecificity: 'generic', actualCaptureGeo: { entityIds: [], countryCodes: [], regionIds: [], label: '用户照片：地点未验证', source: 'explicit user local selection', evidence: 'user action', confidence: 'unknown' }, landmarkVisibility: 'none', landmarkAssessment: 'unreviewed_user_photo_auto_ineligible', recommendationEligibility: { generic: false, regional: false, exactGeoIds: [], quarantined: true, source: 'manual only; never automatically admitted' }, sceneTags: [], activityTags: [], moodTags: [], seasonTags: ['season:unknown'], timeOfDay: 'time:unknown', paletteTags: [], composition: { kind: 'composition:wide', focalX: .5, focalY: .5, textSafeArea: 'none', heroCropVerified: false, cropReview: { wide16x9: 'pending', mobile4x5: 'pending', note: 'User photo: no crop or landmark assessment' } }, visualFamily: 'user-manual', subject: 'unknown', primaryScene: 'unknown', provenance: { kind: 'user', author: '用户手动照片', sourceUrl: '', license: '用户提供，未验证', licenseUrl: '', attribution: 'user selected', sha256: '', rightsReview: 'pending', humanReview: 'pending', agentQA: 'not inspected' } };
+        chosen.unshift({ asset: a, score: 0, reasons: ['外部用户照片优先；元数据编辑不覆盖；地点、地标、授权与裁剪均未验证'], manual: true, tier: 'MANUAL', matchLevel: 'manual', destinationPhoto: false, breakdown: {}, affinityEvidence: [], crop: { wide16x9: 'pending', mobile4x5: 'pending', verified: false }, rights: { review: 'pending', human: 'pending' } });
+        return chosen.slice(0, limit);
+    }
+    return chosen;
+}
+export const rankCoverAssets = rankProductionCovers;

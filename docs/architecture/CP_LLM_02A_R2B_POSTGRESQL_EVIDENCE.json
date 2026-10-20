@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "checks": [
+    "observed concurrent lock barriers: winner commit and winner rollback",
+    "concurrent independent sequence1 + exact replay + no rejected rows",
+    "TERMINAL lifetime uniqueness",
+    "UNKNOWN lifetime uniqueness",
+    "restart exact replay and UNKNOWN retained",
+    "changed snapshot digest rejected",
+    "winner rollback + subsequent independent admission",
+    "FORCE RLS and role/bypass denials",
+    "contract/profile/schema/privacy and missing binding fail closed",
+    "exact conservative Hold boundary and currency mismatch",
+    "scope rotation exact replay and lifetime uniqueness",
+    "deadline expires after reserve before mark; binding retained",
+    "revoked Account grant and rotation fence",
+    "Trip authorization loss blocks mark and replay",
+    "scope rotation fences old mark without freeing Task",
+    "historical unbound Call exact recovery, no dispatch",
+    "revoked verifier and canceled/stale publication fence; lifetime retained",
+    "canonical JSON and SHA256 Python/PostgreSQL vector",
+    "Account/day exact boundary and next Hold rejection",
+    "immutable writer guards and migration privileges removed"
+  ],
+  "network": "none",
+  "provider_calls": 0,
+  "activation": "CLOSED",
+  "bootstrap_revision": 7
+}

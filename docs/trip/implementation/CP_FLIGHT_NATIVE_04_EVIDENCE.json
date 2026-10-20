@@ -1,0 +1,274 @@
+{
+  "treeVerification": {
+    "acceptedCommit": "ba412dff420dc58a724b3764cb0ac29acee2c32e",
+    "acceptedTree": "977b2c25c1ee03318ba18e4fc4051d27039a0011",
+    "localCanonical": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+    "remoteCanonical": "03794531a224f0a7046f2717a7a9960b1241fc4f",
+    "native03Manifest": [
+      ".gitignore",
+      "backend/src/__fixtures__/flightCoreDayAcceptance.ts",
+      "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "backend/src/nativeFlightInstalledReview.sql.test.ts",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "docs/DATA_MODEL.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_CHANGED_FILES.txt",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_CHANGED_FILES.txt",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_EVIDENCE.json",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_READINESS_REPORT.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_CHANGED_FILES.txt",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_EVIDENCE.json",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_REPORT.md",
+      "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+      "modules/receipt-ocr/ios/ReceiptOcrModule.swift",
+      "modules/receipt-ocr/tests/README.md",
+      "modules/receipt-ocr/tests/main.swift",
+      "scripts/trip/core-v2-sql-acceptance.py",
+      "scripts/trip/native-flight-03/README.md",
+      "scripts/trip/native-flight-03/batch.template.json",
+      "scripts/trip/native-flight-03/entry.ts",
+      "src/data/bootstrap/participationWakeAcceptance.test.ts",
+      "src/data/db/checkpoint11Integration.test.ts",
+      "src/data/db/database.test.ts",
+      "src/data/db/migrations.ts",
+      "src/data/db/migrations/captureFlightNative.ts",
+      "src/data/db/publicationMembershipMigration.test.ts",
+      "src/data/foundation/diagnosticsReadOnly.test.ts",
+      "src/data/interpretation/__fixtures__/nativeFlightPdf.json",
+      "src/data/interpretation/flightPdfExtraction.ts",
+      "src/data/operations/defaultCaptureFlightNative.ts",
+      "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts",
+      "src/data/repositories/captureFlightNativeRepository.test.ts",
+      "src/data/repositories/captureFlightNativeRepository.ts",
+      "src/data/repositories/intelligenceContinuationRepository.test.ts",
+      "src/data/repositories/tripCanonicalEventRepository.test.ts",
+      "src/data/repositories/tripPublicationMembershipRepository.test.ts",
+      "src/native/flightPdf.test.ts",
+      "src/native/flightPdf.ts"
+    ],
+    "authority22Manifest": [
+      ".gitattributes",
+      "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf",
+      "backend/src/__fixtures__/sourcePdfAcceptance.ts",
+      "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "backend/src/captureFlightCoreV2.sql.test.ts",
+      "backend/src/sourcePdfAuthority.ts",
+      "backend/src/sourcePdfCoreProof.ts",
+      "backend/src/sourcePdfProfile.test.ts",
+      "backend/src/sourcePdfProfile.ts",
+      "backend/src/tripCoreV2SourcePgAuthority.ts",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "docs/adr/2026-10-12-source-owned-pdf-derivative-seal.md",
+      "docs/trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md",
+      "scripts/trip/core-v2-sql-acceptance.py",
+      "scripts/trip/verify-source-pdf-fixture.swift",
+      "src/domain/trip/sourcePdfAuthority.ts",
+      "src/domain/trip/tripCoreV2CandidatePublication.ts",
+      "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql",
+      "supabase/tests/source-pdf/authority.sql",
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md",
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_MANIFEST.json",
+      "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_EVIDENCE.json"
+    ],
+    "authorityOverlap": [
+      "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "scripts/trip/core-v2-sql-acceptance.py"
+    ],
+    "installedEvidenceSha256": "f633566bef97f0033c5789526f31fd77789d2c14eaae0755460d349478dead98",
+    "acceptedProductionAndEvidenceUnchanged": true,
+    "canonicalIsAncestor": true,
+    "acceptedPathSha256": {
+      ".gitignore": "2f037ed4a249096e404c6511ab8052d576c0591227c626b1923c02df96a0da13",
+      "backend/src/__fixtures__/flightCoreDayAcceptance.ts": "9b12f81576fc6ff00e57e850b0ba0210d91b6696293741c9df135a07f7a19c17",
+      "backend/src/__fixtures__/tripCoreV2Sql.ts": "2fc2fdfdf3d11bcb9c09798b15ef2f2d6840d79174d63659c96549965ee0b66d",
+      "backend/src/nativeFlightInstalledReview.sql.test.ts": "9d04798ee952a998c346dbdc88be16762bb9103c639e8a9c23960a2f91759b0e",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md": "78d6bc04ef06dfed83f5fd6c3fdf8d82124cb005bb871c969b60b3b571ba0110",
+      "docs/DATA_MODEL.md": "d182ee9d727d0fa300facb3f4cdf50b167e3718a83f995094fd4d93e1b5da066",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_CHANGED_FILES.txt": "61d614b0b2754777b152eeacc3f510c85864d09bfa87466047ee8583e1ae84e1",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json": "a670ef181b8d4a56a049d03dc763335291be2859a71d6a192d5af86dce02fd27",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md": "d9418acd72badd81ec89c301e6b0769e8f0c056801db557a9183491d5e4936ea",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md": "924d44f50a0eb1c43f5f68e00c47ea846d4d666bd6ac3a7d46d1f605678dd2e7",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_CHANGED_FILES.txt": "f4b41e92040d3f58ba174787fa0438f308f5bda0a14f565435762024089bdf2b",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_EVIDENCE.json": "d0fb0e25a3c6abdd805f73524dcec3e422a687da899978b17c0ef811843d9ffb",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_READINESS_REPORT.md": "4127b9ab57c21348428808d8a5de8831064db8069f88c8dec57ef22a496b531f",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_CHANGED_FILES.txt": "4499accdd3ad440e203a93999a739057c86dc44d2c922acdced881cb60b128b9",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_EVIDENCE.json": "f633566bef97f0033c5789526f31fd77789d2c14eaae0755460d349478dead98",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_03_REPORT.md": "68f8cb20ed21d02ceb239a29c4fdecc4c2cebad781bb8d8ae621863dcc3dac32",
+      "modules/receipt-ocr/ios/FlightPdfExtractor.swift": "b699b0944d78d52739d278594e5237628f9b8375f28a14b9e82c7c614878b707",
+      "modules/receipt-ocr/ios/ReceiptOcrModule.swift": "09f192abbfd95d28c0c2fa763f3de52ea749960ab5b19f488532b305c67de368",
+      "modules/receipt-ocr/tests/README.md": "5609dec7cb505dc98d160bb140c56c3705c4611a99e2223824236365366c1f97",
+      "modules/receipt-ocr/tests/main.swift": "3911a95911c5361b27926310c0a58539548525c76761c90fae6917a48f5c031e",
+      "scripts/trip/core-v2-sql-acceptance.py": "5222bda6c48432d506707ff86045c1d4c51d6ef3e25519a8270d410e810d4c71",
+      "scripts/trip/native-flight-03/README.md": "150f9dab3777ad3c662e1ae2b03d5b30ff55dd183ee3b3041389d32d8debed26",
+      "scripts/trip/native-flight-03/batch.template.json": "8f8818cd197f05685dff6337d16374a79464056eb0c2fd2cea435842d4b920bc",
+      "scripts/trip/native-flight-03/entry.ts": "1acae6a7f809b55ef577b769c661d738cdff71dafe59aeb1b1f529bf00b56d08",
+      "src/data/bootstrap/participationWakeAcceptance.test.ts": "137c8b2cf8b0f75fa906905b03427ba47f23a354093a8f570391394fdc22b5f1",
+      "src/data/db/checkpoint11Integration.test.ts": "37827e127c274ce3853d6a5fc25d4869d7ad03ea44a49ebb40c00b97d70dba84",
+      "src/data/db/database.test.ts": "5bd90220675d6b3d51d6064daf7a26310a7a4921dd13d275cec7bd283c2294f9",
+      "src/data/db/migrations.ts": "bafc1d732b2e790f11b332a0a590a9c29af22cda2b0554e3c64d23891569493f",
+      "src/data/db/migrations/captureFlightNative.ts": "c075a7bec486863a833458444bec8ee6af66514ae8dbb9b1e5c47a514caf03b6",
+      "src/data/db/publicationMembershipMigration.test.ts": "c3abbac846e4dd55015c7548eb5b7fe65e394051bca1fe2e13b0ba88fc84319a",
+      "src/data/foundation/diagnosticsReadOnly.test.ts": "d704bff8eb02fd023504435aafb8501fdb619c3127521a8fc10e15c66a064c2e",
+      "src/data/interpretation/__fixtures__/nativeFlightPdf.json": "6d517adcd52c561364b843c51e0fc52204dcdfa0fd877efaa38467402aeed947",
+      "src/data/interpretation/flightPdfExtraction.ts": "97f24c98295525af1e9fa1a2c6aa3a5c599534e6c3052a874f7d4fa797e4765b",
+      "src/data/operations/defaultCaptureFlightNative.ts": "43793edb77d7562ac8582d90e1ef16ccdfecbafdcaf7a6ae127b81503dcf4997",
+      "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts": "c933cf1d7316e736636a713ef1e5fe38ef664ec113b7388b48cb98aced005eda",
+      "src/data/repositories/captureFlightNativeRepository.test.ts": "8cdf1a49462a14d87ce7f1e33da7d03a28b94f583c86743ae5755fbb319f7132",
+      "src/data/repositories/captureFlightNativeRepository.ts": "f097f862c119926d5efd7172be5fe449806b778dc9c87ea0fc19eb5f78fa4a0b",
+      "src/data/repositories/intelligenceContinuationRepository.test.ts": "adc3110bce27efaf2b4662a189b0c3d3f69f464c4442bb860d28baab714eb6bb",
+      "src/data/repositories/tripCanonicalEventRepository.test.ts": "df93d6723070ef65151afa05e02b9c968adaaddad18bcd3d6561a21ac78c18f8",
+      "src/data/repositories/tripPublicationMembershipRepository.test.ts": "2f18516b59f57ca7b59176ac1eca53a31e5c81747c728277dd80103929acea39",
+      "src/native/flightPdf.test.ts": "7b275d9cc83650a683e95f86a445d0a18b5e25c9703f432a55ae9c369bc5da06",
+      "src/native/flightPdf.ts": "6b78128ce9ac1e875611ced6d8cc5ef345d8b221302d8e97c046833ad25f104d"
+    }
+  },
+  "preservationObserved": {
+    "/Users/xoery/Project/otr-mobile": {
+      "headBefore": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+      "headAfter": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+      "sameStatus": true,
+      "changedPriorDirtyFiles": [],
+      "priorDirtyFilesPreserved": true
+    },
+    "/Users/xoery/Project/otr-mobile-canonical": {
+      "headBefore": "c4571746b0c300fa3b46842cd37745963567338c",
+      "headAfter": "c4571746b0c300fa3b46842cd37745963567338c",
+      "sameStatus": true,
+      "changedPriorDirtyFiles": [],
+      "priorDirtyFilesPreserved": true
+    },
+    "/private/tmp/otr-flight-pdf-auth-01-20261012": {
+      "headBefore": "ea9cbf4d601a6df72264cc96fb3728304b3e00a8",
+      "headAfter": "ea9cbf4d601a6df72264cc96fb3728304b3e00a8",
+      "sameStatus": true,
+      "changedPriorDirtyFiles": [],
+      "priorDirtyFilesPreserved": true
+    },
+    "/private/tmp/otr-flight-pdf-auth-02-20261012": {
+      "headBefore": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+      "headAfter": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+      "sameStatus": true,
+      "changedPriorDirtyFiles": ["scripts/trip/core-v2-sql-acceptance.py"],
+      "priorDirtyFilesPreserved": false
+    },
+    "/Users/xoery/.codex/worktrees/flight-dev03-d0-d1/otr-mobile-canonical": {
+      "headBefore": "82ed7bd45e56a48620db37cd8f21242f89f785d0",
+      "headAfter": "82ed7bd45e56a48620db37cd8f21242f89f785d0",
+      "sameStatus": true,
+      "changedPriorDirtyFiles": [],
+      "priorDirtyFilesPreserved": true
+    }
+  },
+  "retainedInstalledEvidence": {
+    "retainedInstalledResultUnchanged": true,
+    "retainedIdentitiesUnchanged": true,
+    "stateComparedToEarlierCopyDifferentKeys": ["launches"],
+    "result": "COLD_RESTART_PASS",
+    "acceptedItems": [],
+    "counts": {
+      "sources": 0,
+      "items": 0,
+      "queued": 0
+    },
+    "sha256": "7eb7d216b65f0251b0bb7a5b59a136815adffb1448a2bea6602b2cc10292e065"
+  },
+  "installedReview": {
+    "classification": "CP_FLIGHT_NATIVE_03_INSTALLED_PACKET_OWNING_REVIEW",
+    "publicationId": "08abaae3-0ed5-49a4-ac39-e03fdf04ab47",
+    "runId": "cd42515d-dbb0-4a69-88c4-04dedd8e045b",
+    "candidateIds": [
+      "214b51d6-0ef3-82ba-ab3a-bb3d482f4fec",
+      "40492636-283f-8d6c-afeb-2d9772de3c66"
+    ],
+    "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
+    "readyCommands": 0,
+    "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+    "rebuiltCandidates": false,
+    "sourceSealImplemented": false,
+    "hosted": false
+  },
+  "devTextRecovery": {
+    "classification": "CP_FLIGHT_DEV_02_LOCAL_HTTP_NODE_PG_TLS",
+    "sourceId": "2d5bfd22-46bd-4abb-9615-92c0d359a26d",
+    "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+    "itemIds": [
+      "f1236d71-831d-4d0e-8eb1-10c435ba3ef3",
+      "b02ac0df-bb85-40c8-bc89-b47636d55648"
+    ],
+    "recoveredOperationIds": [
+      "17c33fbc-d678-4b3e-af89-22adab049e60",
+      "f6acdcac-cb6e-44c1-95bd-8bf31ae7989b",
+      "37fdd6ed-b435-46c9-8991-91e1eb52e094",
+      "fed312b8-c97e-4723-b226-d3a52da14d60"
+    ],
+    "originalCopies": 1,
+    "privateSourceLeakage": false,
+    "backendProcessRestarts": 5,
+    "tlsVerified": true,
+    "hostnameAndCaAndCredentialNegatives": true,
+    "hosted": false
+  },
+  "joinedAcceptedRead": {
+    "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+    "accountId": "00000000-0000-4000-8000-000000000001",
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "sqlRead2SqliteDayPairs": [
+      {
+        "itemId": "2e85dcf8-e462-4fc1-a53b-997c9f86c739",
+        "semanticRevision": 2
+      },
+      {
+        "itemId": "cefb66d6-3217-4b50-bbb8-2114b6861719",
+        "semanticRevision": 2
+      }
+    ],
+    "itemDateExpectations": [
+      {
+        "itemId": "cefb66d6-3217-4b50-bbb8-2114b6861719",
+        "semanticRevision": 2,
+        "localDate": "2026-12-20"
+      },
+      {
+        "itemId": "2e85dcf8-e462-4fc1-a53b-997c9f86c739",
+        "semanticRevision": 2,
+        "localDate": "2026-12-17"
+      }
+    ],
+    "dates": ["2026-12-20", "2026-12-17"],
+    "read2ManifestSha256": "b98db1b48721266c05aa59d42b8e506f1371c5d887ce68526aa0918984f03027",
+    "read2AccessRevision": 1,
+    "read2Epoch": "b754811b-94fd-4ce8-8f58-2ecfcf8b5bc5",
+    "lostCollectionResponseRecovered": true,
+    "fileColdOfflineReopen": true,
+    "privateSourceLeakage": false,
+    "sqliteMigration": 54,
+    "localSchemaVersion": 55
+  },
+  "checks": {
+    "focused": {
+      "passed": 181,
+      "skipped": 3,
+      "suites": 11
+    },
+    "owningSql": {
+      "installedReview": 1,
+      "devText": 1,
+      "joinedAcceptedRead": 1
+    },
+    "typecheck": "PASS",
+    "lintUiGuard": "PASS",
+    "backendBuild": "PASS",
+    "newNativeFeatures": false,
+    "authorityMerged": false,
+    "newSimulatorRun": false
+  },
+  "concurrentAuthorityRunner": {
+    "beforeSha256": "4cb9b470de155db27714157d53f9253ffad63eb8f2d206b2b981f5193604c7f4",
+    "observedSha256": "24ff8899a3035b5129d6cae936c7f4fa6a3ce4ffafb5d3604cdc00441b5bf41e",
+    "native04WroteAuthorityFiles": false
+  },
+  "canonicalAndPlatformFinalDirtyPreservation": "EXACT"
+}

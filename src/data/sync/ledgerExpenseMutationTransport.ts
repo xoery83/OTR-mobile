@@ -1,0 +1,275 @@
+import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
+import {
+  createLedgerCorrectionRequestSchema,
+  createLedgerPaymentRecordRequestSchema,
+  applyLedgerValuationRequestSchema,
+  ledgerCorrectionActionRequestSchema,
+  ledgerCorrectionMutationResponseSchema,
+  ledgerPaymentRecordMutationResponseSchema,
+  ledgerExpenseMutationResponseSchema,
+  economicDateEvidenceResponseSchema,
+  resolveLedgerExpenseConflictRequestSchema,
+  expenseCommandRequestSchema,
+  expenseConflictChainResponseSchema,
+  expenseConflictChainResolutionRequestSchema,
+  expenseConflictChainResolutionResponseSchema,
+  type ExpenseCommandRequest,
+  type ExpenseConflictChainResolutionRequest,
+  type CreateLedgerCorrectionRequest,
+  type CreateLedgerExpenseRequest,
+  type CreateLedgerPaymentRecordRequest,
+  type ApplyLedgerValuationRequest,
+  type LifecycleLedgerExpenseRequest,
+  type UpdateLedgerExpenseRequest,
+  type LedgerCorrectionActionRequest,
+  type ResolveLedgerExpenseConflictRequest,
+} from "@/data/api/ledgerMutationContracts";
+import { readLocalSession } from "@/data/auth/authRepository";
+
+type Dependencies = {
+  readSession?: typeof readLocalSession;
+  createClient?: (accessToken: string) => ReturnType<typeof createApiClient>;
+  simulateResponseLoss?: () => boolean;
+};
+
+let responseLossConsumed = false;
+
+function configuredResponseLoss() {
+  if (
+    process.env.EXPO_PUBLIC_OTR_DEV_SIMULATE_RESPONSE_LOSS_ONCE !== "ledger_expense" ||
+    responseLossConsumed
+  ) {
+    return false;
+  }
+  responseLossConsumed = true;
+  return true;
+}
+
+async function client(dependencies: Dependencies) {
+  if (!dependencies.readSession && !dependencies.createClient)
+    return createAuthenticatedApiClient();
+  const session = await (dependencies.readSession ?? readLocalSession)();
+  if (!session?.accessToken)
+    throw new ApiClientError(
+      "Authentication is unavailable.",
+      "http",
+      401,
+      "AUTH_REQUIRED",
+    );
+  return (
+    dependencies.createClient ?? ((token) => createApiClient({ accessToken: token }))
+  )(session.accessToken);
+}
+
+export function createLedgerExpenseMutationTransport(dependencies: Dependencies = {}) {
+  return {
+    async readConflictChain(journeyId: string, serverId: string) {
+      return (await client(dependencies)).get(
+        `/v2/trips/${journeyId}/expenses/${serverId}/conflicts`,
+        expenseConflictChainResponseSchema,
+      );
+    },
+    async executeCommand(input: {
+      journeyId: string;
+      serverId: string | null;
+      command: ExpenseCommandRequest;
+    }) {
+      const api = await client(dependencies);
+      const body = expenseCommandRequestSchema.parse(input.command);
+      const type = body.envelope.patchOrIntent.type;
+      const path = `/v2/trips/${input.journeyId}/expenses${type === "CREATE" ? "" : `/${input.serverId}`}${type === "RESTORE" ? "/restore" : type === "APPLY_VALUATION" ? "/valuations" : ""}`;
+      const headers = { "Idempotency-Key": body.envelope.idempotencyKey };
+      const response = await (
+        type === "UPDATE" ? api.put : type === "DELETE" ? api.delete : api.post
+      )(path, body, ledgerExpenseMutationResponseSchema, headers);
+      if ((dependencies.simulateResponseLoss ?? configuredResponseLoss)())
+        throw new Error("Simulated ambiguous response loss after Expense command.");
+      return response;
+    },
+    async resolveConflictChain(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      resolution: ExpenseConflictChainResolutionRequest;
+    }) {
+      const response = await (
+        await client(dependencies)
+      ).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}/conflict-resolution`,
+        expenseConflictChainResolutionRequestSchema.parse(input.resolution),
+        expenseConflictChainResolutionResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+      if ((dependencies.simulateResponseLoss ?? configuredResponseLoss)())
+        throw new Error("Simulated ambiguous response loss after Expense resolution.");
+      return response;
+    },
+    async inspectEconomicDate(journeyId: string, serverId: string) {
+      return (await client(dependencies)).get(
+        `/v2/trips/${journeyId}/expenses/${serverId}/economic-date`,
+        economicDateEvidenceResponseSchema,
+      );
+    },
+    async createExpense(input: {
+      journeyId: string;
+      idempotencyKey: string;
+      expense: CreateLedgerExpenseRequest;
+    }) {
+      const response = await (
+        await client(dependencies)
+      ).post(
+        `/v2/trips/${input.journeyId}/expenses`,
+        input.expense,
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+      if ((dependencies.simulateResponseLoss ?? configuredResponseLoss)()) {
+        throw new Error("Simulated ambiguous response loss after Ledger create.");
+      }
+      return response;
+    },
+    async updateExpense(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      baseRevision: number;
+      auditReason: string | null;
+      expense: Omit<UpdateLedgerExpenseRequest, "baseRevision" | "auditReason">;
+    }) {
+      return (await client(dependencies)).put(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}`,
+        {
+          ...input.expense,
+          baseRevision: input.baseRevision,
+          auditReason: input.auditReason,
+        } satisfies UpdateLedgerExpenseRequest,
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async completeEconomicDate(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      baseRevision: number;
+      economicDate: string;
+      source: "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1";
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}/economic-date`,
+        input.source === "USER_CONFIRMED_V1"
+          ? {
+              source: input.source,
+              baseRevision: input.baseRevision,
+              economicDate: input.economicDate,
+            }
+          : { source: input.source, baseRevision: input.baseRevision },
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async deleteExpense(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      baseRevision: number;
+      auditReason: string | null;
+    }) {
+      return (await client(dependencies)).delete(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}`,
+        {
+          baseRevision: input.baseRevision,
+          auditReason: input.auditReason,
+        } satisfies LifecycleLedgerExpenseRequest,
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async restoreExpense(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      baseRevision: number;
+      auditReason: string | null;
+      businessStatus: "DRAFT" | "ACCEPTED" | "RATE_REQUIRED";
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}/restore`,
+        {
+          baseRevision: input.baseRevision,
+          auditReason: input.auditReason,
+          businessStatus: input.businessStatus,
+        } satisfies LifecycleLedgerExpenseRequest,
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async resolveConflict(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      resolution: ResolveLedgerExpenseConflictRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}/conflict-resolution`,
+        resolveLedgerExpenseConflictRequestSchema.parse(input.resolution),
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async createCorrection(input: {
+      journeyId: string;
+      expenseServerId: string;
+      idempotencyKey: string;
+      correction: CreateLedgerCorrectionRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.expenseServerId}/corrections`,
+        createLedgerCorrectionRequestSchema.parse(input.correction),
+        ledgerCorrectionMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async actOnCorrection(input: {
+      journeyId: string;
+      correctionServerId: string;
+      action: "accept" | "reject" | "withdraw";
+      idempotencyKey: string;
+      request: LedgerCorrectionActionRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/corrections/${input.correctionServerId}/${input.action}`,
+        ledgerCorrectionActionRequestSchema.parse(input.request),
+        ledgerCorrectionMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async addPaymentRecord(input: {
+      journeyId: string;
+      expenseServerId: string;
+      idempotencyKey: string;
+      payment: CreateLedgerPaymentRecordRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.expenseServerId}/payment-records`,
+        createLedgerPaymentRecordRequestSchema.parse(input.payment),
+        ledgerPaymentRecordMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async applyValuation(input: {
+      journeyId: string;
+      expenseServerId: string;
+      idempotencyKey: string;
+      valuation: ApplyLedgerValuationRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.expenseServerId}/valuations`,
+        applyLedgerValuationRequestSchema.parse(input.valuation),
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+  };
+}

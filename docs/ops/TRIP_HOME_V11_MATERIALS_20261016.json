@@ -1,0 +1,32 @@
+[
+  {
+    "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_PREPARATION_PRODUCT_DESIGN_DELTA_2026-10-14.md",
+    "repository": "docs/trip/OTR_TRIP_HOME_PREPARATION_PRODUCT_DESIGN_DELTA_2026-10-14.md",
+    "sha256": "f270ab7363c7dd4910bfc1b5ea18e1ea5bd46ec803147478e363aa288ee780da"
+  },
+  {
+    "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_TODAYS_JOURNEY_PRODUCT_DESIGN_DELTA_2026-10-14(1).md",
+    "repository": "docs/trip/OTR_TRIP_HOME_TODAYS_JOURNEY_PRODUCT_DESIGN_DELTA_2026-10-14.md",
+    "sha256": "504877b5509d4eac08f776ea5632d50a2dab65efff74304a381fc0085c4cdaf2"
+  },
+  {
+    "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_JOURNEY_SNAPSHOT_PRODUCT_DESIGN_DELTA_2026-10-14(1).md",
+    "repository": "docs/trip/OTR_TRIP_HOME_JOURNEY_SNAPSHOT_PRODUCT_DESIGN_DELTA_2026-10-14.md",
+    "sha256": "c296990f9d10fc842c85ecbb4eb5b72c2ada2d8d69328ff1444df451191068f8"
+  },
+  {
+    "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_EXPENSE_SETTLEMENT_PRODUCT_DESIGN_DELTA_2026-10-14(1).md",
+    "repository": "docs/trip/OTR_TRIP_HOME_EXPENSE_SETTLEMENT_PRODUCT_DESIGN_DELTA_2026-10-14.md",
+    "sha256": "e1c85f6bbbe0a90f36f379814d778005c908688baee5d9f22e892eb009b241a9"
+  },
+  {
+    "source": "/Users/xoery/Downloads/OTR_TRIP_HOME_UI_BLUEPRINT_V1_1_2026-10-16.md",
+    "repository": "docs/trip/OTR_TRIP_HOME_UI_BLUEPRINT_V1_1_2026-10-16.md",
+    "sha256": "7b0f5277b60b249c10ec6534f28824c414964fa36eadbb3bd2604000ec4628d0"
+  },
+  {
+    "source": "/Users/xoery/Downloads/Trip Home 移动端界面规范图板.png",
+    "sha256": "2c49ecb3a8ba85eca4b6e7cdddf492fab79004dec8abccef6831c4ba2a8230aa",
+    "role": "visual reference; written contracts and Owner Edit/Search override prevail"
+  }
+]

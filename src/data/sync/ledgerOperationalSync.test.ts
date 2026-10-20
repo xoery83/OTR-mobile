@@ -1,0 +1,443 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  openDatabase: vi.fn(),
+  reactivateOperations: vi.fn(),
+  reactivateAssets: vi.fn(),
+  requireActiveUserId: vi.fn(),
+  getAllAsync: vi.fn(),
+  getQueueActivity: vi.fn(),
+  getMetadataActivity: vi.fn(),
+  metadataEnabled: vi.fn(),
+  metadataRun: vi.fn(),
+  queueListeners: new Set<() => void>(),
+  generation: 7,
+}));
+
+vi.mock("./tripMetadataCoordinator", () => ({
+  isTripMetadataSyncEnabled: mocks.metadataEnabled,
+  runNativeTripMetadataSync: mocks.metadataRun,
+}));
+vi.mock("./ledgerQueueActivity", () => ({
+  getLedgerQueueActivity: mocks.getQueueActivity,
+  getTripMetadataQueueActivity: mocks.getMetadataActivity,
+  subscribeLedgerQueueWorkAvailable: (listener: () => void) => {
+    mocks.queueListeners.add(listener);
+    return () => mocks.queueListeners.delete(listener);
+  },
+}));
+
+vi.mock("@/data/db/database", () => ({ openDatabase: mocks.openDatabase }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: mocks.requireActiveUserId,
+}));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => mocks.generation,
+}));
+vi.mock("@/data/repositories/ledgerReceiptRepository", () => ({
+  createLedgerReceiptRepository: () => ({
+    reactivateLongLivedFailures: mocks.reactivateAssets,
+  }),
+}));
+vi.mock("./syncOperationRepository", () => ({
+  createSyncOperationRepository: () => ({
+    reactivateLongLivedFailures: mocks.reactivateOperations,
+  }),
+}));
+vi.mock("@/data/operations/ledgerMaintenance", () => ({
+  cleanupReconstructibleLedgerData: vi.fn(),
+  enforceReceiptCacheLimit: vi.fn(),
+}));
+vi.mock("./ledgerExpenseDemoCoordinator", () => ({ runLedgerExpenseSync: vi.fn() }));
+vi.mock("./ledgerReceiptCoordinator", () => ({ runLedgerReceiptSync: vi.fn() }));
+vi.mock("./ledgerReviewCoordinator", () => ({ runLedgerReviewSync: vi.fn() }));
+vi.mock("./ledgerSettlementPaymentCoordinator", () => ({
+  runLedgerSettlementPaymentSync: vi.fn(),
+}));
+vi.mock("./ledgerPersonalPaymentCoordinator", () => ({
+  runLedgerPersonalPaymentSync: vi.fn(),
+}));
+vi.mock("./personalSettlementReviewCoordinator", () => ({
+  runPersonalSettlementReviewSync: vi.fn(),
+}));
+
+/* eslint-disable import/first */
+import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";
+import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
+import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
+import {
+  allowLedgerOperationalSync,
+  scheduleOperationalReadRetry,
+  notifyLedgerReadCompletion,
+  setIntelligenceSchedulingAdapter,
+  setTripCreateSyncRunner,
+  kickLedgerOperationalSync,
+  pauseLedgerOperationalSync,
+  reactivateLongLivedLedgerFailures,
+  runLedgerOperationalSync,
+  subscribeLedgerOperationalSyncCompletion,
+  subscribeLedgerOperationalSyncKick,
+} from "./ledgerOperationalSync";
+/* eslint-enable import/first */
+
+describe("Ledger mutation sync kick", () => {
+  beforeEach(() => {
+    setTripCreateSyncRunner(null);
+    vi.clearAllMocks();
+    mocks.metadataEnabled.mockResolvedValue(false);
+    mocks.metadataRun.mockResolvedValue({ status: "closed", processedCount: 0 });
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    vi.mocked(runLedgerExpenseSync).mockResolvedValue({
+      status: "syncing",
+      processedCount: 0,
+    });
+    allowLedgerOperationalSync();
+    mocks.openDatabase.mockResolvedValue({ getAllAsync: mocks.getAllAsync });
+    mocks.requireActiveUserId.mockResolvedValue("user-a");
+    mocks.getAllAsync.mockResolvedValue([]);
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    mocks.generation = 7;
+  });
+
+  it("awaits the explicitly installed Trip receipt/mapping runner before selecting Expenses", async () => {
+    let finish!: () => void;
+    const trip = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    setTripCreateSyncRunner(trip);
+    const run = runLedgerOperationalSync();
+    await vi.waitFor(() => expect(trip).toHaveBeenCalledOnce());
+    expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+    finish();
+    await run;
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    setTripCreateSyncRunner(null);
+  });
+
+  it("a closed/failing Trip runner leaves unrelated Ledger work available", async () => {
+    setTripCreateSyncRunner(
+      vi.fn(async () => {
+        throw new Error("TRIP_CREATE_CLOSED");
+      }),
+    );
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    setTripCreateSyncRunner(null);
+  });
+
+  it("reactivates sparse user and asset mutations on a recovery event", async () => {
+    await reactivateLongLivedLedgerFailures();
+    expect(mocks.reactivateOperations).toHaveBeenCalledOnce();
+    expect(mocks.reactivateAssets).toHaveBeenCalledOnce();
+  });
+
+  it("starts asynchronously and harmlessly absorbs an offline failure", async () => {
+    const run = vi.fn().mockRejectedValue(new Error("offline"));
+    expect(kickLedgerOperationalSync(run)).toBeUndefined();
+    expect(run).toHaveBeenCalledOnce();
+    await Promise.resolve();
+  });
+
+  it("announces mutation kicks once with the active account generation", async () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeLedgerOperationalSyncKick(listener);
+    kickLedgerOperationalSync(async () => undefined);
+    expect(listener).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledWith(7);
+    unsubscribe();
+    kickLedgerOperationalSync(async () => undefined);
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it("blocks direct mutation kicks during an account transition", async () => {
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await pauseLedgerOperationalSync();
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+
+    allowLedgerOperationalSync();
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+  });
+
+  it("publishes the eligible touched scopes after normal sync", async () => {
+    mocks.getAllAsync.mockResolvedValue([{ journeyId: "journey-a" }]);
+    const listener = vi.fn();
+    const unsubscribe = subscribeLedgerOperationalSyncCompletion(listener);
+
+    await runLedgerOperationalSync();
+
+    expect(listener).toHaveBeenCalledWith({
+      accountId: "user-a",
+      generation: 7,
+      journeyIds: ["journey-a"],
+    });
+    unsubscribe();
+  });
+
+  it("waits for Expense sync before starting receipt upload", async () => {
+    let release!: () => void;
+    vi.mocked(runLedgerExpenseSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 1 });
+      }) as never,
+    );
+
+    const run = runLedgerOperationalSync();
+    await vi.waitFor(() => expect(runLedgerExpenseSync).toHaveBeenCalledOnce());
+    expect(runLedgerReceiptSync).not.toHaveBeenCalled();
+    release();
+    await run;
+    expect(runLedgerReceiptSync).toHaveBeenCalledOnce();
+  });
+
+  it("starts Expense sync while a Personal Payment batch is still running", async () => {
+    let release!: () => void;
+    vi.mocked(runLedgerPersonalPaymentSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 1 });
+      }) as never,
+    );
+    const run = runLedgerOperationalSync();
+    await vi.waitFor(() => expect(runLedgerExpenseSync).toHaveBeenCalledOnce());
+    release();
+    await run;
+  });
+
+  it("does not recurse from a health-origin operational sync", async () => {
+    mocks.getAllAsync.mockResolvedValue([{ journeyId: "journey-a" }]);
+    const listener = vi.fn();
+    const unsubscribe = subscribeLedgerOperationalSyncCompletion(listener);
+
+    await runLedgerOperationalSync({ origin: "DATA_HEALTH" });
+
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("wakes metadata retry on the existing timer and isolates its failure from Ledger", async () => {
+    vi.useFakeTimers();
+    mocks.metadataEnabled.mockResolvedValue(true);
+    mocks.metadataRun.mockRejectedValueOnce(new Error("503"));
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4000,
+    });
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(3999);
+    expect(mocks.metadataRun).toHaveBeenCalledOnce();
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(mocks.metadataRun).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+  it("does not lose metadata queued while the normal operational cycle is running", async () => {
+    vi.useFakeTimers();
+    mocks.metadataEnabled.mockResolvedValue(true);
+    let release!: () => void;
+    vi.mocked(runLedgerExpenseSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 0 });
+      }) as never,
+    );
+    const first = runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(0);
+    mocks.getMetadataActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 1,
+      nextActionableAt: null,
+    });
+    for (const listener of mocks.queueListeners) listener();
+    release();
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mocks.metadataRun).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+
+  it("wakes a due retry independently of foreground reads", async () => {
+    vi.useFakeTimers();
+    const due = Date.now() + 4_000;
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: due,
+    });
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(3_999);
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(runLedgerExpenseSync).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+
+  it("does not run an old account's due timer after an account switch", async () => {
+    vi.useFakeTimers();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4_000,
+    });
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await runLedgerOperationalSync();
+    mocks.generation = 8;
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+
+  it("cancels a future retry timer while auth is paused", async () => {
+    vi.useFakeTimers();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4_000,
+    });
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await runLedgerOperationalSync();
+    await pauseLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
+  });
+
+  it("coalesces dependency wakeups while operational work is in flight", async () => {
+    vi.useFakeTimers();
+    let release!: () => void;
+    vi.mocked(runLedgerExpenseSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 1 });
+      }) as never,
+    );
+    const first = runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(0);
+    for (const listener of mocks.queueListeners) {
+      listener();
+      listener();
+    }
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 1,
+      nextActionableAt: null,
+    });
+    release();
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(runLedgerExpenseSync).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+  it("uses one existing timer for an idle read retry and cancels it on Account pause", async () => {
+    vi.useFakeTimers();
+    const retry = vi.fn(async () => undefined);
+    try {
+      scheduleOperationalReadRetry({ at: Date.now() + 15000, generation: 7, run: retry });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.getTimerCount()).toBe(1);
+      await vi.advanceTimersByTimeAsync(14999);
+      expect(retry).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(retry).toHaveBeenCalledOnce();
+      scheduleOperationalReadRetry({ at: Date.now() + 15000, generation: 7, run: retry });
+      await vi.advanceTimersByTimeAsync(0);
+      await pauseLedgerOperationalSync();
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(retry).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("announces zero-known-Journey discovery and drops ABA-stale notifications/retries", async () => {
+    vi.useFakeTimers();
+    const listener = vi.fn(),
+      retry = vi.fn(async () => undefined);
+    const unsubscribe = subscribeLedgerOperationalSyncCompletion(listener);
+    try {
+      notifyLedgerReadCompletion({
+        accountId: "user-a",
+        generation: 7,
+        journeyIds: [],
+        discoveryChanged: true,
+      });
+      expect(listener).toHaveBeenCalledOnce();
+      scheduleOperationalReadRetry({ at: Date.now() + 15000, generation: 7, run: retry });
+      await vi.advanceTimersByTimeAsync(0);
+      mocks.generation += 2;
+      notifyLedgerReadCompletion({
+        accountId: "user-a",
+        generation: 7,
+        journeyIds: ["old"],
+        discoveryChanged: true,
+      });
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(listener).toHaveBeenCalledOnce();
+      expect(retry).not.toHaveBeenCalled();
+    } finally {
+      scheduleOperationalReadRetry(null);
+      unsubscribe();
+      vi.useRealTimers();
+    }
+  });
+});
+
+it("central owner schedules injected cold/reconnect wakes on its existing timer only", async () => {
+  vi.useFakeTimers();
+  const adapter = {
+    resume: vi.fn(async () => {}),
+    run: vi.fn(async () => {}),
+    activity: vi.fn(async () => ({
+      scope: "INTELLIGENCE" as const,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4000,
+    })),
+  };
+  try {
+    allowLedgerOperationalSync();
+    await setIntelligenceSchedulingAdapter(adapter);
+    await runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(adapter.resume).toHaveBeenCalledWith("COLD_START");
+    expect(adapter.run).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+    const before = adapter.run.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(adapter.run.mock.calls.length).toBeGreaterThan(before);
+    await reactivateLongLivedLedgerFailures();
+    expect(adapter.resume).toHaveBeenCalledWith("RECONNECT");
+    await pauseLedgerOperationalSync();
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    await setIntelligenceSchedulingAdapter(null);
+    vi.useRealTimers();
+  }
+});

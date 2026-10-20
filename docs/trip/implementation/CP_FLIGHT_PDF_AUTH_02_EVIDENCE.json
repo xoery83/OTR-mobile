@@ -1,0 +1,436 @@
+{
+  "checkpoint": "CP-FLIGHT-PDF-AUTH-02",
+  "classification": "ISOLATED_CANONICAL_PREPARATION_ONLY",
+  "preparedCommit": "bba31ffd1eae4f57e2827aae3c381adbdc2fb71d",
+  "preparedTree": "b8e2c8bc69c7004142ee4794a3e7ee8373bc73a7",
+  "canonicalBaseline": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+  "remoteAtPreparation": "03794531a224f0a7046f2717a7a9960b1241fc4f",
+  "acceptedPathEquivalence": {
+    "acceptedPathCount": 22,
+    "exactBlobs": 20,
+    "paths": [
+      {
+        "path": ".gitattributes",
+        "acceptedSha256": "1430bfeb25385ce115cfb53cb707737697821e73e9dca4870a2e8c56f29eeea8",
+        "preparedSha256": "1430bfeb25385ce115cfb53cb707737697821e73e9dca4870a2e8c56f29eeea8",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf",
+        "acceptedSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "preparedSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/__fixtures__/sourcePdfAcceptance.ts",
+        "acceptedSha256": "c04112e28d6823192769adbed630eb174412df847fca506cdc23676c2b06de55",
+        "preparedSha256": "c04112e28d6823192769adbed630eb174412df847fca506cdc23676c2b06de55",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/__fixtures__/tripCoreV2Sql.ts",
+        "acceptedSha256": "89fa78153499c6dcea8bab146013eadf176397652c810f4b437f1641e6dc3092",
+        "preparedSha256": "89fa78153499c6dcea8bab146013eadf176397652c810f4b437f1641e6dc3092",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/captureFlightCoreV2.sql.test.ts",
+        "acceptedSha256": "4aa776f8aefe60bd567241c94ba4ff08a21df44d1aec4f38f59534ebb26b575f",
+        "preparedSha256": "4aa776f8aefe60bd567241c94ba4ff08a21df44d1aec4f38f59534ebb26b575f",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/sourcePdfAuthority.ts",
+        "acceptedSha256": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb",
+        "preparedSha256": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/sourcePdfCoreProof.ts",
+        "acceptedSha256": "44b2dd66706bad3e28d8ce251ef2abfd3ed966f9a43f9b0a80175f7a24bd901d",
+        "preparedSha256": "44b2dd66706bad3e28d8ce251ef2abfd3ed966f9a43f9b0a80175f7a24bd901d",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/sourcePdfProfile.test.ts",
+        "acceptedSha256": "8b999b8448c20a4c547b28d87b71d7976310543499bb34ebdeb397f1c213aecb",
+        "preparedSha256": "8b999b8448c20a4c547b28d87b71d7976310543499bb34ebdeb397f1c213aecb",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/sourcePdfProfile.ts",
+        "acceptedSha256": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6",
+        "preparedSha256": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6",
+        "exactAccepted": true
+      },
+      {
+        "path": "backend/src/tripCoreV2SourcePgAuthority.ts",
+        "acceptedSha256": "5a47e2fa27756a156956437bd61e0c438437756464927bc6a7c3e8390814f7e5",
+        "preparedSha256": "5a47e2fa27756a156956437bd61e0c438437756464927bc6a7c3e8390814f7e5",
+        "exactAccepted": true
+      },
+      {
+        "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+        "acceptedSha256": "5595f3e204f2705b455c2bb48a3ed499ba4148ca3052c0c656b046e877940613",
+        "preparedSha256": "f3c96fa17332832e667199768e00445ca63cfd8a39d1bdd8141fc3d5c4180cb4",
+        "exactAccepted": false
+      },
+      {
+        "path": "docs/adr/2026-10-12-source-owned-pdf-derivative-seal.md",
+        "acceptedSha256": "19796a29c60e090b5651f99b51616a5efb7233a83502a096646f05f3ee71114d",
+        "preparedSha256": "19796a29c60e090b5651f99b51616a5efb7233a83502a096646f05f3ee71114d",
+        "exactAccepted": true
+      },
+      {
+        "path": "docs/trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md",
+        "acceptedSha256": "a74fdb44b3615b2222a64f10307bbc34551e3fcca7314ecb5848ba5a70905900",
+        "preparedSha256": "a74fdb44b3615b2222a64f10307bbc34551e3fcca7314ecb5848ba5a70905900",
+        "exactAccepted": true
+      },
+      {
+        "path": "scripts/trip/core-v2-sql-acceptance.py",
+        "acceptedSha256": "6c28d3495cdd852be7aa2716f847f0acdd2b338656a69a1cbd2a5f8a09da11da",
+        "preparedSha256": "24ff8899a3035b5129d6cae936c7f4fa6a3ce4ffafb5d3604cdc00441b5bf41e",
+        "exactAccepted": false
+      },
+      {
+        "path": "scripts/trip/verify-source-pdf-fixture.swift",
+        "acceptedSha256": "79847e1302ba5221e121375ae8fd99a3829b293feeb5068c16ff31b2c725ccb5",
+        "preparedSha256": "79847e1302ba5221e121375ae8fd99a3829b293feeb5068c16ff31b2c725ccb5",
+        "exactAccepted": true
+      },
+      {
+        "path": "src/domain/trip/sourcePdfAuthority.ts",
+        "acceptedSha256": "fccc80649e62e7e553b9f21a4a33df94d44a88b0c8e9b770473f2a7fb4d212da",
+        "preparedSha256": "fccc80649e62e7e553b9f21a4a33df94d44a88b0c8e9b770473f2a7fb4d212da",
+        "exactAccepted": true
+      },
+      {
+        "path": "src/domain/trip/tripCoreV2CandidatePublication.ts",
+        "acceptedSha256": "cc2259df007d34f37f56c634288eb6c32df95f450218a38322ae2d9e85d54b14",
+        "preparedSha256": "cc2259df007d34f37f56c634288eb6c32df95f450218a38322ae2d9e85d54b14",
+        "exactAccepted": true
+      },
+      {
+        "path": "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql",
+        "acceptedSha256": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+        "preparedSha256": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+        "exactAccepted": true
+      },
+      {
+        "path": "supabase/tests/source-pdf/authority.sql",
+        "acceptedSha256": "6d5318ff3cda1cf7942f52b5eb0a908f4cb4accb6dc357016d7d27a372fad52c",
+        "preparedSha256": "6d5318ff3cda1cf7942f52b5eb0a908f4cb4accb6dc357016d7d27a372fad52c",
+        "exactAccepted": true
+      },
+      {
+        "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md",
+        "acceptedSha256": "35fb687194563e9ddb75aaa645e1843062bb9cab221d785e00b2ac1e923c5c0e",
+        "preparedSha256": "35fb687194563e9ddb75aaa645e1843062bb9cab221d785e00b2ac1e923c5c0e",
+        "exactAccepted": true
+      },
+      {
+        "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_MANIFEST.json",
+        "acceptedSha256": "0d68d3b26b8cd88ddb98ebf7ef312d9770fcf0ead6195dffa6acde59d9e3398f",
+        "preparedSha256": "0d68d3b26b8cd88ddb98ebf7ef312d9770fcf0ead6195dffa6acde59d9e3398f",
+        "exactAccepted": true
+      },
+      {
+        "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_EVIDENCE.json",
+        "acceptedSha256": "e7b27b496d9c0da1a88de0c06884762f1ae2342c759f6dfe03e92332bb422153",
+        "preparedSha256": "e7b27b496d9c0da1a88de0c06884762f1ae2342c759f6dfe03e92332bb422153",
+        "exactAccepted": true
+      }
+    ],
+    "migrationOrder": [
+      "supabase/migrations/20261011000100_trip_core_v2_foundation.sql",
+      "supabase/migrations/20261011000200_trip_core_v2_version_dispatch.sql",
+      "supabase/migrations/20261011000300_trip_core_v2_owning_session.sql",
+      "supabase/migrations/20261011000400_trip_core_v2_read_scope.sql",
+      "supabase/migrations/20261011000500_trip_core_v2_source_scope.sql",
+      "supabase/migrations/20261011000600_trip_core_v2_candidate_publication.sql",
+      "supabase/migrations/20261011000700_trip_core_v2_legacy_claim_fence.sql",
+      "supabase/migrations/20261011000800_trip_core_v2_retained_claim_fence.sql",
+      "supabase/migrations/20261012000100_model_task_protected_admission.sql",
+      "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql"
+    ],
+    "historicalMigrationsByteIdentical": true
+  },
+  "pdfSql": [
+    {
+      "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
+      "originalId": "caf1d8dc-e1e1-4b75-95df-ad7ed9c4a35a",
+      "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "operationId": "8a20ca75-383e-40f6-87c5-288005021c8b",
+      "sealSha256": "dea9a07779e1f8bae49d68d01d85484fec2ce44ccdecf6244548267e406de6eb",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "start": 0,
+          "end": 62
+        },
+        {
+          "pageIndex": 1,
+          "start": 63,
+          "end": 125
+        }
+      ],
+      "replay": "EXACT",
+      "negativeSealWrites": 0
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "07346f57-6e44-45e5-8f9f-b4ce46c5eb71",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "6454590e-ea94-48f8-a1c5-47e0ff105a2f",
+          "semanticRevision": 2
+        }
+      ],
+      "dates": ["2026-12-20", "2026-12-17"],
+      "read2ManifestSha256": "a5a97d5b6f82ce809876617b4e93d40ee1d1daddf2ba58b07a0e499660142a4b",
+      "read2AccessRevision": 1,
+      "read2Epoch": "47f9feec-eb41-4796-aa05-dc6d1589092c",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+      "sourceId": "f9c86c66-3578-481a-9997-c52e0a05e547",
+      "runId": "753797a0-d1f6-48bf-9a27-f19ed104cee8",
+      "inputCatalogSha256": "971727508cdb915f755aedb567793ed42e7be308b60f69371b7829093c2c88e8",
+      "candidateIds": [
+        "7efac81b-95af-8fdc-a428-f70bb445f3cc",
+        "b39bfeba-04e4-8c76-aa22-b6269d1108aa"
+      ],
+      "itemIds": [
+        "07346f57-6e44-45e5-8f9f-b4ce46c5eb71",
+        "6454590e-ea94-48f8-a1c5-47e0ff105a2f"
+      ],
+      "recoveredOperationIds": [
+        "b76e709c-6782-4ad2-99f8-752d0e60d653",
+        "cf7eea47-f12e-4d70-a040-3dad02ece178",
+        "05ed08b5-2ec0-4ddf-a239-1663eac634b1",
+        "bb500008-3c80-459c-bc95-280dc28576d0"
+      ],
+      "sourcePlanStatus": "COMPLETE",
+      "associations": 4,
+      "qualificationRevision": 2,
+      "negativeWrites": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 357,
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "textHttpPgTls": [
+    {
+      "classification": "CP_FLIGHT_DEV_02_LOCAL_HTTP_NODE_PG_TLS",
+      "sourceId": "8a27a16f-f1ea-41a4-8413-9abd222bc686",
+      "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+      "itemIds": [
+        "aa7d1e8d-eba0-4ff0-a524-ea496d0dc8d4",
+        "ae59fea9-cf3b-47bc-85b2-78f4f00c47a0"
+      ],
+      "recoveredOperationIds": [
+        "2e0ae51a-af4d-4413-b851-694ff72788c5",
+        "773c3131-5cb2-43a3-8c5b-2e0ad82c0bfb",
+        "443ee738-72b5-4b0c-a9cf-5b7e6fa87d57",
+        "dd84e90f-dffc-436a-b14f-cf13fc488d2e"
+      ],
+      "originalCopies": 1,
+      "privateSourceLeakage": false,
+      "backendProcessRestarts": 5,
+      "tlsVerified": true,
+      "hostnameAndCaAndCredentialNegatives": true,
+      "hosted": false
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 357,
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "sourceSql": [
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 357,
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "protectedRoots": {
+    "status": "PASS",
+    "checks": [
+      "Core85\u201392 exact install and foundation/publication CLOSED assertions",
+      "LLM only replaces its two approved protected roots",
+      "PDF preserves every preexisting Core/LLM function and starts CHECK-CLOSED",
+      "observed concurrent lock barriers: winner commit and winner rollback",
+      "concurrent independent sequence1 + exact replay + no rejected rows",
+      "TERMINAL lifetime uniqueness",
+      "UNKNOWN lifetime uniqueness",
+      "restart exact replay and UNKNOWN retained",
+      "changed snapshot digest rejected",
+      "winner rollback + subsequent independent admission",
+      "FORCE RLS and role/bypass denials",
+      "contract/profile/schema/privacy and missing binding fail closed",
+      "exact conservative Hold boundary and currency mismatch",
+      "scope rotation exact replay and lifetime uniqueness",
+      "deadline expires after reserve before mark; binding retained",
+      "revoked Account grant and rotation fence",
+      "Trip authorization loss blocks mark and replay",
+      "scope rotation fences old mark without freeing Task",
+      "historical unbound Call exact recovery, no dispatch",
+      "revoked verifier and canceled/stale publication fence; lifetime retained",
+      "canonical JSON and SHA256 Python/PostgreSQL vector",
+      "Account/day exact boundary and next Hold rejection",
+      "immutable writer guards and migration privileges removed",
+      "all installed functions unchanged after protected-root scenarios; Core/PDF remain CLOSED"
+    ],
+    "network": "none",
+    "provider_calls": 0,
+    "activation": "CLOSED",
+    "bootstrap_revision": 7
+  },
+  "protectedRootHarness": {
+    "path": "/private/tmp/pdf-auth-02-llm/effective-harness.py",
+    "sha256": "5af627d113c889294efdad8e854e7d6a92b938ddcae8ade49779c3aef3fb3179"
+  },
+  "validation": {
+    "focusedSuites": 12,
+    "focusedPassed": 172,
+    "focusedSkipped": 2,
+    "skipReasons": [
+      "LIVE_W_SERVER84 bridge not configured",
+      "Linux-only real anchored custody case on macOS"
+    ],
+    "sqlPassed": 5,
+    "protectedRootGroups": 24,
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "touchedLint": "PASS",
+    "uiGuard": "PASS",
+    "format": "PASS",
+    "diff": "PASS"
+  },
+  "preservation": {
+    "classification": "DISPOSABLE_SHARED_CLONE_PRESERVATION_PREVIEW",
+    "baseline": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+    "preparedCommit": "bba31ffd1eae4f57e2827aae3c381adbdc2fb71d",
+    "mainRefUnchanged": true,
+    "canonicalIndexUnchanged": true,
+    "canonicalDirtyStatusAndBytesUnchanged": true,
+    "dirtyPaths": {
+      "docs/CURRENT_IMPLEMENTATION_STATE.md": {
+        "status": " M",
+        "sha256": "3e3a12b8b6362b76dd3b2c99a17a64df6986a2180d10a937be858d8b1b6dc15d"
+      },
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": {
+        "status": " M",
+        "sha256": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3"
+      },
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": {
+        "status": "??",
+        "sha256": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4"
+      },
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": {
+        "status": "??",
+        "sha256": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573"
+      },
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": {
+        "status": "??",
+        "sha256": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a"
+      },
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": {
+        "status": "??",
+        "sha256": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+      }
+    },
+    "sharedWorkingNotesExactSuffix": true,
+    "unrelatedDirtyFilesRetainedInPreview": true,
+    "directDirtyFastForwardNotProposed": true
+  },
+  "overlapOwnership": {
+    "SourceAuthorityDTOProfileSQL": "Agent 3; exact accepted files unchanged",
+    "backendCustodyTransport": "Agent A; current canonical TEXT composition retained",
+    "nativeCaptureHandoff": "Agent B; Native02/03 excluded",
+    "sharedSqlFixture": "Agent 3/Core test owner; future coordination with Agent B for nativeOriginal vs pdfOriginal",
+    "sharedSqlRunner": "Agent 3/Core test owner; opt-in combined-chain flags only",
+    "CoreAdmissionWriter": "existing Core owner; no redesign",
+    "DayG2Lab": "Experience owner; canonical G2/DL1/DL2 retained",
+    "protectedLlmRoots": "LLM owner; accepted migration unchanged",
+    "currentState": "shared coordinator; canonical working notes exact suffix"
+  },
+  "notExecuted": [
+    "canonical merge/push",
+    "unaccepted Native02/03 or Hosted branch integration",
+    "Hosted/Provider/paid LLM/Production/native activation",
+    "general PDF/Quartz/OCR expansion",
+    "full repository regression or Linux host bridge"
+  ],
+  "allGates": "CLOSED"
+}

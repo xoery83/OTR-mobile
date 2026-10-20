@@ -1,0 +1,69 @@
+{
+  "status": "PASS_INSTALLATION_PRIVILEGES_RLS_TRIGGER_ORDER_CLOSED_REJECTION",
+  "imageId": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "container": "otr-doc-peer-61-e40aab495642",
+  "execution": [
+    {
+      "path": "supabase/migrations/20261011000100_trip_core_v2_foundation.sql",
+      "sha256": "495db2ca7b66cc9410eac7d9711b7c4deb63822eea6c635a8d7d3337bc2f0d41",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000200_trip_core_v2_version_dispatch.sql",
+      "sha256": "c0a63da8efeb397991ef53f5c4a575c56d3f6dcdb864d909de7f5c50488cfad9",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000300_trip_core_v2_owning_session.sql",
+      "sha256": "eb8df5c6db491fa05f48c959a17153457530f2eb63d9a25aef2bca41bcd65214",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000400_trip_core_v2_read_scope.sql",
+      "sha256": "f1681c6b395e84a21f8ddb6155e3afcd4615066c980ae3c30a8c081a627e1be0",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000500_trip_core_v2_source_scope.sql",
+      "sha256": "6118ede99678d0ab30837612278599b208a42eb44efe9ace47740333401f7eb7",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000600_trip_core_v2_candidate_publication.sql",
+      "sha256": "0aee99a4f2c7558170cc1235b595ad93735d403cfd346e0a6a0268c45b058a55",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000700_trip_core_v2_legacy_claim_fence.sql",
+      "sha256": "747f2eb2a8a280176183ea7e2977444c45a5361e501bf1addcb65f71bbae0a57",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261011000800_trip_core_v2_retained_claim_fence.sql",
+      "sha256": "874208aa54404d710748b8c950a288f943a846b557c37cee5220b9488c063b63",
+      "purpose": "Exact accepted Core dependency setup only",
+      "execution": "SUCCESS"
+    },
+    {
+      "path": "supabase/migrations/20261014000200_trip_document_private_reference_custody.sql",
+      "sha256": "bebd38d58fbf270eef3cc046b19d37453dee2f5af2e5bc65c5218d37076b832f",
+      "purpose": "Candidate custody migration validation",
+      "execution": "SUCCESS"
+    }
+  ],
+  "cleanup": "PASS",
+  "positiveBinding": "NOT_VERIFIED_CURRENT_CONSTANT_FALSE_CORE_GATE",
+  "runtime": "CLOSED",
+  "booleanChecks": 13,
+  "closedInsertRejected": true,
+  "transactionRollback": true,
+  "guardAlteration": false,
+  "roleLoginAlteration": false
+}

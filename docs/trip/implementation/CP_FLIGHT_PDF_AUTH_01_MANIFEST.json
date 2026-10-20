@@ -1,0 +1,118 @@
+{
+  "branch": "codex/cp-flight-pdf-auth-01",
+  "baseline": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+  "implementationCommit": "ee7569228e61a774dcd33d22965af7d3a3933fd9",
+  "implementationFiles": [
+    {
+      "status": "M",
+      "path": ".gitattributes",
+      "sha256": "1430bfeb25385ce115cfb53cb707737697821e73e9dca4870a2e8c56f29eeea8"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf",
+      "sha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/__fixtures__/sourcePdfAcceptance.ts",
+      "sha256": "c04112e28d6823192769adbed630eb174412df847fca506cdc23676c2b06de55"
+    },
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "sha256": "89fa78153499c6dcea8bab146013eadf176397652c810f4b437f1641e6dc3092"
+    },
+    {
+      "status": "M",
+      "path": "backend/src/captureFlightCoreV2.sql.test.ts",
+      "sha256": "4aa776f8aefe60bd567241c94ba4ff08a21df44d1aec4f38f59534ebb26b575f"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfAuthority.ts",
+      "sha256": "90f9ec498925ebd1d25cc233218f47d38998f2b07bf5d66bdfbfa7542d2e9cfb"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfCoreProof.ts",
+      "sha256": "44b2dd66706bad3e28d8ce251ef2abfd3ed966f9a43f9b0a80175f7a24bd901d"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfProfile.test.ts",
+      "sha256": "8b999b8448c20a4c547b28d87b71d7976310543499bb34ebdeb397f1c213aecb"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfProfile.ts",
+      "sha256": "6d2eeb21cf3d32d5f65a0938dde086ab9e19e68faf5899fc3347174f76aaa0e6"
+    },
+    {
+      "status": "M",
+      "path": "backend/src/tripCoreV2SourcePgAuthority.ts",
+      "sha256": "5a47e2fa27756a156956437bd61e0c438437756464927bc6a7c3e8390814f7e5"
+    },
+    {
+      "status": "M",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "5595f3e204f2705b455c2bb48a3ed499ba4148ca3052c0c656b046e877940613"
+    },
+    {
+      "status": "A",
+      "path": "docs/adr/2026-10-12-source-owned-pdf-derivative-seal.md",
+      "sha256": "19796a29c60e090b5651f99b51616a5efb7233a83502a096646f05f3ee71114d"
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md",
+      "sha256": "a74fdb44b3615b2222a64f10307bbc34551e3fcca7314ecb5848ba5a70905900"
+    },
+    {
+      "status": "M",
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "sha256": "6c28d3495cdd852be7aa2716f847f0acdd2b338656a69a1cbd2a5f8a09da11da"
+    },
+    {
+      "status": "A",
+      "path": "scripts/trip/verify-source-pdf-fixture.swift",
+      "sha256": "79847e1302ba5221e121375ae8fd99a3829b293feeb5068c16ff31b2c725ccb5"
+    },
+    {
+      "status": "A",
+      "path": "src/domain/trip/sourcePdfAuthority.ts",
+      "sha256": "fccc80649e62e7e553b9f21a4a33df94d44a88b0c8e9b770473f2a7fb4d212da"
+    },
+    {
+      "status": "M",
+      "path": "src/domain/trip/tripCoreV2CandidatePublication.ts",
+      "sha256": "cc2259df007d34f37f56c634288eb6c32df95f450218a38322ae2d9e85d54b14"
+    },
+    {
+      "status": "A",
+      "path": "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql",
+      "sha256": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72"
+    },
+    {
+      "status": "A",
+      "path": "supabase/tests/source-pdf/authority.sql",
+      "sha256": "6d5318ff3cda1cf7942f52b5eb0a908f4cb4accb6dc357016d7d27a372fad52c"
+    }
+  ],
+  "handoffFiles": [
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md"
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_MANIFEST.json"
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_AUTH_01_EVIDENCE.json"
+    }
+  ],
+  "totalChangedPaths": 22,
+  "authorityCommit": "da1a8a7082a94242107172527426666f231337ba"
+}

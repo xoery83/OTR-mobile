@@ -1,0 +1,7575 @@
+import {
+  readPublicationCatalog,
+  type PublicationCatalogConnection,
+} from "./tripPublicationCatalogRead";
+import {
+  EventCollectionError,
+  type EventCollectionConnection,
+} from "./tripEventCollection";
+import { canonicalEventColumns } from "../../src/data/api/tripCanonicalReadContracts";
+import {
+  canonicalCapabilities,
+  projectCanonicalEvent,
+  projectEventReceipt,
+  requireCanonicalReadConnection,
+  type CanonicalReadGatewayConfig,
+} from "./tripCanonicalRead";
+import {
+  serializeParticipationVector,
+  encodeSharedLedgerCursor,
+  decodeSharedLedgerCursor,
+  participationObservationTimeSchema,
+} from "../../src/domain/trip/participationSnapshot";
+import {
+  valuationRebaseEligible,
+  rateBindingMatches,
+  sameRate,
+} from "@/domain/ledger/rateAcceptance";
+import {
+  createClient,
+  isAuthSessionMissingError,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
+import { createHash, randomUUID } from "node:crypto";
+import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import { losslessSourceJson } from "./losslessSourceJson";
+import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
+import { summarizeMyLedgerSnapshot, type LightweightSnapshot } from "./myLedgerSummary";
+
+import { createFrankfurterRateProvider } from "./frankfurterRateProvider";
+import {
+  createSupabaseAttachmentStorageProvider,
+  resolveAttachmentStorageProvider,
+  SUPABASE_ATTACHMENT_PROVIDER,
+} from "./attachmentStorageProvider";
+import {
+  fetchTrustedRateQuote,
+  calendarDistance,
+  historicalRatePolicyVersion,
+  RateProviderError,
+  type RateQuoteProvider,
+  type RateSnapshotProvider,
+} from "./rateQuoteProvider";
+
+import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
+import type { RateDemandScanResult } from "./rateDemandScanner";
+import type {
+  ExpenseCommandRequest,
+  ExpenseIntentEnvelope,
+  ExpenseConflictChainResolutionRequest,
+  ExpenseConflictChainResponse,
+  CreateLedgerCorrectionRequest,
+  CreateLedgerExpenseRequest,
+  CompleteEconomicDateRequest,
+  EconomicDateEvidenceResponse,
+  CreateLedgerPaymentRecordRequest,
+  ApplyLedgerValuationRequest,
+  LedgerCorrectionActionRequest,
+  LedgerCorrectionMutationResponse,
+  LedgerExpenseMutationResponse,
+  LifecycleLedgerExpenseRequest,
+  ResolveLedgerExpenseConflictRequest,
+  UpdateLedgerExpenseRequest,
+} from "../../src/data/api/ledgerMutationContracts";
+import type {
+  LedgerAnalysisResponse,
+  LedgerBootstrapResponse,
+  LedgerChangesResponse,
+  LedgerExpenseListResponse,
+  LedgerExpenseDto,
+  LedgerPaymentRecordDto,
+  LedgerRateQuoteDto,
+  MyLedgerPeriod,
+  MyLedgerResponse,
+} from "../../src/data/api/ledgerReadContracts";
+import { ledgerMemberSchema } from "../../src/data/api/ledgerReadContracts";
+import {
+  journeyCurrencyCommitSchema,
+  journeyCurrencyPreviewSchema,
+} from "../../src/data/api/ledgerCurrencyContracts";
+import type {
+  LedgerRateLookupRequest,
+  LedgerRateLookupResponse,
+} from "../../src/data/api/ledgerFxContracts";
+import type {
+  CreatePersonalSettlementCheckpointRequest,
+  CreatePersonalSettlementPaymentRequest,
+  CorrectSettlementPaymentRequest,
+  DeletePersonalSettlementPaymentRequest,
+  FinalizedSettlementDto,
+  PersonalSettlementCheckpointDto,
+  PersonalSettlementPaymentDto,
+  PersonalSettlementPaymentFxProjectionDto,
+  PersonalSettlementPaymentMutationResponse,
+  RecordSettlementPaymentRequest,
+  SettlementAdjustmentFinalizeRequest,
+  SettlementAdjustmentMutationResponse,
+  SettlementAdjustmentPreviewResponse,
+  SettlementCorrectionConfirmRequest,
+  SettlementCorrectionMutationResponse,
+  SettlementCorrectionPreviewRequest,
+  SettlementCorrectionPreviewResponse,
+  SettlementFinalizeResponse,
+  SettlementPaymentActionRequest,
+  SettlementPaymentMutationResponse,
+  SettlementPreviewResponse,
+  UpdatePersonalSettlementPaymentRequest,
+} from "../../src/data/api/ledgerSettlementContracts";
+import {
+  analyzeReporting,
+  matchesReportingFilters,
+  summarizeReporting,
+  type ReportingFilters,
+  type ReportingRecord,
+} from "../../src/domain/ledger/reporting";
+import {
+  changedExpenseGroups,
+  sameStage4Expense,
+  type Stage4EditableExpense,
+} from "../../src/domain/ledger/conflict";
+import {
+  expensePatchEligibility,
+  sameExpenseValue,
+  utcInstant,
+} from "../../src/domain/ledger/expenseIntent";
+import {
+  expenseConflictChainResponseSchema,
+  expenseConflictChainResolutionResponseSchema,
+  expenseIntentEnvelopeSchema,
+  ledgerExpenseMutationResponseSchema,
+} from "../../src/data/api/ledgerMutationContracts";
+import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
+import {
+  balancesFromSettlementInputs,
+  buildOutstandingBalanceVector,
+  buildSettlementConfirmationDiff,
+  buildSettlementAdjustmentVectors,
+  buildSettlementPreview,
+  canonicalAdjustmentInputJson,
+  canonicalSettlementJson,
+  canonicalSettlementSourceJson,
+  replaceSettlementExpenseSource,
+  SETTLEMENT_ALGORITHM_VERSION,
+  SETTLEMENT_SOURCE_FINGERPRINT_POLICY,
+  type SettlementExpenseCandidate,
+  type SettlementInputSnapshot,
+  type SettlementPreviewInput,
+} from "../../src/domain/ledger/settlement";
+import { previewValuation } from "../../src/domain/ledger/valuation";
+import { deriveTransferPaymentState } from "../../src/domain/ledger/paymentLifecycle";
+import { reviewExpensesV2 } from "../../src/domain/ledger/reviewV2";
+import {
+  buildPersonalSettlementStatement,
+  comparePersonalSettlementStatements,
+  projectPersonalSettlementReviewState,
+  type PersonalSettlementStatement,
+} from "../../src/domain/ledger/personalSettlementReview";
+import {
+  assertValidExpenseAggregate,
+  LedgerValidationError,
+  validateExpenseAggregate,
+} from "../../src/domain/ledger/validation";
+import type {
+  CompleteReceiptRequest,
+  CreateReceiptRequest,
+  ReceiptDto,
+} from "../../src/data/api/ledgerReceiptContracts";
+import type {
+  LedgerReviewActionDto,
+  LedgerReviewFindingDto,
+} from "../../src/data/api/ledgerReviewContracts";
+import {
+  createReceiptOcrProvider,
+  extractReceiptSuggestion,
+  type ReceiptOcrProvider,
+} from "./receiptOcrProvider";
+
+const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
+
+export type SupabaseDevConfig = {
+  publicationCatalogConnection?: PublicationCatalogConnection;
+  canonicalReadGateway?: CanonicalReadGatewayConfig;
+  canonicalCollectionConnection?: EventCollectionConnection;
+  url: string;
+  publishableKey: string;
+  secretKey: string;
+  receiptOcrProvider?: ReceiptOcrProvider;
+  rateQuoteProvider?: RateQuoteProvider;
+  rateSnapshotProvider?: RateSnapshotProvider;
+  onRateDemand?: () => void;
+  onMyLedgerRead?: (event: MyLedgerReadEvent | MyLedgerSummaryEvent) => void;
+  useLegacyMyLedgerRead?: boolean;
+};
+
+export type MyLedgerSummaryEvent = {
+  path: "lightweight_2_0";
+  linkedJourneyCount: number;
+  ledgerEligibleJourneyCount: number;
+  skippedMissingSettingsCount: number;
+  expenseCount: number;
+  spendingFactCount: number;
+  batchCount: number;
+  queryOperationCount: number;
+  snapshotDurationMs: number;
+  authorizationDurationMs: number;
+  aggregationDurationMs: number;
+  totalDurationMs: number;
+  consistencyRetryCount: number;
+  cancellationCount: number;
+  postDisconnectWorkMs: number;
+  failureClass: string | null;
+};
+
+export type MyLedgerReadEvent = {
+  linkedJourneyCount: number;
+  ledgerEligibleJourneyCount: number;
+  skippedMissingSettingsCount: number;
+  activeConcurrencyHighWaterMark: number;
+  completedJourneyCount: number;
+  failedJourneyIndex: number | null;
+  failureClass: string | null;
+  queuedWorkSuppressed: boolean;
+};
+
+export function createMyLedgerReadGate() {
+  let previous: Promise<void> = Promise.resolve();
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    const wait = previous;
+    let release!: () => void;
+    previous = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await wait;
+    try {
+      return await task();
+    } finally {
+      release();
+    }
+  };
+}
+
+function assertApprovedDevUrl(url: string) {
+  const parsed = new URL(url);
+  if (parsed.hostname !== `${approvedDevProjectRef}.supabase.co`) {
+    throw new Error("The backend may connect only to the approved Supabase Dev project.");
+  }
+}
+
+function client(url: string, key: string) {
+  return createClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+function rowToStoredCreate(row: Record<string, unknown>): StoredCreate {
+  return {
+    id: String(row.id),
+    tripId: String(row.journey_id ?? row.trip_id),
+    createdByUserId: String(row.created_by_user_id ?? row.created_by),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function journeyCurrencyError(message: string): BackendError {
+  for (const code of [
+    "TRIP_WRITE_FORBIDDEN",
+    "JOURNEY_CURRENCY_FINALIZED_LOCK",
+    "JOURNEY_CURRENCY_OPEN_SETTLEMENT",
+    "JOURNEY_CURRENCY_CONFLICT",
+    "JOURNEY_CURRENCY_PREVIEW_STALE",
+    "SETTINGS_REVISION_CONFLICT",
+    "IDEMPOTENCY_CONFLICT",
+    "CURRENCY_UNCHANGED",
+    "INVALID_CURRENCY",
+  ]) {
+    if (message.includes(code))
+      return new BackendError(
+        code === "TRIP_WRITE_FORBIDDEN" ? 403 : code === "INVALID_CURRENCY" ? 400 : 409,
+        code,
+        "Journey Currency change requires a fresh preview or cannot proceed.",
+      );
+  }
+  return new BackendError(
+    500,
+    "JOURNEY_CURRENCY_FAILED",
+    "Journey Currency change failed.",
+  );
+}
+
+const ledgerCursorVersion = 1;
+
+export function encodeLedgerCursor(sequence: number, tripId: string, userId: string) {
+  return Buffer.from(
+    JSON.stringify({ version: ledgerCursorVersion, sequence, tripId, userId }),
+  ).toString("base64url");
+}
+
+export function decodeLedgerCursor(
+  cursor: string | null,
+  tripId: string,
+  userId: string,
+) {
+  if (!cursor) return 0;
+  try {
+    const decoded = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as {
+      version?: unknown;
+      sequence?: unknown;
+      tripId?: unknown;
+      userId?: unknown;
+    };
+    if (
+      decoded.version !== ledgerCursorVersion ||
+      !Number.isSafeInteger(decoded.sequence) ||
+      Number(decoded.sequence) < 0 ||
+      decoded.tripId !== tripId ||
+      decoded.userId !== userId
+    )
+      throw new Error();
+    return Number(decoded.sequence);
+  } catch {
+    throw new BackendError(400, "INVALID_CURSOR", "The Ledger cursor is invalid.");
+  }
+}
+
+export function assertLedgerCursorContinuation(sequence: number, latest: number) {
+  if (sequence > latest)
+    throw new BackendError(
+      400,
+      "INVALID_CURSOR",
+      "The Ledger cursor continuation is invalid.",
+    );
+}
+
+function encodePageCursor(sequence: number) {
+  return Buffer.from(JSON.stringify({ sequence })).toString("base64url");
+}
+
+function stableReviewId(value: string) {
+  const hash = createHash("sha256").update(value).digest("hex");
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-5${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
+}
+
+function hashPayload(value: unknown) {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+export function personalPaymentRowToDto(
+  row: Record<string, unknown>,
+): PersonalSettlementPaymentDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    ownerUserId: String(row.owner_user_id),
+    ownerMemberId: String(row.owner_member_id),
+    counterpartyMemberId: String(row.counterparty_member_id),
+    direction: row.direction as PersonalSettlementPaymentDto["direction"],
+    amountMinor: Number(row.amount_minor),
+    currency: String(row.currency),
+    scale: Number(row.scale),
+    occurredAt: String(row.occurred_at),
+    economicDate: String(row.economic_date ?? String(row.occurred_at).slice(0, 10)),
+    economicDateSource:
+      row.economic_date_source == null
+        ? null
+        : (String(
+            row.economic_date_source,
+          ) as PersonalSettlementPaymentDto["economicDateSource"]),
+    note: row.note == null ? null : String(row.note),
+    recordedEquivalentMinor:
+      row.recorded_equivalent_minor == null
+        ? null
+        : Number(row.recorded_equivalent_minor),
+    recordedEquivalentCurrency:
+      row.recorded_equivalent_currency == null
+        ? null
+        : String(row.recorded_equivalent_currency),
+    recordedEquivalentScale:
+      row.recorded_equivalent_scale == null
+        ? null
+        : Number(row.recorded_equivalent_scale),
+    referenceRateDecimal:
+      row.reference_rate_decimal == null ? null : String(row.reference_rate_decimal),
+    referenceRateDate:
+      row.reference_rate_date == null ? null : String(row.reference_rate_date),
+    referenceSource: row.reference_source == null ? null : String(row.reference_source),
+    referenceProvenance:
+      row.reference_provenance == null
+        ? null
+        : (row.reference_provenance as Record<string, unknown>),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    deletedAt: row.deleted_at == null ? null : String(row.deleted_at),
+  };
+}
+
+export function personalPaymentFxProjectionRowToDto(
+  row: Record<string, unknown>,
+): PersonalSettlementPaymentFxProjectionDto {
+  return {
+    id: String(row.id),
+    paymentId: String(row.payment_id),
+    journeyId: String(row.journey_id),
+    targetCurrency: String(row.target_currency),
+    targetScale: Number(row.target_scale),
+    policyVersion: "ECB_DAILY_V1",
+    sourcePaymentRevision: Number(row.source_payment_revision),
+    inputDigest: String(row.input_digest),
+    economicDate: String(row.economic_date),
+    originalAmountMinor: Number(row.original_amount_minor),
+    originalCurrency: String(row.original_currency),
+    originalScale: Number(row.original_scale),
+    state: row.state as PersonalSettlementPaymentFxProjectionDto["state"],
+    equivalentMinor: row.equivalent_minor == null ? null : Number(row.equivalent_minor),
+    decimalRate: row.decimal_rate == null ? null : String(row.decimal_rate),
+    rateQuoteId: row.rate_quote_id == null ? null : String(row.rate_quote_id),
+    referenceDate: row.reference_date == null ? null : String(row.reference_date),
+    provider: row.provider == null ? null : String(row.provider),
+    providerReference:
+      row.provider_reference == null ? null : String(row.provider_reference),
+    sourceReference: row.source_reference == null ? null : String(row.source_reference),
+    failureCategory: row.failure_category == null ? null : String(row.failure_category),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+export function personalPaymentBackendError(message: string) {
+  const known: Record<string, [number, string]> = {
+    ENTITY_NOT_FOUND: [404, "The Personal Payment was not found."],
+    TRIP_WRITE_FORBIDDEN: [403, "Current Journey membership is required."],
+    PERSONAL_PAYMENT_WRITE_FORBIDDEN: [403, "Only the record owner may change it."],
+    IDEMPOTENCY_CONFLICT: [409, "The idempotency key conflicts."],
+    REVISION_CONFLICT: [409, "The Personal Payment revision is stale."],
+    PERSONAL_PAYMENT_IDENTITY_CONFLICT: [409, "The Personal Payment id conflicts."],
+    PERSONAL_PAYMENT_DELETED: [409, "The Personal Payment is deleted."],
+    PERSONAL_PAYMENT_COUNTERPARTY_INVALID: [422, "The counterparty is invalid."],
+    PERSONAL_PAYMENT_SELF_COUNTERPARTY: [422, "The owner cannot be the counterparty."],
+    PERSONAL_PAYMENT_DIRECTION_INVALID: [422, "The payment direction is invalid."],
+    PERSONAL_PAYMENT_AMOUNT_INVALID: [422, "The payment amount is invalid."],
+    PERSONAL_PAYMENT_CURRENCY_INVALID: [422, "The payment currency is invalid."],
+    PERSONAL_PAYMENT_EQUIVALENT_INVALID: [422, "The recorded equivalent is invalid."],
+    PERSONAL_PAYMENT_BASE_REVISION_INVALID: [422, "The base revision is invalid."],
+  };
+  for (const [code, [status, text]] of Object.entries(known)) {
+    if (message.includes(code)) return new BackendError(status, code, text);
+  }
+  return new BackendError(
+    500,
+    "PERSONAL_PAYMENT_FAILED",
+    "The Personal Payment operation failed.",
+  );
+}
+
+function reviewFindingRowToDto(row: Record<string, unknown>): LedgerReviewFindingDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    expenseId: row.expense_id ? String(row.expense_id) : null,
+    settlementId: row.settlement_id ? String(row.settlement_id) : null,
+    layer: row.layer as LedgerReviewFindingDto["layer"],
+    findingType: String(row.finding_type),
+    severity: row.severity as LedgerReviewFindingDto["severity"],
+    confidence: row.confidence === null ? null : Number(row.confidence),
+    evidenceCodes: (row.evidence_codes ?? []) as string[],
+    status: row.status as LedgerReviewFindingDto["status"],
+    rulesetVersion: String(row.ruleset_version),
+    entityRevision: row.entity_revision === null ? null : Number(row.entity_revision),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    ruleId: row.rule_id ? String(row.rule_id) : null,
+    ruleVersion: row.rule_version == null ? null : Number(row.rule_version),
+    ruleCategory: row.rule_category ? String(row.rule_category) : null,
+    ruleInputFingerprint: row.rule_input_fingerprint
+      ? String(row.rule_input_fingerprint)
+      : null,
+    comparisonFingerprint: row.comparison_fingerprint
+      ? String(row.comparison_fingerprint)
+      : null,
+    observationContext: (row.observation_context ?? null) as Record<
+      string,
+      unknown
+    > | null,
+    lifecycle: (row.lifecycle ?? null) as LedgerReviewFindingDto["lifecycle"],
+    observationGeneration:
+      row.observation_generation == null ? null : Number(row.observation_generation),
+    resolvedAt: row.resolved_at ? String(row.resolved_at) : null,
+    resolutionReason: row.resolution_reason ? String(row.resolution_reason) : null,
+    supersededAt: row.superseded_at ? String(row.superseded_at) : null,
+    supersededByFindingId: row.superseded_by_finding_id
+      ? String(row.superseded_by_finding_id)
+      : null,
+    personalDecision: (row.personal_decision ??
+      "NEEDS_REVIEW") as LedgerReviewFindingDto["personalDecision"],
+    decisionRevision: Number(row.decision_revision ?? 0),
+    lastActionId: row.last_action_id ? String(row.last_action_id) : null,
+    decisionActedAt: row.decision_acted_at ? String(row.decision_acted_at) : null,
+    origin: (row.origin ?? "SYSTEM") as LedgerReviewFindingDto["origin"],
+    authorUserId: row.author_user_id ? String(row.author_user_id) : null,
+    authorMemberId: row.author_member_id ? String(row.author_member_id) : null,
+    targetType: (row.target_type ?? null) as LedgerReviewFindingDto["targetType"],
+    targetMemberId: row.target_member_id ? String(row.target_member_id) : null,
+    personalPaymentId: row.personal_payment_id ? String(row.personal_payment_id) : null,
+    targetSourceRevision:
+      row.target_source_revision == null ? null : Number(row.target_source_revision),
+    humanNote: row.human_note == null ? null : String(row.human_note),
+    originOperationId: row.origin_operation_id ? String(row.origin_operation_id) : null,
+  };
+}
+
+function reviewActionRowToDto(row: Record<string, unknown>): LedgerReviewActionDto {
+  return {
+    id: String(row.id),
+    findingId: String(row.finding_id),
+    action: row.action as LedgerReviewActionDto["action"],
+    actorUserId: String(row.actor_user_id),
+    actorMemberId: String(row.actor_member_id),
+    actorRole: String(row.actor_role),
+    reason: row.reason == null ? null : String(row.reason),
+    findingRevision: Number(row.finding_revision),
+    entityRevision: row.entity_revision === null ? null : Number(row.entity_revision),
+    rulesetVersion: String(row.ruleset_version),
+    operationId: String(row.operation_id),
+    createdAt: String(row.created_at),
+  };
+}
+
+async function readLedgerReviewData(
+  service: SupabaseClient,
+  tripId: string,
+  userId: string,
+) {
+  const result = await service.rpc("read_ledger_review_projection_v2", {
+    p_user_id: userId,
+    p_journey_id: tripId,
+  });
+  if (result.error) {
+    if (result.error.message.includes("REVIEW_READ_FORBIDDEN"))
+      throw new BackendError(
+        403,
+        "REVIEW_READ_FORBIDDEN",
+        "Review read is not authorized.",
+      );
+    throw new Error("Supabase Dev Ledger Review read failed.");
+  }
+  const { findings, actions } = result.data as {
+    findings: Record<string, unknown>[];
+    actions: Record<string, unknown>[];
+  };
+  return {
+    findings: findings.map(reviewFindingRowToDto),
+    actions: actions.map(reviewActionRowToDto),
+  };
+}
+
+async function evaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
+  const expenseRows = await readAllJourneyExpenses(service, tripId);
+  if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
+  const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
+  const evaluatedAt = new Date().toISOString();
+  const observations = reviewExpensesV2(
+    expenses.map((expense) => ({ ...expense, status: expense.businessStatus })),
+  ).map((observation) => {
+    const comparisonFingerprint = observation.comparison
+      ? hashPayload(observation.comparison)
+      : null;
+    const inputFingerprint = hashPayload([observation.input, observation.comparison]);
+    return {
+      ...observation,
+      inputFingerprint,
+      comparisonFingerprint,
+      context: {
+        ...observation.context,
+        evaluatedAt,
+        ruleInputFingerprint: inputFingerprint,
+        comparisonFingerprint,
+      },
+    };
+  });
+  const revisions = Object.fromEntries(
+    (expenseRows.data ?? []).map((row) => [String(row.id), Number(row.revision)]),
+  );
+  const result = await service.rpc("reconcile_ledger_review_v2", {
+    p_journey_id: tripId,
+    p_observations: observations,
+    p_expense_revisions: revisions,
+  });
+  if (result.error)
+    throw new Error(
+      `Supabase Dev Review v2 reconciliation failed: ${result.error.message}`,
+    );
+  const human = await service.rpc("ledger_resolve_human_review_findings_3a", {
+    p_journey_id: tripId,
+  });
+  if (human.error) throw new Error("Supabase Dev human Review reconciliation failed.");
+}
+
+async function tryEvaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
+  // The Expense RPC has already committed. Review failure is repaired by the next refresh.
+  try {
+    await evaluateLedgerReviewV2(service, tripId);
+  } catch {
+    /* best-effort projection */
+  }
+}
+
+function capabilities(role: string | null, status: string | null) {
+  const linked = status === "linked";
+  const organizer = role === "owner";
+  return {
+    canRead: linked,
+    canCreateExpense: linked && (organizer || role === "group_member"),
+    canEditOwnExpense: linked && (organizer || role === "group_member"),
+    canCorrectAnyExpense: linked && organizer,
+    canSuggestCorrection: linked && (organizer || role === "group_member"),
+    canResolveOwnExpenseConflict: linked && (organizer || role === "group_member"),
+    canAddOwnPaymentEvidence: linked && (organizer || role === "group_member"),
+    canManageExpenseValuation: linked && (organizer || role === "group_member"),
+    canManageLedgerValuationPolicy: linked && organizer,
+    canPrepareSettlement: linked && organizer,
+    canFinalizeSettlement: linked && organizer,
+  };
+}
+
+async function requireData<T>(result: {
+  data: T | null;
+  error: { code?: string } | null;
+}) {
+  if (result.error || !result.data) throw new Error("Supabase Dev operation failed.");
+  return result.data;
+}
+
+async function findOne(
+  service: SupabaseClient,
+  table: "ledger_entries" | "itinerary_events",
+  id: string,
+) {
+  const columns =
+    table === "ledger_entries"
+      ? "id, journey_id, created_by_user_id, updated_at"
+      : "id, trip_id, created_by, updated_at, temporal_contract_version";
+  const result = await service.from(table).select(columns).eq("id", id).maybeSingle();
+  if (result.error) throw new Error("Supabase Dev lookup failed.");
+  const row = result.data as unknown as Record<string, unknown> | null;
+  if (table === "itinerary_events" && row?.temporal_contract_version != null)
+    throw new BackendError(
+      409,
+      "CANONICAL_TARGET_REQUIRED",
+      "Canonical Events require the versioned read contract.",
+    );
+  return row ? rowToStoredCreate(row) : null;
+}
+
+export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendGateway {
+  assertApprovedDevUrl(config.url);
+  const auth = client(config.url, config.publishableKey);
+  const service = client(config.url, config.secretKey);
+  const runLegacyMyLedgerRead = createMyLedgerReadGate();
+  const receiptOcrProvider = config.receiptOcrProvider ?? createReceiptOcrProvider();
+  const defaultRateProvider = createFrankfurterRateProvider();
+  const rateQuoteProvider = config.rateQuoteProvider ?? defaultRateProvider;
+  const rateSnapshotProvider = config.rateSnapshotProvider ?? defaultRateProvider;
+  const wakeForExpense = (
+    response: LedgerExpenseMutationResponse | LedgerCorrectionMutationResponse,
+  ) => {
+    const expense = "entity" in response ? response.entity : response.expense;
+    if (
+      !response.idempotentReplay &&
+      expense?.businessStatus === "RATE_REQUIRED" &&
+      expense.economicDate
+    )
+      config.onRateDemand?.();
+  };
+  const wakeForPayment = (response: PersonalSettlementPaymentMutationResponse) => {
+    if (
+      !response.idempotentReplay &&
+      response.projections?.some(
+        (projection) =>
+          projection.state === "PENDING" &&
+          projection.originalCurrency !== projection.targetCurrency,
+      )
+    )
+      config.onRateDemand?.();
+  };
+
+  return {
+    async observeCanonicalEventCollection(userId, tripId) {
+      const connection = config.canonicalCollectionConnection;
+      if (
+        !connection ||
+        (await connection.sessionUser()) !== "otr_trip_event_collection_gateway"
+      )
+        return {
+          disposition: "WITHHELD",
+          reason: "COLLECTION_CERTIFICATION_UNAVAILABLE",
+        };
+      // Fixed primary READ COMMITTED SQL observation; never service-role REST lists.
+      try {
+        return await connection.observe(userId, tripId);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        if (message === "READ_UNAVAILABLE")
+          throw new EventCollectionError(404, "READ_UNAVAILABLE");
+        if (message === "CANONICAL_EVENT_SNAPSHOT_LIMIT")
+          throw new EventCollectionError(503, message);
+        if (message === "CANONICAL_EVENT_SNAPSHOT_INVALID")
+          throw new EventCollectionError(500, message);
+        if (message === "COLLECTION_CERTIFICATION_UNAVAILABLE")
+          return { disposition: "WITHHELD", reason: message };
+        throw new EventCollectionError(503, "READ_UNAVAILABLE");
+      }
+    },
+    async readCanonicalCapabilities(userId, tripId) {
+      if (!(await this.canReadTrip(userId, tripId)))
+        throw new BackendError(
+          404,
+          "READ_UNAVAILABLE",
+          "The requested read is unavailable.",
+        );
+      const probe = await service
+        .from("itinerary_events")
+        .select(canonicalEventColumns)
+        .eq("trip_id", tripId)
+        .limit(0);
+      return canonicalCapabilities(!probe.error, config.canonicalReadGateway);
+    },
+    async readCanonicalEvent(userId, tripId, eventId, readVersion) {
+      if (!(await this.canReadTrip(userId, tripId))) return null;
+      if (readVersion !== "1")
+        return { readVersion: 1, disposition: "WITHHELD", reason: "UNSUPPORTED_CLIENT" };
+      // Embedded endpoints share one database statement/snapshot with the root.
+      let result = await service
+        .from("itinerary_events")
+        .select("business_contract_version," + canonicalEventColumns)
+        .eq("trip_id", tripId)
+        .eq("id", eventId)
+        .is("business_contract_version", null)
+        .maybeSingle();
+      if (
+        result.error?.code === "42703" &&
+        result.error.message.includes("business_contract_version")
+      )
+        result = await service
+          .from("itinerary_events")
+          .select(canonicalEventColumns)
+          .eq("trip_id", tripId)
+          .eq("id", eventId)
+          .maybeSingle();
+      if (result.error)
+        throw new BackendError(
+          503,
+          "READ_UNAVAILABLE",
+          "Canonical Event reads are unavailable.",
+        );
+      const row = result.data as unknown as Record<string, unknown> | null;
+      if (!row || row.business_contract_version != null) return null;
+      const { business_contract_version: _businessVersion, ...legacy } = row;
+      return projectCanonicalEvent(legacy, readVersion);
+    },
+    async readEventOperationReceipt(userId, tripId, operationKey) {
+      if (!(await this.canReadTrip(userId, tripId))) return null;
+      const connection = await requireCanonicalReadConnection(
+        config.canonicalReadGateway ?? {},
+      );
+      if (!connection)
+        throw new BackendError(
+          503,
+          "REPLAY_UNAVAILABLE",
+          "Historic operation recovery is unavailable.",
+        );
+      const raw = await connection.lookupExactReceipt(userId, tripId, operationKey);
+      return raw === null ? null : projectEventReceipt(raw, userId, tripId, operationKey);
+    },
+
+    async readPublicationImportCatalogs(actor, trip, signal) {
+      return readPublicationCatalog(
+        config.publicationCatalogConnection,
+        actor,
+        trip,
+        signal,
+      );
+    },
+    async validatePublicationAccessToken(token, signal) {
+      if (signal.aborted) return { disposition: "UNAVAILABLE" };
+      try {
+        const { data, error } = await auth.auth.getUser(token);
+        if (signal.aborted) return { disposition: "UNAVAILABLE" };
+        if (!error && data.user)
+          return { disposition: "VERIFIED", user: { id: data.user.id } };
+        // Auth infrastructure errors are never credential-revocation evidence.
+        if (
+          isAuthSessionMissingError(error) ||
+          (error &&
+            [400, 401, 403, 404].includes(error.status ?? 0) &&
+            [
+              "bad_jwt",
+              "user_not_found",
+              "session_not_found",
+              "session_expired",
+              "user_banned",
+            ].includes(error.code ?? ""))
+        )
+          return { disposition: "REJECTED" };
+        return { disposition: "UNAVAILABLE" };
+      } catch {
+        return { disposition: "UNAVAILABLE" };
+      }
+    },
+    async validateAccessToken(token) {
+      const { data, error } = await auth.auth.getUser(token);
+      return error || !data.user ? null : { id: data.user.id };
+    },
+
+    async canReadTrip(userId, tripId) {
+      const [creator, legacyMember, journeyMember] = await Promise.all([
+        service
+          .from("trips")
+          .select("id")
+          .eq("id", tripId)
+          .eq("created_by", userId)
+          .limit(1),
+        service
+          .from("trip_members")
+          .select("id")
+          .eq("trip_id", tripId)
+          .eq("user_id", userId)
+          .limit(1),
+        service
+          .from("journey_members")
+          .select("id")
+          .eq("trip_id", tripId)
+          .eq("user_id", userId)
+          .eq("status", "linked")
+          .limit(1),
+      ]);
+
+      if (creator.error || legacyMember.error || journeyMember.error) {
+        throw new Error("Supabase Dev authorization lookup failed.");
+      }
+      return Boolean(
+        creator.data.length || legacyMember.data.length || journeyMember.data.length,
+      );
+    },
+
+    async discoverTrips(userId, cursor, limit) {
+      let createdQuery = service.from("trips").select("id").eq("created_by", userId);
+      let legacyQuery = service
+        .from("trip_members")
+        .select("trip_id")
+        .eq("user_id", userId);
+      let linkedQuery = service
+        .from("journey_members")
+        .select("trip_id")
+        .eq("user_id", userId)
+        .eq("status", "linked");
+      if (cursor !== null) {
+        createdQuery = createdQuery.gt("id", cursor);
+        legacyQuery = legacyQuery.gt("trip_id", cursor);
+        linkedQuery = linkedQuery.gt("trip_id", cursor);
+      }
+      const [created, legacy, linked] = await Promise.all([
+        createdQuery.order("id").limit(limit + 1),
+        legacyQuery.order("trip_id").limit(limit + 1),
+        linkedQuery.order("trip_id").limit(limit + 1),
+      ]);
+      if (created.error || legacy.error || linked.error)
+        throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
+      const candidates = [
+        ...created.data.map((row) => row.id),
+        ...legacy.data.map((row) => row.trip_id),
+        ...linked.data.map((row) => row.trip_id),
+      ];
+      if (candidates.some((id) => !coreUuid.safeParse(id).success))
+        throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
+      const ordered = [...new Set(candidates)].sort();
+      const pageIds = ordered.slice(0, limit);
+      const nextCursor = ordered.length > limit ? pageIds.at(-1)! : null;
+      const admitted = await Promise.all(
+        pageIds.map((tripId) => this.canReadTrip(userId, tripId)),
+      );
+      const visibleIds = pageIds.filter((_, index) => admitted[index]);
+      if (!visibleIds.length) return { trips: [], nextCursor };
+      const details = await service
+        .from("trips")
+        .select("id,name,destination,start_date,end_date,created_at")
+        .in("id", visibleIds);
+      if (details.error) throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
+      const byId = new Map(details.data.map((row) => [row.id, row]));
+      return {
+        trips: visibleIds.flatMap((id) => {
+          const row = byId.get(id);
+          return row
+            ? [
+                {
+                  id: row.id,
+                  name: row.name,
+                  destination: row.destination,
+                  startDate: row.start_date,
+                  endDate: row.end_date,
+                  createdAt: row.created_at,
+                },
+              ]
+            : [];
+        }),
+        nextCursor,
+      };
+    },
+
+    async canWriteTrip(userId, tripId) {
+      const [creator, legacyMember, journeyMember] = await Promise.all([
+        service
+          .from("trips")
+          .select("id")
+          .eq("id", tripId)
+          .eq("created_by", userId)
+          .limit(1),
+        service
+          .from("trip_members")
+          .select("id")
+          .eq("trip_id", tripId)
+          .eq("user_id", userId)
+          .limit(1),
+        service
+          .from("journey_members")
+          .select("id")
+          .eq("trip_id", tripId)
+          .eq("user_id", userId)
+          .eq("status", "linked")
+          .in("role", ["owner", "group_member"])
+          .limit(1),
+      ]);
+
+      if (creator.error || legacyMember.error || journeyMember.error) {
+        throw new Error("Supabase Dev authorization lookup failed.");
+      }
+      return Boolean(
+        creator.data.length || legacyMember.data.length || journeyMember.data.length,
+      );
+    },
+
+    async canFinalizeSettlement(userId, tripId) {
+      const result = await service
+        .from("journey_members")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId)
+        .eq("status", "linked")
+        .eq("role", "owner")
+        .limit(1);
+      if (result.error) throw new Error("Supabase Dev settlement authorization failed.");
+      return result.data.length > 0;
+    },
+
+    async readLedgerReview(userId, tripId) {
+      return readLedgerReviewData(service, tripId, userId);
+    },
+
+    async refreshLedgerReview(userId, tripId) {
+      await evaluateLedgerReviewV2(service, tripId);
+      const expenseRows = await readAllJourneyExpenses(service, tripId);
+      if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
+      const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
+      const memberRows = await service
+        .from("journey_members")
+        .select("id")
+        .eq("trip_id", tripId);
+      if (memberRows.error) throw new Error("Supabase Dev Review member read failed.");
+      const memberIds = new Set((memberRows.data ?? []).map((row) => String(row.id)));
+      const observations = expenses.flatMap((expense) =>
+        validateExpenseAggregate(
+          { ...expense, status: expense.businessStatus },
+          memberIds,
+        ).map((issue) => ({
+          expenseId: expense.id,
+          entityRevision: expense.revision,
+          rulesetVersion: "ledger-validation-v1",
+          findingType: issue.code,
+          severity: "BLOCKING" as const,
+          confidence: null,
+          evidenceCodes: [issue.code, `FIELD:${issue.field}`],
+          layer: "DETERMINISTIC" as const,
+        })),
+      );
+      const current = await service
+        .from("ledger_review_findings")
+        .select(
+          "id, expense_id, entity_revision, ruleset_version, finding_type, layer, evidence_codes, status",
+        )
+        .eq("journey_id", tripId)
+        .eq("layer", "DETERMINISTIC")
+        .neq("status", "STALE");
+      if (current.error) throw new Error("Supabase Dev Review state read failed.");
+      const activeKeys = new Set(
+        observations.map(
+          (item) =>
+            `${item.layer}:${item.expenseId}:${item.entityRevision}:${item.rulesetVersion}:${item.findingType}:${item.evidenceCodes.join(",")}`,
+        ),
+      );
+      const staleIds = (current.data ?? [])
+        .filter(
+          (row) =>
+            !activeKeys.has(
+              `${String(row.layer)}:${String(row.expense_id)}:${Number(row.entity_revision)}:${String(row.ruleset_version)}:${String(row.finding_type)}:${((row.evidence_codes ?? []) as string[]).join(",")}`,
+            ),
+        )
+        .map((row) => String(row.id));
+      if (staleIds.length) {
+        const stale = await service
+          .from("ledger_review_findings")
+          .update({ status: "STALE" })
+          .in("id", staleIds);
+        if (stale.error) throw new Error("Supabase Dev Review stale update failed.");
+      }
+      if (observations.length) {
+        const inserted = await service.from("ledger_review_findings").upsert(
+          observations.map((item) => ({
+            id: stableReviewId(
+              `${tripId}:${item.layer}:${item.expenseId}:${item.entityRevision}:${item.rulesetVersion}:${item.findingType}:${item.evidenceCodes.join(",")}`,
+            ),
+            journey_id: tripId,
+            expense_id: item.expenseId,
+            layer: item.layer,
+            finding_type: item.findingType,
+            severity: item.severity,
+            confidence: item.confidence,
+            evidence_codes: item.evidenceCodes,
+            status: "OPEN",
+            ruleset_version: item.rulesetVersion,
+            entity_revision: item.entityRevision,
+          })),
+          { onConflict: "id", ignoreDuplicates: true },
+        );
+        if (inserted.error) throw new Error("Supabase Dev Review generation failed.");
+      }
+      return readLedgerReviewData(service, tripId, userId);
+    },
+
+    async raiseLedgerReviewFinding(userId, tripId, idempotencyKey, input) {
+      if (input.operationId !== idempotencyKey || input.id !== input.operationId)
+        throw new BackendError(
+          409,
+          "IDEMPOTENCY_CONFLICT",
+          "Review operation identity differs.",
+        );
+      const result = await service.rpc("ledger_raise_human_review_finding_3a", {
+        p_actor_user_id: userId,
+        p_journey_id: tripId,
+        p_finding_id: input.id,
+        p_target_type: input.targetType,
+        p_expense_id: input.expenseId ?? null,
+        p_target_member_id: input.targetMemberId ?? null,
+        p_personal_payment_id: input.personalPaymentId ?? null,
+        p_settlement_id: input.settlementId ?? null,
+        p_source_revision: input.sourceRevision,
+        p_note: input.note ?? null,
+        p_operation_id: input.operationId,
+      });
+      if (result.error) {
+        const message = result.error.message;
+        if (
+          message.includes("IDEMPOTENCY_CONFLICT") ||
+          message.includes("REVIEW_OPERATION_IDENTITY_CONFLICT")
+        )
+          throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+        if (message.includes("REVIEW_RAISE_FORBIDDEN"))
+          throw new BackendError(
+            403,
+            "REVIEW_RAISE_FORBIDDEN",
+            "This Review concern is not authorized.",
+          );
+        if (message.includes("REVIEW_TARGET_NOT_FOUND"))
+          throw new BackendError(404, "REVIEW_TARGET_NOT_FOUND", "Target not found.");
+        if (message.includes("REVIEW_TARGET_STALE"))
+          throw new BackendError(
+            409,
+            "REVIEW_TARGET_STALE",
+            "The target changed; refresh and try again.",
+          );
+        throw new BackendError(
+          422,
+          "INVALID_HUMAN_REVIEW_FINDING",
+          "The Review concern was rejected.",
+        );
+      }
+      const value = result.data as {
+        finding: Record<string, unknown>;
+        idempotentReplay: boolean;
+      };
+      return {
+        finding: reviewFindingRowToDto(value.finding),
+        idempotentReplay: Boolean(value.idempotentReplay),
+      };
+    },
+
+    async actOnLedgerReviewFinding(userId, tripId, findingId, idempotencyKey, input) {
+      if (input.operationId !== idempotencyKey)
+        throw new BackendError(
+          409,
+          "IDEMPOTENCY_CONFLICT",
+          "Review operation identity differs.",
+        );
+      const result = await service.rpc("act_on_ledger_review_finding_v2", {
+        p_actor_user_id: userId,
+        p_journey_id: tripId,
+        p_finding_id: findingId,
+        p_action: input.action,
+        p_base_revision: input.baseRevision,
+        p_decision_revision: input.decisionRevision,
+        p_reason: input.reason ?? null,
+        p_operation_id: input.operationId,
+      });
+      if (result.error) {
+        const message = result.error.message;
+        if (message.includes("IDEMPOTENCY_CONFLICT"))
+          throw new BackendError(
+            409,
+            "IDEMPOTENCY_CONFLICT",
+            "The Review idempotency key conflicts.",
+          );
+        if (message.includes("REVIEW_ACTION_FORBIDDEN"))
+          throw new BackendError(
+            403,
+            "REVIEW_ACTION_FORBIDDEN",
+            "Review action is not authorized.",
+          );
+        if (message.includes("REVIEW_FINDING_STALE"))
+          throw new BackendError(
+            409,
+            "REVIEW_FINDING_STALE",
+            "Review finding revision is stale.",
+          );
+        if (message.includes("REVIEW_DECISION_STALE"))
+          throw new BackendError(
+            409,
+            "REVIEW_DECISION_STALE",
+            "Personal Review decision is stale.",
+          );
+        if (message.includes("DETERMINISTIC_REVIEW_ACTION_FORBIDDEN"))
+          throw new BackendError(
+            422,
+            "DETERMINISTIC_REVIEW_ACTION_FORBIDDEN",
+            "Deterministic validation cannot be bypassed.",
+          );
+        throw new BackendError(
+          422,
+          "INVALID_REVIEW_ACTION",
+          "Review action was rejected.",
+        );
+      }
+      const value = result.data as {
+        finding: Record<string, unknown>;
+        action: Record<string, unknown>;
+        idempotentReplay: boolean;
+        decision: Record<string, unknown>;
+      };
+      return {
+        finding: reviewFindingRowToDto({
+          ...value.finding,
+          personal_decision: value.decision?.decision ?? "NEEDS_REVIEW",
+          decision_revision: value.decision?.revision ?? 0,
+          last_action_id: value.decision?.last_action_id ?? null,
+          decision_acted_at: value.decision?.acted_at ?? null,
+        }),
+        action: reviewActionRowToDto(value.action),
+        idempotentReplay: Boolean(value.idempotentReplay),
+      };
+    },
+
+    async bootstrapLedger(userId, tripId) {
+      return readLedgerBootstrap(service, tripId, userId);
+    },
+
+    async pullLedgerChanges(userId, tripId, cursor) {
+      return readLedgerChanges(service, userId, tripId, cursor);
+    },
+
+    async readLedgerExpenses(userId, tripId, filters, limit, offset) {
+      return readLedgerExpenses(service, userId, tripId, filters, limit, offset);
+    },
+
+    async readLedgerAnalysis(userId, tripId, filters, scope, dimension) {
+      return readLedgerAnalysis(service, userId, tripId, filters, scope, dimension);
+    },
+
+    async readMyLedger(userId, period, from, to, signal) {
+      if (config.useLegacyMyLedgerRead)
+        return runLegacyMyLedgerRead(() =>
+          readMyLedger(service, userId, period, from, to, { log: config.onMyLedgerRead }),
+        );
+      return readMyLedgerSummary(
+        service,
+        userId,
+        period,
+        from,
+        to,
+        signal,
+        config.onMyLedgerRead,
+      );
+    },
+
+    async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
+      return readRateQuotes(service, tripId, quoteCurrency, baseCurrency);
+    },
+
+    async readReferenceRateSnapshots(_userId) {
+      return rateSnapshotProvider.fetchReferenceSnapshots(32);
+    },
+
+    async previewJourneyCurrency(userId, tripId, proposedCurrency) {
+      const claim = await service.rpc("ledger_claim_currency_preview_demands", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_currency: proposedCurrency,
+        max_requests: 4,
+      });
+      if (claim.error) throw journeyCurrencyError(claim.error.message);
+      await acquirePendingRateQuotes(
+        service,
+        rateQuoteProvider,
+        (claim.data ?? []) as ClaimedRateDemand[],
+      );
+      const result = await service.rpc("ledger_preview_journey_currency", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_currency: proposedCurrency,
+      });
+      if (result.error) throw journeyCurrencyError(result.error.message);
+      return journeyCurrencyPreviewSchema.parse(result.data);
+    },
+
+    async commitJourneyCurrency(userId, tripId, idempotencyKey, input) {
+      const result = await service.rpc("ledger_commit_journey_currency", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_currency: input.proposedCurrency,
+        base_revision: input.baseSettingsRevision,
+        expected_digest: input.previewDigest,
+        operation_id: idempotencyKey,
+      });
+      if (result.error) throw journeyCurrencyError(result.error.message);
+      const committed = journeyCurrencyCommitSchema.parse(result.data);
+      const payments = await readPersonalSettlementPayments(service, userId, tripId);
+      let pendingRateDemand = false;
+      for (const payment of payments.filter((item) => item.deletedAt === null)) {
+        const ensured = await service.rpc(
+          "ledger_ensure_personal_payment_fx_projection_1c",
+          {
+            target_payment: payment.id,
+            requested_target_currency: input.proposedCurrency,
+          },
+        );
+        if (ensured.error)
+          throw new Error("Supabase Dev Personal Payment FX retarget failed.");
+        pendingRateDemand ||= (ensured.data ?? []).some(
+          (projection: {
+            state: string;
+            original_currency: string;
+            target_currency: string;
+          }) =>
+            projection.state === "PENDING" &&
+            projection.original_currency !== projection.target_currency,
+        );
+      }
+      if (pendingRateDemand) config.onRateDemand?.();
+      try {
+        await this.refreshLedgerReview(userId, tripId);
+      } catch (error) {
+        console.error("Journey Currency Review refresh failed", error);
+      }
+      return committed;
+    },
+
+    async lookupLedgerRate(_userId, tripId, input) {
+      return lookupLedgerRate(service, rateQuoteProvider, tripId, input);
+    },
+
+    async acquirePendingRateQuotes() {
+      let personalPaymentFxWork = 0;
+      let autoReferenceDemands = 0;
+      const claimedRateDemands = await acquirePendingRateQuotes(
+        service,
+        rateQuoteProvider,
+        undefined,
+        true,
+        (count) => {
+          personalPaymentFxWork = count;
+        },
+      );
+      const autoReferenceWork = await applyPendingReferenceValuations(
+        service,
+        undefined,
+        (count) => {
+          autoReferenceDemands = count;
+        },
+      );
+      return {
+        claimedRateDemands,
+        personalPaymentFxWork,
+        autoReferenceDemands,
+        autoReferenceWork,
+      } satisfies RateDemandScanResult;
+    },
+
+    async resolveSettlementFx(_userId, tripId, forceRetry) {
+      const claimed = await service.rpc(
+        forceRetry
+          ? "ledger_retry_settlement_unpublished_rates"
+          : "ledger_claim_settlement_rate_demands",
+        {
+          target_journey: tripId,
+          max_requests: 4,
+        },
+      );
+      if (claimed.error) throw new Error("Supabase Dev settlement FX claim failed.");
+      const count = await acquirePendingRateQuotes(
+        service,
+        rateQuoteProvider,
+        (claimed.data ?? []) as ClaimedRateDemand[],
+      );
+      const accepted = await applyPendingReferenceValuations(service, tripId);
+      const [settings, attempts, expenses] = await Promise.all([
+        service
+          .from("ledger_settings")
+          .select("settlement_currency")
+          .eq("journey_id", tripId)
+          .single(),
+        service
+          .from("ledger_rate_quote_attempts")
+          .select("economic_date,quote_currency,base_currency,status")
+          .eq("journey_id", tripId)
+          .in("status", [
+            "UNSUPPORTED",
+            "NO_REFERENCE_WITHIN_POLICY",
+            "NOT_YET_AVAILABLE",
+          ]),
+        service
+          .from("expenses")
+          .select("id,economic_date,original_currency")
+          .eq("journey_id", tripId)
+          .eq("business_status", "RATE_REQUIRED")
+          .eq("settlement_participation", "INCLUDED")
+          .is("deleted_at", null),
+      ]);
+      if (settings.error || attempts.error || expenses.error)
+        throw new Error("Supabase Dev settlement FX classification failed.");
+      const currency = String(settings.data.settlement_currency);
+      const unavailable = new Set(
+        (attempts.data ?? [])
+          .filter((row) => row.status !== "NOT_YET_AVAILABLE")
+          .map(
+            (row) => `${row.economic_date}:${row.quote_currency}:${row.base_currency}`,
+          ),
+      );
+      const pendingPublication = new Set(
+        (attempts.data ?? [])
+          .filter((row) => row.status === "NOT_YET_AVAILABLE")
+          .map(
+            (row) => `${row.economic_date}:${row.quote_currency}:${row.base_currency}`,
+          ),
+      );
+      return {
+        claimed: count,
+        accepted,
+        unavailableExpenseIds: (expenses.data ?? [])
+          .filter((row) =>
+            unavailable.has(`${row.economic_date}:${row.original_currency}:${currency}`),
+          )
+          .map((row) => String(row.id)),
+        pendingPublicationExpenseIds: (expenses.data ?? [])
+          .filter((row) =>
+            pendingPublication.has(
+              `${row.economic_date}:${row.original_currency}:${currency}`,
+            ),
+          )
+          .map((row) => String(row.id)),
+      };
+    },
+
+    async previewLedgerSettlement(_userId, tripId, throughTimestamp) {
+      return (await calculateSettlementPreview(service, tripId, throughTimestamp))
+        .response;
+    },
+
+    async readPersonalSettlementReview(userId, tripId) {
+      return (await calculatePersonalSettlementReview(service, userId, tripId)).response;
+    },
+
+    async createPersonalSettlementCheckpoint(userId, tripId, idempotencyKey, input) {
+      return createPersonalSettlementCheckpoint(
+        service,
+        userId,
+        tripId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async finalizeLedgerSettlement(userId, tripId, idempotencyKey, input) {
+      return finalizeLedgerSettlement(service, userId, tripId, idempotencyKey, input);
+    },
+
+    async previewSettlementAdjustment(
+      _userId,
+      tripId,
+      rootSettlementId,
+      throughTimestamp,
+    ) {
+      return (
+        await calculateSettlementAdjustmentPreview(
+          service,
+          tripId,
+          rootSettlementId,
+          undefined,
+          throughTimestamp,
+        )
+      ).response;
+    },
+
+    async finalizeSettlementAdjustment(
+      userId,
+      tripId,
+      rootSettlementId,
+      idempotencyKey,
+      input,
+    ) {
+      return finalizeSettlementAdjustment(
+        service,
+        userId,
+        tripId,
+        rootSettlementId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async previewSettlementCorrection(_userId, tripId, rootSettlementId, input) {
+      return calculateSettlementCorrectionPreview(
+        service,
+        tripId,
+        rootSettlementId,
+        input,
+      );
+    },
+
+    async finalizeSettlementCorrection(
+      userId,
+      tripId,
+      rootSettlementId,
+      idempotencyKey,
+      input,
+    ) {
+      return finalizeSettlementCorrection(
+        service,
+        userId,
+        tripId,
+        rootSettlementId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async recordSettlementPayment(userId, tripId, transferId, idempotencyKey, input) {
+      return recordSettlementPayment(
+        service,
+        userId,
+        tripId,
+        transferId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async actOnSettlementPayment(
+      userId,
+      tripId,
+      paymentId,
+      action,
+      idempotencyKey,
+      input,
+    ) {
+      return actOnSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        action,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async correctSettlementPayment(userId, tripId, paymentId, idempotencyKey, input) {
+      return correctSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async readPersonalSettlementPayments(userId, tripId) {
+      return readPersonalSettlementPayments(service, userId, tripId);
+    },
+
+    async readPersonalPaymentFxProjections(userId, tripId) {
+      return readPersonalPaymentFxProjections(service, userId, tripId);
+    },
+
+    async pullPersonalSettlementPaymentChanges(userId, tripId, cursor) {
+      return readPersonalSettlementPaymentChanges(service, userId, tripId, cursor);
+    },
+
+    async createPersonalSettlementPayment(userId, tripId, operationId, input) {
+      const response = await mutatePersonalSettlementPayment(
+        service,
+        userId,
+        tripId,
+        input.id,
+        operationId,
+        "CREATE",
+        null,
+        input,
+      );
+      wakeForPayment(response);
+      return response;
+    },
+
+    async updatePersonalSettlementPayment(userId, tripId, paymentId, operationId, input) {
+      const response = await mutatePersonalSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        operationId,
+        "UPDATE",
+        input.baseRevision,
+        input,
+      );
+      wakeForPayment(response);
+      return response;
+    },
+
+    async deletePersonalSettlementPayment(userId, tripId, paymentId, operationId, input) {
+      return mutatePersonalSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        operationId,
+        "DELETE",
+        input.baseRevision,
+        input,
+      );
+    },
+
+    async createLedgerExpense(userId, tripId, idempotencyKey, input) {
+      const result = await createLedgerExpenseAggregate(
+        service,
+        userId,
+        tripId,
+        idempotencyKey,
+        input,
+      );
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async executeExpenseCommand(userId, tripId, expenseId, key, input) {
+      const result = ledgerExpenseMutationResponseSchema.parse(
+        await executeExpenseCommand(service, userId, tripId, expenseId, key, input),
+      );
+      const receipt = result.receipt;
+      if (
+        !receipt ||
+        receipt.commandId !== input.envelope.commandId ||
+        receipt.operationId !== input.envelope.commandId ||
+        receipt.idempotencyKey !== key ||
+        receipt.commandType !== input.envelope.patchOrIntent.type ||
+        receipt.intentSequence !== input.envelope.intentSequence ||
+        receipt.expenseId !== result.entity.id ||
+        receipt.canonicalRevision !== result.revision
+      )
+        throw new Error("Typed Expense receipt correlation failed.");
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+    async readExpenseConflictChain(userId, tripId, expenseId) {
+      return readExpenseConflictChain(service, userId, tripId, expenseId);
+    },
+    async resolveExpenseConflictChain(userId, tripId, expenseId, key, input) {
+      const chain = await service.rpc("ledger_expense_chain_v2", {
+        target_journey: tripId,
+        target_expense: expenseId,
+      });
+      if (chain.error) throw new Error("Expense conflict chain read failed.");
+      const stored = chain.data as {
+        records: {
+          conflictId: string;
+          lifecycle: string;
+          body: { error?: { commandId?: string; envelope?: unknown } };
+        }[];
+      };
+      const primary = stored.records.find(
+        (record) =>
+          record.lifecycle === "OPEN" &&
+          input.coveredConflictIds.includes(record.conflictId) &&
+          record.body.error?.commandId === input.commandId,
+      );
+      const originalEnvelope = expenseIntentEnvelopeSchema.safeParse(
+        primary?.body.error?.envelope,
+      );
+      const result = await executeExpenseCommand(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        key,
+        {
+          envelope: resolutionEnvelope(
+            key,
+            input,
+            originalEnvelope.success ? originalEnvelope.data : null,
+          ),
+          auditReason: input.reason,
+        },
+        input,
+      );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      const response = expenseConflictChainResolutionResponseSchema.parse(result);
+      if (
+        response.resolutionReceipt.commandId !== input.commandId ||
+        response.resolutionReceipt.operationId !== input.commandId ||
+        response.resolutionReceipt.commandType !== input.intentType ||
+        response.resolutionReceipt.idempotencyKey !== key
+      )
+        throw new Error("Expense resolution receipt correlation failed.");
+      return response;
+    },
+
+    async updateLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
+      const result = await mutateLedgerExpenseAggregate(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        "UPDATE_EXPENSE",
+        input,
+      );
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async completeLedgerEconomicDate(userId, tripId, expenseId, idempotencyKey, input) {
+      const response = await completeLedgerEconomicDate(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+      wakeForExpense(response);
+      return response;
+    },
+
+    async inspectLedgerEconomicDate(_userId, tripId, expenseId) {
+      return inspectLedgerEconomicDate(service, tripId, expenseId);
+    },
+
+    async deleteLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
+      const result = await mutateLedgerExpenseAggregate(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        "DELETE_EXPENSE",
+        input,
+      );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async restoreLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
+      const result = await mutateLedgerExpenseAggregate(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        "RESTORE_EXPENSE",
+        input,
+      );
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async resolveLedgerExpenseConflict(userId, tripId, expenseId, idempotencyKey, input) {
+      const result = await resolveLedgerExpenseConflict(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async createLedgerCorrection(userId, tripId, expenseId, idempotencyKey, input) {
+      return createLedgerCorrection(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async actOnLedgerCorrection(
+      userId,
+      tripId,
+      correctionId,
+      action,
+      idempotencyKey,
+      input,
+    ) {
+      const result = await actOnLedgerCorrection(
+        service,
+        userId,
+        tripId,
+        correctionId,
+        action,
+        idempotencyKey,
+        input,
+      );
+      wakeForExpense(result);
+      return result;
+    },
+
+    async addLedgerPaymentRecord(userId, tripId, expenseId, idempotencyKey, input) {
+      const result = await addLedgerPaymentRecord(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async applyLedgerValuation(userId, tripId, expenseId, idempotencyKey, input) {
+      const result = await applyLedgerValuation(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+
+    async createFinalizedSettlementGuardFixture(_userId, tripId, expenseId) {
+      await createFinalizedSettlementGuardFixture(service, tripId, expenseId);
+      return { ok: true };
+    },
+
+    createReceipt(userId, tripId, receiptId, input) {
+      return createReceipt(service, userId, tripId, receiptId, input);
+    },
+
+    uploadReceiptContent(userId, tripId, receiptId, bytes, mimeType) {
+      return uploadReceiptContent(service, userId, tripId, receiptId, bytes, mimeType);
+    },
+    downloadReceiptContent(userId, tripId, receiptId) {
+      return downloadReceiptContent(service, userId, tripId, receiptId);
+    },
+    statReceiptContent(userId, tripId, receiptId) {
+      return statReceiptContent(service, userId, tripId, receiptId);
+    },
+
+    completeReceipt(userId, tripId, receiptId, key, input) {
+      return completeReceipt(service, userId, tripId, receiptId, key, input);
+    },
+
+    linkReceipt(userId, tripId, receiptId, key, expenseId) {
+      return linkReceipt(service, userId, tripId, receiptId, key, expenseId);
+    },
+
+    deleteExpenseReceipt(userId, tripId, receiptId) {
+      return deleteExpenseReceipt(service, tripId, receiptId);
+    },
+
+    listPersonalPaymentAttachments(userId, tripId, paymentId) {
+      return listPersonalPaymentAttachments(service, userId, tripId, paymentId);
+    },
+
+    linkPersonalPaymentAttachment(userId, tripId, paymentId, receiptId, key) {
+      return linkPersonalPaymentAttachment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        receiptId,
+        key,
+      );
+    },
+
+    unlinkPersonalPaymentAttachment(userId, tripId, paymentId, receiptId, key) {
+      return unlinkPersonalPaymentAttachment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        receiptId,
+        key,
+      );
+    },
+
+    ocrReceipt(userId, tripId, receiptId, key) {
+      return ocrReceipt(service, receiptOcrProvider, userId, tripId, receiptId, key);
+    },
+
+    findExpense(id) {
+      return findOne(service, "ledger_entries", id);
+    },
+
+    async createExpense(id, tripId, userId, input) {
+      const occurredAt = input.occurredAt ? new Date(input.occurredAt) : new Date();
+      const amount = (input.amountMinor / 100).toFixed(2);
+      const result = await service
+        .from("ledger_entries")
+        .insert({
+          id,
+          journey_id: tripId,
+          title: input.title,
+          expense_date: occurredAt.toISOString().slice(0, 10),
+          original_amount: amount,
+          original_currency: input.currencyCode,
+          base_amount: amount,
+          base_currency: input.currencyCode,
+          exchange_rate: 1,
+          payer_member_id: input.paidByMemberId,
+          created_by_user_id: userId,
+        })
+        .select("id, journey_id, created_by_user_id, updated_at")
+        .single();
+
+      if (result.error?.code === "23505") {
+        const existing = await findOne(service, "ledger_entries", id);
+        if (existing) return existing;
+      }
+      return rowToStoredCreate(await requireData(result));
+    },
+
+    findItineraryItem(id) {
+      return findOne(service, "itinerary_events", id);
+    },
+
+    async createItineraryItem(id, tripId, userId, input) {
+      const time = input.startTime ?? "00:00";
+      const result = await service
+        .from("itinerary_events")
+        .insert({
+          id,
+          trip_id: tripId,
+          title: input.title,
+          description: input.notes,
+          location_name: input.location,
+          location_text: input.location,
+          planned_start: `${input.scheduledDate}T${time}:00.000Z`,
+          is_estimated_time: input.startTime === null,
+          created_by: userId,
+        })
+        .select("id, trip_id, created_by, updated_at")
+        .single();
+
+      if (result.error?.code === "23505") {
+        const existing = await findOne(service, "itinerary_events", id);
+        if (existing) return existing;
+      }
+      return rowToStoredCreate(await requireData(result));
+    },
+  };
+}
+
+const receiptColumns =
+  "id, journey_id, expense_id, deleted_at, local_id, created_by, storage_provider, object_path, mime_type, size_bytes, sha256, upload_status, ocr_status, ocr_suggestion, created_at, updated_at";
+
+function receiptRowToDto(row: Record<string, unknown>): ReceiptDto {
+  return {
+    id: String(row.id),
+    localId: String(row.local_id),
+    journeyId: String(row.journey_id),
+    expenseId: row.expense_id ? String(row.expense_id) : null,
+    deletedAt: row.deleted_at ? String(row.deleted_at) : null,
+    objectPath: String(row.object_path),
+    mimeType: row.mime_type as ReceiptDto["mimeType"],
+    sizeBytes: Number(row.size_bytes),
+    sha256: String(row.sha256),
+    uploadStatus: row.upload_status as ReceiptDto["uploadStatus"],
+    ocrStatus: row.ocr_status as ReceiptDto["ocrStatus"],
+    ocrSuggestion: row.ocr_suggestion as ReceiptDto["ocrSuggestion"],
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+async function filterReadableReceipts(
+  service: SupabaseClient,
+  userId: string,
+  readablePaymentIds: string[],
+  rows: Record<string, unknown>[],
+) {
+  const links = readablePaymentIds.length
+    ? await service
+        .from("personal_settlement_payment_attachments")
+        .select("asset_id")
+        .in("record_id", readablePaymentIds)
+        .is("deleted_at", null)
+    : { data: [], error: null };
+  if (links.error)
+    throw new Error("Supabase Dev Personal Payment attachment projection failed.");
+  const allowed = new Set((links.data ?? []).map((link) => String(link.asset_id)));
+  return rows.filter(
+    (row) =>
+      Boolean(row.expense_id) ||
+      String(row.created_by) === userId ||
+      allowed.has(String(row.id)),
+  );
+}
+
+async function readReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const result = await service
+    .from("receipt_assets")
+    .select(`${receiptColumns}, created_by, uploaded_size_bytes, uploaded_sha256`)
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .eq("created_by", userId)
+    .maybeSingle();
+  if (result.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!result.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  if (result.data.deleted_at)
+    throw new BackendError(409, "EXPENSE_ATTACHMENT_DELETED", "Receipt is deleted.");
+  return result.data as Record<string, unknown>;
+}
+
+export async function readDownloadableReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const result = await service
+    .from("receipt_assets")
+    .select(`${receiptColumns}, created_by, uploaded_size_bytes, uploaded_sha256`)
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (result.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!result.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  if (result.data.deleted_at)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  const link = await service
+    .from("personal_settlement_payment_attachments")
+    .select("record_id")
+    .eq("journey_id", tripId)
+    .eq("asset_id", receiptId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (link.error) throw new Error("Supabase Dev attachment lookup failed.");
+  if (link.data) {
+    const allowed = await service.rpc("ledger_can_read_personal_settlement_payment_1a", {
+      actor_user: userId,
+      target_record: link.data.record_id,
+    });
+    if (!allowed.error && allowed.data === true)
+      return result.data as Record<string, unknown>;
+  }
+  if (result.data.expense_id) {
+    const [creator, legacy, member] = await Promise.all([
+      service
+        .from("trips")
+        .select("id")
+        .eq("id", tripId)
+        .eq("created_by", userId)
+        .limit(1),
+      service
+        .from("trip_members")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId)
+        .limit(1),
+      service
+        .from("journey_members")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId)
+        .eq("status", "linked")
+        .limit(1),
+    ]);
+    if (creator.error || legacy.error || member.error)
+      throw new Error("Supabase Dev receipt membership lookup failed.");
+    if (creator.data.length || legacy.data.length || member.data.length)
+      return result.data as Record<string, unknown>;
+  }
+  if (String(result.data.created_by) === userId) {
+    const current = await service
+      .from("journey_members")
+      .select("id")
+      .eq("trip_id", tripId)
+      .eq("user_id", userId)
+      .eq("status", "linked")
+      .maybeSingle();
+    if (current.error) throw new Error("Supabase Dev receipt membership lookup failed.");
+    if (current.data) return result.data as Record<string, unknown>;
+  }
+  throw new BackendError(403, "RECEIPT_READ_FORBIDDEN", "Receipt access is forbidden.");
+}
+
+export async function downloadReceiptContent(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const row = await readDownloadableReceipt(service, userId, tripId, receiptId);
+  if (row.upload_status !== "UPLOADED" || !row.object_path)
+    throw new BackendError(
+      409,
+      "RECEIPT_NOT_DOWNLOADABLE",
+      "Receipt content is not canonical.",
+    );
+  const storage = resolveAttachmentStorageProvider(
+    row.storage_provider,
+    createSupabaseAttachmentStorageProvider(service),
+  );
+  return {
+    bytes: await storage.read(String(row.object_path)),
+    mimeType: String(row.mime_type),
+  };
+}
+
+export async function statReceiptContent(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const row = await readDownloadableReceipt(service, userId, tripId, receiptId);
+  if (row.upload_status !== "UPLOADED" || !row.object_path)
+    throw new BackendError(
+      409,
+      "RECEIPT_NOT_DOWNLOADABLE",
+      "Receipt content is not canonical.",
+    );
+  const storage = resolveAttachmentStorageProvider(
+    row.storage_provider,
+    createSupabaseAttachmentStorageProvider(service),
+  );
+  const stat = await storage.stat(String(row.object_path));
+  if (
+    !stat ||
+    stat.byteCount !== Number(row.size_bytes) ||
+    stat.sha256 !== row.sha256 ||
+    stat.contentType !== row.mime_type
+  )
+    throw new BackendError(
+      409,
+      "RECEIPT_REMOTE_MISMATCH",
+      "Receipt content is not verified.",
+    );
+  return {
+    sizeBytes: stat.byteCount,
+    sha256: stat.sha256,
+    mimeType: String(row.mime_type),
+    objectPath: String(row.object_path),
+  };
+}
+
+export async function createReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  input: CreateReceiptRequest,
+) {
+  let existing = await service
+    .from("receipt_assets")
+    .select(receiptColumns)
+    .eq("id", receiptId)
+    .maybeSingle();
+  if (existing.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!existing.data) {
+    existing = await service
+      .from("receipt_assets")
+      .select(receiptColumns)
+      .eq("journey_id", tripId)
+      .eq("created_by", userId)
+      .eq("local_id", input.localId)
+      .maybeSingle();
+    if (existing.error) throw new Error("Supabase Dev receipt lookup failed.");
+  }
+  if (existing.data) {
+    const row = existing.data as Record<string, unknown>;
+    if (row.deleted_at)
+      throw new BackendError(409, "EXPENSE_ATTACHMENT_DELETED", "Receipt is deleted.");
+    if (
+      String(row.journey_id) !== tripId ||
+      String(row.created_by) !== userId ||
+      String(row.local_id) !== input.localId ||
+      String(row.mime_type) !== input.mimeType ||
+      Number(row.size_bytes) !== input.sizeBytes ||
+      String(row.sha256) !== input.sha256 ||
+      (input.expenseId && String(row.expense_id) !== input.expenseId)
+    )
+      throw new BackendError(
+        409,
+        "IDEMPOTENCY_CONFLICT",
+        "The receipt idempotency key conflicts.",
+      );
+    return { entity: receiptRowToDto(row), idempotentReplay: true };
+  }
+  const objectPath = `${tripId}/${receiptId}/original`;
+  if (input.expenseId) {
+    const expense = await service
+      .from("expenses")
+      .select("id")
+      .eq("id", input.expenseId)
+      .eq("journey_id", tripId)
+      .maybeSingle();
+    if (expense.error || !expense.data)
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "The Expense does not exist.");
+  }
+  const inserted = await service
+    .from("receipt_assets")
+    .insert({
+      id: receiptId,
+      journey_id: tripId,
+      expense_id: input.expenseId ?? null,
+      local_id: input.localId,
+      created_by: userId,
+      storage_provider: SUPABASE_ATTACHMENT_PROVIDER,
+      object_path: objectPath,
+      mime_type: input.mimeType,
+      size_bytes: input.sizeBytes,
+      sha256: input.sha256,
+    })
+    .select(receiptColumns)
+    .single();
+  if (inserted.error?.message.includes("EXPENSE_ATTACHMENT_LIMIT_REACHED"))
+    throw new BackendError(
+      409,
+      "EXPENSE_ATTACHMENT_LIMIT_REACHED",
+      "Maximum three attachments per Expense.",
+    );
+  if (inserted.error || !inserted.data)
+    throw new Error("Supabase Dev receipt create failed.");
+  return {
+    entity: receiptRowToDto(inserted.data as Record<string, unknown>),
+    idempotentReplay: false,
+  };
+}
+
+export async function uploadReceiptContent(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  bytes: Uint8Array,
+  _mimeType: string,
+) {
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  const actual = createHash("sha256").update(bytes).digest("hex");
+  if (bytes.byteLength !== Number(row.size_bytes) || actual !== row.sha256)
+    throw new BackendError(
+      422,
+      "RECEIPT_CONTENT_MISMATCH",
+      "Receipt content does not match its metadata.",
+    );
+  const storage = resolveAttachmentStorageProvider(
+    row.storage_provider,
+    createSupabaseAttachmentStorageProvider(service),
+  );
+  await storage.put(String(row.object_path), bytes, String(row.mime_type));
+  const updated = await service
+    .from("receipt_assets")
+    .update({ uploaded_size_bytes: bytes.byteLength, uploaded_sha256: actual })
+    .eq("id", receiptId)
+    .select(receiptColumns)
+    .single();
+  if (updated.error || !updated.data)
+    throw new Error("Supabase Dev receipt upload record failed.");
+  return {
+    entity: receiptRowToDto(updated.data as Record<string, unknown>),
+    idempotentReplay: false,
+  };
+}
+
+async function completeReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  key: string,
+  input: CompleteReceiptRequest,
+) {
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  if (
+    input.objectPath !== row.object_path ||
+    input.sizeBytes !== Number(row.size_bytes) ||
+    input.sha256 !== row.sha256 ||
+    Number(row.uploaded_size_bytes) !== input.sizeBytes ||
+    row.uploaded_sha256 !== input.sha256
+  )
+    throw new BackendError(
+      422,
+      "RECEIPT_COMPLETION_MISMATCH",
+      "Receipt completion validation failed.",
+    );
+  const replay = await receiptReplay(
+    service,
+    userId,
+    tripId,
+    "COMPLETE_RECEIPT",
+    key,
+    input,
+  );
+  if (replay) return replay;
+  const updated = await service
+    .from("receipt_assets")
+    .update({ upload_status: "UPLOADED" })
+    .eq("id", receiptId)
+    .select(receiptColumns)
+    .single();
+  if (updated.error || !updated.data)
+    throw new Error("Supabase Dev receipt completion failed.");
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "COMPLETE_RECEIPT",
+    key,
+    input,
+    receiptRowToDto(updated.data as Record<string, unknown>),
+  );
+}
+
+async function linkReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  key: string,
+  expenseId: string,
+) {
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
+  const replay = await receiptReplay(service, userId, tripId, "LINK_RECEIPT", key, {
+    expenseId,
+  });
+  if (replay) return replay;
+  if (receipt.expense_id && receipt.expense_id !== expenseId)
+    throw new BackendError(409, "RECEIPT_ALREADY_LINKED", "Receipt is already linked.");
+  const expense = await service
+    .from("expenses")
+    .select("id")
+    .eq("id", expenseId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (expense.error || !expense.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Expense does not exist.");
+  const updated = await service
+    .from("receipt_assets")
+    .update({ expense_id: expenseId })
+    .eq("id", receiptId)
+    .select(receiptColumns)
+    .single();
+  if (updated.error?.message.includes("EXPENSE_ATTACHMENT_LIMIT_REACHED"))
+    throw new BackendError(
+      409,
+      "EXPENSE_ATTACHMENT_LIMIT_REACHED",
+      "Maximum three attachments per Expense.",
+    );
+  if (updated.error || !updated.data)
+    throw new Error("Supabase Dev receipt link failed.");
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "LINK_RECEIPT",
+    key,
+    { expenseId },
+    receiptRowToDto(updated.data as Record<string, unknown>),
+  );
+}
+
+export async function deleteExpenseReceipt(
+  service: SupabaseClient,
+  tripId: string,
+  receiptId: string,
+) {
+  const found = await service
+    .from("receipt_assets")
+    .select(receiptColumns)
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (found.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!found.data?.expense_id)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense attachment does not exist.");
+  const evidence = await service
+    .from("personal_settlement_payment_attachments")
+    .select("id")
+    .eq("asset_id", receiptId)
+    .is("deleted_at", null)
+    .limit(1);
+  if (evidence.error) throw new Error("Supabase Dev receipt evidence lookup failed.");
+  if (evidence.data.length)
+    throw new BackendError(
+      409,
+      "RECEIPT_IS_PAYMENT_EVIDENCE",
+      "Payment evidence is protected.",
+    );
+  if (found.data.deleted_at)
+    return { entity: receiptRowToDto(found.data), idempotentReplay: true };
+  const updated = await service
+    .from("receipt_assets")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .is("deleted_at", null)
+    .select(receiptColumns)
+    .maybeSingle();
+  if (updated.error) throw new Error("Supabase Dev receipt deletion failed.");
+  if (!updated.data) return deleteExpenseReceipt(service, tripId, receiptId);
+  return { entity: receiptRowToDto(updated.data), idempotentReplay: false };
+}
+
+async function listPersonalPaymentAttachments(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+) {
+  const links = await service.rpc(
+    "ledger_list_personal_settlement_payment_attachments_1a",
+    { actor_user: userId, target_journey: tripId, target_record: paymentId },
+  );
+  if (links.error)
+    throw new Error("Supabase Dev Personal Payment attachment read failed.");
+  const ids = (links.data ?? [])
+    .filter((link: Record<string, unknown>) => !link.deleted_at)
+    .map((link: Record<string, unknown>) => String(link.asset_id));
+  if (!ids.length) return [];
+  const assets = await service
+    .from("receipt_assets")
+    .select(receiptColumns)
+    .in("id", ids);
+  if (assets.error) throw new Error("Supabase Dev attachment asset read failed.");
+  return (assets.data ?? []).map((row) =>
+    receiptRowToDto(row as Record<string, unknown>),
+  );
+}
+
+async function linkPersonalPaymentAttachment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  receiptId: string,
+  key: string,
+) {
+  const payload = { paymentId, receiptId };
+  const replay = await receiptReplay(
+    service,
+    userId,
+    tripId,
+    "LINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+  );
+  if (replay) return replay;
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
+  if (receipt.upload_status !== "UPLOADED")
+    throw new BackendError(
+      409,
+      "RECEIPT_UPLOAD_PENDING",
+      "Receipt upload must complete first.",
+    );
+  const inserted = await service.from("personal_settlement_payment_attachments").insert({
+    id: receiptId,
+    journey_id: tripId,
+    record_id: paymentId,
+    asset_id: receiptId,
+    created_by_user_id: userId,
+    last_operation_id: key,
+  });
+  if (inserted.error) {
+    if (inserted.error.message.includes("PERSONAL_PAYMENT_ATTACHMENT_INVALID"))
+      throw new BackendError(
+        403,
+        "PERSONAL_PAYMENT_ATTACHMENT_FORBIDDEN",
+        "Only the current record owner can add an attachment.",
+      );
+    throw new Error("Supabase Dev Personal Payment attachment link failed.");
+  }
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "LINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+    receiptRowToDto(receipt),
+  );
+}
+
+async function unlinkPersonalPaymentAttachment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  receiptId: string,
+  key: string,
+) {
+  const payload = { paymentId, receiptId };
+  const replay = await receiptReplay(
+    service,
+    userId,
+    tripId,
+    "UNLINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+  );
+  if (replay) return replay;
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
+  const updated = await service
+    .from("personal_settlement_payment_attachments")
+    .update({
+      revision: 2,
+      last_operation_id: key,
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("journey_id", tripId)
+    .eq("record_id", paymentId)
+    .eq("asset_id", receiptId)
+    .eq("created_by_user_id", userId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (updated.error || !updated.data)
+    throw new BackendError(
+      403,
+      "PERSONAL_PAYMENT_ATTACHMENT_FORBIDDEN",
+      "Only the current record owner can remove an attachment.",
+    );
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "UNLINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+    receiptRowToDto(receipt),
+  );
+}
+
+export async function ocrReceipt(
+  service: SupabaseClient,
+  provider: ReceiptOcrProvider,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  key: string,
+) {
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  if (row.expense_id)
+    throw new BackendError(
+      409,
+      "EXPENSE_SCAN_NOT_AVAILABLE",
+      "Existing Expense attachments cannot request OCR.",
+    );
+  const replay = await receiptReplay(service, userId, tripId, "OCR_RECEIPT", key, {});
+  if (replay) return replay;
+  if (row.upload_status !== "UPLOADED")
+    throw new BackendError(
+      409,
+      "RECEIPT_UPLOAD_PENDING",
+      "Receipt upload must complete first.",
+    );
+  await service
+    .from("receipt_assets")
+    .update({ ocr_status: "RUNNING" })
+    .eq("id", receiptId);
+  try {
+    const storage = resolveAttachmentStorageProvider(
+      row.storage_provider,
+      createSupabaseAttachmentStorageProvider(service),
+    );
+    const suggestion = await extractReceiptSuggestion(provider, {
+      bytes: await storage.read(String(row.object_path)),
+      mimeType: String(row.mime_type),
+    });
+    const updated = await service
+      .from("receipt_assets")
+      .update({ ocr_status: "SUCCEEDED", ocr_suggestion: suggestion })
+      .eq("id", receiptId)
+      .select(receiptColumns)
+      .single();
+    if (updated.error || !updated.data)
+      throw new Error("Supabase Dev OCR persistence failed.");
+    return storeReceiptReplay(
+      service,
+      userId,
+      tripId,
+      "OCR_RECEIPT",
+      key,
+      {},
+      receiptRowToDto(updated.data as Record<string, unknown>),
+    );
+  } catch (error) {
+    await service
+      .from("receipt_assets")
+      .update({ ocr_status: "FAILED", ocr_suggestion: null })
+      .eq("id", receiptId);
+    throw error;
+  }
+}
+
+async function receiptReplay(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  command: string,
+  key: string,
+  payload: unknown,
+) {
+  const found = await service
+    .from("ledger_idempotency_keys")
+    .select("payload_hash, response_body")
+    .eq("actor_user_id", userId)
+    .eq("journey_id", tripId)
+    .eq("command_type", command)
+    .eq("idempotency_key", key)
+    .maybeSingle();
+  if (found.error) throw new Error("Supabase Dev idempotency lookup failed.");
+  if (!found.data) return null;
+  if (found.data.payload_hash !== hashPayload(payload))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  const response = found.data.response_body as { entity: ReceiptDto };
+  return { ...response, idempotentReplay: true };
+}
+
+async function storeReceiptReplay(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  command: string,
+  key: string,
+  payload: unknown,
+  entity: ReceiptDto,
+) {
+  const response = { entity, idempotentReplay: false };
+  const inserted = await service.from("ledger_idempotency_keys").insert({
+    actor_user_id: userId,
+    journey_id: tripId,
+    command_type: command,
+    idempotency_key: key,
+    payload_hash: hashPayload(payload),
+    response_status: 200,
+    response_body: response,
+    completed_at: new Date().toISOString(),
+  });
+  if (inserted.error) throw new Error("Supabase Dev idempotency persistence failed.");
+  return response;
+}
+
+async function createLedgerExpenseAggregate(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  idempotencyKey: string,
+  input: CreateLedgerExpenseRequest,
+) {
+  const response = buildLedgerExpenseCreateResponse(userId, tripId, input);
+  await validateCanonicalExpense(service, tripId, {
+    ...response.entity,
+    status: response.entity.businessStatus,
+  });
+  const result = await service.rpc("ledger_create_expense_4a", {
+    actor_user: userId,
+    target_journey: tripId,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    response_body_value: response,
+  });
+
+  if (result.error?.message.includes("IDEMPOTENCY_CONFLICT")) {
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  }
+  if (result.error?.message.includes("FINALIZED_SETTLEMENT_PROTECTED")) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this mutation.",
+    );
+  }
+  if (result.error) throw new Error("Supabase Dev Ledger create failed.");
+
+  return result.data as typeof response;
+}
+
+function buildLedgerExpenseCreateResponse(
+  userId: string,
+  tripId: string,
+  input: CreateLedgerExpenseRequest,
+  serverId: string = randomUUID(),
+  valuationId: string = randomUUID(),
+) {
+  const now = new Date().toISOString();
+  const valuation = input.valuation
+    ? {
+        id: valuationId,
+        policy: input.valuation.policy,
+        original: input.valuation.original,
+        settlement: input.valuation.settlement,
+        rateSnapshotId: input.valuation.rateSnapshotId,
+        paymentRecordId: input.valuation.paymentRecordId,
+        reason: input.valuation.reason,
+      }
+    : null;
+  const entity = {
+    id: serverId,
+    journeyId: tripId,
+    creatorMemberId: null,
+    payerMemberId: input.payerMemberId,
+    title: input.title,
+    description: input.description,
+    category: input.category,
+    occurredAt: input.occurredAt,
+    economicDate: input.economicDate ?? null,
+    original: input.original,
+    businessStatus: input.businessStatus,
+    settlementParticipation: input.settlementParticipation ?? "INCLUDED",
+    revision: 1,
+    deletedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    participants: input.participants,
+    splits: input.splits,
+    valuation,
+    paymentRecords: [],
+    auditEvents: [
+      {
+        id: randomUUID(),
+        expenseId: serverId,
+        actorUserId: userId,
+        actorMemberId: null,
+        eventType: "CREATED",
+        reason: null,
+        changedGroups: ["FINANCIAL_CORE", "DESCRIPTIVE"],
+        revision: 1,
+        createdAt: now,
+      },
+    ],
+  };
+  return {
+    entity,
+    serverId,
+    revision: 1,
+    updatedAt: now,
+    idempotentReplay: false,
+  };
+}
+
+async function createFinalizedSettlementGuardFixture(
+  service: SupabaseClient,
+  tripId: string,
+  expenseId: string,
+) {
+  const valuation = await service
+    .from("settlement_valuation_snapshots")
+    .select("id")
+    .eq("expense_id", expenseId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (valuation.error || !valuation.data) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The valuation was not found.");
+  }
+
+  const expense = await service
+    .from("expenses")
+    .select("revision")
+    .eq("id", expenseId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (expense.error || !expense.data) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  }
+
+  const settlementId = randomUUID();
+  const settlement = await service.from("settlements").insert({
+    id: settlementId,
+    journey_id: tripId,
+    settlement_currency: "NZD",
+    settlement_scale: 2,
+    status: "FINALIZED",
+    through_timestamp: new Date().toISOString(),
+    input_digest: `stage4b-${settlementId}`,
+    algorithm_version: "stage4b-guard-fixture",
+  });
+  if (settlement.error) throw new Error("Supabase Dev guard fixture failed.");
+
+  const input = await service.from("settlement_inputs").insert({
+    settlement_id: settlementId,
+    journey_id: tripId,
+    expense_id: expenseId,
+    expense_revision: Number(expense.data.revision),
+    valuation_snapshot_id: String(valuation.data.id),
+  });
+  if (input.error) throw new Error("Supabase Dev guard fixture failed.");
+}
+
+async function mutateLedgerExpenseAggregate(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  commandType: "UPDATE_EXPENSE" | "DELETE_EXPENSE" | "RESTORE_EXPENSE",
+  input: UpdateLedgerExpenseRequest | LifecycleLedgerExpenseRequest,
+) {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  }
+
+  const now = new Date().toISOString();
+  const nextRevision = input.baseRevision + 1;
+  const eventType =
+    commandType === "UPDATE_EXPENSE"
+      ? "EDITED"
+      : commandType === "DELETE_EXPENSE"
+        ? "DELETED"
+        : "RESTORED";
+  const changedGroups =
+    commandType === "UPDATE_EXPENSE"
+      ? changedExpenseGroups(editableExpense(current), {
+          ...(input as UpdateLedgerExpenseRequest),
+        })
+      : ["LIFECYCLE"];
+  const updateInput = input as UpdateLedgerExpenseRequest;
+  const edited =
+    commandType === "UPDATE_EXPENSE" ? safeEconomicDateEdit(current, updateInput) : null;
+  const entity: LedgerExpenseDto =
+    commandType === "UPDATE_EXPENSE"
+      ? {
+          id: expenseId,
+          journeyId: tripId,
+          creatorMemberId: current.creatorMemberId,
+          payerMemberId: updateInput.payerMemberId,
+          title: updateInput.title,
+          description: updateInput.description,
+          category: updateInput.category,
+          occurredAt: updateInput.occurredAt,
+          economicDate: edited!.economicDate ?? null,
+          original: updateInput.original,
+          businessStatus: edited!.businessStatus,
+          settlementParticipation:
+            updateInput.settlementParticipation ?? current.settlementParticipation,
+          revision: nextRevision,
+          deletedAt: null,
+          createdAt: current.createdAt,
+          updatedAt: now,
+          participants: updateInput.participants,
+          splits: edited!.splits,
+          valuation: edited!.valuation
+            ? { id: randomUUID(), ...edited!.valuation }
+            : null,
+          paymentRecords: current.paymentRecords,
+          auditEvents: [],
+        }
+      : {
+          ...current,
+          businessStatus:
+            commandType === "DELETE_EXPENSE"
+              ? "DELETED"
+              : ((input as LifecycleLedgerExpenseRequest).businessStatus ?? "ACCEPTED"),
+          revision: nextRevision,
+          deletedAt: commandType === "DELETE_EXPENSE" ? now : null,
+          updatedAt: now,
+          auditEvents: [],
+        };
+  entity.auditEvents = current.auditEvents.concat({
+    id: randomUUID(),
+    expenseId,
+    actorUserId: userId,
+    actorMemberId: null,
+    eventType,
+    reason: input.auditReason ?? null,
+    changedGroups,
+    revision: nextRevision,
+    createdAt: now,
+  });
+  await validateCanonicalExpense(service, tripId, {
+    ...entity,
+    status: entity.businessStatus,
+  });
+  const response = {
+    entity,
+    serverId: expenseId,
+    revision: nextRevision,
+    updatedAt: now,
+    idempotentReplay: false,
+  };
+  const result = await service.rpc("ledger_mutate_expense_4b", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    command_type_value: commandType,
+    base_revision_value: input.baseRevision,
+    audit_reason_value: input.auditReason ?? null,
+    payload_hash_value: hashPayload(input),
+    idempotency_key_value: idempotencyKey,
+    response_body_value: response,
+  });
+
+  if (result.error?.message.includes("IDEMPOTENCY_CONFLICT")) {
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  }
+  if (result.error?.message.includes("REVISION_CONFLICT")) {
+    const canonical = await readOneExpenseAggregate(service, expenseId);
+    if (!canonical) {
+      throw new BackendError(
+        404,
+        "ENTITY_NOT_FOUND",
+        "The Ledger expense was not found.",
+      );
+    }
+    const conflictBody = {
+      error: {
+        code: "REVISION_CONFLICT",
+        conflictId: "00000000-0000-4000-8000-000000000000",
+        expenseId,
+        baseRevision: input.baseRevision,
+        currentRevision: canonical.revision,
+        submitted: editableExpense(entity),
+        current: canonical,
+        changedGroups: changedExpenseGroups(
+          editableExpense(entity),
+          editableExpense(canonical),
+        ),
+        auditSummaries: canonical.auditEvents.filter(
+          (event) => event.revision > input.baseRevision,
+        ),
+      },
+    };
+    const recorded = await service.rpc("ledger_record_conflict_4c", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_expense: expenseId,
+      command_type_value: commandType,
+      idempotency_key_value: idempotencyKey,
+      payload_hash_value: hashPayload(input),
+      conflict_body_value: conflictBody,
+    });
+    if (recorded.error) throw new Error("Supabase Dev conflict persistence failed.");
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "The base revision is stale.",
+      recorded.data,
+    );
+  }
+  if (result.error?.message.includes("ORGANIZER_REASON_REQUIRED")) {
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "An organizer override reason is required.",
+    );
+  }
+  if (result.error?.message.includes("TRIP_WRITE_FORBIDDEN")) {
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+  }
+  if (result.error?.message.includes("FINALIZED_SETTLEMENT_PROTECTED")) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this mutation.",
+    );
+  }
+  if (result.error?.message.includes("EXPENSE_DELETED"))
+    throw new BackendError(
+      409,
+      "EXPENSE_DELETED",
+      "Only RESTORE can revive a deleted Expense.",
+    );
+  if (result.error) throw new Error("Supabase Dev Ledger mutation failed.");
+
+  if (
+    (result.data as { error?: { code?: string } } | null)?.error?.code ===
+    "REVISION_CONFLICT"
+  ) {
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "The base revision is stale.",
+      result.data,
+    );
+  }
+
+  return result.data as typeof response;
+}
+
+async function inspectLedgerEconomicDate(
+  service: SupabaseClient,
+  tripId: string,
+  expenseId: string,
+): Promise<EconomicDateEvidenceResponse> {
+  const [expense, settings, audits, valuations, frozenInputs] = await Promise.all([
+    service
+      .from("expenses")
+      .select(
+        "id,journey_id,revision,occurred_at,economic_date,original_currency,business_status,deleted_at,import_provenance",
+      )
+      .eq("id", expenseId)
+      .eq("journey_id", tripId)
+      .single(),
+    service
+      .from("ledger_settings")
+      .select("settlement_currency")
+      .eq("journey_id", tripId)
+      .single(),
+    service
+      .from("expense_audit_events")
+      .select("expense_revision,changed_groups")
+      .eq("expense_id", expenseId)
+      .gt("expense_revision", 1),
+    service
+      .from("settlement_valuation_snapshots")
+      .select("id")
+      .eq("expense_id", expenseId)
+      .eq("is_active", true)
+      .limit(1),
+    service
+      .from("settlement_inputs")
+      .select("expense_revision,settlement_id")
+      .eq("expense_id", expenseId),
+  ]);
+  if (expense.error || !expense.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  if (settings.error || audits.error || valuations.error || frozenInputs.error)
+    throw new Error("Supabase Dev date evidence read failed.");
+  const row = expense.data;
+  const revision = Number(row.revision);
+  const unavailable: EconomicDateEvidenceResponse = {
+    disposition: "USER_ACTION_REQUIRED",
+    economicDate: null,
+    source: null,
+    expenseRevision: revision,
+  };
+  if (
+    row.economic_date ||
+    row.deleted_at ||
+    row.business_status !== "RATE_REQUIRED" ||
+    row.original_currency === settings.data.settlement_currency ||
+    (valuations.data ?? []).length > 0
+  )
+    return unavailable;
+  const relevantInputs = (frozenInputs.data ?? []).filter(
+    (input) => Number(input.expense_revision) >= revision,
+  );
+  if (relevantInputs.length) {
+    const settlements = await service
+      .from("settlements")
+      .select("id,status")
+      .in(
+        "id",
+        relevantInputs.map((input) => input.settlement_id),
+      );
+    if (settlements.error) throw new Error("Supabase Dev finalized input read failed.");
+    if (
+      (settlements.data ?? []).some((item) =>
+        ["FINALIZED", "PARTIALLY_PAID", "SETTLED"].includes(item.status),
+      )
+    )
+      return unavailable;
+  }
+  const evidence = classifyMissingEconomicDate({
+    occurredAt: String(row.occurred_at),
+    importProvenance: row.import_provenance as Record<string, unknown> | null,
+    conflictingDateEvidence: (audits.data ?? []).some((audit) =>
+      (audit.changed_groups as string[]).includes("FINANCIAL_CORE"),
+    ),
+  });
+  return evidence.disposition === "AUTO_SAFE"
+    ? {
+        disposition: "AUTO_SAFE",
+        economicDate: evidence.date,
+        source: evidence.source,
+        expenseRevision: revision,
+      }
+    : unavailable;
+}
+
+async function completeLedgerEconomicDate(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: CompleteEconomicDateRequest,
+): Promise<LedgerExpenseMutationResponse> {
+  const prior = await service
+    .from("ledger_idempotency_keys")
+    .select("payload_hash,response_body")
+    .eq("actor_user_id", userId)
+    .eq("journey_id", tripId)
+    .eq("command_type", "COMPLETE_ECONOMIC_DATE_V1")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+  if (prior.error) throw new Error("Supabase Dev date replay read failed.");
+  if (prior.data) {
+    if (prior.data.payload_hash !== hashPayload(input))
+      throw new BackendError(
+        409,
+        "IDEMPOTENCY_CONFLICT",
+        "The idempotency key conflicts.",
+      );
+    return {
+      ...(prior.data.response_body as LedgerExpenseMutationResponse),
+      idempotentReplay: true,
+    };
+  }
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  let economicDate: string;
+  if (input.source === "USER_CONFIRMED_V1") {
+    economicDate = input.economicDate;
+  } else {
+    const evidence = await inspectLedgerEconomicDate(service, tripId, expenseId);
+    if (evidence.disposition !== "AUTO_SAFE")
+      throw new BackendError(
+        409,
+        "ECONOMIC_DATE_EVIDENCE_REJECTED",
+        "Transaction date needs confirmation.",
+      );
+    economicDate = evidence.economicDate;
+  }
+  const response = mutationResponse(
+    current,
+    { ...editableExpense(current), economicDate },
+    userId,
+    "ECONOMIC_DATE_COMPLETED",
+    "Completed missing transaction date evidence.",
+    ["FINANCIAL_CORE"],
+  );
+  // This command fills evidence only; the generic date-edit helper also clears
+  // derived split values, which this narrow RPC intentionally does not edit.
+  response.entity.splits = current.splits;
+  const result = await service.rpc("ledger_complete_expense_economic_date_v1", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    expected_revision: input.baseRevision,
+    confirmed_date: economicDate,
+    evidence_source: input.source,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    response_body_value: response,
+  });
+  const message = result.error?.message ?? "";
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("REVISION_CONFLICT"))
+    throw new BackendError(409, "REVISION_CONFLICT", "The Expense changed; refresh it.");
+  if (message.includes("FINALIZED_SETTLEMENT_PROTECTED"))
+    throw new BackendError(409, "SETTLEMENT_INPUT_STALE", "This revision is protected.");
+  if (
+    message.includes("ECONOMIC_DATE_NOT_ELIGIBLE") ||
+    message.includes("ECONOMIC_DATE_EVIDENCE_REJECTED")
+  )
+    throw new BackendError(
+      409,
+      "ECONOMIC_DATE_EVIDENCE_REJECTED",
+      "Date evidence changed; refresh it.",
+    );
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(
+      403,
+      "TRIP_WRITE_FORBIDDEN",
+      "Expense write access is required.",
+    );
+  if (result.error) throw new Error("Supabase Dev date completion failed.");
+  return result.data as LedgerExpenseMutationResponse;
+}
+
+async function validateCanonicalExpense(
+  service: SupabaseClient,
+  tripId: string,
+  expense: Parameters<typeof assertValidExpenseAggregate>[0],
+) {
+  const members = await service
+    .from("journey_members")
+    .select("id")
+    .eq("trip_id", tripId);
+  if (members.error) throw new Error("Supabase Dev member validation failed.");
+  try {
+    assertValidExpenseAggregate(
+      expense,
+      new Set((members.data ?? []).map((member) => String(member.id))),
+    );
+  } catch (error) {
+    if (error instanceof LedgerValidationError)
+      throw new BackendError(422, error.code, error.message, {
+        error: { issues: error.issues },
+      });
+    throw error;
+  }
+}
+
+type ClaimedRateDemand = {
+  journey_id: string;
+  economic_date: string;
+  quote_currency: string;
+  base_currency: string;
+  policy_version: string;
+};
+
+function negativeRetryAt(category: RateProviderError["category"], now: Date): string {
+  const delay = {
+    TEMPORARY_FAILURE: 5 * 60_000,
+    RATE_LIMITED: 15 * 60_000,
+    NOT_YET_AVAILABLE: 60 * 60_000,
+    NO_REFERENCE_WITHIN_POLICY: 24 * 60 * 60_000,
+    UNSUPPORTED: 7 * 24 * 60 * 60_000,
+  }[category];
+  return new Date(now.getTime() + delay).toISOString();
+}
+
+export async function acquirePendingRateQuotes(
+  service: SupabaseClient,
+  provider: RateQuoteProvider,
+  previewDemands?: ClaimedRateDemand[],
+  applyPersonalPaymentEffects = true,
+  onPersonalPaymentFxWork?: (count: number) => void,
+): Promise<number> {
+  // ponytail: four sequential eight-second requests fit the 45-second lease; use bounded concurrency if demand grows.
+  const claimed = previewDemands
+    ? null
+    : await service.rpc("ledger_claim_rate_demands", { max_requests: 4 });
+  if (claimed?.error) throw new Error("Supabase Dev rate demand claim failed.");
+  const demands = previewDemands ?? ((claimed?.data ?? []) as ClaimedRateDemand[]);
+  for (const demand of demands) {
+    const key = {
+      journey_id: demand.journey_id,
+      economic_date: demand.economic_date,
+      quote_currency: demand.quote_currency,
+      base_currency: demand.base_currency,
+      policy_version: demand.policy_version,
+    };
+    const request = {
+      economicDate: demand.economic_date,
+      quoteCurrency: demand.quote_currency,
+      settlementCurrency: demand.base_currency,
+      policyVersion: historicalRatePolicyVersion as typeof historicalRatePolicyVersion,
+    };
+    console.info(JSON.stringify({ event: "historical_rate_cache_miss", ...key }));
+    try {
+      const candidate = await fetchTrustedRateQuote(provider, request);
+      const now = new Date();
+      const saved = await service.from("ledger_rate_quotes").upsert(
+        {
+          journey_id: demand.journey_id,
+          quote_currency: demand.quote_currency,
+          base_currency: demand.base_currency,
+          economic_date: demand.economic_date,
+          reference_date: candidate.referenceDate,
+          policy_version: demand.policy_version,
+          effective_date: candidate.referenceDate,
+          decimal_rate: candidate.decimalRate,
+          observed_at: now.toISOString(),
+          expires_at: new Date(now.getTime() + 30 * 24 * 60 * 60_000).toISOString(),
+          provider: candidate.provider,
+          provider_reference: candidate.providerReference,
+          source_reference: candidate.sourceReference,
+        },
+        {
+          onConflict:
+            "journey_id,economic_date,quote_currency,base_currency,policy_version",
+        },
+      );
+      if (saved.error) throw new Error("Supabase Dev rate candidate cache write failed.");
+      console.info(
+        JSON.stringify({
+          event: "historical_rate_candidate_cached",
+          ...key,
+          reference_date: candidate.referenceDate,
+          fallback_days:
+            (Date.parse(`${demand.economic_date}T00:00:00Z`) -
+              Date.parse(`${candidate.referenceDate}T00:00:00Z`)) /
+            86_400_000,
+        }),
+      );
+    } catch (error) {
+      const category =
+        error instanceof RateProviderError ? error.category : "TEMPORARY_FAILURE";
+      const retryAt = negativeRetryAt(category, new Date());
+      const updated = await service
+        .from("ledger_rate_quote_attempts")
+        .update({ status: category, next_retry_at: retryAt })
+        .match(key);
+      if (updated.error) throw new Error("Supabase Dev rate retry write failed.");
+      if (applyPersonalPaymentEffects) {
+        const marked = await service.rpc("ledger_mark_personal_payment_fx_demand_1c", {
+          target_journey: demand.journey_id,
+          target_economic_date: demand.economic_date,
+          quote_currency_value: demand.quote_currency,
+          base_currency_value: demand.base_currency,
+          failure_category_value: category,
+        });
+        if (marked.error)
+          throw new Error("Supabase Dev Personal Payment FX retry state failed.");
+      }
+      console.warn(
+        JSON.stringify({
+          event: "historical_rate_negative_cache",
+          ...key,
+          category,
+          next_retry_at: retryAt,
+        }),
+      );
+    }
+  }
+  if (applyPersonalPaymentEffects) {
+    const resolved = await service.rpc(
+      "ledger_resolve_personal_payment_fx_projections_1c",
+      { target_journey: null },
+    );
+    if (resolved.error)
+      throw new Error("Supabase Dev Personal Payment FX resolution failed.");
+    onPersonalPaymentFxWork?.(Number(resolved.data ?? 0));
+  }
+  return demands.length;
+}
+
+export async function lookupLedgerRate(
+  service: SupabaseClient,
+  provider: RateQuoteProvider,
+  journeyId: string,
+  input: LedgerRateLookupRequest,
+): Promise<LedgerRateLookupResponse> {
+  const key = {
+    journey_id: journeyId,
+    economic_date: input.requestedDate,
+    quote_currency: input.quoteCurrency,
+    base_currency: input.baseCurrency,
+    policy_version: historicalRatePolicyVersion,
+  };
+  const cached = await lookupCachedRate(service, journeyId, input);
+  if (cached) return lookupAvailableResponse(input, cached);
+
+  const previous = await service
+    .from("ledger_rate_quote_attempts")
+    .select("status,next_retry_at")
+    .match(key)
+    .maybeSingle();
+  if (previous.error) throw new Error("Supabase Dev rate lookup attempt read failed.");
+  if (previous.data && Date.parse(String(previous.data.next_retry_at)) > Date.now()) {
+    return lookupUnavailableResponse(input, String(previous.data.status));
+  }
+
+  const claimed = await service.from("ledger_rate_quote_attempts").upsert(
+    {
+      ...key,
+      status: "IN_FLIGHT",
+      next_retry_at: new Date(Date.now() + 45_000).toISOString(),
+      last_attempt_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "journey_id,economic_date,quote_currency,base_currency,policy_version",
+    },
+  );
+  if (claimed.error) throw new Error("Supabase Dev rate lookup claim failed.");
+  await acquirePendingRateQuotes(
+    service,
+    provider,
+    [
+      {
+        journey_id: journeyId,
+        economic_date: input.requestedDate,
+        quote_currency: input.quoteCurrency,
+        base_currency: input.baseCurrency,
+        policy_version: historicalRatePolicyVersion,
+      },
+    ],
+    false,
+  );
+
+  const resolved = await lookupCachedRate(service, journeyId, input);
+  if (resolved) return lookupAvailableResponse(input, resolved);
+  const attempt = await service
+    .from("ledger_rate_quote_attempts")
+    .select("status")
+    .match(key)
+    .maybeSingle();
+  if (attempt.error) throw new Error("Supabase Dev rate lookup result read failed.");
+  return lookupUnavailableResponse(input, String(attempt.data?.status ?? "UNKNOWN"));
+}
+
+async function lookupCachedRate(
+  service: SupabaseClient,
+  journeyId: string,
+  input: LedgerRateLookupRequest,
+) {
+  return (
+    await readRateQuotes(service, journeyId, input.quoteCurrency, input.baseCurrency)
+  )
+    .filter(
+      (quote) =>
+        quote.economicDate === input.requestedDate &&
+        quote.policyVersion === historicalRatePolicyVersion &&
+        quote.provider === "ECB" &&
+        quote.referenceDate &&
+        quote.referenceDate <= input.requestedDate &&
+        calendarDistance(input.requestedDate, quote.referenceDate) <= 7 &&
+        quote.sourceReference ===
+          "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" &&
+        quote.providerReference ===
+          `https://api.frankfurter.dev/v2/providers/ecb/rate/${input.quoteCurrency}/${input.baseCurrency}?date=${input.requestedDate}` &&
+        Date.parse(quote.expiresAt) > Date.now(),
+    )
+    .sort((left, right) => right.observedAt.localeCompare(left.observedAt))[0];
+}
+
+function lookupAvailableResponse(
+  input: LedgerRateLookupRequest,
+  quote: LedgerRateQuoteDto,
+): LedgerRateLookupResponse {
+  return {
+    quoteCurrency: input.quoteCurrency,
+    baseCurrency: input.baseCurrency,
+    requestedDate: input.requestedDate,
+    referenceDate: quote.referenceDate ?? null,
+    decimalRate: quote.decimalRate,
+    resolution:
+      quote.referenceDate === input.requestedDate ? "EXACT_DATE" : "NEAREST_AVAILABLE",
+    policyVersion: historicalRatePolicyVersion,
+    observedAt: quote.observedAt,
+    provider: "ECB",
+    sourceReference: quote.sourceReference ?? null,
+    providerReference: quote.providerReference ?? null,
+  };
+}
+
+function lookupUnavailableResponse(
+  input: LedgerRateLookupRequest,
+  status: string,
+): LedgerRateLookupResponse {
+  const resolution =
+    status === "NOT_YET_AVAILABLE"
+      ? "PENDING_PUBLICATION"
+      : status === "UNSUPPORTED"
+        ? "UNSUPPORTED"
+        : status === "NO_REFERENCE_WITHIN_POLICY"
+          ? "NO_REFERENCE_WITHIN_POLICY"
+          : "TEMPORARILY_UNAVAILABLE";
+  return {
+    quoteCurrency: input.quoteCurrency,
+    baseCurrency: input.baseCurrency,
+    requestedDate: input.requestedDate,
+    referenceDate: null,
+    decimalRate: null,
+    resolution,
+    policyVersion: historicalRatePolicyVersion,
+    observedAt: null,
+    provider: null,
+    sourceReference: null,
+    providerReference: null,
+  };
+}
+
+async function readRateQuotes(
+  service: SupabaseClient,
+  tripId: string,
+  quoteCurrency: string | null = null,
+  baseCurrency: string | null = null,
+): Promise<LedgerRateQuoteDto[]> {
+  let query = service
+    .from("ledger_rate_quotes")
+    .select(
+      "id, journey_id, quote_currency, base_currency, decimal_rate_text, effective_date, economic_date, reference_date, policy_version, observed_at, provider, provider_reference, source_reference, expires_at",
+    )
+    .eq("journey_id", tripId)
+    .order("observed_at", { ascending: false });
+  if (quoteCurrency) query = query.eq("quote_currency", quoteCurrency);
+  if (baseCurrency) query = query.eq("base_currency", baseCurrency);
+  const result = await query;
+  if (result.error) throw new Error("Supabase Dev rate quote read failed.");
+  return (result.data ?? []).map(rateQuoteRowToDto);
+}
+
+export function rateQuoteRowToDto(row: Record<string, unknown>): LedgerRateQuoteDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    quoteCurrency: String(row.quote_currency),
+    baseCurrency: String(row.base_currency),
+    decimalRate: String(row.decimal_rate_text ?? row.decimal_rate),
+    effectiveDate: String(row.effective_date),
+    economicDate: row.economic_date ? String(row.economic_date) : null,
+    referenceDate: row.reference_date ? String(row.reference_date) : null,
+    policyVersion: row.policy_version ? String(row.policy_version) : null,
+    observedAt: String(row.observed_at),
+    provider: String(row.provider),
+    providerReference: row.provider_reference ? String(row.provider_reference) : null,
+    sourceReference: row.source_reference ? String(row.source_reference) : null,
+    expiresAt: String(row.expires_at),
+  };
+}
+
+export function eligibleReferenceCandidate(
+  expense: LedgerExpenseDto,
+  input: Pick<ApplyLedgerValuationRequest, "economicDate">,
+  quote: LedgerRateQuoteDto | undefined,
+  settlementCurrency: string,
+  now = new Date(),
+): boolean {
+  if (
+    !quote ||
+    !expense.economicDate ||
+    input.economicDate !== expense.economicDate ||
+    quote.economicDate !== expense.economicDate ||
+    quote.quoteCurrency !== expense.original.currency ||
+    quote.baseCurrency !== settlementCurrency ||
+    quote.referenceDate !== quote.effectiveDate ||
+    !quote.referenceDate ||
+    quote.policyVersion !== historicalRatePolicyVersion ||
+    quote.provider !== "ECB" ||
+    quote.sourceReference !==
+      "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" ||
+    quote.providerReference !==
+      `https://api.frankfurter.dev/v2/providers/ecb/rate/${quote.quoteCurrency}/${quote.baseCurrency}?date=${quote.economicDate}` ||
+    quote.economicDate > now.toISOString().slice(0, 10) ||
+    Date.parse(quote.expiresAt) <= now.getTime()
+  )
+    return false;
+  const days = calendarDistance(quote.economicDate, quote.referenceDate);
+  return Number.isInteger(days) && days >= 0 && days <= 7;
+}
+
+type AutoReferenceDemand = {
+  expense_id: string;
+  journey_id: string;
+  actor_user_id: string;
+  economic_date: string;
+  rate_quote_id: string;
+  expense_revision: number;
+};
+
+export async function applyPendingReferenceValuations(
+  service: SupabaseClient,
+  journeyId?: string,
+  onDemandCount?: (count: number) => void,
+) {
+  const listed = journeyId
+    ? await service.rpc("ledger_list_settlement_auto_reference_demands", {
+        target_journey: journeyId,
+        max_requests: 4,
+      })
+    : await service.rpc("ledger_list_auto_reference_demands", { max_requests: 4 });
+  if (listed.error)
+    throw new Error("Supabase Dev automatic valuation demand read failed.");
+  onDemandCount?.((listed.data ?? []).length);
+  let accepted = 0;
+  for (const demand of (listed.data ?? []) as AutoReferenceDemand[]) {
+    try {
+      const expense = await readOneExpenseAggregate(service, demand.expense_id);
+      if (
+        !expense ||
+        expense.revision !== demand.expense_revision ||
+        expense.businessStatus !== "RATE_REQUIRED" ||
+        expense.valuation
+      )
+        continue;
+      const settings = await service
+        .from("ledger_settings")
+        .select("settlement_currency, settlement_scale, revision")
+        .eq("journey_id", demand.journey_id)
+        .single();
+      if (settings.error) throw new Error("Supabase Dev valuation settings failed.");
+      const quote = (await readRateQuotes(service, demand.journey_id)).find(
+        (item) => item.id === demand.rate_quote_id,
+      );
+      if (
+        !eligibleReferenceCandidate(
+          expense,
+          { economicDate: demand.economic_date },
+          quote,
+          String(settings.data.settlement_currency),
+        )
+      )
+        continue;
+      const preview = previewValuation({
+        policy: "REFERENCE_RATE",
+        original: expense.original,
+        settlementCurrency: String(settings.data.settlement_currency),
+        settlementScale: Number(settings.data.settlement_scale),
+        rateQuote: quote,
+      });
+      await applyLedgerValuation(
+        service,
+        demand.actor_user_id,
+        demand.journey_id,
+        demand.expense_id,
+        `auto-reference:${demand.expense_id}:${demand.expense_revision}`,
+        {
+          localValuationId: stableReviewId(
+            `auto-valuation:${demand.expense_id}:${demand.expense_revision}`,
+          ),
+          localRateSnapshotId: stableReviewId(
+            `auto-rate:${demand.expense_id}:${demand.expense_revision}`,
+          ),
+          baseRevision: demand.expense_revision,
+          policy: "REFERENCE_RATE",
+          economicDate: demand.economic_date,
+          settingsRevision: Number(settings.data.revision),
+          rateQuoteId: demand.rate_quote_id,
+          paymentRecordId: null,
+          manualRate: null,
+          reason: "Automatic ECB reference valuation",
+          previewSettlement: preview.settlement,
+        },
+        true,
+      );
+      accepted += 1;
+      await tryEvaluateLedgerReviewV2(service, demand.journey_id);
+      console.info(
+        JSON.stringify({
+          event: "automatic_reference_valuation_accepted",
+          expense_id: demand.expense_id,
+          expense_revision: demand.expense_revision,
+          rate_quote_id: demand.rate_quote_id,
+        }),
+      );
+    } catch (error) {
+      const failureClass =
+        error instanceof BackendError
+          ? error.code === "REVISION_CONFLICT"
+            ? "CONFLICT"
+            : "SEMANTIC"
+          : "TRANSIENT";
+      const retryAt =
+        failureClass === "SEMANTIC"
+          ? null
+          : new Date(
+              Date.now() + (failureClass === "CONFLICT" ? 60_000 : 5 * 60_000),
+            ).toISOString();
+      const persisted = await service.from("ledger_auto_valuation_failures").upsert(
+        {
+          expense_id: demand.expense_id,
+          expense_revision: demand.expense_revision,
+          failure_class: failureClass,
+          next_retry_at: retryAt,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "expense_id,expense_revision" },
+      );
+      if (persisted.error) throw new Error("Supabase Dev valuation retry write failed.");
+      console.warn(
+        JSON.stringify({
+          event: "automatic_reference_valuation_deferred",
+          expense_id: demand.expense_id,
+          expense_revision: demand.expense_revision,
+          failure_class: failureClass,
+          next_retry_at: retryAt,
+        }),
+      );
+    }
+  }
+  return accepted;
+}
+
+function paymentRowToDto(
+  row: Record<string, unknown>,
+  audit?: Record<string, unknown>,
+): LedgerPaymentRecordDto {
+  return {
+    id: String(row.id),
+    expenseId: row.expense_id ? String(row.expense_id) : undefined,
+    expenseRevision:
+      row.expense_revision === null || row.expense_revision === undefined
+        ? undefined
+        : Number(row.expense_revision),
+    payerMemberId: row.payer_member_id ? String(row.payer_member_id) : undefined,
+    instrumentLabel: row.instrument_label ? String(row.instrument_label) : null,
+    authorization: moneyOrNull(row, "authorization"),
+    posted: moneyOrNull(row, "posted"),
+    authorizedAt: row.authorized_at ? String(row.authorized_at) : null,
+    postedAt: row.posted_at ? String(row.posted_at) : null,
+    fee: moneyOrNull(row, "fee"),
+    bankFxRate: row.bank_fx_rate ? String(row.bank_fx_rate) : null,
+    source: row.source ? String(row.source) : null,
+    notes: row.notes ? String(row.notes) : null,
+    supersedesPaymentRecordId: row.supersedes_payment_record_id
+      ? String(row.supersedes_payment_record_id)
+      : null,
+    auditEvent: audit ? auditRowToDto(audit) : undefined,
+  };
+}
+
+function auditRowToDto(row: Record<string, unknown>) {
+  return {
+    id: String(row.id),
+    expenseId: String(row.expense_id),
+    actorUserId: row.actor_user_id ? String(row.actor_user_id) : null,
+    actorMemberId: row.actor_member_id ? String(row.actor_member_id) : null,
+    eventType: String(row.event_type),
+    reason: row.reason ? String(row.reason) : null,
+    changedGroups: Array.isArray(row.changed_groups)
+      ? row.changed_groups.map(String)
+      : [],
+    revision: Number(row.expense_revision),
+    createdAt: String(row.created_at),
+  };
+}
+
+async function addLedgerPaymentRecord(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: CreateLedgerPaymentRecordRequest,
+) {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  const now = new Date().toISOString();
+  const entity: LedgerPaymentRecordDto = {
+    id: randomUUID(),
+    expenseRevision: current.revision,
+    payerMemberId: current.payerMemberId,
+    instrumentLabel: input.instrumentLabel,
+    authorization: input.authorization,
+    posted: input.posted,
+    authorizedAt: input.authorizedAt,
+    postedAt: input.postedAt,
+    fee: input.fee,
+    bankFxRate: input.bankFxRate,
+    source: input.source,
+    notes: input.notes,
+    supersedesPaymentRecordId: input.supersedesPaymentRecordId,
+  };
+  const response = {
+    entity,
+    serverId: entity.id,
+    revision: 1 as const,
+    updatedAt: now,
+    idempotentReplay: false,
+  };
+  const result = await service.rpc("ledger_add_payment_record_5_1", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    payment_value: input,
+    response_body_value: response,
+  });
+  mapFinancialEvidenceError(result.error?.message);
+  return result.data as typeof response;
+}
+
+async function prepareLedgerValuation(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: ApplyLedgerValuationRequest,
+  automaticReference = false,
+) {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  const settingResult = await service
+    .from("ledger_settings")
+    .select("settlement_currency, settlement_scale")
+    .eq("journey_id", tripId)
+    .single();
+  if (settingResult.error) throw new Error("Supabase Dev valuation settings failed.");
+  const quote = input.rateQuoteId
+    ? (await readRateQuotes(service, tripId)).find(
+        (item) => item.id === input.rateQuoteId,
+      )
+    : undefined;
+  if (
+    input.policy === "REFERENCE_RATE" &&
+    !eligibleReferenceCandidate(
+      current,
+      input,
+      quote,
+      String(settingResult.data.settlement_currency),
+    )
+  )
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "The historical reference candidate is incompatible.",
+    );
+  const payment = input.paymentRecordId
+    ? current.paymentRecords.find((item) => item.id === input.paymentRecordId)
+    : undefined;
+  let preview;
+  try {
+    preview = previewValuation({
+      policy: input.policy,
+      original: current.original,
+      settlementCurrency: String(settingResult.data.settlement_currency),
+      settlementScale: Number(settingResult.data.settlement_scale),
+      rateQuote: quote,
+      paymentRecord: payment,
+      manualRate: input.manualRate ?? undefined,
+      reason: input.reason ?? undefined,
+    });
+  } catch {
+    throw new BackendError(400, "INVALID_PAYLOAD", "The valuation evidence is invalid.");
+  }
+  if (JSON.stringify(preview.settlement) !== JSON.stringify(input.previewSettlement))
+    throw new BackendError(400, "INVALID_PAYLOAD", "The valuation preview is stale.");
+
+  const now = new Date().toISOString();
+  const nextRevision = current.revision + 1;
+  const rateSnapshotId = input.policy === "ACTUAL_PAYER_COST" ? null : randomUUID();
+  const valuation = {
+    id: randomUUID(),
+    policy: input.policy,
+    original: current.original,
+    settlement: preview.settlement,
+    rateSnapshotId,
+    paymentRecordId: preview.paymentRecordId,
+    reason: preview.reason,
+    decimalRate: preview.decimalRate,
+    roundingMode: "HALF_UP" as const,
+    effectiveAt: now,
+    supersedesValuationId: current.valuation?.id ?? null,
+    referenceEvidence:
+      input.policy === "REFERENCE_RATE" && quote
+        ? {
+            economicDate: input.economicDate!,
+            referenceDate: quote.referenceDate!,
+            source: "European Central Bank reference rate",
+            sourceReference: quote.sourceReference!,
+            deliveryProvider: "Frankfurter",
+            providerReference: quote.providerReference!,
+            observedAt: quote.observedAt,
+            acceptedAt: now,
+            automatic: automaticReference,
+          }
+        : null,
+  };
+  const entity: LedgerExpenseDto = {
+    ...current,
+    businessStatus: "ACCEPTED",
+    revision: nextRevision,
+    splits: allocateSettlementFromOriginal(preview.settlement.minor, current.splits),
+    valuation,
+    updatedAt: now,
+    auditEvents: current.auditEvents.concat({
+      id: randomUUID(),
+      expenseId,
+      actorUserId: userId,
+      actorMemberId: null,
+      eventType: "VALUATION_APPLIED",
+      reason: preview.reason,
+      changedGroups: ["FINANCIAL_CORE"],
+      revision: nextRevision,
+      createdAt: now,
+    }),
+  };
+  const response: LedgerExpenseMutationResponse = {
+    entity,
+    serverId: expenseId,
+    revision: nextRevision,
+    updatedAt: now,
+    idempotentReplay: false,
+  };
+  const rateSnapshot = rateSnapshotId
+    ? {
+        id: rateSnapshotId,
+        decimalRate: preview.decimalRate,
+        effectiveDate: quote?.effectiveDate ?? now.slice(0, 10),
+        observedAt: quote?.observedAt ?? now,
+        provider:
+          quote?.provider ??
+          (input.policy === "SAME_CURRENCY" ? "same_currency" : "manual"),
+        providerReference: quote?.providerReference ?? null,
+        stalenessState:
+          quote && Date.parse(quote.expiresAt) < Date.parse(now)
+            ? "STALE_ACCEPTED"
+            : "FRESH",
+        supersedesRateSnapshotId: current.valuation?.rateSnapshotId ?? null,
+      }
+    : null;
+  return { response, rateSnapshot };
+}
+
+async function applyLedgerValuation(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: ApplyLedgerValuationRequest,
+  automaticReference = false,
+): Promise<LedgerExpenseMutationResponse> {
+  const { response, rateSnapshot } = await prepareLedgerValuation(
+    service,
+    userId,
+    tripId,
+    expenseId,
+    idempotencyKey,
+    input,
+    automaticReference,
+  );
+  const result = await service.rpc("ledger_apply_valuation_c", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    valuation_value: input,
+    rate_snapshot_value: rateSnapshot,
+    response_body_value: response,
+    automatic_reference: automaticReference,
+  });
+  if (result.error?.message.includes("REVISION_CONFLICT")) {
+    if (automaticReference)
+      throw new BackendError(
+        409,
+        "REVISION_CONFLICT",
+        "The automatic valuation was superseded.",
+      );
+    const canonical = await readOneExpenseAggregate(service, expenseId);
+    if (!canonical) throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+    const submitted = editableExpense(response.entity);
+    const conflictBody = {
+      error: {
+        code: "REVISION_CONFLICT",
+        conflictId: "00000000-0000-4000-8000-000000000000",
+        expenseId,
+        baseRevision: input.baseRevision,
+        currentRevision: canonical.revision,
+        submitted,
+        current: canonical,
+        changedGroups: changedExpenseGroups(submitted, editableExpense(canonical)),
+        auditSummaries: canonical.auditEvents.filter(
+          (event) => event.revision > input.baseRevision,
+        ),
+      },
+    };
+    const recorded = await service.rpc("ledger_record_conflict_4c", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_expense: expenseId,
+      command_type_value: "APPLY_VALUATION",
+      idempotency_key_value: idempotencyKey,
+      payload_hash_value: hashPayload(input),
+      conflict_body_value: conflictBody,
+    });
+    if (recorded.error)
+      throw new Error("Supabase Dev valuation conflict persistence failed.");
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "The base revision is stale.",
+      recorded.data,
+    );
+  }
+  mapFinancialEvidenceError(result.error?.message);
+  return result.data as LedgerExpenseMutationResponse;
+}
+
+function mapFinancialEvidenceError(message?: string) {
+  if (!message) return;
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("ENTITY_NOT_FOUND"))
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(
+      403,
+      "TRIP_WRITE_FORBIDDEN",
+      "The financial command is forbidden.",
+    );
+  if (message.includes("FINALIZED_SETTLEMENT_PROTECTED"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this mutation.",
+    );
+  if (message.includes("SETTINGS_REVISION_CONFLICT"))
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "Journey settings changed during valuation.",
+    );
+  if (
+    message.includes("INVALID_") ||
+    message.includes("ECONOMIC_DATE_REQUIRED_OR_MISMATCH") ||
+    message.includes("AUTO_VALUATION_NOT_ELIGIBLE") ||
+    message.includes("REASON_REQUIRED") ||
+    message.includes("PREVIEW_MISMATCH")
+  )
+    throw new BackendError(400, "INVALID_PAYLOAD", "The financial evidence is invalid.");
+  if (message.includes("RATE_REQUIRED"))
+    throw new BackendError(409, "RATE_REQUIRED", "No trusted rate is available.");
+  throw new Error("Supabase Dev financial evidence operation failed.");
+}
+
+export function safeEconomicDateEdit(
+  current: LedgerExpenseDto,
+  input: Stage4EditableExpense,
+): Stage4EditableExpense {
+  const economicDate = input.economicDate ?? null;
+  const changed =
+    economicDate !== (current.economicDate ?? null) ||
+    input.occurredAt.slice(0, 10) !== current.occurredAt.slice(0, 10);
+  if (!changed || input.valuation?.policy === "SAME_CURRENCY")
+    return { ...input, economicDate };
+  return {
+    ...input,
+    economicDate,
+    businessStatus: input.businessStatus === "DRAFT" ? "DRAFT" : "RATE_REQUIRED",
+    valuation: null,
+    splits: input.splits.map((split) => ({ ...split, settlementMinor: null })),
+  };
+}
+
+function editableExpense(expense: LedgerExpenseDto) {
+  return {
+    title: expense.title,
+    description: expense.description,
+    category: expense.category,
+    occurredAt: expense.occurredAt,
+    economicDate: expense.economicDate,
+    payerMemberId: expense.payerMemberId,
+    original: expense.original,
+    businessStatus:
+      expense.businessStatus === "DELETED"
+        ? ("ACCEPTED" as const)
+        : expense.businessStatus,
+    settlementParticipation: expense.settlementParticipation,
+    participants: expense.participants,
+    splits: expense.splits,
+    valuation: expense.valuation
+      ? {
+          policy: expense.valuation.policy,
+          original: expense.valuation.original,
+          settlement: expense.valuation.settlement,
+          rateSnapshotId: expense.valuation.rateSnapshotId,
+          paymentRecordId: expense.valuation.paymentRecordId,
+          reason: expense.valuation.reason,
+        }
+      : null,
+  };
+}
+
+function mutationResponse(
+  current: LedgerExpenseDto,
+  editable: Stage4EditableExpense,
+  actorUserId: string,
+  eventType: string,
+  reason: string | null,
+  changedGroups: string[],
+  incrementRevision = true,
+) {
+  const revision = current.revision + (incrementRevision ? 1 : 0);
+  const now = new Date().toISOString();
+  const safeEditable = safeEconomicDateEdit(current, editable);
+  const entity: LedgerExpenseDto = {
+    ...current,
+    ...safeEditable,
+    settlementParticipation:
+      editable.settlementParticipation ?? current.settlementParticipation,
+    revision,
+    deletedAt: null,
+    updatedAt: incrementRevision ? now : current.updatedAt,
+    valuation: safeEditable.valuation
+      ? {
+          id: incrementRevision ? randomUUID() : (current.valuation?.id ?? randomUUID()),
+          ...safeEditable.valuation,
+        }
+      : null,
+    auditEvents: current.auditEvents.concat({
+      id: randomUUID(),
+      expenseId: current.id,
+      actorUserId,
+      actorMemberId: null,
+      eventType,
+      reason,
+      changedGroups,
+      revision,
+      createdAt: now,
+    }),
+  };
+  return {
+    entity,
+    serverId: current.id,
+    revision,
+    updatedAt: entity.updatedAt,
+    idempotentReplay: false,
+  };
+}
+
+export function resolutionEnvelope(
+  key: string,
+  input: ExpenseConflictChainResolutionRequest,
+  original: ExpenseIntentEnvelope | null = null,
+): ExpenseIntentEnvelope {
+  return {
+    commandId: input.commandId,
+    intentVersion: 2,
+    intentSequence: original?.intentSequence ?? 1,
+    predecessorOperationId: original?.predecessorOperationId ?? null,
+    observedServerRevision: input.observedBaseRevision,
+    observedBase: null,
+    patchOrIntent: input.submittedIntent,
+    causalBaseReceipt: original?.causalBaseReceipt ?? null,
+    boundExecutionRevision: original?.boundExecutionRevision ?? null,
+    idempotencyKey: key,
+  };
+}
+
+function typedExpenseError(message?: string) {
+  if (!message) return;
+  for (const code of [
+    "REVISION_CONFLICT",
+    "CONFLICT_CHAIN_DRIFT",
+    "UNVERIFIED_OBSERVED_BASE",
+    "EXPENSE_DELETED",
+    "TYPED_RESOLUTION_REQUIRED",
+  ])
+    if (message.includes(code))
+      throw new BackendError(
+        409,
+        code,
+        "The command requires refreshed verified evidence.",
+      );
+  if (message.includes("INVALID_") || message.includes("RESOLUTION_REASON_REQUIRED")) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "typed_expense_validation",
+        cause:
+          message.match(/\b(?:INVALID_[A-Z_]+|RESOLUTION_REASON_REQUIRED)\b/)?.[0] ??
+          "UNKNOWN",
+      }),
+    );
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "The typed command or covered conflict scope is invalid.",
+    );
+  }
+  mapFinancialEvidenceError(message);
+}
+
+export async function readExpenseConflictChain(
+  service: SupabaseClient,
+  _userId: string,
+  tripId: string,
+  expenseId: string,
+): Promise<ExpenseConflictChainResponse> {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+  const result = await service.rpc("ledger_expense_chain_v2", {
+    target_journey: tripId,
+    target_expense: expenseId,
+  });
+  if (result.error) throw new Error("Expense conflict chain read failed.");
+  const chain = result.data as {
+    chainDigest: string;
+    records: {
+      conflictId: string;
+      commandType: string;
+      idempotencyKey: string;
+      lifecycle: string;
+      reason: string | null;
+      operationReceipt?: unknown;
+      body: { error: Record<string, unknown> };
+    }[];
+  };
+  return expenseConflictChainResponseSchema.parse({
+    contractVersion: 2,
+    canonical: current,
+    chainDigest: chain.chainDigest,
+    conflicts: await Promise.all(
+      chain.records.map(async (row) => {
+        const error = row.body.error;
+        const commandType = String(
+          error.commandType ??
+            {
+              UPDATE_EXPENSE: "UPDATE",
+              DELETE_EXPENSE: "DELETE",
+              RESTORE_EXPENSE: "RESTORE",
+              APPLY_VALUATION: "APPLY_VALUATION",
+            }[row.commandType] ??
+            "UPDATE",
+        );
+        let submittedIntent =
+          error.submittedIntent ?? (commandType === "DELETE" ? { type: "DELETE" } : null);
+        let equivalent = false;
+        if (!submittedIntent && commandType === "UPDATE" && error.submitted) {
+          const history = await service
+            .from("expense_revision_evidence")
+            .select("canonical")
+            .eq("expense_id", expenseId)
+            .eq("revision", error.baseRevision)
+            .order("created_at", { ascending: true })
+            .limit(1);
+          if (history.error) throw new Error("Legacy Expense evidence read failed.");
+          const base = history.data?.[0]?.canonical as LedgerExpenseDto | undefined;
+          if (base) {
+            const proof = await service.rpc("ledger_legacy_expense_noop_v2", {
+              historical: base,
+              submitted: error.submitted,
+            });
+            if (proof.error) throw new Error("Legacy Expense equivalence read failed.");
+            equivalent =
+              proof.data === true &&
+              expensePatchEligibility({
+                base: mergeEvidence(base),
+                current: mergeEvidence(current),
+                patch: {},
+                verifiedHistoricalBase: true,
+                deleted: current.businessStatus === "DELETED",
+              }) === "EQUIVALENT";
+            if (equivalent) submittedIntent = { type: "UPDATE", patch: {} };
+          }
+        }
+        return {
+          conflictId: row.conflictId,
+          commandId: error.commandId ?? row.idempotencyKey,
+          idempotencyKey: row.idempotencyKey,
+          commandType,
+          submittedIntent,
+          operationReceipt: row.operationReceipt ?? null,
+          observedBaseRevision: error.baseRevision,
+          currentServerRevision: error.currentRevision,
+          changedGroups: equivalent ? [] : (error.changedGroups ?? []),
+          lifecycle: row.lifecycle,
+          reason:
+            row.reason ??
+            (equivalent
+              ? "VERIFIED_LEGACY_EQUIVALENT"
+              : submittedIntent
+                ? null
+                : "LEGACY_INTENT_REQUIRES_ACTION"),
+        };
+      }),
+    ),
+  });
+}
+
+export async function executeExpenseCommand(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  key: string,
+  input: ExpenseCommandRequest,
+  resolution: ExpenseConflictChainResolutionRequest | null = null,
+): Promise<unknown> {
+  const envelope = input.envelope;
+  if (envelope.idempotencyKey !== key)
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "The command key must match its header.",
+    );
+  // Replay before history/quote/head preparation: the original receipt survives later drift.
+  const replay = await service.rpc("ledger_replay_expense_v2", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    envelope_value: envelope,
+    reason_value: input.auditReason,
+    resolution_value: resolution,
+  });
+  typedExpenseError(replay.error?.message);
+  if (replay.data) {
+    if (replay.data.error)
+      throw new BackendError(
+        409,
+        replay.data.error.code,
+        "The typed command remains conflicted.",
+        replay.data,
+      );
+    return replay.data;
+  }
+  const intent = envelope.patchOrIntent;
+  let current: LedgerExpenseDto | null = null;
+  let historical: LedgerExpenseDto | null = null;
+  let eligibility = "DIRECT";
+  let response: LedgerExpenseMutationResponse;
+  let rateSnapshot: unknown = null;
+  if (intent.type === "CREATE") {
+    if (resolution)
+      throw new BackendError(
+        400,
+        "INVALID_PAYLOAD",
+        "CREATE cannot resolve an existing Expense conflict.",
+      );
+    response = buildLedgerExpenseCreateResponse(
+      userId,
+      tripId,
+      { ...intent.expense, localId: envelope.commandId },
+      expenseId,
+    );
+  } else {
+    current = await readOneExpenseAggregate(service, expenseId);
+    if (!current || current.journeyId !== tripId)
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+    const history = await service
+      .from("expense_revision_evidence")
+      .select("canonical")
+      .eq("expense_id", expenseId)
+      .eq("revision", envelope.observedServerRevision)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (history.error) throw new Error("Expense historical evidence read failed.");
+    historical = (history.data?.[0]?.canonical as LedgerExpenseDto | undefined) ?? null;
+    // Client observedBase is deliberately never used as merge evidence.
+    const causal = await service.rpc("ledger_expense_causal_base_v2", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_expense: expenseId,
+      envelope_value: envelope,
+    });
+    if (causal.error?.message.includes("INVALID_CAUSAL_RECEIPT"))
+      console.error(
+        JSON.stringify({
+          level: "error",
+          event: "typed_expense_causal_shape",
+          hasPredecessor: !!envelope.predecessorOperationId,
+          hasReceipt: !!envelope.causalBaseReceipt,
+          receiptMatchesPredecessor:
+            envelope.causalBaseReceipt?.operationId === envelope.predecessorOperationId,
+          observedRevision: envelope.observedServerRevision,
+          boundRevision: envelope.boundExecutionRevision,
+          receiptRevision: envelope.causalBaseReceipt?.canonicalRevision ?? null,
+        }),
+      );
+    typedExpenseError(causal.error?.message);
+    const serverBase = (causal.data as LedgerExpenseDto | null) ?? historical;
+    const stale =
+      (serverBase?.revision ?? envelope.observedServerRevision) !== current.revision;
+    if (stale) eligibility = "CONFLICT";
+    response = {
+      entity: current,
+      serverId: current.id,
+      revision: current.revision,
+      updatedAt: current.updatedAt,
+      idempotentReplay: false,
+    };
+    if (intent.type === "UPDATE") {
+      if (serverBase || !stale) {
+        eligibility = expensePatchEligibility({
+          base: mergeEvidence(serverBase ?? current),
+          current: mergeEvidence(current),
+          patch: intent.patch,
+          verifiedHistoricalBase: true,
+          deleted: current.businessStatus === "DELETED",
+        });
+        if (
+          !stale &&
+          !intent.patch.descriptive &&
+          (intent.patch.financial || intent.patch.participantSplit)
+        )
+          eligibility = "DIRECT";
+        else if (
+          !stale &&
+          eligibility === "CONFLICT" &&
+          current.businessStatus !== "DELETED"
+        )
+          eligibility = "DIRECT";
+      }
+      const derivedPatch = !!(
+        intent.patch.participantSplit ||
+        Object.keys(intent.patch.financial ?? {}).some(
+          (field) => field !== "settlementParticipation",
+        ) ||
+        (intent.patch.descriptive?.occurredAt &&
+          utcInstant(intent.patch.descriptive.occurredAt).slice(0, 10) !==
+            utcInstant(current.occurredAt).slice(0, 10))
+      );
+      if (
+        resolution &&
+        resolution.choice === "APPLY_PATCH" &&
+        !derivedPatch &&
+        stale &&
+        !["DESCRIPTIVE_REBASE", "EQUIVALENT"].includes(eligibility)
+      )
+        throw new BackendError(
+          409,
+          "UNVERIFIED_OBSERVED_BASE",
+          "A descriptive rebase requires compatible server history.",
+        );
+      if (
+        eligibility !== "EQUIVALENT" &&
+        (eligibility !== "CONFLICT" || resolution?.choice === "APPLY_PATCH")
+      ) {
+        const editable = {
+          ...editableExpense(current),
+          ...intent.patch.descriptive,
+          ...intent.patch.financial,
+          participants:
+            intent.patch.participantSplit?.participants ?? current.participants,
+          splits:
+            intent.patch.participantSplit?.splits?.map((split) => ({
+              ...split,
+              settlementMinor: null,
+              roundingAdjustmentMinor: 0,
+            })) ?? current.splits,
+        };
+        if (editable.occurredAt) editable.occurredAt = utcInstant(editable.occurredAt);
+        if (derivedPatch) {
+          editable.valuation = null;
+          editable.businessStatus =
+            current.businessStatus === "DRAFT" ? "DRAFT" : "RATE_REQUIRED";
+          editable.splits = editable.splits.map((split) => ({
+            ...split,
+            settlementMinor: null,
+            roundingAdjustmentMinor: 0,
+          }));
+          if (
+            current.valuation?.policy === "SAME_CURRENCY" &&
+            editable.original.currency === current.valuation.settlement.currency
+          ) {
+            editable.businessStatus = "ACCEPTED";
+            editable.valuation = {
+              policy: "SAME_CURRENCY",
+              original: editable.original,
+              settlement: editable.original,
+              rateSnapshotId: null,
+              paymentRecordId: null,
+              reason: null,
+            };
+            editable.splits = allocateSettlementFromOriginal(
+              editable.original.minor,
+              editable.splits,
+            );
+          }
+        }
+        response = mutationResponse(
+          current,
+          editable,
+          userId,
+          "EDITED",
+          input.auditReason,
+          changedExpenseGroups(editableExpense(current), editable),
+        );
+        if (!derivedPatch) response.entity.valuation = current.valuation;
+      }
+    } else if (intent.type === "APPLY_VALUATION") {
+      const binding = intent.valuation.rateAcceptance;
+      if (binding) {
+        const settings = await service
+          .from("ledger_settings")
+          .select("settlement_currency,settlement_scale")
+          .eq("journey_id", tripId)
+          .single();
+        if (settings.error) throw new Error("Rate acceptance settings read failed.");
+        const valid =
+          intent.valuation.policy === "MANUAL_AGREED" &&
+          sameRate(intent.valuation.manualRate, binding.decimalRate) &&
+          sameExpenseValue(intent.valuation.previewSettlement, binding.settlement) &&
+          rateBindingMatches(
+            binding,
+            current,
+            String(settings.data.settlement_currency),
+            Number(settings.data.settlement_scale),
+          );
+        if (!valid) eligibility = "CONFLICT";
+        else if (
+          stale &&
+          serverBase &&
+          valuationRebaseEligible(
+            mergeEvidence(serverBase),
+            mergeEvidence(current),
+            binding,
+          )
+        )
+          eligibility = "VALUATION_REBASE";
+      }
+      if (
+        (eligibility === "CONFLICT" && !resolution) ||
+        (resolution && resolution.choice !== "APPLY_VALUATION")
+      ) {
+        // Return the current aggregate; SQL records the original immutable intent.
+      } else {
+        const prepared = await prepareLedgerValuation(
+          service,
+          userId,
+          tripId,
+          expenseId,
+          key,
+          { ...intent.valuation, baseRevision: current.revision },
+        );
+        response = prepared.response;
+        rateSnapshot = prepared.rateSnapshot;
+      }
+    } else if (intent.type === "DELETE" || intent.type === "RESTORE") {
+      if (!stale || (resolution && resolution.choice !== "KEEP_SERVER")) {
+        const now = new Date().toISOString();
+        response = {
+          entity: {
+            ...current,
+            businessStatus: intent.type === "DELETE" ? "DELETED" : intent.businessStatus,
+            deletedAt: intent.type === "DELETE" ? now : null,
+            revision: current.revision + 1,
+            updatedAt: now,
+            auditEvents: current.auditEvents.concat({
+              id: randomUUID(),
+              expenseId,
+              actorUserId: userId,
+              actorMemberId: null,
+              eventType: intent.type === "DELETE" ? "DELETED" : "RESTORED",
+              reason: input.auditReason,
+              changedGroups: ["LIFECYCLE"],
+              revision: current.revision + 1,
+              createdAt: now,
+            }),
+          },
+          serverId: expenseId,
+          revision: current.revision + 1,
+          updatedAt: now,
+          idempotentReplay: false,
+        };
+      }
+    }
+    if (
+      resolution?.choice === "KEEP_SERVER" ||
+      resolution?.choice === "ACCEPT_EQUIVALENT"
+    )
+      response = {
+        entity: current,
+        serverId: current.id,
+        revision: current.revision,
+        updatedAt: current.updatedAt,
+        idempotentReplay: false,
+      };
+  }
+  if (eligibility !== "CONFLICT" || resolution)
+    await validateCanonicalExpense(service, tripId, {
+      ...response.entity,
+      status: response.entity.businessStatus,
+    });
+  const result = await service.rpc("ledger_execute_expense_v2", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    envelope_value: envelope,
+    reason_value: input.auditReason,
+    prepared_revision: current?.revision ?? 0,
+    historical_base_value: historical,
+    eligibility_value: eligibility,
+    response_body_value: {
+      ...response,
+      ...(current ? { _verifiedCurrent: current } : {}),
+    },
+    rate_snapshot_value: rateSnapshot,
+    resolution_value: resolution,
+  });
+  typedExpenseError(result.error?.message);
+  if (result.data?.error)
+    throw new BackendError(
+      409,
+      result.data.error.code,
+      "The typed command requires conflict resolution.",
+      result.data,
+    );
+  return result.data;
+}
+
+function mergeEvidence(expense: LedgerExpenseDto): Stage4EditableExpense {
+  // Strip identity/volatile derived timestamps, retain the server's provenance proof.
+  const value = editableExpense(expense);
+  return {
+    ...value,
+    splits: expense.splits,
+    valuation: expense.valuation
+      ? {
+          ...value.valuation!,
+          decimalRate: expense.valuation.decimalRate ?? null,
+          referenceEvidence: expense.valuation.referenceEvidence ?? null,
+        }
+      : null,
+  };
+}
+
+async function resolveLedgerExpenseConflict(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: ResolveLedgerExpenseConflictRequest,
+) {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  }
+  const currentEditable = editableExpense(current);
+  if (
+    input.resolution === "KEEP_JOURNEY" &&
+    !sameStage4Expense(input.resolvedExpense, currentEditable)
+  ) {
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "Keep Journey must use the current aggregate.",
+    );
+  }
+  const increment = input.resolution !== "KEEP_JOURNEY";
+  const response = mutationResponse(
+    current,
+    input.resolvedExpense,
+    userId,
+    "CONFLICT_RESOLVED",
+    input.reason,
+    changedExpenseGroups(currentEditable, input.resolvedExpense),
+    increment,
+  );
+  const result = await service.rpc("ledger_resolve_expense_conflict_4c", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    conflict_id_value: input.conflictId,
+    current_revision_value: input.currentRevision,
+    resolution_value: input.resolution,
+    selected_sources_value: input.selectedSources,
+    reason_value: input.reason,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    response_body_value: response,
+  });
+  if (result.error?.message.includes("REVISION_CONFLICT")) {
+    const canonical = await readOneExpenseAggregate(service, expenseId);
+    if (!canonical) throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+    const conflictBody = {
+      error: {
+        code: "REVISION_CONFLICT",
+        conflictId: "00000000-0000-4000-8000-000000000000",
+        expenseId,
+        baseRevision: input.currentRevision,
+        currentRevision: canonical.revision,
+        submitted: input.resolvedExpense,
+        current: canonical,
+        changedGroups: changedExpenseGroups(
+          input.resolvedExpense,
+          editableExpense(canonical),
+        ),
+        auditSummaries: canonical.auditEvents.filter(
+          (event) => event.revision > input.currentRevision,
+        ),
+      },
+    };
+    const recorded = await service.rpc("ledger_record_conflict_4c", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_expense: expenseId,
+      command_type_value: "RESOLVE_EXPENSE_CONFLICT",
+      idempotency_key_value: idempotencyKey,
+      payload_hash_value: hashPayload(input),
+      conflict_body_value: conflictBody,
+    });
+    if (recorded.error) throw new Error("Supabase Dev conflict persistence failed.");
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "Resolution became stale.",
+      recorded.data,
+    );
+  }
+  if (result.error?.message.includes("TRIP_WRITE_FORBIDDEN")) {
+    throw new BackendError(
+      403,
+      "TRIP_WRITE_FORBIDDEN",
+      "Conflict resolution is forbidden.",
+    );
+  }
+  if (result.error?.message.includes("TYPED_RESOLUTION_REQUIRED"))
+    throw new BackendError(
+      409,
+      "TYPED_RESOLUTION_REQUIRED",
+      "This conflict requires typed chain resolution.",
+    );
+  if (result.error?.message.includes("FINALIZED_SETTLEMENT_PROTECTED"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this resolution.",
+    );
+  if (result.error?.message.includes("CONFLICT_NOT_FOUND")) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The conflict was not found.");
+  }
+  if (result.error?.message.includes("CONFLICT_ALREADY_RESOLVED")) {
+    throw new BackendError(409, "REVISION_CONFLICT", "The conflict is already resolved.");
+  }
+  if (result.error) throw new Error("Supabase Dev conflict resolution failed.");
+  if ((result.data as { error?: { code?: string } } | null)?.error?.code) {
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "Resolution became stale.",
+      result.data,
+    );
+  }
+  return result.data as typeof response;
+}
+
+function correctionDto(
+  id: string,
+  journeyId: string,
+  expenseId: string,
+  input: CreateLedgerCorrectionRequest,
+  userId: string,
+) {
+  const now = new Date().toISOString();
+  return {
+    id,
+    journeyId,
+    expenseId,
+    baseExpenseRevision: input.baseRevision,
+    proposedExpense: input.proposedExpense,
+    reason: input.reason,
+    status: "OPEN" as const,
+    requestedByUserId: userId,
+    requestedByMemberId: "00000000-0000-4000-8000-000000000000",
+    resolvedByUserId: null,
+    resolvedByMemberId: null,
+    resolutionReason: null,
+    resultingExpenseRevision: null,
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+    resolvedAt: null,
+  };
+}
+
+async function createLedgerCorrection(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: CreateLedgerCorrectionRequest,
+): Promise<LedgerCorrectionMutationResponse> {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  }
+  const correction = correctionDto(randomUUID(), tripId, expenseId, input, userId);
+  const response = { correction, expense: null, idempotentReplay: false };
+  const result = await service.rpc("ledger_propose_correction_4c", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    correction_id_value: correction.id,
+    base_revision_value: input.baseRevision,
+    proposed_aggregate_value: input.proposedExpense,
+    reason_value: input.reason,
+    changed_groups_value: changedExpenseGroups(
+      editableExpense(current),
+      input.proposedExpense,
+    ),
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    response_body_value: response,
+  });
+  mapCollaborationError(result.error?.message);
+  return result.data as LedgerCorrectionMutationResponse;
+}
+
+async function actOnLedgerCorrection(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  correctionId: string,
+  action: "accept" | "reject" | "withdraw",
+  idempotencyKey: string,
+  input: LedgerCorrectionActionRequest,
+): Promise<LedgerCorrectionMutationResponse> {
+  const correction = await readCorrection(service, correctionId);
+  if (!correction || correction.journeyId !== tripId) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The correction was not found.");
+  }
+  const response: LedgerCorrectionMutationResponse = {
+    correction: {
+      ...correction,
+      status:
+        action === "accept" ? "ACCEPTED" : action === "reject" ? "REJECTED" : "WITHDRAWN",
+      resolvedByUserId: userId,
+      resolutionReason: input.resolutionReason,
+      revision: correction.revision + 1,
+      updatedAt: new Date().toISOString(),
+      resolvedAt: new Date().toISOString(),
+    },
+    expense: null,
+    idempotentReplay: false,
+  };
+  const payloadHash = hashPayload(input);
+  if (action !== "accept") {
+    const result = await service.rpc("ledger_transition_correction_4c", {
+      actor_user: userId,
+      target_journey: tripId,
+      correction_id_value: correctionId,
+      action_value: action.toUpperCase(),
+      base_request_revision_value: input.baseRequestRevision,
+      resolution_reason_value: input.resolutionReason,
+      idempotency_key_value: idempotencyKey,
+      payload_hash_value: payloadHash,
+      response_body_value: response,
+    });
+    mapCollaborationError(result.error?.message);
+    return result.data as LedgerCorrectionMutationResponse;
+  }
+
+  const current = await readOneExpenseAggregate(service, correction.expenseId);
+  if (!current) throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+  const expenseResponse = mutationResponse(
+    current,
+    correction.proposedExpense,
+    userId,
+    "CORRECTION_ACCEPTED",
+    input.resolutionReason,
+    changedExpenseGroups(editableExpense(current), correction.proposedExpense),
+  );
+  const result = await service.rpc("ledger_accept_correction_4c", {
+    actor_user: userId,
+    target_journey: tripId,
+    correction_id_value: correctionId,
+    base_request_revision_value: input.baseRequestRevision,
+    resolution_reason_value: input.resolutionReason,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: payloadHash,
+    correction_response_body_value: response,
+    expense_response_body_value: expenseResponse,
+  });
+  mapCollaborationError(result.error?.message);
+  return result.data as LedgerCorrectionMutationResponse;
+}
+
+function mapCollaborationError(message?: string) {
+  if (!message) return;
+  if (message.includes("ENTITY_NOT_FOUND")) {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger entity was not found.");
+  }
+  if (message.includes("IDEMPOTENCY_CONFLICT")) {
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  }
+  if (message.includes("CORRECTION_NOT_OPEN")) {
+    throw new BackendError(409, "REVISION_CONFLICT", "The correction is not open.");
+  }
+  if (message.includes("ORGANIZER_REASON_REQUIRED")) {
+    throw new BackendError(400, "INVALID_PAYLOAD", "An organizer reason is required.");
+  }
+  if (message.includes("TRIP_WRITE_FORBIDDEN")) {
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "The command is forbidden.");
+  }
+  if (message.includes("FINALIZED_SETTLEMENT_PROTECTED")) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this expense.",
+    );
+  }
+  throw new Error("Supabase Dev Ledger collaboration command failed.");
+}
+
+async function readCorrection(service: SupabaseClient, id: string) {
+  const result = await service
+    .from("expense_correction_requests")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (result.error) throw new Error("Supabase Dev correction read failed.");
+  return result.data ? correctionRowToDto(result.data) : null;
+}
+
+function correctionRowToDto(row: Record<string, unknown>) {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    expenseId: String(row.expense_id),
+    baseExpenseRevision: Number(row.base_expense_revision),
+    proposedExpense:
+      row.proposed_aggregate as CreateLedgerCorrectionRequest["proposedExpense"],
+    reason: String(row.reason),
+    status: row.status as "OPEN" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | "STALE",
+    requestedByUserId: String(row.requested_by),
+    requestedByMemberId: String(row.requested_by_member_id),
+    resolvedByUserId: row.resolved_by ? String(row.resolved_by) : null,
+    resolvedByMemberId: row.resolved_by_member_id
+      ? String(row.resolved_by_member_id)
+      : null,
+    resolutionReason: row.resolution_reason ? String(row.resolution_reason) : null,
+    resultingExpenseRevision:
+      row.resulting_expense_revision === null
+        ? null
+        : Number(row.resulting_expense_revision),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    resolvedAt: row.resolved_at ? String(row.resolved_at) : null,
+  };
+}
+
+async function readOneExpenseAggregate(service: SupabaseClient, expenseId: string) {
+  const result = await service
+    .from("expenses")
+    .select(
+      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+    )
+    .eq("id", expenseId)
+    .maybeSingle();
+  if (result.error) throw new Error("Supabase Dev Ledger aggregate read failed.");
+  const [expense] = await readExpenseAggregates(
+    service,
+    result.data ? [result.data] : [],
+  );
+  return expense ?? null;
+}
+
+async function calculateSettlementPreview(
+  service: SupabaseClient,
+  tripId: string,
+  throughTimestamp: string,
+) {
+  const latest = await service
+    .from("settlements")
+    .select("id")
+    .eq("journey_id", tripId)
+    .eq("algorithm_version", SETTLEMENT_ALGORITHM_VERSION)
+    .in("status", ["FINALIZED", "PARTIALLY_PAID", "SETTLED"])
+    .order("finalized_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latest.error) throw new Error("Supabase Dev Settlement reference read failed.");
+  const confirmed = latest.data
+    ? await readOneFinalizedSettlement(service, tripId, String(latest.data.id))
+    : null;
+  if (latest.data && !confirmed) throw new Error("Canonical Settlement head is missing.");
+  const rootId = confirmed?.rootSettlementId ?? confirmed?.id;
+  const result = rootId
+    ? await service.rpc("ledger_adjustment_source_current_7_2c", {
+        target_root: rootId,
+        source_cutoff: throughTimestamp,
+      })
+    : await service.rpc("ledger_settlement_source_7_1", {
+        target_journey: tripId,
+        through_timestamp_value: throughTimestamp,
+      });
+  if (result.error || !result.data)
+    throw new Error("Supabase Dev settlement preview failed.");
+  const source = normalizeSettlementSource(result.data as SettlementPreviewInput);
+  const preview = buildSettlementPreview(source);
+  const inputDigest = createHash("sha256")
+    .update(canonicalSettlementJson(preview))
+    .digest("hex");
+  const sourceFingerprint = createHash("sha256")
+    .update(canonicalSettlementSourceJson(source))
+    .digest("hex");
+  const confirmationDiff = buildSettlementConfirmationDiff(
+    confirmed?.inputs ?? [],
+    preview.inputs,
+  );
+  const confirmedBalances =
+    confirmed?.kind === "ADJUSTMENT"
+      ? balancesFromSettlementInputs(
+          confirmed.inputs,
+          source.members,
+          confirmed.settlementCurrency,
+          confirmed.settlementScale,
+        )
+      : (confirmed?.balances ?? []);
+  return {
+    source,
+    preview,
+    response: {
+      ...preview,
+      inputDigest,
+      sourceAsOf: source.throughTimestamp,
+      sourceFingerprintPolicy: SETTLEMENT_SOURCE_FINGERPRINT_POLICY,
+      sourceFingerprint,
+      confirmedSettlement: confirmed
+        ? {
+            id: confirmed.id,
+            inputDigest: confirmed.inputDigest,
+            finalizedAt: confirmed.finalizedAt,
+            lineageSequence: confirmed.lineageSequence ?? 0,
+            balances: confirmedBalances,
+          }
+        : null,
+      confirmationDiff,
+    } satisfies SettlementPreviewResponse,
+  };
+}
+
+function personalSettlementCheckpointRowToDto(
+  row: Record<string, unknown>,
+): PersonalSettlementCheckpointDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    reviewerUserId: String(row.reviewer_user_id),
+    reviewerMemberId: String(row.reviewer_member_id),
+    statementFingerprint: String(row.statement_fingerprint),
+    reviewedStatement: row.reviewed_statement as PersonalSettlementStatement,
+    revision: Number(row.revision),
+    reviewedAt: String(row.reviewed_at),
+    reviewState: String(row.review_state ?? "LOOKS_GOOD") as
+      "LOOKS_GOOD" | "STILL_CHECKING",
+  };
+}
+
+async function calculatePersonalSettlementReview(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  checkpointRow?: Record<string, unknown> | null,
+) {
+  const throughTimestamp = new Date().toISOString();
+  const [calculated, actor, lineage, financialSource] = await Promise.all([
+    calculateSettlementPreview(service, tripId, throughTimestamp),
+    service
+      .from("journey_members")
+      .select("id, role")
+      .eq("trip_id", tripId)
+      .eq("user_id", userId)
+      .eq("status", "linked")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    service
+      .from("settlements")
+      .select("id, revision, input_digest")
+      .eq("journey_id", tripId)
+      .eq("algorithm_version", SETTLEMENT_ALGORITHM_VERSION)
+      .in("status", ["FINALIZED", "PARTIALLY_PAID", "SETTLED"])
+      .order("finalized_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    service.rpc("ledger_personal_financial_source_3b", {
+      p_journey_id: tripId,
+      p_through_timestamp: throughTimestamp,
+    }),
+  ]);
+  if (actor.error || !actor.data)
+    throw new BackendError(
+      403,
+      "SETTLEMENT_REVIEW_FORBIDDEN",
+      "Current Journey membership is required.",
+    );
+  if (lineage.error || financialSource.error)
+    throw new Error("Supabase Dev personal Settlement review read failed.");
+  const ids = calculated.preview.inputs.map((input) => input.expenseId);
+  const titles = ids.length
+    ? await service.from("expenses").select("id, title").in("id", ids)
+    : { data: [], error: null };
+  if (titles.error) throw new Error("Supabase Dev Expense title read failed.");
+  const titleById = new Map(
+    (titles.data ?? []).map((row) => [String(row.id), String(row.title)]),
+  );
+  const settlementIdentity = lineage.data
+    ? {
+        settlementId: String(lineage.data.id),
+        settlementRevision: Number(lineage.data.revision),
+        settlementInputDigest: String(lineage.data.input_digest),
+      }
+    : null;
+  const statement = buildPersonalSettlementStatement(
+    calculated.preview,
+    String(actor.data.id),
+    titleById,
+    settlementIdentity,
+    calculated.source.expenses,
+  );
+  const statementFingerprint = hashPayload(statement);
+  let selectedCheckpoint = checkpointRow;
+  if (selectedCheckpoint === undefined) {
+    const latest = await service
+      .from("ledger_settlement_review_checkpoints")
+      .select("*")
+      .eq("journey_id", tripId)
+      .eq("reviewer_user_id", userId)
+      .order("reviewed_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latest.error) throw new Error("Supabase Dev Settlement checkpoint read failed.");
+    selectedCheckpoint = latest.data;
+  }
+  const checkpoint = selectedCheckpoint
+    ? personalSettlementCheckpointRowToDto(selectedCheckpoint)
+    : null;
+  const [members, checkpoints] = await Promise.all([
+    service
+      .from("journey_members")
+      .select("id, display_name")
+      .eq("trip_id", tripId)
+      .eq("status", "linked")
+      .order("created_at", { ascending: true }),
+    service
+      .from("ledger_settlement_review_checkpoints")
+      .select("reviewer_member_id, reviewed_at, statement_fingerprint, review_state")
+      .eq("journey_id", tripId)
+      .order("reviewed_at", { ascending: false }),
+  ]);
+  if (members.error || checkpoints.error)
+    throw new Error("Supabase Dev Settlement review coverage failed.");
+  const latest = new Map<string, (typeof checkpoints.data)[number]>();
+  for (const item of checkpoints.data ?? [])
+    if (!latest.has(String(item.reviewer_member_id)))
+      latest.set(String(item.reviewer_member_id), item);
+  const coverage = (members.data ?? []).map((member) => {
+    const memberId = String(member.id);
+    const checkpoint = latest.get(memberId);
+    const currentFingerprint = hashPayload(
+      buildPersonalSettlementStatement(
+        calculated.preview,
+        memberId,
+        titleById,
+        settlementIdentity,
+        calculated.source.expenses,
+      ),
+    );
+    const explicit = checkpoint?.review_state ?? "LOOKS_GOOD";
+    return {
+      memberId,
+      displayName: String(member.display_name),
+      reviewedAt: checkpoint ? String(checkpoint.reviewed_at) : null,
+      reviewState: projectPersonalSettlementReviewState(
+        checkpoint
+          ? {
+              reviewState: explicit as "LOOKS_GOOD" | "STILL_CHECKING",
+              statementFingerprint: String(checkpoint.statement_fingerprint),
+            }
+          : null,
+        currentFingerprint,
+      ),
+    };
+  });
+  return {
+    throughTimestamp,
+    financialSource: financialSource.data,
+    response: {
+      statement,
+      statementFingerprint,
+      checkpoint,
+      delta: checkpoint
+        ? comparePersonalSettlementStatements(
+            checkpoint.reviewedStatement as PersonalSettlementStatement,
+            statement,
+          )
+        : null,
+      coverage,
+    },
+  };
+}
+
+async function createPersonalSettlementCheckpoint(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  idempotencyKey: string,
+  input: CreatePersonalSettlementCheckpointRequest,
+) {
+  if (input.id !== input.operationId || input.operationId !== idempotencyKey)
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+  const replay = await service
+    .from("ledger_settlement_review_checkpoints")
+    .select("*")
+    .eq("reviewer_user_id", userId)
+    .eq("operation_id", input.operationId)
+    .maybeSingle();
+  if (replay.error) throw new Error("Supabase Dev checkpoint replay read failed.");
+  if (replay.data) {
+    if (
+      replay.data.id !== input.id ||
+      replay.data.journey_id !== tripId ||
+      replay.data.statement_fingerprint !== input.statementFingerprint ||
+      (replay.data.review_state ?? "LOOKS_GOOD") !== input.reviewState
+    )
+      throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+    return {
+      ...(await calculatePersonalSettlementReview(service, userId, tripId, replay.data))
+        .response,
+      idempotentReplay: true,
+    };
+  }
+  const current = await calculatePersonalSettlementReview(service, userId, tripId);
+  if (current.response.statementFingerprint !== input.statementFingerprint)
+    throw new BackendError(
+      409,
+      "STALE_REVIEW_CHECKPOINT",
+      "The Settlement changed; review the updated statement.",
+    );
+  const result = await service.rpc("ledger_create_settlement_review_checkpoint_3c", {
+    p_actor_user_id: userId,
+    p_journey_id: tripId,
+    p_checkpoint_id: input.id,
+    p_operation_id: input.operationId,
+    p_statement_fingerprint: input.statementFingerprint,
+    p_review_state: input.reviewState,
+    p_reviewed_statement: current.response.statement,
+    p_through_timestamp: current.throughTimestamp,
+    p_expected_financial_source: current.financialSource,
+  });
+  if (result.error) {
+    if (result.error.message.includes("CHECKPOINT_STALE"))
+      throw new BackendError(
+        409,
+        "STALE_REVIEW_CHECKPOINT",
+        "The Settlement changed; review the updated statement.",
+      );
+    if (result.error.message.includes("IDEMPOTENCY_CONFLICT"))
+      throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+    if (result.error.message.includes("CHECKPOINT_FORBIDDEN"))
+      throw new BackendError(
+        403,
+        "SETTLEMENT_REVIEW_FORBIDDEN",
+        "Current Journey membership is required.",
+      );
+    throw new BackendError(
+      422,
+      "INVALID_REVIEW_CHECKPOINT",
+      "The checkpoint was rejected.",
+    );
+  }
+  const row = (result.data as { checkpoint: Record<string, unknown> }).checkpoint;
+  return {
+    ...(await calculatePersonalSettlementReview(service, userId, tripId, row)).response,
+    idempotentReplay: false,
+  };
+}
+
+export function normalizeSettlementSource(
+  source: SettlementPreviewInput,
+): SettlementPreviewInput {
+  return {
+    ...source,
+    expenses: source.expenses.map((expense) => ({
+      ...expense,
+      valuation: expense.valuation
+        ? {
+            ...expense.valuation,
+            decimalRate:
+              expense.valuation.decimalRate === null
+                ? null
+                : String(expense.valuation.decimalRate),
+          }
+        : null,
+    })),
+  };
+}
+
+async function finalizeLedgerSettlement(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  idempotencyKey: string,
+  input: { throughTimestamp: string; inputDigest: string },
+): Promise<SettlementFinalizeResponse> {
+  const calculated = await calculateSettlementPreview(
+    service,
+    tripId,
+    input.throughTimestamp,
+  );
+  if (calculated.response.state === "PREVIEW_BLOCKED") {
+    throw new BackendError(
+      409,
+      "FINANCIAL_INVARIANT_FAILED",
+      "Settlement blockers must be resolved before finalization.",
+      { blockers: calculated.response.blockers },
+    );
+  }
+  if (calculated.response.inputDigest !== input.inputDigest) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The settlement preview is stale.",
+    );
+  }
+
+  const result = await service.rpc("ledger_finalize_settlement_7_1", {
+    actor_user: userId,
+    target_journey: tripId,
+    through_timestamp_value: input.throughTimestamp,
+    input_digest_value: input.inputDigest,
+    expected_source_value: calculated.source,
+    inputs_value: calculated.preview.inputs,
+    balances_value: calculated.preview.balances,
+    transfers_value: calculated.preview.transfers,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  const message = result.error?.message ?? "";
+  if (message.includes("SETTLEMENT_INPUT_STALE"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The settlement preview is stale.",
+    );
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  if (
+    message.includes("settlements_one_active_7_1") ||
+    message.includes("settlements_one_root_7_2b")
+  )
+    throw new BackendError(
+      409,
+      "SETTLEMENT_ALREADY_FINALIZED",
+      "This Journey already has an active finalized Settlement.",
+    );
+  if (result.error || !result.data)
+    throw new Error("Supabase Dev settlement finalization failed.");
+  const finalized = result.data as {
+    settlementId: string;
+    idempotentReplay: boolean;
+  };
+  const entity = await readOneFinalizedSettlement(
+    service,
+    tripId,
+    finalized.settlementId,
+  );
+  if (!entity) throw new Error("Canonical Settlement was not found after finalization.");
+  return { entity, idempotentReplay: finalized.idempotentReplay };
+}
+
+const SETTLEMENT_ELIGIBILITY_VERSION = "ledger-settlement-eligibility-v1";
+
+async function calculateSettlementAdjustmentPreview(
+  service: SupabaseClient,
+  tripId: string,
+  rootSettlementId: string,
+  correction?: {
+    sourceExpenseId: string;
+    successor: SettlementExpenseCandidate;
+  },
+  throughTimestamp?: string,
+  exactSourceProof = false,
+) {
+  const root = await readOneFinalizedSettlement(service, tripId, rootSettlementId);
+  if (!root || root.kind === "ADJUSTMENT") {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
+  }
+  const sourceCutoff =
+    throughTimestamp ?? (correction ? new Date().toISOString() : undefined);
+  const needsExactSource = exactSourceProof || !!correction;
+  const sourceResult = needsExactSource
+    ? await service.rpc("ledger_adjustment_source_text_7_2c", {
+        target_root: rootSettlementId,
+        source_cutoff: sourceCutoff ?? null,
+      })
+    : sourceCutoff
+      ? await service.rpc("ledger_adjustment_source_current_7_2c", {
+          target_root: rootSettlementId,
+          source_cutoff: sourceCutoff,
+        })
+      : await service.rpc("ledger_adjustment_source_7_2b", {
+          target_root: rootSettlementId,
+        });
+  if (sourceResult.error || !sourceResult.data) {
+    throw new Error("Supabase Dev Adjustment source failed.");
+  }
+  const canonicalSource = normalizeSettlementSource(
+    (needsExactSource
+      ? JSON.parse(sourceResult.data)
+      : sourceResult.data) as SettlementPreviewInput,
+  );
+  if (
+    correction &&
+    !canonicalSource.expenses.some((expense) => expense.id === correction.sourceExpenseId)
+  ) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "This Expense is no longer current. Refresh Settlement and choose the latest version.",
+    );
+  }
+  const source = correction
+    ? replaceSettlementExpenseSource(
+        canonicalSource,
+        correction.sourceExpenseId,
+        correction.successor,
+      )
+    : canonicalSource;
+  const current = buildSettlementPreview(source);
+  const adjustmentRows = await service
+    .from("settlements")
+    .select("id, input_digest, lineage_sequence")
+    .eq("root_settlement_id", rootSettlementId)
+    .eq("settlement_kind", "ADJUSTMENT")
+    .order("lineage_sequence", { ascending: true });
+  if (adjustmentRows.error) throw new Error("Supabase Dev Adjustment lineage failed.");
+  const adjustmentIds = (adjustmentRows.data ?? []).map((row) => String(row.id));
+  const deltaRows = adjustmentIds.length
+    ? await service
+        .from("settlement_adjustment_deltas")
+        .select("settlement_id, member_id, display_name_snapshot, delta_minor")
+        .in("settlement_id", adjustmentIds)
+    : { data: [], error: null };
+  if (deltaRows.error) throw new Error("Supabase Dev Adjustment delta read failed.");
+
+  const priorDeltaVectors = (adjustmentRows.data ?? []).map((adjustment) =>
+    (deltaRows.data ?? [])
+      .filter((row) => String(row.settlement_id) === String(adjustment.id))
+      .map((row) => ({
+        memberId: String(row.member_id),
+        displayNameSnapshot: String(row.display_name_snapshot),
+        deltaMinor: Number(row.delta_minor),
+      })),
+  );
+  const vectors = buildSettlementAdjustmentVectors({
+    currency: root.settlementCurrency,
+    scale: root.settlementScale,
+    rootBalances: root.balances,
+    priorDeltaVectors,
+    currentBalances: current.balances,
+  });
+  const headRow = adjustmentRows.data?.at(-1) ?? null;
+  const head = headRow
+    ? await readOneFinalizedSettlement(service, tripId, String(headRow.id))
+    : null;
+  if (headRow && !head) throw new Error("Canonical Adjustment head is missing.");
+  const priorInputs = head?.inputs ?? root.inputs;
+  if (
+    correction &&
+    !priorInputs.some((item) => item.expenseId === correction.sourceExpenseId)
+  ) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The correction source is not in the current confirmed version.",
+    );
+  }
+  const digestValue = (inputs: SettlementInputSnapshot[]) =>
+    createHash("sha256")
+      .update(
+        canonicalAdjustmentInputJson({
+          rootSettlementId,
+          journeyId: tripId,
+          throughTimestamp: root.throughTimestamp,
+          settlementCurrency: root.settlementCurrency,
+          settlementScale: root.settlementScale,
+          eligibilityVersion: root.eligibilityVersion ?? SETTLEMENT_ELIGIBILITY_VERSION,
+          algorithmVersion: root.algorithmVersion,
+          inputs,
+        }),
+      )
+      .digest("hex");
+  const priorInputDigest = head?.inputDigest ?? digestValue(root.inputs);
+  const inputDigest = digestValue(current.inputs);
+  const previousById = new Map(priorInputs.map((item) => [item.expenseId, item]));
+  const currentById = new Map(current.inputs.map((item) => [item.expenseId, item]));
+  const changedExpenses: SettlementAdjustmentPreviewResponse["changedExpenses"] = [
+    ...new Set([...previousById.keys(), ...currentById.keys()]),
+  ]
+    .sort()
+    .flatMap<SettlementAdjustmentPreviewResponse["changedExpenses"][number]>(
+      (expenseId) => {
+        const previous = previousById.get(expenseId);
+        const next = currentById.get(expenseId);
+        if (!previous) return [{ expenseId, change: "NEW" }];
+        if (!next) return [{ expenseId, change: "DELETED" }];
+        return digestValue([previous]) === digestValue([next])
+          ? []
+          : [{ expenseId, change: "CHANGED" }];
+      },
+    );
+  const state = current.blockers.length
+    ? "PREVIEW_BLOCKED"
+    : inputDigest === priorInputDigest
+      ? "PREVIEW_UNCHANGED"
+      : "PREVIEW_READY";
+  return {
+    // Preview calculations are unchanged; SQL receives the exact original numeric tokens.
+    source: correction
+      ? replaceSettlementExpenseSource(
+          losslessSourceJson(sourceResult.data) as SettlementPreviewInput,
+          correction.sourceExpenseId,
+          correction.successor,
+        )
+      : exactSourceProof
+        ? losslessSourceJson(sourceResult.data)
+        : sourceResult.data,
+    response: {
+      state,
+      rootSettlementId,
+      throughTimestamp: source.throughTimestamp,
+      expectedHeadId: head?.id ?? null,
+      priorInputDigest,
+      inputDigest,
+      zeroTransfer: vectors.transfers.length === 0,
+      inputs: current.inputs,
+      balances: vectors.balances,
+      transfers: vectors.transfers,
+      blockers: current.blockers,
+      exclusions: current.exclusions,
+      changedExpenses,
+    } satisfies SettlementAdjustmentPreviewResponse,
+  };
+}
+
+async function finalizeSettlementAdjustment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  rootSettlementId: string,
+  idempotencyKey: string,
+  input: SettlementAdjustmentFinalizeRequest,
+): Promise<SettlementAdjustmentMutationResponse> {
+  const calculated = await calculateSettlementAdjustmentPreview(
+    service,
+    tripId,
+    rootSettlementId,
+    undefined,
+    input.throughTimestamp,
+    true,
+  );
+  const preview = calculated.response;
+  const result = await service.rpc("ledger_finalize_adjustment_7_2b", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_root: rootSettlementId,
+    expected_head: input.expectedHeadId,
+    input_digest_value: input.inputDigest,
+    computed_input_digest_value: preview.inputDigest,
+    prior_input_digest_value: preview.priorInputDigest,
+    expected_source_value: calculated.source,
+    inputs_value: preview.inputs,
+    deltas_value: preview.balances,
+    transfers_value: preview.transfers,
+    changed_expenses_value: preview.changedExpenses,
+    reason_value: input.reason,
+    allow_zero_transfer: input.allowZeroTransfer,
+    blocked_value: preview.state === "PREVIEW_BLOCKED",
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  const message = result.error?.message ?? "";
+  if (message.includes("SETTLEMENT_INPUT_STALE"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The Adjustment preview is stale.",
+    );
+  if (message.includes("ADJUSTMENT_NOT_REQUIRED"))
+    throw new BackendError(
+      409,
+      "ADJUSTMENT_NOT_REQUIRED",
+      "The Settlement lineage already matches canonical financial input.",
+    );
+  if (message.includes("ZERO_TRANSFER_ACK_REQUIRED"))
+    throw new BackendError(
+      422,
+      "INVALID_PAYLOAD",
+      "A zero-transfer Adjustment requires explicit acknowledgement.",
+    );
+  if (message.includes("FINANCIAL_INVARIANT_FAILED"))
+    throw new BackendError(
+      409,
+      "FINANCIAL_INVARIANT_FAILED",
+      "Adjustment blockers must be resolved before finalization.",
+      { blockers: preview.blockers },
+    );
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  if (message.includes("REASON_REQUIRED"))
+    throw new BackendError(422, "INVALID_PAYLOAD", "An Adjustment reason is required.");
+  if (message.includes("ENTITY_NOT_FOUND"))
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
+  if (result.error || !result.data)
+    throw new Error("Supabase Dev Adjustment finalization failed.");
+  const finalized = result.data as { settlementId: string; idempotentReplay: boolean };
+  const entity = await readOneFinalizedSettlement(
+    service,
+    tripId,
+    finalized.settlementId,
+  );
+  if (!entity) throw new Error("Canonical Adjustment was not found after finalization.");
+  return { entity, idempotentReplay: finalized.idempotentReplay };
+}
+
+function settlementCorrectionCandidate(
+  input: SettlementCorrectionPreviewRequest,
+): SettlementExpenseCandidate {
+  const successor = input.successor;
+  const postgresTimestamp = new Date(successor.occurredAt)
+    .toISOString()
+    .replace(/(?:\.000)?Z$/, "+00:00");
+  return {
+    id: successor.localId,
+    revision: 1,
+    occurredAt: postgresTimestamp,
+    businessStatus: successor.businessStatus,
+    settlementParticipation: successor.settlementParticipation ?? "INCLUDED",
+    hasOpenConflict: false,
+    payerMemberId: successor.payerMemberId,
+    original: successor.original,
+    participants: successor.participants
+      .map(({ memberId, displayNameSnapshot }) => ({ memberId, displayNameSnapshot }))
+      .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+    splits: successor.splits
+      .slice()
+      .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+    valuation: successor.valuation
+      ? {
+          id: successor.localId,
+          ...successor.valuation,
+          decimalRate: null,
+          roundingMode: "HALF_UP",
+          effectiveAt: null,
+          supersedesValuationId: null,
+        }
+      : null,
+  };
+}
+
+async function calculateSettlementCorrectionPreview(
+  service: SupabaseClient,
+  tripId: string,
+  rootSettlementId: string,
+  input: SettlementCorrectionPreviewRequest,
+): Promise<SettlementCorrectionPreviewResponse> {
+  const calculated = await calculateSettlementAdjustmentPreview(
+    service,
+    tripId,
+    rootSettlementId,
+    {
+      sourceExpenseId: input.sourceExpenseId,
+      successor: settlementCorrectionCandidate(input),
+    },
+  );
+  return {
+    ...calculated.response,
+    sourceExpenseId: input.sourceExpenseId,
+    successorExpenseId: input.successor.localId,
+  };
+}
+
+async function finalizeSettlementCorrection(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  rootSettlementId: string,
+  idempotencyKey: string,
+  input: SettlementCorrectionConfirmRequest,
+): Promise<SettlementCorrectionMutationResponse> {
+  const payloadHash = hashPayload(input);
+  const replay = await service
+    .from("ledger_idempotency_keys")
+    .select("payload_hash, response_body")
+    .eq("actor_user_id", userId)
+    .eq("journey_id", tripId)
+    .eq("command_type", "FINALIZE_CORRECTION")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+  if (replay.error) throw new Error("Supabase Dev correction replay lookup failed.");
+  if (replay.data) {
+    if (replay.data.payload_hash !== payloadHash)
+      throw new BackendError(
+        409,
+        "IDEMPOTENCY_CONFLICT",
+        "The idempotency key conflicts.",
+      );
+    const stored = replay.data.response_body as {
+      settlementId: string;
+      successorExpenseId: string;
+    };
+    const entity = await readOneFinalizedSettlement(service, tripId, stored.settlementId);
+    if (!entity) throw new Error("Corrected Settlement replay was not found.");
+    return {
+      entity,
+      successorExpenseId: stored.successorExpenseId,
+      idempotentReplay: true,
+    };
+  }
+  const calculated = await calculateSettlementAdjustmentPreview(
+    service,
+    tripId,
+    rootSettlementId,
+    {
+      sourceExpenseId: input.sourceExpenseId,
+      successor: settlementCorrectionCandidate(input),
+    },
+  );
+  const preview = calculated.response;
+  const successorResponse = buildLedgerExpenseCreateResponse(
+    userId,
+    tripId,
+    input.successor,
+    input.successor.localId,
+    input.successor.localId,
+  );
+  await validateCanonicalExpense(service, tripId, {
+    ...successorResponse.entity,
+    status: successorResponse.entity.businessStatus,
+  });
+  const result = await service.rpc("ledger_finalize_correction_4a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_root: rootSettlementId,
+    source_expense: input.sourceExpenseId,
+    successor_response: successorResponse,
+    expected_head: input.expectedHeadId,
+    input_digest_value: input.inputDigest,
+    computed_input_digest_value: preview.inputDigest,
+    prior_input_digest_value: preview.priorInputDigest,
+    expected_source_value: calculated.source,
+    inputs_value: preview.inputs,
+    deltas_value: preview.balances,
+    transfers_value: preview.transfers,
+    changed_expenses_value: preview.changedExpenses,
+    reason_value: input.reason,
+    allow_zero_transfer: input.allowZeroTransfer,
+    blocked_value: preview.state === "PREVIEW_BLOCKED",
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: payloadHash,
+  });
+  const message = result.error?.message ?? "";
+  if (
+    message.includes("SETTLEMENT_INPUT_STALE") ||
+    message.includes("CORRECTION_SOURCE_STALE")
+  )
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The correction preview is stale.",
+    );
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("ZERO_TRANSFER_ACK_REQUIRED"))
+    throw new BackendError(422, "INVALID_PAYLOAD", "Confirm the zero-transfer update.");
+  if (result.error) throw new Error("Supabase Dev Settlement correction failed.");
+  const value = result.data as {
+    settlementId: string;
+    successorExpenseId: string;
+    idempotentReplay: boolean;
+  };
+  const entity = await readOneFinalizedSettlement(service, tripId, value.settlementId);
+  if (!entity) throw new Error("Corrected Settlement version was not found.");
+  return {
+    entity,
+    successorExpenseId: value.successorExpenseId,
+    idempotentReplay: value.idempotentReplay,
+  };
+}
+
+async function readPersonalSettlementPayments(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+) {
+  const result = await service.rpc("ledger_list_personal_settlement_payments_1a", {
+    actor_user: userId,
+    target_journey: tripId,
+  });
+  if (result.error) throw new Error("Supabase Dev Personal Payment read failed.");
+  return ((result.data ?? []) as Record<string, unknown>[]).map(personalPaymentRowToDto);
+}
+
+async function readPersonalPaymentFxProjections(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+) {
+  const result = await service.rpc("ledger_list_personal_payment_fx_projections_1c", {
+    actor_user: userId,
+    target_journey: tripId,
+  });
+  if (result.error) throw new Error("Supabase Dev Personal Payment FX read failed.");
+  return ((result.data ?? []) as Record<string, unknown>[]).map(
+    personalPaymentFxProjectionRowToDto,
+  );
+}
+
+async function readPersonalSettlementPaymentChanges(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  cursor: string | null,
+): Promise<LedgerChangesResponse> {
+  const after = decodeLedgerCursor(cursor, tripId, userId);
+  assertLedgerCursorContinuation(after, await latestLedgerSequence(service, tripId));
+  const [result, payments, projections] = await Promise.all([
+    service.rpc("ledger_list_personal_settlement_payment_changes_1a", {
+      actor_user: userId,
+      target_journey: tripId,
+      after_sequence: after,
+      page_size: 101,
+    }),
+    readPersonalSettlementPayments(service, userId, tripId),
+    readPersonalPaymentFxProjections(service, userId, tripId),
+  ]);
+  if (result.error) throw new Error("Supabase Dev Personal Payment changes failed.");
+  const allRows = (result.data ?? []) as Record<string, unknown>[];
+  const hasMore = allRows.length > 100;
+  const rows = allRows.slice(0, 100);
+  const byId = new Map(payments.map((payment) => [payment.id, payment]));
+  const projectionById = new Map(
+    projections.map((projection) => [projection.id, projection]),
+  );
+  return {
+    changes: rows
+      .filter((row) =>
+        [
+          "PERSONAL_SETTLEMENT_PAYMENT",
+          "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+        ].includes(String(row.entity_type)),
+      )
+      .map((row) => ({
+        entityType: row.entity_type as
+          "PERSONAL_SETTLEMENT_PAYMENT" | "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+        entityId: String(row.entity_id),
+        revision: Number(row.revision),
+        isTombstone: Boolean(row.is_tombstone),
+        aggregate:
+          (row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT"
+            ? byId.get(String(row.entity_id))
+            : projectionById.get(String(row.entity_id))) ?? null,
+      })),
+    cursor: rows.length
+      ? encodeLedgerCursor(Number(rows[rows.length - 1].sequence), tripId, userId)
+      : cursor,
+    hasMore,
+    serverTime: new Date().toISOString(),
+  };
+}
+
+async function mutatePersonalSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  operationId: string,
+  command: "CREATE" | "UPDATE" | "DELETE",
+  baseRevision: number | null,
+  input:
+    | CreatePersonalSettlementPaymentRequest
+    | UpdatePersonalSettlementPaymentRequest
+    | DeletePersonalSettlementPaymentRequest,
+): Promise<PersonalSettlementPaymentMutationResponse> {
+  const { auditReason = null, ...submitted } = input;
+  const payment = { ...submitted } as Record<string, unknown>;
+  delete payment.id;
+  delete payment.baseRevision;
+  delete payment.recordedEquivalentMinor;
+  delete payment.recordedEquivalentCurrency;
+  delete payment.recordedEquivalentScale;
+  delete payment.referenceRateDecimal;
+  delete payment.referenceRateDate;
+  delete payment.referenceSource;
+  delete payment.referenceProvenance;
+  const result = await service.rpc("ledger_mutate_personal_settlement_payment_1a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_record: paymentId,
+    command_type_value: command,
+    base_revision_value: baseRevision,
+    operation_id_value: operationId,
+    payload_hash_value: hashPayload({ paymentId, input }),
+    payment_value: command === "DELETE" ? {} : payment,
+    audit_reason_value: auditReason,
+  });
+  if (result.error || !result.data) {
+    throw personalPaymentBackendError(result.error?.message ?? "PERSONAL_PAYMENT_FAILED");
+  }
+  const response = result.data as {
+    record: Record<string, unknown>;
+    idempotentReplay: boolean;
+  };
+  const invalidated = await service.rpc(
+    "ledger_invalidate_personal_payment_fx_projections_1c",
+    { target_payment: paymentId },
+  );
+  if (invalidated.error)
+    throw new Error("Supabase Dev Personal Payment FX invalidation failed.");
+  if (command !== "DELETE") {
+    const ensured = await service.rpc("ledger_ensure_personal_payment_fx_projection_1c", {
+      target_payment: paymentId,
+      requested_target_currency: null,
+    });
+    if (ensured.error)
+      throw new Error("Supabase Dev Personal Payment FX projection failed.");
+  }
+  // Payment is committed already; Review is a repairable projection.
+  try {
+    await service.rpc("ledger_resolve_human_review_findings_3a", {
+      p_journey_id: tripId,
+    });
+  } catch {
+    /* best-effort projection */
+  }
+  return {
+    record: personalPaymentRowToDto(response.record),
+    projections: (await readPersonalPaymentFxProjections(service, userId, tripId)).filter(
+      (projection) => projection.paymentId === paymentId,
+    ),
+    idempotentReplay: Boolean(response.idempotentReplay),
+  };
+}
+
+function throwSettlementPaymentError(message: string): never {
+  const known: Record<string, [number, string]> = {
+    IDEMPOTENCY_CONFLICT: [409, "The idempotency key conflicts."],
+    PAYMENT_IDENTITY_CONFLICT: [409, "The Payment identity conflicts."],
+    PAYMENT_REVISION_CONFLICT: [409, "The Payment or Transfer revision is stale."],
+    PAYMENT_STATE_CONFLICT: [409, "The Payment is no longer awaiting confirmation."],
+    TRANSFER_OVERPAYMENT: [409, "The Payment would exceed the Transfer obligation."],
+    PAYMENT_ACTION_FORBIDDEN: [403, "This member cannot perform the Payment action."],
+    PAYMENT_PROPOSITION_INVALID: [422, "The repayment proposition is invalid."],
+    REPAYMENT_VALUATION_INVALID: [422, "The repayment valuation is invalid."],
+    REASON_REQUIRED: [422, "A reason is required."],
+    ENTITY_NOT_FOUND: [404, "The Payment or Transfer was not found."],
+  };
+  for (const [code, [status, text]] of Object.entries(known)) {
+    if (message.includes(code)) throw new BackendError(status, code, text);
+  }
+  throw new Error("Supabase Dev Settlement Payment command failed.");
+}
+
+async function settlementForTransfer(
+  service: SupabaseClient,
+  tripId: string,
+  transferId: string,
+) {
+  const result = await service
+    .from("settlement_transfers")
+    .select("settlement_id")
+    .eq("journey_id", tripId)
+    .eq("id", transferId)
+    .maybeSingle();
+  if (result.error || !result.data) throwSettlementPaymentError("ENTITY_NOT_FOUND");
+  const entity = await readOneFinalizedSettlement(
+    service,
+    tripId,
+    String(result.data.settlement_id),
+  );
+  if (!entity) throwSettlementPaymentError("ENTITY_NOT_FOUND");
+  return entity;
+}
+
+async function transferForPayment(
+  service: SupabaseClient,
+  tripId: string,
+  paymentId: string,
+) {
+  const result = await service
+    .from("settlement_payments")
+    .select("transfer_id")
+    .eq("journey_id", tripId)
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (result.error || !result.data) throwSettlementPaymentError("ENTITY_NOT_FOUND");
+  return String(result.data.transfer_id);
+}
+
+async function recordSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  transferId: string,
+  idempotencyKey: string,
+  input: RecordSettlementPaymentRequest,
+): Promise<SettlementPaymentMutationResponse> {
+  const result = await service.rpc("ledger_record_settlement_payment_7_2a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_transfer: transferId,
+    payment_value: input,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    supersedes_payment_value: null,
+  });
+  if (result.error || !result.data)
+    throwSettlementPaymentError(result.error?.message ?? "ENTITY_NOT_FOUND");
+  const response = result.data as { paymentId: string; idempotentReplay: boolean };
+  return {
+    entity: await settlementForTransfer(service, tripId, transferId),
+    paymentId: response.paymentId,
+    idempotentReplay: response.idempotentReplay,
+  };
+}
+
+async function actOnSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  action: "confirm" | "reject" | "dispute",
+  idempotencyKey: string,
+  input: SettlementPaymentActionRequest,
+): Promise<SettlementPaymentMutationResponse> {
+  const result = await service.rpc("ledger_act_on_settlement_payment_7_2a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_payment: paymentId,
+    action_value: action,
+    base_revision_value: input.basePaymentRevision,
+    authority_value: input.authority ?? (action === "dispute" ? "PAYER" : "RECIPIENT"),
+    reason_value: input.reason,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  if (result.error || !result.data)
+    throwSettlementPaymentError(result.error?.message ?? "ENTITY_NOT_FOUND");
+  const response = result.data as { paymentId: string; idempotentReplay: boolean };
+  const transferId = await transferForPayment(service, tripId, paymentId);
+  return {
+    entity: await settlementForTransfer(service, tripId, transferId),
+    paymentId: response.paymentId,
+    idempotentReplay: response.idempotentReplay,
+  };
+}
+
+async function correctSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  idempotencyKey: string,
+  input: CorrectSettlementPaymentRequest,
+): Promise<SettlementPaymentMutationResponse> {
+  const transferId = await transferForPayment(service, tripId, paymentId);
+  const payment = {
+    ...input,
+    localId: input.replacementLocalId,
+    reportingAuthority: "ORGANIZER_OVERRIDE" as const,
+  };
+  const result = await service.rpc("ledger_record_settlement_payment_7_2a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_transfer: transferId,
+    payment_value: payment,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    supersedes_payment_value: paymentId,
+  });
+  if (result.error || !result.data)
+    throwSettlementPaymentError(result.error?.message ?? "ENTITY_NOT_FOUND");
+  const response = result.data as { paymentId: string; idempotentReplay: boolean };
+  return {
+    entity: await settlementForTransfer(service, tripId, transferId),
+    paymentId: response.paymentId,
+    idempotentReplay: response.idempotentReplay,
+  };
+}
+
+async function readOneFinalizedSettlement(
+  service: SupabaseClient,
+  tripId: string,
+  settlementId: string,
+) {
+  const settlements = await readFinalizedSettlements(service, tripId, [settlementId]);
+  return settlements[0] ?? null;
+}
+
+async function readFinalizedSettlements(
+  service: SupabaseClient,
+  tripId: string,
+  settlementIds?: string[],
+): Promise<FinalizedSettlementDto[]> {
+  if (settlementIds?.length === 0) return [];
+  let settlementQuery = service
+    .from("settlements")
+    .select(
+      "id, journey_id, settlement_kind, root_settlement_id, parent_adjustment_id, lineage_sequence, prior_input_digest, adjustment_reason, eligibility_version, status, through_timestamp, settlement_currency, settlement_scale, settings_revision, algorithm_version, input_digest, revision, finalized_by, finalized_at",
+    )
+    .eq("journey_id", tripId)
+    .eq("algorithm_version", SETTLEMENT_ALGORITHM_VERSION)
+    .order("finalized_at", { ascending: false });
+  if (settlementIds) settlementQuery = settlementQuery.in("id", settlementIds);
+  const settlements = await settlementQuery;
+  if (settlements.error) throw new Error("Supabase Dev Settlement read failed.");
+  const ids = (settlements.data ?? []).map((row) => String(row.id));
+  if (!ids.length) return [];
+  const [inputs, balances, transfers, audits, adjustmentDeltas, correctionLinks] =
+    await Promise.all([
+      service
+        .from("settlement_inputs")
+        .select("settlement_id, normalized_snapshot")
+        .in("settlement_id", ids),
+      service
+        .from("settlement_member_balances")
+        .select(
+          "settlement_id, member_id, display_name_snapshot, paid_minor, owed_minor, transferred_minor, net_minor",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("settlement_transfers")
+        .select(
+          "id, settlement_id, from_member_id, to_member_id, obligation_amount_minor, settlement_currency, settlement_scale, status, revision",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("settlement_audit_events")
+        .select(
+          "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, transfer_id, payment_id, discharge_id, authority, created_at",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("settlement_adjustment_deltas")
+        .select(
+          "settlement_id, member_id, display_name_snapshot, delta_minor, settlement_currency, settlement_scale",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("expense_correction_successors")
+        .select("correction_settlement_id, source_expense_id, successor_expense_id")
+        .in("correction_settlement_id", ids),
+    ]);
+  if (
+    inputs.error ||
+    balances.error ||
+    transfers.error ||
+    audits.error ||
+    adjustmentDeltas.error ||
+    correctionLinks.error
+  )
+    throw new Error("Supabase Dev Settlement aggregate read failed.");
+
+  const transferIds = (transfers.data ?? []).map((row) => String(row.id));
+  const payments = transferIds.length
+    ? await service
+        .from("settlement_payments")
+        .select(
+          "id, transfer_id, status, payment_amount_minor, payment_currency, payment_scale, asserted_discharge_amount_minor, settlement_currency, settlement_scale, repayment_valuation_snapshot_id, fee_amount_minor, fee_currency, fee_scale, fee_borne_by, reported_by, reported_by_member_id, reporting_authority, reporting_reason, paid_at, evidence_asset_id, notes, supersedes_payment_id, revision, created_at",
+        )
+        .in("transfer_id", transferIds)
+    : { data: [], error: null };
+  if (payments.error) throw new Error("Supabase Dev Settlement Payment read failed.");
+  const valuationIds = (payments.data ?? [])
+    .map((row) => row.repayment_valuation_snapshot_id)
+    .filter((id): id is string => Boolean(id));
+  const paymentIds = (payments.data ?? []).map((row) => String(row.id));
+  const [valuations, discharges] = await Promise.all([
+    valuationIds.length
+      ? service
+          .from("repayment_valuation_snapshots")
+          .select("id, decimal_rate, source, source_label, effective_at, reason")
+          .in("id", valuationIds)
+      : Promise.resolve({ data: [], error: null }),
+    paymentIds.length
+      ? service
+          .from("settlement_payment_discharges")
+          .select(
+            "id, payment_id, amount_minor, settlement_currency, settlement_scale, confirmation_authority, confirmed_by_user_id, confirmed_by_member_id, reason, confirmed_at",
+          )
+          .in("payment_id", paymentIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (valuations.error || discharges.error)
+    throw new Error("Supabase Dev Settlement Payment evidence read failed.");
+
+  return (settlements.data ?? []).map((row) => {
+    const id = String(row.id);
+    const correction = (correctionLinks.data ?? []).find(
+      (item) => String(item.correction_settlement_id) === id,
+    );
+    return {
+      id,
+      journeyId: String(row.journey_id),
+      kind: (row.settlement_kind ?? "ROOT") as "ROOT" | "ADJUSTMENT",
+      rootSettlementId: row.root_settlement_id ? String(row.root_settlement_id) : null,
+      parentAdjustmentId: row.parent_adjustment_id
+        ? String(row.parent_adjustment_id)
+        : null,
+      lineageSequence: Number(row.lineage_sequence ?? 0),
+      priorInputDigest: row.prior_input_digest ? String(row.prior_input_digest) : null,
+      adjustmentReason: row.adjustment_reason ? String(row.adjustment_reason) : null,
+      correctionSourceExpenseId: correction ? String(correction.source_expense_id) : null,
+      correctionSuccessorExpenseId: correction
+        ? String(correction.successor_expense_id)
+        : null,
+      eligibilityVersion: String(
+        row.eligibility_version ?? SETTLEMENT_ELIGIBILITY_VERSION,
+      ),
+      status: row.status as FinalizedSettlementDto["status"],
+      throughTimestamp: String(row.through_timestamp),
+      settlementCurrency: String(row.settlement_currency),
+      settlementScale: Number(row.settlement_scale),
+      settingsRevision: Number(row.settings_revision),
+      algorithmVersion: "ledger-settlement-greedy-v1",
+      inputDigest: String(row.input_digest),
+      revision: Number(row.revision),
+      finalizedBy: String(row.finalized_by),
+      finalizedAt: String(row.finalized_at),
+      inputs: (inputs.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map(
+          (item) => item.normalized_snapshot as FinalizedSettlementDto["inputs"][number],
+        )
+        .sort((left, right) => left.expenseId.localeCompare(right.expenseId)),
+      balances: (balances.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          memberId: String(item.member_id),
+          displayNameSnapshot: String(item.display_name_snapshot),
+          paidMinor: Number(item.paid_minor),
+          owedMinor: Number(item.owed_minor),
+          transferredMinor: 0 as const,
+          netMinor: Number(item.net_minor),
+          currency: String(row.settlement_currency),
+          scale: Number(row.settlement_scale),
+        }))
+        .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+      adjustmentDeltas: (adjustmentDeltas.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          memberId: String(item.member_id),
+          displayNameSnapshot: String(item.display_name_snapshot),
+          deltaMinor: Number(item.delta_minor),
+          currency: String(item.settlement_currency),
+          scale: Number(item.settlement_scale),
+        }))
+        .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+      transfers: (transfers.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => {
+          const transferPayments = (payments.data ?? [])
+            .filter((payment) => String(payment.transfer_id) === String(item.id))
+            .map((payment) => {
+              const valuation = (valuations.data ?? []).find(
+                (value) =>
+                  String(value.id) ===
+                  String(payment.repayment_valuation_snapshot_id ?? ""),
+              );
+              const discharge = (discharges.data ?? []).find(
+                (value) => String(value.payment_id) === String(payment.id),
+              );
+              return {
+                id: String(payment.id),
+                transferId: String(payment.transfer_id),
+                status:
+                  payment.status as FinalizedSettlementDto["transfers"][number]["payments"][number]["status"],
+                payment: {
+                  minor: Number(payment.payment_amount_minor),
+                  currency: String(payment.payment_currency),
+                  scale: Number(payment.payment_scale),
+                },
+                assertedDischarge: {
+                  minor: Number(payment.asserted_discharge_amount_minor),
+                  currency: String(payment.settlement_currency),
+                  scale: Number(payment.settlement_scale),
+                },
+                repaymentValuation: valuation
+                  ? {
+                      id: String(valuation.id),
+                      decimalRate: String(valuation.decimal_rate),
+                      source: valuation.source as "REFERENCE_RATE" | "MANUAL_AGREED",
+                      sourceLabel: String(valuation.source_label),
+                      effectiveAt: String(valuation.effective_at),
+                      reason: valuation.reason ? String(valuation.reason) : null,
+                    }
+                  : null,
+                feeTreatment:
+                  payment.fee_amount_minor === null
+                    ? null
+                    : {
+                        fee: {
+                          minor: Number(payment.fee_amount_minor),
+                          currency: String(payment.fee_currency),
+                          scale: Number(payment.fee_scale),
+                        },
+                        borneBy: payment.fee_borne_by as "DEBTOR" | "CREDITOR" | "SHARED",
+                      },
+                reportedByUserId: String(payment.reported_by),
+                reportedByMemberId: String(payment.reported_by_member_id),
+                reportingAuthority: payment.reporting_authority as
+                  "PAYER" | "ORGANIZER_OVERRIDE",
+                reportingReason: payment.reporting_reason
+                  ? String(payment.reporting_reason)
+                  : null,
+                paidAt: String(payment.paid_at),
+                evidenceAssetId: payment.evidence_asset_id
+                  ? String(payment.evidence_asset_id)
+                  : null,
+                notes: payment.notes ? String(payment.notes) : null,
+                supersedesPaymentId: payment.supersedes_payment_id
+                  ? String(payment.supersedes_payment_id)
+                  : null,
+                revision: Number(payment.revision),
+                createdAt: String(payment.created_at),
+                syncStatus: "SYNCED" as const,
+                discharge: discharge
+                  ? {
+                      id: String(discharge.id),
+                      amount: {
+                        minor: Number(discharge.amount_minor),
+                        currency: String(discharge.settlement_currency),
+                        scale: Number(discharge.settlement_scale),
+                      },
+                      confirmationAuthority: discharge.confirmation_authority as
+                        "RECIPIENT" | "ORGANIZER_OVERRIDE",
+                      confirmedByUserId: String(discharge.confirmed_by_user_id),
+                      confirmedByMemberId: String(discharge.confirmed_by_member_id),
+                      reason: discharge.reason ? String(discharge.reason) : null,
+                      confirmedAt: String(discharge.confirmed_at),
+                    }
+                  : null,
+              };
+            })
+            .sort(
+              (left, right) =>
+                left.createdAt.localeCompare(right.createdAt) ||
+                left.id.localeCompare(right.id),
+            );
+          const amounts = deriveTransferPaymentState(
+            Number(item.obligation_amount_minor),
+            transferPayments.map((payment) => ({
+              status: payment.status,
+              assertedDischargeMinor: payment.assertedDischarge.minor,
+              dischargeMinor: payment.discharge?.amount.minor ?? null,
+            })),
+          );
+          const money = (minor: number) => ({
+            minor,
+            currency: String(item.settlement_currency),
+            scale: Number(item.settlement_scale),
+          });
+          return {
+            id: String(item.id),
+            fromMemberId: String(item.from_member_id),
+            toMemberId: String(item.to_member_id),
+            amount: money(Number(item.obligation_amount_minor)),
+            confirmedDischarge: money(amounts.confirmedDischargeMinor),
+            confirmedRemaining: money(amounts.confirmedRemainingMinor),
+            awaitingAmount: money(amounts.awaitingAmountMinor),
+            availableToReport: money(amounts.availableToReportMinor),
+            status: amounts.status,
+            revision: Number(item.revision),
+            payments: transferPayments,
+          };
+        })
+        .sort((left, right) => left.id.localeCompare(right.id)),
+      auditEvents: (audits.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          id: String(item.id),
+          eventType:
+            item.event_type as FinalizedSettlementDto["auditEvents"][number]["eventType"],
+          actorUserId: String(item.actor_user_id),
+          actorMemberId: String(item.actor_member_id),
+          reason: item.reason ? String(item.reason) : null,
+          transferId: item.transfer_id ? String(item.transfer_id) : null,
+          paymentId: item.payment_id ? String(item.payment_id) : null,
+          dischargeId: item.discharge_id ? String(item.discharge_id) : null,
+          authority: item.authority
+            ? (String(item.authority) as "PAYER" | "RECIPIENT" | "ORGANIZER_OVERRIDE")
+            : null,
+          revision: Number(item.settlement_revision),
+          createdAt: String(item.created_at),
+        })),
+    };
+  });
+}
+
+async function decorateSettlementLineages(
+  service: SupabaseClient,
+  tripId: string,
+  settlements: FinalizedSettlementDto[],
+) {
+  const roots = settlements.filter((settlement) => settlement.kind !== "ADJUSTMENT");
+  const previews = new Map(
+    await Promise.all(
+      roots.map(
+        async (root) =>
+          [
+            root.id,
+            (await calculateSettlementAdjustmentPreview(service, tripId, root.id))
+              .response,
+          ] as const,
+      ),
+    ),
+  );
+  return settlements.map((settlement) => {
+    const preview = previews.get(settlement.id);
+    if (!preview) return settlement;
+    const lineage = settlements.filter(
+      (item) => item.id === settlement.id || item.rootSettlementId === settlement.id,
+    );
+    const discharges = lineage.flatMap((item) =>
+      item.transfers.flatMap((transfer) =>
+        transfer.payments.flatMap((payment) =>
+          payment.discharge
+            ? [
+                {
+                  fromMemberId: transfer.fromMemberId,
+                  toMemberId: transfer.toMemberId,
+                  amountMinor: payment.discharge.amount.minor,
+                },
+              ]
+            : [],
+        ),
+      ),
+    );
+    const names = new Map(
+      preview.balances.map((balance) => [balance.memberId, balance.displayNameSnapshot]),
+    );
+    return {
+      ...settlement,
+      adjustmentState:
+        preview.state === "PREVIEW_BLOCKED"
+          ? ("ADJUSTMENT_BLOCKED" as const)
+          : preview.state === "PREVIEW_READY"
+            ? ("ADJUSTMENT_REQUIRED" as const)
+            : ("CURRENT" as const),
+      lineageHeadId: preview.expectedHeadId ?? settlement.id,
+      outstandingBalances: buildOutstandingBalanceVector(
+        preview.balances,
+        discharges,
+      ).map(({ memberId, minor }) => ({
+        memberId,
+        displayNameSnapshot: names.get(memberId) ?? memberId,
+        amount: {
+          minor,
+          currency: settlement.settlementCurrency,
+          scale: settlement.settlementScale,
+        },
+      })),
+    };
+  });
+}
+
+export async function readAllJourneyExpenses(service: SupabaseClient, tripId: string) {
+  const rows: Record<string, unknown>[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const page = await service
+      .from("expenses")
+      .select(
+        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+      )
+      .eq("journey_id", tripId)
+      .order("id")
+      .range(offset, offset + 499);
+    if (page.error) return { data: null, error: page.error };
+    rows.push(...(page.data ?? []));
+    if ((page.data ?? []).length < 500) break;
+  }
+  return { data: rows, error: null };
+}
+
+async function readExpenseChainMetadata(service: SupabaseClient, tripId: string) {
+  const result = await service.rpc("ledger_list_expense_chain_metadata_v2", {
+    target_journey: tripId,
+  });
+  if (result.error) throw new Error("Expense conflict metadata read failed.");
+  return (result.data ?? []) as NonNullable<
+    LedgerBootstrapResponse["expenseConflictChains"]
+  >;
+}
+
+export async function readTripPersonSnapshot(service: SupabaseClient, tripId: string) {
+  const result = await service.rpc("read_trip_person_snapshot_v1", {
+    target_trip: tripId,
+  });
+  try {
+    if (result.error) throw result.error;
+    const data = result.data as {
+      observedAt: unknown;
+      personCount: unknown;
+      members: Record<string, unknown>[];
+    };
+    const observedAt = participationObservationTimeSchema.parse(data.observedAt);
+    if (!Array.isArray(data.members) || data.personCount !== data.members.length)
+      throw new Error();
+    const vector = data.members.map((member) => ({
+      id: member.id,
+      isParticipating: member.participation_active,
+      participationRevision: member.participation_revision,
+    }));
+    const fingerprint = createHash("sha256")
+      .update(serializeParticipationVector(vector), "utf8")
+      .digest("hex");
+    for (const member of data.members)
+      ledgerMemberSchema.parse({
+        id: member.id,
+        displayName: member.display_name,
+        role: member.role,
+        status: member.status,
+        capabilities: capabilities(
+          member.role === null ? null : String(member.role),
+          member.status === null ? null : String(member.status),
+        ),
+        updatedAt: member.updated_at,
+        isParticipating: member.participation_active,
+        participationRevision: member.participation_revision,
+      });
+    return { data: data.members, error: null, fingerprint, observedAt };
+  } catch {
+    throw new BackendError(
+      500,
+      "PARTICIPATION_SNAPSHOT_INVALID",
+      "Trip Person snapshot is invalid.",
+    );
+  }
+}
+
+async function readLedgerBootstrap(
+  service: SupabaseClient,
+  tripId: string,
+  userId: string,
+  attempt = 0,
+): Promise<LedgerBootstrapResponse> {
+  const now = new Date().toISOString();
+  const initialParticipation = await readTripPersonSnapshot(service, tripId);
+  const initialSettings = await service
+    .from("ledger_settings")
+    .select("revision")
+    .eq("journey_id", tripId)
+    .single();
+  if (initialSettings.error) throw new Error("Supabase Dev settings read failed.");
+  const initialSequence = await latestLedgerSequence(service, tripId);
+  const [
+    trip,
+    settings,
+    members,
+    households,
+    householdMembers,
+    expenses,
+    corrections,
+    rateQuotes,
+    receipts,
+    personalPayments,
+    personalPaymentFxProjections,
+  ] = await Promise.all([
+    service
+      .from("trips")
+      .select("name, start_date, end_date")
+      .eq("id", tripId)
+      .maybeSingle(),
+    service
+      .from("ledger_settings")
+      .select("settlement_currency, settlement_scale, valuation_policy, updated_at")
+      .eq("journey_id", tripId)
+      .maybeSingle(),
+    readTripPersonSnapshot(service, tripId),
+    service
+      .from("households")
+      .select("id, name, display_order, updated_at")
+      .eq("journey_id", tripId)
+      .order("display_order"),
+    service
+      .from("household_members")
+      .select("household_id, member_id")
+      .eq("journey_id", tripId),
+    readAllJourneyExpenses(service, tripId),
+    service
+      .from("expense_correction_requests")
+      .select("*")
+      .eq("journey_id", tripId)
+      .order("updated_at", { ascending: false }),
+    readRateQuotes(service, tripId),
+    service
+      .from("receipt_assets")
+      .select(receiptColumns)
+      .eq("journey_id", tripId)
+      .order("created_at", { ascending: false }),
+    service.rpc("ledger_list_personal_settlement_payments_1a", {
+      actor_user: userId,
+      target_journey: tripId,
+    }),
+    service.rpc("ledger_list_personal_payment_fx_projections_1c", {
+      actor_user: userId,
+      target_journey: tripId,
+    }),
+  ]);
+
+  if (
+    trip.error ||
+    settings.error ||
+    members.error ||
+    households.error ||
+    householdMembers.error ||
+    expenses.error ||
+    corrections.error ||
+    receipts.error ||
+    personalPayments.error ||
+    personalPaymentFxProjections.error
+  ) {
+    throw new Error("Supabase Dev Ledger bootstrap failed.");
+  }
+
+  const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
+  const personalPaymentDtos = (
+    (personalPayments.data ?? []) as Record<string, unknown>[]
+  ).map(personalPaymentRowToDto);
+  const readableReceipts = await filterReadableReceipts(
+    service,
+    userId,
+    personalPaymentDtos.map((payment) => payment.id),
+    (receipts.data ?? []) as Record<string, unknown>[],
+  );
+  const finalizedSettlements = await decorateSettlementLineages(
+    service,
+    tripId,
+    await readFinalizedSettlements(service, tripId),
+  );
+  const review = await readLedgerReviewData(service, tripId, userId);
+  const expenseConflictChains = await readExpenseChainMetadata(service, tripId);
+  const lastSequence = await latestLedgerSequence(service, tripId);
+  const finalSettings = await service
+    .from("ledger_settings")
+    .select("revision")
+    .eq("journey_id", tripId)
+    .single();
+  if (finalSettings.error) throw new Error("Supabase Dev settings read failed.");
+  const finalParticipation = await readTripPersonSnapshot(service, tripId);
+  if (
+    initialParticipation.fingerprint !== members.fingerprint ||
+    members.fingerprint !== finalParticipation.fingerprint ||
+    finalSettings.data.revision !== initialSettings.data.revision ||
+    lastSequence !== initialSequence
+  ) {
+    if (attempt >= 2)
+      throw new BackendError(
+        503,
+        "PARTICIPATION_SNAPSHOT_UNSTABLE",
+        "Trip Person snapshot changed during bootstrap.",
+      );
+    return readLedgerBootstrap(service, tripId, userId, attempt + 1);
+  }
+  const setting = settings.data as Record<string, unknown> | null;
+  const tripRow = trip.data as Record<string, unknown> | null;
+
+  const actorRow = (members.data ?? []).find(
+    (member) => String(member.user_id ?? "") === userId,
+  ) as Record<string, unknown> | undefined;
+  const actorRole = actorRow?.role === null || !actorRow ? null : String(actorRow.role);
+  const actorStatus =
+    actorRow?.status === null || !actorRow ? null : String(actorRow.status);
+
+  return {
+    expenseConflictChains,
+    journey: {
+      id: tripId,
+      title: String(tripRow?.name ?? "Journey"),
+      startDate: tripRow?.start_date ? String(tripRow.start_date) : null,
+      endDate: tripRow?.end_date ? String(tripRow.end_date) : null,
+      settlementCurrency: String(setting?.settlement_currency ?? "NZD"),
+      settlementScale: Number(setting?.settlement_scale ?? 2),
+      valuationPolicy: String(setting?.valuation_policy ?? "REFERENCE_RATE"),
+      updatedAt: String(setting?.updated_at ?? now),
+    },
+    members: (members.data ?? []).map((row) => {
+      const member = row as Record<string, unknown>;
+      const role = member.role === null ? null : String(member.role);
+      const status = member.status === null ? null : String(member.status);
+      if (
+        member.participation_active === undefined ||
+        member.participation_revision === undefined
+      )
+        throw new Error("Member participation columns missing from bootstrap.");
+      return ledgerMemberSchema.parse({
+        id: String(member.id),
+        displayName: String(member.display_name),
+        role,
+        status,
+        capabilities: capabilities(role, status),
+        updatedAt: String(member.updated_at),
+        isParticipating: member.participation_active,
+        participationRevision: member.participation_revision,
+      });
+    }),
+    households: (households.data ?? []).map((row) => {
+      const household = row as Record<string, unknown>;
+      return {
+        id: String(household.id),
+        name: String(household.name),
+        displayOrder: Number(household.display_order),
+        updatedAt: String(household.updated_at),
+        memberIds: (householdMembers.data ?? [])
+          .filter((item) => String(item.household_id) === String(household.id))
+          .map((item) => String(item.member_id)),
+      };
+    }),
+    expenses: aggregates,
+    corrections: (corrections.data ?? []).map(correctionRowToDto),
+    rateQuotes,
+    receipts: readableReceipts.map(receiptRowToDto),
+    settlements: finalizedSettlements,
+    personalPayments: personalPaymentDtos,
+    personalPaymentFxProjections: (
+      (personalPaymentFxProjections.data ?? []) as Record<string, unknown>[]
+    ).map(personalPaymentFxProjectionRowToDto),
+    reviewFindings: review.findings,
+    reviewActions: review.actions,
+    actor: {
+      userId,
+      memberId: actorRow ? String(actorRow.id) : null,
+      role: actorRole,
+      capabilities: capabilities(actorRole, actorStatus),
+    },
+    participationSnapshot: {
+      contractVersion: 1,
+      complete: true,
+      personCount: members.data.length,
+      fingerprintVersion: 1,
+      fingerprint: members.fingerprint,
+      observedAt: finalParticipation.observedAt,
+    },
+    cursor: encodeSharedLedgerCursor(lastSequence, tripId, userId, members.fingerprint),
+    serverTime: now,
+  };
+}
+
+async function readLedgerChanges(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  cursor: string | null,
+): Promise<LedgerChangesResponse> {
+  let binding;
+  try {
+    binding = decodeSharedLedgerCursor(cursor, tripId, userId);
+  } catch {
+    throw new BackendError(400, "INVALID_CURSOR", "The shared Ledger cursor is invalid.");
+  }
+  const after = binding.sequence;
+  const participation = await readTripPersonSnapshot(service, tripId);
+  if (participation.fingerprint !== binding.participationFingerprint)
+    throw new BackendError(400, "INVALID_CURSOR", "Trip Person refresh required.");
+  const currencyBarrier = await service
+    .from("ledger_changes")
+    .select("sequence")
+    .eq("journey_id", tripId)
+    .eq("entity_type", "JOURNEY_CURRENCY")
+    .gt("sequence", after)
+    .order("sequence", { ascending: false })
+    .limit(1);
+  if (currencyBarrier.error)
+    throw new Error("Supabase Dev currency barrier read failed.");
+  if ((currencyBarrier.data ?? []).length)
+    throw new BackendError(
+      400,
+      "INVALID_CURSOR",
+      "Journey Currency changed; bootstrap required.",
+    );
+  assertLedgerCursorContinuation(after, await latestLedgerSequence(service, tripId));
+  const result = await service
+    .from("ledger_changes")
+    .select("sequence, entity_type, entity_id, revision, is_tombstone")
+    .eq("journey_id", tripId)
+    .gt("sequence", after)
+    .order("sequence", { ascending: true })
+    .limit(101);
+
+  if (result.error) throw new Error("Supabase Dev Ledger changes failed.");
+
+  const allRows = result.data ?? [];
+  const hasMore = allRows.length > 100;
+  const rows = allRows.slice(0, 100);
+  const personalPayments = rows.some(
+    (row) =>
+      row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT" ||
+      row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+  )
+    ? await service.rpc("ledger_list_personal_settlement_payments_1a", {
+        actor_user: userId,
+        target_journey: tripId,
+      })
+    : { data: [], error: null };
+  if (personalPayments.error) {
+    throw new Error("Supabase Dev Personal Payment change projection failed.");
+  }
+  const personalPaymentFxProjections = rows.some(
+    (row) => row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+  )
+    ? await service.rpc("ledger_list_personal_payment_fx_projections_1c", {
+        actor_user: userId,
+        target_journey: tripId,
+      })
+    : { data: [], error: null };
+  if (personalPaymentFxProjections.error)
+    throw new Error("Supabase Dev Personal Payment FX change projection failed.");
+  const personalPaymentFxDtos = (
+    (personalPaymentFxProjections.data ?? []) as Record<string, unknown>[]
+  ).map(personalPaymentFxProjectionRowToDto);
+  const readablePersonalPaymentFxIds = new Set(
+    personalPaymentFxDtos.map((projection) => projection.id),
+  );
+  const personalPaymentDtos = (
+    (personalPayments.data ?? []) as Record<string, unknown>[]
+  ).map(personalPaymentRowToDto);
+  const readablePersonalPaymentIds = new Set(
+    personalPaymentDtos.map((payment) => payment.id),
+  );
+  let visibleRows = rows.filter((row) => {
+    if (
+      [
+        "TRANSFER",
+        "TRANSFER_PAYMENT",
+        "REVIEW_FINDING",
+        "PERSONAL_SETTLEMENT_PAYMENT_ATTACHMENT",
+      ].includes(row.entity_type)
+    ) {
+      return false;
+    }
+    return (
+      (row.entity_type !== "PERSONAL_SETTLEMENT_PAYMENT" ||
+        readablePersonalPaymentIds.has(String(row.entity_id))) &&
+      (row.entity_type !== "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION" ||
+        readablePersonalPaymentFxIds.has(String(row.entity_id)))
+    );
+  });
+  const expenseIds = rows
+    .filter((row) => row.entity_type === "EXPENSE")
+    .map((row) => String(row.entity_id));
+  const hasExpenseChanges = rows.some((row) => row.entity_type === "EXPENSE");
+  const householdIds = rows
+    .filter((row) => row.entity_type === "HOUSEHOLD" && !row.is_tombstone)
+    .map((row) => String(row.entity_id));
+  const correctionIds = rows
+    .filter((row) => row.entity_type === "CORRECTION")
+    .map((row) => String(row.entity_id));
+  const rateQuoteIds = rows
+    .filter((row) => row.entity_type === "RATE_QUOTE")
+    .map((row) => String(row.entity_id));
+  const paymentIds = rows
+    .filter((row) => row.entity_type === "PAYMENT_RECORD")
+    .map((row) => String(row.entity_id));
+  const receiptIds = rows
+    .filter((row) => row.entity_type === "RECEIPT")
+    .map((row) => String(row.entity_id));
+  const settlementIds = rows
+    .filter((row) => row.entity_type === "SETTLEMENT")
+    .map((row) => String(row.entity_id));
+  const expenses =
+    expenseIds.length > 0
+      ? await service
+          .from("expenses")
+          .select(
+            "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+          )
+          .in("id", expenseIds)
+      : { data: [], error: null };
+  const households =
+    householdIds.length > 0
+      ? await service
+          .from("households")
+          .select("id, name, display_order, updated_at")
+          .in("id", householdIds)
+      : { data: [], error: null };
+  const householdMembers =
+    householdIds.length > 0
+      ? await service
+          .from("household_members")
+          .select("household_id, member_id")
+          .in("household_id", householdIds)
+      : { data: [], error: null };
+  const corrections =
+    correctionIds.length > 0
+      ? await service
+          .from("expense_correction_requests")
+          .select("*")
+          .in("id", correctionIds)
+      : { data: [], error: null };
+  const rateQuotes =
+    rateQuoteIds.length > 0
+      ? await service
+          .from("ledger_rate_quotes")
+          .select(
+            "id, journey_id, quote_currency, base_currency, decimal_rate_text, effective_date, economic_date, reference_date, policy_version, observed_at, provider, provider_reference, source_reference, expires_at",
+          )
+          .in("id", rateQuoteIds)
+      : { data: [], error: null };
+  const paymentRecords =
+    paymentIds.length > 0
+      ? await service
+          .from("payment_records")
+          .select(
+            "id, expense_id, expense_revision, payer_member_id, instrument_label, authorization_amount_minor, authorization_currency, authorization_scale, posted_amount_minor, posted_currency, posted_scale, authorized_at, posted_at, fee_amount_minor, fee_currency, fee_scale, bank_fx_rate, source, notes, supersedes_payment_record_id",
+          )
+          .in("id", paymentIds)
+      : { data: [], error: null };
+  const evidenceAudits =
+    paymentIds.length > 0
+      ? await service
+          .from("expense_audit_events")
+          .select(
+            "id, expense_id, expense_revision, event_type, actor_user_id, actor_member_id, reason, changed_groups, metadata, created_at",
+          )
+          .in("expense_id", [
+            ...new Set((paymentRecords.data ?? []).map((row) => String(row.expense_id))),
+          ])
+          .in("event_type", ["PAYMENT_RECORD_ADDED", "PAYMENT_RECORD_SUPERSEDED"])
+      : { data: [], error: null };
+  const receipts =
+    receiptIds.length > 0
+      ? await service.from("receipt_assets").select(receiptColumns).in("id", receiptIds)
+      : { data: [], error: null };
+  const includeLineageProjection = hasExpenseChanges || settlementIds.length > 0;
+  const settlements = includeLineageProjection
+    ? await decorateSettlementLineages(
+        service,
+        tripId,
+        await readFinalizedSettlements(service, tripId),
+      )
+    : [];
+
+  if (expenses.error) throw new Error("Supabase Dev Ledger change aggregate failed.");
+  if (
+    households.error ||
+    householdMembers.error ||
+    corrections.error ||
+    rateQuotes.error ||
+    paymentRecords.error ||
+    evidenceAudits.error ||
+    receipts.error
+  ) {
+    throw new Error("Supabase Dev Ledger household aggregate failed.");
+  }
+  const readableReceipts = await filterReadableReceipts(
+    service,
+    userId,
+    personalPaymentDtos.map((payment) => payment.id),
+    (receipts.data ?? []) as Record<string, unknown>[],
+  );
+  const readableReceiptIds = new Set(readableReceipts.map((row) => String(row.id)));
+  visibleRows = visibleRows.filter(
+    (row) =>
+      row.entity_type !== "RECEIPT" || readableReceiptIds.has(String(row.entity_id)),
+  );
+  const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
+  const byId = new Map<string, LedgerChangesResponse["changes"][number]["aggregate"]>(
+    aggregates.map((expense) => [expense.id, expense]),
+  );
+  for (const row of households.data ?? []) {
+    byId.set(String(row.id), {
+      id: String(row.id),
+      name: String(row.name),
+      displayOrder: Number(row.display_order),
+      updatedAt: String(row.updated_at),
+      memberIds: (householdMembers.data ?? [])
+        .filter((item) => String(item.household_id) === String(row.id))
+        .map((item) => String(item.member_id)),
+    });
+  }
+  for (const row of corrections.data ?? []) {
+    byId.set(String(row.id), correctionRowToDto(row));
+  }
+  for (const row of rateQuotes.data ?? []) {
+    byId.set(String(row.id), rateQuoteRowToDto(row));
+  }
+  for (const row of paymentRecords.data ?? []) {
+    const audit = (evidenceAudits.data ?? []).find(
+      (item) =>
+        String(
+          (item.metadata as Record<string, unknown> | null)?.paymentRecordId ?? "",
+        ) === String(row.id),
+    );
+    byId.set(String(row.id), paymentRowToDto(row, audit));
+  }
+  for (const row of readableReceipts)
+    byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
+  for (const settlement of settlements) byId.set(settlement.id, settlement);
+  for (const payment of personalPaymentDtos) byId.set(payment.id, payment);
+  for (const projection of personalPaymentFxDtos) byId.set(projection.id, projection);
+
+  const changes = visibleRows.map((row) => ({
+    entityType: row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],
+    entityId: String(row.entity_id),
+    revision: Number(row.revision),
+    isTombstone: Boolean(row.is_tombstone),
+    aggregate: byId.get(String(row.entity_id)) ?? null,
+  }));
+  const changedSettlementIds = new Set(
+    changes
+      .filter((change) => change.entityType === "SETTLEMENT")
+      .map((change) => change.entityId),
+  );
+  for (const root of settlements.filter((item) => item.kind !== "ADJUSTMENT")) {
+    if (!changedSettlementIds.has(root.id)) {
+      changes.push({
+        entityType: "SETTLEMENT",
+        entityId: root.id,
+        revision: root.revision,
+        isTombstone: false,
+        aggregate: root,
+      });
+    }
+  }
+
+  const review = await readLedgerReviewData(service, tripId, userId);
+  return {
+    expenseConflictChains: await readExpenseChainMetadata(service, tripId),
+    reviewFindings: review.findings,
+    reviewActions: review.actions,
+    changes,
+    participationVerification: {
+      contractVersion: 1,
+      fingerprintVersion: 1,
+      fingerprint: binding.participationFingerprint,
+      observedAt: participation.observedAt,
+    },
+    cursor: rows.length
+      ? encodeSharedLedgerCursor(
+          Number(rows[rows.length - 1].sequence),
+          tripId,
+          userId,
+          binding.participationFingerprint,
+        )
+      : cursor,
+    hasMore,
+    serverTime: new Date().toISOString(),
+  };
+}
+
+async function readExpenseAggregates(
+  service: SupabaseClient,
+  rows: Record<string, unknown>[],
+): Promise<LedgerBootstrapResponse["expenses"]> {
+  if (rows.length > 100) {
+    const result: LedgerBootstrapResponse["expenses"] = [];
+    for (let offset = 0; offset < rows.length; offset += 400) {
+      const batches = await Promise.all(
+        [0, 100, 200, 300]
+          .map((step) => rows.slice(offset + step, offset + step + 100))
+          .filter((batch) => batch.length)
+          .map((batch) => readExpenseAggregates(service, batch)),
+      );
+      result.push(...batches.flat());
+    }
+    return result;
+  }
+  const ids = rows.map((row) => String(row.id));
+  if (ids.length === 0) return [];
+
+  const [participants, splits, valuations, payments, audits] = await Promise.all([
+    service
+      .from("expense_participants")
+      .select(
+        "expense_id, member_id, display_name_snapshot, household_id_snapshot, display_order",
+      )
+      .in("expense_id", ids),
+    service
+      .from("expense_splits")
+      .select(
+        "expense_id, member_id, split_method, original_amount_minor, settlement_amount_minor, weight_units, percentage_units, rounding_adjustment_minor",
+      )
+      .in("expense_id", ids),
+    service
+      .from("settlement_valuation_snapshots")
+      .select(
+        "id, expense_id, policy, original_amount_minor, original_currency, original_scale, settlement_amount_minor, settlement_currency, settlement_scale, rate_snapshot_id, payment_record_id, reason, decimal_rate, rounding_mode, effective_at, supersedes_valuation_id",
+      )
+      .eq("is_active", true)
+      .in("expense_id", ids),
+    service
+      .from("payment_records")
+      .select(
+        "id, expense_id, expense_revision, payer_member_id, instrument_label, authorization_amount_minor, authorization_currency, authorization_scale, posted_amount_minor, posted_currency, posted_scale, authorized_at, posted_at, fee_amount_minor, fee_currency, fee_scale, bank_fx_rate, source, notes, supersedes_payment_record_id",
+      )
+      .in("expense_id", ids),
+    service
+      .from("expense_audit_events")
+      .select(
+        "id, expense_id, expense_revision, event_type, actor_user_id, actor_member_id, reason, changed_groups, created_at",
+      )
+      .in("expense_id", ids)
+      .order("expense_revision", { ascending: true }),
+  ]);
+
+  if (
+    participants.error ||
+    splits.error ||
+    valuations.error ||
+    payments.error ||
+    audits.error
+  ) {
+    throw new Error("Supabase Dev Ledger aggregate read failed.");
+  }
+
+  const rateIds = (valuations.data ?? [])
+    .map((item) => item.rate_snapshot_id)
+    .filter((id): id is string => typeof id === "string");
+  const rateEvidence = rateIds.length
+    ? await service
+        .from("exchange_rate_snapshots")
+        .select("id, provenance, observed_at, created_at")
+        .in("id", rateIds)
+    : { data: [], error: null };
+  if (rateEvidence.error)
+    throw new Error("Supabase Dev accepted rate evidence read failed.");
+
+  return rows.map((row) => {
+    const id = String(row.id);
+    const valuation = (valuations.data ?? []).find(
+      (item) => String(item.expense_id) === id,
+    );
+    const evidenceRow = (rateEvidence.data ?? []).find(
+      (item) => String(item.id) === String(valuation?.rate_snapshot_id),
+    );
+    const provenance = evidenceRow?.provenance as Record<string, unknown> | undefined;
+    return {
+      id,
+      journeyId: String(row.journey_id),
+      creatorMemberId: row.creator_member_id ? String(row.creator_member_id) : null,
+      payerMemberId: String(row.payer_member_id),
+      title: String(row.title),
+      description: row.description ? String(row.description) : null,
+      category: String(row.category),
+      occurredAt: String(row.occurred_at),
+      economicDate: row.economic_date ? String(row.economic_date) : null,
+      original: {
+        minor: Number(row.original_amount_minor),
+        currency: String(row.original_currency),
+        scale: Number(row.original_currency_scale),
+      },
+      businessStatus: row.business_status as
+        "DRAFT" | "ACCEPTED" | "RATE_REQUIRED" | "DELETED",
+      settlementParticipation: row.settlement_participation as "INCLUDED" | "EXCLUDED",
+      revision: Number(row.revision),
+      deletedAt: row.deleted_at ? String(row.deleted_at) : null,
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+      participants: (participants.data ?? [])
+        .filter((item) => String(item.expense_id) === id)
+        .sort((a, b) => Number(a.display_order) - Number(b.display_order))
+        .map((item) => ({
+          memberId: String(item.member_id),
+          displayNameSnapshot: String(item.display_name_snapshot),
+          householdIdSnapshot: item.household_id_snapshot
+            ? String(item.household_id_snapshot)
+            : null,
+        })),
+      splits: (splits.data ?? [])
+        .filter((item) => String(item.expense_id) === id)
+        .map((item) => ({
+          memberId: String(item.member_id),
+          method: item.split_method as "EQUAL_PERSON",
+          originalMinor: Number(item.original_amount_minor),
+          settlementMinor:
+            item.settlement_amount_minor === null
+              ? null
+              : Number(item.settlement_amount_minor),
+          weightUnits: item.weight_units === null ? null : Number(item.weight_units),
+          percentageUnits:
+            item.percentage_units === null ? null : Number(item.percentage_units),
+          roundingAdjustmentMinor: Number(item.rounding_adjustment_minor),
+        })),
+      valuation: valuation
+        ? {
+            id: String(valuation.id),
+            policy: valuation.policy as "REFERENCE_RATE",
+            original: {
+              minor: Number(valuation.original_amount_minor),
+              currency: String(valuation.original_currency),
+              scale: Number(valuation.original_scale),
+            },
+            settlement: {
+              minor: Number(valuation.settlement_amount_minor),
+              currency: String(valuation.settlement_currency),
+              scale: Number(valuation.settlement_scale),
+            },
+            rateSnapshotId: valuation.rate_snapshot_id
+              ? String(valuation.rate_snapshot_id)
+              : null,
+            paymentRecordId: valuation.payment_record_id
+              ? String(valuation.payment_record_id)
+              : null,
+            reason: valuation.reason ? String(valuation.reason) : null,
+            decimalRate: valuation.decimal_rate ? String(valuation.decimal_rate) : null,
+            roundingMode: "HALF_UP" as const,
+            effectiveAt: valuation.effective_at
+              ? String(valuation.effective_at)
+              : undefined,
+            supersedesValuationId: valuation.supersedes_valuation_id
+              ? String(valuation.supersedes_valuation_id)
+              : null,
+            referenceEvidence:
+              valuation.policy === "REFERENCE_RATE" && provenance?.economicDate
+                ? {
+                    economicDate: String(provenance.economicDate),
+                    referenceDate: String(provenance.referenceDate),
+                    source: String(provenance.source),
+                    sourceReference: String(provenance.sourceReference),
+                    deliveryProvider: String(provenance.deliveryProvider),
+                    providerReference: String(provenance.providerReference),
+                    observedAt: String(evidenceRow!.observed_at),
+                    acceptedAt: String(evidenceRow!.created_at),
+                    automatic: provenance.automatic === true,
+                  }
+                : null,
+          }
+        : null,
+      paymentRecords: (payments.data ?? [])
+        .filter((item) => String(item.expense_id) === id)
+        .map((item) => paymentRowToDto(item)),
+      auditEvents: (audits.data ?? [])
+        .filter((item) => String(item.expense_id) === id)
+        .map((item) => ({
+          id: String(item.id),
+          expenseId: id,
+          actorUserId: item.actor_user_id ? String(item.actor_user_id) : null,
+          actorMemberId: item.actor_member_id ? String(item.actor_member_id) : null,
+          eventType: String(item.event_type),
+          reason: item.reason ? String(item.reason) : null,
+          changedGroups: Array.isArray(item.changed_groups)
+            ? item.changed_groups.map(String)
+            : [],
+          revision: Number(item.expense_revision),
+          createdAt: String(item.created_at),
+        })),
+    };
+  });
+}
+
+function moneyOrNull(row: Record<string, unknown>, prefix: string) {
+  const minor = row[`${prefix}_amount_minor`];
+  const currency = row[`${prefix}_currency`];
+  const scale = row[`${prefix}_scale`];
+  return minor === null || currency === null || scale === null
+    ? null
+    : { minor: Number(minor), currency: String(currency), scale: Number(scale) };
+}
+
+async function latestLedgerSequence(service: SupabaseClient, tripId: string) {
+  const result = await service
+    .from("ledger_changes")
+    .select("sequence")
+    .eq("journey_id", tripId)
+    .order("sequence", { ascending: false })
+    .limit(1);
+  if (result.error) throw new Error("Supabase Dev Ledger cursor failed.");
+  return result.data[0] ? Number(result.data[0].sequence) : 0;
+}
+
+export async function readMyLedger(
+  service: SupabaseClient,
+  userId: string,
+  period: MyLedgerPeriod,
+  from: string | null,
+  to: string | null,
+  options: {
+    readReporting?: typeof readServerReporting;
+    log?: (event: MyLedgerReadEvent) => void;
+  } = {},
+): Promise<MyLedgerResponse> {
+  const metrics: MyLedgerReadEvent = {
+    linkedJourneyCount: 0,
+    ledgerEligibleJourneyCount: 0,
+    skippedMissingSettingsCount: 0,
+    activeConcurrencyHighWaterMark: 0,
+    completedJourneyCount: 0,
+    failedJourneyIndex: null,
+    failureClass: null,
+    queuedWorkSuppressed: false,
+  };
+  let active = 0;
+  try {
+    const memberResult = await service
+      .from("journey_members")
+      .select("id, trip_id")
+      .eq("user_id", userId)
+      .eq("status", "linked")
+      .order("trip_id");
+    if (memberResult.error) throw new Error("Supabase Dev My Ledger member read failed.");
+
+    const members = memberResult.data ?? [];
+    metrics.linkedJourneyCount = members.length;
+    const tripIds = members.map((member) => String(member.trip_id));
+    const settings = tripIds.length
+      ? await service
+          .from("ledger_settings")
+          .select("journey_id")
+          .in("journey_id", tripIds)
+      : { data: [], error: null };
+    if (settings.error) throw new Error("Supabase Dev My Ledger settings read failed.");
+    const enabled = new Set((settings.data ?? []).map((row) => String(row.journey_id)));
+    const eligible = members.filter((member) => enabled.has(String(member.trip_id)));
+    metrics.ledgerEligibleJourneyCount = eligible.length;
+    metrics.skippedMissingSettingsCount = members.length - eligible.length;
+
+    const summarize = async (member: (typeof members)[number]) => {
+      active += 1;
+      metrics.activeConcurrencyHighWaterMark = Math.max(
+        metrics.activeConcurrencyHighWaterMark,
+        active,
+      );
+      try {
+        const journeyId = String(member.trip_id);
+        const memberId = String(member.id);
+        const reporting = await (options.readReporting ?? readServerReporting)(
+          service,
+          userId,
+          journeyId,
+        );
+        const filters: ReportingFilters = {
+          ...(from ? { from } : {}),
+          ...(to ? { to } : {}),
+        };
+        const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
+        const settlementMine = summarizeReporting(
+          reporting.records.filter(
+            (record) => record.settlementParticipation === "INCLUDED",
+          ),
+          "MINE",
+          memberId,
+          filters,
+        );
+        const paidMinor = reporting.records
+          .filter(
+            (record) =>
+              matchesReportingFilters(record, filters) &&
+              record.businessStatus === "ACCEPTED" &&
+              record.settlementParticipation === "INCLUDED" &&
+              record.settlementMinor !== null &&
+              !record.hasOpenConflict &&
+              record.payerMemberId === memberId,
+          )
+          .reduce((sum, record) => sum + record.settlementMinor!, 0);
+        const summary = {
+          journeyId,
+          title: reporting.bootstrap.journey.title,
+          startDate: reporting.bootstrap.journey.startDate,
+          endDate: reporting.bootstrap.journey.endDate,
+          currency: reporting.bootstrap.journey.settlementCurrency,
+          scale: reporting.bootstrap.journey.settlementScale,
+          mySpendMinor: mine.totalMinor,
+          paidMinor,
+          positionMinor: paidMinor - settlementMine.totalMinor,
+          unvaluedCount: mine.unresolvedRateCount,
+          conflictCount: mine.openConflictCount,
+          updatedAt: reporting.bootstrap.journey.updatedAt,
+        };
+        metrics.completedJourneyCount += 1;
+        return summary;
+      } finally {
+        active -= 1;
+      }
+    };
+
+    const summaries: MyLedgerResponse["journeys"] = [];
+    for (let index = 0; index < eligible.length; index += 2) {
+      const batch = eligible.slice(index, index + 2);
+      const results = await Promise.allSettled(batch.map(summarize));
+      const failure = results.findIndex((result) => result.status === "rejected");
+      if (failure >= 0) {
+        const reason = (results[failure] as PromiseRejectedResult).reason;
+        metrics.failedJourneyIndex = index + failure;
+        metrics.failureClass = reason instanceof Error ? reason.name : typeof reason;
+        metrics.queuedWorkSuppressed = index + batch.length < eligible.length;
+        throw reason;
+      }
+      summaries.push(
+        ...results.map(
+          (result) =>
+            (result as PromiseFulfilledResult<(typeof summaries)[number]>).value,
+        ),
+      );
+    }
+
+    return {
+      period,
+      from,
+      to,
+      journeys: summaries,
+      serverTime: new Date().toISOString(),
+    };
+  } catch (error) {
+    metrics.failureClass ??= error instanceof Error ? error.name : typeof error;
+    throw error;
+  } finally {
+    try {
+      options.log?.(metrics);
+    } catch {
+      // Observability must not change the read outcome.
+    }
+  }
+}
+
+export async function readMyLedgerSummary(
+  service: SupabaseClient,
+  userId: string,
+  period: MyLedgerPeriod,
+  from: string | null,
+  to: string | null,
+  signal?: AbortSignal,
+  log?: (event: MyLedgerSummaryEvent) => void,
+): Promise<MyLedgerResponse> {
+  const started = performance.now();
+  const metrics: MyLedgerSummaryEvent = {
+    path: "lightweight_2_0",
+    linkedJourneyCount: 0,
+    ledgerEligibleJourneyCount: 0,
+    skippedMissingSettingsCount: 0,
+    expenseCount: 0,
+    spendingFactCount: 0,
+    batchCount: 0,
+    queryOperationCount: 0,
+    snapshotDurationMs: 0,
+    authorizationDurationMs: 0,
+    aggregationDurationMs: 0,
+    totalDurationMs: 0,
+    consistencyRetryCount: 0,
+    cancellationCount: 0,
+    postDisconnectWorkMs: 0,
+    failureClass: null,
+  };
+  let disconnectedAt: number | null = null;
+  const onAbort = () => {
+    disconnectedAt ??= performance.now();
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      signal?.throwIfAborted();
+      const snapshotStart = performance.now();
+      metrics.queryOperationCount++;
+      metrics.batchCount++;
+      const snapshotResult = await (async () => {
+        try {
+          return await service
+            .rpc("my_ledger_lightweight_snapshot_2_0", {
+              actor_user: userId,
+              period_key: period,
+              from_at: from,
+              to_at: to,
+            })
+            .abortSignal(signal ?? new AbortController().signal);
+        } finally {
+          metrics.snapshotDurationMs += performance.now() - snapshotStart;
+        }
+      })();
+      if (snapshotResult.error || !snapshotResult.data)
+        throw new Error("Supabase Dev My Ledger snapshot failed.");
+      signal?.throwIfAborted();
+      const snapshot = snapshotResult.data as LightweightSnapshot;
+      const eligibleIds = new Set(snapshot.journeys.map((journey) => journey.journeyId));
+      if (
+        snapshot.linkedJourneyCount < snapshot.journeys.length ||
+        snapshot.expenses.some((expense) => !eligibleIds.has(expense.journeyId))
+      )
+        throw new Error("My Ledger snapshot scope is invalid.");
+      metrics.linkedJourneyCount = snapshot.linkedJourneyCount;
+      metrics.ledgerEligibleJourneyCount = snapshot.journeys.length;
+      metrics.skippedMissingSettingsCount =
+        snapshot.linkedJourneyCount - snapshot.journeys.length;
+      metrics.expenseCount = snapshot.expenses.length;
+
+      const authStart = performance.now();
+      metrics.queryOperationCount++;
+      const linkedResult = await (async () => {
+        try {
+          return await service
+            .from("journey_members")
+            .select("id, trip_id")
+            .eq("user_id", userId)
+            .eq("status", "linked")
+            .abortSignal(signal ?? new AbortController().signal);
+        } finally {
+          metrics.authorizationDurationMs += performance.now() - authStart;
+        }
+      })();
+      if (linkedResult.error)
+        throw new Error("Supabase Dev My Ledger authorization recheck failed.");
+      signal?.throwIfAborted();
+      const linked = new Set(
+        (linkedResult.data ?? []).map((row) => `${row.trip_id}:${row.id}`),
+      );
+      if (
+        snapshot.journeys.some(
+          (journey) => !linked.has(`${journey.journeyId}:${journey.memberId}`),
+        )
+      )
+        throw new Error("My Ledger access changed during read.");
+      if (linked.size !== snapshot.linkedJourneyCount) {
+        if (attempt === 0) {
+          metrics.consistencyRetryCount++;
+          continue;
+        }
+        throw new Error("My Ledger scope changed during read.");
+      }
+      const aggregationStart = performance.now();
+      const result = summarizeMyLedgerSnapshot(
+        snapshot,
+        period,
+        from,
+        to,
+        new Date().toISOString(),
+      );
+      metrics.aggregationDurationMs += performance.now() - aggregationStart;
+      metrics.spendingFactCount = result.spendingFacts?.length ?? 0;
+      return result;
+    }
+    throw new Error("My Ledger scope changed during read.");
+  } catch (error) {
+    metrics.failureClass = error instanceof Error ? error.name : typeof error;
+    if (signal?.aborted) metrics.cancellationCount++;
+    throw error;
+  } finally {
+    metrics.totalDurationMs = performance.now() - started;
+    if (disconnectedAt !== null)
+      metrics.postDisconnectWorkMs = performance.now() - disconnectedAt;
+    signal?.removeEventListener("abort", onAbort);
+    try {
+      log?.(metrics);
+    } catch {
+      /* Logging cannot change the read outcome. */
+    }
+  }
+}
+
+async function readServerReporting(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+) {
+  const bootstrap = await readLedgerBootstrap(service, tripId, userId);
+  const conflicts = await service
+    .from("ledger_idempotency_keys")
+    .select("id, response_body")
+    .eq("journey_id", tripId)
+    .eq("response_status", 409);
+  if (conflicts.error) throw new Error("Supabase Dev Ledger conflicts failed.");
+  const conflictIds = (conflicts.data ?? []).map((row) => String(row.id));
+  const resolutions =
+    conflictIds.length > 0
+      ? await service
+          .from("expense_conflict_resolutions")
+          .select("conflict_id")
+          .in("conflict_id", conflictIds)
+      : { data: [], error: null };
+  if (resolutions.error)
+    throw new Error("Supabase Dev Ledger conflict resolutions failed.");
+  const resolved = new Set(
+    (resolutions.data ?? []).map((row) => String(row.conflict_id)),
+  );
+  const openExpenseIds = new Set(
+    (conflicts.data ?? [])
+      .filter((row) => !resolved.has(String(row.id)))
+      .map((row) => {
+        const body = row.response_body as { error?: { expenseId?: unknown } } | null;
+        return typeof body?.error?.expenseId === "string" ? body.error.expenseId : "";
+      })
+      .filter(Boolean),
+  );
+  const receiptExpenseIds = new Set(
+    (bootstrap.receipts ?? []).map((receipt) => receipt.expenseId).filter(Boolean),
+  );
+  const memberNames = new Map(
+    bootstrap.members.map((member) => [member.id, member.displayName]),
+  );
+  const records: ReportingRecord[] = bootstrap.expenses.map((expense) => ({
+    id: expense.id,
+    title: expense.title,
+    description: expense.description,
+    category: expense.category,
+    occurredAt: expense.occurredAt,
+    payerMemberId: expense.payerMemberId,
+    payerName: memberNames.get(expense.payerMemberId) ?? "Traveller",
+    originalMinor: expense.original.minor,
+    originalCurrency: expense.original.currency,
+    businessStatus: expense.businessStatus,
+    settlementParticipation: expense.settlementParticipation,
+    syncStatus: "SYNCED",
+    settlementMinor: expense.valuation?.settlement.minor ?? null,
+    settlementCurrency: bootstrap.journey.settlementCurrency,
+    hasOpenConflict: openExpenseIds.has(expense.id),
+    hasReceipt: receiptExpenseIds.has(expense.id),
+    splits: expense.splits.map((split) => ({
+      memberId: split.memberId,
+      memberName:
+        expense.participants.find(
+          (participant) => participant.memberId === split.memberId,
+        )?.displayNameSnapshot ??
+        memberNames.get(split.memberId) ??
+        "Traveller",
+      settlementMinor: split.settlementMinor,
+    })),
+  }));
+  return { bootstrap, records };
+}
+
+async function readLedgerExpenses(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  filters: ReportingFilters,
+  limit: number,
+  offset: number,
+): Promise<LedgerExpenseListResponse> {
+  const reporting = await readServerReporting(service, userId, tripId);
+  const included = new Set(
+    reporting.records
+      .filter((record) => matchesReportingFilters(record, filters))
+      .map((record) => record.id),
+  );
+  const expenses = reporting.bootstrap.expenses
+    .filter((expense) => included.has(expense.id))
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+  const page = expenses.slice(offset, offset + limit);
+  return {
+    expenses: page,
+    nextCursor:
+      offset + limit < expenses.length ? encodePageCursor(offset + limit) : null,
+  };
+}
+
+async function readLedgerAnalysis(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  filters: ReportingFilters,
+  scope: LedgerAnalysisResponse["scope"],
+  dimension: LedgerAnalysisResponse["dimension"],
+): Promise<LedgerAnalysisResponse> {
+  const reporting = await readServerReporting(service, userId, tripId);
+  const memberId = reporting.bootstrap.actor.memberId ?? "";
+  return {
+    scope,
+    dimension,
+    currency: reporting.bootstrap.journey.settlementCurrency,
+    summary: summarizeReporting(reporting.records, scope, memberId, filters),
+    buckets: analyzeReporting(reporting.records, dimension, scope, memberId, filters),
+  };
+}

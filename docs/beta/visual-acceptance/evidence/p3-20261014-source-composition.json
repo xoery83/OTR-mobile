@@ -1,0 +1,76 @@
+{
+  "atUTC": "2026-10-13T20:43:28.068064+00:00",
+  "scope": "Hotr2 plus exact reviewed P3 consumer/reader; no Photos migration/helper/UI layer applied",
+  "files": [
+    {
+      "path": "src/components/ExperienceBottomShell.tsx",
+      "sha256": "ed39d0c9b5ee2258c90032dee47732133bae84f549a87ba49cf9a11e89f98b2b"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.test.ts",
+      "sha256": "da1dea164a8924ad6a8361f5e4aed1dd1e66db51230a8bc76053c7ab22efd38e"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "sha256": "c9fe5f50fc05457684ab9f55f07d526867039baf19fe2f52dddde5774be70539"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.test.ts",
+      "sha256": "fde5a6b7d2e409453aeab79f7dde734d2539c0c553efebb1f9a5dca3e95a7e90"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "sha256": "07fd7b90052d8e677d653798a7bf855c0225c26c9f8eb2ee72f1da564db21fdd"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+      "sha256": "afe450994dcbac5f455dfb5bb128674215b38b68a74496acbb511a972d59c8ef"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.tsx",
+      "sha256": "5624806c8fef2dfb85c97b5fd556a2c98148ebf60a90e2a4e7ecc7aa74c25653"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.test.ts",
+      "sha256": "5bfb7c8df9a66b181b74bc0da4379c6ca381aef91fdac825296dacb4f400549e"
+    },
+    {
+      "path": "src/features/day-feed/tripListPresentation.ts",
+      "sha256": "9a380580b6ec1671bd4e77fe9744460b827df7ff8a65f4ea0ae81d14cbef08ff"
+    },
+    {
+      "path": "src/ui/palette.ts",
+      "sha256": "dc3617c3845f2b076a6c4922e2532884adc41ad0db3f625e98d4aeebfc2d8708"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "b4f1617d19599864830148664e48227ac242fe1b064c20bee63cc698026d2b3b"
+    },
+    {
+      "path": "src/ui/controls.tsx",
+      "sha256": "70e012136dc4ad0a63847b0405a0f42dea4d6598d6cea170ca80f719a7a46999"
+    },
+    {
+      "path": "src/ui/controls.test.ts",
+      "sha256": "1fa9168237cff597d4460bfdfe32515def3e6b55cc6a8325f92aa94a0be8463c"
+    },
+    {
+      "path": "src/features/day-feed/TripScreen.tsx",
+      "sha256": "85328c65af39a9ae7b3964fe6609befc8b1a46145ed79e6cda37e1bfaec419d0"
+    },
+    {
+      "path": "app/(tabs)/_layout.tsx",
+      "sha256": "d283ea8a129ccefc5dac1769ce45e123a7a10c57f0481eb2d23e6d662781e0b6"
+    },
+    {
+      "path": "src/data/repositories/tripDayFeedRepository.test.ts",
+      "sha256": "7eac9a4701246aa9d63a7a9d512a063857c8a36e81bccd0bdda7953f177835b7"
+    },
+    {
+      "path": "src/data/repositories/tripDayFeedRepository.ts",
+      "sha256": "3b62004cfdd4047c5f4ddb27eb77c70b6378d7508b14a9645b5afe4632fd2542"
+    }
+  ],
+  "sourceManifest": "20b82b43f47cabb3d105e385b519ffa5576c53a041b7b12b78d02388435114c5 + d9a1f06d57ac63adaf603c98b1320cec96bc30d1845c9b735700f559531adc9c",
+  "runtime": "real accepted callsite NOT VERIFIED; pure existing Lab only"
+}

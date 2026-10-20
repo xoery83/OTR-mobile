@@ -1,0 +1,70 @@
+{
+  "scope": "Independent applicability/factual evidence/runbook review of Source-authored9-path package only",
+  "author": "accepted_day_prereq_61",
+  "candidateAuthor": "source_intake_61",
+  "verdict": "PASS",
+  "packageManifestSha256": "0fd6581b5600c5faad3b2a79a161f972149ddeb4ed1c07a0681480ab67d337cf",
+  "files": [
+    {
+      "path": "docs/trip/implementation/WP05_ACCEPTED_DAY_PROTECTED_STAGES_2026-10-14.md",
+      "sha256": "cf6730fcc0310de3177a67607846a5e85c302d72651a30d9d8ae3f3b8aa689f8",
+      "baseSha256": null,
+      "bytes": 10119
+    },
+    {
+      "path": "docs/trip/implementation/WP05_FULL_LINEAGE_PREREQUISITE_2026-10-14.md",
+      "sha256": "081d4230b59217c25ecb5aa544bfac5182a224cbad0a69dca0a7cf23dc46fbe1",
+      "baseSha256": null,
+      "bytes": 3041
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/actual-execution-receipts.jsonl",
+      "sha256": "75819dd150717234726ab2306dea29ab7404f226bd524955b936f6f18b01ccfa",
+      "baseSha256": null,
+      "bytes": 27827
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/builder-manifest.json",
+      "sha256": "48fe42773123537030a9a6fa5754bf08ac5af92f86be093e9765d3ee699feca6",
+      "baseSha256": null,
+      "bytes": 2896
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/full-replay-receipt.json",
+      "sha256": "7acb571591966323c201dcff6efea25a8b29e319e47c75e852ca1f97e0e56f37",
+      "baseSha256": null,
+      "bytes": 770
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/meta01-readonly.sql",
+      "sha256": "bc462e902a43d21cf1cf8e8455fa7f2f7d6c5c19452d9774dd6868dabcb35235",
+      "baseSha256": null,
+      "bytes": 2677
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/meta01-visibility.sql",
+      "sha256": "03af9daf26ea340689d041b6533ad9b48ea9334f16ea70aa3e488e20caed873a",
+      "baseSha256": null,
+      "bytes": 1131
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/source-independent-review.md",
+      "sha256": "5085e6921e767a76fb0fd60bddb81400d53a83dfb5a3f83c01a8b377607e6bb5",
+      "baseSha256": null,
+      "bytes": 2637
+    },
+    {
+      "path": "docs/trip/implementation/evidence/wp05-full-lineage-20261014/source-restoration-map.json",
+      "sha256": "cac2a60d824287d2c66d01863b6e256b7085afe108877d6b9f6b317312e09369",
+      "baseSha256": null,
+      "bytes": 10558
+    }
+  ],
+  "originalBuilderProofSelfReview": false,
+  "proofRerun": false,
+  "metadataRerun": false,
+  "authority": "Existing META-01 for exact originals; no new Owner ask for same-scope metadata/build/Trip-port/public TLS; additional credential/principal/internal TLS/rollback provenance remains outside refresh",
+  "acceptedDay": "NOT_VERIFIED",
+  "runtime": "CLOSED",
+  "fullJourneys": 0
+}

@@ -1,0 +1,870 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  createLedgerExpenseRepository,
+  type LedgerExpenseDatabase,
+  type LedgerExpenseCommand,
+} from "./ledgerExpenseRepository";
+
+type ExpenseRow = Record<string, unknown>;
+
+function createInMemoryLedgerDatabase() {
+  const expenses = new Map<string, ExpenseRow>();
+  const participants = new Map<string, ExpenseRow[]>();
+  const splits = new Map<string, ExpenseRow[]>();
+  const valuations = new Map<string, ExpenseRow>();
+  const previousValuations: ExpenseRow[] = [];
+  const payments = new Map<string, ExpenseRow[]>();
+  const operations: ExpenseRow[] = [];
+  const receipts = new Map<string, ExpenseRow>();
+  const assetOperations: ExpenseRow[] = [];
+  const auditEvents: ExpenseRow[] = [];
+  let transactionCount = 0;
+
+  const database: LedgerExpenseDatabase = {
+    async withTransactionAsync(task) {
+      transactionCount += 1;
+      await task();
+    },
+    async runAsync(sql, ...params) {
+      if (sql.includes("INSERT INTO ledger_expenses")) {
+        const [
+          id,
+          serverId,
+          journeyId,
+          creatorMemberId,
+          payerMemberId,
+          title,
+          description,
+          category,
+          occurredAt,
+          economicDate,
+          originalAmountMinor,
+          originalCurrency,
+          originalScale,
+          businessStatus,
+          settlementParticipation,
+          revision,
+          serverRevision,
+          deletedAt,
+          syncStatus,
+          ,
+          createdAt,
+          updatedAt,
+          localOwnerUserId,
+        ] = params;
+        expenses.set(id as string, {
+          id,
+          serverId,
+          journeyId,
+          creatorMemberId,
+          payerMemberId,
+          title,
+          description,
+          category,
+          occurredAt,
+          economicDate,
+          originalAmountMinor,
+          originalCurrency,
+          originalScale,
+          businessStatus,
+          settlementParticipation,
+          revision,
+          serverRevision,
+          deletedAt,
+          syncStatus,
+          createdAt,
+          updatedAt,
+          localOwnerUserId,
+        });
+      } else if (sql.includes("INSERT INTO ledger_expense_participants")) {
+        const [
+          expenseId,
+          memberId,
+          displayNameSnapshot,
+          householdIdSnapshot,
+          displayOrder,
+        ] = params;
+        participants.set(expenseId as string, [
+          ...(participants.get(expenseId as string) ?? []),
+          { memberId, displayNameSnapshot, householdIdSnapshot, displayOrder },
+        ]);
+      } else if (sql.includes("INSERT INTO ledger_expense_splits")) {
+        const [
+          expenseId,
+          memberId,
+          method,
+          originalMinor,
+          settlementMinor,
+          weightUnits,
+          percentageUnits,
+          roundingAdjustmentMinor,
+        ] = params;
+        splits.set(expenseId as string, [
+          ...(splits.get(expenseId as string) ?? []),
+          {
+            memberId,
+            method,
+            originalMinor,
+            settlementMinor,
+            weightUnits,
+            percentageUnits,
+            roundingAdjustmentMinor,
+          },
+        ]);
+      } else if (sql.includes("INTO ledger_valuation_snapshots")) {
+        const [
+          id,
+          ,
+          expenseId,
+          ,
+          policy,
+          originalMinor,
+          originalCurrency,
+          originalScale,
+          settlementMinor,
+          settlementCurrency,
+          settlementScale,
+          rateSnapshotId,
+          paymentRecordId,
+          reason,
+          isActive,
+        ] = params;
+        valuations.set(expenseId as string, {
+          id,
+          policy,
+          originalMinor,
+          originalCurrency,
+          originalScale,
+          settlementMinor,
+          settlementCurrency,
+          settlementScale,
+          rateSnapshotId,
+          paymentRecordId,
+          reason,
+          isActive,
+        });
+      } else if (sql.includes("UPDATE ledger_valuation_snapshots SET is_active = 0")) {
+        const existing = valuations.get(params[0] as string);
+        if (existing) existing.isActive = 0;
+      } else if (sql.includes("INTO ledger_payment_records")) {
+        const [
+          id,
+          serverId,
+          expenseId,
+          expenseRevision,
+          payerMemberId,
+          instrumentLabel,
+          authorizationMinor,
+          authorizationCurrency,
+          authorizationScale,
+          postedMinor,
+          postedCurrency,
+          postedScale,
+          authorizedAt,
+          postedAt,
+          feeMinor,
+          feeCurrency,
+          feeScale,
+          bankFxRate,
+          source,
+          notes,
+          supersedesPaymentRecordId,
+        ] = params;
+        payments.set(expenseId as string, [
+          ...(payments.get(expenseId as string) ?? []),
+          {
+            id,
+            serverId,
+            expenseRevision,
+            payerMemberId,
+            instrumentLabel,
+            authorizationMinor,
+            authorizationCurrency,
+            authorizationScale,
+            postedMinor,
+            postedCurrency,
+            postedScale,
+            authorizedAt,
+            postedAt,
+            feeMinor,
+            feeCurrency,
+            feeScale,
+            bankFxRate,
+            source,
+            notes,
+            supersedesPaymentRecordId,
+          },
+        ]);
+      } else if (sql.includes("INSERT INTO ledger_expense_audit_events")) {
+        auditEvents.push({
+          expenseId: params[1],
+          revision: params[2],
+          eventType: params[3],
+        });
+      } else if (sql.includes("INSERT INTO sync_operations")) {
+        operations.push({
+          tripId: params[1],
+          entityType: params[2],
+          entityId: params[3],
+          operationType: params[4],
+          idempotencyKey: params[5],
+          baseVersion: params[6],
+          payloadJson: params[7],
+          ownerUserId: params[8],
+          status: params[9],
+        });
+      } else if (sql.includes("INSERT INTO ledger_receipt_assets")) {
+        receipts.set(params[0] as string, {
+          id: params[0],
+          journeyId: params[1],
+          expenseId: params[2],
+          localUri: params[3],
+          sha256: params[6],
+          localOwnerUserId: params[9],
+        });
+      } else if (sql.includes("INTO ledger_asset_operations")) {
+        assetOperations.push({ assetId: params[2], operationType: params[3] });
+      } else if (
+        sql.includes("UPDATE ledger_expenses SET economic_date = ?, revision = ?")
+      ) {
+        const row = expenses.get(params[4] as string);
+        if (!row || row.revision !== params[5] || row.economicDate !== null)
+          return { changes: 0 } as never;
+        row.economicDate = params[0];
+        row.revision = params[1];
+        row.syncStatus = "PENDING_UPDATE";
+        row.localOwnerUserId = params[2];
+        row.updatedAt = params[3];
+        return { changes: 1 } as never;
+      } else if (sql.includes("UPDATE ledger_expenses SET\n      journey_id")) {
+        const id = params[21] as string;
+        const row = expenses.get(id);
+        if (row) {
+          Object.assign(row, {
+            journeyId: params[0],
+            creatorMemberId: params[1],
+            payerMemberId: params[2],
+            title: params[3],
+            description: params[4],
+            category: params[5],
+            occurredAt: params[6],
+            economicDate: params[7],
+            originalAmountMinor: params[8],
+            originalCurrency: params[9],
+            originalScale: params[10],
+            businessStatus: params[11],
+            settlementParticipation: params[12],
+            revision: params[13],
+            serverId: params[14],
+            serverRevision: params[15],
+            deletedAt: params[16],
+            syncStatus: params[17],
+            localOwnerUserId: params[19],
+            updatedAt: params[20],
+          });
+        }
+      } else if (sql.includes("business_status = ?, deleted_at = ?")) {
+        const row = expenses.get(params[6] as string);
+        if (row) {
+          row.businessStatus = params[0];
+          row.deletedAt = params[1];
+          row.revision = params[2];
+          row.syncStatus = params[3];
+          row.localOwnerUserId = params[4];
+        }
+      } else if (sql.includes("business_status = ?, deleted_at = NULL")) {
+        const row = expenses.get(params[5] as string);
+        if (row) {
+          row.businessStatus = params[0];
+          row.deletedAt = null;
+          row.revision = params[1];
+          row.syncStatus = params[2];
+          row.localOwnerUserId = params[3];
+        }
+      } else if (sql.includes("DELETE FROM ledger_expense_participants")) {
+        participants.set(params[0] as string, []);
+      } else if (sql.includes("DELETE FROM ledger_expense_splits")) {
+        splits.set(params[0] as string, []);
+      } else if (sql.includes("DELETE FROM ledger_valuation_snapshots")) {
+        valuations.delete(params[0] as string);
+      } else if (sql.includes("DELETE FROM ledger_payment_records")) {
+        payments.set(params[0] as string, []);
+      }
+      return {} as never;
+    },
+    async getFirstAsync<T>(sql: string, ...params: unknown[]) {
+      const id = params[0] as string;
+      if (sql.includes("SELECT role FROM ledger_actor_context"))
+        return { role: "group_member" } as T;
+      if (sql.includes("FROM ledger_receipt_assets"))
+        return (receipts.get(id) ?? null) as T | null;
+      if (sql.includes("FROM ledger_expenses")) {
+        const row = expenses.get(id);
+        return (
+          row && (row.syncStatus === "SYNCED" || row.localOwnerUserId === params[1])
+            ? row
+            : null
+        ) as T | null;
+      }
+      if (sql.includes("FROM ledger_valuation_snapshots")) {
+        const value = valuations.get(id);
+        return (value?.isActive ? value : null) as T | null;
+      }
+      return null;
+    },
+    async getAllAsync<T>(sql: string, ...params: unknown[]) {
+      const id = params[0] as string;
+      if (sql.includes("json_each(?)")) {
+        const ids = JSON.parse(id) as string[];
+        const source = sql.includes("FROM ledger_expense_participants")
+          ? participants
+          : sql.includes("FROM ledger_expense_splits")
+            ? splits
+            : sql.includes("FROM ledger_payment_records")
+              ? payments
+              : null;
+        return ids.flatMap((expenseId) =>
+          source
+            ? (source.get(expenseId) ?? []).map((row) => ({ ...row, expenseId }))
+            : valuations.get(expenseId)?.isActive
+              ? [{ ...valuations.get(expenseId), expenseId }]
+              : [],
+        ) as T[];
+      }
+      if (sql.includes("FROM ledger_receipt_assets"))
+        return [...receipts.values()].filter((row) => row.expenseId === id) as T[];
+      if (sql.includes("FROM ledger_expenses")) {
+        return [...expenses.values()].filter(
+          (row) =>
+            row.journeyId === id &&
+            (row.syncStatus === "SYNCED" || row.localOwnerUserId === params[1]),
+        ) as T[];
+      }
+      if (sql.includes("FROM ledger_expense_participants")) {
+        return (participants.get(id) ?? []) as T[];
+      }
+      if (sql.includes("FROM ledger_expense_splits"))
+        return (splits.get(id) ?? []) as T[];
+      if (sql.includes("FROM ledger_payment_records"))
+        return (payments.get(id) ?? []) as T[];
+      if (sql.includes("FROM ledger_valuation_snapshots WHERE"))
+        return previousValuations.filter((row) => row.expenseId === id) as T[];
+      return [] as T[];
+    },
+  };
+
+  return {
+    database,
+    expenses,
+    participants,
+    splits,
+    operations,
+    receipts,
+    assetOperations,
+    auditEvents,
+    valuations,
+    previousValuations,
+    transactionCount: () => transactionCount,
+  };
+}
+
+const command: LedgerExpenseCommand = {
+  journeyId: "journey-a",
+  creatorMemberId: "member-a",
+  payerMemberId: "member-a",
+  title: "Lisbon dinner",
+  category: "food",
+  occurredAt: "2026-09-11T18:30:00.000Z",
+  economicDate: "2026-09-11",
+  original: { minor: 10_000, currency: "EUR", scale: 2 },
+  participants: [
+    { memberId: "member-a", displayNameSnapshot: "Alex", householdIdSnapshot: null },
+    { memberId: "member-b", displayNameSnapshot: "Bea", householdIdSnapshot: null },
+  ],
+  splits: [
+    {
+      memberId: "member-a",
+      originalMinor: 5_000,
+      settlementMinor: 9_900,
+      method: "EQUAL_PERSON",
+      weightUnits: null,
+      percentageUnits: null,
+      roundingAdjustmentMinor: 0,
+    },
+    {
+      memberId: "member-b",
+      originalMinor: 5_000,
+      settlementMinor: 9_900,
+      method: "EQUAL_PERSON",
+      weightUnits: null,
+      percentageUnits: null,
+      roundingAdjustmentMinor: 0,
+    },
+  ],
+  valuation: {
+    id: "valuation-a",
+    policy: "REFERENCE_RATE",
+    original: { minor: 10_000, currency: "EUR", scale: 2 },
+    settlement: { minor: 19_800, currency: "NZD", scale: 2 },
+    rateSnapshotId: "rate-a",
+    paymentRecordId: "payment-a",
+    reason: "Agreed Journey rate",
+  },
+  status: "ACCEPTED",
+};
+
+describe("Ledger Expense repository", () => {
+  const activeUser = async () => "user-a";
+  const preparedReceipt = {
+    id: "receipt-draft-1",
+    localUri: "file:///durable/receipt-draft-1.jpg",
+    mimeType: "image/jpeg" as const,
+    sizeBytes: 3,
+    sha256: "a".repeat(64),
+  };
+
+  it("commits Expense, receipt metadata, upload and link together, then reuses the draft id", async () => {
+    const {
+      database,
+      expenses,
+      receipts,
+      operations,
+      assetOperations,
+      transactionCount,
+    } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const first = await repository.createExpense(command, [preparedReceipt]);
+    expect(transactionCount()).toBe(1);
+    expect(expenses.has(first.id)).toBe(true);
+    expect(receipts.get(preparedReceipt.id)).toMatchObject({ expenseId: first.id });
+    expect(operations).toHaveLength(1);
+    expect(assetOperations.map((row) => row.operationType)).toEqual([
+      "UPLOAD_RECEIPT",
+      "LINK_RECEIPT",
+    ]);
+    expect(await repository.createExpense(command, [preparedReceipt])).toMatchObject({
+      id: first.id,
+    });
+    expect(expenses.size).toBe(1);
+    expect(receipts.size).toBe(1);
+    expect(assetOperations).toHaveLength(2);
+  });
+
+  it("rolls back Expense intent if receipt operation cannot be committed", async () => {
+    const { database, expenses, receipts, operations, assetOperations } =
+      createInMemoryLedgerDatabase();
+    const write = database.runAsync;
+    database.runAsync = async (sql, ...params) => {
+      if (sql.includes("INTO ledger_asset_operations")) throw new Error("disk full");
+      return (write as (...args: unknown[]) => Promise<unknown>)(sql, ...params) as never;
+    };
+    const transaction = database.withTransactionAsync;
+    database.withTransactionAsync = async (task) => {
+      try {
+        await transaction(task);
+      } catch (error) {
+        expenses.clear();
+        receipts.clear();
+        operations.length = 0;
+        assetOperations.length = 0;
+        throw error;
+      }
+    };
+    await expect(
+      createLedgerExpenseRepository(database, activeUser).createExpense(
+        command,
+        Array.from({ length: 3 }, (_, index) => ({
+          ...preparedReceipt,
+          id: `receipt-${index}`,
+        })),
+      ),
+    ).rejects.toThrow("disk full");
+    expect(expenses.size).toBe(0);
+    expect(receipts.size).toBe(0);
+    expect(operations).toHaveLength(0);
+    expect(assetOperations).toHaveLength(0);
+  });
+
+  it("commits zero to three attachments and re-enters the same three without duplication", async () => {
+    for (const count of [0, 1, 2, 3]) {
+      const { database, expenses, receipts, operations, assetOperations } =
+        createInMemoryLedgerDatabase();
+      const repository = createLedgerExpenseRepository(database, activeUser);
+      const selected = Array.from({ length: count }, (_, index) => ({
+        ...preparedReceipt,
+        id: `receipt-${index}`,
+      }));
+      const draftId = `expense-draft-${count}`;
+      const saved = await repository.createExpense(command, selected, draftId);
+      expect(saved.id).toBe(draftId);
+      expect(expenses.size).toBe(1);
+      expect(receipts.size).toBe(count);
+      expect(operations).toHaveLength(1);
+      expect(assetOperations).toHaveLength(count * 2);
+      expect(await repository.createExpense(command, selected, draftId)).toMatchObject({
+        id: draftId,
+      });
+      expect(receipts.size).toBe(count);
+      expect(assetOperations).toHaveLength(count * 2);
+    }
+  });
+
+  it("rejects a fourth draft before durable work", async () => {
+    const { database, expenses, receipts, assetOperations } =
+      createInMemoryLedgerDatabase();
+    const selected = Array.from({ length: 4 }, (_, index) => ({
+      ...preparedReceipt,
+      id: `receipt-${index}`,
+    }));
+    await expect(
+      createLedgerExpenseRepository(database, activeUser).createExpense(
+        command,
+        selected,
+      ),
+    ).rejects.toThrow("Maximum 3");
+    expect(expenses.size).toBe(0);
+    expect(receipts.size).toBe(0);
+    expect(assetOperations).toHaveLength(0);
+  });
+
+  it("deduplicates only projections of the same canonical valuation", async () => {
+    const { database, previousValuations } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    const row = {
+      expenseId: created.id,
+      policy: "SAME_CURRENCY",
+      originalMinor: 1235,
+      originalCurrency: "CNY",
+      originalScale: 2,
+      settlementMinor: 1235,
+      settlementCurrency: "CNY",
+      settlementScale: 2,
+      rateSnapshotId: null,
+      paymentRecordId: null,
+      reason: null,
+      decimalRate: null,
+      roundingMode: "HALF_UP",
+      effectiveAt: "2026-09-16T00:20:00Z",
+      supersedesValuationId: null,
+      referenceEvidenceJson: null,
+    };
+    previousValuations.push(
+      { ...row, id: "local-copy", serverId: "canonical-1" },
+      { ...row, id: "canonical-1", serverId: "canonical-1" },
+      { ...row, id: "canonical-2", serverId: "canonical-2" },
+    );
+    const history = await repository.listPreviousValuations(created.id);
+    expect(history.map((item) => item.id)).toEqual(["local-copy", "canonical-2"]);
+    expect(history.every((item) => item.original.currency === "CNY")).toBe(true);
+  });
+
+  it("atomically persists the full Expense aggregate and one durable create operation", async () => {
+    const { database, operations, auditEvents, transactionCount } =
+      createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+
+    const created = await repository.createExpense(command);
+
+    expect(transactionCount()).toBe(1);
+    expect(created).toMatchObject({
+      journeyId: "journey-a",
+      title: "Lisbon dinner",
+      settlementParticipation: "INCLUDED",
+      syncStatus: "PENDING_CREATE",
+      paymentRecords: [],
+    });
+    expect(operations).toEqual([
+      expect.objectContaining({
+        entityId: created.id,
+        entityType: "ledger_expense",
+        idempotencyKey: expect.stringMatching(/^ledger-idempotency_/),
+        operationType: "LEDGER_CREATE_EXPENSE",
+        status: "PENDING",
+      }),
+    ]);
+    expect(auditEvents).toEqual([
+      expect.objectContaining({
+        expenseId: created.id,
+        revision: 1,
+        eventType: "CREATED",
+      }),
+    ]);
+  });
+
+  it("keeps the selected calendar day literal across queue and SQLite restart", async () => {
+    const { database, operations } = createInMemoryLedgerDatabase();
+    const created = await createLedgerExpenseRepository(
+      database,
+      activeUser,
+    ).createExpense({
+      ...command,
+      occurredAt: "2026-07-14T23:30:00-10:00",
+      economicDate: "2026-07-15",
+    });
+    expect(created.economicDate).toBe("2026-07-15");
+    expect(JSON.parse(operations[0]!.payloadJson as string).expense.economicDate).toBe(
+      "2026-07-15",
+    );
+    expect(
+      (await createLedgerExpenseRepository(database, activeUser).getExpense(created.id))
+        ?.economicDate,
+    ).toBe("2026-07-15");
+  });
+
+  it("completes only missing date evidence on a later synced revision", async () => {
+    const {
+      database,
+      expenses,
+      operations,
+      auditEvents,
+      participants,
+      splits,
+      valuations,
+    } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    const row = expenses.get(created.id)!;
+    Object.assign(row, {
+      serverId: "server-bakery",
+      serverRevision: 3,
+      revision: 3,
+      syncStatus: "SYNCED",
+      localOwnerUserId: null,
+      economicDate: null,
+      businessStatus: "RATE_REQUIRED",
+      originalCurrency: "ISK",
+    });
+    valuations.delete(created.id);
+    operations.length = 0;
+    const beforeParticipants = structuredClone(participants.get(created.id));
+    const beforeSplits = structuredClone(splits.get(created.id));
+    const result = await repository.completeEconomicDate(
+      created.id,
+      "2026-07-25",
+      "USER_CONFIRMED_V1",
+    );
+    expect(result).toMatchObject({
+      revision: 4,
+      serverRevision: 3,
+      economicDate: "2026-07-25",
+      status: "RATE_REQUIRED",
+      syncStatus: "PENDING_UPDATE",
+    });
+    expect(participants.get(created.id)).toEqual(beforeParticipants);
+    expect(splits.get(created.id)).toEqual(beforeSplits);
+    expect(operations).toEqual([
+      expect.objectContaining({
+        operationType: "LEDGER_COMPLETE_ECONOMIC_DATE",
+        baseVersion: 3,
+      }),
+    ]);
+    expect(auditEvents.at(-1)).toMatchObject({
+      revision: 4,
+      eventType: "ECONOMIC_DATE_COMPLETED",
+    });
+  });
+
+  it("does not backfill ambiguous UTC or offset legacy dates", async () => {
+    const { database } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    for (const occurredAt of ["2026-07-15T00:30:00Z", "2026-07-14T23:30:00-10:00"]) {
+      const created = await repository.createExpense({
+        ...command,
+        occurredAt,
+        economicDate: null,
+      });
+      expect((await repository.getExpense(created.id))?.economicDate).toBeNull();
+    }
+  });
+
+  it("audits an explicit Save of a displayed legacy date or a changed date, never opening alone", async () => {
+    const { database, operations, auditEvents } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const legacy = {
+      ...command,
+      occurredAt: "2026-09-16T08:30:00Z",
+      economicDate: null,
+      valuation: null,
+      status: "RATE_REQUIRED" as const,
+      splits: command.splits.map((split) => ({ ...split, settlementMinor: null })),
+    };
+    const created = await repository.createExpense(legacy);
+    expect((await repository.getExpense(created.id))?.economicDate).toBeNull();
+    expect(operations).toHaveLength(1);
+    const saved = await repository.updateExpense(
+      created.id,
+      { ...legacy, economicDate: "2026-09-16" },
+      "Edited Expense.",
+    );
+    expect(saved.economicDate).toBe("2026-09-16");
+    expect((await repository.getExpense(created.id))?.economicDate).toBe("2026-09-16");
+    expect(JSON.parse(operations[1]!.payloadJson as string).expense.economicDate).toBe(
+      "2026-09-16",
+    );
+    expect(auditEvents.map((event) => event.eventType)).toEqual(["CREATED", "UPDATED"]);
+
+    const changed = await repository.updateExpense(
+      created.id,
+      { ...legacy, occurredAt: "2026-09-17", economicDate: "2026-09-17" },
+      "Edited Expense.",
+    );
+    expect(changed.economicDate).toBe("2026-09-17");
+  });
+
+  it("rehydrates the same persisted aggregate and keeps Journey lists isolated", async () => {
+    const { database } = createInMemoryLedgerDatabase();
+    const writer = createLedgerExpenseRepository(database, activeUser);
+    const created = await writer.createExpense(command);
+    await writer.addPaymentRecord(created.id, {
+      instrumentLabel: "Travel card",
+      authorization: null,
+      posted: { minor: 19_943, currency: "NZD", scale: 2 },
+      postedAt: "2026-09-12T00:00:00.000Z",
+      fee: null,
+      supersedesPaymentRecordId: null,
+    });
+    await writer.createExpense({ ...command, journeyId: "journey-b", title: "B only" });
+
+    const restartedReader = createLedgerExpenseRepository(database, activeUser);
+
+    await expect(restartedReader.getExpense(created.id)).resolves.toMatchObject({
+      id: created.id,
+      original: { minor: 10_000, currency: "EUR" },
+      valuation: { settlement: { minor: 19_800, currency: "NZD" } },
+      paymentRecords: [{ posted: { minor: 19_943, currency: "NZD" } }],
+    });
+    await expect(
+      restartedReader.listExpensesForJourney("journey-a"),
+    ).resolves.toHaveLength(1);
+    await expect(
+      restartedReader.listExpensesForJourney("journey-b"),
+    ).resolves.toHaveLength(1);
+  });
+
+  it("records revisioned update, tombstone, and restore operations without a duplicate row", async () => {
+    const { database, expenses, operations, auditEvents } =
+      createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+
+    const updated = await repository.updateExpense(
+      created.id,
+      {
+        ...command,
+        title: "Lisbon dinner corrected",
+        settlementParticipation: "EXCLUDED",
+      },
+      "Corrected receipt title and settlement participation",
+    );
+    await repository.tombstoneExpense(created.id, "Duplicate entry");
+    await repository.restoreExpense(created.id, "ACCEPTED", "Not a duplicate");
+
+    expect(expenses.size).toBe(1);
+    expect(updated).toMatchObject({
+      revision: 2,
+      settlementParticipation: "EXCLUDED",
+      syncStatus: "PENDING_UPDATE",
+    });
+    expect(JSON.parse(operations[1]!.payloadJson as string)).toMatchObject({
+      expense: { settlementParticipation: "EXCLUDED" },
+      baseExpense: { settlementParticipation: "INCLUDED" },
+    });
+    expect(operations.map((operation) => operation.operationType)).toEqual([
+      "LEDGER_CREATE_EXPENSE",
+      "LEDGER_UPDATE_EXPENSE",
+      "LEDGER_DELETE_EXPENSE",
+      "LEDGER_RESTORE_EXPENSE",
+    ]);
+    expect(auditEvents.map((event) => event.eventType)).toEqual([
+      "CREATED",
+      "UPDATED",
+      "TOMBSTONED",
+      "RESTORED",
+    ]);
+  });
+
+  it("retains historical valuation evidence while a date correction becomes RATE_REQUIRED", async () => {
+    const { database, valuations, operations, auditEvents } =
+      createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    await expect(
+      repository.updateExpense(
+        created.id,
+        { ...command, economicDate: "2026-09-12", valuation: created.valuation },
+        "Correct local date without changing timestamp",
+      ),
+    ).rejects.toThrow(/cannot retain/);
+    await expect(
+      repository.updateExpense(
+        created.id,
+        {
+          ...command,
+          occurredAt: "2026-09-12",
+          economicDate: "2026-09-12",
+          valuation: created.valuation,
+        },
+        "Wrong date",
+      ),
+    ).rejects.toThrow(/cannot retain/);
+
+    const corrected = await repository.updateExpense(
+      created.id,
+      {
+        ...command,
+        occurredAt: "2026-09-12",
+        economicDate: "2026-09-12",
+        valuation: null,
+        status: "RATE_REQUIRED",
+        splits: command.splits.map((split) => ({ ...split, settlementMinor: null })),
+      },
+      "Corrected date",
+    );
+    expect(corrected.status).toBe("RATE_REQUIRED");
+    expect((await repository.getExpense(created.id))?.valuation).toBeNull();
+    expect(valuations.get(created.id)).toMatchObject({ id: "valuation-a", isActive: 0 });
+    expect(JSON.parse(operations[1]!.payloadJson as string)).toMatchObject({
+      expense: {
+        occurredAt: "2026-09-12",
+        economicDate: "2026-09-12",
+        valuation: null,
+        businessStatus: "RATE_REQUIRED",
+      },
+    });
+    expect(auditEvents.map((event) => event.eventType)).toEqual(["CREATED", "UPDATED"]);
+  });
+
+  it("queues append-only PaymentRecord evidence without revising the Expense", async () => {
+    const { database, operations } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    const payment = await repository.addPaymentRecord(created.id, {
+      instrumentLabel: "Visa NZ",
+      authorization: null,
+      posted: { minor: 19_943, currency: "NZD", scale: 2 },
+      authorizedAt: null,
+      postedAt: "2026-09-12T00:00:00.000Z",
+      fee: { minor: 200, currency: "NZD", scale: 2 },
+      bankFxRate: "1.9943",
+      source: "manual",
+      notes: null,
+      supersedesPaymentRecordId: null,
+    });
+
+    expect(payment).toMatchObject({
+      expenseRevision: 1,
+      payerMemberId: "member-a",
+      posted: { minor: 19_943 },
+    });
+    await expect(repository.getExpense(created.id)).resolves.toMatchObject({
+      revision: 1,
+      valuation: { settlement: { minor: 19_800 } },
+    });
+    expect(operations.map((item) => item.operationType)).toEqual([
+      "LEDGER_CREATE_EXPENSE",
+      "LEDGER_ADD_PAYMENT_RECORD",
+    ]);
+  });
+});

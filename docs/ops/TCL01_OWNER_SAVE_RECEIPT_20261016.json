@@ -1,0 +1,55 @@
+{
+  "capturedAtUtc": "2026-10-15T21:44:43.865983+00:00",
+  "evidenceMode": "AD5 local SQLite mode=ro, scoped read-only queries; no app interaction",
+  "deviceId": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "schemaMigrationId": 68,
+  "trip": {
+    "id": "b67d35d9-f338-45b9-9344-5038f86a22d1",
+    "name": "Nelson summer",
+    "actorAccountId": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+    "localCreatorMemberId": "3762a170-4513-4eaa-b4b2-62b959a78f0f",
+    "createOperationId": "1e055353-cd8f-4cd8-a0cd-052e6e66b279",
+    "createOperationStatus": "DEPENDENCY_BLOCKED",
+    "createOperationAttempts": 0
+  },
+  "expense": {
+    "id": "ledger-expense_mva2bhyi_fzsdac6fbc",
+    "idFormat": "local ledger ID, not UUID",
+    "journeyId": "b67d35d9-f338-45b9-9344-5038f86a22d1",
+    "creatorMemberId": "3762a170-4513-4eaa-b4b2-62b959a78f0f",
+    "payerMemberId": "3762a170-4513-4eaa-b4b2-62b959a78f0f",
+    "localOwnerUserId": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+    "title": "Test",
+    "category": "groceries",
+    "originalAmountMinor": 2500,
+    "originalCurrency": "NZD",
+    "originalScale": 2,
+    "businessStatus": "ACCEPTED",
+    "syncStatus": "PENDING_CREATE",
+    "serverId": null,
+    "revision": 1
+  },
+  "expenseOperation": {
+    "id": "ledger-operation_mva2ffjf_cdyxkhnvmn",
+    "operationType": "LEDGER_CREATE_EXPENSE",
+    "status": "DEPENDENCY_BLOCKED",
+    "attemptCount": 0,
+    "dependencyOperationId": "1e055353-cd8f-4cd8-a0cd-052e6e66b279",
+    "intentSequence": 1
+  },
+  "scopedCounts": {
+    "journeys": 1,
+    "localTripLedgerBindings": 1,
+    "members": 1,
+    "expenses": 1,
+    "matchingExpenses": 1,
+    "expenseCommands": 1,
+    "actorBindings": 1
+  },
+  "validation": {
+    "ownerManualSaveObservedByLocalRows": true,
+    "coldReopenPassed": false,
+    "fullyOfflinePassed": false,
+    "serverSyncPassed": false
+  }
+}

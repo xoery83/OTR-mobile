@@ -1,0 +1,71 @@
+{
+  "at": "2026-09-29T03:52:34.204Z",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "gate": "Hosted Dev read-only precision PASS; owner final confirmation not repeated",
+  "settlementConfirmExecuted": false,
+  "productionAccessed": false,
+  "rows": [
+    {
+      "journeyId": "2bb2624c-7cf1-48dc-9607-0f4110130388",
+      "rootSettlementId": "0c738ccc-5bca-49ed-a29d-143a0e7299cf",
+      "precisionChecks": [
+        {
+          "cutoff": "2026-09-29T03:39:08.967+00:00",
+          "exactSqlNumericProofEquality": true,
+          "oldNumericProofEquality": false
+        },
+        {
+          "cutoff": "2026-09-29T03:52:16.977Z",
+          "exactSqlNumericProofEquality": true,
+          "oldNumericProofEquality": false
+        },
+        {
+          "cutoff": null,
+          "exactSqlNumericProofEquality": true,
+          "oldNumericProofEquality": true
+        }
+      ],
+      "previewStatus": 200,
+      "adjustmentStatus": 200,
+      "inputs": 9,
+      "added": 6,
+      "adjustmentState": "PREVIEW_READY",
+      "sourceFingerprint": "ebb48cd8b1414fd8c99983f68f8357949229caf41b0fab2624243a8633c28765",
+      "blockers": [],
+      "adjustmentBlockers": [],
+      "serviceOnly": true,
+      "unchangedFinancialEvidence": true
+    },
+    {
+      "journeyId": "e6e0955d-7f3c-4919-8801-8e6b4e05ce9f",
+      "rootSettlementId": "caf23384-1c13-4719-9281-67cd54ac9bae",
+      "precisionChecks": [
+        {
+          "cutoff": "2026-09-29T03:39:08.967+00:00",
+          "exactSqlNumericProofEquality": true,
+          "oldNumericProofEquality": true
+        },
+        {
+          "cutoff": "2026-09-29T03:52:26.295Z",
+          "exactSqlNumericProofEquality": true,
+          "oldNumericProofEquality": true
+        },
+        {
+          "cutoff": null,
+          "exactSqlNumericProofEquality": true,
+          "oldNumericProofEquality": true
+        }
+      ],
+      "previewStatus": 200,
+      "adjustmentStatus": 200,
+      "inputs": 6,
+      "added": 0,
+      "adjustmentState": "PREVIEW_UNCHANGED",
+      "sourceFingerprint": "d32bd358bcbee432a9a01ce16f31e85715a8f3be53f038e0371b382992bb6b44",
+      "blockers": [],
+      "adjustmentBlockers": [],
+      "serviceOnly": true,
+      "unchangedFinancialEvidence": true
+    }
+  ]
+}

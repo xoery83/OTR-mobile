@@ -1,0 +1,6 @@
+http://localhost:8081/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.xoery.otrmobile
+        return require(_dependencyMap[0], "/private/tmp/otr-beta-trips-shell-r2-native-61/app/(tabs)/_layout.tsx");
+                height: Math.max((0, _expoRouterReactNavigation.getDefaultHeaderHeight)(dimensions, false, insets.top), insets.top + _uiVisual.visual.type.section.fontSize * fontScale + _uiVisual.visual.space.card * 2)
+},744,[745,749,751,1257,755,458,1259,1263,1267,1593,746,1266,1264,748,72],"app/(tabs)/_layout.tsx");
+HeaderProbe count 0
+Bundle SHA b8fda7b8753254abdbe8ecb0ff3c7da22fd8b458928c149c67552b8b7cf29469

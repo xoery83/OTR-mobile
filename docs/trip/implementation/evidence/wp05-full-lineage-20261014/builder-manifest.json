@@ -1,0 +1,69 @@
+{
+  "stage": "FROZEN_BUILDER_PROOF_PENDING_SOURCE_REVIEW",
+  "atUtc": "2026-10-13T20:13:36.252588+00:00",
+  "base": "7ae593ec2768679278bdff2f504ef4500fe91cef",
+  "currentMain": "8aee9f3cfdab8c503b6636b8cec9646af0811e94",
+  "fullGitMigrationExecution": "PASS100",
+  "tripOwningChecks": "PASS8",
+  "closedInitReadChecks": "PASS10",
+  "activation": "CLOSED",
+  "acceptedDay": "NOT_VERIFIED",
+  "files": [
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/full-replay.py",
+      "sha256": "be13c2ec83ffd87c3096b203eb8c45bfdb0bc22cfa9020cde9f4e01c67bca2a5"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/adapted-bootstrap.py",
+      "sha256": "00d12dfdbbc3c34349f438e75ce67e27363146581c4334fd1f1a3cedb0482e19"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/verify-immutable-platform.py",
+      "sha256": "e0c424a772de1bd0f62252a20b1e76b43cf9067da766b1ed76d07cfe8333f850"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/immutable-server84-platform-schema.sql",
+      "sha256": "33583ebd17499b6b0828aded3021edb35a46c110b603d2afab5fb7c8c53997cf"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/immutable-platform-receipt.json",
+      "sha256": "d09f209aba27de92188191c74f85cd15bea1b5bf17b08a6e83d478d0d0a51c05"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/immutable-platform-git-directive-map.json",
+      "sha256": "9641e5195415f40eb61bd93d718921ff4b431c5ef05b44c038daa1002695e121"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/migration-manifest.json",
+      "sha256": "0352706638771964082b84e6bacd9e9f14790ce5825dda6381a4132be85948cf"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/actual-execution-receipts.jsonl",
+      "sha256": "75819dd150717234726ab2306dea29ab7404f226bd524955b936f6f18b01ccfa"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/trip-owning-rollback.sql",
+      "sha256": "049c13f7a0470fb60e378d8db09b6e43c8c823db4edd2fecf7f27b0431f49350"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/trip-core-closed-read-rollback.sql",
+      "sha256": "9052ab4fe8f72520079476e3c4580573fae76c0c09b3eee64b8013c80848cf03"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/full-replay-receipt.json",
+      "sha256": "7acb571591966323c201dcff6efea25a8b29e319e47c75e852ca1f97e0e56f37"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/platform-provenance.json",
+      "sha256": "ea565462db1a3c1d65dc6774f85607e394e3998430a8ee7913a093d53345cfe6"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/postcheck.json",
+      "sha256": "b54ba0b3b0ce21e3954d9700de82e69128d19d0b3e17550e072fba8f6b9bfd02"
+    },
+    {
+      "path": "/private/tmp/otr-beta-accepted-day-61/proof-report.md",
+      "sha256": "400ab9ca53defe82862c3d8674bcec7f8992ead889d4b901aafa5171bbdaa8bf"
+    }
+  ]
+}

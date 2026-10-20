@@ -1,0 +1,41 @@
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import { readInitializedDatabase } from "@/data/db/database";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
+import { coreUuid } from "@/domain/trip/tripCoreV2";
+import { createSyncOperationRepository } from "./syncOperationRepository";
+import { createTripCreateTransport } from "./tripCreateTransport";
+import {
+  createTripCreateSyncCoordinator,
+  createTripCreateSyncWorker,
+} from "./tripCreateSyncWorker";
+
+// Explicit composition only; normal startup installs no runner and the port stays CLOSED.
+export function createNativeTripCreateSyncRunner(
+  target?: TripCreateTarget,
+  portEnabled: () => boolean = () => false,
+) {
+  const selected = target && Object.freeze({ ...target });
+  return async () => {
+    if (!selected || !portEnabled())
+      return { status: "closed" as const, processedCount: 0 };
+    coreUuid.parse(selected.accountId);
+    coreUuid.parse(selected.tripId);
+    coreUuid.parse(selected.operationId);
+    if ((await requireActiveUserId()) !== selected.accountId)
+      throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+    const database = await readInitializedDatabase();
+    const repository = await readLocalTripRepository();
+    return createTripCreateSyncCoordinator(
+      createSyncOperationRepository(database, requireActiveUserId),
+      createTripCreateSyncWorker(
+        repository,
+        createTripCreateTransport(requireActiveUserId),
+        requireActiveUserId,
+      ),
+      repository,
+      portEnabled,
+      selected,
+    ).run("AUTHENTICATED_ONLINE");
+  };
+}

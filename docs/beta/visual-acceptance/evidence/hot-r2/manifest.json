@@ -1,0 +1,36 @@
+{
+  "atUTC": "2026-10-13T20:41:44.795440+00:00",
+  "candidate": "/private/tmp/otr-beta-hot-native-61-r2",
+  "sourceManifestSha256": "20b82b43f47cabb3d105e385b519ffa5576c53a041b7b12b78d02388435114c5",
+  "files": [
+    {
+      "path": "assets/hot-real-home-long-dark.png",
+      "sha256": "4559040dec1a2fb8e5d8d3a1607ed650b64b472a23cfc25a589b53b716fd7a5b"
+    },
+    {
+      "path": "assets/hot2-home-scroll-dark.png",
+      "sha256": "67136fbd0853510d57d3d823ac0829d44d2b9d63635fbbacdd845c22a5cf8166"
+    },
+    {
+      "path": "assets/hot2-initialized-home-long-dark.png",
+      "sha256": "f2f3ff37c2fd883b6f39f6279b3b74d0f9265757753a8b2ab456594e6ad55b1d"
+    },
+    {
+      "path": "assets/hot2-real-home-long-dark.png",
+      "sha256": "79bc2ccbf9e9b266d29d1d21682f16ee837d9f859cbbb4494fa5156f08b56e90"
+    },
+    {
+      "path": "assets/hot2-return-list-dark.png",
+      "sha256": "b89b4f13dc6e46bdc8871f9574986d8c9212b4006f0c221ef7f361eae722523d"
+    },
+    {
+      "path": "assets/hot2-same-scale-reload-dark.png",
+      "sha256": "43e726eb6968dcd9b22e46572a4c48813ae3183bc3e385364c68f3679c7154ac"
+    },
+    {
+      "path": "report.md",
+      "sha256": "703d4c6cac999c89120d1b5c24242a6a968fbc4b36e5a3dcb82b8123bb1d174b"
+    }
+  ],
+  "verdict": "PARTIAL/FIX; L1 INCOMPLETE; Level2 NOT READY"
+}

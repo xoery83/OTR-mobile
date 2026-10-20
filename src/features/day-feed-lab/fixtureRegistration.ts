@@ -1,0 +1,40 @@
+import { flexibleLabContributions } from "@/features/flexible-native-gallery/labAdapter";
+import { collectFixtureContributions } from "./contribution";
+import { getDl1FixtureCatalog } from "./fixtureCatalog";
+import { stayContribution } from "./stayContribution";
+import { stayRenderer } from "./StayFixtureRow";
+import { rentalContribution } from "./rentalContribution";
+import { scheduledTransportContribution } from "./scheduledTransportContribution";
+import { ticketedActivityContribution } from "./ticketedActivityContribution";
+import { flexibleContribution } from "./flexibleContribution";
+import { getTtrLabFixtures } from "@/features/ttr/labFixtures";
+import { t } from "@/ui/locale";
+import { flexibleReactiveContribution } from "./flexibleReactiveContribution";
+import { FlexibleSnapshotFixtureRow } from "./FlexibleSnapshotFixtureRow";
+
+// Explicit immutable registration; new workstreams add contributions here, not to source switching.
+export function getLabFixtures() {
+  const stay = stayContribution();
+  return collectFixtureContributions([
+    ...getDl1FixtureCatalog(),
+    { ...stay, renderer: stayRenderer(stay) },
+    rentalContribution("FUTURE"),
+    rentalContribution("TODAY"),
+    rentalContribution("TODAY_RETURN"),
+    rentalContribution("PAST"),
+    scheduledTransportContribution("FUTURE"),
+    scheduledTransportContribution("TODAY"),
+    scheduledTransportContribution("PAST"),
+    ticketedActivityContribution("FUTURE"),
+    ticketedActivityContribution("TODAY"),
+    ticketedActivityContribution("PAST"),
+    ticketedActivityContribution("TNS"),
+    flexibleContribution(),
+    ...getTtrLabFixtures().map((fixture) => ({
+      ...fixture,
+      title: t(`dayLab.ttr.${fixture.supplemental!.caseId}`),
+    })),
+    { ...flexibleReactiveContribution(), flexibleRenderer: FlexibleSnapshotFixtureRow },
+    ...flexibleLabContributions(),
+  ]);
+}

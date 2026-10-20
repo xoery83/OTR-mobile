@@ -1,0 +1,33 @@
+{
+  "status": "RELEASE_BUILD_PASS_NOT_INSTALLED_NOT_NATIVE_VQA",
+  "productSha": "21df3051d55cb7df6d2cdd803ee581da7002177a",
+  "sourceHead": "681bb8b78b3e173810807c788b7b6b821ff7c1a4",
+  "sourceRoot": "/private/tmp/otr-experience-covers-v2-20261019",
+  "appPath": "/private/tmp/otr-cover-release-21df305-20261019/derived/Build/Products/Release-iphonesimulator/OTRMobile.app",
+  "bundleId": "com.xoery.otrmobile",
+  "version": "0.1.0",
+  "build": "1",
+  "sdk": "iphonesimulator27.1",
+  "minimumOS": "16.4",
+  "infoSha256": "b452ba08381c69b73a2b29f95e7f8599528f0e140b58acebc7d7566dabea70c7",
+  "executableSha256": "b7aa80fea837b600e3c1920e5476cc3bf4d9a51ce26eca64c06deca62f8cc1e6",
+  "embeddedBundleSha256": "b3b1a0c22ccd05c51b6e2482d30170e92cf4d89f0861d2ee71bea9b9616a7273",
+  "embeddedBundleBytes": 11819559,
+  "podLockSha256": "2e37092bf151193b747b9f1b25f23b162933efd319152215b3691c7594a6fa0e",
+  "buildLogSha256": "d72a779cb2f3c3fdad37cb76ad33a4cf2613a1ba92919dd0d2a66780f7a0842f",
+  "architectures": "x86_64 arm64",
+  "embeddedBundleFormat": "Hermes JavaScript bytecode, version 98",
+  "codesignVerifyExit": 0,
+  "matchedCoverImages": 52,
+  "matchedCoverImageBytes": 15080493,
+  "appFilesTotalBytes": 121324539,
+  "deviceInstallationPerformed": false,
+  "authSessionOrDataOperationPerformed": false,
+  "policy": "pending-landmark-preview; rights/human/crop approvals unchanged",
+  "nativeGates": [
+    "startup/index/memory",
+    "Gallery scroll/decode",
+    "normal existing QA login/LocalCreate/Edit flow",
+    "Owner acceptance"
+  ]
+}

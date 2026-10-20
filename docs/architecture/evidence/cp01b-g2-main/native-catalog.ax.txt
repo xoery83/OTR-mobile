@@ -1,0 +1,155 @@
+Window: "OTR G2 TTR Synthetic QA", App: Device Hub.
+0 standard window OTR G2 TTR Synthetic QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selected) Description: iphone.gen3, Value: OTR G2 TTR Synthetic QA
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR Day Feed Lab DL1
+27.0
+Simulator
+					8 row (selectable) Description: iphone.gen3, Value: OTR G2 FLEX Main Integration
+27.0
+Simulator
+					9 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro Max
+27.0
+Simulator
+					10 row (selectable) Description: iphone.gen3, Value: Leon's iPhone16pro
+27.0.1
+iPhone 16 Pro
+					11 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - B
+27.0
+Simulator
+					12 row (selectable) Description: iphone.gen3, Value: OTR Flight Native03 CLOSED
+27.0
+Simulator
+					13 row (selectable) Description: iphone.gen1, Value: OTR N1 NOW Compact QA
+27.0
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: OTR N1 NOW Large QA
+27.0
+Simulator
+					15 row (selectable) Description: iphone.gen1, Value: OTR P1 V1R5 Compact QA
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					17 row (selectable) Description: iphone.gen1, Value: OTR P2 Flight Small QA
+27.0
+Simulator
+					18 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - A
+27.0
+Simulator
+					19 row (selectable) Description: iphone.gen1, Value: OTR Capture C3 Small QA
+27.0
+Simulator
+					20 row (selectable) Description: iphone.gen3, Value: OTR Capture C3 Synthetic QA
+27.0
+Simulator
+					21 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					22 row (selectable) Description: Unavailable, Value: Collapsed
+			23 search text field (settable) Search
+				24 button Search
+			25 splitter (disabled, settable, float) 308
+			26 container
+				27 container
+					28 button Description: Close, Secondary Actions: Cancel
+					29 heading Description: Test Trip, Secondary Actions: Cancel
+					30 button (selected) Description: Nelson Hiking, Secondary Actions: Cancel
+					31 button Description: Faroe Islands, Secondary Actions: Cancel
+					32 button Description: Europe Multi-city, Secondary Actions: Cancel
+					33 button Description: Urban Weekend, Secondary Actions: Cancel
+					34 button Description: Empty / Sparse Trip, Secondary Actions: Cancel
+					35 button Description: Synthetic P3 Stay, Secondary Actions: Cancel
+					36 button Description: Synthetic Flexible Blocks, Secondary Actions: Cancel
+					37 button Description: TTR · Straight-line distance, Secondary Actions: Cancel
+					38 button Description: TTR · Walking, no ETA, Secondary Actions: Cancel
+					39 button Description: TTR · Driving, route pending, Secondary Actions: Cancel
+					40 button Description: TTR · Transit, route failed, Secondary Actions: Cancel
+					41 button Description: TTR · NOW collision, Secondary Actions: Cancel
+					42 button Description: TTR · Past day hidden, Secondary Actions: Cancel
+					43 button Description: TTR · Unknown continuity, Secondary Actions: Cancel
+					44 button Description: TTR · Missing endpoint, Secondary Actions: Cancel
+					45 button Description: TTR · Text-only endpoint, Secondary Actions: Cancel
+					46 button Description: TTR · Repeated occurrence, Secondary Actions: Cancel
+					47 button Description: TTR · Location edit, Secondary Actions: Cancel
+					48 button Description: TTR · Reversed relation, Secondary Actions: Cancel
+					49 button Description: TTR · External Maps, no mode, Secondary Actions: Cancel
+					50 button Description: TTR · Stale open intent, Secondary Actions: Cancel
+					51 button Description: Synthetic Flexible snapshots + TTR, Secondary Actions: Cancel
+					52 button Description: F01 · Empty Block, Secondary Actions: Cancel
+					53 button Description: F02 · My / Group, Secondary Actions: Cancel
+					54 button Description: F03 · Two-column Focus, Secondary Actions: Cancel
+					55 button Description: F04 · Nested fixed Item, Secondary Actions: Cancel
+					56 button Description: F05 · Published carousel, Secondary Actions: Cancel
+					57 button Description: F06 · Pool workspace, Secondary Actions: Cancel
+					58 button Description: F07 · Discovery modes, Secondary Actions: Cancel
+					59 button Description: F08 · Copy / Remove / Undo, Secondary Actions: Cancel
+					60 button Description: F09 · Create / Resize, Secondary Actions: Cancel
+					61 button Description: F10 · Today location, Secondary Actions: Cancel
+					62 button Description: F11 · Past without evidence, Secondary Actions: Cancel
+					63 button Description: F12 · Narrow / large type / offline, Secondary Actions: Cancel
+					64 button Description: F13 · Cross-boundary / TNS / adjacent, Secondary Actions: Cancel
+					65 button Description: F14 · Permissions / missing data / recovery, Secondary Actions: Cancel
+				66 button Description: Home, ID: app.grid.3x3
+				67 button Description: Screenshot, ID: camera.viewfinder
+				68 button Description: Record, ID: record.circle
+				69 button Rotate Left
+		70 splitter (disabled, settable, float) 820
+		71 container
+			72 Inspector Subcategory
+				73 radio button Description: Info, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.info
+				74 radio button Description: Apps, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				75 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			76 scroll area Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+				77 container
+					78 text Name, Help: OTR G2 TTR Synthetic QA, Value: OTR G2 TTR Synthetic QA iOS 27.0, ID: info.inspector.item.name.value
+				79 container
+					80 text Model, Help: iPhone 18 Pro, Value: iPhone 18 Pro 1D01B9F0-6591-4C15-A4CD-43E86E86AA13
+				81 heading Paired Simulators
+				82 container
+					83 scroll area
+						84 list
+							85 row (selectable) No Paired Watch Simulators
+					86 button (disabled) Description: Add, Help: Pair Apple Watch
+					87 button (disabled) Description: Remove, Help: Unpair Apple Watch
+				88 button Edit Visibility
+			89 container Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+	90 toolbar
+		91 menu button Add, Help: Add Device, ID: plus
+		92 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		93 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		94 toggle button Description: Capture Keyboard, Value: off
+		95 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		96 Zoom
+			97 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			98 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 0
+			99 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 1, ID: 1.magnifyingglass
+			100 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		101 button Description: Open in New Window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		102 menu button More, Help: More Actions, ID: ellipsis
+		103 Inspector Category
+			104 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			105 radio button Description: text.document, Help: Reports, Value: 0
+			106 radio button Description: Info, Value: 1, ID: info
+	107 close button
+	108 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	109 minimize button
+	110 text OTR G2 TTR Synthetic QA iOS 27.0
+111 menu bar
+	112 Device Hub
+	113 File
+	114 Edit
+	115 View
+	116 Device
+	117 Controls
+	118 Window
+	119 Help
+
+The focused UI element is 0 standard window OTR G2 TTR Synthetic QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise

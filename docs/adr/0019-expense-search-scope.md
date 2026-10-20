@@ -1,0 +1,5 @@
+# 0019: One Expense Search with explicit view semantics
+
+Expense Search keeps the existing `/expenses/search` route and local reporting repository. The route's legacy parameters are normalized at the screen boundary into a Mine, Person, or Group view. A fixed payer from Settlement Paid remains a Group view with a locked payer condition. The effective member for Mine or Person comes only from route parameters; Search does not read the currently selected Journey member or tab.
+
+Mine and Person show positive allocated shares; Group shows full Expense values. Search uses a dedicated positive-share query condition that retains original shares awaiting Journey valuation; the existing Settlement `shareOnly` condition keeps its narrower behavior. The reporting repository remains the single correction-aware source for rows, counts, and totals. Filters narrow results within a view, so Participant is available only for Group. Both selected attention conditions match either condition. Legacy route names and parameter combinations remain supported; no schema, remote API, or sync behavior changes.

@@ -1,0 +1,6 @@
+{
+  "path": "src/features/day-feed/LocalTripPhotos.tsx",
+  "beforeSha256": "1d87161e4358338a8bb970b2968ad7f1923d00e2caaf24c8037f43e33e12aeb6",
+  "overlaySha256": "46befe7eee68150032911dbc6153564f68564a57ed43d88ae82390db4035590e",
+  "scope": "One actual-account/local-Trip normal repo add, bundled Coast prevalidated669301/c8fda; public Asset localUri/File bytes only; no picker spoof/gallery/SQL"
+}

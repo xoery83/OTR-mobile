@@ -1,0 +1,9 @@
+
+> otr-mobile@0.1.0 lint
+> npm run ui:guard && eslint .
+
+
+> otr-mobile@0.1.0 ui:guard
+> node --import tsx scripts/ui/check.ts
+
+UI guard PASS; 473 legacy occurrences; 91 representative UI files checked without baseline forgiveness.

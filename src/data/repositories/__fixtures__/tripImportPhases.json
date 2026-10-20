@@ -1,0 +1,1138 @@
+{
+  "prepared": {
+    "trip_id": "10000000-0000-4000-8000-000000000001",
+    "version": 1,
+    "trip_sources": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000001",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T12:46:12.458682Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "fixture-source",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      },
+      {
+        "id": "ca130000-0000-4000-8000-000000000201",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T12:46:12.459928Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "fixture-second-source",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000001",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "upgrade-retained",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000003",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "upgrade-identity",
+        "retention_state": "IDENTITY_ONLY",
+        "acquisition_sha256": null,
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      }
+    ],
+    "actor_account_id": "00000000-0000-4000-8000-000000000001",
+    "trip_source_runs": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000003",
+        "state": "READY",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.465803Z",
+        "error_code": null,
+        "generation": 1,
+        "completed_at": "2026-10-05T12:46:12.465803Z",
+        "input_sha256": "62097549f338931b17def99f129045ec72de5d41192159d7d26772082838e0c1",
+        "row_revision": 2,
+        "scope_sha256": "e120979de59e879f927e5fa647226640b10adb887fccdeb7879a99c15706fde3",
+        "extractor_key": "fixture-flight",
+        "operation_key": "fixture-run-1",
+        "superseded_by": null,
+        "retention_state": "RETAINED",
+        "actor_account_id": "00000000-0000-4000-8000-000000000001",
+        "scope_source_ids": ["ca130000-0000-4000-8000-000000000001"],
+        "extractor_version": "1",
+        "extractor_options_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "trip_source_inputs": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000004",
+        "run_id": "ca130000-0000-4000-8000-000000000003",
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "confirmation_id": null,
+        "material_revision": 1,
+        "representation_id": "ca130000-0000-4000-8000-000000000002",
+        "historical_selection": false,
+        "observed_source_row_revision": 1
+      },
+      {
+        "id": "ca130000-0000-4000-8000-000000000010",
+        "run_id": null,
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "confirmation_id": "ca130000-0000-4000-8000-000000000006",
+        "material_revision": 1,
+        "representation_id": "ca130000-0000-4000-8000-000000000002",
+        "historical_selection": false,
+        "observed_source_row_revision": 1
+      }
+    ],
+    "trip_source_revisions": [
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.459271Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "fixture-source",
+        "capture_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca130000-0000-4000-8000-000000000002"]
+      },
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca130000-0000-4000-8000-000000000201",
+        "created_at": "2026-10-05T12:46:12.460085Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "fixture-second-source",
+        "capture_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca130000-0000-4000-8000-000000000202"]
+      },
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca139900-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "upgrade-retained",
+        "capture_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca139900-0000-4000-8000-000000000002"]
+      },
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca139900-0000-4000-8000-000000000003",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "upgrade-identity",
+        "capture_sha256": null,
+        "retention_state": "IDENTITY_ONLY",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca139900-0000-4000-8000-000000000004"]
+      }
+    ],
+    "trip_source_candidates": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000005",
+        "run_id": "ca130000-0000-4000-8000-000000000003",
+        "proposal": {
+          "fields": {
+            "title": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": "NZ0289A"
+            },
+            "origin": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": {
+                "time": {
+                  "basis": "SOURCE_INSTANT",
+                  "quality": "EXACT",
+                  "zone_id": null,
+                  "local_date": "2026-12-17",
+                  "local_time": null,
+                  "fold_choice": null,
+                  "source_instant": "2026-12-16T20:00:00.123456Z",
+                  "clock_precision": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant_precision": 6
+                },
+                "location": {
+                  "authored_text": null,
+                  "authored_label": "Auckland",
+                  "accepted_place_id": null
+                }
+              }
+            },
+            "services": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": [
+                {
+                  "attribution": "UNSPECIFIED",
+                  "service_key": "primary",
+                  "operator_value": "NZ",
+                  "service_number": "0289A",
+                  "operator_issuer": "IATA",
+                  "service_literal": "NZ0289A",
+                  "operator_literal": "Air New Zealand",
+                  "transport_subtype": "FLIGHT",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "codeshare_operating_key": null
+                }
+              ]
+            },
+            "destination": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": {
+                "time": {
+                  "basis": "DERIVED_CIVIL",
+                  "quality": "UNKNOWN",
+                  "zone_id": null,
+                  "local_date": null,
+                  "local_time": null,
+                  "fold_choice": null,
+                  "source_instant": null,
+                  "clock_precision": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant_precision": null
+                },
+                "location": {
+                  "authored_text": null,
+                  "authored_label": "Shanghai",
+                  "accepted_place_id": null
+                }
+              }
+            }
+          }
+        },
+        "created_at": "2026-10-05T12:46:12.465803Z",
+        "candidate_key": "occurrence-1",
+        "candidate_kind": "TRANSPORT",
+        "proposal_sha256": "8bd9e66a5bc6ef665da7636487315bcfcf68e2e3b53d494197dd8f2bf2ae0e54",
+        "retention_state": "RETAINED",
+        "proposal_version": 1
+      }
+    ],
+    "trip_source_associations": [],
+    "trip_source_output_slots": [
+      {
+        "state": "PREPARED",
+        "slot_id": "ca130000-0000-4000-8000-000000000007",
+        "slot_key": "occurrence-1",
+        "adapter_key": "itinerary-event-v1",
+        "disposition": "CREATE",
+        "receipt_ref": null,
+        "candidate_id": "ca130000-0000-4000-8000-000000000005",
+        "failure_code": null,
+        "no_commit_at": null,
+        "base_revision": null,
+        "dispatched_at": null,
+        "receipt_sha256": null,
+        "adapter_version": 1,
+        "confirmation_id": "ca130000-0000-4000-8000-000000000006",
+        "no_commit_basis": null,
+        "result_revision": null,
+        "retention_state": "RETAINED",
+        "reviewed_run_id": "ca130000-0000-4000-8000-000000000003",
+        "support_payload": {
+          "title": {
+            "origin": "ACCEPTED_EXTRACTED",
+            "locators": [
+              {
+                "end": null,
+                "kind": "WHOLE",
+                "page": null,
+                "start": null,
+                "region": null,
+                "input_id": "ca130000-0000-4000-8000-000000000010"
+              }
+            ],
+            "input_ids": ["ca130000-0000-4000-8000-000000000010"],
+            "candidate_id": "ca130000-0000-4000-8000-000000000005",
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/title",
+            "candidate_field_key": "title"
+          },
+          "origin": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/origin",
+            "candidate_field_key": null
+          },
+          "services": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/services",
+            "candidate_field_key": null
+          },
+          "destination": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/destination",
+            "candidate_field_key": null
+          }
+        },
+        "support_version": 1,
+        "result_target_id": null,
+        "reviewed_payload": {
+          "edits": {
+            "title": "NZ0289A",
+            "origin": {
+              "time": {
+                "basis": "SOURCE_INSTANT",
+                "quality": "EXACT",
+                "zone_id": null,
+                "local_date": "2026-12-17",
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": "2026-12-16T20:00:00.123456Z",
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": 6
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Auckland",
+                "accepted_place_id": null
+              }
+            },
+            "services": [
+              {
+                "attribution": "UNSPECIFIED",
+                "service_key": "primary",
+                "operator_value": "NZ",
+                "service_number": "0289A",
+                "operator_issuer": "IATA",
+                "service_literal": "NZ0289A",
+                "operator_literal": "Air New Zealand",
+                "transport_subtype": "FLIGHT",
+                "operator_namespace": "IATA_AIRLINE",
+                "codeshare_operating_key": null
+              }
+            ],
+            "destination": {
+              "time": {
+                "basis": "DERIVED_CIVIL",
+                "quality": "UNKNOWN",
+                "zone_id": null,
+                "local_date": null,
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": null,
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": null
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Shanghai",
+                "accepted_place_id": null
+              }
+            }
+          },
+          "schema_key": "flight-v1",
+          "match_policy": "import-flight-match-v1",
+          "schema_version": 1,
+          "selected_fields": ["destination", "origin", "services", "title"],
+          "association_intents": [
+            {
+              "purpose": "CONFIRMED_SUPPORT",
+              "input_id": "ca130000-0000-4000-8000-000000000010"
+            }
+          ],
+          "deferred_dimensions": [
+            {
+              "reason": "UNSUPPORTED_DIMENSION",
+              "locator": {
+                "end": null,
+                "kind": "WHOLE",
+                "page": null,
+                "start": null,
+                "region": null,
+                "input_id": "ca130000-0000-4000-8000-000000000010"
+              },
+              "input_id": "ca130000-0000-4000-8000-000000000010",
+              "dimension": "passengers",
+              "candidate_field_key": null
+            }
+          ],
+          "normalization_version": 1
+        },
+        "finalization_state": "NONE",
+        "intended_target_id": "ca130000-0000-4000-8000-000000000009",
+        "result_target_kind": null,
+        "create_claim_active": true,
+        "domain_intent_sha256": "c773274ba1ce6c209211a163deaadf77ce570046efca4e980c873e4e0abf0294",
+        "domain_operation_key": "ca130000-0000-4000-8000-000000000008",
+        "intended_target_kind": "ITINERARY_EVENT",
+        "no_commit_receipt_ref": null,
+        "no_commit_receipt_sha256": null
+      }
+    ],
+    "trip_source_confirmations": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000006",
+        "state": "PREPARED",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.475458Z",
+        "row_revision": 1,
+        "intent_sha256": "0987a512c05670d7fbdd24161aadbb774c927bbd132941f0d1c7e61d6a0e8e82",
+        "intent_version": 1,
+        "retention_state": "RETAINED",
+        "actor_account_id": "00000000-0000-4000-8000-000000000001",
+        "confirmation_key": "fixture-confirmation-1"
+      }
+    ],
+    "trip_source_representations": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000002",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "created_at": "2026-10-05T12:46:12.459579Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "Flight NZ0289A Auckland Shanghai 2026-12-17; source supplied UTC 2026-12-16T20:00:00.123456Z.",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      },
+      {
+        "id": "ca130000-0000-4000-8000-000000000202",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca130000-0000-4000-8000-000000000201",
+        "byte_count": 22,
+        "created_at": "2026-10-05T12:46:12.460263Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "Second retained source",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "040f762df6f9f6108a5bd91ec6c76ff484610f9ad8cf98f8ab2ec944df3a7bb3",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000002",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca139900-0000-4000-8000-000000000001",
+        "byte_count": 22,
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "retained upgrade bytes",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "3cba78d5af1533e7549908e721ea0fad1152cc35096fd744a0f1634d55278d18",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000004",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca139900-0000-4000-8000-000000000003",
+        "byte_count": null,
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": null,
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": null,
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "IDENTITY_ONLY",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      }
+    ],
+    "trip_source_run_predecessors": [],
+    "trip_source_candidate_lineage": [],
+    "trip_source_slot_dependencies": [],
+    "trip_source_slot_lineage_dispositions": []
+  },
+  "dispatched": {
+    "trip_id": "10000000-0000-4000-8000-000000000001",
+    "version": 1,
+    "trip_sources": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000001",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T12:46:12.458682Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "fixture-source",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      },
+      {
+        "id": "ca130000-0000-4000-8000-000000000201",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T12:46:12.459928Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "fixture-second-source",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000001",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "upgrade-retained",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000003",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "upgrade-identity",
+        "retention_state": "IDENTITY_ONLY",
+        "acquisition_sha256": null,
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      }
+    ],
+    "actor_account_id": "00000000-0000-4000-8000-000000000001",
+    "trip_source_runs": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000003",
+        "state": "READY",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.465803Z",
+        "error_code": null,
+        "generation": 1,
+        "completed_at": "2026-10-05T12:46:12.465803Z",
+        "input_sha256": "62097549f338931b17def99f129045ec72de5d41192159d7d26772082838e0c1",
+        "row_revision": 2,
+        "scope_sha256": "e120979de59e879f927e5fa647226640b10adb887fccdeb7879a99c15706fde3",
+        "extractor_key": "fixture-flight",
+        "operation_key": "fixture-run-1",
+        "superseded_by": null,
+        "retention_state": "RETAINED",
+        "actor_account_id": "00000000-0000-4000-8000-000000000001",
+        "scope_source_ids": ["ca130000-0000-4000-8000-000000000001"],
+        "extractor_version": "1",
+        "extractor_options_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "trip_source_inputs": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000004",
+        "run_id": "ca130000-0000-4000-8000-000000000003",
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "confirmation_id": null,
+        "material_revision": 1,
+        "representation_id": "ca130000-0000-4000-8000-000000000002",
+        "historical_selection": false,
+        "observed_source_row_revision": 1
+      },
+      {
+        "id": "ca130000-0000-4000-8000-000000000010",
+        "run_id": null,
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "confirmation_id": "ca130000-0000-4000-8000-000000000006",
+        "material_revision": 1,
+        "representation_id": "ca130000-0000-4000-8000-000000000002",
+        "historical_selection": false,
+        "observed_source_row_revision": 1
+      }
+    ],
+    "trip_source_revisions": [
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.459271Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "fixture-source",
+        "capture_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca130000-0000-4000-8000-000000000002"]
+      },
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca130000-0000-4000-8000-000000000201",
+        "created_at": "2026-10-05T12:46:12.460085Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "fixture-second-source",
+        "capture_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca130000-0000-4000-8000-000000000202"]
+      },
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca139900-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "upgrade-retained",
+        "capture_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca139900-0000-4000-8000-000000000002"]
+      },
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca139900-0000-4000-8000-000000000003",
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "upgrade-identity",
+        "capture_sha256": null,
+        "retention_state": "IDENTITY_ONLY",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca139900-0000-4000-8000-000000000004"]
+      }
+    ],
+    "trip_source_candidates": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000005",
+        "run_id": "ca130000-0000-4000-8000-000000000003",
+        "proposal": {
+          "fields": {
+            "title": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": "NZ0289A"
+            },
+            "origin": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": {
+                "time": {
+                  "basis": "SOURCE_INSTANT",
+                  "quality": "EXACT",
+                  "zone_id": null,
+                  "local_date": "2026-12-17",
+                  "local_time": null,
+                  "fold_choice": null,
+                  "source_instant": "2026-12-16T20:00:00.123456Z",
+                  "clock_precision": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant_precision": 6
+                },
+                "location": {
+                  "authored_text": null,
+                  "authored_label": "Auckland",
+                  "accepted_place_id": null
+                }
+              }
+            },
+            "services": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": [
+                {
+                  "attribution": "UNSPECIFIED",
+                  "service_key": "primary",
+                  "operator_value": "NZ",
+                  "service_number": "0289A",
+                  "operator_issuer": "IATA",
+                  "service_literal": "NZ0289A",
+                  "operator_literal": "Air New Zealand",
+                  "transport_subtype": "FLIGHT",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "codeshare_operating_key": null
+                }
+              ]
+            },
+            "destination": {
+              "input_ids": ["ca130000-0000-4000-8000-000000000004"],
+              "proposed_value": {
+                "time": {
+                  "basis": "DERIVED_CIVIL",
+                  "quality": "UNKNOWN",
+                  "zone_id": null,
+                  "local_date": null,
+                  "local_time": null,
+                  "fold_choice": null,
+                  "source_instant": null,
+                  "clock_precision": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant_precision": null
+                },
+                "location": {
+                  "authored_text": null,
+                  "authored_label": "Shanghai",
+                  "accepted_place_id": null
+                }
+              }
+            }
+          }
+        },
+        "created_at": "2026-10-05T12:46:12.465803Z",
+        "candidate_key": "occurrence-1",
+        "candidate_kind": "TRANSPORT",
+        "proposal_sha256": "8bd9e66a5bc6ef665da7636487315bcfcf68e2e3b53d494197dd8f2bf2ae0e54",
+        "retention_state": "RETAINED",
+        "proposal_version": 1
+      }
+    ],
+    "trip_source_associations": [],
+    "trip_source_output_slots": [
+      {
+        "state": "OUTCOME_UNKNOWN",
+        "slot_id": "ca130000-0000-4000-8000-000000000007",
+        "slot_key": "occurrence-1",
+        "adapter_key": "itinerary-event-v1",
+        "disposition": "CREATE",
+        "receipt_ref": null,
+        "candidate_id": "ca130000-0000-4000-8000-000000000005",
+        "failure_code": null,
+        "no_commit_at": null,
+        "base_revision": null,
+        "dispatched_at": "2026-10-05T12:46:12.548573Z",
+        "receipt_sha256": null,
+        "adapter_version": 1,
+        "confirmation_id": "ca130000-0000-4000-8000-000000000006",
+        "no_commit_basis": null,
+        "result_revision": null,
+        "retention_state": "RETAINED",
+        "reviewed_run_id": "ca130000-0000-4000-8000-000000000003",
+        "support_payload": {
+          "title": {
+            "origin": "ACCEPTED_EXTRACTED",
+            "locators": [
+              {
+                "end": null,
+                "kind": "WHOLE",
+                "page": null,
+                "start": null,
+                "region": null,
+                "input_id": "ca130000-0000-4000-8000-000000000010"
+              }
+            ],
+            "input_ids": ["ca130000-0000-4000-8000-000000000010"],
+            "candidate_id": "ca130000-0000-4000-8000-000000000005",
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/title",
+            "candidate_field_key": "title"
+          },
+          "origin": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/origin",
+            "candidate_field_key": null
+          },
+          "services": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/services",
+            "candidate_field_key": null
+          },
+          "destination": {
+            "origin": "USER_ENTERED",
+            "input_ids": [],
+            "candidate_id": null,
+            "edited_value": null,
+            "accepted_value_ref": "otr-event/receipt/10000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001/ca130000-0000-4000-8000-000000000008/slot/ca130000-0000-4000-8000-000000000007/destination",
+            "candidate_field_key": null
+          }
+        },
+        "support_version": 1,
+        "result_target_id": null,
+        "reviewed_payload": {
+          "edits": {
+            "title": "NZ0289A",
+            "origin": {
+              "time": {
+                "basis": "SOURCE_INSTANT",
+                "quality": "EXACT",
+                "zone_id": null,
+                "local_date": "2026-12-17",
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": "2026-12-16T20:00:00.123456Z",
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": 6
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Auckland",
+                "accepted_place_id": null
+              }
+            },
+            "services": [
+              {
+                "attribution": "UNSPECIFIED",
+                "service_key": "primary",
+                "operator_value": "NZ",
+                "service_number": "0289A",
+                "operator_issuer": "IATA",
+                "service_literal": "NZ0289A",
+                "operator_literal": "Air New Zealand",
+                "transport_subtype": "FLIGHT",
+                "operator_namespace": "IATA_AIRLINE",
+                "codeshare_operating_key": null
+              }
+            ],
+            "destination": {
+              "time": {
+                "basis": "DERIVED_CIVIL",
+                "quality": "UNKNOWN",
+                "zone_id": null,
+                "local_date": null,
+                "local_time": null,
+                "fold_choice": null,
+                "source_instant": null,
+                "clock_precision": null,
+                "supplied_offset_seconds": null,
+                "source_instant_precision": null
+              },
+              "location": {
+                "authored_text": null,
+                "authored_label": "Shanghai",
+                "accepted_place_id": null
+              }
+            }
+          },
+          "schema_key": "flight-v1",
+          "match_policy": "import-flight-match-v1",
+          "schema_version": 1,
+          "selected_fields": ["destination", "origin", "services", "title"],
+          "association_intents": [
+            {
+              "purpose": "CONFIRMED_SUPPORT",
+              "input_id": "ca130000-0000-4000-8000-000000000010"
+            }
+          ],
+          "deferred_dimensions": [
+            {
+              "reason": "UNSUPPORTED_DIMENSION",
+              "locator": {
+                "end": null,
+                "kind": "WHOLE",
+                "page": null,
+                "start": null,
+                "region": null,
+                "input_id": "ca130000-0000-4000-8000-000000000010"
+              },
+              "input_id": "ca130000-0000-4000-8000-000000000010",
+              "dimension": "passengers",
+              "candidate_field_key": null
+            }
+          ],
+          "normalization_version": 1
+        },
+        "finalization_state": "NONE",
+        "intended_target_id": "ca130000-0000-4000-8000-000000000009",
+        "result_target_kind": null,
+        "create_claim_active": true,
+        "domain_intent_sha256": "c773274ba1ce6c209211a163deaadf77ce570046efca4e980c873e4e0abf0294",
+        "domain_operation_key": "ca130000-0000-4000-8000-000000000008",
+        "intended_target_kind": "ITINERARY_EVENT",
+        "no_commit_receipt_ref": null,
+        "no_commit_receipt_sha256": null
+      }
+    ],
+    "trip_source_confirmations": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000006",
+        "state": "PROCESSING",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.475458Z",
+        "row_revision": 2,
+        "intent_sha256": "0987a512c05670d7fbdd24161aadbb774c927bbd132941f0d1c7e61d6a0e8e82",
+        "intent_version": 1,
+        "retention_state": "RETAINED",
+        "actor_account_id": "00000000-0000-4000-8000-000000000001",
+        "confirmation_key": "fixture-confirmation-1"
+      }
+    ],
+    "trip_source_representations": [
+      {
+        "id": "ca130000-0000-4000-8000-000000000002",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca130000-0000-4000-8000-000000000001",
+        "byte_count": 93,
+        "created_at": "2026-10-05T12:46:12.459579Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "Flight NZ0289A Auckland Shanghai 2026-12-17; source supplied UTC 2026-12-16T20:00:00.123456Z.",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "78100e8b5dc8686a1d0f9c0da1d764626386c1afdb6802cf4b8a40729f1809bf",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      },
+      {
+        "id": "ca130000-0000-4000-8000-000000000202",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca130000-0000-4000-8000-000000000201",
+        "byte_count": 22,
+        "created_at": "2026-10-05T12:46:12.460263Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "Second retained source",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "040f762df6f9f6108a5bd91ec6c76ff484610f9ad8cf98f8ab2ec944df3a7bb3",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000002",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca139900-0000-4000-8000-000000000001",
+        "byte_count": 22,
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "retained upgrade bytes",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "3cba78d5af1533e7549908e721ea0fad1152cc35096fd744a0f1634d55278d18",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      },
+      {
+        "id": "ca139900-0000-4000-8000-000000000004",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca139900-0000-4000-8000-000000000003",
+        "byte_count": null,
+        "created_at": "2026-10-05T00:00:00.000000Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": null,
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": null,
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "IDENTITY_ONLY",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      }
+    ],
+    "trip_source_run_predecessors": [],
+    "trip_source_candidate_lineage": [],
+    "trip_source_slot_dependencies": [],
+    "trip_source_slot_lineage_dispositions": []
+  }
+}

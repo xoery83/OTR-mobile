@@ -1,0 +1,83 @@
+{
+  "decision": "PASS_MECHANICAL_COMPOSITION_APPLICABILITY_ONLY",
+  "inputManifest": "/private/tmp/otr-beta-mytrips-minimal-61-manifest.json",
+  "inputSha256": "6a991b8d1f8ae41276e24599a1490336a7f3c8d50e43adf0eba0c7e4b1b0b8dc",
+  "authorInputSha256": "8d701dae36000295b82f6b4f677873a912b5c116d2243efc5ca428e53e5ac679",
+  "nativeInputSha256": "47c2c2e65d7754cca39f43bbbb7dfe40a1995d808d79a8b8ac29a7438e3b62bf",
+  "files": [
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "sha256": "4c3a38acdf64345c7eb4f9c1277f1d411a17cbf0330b7d7c2a4e8945fd7fd467",
+      "baseSha256": "0af052d2a1994a46b90b2929aa5bd326874b3494b6dac639eaaebc8d0342ccd4",
+      "sourceSha256": "4c3a38acdf64345c7eb4f9c1277f1d411a17cbf0330b7d7c2a4e8945fd7fd467",
+      "selection": "EXACT_AUTHOR_BYTES"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.test.ts",
+      "sha256": "cb919d1bd897befe9a7d13c0ca8efc0ce1a578fa026b2ccdfb482afb49de3130",
+      "baseSha256": "20066481e5e2fab3aa605577d169abc922a5286f5886915bcf2f90a60a147fd2",
+      "sourceSha256": "cb919d1bd897befe9a7d13c0ca8efc0ce1a578fa026b2ccdfb482afb49de3130",
+      "selection": "EXACT_AUTHOR_BYTES"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.tsx",
+      "sha256": "e5ada37b47b1f64234112f77943650a9bdfb36d1215e5233b472bede3c6bf8f1",
+      "baseSha256": "61b9b5abfaf6ad56f1ad5ebbe729a37e71d8476fb275e7355a41553d3344e3a1",
+      "sourceSha256": "e5ada37b47b1f64234112f77943650a9bdfb36d1215e5233b472bede3c6bf8f1",
+      "selection": "EXACT_AUTHOR_BYTES"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.test.ts",
+      "sha256": "5bfb7c8df9a66b181b74bc0da4379c6ca381aef91fdac825296dacb4f400549e",
+      "baseSha256": null,
+      "sourceSha256": "5bfb7c8df9a66b181b74bc0da4379c6ca381aef91fdac825296dacb4f400549e",
+      "selection": "EXACT_AUTHOR_BYTES"
+    },
+    {
+      "path": "src/features/day-feed/tripListPresentation.ts",
+      "sha256": "9a380580b6ec1671bd4e77fe9744460b827df7ff8a65f4ea0ae81d14cbef08ff",
+      "baseSha256": "064081c77897ac4b835ade56b15735d4c785fff7b398cb9c1e68bd4b51ba9853",
+      "sourceSha256": "9a380580b6ec1671bd4e77fe9744460b827df7ff8a65f4ea0ae81d14cbef08ff",
+      "selection": "EXACT_AUTHOR_BYTES"
+    },
+    {
+      "path": "src/ui/controls.tsx",
+      "sha256": "fc827828dd38613abe40be29a6d429f7dc01014dc8635148f624209626c5ac1b",
+      "baseSha256": "502e4b3bd829d7d069072318ed3ce773908869eeb3a6f19030b74453da216b51",
+      "sourceSha256": "70e012136dc4ad0a63847b0405a0f42dea4d6598d6cea170ca80f719a7a46999",
+      "selection": "MINIMUM_REVIEWED_HUNKS_ON_CURRENT_MAIN"
+    },
+    {
+      "path": "src/ui/controls.test.ts",
+      "sha256": "1fa9168237cff597d4460bfdfe32515def3e6b55cc6a8325f92aa94a0be8463c",
+      "baseSha256": "2c1a3fdf02d39169c756f091857df17744be80bd50dba425e7a3ee0295b58cb2",
+      "sourceSha256": "1fa9168237cff597d4460bfdfe32515def3e6b55cc6a8325f92aa94a0be8463c",
+      "selection": "EXACT_AUTHOR_BYTES"
+    },
+    {
+      "path": "src/ui/palette.ts",
+      "sha256": "6ccf7b070ad78b9fe3ad30eaced9f8e60cc88e24349d39e2c64c5cfa0a603fb4",
+      "baseSha256": "0afaa931fab51ec38ee9b3680d427daba15d7ffe8c9d2b2907cb6a225e14f4cf",
+      "sourceSha256": "dc3617c3845f2b076a6c4922e2532884adc41ad0db3f625e98d4aeebfc2d8708",
+      "selection": "MINIMUM_REVIEWED_HUNKS_ON_CURRENT_MAIN"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "cecbeeb781de6a575a911a1d594df4e4a0058cde6dedbb395f1f0b644b0e6bfa",
+      "baseSha256": "271a5267aabd0f807b9370397e347add661136fc63b09cb9063de4af98d5bbca",
+      "sourceSha256": "829b4bc6a5f60c291cfbf1ad14c9c917ce1b825a0975d1f3c0acb9f6be1e2035",
+      "selection": "MINIMUM_REVIEWED_HUNKS_ON_CURRENT_MAIN"
+    }
+  ],
+  "checks": {
+    "sixSelectedAuthorBytes": "EXACT_MATCH",
+    "allNineBaseCandidateHashes": "MATCH",
+    "controls": "ExactreviewedUiText export/import hunk; oldmainUiButton and allfollowingUiSection/stylesbytesunchanged",
+    "catalogs": "OnlyexacttwoMyTripskeysforeachen/zhappend; remainderoldmainunchanged",
+    "palette": "OnlyexactmediaScrim additiontwothemes; remainderoldmainunchanged",
+    "preservation": "Exact321451d Shelllayout/ExperienceBottomShell/LocalTripWorkspace/TripScreen/SQLite62registries+photos/Doc101+producer unchanged"
+  },
+  "reusedEvidence": "Original independent code +Native boundedcompactPASS trusted; no code rereview/newNativeQA",
+  "nativeLimits": "OriginalwholeMyTripsShellPARTIAL/headerP0FAIL/level2NOTREADY remain; no expanded acceptance",
+  "integration": "Eligibleminimum nine-path ordinaryI afterSourcecurrenttests; do notoverwriteothermainfiles"
+}

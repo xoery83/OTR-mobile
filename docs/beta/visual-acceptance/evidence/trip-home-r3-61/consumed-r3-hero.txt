@@ -1,0 +1,126 @@
+function TripHomeFrame({
+    title,
+    metadata,
+    cover,
+    widgets = [],
+    modules,
+    onEdit,
+    notice,
+    onBack
+  }) {
+    _s();
+    (0, _uiUseUiLocale.useUiLocale)();
+    var styles = (0, _uiTheme.useThemedStyles)(createStyles);
+    var {
+      width,
+      height,
+      fontScale
+    } = (0, _reactNative.useWindowDimensions)();
+    var insets = (0, _reactNativeSafeAreaContext.useSafeAreaInsets)();
+    var detailsBelow = fontScale > 1 || width > height;
+    return (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+      style: styles.frame,
+      children: [(0, _reactJsxRuntime.jsx)(_featuresDayFeedTripCoverVisual.TripCoverVisual, {
+        source: cover,
+        style: [styles.hero, {
+          width,
+          height: Math.min(232, height * 0.4)
+        }],
+        children: (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+          style: [styles.copy, {
+            paddingLeft: Math.max(_uiVisual.visual.space.page, insets.left),
+            paddingRight: Math.max(_uiVisual.visual.space.page, insets.right)
+          }],
+          children: [(0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+            accessibilityRole: "header",
+            style: styles.title,
+            numberOfLines: detailsBelow ? 1 : 2,
+            children: title
+          }), !detailsBelow ? metadata.map((line, index) => (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+            style: styles.meta,
+            numberOfLines: 1,
+            children: line
+          }, index)) : null]
+        })
+      }), detailsBelow ? (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+        style: styles.details,
+        children: [(0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+          accessibilityRole: "header",
+          style: styles.heading,
+          children: title
+        }), metadata.map((line, index) => (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+          style: styles.notice,
+          children: line
+        }, index))]
+      }) : null, onBack ? (0, _reactJsxRuntime.jsx)(_uiControls.UiButton, {
+        variant: "text",
+        label: (0, _uiLocale.t)("dayFeed.myTrips"),
+        onPress: onBack
+      }) : null, onEdit ? (0, _reactJsxRuntime.jsx)(_uiControls.UiButton, {
+        variant: "secondary",
+        label: (0, _uiLocale.t)("tripHome.edit"),
+        onPress: onEdit
+      }) : null, notice ? (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+        style: styles.notice,
+        children: notice
+      }) : null, (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+        style: styles.workspace,
+        children: [(0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+          accessibilityRole: "header",
+          style: styles.heading,
+          children: (0, _uiLocale.t)("tripHome.workspace")
+        }), (0, _reactJsxRuntime.jsx)(_TripHomeWidgetHost.TripHomeWidgetHost, {
+          widgets: widgets
+        })]
+      }), modules ? (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+        style: styles.workspace,
+        children: [(0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+          accessibilityRole: "header",
+          style: styles.heading,
+          children: (0, _uiLocale.t)("tripHome.tools")
+        }), modules]
+      }) : null]
+    });
+  }
+  _s(TripHomeFrame, "uchWJH02UOsCnUAJ7sf7IEw1Pb8=", false, function () {
+    return [_uiUseUiLocale.useUiLocale, _uiTheme.useThemedStyles, _reactNative.useWindowDimensions, _reactNativeSafeAreaContext.useSafeAreaInsets];
+  });
+  _c = TripHomeFrame;
+  var createStyles = colors => _reactNative.StyleSheet.create({
+    frame: {
+      gap: _uiVisual.visual.space.section
+    },
+    hero: {
+      alignSelf: "center",
+      borderRadius: _uiVisual.visual.radius.hero
+    },
+    copy: {
+      paddingHorizontal: _uiVisual.visual.space.page,
+      paddingVertical: _uiVisual.visual.space.card,
+      gap: _uiVisual.visual.space.heading
+    },
+    title: {
+      ..._uiVisual.visual.type.section,
+      color: colors.mediaText
+    },
+    meta: {
+      ..._uiVisual.visual.type.meta,
+      color: colors.mediaText
+    },
+    details: {
+      gap: _uiVisual.visual.space.heading
+    },
+    notice: {
+      ..._uiVisual.visual.type.meta,
+      color: colors.textSecondary
+    },
+    workspace: {
+      gap: _uiVisual.visual.space.card
+    },
+    heading: {
+      ..._uiVisual.visual.type.section,
+      color: colors.textPrimary
+    }
+  });
+  var _c;
+  $RefreshReg$(_c, "TripHomeFrame");

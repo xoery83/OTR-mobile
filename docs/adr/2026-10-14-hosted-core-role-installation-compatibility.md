@@ -1,0 +1,19 @@
+# Hosted Core role installation compatibility
+
+Status: Owner-approved finite contract revision; source reconciliation pending. Authority: revised conditional request call_6b4c5a301e1742689680e0093b23c116, independent Core peer bda239d6, exact Owner gate f73cc9b7. Original7a9b/ten historical SQL/default-OFF forward seals remain immutable external artifacts. This records the accepted revision to previously uninstalled DEV contracts, not a rewrite of an installed migration journal.
+
+The existing managed executor has CREATEROLE but is not superuser, and has auth USAGE without its grant option. PG16+ automatically grants its creator ADMIN-only membership; it cannot remove the bootstrap grant and can regrant SET/INHERIT. The existing migration operator therefore remains explicitly trusted with role administration and its owned functions/policies. FALSE membership flags do not isolate it. Application/runtime roles receive no ADMIN or additional inherited/SET rights.
+
+Core85 permits only safe NOLOGIN principals and their creator ADMIN=true/INHERIT=false/SET=false edge. It grants public/extensions USAGE; auth transfer is removed because the only qualified runtime auth.uid call executes inside a fixed-path SECURITY DEFINER owner, while install-time auth.users REFERENCES retain their exact preconditions. Other existing auth/app grants are unchanged.
+
+The existing finite-scope SECURITY DEFINER function validates final three-role attributes/topology on each owning Core/Trip invocation. Its stable function owner anchors creator edges; gateway→writer ADMIN=false/INHERIT=false/SET=true is the only runtime membership. Unexpected membership or unsafe attributes fail closed, with no new helper/role/framework. This dormant contract still forbids LOGIN; any future actual transport-principal provisioning requires an explicit final attribute contract and separate authorization.
+
+Source candidate byte pins: Core85 7a58f5c8f3fd248281038a833c246917c9627767549194d01a38796eb61c62d2; OFFforward170e181f251844606689d61c989e620183a41b97f90a8763449588af61724224. Other nine schema files remain exact. PG/SQLite version registries do not change.
+
+Local non-super/auth-no-transfer installation and independent20SQL +normal Trip/P1/P3/read/replay/expiry/sameTrip GROUP/PRIVATE/foreign negatives passed; retained-data rollback preserves NZD/scale2/REFERENCE_RATE and three roots/receipts. Actual DEV fixed9preflight and prior selected-parent/collision/three-role absence refresh passed. Eleven exact original transactions received success COMMIT responses on2026-10-14; final selected readonly postmetadata at05:18:36Z returned all ten known TRUE: safe NOLOGIN principals, exact topology/owner/path, closed empty unscoped gate, unchanged Creator, no app or direct Ledger privilege expansion. No LOGIN/credential/deploy/runtimeenable/Doc101/business data read. Actual schema verification is complete; source reconciliation is still pending, so do not claim source==installed before that exact integration; no Supabase journal entries were fabricated.
+
+Stop on FAIL/UNKNOWN/drift/error/ambiguous completion. Preserve successful inert prefixes and real per-file receipts; no blind replay, drops, data deletion or migration-journal rewrite. Future deployed build/principal/TLS/normal actor-device readiness remains separate. Complete real user journeys remain0.
+
+Evidence: /private/tmp/otr-beta-core-hosted-compat-61/manifest.json429f; /private/tmp/otr-beta-core-hosted-compat-peer-61/owner-gate.jsonf73; /private/tmp/otr-beta-core-hosted-execution-61/installation-receipt.json. These are actual local receipts, not a Native/UX or runtime acceptance.
+
+Primary references: [PG16 role attributes](https://www.postgresql.org/docs/16/role-attributes.html), [Supabase managed superuser boundary](https://supabase.com/docs/guides/database/postgres/roles-superuser), [SECURITY DEFINER/search path](https://www.postgresql.org/docs/16/sql-createfunction.html).

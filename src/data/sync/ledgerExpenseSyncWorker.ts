@@ -1,0 +1,563 @@
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import type {
+  LedgerExpense,
+  LedgerExpenseRepository,
+} from "@/data/repositories/ledgerExpenseRepository";
+import { ApiClientError } from "@/data/api/client";
+import {
+  ledgerExpenseConflictResponseSchema,
+  expenseCommandRequestSchema,
+  expenseConflictChainResolutionRequestSchema,
+  expenseTypedConflictResponseSchema,
+} from "@/data/api/ledgerMutationContracts";
+import type {
+  ApplyLedgerValuationRequest,
+  CreateLedgerPaymentRecordRequest,
+} from "@/data/api/ledgerMutationContracts";
+import type { createLedgerCollaborationRepository } from "@/data/repositories/ledgerCollaborationRepository";
+import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
+import {
+  ledgerExpenseToCreateRequest,
+  ledgerExpenseToUpdateRequest,
+} from "@/data/health/historicalExpenseRecovery";
+
+import {
+  SyncConflictError,
+  SyncDependencyError,
+  syncFailureClass,
+  type SyncWorker,
+} from "./syncEngine";
+import type { SyncOperation } from "./syncOperationRepository";
+
+export type LedgerExpenseCreateTransport = {
+  executeCommand?: ReturnType<
+    typeof import("./ledgerExpenseMutationTransport").createLedgerExpenseMutationTransport
+  >["executeCommand"];
+  resolveConflictChain?: ReturnType<
+    typeof import("./ledgerExpenseMutationTransport").createLedgerExpenseMutationTransport
+  >["resolveConflictChain"];
+  createExpense(input: {
+    journeyId: string;
+    idempotencyKey: string;
+    expense: ReturnType<typeof ledgerExpenseToCreateRequest>;
+  }): Promise<{
+    serverId: string;
+    revision: number;
+    entity?: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+  }>;
+  updateExpense(input: {
+    journeyId: string;
+    serverId: string;
+    idempotencyKey: string;
+    baseRevision: number;
+    auditReason: string | null;
+    expense: ReturnType<typeof ledgerExpenseToUpdateRequest>;
+  }): Promise<{
+    serverId: string;
+    revision: number;
+    entity?: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+  }>;
+  completeEconomicDate?(input: {
+    journeyId: string;
+    serverId: string;
+    idempotencyKey: string;
+    baseRevision: number;
+    economicDate: string;
+    source: "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1";
+  }): Promise<{
+    serverId: string;
+    revision: number;
+    entity?: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+  }>;
+  deleteExpense(input: {
+    journeyId: string;
+    serverId: string;
+    idempotencyKey: string;
+    baseRevision: number;
+    auditReason: string | null;
+  }): Promise<{
+    serverId: string;
+    revision: number;
+    entity?: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+  }>;
+  restoreExpense(input: {
+    journeyId: string;
+    serverId: string;
+    idempotencyKey: string;
+    baseRevision: number;
+    auditReason: string | null;
+    businessStatus: "DRAFT" | "ACCEPTED" | "RATE_REQUIRED";
+  }): Promise<{
+    serverId: string;
+    revision: number;
+    entity?: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+  }>;
+  resolveConflict?(input: {
+    journeyId: string;
+    serverId: string;
+    idempotencyKey: string;
+    resolution: Parameters<
+      ReturnType<typeof createLedgerCollaborationRepository>["queueConflictResolution"]
+    >[2];
+  }): Promise<{
+    entity: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+  }>;
+  createCorrection?(input: {
+    journeyId: string;
+    expenseServerId: string;
+    idempotencyKey: string;
+    correction: {
+      localId: string;
+      baseRevision: number;
+      proposedExpense: unknown;
+      reason: string;
+    };
+  }): Promise<{
+    correction: Parameters<
+      ReturnType<typeof createLedgerCollaborationRepository>["reconcileCorrection"]
+    >[1];
+    expense: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1] | null;
+  }>;
+  actOnCorrection?(input: {
+    journeyId: string;
+    correctionServerId: string;
+    action: "accept" | "reject" | "withdraw";
+    idempotencyKey: string;
+    request: { baseRequestRevision: number; resolutionReason: string | null };
+  }): Promise<{
+    correction: Parameters<
+      ReturnType<typeof createLedgerCollaborationRepository>["reconcileCorrection"]
+    >[1];
+    expense: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1] | null;
+  }>;
+  addPaymentRecord?(input: {
+    journeyId: string;
+    expenseServerId: string;
+    idempotencyKey: string;
+    payment: CreateLedgerPaymentRecordRequest;
+  }): Promise<{ serverId: string }>;
+  applyValuation?(input: {
+    journeyId: string;
+    expenseServerId: string;
+    idempotencyKey: string;
+    valuation: ApplyLedgerValuationRequest;
+  }): Promise<{
+    entity: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+    serverId: string;
+    revision: number;
+  }>;
+};
+
+const createOperation = "LEDGER_CREATE_EXPENSE";
+const updateOperation = "LEDGER_UPDATE_EXPENSE";
+const dateCompletionOperation = "LEDGER_COMPLETE_ECONOMIC_DATE";
+const deleteOperation = "LEDGER_DELETE_EXPENSE";
+const restoreOperation = "LEDGER_RESTORE_EXPENSE";
+
+export { ledgerExpenseToCreateRequest, ledgerExpenseToUpdateRequest };
+
+class LedgerRevisionConflictError extends Error {
+  constructor() {
+    super("Ledger mutation has a stale base revision.");
+  }
+}
+
+export function createLedgerExpenseSyncWorker(
+  repository: LedgerExpenseRepository,
+  transport: LedgerExpenseCreateTransport,
+  collaboration?: ReturnType<typeof createLedgerCollaborationRepository>,
+): SyncWorker {
+  return {
+    async push(operation: SyncOperation) {
+      if (operation.tripId) assertReplayFixtureWritable(operation.tripId);
+      if (operation.entityType === "ledger_payment_record") {
+        await pushPaymentRecordOperation(operation, repository, transport);
+        return;
+      }
+      if (operation.entityType === "ledger_correction") {
+        if (!collaboration)
+          throw new Error("Ledger collaboration repository is missing.");
+        await pushCorrectionOperation(operation, repository, collaboration, transport);
+        return;
+      }
+      if (operation.entityType !== "ledger_expense") {
+        throw new Error("Ledger Expense worker received an unsupported operation.");
+      }
+
+      const expense = await repository.getExpense(operation.entityId);
+      if (!expense) throw new Error("Ledger expense is missing from local storage.");
+      if (
+        expense.syncStatus === "CONFLICT" &&
+        operation.operationType !== "LEDGER_RESOLVE_EXPENSE_CONFLICT"
+      ) {
+        throw new Error("Ledger expense has an unresolved conflict.");
+      }
+
+      const generation = getAccountGeneration();
+      const assertAccount = () => {
+        if (generation !== getAccountGeneration())
+          throw new ApiClientError(
+            "Account changed during sync.",
+            "http",
+            401,
+            "AUTH_REQUIRED",
+          );
+      };
+      operation = await repository.bindOperation(operation, !!transport.executeCommand);
+      assertAccount();
+      const typedResolution =
+        operation.operationType === "LEDGER_RESOLVE_EXPENSE_CONFLICT" &&
+        JSON.parse(operation.payloadJson).contractVersion === 2;
+      if (!typedResolution) await repository.markExpenseSyncing(expense.id);
+      try {
+        if (operation.operationType === "LEDGER_RESOLVE_EXPENSE_CONFLICT") {
+          if (!collaboration)
+            throw new Error("Ledger collaboration repository is missing.");
+          const resolution = JSON.parse(operation.payloadJson);
+          if (resolution.contractVersion === 2) {
+            if (!transport.resolveConflictChain)
+              throw new Error("Typed conflict transport is missing.");
+            const response = await transport.resolveConflictChain({
+              journeyId: expense.journeyId,
+              serverId: expense.serverId!,
+              idempotencyKey: operation.idempotencyKey,
+              resolution: expenseConflictChainResolutionRequestSchema.parse(resolution),
+            });
+            assertAccount();
+            await repository.confirmConflictResolution(operation.id, response);
+            return;
+          }
+          if (!transport.resolveConflict)
+            throw new Error("Conflict transport is missing.");
+          const response = await transport.resolveConflict({
+            journeyId: expense.journeyId,
+            serverId: expense.serverId!,
+            idempotencyKey: operation.idempotencyKey,
+            resolution,
+          });
+          assertAccount();
+          await repository.reconcileCanonicalExpense(expense.id, response.entity);
+          await collaboration.resolveConflict(resolution.conflictId);
+        } else if (
+          JSON.parse(operation.payloadJson).envelope &&
+          transport.executeCommand
+        ) {
+          const command = expenseCommandRequestSchema.parse(
+            JSON.parse(operation.payloadJson),
+          );
+          if (command.envelope.patchOrIntent.type !== "CREATE" && !expense.serverId)
+            throw new SyncDependencyError("Expense CREATE must be confirmed first.");
+          const response = await transport.executeCommand({
+            journeyId: expense.journeyId,
+            serverId: expense.serverId,
+            command,
+          });
+          assertAccount();
+          if (!response.receipt)
+            throw new Error("Typed Expense response has no server receipt.");
+          await repository.confirmExpenseOperation(
+            operation.id,
+            response.entity,
+            response.receipt.disposition,
+            response.receipt,
+          );
+        } else if (operation.operationType === "LEDGER_APPLY_VALUATION") {
+          if (!transport.applyValuation)
+            throw new Error("Valuation transport is missing.");
+          if (!expense.serverId)
+            throw new SyncDependencyError(
+              "Ledger Expense create must sync before valuation.",
+            );
+          const payload = JSON.parse(
+            operation.payloadJson,
+          ) as ApplyLedgerValuationRequest;
+          const serverPaymentId = payload.paymentRecordId
+            ? await repository.getPaymentRecordServerId(payload.paymentRecordId)
+            : null;
+          if (payload.paymentRecordId && !serverPaymentId)
+            throw new SyncDependencyError(
+              "Posted payer evidence must sync before valuation.",
+            );
+          const response = await transport.applyValuation({
+            journeyId: expense.journeyId,
+            expenseServerId: expense.serverId,
+            idempotencyKey: operation.idempotencyKey,
+            valuation: {
+              ...payload,
+              paymentRecordId: serverPaymentId,
+              baseRevision: operation.baseVersion ?? expense.serverRevision,
+            },
+          });
+          assertAccount();
+          await repository.confirmExpenseOperation(operation.id, response.entity);
+        } else {
+          const response = await pushExpenseOperation(expense, operation, transport);
+          if (
+            operation.operationType === createOperation &&
+            expense.serverId &&
+            expense.serverId !== response.serverId
+          )
+            throw new LedgerRevisionConflictError();
+          assertAccount();
+          if (response.entity) {
+            await repository.confirmExpenseOperation(operation.id, response.entity);
+          } else if (await repository.getOperationResult(operation.id)) {
+            throw new Error("Expense response is missing canonical receipt evidence.");
+          } else
+            await repository.markExpenseSynced(
+              expense.id,
+              response.serverId,
+              response.revision,
+              operation.id,
+            );
+        }
+      } catch (error) {
+        assertAccount();
+        if (
+          error instanceof ApiClientError &&
+          error.status === 409 &&
+          operation.operationType === "LEDGER_RESOLVE_EXPENSE_CONFLICT"
+        ) {
+          await repository.markExpenseConflict(expense.id);
+          throw error;
+        }
+        if (error instanceof ApiClientError && error.code === "REVISION_CONFLICT") {
+          const typedConflict = expenseTypedConflictResponseSchema.safeParse(
+            error.details,
+          );
+          const parsed = typedConflict.success
+            ? typedConflict
+            : ledgerExpenseConflictResponseSchema.safeParse(error.details);
+          if (!parsed.success || !collaboration) {
+            await repository.markExpenseConflict(expense.id);
+            throw new SyncConflictError("Ledger conflict response was incomplete.");
+          }
+          await collaboration.recordConflict(expense.id, operation, parsed.data);
+          throw new SyncConflictError("Ledger expense has an unresolved conflict.");
+        }
+        if (error instanceof LedgerRevisionConflictError) {
+          await repository.markExpenseConflict(expense.id);
+          throw new SyncConflictError(error.message);
+        }
+        const normalized = error instanceof Error ? error : new Error("Sync failed.");
+        if (typedResolution) throw normalized;
+        const failure = syncFailureClass(normalized);
+        if (failure === "retryable" || failure === "auth" || failure === "dependency") {
+          await repository.markExpensePending?.(expense.id, operation.operationType);
+        } else {
+          await repository.markExpenseFailed(expense.id);
+        }
+        throw normalized;
+      }
+    },
+  };
+}
+
+async function pushPaymentRecordOperation(
+  operation: SyncOperation,
+  repository: LedgerExpenseRepository,
+  transport: LedgerExpenseCreateTransport,
+) {
+  const generation = getAccountGeneration();
+  if (
+    operation.operationType !== "LEDGER_ADD_PAYMENT_RECORD" ||
+    !transport.addPaymentRecord
+  )
+    throw new Error("Payment evidence transport is missing.");
+  const payload = JSON.parse(operation.payloadJson) as Omit<
+    CreateLedgerPaymentRecordRequest,
+    "localId"
+  > & {
+    expenseId: string;
+    id: string;
+  };
+  const expense = await repository.getExpense(payload.expenseId);
+  if (!expense?.serverId)
+    throw new SyncDependencyError(
+      "Ledger Expense create must sync before payment evidence.",
+    );
+  const supersedesPaymentRecordId = payload.supersedesPaymentRecordId
+    ? await repository.getPaymentRecordServerId(payload.supersedesPaymentRecordId)
+    : null;
+  if (payload.supersedesPaymentRecordId && !supersedesPaymentRecordId)
+    throw new SyncDependencyError("Superseded payment evidence must sync first.");
+  const {
+    expenseId: _expenseId,
+    id,
+    expenseRevision: _expenseRevision,
+    payerMemberId: _payerMemberId,
+    ...payment
+  } = payload as typeof payload & {
+    expenseRevision?: number;
+    payerMemberId?: string;
+  };
+  const response = await transport.addPaymentRecord({
+    journeyId: expense.journeyId,
+    expenseServerId: expense.serverId,
+    idempotencyKey: operation.idempotencyKey,
+    payment: { ...payment, localId: id, supersedesPaymentRecordId },
+  });
+  if (generation !== getAccountGeneration())
+    throw new ApiClientError(
+      "Account changed during sync.",
+      "http",
+      401,
+      "AUTH_REQUIRED",
+    );
+  await repository.markPaymentRecordSynced(operation.entityId, response.serverId);
+}
+
+async function pushCorrectionOperation(
+  operation: SyncOperation,
+  expenses: LedgerExpenseRepository,
+  collaboration: ReturnType<typeof createLedgerCollaborationRepository>,
+  transport: LedgerExpenseCreateTransport,
+) {
+  const generation = getAccountGeneration();
+  const payload = JSON.parse(operation.payloadJson) as Record<string, unknown>;
+  if (operation.operationType === "LEDGER_PROPOSE_EXPENSE_CORRECTION") {
+    if (!transport.createCorrection) throw new Error("Correction transport is missing.");
+    const response = await transport.createCorrection({
+      journeyId: operation.tripId!,
+      expenseServerId: String(payload.expenseServerId),
+      idempotencyKey: operation.idempotencyKey,
+      correction: {
+        localId: String(payload.localId),
+        baseRevision: Number(payload.baseRevision),
+        proposedExpense: payload.proposedExpense,
+        reason: String(payload.reason),
+      },
+    });
+    if (generation !== getAccountGeneration())
+      throw new ApiClientError(
+        "Account changed during sync.",
+        "http",
+        401,
+        "AUTH_REQUIRED",
+      );
+    await collaboration.reconcileCorrection(operation.entityId, response.correction);
+    return;
+  }
+  const action = payload.action as "accept" | "reject" | "withdraw";
+  if (!transport.actOnCorrection) throw new Error("Correction transport is missing.");
+  const response = await transport.actOnCorrection({
+    journeyId: operation.tripId!,
+    correctionServerId: String(payload.correctionServerId),
+    action,
+    idempotencyKey: operation.idempotencyKey,
+    request: {
+      baseRequestRevision: Number(payload.baseRequestRevision),
+      resolutionReason:
+        typeof payload.resolutionReason === "string" ? payload.resolutionReason : null,
+    },
+  });
+  if (generation !== getAccountGeneration())
+    throw new ApiClientError(
+      "Account changed during sync.",
+      "http",
+      401,
+      "AUTH_REQUIRED",
+    );
+  await collaboration.reconcileCorrection(operation.entityId, response.correction);
+  if (response.expense) {
+    await expenses.reconcileCanonicalExpense(
+      String(payload.expenseLocalId),
+      response.expense,
+    );
+  }
+}
+
+async function pushExpenseOperation(
+  expense: LedgerExpense,
+  operation: SyncOperation,
+  transport: LedgerExpenseCreateTransport,
+) {
+  const reason = readOperationReason(operation);
+  const snapshot = readOperationSnapshot(operation);
+  if (operation.operationType === createOperation) {
+    return transport.createExpense({
+      journeyId: expense.journeyId,
+      idempotencyKey: operation.idempotencyKey,
+      expense: snapshot
+        ? { localId: expense.id, ...snapshot }
+        : ledgerExpenseToCreateRequest(expense),
+    });
+  }
+
+  if (!expense.serverId || expense.serverRevision === 0) {
+    throw new SyncDependencyError(
+      "Ledger Expense create must sync before dependent mutations.",
+      operation.dependencyOperationId ?? undefined,
+    );
+  }
+
+  if (operation.operationType === updateOperation) {
+    return transport.updateExpense({
+      journeyId: expense.journeyId,
+      serverId: expense.serverId,
+      idempotencyKey: operation.idempotencyKey,
+      baseRevision: operation.baseVersion ?? expense.serverRevision,
+      auditReason: reason,
+      expense: snapshot ?? ledgerExpenseToUpdateRequest(expense),
+    });
+  }
+  if (operation.operationType === dateCompletionOperation) {
+    if (!transport.completeEconomicDate)
+      throw new Error("Economic-date completion transport is missing.");
+    if (
+      !snapshot?.economicDate ||
+      !["USER_CONFIRMED_V1", "STAGE9_DATE_ONLY_V1"].includes(reason ?? "")
+    )
+      throw new Error("Economic-date completion evidence is missing.");
+    return transport.completeEconomicDate({
+      journeyId: expense.journeyId,
+      serverId: expense.serverId,
+      idempotencyKey: operation.idempotencyKey,
+      baseRevision: operation.baseVersion ?? expense.serverRevision,
+      economicDate: snapshot.economicDate,
+      source: reason as "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1",
+    });
+  }
+  if (operation.operationType === deleteOperation) {
+    return transport.deleteExpense({
+      journeyId: expense.journeyId,
+      serverId: expense.serverId,
+      idempotencyKey: operation.idempotencyKey,
+      baseRevision: operation.baseVersion ?? expense.serverRevision,
+      auditReason: reason,
+    });
+  }
+  if (operation.operationType === restoreOperation) {
+    return transport.restoreExpense({
+      journeyId: expense.journeyId,
+      serverId: expense.serverId,
+      idempotencyKey: operation.idempotencyKey,
+      baseRevision: operation.baseVersion ?? expense.serverRevision,
+      auditReason: reason,
+      businessStatus:
+        snapshot?.businessStatus ??
+        (expense.status === "DELETED" ? "ACCEPTED" : expense.status),
+    });
+  }
+  throw new Error("Ledger Expense worker received an unsupported operation.");
+}
+
+function readOperationReason(operation: SyncOperation) {
+  try {
+    const payload = JSON.parse(operation.payloadJson) as { reason?: unknown };
+    return typeof payload.reason === "string" ? payload.reason : null;
+  } catch {
+    return null;
+  }
+}
+
+function readOperationSnapshot(operation: SyncOperation) {
+  try {
+    const payload = JSON.parse(operation.payloadJson) as { expense?: unknown };
+    return payload.expense && typeof payload.expense === "object"
+      ? (payload.expense as ReturnType<typeof ledgerExpenseToUpdateRequest>)
+      : null;
+  } catch {
+    return null;
+  }
+}

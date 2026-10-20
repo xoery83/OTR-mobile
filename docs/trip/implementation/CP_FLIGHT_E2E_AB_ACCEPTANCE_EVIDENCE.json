@@ -1,0 +1,90 @@
+{
+  "baseline": "b5caa1f61cad1d8c612ee40142f3289f69715b5a",
+  "acceptedA": "473893f7654a7fc194a7e7c35e922e350d426f24",
+  "acceptedB": "fdd5a5c38660a7942b19fee0d65af7144d1aed19",
+  "mergeCommit": "90128ce8a390d017d56b5dee59cebfbf9d09471f",
+  "harnessCommit": "763860a27379e8fffe56da16d0560217067c6fc0",
+  "classification": "ISOLATED_SYNTHETIC_JOINED_ACCEPTANCE",
+  "acceptedItems": [
+    {
+      "itemId": "91a75c22-e98d-4354-bae0-dc8b7b768ec6",
+      "semanticRevision": 2,
+      "localDate": "2026-12-20"
+    },
+    {
+      "itemId": "fc0c6c0f-502f-460a-aba5-37897363a70c",
+      "semanticRevision": 2,
+      "localDate": "2026-12-17"
+    }
+  ],
+  "joined": {
+    "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+    "accountId": "00000000-0000-4000-8000-000000000001",
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "sqlRead2SqliteDayPairs": [
+      {
+        "itemId": "91a75c22-e98d-4354-bae0-dc8b7b768ec6",
+        "semanticRevision": 2
+      },
+      {
+        "itemId": "fc0c6c0f-502f-460a-aba5-37897363a70c",
+        "semanticRevision": 2
+      }
+    ],
+    "dates": ["2026-12-20", "2026-12-17"],
+    "read2ManifestSha256": "0e11f9586d99283935a809e1adcc012929be3ba122aef038c5bb7967d8846393",
+    "read2AccessRevision": 1,
+    "read2Epoch": "fb60c474-db3f-482f-96d5-2f52afbc6112",
+    "lostCollectionResponseRecovered": true,
+    "fileColdOfflineReopen": true,
+    "privateSourceLeakage": false,
+    "sqliteMigration": 54
+  },
+  "source": {
+    "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+    "sourceId": "4a5e3f69-0641-495a-b162-9f85e6bd4f6b",
+    "runId": "89cd786a-eede-430d-9e8c-c0eee7f77884",
+    "inputCatalogSha256": "110355488bd9780c41c180561f8d330930657a2e5e5b485df5e6f95635725e31",
+    "candidateIds": [
+      "3961be3b-34ef-82f2-a455-46e28ff77366",
+      "e6cb8a72-05b2-81fe-ab5b-2d63d8c98972"
+    ],
+    "itemIds": [
+      "91a75c22-e98d-4354-bae0-dc8b7b768ec6",
+      "fc0c6c0f-502f-460a-aba5-37897363a70c"
+    ],
+    "recoveredOperationIds": [
+      "a8d8800c-7b0f-4c84-a4eb-5327a87f831f",
+      "d5bd4aa7-e6b2-499a-91e1-3076b7246320",
+      "2f7da8ed-32ae-4492-b76b-ed1baaadcea2",
+      "add07096-ff42-462f-897d-a7d63af9d9fd"
+    ],
+    "sourcePlanStatus": "COMPLETE",
+    "associations": 4,
+    "qualificationRevision": 2,
+    "negativeWrites": 0
+  },
+  "sqlFixture": {
+    "classification": "ISOLATED_SYNTHETIC_SQL",
+    "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+    "historicalFunctionsPreserved": 329,
+    "rlsAndClosedGate": "PASS",
+    "activation": "CLOSED"
+  },
+  "sourceRegression": {
+    "classification": "ISOLATED_SYNTHETIC_SQL",
+    "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+    "historicalFunctionsPreserved": 329,
+    "rlsAndClosedGate": "PASS",
+    "activation": "CLOSED"
+  },
+  "focused": {
+    "suites": 19,
+    "passed": 347
+  },
+  "typecheck": "PASS",
+  "lintUiGuard": "PASS",
+  "backendBuild": "PASS",
+  "nativeHostedAcceptance": "NOT_RUN",
+  "canonicalIntegration": "NOT_AUTHORIZED"
+}

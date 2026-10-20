@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "automated": {
+    "integratedSuites": 18,
+    "integratedTests": 264,
+    "sqlSuites": 31,
+    "sqlAssertions": 640,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "format": "PASS",
+    "backendBuild": "PASS",
+    "signedNativeReleaseBuilds": "PASS"
+  },
+  "coreLog": "RUN  v4.1.11 /Users/xoery/Project/otr-mobile-canonical\n\n\n Test Files  18 passed (18)\n      Tests  264 passed (264)\n   Start at  15:25:36\n   Duration  1.76s (transform 2.25s, setup 0ms, import 4.52s, tests 3.12s, environment 1ms)",
+  "safety": {
+    "productionAccess": false,
+    "settlementConfirm": false,
+    "manualIncidentPatch": false,
+    "incidentSpecificProductLogic": false,
+    "incidentLocalOnlyRepair": false
+  }
+}

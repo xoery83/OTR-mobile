@@ -1,0 +1,80 @@
+{
+  "packet": "WP-TRIPS-COVER-A second asset batch",
+  "baseHead": "b0334506aeb8d1f912eedd1f5321d55f07c70d39",
+  "generationTool": "built-in image_gen.imagegen",
+  "date": "2026-10-14",
+  "prompts": {
+    "roadtrip_desert": "Use case: photorealistic-natural. Asset type: offline OTR Trips travel cover, single photograph. Primary request: a quiet desert road trip landscape with a slender paved road curving toward layered red sandstone mesas in the American Southwest, no vehicles. Style: ordinary high-quality 35mm documentary travel photography, believable rock texture and atmospheric depth, refined natural warm late afternoon sunlight, restrained color and no glossy or fantastical look. Composition: wide landscape about 2:1, mesas and curve in the upper and central area, essential scene within central 70 percent for variable mobile crops; bottom 30 percent is simple muted sand and road foreground safe for a later text overlay, but add no overlay. No people, faces, logos, road signs, legible text, watermark, UI, border, collage or illustration.",
+    "cultural_oldtown": "Use case: photorealistic-natural. Asset type: offline OTR Trips wide travel cover, single photograph. Primary request: a peaceful Japanese old-town lane at early morning, traditional dark timber merchant houses and tiled roofs, subtle maple greenery and a small distant stone bridge, no famous landmark necessary. Ordinary high-quality 35mm documentary travel photography, realistic wood and stone textures, soft warm natural sunlight and subdued earthy colors matching a refined travel-photo series. Composition: wide landscape about 2:1, culturally distinctive architecture and lane depth readable in upper and central portion, central 70 percent contains essential scene; bottom 30 percent calm shaded stone paving suitable for a later text overlay, add no overlay. No people, faces, shop signs, writing, text, logos, watermarks, UI, borders, collage, illustration, fantasy or oversaturated glossy processing.",
+    "fjord": "Use case: photorealistic-natural. Asset type: offline OTR Trips wide travel cover, single photograph. Primary request: a tranquil Norwegian-like fjord viewed from a low shoreline overlook, steep forested cliffs and rounded distant peaks enclosing a narrow blue-green waterway, a subtle distant waterfall, no vessels. Ordinary high-quality 35mm documentary travel photography, natural believable textures and atmospheric depth, gentle late afternoon sunlight touching cliffs, restrained cool water with warm highlights matching a refined travel series, no dramatic fantasy. Composition: wide landscape about 2:1; cliff slopes and fjord depth centered in upper and middle portions, key scene within central 70 percent for variable mobile crop; bottom 30 percent calm dark rippling water safe for later text overlay but no overlay added. No people, faces, cruise ships, logos, signs, writing, text, watermark, UI, border, collage or illustration."
+  },
+  "status": "awaiting independent asset review; not integrated",
+  "rights": {
+    "basis": "Built-in image_gen output generated through this Codex session; no third-party stock supplied.",
+    "termsUrl": "https://openai.com/policies/terms-of-use/",
+    "termsEffective": "2026-01-01",
+    "checked": "2026-10-14",
+    "summary": "OpenAI Terms assign output rights as between user and OpenAI to extent permitted by applicable law; output can be similar to other output. Account-specific agreement and third-party rights are not verified. No exclusivity, royalty-free, non-infringement or place-accuracy warranty is claimed."
+  },
+  "scope": "Asset-only reusable candidate; existing city/coast/mountain enum, matching, persistence, sources and UI unchanged. Contact sheet is generated-asset review evidence, never Native screenshot.",
+  "originalToolSaveHints": {
+    "roadtrip_desert": "Generated images are saved to /Users/xoery/.codex/generated_images/01a13715-db60-74e3-9e91-c3ef9901a28a as /Users/xoery/.codex/generated_images/01a13715-db60-74e3-9e91-c3ef9901a28a/exec-8ccd93e6-6e24-4b74-8f1e-74a358f3938f.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "cultural_oldtown": "Generated images are saved to /Users/xoery/.codex/generated_images/01a13715-db60-74e3-9e91-c3ef9901a28a as /Users/xoery/.codex/generated_images/01a13715-db60-74e3-9e91-c3ef9901a28a/exec-7ed8b2f7-b864-4356-8524-88d59a5487ea.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "fjord": "Generated images are saved to /Users/xoery/.codex/generated_images/01a13715-db60-74e3-9e91-c3ef9901a28a as /Users/xoery/.codex/generated_images/01a13715-db60-74e3-9e91-c3ef9901a28a/exec-bcb1c9ef-2d97-498b-85c5-1d9310be98f6.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
+  },
+  "assets": [
+    {
+      "archetype": "roadtrip-desert",
+      "original": "/private/tmp/otr-trips-cover-b-61/originals/roadtrip-desert.png",
+      "jpeg": "/private/tmp/otr-trips-cover-b-61/jpeg/roadtrip-desert.jpg",
+      "originalDimensions": [
+        1770,
+        889
+      ],
+      "jpegDimensions": [
+        1600,
+        804
+      ],
+      "originalBytes": 2959599,
+      "jpegBytes": 322479,
+      "originalSha256": "f64dfb812556ed27746e0c011678652756c1706f882a9e3ee9a9a967face7270",
+      "jpegSha256": "204ffc25d4f066751f5e7f1d3716b238106a1b3e813577f8646e8f4a66cb6c93"
+    },
+    {
+      "archetype": "cultural-oldtown",
+      "original": "/private/tmp/otr-trips-cover-b-61/originals/cultural-oldtown.png",
+      "jpeg": "/private/tmp/otr-trips-cover-b-61/jpeg/cultural-oldtown.jpg",
+      "originalDimensions": [
+        1774,
+        887
+      ],
+      "jpegDimensions": [
+        1600,
+        800
+      ],
+      "originalBytes": 3319162,
+      "jpegBytes": 415225,
+      "originalSha256": "441abd969337c46b0ab51402370838f0574bec90fc2f56f9d13173ab65f64b68",
+      "jpegSha256": "46e508c8653ec7f5da9de59433e1c13c99227eff2b2943fc412da48e344ffd06"
+    },
+    {
+      "archetype": "fjord",
+      "original": "/private/tmp/otr-trips-cover-b-61/originals/fjord.png",
+      "jpeg": "/private/tmp/otr-trips-cover-b-61/jpeg/fjord.jpg",
+      "originalDimensions": [
+        1774,
+        887
+      ],
+      "jpegDimensions": [
+        1600,
+        800
+      ],
+      "originalBytes": 2749384,
+      "jpegBytes": 324368,
+      "originalSha256": "f4eb81a9caeb0d6bed8dc105c956f46a4fcdb6dff5c658f1daa5416c6d9d70aa",
+      "jpegSha256": "138112d259ced8dbf81381a797cf5760154078d54a11b562b9f96fff28635d41"
+    }
+  ],
+  "jpegTotalBytes": 1062072,
+  "validation": "Three PNGs and JPEGs decode; dimensions/hash/bytes recorded; producer inspection only; ui:guard PASS on unchanged main. Independent review and integration pending."
+}

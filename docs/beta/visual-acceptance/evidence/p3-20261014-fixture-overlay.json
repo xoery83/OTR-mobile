@@ -1,0 +1,8 @@
+{
+  "path": "src/features/day-feed-lab/stayContribution.ts",
+  "beforeSha256": "7687b20e924f4ee0557570e3341aecf5329f5a2dddd02394d8b63b8c30760533",
+  "overlaySha256": "9c2ae8f3c030cbc839bd022e09830d2f56b8d53e0b3f4cb576f1301042d9aa54",
+  "scope": "Approved existing P3 fixture NOW Jan16 12UTC; existing synthetic facts unchanged; Past15/Today16/Future17 only, no real actor/right/certificate",
+  "restoredSha256": "7687b20e924f4ee0557570e3341aecf5329f5a2dddd02394d8b63b8c30760533",
+  "restoredAt": "2026-10-13T20:56:20.682960+00:00"
+}
