@@ -1,13 +1,23 @@
 import UIKit
 
 @main final class PlaceProbeApp: UIResponder, UIApplicationDelegate {
+  func application(_ application: UIApplication, configurationForConnecting session: UISceneSession,
+    options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+    let configuration = UISceneConfiguration(name: "Default Configuration", sessionRole: session.role)
+    configuration.delegateClass = PlaceProbeSceneDelegate.self
+    return configuration
+  }
+}
+
+@objc(PlaceProbeSceneDelegate)
+final class PlaceProbeSceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
-  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    let window = UIWindow(frame: UIScreen.main.bounds)
+  func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options: UIScene.ConnectionOptions) {
+    guard let scene = scene as? UIWindowScene else { return }
+    let window = UIWindow(windowScene: scene)
     window.rootViewController = UINavigationController(rootViewController: ProbeViewController())
     window.makeKeyAndVisible()
     self.window = window
-    return true
   }
 }
 
