@@ -115,6 +115,19 @@ it("an explicit named zone does not inherit the saved floating mode", () => {
     params: { zone: "Asia/Tokyo", viewMode: "NAMED_ZONE" },
   });
 });
+it("explicit floating intent without a zone cannot inherit a named bookmark zone", () => {
+  state.view = saved;
+  state.params = {
+    view: "day",
+    tripId: "saved",
+    date: "2027-02-03",
+    viewMode: "FLOATING",
+  };
+  expect(href()).toEqual({
+    pathname: "/trip-home",
+    params: { ...state.params, zone: "" },
+  });
+});
 it("only a matching generation-scoped bookmark can supply omitted context", () => {
   state.params = { view: "day", tripId: "resumed" };
   state.view = saved;

@@ -44,7 +44,8 @@ export default function TodayRoute() {
           tripId,
           view: "day",
           date: params.date ?? matching?.date ?? "",
-          zone: params.zone ?? matching?.zone ?? "",
+          zone:
+            params.zone ?? (params.viewMode === "FLOATING" ? "" : (matching?.zone ?? "")),
           viewMode:
             params.viewMode ??
             (params.zone !== undefined
