@@ -14,6 +14,7 @@ import { visual } from "@/ui/visual";
 import { tripCoverId, tripCoverSource, builtInTripCoverSource } from "./tripCovers";
 import { groupLocalTrips } from "./tripListPresentation";
 import { TripCoverVisual } from "./TripCoverVisual";
+import { tripDestinationDisplay } from "./tripDestinationDisplay";
 
 export type TodayEntry = Readonly<{ date: string; zone: string }>;
 type Props = {
@@ -60,11 +61,11 @@ const dateLabel = (
 };
 type ListedTrip = Trip | TripListSummary;
 const cardLabel = (trip: ListedTrip) =>
-  trip.destination
+  tripDestinationDisplay(trip)
     ? t("myTrips.openTripDetails", {
         name: trip.name,
         date: dateLabel(trip),
-        destination: trip.destination,
+        destination: tripDestinationDisplay(trip)!,
       })
     : t("myTrips.openTripDated", { name: trip.name, date: dateLabel(trip) });
 
@@ -137,9 +138,9 @@ export function MyTripsList({
             ? dateLabel(trip)
             : t("myTrips.cachedDateSummary", { date: dateLabel(trip) })}
         </Text>
-        {trip.destination ? (
+        {tripDestinationDisplay(trip) ? (
           <Text style={styles.meta} numberOfLines={1}>
-            {trip.destination}
+            {tripDestinationDisplay(trip)}
           </Text>
         ) : null}
       </View>
@@ -190,9 +191,9 @@ export function MyTripsList({
                     {trip.name}
                   </Text>
                   <Text style={styles.heroDate}>{dateLabel(trip)}</Text>
-                  {trip.destination ? (
+                  {tripDestinationDisplay(trip) ? (
                     <Text style={styles.heroMeta} numberOfLines={1}>
-                      {trip.destination}
+                      {tripDestinationDisplay(trip)}
                     </Text>
                   ) : null}
                   {!localIds.has(trip.id) ? (
