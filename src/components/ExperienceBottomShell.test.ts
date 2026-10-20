@@ -59,8 +59,7 @@ vi.mock("@/features/updates/useUpdatesSignal", () => ({
 vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: (initial: unknown) =>
-    typeof initial === "boolean" ? { current: initial } : state.targetRef,
+  useRef: () => state.targetRef,
   useContext: () => state.reportHeight,
   useState: () => [
     state.reduced,
@@ -809,23 +808,3 @@ it.each([false, true])(
     }
   },
 );
-
-it("logs one development-only presentation snapshot without business context", async () => {
-  vi.stubGlobal("__DEV__", true);
-  const log = vi.spyOn(console, "info").mockImplementation(() => {});
-  try {
-    ExperienceBottomShell({ visible: true, pathname: "/trip" });
-    state.resolveReduced!(true);
-    await Promise.resolve();
-    expect(log).toHaveBeenCalledExactlyOnceWith("[ExperienceChrome]", {
-      nativeGlass: false,
-      reduceTransparency: true,
-      visible: true,
-    });
-    state.reducedListener!(false);
-    expect(log).toHaveBeenCalledTimes(1);
-  } finally {
-    log.mockRestore();
-    vi.unstubAllGlobals();
-  }
-});

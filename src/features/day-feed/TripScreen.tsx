@@ -322,6 +322,7 @@ function TripContent({
         : t("navigation.trip");
   useLayoutEffect(() => {
     if (today && !dayActive) return;
+    const blurHeader = dayActive || (immersiveHome && !heroBehindStatus);
     navigation.setOptions({
       // Native Stack falls back to the route name when a custom title renders null.
       title: headerTitle,
@@ -329,10 +330,11 @@ function TripContent({
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: { backgroundColor: colors.transparent },
       headerShadowVisible: false,
-      headerBlurEffect:
-        dayActive || (immersiveHome && !heroBehindStatus)
-          ? "systemUltraThinMaterial"
-          : undefined,
+      headerBlurEffect: blurHeader ? "systemUltraThinMaterial" : undefined,
+      // iOS 26+ edge scrims otherwise overlap the explicit native header material.
+      scrollEdgeEffects: blurHeader
+        ? { top: "hidden", bottom: "hidden", left: "hidden", right: "hidden" }
+        : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,

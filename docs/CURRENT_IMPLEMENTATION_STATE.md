@@ -1,3 +1,10 @@
+## Experience Chrome edge-effect correction — 21 October 2026 / NATIVE PENDING
+
+- Coordinator measured combined 579beee on AD5: Day Frame y=0, height=874, headerHeight=116; actual Day cells reached y=64.33. Underlap is physically present. No Frame/FlatList/inset/anchor correction is justified.
+- Installed native-stack defaults all scroll edges to automatic while TripScreen requests explicit native header blur; RNScreens warns these can overlap. The follow-up hides scroll-edge effects only while Day/collapsed Home uses systemUltraThinMaterial, and restores undefined/default edges for clear Hero and other unblurred states.
+- Bottom keeps the preceding native clear plus semantic floatingSurface tint; Coordinator is still evaluating that balance. No extra overlay fill, native dependency or settings change.
+- Initial capability and Frame geometry diagnostics completed their purpose and are removed from production source/tests. No new diagnostics or business changes. Native repeated navigation, content transition and readability remain pending the Coordinator's serial reload and independent Review.
+
 ## Experience Chrome Native correction follow-up — 21 October 2026 / PARTIAL
 
 - Coordinator loaded combined ddab489fc6f49e5aec2da2e3e76cc54a9eb57363 on AD5. Runtime confirmed nativeGlass=true and reduceTransparency=false. Actual clear-glass refraction enlarged the underlying Day heading across bottom navigation labels; no Chrome Native PASS.

@@ -58,17 +58,7 @@ export function NavigationContentFrame({
   const headerHeight = useHeaderHeight();
   const styles = useThemedStyles(createContentFrameStyles);
   return (
-    <View
-      style={[styles.frame, { paddingTop: underlapHeader ? 0 : headerHeight }]}
-      onLayout={
-        underlapHeader && typeof __DEV__ !== "undefined" && __DEV__
-          ? ({ currentTarget }) =>
-              currentTarget.measureInWindow((_x, y, _width, height) =>
-                console.info("[ExperienceChromeFrame]", { y, height, headerHeight }),
-              )
-          : undefined
-      }
-    >
+    <View style={[styles.frame, { paddingTop: underlapHeader ? 0 : headerHeight }]}>
       <View style={styles.viewport}>{children}</View>
     </View>
   );

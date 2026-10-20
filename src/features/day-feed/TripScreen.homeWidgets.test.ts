@@ -1375,17 +1375,27 @@ it.each([103, 147])(
   },
 );
 
-it("clears native Day blur when returning to Home and restores it on another Day entry", async () => {
+it("separates native blur from edge effects and resets both on warm Home–Day switches", async () => {
   state.routeMode = "day";
   await loaded(false);
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
     "systemUltraThinMaterial",
   );
+  expect(state.setOptions.mock.lastCall?.[0].scrollEdgeEffects).toEqual({
+    top: "hidden",
+    bottom: "hidden",
+    left: "hidden",
+    right: "hidden",
+  });
   state.routeMode = "home";
   state.mount = true;
   render(false);
   expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
     "headerBlurEffect",
+    undefined,
+  );
+  expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
+    "scrollEdgeEffects",
     undefined,
   );
   state.routeMode = "day";
@@ -1394,4 +1404,10 @@ it("clears native Day blur when returning to Home and restores it on another Day
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
     "systemUltraThinMaterial",
   );
+  expect(state.setOptions.mock.lastCall?.[0].scrollEdgeEffects).toEqual({
+    top: "hidden",
+    bottom: "hidden",
+    left: "hidden",
+    right: "hidden",
+  });
 });
