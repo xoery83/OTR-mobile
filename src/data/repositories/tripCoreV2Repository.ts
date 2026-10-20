@@ -136,7 +136,6 @@ export function createTripCoreV2Repository(
   hash: ImportHash,
   clock = () => new Date().toISOString(),
 ) {
-  const queue = createSyncOperationRepository(database, getAccountId, clock);
   const captureContext = (tripId: string) =>
     captureAccountRequestContext(tripId, getAccountId);
   const assertContext = (ctx: AccountRequestContext) =>
@@ -445,57 +444,81 @@ export function createTripCoreV2Repository(
         : result,
     );
   }
-  async function enqueue(ctx: AccountRequestContext, input: unknown) {
+  // Caller must hold the Account apply gate and the database transaction.
+  async function enqueueWithinTransaction(
+    ctx: AccountRequestContext,
+    input: unknown,
+    createdAt = clock(),
+  ) {
     const command = validateCoreCommand(input);
     if (command.tripId !== ctx.tripId) throw new Error("CORE_SCOPE_MISMATCH");
     const text = canonicalCoreJson(command as Json),
       digest = await coreHashValue("otr-trip-core-intent-v2", command, hash);
-    await withAccountApplyGate(async () => {
-      await assertContext(ctx);
-      await database.withTransactionAsync(async () => {
-        await scope(ctx);
-        const prior = await database.getFirstAsync<{ intent_sha256: string }>(
-          "SELECT intent_sha256 FROM trip_core_pending_intents WHERE account_id=? AND operation_id=?",
-          ctx.accountId,
-          command.operationId,
-        );
-        if (prior) {
-          if (prior.intent_sha256 !== digest) throw new Error("OPERATION_REUSE_MISMATCH");
-          return;
-        }
-        await database.runAsync(
-          "INSERT INTO trip_core_pending_intents(account_id,trip_id,operation_id,intent_version,canonical_intent_text,intent_sha256,base_vector,queue_operation_id,created_at,state) VALUES(?,?,?,2,?,?,?,?,?,'BLOCKED')",
-          ctx.accountId,
-          ctx.tripId,
-          command.operationId,
-          text,
-          digest,
-          canonicalCoreJson(command.baseVector as Json),
-          command.operationId,
-          clock(),
-        );
-        await queue.enqueue({
-          id: command.operationId,
-          tripId: ctx.tripId,
-          entityType: "TRIP_CORE_V2",
-          entityId: command.target.id,
-          operationType: "CORE_V2_COMMAND",
-          idempotencyKey: command.operationId,
-          baseVersion: command.baseVector.find(
-            (v) => v.kind === command.target.kind && v.id === command.target.id,
-          )!.revision,
-          payloadJson: text,
-          status: "DEPENDENCY_BLOCKED",
-          nextAttemptAt: null,
-        });
-        await assertContext(ctx);
-      });
+    await assertContext(ctx);
+    await scope(ctx);
+    const prior = await database.getFirstAsync<{ intent_sha256: string }>(
+      "SELECT intent_sha256 FROM trip_core_pending_intents WHERE account_id=? AND operation_id=?",
+      ctx.accountId,
+      command.operationId,
+    );
+    if (prior) {
+      if (prior.intent_sha256 !== digest) throw new Error("OPERATION_REUSE_MISMATCH");
+      return {
+        localStatus: "PENDING" as const,
+        itemId: command.target.id,
+        operationId: command.operationId,
+      };
+    }
+    // Predictions replay by (created_at, operation_id), including same-tick field saves.
+    const latest = await database.getFirstAsync<{ created_at: string }>(
+      "SELECT created_at FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? ORDER BY created_at DESC,operation_id DESC LIMIT 1",
+      ctx.accountId,
+      ctx.tripId,
+    );
+    const orderedAt = new Date(
+      Math.max(Date.parse(createdAt), latest ? Date.parse(latest.created_at) + 1 : 0),
+    ).toISOString();
+    await database.runAsync(
+      "INSERT INTO trip_core_pending_intents(account_id,trip_id,operation_id,intent_version,canonical_intent_text,intent_sha256,base_vector,queue_operation_id,created_at,state) VALUES(?,?,?,2,?,?,?,?,?,'BLOCKED')",
+      ctx.accountId,
+      ctx.tripId,
+      command.operationId,
+      text,
+      digest,
+      canonicalCoreJson(command.baseVector as Json),
+      command.operationId,
+      orderedAt,
+    );
+    await createSyncOperationRepository(database, getAccountId, () => orderedAt).enqueue({
+      id: command.operationId,
+      tripId: ctx.tripId,
+      entityType: "TRIP_CORE_V2",
+      entityId: command.target.id,
+      operationType: "CORE_V2_COMMAND",
+      idempotencyKey: command.operationId,
+      baseVersion: command.baseVector.find(
+        (v) => v.kind === command.target.kind && v.id === command.target.id,
+      )!.revision,
+      payloadJson: text,
+      status: "DEPENDENCY_BLOCKED",
+      nextAttemptAt: null,
     });
+    await assertContext(ctx);
     return {
       localStatus: "PENDING" as const,
       itemId: command.target.id,
       operationId: command.operationId,
     };
+  }
+  async function enqueue(ctx: AccountRequestContext, input: unknown) {
+    let result: Awaited<ReturnType<typeof enqueueWithinTransaction>>;
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        result = await enqueueWithinTransaction(ctx, input);
+      });
+    });
+    return result!;
   }
   async function pending(ctx: AccountRequestContext) {
     await assertContext(ctx);
@@ -985,6 +1008,7 @@ export function createTripCoreV2Repository(
     refresh,
     resume,
     enqueue,
+    enqueueWithinTransaction,
     pending,
     beginRefresh,
     install,

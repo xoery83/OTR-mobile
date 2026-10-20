@@ -22,6 +22,13 @@ import { coreDefaults } from "@/domain/trip/tripCoreV2";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
+// Native photo storage is unrelated to the MANUAL reader authority under test.
+vi.mock("../files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  probeRetainedTripPhotoIdentity: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
 const connections: DatabaseSync[] = [];
 afterEach(() => connections.splice(0).forEach((sql) => sql.close()));
 async function fixture(includeItem = true) {
