@@ -360,7 +360,11 @@ export function P1PlanEditor({
           leftDisabled={saving}
           onLeft={() => close()}
         />
-        <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.body}
+          contentContainerStyle={styles.content}
+        >
           {status === "LOADING" ? (
             <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
           ) : null}

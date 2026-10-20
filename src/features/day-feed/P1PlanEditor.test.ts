@@ -59,7 +59,10 @@ vi.mock("@/data/repositories/manualPlanRepository", () => ({
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
   Modal: (p: any) => createElement("div", null, p.children),
-  ScrollView: (p: any) => createElement("div", null, p.children),
+  ScrollView: (p: any) => {
+    state.nodes.push({ scrollView: p });
+    return createElement("div", null, p.children);
+  },
   View: (p: any) => createElement("div", null, p.children),
   StyleSheet: { create: (value: unknown) => value },
 }));
@@ -606,4 +609,13 @@ it("selected P1 location saves through the existing same-ID Edit writer without 
     }),
   );
   expect(p.onSaved).toHaveBeenCalledWith(draft.itemId);
+});
+
+it("keeps button taps handled while the P1 Name keyboard is open", async () => {
+  const { p } = await withPlace();
+  expect(
+    state.nodes.find((entry) => entry.scrollView)?.scrollView.keyboardShouldPersistTaps,
+  ).toBe("handled");
+  const sheet = await search(p);
+  expect(sheet.initialQuery).toBe("Dinner with Friends");
 });
