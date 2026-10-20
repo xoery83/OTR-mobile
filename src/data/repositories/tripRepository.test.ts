@@ -2488,3 +2488,185 @@ it("a late profile result after Account change cannot create even an explicitly 
   expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
   expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(0);
 });
+
+it("ordered destinations save atomically, cold read and exact replay without Hosted claims", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-destinations-"));
+  folders.push(folder);
+  const path = join(folder, "trip.sqlite"),
+    f = local(path),
+    request = {
+      ...input(),
+      destinations: [
+        {
+          destinationId: randomUUID(),
+          displayLabel: "Tokyo",
+          source: "APPLE_PLACE_ID" as const,
+          provider: "apple" as const,
+          providerPlaceId: "apple.real.tokyo",
+        },
+        {
+          destinationId: randomUUID(),
+          displayLabel: "  ".trim() + "Kyoto custom",
+          source: "MANUAL" as const,
+        },
+      ],
+    };
+  const created = await f.repo.createTrip(request);
+  expect(created.destinations?.map((x) => x.ordinal)).toEqual([0, 1]);
+  expect(created.destinations?.map((x) => x.destinationId)).toEqual(
+    request.destinations.map((x) => x.destinationId),
+  );
+  expect(
+    JSON.parse(
+      String(
+        f.sql
+          .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+          .get(request.operationId)!.payload_json,
+      ),
+    ),
+  ).not.toHaveProperty("destinations");
+  const cold = local(path, false);
+  expect((await cold.repo.getTrip(request.tripId))?.destinations).toEqual(
+    created.destinations,
+  );
+  expect((await cold.repo.listTrips())[0].destinations).toEqual(created.destinations);
+  await expect(cold.repo.createTrip(request)).resolves.toMatchObject({
+    destinations: created.destinations,
+  });
+  const { destinations: _destinations, ...omitted } = request;
+  await expect(cold.repo.createTrip(omitted)).resolves.toMatchObject({
+    destinations: created.destinations,
+  });
+  await expect(
+    cold.repo.createTrip({
+      ...request,
+      destinations: [...request.destinations].reverse(),
+    }),
+  ).rejects.toThrow("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+  await expect(cold.repo.createTrip({ ...request, destinations: [] })).rejects.toThrow(
+    "TRIP_DESTINATIONS_REPLAY_MISMATCH",
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_destinations").get()!.n,
+  ).toBe(2);
+  cold.switchTo(accountB);
+  expect(await cold.repo.getTrip(request.tripId)).toBeNull();
+  expect(await cold.repo.listTrips()).toEqual([]);
+});
+
+it("destinations reject false identity, duplicates and unapproved MapData before writes", async () => {
+  const f = local(),
+    manual = {
+      destinationId: randomUUID(),
+      displayLabel: "Kyoto",
+      source: "MANUAL" as const,
+    };
+  for (const destinations of [
+    [manual, { ...manual, destinationId: randomUUID(), displayLabel: "ＫＹＯＴＯ" }],
+    [manual, { ...manual, displayLabel: "Tokyo" }],
+    Array.from({ length: 21 }, (_, n) => ({
+      ...manual,
+      destinationId: randomUUID(),
+      displayLabel: String(n),
+    })),
+    [{ ...manual, address: "provider snapshot" }],
+    [
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Tokyo",
+        source: "APPLE_PLACE_ID",
+        provider: "apple",
+        providerPlaceId: "",
+      },
+    ],
+  ])
+    await expect(
+      f.repo.createTrip({ ...input(), destinations } as never),
+    ).rejects.toThrow();
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get()!.n).toBe(
+    0,
+  );
+  const request = {
+    ...input(),
+    destinations: [
+      manual,
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Kyoto",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "real-1",
+      },
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Kyoto",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "real-2",
+      },
+    ],
+  };
+  await expect(f.repo.createTrip(request)).resolves.toMatchObject({
+    destinations: expect.any(Array),
+  });
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_destinations").get()!.n,
+  ).toBe(3);
+});
+
+it("destination failure rolls back Trip, creator, persons and queue without changing existing data", async () => {
+  const f = local(),
+    existing = await f.repo.createTrip(input());
+  const before = f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()!.n;
+  f.sql.exec(
+    "CREATE TRIGGER destination_fault BEFORE INSERT ON local_trip_destinations BEGIN SELECT RAISE(ABORT,'DESTINATION_FAULT'); END",
+  );
+  await expect(
+    f.repo.createTrip({
+      ...input(),
+      creatorDisplayName: "Me",
+      destinations: [
+        { destinationId: randomUUID(), displayLabel: "Tokyo", source: "MANUAL" },
+      ],
+    }),
+  ).rejects.toThrow("DESTINATION_FAULT");
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get()!.n).toBe(
+    1,
+  );
+  expect(f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()!.n).toBe(before);
+  expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()!.n).toBe(1);
+  expect(await f.repo.getTrip(existing.id)).toMatchObject({
+    id: existing.id,
+    destinations: [],
+  });
+});
+
+it("destinations reject create replay retrofit and malformed stored claims", async () => {
+  const f = local(),
+    request = input();
+  await f.repo.createTrip(request);
+  await expect(
+    f.repo.createTrip({
+      ...request,
+      destinations: [
+        { destinationId: randomUUID(), displayLabel: "Tokyo", source: "MANUAL" },
+      ],
+    }),
+  ).rejects.toThrow("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+  const other = {
+    ...input(),
+    destinations: [
+      { destinationId: randomUUID(), displayLabel: "Kyoto", source: "MANUAL" as const },
+    ],
+  };
+  await f.repo.createTrip(other);
+  f.sql
+    .prepare(
+      "UPDATE local_trip_destinations SET manual_claim='incorrect' WHERE trip_id=?",
+    )
+    .run(other.tripId);
+  await expect(f.repo.getTrip(other.tripId)).rejects.toThrow(
+    "TRIP_DESTINATIONS_STORED_INVALID",
+  );
+  await expect(f.repo.listTrips()).rejects.toThrow("TRIP_DESTINATIONS_STORED_INVALID");
+});

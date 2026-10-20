@@ -1,3 +1,8 @@
+import { parseLocalTripDestinations } from "@/domain/trip/localTripDestination";
+import {
+  readLocalTripDestinations,
+  initializeLocalTripDestinations,
+} from "./tripDestinationRepository";
 import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import type * as SQLite from "expo-sqlite";
 import { createUuid } from "@/domain/localId";
@@ -199,7 +204,11 @@ export function createTripRepository(
       id,
     );
     await assertAccountRequestContext(scope, account);
-    return row ? trip(row) : null;
+    const destinations = row
+      ? ((await readLocalTripDestinations(database, scope.accountId, id)).get(id) ?? [])
+      : [];
+    await assertAccountRequestContext(scope, account);
+    return row ? { ...trip(row), destinations } : null;
   }
   return {
     ...createTripMetadataRepository(database, account, clock),
@@ -228,7 +237,12 @@ export function createTripRepository(
         scope.accountId,
       );
       await assertAccountRequestContext(scope, account);
-      return rows.map(trip);
+      const destinations = await readLocalTripDestinations(database, scope.accountId);
+      await assertAccountRequestContext(scope, account);
+      return rows.map((row) => ({
+        ...trip(row),
+        destinations: destinations.get(row.id) ?? [],
+      }));
     },
     async selectBuiltInCover(tripId: string, coverAssetId: BuiltInTripCoverId | null) {
       coreUuid.parse(tripId);
@@ -255,6 +269,10 @@ export function createTripRepository(
       });
     },
     async createTrip(input: CreateTripInput): Promise<Trip> {
+      const destinations =
+        input.destinations === undefined
+          ? undefined
+          : parseLocalTripDestinations(input.destinations);
       if (
         input.creatorDisplayName !== undefined &&
         typeof input.creatorDisplayName !== "string"
@@ -348,6 +366,15 @@ export function createTripRepository(
           );
           if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
           await initializeLedger(scope.accountId, row, name, explicitName);
+          const savedDestinations = await initializeLocalTripDestinations(
+            database,
+            scope.accountId,
+            input.tripId,
+            destinations,
+            !prior,
+            row.created_at,
+          );
+          result = { ...result!, destinations: savedDestinations };
           if (input.travelers) {
             await initializeLocalTripPersons(
               database,
@@ -480,12 +507,23 @@ export function createTripRepository(
             scope.accountId,
           );
           await assertAccountRequestContext(scope, account);
-          applied = trip({
-            ...row,
-            owner_person_id: accepted.ownerPersonId,
-            accepted_at: row.accepted_at ?? now,
-            updated_at: row.accepted_at ? row.updated_at : now,
-          });
+          applied = {
+            ...trip({
+              ...row,
+              owner_person_id: accepted.ownerPersonId,
+              accepted_at: row.accepted_at ?? now,
+              updated_at: row.accepted_at ? row.updated_at : now,
+            }),
+            destinations:
+              (
+                await readLocalTripDestinations(
+                  database,
+                  scope.accountId,
+                  accepted.tripId,
+                )
+              ).get(accepted.tripId) ?? [],
+          };
+          await assertAccountRequestContext(scope, account);
         });
         return applied!;
       });

@@ -1,3 +1,7 @@
+import type {
+  LocalTripDestination,
+  LocalTripDestinationInput,
+} from "./localTripDestination";
 import type { LocalPersonNameSlot } from "./localTripPerson";
 import type { SyncableRecord } from "@/domain/sync/syncStatus";
 
@@ -6,6 +10,7 @@ import type { TripCoverAssetId } from "./tripCoverAssets";
 export type BuiltInTripCoverId = TripCoverAssetId;
 
 export type Trip = SyncableRecord & {
+  destinations?: readonly LocalTripDestination[];
   name: string;
   destination: string | null;
   startDate: string | null;
@@ -18,6 +23,8 @@ export type Trip = SyncableRecord & {
 };
 
 export type CreateTripInput = {
+  /** Local ordered authored destinations, excluded from Hosted CREATE proof. */
+  destinations?: readonly LocalTripDestinationInput[];
   /** Local creator nickname only; never changes Account identity or Hosted CREATE proof. */
   creatorDisplayName?: string;
   /** Local-only named slots; never part of the Hosted CREATE proof. */

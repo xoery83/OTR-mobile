@@ -1,3 +1,4 @@
+import { localTripDestinationsMigration } from "./migrations/localTripDestinations";
 import { localCoreAuthorityMigration } from "./migrations/localCoreAuthority";
 import { personalTripCoverPreferencesMigration } from "./migrations/personalTripCoverPreferences";
 import { requiredDateDecisionsMigration } from "./migrations/requiredDateDecisions";
@@ -1723,4 +1724,5 @@ export const migrations: Migration[] = [
   localTripLedgerMigration,
   localCoreAuthorityMigration,
   personalTripCoverPreferencesMigration,
+  localTripDestinationsMigration,
 ];
