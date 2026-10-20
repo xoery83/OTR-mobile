@@ -1,3 +1,10 @@
+import {
+  PlaceSearchSheet,
+  type PlaceSearchResult,
+} from "@/features/place-search/PlaceSearchSheet";
+import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
@@ -132,9 +139,18 @@ export function P1PlanEditor({
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
+  const placeRequest = useRef({ ticket: 0 });
+  const [placeSearch, setPlaceSearch] = useState<{
+    binding: PlaceSearchBinding;
+    query: string;
+    target: "FIND_PLACE" | "LOCATION";
+    fields: ManualPlanFields;
+  } | null>(null);
+  const [placeError, setPlaceError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [frozen, setFrozen] = useState(false);
   useEffect(() => {
+    const placeRequests = placeRequest.current;
     alive.current = true;
     if (!opened) {
       void (async () => {
@@ -159,6 +175,7 @@ export function P1PlanEditor({
     }
     return () => {
       alive.current = false;
+      placeRequests.ticket++;
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
@@ -168,6 +185,93 @@ export function P1PlanEditor({
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
+  };
+  const closePlaceSearch = () => {
+    placeRequest.current.ticket++;
+    setPlaceSearch(null);
+  };
+  const openPlaceSearch = async (target: "FIND_PLACE" | "LOCATION") => {
+    const snapshot = fieldsRef.current;
+    if (!snapshot || !source || !current() || busyRef.current || frozenRef.current)
+      return;
+    const ticket = ++placeRequest.current.ticket;
+    setPlaceError(false);
+    try {
+      const account = await captureAccountScope(requireActiveUserId);
+      if (
+        !current() ||
+        account.generation !== generation ||
+        ticket !== placeRequest.current.ticket ||
+        fieldsRef.current !== snapshot ||
+        busyRef.current ||
+        frozenRef.current
+      )
+        return;
+      const binding: PlaceSearchBinding = Object.freeze({
+        accountId: account.accountId,
+        tripId,
+        editorId: source.draft.itemId,
+        accountGeneration: generation,
+        isCurrent: () =>
+          current() &&
+          ticket === placeRequest.current.ticket &&
+          fieldsRef.current === snapshot &&
+          !busyRef.current &&
+          !frozenRef.current,
+      });
+      setPlaceSearch({
+        binding,
+        target,
+        query: target === "FIND_PLACE" ? snapshot.title : (snapshot.location ?? ""),
+        fields: snapshot,
+      });
+    } catch {
+      if (current() && ticket === placeRequest.current.ticket) setPlaceError(true);
+    }
+  };
+  const confirmPlace = (result: PlaceSearchResult) => {
+    const search = placeSearch;
+    if (!search || !search.binding.isCurrent() || fieldsRef.current !== search.fields)
+      return;
+    const apply = (replaceLocation: boolean) => {
+      if (!search.binding.isCurrent() || fieldsRef.current !== search.fields) return;
+      const next: Partial<ManualPlanFields> = {};
+      if (result.kind === "MANUAL") {
+        if (search.target === "LOCATION") {
+          if (result.text.length > 500) return;
+          next.location = result.text || null;
+        } else if (!search.fields.title.trim()) {
+          if (result.text.length > 200) return;
+          next.title = result.text;
+        }
+      } else {
+        if (
+          !result.place.address?.trim() ||
+          result.place.address.length > 500 ||
+          (result.usePlaceName && result.place.title.length > 200)
+        )
+          return;
+        if (replaceLocation) next.location = result.place.address;
+        if (search.target === "FIND_PLACE" && result.usePlaceName)
+          next.title = result.place.title;
+      }
+      closePlaceSearch();
+      if (Object.keys(next).length) change(next);
+    };
+    if (
+      result.kind === "SELECTED" &&
+      search.fields.location?.trim() &&
+      search.fields.location.trim() !== result.place.address?.trim()
+    ) {
+      Alert.alert(t("placeSearch.replaceTitle"), t("placeSearch.replaceHint"), [
+        {
+          text: t("placeSearch.keepLocation"),
+          style: "cancel",
+          onPress: () => apply(false),
+        },
+        { text: t("placeSearch.replaceLocation"), onPress: () => apply(true) },
+      ]);
+    } else apply(true);
   };
   const close = (then = onClose) => {
     if (!current() || busyRef.current) return;
@@ -305,6 +409,15 @@ export function P1PlanEditor({
                   editable={!saving && !frozen}
                   onChangeText={(title) => change({ title })}
                 />
+                <UiButton
+                  label={t("tripCreate.findPlace")}
+                  variant="text"
+                  disabled={saving || frozen}
+                  onPress={() => {
+                    if (onFindPlace) onFindPlace(fieldsRef.current?.title ?? "");
+                    else void openPlaceSearch("FIND_PLACE");
+                  }}
+                />
                 <CalendarField
                   label={t("tripCreate.itemDate")}
                   value={fields.startDate}
@@ -348,15 +461,20 @@ export function P1PlanEditor({
                   editable={!saving && !frozen}
                   onChangeText={(location) => change({ location: location || null })}
                 />
-                {onFindPlace ? (
-                  <UiButton
-                    label={t("tripCreate.findPlace")}
-                    variant="text"
-                    disabled={saving || frozen}
-                    onPress={() => onFindPlace(fields.location ?? "")}
-                  />
+                <UiButton
+                  label={t("placeSearch.searchLocation")}
+                  variant="text"
+                  disabled={saving || frozen}
+                  onPress={() => {
+                    void openPlaceSearch("LOCATION");
+                  }}
+                />
+                <Text style={styles.meta}>{t("placeSearch.manualHint")}</Text>
+                {placeError ? (
+                  <Text accessibilityRole="alert" style={styles.meta}>
+                    {t("placeSearch.contextUnavailable")}
+                  </Text>
                 ) : null}
-                <Text style={styles.meta}>{t("tripCreate.planManualPlace")}</Text>
                 <UiTextInput
                   accessibilityLabel={t("tripCreate.planNotes")}
                   placeholder={t("tripCreate.planNotes")}
@@ -450,6 +568,18 @@ export function P1PlanEditor({
             </>
           ) : null}
         </ScrollView>
+        {placeSearch &&
+        placeSearch.binding.tripId === tripId &&
+        placeSearch.binding.editorId === source?.draft.itemId &&
+        placeSearch.binding.accountGeneration === generation ? (
+          <PlaceSearchSheet
+            binding={placeSearch.binding}
+            initialQuery={placeSearch.query}
+            nameChoice={placeSearch.target === "FIND_PLACE"}
+            onCancel={closePlaceSearch}
+            onConfirm={confirmPlace}
+          />
+        ) : null}
       </SafeAreaProvider>
     </ManualEditorPresentation>
   );

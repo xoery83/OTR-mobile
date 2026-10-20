@@ -1,3 +1,16 @@
+vi.mock("@/features/place-search/PlaceSearchSheet", () => ({
+  PlaceSearchSheet: (props: any) => {
+    state.nodes.push({ placeSearch: props });
+    return null;
+  },
+}));
+vi.mock("@/data/auth/accountRequestContext", () => ({
+  captureAccountScope: async () => ({
+    accountId: "00000000-0000-4000-8000-000000000099",
+    generation: state.generation,
+  }),
+}));
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -464,4 +477,133 @@ it("rejects an old P1 Save after a clean sibling transition", async () => {
   oldSave();
   expect(p.onChooseRental).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
+});
+
+async function withPlace(title = "Dinner with Friends", location: string | null = null) {
+  const p = props(),
+    value = { ...fields(), title, startDate: "2027-02-08", location };
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "00000000-0000-4000-8000-000000000011",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(async () => ({
+      localStatus: "PENDING",
+      itemId: "00000000-0000-4000-8000-000000000011",
+    })),
+  };
+  await open(p, repo);
+  return { p, repo };
+}
+const placeResult = (usePlaceName = false) => ({
+  kind: "SELECTED",
+  place: {
+    provider: "apple",
+    title: "Sky Tower",
+    address: "Victoria Street West, Auckland",
+    handle: "opaque",
+    kind: "mapItem",
+    sessionId: "session",
+    generation: 1,
+  },
+  usePlaceName,
+});
+async function search(p: ReturnType<typeof props>, label = "tripCreate.findPlace") {
+  node(label).onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+  render(p);
+  return state.nodes.find((n) => n.placeSearch)!.placeSearch;
+}
+it("P1 searches authored Name and fills only Location unless name adoption is explicit", async () => {
+  const { p, repo } = await withPlace();
+  const sheet = await search(p);
+  expect(sheet.initialQuery).toBe("Dinner with Friends");
+  expect(sheet.nameChoice).toBe(true);
+  sheet.onConfirm(placeResult());
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Dinner with Friends");
+  expect(node("tripCreate.planLocation").value).toBe("Victoria Street West, Auckland");
+  node("tripCreate.saveItem").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      title: "Dinner with Friends",
+      location: "Victoria Street West, Auckland",
+    }),
+  );
+});
+it("P1 location search and cancel preserve Name and all existing fields", async () => {
+  const { p } = await withPlace("Original activity", "Original address");
+  const sheet = await search(p, "placeSearch.searchLocation");
+  expect(sheet.initialQuery).toBe("Original address");
+  expect(sheet.nameChoice).toBe(false);
+  sheet.onCancel();
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Original activity");
+  expect(node("tripCreate.planLocation").value).toBe("Original address");
+  sheet.onConfirm(placeResult(true));
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Original address");
+});
+it("P1 explicitly keeps or replaces nonempty Location and does not apply stale confirmation", async () => {
+  const { p } = await withPlace("Original activity", "Existing confirmed address");
+  let sheet = await search(p);
+  sheet.onConfirm(placeResult(true));
+  expect(state.alert.mock.lastCall![0]).toBe("placeSearch.replaceTitle");
+  state.alert.mock.lastCall![2][0].onPress();
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Sky Tower");
+  expect(node("tripCreate.planLocation").value).toBe("Existing confirmed address");
+  sheet = await search(p);
+  sheet.onConfirm(placeResult());
+  const replace = state.alert.mock.lastCall![2][1].onPress;
+  state.generation++;
+  replace();
+  expect(node("tripCreate.planLocation").value).toBe("Existing confirmed address");
+});
+it("manual Find a Place preserves existing Name; manual Location remains a real save value", async () => {
+  const { p } = await withPlace();
+  let sheet = await search(p);
+  sheet.onConfirm({ kind: "MANUAL", text: "Changed search only" });
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Dinner with Friends");
+  sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onConfirm({ kind: "MANUAL", text: "42 Offline Road" });
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("42 Offline Road");
+});
+
+it("selected P1 location saves through the existing same-ID Edit writer without changing dates or participants", async () => {
+  const p0 = props(),
+    value = { ...fields(), title: "Existing activity", startDate: "2027-02-08" };
+  const draft = {
+    mode: "EDIT",
+    itemId: "00000000-0000-4000-8000-000000000011",
+    fields: value,
+    participantOptions: [],
+  };
+  const repo = {
+    save: vi.fn(async () => ({ localStatus: "PENDING", itemId: draft.itemId })),
+  };
+  const p = { ...p0, itemId: draft.itemId, opened: { repository: repo, draft } };
+  await open(p, repo);
+  const sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onConfirm(placeResult());
+  render(p);
+  node("tripCreate.saveChanges").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({
+      title: value.title,
+      startDate: value.startDate,
+      participation: value.participation,
+      location: "Victoria Street West, Auckland",
+    }),
+  );
+  expect(p.onSaved).toHaveBeenCalledWith(draft.itemId);
 });
