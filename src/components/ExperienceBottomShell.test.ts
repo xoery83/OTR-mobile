@@ -1,10 +1,17 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
+import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { lightPalette } from "@/ui/palette";
 import { ExperienceBottomShell } from "./ExperienceBottomShell";
-vi.mock("expo-modules-core", () => ({ requireOptionalNativeModule: () => null }));
+vi.mock("expo-modules-core", () => ({
+  requireOptionalNativeModule: () => state.glassCapability,
+}));
 
 const state = vi.hoisted(() => ({
+  glassCapability: null as null | {
+    isLiquidGlassAvailable: boolean;
+    isGlassEffectAPIAvailable: boolean;
+  },
   dayShellChrome: null as null | {
     tripId: string;
     generation: number;
@@ -155,6 +162,7 @@ function pressables(node: ReactNode): ShellElement[] {
 }
 
 beforeEach(() => {
+  state.glassCapability = null;
   state.view = null;
   state.dayShellChrome = null;
   state.quickActions = null;
@@ -680,3 +688,88 @@ it("Day chrome hides only its current navigation island while retaining Capture 
   walk(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
   expect(hidden).toHaveLength(0);
 });
+
+it("selects regular native glass for each island branch and retains reduced-transparency surfaces", async () => {
+  const require = createRequire(import.meta.url);
+  const path = require.resolve("expo-glass-effect");
+  const previous = require.cache[path];
+  // The optional loader intentionally uses CJS; replace only that native boundary.
+  require.cache[path] = { exports: { GlassView: "NativeGlassView" } } as NodeModule;
+  state.glassCapability = {
+    isLiquidGlassAvailable: true,
+    isGlassEffectAPIAvailable: true,
+  };
+  try {
+    vi.resetModules();
+    const { ExperienceBottomShell: NativeShell } =
+      await import("./ExperienceBottomShell");
+    const materials = (node: ReactNode): ShellElement[] => {
+      if (!isValidElement(node)) return [];
+      const element = node as ShellElement;
+      return [
+        ...(element.type === "NativeGlassView" ? [element] : []),
+        ...Children.toArray(element.props.children).flatMap(materials),
+      ];
+    };
+    state.workingTrip = { tripId: "a", generation: 1 };
+    for (const [pathname, params, count] of [
+      ["/trip-home", { tripId: "a", view: "home" }, 2],
+      ["/expenses", { journeyId: "a" }, 2],
+      ["/trip", { view: "trips" }, 1],
+    ] as const) {
+      state.params = params;
+      const nodes = materials(NativeShell({ visible: true, pathname }));
+      expect(nodes).toHaveLength(count);
+      for (const node of nodes) {
+        expect(node.props).toMatchObject({
+          glassEffectStyle: "regular",
+          isInteractive: true,
+        });
+      }
+    }
+    state.reduced = true;
+    const reduced = materials(NativeShell({ visible: true, pathname: "/trip" }));
+    expect(reduced[0].props.style).toEqual(
+      expect.arrayContaining([{ backgroundColor: lightPalette.floatingSurface }]),
+    );
+  } finally {
+    if (previous) require.cache[path] = previous;
+    else delete require.cache[path];
+    state.glassCapability = null;
+  }
+});
+
+it.each([
+  { isLiquidGlassAvailable: false, isGlassEffectAPIAvailable: true },
+  { isLiquidGlassAvailable: true, isGlassEffectAPIAvailable: false },
+])(
+  "keeps the existing surface fallback when either native capability is unavailable",
+  async (capability) => {
+    state.glassCapability = capability;
+    vi.resetModules();
+    const { ExperienceBottomShell: FallbackShell } =
+      await import("./ExperienceBottomShell");
+    state.params = { view: "trips" };
+    const tree = FallbackShell({ visible: true, pathname: "/trip" });
+    expect(pressables(tree).map((node) => node.props.accessibilityLabel)).toEqual([
+      "actionIsland.startTrip",
+    ]);
+    const nodes: ShellElement[] = [];
+    const visit = (node: ReactNode) => {
+      if (!isValidElement(node)) return;
+      const element = node as ShellElement;
+      if (
+        element.props.style &&
+        Array.isArray(element.props.style) &&
+        element.props.style.some(
+          (style: any) => style?.backgroundColor === lightPalette.floatingSurface,
+        )
+      )
+        nodes.push(element);
+      Children.toArray(element.props.children).forEach(visit);
+    };
+    visit(tree);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].type).toBe("View");
+  },
+);

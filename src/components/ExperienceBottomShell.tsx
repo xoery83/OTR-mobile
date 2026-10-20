@@ -261,7 +261,7 @@ export function ExperienceBottomShell({
         {!tripList ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              ? { glassEffectStyle: "regular" as const, isInteractive: true }
               : {})}
             accessibilityElementsHidden={
               isDay &&
@@ -465,7 +465,7 @@ export function ExperienceBottomShell({
         {!tripList && !ledger && contextualTripId ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              ? { glassEffectStyle: "regular" as const, isInteractive: true }
               : {})}
             style={[
               styles.actionIsland,
@@ -528,7 +528,7 @@ export function ExperienceBottomShell({
         {tripList || ledger ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              ? { glassEffectStyle: "regular" as const, isInteractive: true }
               : {})}
             style={[
               styles.actionIsland,
