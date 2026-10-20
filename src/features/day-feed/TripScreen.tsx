@@ -12,6 +12,12 @@ import {
   type TripListSummary,
 } from "@/data/repositories/tripDiscoveryRepository";
 import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
+import { P1PlanEditor } from "./P1PlanEditor";
+import {
+  createDefaultManualPlanRepository,
+  type ManualPlanDraft,
+  type ManualPlanRepository,
+} from "@/data/repositories/manualPlanRepository";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import {
   readTripTodaysJourney,
@@ -183,6 +189,13 @@ function TripContent({
   const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
   const [localItem, setLocalItem] = useState<LocalItem | null>(null);
+  const [planEditError, setPlanEditError] = useState(false);
+  const [planEdit, setPlanEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualPlanRepository;
+    draft: ManualPlanDraft;
+  } | null>(null);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
@@ -528,6 +541,7 @@ function TripContent({
     const current = await freshLocalRead(resolved);
     setTrip(current);
     setLocalItem(resolved);
+    setPlanEditError(false);
   };
   const manualItemSaved = useCallback(
     (tripId: string, captured: number) => {
@@ -851,12 +865,62 @@ function TripContent({
     localItem.source.fingerprint === visibleTrip.localManual.source.fingerprint
       ? localItem
       : null;
-  const localPreview = visibleLocalItem ? (
-    <LocalCoreItemPreview
-      item={visibleLocalItem.item}
-      onClose={() => setLocalItem(null)}
-    />
-  ) : null;
+  const localPreview =
+    visibleLocalItem && !planEdit ? (
+      <LocalCoreItemPreview
+        item={visibleLocalItem.item}
+        onClose={() => setLocalItem(null)}
+        editError={planEditError}
+        onEdit={
+          visibleLocalItem.item.family === "P1" &&
+          visibleLocalItem.item.localState === "PENDING"
+            ? () => {
+                setPlanEditError(false);
+                const ticket = request.current;
+                void (async () => {
+                  try {
+                    const repository = await createDefaultManualPlanRepository();
+                    const draft = await repository.read(
+                      requested,
+                      visibleLocalItem.item.itemId,
+                    );
+                    if (
+                      ticket !== request.current ||
+                      generation !== getAccountGeneration() ||
+                      draft.itemId !== visibleLocalItem.item.itemId
+                    )
+                      return;
+                    setPlanEdit({ tripId: requested, generation, repository, draft });
+                  } catch {
+                    if (
+                      ticket === request.current &&
+                      generation === getAccountGeneration()
+                    )
+                      setPlanEditError(true);
+                  }
+                })();
+              }
+            : undefined
+        }
+      />
+    ) : null;
+  const planEditor =
+    planEdit?.tripId === requested && planEdit.generation === generation ? (
+      <P1PlanEditor
+        key={`${planEdit.tripId}:${planEdit.draft.itemId}:${generation}`}
+        tripId={planEdit.tripId}
+        itemId={planEdit.draft.itemId}
+        opened={planEdit}
+        onClose={() => setPlanEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setPlanEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
   const homeContextCurrent =
     homeSnapshot &&
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
@@ -1053,6 +1117,7 @@ function TripContent({
           }}
         />
         {localPreview}
+        {planEditor}
       </>
     );
   // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
@@ -1206,6 +1271,7 @@ function TripContent({
         )}
       </ScrollView>
       {localPreview}
+      {planEditor}
       {visibleOverlay?.read.observed ? (
         <DayFeed
           instant={homePerspective?.now}

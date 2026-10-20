@@ -24,6 +24,12 @@ vi.mock("./TripCalendarRangeField", () => ({
   TripCalendarRangeField: () => null,
   tripRangeLabel: () => "range",
 }));
+vi.mock("./P1PlanEditor", () => ({
+  P1PlanEditor: (props: any) => {
+    state.nodes.push({ planEditor: props });
+    return null;
+  },
+}));
 vi.mock("./useTripPreparationWidget", () => ({
   useTripPreparationWidget: (props: any) => {
     state.preparation = props;
@@ -397,13 +403,23 @@ it("remounts when the owning navigation leaves a trip and rejects its late item 
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary(null);
   render();
+  state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
+  render();
   input("tripCreate.itemTitle", "Old trip draft");
   render();
-  button("tripCreate.itemDate").onPress();
+  button("tripCreate.checkin").onPress();
   render();
   state.nodes
     .find((node) => node.mode === "date")!
     .onChange(undefined, new Date(2026, 9, 13, 12));
+  render();
+  button("common.done").onPress();
+  render();
+  button("tripCreate.checkout").onPress();
+  render();
+  state.nodes
+    .find((node) => node.mode === "date")!
+    .onChange(undefined, new Date(2026, 9, 14, 12));
   render();
   button("common.done").onPress();
   render();
@@ -616,7 +632,7 @@ vi.mock("@/components/SheetHeader", () => ({
   },
 }));
 
-it("the mounted local Quick Add callback opens the existing form with an editable weak date and real local save", async () => {
+it("the mounted local Quick Add opens the typed P1 form with explicit Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -631,15 +647,11 @@ it("the mounted local Quick Add callback opens the existing form with an editabl
   expect(actions.photos).toBeUndefined();
   actions.itinerary("2027-01-02");
   render();
-  input("tripCreate.itemTitle", "Explicit activity");
-  render();
-  button("tripCreate.saveItem").onPress();
-  await flush();
-  expect(repo.addItem).toHaveBeenCalledWith(
-    "local-a",
-    expect.objectContaining({ title: "Explicit activity", startDate: "2027-01-02" }),
-  );
+  const editor = state.nodes.find((node) => node.planEditor)?.planEditor;
+  expect(editor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
+  editor.onSaved("item-a");
   expect(render()).toContain("actionIsland.savedLocally");
+  expect(repo.addItem).not.toHaveBeenCalled();
 });
 
 it("non-Creator Home opens the independent preference Gallery without metadata authority", async () => {
@@ -1164,5 +1176,50 @@ it("does not gate an authoritative local Home on unrelated discovery and retains
   expect(state.discovery).not.toHaveBeenCalled();
   expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
   expect(state.preparation.onEdit).toBeUndefined();
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
+});
+
+it("P1 Home passes Trip Start only as picker navigation, not selected date", async () => {
+  const repo = repository([{ ...trip("local-a", "Local A"), startDate: "2027-12-30" }]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  state.publish.mock.calls
+    .find((call) => call[0]?.tripId === "local-a")![0]
+    .itinerary(null);
+  render();
+  expect(state.nodes.find((node) => node.planEditor)?.planEditor).toMatchObject({
+    tripId: "local-a",
+    initialDate: null,
+    tripStartDate: "2027-12-30",
+  });
+  expect(repo.addItem).not.toHaveBeenCalled();
+});
+
+it("P1 passes explicit Day context ahead of Trip Start without changing Trip dates", async () => {
+  const repo = repository([
+    { ...trip("local-a", "Local A"), startDate: "2027-12-30", endDate: "2028-01-03" },
+  ]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  state.publish.mock.calls
+    .find((call) => call[0]?.tripId === "local-a")![0]
+    .itinerary("2027-12-29");
+  render();
+  expect(state.nodes.find((node) => node.planEditor)?.planEditor).toMatchObject({
+    tripId: "local-a",
+    initialDate: "2027-12-29",
+    tripStartDate: "2027-12-30",
+  });
+  expect(repo.addItem).not.toHaveBeenCalled();
   expect(repo.updateMetadata).not.toHaveBeenCalled();
 });

@@ -2,7 +2,7 @@ import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
 import { SheetHeader } from "@/components/SheetHeader";
-import { UiText as Text } from "@/ui/controls";
+import { UiButton, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
@@ -13,9 +13,13 @@ import { visual } from "@/ui/visual";
 export function LocalCoreItemPreview({
   item,
   onClose,
+  onEdit,
+  editError = false,
 }: {
   item: NonNullable<ReturnType<typeof projectCoreItem>>;
   onClose(): void;
+  onEdit?(): void;
+  editError?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -74,6 +78,20 @@ export function LocalCoreItemPreview({
           ) : null}
           {item.place?.authoredAddress ? (
             <Text style={styles.text}>{item.place.authoredAddress}</Text>
+          ) : null}
+          {item.family === "P1" &&
+          typeof item.description === "string" &&
+          item.description.trim() ? (
+            <View>
+              <Text style={styles.meta}>{t("tripCreate.planNotes")}</Text>
+              <Text style={styles.text}>{item.description}</Text>
+            </View>
+          ) : null}
+          {onEdit ? <UiButton label={t("tripCreate.editPlan")} onPress={onEdit} /> : null}
+          {editError ? (
+            <Text accessibilityRole="alert" style={styles.meta}>
+              {t("tripCreate.planUnavailable")}
+            </Text>
           ) : null}
         </ScrollView>
       </SafeAreaProvider>

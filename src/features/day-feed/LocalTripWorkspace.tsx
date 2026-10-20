@@ -58,6 +58,7 @@ import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { CalendarField, calendarDate } from "./TripCalendarField";
+import { P1PlanEditor } from "./P1PlanEditor";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripMetadataFields } from "./TripMetadataFields";
 import { tripMetadataSchema } from "@/domain/trip/tripMetadataContract";
@@ -827,7 +828,7 @@ function LocalTripContent({
             </SafeAreaProvider>
           </Modal>
           <Modal
-            visible={itemFormOpen}
+            visible={itemFormOpen && family === "P3"}
             onRequestClose={closeItemForm}
             animationType="slide"
           >
@@ -846,7 +847,7 @@ function LocalTripContent({
                 <UiSection title={t("tripCreate.addItem")}>
                   <UiChoiceChip
                     label={t("tripCreate.activity")}
-                    selected={family === "P1"}
+                    selected={false}
                     onPress={() => setFamily("P1")}
                   />
                   <UiChoiceChip
@@ -862,33 +863,42 @@ function LocalTripContent({
                     editable={!saving}
                   />
                   <CalendarField
-                    label={t(
-                      family === "P3" ? "tripCreate.checkin" : "tripCreate.itemDate",
-                    )}
+                    label={t("tripCreate.checkin")}
                     value={itemStart}
                     onChange={setItemStart}
                   />
-                  {family === "P3" ? (
-                    <CalendarField
-                      label={t("tripCreate.checkout")}
-                      value={itemEnd}
-                      onChange={setItemEnd}
-                    />
-                  ) : null}
+                  <CalendarField
+                    label={t("tripCreate.checkout")}
+                    value={itemEnd}
+                    onChange={setItemEnd}
+                  />
                   <UiButton
                     label={t("tripCreate.saveItem")}
-                    disabled={
-                      saving ||
-                      !itemTitle.trim() ||
-                      !itemStart ||
-                      (family === "P3" && !itemEnd)
-                    }
+                    disabled={saving || !itemTitle.trim() || !itemStart || !itemEnd}
                     onPress={() => void save(true)}
                   />
                 </UiSection>
               </ScrollView>
             </View>
           </Modal>
+          {itemFormOpen && family === "P1" ? (
+            <P1PlanEditor
+              key={`${selected.id}:${generation}:${itemStart}`}
+              tripId={selected.id}
+              initialDate={itemStart || null}
+              tripStartDate={selected.startDate}
+              onChooseStay={() => setFamily("P3")}
+              onClose={() => setItemFormOpen(false)}
+              onSaved={() => {
+                if (!alive.current || generation !== getAccountGeneration()) return;
+                onManualItemSaved?.(selected.id, generation);
+                setItemFormOpen(false);
+                setItemStart("");
+                setSavedNotice(true);
+                void load();
+              }}
+            />
+          ) : null}
         </>
       ) : remoteSelected ? (
         <>
