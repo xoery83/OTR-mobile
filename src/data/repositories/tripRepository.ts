@@ -282,7 +282,6 @@ export function createTripRepository(
       const scope = await captureAccountScope(account);
       const profileName = await displayName(scope.accountId);
       const name = explicitName ?? profileName;
-      if (!name.trim()) throw new Error("TRIP_CREATOR_NAME_UNAVAILABLE");
       return withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         let result: Trip | null = null;

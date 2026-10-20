@@ -2461,9 +2461,12 @@ it("blank nickname uses the existing known name, invalid names and queue errors 
     () => stamp,
     async () => "",
   );
-  await expect(unknown.createTrip(input())).rejects.toThrow(
-    "TRIP_CREATOR_NAME_UNAVAILABLE",
-  );
+  const anonymous = await unknown.createTrip(input());
+  expect(anonymous.id).toBeTruthy();
+  expect(missing.sql.prepare("SELECT display_name FROM ledger_members").get()).toEqual({
+    display_name: "",
+  });
+  expect(missing.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
 });
 it("a late profile result after Account change cannot create even an explicitly nicknamed creator", async () => {
   const f = local();
