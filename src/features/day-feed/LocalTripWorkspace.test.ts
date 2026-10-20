@@ -1,3 +1,22 @@
+vi.mock("./CreateTripDestinations", () => ({
+  CreateTripDestinations: (props: any) => {
+    state.nodes.push({ destinations: props });
+    return null;
+  },
+}));
+vi.mock("./CreateTripV2Fields", () => ({
+  CreateTripV2Fields: (props: any) => {
+    state.nodes.push(
+      { createFields: props },
+      {
+        accessibilityLabel: "createTripV2.name",
+        value: props.name,
+        onChangeText: props.onName,
+      },
+    );
+    return props.destinationEntry;
+  },
+}));
 vi.mock("./ManualItineraryContent", () => ({
   ManualItineraryContent: (props: any) => {
     state.nodes.push({ manualEntry: props });
@@ -373,13 +392,13 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   props.mode = "CREATE";
   render();
   await flush();
-  input("tripCreate.name", "A private draft");
+  input("createTripV2.name", "A private draft");
   render();
   const old = deferred<TripRepository>();
   state.repo.mockImplementationOnce(() => old.promise);
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   render();
-  expect(button("tripCreate.newTrip").disabled).toBe(true);
+  expect(button("createTripV2.create").disabled).toBe(true);
   const oldKey = key;
   advanceAccountGeneration();
   state.repo.mockResolvedValue(b);
@@ -389,17 +408,17 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(immediate).not.toContain("A private draft");
   await flush();
   render();
-  input("tripCreate.name", "B own draft");
+  input("createTripV2.name", "B own draft");
   render();
   const bSave = deferred<TripRepository>();
   state.repo.mockImplementationOnce(() => bSave.promise);
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   render();
   old.resolve(b);
   await flush();
   render();
   expect(b.createTrip).not.toHaveBeenCalled();
-  expect(button("tripCreate.newTrip").disabled).toBe(true);
+  expect(button("createTripV2.create").disabled).toBe(true);
   bSave.resolve(b);
   await flush();
   render();
@@ -407,7 +426,7 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(b.createTrip).toHaveBeenCalledWith(
     expect.objectContaining({ name: "B own draft" }),
   );
-  expect(button("tripCreate.newTrip").disabled).toBe(false);
+  expect(button("createTripV2.create").disabled).toBe(false);
   expect(props.onOpen).toHaveBeenCalledOnce();
 });
 
@@ -824,11 +843,11 @@ it("Create is one native sheet, Cancel writes nothing, and immediate double tap 
   button("common.close").onPress();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
   expect(repo.createTrip).not.toHaveBeenCalled();
-  input("tripCreate.name", "Name only");
+  input("createTripV2.name", "Name only");
   render();
   const pending = deferred<Trip>();
   vi.mocked(repo.createTrip).mockImplementationOnce(() => pending.promise);
-  const create = button("tripCreate.newTrip");
+  const create = button("createTripV2.create");
   create.onPress();
   create.onPress();
   await flush();
@@ -888,28 +907,19 @@ it("sends seven slots with three nonblank names through the real atomic Trip Rep
     render();
     await vi.waitFor(() => expect(props.onKnownTrip).toHaveBeenCalledWith("NONE"));
     render();
-    expect(
-      state.nodes.some((node) => node.accessibilityLabel === "tripForm.travelerName:1"),
-    ).toBe(false);
-    input("tripCreate.name", "Local Travelers");
-    button("tripForm.travelers").onPress();
-    render();
-    expect(
-      state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:1")!
-        .value,
-    ).toBe("");
-    input("tripForm.travelerCount", "7");
-    render();
-    input("tripForm.travelerName:1", " Tina ");
-    render();
-    input("tripForm.travelerName:3", "同行者");
-    render();
-    input("tripForm.travelerName:7", "Tina");
+    input("createTripV2.name", "Local Travelers");
+    const slots = Array.from({ length: 7 }, (_, index) => ({
+      personId: randomUUID(),
+      operationId: randomUUID(),
+      displayName:
+        index === 0 ? " Tina " : index === 2 ? "同行者" : index === 6 ? "Tina" : "",
+    }));
+    state.nodes.find((node) => node.createFields)!.createFields.onTravelers(slots);
     render();
     props.onOpen.mockImplementationOnce(() => {
       throw new Error("navigation");
     });
-    button("tripCreate.newTrip").onPress();
+    button("createTripV2.create").onPress();
     await vi.waitFor(() => expect(props.onOpen).toHaveBeenCalledOnce());
     const payload = create.mock.calls[0][0];
     expect(payload.travelers?.map((slot) => slot.displayName)).toEqual([
@@ -928,7 +938,7 @@ it("sends seven slots with three nonblank names through the real atomic Trip Rep
       people.filter((person) => person.displayName === "Account creator"),
     ).toHaveLength(1);
     render();
-    button("tripCreate.newTrip").onPress();
+    button("createTripV2.create").onPress();
     await vi.waitFor(() => expect(props.onOpen).toHaveBeenCalledTimes(2));
     expect(create.mock.calls[1][0]).toEqual(payload);
     expect(
@@ -949,7 +959,7 @@ it("sends seven slots with three nonblank names through the real atomic Trip Rep
   }
 });
 
-it("preserves names and stable intent IDs on retry and rejects a count that would discard names", async () => {
+it("preserves additional names and stable intent IDs on retry without a count stepper", async () => {
   const repo = repository();
   vi.mocked(repo.createTrip).mockRejectedValueOnce(new Error("disk"));
   state.repo.mockResolvedValue(repo);
@@ -957,66 +967,40 @@ it("preserves names and stable intent IDs on retry and rejects a count that woul
   render();
   await flush();
   render();
-  input("tripCreate.name", "Retry trip");
-  button("tripForm.travelers").onPress();
+  input("createTripV2.name", "Retry trip");
+  state.nodes
+    .find((node) => node.createFields)!
+    .createFields.onTravelers([
+      { personId: randomUUID(), operationId: randomUUID(), displayName: "Last traveler" },
+    ]);
   render();
-  input("tripForm.travelerCount", "7");
-  render();
-  input("tripForm.travelerName:7", "Last traveler");
-  render();
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   await flush();
   render();
   const first = vi.mocked(repo.createTrip).mock.calls[0][0];
-  input("tripForm.travelerCount", "3");
-  expect(render()).toContain("tripForm.travelerNamesRetained");
-  expect(
-    state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:7")!
-      .value,
-  ).toBe("Last traveler");
-  expect(button("tripCreate.newTrip").disabled).toBe(true);
-  button("tripCreate.newTrip").onPress();
-  await flush();
-  expect(repo.createTrip).toHaveBeenCalledTimes(1);
-  input("tripForm.travelerCount", "7");
-  render();
-  button("tripCreate.newTrip").onPress();
+  expect(first.travelers?.[0].displayName).toBe("Last traveler");
+  button("createTripV2.create").onPress();
   await flush();
   expect(vi.mocked(repo.createTrip).mock.calls[1][0]).toEqual(first);
 });
-
-it("rejects invalid counts without submitting old slots and supports more than ten fields", async () => {
+it("maps You nickname only to the lawful creator display field", async () => {
   const repo = repository();
   state.repo.mockResolvedValue(repo);
   props.mode = "CREATE";
   render();
   await flush();
   render();
-  input("tripCreate.name", "Large group");
-  button("tripForm.travelers").onPress();
+  input("createTripV2.name", "Name only");
+  state.nodes.find((node) => node.createFields)!.createFields.onSelfNickname("Trip AKA");
   render();
-  for (const count of ["101", "1000", "-1", "2.5", ""]) {
-    input("tripForm.travelerCount", count);
-    expect(render()).toContain("tripForm.travelerCountRange");
-    expect(
-      state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerCount")!
-        .value,
-    ).toBe(count);
-    button("tripCreate.newTrip").onPress();
-    await flush();
-  }
-  expect(repo.createTrip).not.toHaveBeenCalled();
-  input("tripForm.travelerCount", "11");
-  render();
-  expect(
-    state.nodes.filter((node) =>
-      node.accessibilityLabel?.startsWith("tripForm.travelerName:"),
-    ).length,
-  ).toBe(11);
-  expect(button("tripCreate.newTrip").disabled).toBe(false);
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledWith(
+    expect.objectContaining({ creatorDisplayName: "Trip AKA" }),
+  );
+  expect(vi.mocked(repo.createTrip).mock.calls[0][0].travelers).toBeUndefined();
 });
-
-it("clears private Traveler names and allocates a new intent after account generation changes", async () => {
+it("clears private Traveler names and allocates new intent after account generation changes", async () => {
   const a = repository(),
     b = repository();
   vi.mocked(a.createTrip).mockRejectedValueOnce(new Error("disk"));
@@ -1025,35 +1009,52 @@ it("clears private Traveler names and allocates a new intent after account gener
   render();
   await flush();
   render();
-  input("tripCreate.name", "A trip");
-  button("tripForm.travelers").onPress();
+  input("createTripV2.name", "A trip");
+  const oldPerson = {
+    personId: randomUUID(),
+    operationId: randomUUID(),
+    displayName: "A private name",
+  };
+  state.nodes.find((node) => node.createFields)!.createFields.onTravelers([oldPerson]);
   render();
-  input("tripForm.travelerName:1", "A private name");
-  render();
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   await flush();
   const old = vi.mocked(a.createTrip).mock.calls[0][0];
   advanceAccountGeneration();
   state.repo.mockResolvedValue(b);
-  expect(render()).not.toContain("A private name");
+  render();
   await flush();
   render();
-  button("tripForm.travelers").onPress();
+  expect(state.nodes.find((node) => node.createFields)!.createFields.travelers).toEqual(
+    [],
+  );
+  input("createTripV2.name", "B trip");
+  state.nodes
+    .find((node) => node.createFields)!
+    .createFields.onTravelers([
+      { personId: randomUUID(), operationId: randomUUID(), displayName: "B friend" },
+    ]);
   render();
-  expect(
-    state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:1")!
-      .value,
-  ).toBe("");
-  input("tripCreate.name", "B trip");
-  input("tripForm.travelerName:1", "B own name");
-  render();
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   await flush();
   const fresh = vi.mocked(b.createTrip).mock.calls[0][0];
-  expect(fresh.travelers?.[0].displayName).toBe("B own name");
   expect(fresh.tripId).not.toBe(old.tripId);
   expect(fresh.travelers?.[0].personId).not.toBe(old.travelers?.[0].personId);
-  expect(fresh.travelers?.[0].operationId).not.toBe(old.travelers?.[0].operationId);
+});
+it("Close confirms meaningful new Trip edits and never submits a create", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Unsaved trip");
+  render();
+  button("common.close").onPress();
+  expect(props.onBackToTrips).not.toHaveBeenCalled();
+  state.alert.mock.lastCall![2][1].onPress();
+  expect(props.onBackToTrips).toHaveBeenCalledOnce();
+  expect(repo.createTrip).not.toHaveBeenCalled();
 });
 
 it("Creator Close discards staged cover without an independent write and cannot dismiss an in-flight atomic save", async () => {
@@ -1287,4 +1288,26 @@ it("P1 passes explicit Day context ahead of Trip Start without changing Trip dat
   });
   expect(repo.addItem).not.toHaveBeenCalled();
   expect(repo.updateMetadata).not.toHaveBeenCalled();
+});
+
+it("holds Create while a destination selection resolves and protects unselected query on Close", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "My trip");
+  render();
+  const search = state.nodes.find((node) => node.destinations)!.destinations;
+  search.onBusy(true);
+  search.onQueryDirty(true);
+  render();
+  expect(button("createTripV2.create").disabled).toBe(true);
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).not.toHaveBeenCalled();
+  button("common.close").onPress();
+  expect(state.alert).toHaveBeenCalled();
+  expect(props.onBackToTrips).not.toHaveBeenCalled();
 });

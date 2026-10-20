@@ -440,6 +440,8 @@ export const en = {
   "myTrips.openCachedTrip": "Open {name} summary",
   "myTrips.cachedDetails":
     "This Trip summary is saved here. Planning details and actions are not available on this device yet.",
+  "createTripV2.customRequired":
+    "Add this place as a custom destination to keep its name.",
   "createTripV2.startHint": "How would you like to get started?",
   "createTripV2.importHint": "Add travel plans from emails, files, photos or links.",
   "createTripV2.manualHint": "Start with a name and build your trip at your own pace.",
@@ -2983,6 +2985,7 @@ export const zhHans: Record<MessageKey, string> = {
   "myTrips.compactDetails": "{date} · {destination}",
   "myTrips.openCachedTrip": "打开{name}的摘要",
   "myTrips.cachedDetails": "此设备已保存旅行摘要，详细安排和操作目前不可用。",
+  "createTripV2.customRequired": "请添加为自定义目的地以保留这个地点名称。",
   "createTripV2.startHint": "你想从哪一步开始？",
   "createTripV2.importHint": "从邮件、文件、照片或链接添加旅行安排。",
   "createTripV2.manualHint": "从旅行名称开始，按自己的节奏安排行程。",
