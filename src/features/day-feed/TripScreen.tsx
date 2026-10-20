@@ -14,6 +14,7 @@ import {
 import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { P3StayEditor } from "./P3StayEditor";
+import { P4RentalEditor } from "./P4RentalEditor";
 import {
   createDefaultManualPlanRepository,
   type ManualPlanDraft,
@@ -24,6 +25,11 @@ import {
   type ManualStayDraft,
   type ManualStayRepository,
 } from "@/data/repositories/manualStayRepository";
+import {
+  createDefaultManualRentalRepository,
+  type ManualRentalDraft,
+  type ManualRentalRepository,
+} from "@/data/repositories/manualRentalRepository";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import {
   readTripTodaysJourney,
@@ -207,6 +213,12 @@ function TripContent({
     generation: number;
     repository: ManualStayRepository;
     draft: ManualStayDraft;
+  } | null>(null);
+  const [rentalEdit, setRentalEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualRentalRepository;
+    draft: ManualRentalDraft;
   } | null>(null);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
@@ -878,13 +890,13 @@ function TripContent({
       ? localItem
       : null;
   const localPreview =
-    visibleLocalItem && !planEdit && !stayEdit ? (
+    visibleLocalItem && !planEdit && !stayEdit && !rentalEdit ? (
       <LocalCoreItemPreview
         item={visibleLocalItem.item}
         onClose={() => setLocalItem(null)}
         editError={planEditError}
         onEdit={
-          ["P1", "P3"].includes(visibleLocalItem.item.family) &&
+          ["P1", "P3", "P4"].includes(visibleLocalItem.item.family) &&
           visibleLocalItem.item.localState === "PENDING"
             ? () => {
                 setPlanEditError(false);
@@ -896,7 +908,17 @@ function TripContent({
                       ticket === request.current &&
                       generation === getAccountGeneration() &&
                       draftId === itemId;
-                    if (visibleLocalItem.item.family === "P3") {
+                    if (visibleLocalItem.item.family === "P4") {
+                      const repository = await createDefaultManualRentalRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setRentalEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    } else if (visibleLocalItem.item.family === "P3") {
                       const repository = await createDefaultManualStayRepository();
                       const draft = await repository.read(requested, itemId);
                       if (!current(draft.itemId)) return;
@@ -958,6 +980,23 @@ function TripContent({
         onSaved={() => {
           if (generation !== getAccountGeneration()) return;
           setStayEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
+  const rentalEditor =
+    rentalEdit?.tripId === requested && rentalEdit.generation === generation ? (
+      <P4RentalEditor
+        key={`${rentalEdit.tripId}:${rentalEdit.draft.itemId}:${generation}`}
+        tripId={rentalEdit.tripId}
+        itemId={rentalEdit.draft.itemId}
+        opened={rentalEdit}
+        onClose={() => setRentalEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setRentalEdit(null);
           setLocalItem(null);
           setRevision((value) => value + 1);
           void load();
@@ -1162,6 +1201,7 @@ function TripContent({
         {localPreview}
         {planEditor}
         {stayEditor}
+        {rentalEditor}
       </>
     );
   // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
@@ -1317,6 +1357,7 @@ function TripContent({
       {localPreview}
       {planEditor}
       {stayEditor}
+      {rentalEditor}
       {visibleOverlay?.read.observed ? (
         <DayFeed
           instant={homePerspective?.now}

@@ -243,3 +243,30 @@ it("P1/P3 Notes project only with the existing Item read authority, retaining li
   const stay = create(emptyCoreGraph(), "P3", "2026-10-20", "2026-10-21");
   expect(projectCoreItem(stay.graph, actor, stay.id)).toHaveProperty("description", null);
 });
+
+it("P4 public Details maps Notes and independent vehicle/place facts without renaming Rental identity", () => {
+  const rental = create(emptyCoreGraph(), "P4", "2026-10-20", "2026-10-23", {
+    core: { title: "Family rental", description: "Keep the original contract" },
+    details: {
+      supplier: "Rental company",
+      reserved_category: "SUV",
+      or_similar: true,
+      actual_vehicle_model: "Actual model",
+      verified_plate: "TEST123",
+    },
+    places: { pickup: place("Airport counter"), return: place("City office") },
+  });
+  const item = projectCoreItem(rental.graph, actor, rental.id)!;
+  expect(item.title).toBe("Family rental");
+  expect(item.description).toBe("Keep the original contract");
+  expect(item.details).toMatchObject({
+    supplier: "Rental company",
+    reservedCategory: "SUV",
+    orSimilar: true,
+    actualVehicleModel: "Actual model",
+    verifiedPlate: "TEST123",
+    pickupPlace: { authoredLabel: "Airport counter" },
+    returnPlace: { authoredLabel: "City office" },
+  });
+  expect(item.bookingSummaries).toEqual([]);
+});

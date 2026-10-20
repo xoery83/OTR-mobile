@@ -145,6 +145,22 @@ beforeEach(() => {
   state.alert.mockReset();
 });
 
+it("opens the sibling Rental form without changing a clean P1 draft", async () => {
+  const p = { ...props(), onChooseRental: vi.fn() };
+  const value = fields();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "plan",
+      fields: value,
+      participantOptions: [],
+    })),
+  });
+  node("tripCreate.rental").onPress();
+  expect(p.onChooseRental).toHaveBeenCalledOnce();
+  expect(p.onClose).not.toHaveBeenCalled();
+});
+
 it("navigates Home picker to Trip Start without selecting it, then saves authored date as NTC", async () => {
   const p = props();
   const draft = {
@@ -384,4 +400,53 @@ it("ignores P1 Discard confirmation after Account change or unmount", async () =
   cleanup();
   discard();
   expect(p.onClose).not.toHaveBeenCalled();
+});
+
+it("rejects an old P1 Save after Discard closes a dirty draft", async () => {
+  const p = props();
+  const value = fields();
+  value.title = "Original plan";
+  value.startDate = "2027-12-29";
+  const save = vi.fn();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "plan",
+      fields: value,
+      participantOptions: [],
+    })),
+    save,
+  });
+  node("tripCreate.planName").onChangeText("Changed plan");
+  render(p);
+  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldChange = node("tripCreate.planName").onChangeText;
+  node("common.cancel").onPress();
+  state.alert.mock.lastCall![2][1].onPress();
+  oldChange("Late plan");
+  oldSave();
+  expect(p.onClose).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+});
+
+it("rejects an old P1 Save after a clean sibling transition", async () => {
+  const p = { ...props(), onChooseRental: vi.fn() };
+  const value = fields();
+  value.title = "Original plan";
+  value.startDate = "2027-12-29";
+  const save = vi.fn();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "plan",
+      fields: value,
+      participantOptions: [],
+    })),
+    save,
+  });
+  const oldSave = node("tripCreate.saveItem").onPress;
+  node("tripCreate.rental").onPress();
+  oldSave();
+  expect(p.onChooseRental).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
 });

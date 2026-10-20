@@ -291,7 +291,7 @@ export function projectCoreItem(
     itemRevision: item.semantic_revision,
     family,
     title: item.title,
-    ...(["P1", "P3"].includes(family) ? { description: item.description } : {}),
+    ...(["P1", "P3", "P4"].includes(family) ? { description: item.description } : {}),
     status: item.status,
     hidden: item.hidden_at !== null,
     localState,

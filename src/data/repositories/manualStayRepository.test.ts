@@ -392,7 +392,7 @@ it("keeps lawful same-date zero-night Stay explicit, without inventing a checkou
   expect(local.rows("2026-10-21")).toEqual([]);
   expect((await f.repo().read(f.tripId, d.itemId)).fields.endDate).toBe("2026-10-20");
 });
-it("stays finite to P1/P3: P3 editor rejects an existing Plan and atomic batch rejects a valid Rental command without writing", async () => {
+it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6 command without writing", async () => {
   const f = await fixture();
   const plan = randomUUID();
   await f.trips.addItem(f.tripId, {
@@ -415,7 +415,7 @@ it("stays finite to P1/P3: P3 editor rejects an existing Plan and atomic batch r
     operationId: randomUUID(),
     target: { kind: "ITEM", id: other },
     baseVector: [{ kind: "ITEM", id: other, revision: null }],
-    payload: { ...original.payload, family: "P4" },
+    payload: { ...original.payload, family: "P6" },
   };
   const n = count(f.sql);
   await expect(
@@ -427,7 +427,7 @@ it("stays finite to P1/P3: P3 editor rejects an existing Plan and atomic batch r
   expect(count(f.sql)).toBe(n);
 });
 
-it("finite batch rejects SET on an existing P4 target while the original generic enqueue remains unchanged", async () => {
+it("finite batch rejects SET on an existing P6 target while the original generic enqueue remains unchanged", async () => {
   const f = await fixture(),
     id = randomUUID(),
     ctx = await f.core.captureContext(f.tripId);
@@ -458,8 +458,8 @@ it("finite batch rejects SET on an existing P4 target while the original generic
     baseVector: [{ kind: "ITEM", id, revision: null }],
     admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
     payload: {
-      family: "P4",
-      core: { title: "Rental" },
+      family: "P6",
+      core: { title: "Activity" },
       schedule: { start: time },
       participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
       acl: { visibility: "GROUP", people: [] },
@@ -474,7 +474,7 @@ it("finite batch rejects SET on an existing P4 target while the original generic
     target: { kind: "ITEM", id },
     baseVector: [{ kind: "ITEM", id, revision: 1 }],
     admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
-    payload: { title: "New rental label" },
+    payload: { title: "New activity label" },
   };
   const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
   await expect(

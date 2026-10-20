@@ -38,6 +38,7 @@ import {
   emptyCoreGraph,
   type CoreActor,
 } from "../../domain/trip/tripCoreV2Mutation";
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
 const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
@@ -868,4 +869,105 @@ it("Core publication denies a queued Account transition and wrong Trip without t
   ).toMatchObject({ status: "UNAVAILABLE" });
   expect(a.sql.prepare("PRAGMA table_info(ttr_selections)").all()).toHaveLength(9);
   a.selection();
+});
+
+it("finite Forms batch admits P4 Create and Rental details but rejects a P6 Create before durable writes", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const create = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P4",
+      core: { title: "Rental" },
+      schedule: {
+        start: coreDateBoundary("2026-10-20"),
+        end: coreDateBoundary("2026-10-22"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const details = {
+    ...create,
+    operationId: randomUUID(),
+    command: "SET_RENTAL_DETAILS",
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    payload: { details: { actual_vehicle_model: "Authored model" }, places: {} },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [create, details],
+      result: async () => true,
+    })),
+  ).resolves.toBe(true);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    2,
+  );
+  const other = randomUUID();
+  const activity = {
+    ...create,
+    operationId: randomUUID(),
+    target: { kind: "ITEM", id: other },
+    baseVector: [{ kind: "ITEM", id: other, revision: null }],
+    payload: { ...create.payload, family: "P6" },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [activity],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    2,
+  );
+});
+it("finite Forms batch refuses Rental detail mutation on an actual P3 target", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P3",
+      core: { title: "Stay" },
+      schedule: {
+        start: coreDateBoundary("2026-10-20"),
+        end: coreDateBoundary("2026-10-22"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const graph = applyCoreCommand(emptyCoreGraph(), command, actor, stamp).graph;
+  const bundle = await collection(true, graph);
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  const invalid = {
+    ...command,
+    command: "SET_RENTAL_DETAILS",
+    operationId: randomUUID(),
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    payload: { details: {}, places: {} },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [invalid],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    0,
+  );
 });

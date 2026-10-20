@@ -68,8 +68,35 @@ export const manualStayFieldsSchema = manualPlanFieldsSchema.safeExtend({
   stayDetails: manualStayDetailsSchema,
 });
 export type ManualStayFields = z.infer<typeof manualStayFieldsSchema>;
+export const manualRentalDetailsSchema = z.strictObject({
+  supplier: z.string().max(500).nullable(),
+  reservedCategory: z.string().max(500).nullable(),
+  orSimilar: z.boolean().nullable(),
+  actualVehicleModel: z.string().max(500).nullable(),
+  verifiedPlate: z.string().max(64).nullable(),
+});
+export const manualRentalFieldsSchema = manualPlanFieldsSchema.safeExtend({
+  startTime: minute.unwrap(),
+  endDate: z.string().min(1),
+  endTime: minute.unwrap(),
+  location: z.null(),
+  pickupLocation: z.string().trim().min(1).max(500),
+  returnLocation: z.string().trim().min(1).max(500),
+  rentalDetails: manualRentalDetailsSchema,
+});
+export type ManualRentalFields = z.infer<typeof manualRentalFieldsSchema>;
+// Existing date-only rentals may open an incomplete draft; Save still requires both clocks/places.
+const rentalReadFieldsSchema = manualRentalFieldsSchema.safeExtend({
+  startTime: z.union([minute.unwrap(), z.literal("")]),
+  endTime: z.union([minute.unwrap(), z.literal("")]),
+  pickupLocation: z.string().trim().max(500),
+  returnLocation: z.string().trim().max(500),
+});
 type ManualItemFields = ManualPlanFields & {
   stayDetails?: ManualStayFields["stayDetails"];
+  pickupLocation?: string;
+  returnLocation?: string;
+  rentalDetails?: ManualRentalFields["rentalDetails"];
 };
 
 export type ManualPlanDraft = Readonly<{
@@ -110,11 +137,30 @@ type DraftState = {
 function fieldsFor(
   row: Record<string, unknown>,
   snapshot: Snapshot,
-  family: "P1" | "P3",
+  family: "P1" | "P3" | "P4",
 ): ManualItemFields {
   const stay = snapshot.graph.trip_stay_details.find((r) => r.event_id === row.id);
   const clockLabel = (v: unknown) => (typeof v === "string" ? v.slice(0, 5) : null);
-  return (family === "P3" ? manualStayFieldsSchema : manualPlanFieldsSchema).parse({
+  const rental = snapshot.graph.trip_rental_details.find((r) => r.event_id === row.id);
+  const rentalLabel = (role: "PICKUP" | "RETURN") => {
+    const place = snapshot.graph.trip_rental_places.find(
+      (r) => r.event_id === row.id && r.role === role,
+    );
+    return (
+      place?.authored_label ??
+      place?.authored_text ??
+      place?.authored_address ??
+      place?.accepted_address ??
+      ""
+    );
+  };
+  return (
+    family === "P4"
+      ? rentalReadFieldsSchema
+      : family === "P3"
+        ? manualStayFieldsSchema
+        : manualPlanFieldsSchema
+  ).parse({
     title: row.title,
     ...(family === "P3"
       ? {
@@ -126,13 +172,27 @@ function fieldsFor(
           },
         }
       : {}),
+    ...(family === "P4"
+      ? {
+          pickupLocation: rentalLabel("PICKUP"),
+          returnLocation: rentalLabel("RETURN"),
+          rentalDetails: {
+            supplier: rental?.supplier ?? null,
+            reservedCategory: rental?.reserved_category ?? null,
+            orSimilar: rental?.or_similar ?? null,
+            actualVehicleModel: rental?.actual_vehicle_model ?? null,
+            verifiedPlate: rental?.verified_plate ?? null,
+          },
+        }
+      : {}),
     startDate: row.start_local_date,
-    startTime:
-      typeof row.start_local_time === "string" ? row.start_local_time.slice(0, 5) : null,
+    startTime: clockLabel(row.start_local_time) ?? (family === "P4" ? "" : null),
     endDate: row.end_local_date,
-    endTime:
-      typeof row.end_local_time === "string" ? row.end_local_time.slice(0, 5) : null,
-    location: row.authored_label ?? row.authored_text ?? row.authored_address ?? null,
+    endTime: clockLabel(row.end_local_time) ?? (family === "P4" ? "" : null),
+    location:
+      family === "P4"
+        ? null
+        : (row.authored_label ?? row.authored_text ?? row.authored_address ?? null),
     description: row.description,
     participation: {
       mode: row.participation_mode,
@@ -148,7 +208,7 @@ function editable(
   snapshot: Snapshot,
   itemId: string,
   accountId: string,
-  family: "P1" | "P3",
+  family: "P1" | "P3" | "P4",
 ) {
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
@@ -176,7 +236,7 @@ const authoredBoundary = (
   zone_id: zone,
 });
 
-// Two finite Forms share the already-qualified transaction and opaque retry boundary.
+// Three finite Forms share the already-qualified transaction and opaque retry boundary.
 export function createManualItemRepository(
   family: "P1",
   database: CoreDatabase,
@@ -194,7 +254,15 @@ export function createManualItemRepository(
   newId?: () => string,
 ): ManualItemRepository<ManualStayFields>;
 export function createManualItemRepository(
-  family: "P1" | "P3",
+  family: "P4",
+  database: CoreDatabase,
+  account: () => Promise<string>,
+  core: Core,
+  clock?: () => string,
+  newId?: () => string,
+): ManualItemRepository<ManualRentalFields>;
+export function createManualItemRepository(
+  family: "P1" | "P3" | "P4",
   database: CoreDatabase,
   account: () => Promise<string>,
   core: Core,
@@ -240,8 +308,8 @@ export function createManualItemRepository(
           : {
               title: "",
               startDate: "",
-              startTime: null,
-              endDate: family === "P3" ? "" : null,
+              startTime: family === "P4" ? "" : null,
+              endDate: family !== "P1" ? "" : null,
               ...(family === "P3"
                 ? {
                     stayDetails: {
@@ -252,7 +320,20 @@ export function createManualItemRepository(
                     },
                   }
                 : {}),
-              endTime: null,
+              ...(family === "P4"
+                ? {
+                    pickupLocation: "",
+                    returnLocation: "",
+                    rentalDetails: {
+                      supplier: null,
+                      reservedCategory: null,
+                      orSimilar: null,
+                      actualVehicleModel: null,
+                      verifiedPlate: null,
+                    },
+                  }
+                : {}),
+              endTime: family === "P4" ? "" : null,
               location: null,
               description: null,
               participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
@@ -265,7 +346,7 @@ export function createManualItemRepository(
           mode: itemId ? "EDIT" : "CREATE",
           itemId: itemId ?? newId(),
           fields: structuredClone(fields),
-          participantOptions: members
+          participantOptions: (family === "P4" ? [] : members)
             .filter((m) => snapshot.actor.personIds.includes(m.id))
             .map((m) => ({ personId: m.id, displayName: m.display_name })),
         });
@@ -293,8 +374,17 @@ export function createManualItemRepository(
       const state = drafts.get(draft);
       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
       const fields: ManualItemFields = (
-        family === "P3" ? manualStayFieldsSchema : manualPlanFieldsSchema
+        family === "P4"
+          ? manualRentalFieldsSchema
+          : family === "P3"
+            ? manualStayFieldsSchema
+            : manualPlanFieldsSchema
       ).parse(input);
+      if (
+        family === "P4" &&
+        json(fields.participation) !== json(state.original.participation)
+      )
+        throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
       fields.participation.people.sort();
       fields.location = fields.location || null;
       const fieldsText = json(fields);
@@ -390,15 +480,40 @@ export function createManualItemRepository(
               ),
             }
           : undefined;
+        const rentalDetails = fields.rentalDetails
+          ? {
+              supplier: fields.rentalDetails.supplier,
+              reserved_category: fields.rentalDetails.reservedCategory,
+              or_similar: fields.rentalDetails.orSimilar,
+              actual_vehicle_model: fields.rentalDetails.actualVehicleModel,
+              verified_plate: fields.rentalDetails.verifiedPlate,
+            }
+          : undefined;
+        const rentalPlaces: {
+          pickup?: z.infer<typeof corePlaceSchema>;
+          return?: z.infer<typeof corePlaceSchema>;
+        } = {};
+        for (const key of ["pickup", "return"] as const) {
+          const field = key === "pickup" ? "pickupLocation" : "returnLocation";
+          if (
+            family === "P4" &&
+            (draft.mode === "CREATE" || fields[field] !== state.original[field])
+          )
+            rentalPlaces[key] = { ...place, authored_label: fields[field] ?? null };
+        }
         if (draft.mode === "CREATE")
           payloads.push({
             command: "CREATE_ITEM",
             payload: {
               family,
-              ...(stayDetails ? { details: stayDetails, rooms: [] } : {}),
+              ...(family === "P4"
+                ? { details: rentalDetails, places: rentalPlaces }
+                : {
+                    ...(stayDetails ? { details: stayDetails, rooms: [] } : {}),
+                    place,
+                  }),
               core: { title: fields.title, description: fields.description },
               schedule,
-              place,
               participation: fields.participation,
               acl: coreDefaults("organizer").acl,
             },
@@ -471,6 +586,16 @@ export function createManualItemRepository(
             },
           });
         }
+        if (
+          draft.mode === "EDIT" &&
+          family === "P4" &&
+          (json(fields.rentalDetails) !== json(state.original.rentalDetails) ||
+            Object.keys(rentalPlaces).length)
+        )
+          payloads.push({
+            command: "SET_RENTAL_DETAILS",
+            payload: { details: rentalDetails, places: rentalPlaces },
+          });
         let graph = snapshot.graph;
         const commands = payloads.map((p, i) => {
           const revision =

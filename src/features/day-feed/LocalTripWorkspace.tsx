@@ -60,6 +60,7 @@ import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { calendarDate } from "./TripCalendarField";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { P3StayEditor } from "./P3StayEditor";
+import { P4RentalEditor } from "./P4RentalEditor";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripMetadataFields } from "./TripMetadataFields";
 import { tripMetadataSchema } from "@/domain/trip/tripMetadataContract";
@@ -177,7 +178,7 @@ function LocalTripContent({
     (value: TripPreparationSetup | null) => setSetup(value),
     [],
   );
-  const [family, setFamily] = useState<"P1" | "P3">("P1"),
+  const [family, setFamily] = useState<"P1" | "P3" | "P4">("P1"),
     [itemStart, setItemStart] = useState("");
   const { publishQuickActions, localOutcome } = useTripView();
   const [quickActionsOwner] = useState(() => Symbol("mounted-trip-quick-actions"));
@@ -789,6 +790,28 @@ function LocalTripContent({
               initialDate={itemStart || null}
               tripStartDate={selected.startDate}
               onChoosePlan={() => setFamily("P1")}
+              onChooseRental={() => setFamily("P4")}
+              onClose={() => {
+                setItemFormOpen(false);
+                setItemStart("");
+              }}
+              onSaved={() => {
+                if (!alive.current || generation !== getAccountGeneration()) return;
+                onManualItemSaved?.(selected.id, generation);
+                setItemFormOpen(false);
+                setItemStart("");
+                setSavedNotice(true);
+                void load();
+              }}
+            />
+          ) : null}
+          {itemFormOpen && family === "P4" ? (
+            <P4RentalEditor
+              key={`${selected.id}:${generation}:${itemStart}`}
+              tripId={selected.id}
+              initialDate={itemStart || null}
+              tripStartDate={selected.startDate}
+              onChoosePlan={() => setFamily("P1")}
               onClose={() => {
                 setItemFormOpen(false);
                 setItemStart("");
@@ -810,6 +833,7 @@ function LocalTripContent({
               initialDate={itemStart || null}
               tripStartDate={selected.startDate}
               onChooseStay={() => setFamily("P3")}
+              onChooseRental={() => setFamily("P4")}
               onClose={() => {
                 setItemFormOpen(false);
                 setItemStart("");

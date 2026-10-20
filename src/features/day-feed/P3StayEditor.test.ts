@@ -160,6 +160,22 @@ beforeEach(() => {
   state.alert.mockReset();
 });
 
+it("opens the sibling Rental form without changing a clean P3 draft", async () => {
+  const p = { ...props(), onChooseRental: vi.fn() };
+  const value = fields();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+  });
+  node("tripCreate.rental").onPress();
+  expect(p.onChooseRental).toHaveBeenCalledOnce();
+  expect(p.onClose).not.toHaveBeenCalled();
+});
+
 it("navigates to Trip Start without selecting and requires both stay dates", async () => {
   const p = props();
   const draft = {
@@ -429,4 +445,32 @@ it("ignores P3 Discard confirmation after Account change or unmount", async () =
   cleanup();
   discard();
   expect(p.onClose).not.toHaveBeenCalled();
+});
+
+it("rejects an old P3 Save after Discard closes a dirty draft", async () => {
+  const p = props();
+  const value = fields();
+  value.title = "Original stay";
+  value.startDate = "2027-12-29";
+  value.endDate = "2028-01-02";
+  const save = vi.fn();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+    save,
+  });
+  node("tripCreate.stayName").onChangeText("Changed stay");
+  render(p);
+  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldChange = node("tripCreate.stayName").onChangeText;
+  node("common.cancel").onPress();
+  state.alert.mock.lastCall![2][1].onPress();
+  oldChange("Late stay");
+  oldSave();
+  expect(p.onClose).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
 });

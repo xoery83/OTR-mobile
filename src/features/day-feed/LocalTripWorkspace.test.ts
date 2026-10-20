@@ -36,6 +36,12 @@ vi.mock("./P3StayEditor", () => ({
     return null;
   },
 }));
+vi.mock("./P4RentalEditor", () => ({
+  P4RentalEditor: (props: any) => {
+    state.nodes.push({ rentalEditor: props });
+    return null;
+  },
+}));
 vi.mock("./useTripPreparationWidget", () => ({
   useTripPreparationWidget: (props: any) => {
     state.preparation = props;
@@ -659,6 +665,29 @@ it("switches the local Quick Add to the typed Stay form with the same Day contex
   const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
   expect(stayEditor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   stayEditor.onSaved("stay-a");
+  expect(render()).toContain("actionIsland.savedLocally");
+  expect(repo.addItem).not.toHaveBeenCalled();
+});
+
+it("switches local Quick Add to the typed Rental form and refreshes the same Trip", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  const actions = state.publish.mock.calls.find(
+    (call) => call[0]?.tripId === "local-a",
+  )![0];
+  actions.itinerary("2027-01-02");
+  render();
+  state.nodes.find((entry) => entry.planEditor)?.planEditor.onChooseRental();
+  render();
+  const rental = state.nodes.find((entry) => entry.rentalEditor)?.rentalEditor;
+  expect(rental).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
+  rental.onSaved("rental-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });

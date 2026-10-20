@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { closedItemCapabilities } from "@/domain/trip/tripCoreV2Day";
-import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "@/domain/trip/tripCoreV2";
 import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
@@ -145,4 +145,59 @@ it("renders the public P3 Core projection, including stored Stay details", () =>
   expect(markup).toContain("tripCreate.stayCheckoutBy");
   expect(markup).toContain("10:00");
   expect(markup).toContain("Ask for a quiet room.");
+});
+
+it("renders real P4 pickup, return, vehicle and Notes projection without renaming Rental", () => {
+  const tripId = randomUUID();
+  const itemId = randomUUID();
+  const actor = {
+    accountId: randomUUID(),
+    tripId,
+    personId: null,
+    personIds: [],
+    active: true,
+    canManageShared: true,
+  };
+  const place = (authored_label: string) => ({
+    ...Object.fromEntries(Object.keys(corePlaceSchema.shape).map((key) => [key, null])),
+    authored_label,
+  });
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P4",
+        core: { title: "Family rental", description: "Keep the contract." },
+        schedule: {
+          start: coreDateBoundary("2026-10-20"),
+          end: coreDateBoundary("2026-10-23"),
+        },
+        ...coreDefaults("organizer"),
+        details: { actual_vehicle_model: "Actual model", verified_plate: "TEST123" },
+        places: { pickup: place("Airport counter"), return: place("City office") },
+      },
+    },
+    actor,
+    "2026-10-21T00:00:00Z",
+  ).graph;
+  const projected = projectCoreItem(graph, actor, itemId);
+  expect(projected?.title).toBe("Family rental");
+  const markup = renderToStaticMarkup(
+    createElement(LocalCoreItemPreview, { item: projected!, onClose: () => {} }),
+  );
+  expect(markup).toContain("tripCreate.rentalPickupPlace");
+  expect(markup).toContain("Airport counter");
+  expect(markup).toContain("tripCreate.rentalReturnPlace");
+  expect(markup).toContain("City office");
+  expect(markup).toContain("Actual model");
+  expect(markup).toContain("TEST123");
+  expect(markup).toContain("Keep the contract.");
 });

@@ -94,6 +94,7 @@ export function P3StayEditor({
   onClose,
   onSaved,
   onChoosePlan,
+  onChooseRental,
   onFindPlace,
 }: {
   tripId: string;
@@ -104,12 +105,14 @@ export function P3StayEditor({
   onClose(): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
+  onChooseRental?(): void;
   onFindPlace?(current: string): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
+  const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
   const [fields, setFields] = useState<ManualStayFields | null>(
     opened ? structuredClone(opened.draft.fields) : null,
@@ -151,9 +154,10 @@ export function P3StayEditor({
       alive.current = false;
     };
   }, [tripId, itemId, initialDate, opened, generation]);
-  const current = () => alive.current && generation === getAccountGeneration();
+  const current = () =>
+    alive.current && !closedRef.current && generation === getAccountGeneration();
   const change = (next: Partial<ManualStayFields>) => {
-    if (frozenRef.current || busyRef.current || !fieldsRef.current) return;
+    if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -171,6 +175,7 @@ export function P3StayEditor({
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
+      closedRef.current = true;
       then();
       return;
     }
@@ -180,7 +185,10 @@ export function P3StayEditor({
         text: t("actionIsland.discard"),
         style: "destructive",
         onPress: () => {
-          if (current() && !busyRef.current) then();
+          if (current() && !busyRef.current) {
+            closedRef.current = true;
+            then();
+          }
         },
       },
     ]);
@@ -267,6 +275,14 @@ export function P3StayEditor({
                   variant="text"
                   disabled={saving}
                   onPress={() => close(onChoosePlan)}
+                />
+              ) : null}
+              {onChooseRental ? (
+                <UiButton
+                  label={t("tripCreate.rental")}
+                  variant="text"
+                  disabled={saving}
+                  onPress={() => close(onChooseRental)}
                 />
               ) : null}
               <UiSection title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}>

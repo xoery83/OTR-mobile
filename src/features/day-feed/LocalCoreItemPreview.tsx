@@ -27,6 +27,8 @@ export function LocalCoreItemPreview({
     start?: { localDate?: string; localTime?: string };
     end?: { localDate?: string; localTime?: string };
   };
+  const pickupPlace = item.details.pickupPlace as { authoredLabel?: string } | undefined;
+  const returnPlace = item.details.returnPlace as { authoredLabel?: string } | undefined;
   const civil = (date: string) =>
     formatUiDate(new Date(`${date}T12:00:00Z`), {
       year: "numeric",
@@ -45,13 +47,21 @@ export function LocalCoreItemPreview({
           ) : null}
           {item.family === "P3" ? (
             <Text style={styles.meta}>{t("tripCreate.stay")}</Text>
+          ) : item.family === "P4" ? (
+            <Text style={styles.meta}>{t("tripCreate.rental")}</Text>
           ) : item.family === "P1" ? (
             <Text style={styles.meta}>{t("tripCreate.activity")}</Text>
           ) : null}
           {schedule.start?.localDate ? (
             <View>
               <Text style={styles.meta}>
-                {t(item.family === "P3" ? "tripCreate.checkin" : "tripCreate.itemDate")}
+                {t(
+                  item.family === "P4"
+                    ? "tripCreate.rentalPickupDate"
+                    : item.family === "P3"
+                      ? "tripCreate.checkin"
+                      : "tripCreate.itemDate",
+                )}
               </Text>
               <Text style={styles.text}>{civil(schedule.start.localDate)}</Text>
               {schedule.start.localTime ? (
@@ -62,7 +72,13 @@ export function LocalCoreItemPreview({
           {schedule.end?.localDate ? (
             <View>
               <Text style={styles.meta}>
-                {t(item.family === "P3" ? "tripCreate.checkout" : "tripCreate.end")}
+                {t(
+                  item.family === "P4"
+                    ? "tripCreate.rentalReturnDate"
+                    : item.family === "P3"
+                      ? "tripCreate.checkout"
+                      : "tripCreate.end",
+                )}
               </Text>
               <Text style={styles.text}>{civil(schedule.end.localDate)}</Text>
               {schedule.end.localTime ? (
@@ -103,13 +119,37 @@ export function LocalCoreItemPreview({
           {item.place?.authoredAddress ? (
             <Text style={styles.text}>{item.place.authoredAddress}</Text>
           ) : null}
-          {(item.family === "P1" || item.family === "P3") &&
+          {item.family === "P4" ? (
+            <>
+              {typeof item.details.actualVehicleModel === "string" ? (
+                <Text style={styles.text}>{item.details.actualVehicleModel}</Text>
+              ) : null}
+              {typeof item.details.verifiedPlate === "string" ? (
+                <Text style={styles.text}>{item.details.verifiedPlate}</Text>
+              ) : null}
+              {typeof pickupPlace?.authoredLabel === "string" ? (
+                <Text style={styles.text}>
+                  {t("tripCreate.rentalPickupPlace")}: {pickupPlace.authoredLabel}
+                </Text>
+              ) : null}
+              {typeof returnPlace?.authoredLabel === "string" ? (
+                <Text style={styles.text}>
+                  {t("tripCreate.rentalReturnPlace")}: {returnPlace.authoredLabel}
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+          {(item.family === "P1" || item.family === "P3" || item.family === "P4") &&
           typeof item.description === "string" &&
           item.description.trim() ? (
             <View>
               <Text style={styles.meta}>
                 {t(
-                  item.family === "P3" ? "tripCreate.stayNotes" : "tripCreate.planNotes",
+                  item.family === "P4"
+                    ? "tripCreate.rentalNotes"
+                    : item.family === "P3"
+                      ? "tripCreate.stayNotes"
+                      : "tripCreate.planNotes",
                 )}
               </Text>
               <Text style={styles.text}>{item.description}</Text>
@@ -118,7 +158,11 @@ export function LocalCoreItemPreview({
           {onEdit ? (
             <UiButton
               label={t(
-                item.family === "P3" ? "tripCreate.editStay" : "tripCreate.editPlan",
+                item.family === "P4"
+                  ? "tripCreate.editRental"
+                  : item.family === "P3"
+                    ? "tripCreate.editStay"
+                    : "tripCreate.editPlan",
               )}
               onPress={onEdit}
             />
@@ -126,9 +170,11 @@ export function LocalCoreItemPreview({
           {editError ? (
             <Text accessibilityRole="alert" style={styles.meta}>
               {t(
-                item.family === "P3"
-                  ? "tripCreate.stayUnavailable"
-                  : "tripCreate.planUnavailable",
+                item.family === "P4"
+                  ? "tripCreate.rentalUnavailable"
+                  : item.family === "P3"
+                    ? "tripCreate.stayUnavailable"
+                    : "tripCreate.planUnavailable",
               )}
             </Text>
           ) : null}
