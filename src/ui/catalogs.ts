@@ -457,6 +457,13 @@ export const en = {
   "tripCreate.itemPending": "Saved · waiting to sync",
   "tripCreate.itemNeedsAttention": "Saved · needs attention before syncing",
   "tripCreate.addItem": "Add to itinerary",
+  "manualFlight.newFlight": "New flight",
+  "manualFlight.number": "Flight number",
+  "manualFlight.departureDate": "Departure date",
+  "manualFlight.claimUnavailable":
+    "This flight needs an identity check before it can be saved. Cancel and reopen to change your input.",
+  "manualFlight.saveUnavailable":
+    "Local save is not confirmed. Retry with these values, or cancel and reopen to change them.",
   "formEntry.title": "Add itinerary",
   "formEntry.prompt": "What would you like to add?",
   "formEntry.plan": "Plan",
@@ -2926,6 +2933,13 @@ export const zhHans: Record<MessageKey, string> = {
   "tripCreate.itemPending": "已保存 · 待同步",
   "tripCreate.itemNeedsAttention": "已保存 · 同步前需要处理",
   "tripCreate.addItem": "添加安排",
+  "manualFlight.newFlight": "新航班",
+  "manualFlight.number": "航班号",
+  "manualFlight.departureDate": "出发日期",
+  "manualFlight.claimUnavailable":
+    "保存前需核对该航班的身份。如需修改，请取消后重新填写。",
+  "manualFlight.saveUnavailable":
+    "暂未确认本地保存结果。请用原输入重试，或取消后重新填写。",
   "formEntry.title": "添加行程",
   "formEntry.prompt": "你想添加什么？",
   "formEntry.plan": "计划",

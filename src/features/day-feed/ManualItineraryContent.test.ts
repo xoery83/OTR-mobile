@@ -1,3 +1,9 @@
+vi.mock("./ManualFlightForm", () => ({
+  ManualFlightEditor: (props: any) => {
+    state.editor = { family: "P2", ...props };
+    return null;
+  },
+}));
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -119,6 +125,7 @@ it("shows the approved 2+5 order without creating a draft or reading an editor",
   expect(props.onSaved).not.toHaveBeenCalled();
 });
 it.each([
+  ["flight", "P2"],
   ["plan", "P1"],
   ["stay", "P3"],
   ["rental", "P4"],
@@ -141,7 +148,7 @@ it.each([
   },
 );
 it("unsupported types cannot route to P1 even if a stale handler is invoked", () => {
-  for (const label of ["flight", "flexible", "activity"]) {
+  for (const label of ["flexible", "activity"]) {
     render();
     const button = state.buttons.find(
       (p) => p.accessibilityLabel === `formEntry.${label}`,

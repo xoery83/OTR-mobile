@@ -13,13 +13,14 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { ManualFlightEditor } from "./ManualFlightForm";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { P3StayEditor } from "./P3StayEditor";
 import { P4RentalEditor } from "./P4RentalEditor";
 import { P5TransportEditor } from "./P5TransportEditor";
 
 import { manualItineraryTypes } from "./manualItineraryTypes";
-type Family = "P1" | "P3" | "P4" | "P5";
+type Family = "P2" | "P1" | "P3" | "P4" | "P5";
 export function ManualItineraryContent({
   tripId,
   generation,
@@ -72,6 +73,7 @@ export function ManualItineraryContent({
       if (generation === getAccountGeneration()) onSaved(id);
     },
   };
+  if (family === "P2") return <ManualFlightEditor {...props} />;
   if (family === "P1") return <P1PlanEditor {...props} />;
   if (family === "P3") return <P3StayEditor {...props} />;
   if (family === "P4") return <P4RentalEditor {...props} />;
