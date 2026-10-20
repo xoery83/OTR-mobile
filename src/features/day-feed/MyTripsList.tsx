@@ -122,6 +122,8 @@ export function MyTripsList({
     >
       <TripCoverVisual
         key={tripCoverId(trip)}
+        tripId={trip.id}
+        rawSelection={trip.selectedCoverAssetIdRaw}
         source={tripCoverSource(trip)}
         assetId={tripCoverId(trip)}
         style={styles.thumbnail}
@@ -172,6 +174,8 @@ export function MyTripsList({
             {groups.active.map((trip) => (
               <TripCoverVisual
                 key={`${trip.id}:${tripCoverId(trip)}`}
+                tripId={trip.id}
+                rawSelection={trip.selectedCoverAssetIdRaw}
                 source={tripCoverSource(trip)}
                 assetId={tripCoverId(trip)}
                 style={styles.heroImage}

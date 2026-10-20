@@ -1,3 +1,4 @@
+import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -620,6 +621,8 @@ function LocalTripContent({
             }}
             onHeroHeight={onHomeHeroHeight}
             widgets={pages}
+            tripId={selected.id}
+            rawCoverSelection={selected.selectedCoverAssetIdRaw}
             title={selected.name}
             cover={tripCoverSource(selected)}
             coverAssetId={tripCoverId(selected)}
@@ -713,15 +716,7 @@ function LocalTripContent({
                     setEditorSaving(saving);
                   }}
                   setup={setup?.context.tripId === selected.id ? setup : null}
-                  onOpenCurrency={() => {
-                    if (alive.current && generation === getAccountGeneration()) {
-                      setCoverOpen(false);
-                      router.push({
-                        pathname: "/trip-currency",
-                        params: { journeyId: selected.id },
-                      });
-                    }
-                  }}
+                  currencyAvailable
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}
                   onSaveMetadata={async (before, after, cover, operationId) => {
@@ -747,7 +742,9 @@ function LocalTripContent({
                         ...after,
                         ...(cover
                           ? {
-                              selectedCoverAssetId: cover.after,
+                              selectedCoverAssetId: isTripCoverAssetId(cover.after)
+                                ? cover.after
+                                : null,
                               selectedCoverAssetIdRaw: cover.after,
                             }
                           : {}),
@@ -836,6 +833,8 @@ function LocalTripContent({
               />
             }
             widgets={pages}
+            tripId={remoteSelected.id}
+            rawCoverSelection={remoteSelected.selectedCoverAssetIdRaw}
             title={remoteSelected.name}
             cover={tripCoverSource(remoteSelected)}
             coverAssetId={tripCoverId(remoteSelected)}

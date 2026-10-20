@@ -1,5 +1,9 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
+import * as ImagePicker from "expo-image-picker";
+import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepository";
+import { Modal } from "react-native";
+import { CurrencySettingsScreen } from "@/features/ledger/CurrencySettingsScreen";
 import { lightPalette } from "@/ui/palette";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripCoverPicker } from "./TripCoverPicker";
@@ -17,6 +21,7 @@ const state = vi.hoisted(() => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
+  useEffect: () => {},
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.values)) state.values[i] = initial;
@@ -28,12 +33,24 @@ vi.mock("react", async (original) => ({
     ];
   },
 }));
+vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
+  readTripPreparationSetupRepository: vi.fn(),
+}));
+vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));
+vi.mock("@/data/repositories/tripPhotoRepository", () => ({
+  readLocalTripPhotoRepository: vi.fn(),
+}));
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: any[]) => state.alert(...args) },
   View: "View",
+  Modal: "Modal",
   ScrollView: "ScrollView",
   StyleSheet: { create: (s: unknown) => s },
 }));
+vi.mock("@/features/ledger/CurrencySettingsScreen", () => ({
+  CurrencySettingsScreen: "CurrencySettingsScreen",
+}));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
 vi.mock("@/ui/theme", () => ({
   useThemedStyles: (create: (colors: typeof lightPalette) => unknown) =>
     create(lightPalette),
@@ -172,37 +189,64 @@ it("withholds metadata edits without local creator provenance while retaining th
   expect(nodes.some((node) => node.type === TripCoverPicker)).toBe(true);
 });
 
-it("retains a dirty editor when Currency is opened unless the user explicitly discards", () => {
-  const open = vi.fn();
+it("opens the existing Currency screen over a dirty editor and Back preserves every draft", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
   const renderEditor = () => {
     state.cursor = state.refCursor = 0;
     return elements(
       TripBasicEditor({
         trip,
         metadataEditable: true,
-        onSaveMetadata: vi.fn(),
+        onSaveMetadata: save,
         onSelectCover: vi.fn(),
-        onOpenCurrency: open,
+        currencyAvailable: true,
       }),
     );
   };
   let nodes = renderEditor();
-  (nodes.find((n) => n.type === TripCurrencyRow)!.props.onOpen as () => void)();
-  expect(open).toHaveBeenCalledOnce();
-  open.mockClear();
-  (nodes.find((n) => n.type === TripMetadataFields)!.props.onName as (s: string) => void)(
-    "Unsaved name",
-  );
+  const fields = nodes.find((n) => n.type === TripMetadataFields)!.props;
+  (fields.onName as (s: string) => void)("Unsaved name");
+  (fields.onDestination as (s: string) => void)("Tokyo");
+  (fields.onRange as (s: any) => void)({ start: "2027-01-01", end: "2027-01-02" });
+  await (
+    nodes.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
+      s: string,
+    ) => Promise<void>
+  )("coast");
   nodes = renderEditor();
   (nodes.find((n) => n.type === TripCurrencyRow)!.props.onOpen as () => void)();
-  expect(open).not.toHaveBeenCalled();
-  const actions = state.alert.mock.calls[0][2];
-  expect(actions[0].style).toBe("cancel");
-  expect(renderEditor().find((n) => n.type === TripMetadataFields)!.props.name).toBe(
-    "Unsaved name",
+  nodes = renderEditor();
+  expect(nodes.find((n) => n.type === Modal)!.props.visible).toBe(true);
+  expect(nodes.find((n) => n.type === CurrencySettingsScreen)!.props.journeyId).toBe(
+    trip.id,
   );
-  actions[1].onPress();
-  expect(open).toHaveBeenCalledOnce();
+  expect(state.alert).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
+  (
+    nodes.find((n) => n.type === SheetHeader && n.props.leftLabel === "common.back")!
+      .props.onLeft as () => void
+  )();
+  nodes = renderEditor();
+  expect(nodes.find((n) => n.type === Modal)!.props.visible).toBe(false);
+  expect(nodes.find((n) => n.type === TripMetadataFields)!.props).toMatchObject({
+    name: "Unsaved name",
+    destination: "Tokyo",
+    range: { start: "2027-01-01", end: "2027-01-02" },
+  });
+  expect(nodes.find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBe("coast");
+  (nodes.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save).toHaveBeenCalledExactlyOnceWith(
+    before,
+    {
+      name: "Unsaved name",
+      destination: "Tokyo",
+      startDate: "2027-01-01",
+      endDate: "2027-01-02",
+    },
+    { before: "cultural-oldtown", after: "coast" },
+    expect.any(String),
+  );
 });
 
 it("metadata-only edits preserve an unsupported raw manual selection without cover intent", async () => {
@@ -266,4 +310,69 @@ it("does not turn an uncertified decoded null into an explicit cover save", asyn
     )("city"),
   ).rejects.toThrow("TRIP_COVER_STATE_UNAVAILABLE");
   expect(save).not.toHaveBeenCalled();
+});
+
+it("keeps explicit manual choice on rename/location while AUTO stays null and uses draft metadata", async () => {
+  const autoTrip = { ...trip, selectedCoverAssetId: null, selectedCoverAssetIdRaw: null };
+  let nodes = render(undefined, undefined, autoTrip);
+  const fields = nodes.find((n) => n.type === TripMetadataFields)!.props;
+  (fields.onName as (s: string) => void)("Tokyo city tour");
+  (fields.onDestination as (s: string) => void)("Tokyo");
+  nodes = render(undefined, undefined, autoTrip);
+  expect(nodes.find((n) => n.type === TripCoverPicker)!.props).toMatchObject({
+    selectedRaw: null,
+    trip: { name: "Tokyo city tour", destination: "Tokyo" },
+  });
+  await (
+    nodes.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
+      s: string,
+    ) => Promise<void>
+  )("city");
+  nodes = render(undefined, undefined, autoTrip);
+  (
+    nodes.find((n) => n.type === TripMetadataFields)!.props.onDestination as (
+      s: string,
+    ) => void
+  )("Iceland");
+  nodes = render(undefined, undefined, autoTrip);
+  expect(nodes.find((n) => n.type === TripCoverPicker)!.props).toMatchObject({
+    selectedRaw: "city",
+    trip: { destination: "Iceland" },
+  });
+});
+
+it("retains a picked photo through the owning photo repository, stages only its stable ID and preserves it on draft rename", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const id = "00000000-0000-4000-8000-000000000002";
+  vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: "file://picker/temporary" }],
+  } as any);
+  const add = vi
+    .fn()
+    .mockResolvedValue({ assetId: id, localUri: "file://retained/photo" });
+  vi.mocked(readLocalTripPhotoRepository).mockResolvedValue({ addTripPhoto: add } as any);
+  let view = render(save);
+  expect(
+    await (
+      view.find((n) => n.type === TripCoverPicker)!.props
+        .onChoosePhoto as () => Promise<boolean>
+    )(),
+  ).toBe(true);
+  expect(add).toHaveBeenCalledExactlyOnceWith(trip.id, "file://picker/temporary");
+  expect(save).not.toHaveBeenCalled();
+  view = render(save);
+  (view.find((n) => n.type === TripMetadataFields)!.props.onName as (s: string) => void)(
+    "New draft name",
+  );
+  view = render(save);
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBe(
+    "photo-" + id,
+  );
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save.mock.calls[0][2]).toEqual({
+    before: "cultural-oldtown",
+    after: "photo-" + id,
+  });
 });

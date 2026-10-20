@@ -19,6 +19,8 @@ import { TripHomeWidgetHost, type TripHomeWidget } from "./TripHomeWidgetHost";
 
 export function TripHomeFrame({
   title,
+  tripId,
+  rawCoverSelection,
   metadata,
   cover,
   coverAssetId,
@@ -29,6 +31,8 @@ export function TripHomeFrame({
   onEdit,
 }: {
   title: string;
+  tripId?: string;
+  rawCoverSelection?: string | null;
   metadata: readonly string[];
   cover: ImageSourcePropType;
   coverAssetId?: TripCoverAssetId;
@@ -50,6 +54,8 @@ export function TripHomeFrame({
             ? (event) => onHeroHeight(event.nativeEvent.layout.height)
             : undefined
         }
+        tripId={tripId}
+        rawSelection={rawCoverSelection}
         source={cover}
         assetId={coverAssetId}
         style={[styles.hero, { width, minHeight: height * 0.32 }]}

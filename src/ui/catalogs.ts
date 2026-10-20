@@ -18,7 +18,7 @@ export const en = {
     "Names were kept. Clear the last entered names before reducing the number of fields.",
   "tripForm.namedPeopleHint":
     "Includes the creator when listed. Names do not indicate account connections or invitations.",
-  "tripForm.dates": "Travel dates · Optional",
+  "tripForm.dates": "Travel dates (optional)",
   "tripForm.chooseStart": "Choose a start date, then an end date.",
   "tripForm.chooseEnd": "Choose an end date.",
   "tripForm.previousMonth": "Previous month",
@@ -379,6 +379,9 @@ export const en = {
   "coverLibrary.wikidata": "Wikidata",
   "coverLibrary.geoLicense": "GeoNames licence · CC BY 4.0",
   "coverLibrary.preview": "Preview library · rights and crop review pending",
+  "coverLibrary.current": "Current cover",
+  "coverLibrary.choosePhoto": "Choose cover photo",
+  "coverLibrary.option": "Suggested cover {number}",
   "coverLibrary.automatic": "Automatic cover",
   "coverLibrary.unavailable":
     "Your saved cover is unavailable in this version. It has not been changed.",
@@ -2381,7 +2384,7 @@ export const zhHans: Record<MessageKey, string> = {
     "姓名已保留。请先清空末尾已填写的姓名，再减少姓名栏数量。",
   "tripForm.namedPeopleHint":
     "创建者在名单中时也计入人数。姓名不代表账号已连接或已发出邀请。",
-  "tripForm.dates": "旅行日期 · 可选",
+  "tripForm.dates": "旅行日期（可选）",
   "tripForm.chooseStart": "先选择开始日期，再选择结束日期。",
   "tripForm.chooseEnd": "选择结束日期。",
   "tripForm.previousMonth": "上个月",
@@ -2728,6 +2731,9 @@ export const zhHans: Record<MessageKey, string> = {
   "coverLibrary.wikidata": "Wikidata",
   "coverLibrary.geoLicense": "GeoNames 许可 · CC BY 4.0",
   "coverLibrary.preview": "预览图库 · 授权与裁剪仍待审核",
+  "coverLibrary.current": "当前封面",
+  "coverLibrary.choosePhoto": "选择封面照片",
+  "coverLibrary.option": "推荐封面 {number}",
   "coverLibrary.automatic": "自动选择封面",
   "coverLibrary.unavailable": "已保存的封面在此版本不可用。原选择未被更改。",
   "coverLibrary.recommended": "此旅行的推荐封面",

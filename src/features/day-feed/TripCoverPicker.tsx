@@ -1,229 +1,225 @@
-import { useState } from "react";
-import { FlatList, Linking, Modal, Pressable, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRef, useState } from "react";
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
+import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import {
   isTripCoverAssetId,
-  legacyTripCoverAssetIds,
+  parseTripPhotoCoverRef,
+  type TripCoverChoice,
   type TripCoverAssetId,
 } from "@/domain/trip/tripCoverAssets";
-import {
-  coverCatalog,
-  rankedTripCovers,
-  type CoverMetadata,
-} from "@/features/trip-cover/coverDecision";
-import { builtInTripCoverIds, builtInTripCoverSource } from "./tripCovers";
+import { coverCatalog, type CoverMetadata } from "@/features/trip-cover/coverDecision";
+import { builtInTripCoverSource, tripCoverId, tripCoverSource } from "./tripCovers";
+import { suggestedCoverIds } from "./tripCoverRecommendations";
 import { TripCoverVisual } from "./TripCoverVisual";
 
 export function TripCoverPicker({
   trip,
   selectedRaw,
   onSelect,
+  onChoosePhoto,
 }: {
   trip: CoverMetadata;
   selectedRaw?: string | null;
-  onSelect(id: TripCoverAssetId | null): Promise<void>;
+  onSelect(id: TripCoverChoice | null): Promise<void>;
+  onChoosePhoto?(): Promise<boolean>;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const insets = useSafeAreaInsets();
+  const colors = useUiTheme();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const busy = useRef(false);
   const [error, setError] = useState(false);
   const [credits, setCredits] = useState(false);
-  const ranked = open ? rankedTripCovers(trip, 48) : [];
-  const recommended = new Set(ranked.map((row) => row.asset.id));
-  const order = [
-    ...ranked.map((row) => row.asset.id).filter(isTripCoverAssetId),
-    ...builtInTripCoverIds.filter((id) => !recommended.has(id)),
-  ];
-  const select = (id: TripCoverAssetId | null) => {
-    if (saving) return;
+  const current = { ...trip, selectedCoverAssetIdRaw: selectedRaw };
+  const currentId = tripCoverId(current);
+  const personal = parseTripPhotoCoverRef(selectedRaw) !== null;
+  const order = open ? suggestedCoverIds(trip, personal ? selectedRaw : currentId) : [];
+  const select = async (id: TripCoverChoice | null) => {
+    if (busy.current) return;
+    busy.current = true;
     setSaving(true);
     setError(false);
-    void onSelect(id)
-      .then(() => setOpen(false))
-      .catch(() => setError(true))
-      .finally(() => setSaving(false));
+    try {
+      await onSelect(id);
+      setOpen(false);
+    } catch {
+      setError(true);
+    } finally {
+      busy.current = false;
+      setSaving(false);
+    }
   };
+  const choosePhoto = async () => {
+    if (busy.current || !onChoosePhoto) return;
+    busy.current = true;
+    setSaving(true);
+    setError(false);
+    try {
+      if (await onChoosePhoto()) setOpen(false);
+    } catch {
+      setError(true);
+    } finally {
+      busy.current = false;
+      setSaving(false);
+    }
+  };
+  const close = () => {
+    if (!busy.current) setOpen(false);
+  };
+  const creditAssets = coverCatalog.filter(
+    (asset) =>
+      (!personal && asset.id === currentId) ||
+      order.includes(asset.id as TripCoverAssetId),
+  );
   return (
     <View>
-      <UiButton
-        label={t("myTrips.chooseCover")}
-        variant="text"
-        onPress={() => setOpen(true)}
-      />
+      <View style={styles.preview}>
+        <TripCoverVisual
+          tripId={trip.id}
+          rawSelection={selectedRaw}
+          source={tripCoverSource(current)}
+          assetId={currentId}
+          style={styles.cover}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("myTrips.chooseCover")}
+          onPress={() => {
+            setError(false);
+            setOpen(true);
+          }}
+          style={styles.edit}
+        >
+          <AppIcon name="pencil" color={colors.mediaText} size={22} />
+        </Pressable>
+      </View>
       <Modal
         visible={open}
         presentationStyle="pageSheet"
         animationType="slide"
-        onRequestClose={() => {
-          if (!saving) setOpen(false);
-        }}
+        onRequestClose={close}
+        allowSwipeDismissal={!saving}
       >
-        <View
-          style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
-        >
+        <SafeAreaView edges={["bottom"]} style={styles.root}>
           <SheetHeader
             title={t("myTrips.chooseCover")}
             leftLabel={t("common.close")}
-            onLeft={() => {
-              if (!saving) setOpen(false);
-            }}
+            onLeft={close}
+            safeTop={false}
           />
-          <FlatList
-            data={open ? order : []}
-            keyExtractor={(id) => id}
-            initialNumToRender={6}
-            maxToRenderPerBatch={6}
-            windowSize={5}
-            contentContainerStyle={styles.list}
-            ListHeaderComponent={
-              <View style={styles.header}>
-                <UiText>{t("coverLibrary.preview")}</UiText>
-                {selectedRaw !== null && !isTripCoverAssetId(selectedRaw) ? (
-                  <UiText>{t("coverLibrary.unavailable")}</UiText>
-                ) : null}
-                <UiButton
-                  label={t("coverLibrary.automatic")}
-                  variant={selectedRaw === null ? "primary" : "secondary"}
-                  disabled={saving}
-                  onPress={() => select(null)}
+          <ScrollView style={styles.root} contentContainerStyle={styles.list}>
+            <View style={styles.firstRow}>
+              <View style={styles.tile}>
+                <TripCoverVisual
+                  tripId={trip.id}
+                  rawSelection={selectedRaw}
+                  source={tripCoverSource(current)}
+                  assetId={currentId}
+                  style={styles.image}
                 />
-                <UiButton
-                  label={t("coverLibrary.credits")}
-                  variant="text"
-                  onPress={() => setCredits(!credits)}
-                />
-                {credits ? (
-                  <View>
-                    <UiText>{t("coverLibrary.geoCredits")}</UiText>
-                    <UiButton
-                      label={t("coverLibrary.geoNames")}
-                      variant="text"
-                      onPress={() => {
-                        void Linking.openURL("https://www.geonames.org/").catch(() =>
-                          setError(true),
-                        );
-                      }}
-                    />
-                    <UiButton
-                      label={t("coverLibrary.wikidata")}
-                      variant="text"
-                      onPress={() => {
-                        void Linking.openURL("https://www.wikidata.org/").catch(() =>
-                          setError(true),
-                        );
-                      }}
-                    />
-                    <UiButton
-                      label={t("coverLibrary.geoLicense")}
-                      variant="text"
-                      onPress={() => {
-                        void Linking.openURL(
-                          "https://creativecommons.org/licenses/by/4.0/",
-                        ).catch(() => setError(true));
-                      }}
-                    />
-                  </View>
-                ) : null}
-                {error ? (
-                  <UiText accessibilityRole="alert" style={styles.error}>
-                    {t("myTrips.coverFailed")}
-                  </UiText>
-                ) : null}
+                <UiText style={styles.caption}>{t("coverLibrary.current")}</UiText>
               </View>
-            }
-            renderItem={({ item: id }) => {
-              const asset = coverCatalog.find((row) => row.id === id);
-              const legacy = legacyTripCoverAssetIds.find((value) => value === id);
-              const title = legacy ? t(`myTrips.cover.${legacy}`) : (asset?.title ?? id);
-              return (
-                <View style={styles.row}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={title}
-                    accessibilityState={{
-                      selected: selectedRaw === id,
-                      disabled: saving,
-                    }}
-                    disabled={saving}
-                    onPress={() => select(id)}
-                    style={styles.choice}
-                  >
-                    <TripCoverVisual
-                      source={builtInTripCoverSource(id)}
-                      assetId={id}
-                      style={styles.image}
-                    />
-                    <View style={styles.body}>
-                      <UiText style={styles.title}>{title}</UiText>
-                      {recommended.has(id) ? (
-                        <UiText style={styles.meta}>
-                          {t("coverLibrary.recommended")}
-                        </UiText>
-                      ) : null}
-                      {asset ? (
-                        <UiText style={styles.meta}>
-                          {asset.provenance.kind === "owner_photograph"
-                            ? t("coverLibrary.ownerPhoto")
-                            : `${asset.provenance.author} · ${asset.provenance.license}`}
-                        </UiText>
-                      ) : null}
-                      {asset?.provenance.kind === "owner_photograph" ? (
-                        <UiText style={styles.meta}>
-                          {t("coverLibrary.ownerScope")}
-                        </UiText>
-                      ) : null}
-                      {asset?.provenance.kind === "generated_illustration" ? (
-                        <UiText style={styles.meta}>
-                          {t("coverLibrary.illustration")}
-                        </UiText>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                  {credits && asset ? (
-                    <View style={styles.credits}>
-                      <UiText style={styles.meta}>
-                        {asset.provenance.kind === "owner_photograph"
-                          ? t("coverLibrary.ownerScope")
-                          : asset.provenance.attribution}
-                      </UiText>
-                      {asset.provenance.sourceUrl.startsWith("https://") ? (
-                        <UiButton
-                          label={t("coverLibrary.source")}
-                          variant="text"
-                          onPress={() => {
-                            void Linking.openURL(asset.provenance.sourceUrl).catch(() =>
-                              setError(true),
-                            );
-                          }}
-                        />
-                      ) : null}
-                      {asset.provenance.licenseUrl.startsWith("https://") ? (
-                        <UiButton
-                          label={t("coverLibrary.license")}
-                          variant="text"
-                          onPress={() => {
-                            void Linking.openURL(asset.provenance.licenseUrl).catch(() =>
-                              setError(true),
-                            );
-                          }}
-                        />
-                      ) : null}
-                    </View>
-                  ) : null}
-                </View>
-              );
-            }}
-          />
-        </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("coverLibrary.choosePhoto")}
+                accessibilityState={{ disabled: saving || !onChoosePhoto }}
+                disabled={saving || !onChoosePhoto}
+                onPress={() => void choosePhoto()}
+                style={[
+                  styles.tile,
+                  styles.upload,
+                  (saving || !onChoosePhoto) && styles.disabled,
+                ]}
+              >
+                <AppIcon name="photo.badge.plus" color={colors.accent} size={28} />
+                <UiText style={styles.caption}>{t("coverLibrary.choosePhoto")}</UiText>
+              </Pressable>
+            </View>
+            {selectedRaw !== null &&
+            selectedRaw !== undefined &&
+            !isTripCoverAssetId(selectedRaw) &&
+            !personal ? (
+              <UiText style={styles.meta}>{t("coverLibrary.unavailable")}</UiText>
+            ) : null}
+            <View style={styles.grid}>
+              {order.map((id, index) => (
+                <Pressable
+                  key={id}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("coverLibrary.option", { number: index + 1 })}
+                  accessibilityState={{ disabled: saving }}
+                  disabled={saving}
+                  onPress={() => void select(id)}
+                  style={styles.tile}
+                >
+                  <TripCoverVisual
+                    source={builtInTripCoverSource(id)}
+                    assetId={id}
+                    style={styles.image}
+                  />
+                </Pressable>
+              ))}
+            </View>
+            {error ? (
+              <UiText accessibilityRole="alert" style={styles.error}>
+                {t("myTrips.coverFailed")}
+              </UiText>
+            ) : null}
+            <UiButton
+              label={t("coverLibrary.automatic")}
+              variant="text"
+              disabled={saving}
+              onPress={() => void select(null)}
+            />
+            <UiButton
+              label={t("coverLibrary.credits")}
+              variant="text"
+              onPress={() => setCredits(!credits)}
+            />
+            {credits ? (
+              <View style={styles.credits}>
+                <UiText style={styles.meta}>{t("coverLibrary.geoCredits")}</UiText>
+                {creditAssets.map((asset) => (
+                  <View key={asset.id} style={styles.credit}>
+                    <UiText style={styles.meta}>{asset.title}</UiText>
+                    <UiText style={styles.meta}>{asset.provenance.attribution}</UiText>
+                    {asset.provenance.sourceUrl.startsWith("https://") ? (
+                      <UiButton
+                        label={t("coverLibrary.source")}
+                        variant="text"
+                        onPress={() => {
+                          void Linking.openURL(asset.provenance.sourceUrl).catch(() =>
+                            setError(true),
+                          );
+                        }}
+                      />
+                    ) : null}
+                    {asset.provenance.licenseUrl.startsWith("https://") ? (
+                      <UiButton
+                        label={t("coverLibrary.license")}
+                        variant="text"
+                        onPress={() => {
+                          void Linking.openURL(asset.provenance.licenseUrl).catch(() =>
+                            setError(true),
+                          );
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </View>
   );
@@ -231,24 +227,43 @@ export function TripCoverPicker({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: c.background },
-    list: { padding: visual.space.page, gap: visual.space.heading },
-    header: { gap: visual.space.heading, paddingBottom: visual.space.heading },
-    row: {
-      backgroundColor: c.surface,
-      borderRadius: visual.radius.card,
-      overflow: "hidden",
-    },
-    choice: {
-      flexDirection: "row",
+    list: { padding: visual.space.page, gap: visual.space.section },
+    preview: { position: "relative" },
+    cover: { height: 128, borderRadius: visual.radius.card },
+    edit: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      minWidth: 44,
+      minHeight: 44,
       alignItems: "center",
-      minHeight: 88,
-      gap: visual.space.heading,
-      padding: visual.space.heading,
+      justifyContent: "center",
     },
-    body: { flex: 1, gap: visual.space.heading },
-    image: { width: 96, height: 76, borderRadius: visual.radius.card },
-    title: { ...visual.type.row, color: c.textPrimary },
+    firstRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      gap: visual.space.card,
+    },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      gap: visual.space.card,
+    },
+    tile: { width: "47%", minHeight: 88, gap: visual.space.heading },
+    image: { width: "100%", aspectRatio: 1.5, borderRadius: visual.radius.card },
+    upload: {
+      borderRadius: visual.radius.card,
+      backgroundColor: c.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: visual.space.card,
+    },
+    caption: { ...visual.type.meta, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
-    credits: { padding: visual.space.heading },
+    disabled: { opacity: 0.5 },
+    credits: { gap: visual.space.card },
+    credit: { gap: visual.space.heading },
     error: { ...visual.type.meta, color: c.destructive },
   });

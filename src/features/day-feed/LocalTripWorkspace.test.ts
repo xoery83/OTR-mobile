@@ -14,6 +14,12 @@ import {
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { router } from "expo-router";
+vi.mock("@/features/ledger/CurrencySettingsScreen", () => ({
+  CurrencySettingsScreen: (props: any) => {
+    state.nodes.push({ currencyScreen: props });
+    return null;
+  },
+}));
 vi.mock("./TripCalendarRangeField", () => ({
   TripCalendarRangeField: () => null,
   tripRangeLabel: () => "range",
@@ -99,6 +105,12 @@ vi.mock("react", async (original) => ({
     ];
   },
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
+}));
+vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));
+vi.mock("@/data/files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
 }));
 vi.mock("react-native", () => ({
   KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
@@ -1026,7 +1038,7 @@ it("opens the existing Members sheet from a scoped local menu only when real set
   expect(state.nodes.some((node) => node.membersSheet?.visible)).toBe(false);
 });
 
-it("leaves the unchanged Editor for same-Trip parent currency without saving, and fences its stale callback", async () => {
+it("keeps the same Editor mounted beneath same-Trip Currency without saving", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -1058,15 +1070,16 @@ it("leaves the unchanged Editor for same-Trip parent currency without saving, an
   vi.mocked(router.push).mockClear();
   currency.onPress();
   render();
-  expect(router.push).toHaveBeenCalledExactlyOnceWith({
-    pathname: "/trip-currency",
-    params: { journeyId: "local-a" },
-  });
-  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+  expect(router.push).not.toHaveBeenCalled();
+  expect(state.nodes.some((node) => node.currencyScreen?.journeyId === "local-a")).toBe(
+    true,
+  );
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
   expect(repo.updateMetadata).not.toHaveBeenCalled();
-  vi.mocked(router.push).mockClear();
   advanceAccountGeneration();
   render();
   currency.onPress();
+  render();
+  expect(state.nodes.some((node) => node.currencyScreen)).toBe(false);
   expect(router.push).not.toHaveBeenCalled();
 });

@@ -54,5 +54,5 @@ export function TripMetadataFields({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     fields: { gap: visual.space.card },
-    label: { ...visual.type.meta, color: c.textPrimary },
+    label: { ...visual.type.action, color: c.textPrimary },
   });

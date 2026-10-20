@@ -34,6 +34,7 @@ const hooks = vi.hoisted(() => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useEffect: () => {},
   useState: (initial: any) => {
     const i = hooks.cursor++;
     if (!(i in hooks.values)) hooks.values[i] = initial;
@@ -47,6 +48,12 @@ vi.mock("react", async (original) => ({
   },
   useRef: (initial: any) => (hooks.refs[hooks.refCursor++] ??= { current: initial }),
 }));
+vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));
+vi.mock("@/data/files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
 vi.mock("react-native", () => ({
   View: "View",
   Modal: "Modal",
@@ -55,6 +62,9 @@ vi.mock("react-native", () => ({
   StyleSheet: { create: (s: any) => s },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
+vi.mock("@/features/ledger/CurrencySettingsScreen", () => ({
+  CurrencySettingsScreen: "CurrencySettingsScreen",
+}));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("@/ui/controls", () => ({
   UiText: "UiText",
