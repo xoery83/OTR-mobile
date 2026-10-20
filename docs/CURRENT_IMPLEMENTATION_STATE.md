@@ -1,3 +1,11 @@
+## Experience Day native-host regression — 20 October 2026
+
+- Owner reproduced flat Menu/Search on the new Day header after the 2a2ec5ab preview. Earlier bounded Native observations did not cover the saved-Day/legacy-root branch; chrome remains PARTIAL, not UX Accepted.
+- Proven chain: Bottom Shell saved Day navigated to `/` → explicit Today Tab rendered `TripScreen today` with JS Menu/Search header actions. First entry used native `/trip-home`, explaining inconsistent buttons without a material change.
+- Isolated follow-up on 2a2ec5ab routes saved Day to the existing native Trip Stack with the same Trip/date/zone/mode and `resume()` owner. Legacy explicit `/` Day links use Redirect replacement to the same host; non-Day root/invalid target still opens My Trips, physical smoke remains available.
+- Explicit link context wins; omitted context may come only from the matching current-generation view/bookmark. Repository, reading/anchor, date contracts, data, Core and native materials are unchanged.
+- Static route/context checks are separate from pending independent Review and Native repeated Home–Day/Search/Back/deep-link checks. No device/Metro reload authorized or performed for this follow-up. Resident AD5 remains the previous 2a preview.
+
 # ER02 Range Picker local correction — 2026-10-18 / PARTIAL
 
 - Root Native window exposed year-scale calendar movement; original AD5/8083

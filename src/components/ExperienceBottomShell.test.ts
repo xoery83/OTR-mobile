@@ -11,7 +11,13 @@ const state = vi.hoisted(() => ({
     owner: symbol;
     navigationVisible: boolean;
   },
-  view: null as null | { tripId: string; date: string; zone: string; generation: number },
+  view: null as null | {
+    tripId: string;
+    date: string;
+    zone: string | null;
+    viewMode?: "FLOATING";
+    generation: number;
+  },
   navigate: vi.fn(),
   setParams: vi.fn(),
   fontScale: 1,
@@ -230,8 +236,55 @@ it("keeps Home, Day and Ledger available for the generation-scoped accepted Day"
     params: { tripId: "accepted-trip", view: "home" },
   });
   buttons[1].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith({ pathname: "/", params: { view: "day" } });
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: {
+      tripId: "accepted-trip",
+      view: "day",
+      date: "2026-10-13",
+      zone: "UTC",
+      viewMode: "NAMED_ZONE",
+    },
+  });
 });
+
+it.each(["/trip-home", "/trip", "/expenses", "/updates"])(
+  "resumes floating Day through the native Trip host from %s, replacing stale Home params",
+  (pathname) => {
+    state.params = {
+      tripId: "a",
+      view: "home",
+      date: "2027-03-01",
+      zone: "Asia/Tokyo",
+      viewMode: "NAMED_ZONE",
+    };
+    state.workingTrip = { tripId: "a", generation: 1 };
+    state.view = {
+      tripId: "a",
+      date: "2026-10-31",
+      zone: null,
+      viewMode: "FLOATING",
+      generation: 1,
+    };
+    const day = pressables(ExperienceBottomShell({ visible: true, pathname })).find(
+      (button) => button.props.accessibilityLabel === "shell.day",
+    )!;
+    day.props.onPress?.();
+    expect(state.resume).toHaveBeenCalledOnce();
+    expect(state.navigate).toHaveBeenCalledExactlyOnceWith({
+      pathname: "/trip-home",
+      params: {
+        tripId: "a",
+        view: "day",
+        date: "2026-10-31",
+        zone: "",
+        viewMode: "FLOATING",
+      },
+    });
+    expect(state.setParams).not.toHaveBeenCalled();
+    expect(state.quickActions).toBeNull();
+  },
+);
 
 it("uses the explicit working Trip for Home and Ledger while Day resumes its own bookmark", () => {
   state.workingTrip = { tripId: "a", generation: 1 };

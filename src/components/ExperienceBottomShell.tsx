@@ -336,7 +336,17 @@ export function ExperienceBottomShell({
                     savedDay.generation === generation
                   ) {
                     resume();
-                    router.navigate({ pathname: "/", params: { view: "day" } });
+                    // The legacy root Tab has JS header actions; resume in the native Trip Stack.
+                    router.navigate({
+                      pathname: "/trip-home",
+                      params: {
+                        tripId: savedDay.tripId,
+                        view: "day",
+                        date: savedDay.date,
+                        zone: savedDay.zone ?? "",
+                        viewMode: savedDay.zone === null ? "FLOATING" : "NAMED_ZONE",
+                      },
+                    });
                   } else if (activeQuickActions?.chooseDay) {
                     activeQuickActions.chooseDay();
                   } else {
