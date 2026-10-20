@@ -1,4 +1,6 @@
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
+import { ApiClientError } from "@/data/api/client";
+import { ZodError } from "zod";
 import {
   journeyCurrencyCommitSchema,
   journeyCurrencyPreviewSchema,
@@ -19,8 +21,91 @@ import { cachedRateLookup, identityRateLookup } from "./ledgerRateLookup";
 export type { JourneyCurrencyPreview } from "@/data/api/ledgerCurrencyContracts";
 export type LedgerRateLookupResult = LedgerRateLookupResponse;
 
+export type JourneyCurrencyPreviewFailure = {
+  kind:
+    | "CONFIG_UNAVAILABLE"
+    | "CONNECTIVITY"
+    | "AUTH"
+    | "FORBIDDEN"
+    | "CONFLICT"
+    | "SERVICE"
+    | "INVALID_RESPONSE"
+    | "UNKNOWN";
+  status?: number;
+  code?:
+    | "AUTH_REQUIRED"
+    | "INVALID_SESSION"
+    | "TRIP_WRITE_FORBIDDEN"
+    | "JOURNEY_CURRENCY_FINALIZED_LOCK"
+    | "JOURNEY_CURRENCY_OPEN_SETTLEMENT"
+    | "JOURNEY_CURRENCY_CONFLICT"
+    | "JOURNEY_CURRENCY_PREVIEW_STALE"
+    | "SETTINGS_REVISION_CONFLICT"
+    | "CURRENCY_UNCHANGED"
+    | "INVALID_CURRENCY"
+    | "BACKEND_UNAVAILABLE";
+};
+
+class CurrencyApiConfigurationError extends Error {
+  constructor() {
+    super("CURRENCY_API_CONFIG_UNAVAILABLE");
+  }
+}
+
+const safeServerCodes = new Set<NonNullable<JourneyCurrencyPreviewFailure["code"]>>([
+  "AUTH_REQUIRED",
+  "INVALID_SESSION",
+  "TRIP_WRITE_FORBIDDEN",
+  "JOURNEY_CURRENCY_FINALIZED_LOCK",
+  "JOURNEY_CURRENCY_OPEN_SETTLEMENT",
+  "JOURNEY_CURRENCY_CONFLICT",
+  "JOURNEY_CURRENCY_PREVIEW_STALE",
+  "SETTINGS_REVISION_CONFLICT",
+  "CURRENCY_UNCHANGED",
+  "INVALID_CURRENCY",
+  "BACKEND_UNAVAILABLE",
+]);
+
+export function classifyJourneyCurrencyPreviewFailure(
+  error: unknown,
+): JourneyCurrencyPreviewFailure {
+  if (error instanceof CurrencyApiConfigurationError)
+    return { kind: "CONFIG_UNAVAILABLE" };
+  if (!(error instanceof ApiClientError)) return { kind: "UNKNOWN" };
+  const status =
+    Number.isInteger(error.status) && error.status! >= 100 && error.status! <= 599
+      ? error.status
+      : undefined;
+  const code =
+    error.code &&
+    safeServerCodes.has(error.code as NonNullable<JourneyCurrencyPreviewFailure["code"]>)
+      ? (error.code as JourneyCurrencyPreviewFailure["code"])
+      : undefined;
+  if (error.kind === "network" || error.kind === "timeout")
+    return { kind: "CONNECTIVITY" };
+  if (error.kind === "validation") return { kind: "INVALID_RESPONSE", status };
+  if (error.kind !== "http") return { kind: "UNKNOWN" };
+  const kind =
+    status === 401
+      ? "AUTH"
+      : status === 403
+        ? "FORBIDDEN"
+        : status === 409
+          ? "CONFLICT"
+          : status !== undefined && status >= 500
+            ? "SERVICE"
+            : "UNKNOWN";
+  return { kind, status, code };
+}
+
 async function client() {
-  return createAuthenticatedApiClient();
+  try {
+    return createAuthenticatedApiClient();
+  } catch (error) {
+    // The shared client validates the public base URL before token or network work.
+    if (error instanceof ZodError) throw new CurrencyApiConfigurationError();
+    throw error;
+  }
 }
 
 export const ledgerCurrencyRepository = {
