@@ -4,7 +4,7 @@ import { expect, it, vi } from "vitest";
 
 import { SheetHeader } from "./SheetHeader";
 
-const ui = vi.hoisted(() => ({ fontScale: 1 }));
+const ui = vi.hoisted(() => ({ fontScale: 1, header: null as any }));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(element: ReactNode): string;
@@ -34,11 +34,14 @@ vi.mock("react-native", async () => {
       ...props
     }: {
       style?: Record<string, unknown> | (Record<string, unknown> | false)[];
-    }) =>
-      createElement("div", {
+      [key: string]: any;
+    }) => {
+      if (props.onTouchStart) ui.header = props;
+      return createElement("div", {
         ...props,
         style: Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
-      }),
+      });
+    },
     useWindowDimensions: () => ({ fontScale: ui.fontScale }),
   };
 });
@@ -132,3 +135,40 @@ it("uses undecorated actions with adequate targets and equal title flanks", () =
   }
   expect(html.match(/width:112px/g)).toHaveLength(2);
 });
+
+it("keeps the left action enabled by default", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, { title: "Header", onLeft: () => undefined }),
+  );
+  expect(html.match(/<button[^>]*>/g)).toHaveLength(1);
+  expect(html).toContain('aria-disabled="false"');
+  expect(html).not.toContain('disabled=""');
+});
+it("disables the canonical left action without disabling the right", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, {
+      title: "Header",
+      onLeft: () => undefined,
+      leftDisabled: true,
+      onRight: () => undefined,
+    }),
+  );
+  const actions = html.match(/<button[^>]*>/g)!;
+  expect(actions[0]).toContain('aria-disabled="true"');
+  expect(actions[0]).toContain('disabled=""');
+  expect(actions[1]).toContain('aria-disabled="false"');
+  expect(actions[1]).not.toContain('disabled=""');
+});
+
+it.each([false, true])(
+  "honors leftDisabled=%s for the header dismissal gesture",
+  (leftDisabled) => {
+    const onLeft = vi.fn();
+    renderToStaticMarkup(
+      createElement(SheetHeader, { title: "Header", onLeft, leftDisabled }),
+    );
+    ui.header.onTouchStart({ nativeEvent: { pageY: 10 } });
+    ui.header.onTouchEnd({ nativeEvent: { pageY: 100 } });
+    expect(onLeft).toHaveBeenCalledTimes(leftDisabled ? 0 : 1);
+  },
+);

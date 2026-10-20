@@ -352,13 +352,18 @@ it("retains a picked photo through the owning photo repository, stages only its 
     .fn()
     .mockResolvedValue({ assetId: id, localUri: "file://retained/photo" });
   vi.mocked(readLocalTripPhotoRepository).mockResolvedValue({ addTripPhoto: add } as any);
+  const processing = vi.fn(async () => {
+    expect(add).not.toHaveBeenCalled();
+  });
   let view = render(save);
   expect(
     await (
-      view.find((n) => n.type === TripCoverPicker)!.props
-        .onChoosePhoto as () => Promise<boolean>
-    )(),
+      view.find((n) => n.type === TripCoverPicker)!.props.onChoosePhoto as (
+        processing: () => Promise<void>,
+      ) => Promise<boolean>
+    )(processing),
   ).toBe(true);
+  expect(processing).toHaveBeenCalledOnce();
   expect(add).toHaveBeenCalledExactlyOnceWith(trip.id, "file://picker/temporary");
   expect(save).not.toHaveBeenCalled();
   view = render(save);

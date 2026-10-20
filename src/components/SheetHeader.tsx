@@ -10,6 +10,7 @@ export function SheetHeader({
   title,
   leftLabel = t("common.close"),
   onLeft,
+  leftDisabled = false,
   rightLabel = t("common.done"),
   onRight,
   rightDisabled = false,
@@ -18,6 +19,7 @@ export function SheetHeader({
   title: string;
   leftLabel?: string;
   onLeft: () => void;
+  leftDisabled?: boolean;
   rightLabel?: string;
   onRight?: () => void;
   rightDisabled?: boolean;
@@ -27,7 +29,7 @@ export function SheetHeader({
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
   const touchY = useRef(0);
-  const left = <Action label={leftLabel} onPress={onLeft} />;
+  const left = <Action disabled={leftDisabled} label={leftLabel} onPress={onLeft} />;
   const right = onRight ? (
     <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} />
   ) : null;
@@ -36,7 +38,7 @@ export function SheetHeader({
     <SafeAreaView edges={safeTop ? ["top"] : []} style={styles.safe}>
       <View
         onTouchEnd={(event) => {
-          if (event.nativeEvent.pageY - touchY.current > 80) onLeft();
+          if (!leftDisabled && event.nativeEvent.pageY - touchY.current > 80) onLeft();
         }}
         onTouchStart={(event) => {
           touchY.current = event.nativeEvent.pageY;

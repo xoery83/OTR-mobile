@@ -641,7 +641,7 @@ function LocalTripContent({
           selectedRaw={personalCover.selection.raw}
           onClose={() => setPersonalCoverOpen(false)}
           onSelect={personalCover.select}
-          onChoosePhoto={async () => {
+          onChoosePhoto={async (processing) => {
             const current = () => alive.current && generation === getAccountGeneration();
             if (!current() || !(await personalCover.open())) return false;
             const choice = await ImagePicker.launchImageLibraryAsync({
@@ -652,6 +652,8 @@ function LocalTripContent({
               exif: false,
             });
             if (!current() || choice.canceled) return false;
+            await processing();
+            if (!current()) return false;
             const uri = choice.assets[0]?.uri;
             if (!uri?.startsWith("file://"))
               throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");

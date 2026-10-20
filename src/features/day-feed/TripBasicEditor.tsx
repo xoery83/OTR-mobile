@@ -227,7 +227,7 @@ export function TripBasicEditor({
             }}
             onChoosePhoto={
               metadataEditable && beforeCover !== undefined
-                ? async () => {
+                ? async (processing) => {
                     const current = () =>
                       alive.current && generation === getAccountGeneration();
                     if (!current() || busy.current) return false;
@@ -239,6 +239,8 @@ export function TripBasicEditor({
                       exif: false,
                     });
                     if (!current() || choice.canceled) return false;
+                    await processing?.();
+                    if (!current()) return false;
                     const repo = await readLocalTripPhotoRepository();
                     if (!current()) return false;
                     const uri = choice.assets[0]?.uri;

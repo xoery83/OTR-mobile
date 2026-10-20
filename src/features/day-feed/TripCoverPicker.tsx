@@ -1,5 +1,13 @@
-import { useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { AppIcon } from "@/components/AppIcon";
@@ -30,7 +38,7 @@ export function TripCoverPicker({
   trip: CoverMetadata;
   selectedRaw?: string | null;
   onSelect(id: TripCoverChoice | null): Promise<void>;
-  onChoosePhoto?(): Promise<boolean>;
+  onChoosePhoto?(processing: () => Promise<void>): Promise<boolean>;
   presentation?: "editor" | "standalone";
   onClose?(): void;
 }) {
@@ -41,6 +49,15 @@ export function TripCoverPicker({
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
   const [error, setError] = useState(false);
+  const [processingPhoto, setProcessingPhoto] = useState(false);
+  const [photoSaved, setPhotoSaved] = useState(false);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   const current = { ...trip, selectedCoverAssetIdRaw: selectedRaw };
   const currentId = tripCoverId(current);
   const personal = parseTripPhotoCoverRef(selectedRaw) !== null;
@@ -54,6 +71,7 @@ export function TripCoverPicker({
     busy.current = true;
     setSaving(true);
     setError(false);
+    setPhotoSaved(false);
     try {
       await onSelect(id);
       if (closeAfter) dismiss();
@@ -69,13 +87,28 @@ export function TripCoverPicker({
     busy.current = true;
     setSaving(true);
     setError(false);
+    setPhotoSaved(false);
     try {
-      if (await onChoosePhoto()) dismiss();
+      const chosen = await onChoosePhoto(async () => {
+        if (!alive.current) return;
+        setProcessingPhoto(true);
+        // Give native feedback a paint before synchronous local file verification.
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+      });
+      if (chosen && alive.current) {
+        if (presentation === "standalone") setPhotoSaved(true);
+        else dismiss();
+      }
     } catch {
-      setError(true);
+      if (alive.current) setError(true);
     } finally {
       busy.current = false;
-      setSaving(false);
+      if (alive.current) {
+        setSaving(false);
+        setProcessingPhoto(false);
+      }
     }
   };
   const close = () => {
@@ -117,6 +150,7 @@ export function TripCoverPicker({
             title={t("myTrips.chooseCover")}
             leftLabel={t("common.close")}
             onLeft={close}
+            leftDisabled={saving}
             safeTop={false}
           />
           <ScrollView style={styles.root} contentContainerStyle={styles.list}>
@@ -147,6 +181,18 @@ export function TripCoverPicker({
                 <UiText style={styles.caption}>{t("coverLibrary.choosePhoto")}</UiText>
               </Pressable>
             </View>
+            {processingPhoto ? (
+              <View accessibilityState={{ busy: true }} style={styles.progress}>
+                <ActivityIndicator color={colors.accent} />
+                <UiText accessibilityLiveRegion="polite" style={styles.meta}>
+                  {t("coverLibrary.processingPhoto")}
+                </UiText>
+              </View>
+            ) : photoSaved ? (
+              <UiText accessibilityLiveRegion="polite" style={styles.meta}>
+                {t("coverLibrary.photoSaved")}
+              </UiText>
+            ) : null}
             {selectedRaw !== null &&
             selectedRaw !== undefined &&
             !isTripCoverAssetId(selectedRaw) &&
@@ -222,6 +268,7 @@ const createStyles = (c: UiColors) =>
       justifyContent: "space-between",
       gap: visual.space.card,
     },
+    progress: { flexDirection: "row", alignItems: "center", gap: visual.space.card },
     grid: {
       flexDirection: "row",
       flexWrap: "wrap",

@@ -7,6 +7,9 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   refs: [] as any[],
   refCursor: 0,
+  cleanup: null as null | (() => void),
+  frames: [] as (() => void)[],
+  writes: 0,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -17,12 +20,17 @@ vi.mock("react", async (original) => ({
       state.values[i],
       (v: any) => {
         state.values[i] = v;
+        state.writes++;
       },
     ];
+  },
+  useEffect: (effect: () => () => void) => {
+    state.cleanup ??= effect();
   },
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
 vi.mock("react-native", () => ({
+  ActivityIndicator: "ActivityIndicator",
   View: "View",
   Pressable: "Pressable",
   ScrollView: "ScrollView",
@@ -68,13 +76,21 @@ const nodes = (n: ReactNode): Node[] =>
     ? [n as Node, ...Children.toArray((n as Node).props.children).flatMap(nodes)]
     : [];
 beforeEach(() => {
+  state.cleanup?.();
+  state.cleanup = null;
+  state.frames = [];
+  state.writes = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
+    state.frames.push(callback);
+    return state.frames.length;
+  });
   state.values = [];
   state.refs = [];
   state.cursor = state.refCursor = 0;
 });
 function render(
   onSelect = vi.fn().mockResolvedValue(undefined),
-  onChoosePhoto?: () => Promise<boolean>,
+  onChoosePhoto?: Parameters<typeof TripCoverPicker>[0]["onChoosePhoto"],
   selectedRaw: string | null | undefined = "city",
   extra: Pick<Parameters<typeof TripCoverPicker>[0], "presentation" | "onClose"> = {},
 ) {
@@ -249,4 +265,84 @@ it("standalone AUTO stages through the injected save and stays open for the refr
   expect(
     render(save, undefined, null, extra).find((n) => n.type === "Switch")!.props.value,
   ).toBe(true);
+});
+
+async function paintFeedback() {
+  state.frames.shift()!();
+  state.frames.shift()!();
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+}
+it("shows local processing before work, blocks close/duplicates, and keeps committed Current visible", async () => {
+  let finish!: (chosen: boolean) => void;
+  const work = vi.fn();
+  const choose = vi.fn(async (processing: () => Promise<void>) => {
+    await processing();
+    work();
+    return new Promise<boolean>((resolve) => {
+      finish = resolve;
+    });
+  });
+  const onClose = vi.fn();
+  const extra = { presentation: "standalone" as const, onClose };
+  let v = render(undefined, choose, "city", extra);
+  const button = v.find(
+    (n) => n.props.accessibilityLabel === "coverLibrary.choosePhoto",
+  )!;
+  button.props.onPress();
+  button.props.onPress();
+  v = render(undefined, choose, "city", extra);
+  expect(choose).toHaveBeenCalledOnce();
+  expect(work).not.toHaveBeenCalled();
+  expect(v.some((n) => n.type === "ActivityIndicator")).toBe(true);
+  expect(v.some((n) => n.props.children === "coverLibrary.processingPhoto")).toBe(true);
+  expect(v.find((n) => n.type === "Modal")!.props.allowSwipeDismissal).toBe(false);
+  expect(v.find((n) => n.type === "SheetHeader")!.props.leftDisabled).toBe(true);
+  v.find((n) => n.type === "SheetHeader")!.props.onLeft();
+  expect(onClose).not.toHaveBeenCalled();
+  expect(v.find((n) => n.props.tripId === "qa")!.props.rawSelection).toBe("city");
+  await paintFeedback();
+  expect(work).toHaveBeenCalledOnce();
+  finish(true);
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+  const committedRaw = "photo-00000000-0000-4000-8000-000000000001";
+  v = render(undefined, choose, committedRaw, extra);
+  expect(v.find((n) => n.props.tripId === "qa")!.props.rawSelection).toBe(committedRaw);
+  expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
+  expect(v.some((n) => n.props.children === "coverLibrary.photoSaved")).toBe(true);
+  expect(v.some((n) => n.type === "ActivityIndicator")).toBe(false);
+  expect(v.find((n) => n.type === "SheetHeader")!.props.leftDisabled).toBe(false);
+  expect(onClose).not.toHaveBeenCalled();
+});
+it("keeps the old Current with the safe failure message when local photo processing fails", async () => {
+  const choose = vi.fn(async (processing: () => Promise<void>) => {
+    await processing();
+    throw new Error("private detail");
+  });
+  const onClose = vi.fn(),
+    extra = { presentation: "standalone" as const, onClose };
+  render(undefined, choose, "city", extra)
+    .find((n) => n.props.accessibilityLabel === "coverLibrary.choosePhoto")!
+    .props.onPress();
+  await paintFeedback();
+  const v = render(undefined, choose, "city", extra);
+  expect(v.find((n) => n.props.tripId === "qa")!.props.rawSelection).toBe("city");
+  expect(v.some((n) => n.props.children === "myTrips.coverFailed")).toBe(true);
+  expect(v.some((n) => n.props.children === "coverLibrary.photoSaved")).toBe(false);
+  expect(v.find((n) => n.type === "Modal")!.props.allowSwipeDismissal).toBe(true);
+  expect(onClose).not.toHaveBeenCalled();
+});
+it("does not close or publish photo status after the Gallery unmounts", async () => {
+  const choose = vi.fn(async (processing: () => Promise<void>) => {
+    await processing();
+    return true;
+  });
+  const onClose = vi.fn();
+  render(undefined, choose, "city", { presentation: "standalone", onClose })
+    .find((n) => n.props.accessibilityLabel === "coverLibrary.choosePhoto")!
+    .props.onPress();
+  state.cleanup?.();
+  const writes = state.writes;
+  await paintFeedback();
+  expect(state.writes).toBe(writes);
+  expect(onClose).not.toHaveBeenCalled();
 });
