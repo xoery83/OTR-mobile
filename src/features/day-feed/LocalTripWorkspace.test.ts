@@ -600,7 +600,15 @@ it("non-Creator Home preserves the legitimate independent local Cover scope", as
   const html = render();
   expect(html).not.toContain("tripCreate.pendingItems");
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
-  button("tripHome.edit").onPress();
+  expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  expect(
+    state.publish.mock.calls.find(([actions]) => actions?.tripId === "local-a")?.[0]
+      .editTrip,
+  ).toBeUndefined();
+  state.preparation.onCover();
   render();
   const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
   await picker.onSelect("coast");
@@ -1096,7 +1104,7 @@ it("does not gate an authoritative local Home on unrelated discovery and retains
   expect(repo.getTrip).toHaveBeenCalledWith("local-a");
   expect(repo.canUpdateMetadata).toHaveBeenCalledWith("local-a");
   expect(state.discovery).not.toHaveBeenCalled();
-  button("tripHome.edit").onPress();
-  expect(render()).toContain("tripHome.editor.metadataReadOnly");
+  expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
+  expect(state.preparation.onEdit).toBeUndefined();
   expect(repo.updateMetadata).not.toHaveBeenCalled();
 });

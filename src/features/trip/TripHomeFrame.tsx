@@ -29,6 +29,8 @@ export function TripHomeFrame({
   notice,
   onHeroHeight,
   onEdit,
+  canChooseCover = false,
+  onChooseCover,
 }: {
   title: string;
   tripId?: string;
@@ -41,6 +43,8 @@ export function TripHomeFrame({
   notice?: string;
   onHeroHeight?: (height: number) => void;
   onEdit?: () => void;
+  canChooseCover?: boolean;
+  onChooseCover?: () => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -61,6 +65,16 @@ export function TripHomeFrame({
         style={[styles.hero, { width, minHeight: height * 0.32 }]}
       >
         <Pressable
+          onPress={canChooseCover ? onChooseCover : undefined}
+          disabled={!canChooseCover || !onChooseCover}
+          accessible={canChooseCover && !!onChooseCover}
+          accessibilityRole={canChooseCover && onChooseCover ? "button" : undefined}
+          accessibilityLabel={
+            canChooseCover && onChooseCover ? t("myTrips.chooseCover") : undefined
+          }
+          style={[styles.imageAction, { minHeight: insets.top + 60 }]}
+        />
+        <Pressable
           onPress={onEdit}
           disabled={!onEdit}
           accessible={!!onEdit}
@@ -75,7 +89,7 @@ export function TripHomeFrame({
             {
               paddingLeft: Math.max(visual.space.page, insets.left),
               paddingRight: Math.max(visual.space.page, insets.right),
-              paddingTop: insets.top + 60,
+              paddingTop: 0,
             },
           ]}
         >
@@ -108,6 +122,7 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     frame: { gap: visual.space.section },
     hero: { alignSelf: "center", borderRadius: 0 },
+    imageAction: { flexGrow: 1, minHeight: 44 },
     copy: {
       paddingHorizontal: visual.space.page,
       paddingVertical: visual.space.card,

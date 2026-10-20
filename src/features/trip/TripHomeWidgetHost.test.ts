@@ -219,7 +219,7 @@ it("keeps one full-bleed identity with untruncated metadata under enlargement an
   }
 });
 
-it("uses the supplied Editor for the whole Hero identity and never invents an editing capability", () => {
+it("uses the supplied Editor for Hero text identity and never invents an editing capability", () => {
   const edit = vi.fn();
   renderToStaticMarkup(
     createElement(TripHomeFrame, {
@@ -237,4 +237,61 @@ it("uses the supplied Editor for the whole Hero identity and never invents an ed
   expect(target.disabled).toBe(false);
   target.onPress();
   expect(edit).toHaveBeenCalledOnce();
+});
+
+it("separates image and metadata actions into sibling hit regions", () => {
+  const edit = vi.fn(),
+    chooseCover = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Trip",
+      metadata: ["Auckland"],
+      cover: 1,
+      onEdit: edit,
+      canChooseCover: true,
+      onChooseCover: chooseCover,
+    }),
+  );
+  const image = state.nodes.find((n) => n.accessibilityLabel === "myTrips.chooseCover");
+  const identity = state.nodes.find(
+    (n) => n.accessibilityLabel === "tripHome.edit: Trip, Auckland",
+  );
+  expect(image.disabled).toBe(false);
+  expect(image.children).toBeUndefined();
+  expect(html).not.toMatch(/<button[^>]*>[^<]*<button/);
+  image.onPress();
+  expect(chooseCover).toHaveBeenCalledOnce();
+  expect(edit).not.toHaveBeenCalled();
+  identity.onPress();
+  expect(edit).toHaveBeenCalledOnce();
+  expect(chooseCover).toHaveBeenCalledOnce();
+});
+it("allows independent cover capability without inventing metadata authority", () => {
+  const chooseCover = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Member Trip",
+      metadata: [],
+      cover: 1,
+      canChooseCover: true,
+      onChooseCover: chooseCover,
+    }),
+  );
+  const image = state.nodes.find((n) => n.accessibilityLabel === "myTrips.chooseCover");
+  image.onPress();
+  expect(chooseCover).toHaveBeenCalledOnce();
+  expect(html).not.toContain("tripHome.edit");
+});
+it("does not enable cover merely because a callback was provided", () => {
+  renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Trip",
+      metadata: [],
+      cover: 1,
+      onChooseCover: vi.fn(),
+    }),
+  );
+  expect(state.nodes.some((n) => n.accessibilityLabel === "myTrips.chooseCover")).toBe(
+    false,
+  );
 });

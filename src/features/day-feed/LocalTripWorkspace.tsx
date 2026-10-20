@@ -489,10 +489,14 @@ function LocalTripContent({
           generation,
           owner: quickActionsOwner,
           backToTrips: leaveHome,
-          editTrip: () => {
-            if (alive.current && generation === getAccountGeneration())
-              setCoverOpen(true);
-          },
+          ...(metadataEditable
+            ? {
+                editTrip: () => {
+                  if (alive.current && generation === getAccountGeneration())
+                    setCoverOpen(true);
+                },
+              }
+            : {}),
           ...(setup?.context.tripId === owner &&
           setup.context.generation === generation &&
           setup.members.state === "AVAILABLE"
@@ -527,6 +531,7 @@ function LocalTripContent({
       selected,
       status,
       generation,
+      metadataEditable,
       photosReady,
       setup,
       publishQuickActions,
@@ -618,10 +623,14 @@ function LocalTripContent({
       {selected ? (
         <>
           <TripHomeFrame
-            onEdit={() => {
-              if (alive.current && generation === getAccountGeneration())
-                setCoverOpen(true);
-            }}
+            onEdit={
+              metadataEditable
+                ? () => {
+                    if (alive.current && generation === getAccountGeneration())
+                      setCoverOpen(true);
+                  }
+                : undefined
+            }
             onHeroHeight={onHomeHeroHeight}
             widgets={pages}
             tripId={selected.id}
