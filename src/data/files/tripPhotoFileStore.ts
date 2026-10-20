@@ -150,6 +150,44 @@ export async function retainTripPhoto(input: {
   }
 }
 
+export type RetainedTripPhotoIdentity = Readonly<{
+  uri: string;
+  sizeBytes: number;
+  modificationTime: number;
+  creationTime: number;
+}>;
+
+/** A presentation-cache invalidation signal, never a replacement for full verification. */
+export function probeRetainedTripPhotoIdentity(
+  photo: RetainedTripPhoto,
+): RetainedTripPhotoIdentity | null {
+  try {
+    const { file } = photoFile(photo);
+    if (photo.localUri !== file.uri) return null;
+    const info = file.info();
+    if (
+      !info.exists ||
+      info.size !== photo.sizeBytes ||
+      !Number.isSafeInteger(info.size) ||
+      photo.sizeBytes < 1 ||
+      photo.sizeBytes > MAX_PHOTO_BYTES ||
+      typeof info.modificationTime !== "number" ||
+      !Number.isFinite(info.modificationTime) ||
+      typeof info.creationTime !== "number" ||
+      !Number.isFinite(info.creationTime)
+    )
+      return null;
+    return Object.freeze({
+      uri: file.uri,
+      sizeBytes: photo.sizeBytes,
+      modificationTime: info.modificationTime,
+      creationTime: info.creationTime,
+    });
+  } catch {
+    return null;
+  }
+}
+
 /** Missing or changed local bytes return null so a repository can show an honest fallback. */
 export function resolveRetainedTripPhoto(photo: RetainedTripPhoto): string | null {
   try {

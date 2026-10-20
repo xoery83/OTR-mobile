@@ -8,13 +8,24 @@ import { expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import type { RetainTripPhotoResult } from "../files/tripPhotoFileStore";
-import { createTripPhotoRepository } from "./tripPhotoRepository";
+import {
+  createTripPhotoRepository,
+  readLocalTripPhotoRepository,
+} from "./tripPhotoRepository";
+import { captureAccountRequestContext } from "../auth/accountRequestContext";
+import { requireActiveUserId } from "../auth/authRepository";
+import { readInitializedDatabase } from "../db/database";
+import {
+  resolveRetainedTripPhoto,
+  probeRetainedTripPhotoIdentity,
+} from "../files/tripPhotoFileStore";
 
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("../files/tripPhotoFileStore", () => ({
   retainTripPhoto: vi.fn(),
   resolveRetainedTripPhoto: vi.fn(),
+  probeRetainedTripPhotoIdentity: vi.fn(),
   discardRetainedTripPhoto: vi.fn(),
 }));
 const accountA = randomUUID(),
@@ -38,9 +49,16 @@ function setup() {
   let account: string = accountA;
   let failInsert = false;
   let abaRead = false;
+  let afterPhotoRead: (() => Promise<void>) | null = null;
   const database = () => ({
     async getFirstAsync<T>(query: string, ...args: unknown[]) {
-      return (sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+      const row = (sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+      if (afterPhotoRead && query.includes("FROM local_trip_photos")) {
+        const action = afterPhotoRead;
+        afterPhotoRead = null;
+        await action();
+      }
+      return row;
     },
     async getAllAsync<T>(query: string, ...args: unknown[]) {
       const rows = sql.prepare(query).all(...(args as never[])) as T[];
@@ -94,6 +112,11 @@ function setup() {
     },
     files,
     retained,
+    database,
+    getAccount: async () => account,
+    afterPhotoRead(action: () => Promise<void>) {
+      afterPhotoRead = action;
+    },
     repo: () =>
       createTripPhotoRepository(
         database(),
@@ -318,6 +341,298 @@ it("rejects a selected-photo result after Account ABA during file verification",
     await expect(
       f.repo().readSelectedTripCoverPhoto(tripId, tripPhotoCoverRef(photoId)),
     ).rejects.toThrow("Account changed");
+  } finally {
+    f.close();
+  }
+});
+
+function enableCache(f: ReturnType<typeof setup>) {
+  let identity: {
+    uri: string;
+    sizeBytes: number;
+    modificationTime: number;
+    creationTime: number;
+  } | null = {
+    uri: f.retained.photo.localUri,
+    sizeBytes: 12,
+    modificationTime: 100,
+    creationTime: 50,
+  };
+  const probe = vi.fn(() => identity);
+  const files = { ...f.files, probeRetainedTripPhotoIdentity: probe };
+  return {
+    files,
+    probe,
+    identity(value: typeof identity) {
+      identity = value;
+    },
+    repo: () => createTripPhotoRepository(f.database(), f.getAccount, files),
+  };
+}
+
+it("reuses one full verification across warm factory remounts, including chooser cancellation", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    f.files.resolveRetainedTripPhoto.mockClear();
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toMatchObject({
+      assetId: photoId,
+    });
+    // Opening/canceling a chooser performs no committed-selection invalidation.
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, "city")).toBeNull();
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toMatchObject({
+      assetId: photoId,
+    });
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(1);
+    expect(c.probe).toHaveBeenCalledTimes(4);
+    const context = await captureAccountRequestContext(tripId, f.getAccount);
+    await c.repo().invalidateSelectedTripCoverPhotoAfterCommit(context);
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).not.toBeNull();
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(2);
+  } finally {
+    f.close();
+  }
+});
+
+it("shares the installed default factory cache but isolates injected file stores", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    vi.mocked(requireActiveUserId).mockImplementation(f.getAccount);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(f.database() as never);
+    vi.mocked(resolveRetainedTripPhoto)
+      .mockReset()
+      .mockReturnValue(f.retained.photo.localUri);
+    vi.mocked(probeRetainedTripPhotoIdentity).mockReturnValue({
+      uri: f.retained.photo.localUri,
+      sizeBytes: 12,
+      modificationTime: 100,
+      creationTime: 50,
+    });
+    const raw = tripPhotoCoverRef(photoId);
+    expect(
+      await (
+        await readLocalTripPhotoRepository()
+      ).readSelectedTripCoverPhoto(tripId, raw),
+    ).not.toBeNull();
+    expect(
+      await (
+        await readLocalTripPhotoRepository()
+      ).readSelectedTripCoverPhoto(tripId, raw),
+    ).not.toBeNull();
+    expect(resolveRetainedTripPhoto).toHaveBeenCalledTimes(1);
+    const c = enableCache(f);
+    f.files.resolveRetainedTripPhoto.mockClear();
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).not.toBeNull();
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(1);
+  } finally {
+    f.close();
+  }
+});
+
+it("rehashes changed same-size timestamps and never caches missing/unknown signatures", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    f.files.resolveRetainedTripPhoto.mockClear();
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    c.identity({
+      uri: f.retained.photo.localUri,
+      sizeBytes: 12,
+      modificationTime: 101,
+      creationTime: 50,
+    });
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(2);
+    c.identity(null);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(4);
+    f.files.resolveRetainedTripPhoto.mockReturnValue(null);
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+  } finally {
+    f.close();
+  }
+});
+
+it("never publishes or caches a file whose identity changes during full verification", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    f.files.resolveRetainedTripPhoto.mockImplementationOnce(() => {
+      c.identity({
+        uri: f.retained.photo.localUri,
+        sizeBytes: 12,
+        modificationTime: 101,
+        creationTime: 50,
+      });
+      return f.retained.photo.localUri;
+    });
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+    f.files.resolveRetainedTripPhoto.mockClear();
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).not.toBeNull();
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(1);
+  } finally {
+    f.close();
+  }
+});
+
+it("revalidates changed access revision and selection row; revoked/deleted scope cannot reuse a photo", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    f.files.resolveRetainedTripPhoto.mockClear();
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    f.sql
+      .prepare(
+        "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,1,0)",
+      )
+      .run(accountA, tripId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    f.sql
+      .prepare(
+        "UPDATE trip_core_scopes SET access_revision=2,refresh_generation=2 WHERE account_id=? AND trip_id=?",
+      )
+      .run(accountA, tripId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    f.sql
+      .prepare(
+        "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+      )
+      .run(raw, accountA, tripId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(4);
+    f.sql
+      .prepare("UPDATE trip_core_scopes SET revoked=1 WHERE account_id=? AND trip_id=?")
+      .run(accountA, tripId);
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+    f.sql
+      .prepare("UPDATE trip_core_scopes SET revoked=0 WHERE account_id=? AND trip_id=?")
+      .run(accountA, tripId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    f.sql
+      .prepare("DELETE FROM local_trip_containers WHERE account_id=? AND id=?")
+      .run(accountA, tripId);
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+  } finally {
+    f.close();
+  }
+});
+
+it("rejects changed/deleted photo rows and same Account ABA during an awaited warm read", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    f.afterPhotoRead(async () => {
+      f.sql
+        .prepare("UPDATE local_trip_photos SET sha256=? WHERE account_id=? AND trip_id=?")
+        .run("b".repeat(64), accountA, tripId);
+    });
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+    f.afterPhotoRead(async () => {
+      f.account(accountB);
+      f.account(accountA);
+    });
+    await expect(c.repo().readSelectedTripCoverPhoto(tripId, raw)).rejects.toThrow(
+      "Account changed",
+    );
+    f.sql
+      .prepare("DELETE FROM local_trip_photos WHERE account_id=? AND trip_id=?")
+      .run(accountA, tripId);
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+  } finally {
+    f.close();
+  }
+});
+
+it("rejects an in-flight lease invalidated after a committed same-photo rechoose", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    const context = await captureAccountRequestContext(tripId, f.getAccount);
+    f.afterPhotoRead(async () => {
+      await c.repo().invalidateSelectedTripCoverPhotoAfterCommit(context);
+    });
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).not.toBeNull();
+    f.account(accountB);
+    await expect(
+      c.repo().invalidateSelectedTripCoverPhotoAfterCommit(context),
+    ).rejects.toThrow("Account changed");
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+    expect(await c.repo().readSelectedTripCoverPhoto(randomUUID(), raw)).toBeNull();
+  } finally {
+    f.close();
+  }
+});
+
+it("denies revoked scope and a disappeared file during otherwise warm navigation", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    f.afterPhotoRead(async () => {
+      f.sql
+        .prepare(
+          "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,1,1)",
+        )
+        .run(accountA, tripId);
+    });
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+    f.sql
+      .prepare("UPDATE trip_core_scopes SET revoked=0 WHERE account_id=? AND trip_id=?")
+      .run(accountA, tripId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    c.identity(null);
+    f.files.resolveRetainedTripPhoto.mockReturnValue(null);
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).toBeNull();
+  } finally {
+    f.close();
+  }
+});
+
+it("rejects a deferred warm row read after Account switches away and back", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const c = enableCache(f),
+      raw = tripPhotoCoverRef(photoId);
+    await c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    let release!: () => void, entered!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    f.afterPhotoRead(() => {
+      entered();
+      return new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    });
+    const pending = c.repo().readSelectedTripCoverPhoto(tripId, raw);
+    await waiting;
+    f.account(accountB);
+    f.account(accountA);
+    release();
+    await expect(pending).rejects.toThrow("Account changed");
+    f.files.resolveRetainedTripPhoto.mockClear();
+    expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).not.toBeNull();
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(1);
   } finally {
     f.close();
   }

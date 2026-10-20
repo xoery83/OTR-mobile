@@ -5,6 +5,7 @@ import { createUuid } from "@/domain/localId";
 import {
   retainTripPhoto,
   resolveRetainedTripPhoto,
+  probeRetainedTripPhotoIdentity,
   discardRetainedTripPhoto,
   type RetainedTripPhoto,
   type RetainTripPhotoResult,
@@ -12,6 +13,7 @@ import {
 import {
   captureAccountScope,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   withAccountApplyGate,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
@@ -26,6 +28,7 @@ type PhotoFiles = {
   retainTripPhoto: typeof retainTripPhoto;
   resolveRetainedTripPhoto: typeof resolveRetainedTripPhoto;
   discardRetainedTripPhoto: typeof discardRetainedTripPhoto;
+  probeRetainedTripPhotoIdentity?: typeof probeRetainedTripPhotoIdentity;
 };
 type Row = {
   account_id: string;
@@ -49,23 +52,141 @@ export type TripPhoto = {
 const files: PhotoFiles = {
   retainTripPhoto,
   resolveRetainedTripPhoto,
+  probeRetainedTripPhotoIdentity: (photo) => probeRetainedTripPhotoIdentity(photo),
   discardRetainedTripPhoto,
 };
+function retainedPhoto(row: Row): RetainedTripPhoto {
+  return {
+    accountId: row.account_id,
+    tripId: row.trip_id,
+    assetId: row.asset_id,
+    mimeType: row.mime_type,
+    sizeBytes: row.size_bytes,
+    sha256: row.sha256,
+    localUri: row.local_uri,
+  };
+}
+
+type CoverState = { row: Row; access: unknown };
+type CoverCacheLease = {
+  entry?: { signature: string; identity: string; photo: TripPhoto };
+};
+type CoverCache = {
+  accountId: string;
+  generation: number;
+  trips: Map<string, CoverCacheLease>;
+};
+// The default file store shares warm navigation results; injected stores stay isolated.
+const coverCaches = new WeakMap<PhotoFiles, CoverCache>();
+function coverCache(fileStore: PhotoFiles, scope: AccountRequestContext) {
+  let cache = coverCaches.get(fileStore);
+  if (cache?.accountId !== scope.accountId || cache.generation !== scope.generation) {
+    cache = {
+      accountId: scope.accountId,
+      generation: scope.generation,
+      trips: new Map(),
+    };
+    coverCaches.set(fileStore, cache);
+  }
+  return cache;
+}
+function cacheLease(cache: CoverCache, tripId: string) {
+  let lease = cache.trips.get(tripId);
+  if (!lease) lease = {};
+  cache.trips.delete(tripId);
+  cache.trips.set(tripId, lease);
+  if (cache.trips.size > 64) cache.trips.delete(cache.trips.keys().next().value!);
+  return lease;
+}
+async function readCoverState(
+  database: Database,
+  scope: AccountRequestContext,
+  assetId: string,
+): Promise<CoverState | null> {
+  const access = await database.getFirstAsync<{
+    id: string;
+    selected_cover_asset_id: string | null;
+    refresh_generation: number | null;
+    access_revision: number | null;
+  }>(
+    `SELECT t.id,t.selected_cover_asset_id,s.refresh_generation,s.access_revision
+     FROM local_trip_containers t LEFT JOIN trip_core_scopes s
+       ON s.account_id=t.account_id AND s.trip_id=t.id
+     WHERE t.account_id=? AND t.id=? AND (s.revoked IS NULL OR s.revoked=0)`,
+    scope.accountId,
+    scope.tripId,
+  );
+  if (!access) return null;
+  const row = await database.getFirstAsync<Row>(
+    "SELECT * FROM local_trip_photos WHERE account_id=? AND trip_id=? AND asset_id=?",
+    scope.accountId,
+    scope.tripId,
+    assetId,
+  );
+  return row ? { row, access } : null;
+}
+function probe(row: Row, fileStore: PhotoFiles) {
+  try {
+    const identity = fileStore.probeRetainedTripPhotoIdentity?.(retainedPhoto(row));
+    return identity ? JSON.stringify(identity) : null;
+  } catch {
+    return null;
+  }
+}
+async function readCachedCover(
+  database: Database,
+  account: () => Promise<string>,
+  scope: AccountRequestContext,
+  raw: unknown,
+  fileStore: PhotoFiles,
+): Promise<TripPhoto | null> {
+  await assertAccountRequestContext(scope, account);
+  const cache = coverCache(fileStore, scope);
+  const lease = cacheLease(cache, scope.tripId);
+  const assetId = parseTripPhotoCoverRef(raw);
+  if (!assetId) return null;
+  const state = await readCoverState(database, scope, assetId);
+  await assertAccountRequestContext(scope, account);
+  if (!state) {
+    delete lease.entry;
+    return null;
+  }
+  const signature = JSON.stringify([raw, state]);
+  const cached = lease.entry;
+  const latest = await readCoverState(database, scope, assetId);
+  await assertAccountRequestContext(scope, account);
+  if (
+    coverCaches.get(fileStore) !== cache ||
+    cache.trips.get(scope.tripId) !== lease ||
+    JSON.stringify([raw, latest]) !== signature
+  ) {
+    delete lease.entry;
+    return null;
+  }
+  const before = probe(state.row, fileStore);
+  const photo =
+    before && cached?.signature === signature && cached.identity === before
+      ? { ...cached.photo }
+      : decode(state.row, fileStore);
+  const after = probe(state.row, fileStore);
+  assertAccountRequestGeneration(scope);
+  if (before && before !== after) {
+    delete lease.entry;
+    return null;
+  }
+  if (photo.localUri && before && before === after) {
+    lease.entry = { signature, identity: before, photo: { ...photo } };
+  } else delete lease.entry;
+  return photo.localUri ? photo : null;
+}
+
 function decode(
   row: Row,
   fileStore: Pick<PhotoFiles, "resolveRetainedTripPhoto">,
 ): TripPhoto {
   let uri: string | null;
   try {
-    uri = fileStore.resolveRetainedTripPhoto({
-      accountId: row.account_id,
-      tripId: row.trip_id,
-      assetId: row.asset_id,
-      mimeType: row.mime_type,
-      sizeBytes: row.size_bytes,
-      sha256: row.sha256,
-      localUri: row.local_uri,
-    });
+    uri = fileStore.resolveRetainedTripPhoto(retainedPhoto(row));
   } catch {
     uri = null;
   }
@@ -131,17 +252,22 @@ export function createTripPhotoRepository(
       return withAccountApplyGate(async () => {
         let result: TripPhoto | null = null;
         await database.withTransactionAsync(async () => {
-          result = await readSelectedTripCoverPhotoInScope(
-            database,
-            account,
-            scope,
-            raw,
-            fileStore,
-          );
+          result = await readCachedCover(database, account, scope, raw, fileStore);
         });
         await assertAccountRequestContext(scope, account);
         return result;
       });
+    },
+    /** Call only after the owning selection save committed, never on picker open/cancel. */
+    async invalidateSelectedTripCoverPhotoAfterCommit(context: AccountRequestContext) {
+      coreUuid.parse(context.tripId);
+      await assertAccountRequestContext(context, account);
+      const cache = coverCaches.get(fileStore);
+      if (
+        cache?.accountId === context.accountId &&
+        cache.generation === context.generation
+      )
+        cache.trips.delete(context.tripId);
     },
     async listTripPhotos(tripId: string): Promise<TripPhoto[]> {
       coreUuid.parse(tripId);
