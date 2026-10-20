@@ -39,7 +39,9 @@ vi.mock("./TripMembersSheet", () => ({
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
-    state.nodes.push({ frameWidgets: p.widgets ?? [] });
+    state.nodes.push({ frameWidgets: p.widgets ?? [], frame: p });
+    if (p.canChooseCover && p.onChooseCover)
+      state.nodes.push({ label: "myTrips.chooseCover", onPress: p.onChooseCover });
     if (p.onEdit) state.nodes.push({ label: "tripHome.edit", onPress: p.onEdit });
     if (p.onBack) state.nodes.push({ label: "dayFeed.myTrips", onPress: p.onBack });
     return createElement(
@@ -79,7 +81,9 @@ const state = vi.hoisted(() => ({
   focused: true,
   finance: null as TripHomeWidget | null,
   preparation: null as any,
+  personal: { selection: null as any, open: vi.fn(), select: vi.fn() },
 }));
+vi.mock("./useTripPersonalCover", () => ({ useTripPersonalCover: () => state.personal }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: (_: unknown, snapshot: () => unknown) => snapshot(),
@@ -316,6 +320,9 @@ beforeEach(() => {
     readMerged: async () => ({ cachedAt: null, trips: [] }),
   });
   state.finance = null;
+  state.personal.selection = null;
+  state.personal.open.mockReset().mockResolvedValue(false);
+  state.personal.select.mockReset().mockResolvedValue(undefined);
   props.widgetsForHome.mockReset();
   props.widgetsForHome.mockReturnValue([]);
   props.tripId = null;
@@ -491,6 +498,48 @@ it("mounts trusted Photos only for the currently selected local Trip", async () 
   expect(next).not.toContain('data-trip-photos="local-a"');
 });
 
+it("opens a remote member chooser only through the independent owning capability", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({
+      cachedAt: null,
+      trips: [
+        {
+          id: "remote-b",
+          name: "Shared Trip",
+          destination: null,
+          startDate: null,
+          endDate: null,
+          createdAt: null,
+          localStatus: null,
+          remoteListed: true,
+          selectedCoverAssetId: null,
+        },
+      ],
+    }),
+  });
+  state.personal.selection = { raw: "coast" };
+  state.personal.open.mockResolvedValue(true);
+  props.tripId = "remote-b";
+  render();
+  await flush();
+  render();
+  const frame = state.nodes.find((node) => node.frame)!.frame;
+  expect(frame.canChooseCover).toBe(true);
+  expect(frame.onEdit).toBeUndefined();
+  expect(repo.canUpdateMetadata).not.toHaveBeenCalled();
+  await button("myTrips.chooseCover").onPress();
+  render();
+  const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
+  expect(picker.presentation).toBe("standalone");
+  await picker.onSelect(null);
+  expect(state.personal.select).toHaveBeenCalledExactlyOnceWith(null);
+  expect(repo.createTrip).not.toHaveBeenCalled();
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
+  expect(repo.selectBuiltInCover).not.toHaveBeenCalled();
+});
+
 it("appends only a qualified finance page after the Past Snapshot", async () => {
   state.repo.mockResolvedValue(
     repository([
@@ -511,6 +560,9 @@ it("appends only a qualified finance page after the Past Snapshot", async () => 
       ?.frameWidgets.map((page: TripHomeWidget) => page.id),
   ).toEqual(["journey-snapshot", "ledger-finance"]);
   state.finance = null;
+  state.personal.selection = null;
+  state.personal.open.mockReset().mockResolvedValue(false);
+  state.personal.select.mockReset().mockResolvedValue(undefined);
   render();
   expect(
     state.nodes
@@ -590,17 +642,18 @@ it("the mounted local Quick Add callback opens the existing form with an editabl
   expect(render()).toContain("actionIsland.savedLocally");
 });
 
-it("non-Creator Home preserves the legitimate independent local Cover scope", async () => {
+it("non-Creator Home opens the independent preference Gallery without metadata authority", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   vi.mocked(repo.canUpdateMetadata).mockResolvedValue(false);
+  state.personal.selection = { raw: "coast" };
+  state.personal.open.mockResolvedValue(true);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
   render();
   await flush();
-  const html = render();
-  expect(html).not.toContain("tripCreate.pendingItems");
-  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+  render();
   expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
+  expect(state.nodes.find((node) => node.frame)!.frame.rawCoverSelection).toBe("coast");
   state.forceEffects = true;
   render();
   state.forceEffects = false;
@@ -608,12 +661,17 @@ it("non-Creator Home preserves the legitimate independent local Cover scope", as
     state.publish.mock.calls.find(([actions]) => actions?.tripId === "local-a")?.[0]
       .editTrip,
   ).toBeUndefined();
-  state.preparation.onCover();
+  await button("myTrips.chooseCover").onPress();
   render();
   const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
-  await picker.onSelect("coast");
-  expect(repo.selectBuiltInCover).toHaveBeenCalledWith("local-a", "coast");
+  expect(picker.presentation).toBe("standalone");
+  await picker.onSelect("city");
+  expect(state.personal.select).toHaveBeenCalledWith("city");
+  expect(repo.selectBuiltInCover).not.toHaveBeenCalled();
   expect(repo.updateMetadata).not.toHaveBeenCalled();
+  picker.onClose();
+  render();
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
 });
 
 vi.mock("react-native-safe-area-context", () => ({

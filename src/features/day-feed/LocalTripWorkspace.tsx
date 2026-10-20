@@ -1,4 +1,8 @@
-import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
+import * as ImagePicker from "expo-image-picker";
+import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepository";
+import { TripCoverPicker } from "./TripCoverPicker";
+import { useTripPersonalCover } from "./useTripPersonalCover";
+import { isTripCoverAssetId, tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -161,6 +165,8 @@ function LocalTripContent({
     "tripForm.travelerCountRange" | "tripForm.travelerNamesRetained" | null
   >(null);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
+  const personalCover = useTripPersonalCover(tripId);
   const [editorSaving, setEditorSaving] = useState(false);
   const editorBusy = useRef(false);
   const [metadataEditable, setMetadataEditable] = useState(false);
@@ -543,6 +549,18 @@ function LocalTripContent({
   const remoteStart = knownDate(remoteSelected?.startDate ?? null);
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
   const metadata = selected ?? remoteSelected;
+  const displayCover =
+    metadata && personalCover.selection
+      ? { ...metadata, selectedCoverAssetIdRaw: personalCover.selection.raw }
+      : metadata;
+  const openPersonalCover = personalCover.selection
+    ? async () => {
+        if (await personalCover.open()) {
+          if (alive.current && generation === getAccountGeneration())
+            setPersonalCoverOpen(true);
+        }
+      }
+    : undefined;
   const lifecycleGroups = metadata
     ? groupLocalTrips([metadata], homePerspective?.date ?? calendarDate(new Date()))
     : null;
@@ -566,7 +584,7 @@ function LocalTripContent({
       : undefined,
     onSetup: receiveSetup,
     onEdit: selected && metadataEditable ? () => setCoverOpen(true) : undefined,
-    onCover: selected ? () => setCoverOpen(true) : undefined,
+    onCover: openPersonalCover,
     undated: lifecycle === "Undated",
     onImport: selected
       ? () => {
@@ -615,6 +633,38 @@ function LocalTripContent({
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
+      {personalCoverOpen && displayCover && personalCover.selection ? (
+        <TripCoverPicker
+          key={displayCover.id}
+          presentation="standalone"
+          trip={displayCover}
+          selectedRaw={personalCover.selection.raw}
+          onClose={() => setPersonalCoverOpen(false)}
+          onSelect={personalCover.select}
+          onChoosePhoto={async () => {
+            const current = () => alive.current && generation === getAccountGeneration();
+            if (!current() || !(await personalCover.open())) return false;
+            const choice = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ["images"],
+              allowsMultipleSelection: false,
+              quality: 1,
+              base64: false,
+              exif: false,
+            });
+            if (!current() || choice.canceled) return false;
+            const uri = choice.assets[0]?.uri;
+            if (!uri?.startsWith("file://"))
+              throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
+            const repository = await readLocalTripPhotoRepository();
+            if (!current()) return false;
+            const photo = await repository.addTripPhoto(displayCover.id, uri);
+            if (!current()) return false;
+            if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
+            await personalCover.select(tripPhotoCoverRef(photo.assetId));
+            return true;
+          }}
+        />
+      ) : null}
       {error && !selected && !remoteSelected ? (
         <Text accessibilityRole="alert" style={styles.status}>
           {t("tripCreate.saveFailed")}
@@ -623,6 +673,8 @@ function LocalTripContent({
       {selected ? (
         <>
           <TripHomeFrame
+            canChooseCover={!!personalCover.selection}
+            onChooseCover={openPersonalCover}
             onEdit={
               metadataEditable
                 ? () => {
@@ -634,10 +686,10 @@ function LocalTripContent({
             onHeroHeight={onHomeHeroHeight}
             widgets={pages}
             tripId={selected.id}
-            rawCoverSelection={selected.selectedCoverAssetIdRaw}
+            rawCoverSelection={displayCover?.selectedCoverAssetIdRaw}
             title={selected.name}
-            cover={tripCoverSource(selected)}
-            coverAssetId={tripCoverId(selected)}
+            cover={tripCoverSource(displayCover ?? selected)}
+            coverAssetId={tripCoverId(displayCover ?? selected)}
             metadata={[
               ...(selected.startDate && selected.endDate
                 ? [
@@ -719,7 +771,10 @@ function LocalTripContent({
             <SafeAreaProvider style={styles.modal}>
               {coverOpen ? (
                 <TripBasicEditor
-                  trip={selected}
+                  trip={{
+                    ...selected,
+                    selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
+                  }}
                   onClose={() => {
                     if (!editorBusy.current) setCoverOpen(false);
                   }}
@@ -836,6 +891,8 @@ function LocalTripContent({
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
+            canChooseCover={!!personalCover.selection}
+            onChooseCover={openPersonalCover}
             onHeroHeight={onHomeHeroHeight}
             modules={
               <TripMembersSummary
@@ -846,10 +903,10 @@ function LocalTripContent({
             }
             widgets={pages}
             tripId={remoteSelected.id}
-            rawCoverSelection={remoteSelected.selectedCoverAssetIdRaw}
+            rawCoverSelection={displayCover?.selectedCoverAssetIdRaw}
             title={remoteSelected.name}
-            cover={tripCoverSource(remoteSelected)}
-            coverAssetId={tripCoverId(remoteSelected)}
+            cover={tripCoverSource(displayCover ?? remoteSelected)}
+            coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
             notice={t("myTrips.cachedDetails")}
             metadata={[
               ...(remoteStart && remoteEnd
