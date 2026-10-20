@@ -173,3 +173,36 @@ it("rejects UTF8-overlong queries consistently before native dispatch", async ()
   );
   expect(f.native.search).not.toHaveBeenCalled();
 });
+
+it("supports a real precreation draft binding without manufacturing a Trip", async () => {
+  const f = fixture();
+  let active = true;
+  const p = createApplePlaceProvider(f.native, {
+    accountId: randomUUID(),
+    draftId: randomUUID(),
+    editorId: randomUUID(),
+    accountGeneration: getAccountGeneration(),
+    isCurrent: () => active,
+  });
+  const rows = await p.complete({ text: "Tokyo" });
+  expect(rows).toHaveLength(1);
+  const request = f.native.complete.mock.calls[0][0];
+  expect(request).not.toHaveProperty("tripId");
+  expect(request).not.toHaveProperty("draftId");
+  expect(request).not.toHaveProperty("accountId");
+  active = false;
+  await expect(p.resolve(rows[0], { text: "Tokyo" })).rejects.toMatchObject({
+    code: "CANCELLED",
+  });
+  p.close();
+  expect(() =>
+    createApplePlaceProvider(f.native, {
+      accountId: randomUUID(),
+      editorId: randomUUID(),
+      tripId: randomUUID(),
+      draftId: randomUUID(),
+      accountGeneration: getAccountGeneration(),
+      isCurrent: () => true,
+    } as never),
+  ).toThrow("INVALID_BINDING");
+});

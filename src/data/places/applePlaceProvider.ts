@@ -33,6 +33,7 @@ const candidateSchema = z.strictObject({
   address: z.string().max(4096).optional(),
   point: point.optional(),
   category: z.string().max(256).optional(),
+  providerPlaceId: z.string().min(1).max(1024).optional(),
 });
 const responseSchema = z.strictObject({
   status: z.enum([
@@ -63,13 +64,25 @@ export type ApplePlaceQuery = {
   locale?: string;
   region?: z.infer<typeof point>;
 };
-export type PlaceSearchBinding = Readonly<{
-  accountId: string;
-  tripId: string;
-  editorId: string;
-  accountGeneration: number;
-  isCurrent(): boolean;
-}>;
+export type PlaceSearchBinding = Readonly<
+  {
+    accountId: string;
+    editorId: string;
+    accountGeneration: number;
+    isCurrent(): boolean;
+  } & ({ tripId: string; draftId?: never } | { draftId: string; tripId?: never })
+>;
+function assertPlaceSearchBinding(binding: PlaceSearchBinding) {
+  const trip = "tripId" in binding;
+  const draft = "draftId" in binding;
+  if (trip === draft) throw new ApplePlaceError("INVALID_BINDING");
+  for (const value of [
+    binding.accountId,
+    binding.editorId,
+    trip ? binding.tripId : binding.draftId,
+  ])
+    z.uuid().parse(value);
+}
 export type ApplePlaceNative = {
   complete(input: Record<string, unknown>): Promise<unknown>;
   search(input: Record<string, unknown>): Promise<unknown>;
@@ -86,8 +99,7 @@ export function createApplePlaceProvider(
   binding: PlaceSearchBinding,
   id = createUuid,
 ) {
-  for (const value of [binding.accountId, binding.tripId, binding.editorId])
-    z.uuid().parse(value);
+  assertPlaceSearchBinding(binding);
   const sessionId = id();
   let generation = 0,
     closed = false;
@@ -183,6 +195,7 @@ export function createApplePlaceProvider(
   };
 }
 export async function readApplePlaceProvider(binding: PlaceSearchBinding) {
+  assertPlaceSearchBinding(binding);
   let native: ApplePlaceNative;
   try {
     const { requireNativeModule } = await import("expo-modules-core");
