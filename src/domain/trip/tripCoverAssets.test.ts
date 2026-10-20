@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { expect, it } from "vitest";
 import {
   isTripCoverAssetId,
+  parseTripPhotoCoverRef,
+  tripPhotoCoverRef,
   legacyTripCoverAssetIds,
   nativeTripCoverAllowlistSha256,
   nativeTripCoverAssetIds,
@@ -81,4 +83,24 @@ it("appends exactly the authorized22 static Owner IDs without replacing the orig
     "owner-photo-a348f66b8ca5/..",
   ])
     expect(isTripCoverAssetId(invalid)).toBe(false);
+});
+
+it("keeps retained photo references canonical and outside the static registry", () => {
+  const id = "cd1d8549-4cb8-4166-8d79-c1adc10391e7";
+  expect(tripPhotoCoverRef(id)).toBe(`photo-${id}`);
+  expect(parseTripPhotoCoverRef(`photo-${id}`)).toBe(id);
+  expect(isTripCoverAssetId(`photo-${id}`)).toBe(false);
+  expect(tripCoverAssetIds).toHaveLength(74);
+  for (const raw of [
+    id,
+    `photo-${id.toUpperCase()}`,
+    `PHOTO-${id}`,
+    ` photo-${id}`,
+    `photo-${id}/x`,
+    "photo-../a",
+    null,
+    {},
+  ])
+    expect(parseTripPhotoCoverRef(raw)).toBeNull();
+  expect(() => tripPhotoCoverRef(id.toUpperCase())).toThrow();
 });

@@ -1,4 +1,10 @@
-import { isTripCoverAssetId, type TripCoverUpdate } from "@/domain/trip/tripCoverAssets";
+import { readSelectedTripCoverPhotoInScope } from "./tripPhotoRepository";
+import { resolveRetainedTripPhoto } from "../files/tripPhotoFileStore";
+import {
+  isTripCoverAssetId,
+  parseTripPhotoCoverRef,
+  type TripCoverUpdate,
+} from "@/domain/trip/tripCoverAssets";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
@@ -25,6 +31,7 @@ export function createTripMetadataRepository(
   database: Database,
   account: () => Promise<string>,
   clock: () => string,
+  resolvePhoto: typeof resolveRetainedTripPhoto = resolveRetainedTripPhoto,
 ) {
   return {
     async canUpdateMetadata(tripId: string) {
@@ -57,7 +64,9 @@ export function createTripMetadataRepository(
         ((cover.before !== null &&
           (typeof cover.before !== "string" ||
             !/^[a-z0-9_-]{1,64}$/.test(cover.before))) ||
-          (cover.after !== null && !isTripCoverAssetId(cover.after)))
+          (cover.after !== null &&
+            !isTripCoverAssetId(cover.after) &&
+            !parseTripPhotoCoverRef(cover.after)))
       )
         throw new Error("TRIP_COVER_INVALID");
       const scope = await captureAccountScope(account);
@@ -121,6 +130,20 @@ export function createTripMetadataRepository(
           };
           if (json(before) !== json(request.before))
             throw new Error("TRIP_METADATA_LOCAL_CONFLICT");
+          if (
+            cover &&
+            cover.before !== cover.after &&
+            parseTripPhotoCoverRef(cover.after)
+          ) {
+            const photo = await readSelectedTripCoverPhotoInScope(
+              database,
+              account,
+              { ...scope, tripId: request.tripId },
+              cover.after,
+              { resolveRetainedTripPhoto: resolvePhoto },
+            );
+            if (!photo) throw new Error("TRIP_COVER_PHOTO_UNAVAILABLE");
+          }
           // A metadata-only save must not write a derived recommendation or erase
           // an unrecognised stored preference decoded by an older caller as null.
           if (cover && cover.before !== cover.after) {

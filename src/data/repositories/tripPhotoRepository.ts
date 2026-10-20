@@ -1,4 +1,5 @@
 import type * as SQLite from "expo-sqlite";
+import { parseTripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { createUuid } from "@/domain/localId";
 import {
@@ -12,6 +13,7 @@ import {
   captureAccountScope,
   assertAccountRequestContext,
   withAccountApplyGate,
+  type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { readInitializedDatabase } from "../db/database";
 import { requireActiveUserId } from "../auth/authRepository";
@@ -49,7 +51,10 @@ const files: PhotoFiles = {
   resolveRetainedTripPhoto,
   discardRetainedTripPhoto,
 };
-function decode(row: Row, fileStore: PhotoFiles): TripPhoto {
+function decode(
+  row: Row,
+  fileStore: Pick<PhotoFiles, "resolveRetainedTripPhoto">,
+): TripPhoto {
   let uri: string | null;
   try {
     uri = fileStore.resolveRetainedTripPhoto({
@@ -75,6 +80,39 @@ function decode(row: Row, fileStore: PhotoFiles): TripPhoto {
   };
 }
 
+// Reuses the caller's Account gate/transaction, including metadata's atomic save.
+export async function readSelectedTripCoverPhotoInScope(
+  database: Database,
+  account: () => Promise<string>,
+  scope: AccountRequestContext,
+  raw: unknown,
+  fileStore: Pick<PhotoFiles, "resolveRetainedTripPhoto"> = files,
+): Promise<TripPhoto | null> {
+  await assertAccountRequestContext(scope, account);
+  const assetId = parseTripPhotoCoverRef(raw);
+  if (!assetId) return null;
+  const trip = await database.getFirstAsync<{ id: string }>(
+    `SELECT id FROM local_trip_containers WHERE account_id=? AND id=?
+     AND NOT EXISTS(SELECT 1 FROM trip_core_scopes WHERE account_id=? AND trip_id=? AND revoked<>0)`,
+    scope.accountId,
+    scope.tripId,
+    scope.accountId,
+    scope.tripId,
+  );
+  const row = trip
+    ? await database.getFirstAsync<Row>(
+        "SELECT * FROM local_trip_photos WHERE account_id=? AND trip_id=? AND asset_id=?",
+        scope.accountId,
+        scope.tripId,
+        assetId,
+      )
+    : null;
+  await assertAccountRequestContext(scope, account);
+  const photo = row ? decode(row, fileStore) : null;
+  await assertAccountRequestContext(scope, account);
+  return photo?.localUri ? photo : null;
+}
+
 // Only local Trip-owned images; neither a Day association nor a cloud upload.
 export function createTripPhotoRepository(
   database: Database,
@@ -84,6 +122,27 @@ export function createTripPhotoRepository(
   clock = () => new Date().toISOString(),
 ) {
   return {
+    async readSelectedTripCoverPhoto(
+      tripId: string,
+      raw: unknown,
+    ): Promise<TripPhoto | null> {
+      coreUuid.parse(tripId);
+      const scope = { ...(await captureAccountScope(account)), tripId };
+      return withAccountApplyGate(async () => {
+        let result: TripPhoto | null = null;
+        await database.withTransactionAsync(async () => {
+          result = await readSelectedTripCoverPhotoInScope(
+            database,
+            account,
+            scope,
+            raw,
+            fileStore,
+          );
+        });
+        await assertAccountRequestContext(scope, account);
+        return result;
+      });
+    },
     async listTripPhotos(tripId: string): Promise<TripPhoto[]> {
       coreUuid.parse(tripId);
       const scope = await captureAccountScope(account);

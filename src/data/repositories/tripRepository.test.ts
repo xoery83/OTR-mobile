@@ -1,4 +1,5 @@
-import { tripCoverAssetIds } from "@/domain/trip/tripCoverAssets";
+import { resolveRetainedTripPhoto } from "../files/tripPhotoFileStore";
+import { tripCoverAssetIds, tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -28,6 +29,11 @@ import { createLedgerReadRepository } from "./ledgerReadRepository";
 import { createLedgerExpenseSyncWorker } from "../sync/ledgerExpenseSyncWorker";
 import { createSyncEngine } from "../sync/syncEngine";
 import { captureAccountScope } from "../auth/accountRequestContext";
+vi.mock("../files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const connections: DatabaseSync[] = [],
@@ -2207,4 +2213,182 @@ it("distinguishes unknown stored IDs from AUTO and leaves them untouched on meta
   await expect(
     f.repo.updateMetadata(request, { before: "future-cover-v3", after: "wc-142191115" }),
   ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
+});
+
+it("atomically saves a retained same-Trip photo cover and preserves it on metadata-only cold edits", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-photo-cover-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const saved = await f.repo.createTrip(input()),
+    photo = randomUUID(),
+    ref = tripPhotoCoverRef(photo);
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  f.sql
+    .prepare(
+      "INSERT INTO local_trip_photos(account_id,trip_id,asset_id,mime_type,size_bytes,sha256,local_uri,created_at) VALUES(?,?,?,'image/jpeg',12,?,'file:///retained/photo.jpg',?)",
+    )
+    .run(accountA, saved.id, photo, "a".repeat(64), stamp);
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue("file:///retained/photo.jpg");
+  const req = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Photo trip" },
+  };
+  await f.repo.updateMetadata(req, { before: null, after: ref });
+  await f.repo.updateMetadata(req, { before: null, after: ref });
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    name: "Photo trip",
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: ref,
+  });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) n FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+      )
+      .get(),
+  ).toEqual({ n: 1 });
+  f.sql.close();
+  connections.splice(connections.indexOf(f.sql), 1);
+  f = local(path, false);
+  const after = { ...req.after, destination: "New destination" };
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue(null);
+  await f.repo.updateMetadata({
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: req.after,
+    after,
+  });
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    name: "Photo trip",
+    destination: "New destination",
+    selectedCoverAssetIdRaw: ref,
+  });
+  // An unchanged preference is also metadata-only; missing bytes do not erase it.
+  await f.repo.updateMetadata(
+    { operationId: randomUUID(), tripId: saved.id, before: after, after },
+    { before: ref, after: ref },
+  );
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue("file:///retained/photo.jpg");
+  const coverOnly = { operationId: randomUUID(), tripId: saved.id, before: after, after };
+  await f.repo.updateMetadata(coverOnly, { before: ref, after: "city" });
+  await f.repo.updateMetadata(
+    { ...coverOnly, operationId: randomUUID() },
+    { before: "city", after: ref },
+  );
+  await f.repo.updateMetadata(coverOnly, { before: ref, after: "city" });
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetIdRaw).toBe(ref);
+});
+it("rejects missing, foreign, invalid, revoked or stale photo cover saves without partial metadata", async () => {
+  const f = local(),
+    saved = await f.repo.createTrip(input()),
+    other = await f.repo.createTrip(input());
+  const photo = randomUUID(),
+    ref = tripPhotoCoverRef(photo),
+    before = {
+      name: saved.name,
+      destination: saved.destination,
+      startDate: saved.startDate,
+      endDate: saved.endDate,
+    };
+  const request = () => ({
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Must not save" },
+  });
+  f.sql
+    .prepare(
+      "INSERT INTO local_trip_photos(account_id,trip_id,asset_id,mime_type,size_bytes,sha256,local_uri,created_at) VALUES(?,?,?,'image/jpeg',12,?,'file:///retained/photo.jpg',?)",
+    )
+    .run(accountA, other.id, photo, "a".repeat(64), stamp);
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue("file:///retained/photo.jpg");
+  await expect(
+    f.repo.updateMetadata(request(), { before: null, after: ref }),
+  ).rejects.toThrow("TRIP_COVER_PHOTO_UNAVAILABLE");
+  f.sql
+    .prepare("UPDATE local_trip_photos SET trip_id=? WHERE account_id=? AND asset_id=?")
+    .run(saved.id, accountA, photo);
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue(null);
+  await expect(
+    f.repo.updateMetadata(request(), { before: null, after: ref }),
+  ).rejects.toThrow("TRIP_COVER_PHOTO_UNAVAILABLE");
+  await expect(
+    f.repo.updateMetadata(request(), { before: null, after: ref.toUpperCase() as never }),
+  ).rejects.toThrow("TRIP_COVER_INVALID");
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue("file:///retained/photo.jpg");
+  await f.repo.selectBuiltInCover(saved.id, "coast");
+  await expect(
+    f.repo.updateMetadata(request(), { before: null, after: ref }),
+  ).rejects.toThrow("TRIP_COVER_LOCAL_CONFLICT");
+  f.sql
+    .prepare(
+      "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,1,1)",
+    )
+    .run(accountA, saved.id);
+  await expect(
+    f.repo.updateMetadata(request(), { before: "coast", after: ref }),
+  ).rejects.toThrow("TRIP_COVER_PHOTO_UNAVAILABLE");
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    ...before,
+    selectedCoverAssetIdRaw: "coast",
+  });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) n FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+      )
+      .get(),
+  ).toEqual({ n: 0 });
+  f.switchTo(accountB);
+  await expect(
+    f.repo.updateMetadata(request(), { before: "coast", after: ref }),
+  ).rejects.toThrow("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
+});
+it("rolls photo cover and metadata back on queue failure or Account ABA during verification", async () => {
+  const f = local(),
+    saved = await f.repo.createTrip(input()),
+    photo = randomUUID(),
+    ref = tripPhotoCoverRef(photo);
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  f.sql
+    .prepare(
+      "INSERT INTO local_trip_photos(account_id,trip_id,asset_id,mime_type,size_bytes,sha256,local_uri,created_at) VALUES(?,?,?,'image/jpeg',12,?,'file:///retained/photo.jpg',?)",
+    )
+    .run(accountA, saved.id, photo, "a".repeat(64), stamp);
+  const req = () => ({
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Must not save" },
+  });
+  vi.mocked(resolveRetainedTripPhoto).mockReturnValue("file:///retained/photo.jpg");
+  f.failNextQueue();
+  await expect(
+    f.repo.updateMetadata(req(), { before: null, after: ref }),
+  ).rejects.toThrow("QUEUE_WRITE_FAILED");
+  vi.mocked(resolveRetainedTripPhoto).mockImplementationOnce(() => {
+    f.switchTo(accountB);
+    f.switchTo(accountA);
+    return "file:///retained/photo.jpg";
+  });
+  await expect(
+    f.repo.updateMetadata(req(), { before: null, after: ref }),
+  ).rejects.toThrow("Account changed");
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    ...before,
+    selectedCoverAssetIdRaw: null,
+  });
 });

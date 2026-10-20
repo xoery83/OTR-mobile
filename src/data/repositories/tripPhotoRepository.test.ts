@@ -1,3 +1,4 @@
+import { tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -261,5 +262,63 @@ it("rejects a prior Account generation even when the same Account returns before
     await expect(test.repo().listTripPhotos(tripId)).rejects.toThrow("Account changed");
   } finally {
     test.close();
+  }
+});
+
+it("resolves only a current same-Trip retained cover photo across cold reopen", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    expect(
+      f.sql
+        .prepare(
+          "SELECT selected_cover_asset_id FROM local_trip_containers WHERE account_id=? AND id=?",
+        )
+        .get(accountA, tripId),
+    ).toEqual({ selected_cover_asset_id: null });
+    const ref = tripPhotoCoverRef(photoId);
+    expect(await f.repo().readSelectedTripCoverPhoto(tripId, ref)).toMatchObject({
+      assetId: photoId,
+      localUri: f.retained.photo.localUri,
+    });
+    f.reopen();
+    expect(await f.repo().readSelectedTripCoverPhoto(tripId, ref)).toMatchObject({
+      assetId: photoId,
+    });
+    expect(await f.repo().readSelectedTripCoverPhoto(randomUUID(), ref)).toBeNull();
+    expect(await f.repo().readSelectedTripCoverPhoto(tripId, "city")).toBeNull();
+    expect(
+      await f.repo().readSelectedTripCoverPhoto(tripId, ref.toUpperCase()),
+    ).toBeNull();
+    f.account(accountB);
+    expect(await f.repo().readSelectedTripCoverPhoto(tripId, ref)).toBeNull();
+    f.account(accountA);
+    f.files.resolveRetainedTripPhoto.mockReturnValue(null);
+    expect(await f.repo().readSelectedTripCoverPhoto(tripId, ref)).toBeNull();
+    f.files.resolveRetainedTripPhoto.mockReturnValue(f.retained.photo.localUri);
+    f.sql
+      .prepare(
+        "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,1,1)",
+      )
+      .run(accountA, tripId);
+    expect(await f.repo().readSelectedTripCoverPhoto(tripId, ref)).toBeNull();
+  } finally {
+    f.close();
+  }
+});
+it("rejects a selected-photo result after Account ABA during file verification", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    f.files.resolveRetainedTripPhoto.mockImplementationOnce(() => {
+      f.account(accountB);
+      f.account(accountA);
+      return f.retained.photo.localUri;
+    });
+    await expect(
+      f.repo().readSelectedTripCoverPhoto(tripId, tripPhotoCoverRef(photoId)),
+    ).rejects.toThrow("Account changed");
+  } finally {
+    f.close();
   }
 });
