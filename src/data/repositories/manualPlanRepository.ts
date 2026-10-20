@@ -57,6 +57,21 @@ export const manualPlanFieldsSchema = z
     }
   });
 export type ManualPlanFields = z.infer<typeof manualPlanFieldsSchema>;
+export const manualStayDetailsSchema = z.strictObject({
+  propertyName: z.string().max(500).nullable(),
+  permittedCheckinFrom: minute,
+  permittedCheckinUntil: minute,
+  permittedCheckoutBy: minute,
+});
+export const manualStayFieldsSchema = manualPlanFieldsSchema.safeExtend({
+  endDate: z.string().min(1),
+  stayDetails: manualStayDetailsSchema,
+});
+export type ManualStayFields = z.infer<typeof manualStayFieldsSchema>;
+type ManualItemFields = ManualPlanFields & {
+  stayDetails?: ManualStayFields["stayDetails"];
+};
+
 export type ManualPlanDraft = Readonly<{
   mode: "CREATE" | "EDIT";
   itemId: string;
@@ -73,18 +88,44 @@ type Snapshot = NonNullable<
   Awaited<ReturnType<typeof readLocalManualSnapshotWithinTransaction>>
 >;
 type Command = ReturnType<typeof validateCoreCommand>;
+type ManualItemDraft<F extends ManualPlanFields = ManualItemFields> = Omit<
+  ManualPlanDraft,
+  "fields"
+> &
+  Readonly<{ fields: F }>;
+type ManualItemRepository<F extends ManualPlanFields> = {
+  createDraft(tripId: string): Promise<ManualItemDraft<F>>;
+  read(tripId: string, itemId: string): Promise<ManualItemDraft<F>>;
+  save(draft: ManualItemDraft<F>, fields: F): Promise<ManualPlanSaveResult>;
+};
 type DraftState = {
   context: AccountRequestContext;
   fingerprint: string;
   actor: string;
   revision: number | null;
-  original: ManualPlanFields;
+  original: ManualItemFields;
   ids: string[];
   attempt?: { fields: string; commands: Command[] };
 };
-function fieldsFor(row: Record<string, unknown>, snapshot: Snapshot): ManualPlanFields {
-  return manualPlanFieldsSchema.parse({
+function fieldsFor(
+  row: Record<string, unknown>,
+  snapshot: Snapshot,
+  family: "P1" | "P3",
+): ManualItemFields {
+  const stay = snapshot.graph.trip_stay_details.find((r) => r.event_id === row.id);
+  const clockLabel = (v: unknown) => (typeof v === "string" ? v.slice(0, 5) : null);
+  return (family === "P3" ? manualStayFieldsSchema : manualPlanFieldsSchema).parse({
     title: row.title,
+    ...(family === "P3"
+      ? {
+          stayDetails: {
+            propertyName: stay?.property_name ?? null,
+            permittedCheckinFrom: clockLabel(stay?.permitted_checkin_from),
+            permittedCheckinUntil: clockLabel(stay?.permitted_checkin_until),
+            permittedCheckoutBy: clockLabel(stay?.permitted_checkout_by),
+          },
+        }
+      : {}),
     startDate: row.start_local_date,
     startTime:
       typeof row.start_local_time === "string" ? row.start_local_time.slice(0, 5) : null,
@@ -103,12 +144,17 @@ function fieldsFor(row: Record<string, unknown>, snapshot: Snapshot): ManualPlan
     },
   });
 }
-function editable(snapshot: Snapshot, itemId: string, accountId: string) {
+function editable(
+  snapshot: Snapshot,
+  itemId: string,
+  accountId: string,
+  family: "P1" | "P3",
+) {
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
     !row ||
     !snapshot.predictedIds.has(itemId) ||
-    row.experience_family !== "P1" ||
+    row.experience_family !== family ||
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
     row.status === "cancelled" ||
@@ -130,14 +176,32 @@ const authoredBoundary = (
   zone_id: zone,
 });
 
-export function createManualPlanRepository(
+// Two finite Forms share the already-qualified transaction and opaque retry boundary.
+export function createManualItemRepository(
+  family: "P1",
+  database: CoreDatabase,
+  account: () => Promise<string>,
+  core: Core,
+  clock?: () => string,
+  newId?: () => string,
+): ManualItemRepository<ManualPlanFields>;
+export function createManualItemRepository(
+  family: "P3",
+  database: CoreDatabase,
+  account: () => Promise<string>,
+  core: Core,
+  clock?: () => string,
+  newId?: () => string,
+): ManualItemRepository<ManualStayFields>;
+export function createManualItemRepository(
+  family: "P1" | "P3",
   database: CoreDatabase,
   account: () => Promise<string>,
   core: Core,
   clock = () => new Date().toISOString(),
   newId = createUuid,
 ) {
-  const drafts = new WeakMap<ManualPlanDraft, DraftState>();
+  const drafts = new WeakMap<ManualItemDraft, DraftState>();
   async function current(context: AccountRequestContext) {
     const accepted = await core.readAcceptedSnapshotWithinTransaction(context);
     const snapshot = await readLocalManualSnapshotWithinTransaction(
@@ -150,15 +214,15 @@ export function createManualPlanRepository(
     if (!snapshot) throw new Error("MANUAL_PLAN_UNAVAILABLE");
     return snapshot;
   }
-  async function open(tripId: string, itemId?: string): Promise<ManualPlanDraft> {
+  async function open(tripId: string, itemId?: string): Promise<ManualItemDraft> {
     coreUuid.parse(tripId);
     if (itemId) coreUuid.parse(itemId);
     const context = await core.captureContext(tripId);
     return withAccountApplyGate(async () => {
-      let draft!: ManualPlanDraft;
+      let draft!: ManualItemDraft;
       await database.withTransactionAsync(async () => {
         const snapshot = await current(context);
-        const row = itemId ? editable(snapshot, itemId, context.accountId) : null;
+        const row = itemId ? editable(snapshot, itemId, context.accountId, family) : null;
         // Exact MANUAL CREATE provenance is retained independently from accepted facts.
         if (
           row &&
@@ -171,13 +235,23 @@ export function createManualPlanRepository(
           )
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");
-        const fields: ManualPlanFields = row
-          ? fieldsFor(row, snapshot)
+        const fields: ManualItemFields = row
+          ? fieldsFor(row, snapshot, family)
           : {
               title: "",
               startDate: "",
               startTime: null,
-              endDate: null,
+              endDate: family === "P3" ? "" : null,
+              ...(family === "P3"
+                ? {
+                    stayDetails: {
+                      propertyName: null,
+                      permittedCheckinFrom: null,
+                      permittedCheckinUntil: null,
+                      permittedCheckoutBy: null,
+                    },
+                  }
+                : {}),
               endTime: null,
               location: null,
               description: null,
@@ -201,7 +275,7 @@ export function createManualPlanRepository(
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
           original: structuredClone(fields),
-          ids: Array.from({ length: 4 }, () => newId()),
+          ids: Array.from({ length: family === "P3" ? 5 : 4 }, () => newId()),
         });
         await assertAccountRequestContext(context, account);
       });
@@ -213,12 +287,21 @@ export function createManualPlanRepository(
     createDraft: (tripId: string) => open(tripId),
     read: (tripId: string, itemId: string) => open(tripId, itemId),
     async save(
-      draft: ManualPlanDraft,
-      input: ManualPlanFields,
+      draft: ManualItemDraft,
+      input: ManualItemFields,
     ): Promise<ManualPlanSaveResult> {
       const state = drafts.get(draft);
       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
-      const fields = manualPlanFieldsSchema.parse(input);
+      const fields: ManualItemFields = (
+        family === "P3" ? manualStayFieldsSchema : manualPlanFieldsSchema
+      ).parse(input);
+      // Create's single accommodation name is explicit authored property text; Edit retains historical fields.
+      if (
+        draft.mode === "CREATE" &&
+        fields.stayDetails &&
+        fields.stayDetails.propertyName === null
+      )
+        fields.stayDetails.propertyName = fields.title;
       fields.participation.people.sort();
       fields.location = fields.location || null;
       const fieldsText = json(fields);
@@ -229,7 +312,7 @@ export function createManualPlanRepository(
         if (json(snapshot.actor) !== state.actor)
           throw new Error("MANUAL_PLAN_SCOPE_CHANGED");
         if (draft.mode === "EDIT")
-          editable(snapshot, draft.itemId, state.context.accountId);
+          editable(snapshot, draft.itemId, state.context.accountId, family);
         const prior = state.attempt?.commands;
         if (prior?.length) {
           const rows = await database.getAllAsync<{
@@ -252,7 +335,7 @@ export function createManualPlanRepository(
               )
             )
               throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
-            editable(snapshot, draft.itemId, state.context.accountId);
+            editable(snapshot, draft.itemId, state.context.accountId, family);
             return {
               commands: [],
               result: async () => ({
@@ -267,7 +350,7 @@ export function createManualPlanRepository(
           throw new Error("MANUAL_PLAN_CONFLICT");
         const row =
           draft.mode === "EDIT"
-            ? editable(snapshot, draft.itemId, state.context.accountId)
+            ? editable(snapshot, draft.itemId, state.context.accountId, family)
             : null;
         if (row && row.semantic_revision !== state.revision)
           throw new Error("MANUAL_PLAN_CONFLICT");
@@ -288,11 +371,38 @@ export function createManualPlanRepository(
           Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
         );
         place.authored_label = fields.location || null;
+        const storedStay = snapshot.graph.trip_stay_details.find(
+          (r) => r.event_id === draft.itemId,
+        );
+        const originalStay = state.original.stayDetails
+          ? state.original.stayDetails
+          : null;
+        const selectedStay = fields.stayDetails;
+        const stayDetails = selectedStay
+          ? {
+              property_name: selectedStay.propertyName,
+              ...Object.fromEntries(
+                [
+                  ["permittedCheckinFrom", "permitted_checkin_from"],
+                  ["permittedCheckinUntil", "permitted_checkin_until"],
+                  ["permittedCheckoutBy", "permitted_checkout_by"],
+                ].map(([key, column]) => [
+                  column,
+                  originalStay &&
+                  selectedStay[key as keyof typeof selectedStay] ===
+                    originalStay[key as keyof typeof originalStay]
+                    ? (storedStay?.[column] ?? null)
+                    : selectedStay[key as keyof typeof selectedStay],
+                ]),
+              ),
+            }
+          : undefined;
         if (draft.mode === "CREATE")
           payloads.push({
             command: "CREATE_ITEM",
             payload: {
-              family: "P1",
+              family,
+              ...(stayDetails ? { details: stayDetails, rooms: [] } : {}),
               core: { title: fields.title, description: fields.description },
               schedule,
               place,
@@ -348,6 +458,26 @@ export function createManualPlanRepository(
               payload: { participation: fields.participation },
             });
         }
+        if (
+          draft.mode === "EDIT" &&
+          fields.stayDetails &&
+          json(fields.stayDetails) !== json(originalStay)
+        ) {
+          payloads.push({
+            command: "SET_STAY_DETAILS",
+            payload: {
+              details: stayDetails,
+              rooms: snapshot.graph.trip_stay_rooms
+                .filter((r) => r.event_id === draft.itemId)
+                .map((r) => ({
+                  room_id: r.room_id,
+                  category: r.category,
+                  quantity: r.quantity,
+                  capacity: r.capacity,
+                })),
+            },
+          });
+        }
         let graph = snapshot.graph;
         const commands = payloads.map((p, i) => {
           const revision =
@@ -382,8 +512,13 @@ export function createManualPlanRepository(
           commands,
           result: async () => {
             const projected = await current(state.context);
-            const saved = editable(projected, draft.itemId, state.context.accountId);
-            if (json(fieldsFor(saved, projected)) !== fieldsText)
+            const saved = editable(
+              projected,
+              draft.itemId,
+              state.context.accountId,
+              family,
+            );
+            if (json(fieldsFor(saved, projected, family)) !== fieldsText)
               throw new Error("MANUAL_PLAN_PROJECTION_MISMATCH");
             await assertAccountRequestContext(state.context, account);
             return {
@@ -396,6 +531,15 @@ export function createManualPlanRepository(
       });
     },
   };
+}
+export function createManualPlanRepository(
+  database: CoreDatabase,
+  account: () => Promise<string>,
+  core: Core,
+  clock?: () => string,
+  newId?: () => string,
+) {
+  return createManualItemRepository("P1", database, account, core, clock, newId);
 }
 export async function createDefaultManualPlanRepository() {
   const database = await readInitializedDatabase();

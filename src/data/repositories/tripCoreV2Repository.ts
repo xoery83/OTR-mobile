@@ -531,7 +531,7 @@ export function createTripCoreV2Repository(
       await database.withTransactionAsync(async () => {
         await scope(ctx);
         const prepared = await prepare();
-        if (prepared.commands.length > 4) throw new Error("MANUAL_BATCH_INVALID");
+        if (prepared.commands.length > 5) throw new Error("MANUAL_BATCH_INVALID");
         const commands = prepared.commands.map(validateCoreCommand);
         if (
           commands.some(
@@ -545,9 +545,10 @@ export function createTripCoreV2Repository(
                 "SET_ITEM_SCHEDULE",
                 "SET_ITEM_PLACE",
                 "SET_ITEM_PARTICIPATION",
+                "SET_STAY_DETAILS",
               ].includes(c.command) ||
               (c.command === "CREATE_ITEM" &&
-                (c.payload as { family: string }).family !== "P1"),
+                !["P1", "P3"].includes((c.payload as { family: string }).family)),
           ) ||
           new Set(commands.map((c) => c.target.id)).size > 1
         )

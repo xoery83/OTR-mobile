@@ -225,7 +225,7 @@ describe("Core2 supplemental read and deterministic Day, synthetic accepted fact
   });
 });
 
-it("P1 Notes project only with the existing Item read authority, retaining literal text and null", () => {
+it("P1/P3 Notes project only with the existing Item read authority, retaining literal text and null", () => {
   const note = "Meet by the garden gate";
   const p1 = create(emptyCoreGraph(), "P1", "2026-10-20", undefined, {
     core: { title: "Garden visit", description: note },
@@ -241,5 +241,5 @@ it("P1 Notes project only with the existing Item read authority, retaining liter
     null,
   );
   const stay = create(emptyCoreGraph(), "P3", "2026-10-20", "2026-10-21");
-  expect(projectCoreItem(stay.graph, actor, stay.id)).not.toHaveProperty("description");
+  expect(projectCoreItem(stay.graph, actor, stay.id)).toHaveProperty("description", null);
 });
