@@ -42,6 +42,7 @@ beforeEach(() => {
 });
 it("shows the two restrained entry choices in a content-fit modal without selecting either", () => {
   const html = renderToStaticMarkup(createElement(StartTripSheet, props));
+  expect(html).toContain("createTripV2.startHint");
   expect(html).toContain("createTripV2.importHint");
   expect(html).toContain("createTripV2.manualHint");
   expect(state.modal).toMatchObject({

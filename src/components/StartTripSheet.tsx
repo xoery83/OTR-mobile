@@ -50,6 +50,7 @@ export function StartTripSheet({
               contentContainerStyle={styles.content}
               keyboardShouldPersistTaps="handled"
             >
+              <UiText style={styles.meta}>{t("createTripV2.startHint")}</UiText>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("actionIsland.importPlans")}
