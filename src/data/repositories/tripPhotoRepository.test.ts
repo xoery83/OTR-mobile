@@ -18,6 +18,7 @@ import { readInitializedDatabase } from "../db/database";
 import {
   resolveRetainedTripPhoto,
   probeRetainedTripPhotoIdentity,
+  isRetainedTripPhotoLocation,
 } from "../files/tripPhotoFileStore";
 
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
@@ -27,6 +28,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
   resolveRetainedTripPhoto: vi.fn(),
   probeRetainedTripPhotoIdentity: vi.fn(),
   discardRetainedTripPhoto: vi.fn(),
+  isRetainedTripPhotoLocation: vi.fn(() => false),
 }));
 const accountA = randomUUID(),
   accountB = randomUUID(),
@@ -656,6 +658,42 @@ it("rejects a deferred warm row read after Account switches away and back", asyn
     expect(await c.repo().readSelectedTripCoverPhoto(tripId, raw)).not.toBeNull();
     expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledTimes(1);
   } finally {
+    f.close();
+  }
+});
+
+it("accepts only a location-validated relocation and reuses the verified warm identity", async () => {
+  const f = setup();
+  try {
+    await f.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    const prior = f.retained.photo.localUri;
+    const current = `file:///app/current/trip-photos/${accountA}/${tripId}/${photoId}.jpg`;
+    const c = enableCache(f);
+    c.identity({ uri: current, sizeBytes: 12, modificationTime: 100, creationTime: 50 });
+    f.files.resolveRetainedTripPhoto.mockReturnValue(current);
+    vi.mocked(isRetainedTripPhotoLocation).mockImplementation(
+      (photo, uri) =>
+        photo.accountId === accountA &&
+        photo.tripId === tripId &&
+        photo.assetId === photoId &&
+        photo.localUri === prior &&
+        uri === current,
+    );
+    f.files.resolveRetainedTripPhoto.mockClear();
+    expect(
+      await c.repo().readSelectedTripCoverPhoto(tripId, tripPhotoCoverRef(photoId)),
+    ).toMatchObject({ localUri: current });
+    expect(
+      await c.repo().readSelectedTripCoverPhoto(tripId, tripPhotoCoverRef(photoId)),
+    ).toMatchObject({ localUri: current });
+    expect(f.files.resolveRetainedTripPhoto).toHaveBeenCalledOnce();
+    expect(f.sql.prepare("SELECT local_uri FROM local_trip_photos").get()).toEqual({
+      local_uri: prior,
+    });
+    f.files.resolveRetainedTripPhoto.mockReturnValue("file:///untrusted/other.jpg");
+    expect(await f.repo().listTripPhotos(tripId)).toMatchObject([{ localUri: null }]);
+  } finally {
+    vi.mocked(isRetainedTripPhotoLocation).mockReset();
     f.close();
   }
 });
