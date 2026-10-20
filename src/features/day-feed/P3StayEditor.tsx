@@ -166,7 +166,7 @@ export function P3StayEditor({
     change({ stayDetails: { ...fieldsRef.current.stayDetails, [key]: value } });
   };
   const close = (then = onClose) => {
-    if (busyRef.current) return;
+    if (!current() || busyRef.current) return;
     const dirty =
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
@@ -176,7 +176,13 @@ export function P3StayEditor({
     }
     Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
       { text: t("actionIsland.stay"), style: "cancel" },
-      { text: t("actionIsland.discard"), style: "destructive", onPress: then },
+      {
+        text: t("actionIsland.discard"),
+        style: "destructive",
+        onPress: () => {
+          if (current() && !busyRef.current) then();
+        },
+      },
     ]);
   };
   const save = async () => {

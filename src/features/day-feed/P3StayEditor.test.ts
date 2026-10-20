@@ -131,11 +131,15 @@ const node = (label: string) =>
 async function open(p: ReturnType<typeof props>, repo: any) {
   state.repository.mockResolvedValue(repo);
   render(p);
-  for (const effect of state.effects) effect();
+  const cleanups = state.effects.flatMap((effect) => {
+    const cleanup = effect();
+    return typeof cleanup === "function" ? [cleanup] : [];
+  });
   state.effects = [];
   state.mount = false;
   await new Promise((resolve) => setImmediate(resolve));
   render(p);
+  return () => cleanups.forEach((cleanup) => cleanup());
 }
 function chooseDate(p: ReturnType<typeof props>, label: string, date: Date) {
   node(label).onPress();
@@ -367,4 +371,62 @@ it("edits an existing P3 through its original repository draft and preserves the
     }),
   );
   expect(p.onSaved).toHaveBeenCalledWith("item-existing");
+});
+
+it("ignores a queued Discard confirmation after P3 Save starts", async () => {
+  const p = props();
+  const value = fields();
+  value.title = "Original stay";
+  value.startDate = "2027-12-29";
+  value.endDate = "2028-01-02";
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "item-alert",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(() => new Promise(() => {})),
+  };
+  await open(p, repo);
+  node("tripCreate.stayName").onChangeText("Changed stay");
+  render(p);
+  const oldCancel = node("common.cancel").onPress;
+  const oldSave = node("tripCreate.saveItem").onPress;
+  oldCancel();
+  const discard = state.alert.mock.lastCall![2][1].onPress;
+  oldSave();
+  discard();
+  expect(repo.save).toHaveBeenCalledOnce();
+  expect(p.onClose).not.toHaveBeenCalled();
+});
+
+it("ignores P3 Discard confirmation after Account change or unmount", async () => {
+  const p = props();
+  const value = fields();
+  value.title = "Original stay";
+  value.startDate = "2027-12-29";
+  value.endDate = "2028-01-02";
+  const cleanup = await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "item-alert",
+      fields: value,
+      participantOptions: [],
+    })),
+  });
+  node("tripCreate.stayName").onChangeText("Changed stay");
+  render(p);
+  const oldCancel = node("common.cancel").onPress;
+  oldCancel();
+  const discard = state.alert.mock.lastCall![2][1].onPress;
+  state.generation++;
+  oldCancel();
+  discard();
+  expect(state.alert).toHaveBeenCalledOnce();
+  expect(p.onClose).not.toHaveBeenCalled();
+  state.generation--;
+  cleanup();
+  discard();
+  expect(p.onClose).not.toHaveBeenCalled();
 });
