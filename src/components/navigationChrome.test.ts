@@ -67,3 +67,15 @@ it("owns the measured native-header inset once and clips collapsing Journey chro
     expect(frame.props.children.props.children).toBe("Journey context → segment");
   }
 });
+
+it("lets an explicit Day underlap reach the native bar without changing default callers", () => {
+  for (const height of [91, 144]) {
+    chrome.headerHeight = height;
+    const frame = NavigationContentFrame({ children: "Day", underlapHeader: true });
+    expect(frame.props.style[1]).toEqual({ paddingTop: 0 });
+    expect(frame.props.children.props.style).toEqual({ flex: 1, overflow: "hidden" });
+    expect(NavigationContentFrame({ children: "Other" }).props.style[1]).toEqual({
+      paddingTop: height,
+    });
+  }
+});

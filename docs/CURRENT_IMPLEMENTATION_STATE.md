@@ -1,3 +1,11 @@
+## Experience Chrome translucency correction — 21 October 2026 / REVIEW PENDING
+
+- Independent candidate starts at full Forms P1/P3/P4/P5 preview 3423f273; keeps its normal repositories, forms and QA data. No resident preview switch during implementation.
+- Day explicitly opts into native-header underlap. The default shared Frame still owns its measured/clipped inset for other screens; Day instead uses the existing scrolling header/topInset once, preserving physical reading/anchor boundaries. UIKit systemMaterial blurs real scrolling content behind Day and collapsed Home; immersive Home Hero remains clear.
+- Bottom islands keep native regular glass and explicit transparent tint, pending actual appearance verification. Reduce Transparency uses opaque theme surface/tint; unavailable native glass also uses an opaque theme surface. Auto appearance and existing large-text geometry remain intact.
+- Only the registered Chrome/Frame and header-option regions change; Forms entry fixes are a separate Coordinator-owned packet to combine serially before Native. No Core/Reader/schema/date/anchor algorithm or business-data change.
+- Static inset/collapse, warm Home–Day, native capability/fallback/Light–Dark reduced transparency tests do not establish Native UX acceptance. Real continuous scroll, backdrop readability, Menu/Search/navigation and preservation of the Forms entry candidate remain required; existing 3423 rollback is retained.
+
 ## Experience Day native-host regression — 20 October 2026
 
 - Owner reproduced flat Menu/Search on the new Day header after the 2a2ec5ab preview. Earlier bounded Native observations did not cover the saved-Day/legacy-root branch; chrome remains PARTIAL, not UX Accepted.

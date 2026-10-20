@@ -739,6 +739,7 @@ it("keeps status information readable after the measured Hero scrolls away and o
   find(node, LocalTripWorkspace).onHomeHeroHeight(300);
   const scroll = find(node, "ScrollView");
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.setOptions.mock.lastCall?.[0].headerTransparent).toBe(true);
   expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
     "transparent",
@@ -755,7 +756,7 @@ it("keeps status information readable after the measured Hero scrolls away and o
   expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
     "transparent",
   );
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
     "Actual saved Trip",
   );
@@ -780,18 +781,22 @@ it("keeps status information readable after the measured Hero scrolls away and o
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
   find(node, LocalTripWorkspace).onHomeHeroHeight(500);
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   find(node, LocalTripWorkspace).onHomeHeroHeight(300);
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
   scroll.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe("");
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.select).not.toHaveBeenCalled();
@@ -1095,7 +1100,7 @@ it("keeps Day header title blank until the actual textual introduction has scrol
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
 });
 
 it("Home returns to the current same-Trip Floating bookmark before its stale entry date", async () => {
@@ -1144,7 +1149,7 @@ it("keeps the native toolbar transparent with a single measured Day boundary", a
   const options = state.setOptions.mock.lastCall![0];
   expect(options.headerTransparent).toBe(true);
   expect(options.fullScreenGestureEnabled).toBe(false);
-  expect(options.headerBlurEffect).toBeUndefined();
+  expect(options.headerBlurEffect).toBe("systemMaterial");
   expect(options.headerStyle.backgroundColor).toBe("transparent");
   expect(find(node, DayFeed).presentation.topInset).toBe(103);
 });
@@ -1330,4 +1335,49 @@ it("retains the measured boundary for a route without an owning Frame", async ()
   const feed = find(await loaded(false), DayFeed);
   expect(feed.presentation.topInset).toBe(147);
   expect(feed.presentation.header.props.style.paddingTop).toBe(147);
+});
+
+it.each([103, 147])(
+  "Day underlap keeps the same %s physical boundary and title-collapse offsets",
+  async (height) => {
+    state.routeMode = "day";
+    state.headerHeight = height;
+    state.shellVisibleDates = { first: "2027-02-01", last: "2027-02-01" };
+    const feed = find(await loaded(false), DayFeed);
+    expect(feed.presentation.topInset).toBe(height);
+    expect(feed.presentation.header.props.style.paddingTop).toBe(height);
+    feed.presentation.header.props.onLayout({
+      nativeEvent: { layout: { height: height + 92 } },
+    });
+    feed.presentation.onOffsetChange(91);
+    state.mount = true;
+    render(false);
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+    expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+    feed.presentation.onOffsetChange(92);
+    state.mount = true;
+    render(false);
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("visible dates");
+    feed.presentation.onOffsetChange(0);
+    state.mount = true;
+    render(false);
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+  },
+);
+
+it("clears native Day blur when returning to Home and restores it on another Day entry", async () => {
+  state.routeMode = "day";
+  await loaded(false);
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
+  state.routeMode = "home";
+  state.mount = true;
+  render(false);
+  expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
+    "headerBlurEffect",
+    undefined,
+  );
+  state.routeMode = "day";
+  state.mount = true;
+  render(false);
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe("systemMaterial");
 });

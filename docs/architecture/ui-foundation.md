@@ -103,9 +103,14 @@ Journey workspaces with floating/collapsing content chrome use the shared
 `NavigationContentFrame` with `navigationContentFrameOptions`: native header
 is explicitly overlaid, the frame reserves its measured height (including safe
 area) once, and its content viewport clips collapsing chrome below that boundary.
-Inner scroll views disable automatic top inset for that managed frame. Native
-title/toolbar owns the top bar; chooser context remains content, never a second
-native header. Do not add screen-specific header offsets.
+Inner scroll views disable automatic top inset for that managed frame. Day may
+explicitly opt into `underlapHeader` for a native blurred navigation bar: the
+Frame removes its outer inset and the existing Day list reserves that same
+measured header height inside its scrolling header/topInset, once. This lets
+real content pass behind UIKit material while preserving the physical reading
+boundary. Other Frame callers retain the default measured/clipped viewport.
+Native title/toolbar owns the top bar; chooser context remains content, never a
+second native header. Do not add screen-specific header offsets.
 
 Root areas keep their existing Menu/title/context actions/tabs. Journey primary
 screens may show Journey context; detail/task screens use native Back and minimal

@@ -9,6 +9,7 @@ export default function TripRoute() {
   const selectedTrip =
     !!params.tripId && !["trips", "create"].includes(params.view ?? "");
   const home = selectedTrip && params.view !== "day";
+  const day = selectedTrip && params.view === "day";
   return (
     <>
       <GlobalMenu module="TRIP" nativeToolbar />
@@ -23,8 +24,8 @@ export default function TripRoute() {
           <TripScreen />
         </View>
       ) : (
-        <NavigationContentFrame>
-          <TripScreen contentFrameManaged />
+        <NavigationContentFrame underlapHeader={day}>
+          <TripScreen contentFrameManaged={!day} />
         </NavigationContentFrame>
       )}
     </>

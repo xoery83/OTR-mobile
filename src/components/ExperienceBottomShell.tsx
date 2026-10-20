@@ -268,7 +268,11 @@ export function ExperienceBottomShell({
         {!tripList ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "regular" as const, isInteractive: true }
+              ? {
+                  glassEffectStyle: "regular" as const,
+                  isInteractive: true,
+                  tintColor: reducedTransparency ? colors.surface : colors.transparent,
+                }
               : {})}
             accessibilityElementsHidden={
               isDay &&
@@ -472,7 +476,11 @@ export function ExperienceBottomShell({
         {!tripList && !ledger && contextualTripId ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "regular" as const, isInteractive: true }
+              ? {
+                  glassEffectStyle: "regular" as const,
+                  isInteractive: true,
+                  tintColor: reducedTransparency ? colors.surface : colors.transparent,
+                }
               : {})}
             style={[
               styles.actionIsland,
@@ -532,7 +540,11 @@ export function ExperienceBottomShell({
         {tripList || ledger ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "regular" as const, isInteractive: true }
+              ? {
+                  glassEffectStyle: "regular" as const,
+                  isInteractive: true,
+                  tintColor: reducedTransparency ? colors.surface : colors.transparent,
+                }
               : {})}
             style={[
               styles.actionIsland,
@@ -573,7 +585,7 @@ const createStyles = (c: UiColors) =>
       backgroundColor: c.transparent,
     },
     nativeMaterial: { backgroundColor: c.transparent },
-    reducedMaterial: { backgroundColor: c.floatingSurface },
+    reducedMaterial: { backgroundColor: c.surface },
     actionsOnly: { justifyContent: "flex-end" },
     row: {
       paddingHorizontal: visual.space.page,
@@ -592,7 +604,7 @@ const createStyles = (c: UiColors) =>
       shadowOpacity: 0.08,
       shadowRadius: visual.space.heading,
       shadowOffset: { width: 0, height: 2 },
-      backgroundColor: c.floatingSurface,
+      backgroundColor: c.surface,
       borderColor: c.separator,
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: visual.radius.pill,
@@ -609,7 +621,7 @@ const createStyles = (c: UiColors) =>
       shadowOpacity: 0.08,
       shadowRadius: visual.space.heading,
       shadowOffset: { width: 0, height: 2 },
-      backgroundColor: c.floatingSurface,
+      backgroundColor: c.surface,
       borderColor: c.separator,
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: visual.radius.pill,

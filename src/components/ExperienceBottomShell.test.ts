@@ -1,13 +1,14 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
-import { lightPalette } from "@/ui/palette";
+import { lightPalette, darkPalette, type UiColors } from "@/ui/palette";
 import { ExperienceBottomShell } from "./ExperienceBottomShell";
 vi.mock("expo-modules-core", () => ({
   requireOptionalNativeModule: () => state.glassCapability,
 }));
 
 const state = vi.hoisted(() => ({
+  dark: false,
   glassCapability: null as null | {
     isLiquidGlassAvailable: boolean;
     isGlassEffectAPIAvailable: boolean;
@@ -139,9 +140,9 @@ vi.mock("@/ui/locale", () => ({
   formatUiNumber: (value: number) => String(value),
 }));
 vi.mock("@/ui/theme", () => ({
-  useUiTheme: () => lightPalette,
-  useThemedStyles: (create: (colors: typeof lightPalette) => unknown) =>
-    create(lightPalette),
+  useUiTheme: () => (state.dark ? darkPalette : lightPalette),
+  useThemedStyles: (create: (colors: UiColors) => unknown) =>
+    create(state.dark ? darkPalette : lightPalette),
 }));
 
 type ShellElement = ReactElement<{
@@ -163,6 +164,7 @@ function pressables(node: ReactNode): ShellElement[] {
 
 beforeEach(() => {
   state.glassCapability = null;
+  state.dark = false;
   state.view = null;
   state.dayShellChrome = null;
   state.quickActions = null;
@@ -724,13 +726,21 @@ it("selects regular native glass for each island branch and retains reduced-tran
         expect(node.props).toMatchObject({
           glassEffectStyle: "regular",
           isInteractive: true,
+          tintColor: lightPalette.transparent,
         });
       }
     }
     state.reduced = true;
     const reduced = materials(NativeShell({ visible: true, pathname: "/trip" }));
     expect(reduced[0].props.style).toEqual(
-      expect.arrayContaining([{ backgroundColor: lightPalette.floatingSurface }]),
+      expect.arrayContaining([{ backgroundColor: lightPalette.surface }]),
+    );
+    expect(reduced[0].props).toMatchObject({ tintColor: lightPalette.surface });
+    state.dark = true;
+    const dark = materials(NativeShell({ visible: true, pathname: "/trip" }));
+    expect(dark[0].props).toMatchObject({ tintColor: darkPalette.surface });
+    expect(dark[0].props.style).toEqual(
+      expect.arrayContaining([{ backgroundColor: darkPalette.surface }]),
     );
   } finally {
     if (previous) require.cache[path] = previous;
@@ -762,7 +772,7 @@ it.each([
         element.props.style &&
         Array.isArray(element.props.style) &&
         element.props.style.some(
-          (style: any) => style?.backgroundColor === lightPalette.floatingSurface,
+          (style: any) => style?.backgroundColor === lightPalette.surface,
         )
       )
         nodes.push(element);

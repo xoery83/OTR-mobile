@@ -329,7 +329,8 @@ function TripContent({
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: { backgroundColor: colors.transparent },
       headerShadowVisible: false,
-      headerBlurEffect: undefined,
+      headerBlurEffect:
+        dayActive || (immersiveHome && !heroBehindStatus) ? "systemMaterial" : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,
