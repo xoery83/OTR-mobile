@@ -13,11 +13,17 @@ import {
 } from "@/data/repositories/tripDiscoveryRepository";
 import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
 import { P1PlanEditor } from "./P1PlanEditor";
+import { P3StayEditor } from "./P3StayEditor";
 import {
   createDefaultManualPlanRepository,
   type ManualPlanDraft,
   type ManualPlanRepository,
 } from "@/data/repositories/manualPlanRepository";
+import {
+  createDefaultManualStayRepository,
+  type ManualStayDraft,
+  type ManualStayRepository,
+} from "@/data/repositories/manualStayRepository";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import {
   readTripTodaysJourney,
@@ -195,6 +201,12 @@ function TripContent({
     generation: number;
     repository: ManualPlanRepository;
     draft: ManualPlanDraft;
+  } | null>(null);
+  const [stayEdit, setStayEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualStayRepository;
+    draft: ManualStayDraft;
   } | null>(null);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
@@ -866,31 +878,45 @@ function TripContent({
       ? localItem
       : null;
   const localPreview =
-    visibleLocalItem && !planEdit ? (
+    visibleLocalItem && !planEdit && !stayEdit ? (
       <LocalCoreItemPreview
         item={visibleLocalItem.item}
         onClose={() => setLocalItem(null)}
         editError={planEditError}
         onEdit={
-          visibleLocalItem.item.family === "P1" &&
+          ["P1", "P3"].includes(visibleLocalItem.item.family) &&
           visibleLocalItem.item.localState === "PENDING"
             ? () => {
                 setPlanEditError(false);
                 const ticket = request.current;
                 void (async () => {
                   try {
-                    const repository = await createDefaultManualPlanRepository();
-                    const draft = await repository.read(
-                      requested,
-                      visibleLocalItem.item.itemId,
-                    );
-                    if (
-                      ticket !== request.current ||
-                      generation !== getAccountGeneration() ||
-                      draft.itemId !== visibleLocalItem.item.itemId
-                    )
-                      return;
-                    setPlanEdit({ tripId: requested, generation, repository, draft });
+                    const itemId = visibleLocalItem.item.itemId;
+                    const current = (draftId: string) =>
+                      ticket === request.current &&
+                      generation === getAccountGeneration() &&
+                      draftId === itemId;
+                    if (visibleLocalItem.item.family === "P3") {
+                      const repository = await createDefaultManualStayRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setStayEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    } else {
+                      const repository = await createDefaultManualPlanRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setPlanEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    }
                   } catch {
                     if (
                       ticket === request.current &&
@@ -915,6 +941,23 @@ function TripContent({
         onSaved={() => {
           if (generation !== getAccountGeneration()) return;
           setPlanEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
+  const stayEditor =
+    stayEdit?.tripId === requested && stayEdit.generation === generation ? (
+      <P3StayEditor
+        key={`${stayEdit.tripId}:${stayEdit.draft.itemId}:${generation}`}
+        tripId={stayEdit.tripId}
+        itemId={stayEdit.draft.itemId}
+        opened={stayEdit}
+        onClose={() => setStayEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setStayEdit(null);
           setLocalItem(null);
           setRevision((value) => value + 1);
           void load();
@@ -1118,6 +1161,7 @@ function TripContent({
         />
         {localPreview}
         {planEditor}
+        {stayEditor}
       </>
     );
   // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
@@ -1272,6 +1316,7 @@ function TripContent({
       </ScrollView>
       {localPreview}
       {planEditor}
+      {stayEditor}
       {visibleOverlay?.read.observed ? (
         <DayFeed
           instant={homePerspective?.now}

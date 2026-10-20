@@ -70,8 +70,32 @@ export function LocalCoreItemPreview({
               ) : null}
             </View>
           ) : null}
-          {typeof item.details.propertyName === "string" ? (
-            <Text style={styles.text}>{item.details.propertyName}</Text>
+          {item.family === "P3" &&
+          typeof item.details.propertyName === "string" &&
+          item.details.propertyName.trim() &&
+          item.details.propertyName !== item.title ? (
+            <View>
+              <Text style={styles.meta}>{t("tripCreate.stayPropertyName")}</Text>
+              <Text style={styles.text}>{item.details.propertyName}</Text>
+            </View>
+          ) : null}
+          {item.family === "P3" &&
+          typeof item.details.permittedCheckinFrom === "string" ? (
+            <Text style={styles.text}>
+              {t("tripCreate.stayArrivalFrom")}: {item.details.permittedCheckinFrom}
+            </Text>
+          ) : null}
+          {item.family === "P3" &&
+          typeof item.details.permittedCheckinUntil === "string" ? (
+            <Text style={styles.text}>
+              {t("tripCreate.stayArrivalUntil")}: {item.details.permittedCheckinUntil}
+            </Text>
+          ) : null}
+          {item.family === "P3" &&
+          typeof item.details.permittedCheckoutBy === "string" ? (
+            <Text style={styles.text}>
+              {t("tripCreate.stayCheckoutBy")}: {item.details.permittedCheckoutBy}
+            </Text>
           ) : null}
           {item.place?.authoredLabel ? (
             <Text style={styles.text}>{item.place.authoredLabel}</Text>
@@ -79,18 +103,33 @@ export function LocalCoreItemPreview({
           {item.place?.authoredAddress ? (
             <Text style={styles.text}>{item.place.authoredAddress}</Text>
           ) : null}
-          {item.family === "P1" &&
+          {(item.family === "P1" || item.family === "P3") &&
           typeof item.description === "string" &&
           item.description.trim() ? (
             <View>
-              <Text style={styles.meta}>{t("tripCreate.planNotes")}</Text>
+              <Text style={styles.meta}>
+                {t(
+                  item.family === "P3" ? "tripCreate.stayNotes" : "tripCreate.planNotes",
+                )}
+              </Text>
               <Text style={styles.text}>{item.description}</Text>
             </View>
           ) : null}
-          {onEdit ? <UiButton label={t("tripCreate.editPlan")} onPress={onEdit} /> : null}
+          {onEdit ? (
+            <UiButton
+              label={t(
+                item.family === "P3" ? "tripCreate.editStay" : "tripCreate.editPlan",
+              )}
+              onPress={onEdit}
+            />
+          ) : null}
           {editError ? (
             <Text accessibilityRole="alert" style={styles.meta}>
-              {t("tripCreate.planUnavailable")}
+              {t(
+                item.family === "P3"
+                  ? "tripCreate.stayUnavailable"
+                  : "tripCreate.planUnavailable",
+              )}
             </Text>
           ) : null}
         </ScrollView>

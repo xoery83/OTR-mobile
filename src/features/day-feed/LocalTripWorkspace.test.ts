@@ -30,6 +30,12 @@ vi.mock("./P1PlanEditor", () => ({
     return null;
   },
 }));
+vi.mock("./P3StayEditor", () => ({
+  P3StayEditor: (props: any) => {
+    state.nodes.push({ stayEditor: props });
+    return null;
+  },
+}));
 vi.mock("./useTripPreparationWidget", () => ({
   useTripPreparationWidget: (props: any) => {
     state.preparation = props;
@@ -387,7 +393,7 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(props.onOpen).toHaveBeenCalledOnce();
 });
 
-it("remounts when the owning navigation leaves a trip and rejects its late item save", async () => {
+it("remounts when navigation leaves a trip and rejects a late typed Stay save", async () => {
   const repo = repository([trip("local-a", "Local pending trip")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -405,35 +411,15 @@ it("remounts when the owning navigation leaves a trip and rejects its late item 
   render();
   state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
   render();
-  input("tripCreate.itemTitle", "Old trip draft");
-  render();
-  button("tripCreate.checkin").onPress();
-  render();
-  state.nodes
-    .find((node) => node.mode === "date")!
-    .onChange(undefined, new Date(2026, 9, 13, 12));
-  render();
-  button("common.done").onPress();
-  render();
-  button("tripCreate.checkout").onPress();
-  render();
-  state.nodes
-    .find((node) => node.mode === "date")!
-    .onChange(undefined, new Date(2026, 9, 14, 12));
-  render();
-  button("common.done").onPress();
-  render();
-  expect(button("tripCreate.saveItem").disabled).toBe(false);
-  const old = deferred<TripRepository>();
-  state.repo.mockImplementationOnce(() => old.promise);
-  button("tripCreate.saveItem").onPress();
+  const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
+  expect(stayEditor).toMatchObject({ tripId: "local-a" });
   const generation = getAccountGeneration(),
     oldKey = key;
   props.tripId = null;
-  expect(render()).not.toContain("Old trip draft");
+  render();
   expect(getAccountGeneration()).toBe(generation);
   expect(key).not.toBe(oldKey);
-  old.resolve(repo);
+  stayEditor.onSaved("old-stay");
   await flush();
   render();
   expect(repo.addItem).not.toHaveBeenCalled();
@@ -650,6 +636,29 @@ it("the mounted local Quick Add opens the typed P1 form with explicit Day contex
   const editor = state.nodes.find((node) => node.planEditor)?.planEditor;
   expect(editor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   editor.onSaved("item-a");
+  expect(render()).toContain("actionIsland.savedLocally");
+  expect(repo.addItem).not.toHaveBeenCalled();
+});
+
+it("switches the local Quick Add to the typed Stay form with the same Day context", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  const actions = state.publish.mock.calls.find(
+    (call) => call[0]?.tripId === "local-a",
+  )![0];
+  actions.itinerary("2027-01-02");
+  render();
+  state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
+  render();
+  const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
+  expect(stayEditor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
+  stayEditor.onSaved("stay-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });

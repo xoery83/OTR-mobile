@@ -46,8 +46,8 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiTextInput } from "@/ui/forms";
+import { UiButton, UiText as Text } from "@/ui/controls";
+import { UiTextInput } from "@/ui/forms";
 import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -57,8 +57,9 @@ import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
-import { CalendarField, calendarDate } from "./TripCalendarField";
+import { calendarDate } from "./TripCalendarField";
 import { P1PlanEditor } from "./P1PlanEditor";
+import { P3StayEditor } from "./P3StayEditor";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripMetadataFields } from "./TripMetadataFields";
 import { tripMetadataSchema } from "@/domain/trip/tripMetadataContract";
@@ -177,9 +178,7 @@ function LocalTripContent({
     [],
   );
   const [family, setFamily] = useState<"P1" | "P3">("P1"),
-    [itemTitle, setItemTitle] = useState(""),
-    [itemStart, setItemStart] = useState(""),
-    [itemEnd, setItemEnd] = useState("");
+    [itemStart, setItemStart] = useState("");
   const { publishQuickActions, localOutcome } = useTripView();
   const [quickActionsOwner] = useState(() => Symbol("mounted-trip-quick-actions"));
   const [itemFormOpen, setItemFormOpen] = useState(false);
@@ -196,8 +195,7 @@ function LocalTripContent({
   const [menuMembersTrip, setMenuMembersTrip] = useState<string | null>(null);
   const request = useRef(0),
     busy = useRef(false),
-    tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() }),
-    itemOperation = useRef({ operationId: createUuid(), itemId: createUuid() });
+    tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() });
   const alive = useRef(true),
     saveOwner = useRef<symbol | null>(null);
   const changeTravelerCount = (value: string) => {
@@ -342,8 +340,8 @@ function LocalTripContent({
       sub.remove();
     };
   }, [load, generation]);
-  const save = async (item: boolean) => {
-    if (!item && travelerCountError !== null) return;
+  const save = async () => {
+    if (travelerCountError !== null) return;
     if (busy.current || !alive.current || generation !== getAccountGeneration()) return;
     busy.current = true;
     setSaving(true);
@@ -356,44 +354,23 @@ function LocalTripContent({
     try {
       const repo = await readLocalTripRepository();
       if (!current()) return;
-      if (item && selected) {
-        await repo.addItem(selected.id, {
-          ...itemOperation.current,
-          family,
-          title: itemTitle,
-          startDate: itemStart,
-          ...(family === "P3" ? { endDate: itemEnd } : {}),
-        });
-        if (!current()) return;
-        onManualItemSaved?.(selected.id, captured);
-        itemOperation.current = { operationId: createUuid(), itemId: createUuid() };
-        setItemTitle("");
-        setItemStart("");
-        setItemEnd("");
-        await load();
-        if (current()) {
-          setItemFormOpen(false);
-          setSavedNotice(true);
-        }
-      } else {
-        const trip = await repo.createTrip({
-          ...tripOperation.current,
-          name,
-          destination,
-          startDate: start || null,
-          endDate: end || null,
-          ...(travelers.some((slot) => slot.displayName.trim())
-            ? {
-                travelers: travelers
-                  .slice(0, travelerCount)
-                  .filter((slot) => slot.displayName.trim())
-                  .map((slot) => ({ ...slot, displayName: slot.displayName.trim() })),
-              }
-            : {}),
-        });
-        if (!current()) return;
-        onOpen(trip.id);
-      }
+      const trip = await repo.createTrip({
+        ...tripOperation.current,
+        name,
+        destination,
+        startDate: start || null,
+        endDate: end || null,
+        ...(travelers.some((slot) => slot.displayName.trim())
+          ? {
+              travelers: travelers
+                .slice(0, travelerCount)
+                .filter((slot) => slot.displayName.trim())
+                .map((slot) => ({ ...slot, displayName: slot.displayName.trim() })),
+            }
+          : {}),
+      });
+      if (!current()) return;
+      onOpen(trip.id);
     } catch {
       if (current()) setError(true);
     } finally {
@@ -445,7 +422,7 @@ function LocalTripContent({
   };
   const leaveHome = useCallback(() => {
     if (!alive.current || generation !== getAccountGeneration()) return;
-    if (!itemTitle && !itemStart && !itemEnd) {
+    if (!itemStart) {
       onBackToTrips();
       return;
     }
@@ -457,34 +434,12 @@ function LocalTripContent({
         style: "destructive",
         onPress: () => {
           if (!alive.current || generation !== getAccountGeneration()) return;
-          setItemTitle("");
           setItemStart("");
-          setItemEnd("");
           onBackToTrips();
         },
       },
     ]);
-  }, [generation, itemTitle, itemStart, itemEnd, saving, onBackToTrips]);
-  const closeItemForm = () => {
-    if (saving) return;
-    if (!itemTitle && !itemStart && !itemEnd) {
-      setItemFormOpen(false);
-      return;
-    }
-    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
-      { text: t("actionIsland.stay"), style: "cancel" },
-      {
-        text: t("actionIsland.discard"),
-        style: "destructive",
-        onPress: () => {
-          setItemTitle("");
-          setItemStart("");
-          setItemEnd("");
-          setItemFormOpen(false);
-        },
-      },
-    ]);
-  };
+  }, [generation, itemStart, saving, onBackToTrips]);
   useFocusEffect(
     useCallback(() => {
       if (!selected || status !== "READY") return;
@@ -827,60 +782,27 @@ function LocalTripContent({
               ) : null}
             </SafeAreaProvider>
           </Modal>
-          <Modal
-            visible={itemFormOpen && family === "P3"}
-            onRequestClose={closeItemForm}
-            animationType="slide"
-          >
-            <View style={styles.modal}>
-              <SheetHeader
-                title={t("tripCreate.addItem")}
-                leftLabel={t("common.cancel")}
-                onLeft={closeItemForm}
-              />
-              <ScrollView contentContainerStyle={styles.form}>
-                {error ? (
-                  <Text accessibilityRole="alert" style={styles.status}>
-                    {t("tripCreate.saveFailed")}
-                  </Text>
-                ) : null}
-                <UiSection title={t("tripCreate.addItem")}>
-                  <UiChoiceChip
-                    label={t("tripCreate.activity")}
-                    selected={false}
-                    onPress={() => setFamily("P1")}
-                  />
-                  <UiChoiceChip
-                    label={t("tripCreate.stay")}
-                    selected={family === "P3"}
-                    onPress={() => setFamily("P3")}
-                  />
-                  <UiTextInput
-                    accessibilityLabel={t("tripCreate.itemTitle")}
-                    placeholder={t("tripCreate.itemTitle")}
-                    value={itemTitle}
-                    onChangeText={setItemTitle}
-                    editable={!saving}
-                  />
-                  <CalendarField
-                    label={t("tripCreate.checkin")}
-                    value={itemStart}
-                    onChange={setItemStart}
-                  />
-                  <CalendarField
-                    label={t("tripCreate.checkout")}
-                    value={itemEnd}
-                    onChange={setItemEnd}
-                  />
-                  <UiButton
-                    label={t("tripCreate.saveItem")}
-                    disabled={saving || !itemTitle.trim() || !itemStart || !itemEnd}
-                    onPress={() => void save(true)}
-                  />
-                </UiSection>
-              </ScrollView>
-            </View>
-          </Modal>
+          {itemFormOpen && family === "P3" ? (
+            <P3StayEditor
+              key={`${selected.id}:${generation}:${itemStart}`}
+              tripId={selected.id}
+              initialDate={itemStart || null}
+              tripStartDate={selected.startDate}
+              onChoosePlan={() => setFamily("P1")}
+              onClose={() => {
+                setItemFormOpen(false);
+                setItemStart("");
+              }}
+              onSaved={() => {
+                if (!alive.current || generation !== getAccountGeneration()) return;
+                onManualItemSaved?.(selected.id, generation);
+                setItemFormOpen(false);
+                setItemStart("");
+                setSavedNotice(true);
+                void load();
+              }}
+            />
+          ) : null}
           {itemFormOpen && family === "P1" ? (
             <P1PlanEditor
               key={`${selected.id}:${generation}:${itemStart}`}
@@ -888,7 +810,10 @@ function LocalTripContent({
               initialDate={itemStart || null}
               tripStartDate={selected.startDate}
               onChooseStay={() => setFamily("P3")}
-              onClose={() => setItemFormOpen(false)}
+              onClose={() => {
+                setItemFormOpen(false);
+                setItemStart("");
+              }}
               onSaved={() => {
                 if (!alive.current || generation !== getAccountGeneration()) return;
                 onManualItemSaved?.(selected.id, generation);
@@ -1128,7 +1053,7 @@ function LocalTripContent({
                           endDate: end || null,
                         }).success
                       }
-                      onPress={() => void save(false)}
+                      onPress={() => void save()}
                     />
                   </View>
                 </KeyboardAvoidingView>

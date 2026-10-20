@@ -1,8 +1,12 @@
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
+import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { closedItemCapabilities } from "@/domain/trip/tripCoreV2Day";
-import type { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
+import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
+import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
 import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
 
 vi.mock("react-native", () => ({
@@ -29,7 +33,11 @@ vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
 };
-const item = (family: "P1" | "P3", description: string | null) => {
+const item = (
+  family: "P1" | "P3",
+  description: string | null,
+  details: Record<string, unknown> = {},
+) => {
   const value: NonNullable<ReturnType<typeof projectCoreItem>> = {
     itemId: "item-preview",
     tripId: "trip-preview",
@@ -42,7 +50,7 @@ const item = (family: "P1" | "P3", description: string | null) => {
     localState: "PENDING",
     participation: { mode: "WHOLE_GROUP", personIds: [] },
     schedule: { shape: "POINT" },
-    details: {},
+    details,
     bookingSummaries: [],
     entitlementSummaries: [],
     documentSummaries: [],
@@ -53,11 +61,15 @@ const item = (family: "P1" | "P3", description: string | null) => {
   return value;
 };
 
-it("shows saved P1 Notes exactly and hides absent or non-P1 Notes", () => {
-  const render = (family: "P1" | "P3", description: string | null) =>
+it("shows saved P1 and P3 Notes exactly, hiding empty Notes", () => {
+  const render = (
+    family: "P1" | "P3",
+    description: string | null,
+    details?: Record<string, unknown>,
+  ) =>
     renderToStaticMarkup(
       createElement(LocalCoreItemPreview, {
-        item: item(family, description),
+        item: item(family, description, details),
         onClose: () => {},
       }),
     );
@@ -66,5 +78,71 @@ it("shows saved P1 Notes exactly and hides absent or non-P1 Notes", () => {
     "Meet at 9.\nBring tickets.",
   );
   expect(render("P1", "  ")).not.toContain("tripCreate.planNotes");
-  expect(render("P3", "Private note")).not.toContain("tripCreate.planNotes");
+  expect(render("P3", "Private note")).toContain("tripCreate.stayNotes");
+  expect(render("P3", "Private note")).toContain("Private note");
+  const stayDetails = render("P3", null, {
+    propertyName: "Harbour Inn",
+    permittedCheckinFrom: "15:00",
+    permittedCheckoutBy: "10:00",
+  });
+  expect(stayDetails).toContain("tripCreate.stayPropertyName");
+  expect(stayDetails).toContain("tripCreate.stayArrivalFrom");
+  expect(render("P3", null, { propertyName: "Visit the museum" })).not.toContain(
+    "tripCreate.stayPropertyName",
+  );
+  expect(render("P3", null, { permittedCheckoutBy: "10:00" })).toContain(
+    "tripCreate.stayCheckoutBy",
+  );
+});
+
+it("renders the public P3 Core projection, including stored Stay details", () => {
+  const tripId = randomUUID();
+  const itemId = randomUUID();
+  const actor = {
+    accountId: randomUUID(),
+    tripId,
+    personId: null,
+    personIds: [],
+    active: true,
+    canManageShared: true,
+  };
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P3",
+        core: { title: "Harbour Inn", description: "Ask for a quiet room." },
+        schedule: {
+          start: coreDateBoundary("2026-12-14"),
+          end: coreDateBoundary("2026-12-17"),
+        },
+        ...coreDefaults("organizer"),
+        details: {
+          property_name: "Harbour Inn",
+          permitted_checkin_from: "15:00",
+          permitted_checkout_by: "10:00",
+        },
+      },
+    },
+    actor,
+    "2026-10-21T00:00:00Z",
+  ).graph;
+  const projected = projectCoreItem(graph, actor, itemId);
+  expect(projected).not.toBeNull();
+  const markup = renderToStaticMarkup(
+    createElement(LocalCoreItemPreview, { item: projected!, onClose: () => {} }),
+  );
+  expect(markup).toContain("tripCreate.stayArrivalFrom");
+  expect(markup).toContain("15:00");
+  expect(markup).toContain("tripCreate.stayCheckoutBy");
+  expect(markup).toContain("10:00");
+  expect(markup).toContain("Ask for a quiet room.");
 });
