@@ -69,3 +69,23 @@ it("never upgrades a manual label to an Apple identity just because names match"
     apple = resolvedTripDestination(candidate({ providerPlaceId: "actual-apple-id" }));
   expect(addTripDestination([manual], apple)).toEqual([manual, apple]);
 });
+
+it("never label-merges different or unknown provider identities", () => {
+  const a = resolvedTripDestination(
+    candidate({
+      providerPlaceId: "apple-first",
+      point: { latitude: 35, longitude: 139 },
+    }),
+  );
+  const other = resolvedTripDestination(
+    candidate({
+      providerPlaceId: "apple-second",
+      point: { latitude: 35, longitude: 139 },
+    }),
+  );
+  const unknown = resolvedTripDestination(
+    candidate({ point: { latitude: 35, longitude: 139 } }),
+  );
+  expect(addTripDestination([a], other)).toEqual([a, other]);
+  expect(addTripDestination([a], unknown)).toEqual([a, unknown]);
+});

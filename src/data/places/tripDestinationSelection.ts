@@ -62,12 +62,10 @@ export function sameTripDestination(
   b: TripDestinationDraftSelection,
 ): boolean {
   if (a.source !== b.source) return false;
-  if (
-    a.match?.providerPlaceId &&
-    b.match?.providerPlaceId &&
-    a.match.providerPlaceId === b.match.providerPlaceId
-  )
-    return true;
+  if (a.match?.providerPlaceId || b.match?.providerPlaceId)
+    return (
+      !!a.match?.providerPlaceId && a.match.providerPlaceId === b.match?.providerPlaceId
+    );
   if (
     normalized(a.match?.title ?? a.text).toLowerCase() !==
     normalized(b.match?.title ?? b.text).toLowerCase()
