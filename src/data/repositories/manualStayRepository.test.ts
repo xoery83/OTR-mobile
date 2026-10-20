@@ -428,3 +428,98 @@ it("stays finite to P1/P3: P3 editor rejects an existing Plan and atomic batch r
   ).rejects.toThrow("MANUAL_BATCH_INVALID");
   expect(count(f.sql)).toBe(n);
 });
+
+it("finite batch rejects SET on an existing P4 target while the original generic enqueue remains unchanged", async () => {
+  const f = await fixture(),
+    id = randomUUID(),
+    ctx = await f.core.captureContext(f.tripId);
+  const time = {
+    instant: null,
+    local_date: "2026-10-20",
+    local_time: null,
+    clock_precision: null,
+    quality: "UNKNOWN",
+    basis: "DERIVED_CIVIL",
+    zone_id: null,
+    supplied_offset_seconds: null,
+    source_instant: null,
+    source_instant_precision: null,
+    civil_resolution: "PENDING",
+    resolution_offset_seconds: null,
+    interpretation_key: null,
+    interpretation_input_sha256: null,
+    provenance_refs: null,
+  };
+  await f.core.enqueue(ctx, {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P4",
+      core: { title: "Rental" },
+      schedule: { start: time },
+      participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+      acl: { visibility: "GROUP", people: [] },
+    },
+  });
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "SET_ITEM_TEXT",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { title: "New rental label" },
+  };
+  const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+  await expect(
+    f.core.commitManualBatch(ctx, async () => ({
+      commands: [command],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(count(f.sql)).toBe(1);
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+    before,
+  );
+  expect((await f.core.enqueue(ctx, command)).localStatus).toBe("PENDING");
+  expect(count(f.sql)).toBe(2);
+});
+it("SET_STAY_DETAILS requires an actual P3 target even when the current target is a legal P1", async () => {
+  const f = await fixture(),
+    id = randomUUID(),
+    ctx = await f.core.captureContext(f.tripId);
+  await f.trips.addItem(f.tripId, {
+    itemId: id,
+    operationId: randomUUID(),
+    family: "P1",
+    title: "Plan",
+    startDate: "2026-10-20",
+  });
+  const n = count(f.sql);
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "SET_STAY_DETAILS",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { details: {}, rooms: [] },
+  };
+  await expect(
+    f.core.commitManualBatch(ctx, async () => ({
+      commands: [command],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(count(f.sql)).toBe(n);
+});

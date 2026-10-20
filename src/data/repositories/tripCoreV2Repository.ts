@@ -29,6 +29,7 @@ import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
 export type CoreDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
@@ -553,6 +554,34 @@ export function createTripCoreV2Repository(
           new Set(commands.map((c) => c.target.id)).size > 1
         )
           throw new Error("MANUAL_BATCH_INVALID");
+        if (commands.length) {
+          const creation = commands.find((c) => c.command === "CREATE_ITEM");
+          let family: unknown;
+          if (creation) {
+            if (
+              commands[0] !== creation ||
+              commands.filter((c) => c.command === "CREATE_ITEM").length !== 1
+            )
+              throw new Error("MANUAL_BATCH_INVALID");
+            family = (creation.payload as { family: string }).family;
+          } else {
+            const snapshot = await readLocalManualSnapshotWithinTransaction(
+              database,
+              getAccountId,
+              { manualReadSnapshot },
+              ctx,
+              await acceptedWithinTransaction(ctx),
+            );
+            family = snapshot?.graph.itinerary_events.find(
+              (r) => r.id === commands[0].target.id,
+            )?.experience_family;
+          }
+          if (
+            (family !== "P1" && family !== "P3") ||
+            (family !== "P3" && commands.some((c) => c.command === "SET_STAY_DETAILS"))
+          )
+            throw new Error("MANUAL_BATCH_INVALID");
+        }
         for (const command of commands) await enqueueWithinTransaction(ctx, command);
         result = await prepared.result();
         await assertContext(ctx);
