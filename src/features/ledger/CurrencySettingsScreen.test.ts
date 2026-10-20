@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   settlement: vi.fn(),
   preview: vi.fn(),
   commit: vi.fn(),
+  classify: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -55,6 +56,7 @@ vi.mock("@/data/repositories/defaultLedgerSettlementRepository", () => ({
   getDefaultLedgerSettlementRepository: () => state.settlement(),
 }));
 vi.mock("@/data/repositories/ledgerCurrencyRepository", () => ({
+  classifyJourneyCurrencyPreviewFailure: (...a: any[]) => state.classify(...a),
   ledgerCurrencyRepository: {
     preview: (...a: any[]) => state.preview(...a),
     commit: (...a: any[]) => state.commit(...a),
@@ -90,6 +92,7 @@ beforeEach(() => {
   actor.mockClear();
   state.preview.mockReset();
   state.commit.mockReset();
+  state.classify.mockReset();
   state.reporting.mockResolvedValue({
     getSelectedJourneyId: async () => "b",
     listJourneys: async () => [b],
@@ -132,3 +135,34 @@ it("withholds a previously loaded B immediately when an explicit A is supplied",
   expect(state.preview).not.toHaveBeenCalled();
   expect(state.commit).not.toHaveBeenCalled();
 });
+
+const failures = [
+  ["CONFIG_UNAVAILABLE", "previewConfigUnavailable"],
+  ["CONNECTIVITY", "copy1"],
+  ["AUTH", "previewAuth"],
+  ["FORBIDDEN", "previewForbidden"],
+  ["CONFLICT", "previewConflict"],
+  ["SERVICE", "previewService"],
+  ["INVALID_RESPONSE", "previewInvalid"],
+  ["UNKNOWN", "previewUnknown"],
+];
+it.each(failures)(
+  "shows safe %s preview failure without committing or changing currency",
+  async (kind, key) => {
+    const error = new Error("private error details");
+    state.preview.mockRejectedValue(error);
+    state.classify.mockReturnValue({ kind });
+    render("b");
+    await flush();
+    await render("b")
+      .find((n) => n.type === "CurrencyPicker")!
+      .props.onSelect("EUR");
+    const v = render("b");
+    expect(state.preview).toHaveBeenCalledExactlyOnceWith("b", "EUR");
+    expect(state.classify).toHaveBeenCalledExactlyOnceWith(error);
+    expect(v.some((n) => n.props.children === `currencySettings.${key}`)).toBe(true);
+    expect(v.some((n) => n.props.children === "private error details")).toBe(false);
+    expect(state.commit).not.toHaveBeenCalled();
+    expect(state.values[2].settlementCurrency).toBe("NZD");
+  },
+);

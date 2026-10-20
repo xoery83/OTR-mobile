@@ -170,15 +170,24 @@ it("stages AUTO through the native Switch without dismissing Gallery or saving m
   expect(v.find((n) => n.type === "Switch")!.props.value).toBe(true);
   expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
 });
-it("does not fabricate a manual image when AUTO is turned off without a selection", () => {
-  const select = vi.fn();
+it("turning AUTO off locks the currently displayed registered image, and on clears the draft", async () => {
+  const select = vi.fn().mockResolvedValue(undefined);
   render(select, undefined, null)
     .find((n) => n.props.accessibilityLabel === "myTrips.chooseCover")!
     .props.onPress();
-  let v = render(select, undefined, null);
-  v.find((n) => n.type === "Switch")!.props.onValueChange(false);
+  render(select, undefined, null)
+    .find((n) => n.type === "Switch")!
+    .props.onValueChange(false);
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(select).toHaveBeenCalledExactlyOnceWith("city");
+  let v = render(select, undefined, "city");
+  expect(v.find((n) => n.type === "Switch")!.props.value).toBe(false);
+  expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
+  v.find((n) => n.type === "Switch")!.props.onValueChange(true);
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(select).toHaveBeenLastCalledWith(null);
   v = render(select, undefined, null);
-  expect(select).not.toHaveBeenCalled();
   expect(v.find((n) => n.type === "Switch")!.props.value).toBe(true);
-  expect(v.some((n) => n.props.children === "coverLibrary.chooseManual")).toBe(true);
 });

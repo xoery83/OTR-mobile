@@ -19,14 +19,34 @@ import { useNetworkState } from "expo-network";
 import { AppIcon } from "@/components/AppIcon";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
-import { ledgerCurrencyRepository } from "@/data/repositories/ledgerCurrencyRepository";
-import type { JourneyCurrencyPreview } from "@/data/repositories/ledgerCurrencyRepository";
+import {
+  classifyJourneyCurrencyPreviewFailure,
+  ledgerCurrencyRepository,
+} from "@/data/repositories/ledgerCurrencyRepository";
+import type {
+  JourneyCurrencyPreview,
+  JourneyCurrencyPreviewFailure,
+} from "@/data/repositories/ledgerCurrencyRepository";
 import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
 import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
 import { SheetHeader } from "@/components/SheetHeader";
+
+const previewFailureMessages: Record<
+  JourneyCurrencyPreviewFailure["kind"],
+  Parameters<typeof t>[0]
+> = {
+  CONFIG_UNAVAILABLE: "currencySettings.previewConfigUnavailable",
+  CONNECTIVITY: "currencySettings.copy1",
+  AUTH: "currencySettings.previewAuth",
+  FORBIDDEN: "currencySettings.previewForbidden",
+  CONFLICT: "currencySettings.previewConflict",
+  SERVICE: "currencySettings.previewService",
+  INVALID_RESPONSE: "currencySettings.previewInvalid",
+  UNKNOWN: "currencySettings.previewUnknown",
+};
 
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
 
@@ -96,8 +116,10 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
       const next = await ledgerCurrencyRepository.preview(journey.journeyId, currency);
       setPreview(next);
       setOperationId(createLocalId("journeyCurrency"));
-    } catch {
-      setMessage(t("currencySettings.copy1"));
+    } catch (error) {
+      setMessage(
+        t(previewFailureMessages[classifyJourneyCurrencyPreviewFailure(error).kind]),
+      );
     } finally {
       setWorking(false);
     }

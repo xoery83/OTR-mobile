@@ -379,7 +379,6 @@ export const en = {
   "coverLibrary.wikidata": "Wikidata",
   "coverLibrary.geoLicense": "GeoNames licence · CC BY 4.0",
   "coverLibrary.preview": "Preview library · rights and crop review pending",
-  "coverLibrary.chooseManual": "Choose a picture to use a manual cover.",
   "coverLibrary.current": "Current cover",
   "coverLibrary.choosePhoto": "Choose cover photo",
   "coverLibrary.option": "Suggested cover {number}: {description}",
@@ -1052,6 +1051,20 @@ export const en = {
   "account.remove": "Remove",
   "account.cancel": "Cancel",
   "account.notApproved": "This is not an approved test account.",
+  "currencySettings.previewConfigUnavailable":
+    "Currency changes are not available in this preview. Journey Currency has not changed.",
+  "currencySettings.previewAuth":
+    "Your account could not authorize this preview. Check your account and try again.",
+  "currencySettings.previewForbidden":
+    "You do not have permission to change Journey Currency.",
+  "currencySettings.previewConflict":
+    "Ledger settings or settlements have changed. Reopen Currency and preview again.",
+  "currencySettings.previewService":
+    "Currency preview is temporarily unavailable. Please try again later.",
+  "currencySettings.previewInvalid":
+    "The currency preview could not be verified. Please try again.",
+  "currencySettings.previewUnknown":
+    "The currency preview could not be completed. Please try again.",
   "currencySettings.copy1":
     "Reconnect and preview again. Journey Currency has not changed.",
   "currencySettings.copy2": "Confirm Journey Currency change",
@@ -2739,7 +2752,6 @@ export const zhHans: Record<MessageKey, string> = {
   "coverLibrary.wikidata": "Wikidata",
   "coverLibrary.geoLicense": "GeoNames 许可 · CC BY 4.0",
   "coverLibrary.preview": "预览图库 · 授权与裁剪仍待审核",
-  "coverLibrary.chooseManual": "选择一张图片以使用手动封面。",
   "coverLibrary.current": "当前封面",
   "coverLibrary.choosePhoto": "选择封面照片",
   "coverLibrary.option": "推荐封面 {number}：{description}",
@@ -3364,6 +3376,15 @@ export const zhHans: Record<MessageKey, string> = {
   "account.remove": "移除",
   "account.cancel": "取消",
   "account.notApproved": "这不是已批准的测试账户。",
+  "currencySettings.previewConfigUnavailable":
+    "此预览暂未启用币种修改，行程结算币种未更改。",
+  "currencySettings.previewAuth": "当前账号未能授权此次预览。请检查账号后重试。",
+  "currencySettings.previewForbidden": "你没有更改行程结算币种的权限。",
+  "currencySettings.previewConflict":
+    "账本设置或结算状态已变化。请重新打开币种设置并预览。",
+  "currencySettings.previewService": "币种预览暂时不可用，请稍后重试。",
+  "currencySettings.previewInvalid": "无法验证币种预览，请重试。",
+  "currencySettings.previewUnknown": "无法完成币种预览，请重试。",
   "currencySettings.copy1": "无法连接。请重连后重新预览；行程结算币种未更改。",
   "currencySettings.copy2": "确认更改行程结算币种",
   "currencySettings.copy3":

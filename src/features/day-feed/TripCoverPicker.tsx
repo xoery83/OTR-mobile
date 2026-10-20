@@ -37,7 +37,6 @@ export function TripCoverPicker({
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
   const [error, setError] = useState(false);
-  const [chooseManual, setChooseManual] = useState(false);
   const current = { ...trip, selectedCoverAssetIdRaw: selectedRaw };
   const currentId = tripCoverId(current);
   const personal = parseTripPhotoCoverRef(selectedRaw) !== null;
@@ -50,7 +49,6 @@ export function TripCoverPicker({
     try {
       await onSelect(id);
       if (closeAfter) setOpen(false);
-      setChooseManual(false);
     } catch {
       setError(true);
     } finally {
@@ -82,7 +80,6 @@ export function TripCoverPicker({
         accessibilityLabel={t("myTrips.chooseCover")}
         onPress={() => {
           setError(false);
-          setChooseManual(false);
           setOpen(true);
         }}
         style={styles.preview}
@@ -181,15 +178,13 @@ export function TripCoverPicker({
                 disabled={saving || selectedRaw === undefined}
                 onValueChange={(automatic) => {
                   if (automatic) void select(null, false);
-                  else if (selectedRaw === null) setChooseManual(true);
+                  else if (selectedRaw === null) {
+                    if (isTripCoverAssetId(currentId)) void select(currentId, false);
+                    else setError(true);
+                  }
                 }}
               />
             </View>
-            {chooseManual && selectedRaw === null ? (
-              <UiText accessibilityLiveRegion="polite" style={styles.meta}>
-                {t("coverLibrary.chooseManual")}
-              </UiText>
-            ) : null}
           </ScrollView>
         </SafeAreaView>
       </Modal>
