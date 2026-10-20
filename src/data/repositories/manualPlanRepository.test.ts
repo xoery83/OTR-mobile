@@ -382,3 +382,92 @@ it("unchanged edit is a verified no-write result; clearing an end boundary reall
     endTime: null,
   });
 });
+
+it("has no public transaction-bypass writer and rolls back an intent when the owning batch queue write fails", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  expect(f.core).not.toHaveProperty("enqueueWithinTransaction");
+  const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+  f.sql.exec(`CREATE TEMP TRIGGER fail_core_queue BEFORE INSERT ON sync_operations
+    WHEN NEW.operation_type='CORE_V2_COMMAND'
+    BEGIN SELECT RAISE(ABORT,'TEST_QUEUE_FAILURE'); END;`);
+  await expect(repo.save(draft, values(draft.fields))).rejects.toThrow(
+    "TEST_QUEUE_FAILURE",
+  );
+  expect(count(f.sql)).toBe(0);
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+    before,
+  );
+  f.sql.exec("DROP TRIGGER fail_core_queue");
+  expect((await repo.save(draft, values(draft.fields))).localStatus).toBe("PENDING");
+  expect(count(f.sql)).toBe(1);
+});
+
+it("changing only a date retains an unchanged authored seconds tuple while clearing date-specific resolution", async () => {
+  const f = await fixture(),
+    itemId = randomUUID();
+  const boundary = {
+    instant: "2026-10-19T21:00:30Z",
+    local_date: "2026-10-20",
+    local_time: "10:00:30",
+    clock_precision: 0,
+    quality: "EXACT",
+    basis: "DERIVED_CIVIL",
+    zone_id: "Pacific/Auckland",
+    supplied_offset_seconds: 46800,
+    source_instant: null,
+    source_instant_precision: null,
+    civil_resolution: "UNIQUE",
+    resolution_offset_seconds: 46800,
+    interpretation_key: "test-immutable-existing-interpretation",
+    interpretation_input_sha256: "a".repeat(64),
+    provenance_refs: null,
+  };
+  // Existing valid MANUAL boundary fixture, not a newly minted production certificate.
+  await f.core.enqueue(await f.core.captureContext(f.tripId), {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: f.tripId,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id: itemId },
+    baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P1",
+      core: { title: "Precise planned visit" },
+      participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+      acl: { visibility: "GROUP", people: [] },
+      schedule: { start: boundary },
+    },
+  });
+  const repo = f.repo(),
+    draft = await repo.read(f.tripId, itemId);
+  expect(draft.fields.startTime).toBe("10:00");
+  await repo.save(draft, { ...draft.fields, startDate: "2026-10-21" });
+  const edits = f.sql
+    .prepare(
+      "SELECT canonical_intent_text FROM trip_core_pending_intents ORDER BY created_at,operation_id",
+    )
+    .all();
+  const after = JSON.parse(String(edits[1].canonical_intent_text)).payload.schedule.start;
+  expect(after).toMatchObject({
+    local_date: "2026-10-21",
+    local_time: "10:00:30",
+    clock_precision: 0,
+    zone_id: "Pacific/Auckland",
+    quality: "ESTIMATED",
+    instant: null,
+    supplied_offset_seconds: null,
+    source_instant: null,
+    civil_resolution: "PENDING",
+    resolution_offset_seconds: null,
+    interpretation_key: null,
+    interpretation_input_sha256: null,
+  });
+  expect((await f.repo().read(f.tripId, itemId)).fields).toMatchObject({
+    startDate: "2026-10-21",
+    startTime: "10:00",
+  });
+});

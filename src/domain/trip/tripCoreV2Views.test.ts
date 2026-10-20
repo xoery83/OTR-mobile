@@ -224,3 +224,22 @@ describe("Core2 supplemental read and deterministic Day, synthetic accepted fact
     });
   });
 });
+
+it("P1 Notes project only with the existing Item read authority, retaining literal text and null", () => {
+  const note = "Meet by the garden gate";
+  const p1 = create(emptyCoreGraph(), "P1", "2026-10-20", undefined, {
+    core: { title: "Garden visit", description: note },
+  });
+  expect(projectCoreItem(p1.graph, actor, p1.id)).toMatchObject({ description: note });
+  const row = p1.graph.itinerary_events.find((r) => r.id === p1.id)!;
+  row.visibility = "PRIVATE";
+  const other = { ...actor, accountId: randomUUID(), canManageShared: false };
+  expect(projectCoreItem(p1.graph, other, p1.id)).toBeNull();
+  const empty = create(emptyCoreGraph(), "P1", "2026-10-20");
+  expect(projectCoreItem(empty.graph, actor, empty.id)).toHaveProperty(
+    "description",
+    null,
+  );
+  const stay = create(emptyCoreGraph(), "P3", "2026-10-20", "2026-10-21");
+  expect(projectCoreItem(stay.graph, actor, stay.id)).not.toHaveProperty("description");
+});

@@ -520,6 +520,46 @@ export function createTripCoreV2Repository(
     });
     return result!;
   }
+  // Both preparation reads and post-write verification share this owning transaction.
+  async function commitManualBatch<T>(
+    ctx: AccountRequestContext,
+    prepare: () => Promise<{ commands: readonly unknown[]; result(): Promise<T> }>,
+  ): Promise<T> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result!: T;
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        const prepared = await prepare();
+        if (prepared.commands.length > 4) throw new Error("MANUAL_BATCH_INVALID");
+        const commands = prepared.commands.map(validateCoreCommand);
+        if (
+          commands.some(
+            (c) =>
+              c.tripId !== ctx.tripId ||
+              c.target.kind !== "ITEM" ||
+              c.admission.mode !== "MANUAL" ||
+              ![
+                "CREATE_ITEM",
+                "SET_ITEM_TEXT",
+                "SET_ITEM_SCHEDULE",
+                "SET_ITEM_PLACE",
+                "SET_ITEM_PARTICIPATION",
+              ].includes(c.command) ||
+              (c.command === "CREATE_ITEM" &&
+                (c.payload as { family: string }).family !== "P1"),
+          ) ||
+          new Set(commands.map((c) => c.target.id)).size > 1
+        )
+          throw new Error("MANUAL_BATCH_INVALID");
+        for (const command of commands) await enqueueWithinTransaction(ctx, command);
+        result = await prepared.result();
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
+  }
   async function pending(ctx: AccountRequestContext) {
     await assertContext(ctx);
     await scope(ctx);
@@ -1008,7 +1048,7 @@ export function createTripCoreV2Repository(
     refresh,
     resume,
     enqueue,
-    enqueueWithinTransaction,
+    commitManualBatch,
     pending,
     beginRefresh,
     install,
