@@ -240,9 +240,12 @@ function LocalTripContent({
       const local = tripId ? await repo.getTrip(tripId) : null;
       const list = tripId ? [] : await repo.listTrips();
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
-      const discovery = await readLocalTripDiscoveryRepository()
-        .then((reader) => reader.readMerged())
-        .catch(() => null);
+      // A local Repository result already wins; discovery is only needed for list/remote fallback.
+      const discovery = local
+        ? null
+        : await readLocalTripDiscoveryRepository()
+            .then((reader) => reader.readMerged())
+            .catch(() => null);
       const cached =
         tripId && !local
           ? (discovery?.trips.find(

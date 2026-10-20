@@ -84,6 +84,7 @@ export function TripCalendarRangeField({
         label={t("tripForm.dates")}
         value={tripRangeLabel(value)}
         stacked
+        horizontalInset={0}
         disabled={disabled}
         onPress={() => {
           setDraft(value);

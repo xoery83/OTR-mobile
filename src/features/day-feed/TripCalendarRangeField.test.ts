@@ -267,3 +267,10 @@ it.each(["0001-01-01", "9999-12-31"])(
     expect(state.values[2]).toBe(before);
   },
 );
+
+it("aligns the dates caption with the form fields without changing canonical defaults", () => {
+  const rows = nodes(
+    TripCalendarRangeField({ value: { start: "", end: "" }, onChange: vi.fn() }),
+  );
+  expect(rows.find((n) => n.type === UiFormRow)!.props.horizontalInset).toBe(0);
+});

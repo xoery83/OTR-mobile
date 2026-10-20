@@ -27,7 +27,7 @@ vi.mock("react-native", () => ({
   Pressable: "Pressable",
   ScrollView: "ScrollView",
   Modal: "Modal",
-  Linking: { openURL: vi.fn() },
+  Switch: "Switch",
   StyleSheet: { create: (s: any) => s },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
@@ -75,10 +75,11 @@ beforeEach(() => {
 function render(
   onSelect = vi.fn().mockResolvedValue(undefined),
   onChoosePhoto?: () => Promise<boolean>,
+  selectedRaw: string | null | undefined = "city",
 ) {
   state.cursor = state.refCursor = 0;
   return nodes(
-    TripCoverPicker({ trip: { id: "qa" }, selectedRaw: "city", onSelect, onChoosePhoto }),
+    TripCoverPicker({ trip: { id: "qa" }, selectedRaw, onSelect, onChoosePhoto }),
   );
 }
 it("opens from a cover edit glyph and shows current plus exactly six other ranked images", () => {
@@ -134,4 +135,50 @@ it("does not stage a selection for a canceled photo choice or accept duplicate i
   v = render(save, choose);
   expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
   expect(save).not.toHaveBeenCalled();
+});
+
+it("uses the entire image as one edit button with the Home edit glyph and hides credits", () => {
+  const v = render();
+  const button = v.find((n) => n.props.accessibilityLabel === "myTrips.chooseCover")!;
+  expect(button.type).toBe("Pressable");
+  expect(nodes(button).filter((n) => n.type === "Pressable")).toHaveLength(1);
+  expect(nodes(button).some((n) => n.type === "TripCoverVisual")).toBe(true);
+  expect(nodes(button).find((n) => n.type === "AppIcon")!.props).toMatchObject({
+    name: "square.and.pencil",
+    color: lightPalette.mediaText,
+  });
+  expect(
+    v.some(
+      (n) =>
+        n.props.label === "coverLibrary.credits" ||
+        n.props.children === "coverLibrary.credits",
+    ),
+  ).toBe(false);
+});
+it("stages AUTO through the native Switch without dismissing Gallery or saving metadata", async () => {
+  const select = vi.fn().mockResolvedValue(undefined);
+  render(select)
+    .find((n) => n.props.accessibilityLabel === "myTrips.chooseCover")!
+    .props.onPress();
+  let v = render(select);
+  expect(v.find((n) => n.type === "Switch")!.props.value).toBe(false);
+  v.find((n) => n.type === "Switch")!.props.onValueChange(true);
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(select).toHaveBeenCalledExactlyOnceWith(null);
+  v = render(select, undefined, null);
+  expect(v.find((n) => n.type === "Switch")!.props.value).toBe(true);
+  expect(v.find((n) => n.type === "Modal")!.props.visible).toBe(true);
+});
+it("does not fabricate a manual image when AUTO is turned off without a selection", () => {
+  const select = vi.fn();
+  render(select, undefined, null)
+    .find((n) => n.props.accessibilityLabel === "myTrips.chooseCover")!
+    .props.onPress();
+  let v = render(select, undefined, null);
+  v.find((n) => n.type === "Switch")!.props.onValueChange(false);
+  v = render(select, undefined, null);
+  expect(select).not.toHaveBeenCalled();
+  expect(v.find((n) => n.type === "Switch")!.props.value).toBe(true);
+  expect(v.some((n) => n.props.children === "coverLibrary.chooseManual")).toBe(true);
 });

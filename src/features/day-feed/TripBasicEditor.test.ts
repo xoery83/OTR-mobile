@@ -376,3 +376,29 @@ it("retains a picked photo through the owning photo repository, stages only its 
     after: "photo-" + id,
   });
 });
+
+it("keeps an AUTO switch change draft-only until the Editor owning Save", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const current = {
+    ...trip,
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: "photo-00000000-0000-4000-8000-000000000002",
+  };
+  let view = render(save, undefined, current);
+  await (
+    view.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
+      id: null,
+    ) => Promise<void>
+  )(null);
+  expect(save).not.toHaveBeenCalled();
+  view = render(save, undefined, current);
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBeNull();
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save).toHaveBeenCalledWith(
+    before,
+    before,
+    { before: current.selectedCoverAssetIdRaw, after: null },
+    expect.any(String),
+  );
+});

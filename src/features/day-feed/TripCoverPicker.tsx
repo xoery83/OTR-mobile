@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { AppIcon } from "@/components/AppIcon";
-import { UiButton, UiText } from "@/ui/controls";
+import { UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -13,9 +13,8 @@ import {
   isTripCoverAssetId,
   parseTripPhotoCoverRef,
   type TripCoverChoice,
-  type TripCoverAssetId,
 } from "@/domain/trip/tripCoverAssets";
-import { coverCatalog, type CoverMetadata } from "@/features/trip-cover/coverDecision";
+import { type CoverMetadata } from "@/features/trip-cover/coverDecision";
 import { builtInTripCoverSource, tripCoverId, tripCoverSource } from "./tripCovers";
 import { suggestedCoverIds, tripCoverDescription } from "./tripCoverRecommendations";
 import { TripCoverVisual } from "./TripCoverVisual";
@@ -38,19 +37,20 @@ export function TripCoverPicker({
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
   const [error, setError] = useState(false);
-  const [credits, setCredits] = useState(false);
+  const [chooseManual, setChooseManual] = useState(false);
   const current = { ...trip, selectedCoverAssetIdRaw: selectedRaw };
   const currentId = tripCoverId(current);
   const personal = parseTripPhotoCoverRef(selectedRaw) !== null;
   const order = open ? suggestedCoverIds(trip, personal ? selectedRaw : currentId) : [];
-  const select = async (id: TripCoverChoice | null) => {
+  const select = async (id: TripCoverChoice | null, closeAfter = true) => {
     if (busy.current) return;
     busy.current = true;
     setSaving(true);
     setError(false);
     try {
       await onSelect(id);
-      setOpen(false);
+      if (closeAfter) setOpen(false);
+      setChooseManual(false);
     } catch {
       setError(true);
     } finally {
@@ -75,14 +75,18 @@ export function TripCoverPicker({
   const close = () => {
     if (!busy.current) setOpen(false);
   };
-  const creditAssets = coverCatalog.filter(
-    (asset) =>
-      (!personal && asset.id === currentId) ||
-      order.includes(asset.id as TripCoverAssetId),
-  );
   return (
     <View>
-      <View style={styles.preview}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("myTrips.chooseCover")}
+        onPress={() => {
+          setError(false);
+          setChooseManual(false);
+          setOpen(true);
+        }}
+        style={styles.preview}
+      >
         <TripCoverVisual
           tripId={trip.id}
           rawSelection={selectedRaw}
@@ -90,18 +94,10 @@ export function TripCoverPicker({
           assetId={currentId}
           style={styles.cover}
         />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("myTrips.chooseCover")}
-          onPress={() => {
-            setError(false);
-            setOpen(true);
-          }}
-          style={styles.edit}
-        >
-          <AppIcon name="pencil" color={colors.mediaText} size={22} />
-        </Pressable>
-      </View>
+        <View pointerEvents="none" style={styles.edit}>
+          <AppIcon name="square.and.pencil" color={colors.mediaText} size={22} />
+        </View>
+      </Pressable>
       <Modal
         visible={open}
         presentationStyle="pageSheet"
@@ -177,49 +173,22 @@ export function TripCoverPicker({
                 {t("myTrips.coverFailed")}
               </UiText>
             ) : null}
-            <UiButton
-              label={t("coverLibrary.automatic")}
-              variant="text"
-              disabled={saving}
-              onPress={() => void select(null)}
-            />
-            <UiButton
-              label={t("coverLibrary.credits")}
-              variant="text"
-              onPress={() => setCredits(!credits)}
-            />
-            {credits ? (
-              <View style={styles.credits}>
-                <UiText style={styles.meta}>{t("coverLibrary.geoCredits")}</UiText>
-                {creditAssets.map((asset) => (
-                  <View key={asset.id} style={styles.credit}>
-                    <UiText style={styles.meta}>{asset.title}</UiText>
-                    <UiText style={styles.meta}>{asset.provenance.attribution}</UiText>
-                    {asset.provenance.sourceUrl.startsWith("https://") ? (
-                      <UiButton
-                        label={t("coverLibrary.source")}
-                        variant="text"
-                        onPress={() => {
-                          void Linking.openURL(asset.provenance.sourceUrl).catch(() =>
-                            setError(true),
-                          );
-                        }}
-                      />
-                    ) : null}
-                    {asset.provenance.licenseUrl.startsWith("https://") ? (
-                      <UiButton
-                        label={t("coverLibrary.license")}
-                        variant="text"
-                        onPress={() => {
-                          void Linking.openURL(asset.provenance.licenseUrl).catch(() =>
-                            setError(true),
-                          );
-                        }}
-                      />
-                    ) : null}
-                  </View>
-                ))}
-              </View>
+            <View style={styles.automatic}>
+              <UiText style={styles.caption}>{t("coverLibrary.automatic")}</UiText>
+              <Switch
+                accessibilityLabel={t("coverLibrary.automatic")}
+                value={selectedRaw === null}
+                disabled={saving || selectedRaw === undefined}
+                onValueChange={(automatic) => {
+                  if (automatic) void select(null, false);
+                  else if (selectedRaw === null) setChooseManual(true);
+                }}
+              />
+            </View>
+            {chooseManual && selectedRaw === null ? (
+              <UiText accessibilityLiveRegion="polite" style={styles.meta}>
+                {t("coverLibrary.chooseManual")}
+              </UiText>
             ) : null}
           </ScrollView>
         </SafeAreaView>
@@ -266,7 +235,12 @@ const createStyles = (c: UiColors) =>
     caption: { ...visual.type.meta, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
     disabled: { opacity: 0.5 },
-    credits: { gap: visual.space.card },
-    credit: { gap: visual.space.heading },
+    automatic: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      minHeight: 44,
+      gap: visual.space.card,
+    },
     error: { ...visual.type.meta, color: c.destructive },
   });

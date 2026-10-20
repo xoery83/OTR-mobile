@@ -65,12 +65,14 @@ export function UiFormRow({
   onPress,
   disabled = false,
   stacked = false,
+  horizontalInset,
 }: {
   label: string;
   value: string;
   onPress: () => void;
   disabled?: boolean;
   stacked?: boolean;
+  horizontalInset?: number;
 }) {
   const styles = useThemedStyles(createStyles);
 
@@ -86,6 +88,7 @@ export function UiFormRow({
         styles.row,
         (largeText || stacked) && styles.rowLargeText,
         disabled && styles.disabledSurface,
+        horizontalInset !== undefined && { paddingHorizontal: horizontalInset },
       ]}
     >
       <Text

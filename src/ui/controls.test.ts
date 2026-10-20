@@ -225,3 +225,14 @@ it("refreshes only the native text identity on hot font changes and preserves it
   expect(enlarged.props.allowFontScaling).not.toBe(false);
   state.fontScale = 1;
 });
+
+it("keeps default form-row inset while allowing captions to align with sibling fields", () => {
+  const props = { label: "Dates", value: "Dec 30", onPress: vi.fn(), stacked: true };
+  const regular = renderToStaticMarkup(createElement(UiFormRow, props));
+  const aligned = renderToStaticMarkup(
+    createElement(UiFormRow, { ...props, horizontalInset: 0 }),
+  );
+  expect(regular).toContain("padding-horizontal:14px");
+  expect(aligned).toContain("padding-horizontal:0");
+  expect(aligned).toContain("min-height:52px");
+});

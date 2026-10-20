@@ -1083,3 +1083,20 @@ it("keeps the same Editor mounted beneath same-Trip Currency without saving", as
   expect(state.nodes.some((node) => node.currencyScreen)).toBe(false);
   expect(router.push).not.toHaveBeenCalled();
 });
+
+it("does not gate an authoritative local Home on unrelated discovery and retains the owning edit check", async () => {
+  const repo = repository([trip("local-a", "Local Home")]);
+  vi.mocked(repo.canUpdateMetadata).mockResolvedValue(false);
+  state.repo.mockResolvedValue(repo);
+  state.discovery.mockImplementation(() => new Promise(() => {}));
+  props.tripId = "local-a";
+  render();
+  await flush();
+  expect(render()).toContain("Local Home");
+  expect(repo.getTrip).toHaveBeenCalledWith("local-a");
+  expect(repo.canUpdateMetadata).toHaveBeenCalledWith("local-a");
+  expect(state.discovery).not.toHaveBeenCalled();
+  button("tripHome.edit").onPress();
+  expect(render()).toContain("tripHome.editor.metadataReadOnly");
+  expect(repo.updateMetadata).not.toHaveBeenCalled();
+});
