@@ -221,3 +221,28 @@ it("retains a genuine optional provider Place ID separately from opaque handles"
     (await legacy.provider.search({ text: "Auckland" }))[0].providerPlaceId,
   ).toBeUndefined();
 });
+
+it("reports preflight runtime failure without sending a query or exposing its text", async () => {
+  const { provider, native } = fixture();
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  vi.stubGlobal("__DEV__", true);
+  vi.stubGlobal("TextEncoder", undefined);
+  try {
+    await expect(
+      provider.complete({ text: "Private query must never be logged" }),
+    ).rejects.toBeInstanceOf(TypeError);
+    expect(native.complete).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "apple_place_failure",
+        phase: "COMPLETE",
+        errorType: "TypeError",
+        textEncoderAvailable: false,
+      }),
+    );
+    expect(JSON.stringify(log.mock.calls)).not.toContain("Private query");
+  } finally {
+    vi.unstubAllGlobals();
+    log.mockRestore();
+  }
+});

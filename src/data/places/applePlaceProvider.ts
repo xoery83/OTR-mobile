@@ -116,28 +116,29 @@ export function createApplePlaceProvider(
     signal?: AbortSignal,
     selected?: ApplePlaceCandidate,
   ) {
-    assertCurrent(signal);
-    const text = normalizePlaceQuery(query.text).phrase;
-    if (
-      selected &&
-      (selected.sessionId !== sessionId || selected.generation !== generation)
-    )
-      throw new ApplePlaceError("STALE_HANDLE");
-    const requestGeneration = kind === "resolve" ? generation : ++generation;
-    if (kind !== "resolve" && (!text || new TextEncoder().encode(text).length > 2048)) {
-      native.cancel(sessionId, requestGeneration - 1);
-      if (text) throw new ApplePlaceError("INVALID_REQUEST");
-      return [];
-    }
-    const requestId = id();
-    let region: z.infer<typeof point> | undefined;
-    if (query.region) {
-      region = point.parse(query.region);
-      if (!region.latitude && !region.longitude) region = undefined;
-    }
-    const cancel = () => native.cancel(sessionId, requestGeneration);
-    signal?.addEventListener("abort", cancel, { once: true });
+    let cancel: (() => void) | undefined;
     try {
+      assertCurrent(signal);
+      const text = normalizePlaceQuery(query.text).phrase;
+      if (
+        selected &&
+        (selected.sessionId !== sessionId || selected.generation !== generation)
+      )
+        throw new ApplePlaceError("STALE_HANDLE");
+      const requestGeneration = kind === "resolve" ? generation : ++generation;
+      if (kind !== "resolve" && (!text || new TextEncoder().encode(text).length > 2048)) {
+        native.cancel(sessionId, requestGeneration - 1);
+        if (text) throw new ApplePlaceError("INVALID_REQUEST");
+        return [];
+      }
+      const requestId = id();
+      let region: z.infer<typeof point> | undefined;
+      if (query.region) {
+        region = point.parse(query.region);
+        if (!region.latitude && !region.longitude) region = undefined;
+      }
+      cancel = () => native.cancel(sessionId, requestGeneration);
+      signal?.addEventListener("abort", cancel, { once: true });
       const response = responseSchema.parse(
         await native[kind]({
           sessionId,
@@ -168,7 +169,7 @@ export function createApplePlaceProvider(
       reportApplePlaceFailure(kind.toUpperCase(), error);
       throw error;
     } finally {
-      signal?.removeEventListener("abort", cancel);
+      if (cancel) signal?.removeEventListener("abort", cancel);
     }
   }
   return {
