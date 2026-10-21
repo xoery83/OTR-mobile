@@ -6,10 +6,21 @@ public final class LocalDictationModule: Module {
   public func definition() -> ModuleDefinition {
     Name("OTRLocalDictation")
     Events("transcript", "state")
-    AsyncFunction("start") { [weak self] (sessionId: String, locale: String) async throws in
-      guard let owner = self?.owner else { throw DictationFailure.interrupted }
-      try await LocalDictationEngine.shared.start(owner: owner, sessionId: sessionId, locale: locale) { [weak self] name, body in
-        self?.sendEvent(name, body)
+    AsyncFunction("start") { [weak self] (sessionId: String, locale: String) async -> [String: Any]? in
+      do {
+        guard let owner = self?.owner else { throw DictationFailure.interrupted }
+        try await LocalDictationEngine.shared.start(owner: owner, sessionId: sessionId, locale: locale) { [weak self] name, body in
+          self?.sendEvent(name, body)
+        }
+        return nil
+      } catch let value as DictationStartFailure {
+        // Expo errors expose only code/message. A private result envelope avoids
+        // serializing diagnostic facts into an Error description or NSError cause.
+        return ["error": value.failure.rawValue, "diagnostic": value.diagnostic.body]
+      } catch let value as DictationFailure {
+        return ["error": value.rawValue]
+      } catch {
+        return ["error": DictationFailure.failed.rawValue]
       }
     }
     AsyncFunction("stop") { [weak self] (sessionId: String) async in

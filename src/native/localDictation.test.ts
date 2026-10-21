@@ -96,4 +96,75 @@ describe("local dictation bounded diagnostic adapter", () => {
     });
     expect(state).toHaveBeenCalledTimes(1);
   });
+  it.each(["event-first", "result-first"])(
+    "publishes early failure once when %s",
+    async (order) => {
+      let emit: (value: unknown) => void = () => {};
+      let complete: (value: unknown) => void = () => {};
+      bridge.addListener.mockImplementation((_event, listener) => {
+        emit = listener;
+        return { remove: vi.fn() };
+      });
+      bridge.start.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            complete = resolve;
+          }),
+      );
+      const onDiagnostic = vi.fn(),
+        native = readLocalDictation({ onDiagnostic });
+      native.addListener("state", vi.fn());
+      const pending = native.start("owned", "en-NZ");
+      const diagnostic = {
+        phase: "audio_engine",
+        domain: "NSOSStatusErrorDomain",
+        code: -50,
+        sampleRateValid: true,
+        channelCountValid: true,
+      };
+      const event = { sessionId: "owned", status: "error", error: "failed", diagnostic };
+      if (order === "event-first") emit(event);
+      complete({
+        error: "failed",
+        diagnostic: { ...diagnostic, description: "private", audio: "private" },
+      });
+      await expect(pending).rejects.toMatchObject({ code: "failed" });
+      if (order === "result-first") emit(event);
+      emit(event);
+      expect(onDiagnostic).toHaveBeenCalledExactlyOnceWith(diagnostic);
+    },
+  );
+  it("does not invent a native phase or forward data from an unknown bridge rejection", async () => {
+    const error = Object.assign(new Error("private"), {
+      diagnostic: { phase: "audio_engine", domain: "NONE" },
+      userInfo: "private",
+    });
+    bridge.start.mockRejectedValue(error);
+    const onDiagnostic = vi.fn(),
+      native = readLocalDictation({ onDiagnostic });
+    await expect(native.start("owned", "en-NZ")).rejects.toBe(error);
+    expect(onDiagnostic).toHaveBeenCalledExactlyOnceWith({
+      phase: "unknown",
+      domain: "OTHER",
+    });
+  });
+  it("never publishes an early rejection after its session was cancelled", async () => {
+    let complete: (value: unknown) => void = () => {};
+    bridge.start.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          complete = resolve;
+        }),
+    );
+    const onDiagnostic = vi.fn(),
+      native = readLocalDictation({ onDiagnostic });
+    const pending = native.start("cancelled", "en-NZ");
+    await native.cancel("cancelled");
+    complete({
+      error: "permission",
+      diagnostic: { phase: "microphone_permission", domain: "NONE" },
+    });
+    await expect(pending).rejects.toMatchObject({ code: "permission" });
+    expect(onDiagnostic).not.toHaveBeenCalled();
+  });
 });

@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import type { DictationNative } from "@/features/capture/localDictation";
 
 const phases = new Set([
+  "unknown",
   "capability",
   "speech_permission",
   "microphone_permission",
@@ -72,15 +73,51 @@ export function readLocalDictation(
     throw Object.assign(new Error("Local dictation unavailable"), {
       code: "unavailable",
     });
-  const native = requireNativeModule<DictationNative>("OTRLocalDictation");
-  const ownSessions = new Set<string>();
+  const native = requireNativeModule<
+    Omit<DictationNative, "start"> & {
+      start(id: string, locale: string): Promise<unknown>;
+    }
+  >("OTRLocalDictation");
+  const failures = new Set([
+    "permission",
+    "unavailable",
+    "interrupted",
+    "failed",
+    "timeout",
+  ]);
+  const ownSessions = new Map<string, { diagnosed: boolean }>();
+  const publish = (id: string, diagnostic: LocalDictationDiagnostic | null) => {
+    const session = ownSessions.get(id);
+    if (!session || session.diagnosed || !diagnostic) return;
+    session.diagnosed = true;
+    try {
+      options.onDiagnostic?.(diagnostic);
+    } catch {
+      /* Diagnostics never interrupt dictation cleanup. */
+    }
+  };
   return {
     async start(id, locale) {
-      ownSessions.add(id);
+      const session = { diagnosed: false };
+      ownSessions.set(id, session);
+      let diagnostic: LocalDictationDiagnostic | null = null;
       try {
-        await native.start(id, locale);
+        const result = await native.start(id, locale);
+        if (result != null) {
+          const envelope =
+            typeof result === "object" ? (result as Record<string, unknown>) : {};
+          const known =
+            typeof envelope.error === "string" && failures.has(envelope.error);
+          const code =
+            known && typeof envelope.error === "string" ? envelope.error : "failed";
+          diagnostic = known ? parseLocalDictationDiagnostic(envelope.diagnostic) : null;
+          throw Object.assign(new Error(code), { code });
+        }
       } catch (error) {
-        ownSessions.delete(id);
+        if (ownSessions.get(id) === session) {
+          publish(id, diagnostic ?? { phase: "unknown", domain: "OTHER" });
+          ownSessions.delete(id);
+        }
         throw error;
       }
     },
@@ -95,13 +132,7 @@ export function readLocalDictation(
           const state = value as Record<string, unknown>;
           if (typeof state.sessionId === "string" && ownSessions.has(state.sessionId)) {
             const diagnostic = parseLocalDictationDiagnostic(state.diagnostic);
-            if (state.status === "error" && diagnostic) {
-              try {
-                options.onDiagnostic?.(diagnostic);
-              } catch {
-                /* Diagnostics never interrupt dictation cleanup. */
-              }
-            }
+            if (state.status === "error") publish(state.sessionId, diagnostic);
             if (state.status === "error" || state.status === "stopped")
               ownSessions.delete(state.sessionId);
           }

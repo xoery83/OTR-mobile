@@ -16,6 +16,8 @@ Props: `requestId: string`, `enabled: boolean`,
 React Native `ViewProps`. Give the system control an accessible touch area using
 canonical composer layout (at least 44 points); it supplies its own system label,
 appearance and clipboard consent gesture. Render it inside the existing composer.
+The control uses system `iconOnly` display mode for a compact 44-point layout;
+UIKit retains its system accessibility label. Actual layout requires Native QA.
 The TextInput's native text editing menu remains unchanged. This does not implement
 an image `onPaste` event on TextInput.
 
@@ -84,6 +86,17 @@ included in the diagnostic callback; no logs or persistence are added. Root may
 show these transiently in DEV for the current subscription. A `failed` state or
 NSError alone does not establish a Simulator cause.
 
+The private Native `start` bridge returns null on success or a sanitized failure
+envelope `{error, diagnostic?}`. The Engine uses the same sanitized diagnostic for
+its error event and this envelope; the Module catches failures without forwarding
+NSError, userInfo, descriptions or causes. The public `DictationNative.start`
+remains `Promise<void>` and rejects with the existing finite error code. Its wrapper
+publishes diagnostics for the current own session before rejecting, and terminal
+session removal deduplicates event-first and envelope-first orderings. Cancellation
+suppresses late diagnostics. Unexpected bridge errors remain rejections and yield
+only `phase: "unknown", domain: "OTHER"`; they never imply an audio/permission
+phase. No JSON is embedded in an Error description, and no diagnostic is persisted.
+
 The existing on-device-only requirement, permissions, session/owner/epoch fences,
 transcript bound, timers and functional state codes remain. The engine adds phases
 around permission, audio setup, recognition and lifecycle/deadline failures.
@@ -91,7 +104,8 @@ around permission, audio setup, recognition and lifecycle/deadline failures.
 ## Validation and boundary
 
 - Vitest: native diagnostic, image delivery contract and existing dictation
-  controller: 3 suites / 20 tests PASS, including duplicate/malformed delivery,
+  controller: 3 suites / 24 tests PASS, including both early-failure delivery orders,
+  unknown bridge/cancelled-session diagnostics, duplicate/malformed image delivery,
   claim/adoption/release reentrancy and callback-failure ownership regressions.
 - Foundation executable: metadata sanitization; pending cancellation/late callback;
   claimed lifetime/explicit release; byte/count limits and foreign-token safety;

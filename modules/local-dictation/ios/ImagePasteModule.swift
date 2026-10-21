@@ -26,7 +26,11 @@ public final class ImagePasteModule: Module {
 @MainActor final class ImagePasteView: ExpoView {
   let onImages = EventDispatcher()
   let onFailure = EventDispatcher()
-  private let control = UIPasteControl()
+  private let control: UIPasteControl = {
+    var configuration = UIPasteControl.Configuration()
+    configuration.displayMode = .iconOnly
+    return UIPasteControl(configuration: configuration)
+  }()
   private var requestId = ""
   private var enabled = false
   private var batch: ImagePasteBatch?

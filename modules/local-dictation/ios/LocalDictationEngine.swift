@@ -3,6 +3,12 @@ import Foundation
 import Speech
 import UIKit
 
+// Carries only the already-sanitized failure facts to the private module adapter.
+struct DictationStartFailure: Error {
+  let failure: DictationFailure
+  let diagnostic: DictationDiagnostic
+}
+
 // AVAudioEngine delivers buffers off-main. Closing the gate precedes endAudio/cancel.
 private final class DictationAudioInput {
   private let lock = NSLock()
@@ -146,8 +152,9 @@ private final class DictationAudioInput {
       state(session, "listening")
     } catch {
       let failure = error as? DictationFailure ?? .failed
-      finish(lease, error: failure, diagnostic: DictationDiagnostic(session.diagnosticPhase, error: error is DictationFailure ? nil : error, sampleRateValid: session.sampleRateValid, channelCountValid: session.channelCountValid))
-      throw failure
+      let diagnostic = DictationDiagnostic(session.diagnosticPhase, error: error is DictationFailure ? nil : error, sampleRateValid: session.sampleRateValid, channelCountValid: session.channelCountValid)
+      finish(lease, error: failure, diagnostic: diagnostic)
+      throw DictationStartFailure(failure: failure, diagnostic: diagnostic)
     }
   }
 
