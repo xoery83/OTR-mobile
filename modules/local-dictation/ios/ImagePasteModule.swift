@@ -100,6 +100,7 @@ public final class ImagePasteModule: Module {
         do { result = .success(try value.copyProviderFile(url)) }
         catch { result = .failure(error as? ImagePasteFailure ?? .storage) }
       } else {
+        Self.providerFailure("file", type: type, provider: provider, error: error)
         Task { @MainActor in
           guard let self, self.current(value) else { value.cancelPending(); return }
           self.loadData(provider, type: type, providers: providers, index: index, current: value, items: items)
@@ -122,7 +123,10 @@ public final class ImagePasteModule: Module {
       if let data, error == nil {
         do { result = .success(try value.copyProviderData(data)) }
         catch { result = .failure(error as? ImagePasteFailure ?? .storage) }
-      } else { result = .failure(.loadFailed) }
+      } else {
+        Self.providerFailure("data", type: type, provider: provider, error: error)
+        result = .failure(.loadFailed)
+      }
       Task { @MainActor in
         guard let self, self.current(value) else { value.cancelPending(); return }
         self.progress = nil
@@ -132,6 +136,14 @@ public final class ImagePasteModule: Module {
         }
       }
     }
+  }
+  nonisolated private static func providerFailure(_ phase: String, type: String, provider: NSItemProvider, error: Error?) {
+    #if DEBUG
+    let error = error as NSError?
+    let domain = ["NSItemProviderErrorDomain", "NSCocoaErrorDomain"].contains(error?.domain ?? "") ? error!.domain : "OTHER"
+    let registered = ImagePastePolicy.identifiers.filter { provider.registeredTypeIdentifiers.contains($0) }.joined(separator: ",")
+    NSLog("OTRImagePaste phase=%@ type=%@ domain=%@ code=%ld formats=%@", phase, type, domain, error?.code ?? 0, registered)
+    #endif
   }
   private func fail(_ value: ImagePasteBatch, _ error: ImagePasteFailure) {
     guard batch === value else { value.cancelPending(); return }
