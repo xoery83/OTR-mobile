@@ -127,6 +127,8 @@ through hierarchy; Cancel abandons a task/selection; Close dismisses a preview o
 overlay. Preserve each caller's handlers and dismissal semantics. Destructive
 actions belong in the appropriate editing/task context with safe confirmation.
 
+`UiGlassSurface` provides existing installed iOS glass for compact composer/popover surfaces, with semantic translucent fallback and opaque Reduce Transparency support. Do not put an opaque page/input fill over the material. The Import composer uses one shared input/action surface; its replacement connection sheets preserve draft and launching page. Native system paste is a separate explicit intake control, never a passive clipboard read.
+
 ## Forms, state and accessibility
 
 Use `UiTextInput`, `UiFormRow`, `UiChoiceChip` and `UiDatePicker` from

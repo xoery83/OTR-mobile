@@ -1,9 +1,7 @@
 import { AppIcon } from "@/components/AppIcon";
 import { OverlayDismissAction } from "@/components/OverlayDismissAction";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  ActionSheetIOS,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -16,6 +14,8 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { UiButton, UiText } from "@/ui/controls";
+import { UiGlassSurface } from "@/ui/UiGlassSurface";
+import { CaptureConnections } from "./CaptureConnections";
 import { UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -34,6 +34,11 @@ type Props = {
   title?: string;
   contextLabel?: string;
   errorMessage?: string;
+  readTripTargets?(): Promise<readonly { id: string; name: string }[]>;
+  onTripTarget?(
+    target: { id: string; name: string } | null,
+    isCurrent: () => boolean,
+  ): Promise<boolean>;
   onClose(): void;
   onFiles(): void;
   onPhotos(): void;
@@ -55,6 +60,8 @@ export function CaptureComposer({
   title,
   contextLabel,
   errorMessage,
+  readTripTargets,
+  onTripTarget,
   onClose,
   onFiles,
   onPhotos,
@@ -72,10 +79,52 @@ export function CaptureComposer({
   const insets = useSafeAreaInsets(),
     { height, fontScale } = useWindowDimensions();
   const [page, setPage] = useState<"composer" | "email" | "ai" | "context">("composer");
+  const [menu, setMenu] = useState(false);
+  const targetEpoch = useRef(0);
+  const [trips, setTrips] = useState<readonly { id: string; name: string }[]>([]);
+  const [targetBusy, setTargetBusy] = useState(false);
+  const [targetError, setTargetError] = useState(false);
+  useEffect(() => {
+    if (page !== "context") return;
+    let active = true;
+    void (
+      readTripTargets
+        ? readTripTargets()
+        : Promise.reject(new Error("CAPTURE_TARGET_READER_UNAVAILABLE"))
+    )
+      .then((value) => {
+        if (active) setTrips(value);
+      })
+      .catch(() => {
+        if (active) setTargetError(true);
+      })
+      .finally(() => {
+        if (active) setTargetBusy(false);
+      });
+    return () => {
+      active = false;
+      targetEpoch.current += 1;
+    };
+  }, [page, readTripTargets]);
+  const chooseTrip = async (target: { id: string; name: string } | null) => {
+    if (targetBusy || !onTripTarget) return;
+    setTargetBusy(true);
+    setTargetError(false);
+    const epoch = targetEpoch.current;
+    const current = () => epoch === targetEpoch.current;
+    try {
+      if (await onTripTarget(target, current)) setPage("composer");
+      else setTargetError(true);
+    } catch {
+      setTargetError(true);
+    } finally {
+      setTargetBusy(false);
+    }
+  };
   const maxInputHeight = 6 * 22 * Math.max(1, fontScale) + 16;
   const mixed =
     !!snapshot.editorText.trim() ||
-    snapshot.items.some((i) => i.source === "magic_input");
+    snapshot.items.some((i) => i.source === "magic_input" || i.source === "clipboard");
   const sendDisabled = locked || !count || mixed;
   const context =
     contextLabel ??
@@ -92,41 +141,7 @@ export function CaptureComposer({
     if (content != null || page !== "composer") closeVoice();
   }, [content, page, closeVoice]);
   const attachments = () => {
-    const choose = (index: number) => {
-      if (locked) return;
-      if (index === 0) onCamera?.();
-      if (index === 1) onPhotos();
-      if (index === 2) onFiles();
-    };
-    if (Platform.OS !== "ios") {
-      Alert.alert(
-        t("capture.composer.addAttachments"),
-        undefined,
-        [
-          ...(onCamera
-            ? [{ text: t("capture.composer.camera"), onPress: () => choose(0) }]
-            : []),
-          { text: t("capture.composer.photos"), onPress: () => choose(1) },
-          { text: t("capture.composer.files"), onPress: () => choose(2) },
-        ],
-        { cancelable: true },
-      );
-      return;
-    }
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: t("capture.composer.addAttachments"),
-        options: [
-          t("capture.composer.camera"),
-          t("capture.composer.photos"),
-          t("capture.composer.files"),
-          t("common.cancel"),
-        ],
-        cancelButtonIndex: 3,
-        disabledButtonIndices: onCamera ? [] : [0],
-      },
-      choose,
-    );
+    if (!locked) setMenu((value) => !value);
   };
   const header =
     page === "email"
@@ -143,6 +158,12 @@ export function CaptureComposer({
           style={styles.keyboard}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("common.close")}
+            style={StyleSheet.absoluteFill}
+            onPress={() => (menu ? setMenu(false) : close())}
+          />
           <View
             style={[
               styles.sheet,
@@ -169,26 +190,43 @@ export function CaptureComposer({
                 ) : null}
                 <View style={styles.contentViewport}>{content}</View>
               </>
-            ) : page !== "composer" ? (
+            ) : page === "email" || page === "ai" ? (
+              <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+                <CaptureConnections page={page} onBack={() => setPage("composer")} />
+              </ScrollView>
+            ) : page === "context" ? (
               <ScrollView
                 style={styles.body}
                 contentContainerStyle={styles.child}
                 keyboardShouldPersistTaps="handled"
               >
-                <UiText style={styles.bodyText}>
-                  {page === "context"
-                    ? context
-                    : t(
-                        page === "email"
-                          ? "capture.composer.emailUnavailable"
-                          : "capture.composer.aiUnavailable",
-                      )}
-                </UiText>
-                {page === "context" ? (
-                  <UiText style={styles.secondary}>
-                    {t("capture.composer.contextUnavailable")}
+                {targetBusy ? (
+                  <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                    {t("capture.checking")}
                   </UiText>
                 ) : null}
+                {targetError ? (
+                  <UiText accessibilityRole="alert" style={styles.error}>
+                    {t("capture.connections.targetError")}
+                  </UiText>
+                ) : null}
+                <UiButton
+                  variant="text"
+                  label={t("capture.composer.unassigned")}
+                  disabled={targetBusy}
+                  onPress={() => void chooseTrip(null)}
+                />
+                {trips.map((trip) => (
+                  <Pressable
+                    key={trip.id}
+                    accessibilityRole="button"
+                    disabled={targetBusy}
+                    onPress={() => void chooseTrip(trip)}
+                    style={styles.tripRow}
+                  >
+                    <UiText style={styles.bodyText}>{trip.name}</UiText>
+                  </Pressable>
+                ))}
                 <UiButton
                   variant="text"
                   label={t("common.back")}
@@ -201,7 +239,11 @@ export function CaptureComposer({
                   accessibilityRole="button"
                   accessibilityLabel={t("capture.composer.contextTitle")}
                   disabled={voice.busy}
-                  onPress={() => setPage("context")}
+                  onPress={() => {
+                    setTargetBusy(true);
+                    setTargetError(false);
+                    setPage("context");
+                  }}
                   style={styles.contextTarget}
                 >
                   <UiText style={styles.contextText} numberOfLines={1}>
@@ -348,6 +390,8 @@ export function CaptureComposer({
                       {errorMessage}
                     </UiText>
                   ) : null}
+                </ScrollView>
+                <UiGlassSurface style={styles.composer}>
                   <UiTextInput
                     variant="bare"
                     value={snapshot.editorText}
@@ -362,12 +406,75 @@ export function CaptureComposer({
                     accessibilityLabel={t("capture.composer.magic")}
                     style={[styles.input, { maxHeight: maxInputHeight }]}
                   />
-                  {mixed ? (
-                    <UiText style={styles.secondary}>
-                      {t("capture.composer.textSubmitUnavailable")}
-                    </UiText>
-                  ) : null}
-                </ScrollView>
+                  <View style={styles.footer}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("capture.composer.addAttachments")}
+                      accessibilityState={{ disabled: locked }}
+                      disabled={locked}
+                      style={styles.target}
+                      onPress={attachments}
+                    >
+                      <AppIcon name="plus" size={25} color={colors.textPrimary} />
+                    </Pressable>
+                    <View style={styles.spacer} />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t(
+                        voice.busy ? "capture.voice.stop" : "capture.voice.start",
+                      )}
+                      accessibilityState={{
+                        disabled:
+                          snapshot.selecting ||
+                          voice.state.status === "starting" ||
+                          voice.state.status === "finishing",
+                      }}
+                      disabled={
+                        snapshot.selecting ||
+                        voice.state.status === "starting" ||
+                        voice.state.status === "finishing"
+                      }
+                      onPress={() =>
+                        voice.busy
+                          ? voice.stop()
+                          : voice.start(
+                              snapshot.editorText,
+                              locale === "zh-Hans" ? "zh-CN" : "en-US",
+                            )
+                      }
+                      style={styles.target}
+                    >
+                      <AppIcon
+                        name={voice.busy ? "stop.fill" : "mic"}
+                        size={22}
+                        color={snapshot.selecting ? colors.disabled : colors.accent}
+                      />
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("capture.composer.submit")}
+                      accessibilityState={{ disabled: sendDisabled }}
+                      disabled={sendDisabled}
+                      onPress={onSubmit}
+                      style={[
+                        styles.target,
+                        styles.send,
+                        sendDisabled && styles.sendDisabled,
+                      ]}
+                    >
+                      <AppIcon
+                        name="arrow.up"
+                        size={23}
+                        color={sendDisabled ? colors.disabled : colors.onAccent}
+                      />
+                    </Pressable>
+                  </View>
+                </UiGlassSurface>
+                {mixed ? (
+                  <UiText style={styles.submitHelp}>
+                    {t("capture.composer.textSubmitUnavailable")}
+                  </UiText>
+                ) : null}
                 {voice.state.status !== "idle" ? (
                   <View style={styles.voiceStatus}>
                     <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
@@ -386,72 +493,48 @@ export function CaptureComposer({
                     ) : null}
                   </View>
                 ) : null}
-                <View style={styles.footer}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("capture.composer.addAttachments")}
-                    accessibilityState={{ disabled: locked }}
-                    disabled={locked}
-                    style={styles.target}
-                    onPress={attachments}
-                  >
-                    <AppIcon name="plus" size={25} color={colors.textPrimary} />
-                  </Pressable>
-                  <View style={styles.spacer} />
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t(
-                      voice.busy ? "capture.voice.stop" : "capture.voice.start",
-                    )}
-                    accessibilityState={{
-                      disabled:
-                        snapshot.selecting ||
-                        voice.state.status === "starting" ||
-                        voice.state.status === "finishing",
-                    }}
-                    disabled={
-                      snapshot.selecting ||
-                      voice.state.status === "starting" ||
-                      voice.state.status === "finishing"
-                    }
-                    onPress={() =>
-                      voice.busy
-                        ? voice.stop()
-                        : voice.start(
-                            snapshot.editorText,
-                            locale === "zh-Hans" ? "zh-CN" : "en-US",
-                          )
-                    }
-                    style={styles.target}
-                  >
-                    <AppIcon
-                      name={voice.busy ? "stop.fill" : "mic"}
-                      size={22}
-                      color={snapshot.selecting ? colors.disabled : colors.accent}
-                    />
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("capture.composer.submit")}
-                    accessibilityState={{ disabled: sendDisabled }}
-                    disabled={sendDisabled}
-                    onPress={onSubmit}
-                    style={[
-                      styles.target,
-                      styles.send,
-                      sendDisabled && styles.sendDisabled,
-                    ]}
-                  >
-                    <AppIcon
-                      name="arrow.up"
-                      size={23}
-                      color={sendDisabled ? colors.disabled : colors.onAccent}
-                    />
-                  </Pressable>
-                </View>
               </>
             )}
           </View>
+          {menu && page === "composer" && content == null ? (
+            <UiGlassSurface
+              style={[styles.attachmentMenu, { bottom: insets.bottom + 60 }]}
+            >
+              {[
+                {
+                  icon: "camera" as const,
+                  label: t("capture.composer.camera"),
+                  press: onCamera,
+                },
+                {
+                  icon: "photo" as const,
+                  label: t("capture.composer.photos"),
+                  press: onPhotos,
+                },
+                {
+                  icon: "paperclip" as const,
+                  label: t("capture.composer.files"),
+                  press: onFiles,
+                },
+              ].map((item) => (
+                <Pressable
+                  key={item.icon}
+                  accessibilityRole="button"
+                  disabled={!item.press || locked}
+                  onPress={() => {
+                    setMenu(false);
+                    item.press?.();
+                  }}
+                  style={styles.menuRow}
+                >
+                  <View style={styles.menuIcon}>
+                    <AppIcon name={item.icon} size={23} color={colors.textPrimary} />
+                  </View>
+                  <UiText style={styles.bodyText}>{item.label}</UiText>
+                </Pressable>
+              ))}
+            </UiGlassSurface>
+          ) : null}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
@@ -501,7 +584,7 @@ const createStyles = (c: UiColors) =>
     content: { paddingHorizontal: visual.space.page, gap: 6 },
     contentViewport: { flexShrink: 1, minHeight: 44 },
     instructions: { paddingVertical: 4 },
-    instruction: { ...visual.type.meta, color: c.textSecondary, lineHeight: 44 },
+    instruction: { ...visual.type.meta, color: c.textSecondary, lineHeight: 24 },
     link: { color: c.accent, textDecorationLine: "underline" },
     tray: { gap: visual.space.card, paddingVertical: 8, paddingRight: 12 },
     tile: {
@@ -539,9 +622,6 @@ const createStyles = (c: UiColors) =>
       fontWeight: "400",
       minHeight: 44,
       textAlignVertical: "top",
-      borderRadius: visual.radius.control,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.separator,
       paddingHorizontal: visual.space.card,
       paddingVertical: 10,
     },
@@ -549,7 +629,7 @@ const createStyles = (c: UiColors) =>
     footer: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: visual.space.page,
+      paddingHorizontal: 6,
       paddingVertical: 4,
       gap: 8,
     },
@@ -559,6 +639,59 @@ const createStyles = (c: UiColors) =>
     sendDisabled: { backgroundColor: c.controlTrack },
     secondary: { ...visual.type.meta, color: c.textSecondary },
     error: { ...visual.type.meta, color: c.destructive },
+    composer: {
+      marginHorizontal: visual.space.page,
+      marginTop: 6,
+      borderRadius: 24,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.separator,
+      shadowColor: c.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    attachmentMenu: {
+      position: "absolute",
+      left: visual.space.page,
+      width: 240,
+      maxWidth: "90%",
+      borderRadius: 28,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.separator,
+      padding: 8,
+      shadowColor: c.shadow,
+      shadowOpacity: 0.14,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+    },
+    menuRow: {
+      minHeight: 54,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      paddingHorizontal: 8,
+    },
+    menuIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: visual.radius.pill,
+      backgroundColor: c.controlTrack,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    tripRow: {
+      minHeight: 44,
+      justifyContent: "center",
+      paddingVertical: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.separator,
+    },
+    submitHelp: {
+      ...visual.type.meta,
+      color: c.textSecondary,
+      paddingHorizontal: visual.space.page,
+      paddingTop: 4,
+    },
     child: { padding: visual.space.page, gap: visual.space.card, minHeight: 180 },
     bodyText: { ...visual.type.row, fontWeight: "400", color: c.textPrimary },
   });

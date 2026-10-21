@@ -9,6 +9,9 @@ import { uiPalette } from "@/ui/palette";
 import type { CaptureDraftSnapshot } from "./captureStaging";
 // Native diagnostic controls are outside this UI lifecycle suite.
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
+vi.mock("@/ui/UiGlassSurface", () => ({
+  UiGlassSurface: (props: any) => createElement("div", {}, props.children),
+}));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
@@ -44,7 +47,8 @@ vi.mock("react", async (original) => ({
     return [
       state.hooks[index],
       (value: any) => {
-        state.hooks[index] = value;
+        state.hooks[index] =
+          typeof value === "function" ? value(state.hooks[index]) : value;
       },
     ];
   },
@@ -186,29 +190,24 @@ it("empty composer offers real intake sources and a persistent disabled send in 
       expect(state.nodes.find((n) => n.multiline).style[1].maxHeight).toBeLessThan(400);
     }
 });
-it("attachment menu routes selection to the existing picker without submitting", () => {
-  const { props } = render();
+it("attachment popover picks the requested source without a system alert or submission", () => {
+  render();
   button("capture.composer.addAttachments").onPress();
-  const [options, choose] = state.actionSheet.mock.calls[0];
-  expect(options.cancelButtonIndex).toBe(3);
-  choose(0);
-  choose(1);
-  choose(2);
-  choose(3);
-  expect(props.onCamera).toHaveBeenCalledOnce();
-  expect(props.onPhotos).toHaveBeenCalledOnce();
+  const { props } = render();
+  const file = state.buttons.find(
+    (b) => b.children?.[1]?.props?.children === t("capture.composer.files"),
+  );
+  file.onPress();
   expect(props.onFiles).toHaveBeenCalledOnce();
+  expect(state.actionSheet).not.toHaveBeenCalled();
+  expect(state.confirm).not.toHaveBeenCalled();
   expect(props.onSubmit).not.toHaveBeenCalled();
 });
-it("non-iOS attachment entry preserves the native picker routes without ActionSheetIOS", () => {
-  state.os = "android";
-  const { props } = render();
-  button("capture.composer.addAttachments").onPress();
-  expect(state.actionSheet).not.toHaveBeenCalled();
-  const actions = state.confirm.mock.calls[0][2];
-  actions.find((a: any) => a.text === t("capture.composer.files")).onPress();
-  expect(props.onFiles).toHaveBeenCalledOnce();
-  expect(props.onSubmit).not.toHaveBeenCalled();
+it("outside dismissal preserves rather than clears the unsent draft", () => {
+  const { props } = render({ ...empty, editorText: "keep this" });
+  state.buttons.find((b) => b.style?.position === "absolute").onPress();
+  expect(props.onClose).toHaveBeenCalledOnce();
+  expect(props.onClear).not.toHaveBeenCalled();
 });
 it("native paste retains text exactly and unsupported text never silently submits files", () => {
   const { props, html } = render({ ...empty, editorText: "Original note" }, 1);
@@ -396,4 +395,20 @@ it("voice input starts from the exact draft and active recording locks conflicti
   button("common.close").onPress();
   expect(state.voiceClose).toHaveBeenCalledOnce();
   expect(props.onClose).toHaveBeenCalledOnce();
+});
+
+it("clipboard intake stays visible as an image and cannot enter the existing file-only submit path", () => {
+  const pasted = {
+    source: "clipboard" as const,
+    stagingId: 1,
+    token: "one",
+    temporaryUri: "file:///tmp/one.png",
+    name: null,
+    typeHint: "image/png",
+    size: 4,
+    availability: "unverified" as const,
+  };
+  render({ ...empty, items: [pasted] }, 1);
+  expect(button("capture.composer.submit").disabled).toBe(true);
+  expect(state.nodes.some((node) => node.source?.uri === pasted.temporaryUri)).toBe(true);
 });

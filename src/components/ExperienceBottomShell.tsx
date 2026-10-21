@@ -200,7 +200,11 @@ export function ExperienceBottomShell({
     )
       return;
     closeStartTrip();
-    if (index === 0) router.navigate("/capture");
+    if (index === 0)
+      router.push({
+        pathname: "/import-plans",
+        params: { origin: "TRIPS", originGeneration: String(generation) },
+      });
     else router.setParams({ tripId: "", date: "", zone: "", view: "create" });
   };
 
@@ -529,8 +533,12 @@ export function ExperienceBottomShell({
                 )
                   return;
                 router.navigate({
-                  pathname: "/capture",
-                  params: { tripId: contextualTripId },
+                  pathname: "/import-plans",
+                  params: {
+                    tripId: contextualTripId,
+                    origin: "TRIP",
+                    originGeneration: String(generation),
+                  },
                 });
               }}
               expense={(date) => {

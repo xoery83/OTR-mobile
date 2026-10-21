@@ -24,6 +24,7 @@ export function CaptureContent({
   tripName,
   tripPrior = null,
   validateTripPrior,
+  readTripTargets,
   onCancel,
   jobId,
   draftStaging,
@@ -33,7 +34,8 @@ export function CaptureContent({
   isCurrent: () => boolean;
   tripName?: string;
   tripPrior?: string | null;
-  validateTripPrior?: () => Promise<boolean>;
+  validateTripPrior?: (id: string) => Promise<boolean>;
+  readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onCancel: () => void;
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
@@ -55,6 +57,11 @@ export function CaptureContent({
     staging.getDraftSnapshot,
     staging.getDraftSnapshot,
   );
+  const selectedTripPrior =
+    draft.tripTarget === undefined ? invocationTripPrior : (draft.tripTarget?.id ?? null);
+  const selectedTripName =
+    draft.tripTarget === undefined ? invocationTripName : draft.tripTarget?.name;
+  const submittedTripPrior = useRef<string | null>(null);
   const [duplicate, setDuplicate] = useState(false);
   const [model, setModel] = useState<CaptureJobReadModel | null>(null);
   const modelRef = useRef<CaptureJobReadModel | null>(null);
@@ -175,19 +182,26 @@ export function CaptureContent({
       return;
     const roster =
       submittedSelections ?? (draftStaging ? staging.prepareSubmit() : snapshot.items);
-    if (!roster?.length || roster.some((item) => item.source === "magic_input")) return;
+    if (
+      !roster?.length ||
+      roster.some((item) => item.source === "magic_input" || item.source === "clipboard")
+    )
+      return;
     const selected = roster
       .filter(
         (item): item is import("./captureStaging").StagedCaptureItem =>
-          item.source !== "magic_input",
+          item.source !== "magic_input" && item.source !== "clipboard",
       )
       .map((item) => ({ ...item }));
+    const submitPrior = submittedSelections
+      ? submittedTripPrior.current
+      : selectedTripPrior;
     running.current = true;
     setBusy(true);
     setSubmitError(false);
     try {
-      if (!submittedSelections && invocationTripPrior) {
-        if (!validateTripPrior || !(await validateTripPrior()))
+      if (!submittedSelections && submitPrior) {
+        if (!validateTripPrior || !(await validateTripPrior(submitPrior)))
           throw new Error("CAPTURE_PRIOR_UNAVAILABLE");
         if (!current()) return;
       }
@@ -202,11 +216,11 @@ export function CaptureContent({
       if (!current()) return;
       if (draftStaging && !submittedSelections) {
         // The existing C3 invocation now owns this frozen roster, not the pre-submit draft.
+        submittedTripPrior.current = submitPrior;
         setSubmittedSelections(selected);
         staging.cancel();
       }
-      if (invocationTripPrior)
-        await owner.submit(selected, progress, invocationTripPrior);
+      if (submitPrior) await owner.submit(selected, progress, submitPrior);
       else await owner.submit(selected, progress);
     } catch {
       if (current()) {
@@ -292,9 +306,25 @@ export function CaptureContent({
       <CaptureComposer
         snapshot={draft}
         count={staging.prepareSubmit()?.length ?? 0}
-        tripName={invocationTripName}
+        tripName={selectedTripName}
+        readTripTargets={readTripTargets}
+        onTripTarget={async (target, targetCurrent) => {
+          if (!current() || running.current || attempted || reopening || model)
+            return false;
+          if (target && (!validateTripPrior || !(await validateTripPrior(target.id))))
+            return false;
+          return (
+            targetCurrent() &&
+            current() &&
+            !running.current &&
+            !attempted &&
+            !reopening &&
+            !model &&
+            staging.setTripTarget(target)
+          );
+        }}
         errorMessage={
-          !attempted && submitError && invocationTripPrior
+          !attempted && submitError && selectedTripPrior
             ? t("actionIsland.tripCaptureUnavailable")
             : undefined
         }
