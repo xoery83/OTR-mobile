@@ -93,11 +93,7 @@ export function UiFormRow({
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
-        style={[
-          styles.actionCard,
-          largeText && styles.rowLargeText,
-          disabled && styles.disabledSurface,
-        ]}
+        style={[styles.actionCard, largeText && styles.rowLargeText]}
       >
         {leading}
         <View style={styles.actionCopy}>

@@ -151,7 +151,7 @@ it("arrows change only weak menu date and pass it into the existing create callb
   button("actionIsland.nextDate").onPress();
   render();
   expect(button("quickAdd.selectedDay").value).toBe("2027-01-01");
-  button("actionIsland.itinerary").onPress();
+  button("quickAdd.itinerary").onPress();
   expect(itinerary).toHaveBeenCalledWith("2027-01-01");
   expect(expense).not.toHaveBeenCalled();
   expect(photos).not.toHaveBeenCalled();
@@ -164,16 +164,16 @@ it("missing anchored date stays unknown and blocks dated flows until explicit se
   const html = render();
   expect(html).toContain("actionIsland.selectDate");
   expect(button("actionIsland.previousDate").disabled).toBe(true);
-  expect(button("actionIsland.itinerary").disabled).toBe(true);
+  expect(button("quickAdd.itinerary").disabled).toBe(true);
   expect(button("actionIsland.importPlans").disabled).toBe(true);
-  expect(button("actionIsland.member").disabled).toBe(true);
+  expect(button("quickAdd.member").disabled).toBe(true);
   initialDate = "2026-02-30";
   button("common.cancel").onPress();
   render();
   state.nodes[0].onPress();
   await flush();
   render();
-  expect(button("actionIsland.itinerary").disabled).toBe(true);
+  expect(button("quickAdd.itinerary").disabled).toBe(true);
 });
 it("current denied Expense access remains disabled", async () => {
   state.actor.mockResolvedValue({ memberId: "m", role: "denied" });
@@ -181,7 +181,7 @@ it("current denied Expense access remains disabled", async () => {
   state.nodes[0].onPress();
   await flush();
   render();
-  expect(button("ledger.addExpense").disabled).toBe(true);
+  expect(button("quickAdd.expense").disabled).toBe(true);
 });
 it("civil arrows preserve explicit dates across leap boundaries without inferring today", () => {
   expect(shiftSuggestedDate("2028-02-28", 1)).toBe("2028-02-29");
@@ -210,10 +210,10 @@ it("the open Modal protects header and actions with viewport safe areas and Canc
     html.indexOf("data-safe-area"),
   );
   expect(html).toContain('data-safe-area="bottom,left,right"');
-  expect(html).toContain("actionIsland.itinerary");
+  expect(html).toContain("quickAdd.itinerary");
   button("common.cancel").onPress();
   const closed = render();
-  expect(closed).not.toContain("actionIsland.itinerary");
+  expect(closed).not.toContain("quickAdd.itinerary");
   expect(closed).not.toContain("data-modal-inset-provider");
   expect(itinerary).not.toHaveBeenCalled();
   expect(expense).not.toHaveBeenCalled();
@@ -226,7 +226,7 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   state.nodes[0].onPress();
   await flush();
   render();
-  expect(button("actionIsland.itinerary").disabled).toBe(true);
+  expect(button("quickAdd.itinerary").disabled).toBe(true);
   button("quickAdd.selectedDay").onPress();
   render();
   state.nodes
@@ -238,7 +238,7 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   expect(button("quickAdd.selectedDay").value).toBe("2027-02-09");
   expect(itinerary).not.toHaveBeenCalled();
   expect(expense).not.toHaveBeenCalled();
-  button("actionIsland.itinerary").onPress();
+  button("quickAdd.itinerary").onPress();
   expect(itinerary).toHaveBeenCalledWith("2027-02-09");
 });
 
@@ -248,7 +248,7 @@ it("expands the same native host into the shared type chooser without routing Ho
   state.nodes.find((p) => p.accessibilityLabel === "actionIsland.addToTrip").onPress();
   await flush();
   render();
-  button("actionIsland.itinerary").onPress();
+  button("quickAdd.itinerary").onPress();
   render();
   expect(state.modalProps.visible).toBe(true);
   expect(state.manualProps).toMatchObject({
@@ -256,7 +256,7 @@ it("expands the same native host into the shared type chooser without routing Ho
     generation: 1,
     initialDate: "2026-12-31",
   });
-  expect(button("actionIsland.itinerary")).toBeUndefined();
+  expect(button("quickAdd.itinerary")).toBeUndefined();
   expect(itinerary).not.toHaveBeenCalled();
   const guardedDismiss = vi.fn();
   state.manualProps.registerDismissHandler(guardedDismiss);
@@ -274,7 +274,7 @@ it("does not rebind an open manual chooser to the next account generation", asyn
   state.nodes.find((p) => p.accessibilityLabel === "actionIsland.addToTrip").onPress();
   await flush();
   render();
-  button("actionIsland.itinerary").onPress();
+  button("quickAdd.itinerary").onPress();
   render();
   const staleSave = state.manualProps.onSaved;
   state.generation = 2;

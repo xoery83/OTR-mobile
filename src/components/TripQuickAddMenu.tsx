@@ -340,7 +340,7 @@ export function TripQuickAddMenu({
                       <UiFormRow
                         variant="action"
                         value={t("quickAdd.itineraryHint")}
-                        label={t("actionIsland.itinerary")}
+                        label={t("quickAdd.itinerary")}
                         leading={
                           <View style={styles.icon}>
                             <AppIcon
@@ -364,7 +364,7 @@ export function TripQuickAddMenu({
                       <UiFormRow
                         variant="action"
                         value={t("quickAdd.expenseHint")}
-                        label={t("ledger.addExpense")}
+                        label={t("quickAdd.expense")}
                         leading={
                           <View style={styles.expenseIcon}>
                             <AppIcon name="banknote" size={25} color={colors.warning} />
@@ -378,7 +378,7 @@ export function TripQuickAddMenu({
                       <UiFormRow
                         variant="action"
                         value={t("quickAdd.membersHint")}
-                        label={t("actionIsland.member")}
+                        label={t("quickAdd.member")}
                         leading={
                           <View style={styles.icon}>
                             <AppIcon
@@ -396,7 +396,7 @@ export function TripQuickAddMenu({
                       <UiFormRow
                         variant="action"
                         value={t("quickAdd.photosHint")}
-                        label={t("tripPhotos.choose")}
+                        label={t("quickAdd.photos")}
                         leading={
                           <View style={styles.icon}>
                             <AppIcon name="photo" size={25} color={colors.accent} />
@@ -423,7 +423,7 @@ const createStyles = (c: UiColors) =>
     backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: c.overlay },
     menuSheet: {
       maxHeight: "90%",
-      backgroundColor: c.background,
+      backgroundColor: c.surface,
       borderTopLeftRadius: visual.radius.sheet,
       borderTopRightRadius: visual.radius.sheet,
       overflow: "hidden",
@@ -455,7 +455,7 @@ const createStyles = (c: UiColors) =>
       padding: 12,
       gap: 10,
       borderRadius: visual.radius.card,
-      backgroundColor: c.selected,
+      backgroundColor: c.surface,
     },
     dateCopy: { flex: 1 },
     arrows: { flexDirection: "row", gap: 6 },
