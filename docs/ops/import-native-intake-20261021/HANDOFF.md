@@ -27,11 +27,19 @@ items also have a process-wide 10-item/20-MiB retention cap. Header checks ident
 the representation, not full image validity, profile, original-media identity or
 canonical evidence. No bitmap decode, re-encoding or upload occurs.
 
+Native event emission registers `EMITTED_UNCLAIMED` files; it does not transfer
+ownership. Before invoking `onImages`, the wrapper calls synchronous Native
+`claim(requestId, tokens)`. Claim atomically requires every token to be unique,
+module-registered, unclaimed, still present and issued for that request. Success
+transfers the entire set to `CLAIMED`; failure never calls the consumer. Both states
+share the 10-item/20-MiB budget. Missing bridge claim support hides the control.
+
 Use a fresh printable ASCII request ID (1–80 characters) when the account/editor
 generation changes. `enabled=false`, request change, detach and unmount cancel and
-delete only pending work. Successfully delivered items survive panel closure;
+delete pending work and emitted-but-unclaimed files. Successfully claimed items
+survive panel closure;
 staging must call `releaseImagePaste` on remove, clear and account purge. A stale or
-malformed JS event automatically releases recognized opaque tokens; keep the
+malformed JS event discards only unclaimed tokens via `releaseUnclaimed`; keep the
 owning staging fence too. The release API can delete only files registered by this
 module, never an arbitrary URI. No submitted-file lifecycle is introduced.
 
@@ -41,6 +49,16 @@ previously consumed token; only unseen tokens in a rejected event are released.
 If `onImages` throws, delivery may already have reached staging, so the gate retains
 that ownership conservatively. The staging owner must explicitly release it; the
 gate never deletes a possibly adopted draft as error recovery.
+
+The Native view retains emitted tokens until lifecycle cleanup, so a queued event
+that is never received cannot strand unclaimed files. Claim and cleanup share the
+store lock: detach first means claim fails; claim first means detach preserves the
+draft. There is no timeout that could delete a claimed file. Tokens are random
+module-issued opaque capabilities, exposed only through the Native callback to
+the owning JS adapter/staging. Holding a token authorizes explicit staging release;
+there is no arbitrary URI deletion or separate account/ACL authority in this local
+temporary-file API. Fresh request IDs on account/editor generation changes and
+staging's current-context fence remain mandatory.
 
 Provider URLs are copied during their callback into module-owned temporary
 process/batch directories. Per-file stream accounting bounds a pending batch;
@@ -71,11 +89,13 @@ around permission, audio setup, recognition and lifecycle/deadline failures.
 ## Validation and boundary
 
 - Vitest: native diagnostic, image delivery contract and existing dictation
-  controller: 3 suites / 17 tests PASS, including duplicate/malformed delivery,
-  adoption/release reentrancy and callback-failure ownership regressions.
+  controller: 3 suites / 20 tests PASS, including duplicate/malformed delivery,
+  claim/adoption/release reentrancy and callback-failure ownership regressions.
 - Foundation executable: metadata sanitization; pending cancellation/late callback;
-  delivered lifetime/explicit release; byte/count limits and foreign-token safety
-  PASS. Existing session-fence executable PASS.
+  claimed lifetime/explicit release; byte/count limits and foreign-token safety;
+  dropped event/cap recovery, both claim/detach orders, wrong request, invalid or
+  duplicate token, atomic claim failure and missing file PASS. Existing
+  session-fence executable PASS.
 - Typecheck, targeted ESLint and `npm run ui:guard` PASS.
 - Installed iOS SDK typecheck of engine/storage/diagnostic and a UIKit paste-target
   API probe PASS; Expo module Swift syntax parse PASS. This is not a full Expo

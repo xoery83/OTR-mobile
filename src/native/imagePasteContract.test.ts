@@ -67,6 +67,7 @@ describe("explicit clipboard image delivery contract", () => {
       images = vi.fn(),
       failure = vi.fn();
     const gate = createImagePasteDeliveryGate({
+      claim: () => true,
       current: (id) => enabled && id === current,
       release,
       images,
@@ -95,6 +96,7 @@ describe("explicit clipboard image delivery contract", () => {
       failure = vi.fn(),
       first = item();
     const gate = createImagePasteDeliveryGate({
+      claim: () => true,
       current: (id) => id === "paste-1",
       release,
       images: () => {
@@ -114,6 +116,7 @@ describe("explicit clipboard image delivery contract", () => {
     const release = vi.fn(),
       images = vi.fn();
     const gate = createImagePasteDeliveryGate({
+      claim: () => true,
       current: () => true,
       release,
       images,
@@ -136,6 +139,7 @@ describe("explicit clipboard image delivery contract", () => {
       first = item();
     let calls = 0;
     const gate = createImagePasteDeliveryGate({
+      claim: () => true,
       current: () => true,
       release,
       images: () => {
@@ -159,6 +163,7 @@ describe("explicit clipboard image delivery contract", () => {
       gate.images({ requestId: "paste-1", items: [first] });
     });
     const gate = createImagePasteDeliveryGate({
+      claim: () => true,
       current: () => current,
       release,
       images,
@@ -167,5 +172,64 @@ describe("explicit clipboard image delivery contract", () => {
     gate.images({ requestId: "paste-1", items: [first] });
     expect(release).toHaveBeenCalledExactlyOnceWith([first.token]);
     expect(images).not.toHaveBeenCalled();
+  });
+  it("requires a synchronous claim before adoption and never retries a failed token", () => {
+    const first = item(),
+      release = vi.fn(),
+      images = vi.fn();
+    const claim = vi.fn(() => false);
+    const gate = createImagePasteDeliveryGate({
+      current: () => true,
+      claim,
+      release,
+      images,
+      failure: vi.fn(),
+    });
+    gate.images({ requestId: "paste-1", items: [first] });
+    expect(claim).toHaveBeenCalledExactlyOnceWith("paste-1", [first.token]);
+    expect(release).toHaveBeenCalledExactlyOnceWith([first.token]);
+    expect(images).not.toHaveBeenCalled();
+    claim.mockReturnValue(true);
+    gate.images({ requestId: "paste-1", items: [first] });
+    expect(claim).toHaveBeenCalledTimes(1);
+    expect(images).not.toHaveBeenCalled();
+  });
+  it("reserves tokens before synchronous claim reentrancy, and delivers only after claim", () => {
+    const first = item(),
+      order: string[] = [],
+      release = vi.fn();
+    const gate = createImagePasteDeliveryGate({
+      current: () => true,
+      release,
+      claim: () => {
+        order.push("claim");
+        gate.images({ requestId: "paste-1", items: [first] });
+        return true;
+      },
+      images: () => {
+        order.push("adopt");
+      },
+      failure: vi.fn(),
+    });
+    gate.images({ requestId: "paste-1", items: [first] });
+    expect(order).toEqual(["claim", "adopt"]);
+    expect(release).not.toHaveBeenCalled();
+  });
+  it("treats throwing claim as failure and discards without calling the consumer", () => {
+    const first = item(),
+      release = vi.fn(),
+      images = vi.fn();
+    const gate = createImagePasteDeliveryGate({
+      current: () => true,
+      release,
+      images,
+      claim: () => {
+        throw Error("bridge unavailable");
+      },
+      failure: vi.fn(),
+    });
+    gate.images({ requestId: "paste-1", items: [first] });
+    expect(images).not.toHaveBeenCalled();
+    expect(release).toHaveBeenCalledExactlyOnceWith([first.token]);
   });
 });

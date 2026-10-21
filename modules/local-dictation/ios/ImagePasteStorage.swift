@@ -107,7 +107,12 @@ final class ImagePasteStore {
   static let shared = ImagePasteStore()
   private let lock = NSLock()
   private let root: URL
-  private var delivered: [String: ImagePasteItem] = [:]
+  private struct Registration {
+    let item: ImagePasteItem
+    let requestId: String
+    var claimed = false
+  }
+  private var delivered: [String: Registration] = [:]
   private weak var pending: ImagePasteBatch?
   init(root: URL = FileManager.default.temporaryDirectory.appendingPathComponent("otr-image-paste-v1", isDirectory: true)) {
     self.root = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -118,7 +123,7 @@ final class ImagePasteStore {
   }
   func batch(requestId: String) throws -> ImagePasteBatch {
     lock.lock(); defer { lock.unlock() }
-    let remainingBytes = ImagePastePolicy.maxBytes - delivered.values.reduce(0, { $0 + $1.byteSize })
+    let remainingBytes = ImagePastePolicy.maxBytes - delivered.values.reduce(0, { $0 + $1.item.byteSize })
     let remainingItems = ImagePastePolicy.maxItems - delivered.count
     guard pending?.isCurrent() != true, remainingBytes > 0, remainingItems > 0 else { throw ImagePasteFailure.limit }
     let value = try ImagePasteBatch(requestId: requestId, directory: root.appendingPathComponent(UUID().uuidString, isDirectory: true), maxBytes: remainingBytes, maxItems: remainingItems)
@@ -128,14 +133,36 @@ final class ImagePasteStore {
   func deliver(_ items: [ImagePasteItem], batch: ImagePasteBatch) throws {
     lock.lock(); defer { lock.unlock() }
     guard pending === batch, batch.isCurrent(), !items.isEmpty, items.count <= batch.maxItems, delivered.count + items.count <= ImagePastePolicy.maxItems,
-      delivered.values.reduce(0, { $0 + $1.byteSize }) + items.reduce(0, { $0 + $1.byteSize }) <= ImagePastePolicy.maxBytes
+      delivered.values.reduce(0, { $0 + $1.item.byteSize }) + items.reduce(0, { $0 + $1.byteSize }) <= ImagePastePolicy.maxBytes
     else { throw ImagePasteFailure.limit }
     guard batch.markDeliveredIfCurrent() else { throw ImagePasteFailure.cancelled }
-    for item in items { delivered[item.token] = item }
+    for item in items { delivered[item.token] = Registration(item: item, requestId: batch.requestId) }
     pending = nil
   }
+  // The lock makes lifecycle cleanup and JS ownership transfer mutually exclusive.
+  func claim(requestId: String, tokens: [String]) -> Bool {
+    lock.lock(); defer { lock.unlock() }
+    guard !tokens.isEmpty, tokens.count <= ImagePastePolicy.maxItems, Set(tokens).count == tokens.count,
+      tokens.allSatisfy({ token in
+        guard UUID(uuidString: token)?.uuidString.lowercased() == token,
+          let value = delivered[token], !value.claimed,
+          value.requestId == requestId else { return false }
+        return FileManager.default.fileExists(atPath: value.item.url.path)
+      }) else { return false }
+    for token in tokens { delivered[token]?.claimed = true }
+    return true
+  }
+  func releaseUnclaimed(_ tokens: [String]) { remove(tokens, unclaimedOnly: true) }
   func release(_ tokens: [String]) {
-    lock.lock(); let removed = tokens.compactMap { delivered.removeValue(forKey: $0) }; lock.unlock()
+    remove(tokens, unclaimedOnly: false)
+  }
+  private func remove(_ tokens: [String], unclaimedOnly: Bool) {
+    lock.lock()
+    let removed = tokens.compactMap { token -> ImagePasteItem? in
+      guard let value = delivered[token], !unclaimedOnly || !value.claimed else { return nil }
+      return delivered.removeValue(forKey: token)?.item
+    }
+    lock.unlock()
     for item in removed {
       try? FileManager.default.removeItem(at: item.url)
       let parent = item.url.deletingLastPathComponent()

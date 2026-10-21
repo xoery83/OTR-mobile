@@ -12,7 +12,11 @@ export type {
   ImagePasteFailure,
 } from "./imagePasteContract";
 
-type NativePaste = { release(tokens: string[]): Promise<void> };
+type NativePaste = {
+  claim(requestId: string, tokens: string[]): boolean;
+  releaseUnclaimed(tokens: string[]): Promise<void>;
+  release(tokens: string[]): Promise<void>;
+};
 function module(): NativePaste | null {
   if (Platform.OS !== "ios") return null;
   try {
@@ -22,7 +26,12 @@ function module(): NativePaste | null {
   }
 }
 export function isImagePasteAvailable(): boolean {
-  return typeof module()?.release === "function";
+  const native = module();
+  return (
+    typeof native?.release === "function" &&
+    typeof native.claim === "function" &&
+    typeof native.releaseUnclaimed === "function"
+  );
 }
 export async function releaseImagePasteTokens(tokens: readonly string[]): Promise<void> {
   const native = module();
@@ -58,7 +67,12 @@ export function ImagePasteControl(props: ImagePasteControlProps) {
         current.current.mounted &&
         current.current.props.enabled &&
         current.current.props.requestId === id,
-      release: releaseImagePaste,
+      claim: (id, tokens) => module()?.claim(id, tokens) === true,
+      release: (tokens) => {
+        void module()
+          ?.releaseUnclaimed(tokens)
+          .catch(() => {});
+      },
       images: (payload) => current.current.props.onImages(payload),
       failure: (payload) => current.current.props.onFailure(payload),
     });

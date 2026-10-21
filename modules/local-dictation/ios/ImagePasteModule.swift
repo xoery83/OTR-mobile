@@ -4,6 +4,13 @@ import UIKit
 public final class ImagePasteModule: Module {
   public func definition() -> ModuleDefinition {
     Name("OTRImagePaste")
+    Function("claim") { (requestId: String, tokens: [String]) -> Bool in
+      ImagePasteStore.shared.claim(requestId: requestId, tokens: tokens)
+    }
+    AsyncFunction("releaseUnclaimed") { (tokens: [String]) in
+      guard tokens.count <= ImagePastePolicy.maxItems else { return }
+      ImagePasteStore.shared.releaseUnclaimed(tokens)
+    }
     AsyncFunction("release") { (tokens: [String]) in
       guard tokens.count <= ImagePastePolicy.maxItems else { return }
       ImagePasteStore.shared.release(tokens)
@@ -24,6 +31,7 @@ public final class ImagePasteModule: Module {
   private var enabled = false
   private var batch: ImagePasteBatch?
   private var progress: Progress?
+  private var emittedTokens: [String] = []
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
     pasteConfiguration = UIPasteConfiguration(acceptableTypeIdentifiers: ["public.image"])
@@ -43,7 +51,10 @@ public final class ImagePasteModule: Module {
     super.didMoveToWindow()
     if window == nil { cancelPending() }
   }
-  deinit { batch?.cancelPending(); progress?.cancel() }
+  deinit {
+    batch?.cancelPending(); progress?.cancel()
+    ImagePasteStore.shared.releaseUnclaimed(emittedTokens)
+  }
   override func canPaste(_ itemProviders: [NSItemProvider]) -> Bool {
     enabled && batch == nil && ImagePastePolicy.validRequest(requestId) && itemProviders.contains { identifier($0) != nil }
   }
@@ -73,6 +84,7 @@ public final class ImagePasteModule: Module {
       do {
         try ImagePasteStore.shared.deliver(items, batch: value)
         batch = nil; progress = nil
+        emittedTokens.append(contentsOf: items.map { $0.token })
         onImages(["requestId": value.requestId, "items": items.map { $0.body }])
       } catch { fail(value, .limit) }
       return
@@ -104,5 +116,7 @@ public final class ImagePasteModule: Module {
     let pending = batch; batch = nil
     pending?.cancelPending()
     progress?.cancel(); progress = nil
+    ImagePasteStore.shared.releaseUnclaimed(emittedTokens)
+    emittedTokens = []
   }
 }

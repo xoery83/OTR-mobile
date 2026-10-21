@@ -69,4 +69,36 @@ let restoredBudget = try store.batch(requestId: "restored-budget")
 precondition(restoredBudget.maxItems == 10)
 _ = try restoredBudget.copyProviderFile(twelve)
 restoredBudget.cancelPending()
+// Emitting an event does not transfer file ownership. A dropped event is cleaned
+// by the view lifecycle and immediately restores the native retained-item budget.
+let dropped = try store.batch(requestId: "dropped")
+let droppedItems = try (0..<10).map { _ in try dropped.copyProviderFile(input) }
+try store.deliver(droppedItems, batch: dropped)
+rejects { _ = try store.batch(requestId: "full") }
+store.releaseUnclaimed(droppedItems.map { $0.token })
+precondition(droppedItems.allSatisfy { !FileManager.default.fileExists(atPath: $0.url.path) })
+precondition(!store.claim(requestId: "dropped", tokens: droppedItems.map { $0.token }))
+let restored = try store.batch(requestId: "claim")
+precondition(restored.maxItems == 10)
+let claimItems = try (0..<2).map { _ in try restored.copyProviderFile(input) }
+try store.deliver(claimItems, batch: restored)
+let claimTokens = claimItems.map { $0.token }
+precondition(!store.claim(requestId: "wrong-request", tokens: claimTokens))
+precondition(!store.claim(requestId: "claim", tokens: []))
+precondition(!store.claim(requestId: "claim", tokens: [claimTokens[0], claimTokens[0]]))
+precondition(!store.claim(requestId: "claim", tokens: [claimTokens[0], "invalid"]))
+precondition(!store.claim(requestId: "claim", tokens: [claimTokens[0], UUID().uuidString.lowercased()]))
+// All failed claims above are atomic: both still transfer successfully together.
+precondition(store.claim(requestId: "claim", tokens: claimTokens))
+precondition(!store.claim(requestId: "claim", tokens: claimTokens))
+store.releaseUnclaimed(claimTokens) // Claim wins the race: detach must preserve.
+precondition(claimItems.allSatisfy { FileManager.default.fileExists(atPath: $0.url.path) })
+store.release(claimTokens)
+precondition(claimItems.allSatisfy { !FileManager.default.fileExists(atPath: $0.url.path) })
+let gone = try store.batch(requestId: "missing-file")
+let goneItem = try gone.copyProviderFile(input)
+try store.deliver([goneItem], batch: gone)
+try FileManager.default.removeItem(at: goneItem.url)
+precondition(!store.claim(requestId: "missing-file", tokens: [goneItem.token]))
+store.releaseUnclaimed([goneItem.token])
 print("Safe diagnostic metadata and bounded pending/delivered image ownership PASS; no clipboard/audio/UI access")

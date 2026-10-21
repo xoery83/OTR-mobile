@@ -75,6 +75,8 @@ export type ImagePasteFailure = z.infer<typeof imagePasteFailureSchema>;
 // Each opaque token crosses this gate once: adoption and release are both terminal.
 export function createImagePasteDeliveryGate(options: {
   current(requestId: string): boolean;
+  claim(requestId: string, tokens: string[]): boolean;
+  // Bridge discard releases only unclaimed files; staging uses explicit release.
   release(tokens: string[]): void;
   images(payload: ImagePastePayload): void;
   failure(payload: ImagePasteFailure): void;
@@ -106,7 +108,18 @@ export function createImagePasteDeliveryGate(options: {
         releaseRaw(value);
         return;
       }
-      for (const item of result.data.items) terminal.add(item.token);
+      const tokens = result.data.items.map((item) => item.token);
+      for (const token of tokens) terminal.add(token);
+      let claimed = false;
+      try {
+        claimed = options.claim(result.data.requestId, tokens);
+      } catch {
+        // Claim failure must never fall back to unconditional staging cleanup.
+      }
+      if (!claimed) {
+        options.release(tokens);
+        return;
+      }
       try {
         options.images(result.data);
       } catch {
