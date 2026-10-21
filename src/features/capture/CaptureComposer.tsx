@@ -482,6 +482,7 @@ const createStyles = (c: UiColors) =>
     },
     input: {
       ...visual.type.row,
+      lineHeight: 22,
       fontWeight: "400",
       minHeight: 44,
       textAlignVertical: "top",
