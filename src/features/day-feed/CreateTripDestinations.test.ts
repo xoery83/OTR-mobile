@@ -25,7 +25,8 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {
     const i = state.cursor++;
-    if (!(i in state.hooks)) state.hooks[i] = initial;
+    if (!(i in state.hooks))
+      state.hooks[i] = typeof initial === "function" ? initial() : initial;
     return [
       state.hooks[i],
       (v: unknown) => {
@@ -37,6 +38,7 @@ vi.mock("react", async (original) => ({
     const i = state.cursor++;
     return state.hooks[i] ?? (state.hooks[i] = { current: value });
   },
+  useLayoutEffect: (effect: () => void) => effect(),
   useEffect: (effect: () => void, deps: unknown[]) => {
     const i = state.cursor++,
       old = state.hooks[i];
@@ -103,6 +105,7 @@ vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => null }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 let items: readonly TripDestinationDraftSelection[], name: string;
 const dirty = vi.fn();
+let context: { tripId: string; editorId: string } | { draftId: string };
 function render() {
   state.cursor = 0;
   state.nodes = [];
@@ -110,7 +113,7 @@ function render() {
   const html = renderToStaticMarkup(
     createElement(CreateTripDestinations, {
       name,
-      draftId: "f97c6ad1-5328-4a23-af39-8fa8bf280007",
+      ...context,
       generation: 1,
       items,
       onChange: (value) => {
@@ -142,6 +145,7 @@ beforeEach(() => {
   state.provider.mockReset().mockResolvedValue({ close: vi.fn() });
   state.online = true;
   items = [];
+  context = { draftId: "f97c6ad1-5328-4a23-af39-8fa8bf280007" };
   name = "Nelson Summer";
   dirty.mockReset();
 });
@@ -336,4 +340,31 @@ it("preserves the query and existing tags if a selected area label exceeds persi
   expect(items).toEqual([]);
   expect(render()).toContain("createTripV2.destinationLength");
   expect(state.nodes.find((node) => node.onChangeText).value).toBe("Sydney");
+});
+
+it("binds Edit autocomplete to the actual Trip and editor while keeping destination-only intent", async () => {
+  context = {
+    tripId: "f97c6ad1-5328-4a23-af39-8fa8bf280008",
+    editorId: "f97c6ad1-5328-4a23-af39-8fa8bf280009",
+  };
+  render();
+  await flush();
+  expect(state.provider).toHaveBeenCalledWith(
+    expect.objectContaining({ ...context, accountGeneration: 1 }),
+  );
+  expect(state.provider.mock.calls[0][0]).not.toHaveProperty("draftId");
+  expect(state.update).toHaveBeenCalledWith(
+    expect.objectContaining({ intent: "destinationArea" }),
+    450,
+    true,
+  );
+  const oldBinding = state.provider.mock.calls[0][0];
+  context = {
+    tripId: "f97c6ad1-5328-4a23-af39-8fa8bf280010",
+    editorId: "f97c6ad1-5328-4a23-af39-8fa8bf280011",
+  };
+  render();
+  expect(oldBinding.isCurrent()).toBe(false);
+  await flush();
+  expect(state.provider).toHaveBeenLastCalledWith(expect.objectContaining(context));
 });

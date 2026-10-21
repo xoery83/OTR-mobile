@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { UiText } from "@/ui/controls";
 import { UiTextInput } from "@/ui/forms";
@@ -16,7 +17,9 @@ export function TripMetadataFields({
   onName,
   onDestination,
   onRange,
+  destinationEntry,
 }: {
+  destinationEntry?: ReactNode;
   name: string;
   destination: string;
   range: TripDateRange;
@@ -38,15 +41,19 @@ export function TripMetadataFields({
         onChangeText={onName}
         editable={!disabled}
       />
-      <UiText style={styles.label}>{t("tripCreate.destination")}</UiText>
-      <UiTextInput
-        accessibilityLabel={t("tripCreate.destination")}
-        placeholder={t("tripCreate.destination")}
-        maxLength={256}
-        value={destination}
-        onChangeText={onDestination}
-        editable={!disabled}
-      />
+      {destinationEntry ?? (
+        <>
+          <UiText style={styles.label}>{t("tripCreate.destination")}</UiText>
+          <UiTextInput
+            accessibilityLabel={t("tripCreate.destination")}
+            placeholder={t("tripCreate.destination")}
+            maxLength={256}
+            value={destination}
+            onChangeText={onDestination}
+            editable={!disabled}
+          />
+        </>
+      )}
       <TripCalendarRangeField value={range} onChange={onRange} disabled={disabled} />
     </View>
   );

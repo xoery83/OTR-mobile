@@ -211,6 +211,7 @@ describe("sync engine", () => {
 
 it.each([
   "TRIP_COVER_LOCAL_SAVE",
+  "TRIP_DESTINATIONS_LOCAL_SAVE",
   "C_PREPARE_CONFIRMATION",
   "C_EXECUTE_EVENT_SLOT",
   "C_FINALIZE_EVENT_SLOT",

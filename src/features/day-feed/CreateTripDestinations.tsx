@@ -1,5 +1,6 @@
+import { createUuid } from "@/domain/localId";
 import { createTripNameQuery } from "@/data/places/createTripNameQuery";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useNetworkState } from "expo-network";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -34,6 +35,8 @@ import { visual } from "@/ui/visual";
 export function CreateTripDestinations({
   name,
   draftId,
+  tripId,
+  editorId,
   generation,
   items,
   onChange,
@@ -42,14 +45,14 @@ export function CreateTripDestinations({
   disabled,
 }: {
   name: string;
-  draftId: string;
+  editorId?: string;
   generation: number;
   items: readonly TripDestinationDraftSelection[];
   onChange(items: readonly TripDestinationDraftSelection[]): void;
   onQueryDirty(dirty: boolean): void;
   onBusy(busy: boolean): void;
   disabled: boolean;
-}) {
+} & ({ draftId: string; tripId?: never } | { tripId: string; draftId?: never })) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -65,6 +68,12 @@ export function CreateTripDestinations({
   const [choosing, setChoosing] = useState(false);
   const [inputInvalid, setInputInvalid] = useState(false);
   const session = useRef<PlaceSearchSession | null>(null);
+  const [editor] = useState(() => editorId ?? draftId ?? createUuid());
+  const scope = `${generation}:${tripId ?? draftId}:${editorId ?? editor}`;
+  const latestScope = useRef(scope);
+  useLayoutEffect(() => {
+    latestScope.current = scope;
+  }, [scope]);
   const alive = useRef(true),
     currentQuery = useRef(query || createTripNameQuery(name));
   const searchText = suggestionsVisible
@@ -76,8 +85,11 @@ export function CreateTripDestinations({
     currentQuery.current = searchText;
   }, [searchText]);
   const current = useCallback(
-    () => alive.current && generation === getAccountGeneration(),
-    [generation],
+    () =>
+      alive.current &&
+      generation === getAccountGeneration() &&
+      latestScope.current === scope,
+    [generation, scope],
   );
   useEffect(() => {
     alive.current = true;
@@ -89,8 +101,8 @@ export function CreateTripDestinations({
       if (!accountId) throw new Error("NATIVE_UNAVAILABLE");
       const binding = {
         accountId,
-        draftId,
-        editorId: draftId,
+        ...(tripId ? { tripId } : { draftId: draftId! }),
+        editorId: editorId ?? editor,
         accountGeneration: generation,
         isCurrent: () => active && current(),
       };
@@ -135,7 +147,7 @@ export function CreateTripDestinations({
       session.current?.close();
       session.current = null;
     };
-  }, [draftId, generation, online, current]);
+  }, [draftId, tripId, editorId, editor, generation, online, current]);
   useEffect(() => {
     session.current?.update(
       { text: searchText, locale: getFormatLocale(), intent: "destinationArea" },

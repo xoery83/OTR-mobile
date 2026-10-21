@@ -75,6 +75,7 @@ export function createSyncOperationRepository(
           last_error_message = 'INTERRUPTED', claim_owner = NULL,
           lease_expires_at = NULL, updated_at = ? WHERE status = 'PROCESSING'
           AND owner_user_id = ?
+          AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
           AND operation_type NOT IN (?,?)
           AND (claim_owner IS NULL OR
             (claim_owner <> ? AND NOT (operation_type=? AND substr(claim_owner,1,?)=?))
@@ -141,7 +142,7 @@ export function createSyncOperationRepository(
           updated_at AS updatedAt
         FROM sync_operations
         WHERE owner_user_id = ? AND status IN (?, ?)
-          AND operation_type <> 'TRIP_COVER_LOCAL_SAVE'
+          AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
         ORDER BY created_at ASC, rowid ASC`,
         userId,
@@ -155,6 +156,7 @@ export function createSyncOperationRepository(
       await database.runAsync(
         `UPDATE sync_operations SET next_attempt_at = NULL, updated_at = ?
          WHERE owner_user_id = ? AND status = 'RETRYABLE'
+           AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
            AND failure_category IN ('UNKNOWN', 'NETWORK', 'TIMEOUT', 'SERVER',
              'RATE_LIMIT', 'RESPONSE_INVALID')`,
         clockNow(),
@@ -168,9 +170,9 @@ export function createSyncOperationRepository(
       const result = await database.runAsync(
         `UPDATE sync_operations SET status = 'PROCESSING', claim_owner = ?,
           lease_expires_at = ?, last_attempt_at = ?, updated_at = ?
-         WHERE id = ? AND owner_user_id = ?
+         WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE') AND owner_user_id = ?
            AND status IN ('PENDING', 'RETRYABLE')
-           AND operation_type <> 'TRIP_COVER_LOCAL_SAVE'
+           AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
            AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
         processClaimOwner,
         new Date(Date.parse(now) + 5 * 60_000).toISOString(),
@@ -185,7 +187,7 @@ export function createSyncOperationRepository(
 
     async markProcessing(id: string) {
       await database.runAsync(
-        "UPDATE sync_operations SET status = ?, last_attempt_at = ?, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ?",
+        "UPDATE sync_operations SET status = ?, last_attempt_at = ?, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')",
         "PROCESSING",
         clockNow(),
         clockNow(),
@@ -199,7 +201,7 @@ export function createSyncOperationRepository(
         `UPDATE sync_operations SET status = ?, next_attempt_at = NULL,
           failure_category = NULL, last_error_code = NULL, last_error_message = NULL,
           last_request_id = NULL, claim_owner = NULL,
-          lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
+          lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')`,
         "COMPLETED",
         clockNow(),
         id,
@@ -213,7 +215,7 @@ export function createSyncOperationRepository(
         `UPDATE sync_operations
          SET status = ?, failure_category = ?, last_error_code = ?, last_error_message = ?, last_request_id = ?,
              first_failed_at = COALESCE(first_failed_at, ?), claim_owner = NULL,
-             lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
+             lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')`,
         "CONFLICT",
         failure.category,
         failure.code,
@@ -233,7 +235,7 @@ export function createSyncOperationRepository(
              failure_category = ?, last_error_code = ?, last_error_message = ?, last_request_id = ?,
              first_failed_at = COALESCE(first_failed_at, ?), claim_owner = NULL,
              lease_expires_at = NULL, updated_at = ?
-         WHERE id = ?`,
+         WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')`,
         "RETRYABLE",
         nextAttemptAt,
         failure.category,
@@ -252,7 +254,7 @@ export function createSyncOperationRepository(
           last_error_code = ?, last_error_message = ?, last_request_id = ?,
           first_failed_at = COALESCE(first_failed_at, ?),
           next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL,
-          updated_at = ? WHERE id = ?`,
+          updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')`,
         failure.category,
         failure.code,
         failure.message,
@@ -269,7 +271,7 @@ export function createSyncOperationRepository(
           failure_category = 'AUTH', last_error_code = ?,
           last_error_message = ?, last_request_id = ?,
           first_failed_at = COALESCE(first_failed_at, ?), claim_owner = NULL,
-          lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
+          lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')`,
         failure?.code ?? "AUTH_PAUSED",
         failure?.message ?? "Authentication is paused.",
         failure?.requestId ?? null,
@@ -298,7 +300,7 @@ export function createSyncOperationRepository(
           dependency_operation_id = COALESCE(?, dependency_operation_id),
           failure_category = 'DEPENDENCY', last_error_code = 'DEPENDENCY_BLOCKED',
           last_error_message = 'Waiting for an earlier operation.', next_attempt_at = NULL,
-          claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ?
+          claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
           AND owner_user_id=? AND NOT EXISTS (SELECT 1 FROM sync_operations dependency
             WHERE dependency.id=COALESCE(?,sync_operations.dependency_operation_id)
               AND dependency.owner_user_id=sync_operations.owner_user_id
@@ -354,6 +356,7 @@ async function wakeCompletedDependencies(
       last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL,
       updated_at = ?
      WHERE owner_user_id = ? AND status = 'DEPENDENCY_BLOCKED'
+       AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
        AND dependency_operation_id IS NOT NULL
        AND (? IS NULL OR dependency_operation_id = ?)
        AND EXISTS (SELECT 1 FROM sync_operations dependency

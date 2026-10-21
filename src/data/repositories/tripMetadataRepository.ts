@@ -1,4 +1,13 @@
 import {
+  replaceLocalTripDestinations,
+  verifyLocalTripDestinationHistory,
+} from "./tripDestinationRepository";
+import {
+  localTripDestinationsChangeSchema,
+  localTripDestinationsReceiptSchema,
+  type LocalTripDestinationsChange,
+} from "@/domain/trip/localTripDestinationUpdate";
+import {
   readSelectedTripCoverPhotoInScope,
   announcePersonalTripCoverAfterCommit,
 } from "./tripPhotoRepository";
@@ -60,8 +69,29 @@ export function createTripMetadataRepository(
         return false;
       }
     },
-    async updateMetadata(input: TripMetadataUpdate, cover?: TripCoverUpdate) {
+    async updateMetadata(
+      input: TripMetadataUpdate,
+      cover?: TripCoverUpdate,
+      destinationInput?: LocalTripDestinationsChange,
+    ) {
       const request = tripMetadataUpdateSchema.parse(input);
+      const destinations = destinationInput
+        ? localTripDestinationsChangeSchema.parse(destinationInput)
+        : undefined;
+      if (
+        destinations &&
+        (request.after.destination !== null ||
+          (json(destinations.before) === json(destinations.after) &&
+            request.before.destination === null))
+      )
+        throw new Error("TRIP_DESTINATIONS_CHANGE_INVALID");
+      const localReceipt = destinations
+        ? localTripDestinationsReceiptSchema.parse({
+            metadata: request,
+            cover: cover ?? null,
+            destinations,
+          })
+        : undefined;
       if (
         cover &&
         ((cover.before !== null &&
@@ -78,6 +108,40 @@ export function createTripMetadataRepository(
         async () => {
           await assertAccountRequestContext(scope, account);
           await database.withTransactionAsync(async () => {
+            if (localReceipt) {
+              const local = await database.getFirstAsync<{
+                payload_json: string;
+                entity_type: string;
+                operation_type: string;
+                trip_id: string;
+                entity_id: string;
+                idempotency_key: string;
+                status: string;
+              }>(
+                "SELECT * FROM sync_operations WHERE id=? AND owner_user_id=?",
+                localReceipt.destinations.operationId,
+                scope.accountId,
+              );
+              if (local) {
+                if (
+                  local.entity_type !== "TRIP_LOCAL_PREFERENCE" ||
+                  local.operation_type !== "TRIP_DESTINATIONS_LOCAL_SAVE" ||
+                  local.trip_id !== request.tripId ||
+                  local.entity_id !== request.tripId ||
+                  local.idempotency_key !== localReceipt.destinations.operationId ||
+                  local.status !== "COMPLETED" ||
+                  local.payload_json !== json(localReceipt)
+                )
+                  throw new Error("TRIP_DESTINATIONS_OPERATION_REUSE_MISMATCH");
+                await verifyLocalTripDestinationHistory(
+                  database,
+                  scope.accountId,
+                  request.tripId,
+                );
+                await assertAccountRequestContext(scope, account);
+                return;
+              }
+            }
             const existing = await database.getFirstAsync<{
               payload_json: string;
               entity_type: string;
@@ -88,6 +152,8 @@ export function createTripMetadataRepository(
               scope.accountId,
             );
             if (existing) {
+              if (destinations)
+                throw new Error("TRIP_DESTINATIONS_OPERATION_REUSE_MISMATCH");
               const matchesMetadata =
                 existing.entity_type === "TRIP" &&
                 existing.operation_type === "UPDATE_TRIP_METADATA" &&
@@ -148,6 +214,28 @@ export function createTripMetadataRepository(
                 { resolveRetainedTripPhoto: resolvePhoto },
               );
               if (!photo) throw new Error("TRIP_COVER_PHOTO_UNAVAILABLE");
+            }
+            if (destinations && localReceipt) {
+              const now = clock();
+              await replaceLocalTripDestinations(
+                database,
+                scope.accountId,
+                request.tripId,
+                destinations,
+                now,
+              );
+              await database.runAsync(
+                `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,created_at,updated_at)
+                 VALUES(?,?,'TRIP_LOCAL_PREFERENCE',?,'TRIP_DESTINATIONS_LOCAL_SAVE',?,?,?,'COMPLETED',0,?,?)`,
+                destinations.operationId,
+                request.tripId,
+                request.tripId,
+                destinations.operationId,
+                json(localReceipt),
+                scope.accountId,
+                now,
+                now,
+              );
             }
             // A metadata-only save must not write a derived recommendation or erase
             // an unrecognised stored preference decoded by an older caller as null.

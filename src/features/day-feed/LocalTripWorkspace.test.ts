@@ -806,7 +806,9 @@ it("normal Home Hero action opens the same Editor and saves through the owning m
       after: { name: "Updated", destination: null, startDate: null, endDate: null },
     }),
     undefined,
+    undefined,
   );
+  expect(repo.getTrip).toHaveBeenCalledWith(current.id);
 });
 
 it("an unfocused retained Workspace cannot publish actions over another Trip", async () => {

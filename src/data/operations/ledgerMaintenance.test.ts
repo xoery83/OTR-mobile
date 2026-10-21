@@ -372,6 +372,7 @@ it("retains device-local cover consumed identities during ordinary completed his
     for (const migration of migrations) sqlite.exec(migration.sql);
     for (const [id, kind] of [
       ["cover", "TRIP_COVER_LOCAL_SAVE"],
+      ["destinations", "TRIP_DESTINATIONS_LOCAL_SAVE"],
       ["old", "ORDINARY_COMPLETED"],
     ]) {
       sqlite
@@ -393,6 +394,7 @@ it("retains device-local cover consumed identities during ordinary completed his
     expect(result.deletedSyncOperations).toBe(1);
     expect(sqlite.prepare("SELECT id FROM sync_operations").all()).toEqual([
       { id: "cover" },
+      { id: "destinations" },
     ]);
   } finally {
     sqlite.close();

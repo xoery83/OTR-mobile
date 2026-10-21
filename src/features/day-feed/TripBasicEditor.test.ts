@@ -5,6 +5,7 @@ import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepos
 import { Modal } from "react-native";
 import { CurrencySettingsScreen } from "@/features/ledger/CurrencySettingsScreen";
 import { lightPalette } from "@/ui/palette";
+import { CreateTripDestinations } from "./CreateTripDestinations";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripCoverPicker } from "./TripCoverPicker";
 import { TripCurrencyRow } from "./TripSetupRows";
@@ -22,9 +23,11 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
   useEffect: () => {},
+  useLayoutEffect: (effect: () => void) => effect(),
   useState: (initial: unknown) => {
     const i = state.cursor++;
-    if (!(i in state.values)) state.values[i] = initial;
+    if (!(i in state.values))
+      state.values[i] = typeof initial === "function" ? initial() : initial;
     return [
       state.values[i],
       (value: unknown) => {
@@ -64,6 +67,9 @@ vi.mock("@/ui/controls", () => ({
   UiButton: "UiButton",
 }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
+vi.mock("./CreateTripDestinations", () => ({
+  CreateTripDestinations: "CreateTripDestinations",
+}));
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: "TripCoverPicker" }));
 vi.mock("./TripMetadataFields", () => ({ TripMetadataFields: "TripMetadataFields" }));
 vi.mock("./TripSetupRows", () => ({ TripCurrencyRow: "TripCurrencyRow" }));
@@ -206,7 +212,9 @@ it("opens the existing Currency screen over a dirty editor and Back preserves ev
   let nodes = renderEditor();
   const fields = nodes.find((n) => n.type === TripMetadataFields)!.props;
   (fields.onName as (s: string) => void)("Unsaved name");
-  (fields.onDestination as (s: string) => void)("Tokyo");
+  destinationField(nodes).props.onChange([
+    { localId: "00000000-0000-4000-8000-000000000012", text: "Tokyo", source: "MANUAL" },
+  ]);
   (fields.onRange as (s: any) => void)({ start: "2027-01-01", end: "2027-01-02" });
   await (
     nodes.find((n) => n.type === TripCoverPicker)!.props.onSelect as (
@@ -230,9 +238,11 @@ it("opens the existing Currency screen over a dirty editor and Back preserves ev
   expect(nodes.find((n) => n.type === Modal)!.props.visible).toBe(false);
   expect(nodes.find((n) => n.type === TripMetadataFields)!.props).toMatchObject({
     name: "Unsaved name",
-    destination: "Tokyo",
     range: { start: "2027-01-01", end: "2027-01-02" },
   });
+  expect(destinationField(nodes).props.items).toMatchObject([
+    { text: "Tokyo", source: "MANUAL" },
+  ]);
   expect(nodes.find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBe("coast");
   (nodes.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
   await flush();
@@ -240,12 +250,22 @@ it("opens the existing Currency screen over a dirty editor and Back preserves ev
     before,
     {
       name: "Unsaved name",
-      destination: "Tokyo",
+      destination: null,
       startDate: "2027-01-01",
       endDate: "2027-01-02",
     },
     { before: "cultural-oldtown", after: "coast" },
     expect.any(String),
+    expect.objectContaining({
+      before: [],
+      after: [
+        {
+          destinationId: "00000000-0000-4000-8000-000000000012",
+          displayLabel: "Tokyo",
+          source: "MANUAL",
+        },
+      ],
+    }),
   );
 });
 
@@ -317,7 +337,9 @@ it("keeps explicit manual choice on rename/location while AUTO stays null and us
   let nodes = render(undefined, undefined, autoTrip);
   const fields = nodes.find((n) => n.type === TripMetadataFields)!.props;
   (fields.onName as (s: string) => void)("Tokyo city tour");
-  (fields.onDestination as (s: string) => void)("Tokyo");
+  destinationField(nodes).props.onChange([
+    { localId: "00000000-0000-4000-8000-000000000012", text: "Tokyo", source: "MANUAL" },
+  ]);
   nodes = render(undefined, undefined, autoTrip);
   expect(nodes.find((n) => n.type === TripCoverPicker)!.props).toMatchObject({
     selectedRaw: null,
@@ -329,11 +351,13 @@ it("keeps explicit manual choice on rename/location while AUTO stays null and us
     ) => Promise<void>
   )("city");
   nodes = render(undefined, undefined, autoTrip);
-  (
-    nodes.find((n) => n.type === TripMetadataFields)!.props.onDestination as (
-      s: string,
-    ) => void
-  )("Iceland");
+  destinationField(nodes).props.onChange([
+    {
+      localId: "00000000-0000-4000-8000-000000000012",
+      text: "Iceland",
+      source: "MANUAL",
+    },
+  ]);
   nodes = render(undefined, undefined, autoTrip);
   expect(nodes.find((n) => n.type === TripCoverPicker)!.props).toMatchObject({
     selectedRaw: "city",
@@ -406,4 +430,97 @@ it("keeps an AUTO switch change draft-only until the Editor owning Save", async 
     { before: current.selectedCoverAssetIdRaw, after: null },
     expect.any(String),
   );
+});
+
+const destinationField = (view: Element[]) =>
+  view.find((n) => n.type === TripMetadataFields)!.props.destinationEntry as ReactElement<
+    Record<string, any>
+  >;
+it("hydrates structured Tags without dirtying and keeps the area search pinned to the persisted Trip", () => {
+  const structured = {
+    ...trip,
+    destination: null,
+    destinations: [
+      {
+        destinationId: "00000000-0000-4000-8000-000000000011",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "real.apple",
+        displayLabel: "Sydney, Australia",
+        ordinal: 0,
+      },
+    ],
+  };
+  const view = render(undefined, undefined, structured);
+  expect(view.find((n) => n.type === SheetHeader)!.props.rightDisabled).toBe(true);
+  const entry = destinationField(view);
+  expect(entry.type).toBe(CreateTripDestinations);
+  expect(entry.props.tripId).toBe(trip.id);
+  expect(entry.props.draftId).toBeUndefined();
+  expect(entry.props.items).toMatchObject([
+    {
+      localId: structured.destinations[0].destinationId,
+      source: "APPLE",
+      text: "Sydney, Australia",
+      match: { providerPlaceId: "real.apple" },
+    },
+  ]);
+});
+it("legacy scalar seed remains clean on open and name-only Save does not migrate it", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  let view = render(save);
+  expect(view.find((n) => n.type === SheetHeader)!.props.rightDisabled).toBe(true);
+  expect(destinationField(view).props.items).toMatchObject([
+    { text: "Nelson", source: "MANUAL" },
+  ]);
+  (view.find((n) => n.type === TripMetadataFields)!.props.onName as (s: string) => void)(
+    "Renamed",
+  );
+  view = render(save);
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save).toHaveBeenCalledExactlyOnceWith(
+    before,
+    { ...before, name: "Renamed" },
+    undefined,
+    expect.any(String),
+  );
+});
+it("explicit Tags changes stage one atomic Save, clear legacy scalar and retain the retry identity", async () => {
+  const save = vi.fn().mockRejectedValue(new Error("disk"));
+  let view = render(save);
+  const entry = destinationField(view);
+  entry.props.onChange([
+    ...entry.props.items,
+    { localId: "00000000-0000-4000-8000-000000000012", text: "Tokyo", source: "MANUAL" },
+  ]);
+  expect(save).not.toHaveBeenCalled();
+  view = render(save);
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save.mock.calls[0][1].destination).toBeNull();
+  expect(save.mock.calls[0][4]).toMatchObject({
+    operationId: expect.any(String),
+    before: [],
+    after: [
+      { displayLabel: "Nelson", source: "MANUAL" },
+      { displayLabel: "Tokyo", source: "MANUAL" },
+    ],
+  });
+  view = render(save);
+  (view.find((n) => n.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save.mock.calls[1]).toEqual(save.mock.calls[0]);
+  expect(destinationField(render(save)).props.items).toHaveLength(2);
+});
+it("pending resolution blocks Save and changing Name never replaces selected Tags", () => {
+  let view = render();
+  const original = destinationField(view).props.items;
+  destinationField(view).props.onBusy(true);
+  (view.find((n) => n.type === TripMetadataFields)!.props.onName as (s: string) => void)(
+    "Iceland",
+  );
+  view = render();
+  expect(view.find((n) => n.type === SheetHeader)!.props.rightDisabled).toBe(true);
+  expect(destinationField(view).props.items).toEqual(original);
 });

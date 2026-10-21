@@ -785,7 +785,13 @@ function LocalTripContent({
                   currencyAvailable
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}
-                  onSaveMetadata={async (before, after, cover, operationId) => {
+                  onSaveMetadata={async (
+                    before,
+                    after,
+                    cover,
+                    operationId,
+                    destinations,
+                  ) => {
                     if (!alive.current || generation !== getAccountGeneration())
                       throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
                     const repo = await readLocalTripRepository();
@@ -799,13 +805,16 @@ function LocalTripContent({
                         after,
                       },
                       cover,
+                      destinations,
                     );
+                    const committed = await repo.getTrip(selected.id);
                     if (alive.current && generation === getAccountGeneration()) {
                       // Fence an older focus read that started before this local commit.
                       request.current++;
                       setSelected({
                         ...selected,
                         ...after,
+                        ...(committed ? { destinations: committed.destinations } : {}),
                         ...(cover
                           ? {
                               selectedCoverAssetId: isTripCoverAssetId(cover.after)
