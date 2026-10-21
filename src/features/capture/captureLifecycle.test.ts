@@ -912,3 +912,17 @@ it("clipboard-only draft cannot bypass disabled UI and enter file submission", a
   expect(ui.submit).not.toHaveBeenCalled();
   expect(s.getDraftSnapshot().items[0].source).toBe("clipboard");
 });
+
+it("popping the root overlay does not dispatch SET_PARAMS to a removed route", async () => {
+  ui.session.mockResolvedValue({ identity: { userId: "A" } });
+  const render = () => {
+    ui.cursor = 0;
+    return CaptureRoute({ overlay: true }).props.children;
+  };
+  render();
+  await vi.waitFor(() => expect(render().type).toBe(CaptureContent));
+  ui.focused = false;
+  ui.setParams.mockClear();
+  ui.focusCleanup?.();
+  expect(ui.setParams).not.toHaveBeenCalled();
+});

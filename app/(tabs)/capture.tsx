@@ -132,7 +132,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
         visibleStaging?.hide();
         setAdmission(null);
         // Dependency cleanup must not erase a newer focused invocation.
-        if (!navigation.isFocused())
+        if (!overlay && !navigation.isFocused())
           navigation.setParams({
             tripId: undefined,
             jobId: undefined,
@@ -140,7 +140,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             originGeneration: undefined,
           });
       };
-    }, [generation, navigation, tripId, retained]),
+    }, [generation, navigation, tripId, retained, overlay]),
   );
   const isCurrent = () => {
     if (
