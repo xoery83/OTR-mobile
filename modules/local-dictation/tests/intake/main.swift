@@ -74,8 +74,10 @@ restoredBudget.cancelPending()
 let dropped = try store.batch(requestId: "dropped")
 let droppedItems = try (0..<10).map { _ in try dropped.copyProviderFile(input) }
 try store.deliver(droppedItems, batch: dropped)
+precondition(store.unclaimedTokens(droppedItems.map { $0.token }).count == 10)
 rejects { _ = try store.batch(requestId: "full") }
 store.releaseUnclaimed(droppedItems.map { $0.token })
+precondition(store.unclaimedTokens(droppedItems.map { $0.token }).isEmpty)
 precondition(droppedItems.allSatisfy { !FileManager.default.fileExists(atPath: $0.url.path) })
 precondition(!store.claim(requestId: "dropped", tokens: droppedItems.map { $0.token }))
 let restored = try store.batch(requestId: "claim")
@@ -90,6 +92,7 @@ precondition(!store.claim(requestId: "claim", tokens: [claimTokens[0], "invalid"
 precondition(!store.claim(requestId: "claim", tokens: [claimTokens[0], UUID().uuidString.lowercased()]))
 // All failed claims above are atomic: both still transfer successfully together.
 precondition(store.claim(requestId: "claim", tokens: claimTokens))
+precondition(store.unclaimedTokens(claimTokens + [UUID().uuidString.lowercased()]).isEmpty)
 precondition(!store.claim(requestId: "claim", tokens: claimTokens))
 store.releaseUnclaimed(claimTokens) // Claim wins the race: detach must preserve.
 precondition(claimItems.allSatisfy { FileManager.default.fileExists(atPath: $0.url.path) })

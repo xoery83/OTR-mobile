@@ -84,7 +84,7 @@ public final class ImagePasteModule: Module {
       do {
         try ImagePasteStore.shared.deliver(items, batch: value)
         batch = nil; progress = nil
-        emittedTokens.append(contentsOf: items.map { $0.token })
+        emittedTokens = ImagePasteStore.shared.unclaimedTokens(emittedTokens) + items.map { $0.token }
         onImages(["requestId": value.requestId, "items": items.map { $0.body }])
       } catch { fail(value, .limit) }
       return

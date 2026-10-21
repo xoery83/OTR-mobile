@@ -153,6 +153,10 @@ final class ImagePasteStore {
     return true
   }
   func releaseUnclaimed(_ tokens: [String]) { remove(tokens, unclaimedOnly: true) }
+  func unclaimedTokens(_ tokens: [String]) -> [String] {
+    lock.lock(); defer { lock.unlock() }
+    return tokens.filter { delivered[$0]?.claimed == false }
+  }
   func release(_ tokens: [String]) {
     remove(tokens, unclaimedOnly: false)
   }

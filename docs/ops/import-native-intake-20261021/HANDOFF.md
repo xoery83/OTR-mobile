@@ -51,8 +51,10 @@ that ownership conservatively. The staging owner must explicitly release it; the
 gate never deletes a possibly adopted draft as error recovery.
 
 The Native view retains emitted tokens until lifecycle cleanup, so a queued event
-that is never received cannot strand unclaimed files. Claim and cleanup share the
-store lock: detach first means claim fails; claim first means detach preserves the
+that is never received cannot strand unclaimed files. Before each emission its
+token list retains only still-registered, unclaimed tokens, keeping that list within
+the same 10-item cap. Claim and cleanup share the store lock: detach first means
+claim fails; claim first means detach preserves the
 draft. There is no timeout that could delete a claimed file. Tokens are random
 module-issued opaque capabilities, exposed only through the Native callback to
 the owning JS adapter/staging. Holding a token authorizes explicit staging release;
