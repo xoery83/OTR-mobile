@@ -62,6 +62,27 @@ final class ImagePasteBatch {
     delivered = true; return true
   }
   func isCurrent() -> Bool { lock.lock(); defer { lock.unlock() }; return !cancelled }
+  // Some system clipboard providers expose encoded data but no file representation.
+  // NSItemProvider owns the returned allocation; reject before copying/decoding it.
+  func copyProviderData(_ data: Data) throws -> ImagePasteItem {
+    guard !data.isEmpty else { throw ImagePasteFailure.invalidImage }
+    guard data.count <= maxBytes else { throw ImagePasteFailure.limit }
+    let format = try ImagePastePolicy.format(Data(data.prefix(64)))
+    lock.lock()
+    let allowed = !cancelled && used <= maxBytes - data.count
+    if allowed { used += data.count }
+    lock.unlock()
+    guard allowed else { throw ImagePasteFailure.limit }
+    let token = UUID().uuidString.lowercased()
+    let url = directory.appendingPathComponent(token + "." + format.ext)
+    try data.write(to: url, options: .atomic)
+    try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+    #if os(iOS)
+    try FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
+    #endif
+    guard isCurrent() else { try? FileManager.default.removeItem(at: url); throw ImagePasteFailure.cancelled }
+    return ImagePasteItem(token: token, url: url, byteSize: data.count, mimeType: format.mime)
+  }
   func copyProviderFile(_ source: URL) throws -> ImagePasteItem {
     guard isCurrent() else { throw ImagePasteFailure.cancelled }
     guard source.isFileURL else { throw ImagePasteFailure.invalidImage }

@@ -92,3 +92,13 @@ Apple references:
 [on-device support](https://developer.apple.com/documentation/speech/sfspeechrecognizer/supportsondevicerecognition),
 [required local recognition](https://developer.apple.com/documentation/speech/sfspeechrecognitionrequest/requiresondevicerecognition),
 [live audio requests](https://developer.apple.com/documentation/speech/sfspeechaudiobufferrecognitionrequest).
+
+## Explicit image Paste control
+
+UIPasteControl first requests an encoded file representation. If the system provider
+cannot supply a file, it requests encoded Data for the same advertised image type.
+Both paths enforce header allowlisting, the shared10-item/20MiB retained-byte budget,
+claim/request lifecycle fences, owned private files and explicit release. No UIImage
+decode, re-encode or upload. NSItemProvider controls the Data callback allocation;
+the app rejects oversized data immediately before copying it, so20MiB is a retained
+payload limit, not a guarantee about the provider's temporary memory allocation.

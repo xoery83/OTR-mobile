@@ -105,3 +105,25 @@ try FileManager.default.removeItem(at: goneItem.url)
 precondition(!store.claim(requestId: "missing-file", tokens: [goneItem.token]))
 store.releaseUnclaimed([goneItem.token])
 print("Safe diagnostic metadata and bounded pending/delivered image ownership PASS; no clipboard/audio/UI access")
+
+let bytesOnly = try store.batch(requestId: "data-only")
+let pngData = try Data(contentsOf: input)
+let bytesItem = try bytesOnly.copyProviderData(pngData)
+precondition(bytesItem.mimeType == "image/png" && bytesItem.byteSize == pngData.count)
+let copiedData = try Data(contentsOf: bytesItem.url)
+precondition(copiedData == pngData)
+try store.deliver([bytesItem], batch: bytesOnly)
+precondition(store.claim(requestId: "data-only", tokens: [bytesItem.token]))
+store.release([bytesItem.token])
+let badData = try store.batch(requestId: "bad-data")
+rejects { _ = try badData.copyProviderData(Data()) }
+rejects { _ = try badData.copyProviderData(Data([1,2,3])) }
+rejects { _ = try badData.copyProviderData(Data(repeating: 0, count: ImagePastePolicy.maxBytes + 1)) }
+badData.cancelPending()
+rejects { _ = try badData.copyProviderData(pngData) }
+let aggregateData = try store.batch(requestId: "data-budget")
+let bigData = try Data(contentsOf: twelve)
+_ = try aggregateData.copyProviderData(bigData)
+rejects { _ = try aggregateData.copyProviderData(bigData) }
+aggregateData.cancelPending()
+print("Encoded data-only provider byte identity, rejection, cancellation and aggregate budgets PASS")

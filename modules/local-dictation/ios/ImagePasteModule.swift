@@ -99,6 +99,29 @@ public final class ImagePasteModule: Module {
       if let url, error == nil {
         do { result = .success(try value.copyProviderFile(url)) }
         catch { result = .failure(error as? ImagePasteFailure ?? .storage) }
+      } else {
+        Task { @MainActor in
+          guard let self, self.current(value) else { value.cancelPending(); return }
+          self.loadData(provider, type: type, providers: providers, index: index, current: value, items: items)
+        }
+        return
+      }
+      Task { @MainActor in
+        guard let self, self.current(value) else { value.cancelPending(); return }
+        self.progress = nil
+        switch result {
+        case .success(let item): self.load(providers, index: index + 1, current: value, items: items + [item])
+        case .failure(let error): self.fail(value, error)
+        }
+      }
+    }
+  }
+  private func loadData(_ provider: NSItemProvider, type: String, providers: [(NSItemProvider, String)], index: Int, current value: ImagePasteBatch, items: [ImagePasteItem]) {
+    progress = provider.loadDataRepresentation(forTypeIdentifier: type) { [weak self] data, error in
+      let result: Result<ImagePasteItem, ImagePasteFailure>
+      if let data, error == nil {
+        do { result = .success(try value.copyProviderData(data)) }
+        catch { result = .failure(error as? ImagePasteFailure ?? .storage) }
       } else { result = .failure(.loadFailed) }
       Task { @MainActor in
         guard let self, self.current(value) else { value.cancelPending(); return }
