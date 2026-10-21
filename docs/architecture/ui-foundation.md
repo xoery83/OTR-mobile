@@ -44,6 +44,10 @@ least 44pt. Do not wrap every View in a new primitive. Existing Ledger layouts c
 retain geometry during migration; new modules use canonical roles rather than
 inventing a card radius, divider, font hierarchy or spacing rhythm.
 
+`UiFormRow variant="field"` presents its caption above a bordered value button,
+sharing `UiTextInput` field geometry and typography. Use it for date selectors
+within input forms; the default row presentation remains available for grouped settings.
+
 ## Segmented selection
 
 Use `segmentedControlTokens` from `src/ui/segmented.ts` for segmented controls,

@@ -1,6 +1,7 @@
 import type { Ref } from "react";
 import {
   TextInput,
+  View,
   Pressable,
   Text,
   StyleSheet,
@@ -66,6 +67,7 @@ export function UiFormRow({
   disabled = false,
   stacked = false,
   horizontalInset,
+  variant = "row",
 }: {
   label: string;
   value: string;
@@ -73,11 +75,13 @@ export function UiFormRow({
   disabled?: boolean;
   stacked?: boolean;
   horizontalInset?: number;
+  variant?: "row" | "field";
 }) {
   const styles = useThemedStyles(createStyles);
 
   const largeText = useWindowDimensions().fontScale > 2;
-  return (
+  const field = variant === "field";
+  const button = (
     <Pressable
       accessibilityLabel={`${label}, ${value}`}
       accessibilityRole="button"
@@ -85,32 +89,43 @@ export function UiFormRow({
       disabled={disabled}
       onPress={onPress}
       style={[
-        styles.row,
-        (largeText || stacked) && styles.rowLargeText,
+        field ? styles.input : styles.row,
+        field && styles.fieldButton,
+        !field && (largeText || stacked) && styles.rowLargeText,
         disabled && styles.disabledSurface,
-        horizontalInset !== undefined && { paddingHorizontal: horizontalInset },
+        !field && horizontalInset !== undefined && { paddingHorizontal: horizontalInset },
       ]}
     >
-      <Text
-        style={[
-          styles.rowLabel,
-          stacked && styles.rowLabelStacked,
-          disabled && styles.disabledText,
-        ]}
-      >
-        {label}
-      </Text>
+      {!field && (
+        <Text
+          style={[
+            styles.rowLabel,
+            stacked && styles.rowLabelStacked,
+            disabled && styles.disabledText,
+          ]}
+        >
+          {label}
+        </Text>
+      )}
       <Text
         numberOfLines={2}
         style={[
-          styles.rowValue,
-          (largeText || stacked) && styles.rowValueLargeText,
+          field ? styles.fieldValue : styles.rowValue,
+          !field && (largeText || stacked) && styles.rowValueLargeText,
           disabled && styles.disabledText,
         ]}
       >
         {value}
       </Text>
     </Pressable>
+  );
+  return field ? (
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      {button}
+    </View>
+  ) : (
+    button
   );
 }
 
@@ -165,6 +180,10 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: 14,
       ...visual.type.row,
     },
+    fieldGroup: { gap: visual.space.heading },
+    fieldLabel: { ...visual.type.action, color: colors.textPrimary },
+    fieldButton: { justifyContent: "center", paddingVertical: visual.space.heading },
+    fieldValue: { ...visual.type.row, color: colors.textPrimary },
     bareInput: {
       backgroundColor: colors.background,
       borderWidth: 0,

@@ -78,7 +78,12 @@ export function CreateTripV2Fields({
         />
       </View>
       {destinationEntry}
-      <TripCalendarRangeField value={range} onChange={onRange} disabled={disabled} />
+      <TripCalendarRangeField
+        value={range}
+        onChange={onRange}
+        disabled={disabled}
+        presentation="field"
+      />
       <View style={styles.section}>
         <UiText style={styles.label}>{t("createTripV2.travelers")}</UiText>
         <Pressable

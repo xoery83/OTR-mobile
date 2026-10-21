@@ -50,10 +50,12 @@ export function tripRangeLabel({ start, end }: TripDateRange) {
 export function TripCalendarRangeField({
   value,
   disabled = false,
+  presentation = "row",
   onChange,
 }: {
   value: TripDateRange;
   disabled?: boolean;
+  presentation?: "row" | "field";
   onChange(range: TripDateRange): void;
 }) {
   useUiLocale();
@@ -81,6 +83,7 @@ export function TripCalendarRangeField({
   return (
     <View>
       <UiFormRow
+        variant={presentation}
         label={t("tripForm.dates")}
         value={tripRangeLabel(value)}
         stacked
