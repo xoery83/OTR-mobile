@@ -163,3 +163,30 @@ it("keeps the authorized Owner22 supplement finite, byte-exact and geographicall
       .map((item: any) => item.id),
   ).toEqual(origin.cropContainIds);
 });
+
+it("multi-destination UI shortening does not change full geography or its ranking cache", () => {
+  const trip = {
+    ...automatic("Holiday", "Legacy"),
+    id: "cover-full-multidest-regression",
+    destinations: [
+      { displayLabel: "Cambridge, United Kingdom" },
+      { displayLabel: "Cambridge, Massachusetts, United States" },
+    ],
+  };
+  const ranked = rankedTripCovers(trip, 6);
+  expect(
+    rankedTripCovers(
+      {
+        ...trip,
+        destinations: [],
+        destination:
+          "Cambridge, United Kingdom · Cambridge, Massachusetts, United States",
+      },
+      6,
+    ),
+  ).toBe(ranked);
+  expect(trip.destinations.map((place) => place.displayLabel)).toEqual([
+    "Cambridge, United Kingdom",
+    "Cambridge, Massachusetts, United States",
+  ]);
+});

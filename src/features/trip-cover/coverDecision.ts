@@ -6,7 +6,6 @@ import {
   type ProductionRank,
 } from "../../../vendor/otr-cover-core/frozenExports";
 import type { GeoEntity } from "../../../vendor/otr-cover-core/geo";
-import { tripDestinationDisplay } from "../day-feed/tripDestinationDisplay";
 
 export type CoverMetadata = Readonly<{
   id: string;
@@ -30,7 +29,10 @@ export function rankedTripCovers(
     configureProductionGeo(geo.entities);
     configured = true;
   }
-  const destination = tripDestinationDisplay(trip);
+  // Geographic matching keeps the complete labels; UI summaries may omit countries.
+  const destination = trip.destinations?.length
+    ? trip.destinations.map((place) => place.displayLabel).join(" · ")
+    : trip.destination || null;
   const key = JSON.stringify([trip.id, trip.name ?? "", destination, limit]);
   const previous = cache.get(key);
   if (previous) return previous;
