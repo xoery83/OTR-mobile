@@ -250,11 +250,9 @@ export async function readApplePlaceProvider(binding: PlaceSearchBinding) {
   let native: ApplePlaceNative;
   let phase = "IMPORT_CORE";
   try {
-    const { requireNativeModule } = await import("expo-modules-core");
+    const { readApplePlaceNativeModule } = await import("@/native/applePlaceSearch");
     phase = "LOOKUP_MODULE";
-    if (typeof requireNativeModule !== "function")
-      throw new ApplePlaceError("LOADER_EXPORT_MISSING");
-    native = requireNativeModule<ApplePlaceNative>("OTRPlaceSearch");
+    native = readApplePlaceNativeModule();
   } catch (error) {
     const classified =
       error instanceof Error &&
