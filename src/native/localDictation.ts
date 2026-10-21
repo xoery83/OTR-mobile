@@ -66,6 +66,15 @@ export function parseLocalDictationDiagnostic(
   };
 }
 
+// Treat the observed local recognizer initialization diagnostic as unavailable.
+function isLocalRecognizerUnavailable(diagnostic: LocalDictationDiagnostic | null) {
+  return (
+    diagnostic?.phase === "recognition" &&
+    diagnostic.domain === "kLSRErrorDomain" &&
+    diagnostic.code === 300
+  );
+}
+
 export function readLocalDictation(
   options: { onDiagnostic?(diagnostic: LocalDictationDiagnostic): void } = {},
 ): DictationNative {
@@ -108,9 +117,13 @@ export function readLocalDictation(
             typeof result === "object" ? (result as Record<string, unknown>) : {};
           const known =
             typeof envelope.error === "string" && failures.has(envelope.error);
-          const code =
-            known && typeof envelope.error === "string" ? envelope.error : "failed";
           diagnostic = known ? parseLocalDictationDiagnostic(envelope.diagnostic) : null;
+          const failure =
+            known && typeof envelope.error === "string" ? envelope.error : "failed";
+          const code =
+            failure === "failed" && isLocalRecognizerUnavailable(diagnostic)
+              ? "unavailable"
+              : failure;
           throw Object.assign(new Error(code), { code });
         }
       } catch (error) {
@@ -132,7 +145,14 @@ export function readLocalDictation(
           const state = value as Record<string, unknown>;
           if (typeof state.sessionId === "string" && ownSessions.has(state.sessionId)) {
             const diagnostic = parseLocalDictationDiagnostic(state.diagnostic);
-            if (state.status === "error") publish(state.sessionId, diagnostic);
+            if (state.status === "error") {
+              publish(state.sessionId, diagnostic);
+              if (state.error === "failed" && isLocalRecognizerUnavailable(diagnostic)) {
+                ownSessions.delete(state.sessionId);
+                listener({ ...state, error: "unavailable" });
+                return;
+              }
+            }
             if (state.status === "error" || state.status === "stopped")
               ownSessions.delete(state.sessionId);
           }

@@ -167,4 +167,70 @@ describe("local dictation bounded diagnostic adapter", () => {
     await expect(pending).rejects.toMatchObject({ code: "permission" });
     expect(onDiagnostic).not.toHaveBeenCalled();
   });
+  it.each(["event", "result"])(
+    "reports local recognizer initialization failure as unavailable via %s",
+    async (route) => {
+      let emit: (value: unknown) => void = () => {};
+      bridge.addListener.mockImplementation((_event, listener) => {
+        emit = listener;
+        return { remove: vi.fn() };
+      });
+      const listener = vi.fn(),
+        native = readLocalDictation();
+      native.addListener("state", listener);
+      const diagnostic = { phase: "recognition", domain: "kLSRErrorDomain", code: 300 };
+      if (route === "result") {
+        bridge.start.mockResolvedValue({ error: "failed", diagnostic });
+        await expect(native.start("owned", "en-US")).rejects.toMatchObject({
+          code: "unavailable",
+        });
+      } else {
+        await native.start("owned", "en-US");
+        emit({ sessionId: "owned", status: "error", error: "failed", diagnostic });
+        expect(listener).toHaveBeenLastCalledWith({
+          sessionId: "owned",
+          status: "error",
+          error: "unavailable",
+          diagnostic,
+        });
+      }
+      expect(bridge.start).toHaveBeenCalledTimes(1);
+    },
+  );
+  it.each([
+    ["permission", "recognition", "kLSRErrorDomain", 300],
+    ["failed", "audio_engine", "kLSRErrorDomain", 300],
+    ["failed", "recognition", "OTHER", 300],
+    ["failed", "recognition", "kLSRErrorDomain", 301],
+  ])(
+    "keeps other failures unchanged (%s/%s/%s/%s)",
+    async (error, phase, domain, code) => {
+      bridge.start.mockResolvedValue({ error, diagnostic: { phase, domain, code } });
+      await expect(readLocalDictation().start("owned", "en-US")).rejects.toMatchObject({
+        code: error,
+      });
+    },
+  );
+  it("does not reclassify foreign or cancelled session errors", async () => {
+    let emit: (value: unknown) => void = () => {};
+    bridge.addListener.mockImplementation((_event, listener) => {
+      emit = listener;
+      return { remove: vi.fn() };
+    });
+    const listener = vi.fn(),
+      native = readLocalDictation();
+    native.addListener("state", listener);
+    await native.start("cancelled", "en-US");
+    await native.cancel("cancelled");
+    for (const sessionId of ["foreign", "cancelled"]) {
+      const event = {
+        sessionId,
+        status: "error",
+        error: "failed",
+        diagnostic: { phase: "recognition", domain: "kLSRErrorDomain", code: 300 },
+      };
+      emit(event);
+      expect(listener).toHaveBeenLastCalledWith(event);
+    }
+  });
 });
