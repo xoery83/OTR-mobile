@@ -40,6 +40,12 @@ export function resolvedTripDestination(
 ): TripDestinationDraftSelection {
   if (candidate.provider !== "apple" || candidate.kind !== "mapItem")
     throw new ApplePlaceError("DESTINATION_NOT_RESOLVED");
+  // Explicit selection confirms the displayed area label, not a missing provider identity.
+  if (!candidate.providerPlaceId)
+    return manualTripDestination(
+      [candidate.title, candidate.secondary].filter((value) => value.trim()).join(", "),
+      id,
+    );
   const point = candidate.point ? Object.freeze({ ...candidate.point }) : undefined;
   return Object.freeze({
     localId: z.uuid().parse(id()),

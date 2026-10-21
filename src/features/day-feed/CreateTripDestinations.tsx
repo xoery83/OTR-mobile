@@ -62,7 +62,6 @@ export function CreateTripDestinations({
     more: false,
   });
   const [choosing, setChoosing] = useState(false);
-  const [customRequired, setCustomRequired] = useState(false);
   const [inputInvalid, setInputInvalid] = useState(false);
   const session = useRef<PlaceSearchSession | null>(null);
   const alive = useRef(true),
@@ -115,7 +114,11 @@ export function CreateTripDestinations({
       });
       session.current = controller;
       controller.update(
-        { text: currentQuery.current, locale: getFormatLocale() },
+        {
+          text: currentQuery.current,
+          locale: getFormatLocale(),
+          intent: "destinationArea",
+        },
         450,
         online,
       );
@@ -133,11 +136,14 @@ export function CreateTripDestinations({
     };
   }, [draftId, generation, online, current]);
   useEffect(() => {
-    session.current?.update({ text: searchText, locale: getFormatLocale() }, 450, online);
+    session.current?.update(
+      { text: searchText, locale: getFormatLocale(), intent: "destinationArea" },
+      450,
+      online,
+    );
   }, [searchText, online]);
   const changeQuery = (value: string) => {
     setQuery(value);
-    setCustomRequired(false);
     setInputInvalid(false);
     onQueryDirty(!!value.trim());
   };
@@ -160,11 +166,7 @@ export function CreateTripDestinations({
     try {
       const resolved = await session.current?.resolve(row);
       if (resolved && current()) {
-        if (resolved.providerPlaceId) append(resolvedTripDestination(resolved));
-        else {
-          changeQuery(resolved.title);
-          setCustomRequired(true);
-        }
+        append(resolvedTripDestination(resolved));
       }
     } catch {
       if (current()) setState({ status: "ERROR", rows: [], more: false });
@@ -246,9 +248,6 @@ export function CreateTripDestinations({
           </View>
         </Pressable>
       ))}
-      {customRequired ? (
-        <UiText style={styles.meta}>{t("createTripV2.customRequired")}</UiText>
-      ) : null}
       {suggestionsVisible && (state.status === "ERROR" || !online) ? (
         <UiText style={styles.meta}>{t("createTripV2.searchUnavailable")}</UiText>
       ) : suggestionsVisible && state.status === "EMPTY" ? (

@@ -29,11 +29,14 @@ it("manual labels remain authored selections with separate local UUID and no inv
   expect(() => manualTripDestination("x".repeat(257))).toThrow();
 });
 it("only explicit resolved rows become snapshots, with no handles or fake stable IDs", () => {
-  const raw = candidate({ point: { latitude: 35, longitude: 139 } });
+  const raw = candidate({
+    providerPlaceId: "actual-tokyo-id",
+    point: { latitude: 35, longitude: 139 },
+  });
   const item = resolvedTripDestination(raw);
   expect(item.match).toMatchObject({
     provider: "apple",
-    providerPlaceId: null,
+    providerPlaceId: "actual-tokyo-id",
     title: "Tokyo",
   });
   expect(item.match).not.toHaveProperty("handle");
@@ -88,4 +91,28 @@ it("never label-merges different or unknown provider identities", () => {
   );
   expect(addTripDestination([a], other)).toEqual([a, other]);
   expect(addTripDestination([a], unknown)).toEqual([a, unknown]);
+});
+
+it("explicitly selected no-ID areas use the existing manual identity with visible geographic qualification", () => {
+  const sydney = resolvedTripDestination(
+    candidate({ title: "Sydney, NSW", secondary: "Australia" }),
+  );
+  const auckland = resolvedTripDestination(
+    candidate({ title: "Auckland", secondary: "New Zealand" }),
+  );
+  expect(sydney).toMatchObject({ source: "MANUAL", text: "Sydney, NSW, Australia" });
+  expect(sydney).not.toHaveProperty("match");
+  expect(addTripDestination([auckland], sydney)).toEqual([auckland, sydney]);
+  const us = resolvedTripDestination(
+    candidate({ title: "Springfield", secondary: "Illinois, United States" }),
+  );
+  const other = resolvedTripDestination(
+    candidate({ title: "Springfield", secondary: "Massachusetts, United States" }),
+  );
+  expect(addTripDestination([us], other)).toHaveLength(2);
+  expect(() =>
+    resolvedTripDestination(
+      candidate({ title: "x".repeat(250), secondary: "Australia" }),
+    ),
+  ).toThrow("DESTINATION_LABEL_INVALID");
 });

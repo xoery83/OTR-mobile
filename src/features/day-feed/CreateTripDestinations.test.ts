@@ -167,7 +167,7 @@ it("uses real provider completion then resolve before adding Apple destination m
   render();
   await flush();
   expect(state.update).toHaveBeenCalledWith(
-    { text: "Nelson", locale: "en-NZ" },
+    { text: "Nelson", locale: "en-NZ", intent: "destinationArea" },
     450,
     true,
   );
@@ -229,7 +229,7 @@ it("retains explicit custom entry when native search is unavailable", async () =
   expect(items[0].source).toBe("MANUAL");
 });
 
-it("requires explicit custom confirmation when resolved Apple result has no stable place ID", async () => {
+it("adds a selected no-ID city immediately using the existing qualified manual identity", async () => {
   render();
   await flush();
   state.emit({
@@ -245,10 +245,11 @@ it("requires explicit custom confirmation when resolved Apple result has no stab
     secondary: "NZ",
   });
   await press("Nelson, NZ");
-  expect(items).toEqual([]);
-  expect(render()).toContain("createTripV2.customRequired");
-  press("createTripV2.custom:Nelson");
-  expect(items[0]).toEqual(expect.objectContaining({ text: "Nelson", source: "MANUAL" }));
+  expect(items[0]).toEqual(
+    expect.objectContaining({ text: "Nelson, NZ", source: "MANUAL" }),
+  );
+  expect(items[0]).not.toHaveProperty("match");
+  expect(render()).not.toContain("createTripV2.customRequired");
 });
 
 it("dismisses suggestions after selecting, reopening only for an active query or a new empty-selection name", async () => {
@@ -281,7 +282,7 @@ it("dismisses suggestions after selecting, reopening only for an active query or
   name = "New name";
   render();
   expect(state.update).toHaveBeenLastCalledWith(
-    { text: "New name", locale: "en-NZ" },
+    { text: "New name", locale: "en-NZ", intent: "destinationArea" },
     450,
     true,
   );
