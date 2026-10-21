@@ -33,9 +33,19 @@ state: {
 A recognition result longer than 4096 characters fails explicitly with `failed`; it is never silently truncated. A stop without a final result
 produces `timeout`, never a fabricated final transcript. `start` also rejects on
 failure; a concurrent start or invalid session rejects `failed` without taking
-ownership or emitting an event for the current session. Stale/foreign stop and
-cancel are no-ops. The native singleton fences module owner, opaque session token and an
+ownership or emitting an event for the current session. Foreign stop/cancel never affects another session. An unbegun matching token
+is remembered as cancelled before any later start may request permission. The native singleton fences module owner, opaque session token and an
 internal epoch, including reused tokens and late permission, task and timer callbacks.
+Fresh tokens are required per start; recently known completed tokens cannot restart.
+Pre-begin cancellation and destroyed-owner tombstones never expire or evict. Native
+state is bounded to 128 unresolved pre-begin cancellations, 128 retired owners and
+256 recent begun tokens. Abnormal overflow refuses new starts until native process
+restart rather than reviving a cancelled start. Ordinary post-error/stopped defensive
+cancellation of recent known tokens does not add pending tombstones; a 1024-session
+regression covers this path. Owner destruction retires it permanently before any
+late queued start can acquire audio. Recent history may rotate; the internal epoch
+still rejects callbacks from any earlier lease.
+
 JS must additionally fence editor/account lifecycle and cancel its own session on
 unmount; no transcript is automatically saved by this module.
 

@@ -139,7 +139,10 @@ private final class DictationAudioInput {
   }
 
   func stop(owner: UUID, sessionId: String) {
-    guard let lease = fence.matching(owner: owner, sessionId: sessionId), let session = active else { return }
+    guard let lease = fence.matching(owner: owner, sessionId: sessionId), let session = active else {
+      _ = fence.requestCancel(owner: owner, sessionId: sessionId)
+      return
+    }
     if session.phase == .starting { finish(lease); return }
     guard session.phase == .listening else { return }
     session.phase = .finishing
@@ -152,12 +155,12 @@ private final class DictationAudioInput {
     if let deadline = session.finishDeadline { RunLoop.main.add(deadline, forMode: .common) }
   }
   func cancel(owner: UUID, sessionId: String) {
-    guard let lease = fence.matching(owner: owner, sessionId: sessionId) else { return }
+    guard let lease = fence.requestCancel(owner: owner, sessionId: sessionId) else { return }
     finish(lease)
   }
   func destroy(owner: UUID) {
-    guard let lease = active?.lease, lease.owner == owner else { return }
-    finish(lease)
+    if let lease = active?.lease, lease.owner == owner { finish(lease) }
+    fence.retire(owner: owner)
   }
   private func state(_ session: Session, _ status: String, error: DictationFailure? = nil) {
     var body: [String: Any] = ["sessionId": session.lease.sessionId, "status": status]
