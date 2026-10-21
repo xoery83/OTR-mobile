@@ -21,6 +21,22 @@ const automatic = (name: string, destination: string | null) => ({
   destination,
   selectedCoverAssetIdRaw: null,
 });
+it("uses selected destination labels for automatic covers without changing manual priority", () => {
+  for (const displayLabel of ["Tokyo", "Iceland"]) {
+    const trip = {
+      ...automatic("My holiday", "Legacy location"),
+      destinations: [{ displayLabel }],
+    };
+    expect(rankedTripCovers(trip, 6)).toEqual(
+      rankedTripCovers({ ...trip, destination: displayLabel, destinations: [] }, 6),
+    );
+    expect(resolveTripCover({ ...trip, selectedCoverAssetIdRaw: "city" })).toEqual({
+      assetId: "city",
+      mode: "manual",
+    });
+    expect(trip.destination).toBe("Legacy location");
+  }
+});
 it("keeps 48 frozen images byte exact and all74 literal resource mappings finite", () => {
   const allow = JSON.parse(readFileSync("vendor/otr-cover-core/allowlist.json", "utf8"));
   const map = readFileSync("src/features/trip-cover/tripCoverSources.ts", "utf8");

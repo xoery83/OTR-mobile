@@ -6,11 +6,13 @@ import {
   type ProductionRank,
 } from "../../../vendor/otr-cover-core/frozenExports";
 import type { GeoEntity } from "../../../vendor/otr-cover-core/geo";
+import { tripDestinationDisplay } from "../day-feed/tripDestinationDisplay";
 
 export type CoverMetadata = Readonly<{
   id: string;
   name?: string;
   destination?: string | null;
+  destinations?: readonly { displayLabel: string }[];
   selectedCoverAssetId?: TripCoverAssetId | null;
   selectedCoverAssetIdRaw?: string | null;
 }>;
@@ -28,14 +30,15 @@ export function rankedTripCovers(
     configureProductionGeo(geo.entities);
     configured = true;
   }
-  const key = JSON.stringify([trip.id, trip.name ?? "", trip.destination ?? null, limit]);
+  const destination = tripDestinationDisplay(trip);
+  const key = JSON.stringify([trip.id, trip.name ?? "", destination, limit]);
   const previous = cache.get(key);
   if (previous) return previous;
   const result = rankCoverAssets(
     {
       tripId: trip.id,
       name: trip.name ?? "",
-      destination: trip.destination ?? null,
+      destination,
       allowPendingLandmarkPreview: true,
     },
     coverCatalog,
