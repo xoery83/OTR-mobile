@@ -150,9 +150,9 @@ public final class ImagePasteModule: Module {
         else if let url = item as? URL { result = .success(try value.copyProviderFile(url)) }
         // Never turn an opaque UIImage into new source bytes.
         else { throw ImagePasteFailure.unsupported }
-      } catch {
-        Self.providerFailure("legacy", type: type, provider: provider, error: error)
-        result = .failure(error as? ImagePasteFailure ?? .storage)
+      } catch let storageError {
+        Self.providerFailure("legacy", type: type, provider: provider, error: error ?? storageError)
+        result = .failure(storageError as? ImagePasteFailure ?? .storage)
       }
       Task { @MainActor in
         guard let self, self.current(value) else { value.cancelPending(); return }
@@ -168,8 +168,10 @@ public final class ImagePasteModule: Module {
     #if DEBUG
     let error = error as NSError?
     let domain = ["NSItemProviderErrorDomain", "NSCocoaErrorDomain"].contains(error?.domain ?? "") ? error!.domain : "OTHER"
+    let underlying = error?.userInfo[NSUnderlyingErrorKey] as? NSError
+    let underlyingDomain = ["NSItemProviderErrorDomain", "NSCocoaErrorDomain", "NSPOSIXErrorDomain"].contains(underlying?.domain ?? "") ? underlying!.domain : "OTHER"
     let registered = ImagePastePolicy.identifiers.filter { provider.registeredTypeIdentifiers.contains($0) }.joined(separator: ",")
-    NSLog("OTRImagePaste phase=%@ type=%@ domain=%@ code=%ld formats=%@", phase, type, domain, error?.code ?? 0, registered)
+    NSLog("OTRImagePaste phase=%@ type=%@ domain=%@ code=%ld formats=%@ underlyingDomain=%@ underlyingCode=%ld", phase, type, domain, error?.code ?? 0, registered, underlyingDomain, underlying?.code ?? 0)
     #endif
   }
   private func fail(_ value: ImagePasteBatch, _ error: ImagePasteFailure) {

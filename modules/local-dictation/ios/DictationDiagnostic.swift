@@ -20,6 +20,13 @@ struct DictationDiagnostic {
     let value = error.map { $0 as NSError }
     domain = value.map { allowed.contains($0.domain) ? $0.domain : "OTHER" } ?? "NONE"
     code = value.flatMap { (-2147483648...2147483647).contains($0.code) ? $0.code : nil }
+    #if DEBUG
+    if let value {
+      let underlying = value.userInfo[NSUnderlyingErrorKey] as? NSError
+      let underlyingDomain = underlying.map { allowed.contains($0.domain) ? $0.domain : "OTHER" } ?? "NONE"
+      NSLog("OTRDictation phase=%@ domain=%@ code=%ld underlyingDomain=%@ underlyingCode=%ld", phase.rawValue, domain, code ?? 0, underlyingDomain, underlying?.code ?? 0)
+    }
+    #endif
     self.sampleRateValid = sampleRateValid
     self.channelCountValid = channelCountValid
   }
