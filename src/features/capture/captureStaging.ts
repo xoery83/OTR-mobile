@@ -43,6 +43,7 @@ export type CaptureDraftItem = StagedCaptureItem | StagedCaptureText | StagedCap
 export type CaptureTripTarget = Readonly<{ id: string; name: string }> | null;
 export type CaptureDraftSnapshot = Readonly<{
   tripTarget?: CaptureTripTarget;
+  targetRevision?: number;
   items: readonly CaptureDraftItem[];
   editorText: string;
   selecting: boolean;
@@ -88,6 +89,7 @@ export function createCaptureStaging(
   let invocation = 0;
   let editorText = "";
   let tripTarget: CaptureTripTarget | undefined;
+  let targetRevision = 0;
   let texts: readonly StagedCaptureText[] = [];
   let pasted: readonly StagedCapturePaste[] = [];
   const pasteReleases = new Map<string, (tokens: readonly string[]) => void>();
@@ -115,6 +117,7 @@ export function createCaptureStaging(
       ),
       editorText,
       ...(tripTarget !== undefined ? { tripTarget } : {}),
+      ...(targetRevision ? { targetRevision } : {}),
       selecting: snapshot.selecting,
       error: snapshot.error,
     });
@@ -127,6 +130,7 @@ export function createCaptureStaging(
   }
   function clear() {
     epoch += 1;
+    targetRevision += 1;
     editorText = "";
     texts = [];
     releasePaste(pasted);
@@ -156,6 +160,7 @@ export function createCaptureStaging(
       if (!draftOwner || !current() || snapshot.selecting) return false;
       if (target && (!target.id || !target.name)) return false;
       epoch += 1;
+      targetRevision += 1;
       tripTarget = target ? Object.freeze({ ...target }) : null;
       publish({ ...snapshot });
       return true;

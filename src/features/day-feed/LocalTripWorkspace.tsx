@@ -583,7 +583,14 @@ function LocalTripContent({
     onImport: selected
       ? () => {
           if (generation === getAccountGeneration())
-            router.push({ pathname: "/capture", params: { tripId: selected.id } });
+            router.push({
+              pathname: "/import-plans",
+              params: {
+                tripId: selected.id,
+                origin: "TRIP",
+                originGeneration: String(generation),
+              },
+            });
         }
       : undefined,
     onBuild: selected

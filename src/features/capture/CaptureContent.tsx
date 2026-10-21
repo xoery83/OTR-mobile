@@ -18,6 +18,7 @@ import { CaptureComposer } from "./CaptureComposer";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
 import { subscribeCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
 
+let pasteInvocation = 0;
 // Hosts remount on invocation-context change. Context is a prior, never assignment.
 export function CaptureContent({
   isCurrent,
@@ -42,6 +43,7 @@ export function CaptureContent({
   onReopenJob?: (id: string) => void;
   accountId?: string;
 }) {
+  const styles = useThemedStyles(createStyles);
   const [{ staging, invocationTripName, invocationTripPrior }] = useState(() => ({
     staging: draftStaging ?? createCaptureStaging(pickCaptureMaterial, isCurrent),
     invocationTripName: tripName,
@@ -62,6 +64,14 @@ export function CaptureContent({
   const selectedTripName =
     draft.tripTarget === undefined ? invocationTripName : draft.tripTarget?.name;
   const submittedTripPrior = useRef<string | null>(null);
+  const [pasteSession] = useState(
+    () => `import-paste:${Date.now()}:${++pasteInvocation}`,
+  );
+  const pasteRevision = draft.targetRevision ?? 0;
+  const pasteRequestId = `${pasteSession}:${pasteRevision}`;
+  const [pasteFailure, setPasteFailure] = useState<
+    "PASTE_UNSUPPORTED" | "PASTE_LIMIT" | "PASTE_FAILED" | null
+  >(null);
   const [duplicate, setDuplicate] = useState(false);
   const [model, setModel] = useState<CaptureJobReadModel | null>(null);
   const modelRef = useRef<CaptureJobReadModel | null>(null);
@@ -308,6 +318,64 @@ export function CaptureContent({
         count={staging.prepareSubmit()?.length ?? 0}
         tripName={selectedTripName}
         readTripTargets={readTripTargets}
+        renderImagePaste={
+          accountId
+            ? (enabled) => {
+                // Native intake is loaded only when this explicit composer control is rendered.
+                const { ImagePasteControl, releaseImagePaste } =
+                  require("@/native/imagePaste") as typeof import("@/native/imagePaste");
+                return (
+                  <ImagePasteControl
+                    requestId={pasteRequestId}
+                    enabled={
+                      enabled &&
+                      current() &&
+                      !running.current &&
+                      !attempted &&
+                      !reopening &&
+                      !model
+                    }
+                    style={styles.pasteControl}
+                    onTouchStart={() => setPasteFailure(null)}
+                    onImages={(payload) => {
+                      if (
+                        !current() ||
+                        payload.requestId !== pasteRequestId ||
+                        (staging.getDraftSnapshot().targetRevision ?? 0) !==
+                          pasteRevision ||
+                        running.current ||
+                        attempted ||
+                        reopening ||
+                        model
+                      ) {
+                        releaseImagePaste(payload.items.map((item) => item.token));
+                        return;
+                      }
+                      setPasteFailure(
+                        staging.stagePastedImages(payload.items, releaseImagePaste)
+                          ? null
+                          : "PASTE_LIMIT",
+                      );
+                    }}
+                    onFailure={(payload) => {
+                      if (
+                        current() &&
+                        payload.requestId === pasteRequestId &&
+                        (staging.getDraftSnapshot().targetRevision ?? 0) === pasteRevision
+                      )
+                        setPasteFailure(
+                          payload.code === "unsupported"
+                            ? "PASTE_UNSUPPORTED"
+                            : payload.code === "limit"
+                              ? "PASTE_LIMIT"
+                              : "PASTE_FAILED",
+                        );
+                    }}
+                  />
+                );
+              }
+            : undefined
+        }
         onTripTarget={async (target, targetCurrent) => {
           if (!current() || running.current || attempted || reopening || model)
             return false;
@@ -326,7 +394,15 @@ export function CaptureContent({
         errorMessage={
           !attempted && submitError && selectedTripPrior
             ? t("actionIsland.tripCaptureUnavailable")
-            : undefined
+            : pasteFailure
+              ? t(
+                  pasteFailure === "PASTE_UNSUPPORTED"
+                    ? "capture.composer.paste.unsupported"
+                    : pasteFailure === "PASTE_LIMIT"
+                      ? "capture.composer.paste.limit"
+                      : "capture.composer.paste.failed",
+                )
+              : undefined
         }
         duplicate={duplicate}
         title={
@@ -724,6 +800,7 @@ export function CaptureTray({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    pasteControl: { width: 44, minHeight: 44 },
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.row },
     secondary: { color: colors.textSecondary, ...visual.type.meta },

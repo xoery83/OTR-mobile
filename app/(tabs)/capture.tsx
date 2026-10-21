@@ -2,7 +2,7 @@ import {
   listCaptureTripPriors,
   readCaptureTripPrior,
 } from "@/features/capture/captureTripPrior";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
@@ -35,15 +35,19 @@ type Admission = {
   current: () => boolean;
 };
 // Only overlay invocations outlive their route. Purge on every account-generation change.
-const overlayRetained: {
+type RetainedDrafts = {
   current: {
     accountId: string;
     drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
   } | null;
-} = { current: null };
+};
+const overlayRetained: RetainedDrafts = { current: null };
+const tabRetained: RetainedDrafts = { current: null };
 subscribeAccountGeneration(() => {
-  overlayRetained.current?.drafts.forEach((draft) => draft.cancel());
-  overlayRetained.current = null;
+  for (const retained of [overlayRetained, tabRetained]) {
+    retained.current?.drafts.forEach((draft) => draft.cancel());
+    retained.current = null;
+  }
 });
 export default function CaptureRoute({ overlay = false }: { overlay?: boolean } = {}) {
   const { jobId, origin, originGeneration, tripId } = useLocalSearchParams<{
@@ -68,10 +72,6 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
     getAccountGeneration,
     getAccountGeneration,
   );
-  const tabRetained = useRef<{
-    accountId: string;
-    drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
-  } | null>(null);
   const retained = overlay ? overlayRetained : tabRetained;
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
@@ -103,8 +103,10 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
                 return false;
               }
             };
-            if (retained.current?.accountId !== accountId)
+            if (retained.current?.accountId !== accountId) {
+              retained.current?.drafts.forEach((draft) => draft.cancel());
               retained.current = { accountId, drafts: new Map() };
+            }
             let staging = retained.current.drafts.get(owner.tripPrior);
             if (staging) staging.resume(owner, lease);
             else {

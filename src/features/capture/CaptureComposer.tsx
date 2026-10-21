@@ -34,6 +34,7 @@ type Props = {
   title?: string;
   contextLabel?: string;
   errorMessage?: string;
+  renderImagePaste?(enabled: boolean): ReactNode;
   readTripTargets?(): Promise<readonly { id: string; name: string }[]>;
   onTripTarget?(
     target: { id: string; name: string } | null,
@@ -61,6 +62,7 @@ export function CaptureComposer({
   contextLabel,
   errorMessage,
   readTripTargets,
+  renderImagePaste,
   onTripTarget,
   onClose,
   onFiles,
@@ -113,12 +115,15 @@ export function CaptureComposer({
     const epoch = targetEpoch.current;
     const current = () => epoch === targetEpoch.current;
     try {
-      if (await onTripTarget(target, current)) setPage("composer");
-      else setTargetError(true);
+      const selected = await onTripTarget(target, current);
+      if (current()) {
+        if (selected) setPage("composer");
+        else setTargetError(true);
+      }
     } catch {
-      setTargetError(true);
+      if (current()) setTargetError(true);
     } finally {
-      setTargetBusy(false);
+      if (current()) setTargetBusy(false);
     }
   };
   const maxInputHeight = 6 * 22 * Math.max(1, fontScale) + 16;
@@ -417,6 +422,7 @@ export function CaptureComposer({
                     >
                       <AppIcon name="plus" size={25} color={colors.textPrimary} />
                     </Pressable>
+                    {renderImagePaste?.(!locked)}
                     <View style={styles.spacer} />
                     <Pressable
                       accessibilityRole="button"
@@ -484,6 +490,15 @@ export function CaptureComposer({
                           : `capture.voice.${voice.state.status}`,
                       )}
                     </UiText>
+                    {voice.state.status === "error" && voice.diagnostic ? (
+                      <UiText style={styles.secondary}>
+                        {t("capture.voice.diagnostic", {
+                          phase: voice.diagnostic.phase,
+                          domain: voice.diagnostic.domain,
+                          code: voice.diagnostic.code ?? "?",
+                        })}
+                      </UiText>
+                    ) : null}
                     {voice.busy ? (
                       <UiButton
                         variant="text"

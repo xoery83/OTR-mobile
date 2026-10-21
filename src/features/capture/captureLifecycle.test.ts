@@ -137,6 +137,7 @@ beforeEach(() => {
   ui.focus = null;
   ui.focusCleanup = null;
   vi.resetAllMocks();
+  advanceAccountGeneration();
   ui.focused = true;
   ui.jobId = undefined;
   ui.tripId = undefined;
@@ -873,4 +874,41 @@ it("late selection from a closed target panel cannot change the draft", async ()
   done(true);
   expect(await selecting).toBe(false);
   expect(staging.getDraftSnapshot().tripTarget).toBeUndefined();
+});
+
+it("clipboard-only draft cannot bypass disabled UI and enter file submission", async () => {
+  const s = createCaptureStaging(
+    async () => [],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  s.stagePastedImages(
+    [
+      {
+        source: "clipboard",
+        representation: "item-provider",
+        token: "one",
+        uri: "file:///tmp/paste.png",
+        byteSize: 4,
+        mimeType: "image/png",
+      },
+    ],
+    vi.fn(),
+  );
+  const render = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      accountId: "A",
+      draftStaging: s,
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+    }).props;
+  };
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  render().onSubmit();
+  await Promise.resolve();
+  expect(ui.createSession).not.toHaveBeenCalled();
+  expect(ui.submit).not.toHaveBeenCalled();
+  expect(s.getDraftSnapshot().items[0].source).toBe("clipboard");
 });
