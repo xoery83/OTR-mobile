@@ -1,4 +1,6 @@
 {
   "platforms": ["ios"],
-  "apple": { "modules": ["LocalDictationModule"] }
+  "apple": {
+    "modules": ["LocalDictationModule", "ImagePasteModule"]
+  }
 }

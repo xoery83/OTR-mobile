@@ -27,6 +27,9 @@ private final class DictationAudioInput {
     let lease: DictationLease
     let emit: Emit
     var phase = Phase.starting
+    var diagnosticPhase = DictationDiagnosticPhase.capability
+    var sampleRateValid: Bool?
+    var channelCountValid: Bool?
     var engine: AVAudioEngine?
     var input: DictationAudioInput?
     var task: SFSpeechRecognitionTask?
@@ -48,24 +51,24 @@ private final class DictationAudioInput {
       Task { @MainActor in
         // System permission dialogs may resign active before any audio resources exist.
         if let session = self?.active, session.phase != .starting {
-          self?.finish(session.lease, error: .interrupted)
+          self?.finish(session.lease, error: .interrupted, diagnostic: DictationDiagnostic(.lifecycle))
         }
       }
     })
     observers.append(center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
       Task { @MainActor in
-        if let lease = self?.active?.lease { self?.finish(lease, error: .interrupted) }
+        if let lease = self?.active?.lease { self?.finish(lease, error: .interrupted, diagnostic: DictationDiagnostic(.lifecycle)) }
       }
     })
     observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
       guard (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt) == AVAudioSession.InterruptionType.began.rawValue else { return }
       Task { @MainActor in
-        if let lease = self?.active?.lease { self?.finish(lease, error: .interrupted) }
+        if let lease = self?.active?.lease { self?.finish(lease, error: .interrupted, diagnostic: DictationDiagnostic(.lifecycle)) }
       }
     })
     observers.append(center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
       Task { @MainActor in
-        if let lease = self?.active?.lease { self?.finish(lease, error: .interrupted) }
+        if let lease = self?.active?.lease { self?.finish(lease, error: .interrupted, diagnostic: DictationDiagnostic(.lifecycle)) }
       }
     })
   }
@@ -76,7 +79,7 @@ private final class DictationAudioInput {
     active = session
     state(session, "starting")
     session.deadline = Timer(timeInterval: 60, repeats: false) { [weak self] _ in
-      Task { @MainActor in self?.finish(lease, error: .timeout) }
+      Task { @MainActor in self?.finish(lease, error: .timeout, diagnostic: DictationDiagnostic(.deadline)) }
     }
     if let deadline = session.deadline { RunLoop.main.add(deadline, forMode: .common) }
     do {
@@ -89,13 +92,17 @@ private final class DictationAudioInput {
         Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") is String
       else { throw DictationFailure.unavailable }
       // Authorization is requested only in response to this explicit start call.
+      session.diagnosticPhase = .speechPermission
       let speech = await speechPermission()
       guard fence.current(lease) else { throw DictationFailure.interrupted }
       guard speech else { throw DictationFailure.permission }
+      session.diagnosticPhase = .microphonePermission
       let microphone = await microphonePermission()
       guard fence.current(lease) else { throw DictationFailure.interrupted }
       guard microphone else { throw DictationFailure.permission }
+      session.diagnosticPhase = .application
       guard UIApplication.shared.applicationState == .active else { throw DictationFailure.interrupted }
+      session.diagnosticPhase = .capability
       guard recognizer.supportsOnDeviceRecognition, recognizer.isAvailable else { throw DictationFailure.unavailable }
       let request = SFSpeechAudioBufferRecognitionRequest()
       request.requiresOnDeviceRecognition = true
@@ -103,13 +110,18 @@ private final class DictationAudioInput {
       request.taskHint = .dictation
       let audio = AVAudioSession.sharedInstance()
       session.previousAudio = (audio.category, audio.mode, audio.categoryOptions)
+      session.diagnosticPhase = .audioCategory
       try audio.setCategory(.record, mode: .measurement)
+      session.diagnosticPhase = .audioActivation
       try audio.setActive(true)
       session.audioActive = true
       let engine = AVAudioEngine()
       session.engine = engine
+      session.diagnosticPhase = .audioFormat
       let format = engine.inputNode.outputFormat(forBus: 0)
-      guard format.sampleRate > 0, format.channelCount > 0 else { throw DictationFailure.unavailable }
+      session.sampleRateValid = format.sampleRate.isFinite && format.sampleRate > 0
+      session.channelCountValid = format.channelCount > 0
+      guard session.sampleRateValid == true, session.channelCountValid == true else { throw DictationFailure.unavailable }
       let input = DictationAudioInput(request)
       session.input = input
       engine.inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in input.append(buffer) }
@@ -119,21 +131,22 @@ private final class DictationAudioInput {
           guard let self, self.fence.current(lease), let current = self.active else { return }
           if let result {
             guard let text = try? checkedDictationTranscript(result.bestTranscription.formattedString)
-            else { self.finish(lease, error: .failed); return }
+            else { self.finish(lease, error: .failed, diagnostic: DictationDiagnostic(.transcriptLimit)); return }
             current.emit("transcript", ["sessionId": lease.sessionId,
               "text": text, "isFinal": result.isFinal])
             if result.isFinal { self.finish(lease); return }
           }
-          if error != nil { self.finish(lease, error: .failed) }
+          if let error { self.finish(lease, error: .failed, diagnostic: DictationDiagnostic(.recognition, error: error, sampleRateValid: current.sampleRateValid, channelCountValid: current.channelCountValid)) }
         }
       }
+      session.diagnosticPhase = .audioEngine
       engine.prepare()
       try engine.start()
       session.phase = .listening
       state(session, "listening")
     } catch {
       let failure = error as? DictationFailure ?? .failed
-      finish(lease, error: failure)
+      finish(lease, error: failure, diagnostic: DictationDiagnostic(session.diagnosticPhase, error: error is DictationFailure ? nil : error, sampleRateValid: session.sampleRateValid, channelCountValid: session.channelCountValid))
       throw failure
     }
   }
@@ -150,7 +163,7 @@ private final class DictationAudioInput {
     stopAudio(session)
     session.task?.finish()
     session.finishDeadline = Timer(timeInterval: 3, repeats: false) { [weak self] _ in
-      Task { @MainActor in self?.finish(lease, error: .timeout) }
+      Task { @MainActor in self?.finish(lease, error: .timeout, diagnostic: DictationDiagnostic(.finishDeadline)) }
     }
     if let deadline = session.finishDeadline { RunLoop.main.add(deadline, forMode: .common) }
   }
@@ -162,9 +175,9 @@ private final class DictationAudioInput {
     if let lease = active?.lease, lease.owner == owner { finish(lease) }
     fence.retire(owner: owner)
   }
-  private func state(_ session: Session, _ status: String, error: DictationFailure? = nil) {
+  private func state(_ session: Session, _ status: String, error: DictationFailure? = nil, diagnostic: DictationDiagnostic? = nil) {
     var body: [String: Any] = ["sessionId": session.lease.sessionId, "status": status]
-    if let error { body["error"] = error.rawValue }
+    if let error { body["error"] = error.rawValue; if let diagnostic { body["diagnostic"] = diagnostic.body } }
     session.emit("state", body)
   }
   private func stopAudio(_ session: Session) {
@@ -181,13 +194,13 @@ private final class DictationAudioInput {
       session.previousAudio = nil
     }
   }
-  private func finish(_ lease: DictationLease, error: DictationFailure? = nil) {
+  private func finish(_ lease: DictationLease, error: DictationFailure? = nil, diagnostic: DictationDiagnostic? = nil) {
     guard fence.release(lease), let session = active else { return }
     active = nil // Fence callbacks before cancelling tasks or releasing audio resources.
     session.deadline?.invalidate(); session.finishDeadline?.invalidate()
     stopAudio(session)
     session.task?.cancel(); session.task = nil
-    state(session, error == nil ? "stopped" : "error", error: error)
+    state(session, error == nil ? "stopped" : "error", error: error, diagnostic: diagnostic)
   }
   private func speechPermission() async -> Bool {
     switch SFSpeechRecognizer.authorizationStatus() {
