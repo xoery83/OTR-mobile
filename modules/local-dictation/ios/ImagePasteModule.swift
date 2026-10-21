@@ -125,7 +125,34 @@ public final class ImagePasteModule: Module {
         catch { result = .failure(error as? ImagePasteFailure ?? .storage) }
       } else {
         Self.providerFailure("data", type: type, provider: provider, error: error)
-        result = .failure(.loadFailed)
+        Task { @MainActor in
+          guard let self, self.current(value) else { value.cancelPending(); return }
+          self.loadLegacy(provider, type: type, providers: providers, index: index, current: value, items: items)
+        }
+        return
+      }
+      Task { @MainActor in
+        guard let self, self.current(value) else { value.cancelPending(); return }
+        self.progress = nil
+        switch result {
+        case .success(let item): self.load(providers, index: index + 1, current: value, items: items + [item])
+        case .failure(let error): self.fail(value, error)
+        }
+      }
+    }
+  }
+  private func loadLegacy(_ provider: NSItemProvider, type: String, providers: [(NSItemProvider, String)], index: Int, current value: ImagePasteBatch, items: [ImagePasteItem]) {
+    provider.loadItem(forTypeIdentifier: type, options: nil) { [weak self] item, error in
+      let result: Result<ImagePasteItem, ImagePasteFailure>
+      do {
+        if error != nil { throw ImagePasteFailure.loadFailed }
+        if let data = item as? Data { result = .success(try value.copyProviderData(data)) }
+        else if let url = item as? URL { result = .success(try value.copyProviderFile(url)) }
+        // Never turn an opaque UIImage into new source bytes.
+        else { throw ImagePasteFailure.unsupported }
+      } catch {
+        Self.providerFailure("legacy", type: type, provider: provider, error: error)
+        result = .failure(error as? ImagePasteFailure ?? .storage)
       }
       Task { @MainActor in
         guard let self, self.current(value) else { value.cancelPending(); return }
