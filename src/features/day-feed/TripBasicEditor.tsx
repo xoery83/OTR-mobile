@@ -3,8 +3,8 @@ import { destinationDraft, destinationInputs } from "./tripDestinationDraft";
 import type { LocalTripDestinationsChange } from "@/domain/trip/localTripDestinationUpdate";
 import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
 import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Modal, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Alert, Modal, ScrollView, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import {
   tripMetadataSchema,
@@ -47,6 +47,8 @@ export function TripBasicEditor({
   setup = null,
   currencyAvailable = false,
   onSavingChange,
+  registerDismiss,
+  onDirtyChange,
   onClose,
 }: {
   trip: Pick<
@@ -72,6 +74,8 @@ export function TripBasicEditor({
   setup?: TripPreparationSetup | null;
   currencyAvailable?: boolean;
   onSavingChange?(saving: boolean): void;
+  registerDismiss?(handler: (() => void) | null): void;
+  onDirtyChange?(dirty: boolean): void;
   onClose?(): void;
 }) {
   useUiLocale();
@@ -99,10 +103,13 @@ export function TripBasicEditor({
   useLayoutEffect(() => {
     latestTripId.current = trip.id;
   }, [trip.id]);
-  const current = () =>
-    alive.current &&
-    generation === getAccountGeneration() &&
-    latestTripId.current === openedTripId;
+  const current = useCallback(
+    () =>
+      alive.current &&
+      generation === getAccountGeneration() &&
+      latestTripId.current === openedTripId,
+    [generation, openedTripId],
+  );
   const [editorId] = useState(() => createUuid());
   const [initialDestinations, setInitialDestinations] = useState<
     readonly TripDestinationDraftSelection[]
@@ -119,6 +126,7 @@ export function TripBasicEditor({
     readonly LocalTripDestinationInput[]
   >(trip.destinations?.map(({ ordinal: _ordinal, ...item }) => item) ?? []);
   const [destinationBusy, setDestinationBusy] = useState(false);
+  const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
   const destinationChanged =
     JSON.stringify(destinationItems) !== JSON.stringify(initialDestinations);
   useEffect(() => {
@@ -155,6 +163,30 @@ export function TripBasicEditor({
     after.startDate !== before.startDate ||
     after.endDate !== before.endDate ||
     (metadataEditable && coverChanged && draftCover !== beforeCover);
+  const requestClose = useCallback(() => {
+    if (!current() || busy.current) return;
+    if (!dirty && !destinationQueryDirty) {
+      onClose?.();
+      return;
+    }
+    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
+      { text: t("actionIsland.stay"), style: "cancel" },
+      {
+        text: t("actionIsland.discard"),
+        style: "destructive",
+        onPress: () => {
+          if (current() && !busy.current) onClose?.();
+        },
+      },
+    ]);
+  }, [current, dirty, destinationQueryDirty, onClose]);
+  useEffect(() => {
+    registerDismiss?.(requestClose);
+    return () => registerDismiss?.(null);
+  }, [registerDismiss, requestClose]);
+  useEffect(() => {
+    onDirtyChange?.(dirty || destinationQueryDirty);
+  }, [onDirtyChange, dirty, destinationQueryDirty]);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySetup, setCurrencySetup] = useState<TripPreparationSetup | null>(null);
   const closeCurrency = () => {
@@ -250,9 +282,7 @@ export function TripBasicEditor({
       <SheetHeader
         title={t("tripHome.edit")}
         leftLabel={t("common.cancel")}
-        onLeft={() => {
-          if (!busy.current) onClose?.();
-        }}
+        onLeft={requestClose}
         rightLabel={t("ui.save")}
         onRight={metadataEditable ? save : undefined}
         rightDisabled={saving || destinationBusy || !valid || !dirty}
@@ -283,7 +313,7 @@ export function TripBasicEditor({
                 generation={generation}
                 items={destinationItems}
                 onChange={setDestinationItems}
-                onQueryDirty={() => {}}
+                onQueryDirty={setDestinationQueryDirty}
                 onBusy={setDestinationBusy}
                 disabled={!metadataEditable || saving}
               />
@@ -299,6 +329,7 @@ export function TripBasicEditor({
             trip={{
               ...trip,
               name: after.name,
+              destinations: destinationItems.map((item) => ({ displayLabel: item.text })),
               destination: destinationItems.length
                 ? destinationItems.map((item) => item.text).join(" · ")
                 : after.destination,

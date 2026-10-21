@@ -21,8 +21,9 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useCallback: (callback: unknown) => callback,
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
-  useEffect: () => {},
+  useEffect: (effect: () => void) => effect(),
   useLayoutEffect: (effect: () => void) => effect(),
   useState: (initial: unknown) => {
     const i = state.cursor++;
@@ -523,4 +524,101 @@ it("pending resolution blocks Save and changing Name never replaces selected Tag
   view = render();
   expect(view.find((n) => n.type === SheetHeader)!.props.rightDisabled).toBe(true);
   expect(destinationField(view).props.items).toEqual(original);
+});
+
+it("automatic cover preview replaces old structured destinations with draft Tags, including explicit empty removal", () => {
+  const original = {
+    ...trip,
+    destination: null,
+    selectedCoverAssetId: null,
+    selectedCoverAssetIdRaw: null,
+    destinations: [
+      {
+        destinationId: "00000000-0000-4000-8000-000000000011",
+        displayLabel: "Sydney",
+        source: "MANUAL" as const,
+        ordinal: 0,
+      },
+    ],
+  };
+  let view = render(undefined, undefined, original);
+  destinationField(view).props.onChange([
+    { localId: "00000000-0000-4000-8000-000000000012", text: "Tokyo", source: "MANUAL" },
+  ]);
+  view = render(undefined, undefined, original);
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.trip).toMatchObject({
+    destination: "Tokyo",
+    destinations: [{ displayLabel: "Tokyo" }],
+  });
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.selectedRaw).toBeNull();
+  destinationField(view).props.onChange([]);
+  view = render(undefined, undefined, original);
+  expect(view.find((n) => n.type === TripCoverPicker)!.props.trip).toMatchObject({
+    destination: null,
+    destinations: [],
+  });
+  expect(original.destinations[0].displayLabel).toBe("Sydney");
+});
+it("unselected query guards Cancel and native dismissal without enabling Save or persisting search text", () => {
+  const save = vi.fn(),
+    close = vi.fn(),
+    register = vi.fn(),
+    dirtyChange = vi.fn();
+  const renderEditor = () => {
+    state.cursor = state.refCursor = 0;
+    return elements(
+      TripBasicEditor({
+        trip,
+        metadataEditable: true,
+        onSaveMetadata: save,
+        onSelectCover: vi.fn(),
+        onClose: close,
+        registerDismiss: register,
+        onDirtyChange: dirtyChange,
+      }),
+    );
+  };
+  let view = renderEditor();
+  destinationField(view).props.onQueryDirty(true);
+  view = renderEditor();
+  expect(view.find((n) => n.type === SheetHeader)!.props.rightDisabled).toBe(true);
+  expect(dirtyChange).toHaveBeenLastCalledWith(true);
+  (view.find((n) => n.type === SheetHeader)!.props.onLeft as () => void)();
+  expect(close).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
+  expect(state.alert).toHaveBeenCalledWith(
+    "actionIsland.unsavedTitle",
+    "actionIsland.unsavedHint",
+    expect.any(Array),
+  );
+  register.mock.lastCall![0]();
+  expect(close).not.toHaveBeenCalled();
+  state.alert.mock.lastCall![2][1].onPress();
+  expect(close).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+});
+it("clean query cancellation closes directly while clearing a pending query removes only its discard guard", () => {
+  const close = vi.fn(),
+    save = vi.fn();
+  const renderEditor = () => {
+    state.cursor = state.refCursor = 0;
+    return elements(
+      TripBasicEditor({
+        trip,
+        metadataEditable: true,
+        onSaveMetadata: save,
+        onSelectCover: vi.fn(),
+        onClose: close,
+      }),
+    );
+  };
+  let view = renderEditor();
+  destinationField(view).props.onQueryDirty(true);
+  view = renderEditor();
+  destinationField(view).props.onQueryDirty(false);
+  view = renderEditor();
+  (view.find((n) => n.type === SheetHeader)!.props.onLeft as () => void)();
+  expect(close).toHaveBeenCalledOnce();
+  expect(state.alert).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
 });

@@ -1070,9 +1070,19 @@ it("Creator Close discards staged cover without an independent write and cannot 
   button("tripHome.edit").onPress();
   render();
   await state.nodes.find((node) => node.coverPicker)!.coverPicker.onSelect("coast");
+  // This harness normally suppresses update effects; flush the new child guard registration.
+  state.forceEffects = true;
   render();
-  const close = button("common.cancel").onPress;
-  close();
+  state.forceEffects = false;
+  render();
+  const host = state.nodes.find(
+    (node) => node.modal?.presentationStyle === "pageSheet",
+  )!.modal;
+  expect(host.allowSwipeDismissal).toBe(false);
+  host.onRequestClose();
+  render();
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
+  state.alert.mock.lastCall![2][1].onPress();
   render();
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
   expect(repo.updateMetadata).not.toHaveBeenCalled();

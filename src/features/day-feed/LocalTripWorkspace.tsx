@@ -184,6 +184,8 @@ function LocalTripContent({
   const personalCover = useTripPersonalCover(tripId);
   const [editorSaving, setEditorSaving] = useState(false);
   const editorBusy = useRef(false);
+  const editorDismiss = useRef<(() => void) | null>(null);
+  const [editorDirty, setEditorDirty] = useState(false);
   const [metadataEditable, setMetadataEditable] = useState(false);
   const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
   const receiveSetup = useCallback(
@@ -761,9 +763,12 @@ function LocalTripContent({
           <Modal
             visible={coverOpen}
             presentationStyle="pageSheet"
-            allowSwipeDismissal={!editorSaving}
+            allowSwipeDismissal={!editorSaving && !editorDirty}
             onRequestClose={() => {
-              if (!editorBusy.current) setCoverOpen(false);
+              if (!editorBusy.current) {
+                if (editorDismiss.current) editorDismiss.current();
+                else setCoverOpen(false);
+              }
             }}
             animationType="slide"
           >
@@ -777,6 +782,10 @@ function LocalTripContent({
                   onClose={() => {
                     if (!editorBusy.current) setCoverOpen(false);
                   }}
+                  registerDismiss={(handler) => {
+                    editorDismiss.current = handler;
+                  }}
+                  onDirtyChange={setEditorDirty}
                   onSavingChange={(saving) => {
                     editorBusy.current = saving;
                     setEditorSaving(saving);
