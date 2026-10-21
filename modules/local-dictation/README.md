@@ -97,6 +97,9 @@ Apple references:
 
 UIPasteControl first requests an encoded file representation. If the system provider
 cannot supply a file, it requests encoded Data for the same advertised image type.
+If that is unavailable, the legacy item API may supply encoded Data or a file URL;
+opaque UIImage/other objects are rejected, never re-encoded. The legacy API has no
+cancellable Progress; request/batch fences still reject late delivery.
 Both paths enforce header allowlisting, the shared10-item/20MiB retained-byte budget,
 claim/request lifecycle fences, owned private files and explicit release. No UIImage
 decode, re-encode or upload. NSItemProvider controls the Data callback allocation;
