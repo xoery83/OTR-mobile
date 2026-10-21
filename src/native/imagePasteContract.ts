@@ -72,13 +72,14 @@ export const imagePasteFailureSchema = z.object({
 });
 export type ImagePasteFailure = z.infer<typeof imagePasteFailureSchema>;
 
-// A queued native event may arrive after a context change. Release tokens, never adopt it.
+// Each opaque token crosses this gate once: adoption and release are both terminal.
 export function createImagePasteDeliveryGate(options: {
   current(requestId: string): boolean;
   release(tokens: string[]): void;
   images(payload: ImagePastePayload): void;
   failure(payload: ImagePasteFailure): void;
 }) {
+  const terminal = new Set<string>();
   const releaseRaw = (value: unknown) => {
     const items = (value as { items?: unknown } | null)?.items;
     if (!Array.isArray(items)) return;
@@ -86,23 +87,31 @@ export function createImagePasteDeliveryGate(options: {
       ...new Set(
         items.flatMap((i) => {
           const parsed = token.safeParse(i?.token);
-          return parsed.success ? [parsed.data] : [];
+          return parsed.success && !terminal.has(parsed.data) ? [parsed.data] : [];
         }),
       ),
     ];
+    // Fence before invoking consumer code, including synchronous reentrant events.
+    for (const value of tokens) terminal.add(value);
     for (let i = 0; i < tokens.length; i += 10) options.release(tokens.slice(i, i + 10));
   };
   return {
     images(value: unknown) {
       const result = imagePastePayloadSchema.safeParse(value);
-      if (!result.success || !options.current(result.data.requestId)) {
+      if (
+        !result.success ||
+        !options.current(result.data.requestId) ||
+        result.data.items.some((item) => terminal.has(item.token))
+      ) {
         releaseRaw(value);
         return;
       }
+      for (const item of result.data.items) terminal.add(item.token);
       try {
         options.images(result.data);
       } catch {
-        releaseRaw(value);
+        // The consumer may have adopted files before throwing. Only that owner
+        // can release them now; deleting here could destroy an existing draft.
       }
     },
     failure(value: unknown) {

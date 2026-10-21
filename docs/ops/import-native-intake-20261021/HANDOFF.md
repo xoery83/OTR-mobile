@@ -35,6 +35,13 @@ malformed JS event automatically releases recognized opaque tokens; keep the
 owning staging fence too. The release API can delete only files registered by this
 module, never an arbitrary URI. No submitted-file lifecycle is introduced.
 
+The JS gate records adoption or discard as terminal before invoking consumer code.
+Duplicate, stale, malformed and mixed repeat events cannot release or re-adopt a
+previously consumed token; only unseen tokens in a rejected event are released.
+If `onImages` throws, delivery may already have reached staging, so the gate retains
+that ownership conservatively. The staging owner must explicitly release it; the
+gate never deletes a possibly adopted draft as error recovery.
+
 Provider URLs are copied during their callback into module-owned temporary
 process/batch directories. Per-file stream accounting bounds a pending batch;
 pending cancellation fences copying and delivery. One active batch reserves the
@@ -64,7 +71,8 @@ around permission, audio setup, recognition and lifecycle/deadline failures.
 ## Validation and boundary
 
 - Vitest: native diagnostic, image delivery contract and existing dictation
-  controller: 3 suites / 14 tests PASS.
+  controller: 3 suites / 17 tests PASS, including duplicate/malformed delivery,
+  adoption/release reentrancy and callback-failure ownership regressions.
 - Foundation executable: metadata sanitization; pending cancellation/late callback;
   delivered lifetime/explicit release; byte/count limits and foreign-token safety
   PASS. Existing session-fence executable PASS.

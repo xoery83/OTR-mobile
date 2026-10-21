@@ -78,7 +78,8 @@ describe("explicit clipboard image delivery contract", () => {
     expect(release).not.toHaveBeenCalled();
     current = "paste-2";
     gate.images({ requestId: "paste-1", items: [first] });
-    expect(release).toHaveBeenLastCalledWith([first.token]);
+    expect(release).not.toHaveBeenCalled();
+    expect(images).toHaveBeenCalledTimes(1);
     enabled = false;
     const late = item();
     gate.images({ requestId: current, items: [late] });
@@ -89,7 +90,7 @@ describe("explicit clipboard image delivery contract", () => {
     gate.failure({ requestId: current, code: "load_failed", error: "private" });
     expect(failure).not.toHaveBeenCalled();
   });
-  it("releases tokens if the consumer throws and forwards only finite current errors", () => {
+  it("preserves possibly adopted tokens if the consumer throws and forwards only finite current errors", () => {
     const release = vi.fn(),
       failure = vi.fn(),
       first = item();
@@ -102,10 +103,69 @@ describe("explicit clipboard image delivery contract", () => {
       failure,
     });
     gate.images({ requestId: "paste-1", items: [first] });
-    expect(release).toHaveBeenCalledWith([first.token]);
+    gate.images({ requestId: "paste-1", items: [{ ...first, uri: "invalid" }] });
+    expect(release).not.toHaveBeenCalled();
     gate.failure({ requestId: "paste-1", code: "storage", description: "private" });
     expect(failure).toHaveBeenCalledWith({ requestId: "paste-1", code: "storage" });
     gate.failure({ requestId: "paste-1", code: "private" });
     expect(failure).toHaveBeenCalledTimes(1);
+  });
+  it("never re-adopts or releases an adopted token on duplicate, mixed or malformed events", () => {
+    const release = vi.fn(),
+      images = vi.fn();
+    const gate = createImagePasteDeliveryGate({
+      current: () => true,
+      release,
+      images,
+      failure: vi.fn(),
+    });
+    const first = item(),
+      extra = item();
+    gate.images({ requestId: "paste-1", items: [first] });
+    gate.images({ requestId: "paste-1", items: [first] });
+    gate.images({ requestId: "paste-1", items: [{ ...first, uri: "invalid" }] });
+    gate.images({ requestId: "paste-1", items: [first, extra] });
+    expect(images).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledExactlyOnceWith([extra.token]);
+    gate.images({ requestId: "paste-1", items: [extra] });
+    expect(images).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+  it("fences ownership before reentrant adoption and callback failure", () => {
+    const release = vi.fn(),
+      first = item();
+    let calls = 0;
+    const gate = createImagePasteDeliveryGate({
+      current: () => true,
+      release,
+      images: () => {
+        calls++;
+        gate.images({ requestId: "paste-1", items: [first] });
+        gate.images({ requestId: "paste-1", items: [{ ...first, uri: "invalid" }] });
+        throw Error("consumer already staged the file");
+      },
+      failure: vi.fn(),
+    });
+    gate.images({ requestId: "paste-1", items: [first] });
+    expect(calls).toBe(1);
+    expect(release).not.toHaveBeenCalled();
+  });
+  it("fences discarded tokens before reentrant release and never later adopts them", () => {
+    const first = item(),
+      images = vi.fn();
+    let current = false;
+    const release = vi.fn(() => {
+      current = true;
+      gate.images({ requestId: "paste-1", items: [first] });
+    });
+    const gate = createImagePasteDeliveryGate({
+      current: () => current,
+      release,
+      images,
+      failure: vi.fn(),
+    });
+    gate.images({ requestId: "paste-1", items: [first] });
+    expect(release).toHaveBeenCalledExactlyOnceWith([first.token]);
+    expect(images).not.toHaveBeenCalled();
   });
 });
