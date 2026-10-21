@@ -6,6 +6,7 @@ import { readLocalSession } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   readApplePlaceProvider,
+  reportApplePlaceFailure,
   type ApplePlaceCandidate,
 } from "@/data/places/applePlaceProvider";
 import {
@@ -81,6 +82,7 @@ export function CreateTripDestinations({
   useEffect(() => {
     alive.current = true;
     let active = true;
+    let phase = "READ_CONTEXT";
     void (async () => {
       const accountId = (await readLocalSession())?.identity?.userId;
       if (!active || !current()) return;
@@ -92,9 +94,11 @@ export function CreateTripDestinations({
         accountGeneration: generation,
         isCurrent: () => active && current(),
       };
+      phase = "LOAD_QUICK";
       const quick = await readApplePlaceProvider(binding);
       let more;
       try {
+        phase = "LOAD_MORE";
         more = await readApplePlaceProvider(binding);
       } catch (error) {
         quick.close();
@@ -105,6 +109,7 @@ export function CreateTripDestinations({
         more.close();
         return;
       }
+      phase = "INIT_CONTROLLER";
       const controller = new PlaceSearchSession(quick, more, (next) => {
         if (active && current()) setState(next);
       });
@@ -114,8 +119,11 @@ export function CreateTripDestinations({
         450,
         online,
       );
-    })().catch(() => {
-      if (active && current()) setState({ status: "ERROR", rows: [], more: false });
+    })().catch((error) => {
+      if (active && current()) {
+        reportApplePlaceFailure(phase, error);
+        setState({ status: "ERROR", rows: [], more: false });
+      }
     });
     return () => {
       active = false;

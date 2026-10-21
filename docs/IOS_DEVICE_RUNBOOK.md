@@ -75,3 +75,9 @@ xcrun devicectl list devices
 ```
 
 The last two commands should list the physical iPhone as an available and connected destination.
+
+## Simulator builds that use SecureStore
+
+Keep standard Xcode simulator signing enabled (`CODE_SIGNING_ALLOWED=YES`, or omit the override). Do not build the main App with `CODE_SIGNING_ALLOWED=NO` and expect a later plain ad-hoc signature to restore simulator identity. The working original OTR App embeds its existing `application-identifier` in Mach-O `__TEXT,__entitlements`; `codesign -d --entitlements` alone does not inspect that section.
+
+Before a replacement preview, compare the generated `OTRMobile.app-Simulated.xcent` and executable identity against the preserved working App. Preserve the same application identifier and existing entitlements; do not add access groups or change the team to work around an unreadable account. A build/signature check is not a Keychain or Place Search Native PASS. Use normal App launch with retained account/data and keep the original App restore artifact.

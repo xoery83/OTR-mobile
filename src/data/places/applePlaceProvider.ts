@@ -164,6 +164,9 @@ export function createApplePlaceProvider(
         .map((value): ApplePlaceCandidate =>
           Object.freeze({ ...value, sessionId, generation: requestGeneration }),
         );
+    } catch (error) {
+      reportApplePlaceFailure(kind.toUpperCase(), error);
+      throw error;
     } finally {
       signal?.removeEventListener("abort", cancel);
     }
@@ -194,13 +197,57 @@ export function createApplePlaceProvider(
     },
   };
 }
+// Only bounded capability/error categories: never include query, account or native error text.
+export function applePlaceFailureDiagnostic(phase: string, error: unknown) {
+  const allowed = [
+    "NATIVE_UNAVAILABLE",
+    "INVALID_BINDING",
+    "CANCELLED",
+    "INVALID_REQUEST",
+    "NETWORK_ERROR",
+    "TIMED_OUT",
+    "STALE_HANDLE",
+    "THROTTLED",
+    "NO_RESULTS",
+  ];
+  return {
+    event: "apple_place_failure",
+    phase: [
+      "READ_CONTEXT",
+      "LOAD_QUICK",
+      "LOAD_MORE",
+      "INIT_CONTROLLER",
+      "LOAD_MODULE",
+      "COMPLETE",
+      "SEARCH",
+      "RESOLVE",
+    ].includes(phase)
+      ? phase
+      : "UNKNOWN",
+    code:
+      error instanceof ApplePlaceError && allowed.includes(error.code)
+        ? error.code
+        : "UNKNOWN",
+    errorType:
+      error instanceof Error &&
+      ["TypeError", "ReferenceError", "ZodError", "Error"].includes(error.name)
+        ? error.name
+        : "UNKNOWN",
+    textEncoderAvailable: typeof TextEncoder === "function",
+  };
+}
+export function reportApplePlaceFailure(phase: string, error: unknown) {
+  if (typeof __DEV__ !== "undefined" && __DEV__)
+    console.info(applePlaceFailureDiagnostic(phase, error));
+}
 export async function readApplePlaceProvider(binding: PlaceSearchBinding) {
   assertPlaceSearchBinding(binding);
   let native: ApplePlaceNative;
   try {
     const { requireNativeModule } = await import("expo-modules-core");
     native = requireNativeModule<ApplePlaceNative>("OTRPlaceSearch");
-  } catch {
+  } catch (error) {
+    reportApplePlaceFailure("LOAD_MODULE", error);
     throw new ApplePlaceError("NATIVE_UNAVAILABLE");
   }
   return createApplePlaceProvider(native, binding);
