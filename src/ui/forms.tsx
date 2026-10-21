@@ -200,7 +200,7 @@ const createStyles = (colors: UiColors) =>
     actionCard: {
       flexGrow: 1,
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: 12,
       minHeight: 100,
       padding: 12,
