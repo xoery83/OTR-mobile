@@ -160,7 +160,7 @@ it("empty composer offers real intake sources and a persistent disabled send in 
       expect(props.onCamera).toHaveBeenCalledOnce();
       expect(props.onPhotos).toHaveBeenCalledOnce();
       expect(props.onFiles).toHaveBeenCalledOnce();
-      expect(state.nodes.find((n) => n.multiline).scrollEnabled).toBe(false);
+      expect(state.nodes.find((n) => n.multiline).style[1].maxHeight).toBeLessThan(400);
     }
 });
 it("attachment menu routes selection to the existing picker without submitting", () => {
@@ -196,11 +196,8 @@ it("native paste retains text exactly and unsupported text never silently submit
   expect(props.onSubmit).not.toHaveBeenCalled();
   expect(button("capture.composer.submit").disabled).toBe(true);
   expect(html).toContain(t("capture.composer.textSubmitUnavailable"));
-  input.onContentSizeChange({ nativeEvent: { contentSize: { height: 1000 } } });
-  render({ ...empty, editorText: pasted }, 1);
-  const expanded = state.nodes.find((n) => n.multiline);
-  expect(expanded.scrollEnabled).toBe(true);
-  expect(expanded.style[1].height).toBeLessThan(400);
+  expect(input.style[1].maxHeight).toBeLessThan(400);
+  expect(input.style[1].height).toBeUndefined();
 });
 it("all attachments remain in one horizontal tray and removal only targets the selected item", () => {
   const items = Array.from({ length: 9 }, (_, i) => ({

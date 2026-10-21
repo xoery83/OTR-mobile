@@ -68,7 +68,6 @@ export function CaptureComposer({
   const insets = useSafeAreaInsets(),
     { height, fontScale } = useWindowDimensions();
   const [page, setPage] = useState<"composer" | "email" | "ai" | "context">("composer");
-  const [inputHeight, setInputHeight] = useState(44);
   const maxInputHeight = 6 * 22 * Math.max(1, fontScale) + 16;
   const mixed =
     !!snapshot.editorText.trim() ||
@@ -343,25 +342,13 @@ export function CaptureComposer({
                     onChangeText={onText}
                     editable={!snapshot.selecting}
                     multiline
-                    scrollEnabled={inputHeight >= maxInputHeight}
                     placeholder={t(
                       snapshot.items.length
                         ? "capture.composer.messagePlaceholder"
                         : "capture.composer.placeholder",
                     )}
                     accessibilityLabel={t("capture.composer.magic")}
-                    onContentSizeChange={(event) =>
-                      setInputHeight(
-                        Math.min(
-                          maxInputHeight,
-                          Math.max(44, event.nativeEvent.contentSize.height),
-                        ),
-                      )
-                    }
-                    style={[
-                      styles.input,
-                      { height: inputHeight, maxHeight: maxInputHeight },
-                    ]}
+                    style={[styles.input, { maxHeight: maxInputHeight }]}
                   />
                   {mixed ? (
                     <UiText style={styles.secondary}>
