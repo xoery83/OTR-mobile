@@ -15,11 +15,12 @@ Checks:9 TypeScript adapter tests and6 zero-query Swift state assertions; iOSSDK
 
 `ApplePlaceQuery.intent = "destinationArea"` is opt-in; omitted intent preserves the
 existing P1–P6 general POI completion/search behavior. The intent is part of the
-transient query cache and retained-handle context. Area quick suggestions use one
-bounded MapKit search (5 results), not the general POI completer; Search More stays
-20 and resolving a returned map item reuses its handle without another provider
-search. iOS18+ applies address-area filters and physical-feature results; the only
-allowed POI category in this scope is the explicit Apple nationalPark category.
+transient query cache and retained-handle context. Area quick suggestions use the address-only MapKit completer (5 results), with
+an iOS18+ address-area filter. A completion is not yet area-qualified and cannot be
+saved as a resolved result. Explicit selection resolves that retained completion
+through one bounded address-only MapKit lookup and then applies raw qualification.
+Search More stays 20/address-only; already resolved items reuse their handle.
+General POI completion/search is unchanged. There is no parallel query/fill-up fanout.
 
 The original path requested address+POI for all callers, omitted raw geographical
 components during normalization, and the Create Trip caller rejected any resolved
@@ -42,3 +43,16 @@ path in the owning Create Trip UI. No Core/schema/storage fields change here.
 `tests/AreaChecks.swift` validates raw-fact city/country/state/national-park/water/
 island, street/POI rejection and homonym qualifiers without provider requests.
 SDK typecheck and these checks do not establish actual iOS retrieval or Native VQA.
+
+### Actual city-recall correction
+
+The first area candidate combined address, nationalPark POI and physicalFeature in
+one quick lookup. Actual iOS testing returned Ladies Bay for Auckland and Sydney
+Harbour National Park for Sydney, missing both cities: this was FAIL. The corrected
+quick path uses Apple's address completer and address-area filter, and only the
+user-selected completion is resolved/qualified. Region/city recall must be verified
+in the normal App again; static raw-fact fixtures cannot substitute for that check.
+Natural destinations without reliable address-area completions keep explicit custom
+fallback rather than an extra speculative provider request. The one authorized
+macOS standalone two-query comparison returned MKErrorDomain:1 for both queries;
+no raw rows were available, and it is not evidence of iOS retrieval behavior.

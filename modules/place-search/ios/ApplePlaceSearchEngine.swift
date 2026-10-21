@@ -102,11 +102,14 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
     request.timeout = DispatchWorkItem { [weak request] in request?.finish("TIMED_OUT", []) }
     DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: request.timeout!)
     let region = qualifiedRegion(input["region"])
-    if kind == "complete" && !destinationArea {
+    if kind == "complete" {
       let completer = MKLocalSearchCompleter()
       request.completer = completer
       completer.delegate = request
-      completer.resultTypes = [.address, .pointOfInterest]
+      completer.resultTypes = destinationArea ? [.address] : [.address, .pointOfInterest]
+      if destinationArea, #available(iOS 18.0, macOS 15.0, *) {
+        completer.addressFilter = MKAddressFilter(including: [.locality, .subLocality, .administrativeArea, .subAdministrativeArea, .country])
+      }
       if let region { completer.region = region }
       if #available(iOS 18.0, macOS 15.0, *) { completer.regionPriority = .default }
       request.completions = { [weak self, weak request] values in
@@ -143,10 +146,8 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       searchRequest.resultTypes = [.address, .pointOfInterest]
     }
     if destinationArea {
-      searchRequest.resultTypes = [.address, .pointOfInterest]
-      searchRequest.pointOfInterestFilter = MKPointOfInterestFilter(including: [.nationalPark])
+      searchRequest.resultTypes = [.address]
       if #available(iOS 18.0, macOS 15.0, *) {
-        searchRequest.resultTypes.insert(.physicalFeature)
         searchRequest.addressFilter = MKAddressFilter(including: [.locality, .subLocality, .administrativeArea, .subAdministrativeArea, .country])
       }
     }

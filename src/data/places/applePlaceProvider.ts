@@ -180,6 +180,7 @@ export function createApplePlaceProvider(
         .filter(
           (value) =>
             intent !== "destinationArea" ||
+            (kind === "complete" && value.kind === "completion" && !value.area) ||
             (value.kind === "mapItem" &&
               !!value.area &&
               value.area.label === value.title &&

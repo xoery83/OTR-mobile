@@ -294,3 +294,32 @@ it("pins resolve handles to their original search intent", async () => {
     f.provider.search({ text: "Tower", intent: "unknown" as "destinationArea" }),
   ).rejects.toMatchObject({ code: "INVALID_REQUEST" });
 });
+
+it("shows an area completion but requires its explicit resolve before returning qualified city facts", async () => {
+  const f = fixture();
+  const completion = {
+    ...f.row,
+    kind: "completion",
+    title: "Sydney",
+    secondary: "NSW, Australia",
+  };
+  const resolved = {
+    ...f.row,
+    title: "Sydney",
+    secondary: "NSW, Australia",
+    area: { kind: "locality", label: "Sydney", qualifier: "NSW, Australia" },
+  };
+  f.native.complete.mockImplementation(async (input) => f.reply(input, [completion]));
+  f.native.resolve.mockImplementation(async (input) => f.reply(input, [resolved]));
+  const query = { text: "Sydney", intent: "destinationArea" as const };
+  const rows = await f.provider.complete(query);
+  expect(rows[0]).toMatchObject({ kind: "completion", title: "Sydney" });
+  expect(rows[0]).not.toHaveProperty("area");
+  expect(await f.provider.resolve(rows[0], query)).toMatchObject({
+    kind: "mapItem",
+    area: resolved.area,
+  });
+  expect(f.native.complete).toHaveBeenCalledOnce();
+  expect(f.native.resolve).toHaveBeenCalledOnce();
+  expect(f.native.search).not.toHaveBeenCalled();
+});
