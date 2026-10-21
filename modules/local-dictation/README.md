@@ -11,7 +11,7 @@ unavailable and must keep ordinary typed input working.
 
 Subscribe before starting. Calls return `Promise<void>`:
 
-- `start(sessionId: string, locale: string)` — fresh UUID session; bounded locale
+- `start(sessionId: string, locale: string)` — fresh opaque printable-ASCII session token (1–80 bytes, no whitespace/control); bounded locale
   identifier, e.g. `en-NZ`/`zh-Hans-CN`. Checks recognizer availability and
   `supportsOnDeviceRecognition` before requesting permissions. Requests speech and
   microphone permission only here, then rechecks session ownership and active app.
@@ -30,12 +30,12 @@ state: {
 }
 ```
 
-Transcript payloads are capped at 4096 characters. A stop without a final result
+A recognition result longer than 4096 characters fails explicitly with `failed`; it is never silently truncated. A stop without a final result
 produces `timeout`, never a fabricated final transcript. `start` also rejects on
 failure; a concurrent start or invalid session rejects `failed` without taking
 ownership or emitting an event for the current session. Stale/foreign stop and
-cancel are no-ops. The native singleton fences module owner, session UUID and an
-internal epoch, including reused UUIDs and late permission, task and timer callbacks.
+cancel are no-ops. The native singleton fences module owner, opaque session token and an
+internal epoch, including reused tokens and late permission, task and timer callbacks.
 JS must additionally fence editor/account lifecycle and cancel its own session on
 unmount; no transcript is automatically saved by this module.
 
@@ -73,7 +73,7 @@ xcrun --sdk iphonesimulator swiftc -typecheck -swift-version 5 \
 Checked against the actual iPhoneSimulator27.1 SDK with a 16.4 deployment target;
 all three Swift files also typecheck against the existing real ExpoModulesCore
 framework and its React dependencies. The Foundation checks exercise ownership,
-concurrent-start rejection, foreign cancellation and stale/reused-UUID epochs with
+concurrent-start rejection, foreign cancellation and stale/reused-token epochs with
 zero Speech/audio/permission calls. Podspec syntax and module config parse checked.
 These are not microphone, recognition-quality, interruption, timed-resource, bridge
 runtime, host-installation or Owner Native acceptance tests. Those remain pending.

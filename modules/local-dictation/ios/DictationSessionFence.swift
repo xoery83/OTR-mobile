@@ -10,7 +10,9 @@ final class DictationSessionFence {
   private(set) var active: DictationLease?
 
   func begin(owner: UUID, sessionId: String) throws -> DictationLease {
-    guard UUID(uuidString: sessionId) != nil else { throw DictationFailure.failed }
+    guard !sessionId.isEmpty, sessionId.utf8.count <= 80,
+      sessionId.unicodeScalars.allSatisfy({ (0x21...0x7E).contains($0.value) })
+    else { throw DictationFailure.failed }
     guard active == nil else { throw DictationFailure.failed }
     let lease = DictationLease(owner: owner, sessionId: sessionId)
     active = lease
@@ -30,4 +32,9 @@ final class DictationSessionFence {
 enum DictationFailure: String, Error, LocalizedError {
   case permission, unavailable, interrupted, failed, timeout
   var errorDescription: String? { rawValue }
+}
+
+func checkedDictationTranscript(_ text: String) throws -> String {
+  guard text.count <= 4096 else { throw DictationFailure.failed }
+  return text
 }

@@ -118,8 +118,10 @@ private final class DictationAudioInput {
         Task { @MainActor in
           guard let self, self.fence.current(lease), let current = self.active else { return }
           if let result {
+            guard let text = try? checkedDictationTranscript(result.bestTranscription.formattedString)
+            else { self.finish(lease, error: .failed); return }
             current.emit("transcript", ["sessionId": lease.sessionId,
-              "text": String(result.bestTranscription.formattedString.prefix(4096)), "isFinal": result.isFinal])
+              "text": text, "isFinal": result.isFinal])
             if result.isFinal { self.finish(lease); return }
           }
           if error != nil { self.finish(lease, error: .failed) }

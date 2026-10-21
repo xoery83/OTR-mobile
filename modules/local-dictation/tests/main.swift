@@ -1,12 +1,15 @@
 import Foundation
 
 let fence = DictationSessionFence()
-let owner = UUID(), other = UUID(), sessionId = UUID().uuidString
+let owner = UUID(), other = UUID(), sessionId = "dictation-1761012000000-1"
 func rejects(_ operation: () throws -> Void) {
   do { try operation(); preconditionFailure("Expected rejection") } catch {}
 }
-rejects { _ = try fence.begin(owner: owner, sessionId: "not-a-uuid") }
+rejects { _ = try fence.begin(owner: owner, sessionId: "invalid\n") }
 precondition(fence.active == nil)
+rejects { _ = try fence.begin(owner: owner, sessionId: "") }
+rejects { _ = try fence.begin(owner: owner, sessionId: String(repeating: "a", count: 81)) }
+rejects { _ = try fence.begin(owner: owner, sessionId: "dictation-语音") }
 let first = try fence.begin(owner: owner, sessionId: sessionId)
 precondition(fence.current(first))
 rejects { _ = try fence.begin(owner: other, sessionId: UUID().uuidString) }
@@ -20,4 +23,10 @@ precondition(!fence.current(first)) // Late permission/transcript/timer callback
 precondition(!fence.release(first))
 precondition(fence.current(reused))
 precondition(fence.release(reused))
+
+let exact = String(repeating: "旅", count: 4096)
+let checked = try checkedDictationTranscript(exact)
+precondition(checked == exact)
+rejects { _ = try checkedDictationTranscript(exact + "程") }
+
 print("Dictation session ownership/epoch checks PASS; no permissions, audio, speech, or network invoked")
