@@ -3,12 +3,14 @@ import type { UiColors } from "@/ui/palette";
 import { useRef } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppIcon } from "./AppIcon";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 
 export function SheetHeader({
   title,
-  leftLabel = t("common.close"),
+  leftLabel,
+  category = "legacy",
   onLeft,
   leftDisabled = false,
   rightLabel = t("common.done"),
@@ -17,6 +19,7 @@ export function SheetHeader({
   safeTop = true,
 }: {
   title: string;
+  category?: "legacy" | "action" | "composer" | "form" | "picker";
   leftLabel?: string;
   onLeft: () => void;
   leftDisabled?: boolean;
@@ -29,8 +32,28 @@ export function SheetHeader({
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
   const touchY = useRef(0);
-  const left = <Action disabled={leftDisabled} label={leftLabel} onPress={onLeft} />;
-  const right = onRight ? (
+  const lightweight = category === "action" || category === "composer";
+  const standard = category !== "legacy";
+  const left = lightweight ? null : (
+    <Action
+      disabled={leftDisabled}
+      label={leftLabel ?? t(standard ? "common.cancel" : "common.close")}
+      onPress={onLeft}
+      regular={standard}
+    />
+  );
+  const right = lightweight ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("common.close")}
+      accessibilityState={{ disabled: leftDisabled }}
+      disabled={leftDisabled}
+      onPress={onLeft}
+      style={styles.close}
+    >
+      <AppIcon name="xmark" size={20} color={styles.closeIcon.color} />
+    </Pressable>
+  ) : onRight ? (
     <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} />
   ) : null;
   // Accessibility exception: large text keeps two title lines above the actions.
@@ -43,27 +66,51 @@ export function SheetHeader({
         onTouchStart={(event) => {
           touchY.current = event.nativeEvent.pageY;
         }}
-        style={[styles.header, largeText && styles.largeHeader]}
       >
-        {largeText ? (
-          <>
-            <Text accessibilityRole="header" numberOfLines={2} style={styles.largeTitle}>
-              {title}
-            </Text>
-            <View style={styles.actions}>
-              {left}
-              {right}
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.side}>{left}</View>
-            <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-              {title}
-            </Text>
-            <View style={[styles.side, styles.rightSide]}>{right}</View>
-          </>
-        )}
+        {standard ? (
+          <View
+            accessible={false}
+            accessibilityElementsHidden
+            style={styles.indicatorSpace}
+          >
+            <View style={styles.indicator} />
+          </View>
+        ) : null}
+        <View
+          style={[
+            styles.header,
+            standard && styles.standardHeader,
+            largeText && styles.largeHeader,
+          ]}
+        >
+          {largeText ? (
+            <>
+              <Text
+                accessibilityRole="header"
+                numberOfLines={2}
+                style={styles.largeTitle}
+              >
+                {title}
+              </Text>
+              <View style={[styles.actions, lightweight && styles.closeActions]}>
+                {left}
+                {right}
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={[styles.side, standard && styles.standardSide]}>{left}</View>
+              <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
+                {title}
+              </Text>
+              <View
+                style={[styles.side, standard && styles.standardSide, styles.rightSide]}
+              >
+                {right}
+              </View>
+            </>
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -73,7 +120,9 @@ function Action({
   disabled = false,
   label,
   onPress,
+  regular = false,
 }: {
+  regular?: boolean;
   disabled?: boolean;
   label: string;
   onPress: () => void;
@@ -87,7 +136,14 @@ function Action({
       onPress={onPress}
       style={[styles.button, disabled && styles.disabled]}
     >
-      <Text numberOfLines={1} style={styles.buttonText}>
+      <Text
+        numberOfLines={1}
+        style={[
+          styles.buttonText,
+          regular && styles.regularText,
+          disabled && styles.disabledText,
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
@@ -106,6 +162,24 @@ const createStyles = (colors: UiColors) =>
       paddingVertical: 6,
     },
     largeHeader: { alignItems: "stretch", flexDirection: "column" },
+    standardHeader: { minHeight: 50, paddingHorizontal: 20, paddingVertical: 0 },
+    standardSide: { width: 80 },
+    indicatorSpace: { height: 22, alignItems: "center", paddingTop: 8 },
+    indicator: {
+      width: 36,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: colors.textTertiary,
+    },
+    close: {
+      minHeight: 44,
+      minWidth: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    closeIcon: { color: colors.textSecondary },
+    regularText: { fontWeight: "400" },
+    disabledText: { color: colors.disabled },
     side: { width: 112 },
     rightSide: { alignItems: "flex-end" },
     title: {
@@ -122,6 +196,7 @@ const createStyles = (colors: UiColors) =>
       textAlign: "center",
     },
     actions: { flexDirection: "row", justifyContent: "space-between" },
+    closeActions: { justifyContent: "flex-end" },
     button: {
       alignItems: "center",
       justifyContent: "center",

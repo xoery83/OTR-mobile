@@ -35,7 +35,10 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", () => ({
   View: "div",
   ScrollView: "section",
-  StyleSheet: { create: (x: unknown) => x },
+  StyleSheet: {
+    create: (x: unknown) => x,
+    absoluteFill: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 },
+  },
   Pressable: (p: any) => {
     state.buttons.push(p);
     return createElement("button", null, p.children);
@@ -110,7 +113,11 @@ beforeEach(() => {
 });
 it("shows the approved 2+5 order without creating a draft or reading an editor", () => {
   render();
-  expect(state.buttons.slice(1).map((p) => p.accessibilityLabel)).toEqual([
+  expect(
+    state.buttons
+      .filter((p) => p.accessibilityLabel?.startsWith("formEntry."))
+      .map((p) => p.accessibilityLabel),
+  ).toEqual([
     "formEntry.plan",
     "formEntry.flexible",
     "formEntry.flight",
@@ -171,4 +178,17 @@ it("blocks a late selection/save after account generation changes", () => {
   saved("late-item");
   expect(props.onSaved).not.toHaveBeenCalled();
   expect(render()).toBe("");
+});
+
+it("dismissing the chooser backdrop closes without starting or saving an editor", () => {
+  render();
+  const backdrop = state.buttons.find(
+    (p) => p.style && p.accessibilityLabel === "common.close",
+  );
+  expect(backdrop).toBeDefined();
+  backdrop.onPress();
+  expect(props.onClose).toHaveBeenCalledOnce();
+  expect(state.editor).toBeNull();
+  expect(state.read).not.toHaveBeenCalled();
+  expect(props.onSaved).not.toHaveBeenCalled();
 });

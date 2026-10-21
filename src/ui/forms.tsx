@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import {
   TextInput,
   View,
@@ -68,18 +68,49 @@ export function UiFormRow({
   stacked = false,
   horizontalInset,
   variant = "row",
+  leading,
+  trailing,
 }: {
+  leading?: ReactNode;
+  trailing?: ReactNode;
   label: string;
   value: string;
   onPress: () => void;
   disabled?: boolean;
   stacked?: boolean;
   horizontalInset?: number;
-  variant?: "row" | "field";
+  variant?: "row" | "field" | "action";
 }) {
   const styles = useThemedStyles(createStyles);
 
   const largeText = useWindowDimensions().fontScale > 2;
+  if (variant === "action")
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={value}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.actionCard,
+          largeText && styles.rowLargeText,
+          disabled && styles.disabledSurface,
+        ]}
+      >
+        {leading}
+        <View style={styles.actionCopy}>
+          <Text style={[styles.actionTitle, disabled && styles.disabledText]}>
+            {label}
+          </Text>
+          <Text style={[styles.actionHint, disabled && styles.disabledText]}>
+            {value}
+          </Text>
+        </View>
+        {trailing}
+      </Pressable>
+    );
   const field = variant === "field";
   const button = (
     <Pressable
@@ -170,6 +201,21 @@ export function UiChoiceChip({
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    actionCard: {
+      flexGrow: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      minHeight: 100,
+      padding: 12,
+      borderRadius: visual.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.separator,
+    },
+    actionCopy: { flex: 1, minWidth: 0, gap: 5 },
+    actionTitle: { ...visual.type.row, color: colors.textPrimary },
+    actionHint: { ...visual.type.meta, color: colors.textSecondary },
     input: {
       backgroundColor: colors.surface,
       color: colors.textPrimary,

@@ -40,6 +40,7 @@ export function StartTripSheet({
           />
           <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
             <SheetHeader
+              category="action"
               title={t("actionIsland.startTrip")}
               safeTop={false}
               leftLabel={t("common.cancel")}
@@ -95,8 +96,8 @@ const createStyles = (colors: UiColors) =>
     sheet: {
       maxHeight: "90%",
       backgroundColor: colors.background,
-      borderTopLeftRadius: visual.radius.card,
-      borderTopRightRadius: visual.radius.card,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
       overflow: "hidden",
     },
     scroll: { flexGrow: 0, flexShrink: 1 },

@@ -280,6 +280,7 @@ export function TripBasicEditor({
   return (
     <View style={styles.container}>
       <SheetHeader
+        category="form"
         title={t("tripHome.edit")}
         leftLabel={t("common.cancel")}
         onLeft={requestClose}
@@ -411,6 +412,7 @@ export function TripBasicEditor({
       >
         <SafeAreaView edges={["bottom"]} style={styles.container}>
           <SheetHeader
+            category="form"
             title={t("currencySettings.heading")}
             leftLabel={t("common.back")}
             safeTop={false}

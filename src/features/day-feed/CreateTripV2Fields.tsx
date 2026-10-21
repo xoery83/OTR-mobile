@@ -163,6 +163,7 @@ export function CreateTripV2Fields({
       >
         <SafeAreaProvider style={styles.body}>
           <SheetHeader
+            category="form"
             title={t(
               editor?.self ? "createTripV2.editName" : "createTripV2.editTraveler",
             )}

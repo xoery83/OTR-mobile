@@ -1,5 +1,5 @@
 export const visual = {
-  radius: { hero: 18, card: 14, control: 10, pill: 999 },
+  radius: { hero: 18, card: 14, control: 10, sheet: 26, pill: 999 },
   space: { page: 16, section: 24, heading: 9, card: 12, row: 14 },
   bottomShell: { height: 60, icon: 24, gap: 4 },
   type: {

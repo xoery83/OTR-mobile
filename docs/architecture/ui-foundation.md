@@ -222,3 +222,16 @@ preview, Changes/update, confirmed-expense correction, and settlement history/st
 with their direct children. This authorizes presentation-only theme/localization
 remediation, preserving all review decisions, confirmation gates and financial payloads.
 These accepted B–C surfaces remain part of the full-Ledger Phase D device gate.
+
+## Bottom sheet header standard v1 (Owner, 2026-10-22)
+
+Current Create/Edit Trip, Capture and Action Island flows opt into the existing
+SheetHeader categories action/composer/form/picker. They share a36×5 semantic
+grabber, centered17pt semibold title, equal action slots,20pt horizontal inset,
+44pt targets and text-only confirmations. Action/composer has only a neutral ×;
+forms/pickers use Cancel plus their owning confirmation. The canonical sheet
+radius is26pt. Legacy callers retain behavior until their owning flows migrate.
+All dismissal paths reuse the owning close/draft guard. Quick Add replaces its
+content for manual creation and closes before navigation; it grants no new access.
+Native supplied sheets may retain native presentation constraints. Existing P2
+embedded submit ownership is recorded for follow-up rather than duplicated.

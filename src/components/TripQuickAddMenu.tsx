@@ -196,8 +196,15 @@ export function TripQuickAddMenu({
             />
           ) : (
             <View style={styles.backdrop}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("common.close")}
+                style={StyleSheet.absoluteFill}
+                onPress={close}
+              />
               <SafeAreaView edges={["bottom", "left", "right"]} style={styles.menuSheet}>
                 <SheetHeader
+                  category="action"
                   title={t("actionIsland.addToTrip")}
                   leftLabel={t("common.cancel")}
                   onLeft={close}
@@ -209,35 +216,65 @@ export function TripQuickAddMenu({
                 >
                   {showDate ? (
                     <View style={styles.dates}>
-                      <UiText style={styles.heading}>
-                        {t("actionIsland.suggestedDate")}
-                      </UiText>
-                      <UiFormRow
-                        label={t("actionIsland.suggestedDate")}
-                        value={
-                          knownDate
-                            ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                timeZone: "UTC",
-                              })
-                            : t("actionIsland.selectDate")
-                        }
-                        onPress={() => {
-                          setPickerValue(
-                            knownDate
-                              ? new Date(
-                                  +knownDate.slice(0, 4),
-                                  +knownDate.slice(5, 7) - 1,
-                                  +knownDate.slice(8, 10),
-                                  12,
+                      <View style={styles.dateRow}>
+                        <AppIcon name="calendar" size={24} color={colors.textPrimary} />
+                        <View style={styles.dateCopy}>
+                          <UiText style={styles.meta}>{t("quickAdd.selectedDay")}</UiText>
+                          <UiFormRow
+                            label={t("actionIsland.suggestedDate")}
+                            value={
+                              knownDate
+                                ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                    timeZone: "UTC",
+                                  })
+                                : t("actionIsland.selectDate")
+                            }
+                            onPress={() => {
+                              setPickerValue(
+                                knownDate
+                                  ? new Date(
+                                      +knownDate.slice(0, 4),
+                                      +knownDate.slice(5, 7) - 1,
+                                      +knownDate.slice(8, 10),
+                                      12,
+                                    )
+                                  : new Date(),
+                              );
+                              setPickerOpen(true);
+                            }}
+                          />
+                        </View>
+                        <View style={styles.arrows}>
+                          {([-1, 1] as const).map((direction) => (
+                            <Pressable
+                              key={direction}
+                              accessibilityRole="button"
+                              accessibilityLabel={t(
+                                direction === -1
+                                  ? "actionIsland.previousDate"
+                                  : "actionIsland.nextDate",
+                              )}
+                              accessibilityState={{ disabled: !knownDate }}
+                              disabled={!knownDate}
+                              onPress={() =>
+                                setSuggested(
+                                  shiftSuggestedDate(suggested, direction) ?? "",
                                 )
-                              : new Date(),
-                          );
-                          setPickerOpen(true);
-                        }}
-                      />
+                              }
+                              style={styles.dateArrow}
+                            >
+                              <AppIcon
+                                name={direction === -1 ? "chevron.left" : "chevron.right"}
+                                size={18}
+                                color={knownDate ? colors.textPrimary : colors.disabled}
+                              />
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
                       {pickerOpen ? (
                         <View>
                           <UiDatePicker
@@ -264,24 +301,6 @@ export function TripQuickAddMenu({
                           />
                         </View>
                       ) : null}
-                      <View style={styles.arrows}>
-                        <UiButton
-                          variant="text"
-                          label={t("actionIsland.previousDate")}
-                          disabled={!knownDate}
-                          onPress={() =>
-                            setSuggested(shiftSuggestedDate(suggested, -1) ?? "")
-                          }
-                        />
-                        <UiButton
-                          variant="text"
-                          label={t("actionIsland.nextDate")}
-                          disabled={!knownDate}
-                          onPress={() =>
-                            setSuggested(shiftSuggestedDate(suggested, 1) ?? "")
-                          }
-                        />
-                      </View>
                       <UiText style={styles.meta}>
                         {t(
                           knownDate ? "actionIsland.weakDate" : "actionIsland.selectDate",
@@ -290,46 +309,104 @@ export function TripQuickAddMenu({
                     </View>
                   ) : null}
                   <UiFormRow
-                    value=""
-                    label={t("actionIsland.importCapture")}
+                    variant="action"
+                    value={t(
+                      captureReady
+                        ? "quickAdd.importHint"
+                        : "actionIsland.tripCaptureUnavailable",
+                    )}
+                    label={t("actionIsland.importPlans")}
+                    leading={
+                      <View style={styles.icon}>
+                        <AppIcon
+                          name="doc.badge.arrow.up"
+                          size={26}
+                          color={colors.accent}
+                        />
+                      </View>
+                    }
+                    trailing={
+                      <AppIcon
+                        name="chevron.right"
+                        size={16}
+                        color={colors.textSecondary}
+                      />
+                    }
                     disabled={!capture || !captureReady}
                     onPress={() => invoke(capture)}
                   />
-                  <UiText style={styles.meta}>
-                    {t(
-                      captureReady
-                        ? "actionIsland.tripCapturePrior"
-                        : "actionIsland.tripCaptureUnavailable",
-                    )}
-                  </UiText>
-                  <UiFormRow
-                    value=""
-                    label={t("actionIsland.itinerary")}
-                    disabled={(!itinerary && !onManualSaved) || (showDate && !knownDate)}
-                    onPress={() => {
-                      if (!current()) return;
-                      if (onManualSaved) setManual(true);
-                      else invoke(itinerary ? () => itinerary(knownDate) : undefined);
-                    }}
-                  />
-                  <UiFormRow
-                    value=""
-                    label={t("ledger.addExpense")}
-                    disabled={!expenseReady || (showDate && !knownDate)}
-                    onPress={() => invoke(() => expense(knownDate))}
-                  />
-                  <UiFormRow
-                    value={t("cleanup.unavailable")}
-                    label={t("actionIsland.member")}
-                    disabled
-                    onPress={() => {}}
-                  />
-                  <UiFormRow
-                    value=""
-                    label={t("tripPhotos.choose")}
-                    disabled={!photos}
-                    onPress={() => invoke(photos)}
-                  />
+                  <View style={styles.grid}>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        value={t("quickAdd.itineraryHint")}
+                        label={t("actionIsland.itinerary")}
+                        leading={
+                          <View style={styles.icon}>
+                            <AppIcon
+                              name="calendar.badge.plus"
+                              size={25}
+                              color={colors.accent}
+                            />
+                          </View>
+                        }
+                        disabled={
+                          (!itinerary && !onManualSaved) || (showDate && !knownDate)
+                        }
+                        onPress={() => {
+                          if (!current()) return;
+                          if (onManualSaved) setManual(true);
+                          else invoke(itinerary ? () => itinerary(knownDate) : undefined);
+                        }}
+                      />
+                    </View>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        value={t("quickAdd.expenseHint")}
+                        label={t("ledger.addExpense")}
+                        leading={
+                          <View style={styles.expenseIcon}>
+                            <AppIcon name="banknote" size={25} color={colors.warning} />
+                          </View>
+                        }
+                        disabled={!expenseReady || (showDate && !knownDate)}
+                        onPress={() => invoke(() => expense(knownDate))}
+                      />
+                    </View>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        value={t("actionIsland.membersUnavailable")}
+                        label={t("actionIsland.member")}
+                        leading={
+                          <View style={styles.icon}>
+                            <AppIcon
+                              name="person.badge.plus"
+                              size={25}
+                              color={colors.textSecondary}
+                            />
+                          </View>
+                        }
+                        disabled
+                        onPress={() => {}}
+                      />
+                    </View>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        value={t("quickAdd.photosHint")}
+                        label={t("tripPhotos.choose")}
+                        leading={
+                          <View style={styles.icon}>
+                            <AppIcon name="photo" size={25} color={colors.accent} />
+                          </View>
+                        }
+                        disabled={!photos}
+                        onPress={() => invoke(photos)}
+                      />
+                    </View>
+                  </View>
                 </ScrollView>
               </SafeAreaView>
             </View>
@@ -347,14 +424,49 @@ const createStyles = (c: UiColors) =>
     menuSheet: {
       maxHeight: "90%",
       backgroundColor: c.background,
-      borderTopLeftRadius: visual.radius.card,
-      borderTopRightRadius: visual.radius.card,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
       overflow: "hidden",
     },
     menuScroll: { flexGrow: 0, flexShrink: 1 },
     content: { padding: visual.space.page, gap: visual.space.card },
     dates: { gap: visual.space.heading },
-    arrows: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    tile: { flexBasis: "47%", flexGrow: 1 },
+    icon: {
+      width: 44,
+      minHeight: 48,
+      borderRadius: visual.radius.card,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.accentSurface,
+    },
+    expenseIcon: {
+      width: 44,
+      minHeight: 48,
+      borderRadius: visual.radius.card,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.warningSurface,
+    },
+    dateRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 12,
+      gap: 10,
+      borderRadius: visual.radius.card,
+      backgroundColor: c.selected,
+    },
+    dateCopy: { flex: 1 },
+    arrows: { flexDirection: "row", gap: 6 },
+    dateArrow: {
+      minWidth: 44,
+      minHeight: 44,
+      borderRadius: visual.radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.surface,
+    },
     heading: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
   });

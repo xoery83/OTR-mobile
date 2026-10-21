@@ -113,6 +113,7 @@ export function TripCalendarRangeField({
       >
         <SafeAreaView edges={["bottom"]} style={styles.sheet}>
           <SheetHeader
+            category="picker"
             title={t("tripForm.dates")}
             safeTop={false}
             leftLabel={t("common.cancel")}

@@ -130,8 +130,15 @@ export function ManualItineraryContent({
   };
   return (
     <View style={styles.backdrop}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("common.close")}
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+      />
       <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
         <SheetHeader
+          category="action"
           safeTop={false}
           title={t("formEntry.title")}
           leftLabel={t("common.close")}
@@ -164,8 +171,8 @@ const createStyles = (colors: UiColors) =>
     sheet: {
       maxHeight: "90%",
       backgroundColor: colors.background,
-      borderTopLeftRadius: visual.radius.card,
-      borderTopRightRadius: visual.radius.card,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
       overflow: "hidden",
     },
     choices: { flexGrow: 0, flexShrink: 1, backgroundColor: colors.background },

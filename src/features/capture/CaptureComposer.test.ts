@@ -60,6 +60,7 @@ vi.mock("react-native", () => {
   };
   return {
     View: primitive,
+    Text: primitive,
     Pressable: (props: any) => {
       state.buttons.push({ ...props, label: props.accessibilityLabel });
       state.nodes.push(props);

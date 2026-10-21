@@ -1,3 +1,4 @@
+import { SheetHeader } from "@/components/SheetHeader";
 import { AppIcon } from "@/components/AppIcon";
 import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -178,13 +179,12 @@ export function CaptureComposer({
               },
             ]}
           >
-            <View style={styles.handle} />
-            <View style={styles.heading}>
-              <UiText accessibilityRole="header" style={styles.title}>
-                {header}
-              </UiText>
-              <OverlayDismissAction label={t("common.close")} onPress={close} />
-            </View>
+            <SheetHeader
+              category="composer"
+              safeTop={false}
+              title={header}
+              onLeft={close}
+            />
             {content != null ? (
               <>
                 <UiText style={styles.context}>{context}</UiText>
@@ -566,20 +566,6 @@ const createStyles = (c: UiColors) =>
       borderTopRightRadius: visual.radius.hero,
       overflow: "hidden",
     },
-    handle: {
-      alignSelf: "center",
-      width: 32,
-      height: 4,
-      marginTop: 8,
-      borderRadius: visual.radius.pill,
-      backgroundColor: c.separator,
-    },
-    heading: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: visual.space.page,
-    },
-    title: { ...visual.type.section, color: c.textPrimary, flex: 1 },
     contextTarget: {
       minHeight: 44,
       flexDirection: "row",

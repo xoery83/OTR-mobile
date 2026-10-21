@@ -125,7 +125,8 @@ function render() {
     }),
   );
 }
-const button = (label: string) => state.nodes.find((n) => n.label === label)!;
+const button = (label: string) =>
+  state.nodes.find((n) => (n.label ?? n.accessibilityLabel) === label)!;
 const flush = async () => {
   for (let i = 0; i < 10; i++) await Promise.resolve();
 };
@@ -164,7 +165,7 @@ it("missing anchored date stays unknown and blocks dated flows until explicit se
   expect(html).toContain("actionIsland.selectDate");
   expect(button("actionIsland.previousDate").disabled).toBe(true);
   expect(button("actionIsland.itinerary").disabled).toBe(true);
-  expect(button("actionIsland.importCapture").disabled).toBe(true);
+  expect(button("actionIsland.importPlans").disabled).toBe(true);
   expect(button("actionIsland.member").disabled).toBe(true);
   initialDate = "2026-02-30";
   button("common.cancel").onPress();

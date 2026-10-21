@@ -973,9 +973,10 @@ function LocalTripContent({
             <SafeAreaProvider style={styles.modal}>
               <SafeAreaView edges={["bottom"]} style={styles.modal}>
                 <SheetHeader
+                  category="form"
                   safeTop={false}
                   title={t("createTripV2.title")}
-                  leftLabel={t("common.close")}
+                  leftLabel={t("common.cancel")}
                   onLeft={closeCreate}
                   leftDisabled={saving}
                   rightLabel={t("createTripV2.create")}
