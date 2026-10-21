@@ -128,6 +128,7 @@ export class PlaceSearchSession {
       normalizePlaceQuery(query.text).comparison,
       query.region ?? null,
       query.locale ?? null,
+      query.intent ?? null,
       online,
     ]);
     if (key === this.key) {

@@ -246,3 +246,51 @@ it("reports preflight runtime failure without sending a query or exposing its te
     log.mockRestore();
   }
 });
+
+it("keeps qualified area map items without inventing a required Apple POI ID", async () => {
+  const f = fixture();
+  const area = {
+    ...f.row,
+    title: "Nelson",
+    secondary: "New Zealand",
+    area: { kind: "locality", label: "Nelson", qualifier: "New Zealand" },
+  };
+  f.native.complete.mockImplementation(async (input) => f.reply(input, [f.row, area]));
+  const rows = await f.provider.complete({ text: "Nelson", intent: "destinationArea" });
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ title: "Nelson", area: area.area });
+  expect(rows[0]).not.toHaveProperty("providerPlaceId");
+  expect(f.native.complete.mock.calls[0][0]).toMatchObject({ intent: "destinationArea" });
+  f.native.resolve.mockImplementation(async (input) => f.reply(input, [area]));
+  expect(
+    await f.provider.resolve(rows[0], { text: "Nelson", intent: "destinationArea" }),
+  ).toMatchObject({ area: area.area });
+  expect(f.native.resolve.mock.calls[0][0]).toMatchObject({ intent: "destinationArea" });
+});
+it("area intent rejects POI IDs, unqualified completions and mismatched visible area captions", async () => {
+  const f = fixture();
+  const mismatched = {
+    ...f.row,
+    providerPlaceId: "real-poi-id",
+    area: { kind: "locality", label: "Another area", qualifier: "Another country" },
+  };
+  const poi = { ...f.row, providerPlaceId: "real-poi-id" };
+  f.native.search.mockImplementation(async (input) => f.reply(input, [poi, mismatched]));
+  expect(await f.provider.search({ text: "Tower", intent: "destinationArea" })).toEqual(
+    [],
+  );
+  expect(f.native.search.mock.calls[0][0]).toMatchObject({ intent: "destinationArea" });
+  expect(await f.provider.search({ text: "Tower" })).toHaveLength(2);
+  expect(f.native.search.mock.calls[1][0]).not.toHaveProperty("intent");
+});
+it("pins resolve handles to their original search intent", async () => {
+  const f = fixture();
+  const rows = await f.provider.complete({ text: "Tower" });
+  await expect(
+    f.provider.resolve(rows[0], { text: "Tower", intent: "destinationArea" }),
+  ).rejects.toMatchObject({ code: "STALE_HANDLE" });
+  expect(f.native.resolve).not.toHaveBeenCalled();
+  await expect(
+    f.provider.search({ text: "Tower", intent: "unknown" as "destinationArea" }),
+  ).rejects.toMatchObject({ code: "INVALID_REQUEST" });
+});

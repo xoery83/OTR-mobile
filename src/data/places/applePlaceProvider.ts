@@ -34,6 +34,13 @@ const candidateSchema = z.strictObject({
   point: point.optional(),
   category: z.string().max(256).optional(),
   providerPlaceId: z.string().min(1).max(1024).optional(),
+  area: z
+    .strictObject({
+      kind: z.enum(["locality", "administrativeArea", "country", "physicalFeature"]),
+      label: z.string().min(1).max(256),
+      qualifier: z.string().min(1).max(256),
+    })
+    .optional(),
 });
 const responseSchema = z.strictObject({
   status: z.enum([
@@ -62,6 +69,7 @@ export type ApplePlaceCandidate = Readonly<
 export type ApplePlaceQuery = {
   text: string;
   locale?: string;
+  intent?: "destinationArea";
   region?: z.infer<typeof point>;
 };
 export type PlaceSearchBinding = Readonly<
@@ -101,6 +109,7 @@ export function createApplePlaceProvider(
 ) {
   assertPlaceSearchBinding(binding);
   const sessionId = id();
+  let currentIntent: ApplePlaceQuery["intent"];
   let generation = 0,
     closed = false;
   const current = () =>
@@ -119,13 +128,19 @@ export function createApplePlaceProvider(
     let cancel: (() => void) | undefined;
     try {
       assertCurrent(signal);
+      const intent = query.intent;
+      if (intent !== undefined && intent !== "destinationArea")
+        throw new ApplePlaceError("INVALID_REQUEST");
       const text = normalizePlaceQuery(query.text).phrase;
       if (
         selected &&
-        (selected.sessionId !== sessionId || selected.generation !== generation)
+        (selected.sessionId !== sessionId ||
+          selected.generation !== generation ||
+          intent !== currentIntent)
       )
         throw new ApplePlaceError("STALE_HANDLE");
       const requestGeneration = kind === "resolve" ? generation : ++generation;
+      if (kind !== "resolve") currentIntent = intent;
       if (kind !== "resolve" && (!text || new TextEncoder().encode(text).length > 2048)) {
         native.cancel(sessionId, requestGeneration - 1);
         if (text) throw new ApplePlaceError("INVALID_REQUEST");
@@ -146,6 +161,7 @@ export function createApplePlaceProvider(
           generation: requestGeneration,
           text,
           ...(region ? { region } : {}),
+          ...(intent ? { intent } : {}),
           ...(selected ? { handle: selected.handle } : {}),
         }),
       );
@@ -161,6 +177,14 @@ export function createApplePlaceProvider(
       if (response.status === "NO_RESULTS") return [];
       if (response.status !== "READY") throw new ApplePlaceError(response.status);
       return response.candidates
+        .filter(
+          (value) =>
+            intent !== "destinationArea" ||
+            (value.kind === "mapItem" &&
+              !!value.area &&
+              value.area.label === value.title &&
+              value.area.qualifier === value.secondary),
+        )
         .slice(0, kind === "complete" ? 5 : kind === "resolve" ? 1 : 20)
         .map((value): ApplePlaceCandidate =>
           Object.freeze({ ...value, sessionId, generation: requestGeneration }),

@@ -193,3 +193,25 @@ it("known offline state does not dispatch either provider and still permits late
   await vi.advanceTimersByTimeAsync(450);
   expect(quick.complete).toHaveBeenCalledOnce();
 });
+
+it("does not reuse a general POI cache after switching to destination-area intent", async () => {
+  const quick = provider(),
+    more = provider(),
+    session = new PlaceSearchSession(quick, more, vi.fn());
+  session.update({ text: "Nelson" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).toHaveBeenCalledTimes(1);
+  session.update({ text: "Nelson", intent: "destinationArea" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).toHaveBeenCalledTimes(2);
+  expect(quick.complete).toHaveBeenLastCalledWith(
+    { text: "Nelson", intent: "destinationArea" },
+    expect.any(AbortSignal),
+  );
+  session.update({ text: "Nelson", intent: "destinationArea" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).toHaveBeenCalledTimes(2);
+  session.update({ text: "Nelson" });
+  await vi.advanceTimersByTimeAsync(450);
+  expect(quick.complete).toHaveBeenCalledTimes(3);
+});

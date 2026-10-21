@@ -6,6 +6,7 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
   private struct Handle {
     let session: String
     let generation: Int
+    let destinationArea: Bool
     let completion: MKLocalSearchCompletion?
     let item: MKMapItem?
   }
@@ -72,6 +73,10 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       var response = identity; response["status"] = status; response["candidates"] = []
       finish(response)
     }
+    guard input["intent"] == nil || input["intent"] as? String == "destinationArea" else {
+      early("INVALID_REQUEST"); return
+    }
+    let destinationArea = input["intent"] as? String == "destinationArea"
     track(session)
     guard generation >= (generations[session] ?? 0),
       generation > (cancelledThrough[session] ?? 0), requests[requestId] == nil,
@@ -97,7 +102,7 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
     request.timeout = DispatchWorkItem { [weak request] in request?.finish("TIMED_OUT", []) }
     DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: request.timeout!)
     let region = qualifiedRegion(input["region"])
-    if kind == "complete" {
+    if kind == "complete" && !destinationArea {
       let completer = MKLocalSearchCompleter()
       request.completer = completer
       completer.delegate = request
@@ -108,7 +113,7 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
         guard let self, let request, self.requests[request.id] === request,
           self.generations[session] == generation else { return }
         let rows = values.prefix(5).map { completion -> [String: Any] in
-          let id = self.retain(Handle(session: session, generation: generation, completion: completion, item: nil))
+          let id = self.retain(Handle(session: session, generation: generation, destinationArea: destinationArea, completion: completion, item: nil))
           return ["handle": id, "title": completion.title, "secondary": completion.subtitle,
             "kind": "completion", "provider": "apple"]
         }
@@ -120,11 +125,15 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
     let searchRequest: MKLocalSearch.Request
     if kind == "resolve" {
       guard let id = input["handle"] as? String, let retained = handles[id],
-        retained.session == session, retained.generation == generation else {
+        retained.session == session, retained.generation == generation,
+        retained.destinationArea == destinationArea else {
         request.finish("STALE_HANDLE", []); return
       }
       if let item = retained.item {
-        request.finish("READY", [candidate(item, id)]); return
+        guard let row = candidate(item, id, destinationArea: destinationArea) else {
+          request.finish("NO_RESULTS", []); return
+        }
+        request.finish("READY", [row]); return
       }
       guard let completion = retained.completion else { request.finish("STALE_HANDLE", []); return }
       searchRequest = MKLocalSearch.Request(completion: completion)
@@ -132,6 +141,14 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       searchRequest = MKLocalSearch.Request()
       searchRequest.naturalLanguageQuery = query
       searchRequest.resultTypes = [.address, .pointOfInterest]
+    }
+    if destinationArea {
+      searchRequest.resultTypes = [.address, .pointOfInterest]
+      searchRequest.pointOfInterestFilter = MKPointOfInterestFilter(including: [.nationalPark])
+      if #available(iOS 18.0, macOS 15.0, *) {
+        searchRequest.resultTypes.insert(.physicalFeature)
+        searchRequest.addressFilter = MKAddressFilter(including: [.locality, .subLocality, .administrativeArea, .subAdministrativeArea, .country])
+      }
     }
     if let region { searchRequest.region = region }
     if #available(iOS 18.0, macOS 15.0, *) { searchRequest.regionPriority = .default }
@@ -142,9 +159,12 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
         guard let self, let request, self.requests[request.id] === request,
           self.generations[session] == generation else { return }
         if let error { request.finish(Request.errorStatus(error), [], error as NSError); return }
-        let rows = (response?.mapItems ?? []).prefix(kind == "resolve" ? 1 : 20).map { item -> [String: Any] in
-          let id = self.retain(Handle(session: session, generation: generation, completion: nil, item: item))
-          return self.candidate(item, id)
+        let limit = kind == "resolve" ? 1 : kind == "complete" ? 5 : 20
+        // Filter before limiting: a POI ranked first must not hide a qualified city further down.
+        let items = (response?.mapItems ?? []).filter { !destinationArea || self.areaFacts($0) != nil }
+        let rows = items.prefix(limit).compactMap { item -> [String: Any]? in
+          let id = self.retain(Handle(session: session, generation: generation, destinationArea: destinationArea, completion: nil, item: item))
+          return self.candidate(item, id, destinationArea: destinationArea)
         }
         request.finish(rows.isEmpty ? "NO_RESULTS" : "READY", rows)
       }
@@ -167,7 +187,30 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       span: MKCoordinateSpan(latitudeDelta: 0.8, longitudeDelta: 0.8))
   }
 
-  private func candidate(_ item: MKMapItem, _ id: String) -> [String: Any] {
+  private func areaFacts(_ item: MKMapItem) -> AppleDestinationArea? {
+    guard !item.isCurrentLocation else { return nil }
+    // MKMapItem has no public result-type discriminator. Explicit placemark components
+    // qualify an area; a missing POI category or an identifier alone never does.
+    let placemark = item.placemark
+    var facts = AppleDestinationAreaFacts()
+    facts.name = item.name ?? ""
+    facts.locality = placemark.locality ?? ""
+    facts.subLocality = placemark.subLocality ?? ""
+    facts.administrativeArea = placemark.administrativeArea ?? ""
+    facts.subAdministrativeArea = placemark.subAdministrativeArea ?? ""
+    facts.country = placemark.country ?? ""
+    facts.countryCode = placemark.isoCountryCode ?? ""
+    facts.inlandWater = placemark.inlandWater ?? ""
+    facts.ocean = placemark.ocean ?? ""
+    facts.isNationalPark = item.pointOfInterestCategory == .nationalPark
+    facts.hasStreet = !(placemark.thoroughfare ?? "").isEmpty || !(placemark.subThoroughfare ?? "").isEmpty
+    facts.hasBusiness = item.pointOfInterestCategory != nil || item.phoneNumber != nil || item.url != nil
+    return qualifyAppleDestinationArea(facts)
+  }
+
+  private func candidate(_ item: MKMapItem, _ id: String, destinationArea: Bool) -> [String: Any]? {
+    let area = destinationArea ? areaFacts(item) : nil
+    if destinationArea && area == nil { return nil }
     let point: CLLocationCoordinate2D
     let address: String
     if #available(iOS 26.0, macOS 26.0, *) {
@@ -183,6 +226,11 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
     }
     var result: [String: Any] = ["handle": id, "title": item.name ?? "", "secondary": address,
       "address": address, "kind": "mapItem", "provider": "apple"]
+    if let area {
+      result["area"] = area.payload
+      result["title"] = area.label
+      result["secondary"] = area.qualifier
+    }
     if CLLocationCoordinate2DIsValid(point), point.latitude.isFinite, point.longitude.isFinite {
       result["point"] = ["latitude": point.latitude, "longitude": point.longitude]
     }
@@ -223,4 +271,61 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       return "ERROR"
     }
   }
+}
+
+
+// Raw MapKit facts only. This is conservative display qualification, never Canonical place proof.
+struct AppleDestinationAreaFacts {
+  var name = ""
+  var locality = ""
+  var subLocality = ""
+  var administrativeArea = ""
+  var subAdministrativeArea = ""
+  var country = ""
+  var countryCode = ""
+  var inlandWater = ""
+  var ocean = ""
+  var isNationalPark = false
+  var hasStreet = false
+  var hasBusiness = false
+}
+struct AppleDestinationArea {
+  let kind: String
+  let label: String
+  let qualifier: String
+  var payload: [String: String] { ["kind": kind, "label": label, "qualifier": qualifier] }
+}
+func qualifyAppleDestinationArea(_ facts: AppleDestinationAreaFacts) -> AppleDestinationArea? {
+  func clean(_ value: String) -> String {
+    value.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+  }
+  func key(_ value: String) -> String {
+    clean(value).folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+  }
+  let name = clean(facts.name)
+  guard !name.isEmpty, name.count <= 256 else { return nil }
+  if facts.isNationalPark {
+    var seen = Set([key(name)])
+    let qualifier = [facts.administrativeArea, facts.country].map(clean).filter { !$0.isEmpty && seen.insert(key($0)).inserted }.joined(separator: ", ")
+    guard !qualifier.isEmpty, qualifier.count <= 256 else { return nil }
+    return AppleDestinationArea(kind: "physicalFeature", label: name, qualifier: qualifier)
+  }
+  guard !facts.hasStreet, !facts.hasBusiness else { return nil }
+  let levels: [(String, String, [String])] = [
+    ("locality", facts.subLocality, [facts.locality, facts.administrativeArea, facts.country]),
+    ("locality", facts.locality, [facts.administrativeArea, facts.country]),
+    ("administrativeArea", facts.subAdministrativeArea, [facts.administrativeArea, facts.country]),
+    ("administrativeArea", facts.administrativeArea, [facts.country]),
+    ("country", facts.country, [facts.countryCode]),
+    ("physicalFeature", facts.inlandWater, [facts.locality, facts.administrativeArea, facts.country]),
+    ("physicalFeature", facts.ocean, [facts.locality, facts.administrativeArea, facts.country]),
+  ]
+  guard let matched = levels.first(where: { !clean($0.1).isEmpty && key(name) == key($0.1) }) else { return nil }
+  var seen = Set([key(name)])
+  var qualifier = matched.2.map(clean).filter { !$0.isEmpty && seen.insert(key($0)).inserted }.joined(separator: ", ")
+  if qualifier.isEmpty, !clean(facts.countryCode).isEmpty, key(facts.countryCode) != key(name) {
+    qualifier = clean(facts.countryCode)
+  }
+  guard !qualifier.isEmpty, qualifier.count <= 256 else { return nil }
+  return AppleDestinationArea(kind: matched.0, label: name, qualifier: qualifier)
 }
