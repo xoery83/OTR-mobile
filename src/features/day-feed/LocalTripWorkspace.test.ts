@@ -1311,3 +1311,45 @@ it("holds Create while a destination selection resolves and protects unselected 
   expect(state.alert).toHaveBeenCalled();
   expect(props.onBackToTrips).not.toHaveBeenCalled();
 });
+
+it("submits ordered destination identities and creator nickname without flattening into legacy destination", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Japan trip");
+  render();
+  const destinations = [
+    { localId: randomUUID(), text: "Tokyo", source: "MANUAL" },
+    {
+      localId: randomUUID(),
+      text: "Kyoto",
+      source: "APPLE",
+      match: {
+        provider: "apple",
+        providerPlaceId: "real-kyoto-id",
+        title: "Kyoto",
+        secondary: "Japan",
+        point: { latitude: 35, longitude: 135 },
+      },
+    },
+  ];
+  state.nodes.find((node) => node.destinations)!.destinations.onChange(destinations);
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  const payload = vi.mocked(repo.createTrip).mock.calls[0][0];
+  expect(payload.destination).toBeUndefined();
+  expect(payload.destinations).toEqual([
+    { destinationId: destinations[0].localId, displayLabel: "Tokyo", source: "MANUAL" },
+    {
+      destinationId: destinations[1].localId,
+      displayLabel: "Kyoto",
+      source: "APPLE_PLACE_ID",
+      provider: "apple",
+      providerPlaceId: "real-kyoto-id",
+    },
+  ]);
+});

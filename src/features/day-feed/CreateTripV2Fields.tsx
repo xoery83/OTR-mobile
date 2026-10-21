@@ -20,6 +20,7 @@ export function CreateTripV2Fields({
   range,
   onRange,
   selfNickname,
+  knownSelfName = "",
   onSelfNickname,
   travelers,
   onTravelers,
@@ -31,6 +32,7 @@ export function CreateTripV2Fields({
   range: TripDateRange;
   onRange(value: TripDateRange): void;
   selfNickname: string;
+  knownSelfName?: string;
   onSelfNickname(value: string): void;
   travelers: readonly LocalPersonNameSlot[];
   onTravelers(value: LocalPersonNameSlot[]): void;
@@ -83,12 +85,18 @@ export function CreateTripV2Fields({
           accessibilityRole="button"
           accessibilityLabel={t("createTripV2.editName")}
           disabled={disabled}
-          onPress={() => setEditor({ self: true, personId: null, value: selfNickname })}
+          onPress={() =>
+            setEditor({
+              self: true,
+              personId: null,
+              value: selfNickname || knownSelfName,
+            })
+          }
           style={styles.row}
         >
           <UiText style={styles.value}>
-            {selfNickname.trim()
-              ? t("createTripV2.youName", { name: selfNickname.trim() })
+            {selfNickname.trim() || knownSelfName
+              ? t("createTripV2.youName", { name: selfNickname.trim() || knownSelfName })
               : t("createTripV2.addYourName")}
           </UiText>
           <AppIcon name="square.and.pencil" color={colors.accent} />

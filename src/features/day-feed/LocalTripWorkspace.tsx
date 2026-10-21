@@ -1,3 +1,6 @@
+import { tripDestinationDisplay } from "./tripDestinationDisplay";
+import { readLocalSession } from "@/data/auth/authRepository";
+import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
 import { CreateTripDestinations } from "./CreateTripDestinations";
 import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
 import { CreateTripV2Fields } from "./CreateTripV2Fields";
@@ -148,13 +151,34 @@ function LocalTripContent({
     [end, setEnd] = useState("");
   const [travelers, setTravelers] = useState<LocalPersonNameSlot[]>([]);
   const [selfNickname, setSelfNickname] = useState("");
+  const [knownSelfName, setKnownSelfName] = useState("");
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve()
+      .then(readLocalSession)
+      .then((session) => {
+        const identity = session?.identity,
+          value = identity?.displayName.trim();
+        if (
+          active &&
+          generation === getAccountGeneration() &&
+          value &&
+          value !== "Account" &&
+          value !== identity?.email?.split("@")[0]
+        )
+          setKnownSelfName(value);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [generation]);
   const [createDraftId] = useState(createUuid);
   const [destinations, setDestinations] = useState<
     readonly TripDestinationDraftSelection[]
   >([]);
   const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
   const [destinationBusy, setDestinationBusy] = useState(false);
-  const [createBlocker, setCreateBlocker] = useState<"SELF" | "DESTINATION" | null>(null);
   const [coverOpen, setCoverOpen] = useState(false);
   const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
   const personalCover = useTripPersonalCover(tripId);
@@ -305,10 +329,6 @@ function LocalTripContent({
     };
   }, [load, generation]);
   const save = async () => {
-    if (destinations.some((item) => item.source === "APPLE") || destinations.length > 1) {
-      setCreateBlocker("DESTINATION");
-      return;
-    }
     if (
       busy.current ||
       destinationBusy ||
@@ -330,7 +350,22 @@ function LocalTripContent({
       const trip = await repo.createTrip({
         ...tripOperation.current,
         name,
-        destination: destinations[0]?.text ?? "",
+        destinations: destinations.map((item): LocalTripDestinationInput => {
+          if (item.source === "MANUAL")
+            return {
+              destinationId: item.localId,
+              displayLabel: item.text,
+              source: "MANUAL",
+            };
+          if (!item.match?.providerPlaceId) throw new Error("DESTINATION_NOT_CONFIRMED");
+          return {
+            destinationId: item.localId,
+            displayLabel: item.text,
+            source: "APPLE_PLACE_ID",
+            provider: "apple",
+            providerPlaceId: item.match.providerPlaceId,
+          };
+        }),
         creatorDisplayName: selfNickname.trim(),
         startDate: start || null,
         endDate: end || null,
@@ -665,7 +700,9 @@ function LocalTripContent({
                   : selected.endDate
                     ? [t("myTrips.ends", { date: displayDate(selected.endDate) })]
                     : [t("myTrips.datesToBeDecided")]),
-              ...(selected.destination ? [selected.destination] : []),
+              ...(tripDestinationDisplay(selected)
+                ? [tripDestinationDisplay(selected)!]
+                : []),
             ]}
             modules={
               <View style={styles.root}>
@@ -947,9 +984,9 @@ function LocalTripContent({
                         setEnd(range.end);
                       }}
                       selfNickname={selfNickname}
+                      knownSelfName={knownSelfName}
                       onSelfNickname={(value) => {
                         setSelfNickname(value);
-                        setCreateBlocker(null);
                       }}
                       travelers={travelers}
                       onTravelers={setTravelers}
@@ -962,7 +999,6 @@ function LocalTripContent({
                           items={destinations}
                           onChange={(items) => {
                             setDestinations(items);
-                            setCreateBlocker(null);
                           }}
                           onQueryDirty={setDestinationQueryDirty}
                           onBusy={setDestinationBusy}
@@ -970,15 +1006,6 @@ function LocalTripContent({
                         />
                       }
                     />
-                    {createBlocker ? (
-                      <Text accessibilityRole="alert" style={styles.status}>
-                        {t(
-                          createBlocker === "SELF"
-                            ? "createTripV2.selfGate"
-                            : "createTripV2.destinationGate",
-                        )}
-                      </Text>
-                    ) : null}
                     {error ? (
                       <Text accessibilityRole="alert" style={styles.status}>
                         {t("tripCreate.saveFailed")}

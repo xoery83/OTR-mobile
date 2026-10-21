@@ -46,7 +46,7 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   View: "div",
-  ScrollView: "section",
+  ScrollView: (p: any) => createElement("section", null, p.children),
   StyleSheet: { create: (v: unknown) => v },
   Pressable: (p: any) => {
     state.nodes.push(p);
@@ -64,7 +64,8 @@ vi.mock("@/data/auth/authRepository", () => ({
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
 }));
-vi.mock("@/data/places/applePlaceProvider", () => ({
+vi.mock("@/data/places/applePlaceProvider", async (original) => ({
+  ...(await original<typeof import("@/data/places/applePlaceProvider")>()),
   readApplePlaceProvider: (...args: unknown[]) => state.provider(...args),
 }));
 vi.mock("@/features/place-search/placeSearchSession", () => ({
@@ -156,7 +157,7 @@ it("uses real provider completion then resolve before adding Apple destination m
   render();
   await flush();
   expect(state.update).toHaveBeenCalledWith(
-    { text: "Nelson Summer", locale: "en-NZ" },
+    { text: "Nelson", locale: "en-NZ" },
     450,
     true,
   );
@@ -238,4 +239,50 @@ it("requires explicit custom confirmation when resolved Apple result has no stab
   expect(render()).toContain("createTripV2.customRequired");
   press("createTripV2.custom:Nelson");
   expect(items[0]).toEqual(expect.objectContaining({ text: "Nelson", source: "MANUAL" }));
+});
+
+it("dismisses suggestions after selecting, reopening only for an active query or a new empty-selection name", async () => {
+  render();
+  await flush();
+  state.emit({
+    status: "READY",
+    rows: [{ handle: "c", title: "Nelson", secondary: "NZ" }],
+    more: false,
+  });
+  render();
+  input("Custom Nelson");
+  render();
+  press("createTripV2.custom:Custom Nelson");
+  render();
+  expect(state.nodes.some((node) => node.accessibilityLabel === "Nelson, NZ")).toBe(
+    false,
+  );
+  name = "Tokyo Holiday";
+  render();
+  expect(state.nodes.some((node) => node.accessibilityLabel === "Nelson, NZ")).toBe(
+    false,
+  );
+  input("Kyoto");
+  render();
+  expect(state.nodes.some((node) => node.accessibilityLabel === "Nelson, NZ")).toBe(true);
+  input("");
+  render();
+  press("createTripV2.removeDestination:Custom Nelson");
+  name = "New name";
+  render();
+  expect(state.update).toHaveBeenLastCalledWith(
+    { text: "New name", locale: "en-NZ" },
+    450,
+    true,
+  );
+});
+
+it("keeps query and selected tags when normalized custom text exceeds its bound", () => {
+  render();
+  input("ﬃ".repeat(100));
+  render();
+  expect(() => press(`createTripV2.custom:${"ﬃ".repeat(100)}`)).not.toThrow();
+  expect(render()).toContain("createTripV2.destinationLength");
+  expect(items).toEqual([]);
+  expect(state.nodes.find((node) => node.onChangeText).value).toBe("ﬃ".repeat(100));
 });

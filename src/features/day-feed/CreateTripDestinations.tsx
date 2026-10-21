@@ -1,3 +1,4 @@
+import { createTripNameQuery } from "@/data/places/createTripNameQuery";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useNetworkState } from "expo-network";
@@ -51,6 +52,8 @@ export function CreateTripDestinations({
     colors = useUiTheme();
   const online = useNetworkState().isConnected !== false;
   const [query, setQuery] = useState("");
+  const [dismissedName, setDismissedName] = useState<string | null>(null);
+  const suggestionsVisible = !!query.trim() || (!items.length && dismissedName !== name);
   const [state, setState] = useState<PlaceSearchState>({
     status: "IDLE",
     rows: [],
@@ -58,13 +61,17 @@ export function CreateTripDestinations({
   });
   const [choosing, setChoosing] = useState(false);
   const [customRequired, setCustomRequired] = useState(false);
+  const [inputInvalid, setInputInvalid] = useState(false);
   const session = useRef<PlaceSearchSession | null>(null);
   const alive = useRef(true),
-    currentQuery = useRef(query || name);
+    currentQuery = useRef(query || createTripNameQuery(name));
+  const searchText = suggestionsVisible
+    ? query.trim() || (!items.length ? createTripNameQuery(name) : "")
+    : "";
   const tags = useRef<ScrollView>(null);
   useEffect(() => {
-    currentQuery.current = query.trim() || name;
-  }, [query, name]);
+    currentQuery.current = searchText;
+  }, [searchText]);
   const current = useCallback(
     () => alive.current && generation === getAccountGeneration(),
     [generation],
@@ -116,21 +123,19 @@ export function CreateTripDestinations({
     };
   }, [draftId, generation, online, current]);
   useEffect(() => {
-    session.current?.update(
-      { text: query.trim() || name, locale: getFormatLocale() },
-      450,
-      online,
-    );
-  }, [query, name, online]);
+    session.current?.update({ text: searchText, locale: getFormatLocale() }, 450, online);
+  }, [searchText, online]);
   const changeQuery = (value: string) => {
     setQuery(value);
     setCustomRequired(false);
+    setInputInvalid(false);
     onQueryDirty(!!value.trim());
   };
   const append = (item: TripDestinationDraftSelection) => {
     if (!current() || disabled || items.length >= 20) return;
     onChange(addTripDestination(items, item));
     changeQuery("");
+    setDismissedName(name);
   };
   const choose = async (row: ApplePlaceCandidate) => {
     if (!current() || disabled || choosing || items.length >= 20) return;
@@ -156,7 +161,7 @@ export function CreateTripDestinations({
   };
   return (
     <View style={styles.section}>
-      <UiText style={styles.label}>{t("createTripV2.destinations")}</UiText>
+      <UiText style={styles.caption}>{t("createTripV2.destinations")}</UiText>
       {items.length ? (
         <ScrollView
           ref={tags}
@@ -191,15 +196,19 @@ export function CreateTripDestinations({
         editable={!disabled && !choosing && items.length < 20}
         onChangeText={changeQuery}
       />
-      {!query.trim() && name.trim() && state.rows.length ? (
+      {suggestionsVisible &&
+      !items.length &&
+      !query.trim() &&
+      name.trim() &&
+      state.rows.length ? (
         <UiText style={styles.meta}>{t("createTripV2.nameSuggestions")}</UiText>
       ) : null}
-      {state.status === "LOADING" || choosing ? (
+      {(suggestionsVisible && state.status === "LOADING") || choosing ? (
         <UiText accessibilityLiveRegion="polite" style={styles.meta}>
           {t("createTripV2.searching")}
         </UiText>
       ) : null}
-      {state.rows.map((row) => (
+      {(suggestionsVisible ? state.rows : []).map((row) => (
         <Pressable
           key={row.handle}
           accessibilityRole="button"
@@ -218,10 +227,15 @@ export function CreateTripDestinations({
       {customRequired ? (
         <UiText style={styles.meta}>{t("createTripV2.customRequired")}</UiText>
       ) : null}
-      {state.status === "ERROR" || !online ? (
+      {suggestionsVisible && (state.status === "ERROR" || !online) ? (
         <UiText style={styles.meta}>{t("createTripV2.searchUnavailable")}</UiText>
-      ) : state.status === "EMPTY" ? (
+      ) : suggestionsVisible && state.status === "EMPTY" ? (
         <UiText style={styles.meta}>{t("createTripV2.noResults")}</UiText>
+      ) : null}
+      {inputInvalid ? (
+        <UiText accessibilityRole="alert" style={styles.meta}>
+          {t("createTripV2.destinationLength")}
+        </UiText>
       ) : null}
       {query.trim() ? (
         <Pressable
@@ -229,7 +243,13 @@ export function CreateTripDestinations({
           disabled={disabled || choosing || items.length >= 20}
           style={styles.result}
           accessibilityLabel={t("createTripV2.custom", { query: query.trim() })}
-          onPress={() => append(manualTripDestination(query))}
+          onPress={() => {
+            try {
+              append(manualTripDestination(query));
+            } catch {
+              setInputInvalid(true);
+            }
+          }}
         >
           <AppIcon name="plus.circle" size={20} color={colors.accent} />
           <UiText style={styles.custom}>
@@ -244,6 +264,7 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     section: { gap: visual.space.heading },
     label: { ...visual.type.row, color: colors.textPrimary },
+    caption: { ...visual.type.action, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
     tags: { gap: visual.space.heading },
     tag: {

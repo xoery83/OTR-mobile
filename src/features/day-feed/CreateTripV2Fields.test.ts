@@ -73,6 +73,7 @@ const props = {
   range: { start: "", end: "" },
   onRange: vi.fn(),
   selfNickname: "",
+  knownSelfName: "",
   onSelfNickname: vi.fn(),
   travelers: [] as LocalPersonNameSlot[],
   onTravelers: vi.fn((value: LocalPersonNameSlot[]) => {
@@ -92,6 +93,7 @@ beforeEach(() => {
   state.hooks = [];
   props.name = "";
   props.selfNickname = "";
+  props.knownSelfName = "";
   props.travelers = [];
   props.disabled = false;
   vi.clearAllMocks();
@@ -154,4 +156,11 @@ it("canceling Add traveler creates no slot and entering an empty name never inve
   render();
   node("common.done").onPress();
   expect(props.travelers[0].displayName).toBe("");
+});
+
+it("shows an existing known name without inventing a nickname edit or second traveler", () => {
+  props.knownSelfName = "Alex";
+  expect(render()).toContain("createTripV2.youName:Alex");
+  expect(props.onSelfNickname).not.toHaveBeenCalled();
+  expect(props.onTravelers).not.toHaveBeenCalled();
 });
