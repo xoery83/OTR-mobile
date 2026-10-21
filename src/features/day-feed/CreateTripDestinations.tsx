@@ -5,6 +5,7 @@ import { useNetworkState } from "expo-network";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
+  ApplePlaceError,
   readApplePlaceProvider,
   reportApplePlaceFailure,
   type ApplePlaceCandidate,
@@ -168,8 +169,15 @@ export function CreateTripDestinations({
       if (resolved && current()) {
         append(resolvedTripDestination(resolved));
       }
-    } catch {
-      if (current()) setState({ status: "ERROR", rows: [], more: false });
+    } catch (error) {
+      if (current()) {
+        if (
+          error instanceof ApplePlaceError &&
+          error.code === "DESTINATION_LABEL_INVALID"
+        )
+          setInputInvalid(true);
+        else setState({ status: "ERROR", rows: [], more: false });
+      }
     } finally {
       if (current()) {
         setChoosing(false);

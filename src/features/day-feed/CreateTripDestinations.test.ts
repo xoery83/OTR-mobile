@@ -314,3 +314,26 @@ it("reveals the existing chip instead of duplicating an explicitly selected dest
   expect(items).toEqual([original]);
   expect(state.scroll).toHaveBeenCalledWith({ x: 120, animated: true });
 });
+
+it("preserves the query and existing tags if a selected area label exceeds persistence limits", async () => {
+  render();
+  await flush();
+  input("Sydney");
+  render();
+  state.emit({
+    status: "READY",
+    rows: [{ handle: "c", title: "Sydney", secondary: "Australia" }],
+    more: false,
+  });
+  render();
+  state.resolve.mockResolvedValue({
+    provider: "apple",
+    kind: "mapItem",
+    title: "x".repeat(250),
+    secondary: "Australia",
+  });
+  await press("Sydney, Australia");
+  expect(items).toEqual([]);
+  expect(render()).toContain("createTripV2.destinationLength");
+  expect(state.nodes.find((node) => node.onChangeText).value).toBe("Sydney");
+});
