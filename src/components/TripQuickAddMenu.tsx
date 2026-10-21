@@ -219,9 +219,9 @@ export function TripQuickAddMenu({
                       <View style={styles.dateRow}>
                         <AppIcon name="calendar" size={24} color={colors.textPrimary} />
                         <View style={styles.dateCopy}>
-                          <UiText style={styles.meta}>{t("quickAdd.selectedDay")}</UiText>
                           <UiFormRow
-                            label={t("actionIsland.suggestedDate")}
+                            stacked
+                            label={t("quickAdd.selectedDay")}
                             value={
                               knownDate
                                 ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
@@ -377,7 +377,7 @@ export function TripQuickAddMenu({
                     <View style={styles.tile}>
                       <UiFormRow
                         variant="action"
-                        value={t("actionIsland.membersUnavailable")}
+                        value={t("quickAdd.membersHint")}
                         label={t("actionIsland.member")}
                         leading={
                           <View style={styles.icon}>

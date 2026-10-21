@@ -150,7 +150,7 @@ it("arrows change only weak menu date and pass it into the existing create callb
   render();
   button("actionIsland.nextDate").onPress();
   render();
-  expect(button("actionIsland.suggestedDate").value).toBe("2027-01-01");
+  expect(button("quickAdd.selectedDay").value).toBe("2027-01-01");
   button("actionIsland.itinerary").onPress();
   expect(itinerary).toHaveBeenCalledWith("2027-01-01");
   expect(expense).not.toHaveBeenCalled();
@@ -227,7 +227,7 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   await flush();
   render();
   expect(button("actionIsland.itinerary").disabled).toBe(true);
-  button("actionIsland.suggestedDate").onPress();
+  button("quickAdd.selectedDay").onPress();
   render();
   state.nodes
     .find((node) => node.mode === "date")
@@ -235,7 +235,7 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   render();
   button("common.done").onPress();
   render();
-  expect(button("actionIsland.suggestedDate").value).toBe("2027-02-09");
+  expect(button("quickAdd.selectedDay").value).toBe("2027-02-09");
   expect(itinerary).not.toHaveBeenCalled();
   expect(expense).not.toHaveBeenCalled();
   button("actionIsland.itinerary").onPress();

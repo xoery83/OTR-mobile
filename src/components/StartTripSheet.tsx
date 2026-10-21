@@ -34,7 +34,7 @@ export function StartTripSheet({
         <View style={styles.backdrop}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
+            accessibilityLabel={t("common.close")}
             onPress={onClose}
             style={StyleSheet.absoluteFill}
           />
