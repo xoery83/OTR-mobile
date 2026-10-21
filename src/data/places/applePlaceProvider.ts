@@ -202,6 +202,8 @@ export function createApplePlaceProvider(
 export function applePlaceFailureDiagnostic(phase: string, error: unknown) {
   const allowed = [
     "NATIVE_UNAVAILABLE",
+    "NATIVE_MODULE_MISSING",
+    "LOADER_EXPORT_MISSING",
     "INVALID_BINDING",
     "CANCELLED",
     "INVALID_REQUEST",
@@ -219,6 +221,8 @@ export function applePlaceFailureDiagnostic(phase: string, error: unknown) {
       "LOAD_MORE",
       "INIT_CONTROLLER",
       "LOAD_MODULE",
+      "IMPORT_CORE",
+      "LOOKUP_MODULE",
       "COMPLETE",
       "SEARCH",
       "RESOLVE",
@@ -244,11 +248,20 @@ export function reportApplePlaceFailure(phase: string, error: unknown) {
 export async function readApplePlaceProvider(binding: PlaceSearchBinding) {
   assertPlaceSearchBinding(binding);
   let native: ApplePlaceNative;
+  let phase = "IMPORT_CORE";
   try {
     const { requireNativeModule } = await import("expo-modules-core");
+    phase = "LOOKUP_MODULE";
+    if (typeof requireNativeModule !== "function")
+      throw new ApplePlaceError("LOADER_EXPORT_MISSING");
     native = requireNativeModule<ApplePlaceNative>("OTRPlaceSearch");
   } catch (error) {
-    reportApplePlaceFailure("LOAD_MODULE", error);
+    const classified =
+      error instanceof Error &&
+      error.message === "Cannot find native module 'OTRPlaceSearch'"
+        ? new ApplePlaceError("NATIVE_MODULE_MISSING")
+        : error;
+    reportApplePlaceFailure(phase, classified);
     throw new ApplePlaceError("NATIVE_UNAVAILABLE");
   }
   return createApplePlaceProvider(native, binding);

@@ -52,3 +52,27 @@ it("uses the modules-core loader and retains invalid binding rejection outside c
     readApplePlaceProvider({ ...binding(), tripId: "invalid" }),
   ).rejects.not.toMatchObject({ code: "NATIVE_UNAVAILABLE" });
 });
+
+it("distinguishes a missing native registration without logging raw error text", async () => {
+  vi.resetModules();
+  vi.stubGlobal("__DEV__", true);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  vi.doMock("expo-modules-core", () => ({
+    requireNativeModule: () => {
+      throw new Error("Cannot find native module 'OTRPlaceSearch'");
+    },
+  }));
+  try {
+    const { readApplePlaceProvider } = await import("./applePlaceProvider");
+    await expect(readApplePlaceProvider(binding())).rejects.toMatchObject({
+      code: "NATIVE_UNAVAILABLE",
+    });
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ phase: "LOOKUP_MODULE", code: "NATIVE_MODULE_MISSING" }),
+    );
+    expect(JSON.stringify(log.mock.calls)).not.toContain("Cannot find native module");
+  } finally {
+    vi.unstubAllGlobals();
+    log.mockRestore();
+  }
+});
