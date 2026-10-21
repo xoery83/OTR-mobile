@@ -43,7 +43,6 @@ export function CaptureContent({
   onReopenJob?: (id: string) => void;
   accountId?: string;
 }) {
-  const styles = useThemedStyles(createStyles);
   const [{ staging, invocationTripName, invocationTripPrior }] = useState(() => ({
     staging: draftStaging ?? createCaptureStaging(pickCaptureMaterial, isCurrent),
     invocationTripName: tripName,
@@ -320,12 +319,12 @@ export function CaptureContent({
         readTripTargets={readTripTargets}
         renderImagePaste={
           accountId
-            ? (enabled) => {
-                // Native intake is loaded only when this explicit composer control is rendered.
-                const { ImagePasteControl, releaseImagePaste } =
+            ? (enabled, input) => {
+                // Attach native Paste handling only to this composer input.
+                const { ImagePasteInput, releaseImagePaste } =
                   require("@/native/imagePaste") as typeof import("@/native/imagePaste");
                 return (
-                  <ImagePasteControl
+                  <ImagePasteInput
                     requestId={pasteRequestId}
                     enabled={
                       enabled &&
@@ -335,7 +334,6 @@ export function CaptureContent({
                       !reopening &&
                       !model
                     }
-                    style={styles.pasteControl}
                     onTouchStart={() => setPasteFailure(null)}
                     onImages={(payload) => {
                       if (
@@ -373,7 +371,9 @@ export function CaptureContent({
                               : "PASTE_FAILED",
                         );
                     }}
-                  />
+                  >
+                    {input}
+                  </ImagePasteInput>
                 );
               }
             : undefined
@@ -802,7 +802,6 @@ export function CaptureTray({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    pasteControl: { width: 44, minHeight: 44 },
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.row },
     secondary: { color: colors.textSecondary, ...visual.type.meta },

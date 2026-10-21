@@ -127,3 +127,25 @@ _ = try aggregateData.copyProviderData(bigData)
 rejects { _ = try aggregateData.copyProviderData(bigData) }
 aggregateData.cancelPending()
 print("Encoded data-only provider byte identity, rejection, cancellation and aggregate budgets PASS")
+
+let delayedWave = ImagePasteWave<Int>("delayed")
+delayedWave.append(1, supported: true)
+// A later transform can append before UIKit explicitly seals the paste.
+delayedWave.append(2, supported: true)
+let delayedItems = try delayedWave.finish(); precondition(delayedItems == [1, 2])
+delayedWave.append(3, supported: true)
+rejects { _ = try delayedWave.finish() }
+let excessWave = ImagePasteWave<Int>("excess")
+for n in 0...10 { excessWave.append(n, supported: true) }
+do { _ = try excessWave.finish(); preconditionFailure("Expected whole-wave limit") }
+catch { precondition(error as? ImagePasteFailure == .limit) }
+let unsupportedWave = ImagePasteWave<Int>("unsupported")
+unsupportedWave.append(1, supported: true); unsupportedWave.append(2, supported: false)
+unsupportedWave.append(3, supported: true)
+do { _ = try unsupportedWave.finish(); preconditionFailure("Expected whole-wave unsupported") }
+catch { precondition(error as? ImagePasteFailure == .unsupported) }
+let cancelledWave = ImagePasteWave<Int>("cancelled")
+cancelledWave.append(1, supported: true); cancelledWave.cancel()
+cancelledWave.append(2, supported: true)
+rejects { _ = try cancelledWave.finish() }
+print("Complete paste-wave sealing, late providers, whole-wave limit/unsupported and cancellation PASS")

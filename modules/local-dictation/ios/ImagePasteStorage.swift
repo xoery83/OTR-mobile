@@ -36,6 +36,29 @@ enum ImagePastePolicy {
   }
 }
 
+// UIKit's combine callback seals the whole paste, including providers arriving on later turns.
+final class ImagePasteWave<Provider> {
+  let requestId: String
+  private var providers: [Provider] = []
+  private var failure: ImagePasteFailure?
+  private var sealed = false
+  init(_ requestId: String) { self.requestId = requestId }
+  func append(_ provider: Provider, supported: Bool) {
+    guard !sealed, failure == nil else { return }
+    if !supported { failure = .unsupported; providers = [] }
+    else if providers.count == ImagePastePolicy.maxItems { failure = .limit; providers = [] }
+    else { providers.append(provider) }
+  }
+  func finish() throws -> [Provider] {
+    guard !sealed else { throw ImagePasteFailure.cancelled }
+    sealed = true
+    defer { providers = [] }
+    if let failure { throw failure }
+    return providers
+  }
+  func cancel() { providers = []; sealed = true }
+}
+
 // A provider URL exists only during its callback. Copy there, then fence main-thread delivery.
 final class ImagePasteBatch {
   let requestId: String

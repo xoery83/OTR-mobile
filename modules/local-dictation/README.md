@@ -93,9 +93,27 @@ Apple references:
 [required local recognition](https://developer.apple.com/documentation/speech/sfspeechrecognitionrequest/requiresondevicerecognition),
 [live audio requests](https://developer.apple.com/documentation/speech/sfspeechaudiobufferrecognitionrequest).
 
-## Explicit image Paste control
+## System input Paste
 
-UIPasteControl first requests an encoded file representation. If the system provider
+The Import composer wraps its existing canonical multiline input with a scoped
+native host. The input's system long-press menu accepts images; there is no
+separate Paste button. A local responder fallback makes image-only Paste visible
+for the plain-text input and reads item providers only on the explicit action.
+Non-image actions return to the concrete UITextView implementation. The scoped
+UITextPasteDelegate also handles UIKit-delivered items at its complete combine
+boundary; an image-only result never replaces selected draft text. Cancellation
+or reparenting detaches the input and invalidates pending work. Older hosts
+without supportsInputPaste retain plain text input. No global paste handler or
+responder swizzling is installed.
+
+AD5 bounded verification: iOS-generated PNG and Mac Preview image copied with
+Device Hub **Send Clipboard** both appear as attachments through system Paste;
+selected QA text survives image Paste, and Cut/Paste restores it. Get Clipboard
+is the reverse transport, not the Mac-to-device setup. Repeated Paste creates
+separately removable attachments. HEIC, mixed text/image provider batches and
+physical iPhone remain separate acceptance checks.
+
+The pipeline first requests an encoded file representation. If the system provider
 cannot supply a file, it requests encoded Data for the same advertised image type.
 If that is unavailable, the legacy item API may supply encoded Data or a file URL;
 opaque UIImage/other objects are rejected, never re-encoded. The legacy API has no

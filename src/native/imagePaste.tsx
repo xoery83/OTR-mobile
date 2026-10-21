@@ -13,6 +13,7 @@ export type {
 } from "./imagePasteContract";
 
 type NativePaste = {
+  supportsInputPaste?(): boolean;
   claim(requestId: string, tokens: string[]): boolean;
   releaseUnclaimed(tokens: string[]): Promise<void>;
   release(tokens: string[]): Promise<void>;
@@ -30,7 +31,8 @@ export function isImagePasteAvailable(): boolean {
   return (
     typeof native?.release === "function" &&
     typeof native.claim === "function" &&
-    typeof native.releaseUnclaimed === "function"
+    typeof native.releaseUnclaimed === "function" &&
+    native.supportsInputPaste?.() === true
   );
 }
 export async function releaseImagePasteTokens(tokens: readonly string[]): Promise<void> {
@@ -42,7 +44,7 @@ export async function releaseImagePasteTokens(tokens: readonly string[]): Promis
 export function releaseImagePaste(tokens: readonly string[]): void {
   void releaseImagePasteTokens(tokens).catch(() => {});
 }
-export type ImagePasteControlProps = ViewProps & {
+export type ImagePasteInputProps = ViewProps & {
   requestId: string;
   enabled: boolean;
   onImages(payload: ImagePastePayload): void;
@@ -55,7 +57,7 @@ type NativeProps = ViewProps & {
   onFailure(event: NativeSyntheticEvent<unknown>): void;
 };
 let NativeControl: ComponentType<NativeProps> | null = null;
-export function ImagePasteControl(props: ImagePasteControlProps) {
+export function ImagePasteInput(props: ImagePasteInputProps) {
   const current = useRef({ props, mounted: true });
   useLayoutEffect(() => {
     current.current = { props, mounted: true };
@@ -80,7 +82,7 @@ export function ImagePasteControl(props: ImagePasteControlProps) {
       current.current.mounted = false;
     };
   }, []);
-  if (!isImagePasteAvailable()) return null;
+  if (!isImagePasteAvailable()) return <>{props.children}</>;
   NativeControl ??= requireNativeView<NativeProps>("OTRImagePaste");
   const {
     requestId,

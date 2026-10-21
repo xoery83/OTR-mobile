@@ -212,7 +212,7 @@ export const en = {
   "capture.composer.paste.limit":
     "Pasted images are limited to 10 images and 20 MB in total. Your draft is retained.",
   "capture.composer.paste.failed":
-    "The image could not be read. Copy the image again, then tap Paste. Your draft is retained.",
+    "The image could not be read. Copy it again, then touch and hold the input and choose Paste. Your draft is retained.",
   "capture.voice.diagnostic": "Diagnostic: {phase} · {domain} · {code}",
   "capture.connections.forwarding": "Email forwarding",
   "capture.connections.notConfigured": "Not configured",
@@ -2818,7 +2818,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.composer.sourcesInstruction": "从{camera}、{photos}或{files}添加",
   "capture.composer.paste.unsupported": "剪贴板中的内容不是支持的图片。草稿已保留。",
   "capture.composer.paste.limit": "粘贴图片总计最多 10 张、20 MB。草稿已保留。",
-  "capture.composer.paste.failed": "无法读取图片。请重新复制图片，再点粘贴。草稿已保留。",
+  "capture.composer.paste.failed":
+    "无法读取图片。请重新复制，再长按输入框选择粘贴。草稿已保留。",
   "capture.voice.diagnostic": "诊断：{phase} · {domain} · {code}",
   "capture.connections.forwarding": "邮件转发",
   "capture.connections.notConfigured": "尚未配置",

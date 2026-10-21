@@ -35,7 +35,7 @@ type Props = {
   title?: string;
   contextLabel?: string;
   errorMessage?: string;
-  renderImagePaste?(enabled: boolean): ReactNode;
+  renderImagePaste?(enabled: boolean, input: ReactNode): ReactNode;
   readTripTargets?(): Promise<readonly { id: string; name: string }[]>;
   onTripTarget?(
     target: { id: string; name: string } | null,
@@ -157,6 +157,22 @@ export function CaptureComposer({
         : page === "context"
           ? t("capture.composer.contextTitle")
           : (title ?? t("capture.composer.title"));
+  const editor = (
+    <UiTextInput
+      variant="bare"
+      value={snapshot.editorText}
+      onChangeText={onText}
+      editable={!locked}
+      multiline
+      placeholder={t(
+        snapshot.items.length
+          ? "capture.composer.messagePlaceholder"
+          : "capture.composer.placeholder",
+      )}
+      accessibilityLabel={t("capture.composer.magic")}
+      style={[styles.input, { maxHeight: maxInputHeight }]}
+    />
+  );
   return (
     <Modal visible transparent animationType="slide" onRequestClose={close}>
       <SafeAreaView edges={["top", "left", "right"]} style={styles.viewport}>
@@ -397,20 +413,7 @@ export function CaptureComposer({
                   ) : null}
                 </ScrollView>
                 <UiGlassSurface style={styles.composer}>
-                  <UiTextInput
-                    variant="bare"
-                    value={snapshot.editorText}
-                    onChangeText={onText}
-                    editable={!locked}
-                    multiline
-                    placeholder={t(
-                      snapshot.items.length
-                        ? "capture.composer.messagePlaceholder"
-                        : "capture.composer.placeholder",
-                    )}
-                    accessibilityLabel={t("capture.composer.magic")}
-                    style={[styles.input, { maxHeight: maxInputHeight }]}
-                  />
+                  {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
                   <View style={styles.footer}>
                     <Pressable
                       accessibilityRole="button"
@@ -422,7 +425,6 @@ export function CaptureComposer({
                     >
                       <AppIcon name="plus" size={25} color={colors.textPrimary} />
                     </Pressable>
-                    {renderImagePaste?.(!locked)}
                     <View style={styles.spacer} />
                     <Pressable
                       accessibilityRole="button"
