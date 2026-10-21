@@ -188,6 +188,22 @@ export const en = {
     "Local validation and document-reading events are recorded below.",
   "capture.progress.newImport": "New Import",
   "capture.progress.retryIntake": "Retry local intake",
+  "capture.composer.addAttachments": "Add attachments",
+  "capture.composer.messagePlaceholder": "Add a message (optional)…",
+  "capture.composer.sourcesInstruction": "Add from {camera}, {photos} or {files}",
+  "capture.composer.emailInstruction": "Forward or connect your email",
+  "capture.composer.aiInstruction": "Explore AI connections",
+  "capture.composer.emailTitle": "Email Import",
+  "capture.composer.aiTitle": "AI Connections",
+  "capture.composer.contextTitle": "Import target",
+  "capture.composer.emailUnavailable":
+    "Email forwarding and mailbox connections are not available in this build. No forwarding address is configured by this screen.",
+  "capture.composer.aiUnavailable":
+    "AI connections are not available in this build. No provider connection or automatic import is active here.",
+  "capture.composer.contextUnavailable":
+    "Changing the target of this draft is not available yet. You can close this panel and open Import from the intended trip.",
+  "capture.composer.voiceUnavailable":
+    "In-app dictation is not available yet. You can use keyboard dictation.",
   "capture.composer.files": "Files",
   "capture.composer.photos": "Photos",
   "capture.composer.title": "Import Travel Plans",
@@ -197,7 +213,7 @@ export const en = {
   "capture.composer.camera": "Camera",
   "capture.composer.cameraUnavailable": "Camera capture is not available yet.",
   "capture.composer.magic": "Magic Input",
-  "capture.composer.placeholder": "Type or paste travel information",
+  "capture.composer.placeholder": "Tell us or paste your plans here…",
   "capture.composer.add": "Add",
   "capture.composer.alreadyAdded": "Already added",
   "capture.composer.submit": "Submit Batch",
@@ -2742,6 +2758,21 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.localInterpretationHistory": "下方记录了本机校验和文档读取事件。",
   "capture.progress.newImport": "新建导入",
   "capture.progress.retryIntake": "重试本机接收",
+  "capture.composer.addAttachments": "添加附件",
+  "capture.composer.messagePlaceholder": "添加说明（可选）…",
+  "capture.composer.sourcesInstruction": "从{camera}、{photos}或{files}添加",
+  "capture.composer.emailInstruction": "转发邮件或连接邮箱",
+  "capture.composer.aiInstruction": "查看 AI 连接",
+  "capture.composer.emailTitle": "邮件导入",
+  "capture.composer.aiTitle": "AI 连接",
+  "capture.composer.contextTitle": "导入目标",
+  "capture.composer.emailUnavailable":
+    "此版本尚不支持邮件转发和邮箱连接。本页面未配置转发地址。",
+  "capture.composer.aiUnavailable":
+    "此版本尚不支持 AI 连接。此处没有已启用的服务商连接或自动导入。",
+  "capture.composer.contextUnavailable":
+    "暂不支持更改此草稿的目标。你可以关闭面板，从目标旅行重新打开导入。",
+  "capture.composer.voiceUnavailable": "暂不支持应用内语音输入，可以使用键盘听写。",
   "capture.composer.files": "文件",
   "capture.composer.photos": "照片",
   "capture.composer.title": "导入旅行计划",

@@ -282,7 +282,7 @@ export function CaptureContent({
       />
     );
   if (accountId || (draftStaging && !attempted && !reopening && !model)) {
-    const pick = async (source: "files" | "photos") => {
+    const pick = async (source: "files" | "photos" | "camera") => {
       if (!current() || running.current) return;
       setDuplicate(false);
       const result = await staging.pick(source);
@@ -353,6 +353,7 @@ export function CaptureContent({
         onClose={hide}
         onFiles={() => void pick("files")}
         onPhotos={() => void pick("photos")}
+        onCamera={() => void pick("camera")}
         onRemove={(id) => {
           if (current()) staging.remove(id);
         }}
