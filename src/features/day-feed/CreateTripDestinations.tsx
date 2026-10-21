@@ -12,6 +12,7 @@ import {
   addTripDestination,
   manualTripDestination,
   removeTripDestination,
+  sameTripDestination,
   resolvedTripDestination,
   type TripDestinationDraftSelection,
 } from "@/data/places/tripDestinationSelection";
@@ -69,6 +70,7 @@ export function CreateTripDestinations({
     ? query.trim() || (!items.length ? createTripNameQuery(name) : "")
     : "";
   const tags = useRef<ScrollView>(null);
+  const tagPositions = useRef(new Map<string, number>());
   useEffect(() => {
     currentQuery.current = searchText;
   }, [searchText]);
@@ -133,7 +135,13 @@ export function CreateTripDestinations({
   };
   const append = (item: TripDestinationDraftSelection) => {
     if (!current() || disabled || items.length >= 20) return;
+    const existing = items.find((value) => sameTripDestination(value, item));
     onChange(addTripDestination(items, item));
+    if (existing)
+      tags.current?.scrollTo({
+        x: tagPositions.current.get(existing.localId) ?? 0,
+        animated: true,
+      });
     changeQuery("");
     setDismissedName(name);
   };
@@ -171,7 +179,13 @@ export function CreateTripDestinations({
           onContentSizeChange={() => tags.current?.scrollToEnd({ animated: true })}
         >
           {items.map((item) => (
-            <View key={item.localId} style={styles.tag}>
+            <View
+              key={item.localId}
+              style={styles.tag}
+              onLayout={(event) =>
+                tagPositions.current.set(item.localId, event.nativeEvent.layout.x)
+              }
+            >
               <UiText style={styles.tagText}>{item.text}</UiText>
               <Pressable
                 accessibilityRole="button"

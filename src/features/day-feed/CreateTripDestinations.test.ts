@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
   hooks: [] as any[],
   cursor: 0,
   nodes: [] as any[],
+  views: [] as any[],
+  scroll: vi.fn(),
   effects: [] as (() => void)[],
   generation: 1,
   update: vi.fn(),
@@ -45,8 +47,14 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
-  View: "div",
-  ScrollView: (p: any) => createElement("section", null, p.children),
+  View: (p: any) => {
+    state.views.push(p);
+    return createElement("div", null, p.children);
+  },
+  ScrollView: (p: any) => {
+    if (p.ref) p.ref.current = { scrollTo: state.scroll };
+    return createElement("section", null, p.children);
+  },
   StyleSheet: { create: (v: unknown) => v },
   Pressable: (p: any) => {
     state.nodes.push(p);
@@ -98,6 +106,7 @@ const dirty = vi.fn();
 function render() {
   state.cursor = 0;
   state.nodes = [];
+  state.views = [];
   const html = renderToStaticMarkup(
     createElement(CreateTripDestinations, {
       name,
@@ -126,6 +135,7 @@ beforeEach(() => {
   state.hooks = [];
   state.effects = [];
   state.generation = 1;
+  state.scroll.mockReset();
   state.update.mockReset();
   state.resolve.mockReset();
   state.close.mockReset();
@@ -285,4 +295,21 @@ it("keeps query and selected tags when normalized custom text exceeds its bound"
   expect(render()).toContain("createTripV2.destinationLength");
   expect(items).toEqual([]);
   expect(state.nodes.find((node) => node.onChangeText).value).toBe("ﬃ".repeat(100));
+});
+
+it("reveals the existing chip instead of duplicating an explicitly selected destination", () => {
+  render();
+  input("Nelson");
+  render();
+  press("createTripV2.custom:Nelson");
+  render();
+  const original = items[0];
+  state.views
+    .find((view) => view.onLayout)
+    .onLayout({ nativeEvent: { layout: { x: 120 } } });
+  input("Nelson");
+  render();
+  press("createTripV2.custom:Nelson");
+  expect(items).toEqual([original]);
+  expect(state.scroll).toHaveBeenCalledWith({ x: 120, animated: true });
 });
