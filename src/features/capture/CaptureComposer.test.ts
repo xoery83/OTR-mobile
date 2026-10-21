@@ -15,11 +15,26 @@ const state = vi.hoisted(() => ({
   hooks: [] as any[],
   cursor: 0,
   os: "ios",
+  voice: { status: "idle" as string },
+  voiceStart: vi.fn(),
+  voiceStop: vi.fn(),
+  voiceCancel: vi.fn(),
+  voiceClose: vi.fn(),
   actionSheet: vi.fn(),
   buttons: [] as any[],
   nodes: [] as any[],
   confirm: vi.fn(),
   scheme: "light" as "light" | "dark",
+}));
+vi.mock("./useImportDictation", () => ({
+  useImportDictation: () => ({
+    state: state.voice,
+    busy: ["starting", "listening", "finishing"].includes(state.voice.status),
+    start: state.voiceStart,
+    stop: state.voiceStop,
+    cancel: state.voiceCancel,
+    close: state.voiceClose,
+  }),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -135,6 +150,14 @@ function render(snapshot = empty, count = 0) {
 beforeEach(() => {
   state.hooks = [];
   state.os = "ios";
+  state.voice = { status: "idle" };
+  for (const fn of [
+    state.voiceStart,
+    state.voiceStop,
+    state.voiceCancel,
+    state.voiceClose,
+  ])
+    fn.mockReset();
   state.cursor = 0;
   state.actionSheet.mockReset();
   state.confirm.mockReset();
@@ -351,4 +374,26 @@ it("an added multiline text card keeps its complete draft content without growin
     state.buttons.find((button) => button.label === t("capture.composer.submit"))
       .disabled,
   ).toBe(true);
+});
+
+it("voice input starts from the exact draft and active recording locks conflicting actions", () => {
+  render({ ...empty, editorText: "Existing note" }, 1);
+  button("capture.voice.start").onPress();
+  expect(state.voiceStart).toHaveBeenCalledWith("Existing note", "en-US");
+  state.voice = { status: "listening" };
+  const { props, html } = render(
+    { ...empty, editorText: "Existing note spoken words" },
+    1,
+  );
+  expect(html).toContain(t("capture.voice.listening"));
+  expect(state.nodes.find((n) => n.multiline).editable).toBe(false);
+  expect(button("capture.composer.addAttachments").disabled).toBe(true);
+  expect(button("capture.composer.submit").disabled).toBe(true);
+  button("capture.voice.stop").onPress();
+  expect(state.voiceStop).toHaveBeenCalledOnce();
+  button("capture.voice.cancel").onPress();
+  expect(state.voiceCancel).toHaveBeenCalledOnce();
+  button("common.close").onPress();
+  expect(state.voiceClose).toHaveBeenCalledOnce();
+  expect(props.onClose).toHaveBeenCalledOnce();
 });

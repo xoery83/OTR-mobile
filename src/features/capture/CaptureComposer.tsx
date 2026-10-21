@@ -1,6 +1,6 @@
 import { AppIcon } from "@/components/AppIcon";
 import { OverlayDismissAction } from "@/components/OverlayDismissAction";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ActionSheetIOS,
   Alert,
@@ -23,6 +23,7 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { CaptureDraftSnapshot } from "./captureStaging";
+import { useImportDictation } from "./useImportDictation";
 
 type Props = {
   snapshot: CaptureDraftSnapshot;
@@ -62,7 +63,10 @@ export function CaptureComposer({
   onText,
   onSubmit,
 }: Props) {
-  useUiLocale();
+  const locale = useUiLocale();
+  const voice = useImportDictation(onText);
+  const locked = snapshot.selecting || voice.busy;
+  const closeVoice = voice.close;
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets(),
@@ -72,17 +76,24 @@ export function CaptureComposer({
   const mixed =
     !!snapshot.editorText.trim() ||
     snapshot.items.some((i) => i.source === "magic_input");
-  const sendDisabled = snapshot.selecting || !count || mixed;
+  const sendDisabled = locked || !count || mixed;
   const context =
     contextLabel ??
     (tripName
       ? t("capture.context", { name: tripName })
       : t("capture.composer.unassigned"));
-  const close = () =>
-    page === "composer" || content != null ? onClose() : setPage("composer");
+  const close = () => {
+    if (page === "composer" || content != null) {
+      voice.close();
+      onClose();
+    } else setPage("composer");
+  };
+  useEffect(() => {
+    if (content != null || page !== "composer") closeVoice();
+  }, [content, page, closeVoice]);
   const attachments = () => {
     const choose = (index: number) => {
-      if (snapshot.selecting) return;
+      if (locked) return;
       if (index === 0) onCamera?.();
       if (index === 1) onPhotos();
       if (index === 2) onFiles();
@@ -189,6 +200,7 @@ export function CaptureComposer({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={t("capture.composer.contextTitle")}
+                  disabled={voice.busy}
                   onPress={() => setPage("context")}
                   style={styles.contextTarget}
                 >
@@ -288,9 +300,9 @@ export function CaptureComposer({
                                 key={index}
                                 accessibilityRole="link"
                                 style={styles.link}
-                                onPress={snapshot.selecting ? undefined : action.press}
+                                onPress={locked ? undefined : action.press}
                                 accessibilityState={{
-                                  disabled: snapshot.selecting || !action.press,
+                                  disabled: locked || !action.press,
                                 }}
                               >
                                 {action.label}
@@ -303,14 +315,14 @@ export function CaptureComposer({
                       <UiText
                         style={styles.instruction}
                         accessibilityRole="link"
-                        onPress={() => setPage("email")}
+                        onPress={voice.busy ? undefined : () => setPage("email")}
                       >
                         {t("capture.composer.emailInstruction")}
                       </UiText>
                       <UiText
                         style={styles.instruction}
                         accessibilityRole="link"
-                        onPress={() => setPage("ai")}
+                        onPress={voice.busy ? undefined : () => setPage("ai")}
                       >
                         {t("capture.composer.aiInstruction")}
                       </UiText>
@@ -340,7 +352,7 @@ export function CaptureComposer({
                     variant="bare"
                     value={snapshot.editorText}
                     onChangeText={onText}
-                    editable={!snapshot.selecting}
+                    editable={!locked}
                     multiline
                     placeholder={t(
                       snapshot.items.length
@@ -356,12 +368,30 @@ export function CaptureComposer({
                     </UiText>
                   ) : null}
                 </ScrollView>
+                {voice.state.status !== "idle" ? (
+                  <View style={styles.voiceStatus}>
+                    <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
+                      {t(
+                        voice.state.status === "error"
+                          ? `capture.voice.error.${voice.state.error ?? "failed"}`
+                          : `capture.voice.${voice.state.status}`,
+                      )}
+                    </UiText>
+                    {voice.busy ? (
+                      <UiButton
+                        variant="text"
+                        label={t("capture.voice.cancel")}
+                        onPress={voice.cancel}
+                      />
+                    ) : null}
+                  </View>
+                ) : null}
                 <View style={styles.footer}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={t("capture.composer.addAttachments")}
-                    accessibilityState={{ disabled: snapshot.selecting }}
-                    disabled={snapshot.selecting}
+                    accessibilityState={{ disabled: locked }}
+                    disabled={locked}
                     style={styles.target}
                     onPress={attachments}
                   >
@@ -370,12 +400,35 @@ export function CaptureComposer({
                   <View style={styles.spacer} />
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={t("capture.composer.voiceUnavailable")}
-                    accessibilityState={{ disabled: true }}
-                    disabled
+                    accessibilityLabel={t(
+                      voice.busy ? "capture.voice.stop" : "capture.voice.start",
+                    )}
+                    accessibilityState={{
+                      disabled:
+                        snapshot.selecting ||
+                        voice.state.status === "starting" ||
+                        voice.state.status === "finishing",
+                    }}
+                    disabled={
+                      snapshot.selecting ||
+                      voice.state.status === "starting" ||
+                      voice.state.status === "finishing"
+                    }
+                    onPress={() =>
+                      voice.busy
+                        ? voice.stop()
+                        : voice.start(
+                            snapshot.editorText,
+                            locale === "zh-Hans" ? "zh-CN" : "en-US",
+                          )
+                    }
                     style={styles.target}
                   >
-                    <AppIcon name="mic" size={22} color={colors.disabled} />
+                    <AppIcon
+                      name={voice.busy ? "stop.fill" : "mic"}
+                      size={22}
+                      color={snapshot.selecting ? colors.disabled : colors.accent}
+                    />
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
@@ -492,6 +545,7 @@ const createStyles = (c: UiColors) =>
       paddingHorizontal: visual.space.card,
       paddingVertical: 10,
     },
+    voiceStatus: { paddingHorizontal: visual.space.page, gap: 4 },
     footer: {
       flexDirection: "row",
       alignItems: "center",

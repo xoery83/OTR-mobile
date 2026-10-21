@@ -188,6 +188,22 @@ export const en = {
     "Local validation and document-reading events are recorded below.",
   "capture.progress.newImport": "New Import",
   "capture.progress.retryIntake": "Retry local intake",
+  "capture.voice.start": "Start voice input",
+  "capture.voice.stop": "Stop voice input",
+  "capture.voice.cancel": "Cancel voice input",
+  "capture.voice.starting": "Preparing on-device voice input…",
+  "capture.voice.listening": "Listening… Tap Stop when you are finished.",
+  "capture.voice.finishing": "Finishing transcription…",
+  "capture.voice.error.permission":
+    "Microphone or speech access was not allowed. You can continue typing.",
+  "capture.voice.error.unavailable":
+    "On-device speech is unavailable for this language or device. You can continue typing.",
+  "capture.voice.error.interrupted":
+    "Voice input stopped after an interruption. Your draft is retained.",
+  "capture.voice.error.failed":
+    "Voice input could not finish. Your draft is retained; you can try again.",
+  "capture.voice.error.timeout":
+    "Voice input reached its one-minute limit. Your draft is retained.",
   "capture.composer.addAttachments": "Add attachments",
   "capture.composer.messagePlaceholder": "Add a message (optional)…",
   "capture.composer.sourcesInstruction": "Add from {camera}, {photos} or {files}",
@@ -2758,6 +2774,18 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.localInterpretationHistory": "下方记录了本机校验和文档读取事件。",
   "capture.progress.newImport": "新建导入",
   "capture.progress.retryIntake": "重试本机接收",
+  "capture.voice.start": "开始语音输入",
+  "capture.voice.stop": "停止语音输入",
+  "capture.voice.cancel": "取消语音输入",
+  "capture.voice.starting": "正在准备本机语音输入…",
+  "capture.voice.listening": "正在聆听… 说完后请点停止。",
+  "capture.voice.finishing": "正在完成转写…",
+  "capture.voice.error.permission": "未允许麦克风或语音识别访问。你可以继续手工输入。",
+  "capture.voice.error.unavailable":
+    "当前语言或设备暂不可用本机语音识别。你可以继续手工输入。",
+  "capture.voice.error.interrupted": "语音输入因中断而停止，草稿已保留。",
+  "capture.voice.error.failed": "语音输入未能完成，草稿已保留。你可以重试。",
+  "capture.voice.error.timeout": "语音输入已达到一分钟上限，草稿已保留。",
   "capture.composer.addAttachments": "添加附件",
   "capture.composer.messagePlaceholder": "添加说明（可选）…",
   "capture.composer.sourcesInstruction": "从{camera}、{photos}或{files}添加",

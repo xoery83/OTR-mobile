@@ -134,7 +134,7 @@ Travel Documents / Tickets:
 Capture:
 
 - A unified quick input entry point, not a separate heavy module.
-- Future inputs include text, voice, camera, photo, and document.
+- Inputs include text, camera, photo, and document; Owner approved short on-device voice-to-text on 21 October 2026. Voice edits the existing draft only: explicit start/stop/cancel, no audio file retention or upload, no automatic itinerary submission. Unsupported local recognition retains manual input.
 - Parser routes captured content to Itinerary, Expense, or Travel Document.
 
 Data & Sync:
