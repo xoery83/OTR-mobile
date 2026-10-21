@@ -358,6 +358,8 @@ export function CaptureContent({
                       );
                     }}
                     onFailure={(payload) => {
+                      // Only the validated failure enum; never clipboard content or provider URLs.
+                      if (__DEV__) console.warn(`OTR image paste: ${payload.code}`);
                       if (
                         current() &&
                         payload.requestId === pasteRequestId &&
