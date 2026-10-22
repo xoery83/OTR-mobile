@@ -1,0 +1,53 @@
+{
+  "status": "B_CLOSED_DEPLOYMENT_PASS",
+  "scope": "DEV_INFRASTRUCTURE_ONLY_NOT_BUSINESS_L3",
+  "completedAt": "2026-10-22T09:26:59.964650+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "fixedCodeSHA": "12d6b2f27d66305bba0cbfc81c1a7969b3c37e95",
+  "image": "sha256:4c8d6a04c7e31f5f38d972990a626168fedfe7611e2a32ec92209b5f7a120e14",
+  "captureBundleSHA256": "a9124ac674e3c79003024d88a8123e2fb0cd766e80808e2f679d01898dde0dce",
+  "mutationStartedAt": "2026-10-22T09:23:15+00:00",
+  "remainingSecondsAtStart": 405.0,
+  "attemptCount": 1,
+  "health": {
+    "status": 200,
+    "body": {
+      "status": "ok",
+      "environment": "development"
+    }
+  },
+  "noAuthRouteCount": 5,
+  "noAuthRouteStatuses": [
+    401,
+    401,
+    401,
+    401,
+    401
+  ],
+  "environmentCanonicalEqual": true,
+  "hostConfigHashEqual": true,
+  "mountUserConfigPreserved": true,
+  "allBusinessGateFlags": {
+    "core": false,
+    "metadata": false,
+    "source": false,
+    "sourcePdf": false,
+    "trip": false
+  },
+  "relevantRolesNOLOGIN": true,
+  "metadataReceiptCount": 0,
+  "schemaCatalogUnchanged": true,
+  "diagnosticsSavedBeforeAnyRollback": true,
+  "rollbackRequired": false,
+  "rollbackImage": "sha256:012f2d06476af824a609f7e7b5f2985fa36ae960d903c30f8c3cd283bc4c129e",
+  "rollbackCompose": "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.rollback.closed.yml",
+  "forwardCompose": "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml",
+  "sanitizedDiagnostic": "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/candidate-diagnostic.json",
+  "remoteAttemptReceipt": "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/attempt-receipt.json",
+  "sqlReinstalled": false,
+  "authOperations": 0,
+  "businessRequests": 0,
+  "nativeOperations": 0,
+  "phaseC": "NOT_AUTHORIZED_NOT_RUN",
+  "fourBusinessPaths": "CLOUD_PENDING"
+}

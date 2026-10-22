@@ -1,0 +1,9 @@
+{
+  "status": "BEFORE_UNIQUE_REVIEWED_B_ONLY_ATTEMPT",
+  "remoteUTC": "2026-10-22T09:23:15+00:00",
+  "remainingSeconds": 405.0,
+  "attemptNumber": 1,
+  "project": "tuqigdxrvrerfewsxqgm",
+  "candidateImage": "sha256:4c8d6a04c7e31f5f38d972990a626168fedfe7611e2a32ec92209b5f7a120e14",
+  "phaseCExecuted": false
+}
