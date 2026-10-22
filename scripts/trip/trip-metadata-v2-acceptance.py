@@ -96,8 +96,11 @@ try:
  check('strict schema safeinteger calendar and non-metadata fields rejected')
  failed=request(before=meta('After'),after=meta('Failure'),revision=5);arm(failed)
  sql('begin;'+command(failed)+'select 1/0;',ROLE,failure='22012');check('failed transaction rolls back metadata revision and receipt',state()=='After:5' and sql("select count(*) from public.trip_metadata_update_receipts where operation_id="+literal(failed['operationId'])+";")=='0')
- arm(failed,duration='1 second');sql('begin;'+command(failed)+"select pg_sleep(1.3);commit;",ROLE,failure='55000');check('deferred finite guard rejects expiry at commit atomically',state()=='After:5')
- arm(failed);recovered=json.loads(sql(command(failed),ROLE));check('same stable operation recovers after known rollback',recovered['resultMetadataRevision']==6)
+ arm(failed,duration='1 second');sql('begin;'+command(failed)+"select pg_sleep(1.3);commit;",ROLE,failure='55000');check('fixed default-deferred transaction rejects expiry at commit atomically',state()=='After:5')
+ # Adversarial credential-holder boundary: arbitrary SQL may consume a deferred trigger early.
+ arm(failed,duration='1 second');sql('begin;'+command(failed)+"set constraints all immediate;select pg_sleep(1.3);commit;",ROLE)
+ check('LIMITATION arbitrary SQL can consume deferred expiry check before commit',state()=='Failure:6')
+ arm(failed);recovered=json.loads(sql(command(failed),ROLE));check('stable operation recovers exact immutable result',recovered['resultMetadataRevision']==6)
  arm(req);check('old receipt survives later accepted mutation',json.loads(sql(result(req),ROLE))==accepted)
  # Two real PG sessions use fixture-only SET SESSION AUTHORIZATION to model the same SQL principal concurrently.
  # The normal direct-login connlimit=1 is unchanged and checked separately; this is not Auth/Host proof.

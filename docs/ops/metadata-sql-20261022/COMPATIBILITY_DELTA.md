@@ -1,6 +1,6 @@
 # Metadata V2 isolated compatibility proposal
 
-Owner permits isolated implementation/tests. Formal activation, Migration/grants and V2 client adoption remain a precise later Gate. V1 schemas/queues/UI stay unchanged and are not auto-upgraded.
+Owner permits isolated implementation/tests. Formal activation, Migration/grants and V2 client adoption remain a precise later Gate. V1 strict payload schemas and default UI behavior stay unchanged. The existing queue codec now recognizes explicitly new V2 operations; existing V1 pending JSON is never upgraded.
 
 - No server Trip metadata revision exists. Core revision is a separate authority. Add bounded safe-integer `trips.metadata_revision` and a trigger that advances on name/destination/start/end/creator changes, rejecting manual revision edits. This catches edits and ownership A→B→A even through other existing table writers.
 - V2 adds `formatVersion:2` and `expectedMetadataRevision` to the existing operation/trip/before/after request. Receipt carries original before/after tuple, expected and actual resulting revision plus actor. A private finite snapshot read supplies current revision/metadata under the same current creator AND linked-owner check. This is not inferred from Core/updated_at.
@@ -8,3 +8,7 @@ Owner permits isolated implementation/tests. Formal activation, Migration/grants
 - New immutable Metadata receipt and private finite gate cannot share Create receipts (immutable create payload/owner bootstrap) or financial receipts (financial authority), nor Core command journal (different revision and canonical graph semantics). Exact tables/RLS/grants are in SQL candidate. Dedicated Metadata principal, no Create/Core/Source privilege reuse.
 - Existing accepted Create result reads live metadata. Once Edit exists, that changes the old receipt. Candidate narrowly restores original metadata from stored Create request_payload while retaining current owner/linked membership/Core identity checks and existing wire shape. It changes no Create request or source evidence. The exact function hash delta and cross-path regression must be included in the Owner Migration Gate.
 - New versioned candidate is not a deploy-ready E2E or Hosted schema permission. No GUI/DEV/Session operation is part of this work.
+
+The same repository rejects V2 cover/destination-list side payloads and requires a server-accepted Trip. Receipts are matched to the exact stored original request, actor, operation, Trip, idempotency key and wire version. Result acceptance leaves local destination lists/cover intact. Account generation fences cover snapshot, recovery and update. No SQLite DDL, second queue/repository or new dispatch timer is introduced.
+
+Finite expiry is qualified for the trusted Backend fixed transaction and credential custody only; arbitrary SQL can consume a deferred constraint early. This real-PG limitation is preserved in the receipt and Migration Gate.

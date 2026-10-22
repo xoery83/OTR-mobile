@@ -1,4 +1,11 @@
 import {
+  tripMetadataWireUpdateSchema,
+  tripMetadataWireReceiptSchema,
+  metadataRequestFromReceipt,
+  type TripMetadataWireUpdate,
+  type TripMetadataWireReceipt,
+} from "@/domain/trip/tripMetadataV2Contract";
+import {
   replaceLocalTripDestinations,
   verifyLocalTripDestinationHistory,
 } from "./tripDestinationRepository";
@@ -22,13 +29,7 @@ import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
-import {
-  tripMetadataUpdateSchema,
-  tripMetadataReceiptSchema,
-  type TripMetadataUpdate,
-  type TripMetadataReceipt,
-  type TripMetadataSyncTarget,
-} from "@/domain/trip/tripMetadataContract";
+import { type TripMetadataSyncTarget } from "@/domain/trip/tripMetadataContract";
 import {
   captureAccountScope,
   assertAccountRequestContext,
@@ -72,11 +73,16 @@ export function createTripMetadataRepository(
       }
     },
     async updateMetadata(
-      input: TripMetadataUpdate,
+      input: TripMetadataWireUpdate,
       cover?: TripCoverUpdate,
       destinationInput?: LocalTripDestinationsChange,
     ) {
-      const request = tripMetadataUpdateSchema.parse(input);
+      const request = tripMetadataWireUpdateSchema.parse(input);
+      if (
+        "formatVersion" in request &&
+        (cover !== undefined || destinationInput !== undefined)
+      )
+        throw new Error("TRIP_METADATA_V2_LOCAL_PREFERENCE_UNSUPPORTED");
       const destinations = destinationInput
         ? localTripDestinationsChangeSchema.parse(destinationInput)
         : undefined;
@@ -189,6 +195,8 @@ export function createTripMetadataRepository(
               request.tripId,
             );
             if (!row) throw new Error("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
+            if ("formatVersion" in request && !row.accepted_at)
+              throw new Error("TRIP_METADATA_V2_ACCEPTED_TRIP_REQUIRED");
             const original = tripCreateRequestSchema.parse({
               ...JSON.parse(row.payload_json),
               operationId: row.create_operation_id,
@@ -329,8 +337,11 @@ export function createTripMetadataRepository(
       );
       announceLedgerQueueWorkAvailable();
     },
-    async acceptMetadataUpdate(input: TripMetadataReceipt, requestScope?: AccountScope) {
-      const receipt = tripMetadataReceiptSchema.parse(input);
+    async acceptMetadataUpdate(
+      input: TripMetadataWireReceipt,
+      requestScope?: AccountScope,
+    ) {
+      const receipt = tripMetadataWireReceiptSchema.parse(input);
       const scope = requestScope ?? (await captureAccountScope(account));
       if (receipt.actorAccountId !== scope.accountId)
         throw new Error("TRIP_METADATA_ACCOUNT_MISMATCH");
@@ -338,17 +349,12 @@ export function createTripMetadataRepository(
         await assertAccountRequestContext(scope, account);
         await database.withTransactionAsync(async () => {
           const operation = await database.getFirstAsync<{ payload_json: string }>(
-            "SELECT payload_json FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='TRIP' AND operation_type='UPDATE_TRIP_METADATA'",
+            "SELECT payload_json FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='TRIP' AND operation_type='UPDATE_TRIP_METADATA' AND entity_id=trip_id AND idempotency_key=id",
             receipt.operationId,
             scope.accountId,
             receipt.tripId,
           );
-          const request = tripMetadataUpdateSchema.parse({
-            operationId: receipt.operationId,
-            tripId: receipt.tripId,
-            before: receipt.before,
-            after: receipt.after,
-          });
+          const request = metadataRequestFromReceipt(receipt);
           if (!operation || operation.payload_json !== json(request))
             throw new Error("TRIP_METADATA_RECEIPT_MISMATCH");
           // Never replace a newer local edit with an older server receipt.

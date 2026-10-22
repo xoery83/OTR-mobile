@@ -35,6 +35,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
   discardRetainedTripPhoto: vi.fn(),
 }));
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const connections: DatabaseSync[] = [],
   folders: string[] = [];
@@ -3109,4 +3110,294 @@ it("does not dispatch a scoped metadata operation after an Account ABA while res
   );
   await expect(runner.run("AUTHENTICATED_ONLINE")).rejects.toThrow("Account changed");
   expect(worker.push).not.toHaveBeenCalled();
+});
+
+it("uses a fixture-qualified V2 snapshot to persist a new exact operation in the existing queue and preserves local destinations", async () => {
+  const f = local(),
+    create = {
+      ...input(),
+      destination: null,
+      destinations: [manualDestination("Tokyo"), manualDestination("Kyoto")],
+    };
+  const saved = await f.repo.createTrip(create);
+  await f.repo.acceptCreate({
+    operationId: create.operationId,
+    tripId: saved.id,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const operationId = randomUUID(),
+    scope = await captureAccountScope(async () => accountA);
+  const { createTripMetadataTransport } = await import("../sync/tripMetadataTransport");
+  const { tripMetadataV2Boundary } = await import("../../../backend/src/tripMetadataV2");
+  const { createTripMetadataSyncCoordinator, createTripMetadataSyncWorker } =
+    await import("../sync/tripMetadataSyncWorker");
+  const receipts = new Map<
+    string,
+    import("@/domain/trip/tripMetadataV2Contract").TripMetadataV2Receipt
+  >();
+  const update = vi.fn(
+    async (
+      _actor: string,
+      request: import("@/domain/trip/tripMetadataV2Contract").TripMetadataV2Update,
+    ) => {
+      const receipt = {
+        ...request,
+        actorAccountId: accountA,
+        resultMetadataRevision: request.expectedMetadataRevision + 1,
+      };
+      receipts.set(request.operationId, receipt);
+      return receipt;
+    },
+  );
+  const fetchImplementation = vi.fn(async (url: string, options: RequestInit) =>
+    tripMetadataV2Boundary(new Request(url, options), accountA, {
+      update,
+      receipt: async (_actor, id) => receipts.get(id) ?? null,
+      snapshot: async () => ({
+        formatVersion: 2,
+        actorAccountId: accountA,
+        tripId: saved.id,
+        metadataRevision: 4,
+        metadata: before,
+      }),
+    }),
+  );
+  const transport = createTripMetadataTransport(
+    async () => accountA,
+    {
+      baseUrl: "https://fixture.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "synthetic-fixture-only", userId: accountA }),
+  );
+  const snapshot = await transport.snapshot(scope, saved.id, operationId);
+  const request = {
+    formatVersion: 2 as const,
+    operationId,
+    tripId: snapshot.tripId,
+    expectedMetadataRevision: snapshot.metadataRevision,
+    before: snapshot.metadata,
+    after: { ...snapshot.metadata, name: "Explicit V2 edit" },
+  };
+  await f.repo.updateMetadata(request);
+  const row = f.sql
+    .prepare("SELECT payload_json,status FROM sync_operations WHERE id=?")
+    .get(operationId)!;
+  expect(JSON.parse(String(row.payload_json))).toEqual(request);
+  expect(row.status).toBe("DEPENDENCY_BLOCKED");
+  const runner = createTripMetadataSyncCoordinator(
+    f.queue,
+    createTripMetadataSyncWorker(f.repo, transport, async () => accountA),
+    f.repo,
+    () => true,
+    { accountId: accountA, tripId: saved.id, operationId },
+  );
+  expect((await runner.run("AUTHENTICATED_OFFLINE")).processedCount).toBe(0);
+  expect(update).not.toHaveBeenCalled();
+  expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(1);
+  expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
+  expect(update).toHaveBeenCalledOnce();
+  expect((await f.repo.getTrip(saved.id))?.destinations).toEqual(saved.destinations);
+  expect((await f.repo.getTrip(saved.id))?.syncStatus).toBe("SYNCED");
+  // This is isolated HTTP/SQLite fixture composition, not an actual Hosted Reader/Authority.
+});
+it("never upgrades a pending V1 operation or accepts a version-mismatched V2 receipt", async () => {
+  const f = local(),
+    create = input(),
+    saved = await f.repo.createTrip(create);
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const old = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Legacy pending" },
+  };
+  await f.repo.updateMetadata(old);
+  const pending = String(
+    f.sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(old.operationId)!.payload_json,
+  );
+  await expect(
+    f.repo.updateMetadata({ ...old, formatVersion: 2, expectedMetadataRevision: 0 }),
+  ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
+  expect(
+    String(
+      f.sql
+        .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+        .get(old.operationId)!.payload_json,
+    ),
+  ).toBe(pending);
+  expect(JSON.parse(pending)).not.toHaveProperty("formatVersion");
+  await f.repo.acceptCreate({
+    ...create,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  const fresh = {
+    formatVersion: 2 as const,
+    expectedMetadataRevision: 2,
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: old.after,
+    after: { ...old.after, name: "New V2" },
+  };
+  await f.repo.updateMetadata(fresh);
+  await expect(
+    f.repo.acceptMetadataUpdate({
+      operationId: fresh.operationId,
+      tripId: fresh.tripId,
+      before: fresh.before,
+      after: fresh.after,
+      actorAccountId: accountA,
+    }),
+  ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+  await expect(
+    f.repo.acceptMetadataUpdate({
+      ...fresh,
+      expectedMetadataRevision: 1,
+      resultMetadataRevision: 2,
+      actorAccountId: accountA,
+    }),
+  ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+  await expect(
+    f.repo.updateMetadata(
+      { ...fresh, operationId: randomUUID() },
+      { before: null, after: null },
+    ),
+  ).rejects.toThrow("TRIP_METADATA_V2_LOCAL_PREFERENCE_UNSUPPORTED");
+  await expect(
+    f.repo.updateMetadata({ ...fresh, operationId: randomUUID() }, undefined, {
+      operationId: randomUUID(),
+      before: [],
+      after: [],
+    }),
+  ).rejects.toThrow("TRIP_METADATA_V2_LOCAL_PREFERENCE_UNSUPPORTED");
+});
+it("rejects V2 before Create acceptance instead of inventing a revision", async () => {
+  const f = local(),
+    saved = await f.repo.createTrip(input());
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  await expect(
+    f.repo.updateMetadata({
+      formatVersion: 2,
+      expectedMetadataRevision: 0,
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before,
+      after: { ...before, name: "Not admitted" },
+    }),
+  ).rejects.toThrow("TRIP_METADATA_V2_ACCEPTED_TRIP_REQUIRED");
+});
+
+it("recovers a V2 unknown response from the exact receipt after SQLite reopen without a new operation", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-metadata-v2-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const create = input(),
+    saved = await f.repo.createTrip(create);
+  await f.repo.acceptCreate({
+    ...create,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    formatVersion: 2 as const,
+    expectedMetadataRevision: 6,
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Recovered V2" },
+  };
+  await f.repo.updateMetadata(request);
+  await f.repo.resumeMetadataUpdates({
+    accountId: accountA,
+    tripId: saved.id,
+    operationId: request.operationId,
+  });
+  const operation = (await f.queue.listPending()).find(
+    (row) => row.id === request.operationId,
+  )!;
+  let committed:
+    import("@/domain/trip/tripMetadataV2Contract").TripMetadataV2Receipt | null = null;
+  const transport = {
+    receipt: vi.fn(async () => committed),
+    update: vi.fn(async () => {
+      committed = { ...request, actorAccountId: accountA, resultMetadataRevision: 7 };
+      throw new Error("response lost");
+    }),
+  };
+  const { createTripMetadataSyncWorker } = await import("../sync/tripMetadataSyncWorker");
+  await expect(
+    createTripMetadataSyncWorker(f.repo, transport, async () => accountA).push(operation),
+  ).rejects.toThrow("response lost");
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)?.status,
+  ).toBe("PENDING");
+  f.sql.close();
+  f = local(path, false);
+  await createTripMetadataSyncWorker(f.repo, transport, async () => accountA).push(
+    operation,
+  );
+  expect(transport.receipt).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accountId: accountA }),
+    request.operationId,
+    2,
+  );
+  expect(transport.update).toHaveBeenCalledOnce();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)?.status,
+  ).toBe("COMPLETED");
+  expect(
+    JSON.parse(
+      String(
+        f.sql
+          .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+          .get(request.operationId)?.payload_json,
+      ),
+    ),
+  ).toEqual(request);
 });

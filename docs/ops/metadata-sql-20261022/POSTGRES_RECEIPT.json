@@ -20,8 +20,9 @@
     "receipt update delete and truncate are immutable",
     "strict schema safeinteger calendar and non-metadata fields rejected",
     "failed transaction rolls back metadata revision and receipt",
-    "deferred finite guard rejects expiry at commit atomically",
-    "same stable operation recovers after known rollback",
+    "fixed default-deferred transaction rejects expiry at commit atomically",
+    "LIMITATION arbitrary SQL can consume deferred expiry check before commit",
+    "stable operation recovers exact immutable result",
     "old receipt survives later accepted mutation",
     "concurrent duplicate exact operation has one receipt and one mutation",
     "different operation same baseline cannot silently overwrite winner",
@@ -29,7 +30,7 @@
     "expired exact scope denies receipt recovery",
     "deactivation rollback retains immutable receipts and monotonic revision"
   ],
-  "checkCount": 26,
+  "checkCount": 27,
   "hostedExecuted": false,
   "nativeExecuted": false,
   "authServiceUsed": false

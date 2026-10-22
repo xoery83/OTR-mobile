@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { coreUuid } from "./tripCoreV2";
-import { tripMetadataSchema, tripMetadataUpdateSchema } from "./tripMetadataContract";
+import {
+  tripMetadataSchema,
+  tripMetadataUpdateSchema,
+  tripMetadataReceiptSchema,
+} from "./tripMetadataContract";
 
 // Explicit proposal-only V2. Never synthesize a revision for a V1 queued operation.
 export const tripMetadataV2UpdateSchema = tripMetadataUpdateSchema.extend({
@@ -28,3 +32,33 @@ export const tripMetadataV2SnapshotSchema = z.strictObject({
   metadata: tripMetadataSchema,
 });
 export type TripMetadataV2Snapshot = z.infer<typeof tripMetadataV2SnapshotSchema>;
+
+// Versioned codec for the existing queue only; V1 payloads remain V1 forever.
+export const tripMetadataWireUpdateSchema = z.union([
+  tripMetadataV2UpdateSchema,
+  tripMetadataUpdateSchema,
+]);
+export type TripMetadataWireUpdate = z.infer<typeof tripMetadataWireUpdateSchema>;
+
+export const tripMetadataWireReceiptSchema = z.union([
+  tripMetadataV2ReceiptSchema,
+  tripMetadataReceiptSchema,
+]);
+export type TripMetadataWireReceipt = z.infer<typeof tripMetadataWireReceiptSchema>;
+export function metadataRequestFromReceipt(
+  receipt: TripMetadataWireReceipt,
+): TripMetadataWireUpdate {
+  const request = {
+    operationId: receipt.operationId,
+    tripId: receipt.tripId,
+    before: receipt.before,
+    after: receipt.after,
+  };
+  return "formatVersion" in receipt
+    ? tripMetadataV2UpdateSchema.parse({
+        ...request,
+        formatVersion: 2,
+        expectedMetadataRevision: receipt.expectedMetadataRevision,
+      })
+    : tripMetadataUpdateSchema.parse(request);
+}

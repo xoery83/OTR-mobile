@@ -39,7 +39,13 @@ it("uses the dedicated Edit finite predicate and exact operation/actor parameter
     expect.stringContaining("trip_metadata_update_command"),
     [operationId, actor, tripId, JSON.stringify(request)],
   ]);
-  expect(f.query.mock.calls.at(-1)?.[0]).toBe("COMMIT");
+  expect(f.query.mock.calls.map(([sql]) => sql)).toEqual([
+    "BEGIN",
+    expect.stringContaining("trip_metadata_finite_scope_allowed"),
+    expect.stringContaining("trip_metadata_update_command"),
+    expect.stringContaining("trip_metadata_finite_scope_allowed"),
+    "COMMIT",
+  ]);
   f.query.mockClear();
   expect(await f.storage.receipt(actor, operationId)).toEqual(result);
   expect(f.query.mock.calls[2]).toEqual([

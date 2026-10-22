@@ -1689,3 +1689,9 @@ Date: 2026-10-06 (Pacific/Auckland).
 ## Capture C4-L local evidence candidate — 2026-10-16 / REVIEW PENDING
 
 - Schema67 extends the existing C3 Account/Input queue with immutable local PDF/Vision evidence and per-input events. The same foreground timer runs C3 then C4 after accepted originals validate. The pure Flight line grammar has an Account/Input-only projection; Import still requires real Trip/Source pins. Local-model service hints, if available, remain separate advisory evidence. No remote dispatch, Trip assignment, Source registration, Core write, or Review authority is added. See `docs/adr/2026-10-16-capture-c4-local-evidence.md`.
+
+## Isolated Metadata V2 candidate — 2026-10-22
+
+- Dedicated candidate branch only: Metadata monotonic revision, immutable receipt, finite separate Edit principal and V2 Backend; preserves immutable Create metadata receipt. Same repository/queue/worker/transport accepts explicitly new V2 requests; old V1 payloads/default UI unchanged, no SQLite DDL. Accepted TCL runtime reused, not Core authority.
+- Local evidence: real disposable network-none PG27 checks (including explicit arbitrary-SQL expiry limitation), combined143 PASS/4 Reference excluded, TS/lint/UI guard/Capture bundle PASS. Trusted fixed Backend credential custody/transaction is required; no claim against malicious SQL credential holder.
+- See `docs/ops/metadata-sql-20261022/` Compatibility Delta, Migration Gate, Local Queue Handoff and receipts. Independent combined Review pending. DEV/Hosted/Auth/Schema install/activation/Native remain NOT_RUN and need exact Owner Gate; no four-path Cloud E2E claim.

@@ -198,7 +198,9 @@ BEGIN
  RETURN result;
 END $$;
 
--- Expiry at COMMIT must roll back the receipt and metadata together, including direct SQL sessions.
+-- Default-deferred expiry guard protects the trusted fixed Backend transaction.
+-- Credential custody is Backend-only: an arbitrary SQL client can SET CONSTRAINTS
+-- early and bypass a commit-time deadline. This is not a malicious-client boundary.
 CREATE FUNCTION public.trip_metadata_commit_scope_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
  IF NOT public.trip_metadata_finite_scope_allowed(NEW.actor_account_id,NEW.trip_id,NEW.operation_id)

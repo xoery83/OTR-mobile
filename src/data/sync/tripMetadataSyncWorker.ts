@@ -1,8 +1,6 @@
 import { getAccountGeneration } from "../auth/accountGeneration";
-import {
-  tripMetadataUpdateSchema,
-  type TripMetadataSyncTarget,
-} from "@/domain/trip/tripMetadataContract";
+import type { TripMetadataSyncTarget } from "@/domain/trip/tripMetadataContract";
+import { tripMetadataWireUpdateSchema } from "@/domain/trip/tripMetadataV2Contract";
 import {
   captureAccountScope,
   assertAccountRequestGeneration,
@@ -18,7 +16,7 @@ import type { TripMetadataTransport } from "./tripMetadataTransport";
 
 export function createTripMetadataSyncWorker(
   repository: Pick<TripRepository, "acceptMetadataUpdate">,
-  transport: TripMetadataTransport,
+  transport: Pick<TripMetadataTransport, "receipt" | "update">,
   account: () => Promise<string>,
 ): SyncWorker {
   return {
@@ -33,13 +31,21 @@ export function createTripMetadataSyncWorker(
       const scope = await captureAccountScope(account);
       if (scope.accountId !== operation.ownerUserId)
         throw new Error("TRIP_METADATA_ACCOUNT_MISMATCH");
-      const request = tripMetadataUpdateSchema.parse(JSON.parse(operation.payloadJson));
+      const request = tripMetadataWireUpdateSchema.parse(
+        JSON.parse(operation.payloadJson),
+      );
       if (request.operationId !== operation.id || request.tripId !== operation.tripId)
         throw new Error("TRIP_METADATA_QUEUE_MISMATCH");
-      let receipt = await transport.receipt(scope, request.operationId);
+      const version = "formatVersion" in request ? 2 : 1;
+      let receipt =
+        version === 2
+          ? await transport.receipt(scope, request.operationId, 2)
+          : await transport.receipt(scope, request.operationId);
       await assertAccountRequestContext(scope, account);
       if (!receipt) receipt = await transport.update(scope, request);
       await assertAccountRequestContext(scope, account);
+      if (("formatVersion" in receipt ? 2 : 1) !== version)
+        throw new Error("TRIP_METADATA_WIRE_VERSION_MISMATCH");
       await repository.acceptMetadataUpdate(receipt, scope);
     },
   };
