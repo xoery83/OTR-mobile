@@ -12,7 +12,7 @@ Final source/qualification commit `12d6b2f27d66305bba0cbfc81c1a7969b3c37e95` als
 
 ## Exact future Owner B-only gate
 
-The companion `B_RETRY_GATE.json` fixes the DEV project, old image/bundle, current canonical environment hash, existing eight compose files/hashes, expired custody SHA, candidate image/bundle and a new release directory. `ownerAuthorizedBOnly=false`, Phase C false and UTC window placeholders intentionally prevent execution. Owner must authorize precisely that artifact/target, one deployment attempt and an explicit window<=900seconds. No automatic renewal/retry. A change to any baseline, role/gate, custody content/expiry, mount or image stops execution; do not silently refresh inputs.
+The companion `B_RETRY_GATE.json` fixes the DEV project, old image/bundle, current canonical environment hash, existing eight compose files/hashes, expired custody SHA, candidate image/bundle and a new release directory. `ownerAuthorizedBOnly=false`, Phase C false and UTC window placeholders intentionally prevent execution. Owner must authorize precisely that artifact/target, one deployment attempt and an explicit window<=900seconds. No automatic renewal/retry. Expected impact is one DEV Backend container recreation/restart with transient API unavailability; other services are unchanged. The operator must reserve at least240seconds before the UTC deadline before starting service mutation, accommodating the40second health deadline, bounded diagnostic capture and bounded rollback/verification inside the approved window<=900seconds. If insufficient time remains, do not start; this is an explicit execution prerequisite, not a claim that an unhealthy timeout diagnoses its cause. A change to any baseline, role/gate, custody content/expiry, mount or image stops execution; do not silently refresh inputs.
 
 1. Preserve current healthy old service. Under the new B-only approval, reverify existing SQL gates/NOLOGIN via authorized read-only catalog checks only. A installed SQL is retained; do not reinstall, patch SQL, create Auth users or activate any Trip/Metadata/Source/Core/Provider capability.
 2. Transfer ONLY the exact local image using Docker save/load over existing trusted SSH, verify image ID and source label; do not rebuild in DEV, transfer sessions or add mounts. Preserve the prior image/data/config.
@@ -25,7 +25,7 @@ The existing private custody metadata stays physically mounted but remains expir
 
 ## Evidence and levels
 
-- L1/L2:61 focused Backend tests,9 Python operator fixtures, TS, scoped lint, UI guard and bundle compile PASS. Includes valid resource cleanup, expired/malformed/denied/missing capability closure, version/authority closed fixtures, secret injection, normalized env, capture/persist-before-rollback, capture failure, timeout, remote window and active-custody rejection.
+- L1 Native: NOT_APPLICABLE / NOT_RUN for this Backend-only recovery. L2 isolated Backend evidence:61 focused Backend tests,9 Python operator fixtures, TS, scoped lint, UI guard and bundle compile PASS. Includes valid resource cleanup, expired/malformed/denied/missing capability closure, version/authority closed fixtures, secret injection, normalized env, capture/persist-before-rollback, capture failure, timeout, remote window and active-custody rejection.
 - Actual local final image: health200/development/ok and five no-Auth401 responses in `FINAL_RETRY_IMAGE_ROUTES.json`, synthetic expired fixture/network-none. No real Auth or DEV business call.
 - Earlier same-production-bundle provisional images tested expired/malformed/absent health200; c0ab-label image also denied health200. Their old Catalog426 is an explicit missing-version negative, not five401. These are distinguished from final image receipts.
 - Existing scanner's network-none failures are expected isolation evidence, not Provider/FX/Runtime PASS; scanner was not changed.
@@ -37,5 +37,5 @@ The existing private custody metadata stays physically mounted but remains expir
 | Local Storage | No App SQLite/user/Keychain/photos/Source data change; disposable synthetic fixtures only |
 | Sync Backend | Isolated startup recovery and V2 contract compatibility prepared; live deployment awaits Owner |
 | Conflict/Offline | Existing CAS/queue/replay fixed receipts unchanged; no new live recovery claim |
-| Required L1/L2/L3 | Focused tests+actual local container evidence PASS; DEV/native business L3 BLOCKED |
+| Required L1/L2/L3 | L1 Native NOT_APPLICABLE/NOT_RUN; L2 isolated Backend/container evidence PASS; DEV business L3 BLOCKED |
 | Remaining Delta | New B-only authorization, exact image transfer, one closed deployment, diagnostic/rollback and route receipts; C separately closed |
