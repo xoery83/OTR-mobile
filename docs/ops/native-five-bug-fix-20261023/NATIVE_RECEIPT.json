@@ -1,0 +1,138 @@
+{
+  "codeSha": "bfcb466169ea38221affa4806e406a3a022d0880",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "action": "Official Expo Metro CLI r",
+  "metroPort": 8083,
+  "metroHost": "localhost/IPv6::1",
+  "metroPid": 43047,
+  "metroSession": 64340,
+  "replacedOwnedMetroPid": 17718,
+  "reason": "Old non-PTY stdin closed; same approved isolated Metro restarted with PTY for official reload",
+  "nativeBinaryBaselineUnchanged": {
+    "Info.plist": true,
+    "OTRMobile": true,
+    "__preview.dylib": true,
+    "OTRMobile.debug.dylib": true
+  },
+  "configuration": {
+    "EXPO_NO_DOTENV": "1",
+    "EXPO_PUBLIC_OTR_SYNC_TRANSPORT": "dev",
+    "EXPO_PUBLIC_OTR_API_BASE_URL": "UNSET",
+    "EXPO_PUBLIC_OTR_TRIP_METADATA_UPDATE": "UNSET",
+    "EXPO_OFFLINE": "1",
+    "EXPO_NO_TELEMETRY": "1"
+  },
+  "actualCli": {
+    "reload": "Reloading apps",
+    "entry": "expo-router/entry.js",
+    "bundleMs": 3023,
+    "modules": 2176,
+    "lazyDatabaseAuthRequests": true,
+    "bundleCompileError": false
+  },
+  "warnings": [
+    "Existing noble/hashes exports file-resolution fallback",
+    "Existing Metadata/Photo require cycle",
+    "ledger_sync_failure discovery local; closed API intentional"
+  ],
+  "nativeGuiOperator": "/root only",
+  "nativeUiAcceptance": "BOUNDED_AD5_PASS",
+  "newNativeBuildInstall": false,
+  "userDataOrKeychainRead": false,
+  "remoteBusinessActivation": false,
+  "cacheRecovery": {
+    "codeSha": "f68b28d4aca79f20d5cd5ddeba5640795a7bfb86",
+    "diagnosis": "Default Native virtual entry reused another checkout Expo Router context while current feature modules loaded. Shared node_modules transform cache was not workspace-qualified.",
+    "staleDefaultBundle": {
+      "sha256": "525a48a351267e124c73c570c60407b8af62aa592327708bb9b388848296d70a",
+      "bytes": 19117308,
+      "routerRoot": "/private/tmp/otr-er02-edit-cover-currency-20261020/app/",
+      "importRoutePresent": false
+    },
+    "fix": "Append workspace path to existing Metro cacheVersion; retain existing Workbench prefix. Restart only owned Metro; no global cache deletion.",
+    "defaultNativeRequest": "http://localhost:8083/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&minify=false&modulesOnly=false&runModule=true",
+    "verifiedBundle": {
+      "sha256": "021ae4e70ebc51d882e0e4e517fb7dfc3e0ba7cd072f98fdc22b7cda26498ded",
+      "bytes": 19117984,
+      "currentWorkspaceAppLayoutPresent": true,
+      "importRoutePresent": true,
+      "staleWorkspaceAppRootPresent": false
+    },
+    "metroSession": 12712,
+    "officialReload": "r; Reloading apps",
+    "nativeCompileMs": 11064,
+    "nativeCompileModules": 2176,
+    "bundleCompileError": false,
+    "targetedRegression": "4 files / 20 tests PASS; ESLint/diff PASS",
+    "timestampUtc": "2026-10-22T21:41:18.484144+00:00"
+  },
+  "observedByCoordinator": {
+    "keyboard": {
+      "firstTapDateCalendar": true,
+      "firstTapAddCustomNelson": true,
+      "firstTapAddCustomAuckland": true,
+      "firstTapAddTravelerAndDone": true,
+      "nonTargetHeadingDismissesKeyboard": true
+    },
+    "localQa": {
+      "name": "QA Five Fixes 20261023",
+      "destinations": [
+        "Nelson",
+        "Auckland"
+      ],
+      "person": "QA CompanionA",
+      "p1OnlyNamedPersonCreateAndReopen": true,
+      "originalTripsRetained": 17,
+      "qaTripsAdded": 1
+    },
+    "import": {
+      "myTripsStartTripToImportBackgroundVisible": true,
+      "outsideTapOnceReturnsMyTrips": true,
+      "unmatchedRouteAfterCacheFix": false,
+      "freshZeroTripAccountNotManufactured": true
+    },
+    "preparation": {
+      "heroCities": "Nelson \u00b7 Auckland",
+      "noFalseDestinationNotSet": true,
+      "onlyMissingDatesShown": true
+    },
+    "menu": {
+      "homeAtF68": true,
+      "dayAtF68": false,
+      "dayRootCause": "Home-only quickActions removed on Home blur/unmount",
+      "fixedCodeSha": "bfcb466169ea38221affa4806e406a3a022d0880",
+      "dayAfterHotfix": "PASS",
+      "membersSheet": "Day real owning reader: namedCount2, current actor + QA CompanionA; Close returns Day; Home menu same seven rows, no retained old sheet"
+    }
+  },
+  "finalDefaultBundle": {
+    "sha256": "4dd170b1821644a5dde1b7cbdb1365f50e83dda0ce5121d75b65a013adb0f5e6",
+    "bytes": 19120178,
+    "recordedUtc": "2026-10-22T21:55:57.027148+00:00",
+    "noReloadForHashRead": true
+  },
+  "independentReview": {
+    "reviewer": "Root Coordinator",
+    "code": "PASS_NO_UNRESOLVED_P0_P1",
+    "independentTests": "3 suites /12 tests PASS; final menu and owning read source checked",
+    "nativeOperator": "Root only"
+  },
+  "finalInstalledNativeArtifacts": {
+    "Info.plist": {
+      "sha256": "2492755dfa31397ac03515e14520eb950243e182c3a9ae47f4a315f28052bd36",
+      "baselineMatch": true
+    },
+    "OTRMobile": {
+      "sha256": "c3445bb51a2de92c1436fc16b3ca0f97a1edece80a2c786ea0b78fe10b0dbc1f",
+      "baselineMatch": true
+    },
+    "__preview.dylib": {
+      "sha256": "3c7b877aac0418019fe9da3dbbd48f7b5e31b1540bafaf3793c3b09636c7c52e",
+      "baselineMatch": true
+    },
+    "OTRMobile.debug.dylib": {
+      "sha256": "62d92e7acf351395ab25d418543af8931189c6a979afae77a091c721cf193c3d",
+      "baselineMatch": true
+    }
+  }
+}

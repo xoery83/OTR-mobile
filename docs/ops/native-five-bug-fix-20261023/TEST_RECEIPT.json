@@ -1,14 +1,14 @@
 {
-  "status": "ISOLATED_CHECKS_PASS_NATIVE_NOT_RUN",
+  "status": "LOCAL_PASS_BOUNDED_NATIVE_AND_L2",
   "base": "1238a5c2a1c6b4e2c1a95974d25737068e3d7217",
   "checks": {
-    "focusedTests": 204,
+    "focusedTests": 207,
     "typecheck": "PASS",
     "uiGuard": "PASS473/139",
     "scopedLint": "PASS_WITH_EXISTING_CAPTURE_REQUIRE_WARNING",
     "format": "PASS",
     "diffWhitespace": "PASS",
-    "focusedFiles": 17
+    "focusedFiles": 18
   },
   "keyboardContainersAdded": 52,
   "participantNegative": {
@@ -21,11 +21,12 @@
     "acceptedCertificatesOrBindingsCreated": 0
   },
   "knownExpandedCollectionFailure": "Unchanged localTripPersonRepository.test.ts imports React Native Flow; Node Vitest cannot parse it",
-  "native": "NOT_RUN_OCCUPANCY_NOT_CONFIRMED",
+  "native": "ROOT_AD5_FIVE_BUG_BOUNDED_PASS_FRESH_EMPTY_ACCOUNT_NOT_RUN",
   "phaseCChanges": false,
   "hostedAuthSchemaWrites": false,
   "knownExpandedFailures": [
     "Unchanged localTripPersonRepository.test.ts imports React Native Flow; Node Vitest cannot parse it",
     "tripLocalManualRead hotel/floating test DAY_ZONE_INVALID independently reproduced at1238a5c2;15othersPASS"
-  ]
+  ],
+  "codeSha": "bfcb466169ea38221affa4806e406a3a022d0880"
 }
