@@ -15,4 +15,7 @@ if (process.env.EXPO_PUBLIC_OTR_IMPORT_WORKBENCH === "1") {
   config.cacheVersion = "otr-import-workbench-v1";
 }
 
+// Shared node_modules must not reuse a different checkout's Expo Router context.
+config.cacheVersion = `${config.cacheVersion ?? "expo"}:${__dirname}`;
+
 module.exports = config;
