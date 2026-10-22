@@ -29,8 +29,6 @@ import {
   withAccountApplyGate,
   type AccountScope,
 } from "../auth/accountRequestContext";
-import { readInitializedDatabase } from "../db/database";
-import { requireActiveUserId, readLocalSession } from "../auth/authRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { createTripMetadataRepository } from "./tripMetadataRepository";
@@ -566,6 +564,9 @@ export function createTripRepository(
 }
 export type TripRepository = ReturnType<typeof createTripRepository>;
 export async function readLocalTripRepository(): Promise<TripRepository> {
+  const { readInitializedDatabase } = await import("../db/database");
+  const { requireActiveUserId, readLocalSession } =
+    await import("../auth/authRepository");
   const database = await readInitializedDatabase();
   const core = createTripCoreV2Repository(
     database,

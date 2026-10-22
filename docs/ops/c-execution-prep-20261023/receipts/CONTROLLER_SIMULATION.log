@@ -1,0 +1,14 @@
+test_failed_sql_never_restores_other_scope (control_test.Tests.test_failed_sql_never_restores_other_scope) ... ok
+test_inactive_plan_cannot_activate (control_test.Tests.test_inactive_plan_cannot_activate) ... ok
+test_manifest_pins_recovery_and_scope (control_test.Tests.test_manifest_pins_recovery_and_scope) ... ok
+test_strict_closed_boolean (control_test.Tests.test_strict_closed_boolean) ... ok
+test_termination_precedes_gate_update_and_only_two_roles (control_test.Tests.test_termination_precedes_gate_update_and_only_two_roles) ... ok
+test_diagnostic_failure_not_pass (service_test.Tests.test_diagnostic_failure_not_pass) ... ok
+test_exact_mounts_and_runtime_then_restore (service_test.Tests.test_exact_mounts_and_runtime_then_restore) ... ok
+test_http_health_failure_not_pass (service_test.Tests.test_http_health_failure_not_pass) ... ok
+test_same_count_wrong_target_fails (service_test.Tests.test_same_count_wrong_target_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.015s
+
+OK

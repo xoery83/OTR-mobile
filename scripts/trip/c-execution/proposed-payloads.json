@@ -1,0 +1,46 @@
+{
+  "create": {
+    "body": {
+      "operationId": "97a101f9-9aed-54bc-8dc2-46f52ed4e7d1",
+      "tripId": "f9d7adff-42fa-5f49-8bea-5d692d2fc1d7",
+      "name": "DEV-METADATA-QA-20261022-01",
+      "destination": "Nelson, New Zealand",
+      "startDate": "2026-11-01",
+      "endDate": "2026-11-03"
+    },
+    "utf8CompactJson": "{\"operationId\":\"97a101f9-9aed-54bc-8dc2-46f52ed4e7d1\",\"tripId\":\"f9d7adff-42fa-5f49-8bea-5d692d2fc1d7\",\"name\":\"DEV-METADATA-QA-20261022-01\",\"destination\":\"Nelson, New Zealand\",\"startDate\":\"2026-11-01\",\"endDate\":\"2026-11-03\"}",
+    "sha256Utf8": "77a7f17ab690e5bd645f9291d9127af0574183e5e9526fe6b616f9e7ed2135e0"
+  },
+  "editProposal": {
+    "body": {
+      "operationId": "ed351197-e39a-5379-84af-89137ca3b0f3",
+      "tripId": "f9d7adff-42fa-5f49-8bea-5d692d2fc1d7",
+      "before": {
+        "name": "DEV-METADATA-QA-20261022-01",
+        "destination": "Nelson, New Zealand",
+        "startDate": "2026-11-01",
+        "endDate": "2026-11-03"
+      },
+      "after": {
+        "name": "DEV-METADATA-QA-20261022-01 · edited",
+        "destination": "Auckland, New Zealand",
+        "startDate": "2026-11-01",
+        "endDate": "2026-11-03"
+      },
+      "formatVersion": 2,
+      "expectedMetadataRevision": 0
+    },
+    "utf8CompactJson": "{\"operationId\":\"ed351197-e39a-5379-84af-89137ca3b0f3\",\"tripId\":\"f9d7adff-42fa-5f49-8bea-5d692d2fc1d7\",\"before\":{\"name\":\"DEV-METADATA-QA-20261022-01\",\"destination\":\"Nelson, New Zealand\",\"startDate\":\"2026-11-01\",\"endDate\":\"2026-11-03\"},\"after\":{\"name\":\"DEV-METADATA-QA-20261022-01 · edited\",\"destination\":\"Auckland, New Zealand\",\"startDate\":\"2026-11-01\",\"endDate\":\"2026-11-03\"},\"formatVersion\":2,\"expectedMetadataRevision\":0}",
+    "sha256Utf8": "5510bdb1acea863f248ffe7fd581e624f53a432dd2c918f7b39bf6887623907a"
+  },
+  "currencyPreview": {
+    "body": {
+      "proposedCurrency": "USD"
+    },
+    "utf8CompactJson": "{\"proposedCurrency\":\"USD\"}",
+    "sha256Utf8": "cb186289d857f3425294cb33916e2aec86ffcb751d0458301e6b5a3b45082cb7"
+  },
+  "status": "PROPOSED_NOT_EXECUTED_NOT_SOURCE_AUTHORITY",
+  "qualification": "Edit expected revision0 and before are proposal constraints only; require genuine Create receipt, owning server readback and authenticated snapshot match. Drift stops, no rebase.",
+  "currencyCommit": "No fabricated digest: body baseSettingsRevision/previewDigest must be exact legitimate Preview response; hash exact normalized body before one commit+samebody replay. Any output outside USD/zeroaffected/expected QA scope stops. Idempotency-Key fixed currencyOperationId."
+}

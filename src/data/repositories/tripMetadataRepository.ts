@@ -15,11 +15,6 @@ import {
   type LocalTripDestinationsChange,
 } from "@/domain/trip/localTripDestinationUpdate";
 import {
-  readSelectedTripCoverPhotoInScope,
-  announcePersonalTripCoverAfterCommit,
-} from "./tripPhotoRepository";
-import { resolveRetainedTripPhoto } from "../files/tripPhotoFileStore";
-import {
   isTripCoverAssetId,
   parseTripPhotoCoverRef,
   type TripCoverUpdate,
@@ -46,7 +41,7 @@ export function createTripMetadataRepository(
   database: Database,
   account: () => Promise<string>,
   clock: () => string,
-  resolvePhoto: typeof resolveRetainedTripPhoto = resolveRetainedTripPhoto,
+  resolvePhoto?: typeof import("../files/tripPhotoFileStore").resolveRetainedTripPhoto,
 ) {
   return {
     async canUpdateMetadata(tripId: string) {
@@ -111,6 +106,8 @@ export function createTripMetadataRepository(
       )
         throw new Error("TRIP_COVER_INVALID");
       const scope = await captureAccountScope(account);
+      const photoRepository = cover ? await import("./tripPhotoRepository") : undefined;
+      await assertAccountRequestContext(scope, account);
       let coverChanged = false;
       await withAccountApplyGate(
         async () => {
@@ -216,12 +213,17 @@ export function createTripMetadataRepository(
               cover.before !== cover.after &&
               parseTripPhotoCoverRef(cover.after)
             ) {
-              const photo = await readSelectedTripCoverPhotoInScope(
+              const photo = await photoRepository!.readSelectedTripCoverPhotoInScope(
                 database,
                 account,
                 { ...scope, tripId: request.tripId },
                 cover.after,
-                { resolveRetainedTripPhoto: resolvePhoto },
+                {
+                  resolveRetainedTripPhoto:
+                    resolvePhoto ??
+                    (await import("../files/tripPhotoFileStore"))
+                      .resolveRetainedTripPhoto,
+                },
               );
               if (!photo) throw new Error("TRIP_COVER_PHOTO_UNAVAILABLE");
             }
@@ -332,7 +334,10 @@ export function createTripMetadataRepository(
         },
         () => {
           if (coverChanged)
-            announcePersonalTripCoverAfterCommit({ ...scope, tripId: request.tripId });
+            photoRepository!.announcePersonalTripCoverAfterCommit({
+              ...scope,
+              tripId: request.tripId,
+            });
         },
       );
       announceLedgerQueueWorkAvailable();
