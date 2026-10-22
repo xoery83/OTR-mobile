@@ -1,0 +1,15 @@
+{
+  "case": "absent",
+  "state": "HEALTH_RESPONSE",
+  "status": 200,
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "stdout": "{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"error\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":105,\"usefulWork\":false,\"claimedRateDemands\":null,\"personalPaymentFxWork\":null,\"autoReferenceDemands\":null,\"autoReferenceWork\":null,\"nextIntervalMs\":60000,\"failureCount\":1,\"failureClass\":\"Error\",\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"547eb7a0-812e-4527-afc9-58e92657d6af\",\"route\":\"health\",\"status\":200,\"durationMs\":41}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"c0d2882e-e0f0-49d1-9514-97da5b553999\",\"route\":\"health\",\"status\":200,\"durationMs\":2}\n",
+  "stderr": "",
+  "image": "sha256:7267219e9fc42d5e6304cdc5c7091fbe2e3547861693dd1a2583c6a84aca67a7",
+  "network": "none",
+  "syntheticOnly": true,
+  "actualDEVConfigCopied": false
+}
