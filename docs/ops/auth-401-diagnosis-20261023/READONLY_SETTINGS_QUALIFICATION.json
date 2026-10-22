@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-22T23:20:56.600Z",
+  "method": "GET",
+  "endpoint": "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1/settings",
+  "sameCredential": true,
+  "headerSource": "installed SupabaseClient Auth admin default headers",
+  "apikeyMatchesConfiguredSecret": true,
+  "authorizationIsBearerOfSameOpaqueSecret": true,
+  "explicitBrowserUserAgent": false,
+  "SDKVersion": "2.116.0",
+  "attempts": 1,
+  "bodyRetained": false,
+  "provesAdminPermission": false,
+  "httpStatus": 401,
+  "category": "AUTH_REJECTED",
+  "providerRequestId": "01a165ea-ec53-7129-92c6-66d24c67d5da"
+}
