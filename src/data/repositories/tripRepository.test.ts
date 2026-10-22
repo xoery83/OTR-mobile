@@ -3004,3 +3004,109 @@ it("explicit removal of the only legacy scalar Tag persists an empty list and ca
     destinations: [],
   });
 });
+
+it("dispatches only the selected metadata operation and preserves dependencies and unrelated Trip edits", async () => {
+  const f = local();
+  const edits = [];
+  for (const name of ["Target trip", "Other trip"]) {
+    const create = { ...input(), name };
+    const saved = await f.repo.createTrip(create);
+    const before = {
+      name: saved.name,
+      destination: saved.destination,
+      startDate: saved.startDate,
+      endDate: saved.endDate,
+    };
+    const first = {
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before,
+      after: { ...before, name: `${name} first` },
+    };
+    const second = {
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before: first.after,
+      after: { ...before, name: `${name} second` },
+    };
+    await f.repo.updateMetadata(first);
+    await f.repo.updateMetadata(second);
+    await f.repo.acceptCreate({
+      ...create,
+      actorAccountId: accountA,
+      ownerPersonId: randomUUID(),
+      coreEpoch: randomUUID(),
+      coreRevision: 1,
+      coreAccessRevision: 1,
+    });
+    edits.push({ first, second });
+  }
+  const [target, other] = edits;
+  const scope = (edit: typeof target.first) => ({
+    accountId: accountA,
+    tripId: edit.tripId,
+    operationId: edit.operationId,
+  });
+  const status = (id: string) =>
+    f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(id)?.status;
+  await expect(
+    f.repo.resumeMetadataUpdates({ ...scope(target.first), accountId: accountB }),
+  ).rejects.toThrow("TRIP_METADATA_ACCOUNT_MISMATCH");
+  await expect(
+    f.repo.resumeMetadataUpdates({ ...scope(target.first), operationId: "invalid" }),
+  ).rejects.toThrow();
+  await f.repo.resumeMetadataUpdates(scope(target.second));
+  expect(status(target.second.operationId)).toBe("DEPENDENCY_BLOCKED");
+  expect(status(target.first.operationId)).toBe("DEPENDENCY_BLOCKED");
+  const { createTripMetadataSyncCoordinator, createTripMetadataSyncWorker } =
+    await import("../sync/tripMetadataSyncWorker");
+  const transport = {
+    receipt: vi.fn(async () => null),
+    update: vi.fn(async (_: unknown, request: typeof target.first) => ({
+      ...request,
+      actorAccountId: accountA,
+    })),
+  };
+  // An unrelated eligible operation must remain undispatched even if already PENDING.
+  await f.repo.resumeMetadataUpdates(scope(other.first));
+  const run = (edit: typeof target.first) =>
+    createTripMetadataSyncCoordinator(
+      f.queue,
+      createTripMetadataSyncWorker(f.repo, transport, async () => accountA),
+      f.repo,
+      () => true,
+      scope(edit),
+    ).run("AUTHENTICATED_ONLINE");
+  expect((await run(target.first)).processedCount).toBe(1);
+  expect(status(target.first.operationId)).toBe("COMPLETED");
+  expect(status(target.second.operationId)).toBe("PENDING");
+  expect(status(other.first.operationId)).toBe("PENDING");
+  expect(status(other.second.operationId)).toBe("DEPENDENCY_BLOCKED");
+  expect((await run(target.second)).processedCount).toBe(1);
+  expect(transport.update.mock.calls.map((call) => call[1].operationId)).toEqual([
+    target.first.operationId,
+    target.second.operationId,
+  ]);
+  expect((await run(target.second)).processedCount).toBe(0);
+});
+
+it("does not dispatch a scoped metadata operation after an Account ABA while resuming", async () => {
+  const { createTripMetadataSyncCoordinator } =
+    await import("../sync/tripMetadataSyncWorker");
+  const worker = { push: vi.fn() };
+  const f = local();
+  const runner = createTripMetadataSyncCoordinator(
+    f.queue,
+    worker,
+    {
+      resumeMetadataUpdates: async () => {
+        advanceAccountGeneration();
+        advanceAccountGeneration();
+      },
+    },
+    () => true,
+    { accountId: accountA, tripId: randomUUID(), operationId: randomUUID() },
+  );
+  await expect(runner.run("AUTHENTICATED_ONLINE")).rejects.toThrow("Account changed");
+  expect(worker.push).not.toHaveBeenCalled();
+});

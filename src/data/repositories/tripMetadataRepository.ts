@@ -20,12 +20,14 @@ import {
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
 import {
   tripMetadataUpdateSchema,
   tripMetadataReceiptSchema,
   type TripMetadataUpdate,
   type TripMetadataReceipt,
+  type TripMetadataSyncTarget,
 } from "@/domain/trip/tripMetadataContract";
 import {
   captureAccountScope,
@@ -360,14 +362,31 @@ export function createTripMetadataRepository(
         });
       });
     },
-    async resumeMetadataUpdates() {
+    async resumeMetadataUpdates(target?: TripMetadataSyncTarget) {
+      const selected = target && Object.freeze({ ...target });
       const scope = await captureAccountScope(account);
+      if (selected) {
+        coreUuid.parse(selected.accountId);
+        coreUuid.parse(selected.tripId);
+        coreUuid.parse(selected.operationId);
+        if (selected.accountId !== scope.accountId)
+          throw new Error("TRIP_METADATA_ACCOUNT_MISMATCH");
+      }
       await withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         await database.runAsync(
           `UPDATE sync_operations SET status='PENDING',last_error_code=NULL WHERE owner_user_id=? AND entity_type='TRIP' AND operation_type='UPDATE_TRIP_METADATA' AND status='DEPENDENCY_BLOCKED'
+          ${selected ? "AND trip_id=? AND entity_id=? AND id=? AND idempotency_key=?" : ""}
           AND (dependency_operation_id IS NULL OR EXISTS(SELECT 1 FROM sync_operations parent WHERE parent.id=sync_operations.dependency_operation_id AND parent.owner_user_id=sync_operations.owner_user_id AND parent.status='COMPLETED'))`,
           scope.accountId,
+          ...(selected
+            ? [
+                selected.tripId,
+                selected.tripId,
+                selected.operationId,
+                selected.operationId,
+              ]
+            : []),
         );
         await assertAccountRequestContext(scope, account);
       });

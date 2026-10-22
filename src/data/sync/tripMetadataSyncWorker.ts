@@ -1,6 +1,11 @@
-import { tripMetadataUpdateSchema } from "@/domain/trip/tripMetadataContract";
+import { getAccountGeneration } from "../auth/accountGeneration";
+import {
+  tripMetadataUpdateSchema,
+  type TripMetadataSyncTarget,
+} from "@/domain/trip/tripMetadataContract";
 import {
   captureAccountScope,
+  assertAccountRequestGeneration,
   assertAccountRequestContext,
 } from "../auth/accountRequestContext";
 import type { TripRepository } from "../repositories/tripRepository";
@@ -44,19 +49,34 @@ export function createTripMetadataSyncCoordinator(
   worker: SyncWorker,
   repository: Pick<TripRepository, "resumeMetadataUpdates">,
   portEnabled: () => boolean = () => false,
+  target?: TripMetadataSyncTarget,
 ) {
+  const selected = target && Object.freeze({ ...target });
   const engine = createSyncEngine(
     queue,
     worker,
     undefined,
     (operation) =>
       operation.operationType === "UPDATE_TRIP_METADATA" &&
-      operation.entityType === "TRIP",
+      operation.entityType === "TRIP" &&
+      (!selected ||
+        (operation.ownerUserId === selected.accountId &&
+          operation.tripId === selected.tripId &&
+          operation.entityId === selected.tripId &&
+          operation.id === selected.operationId &&
+          operation.idempotencyKey === selected.operationId)),
   );
   return {
     async run(authState: Parameters<typeof engine.run>[0]) {
       if (!portEnabled()) return { status: "closed" as const, processedCount: 0 };
-      if (authState === "AUTHENTICATED_ONLINE") await repository.resumeMetadataUpdates();
+      const scope = selected && {
+        accountId: selected.accountId,
+        generation: getAccountGeneration(),
+      };
+      if (scope) assertAccountRequestGeneration(scope);
+      if (authState === "AUTHENTICATED_ONLINE")
+        await repository.resumeMetadataUpdates(selected);
+      if (scope) assertAccountRequestGeneration(scope);
       return engine.run(authState);
     },
   };

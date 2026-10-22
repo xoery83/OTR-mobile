@@ -19,3 +19,11 @@ export const tripMetadataReceiptSchema = tripMetadataUpdateSchema.extend({
   actorAccountId: coreUuid,
 });
 export type TripMetadataReceipt = z.infer<typeof tripMetadataReceiptSchema>;
+
+// Local dispatch scope only; the Backend request and receipt contracts are unchanged.
+export type TripMetadataSyncTarget = Pick<
+  TripMetadataUpdate,
+  "tripId" | "operationId"
+> & {
+  accountId: string;
+};
