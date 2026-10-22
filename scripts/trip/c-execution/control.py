@@ -100,7 +100,7 @@ COMMIT;"""
         # No shell interpolation of password. Caller plan must pin helper SHA and baseline compose.
         helper=pathlib.Path(__file__).with_name('service.py')
         assert hashlib.sha256(helper.read_bytes()).hexdigest()==self.p['serviceHelperSHA256']
-        r=subprocess.run([sys.executable,str(helper),action,self.p['planPath'],self.p['manifestSHA256']],input=json.dumps({'kind':kind,'password':password}),capture_output=True,text=True,timeout=120)
+        r=subprocess.run([sys.executable,str(helper),action,self.p['planPath'],self.p['manifestSHA256']],input=json.dumps({'kind':kind,'password':password}),capture_output=True,text=True,timeout=250)
         if r.returncode: raise RuntimeError('C_SERVICE_RECONCILE_REQUIRED')
         result=json.loads(r.stdout); assert result['verified'] is True
         return result
@@ -162,7 +162,7 @@ def main():
         if arm.exists():
             info=json.loads(arm.read_text()); assert info['windowId']==p['windowId']
             (op.dir/'close-requested').touch(mode=0o600,exist_ok=True)
-            deadline=time.monotonic()+160
+            deadline=time.monotonic()+340
             while time.monotonic()<deadline:
                 completed=sorted(op.dir.glob('close-*.json'))
                 if completed: result=json.loads(completed[-1].read_text()); break

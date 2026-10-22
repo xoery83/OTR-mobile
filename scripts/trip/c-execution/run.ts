@@ -76,7 +76,7 @@ async function main() {
     const { stdout } = await execute(
       "python3",
       [control, action, path, dir, "--manifest-sha", gate.manifestSHA256],
-      { timeout: 150000, maxBuffer: 500000 },
+      { timeout: 350000, maxBuffer: 500000 },
     );
     const r = JSON.parse(stdout);
     if (r.status === "RECONCILE_REQUIRED" || r.status?.startsWith("STOPPED"))
