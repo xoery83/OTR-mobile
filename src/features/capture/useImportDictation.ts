@@ -16,7 +16,12 @@ export function useImportDictation(onText: (text: string) => void) {
       load: async () =>
         (await import("@/native/localDictation")).readLocalDictation({
           onDiagnostic: (value) => {
-            if (active && typeof __DEV__ !== "undefined" && __DEV__) setDiagnostic(value);
+            if (
+              active &&
+              ((typeof __DEV__ !== "undefined" && __DEV__) ||
+                process.env.EXPO_PUBLIC_OTR_DICTATION_DIAGNOSTICS === "1")
+            )
+              setDiagnostic(value);
           },
         }),
       onText: (text) => currentText.current(text),
