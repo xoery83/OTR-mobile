@@ -2,10 +2,18 @@
 import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
+import {
+  fetchProvisionWithReceipt,
+  retainProvisionSdkCode,
+  reserveProvisionDispatch,
+  type ProvisionDiagnostic,
+} from "./provisionDiagnostics";
 const project = "tuqigdxrvrerfewsxqgm",
   origin = `https://${project}.supabase.co`;
 let attempts = 0;
 const attemptedEmails = new Set<string>();
+const diagnostics: ProvisionDiagnostic[] = [];
+let failureStage = "PREFLIGHT";
 const receipts: { [key: string]: unknown } = {};
 async function main() {
   const gate = JSON.parse(readFileSync(process.argv[3], "utf8"));
@@ -57,6 +65,7 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: {
       fetch: async (url, options) => {
+        failureStage = "TRANSPORT_SCOPE_GUARD";
         const req = new Request(url, options),
           u = new URL(req.url);
         if (
@@ -82,10 +91,14 @@ async function main() {
           body.phone
         )
           throw Error("C_PROVISION_BODY_FORBIDDEN");
-        if (attemptedEmails.has(body.email)) throw Error("C_PROVISION_RETRY_FORBIDDEN");
-        attemptedEmails.add(body.email);
-        attempts++;
-        return fetch(req);
+        const diagnostic = reserveProvisionDispatch(
+          attemptedEmails,
+          body.email,
+          diagnostics,
+        );
+        attempts = attemptedEmails.size;
+        failureStage = "OUTBOUND_AUTH";
+        return fetchProvisionWithReceipt(req, diagnostic);
       },
     },
   });
@@ -98,6 +111,13 @@ async function main() {
       email_confirm: true,
       user_metadata: { display_name: `DEV-METADATA-QA-20261022-01-${label}` },
     });
+    retainProvisionSdkCode(diagnostics.at(-1), error);
+    if (!error) failureStage = "AUTH_RESPONSE_IDENTITY_VALIDATION";
+    else if (failureStage === "OUTBOUND_AUTH")
+      failureStage =
+        diagnostics.at(-1)?.outcome === "TRANSPORT_EXCEPTION"
+          ? "AUTH_TRANSPORT_EXCEPTION"
+          : "AUTH_HTTP_RESPONSE_REJECTED";
     if (error || !data.user?.id || data.user.email !== email)
       throw Error("C_PROVISION_FAILED_NO_TAKEOVER");
     receipts[label] = { id: data.user.id, email, project, newlyCreated: true };
@@ -108,6 +128,8 @@ async function main() {
       attempts,
       attemptedEmails: [...attemptedEmails],
       receipts,
+      diagnostics,
+      failureStage,
     }),
   );
 }
@@ -118,6 +140,8 @@ main().catch(() => {
       attempts,
       attemptedEmails: [...attemptedEmails],
       receipts,
+      diagnostics,
+      failureStage,
     }),
   );
   process.exitCode = 2;
