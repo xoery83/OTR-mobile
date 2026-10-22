@@ -1,0 +1,104 @@
+Window: "OTR MT Correction 01 QA", App: Device Hub.
+0 standard window OTR MT Correction 01 QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					8 row (selected) Description: iphone.gen3, Value: OTR MT Correction 01 QA
+27.0
+Simulator
+					9 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					10 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					11 row (selectable) Description: iphone.gen3, Value: OTR Apple Local Model Probe 26.5
+26.5
+Simulator
+					12 row (selectable) Description: Unavailable, Value: Expanded
+					13 row (selectable) Description: iphone.gen3, Value: Leon's iPhone16pro
+27.0.1
+iPhone 16 Pro
+			14 search text field (settable) Search
+				15 button Search
+			16 splitter (disabled, settable, float) 308
+			17 container
+				18 container
+					19 back button Description: Back, ID: BackButton
+					20 heading Description: Currency, Secondary Actions: Cancel
+					21 button Description: About Journey Currency, Secondary Actions: Cancel
+					22 heading Description: JOURNEY CURRENCY, Secondary Actions: Cancel
+					23 button Description: ER02 Local Edit QA · Saved, Totals, balances and settlement, NZD, New Zealand Dollar, Secondary Actions: Cancel
+					24 heading Description: EXCHANGE RATE LOOKUP, Secondary Actions: Cancel
+					25 text Description: From, Secondary Actions: Cancel
+					26 text Description: To, Secondary Actions: Cancel
+					27 button Description: Select currency, Secondary Actions: Cancel
+					28 button Description: NZD, Secondary Actions: Cancel
+					29 text Description: Date, Secondary Actions: Cancel
+					30 button Description: Reference date 2026-10-22, Secondary Actions: Cancel
+				31 button Description: Home, ID: app.grid.3x3
+				32 button Description: Screenshot, ID: camera.viewfinder
+				33 button Description: Record, ID: record.circle
+				34 button Rotate Left
+		35 splitter (disabled, settable, float) 820
+		36 container
+			37 Inspector Subcategory
+				38 radio button Description: Info, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.info
+				39 radio button Description: Apps, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				40 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			41 scroll area Description: Apps, ID: Inspector.com.apple.devicekit.inspector.apps
+				42 container
+					43 scroll area
+						44 list
+							45 row (selectable) OTR Input SDK Probe
+1.0
+com.xoery.otr.inputprobe
+							46 row (selectable) Description: appstore, Value: OTR Mobile
+0.1.0
+com.xoery.otrmobile
+							47 row (selectable) OTR Places Probe
+1.0
+com.xoery.otr.placesprobe
+					48 button Add
+					49 button (disabled) Remove
+			50 container Description: Apps, ID: Inspector.com.apple.devicekit.inspector.apps
+				51 image Description: Search, ID: magnifyingglass
+				52 text field (settable) Filter
+				53 pop up button Value: Developer, ID: App Filter
+	54 toolbar
+		55 menu button Add, Help: Add Device, ID: plus
+		56 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		57 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		58 toggle button Description: Capture Keyboard, Value: off
+		59 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		60 Zoom
+			61 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			62 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 1
+			63 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 0, ID: 1.magnifyingglass
+			64 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		65 Inspector Category
+			66 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			67 radio button Description: text.document, Help: Reports, Value: 0
+			68 radio button Description: Info, Value: 1, ID: info
+		69 pop up button more toolbar items
+	70 close button
+	71 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	72 minimize button
+	73 text OTR MT Correction 01 QA iOS 27.0
+74 menu bar
+	75 Device Hub
+	76 File
+	77 Edit
+	78 View
+	79 Device
+	80 Controls
+	81 Window
+	82 Help

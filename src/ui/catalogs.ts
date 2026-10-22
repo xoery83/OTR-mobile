@@ -553,6 +553,8 @@ export const en = {
   "placeSearch.query": "Search places or addresses",
   "placeSearch.clear": "Clear search",
   "placeSearch.apple": "Apple Maps results",
+  "placeSearch.regionHint":
+    "Search for a city or region, then select it to bias place results nearby. This does not restrict results to that area.",
   "placeSearch.region": "Search region",
   "placeSearch.worldwide": "Worldwide",
   "placeSearch.loading": "Searching…",
@@ -3155,6 +3157,8 @@ export const zhHans: Record<MessageKey, string> = {
   "placeSearch.query": "搜索地点或地址",
   "placeSearch.clear": "清空搜索",
   "placeSearch.apple": "Apple 地图结果",
+  "placeSearch.regionHint":
+    "搜索并选择城市或地区，以优先显示附近地点；搜索结果不会严格限制在该区域内。",
   "placeSearch.region": "搜索区域",
   "placeSearch.worldwide": "全球",
   "placeSearch.loading": "正在搜索…",

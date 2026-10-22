@@ -1,0 +1,8 @@
+The following is a diff from the previous accessibility tree for Window: "OTR MT Correction 01 QA" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 115
++					117 button Description: UrCove by HYATT Beijing Forbidden City, Nanheyan Avenue, Beijing, China, Secondary Actions: Cancel
++					118 button Description: Grand Hotel Beijing Forbidden City, 中国北京市东城区东长安街35号, Secondary Actions: Cancel
++					119 button Description: Beijing Hotel NUO Forbidden City, 33 East Chang An Avenue, Dongcheng District, Beijing 100004, China, Secondary Actions: Cancel
++					120 button Secondary Actions: Cancel, Description: East Sacred Hotel-Beijing Tiananmen Square,the Forbidden City&the Palace Museum,Wangfujing Subway St ation,located in the city center, Xizongbu Alley, Beijing, China
++					121 button Secondary Actions: Cancel, Description: Lavande Hotel Beijing Tiananmen Square Forbidden City Beijing Railway Station Metro Station Branch, 大羊毛胡同, Beijing, China
+~					107 button Description: Search more, Secondary Actions: Cancel

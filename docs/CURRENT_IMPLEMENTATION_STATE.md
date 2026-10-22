@@ -1,3 +1,7 @@
+## 22 October — P1 Place Search follow-up / bounded AD5 PASS
+
+More now preserves quick suggestions and their original provider resolution; compact region/Worldwide chips, geographic region selection and fixed keyboard-aware manual fallback. Actual Beijing quick5→More6 retaining5, Beijing selection/original-query restore/Worldwide reset/software keyboard+manual fill PASS.4suites50/TS/UIguard+independentReview PASS. Local Trip already initializes Ledger; local-only Plan sync and Backend currency preview/commit gaps explained, no finance/sync gates changed. [Receipt](ops/p1-place-followup-20261022/NATIVE_RECEIPT.json).
+
 ## 22 October — P1 Create UX bounded Simulator PASS
 
 Calendar Trip-range reference/cross-day selection, immediate location-only MapKit selection, Location-under-Name focus search, aligned Date/Time fields, staged participant picker and top-right Create implemented.6suites74tests/TS/UIguard473/139/scopedlint and independentReview PASS. AD5 actual named QA Plan Create→Day→Edit restores title/address/date/time/participant. Original discarded test draft explicitly authorized. No phone install/Native rebuild/Schema/Core change. [Receipt](ops/p1-create-ux-20261022/NATIVE_RECEIPT.json).

@@ -55,6 +55,8 @@ vi.mock("@/data/auth/accountGeneration", () => ({
   subscribeAccountGeneration: () => () => {},
 }));
 vi.mock("react-native", () => ({
+  KeyboardAvoidingView: "div",
+  Platform: { OS: "ios" },
   Modal: (p: any) => createElement("div", null, p.children),
   ScrollView: "section",
   View: "div",
@@ -64,7 +66,10 @@ vi.mock("react-native", () => ({
     return createElement("button", null, p.children);
   },
 }));
-vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
+vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaProvider: "div",
+  SafeAreaView: "div",
+}));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
@@ -235,4 +240,53 @@ it("known offline keeps manual confirmation available without an Apple dispatch"
   expect(node("placeSearch.useEnteredName").disabled).toBe(false);
   node("placeSearch.useEnteredName").onPress();
   expect(props.onConfirm).toHaveBeenCalledWith({ kind: "MANUAL", text: "Sky Tower" });
+});
+
+it("region picker searches geographic areas, returns to authored query and Worldwide clears only bias", async () => {
+  const quick = provider(),
+    more = provider();
+  quick.resolve.mockResolvedValue({
+    ...row,
+    kind: "mapItem",
+    address: "Auckland, New Zealand",
+    point: { latitude: -36.8, longitude: 174.7 },
+  } as any);
+  state.factory.mockResolvedValueOnce(quick).mockResolvedValueOnce(more);
+  await mount();
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(node("placeSearch.worldwide").selected).toBe(true);
+  expect(node("placeSearch.region").compact).toBe(true);
+  node("placeSearch.region").onPress();
+  render();
+  expect(render()).toContain("placeSearch.regionHint");
+  node("placeSearch.query").onChangeText("Auckland");
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(quick.complete).toHaveBeenLastCalledWith(
+    expect.objectContaining({ text: "Auckland", intent: "destinationArea" }),
+    expect.anything(),
+  );
+  node("Sky Tower, Auckland").onPress();
+  await flush();
+  render();
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(node("placeSearch.query").value).toBe("Sky Tower");
+  expect(quick.complete).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      text: "Sky Tower",
+      region: { latitude: -36.8, longitude: 174.7 },
+    }),
+    expect.anything(),
+  );
+  node("placeSearch.worldwide").onPress();
+  await vi.advanceTimersByTimeAsync(450);
+  render();
+  expect(quick.complete).toHaveBeenLastCalledWith(
+    { text: "Sky Tower", locale: "en" },
+    expect.anything(),
+  );
+  expect(node("placeSearch.useEnteredName").variant).toBe("secondary");
+  expect(props.onConfirm).not.toHaveBeenCalled();
 });

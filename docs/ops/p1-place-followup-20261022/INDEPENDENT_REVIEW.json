@@ -1,0 +1,39 @@
+{
+  "reviewer": "/root/form_entry_01",
+  "status": "PASS_FOR_BOUNDED_SIMULATOR_VQA",
+  "baseline": "11dc1e26386d40465e3adfaee3a9e3920c6c6d18",
+  "candidate": "Uncommitted exact five-file follow-up; hashes below",
+  "sourceHashes": {
+    "src/features/place-search/PlaceSearchSheet.tsx": "c3fdc85f84944115ca2ecbae0d4628602158c08b7cf55e798142d57e973df65d",
+    "src/features/place-search/PlaceSearchSheet.test.ts": "7ca5c1b2441b81904f5556d98a5fe0ca8f76c86abab46b26de1e299f5bc64573",
+    "src/features/place-search/placeSearchSession.ts": "ebbed9e9daf73c5742b7e3236a4f36497bccb85146a8f70bab11f7193bc7f7d1",
+    "src/features/place-search/placeSearchSession.test.ts": "3589446f56747b27ffc7d71c2df49bb5f692df2c5bddc27d2e47a4249a70d3b2",
+    "src/ui/catalogs.ts": "aafb754101f0b25ef84515ad683f47ca679b0d807d5cc4267d7a6b4fbab9b57e"
+  },
+  "blockingFindings": [],
+  "assessment": [
+    "SearchMore retains quick rows, display-deduplicates the merged transient list and caps 20. Quick completion object membership routes resolve through original quick provider, preserving handle ownership.",
+    "More dispatch is blocked during loading; completing searchMore aborts old request signal but does not cancel the quick provider session. Provider listeners are removed on completed calls. Back retains quick results. Query/intent/region change cancels both sessions and invalidates stale callbacks.",
+    "Region search explicitly uses destinationArea intent without existing bias. Resolved point becomes only a soft bias on restored authored query. Worldwide removes that bias. No region selection commits a form field.",
+    "Default confirm mode remains unchanged; P1 immediate selection opt-in remains isolated. Manual fallback is localized secondary footer action with existing account/binding guard. No Core, ACL, schema, Hosted, sync or Ledger code changed."
+  ],
+  "independentValidation": {
+    "tests": "2 suites / 18 tests PASS: placeSearchSession.test.ts and PlaceSearchSheet.test.ts",
+    "commands": [
+      "node_modules/.bin/vitest run --configLoader runner src/features/place-search/placeSearchSession.test.ts src/features/place-search/PlaceSearchSheet.test.ts"
+    ],
+    "native": "NOT_RUN_BY_REVIEWER"
+  },
+  "boundedNotes": [
+    "Merged-row deduplication uses visible title/secondary; it is presentation-only, not a canonical place identity merge.",
+    "Region chip currently displays selected title only; actual same-name regional distinction remains in the selected point, but qualifier visibility can be assessed in VQA.",
+    "KeyboardAvoidingView now supplies iOS keyboard padding; actual device keyboard/large-font geometry still requires VQA."
+  ],
+  "readiness": "Permits bounded serial simulator verification; no Native or Owner acceptance claim. No edits to product source.",
+  "followup": {
+    "change": "KeyboardAvoidingView flex:1 wraps header/search/scroll/footer inside fullscreen SafeAreaProvider; iOS padding only. Test mock and last-call matcher corrected.",
+    "assessment": "No new business or lifecycle change; source review permits actual keyboard VQA.",
+    "validation": "PlaceSearchSheet suite independently rerun: 6 tests PASS; prior combined 18 PASS retained.",
+    "native": "Pending actual keyboard-visible footer confirmation by Root."
+  }
+}

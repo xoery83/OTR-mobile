@@ -1,0 +1,7 @@
+{
+  "src/features/place-search/PlaceSearchSheet.test.ts": "7ca5c1b2441b81904f5556d98a5fe0ca8f76c86abab46b26de1e299f5bc64573",
+  "src/features/place-search/PlaceSearchSheet.tsx": "c3fdc85f84944115ca2ecbae0d4628602158c08b7cf55e798142d57e973df65d",
+  "src/features/place-search/placeSearchSession.test.ts": "3589446f56747b27ffc7d71c2df49bb5f692df2c5bddc27d2e47a4249a70d3b2",
+  "src/features/place-search/placeSearchSession.ts": "ebbed9e9daf73c5742b7e3236a4f36497bccb85146a8f70bab11f7193bc7f7d1",
+  "src/ui/catalogs.ts": "aafb754101f0b25ef84515ad683f47ca679b0d807d5cc4267d7a6b4fbab9b57e"
+}

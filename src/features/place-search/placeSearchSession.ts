@@ -216,8 +216,23 @@ export class PlaceSearchSession {
         20,
       );
       if (this.closed || sequence !== this.sequence || controller.signal.aborted) return;
-      this.extended = rows;
-      this.publish({ status: rows.length ? "READY" : "EMPTY", rows, more: true });
+      const seen = new Set<string>();
+      this.extended = [...this.quick.rows, ...rows]
+        .filter((row) => {
+          const key = JSON.stringify([
+            row.title.trim().toLocaleLowerCase(),
+            row.secondary.trim().toLocaleLowerCase(),
+          ]);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 20);
+      this.publish({
+        status: this.extended.length ? "READY" : "EMPTY",
+        rows: this.extended,
+        more: true,
+      });
     } catch (error) {
       if (!this.closed && sequence === this.sequence && !controller.signal.aborted)
         this.publish({
@@ -250,11 +265,9 @@ export class PlaceSearchSession {
       const resolved =
         candidate.kind === "mapItem"
           ? candidate
-          : await (this.state.more ? this.moreProvider : this.provider).resolve(
-              candidate,
-              this.query,
-              controller.signal,
-            );
+          : await (
+              this.quick.rows.includes(candidate) ? this.provider : this.moreProvider
+            ).resolve(candidate, this.query, controller.signal);
       if (this.closed || sequence !== this.sequence || controller.signal.aborted)
         return null;
       this.publish({ ...this.state, status: "READY" });

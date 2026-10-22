@@ -100,8 +100,15 @@ it("does not resolve a stale row after query change or publish a late callback a
 it("caps Quick at five and explicit More at twenty without pagination", async () => {
   const quick = provider(),
     more = provider();
-  quick.complete.mockResolvedValue(Array.from({ length: 9 }, () => candidate()));
-  more.search.mockResolvedValue(Array.from({ length: 30 }, () => candidate("mapItem")));
+  quick.complete.mockResolvedValue(
+    Array.from({ length: 9 }, (_, i) => ({ ...candidate(), title: `Quick ${i}` })),
+  );
+  more.search.mockResolvedValue(
+    Array.from({ length: 30 }, (_, i) => ({
+      ...candidate("mapItem"),
+      title: `More ${i}`,
+    })),
+  );
   const session = new PlaceSearchSession(quick, more, vi.fn());
   session.update({ text: "Auckland" });
   await vi.advanceTimersByTimeAsync(450);
@@ -214,4 +221,46 @@ it("does not reuse a general POI cache after switching to destination-area inten
   session.update({ text: "Nelson" });
   await vi.advanceTimersByTimeAsync(450);
   expect(quick.complete).toHaveBeenCalledTimes(3);
+});
+
+it("More keeps quick results when provider returns fewer rows and resolves retained handles with their owner", async () => {
+  const quick = provider(),
+    more = provider();
+  quick.complete.mockImplementation(async () => [candidate("completion", 1)]);
+  quick.resolve.mockResolvedValue({
+    ...candidate(),
+    kind: "mapItem",
+    address: "Auckland",
+  });
+  more.search.mockResolvedValue([]);
+  const session = new PlaceSearchSession(quick, more, vi.fn());
+  session.update({ text: "Sky Tower" });
+  await vi.advanceTimersByTimeAsync(450);
+  const retained = session.state.rows[0];
+  await session.searchMore();
+  expect(session.state.rows).toEqual([retained]);
+  expect(await session.resolve(retained)).toMatchObject({ address: "Auckland" });
+  expect(quick.resolve).toHaveBeenCalledOnce();
+  expect(more.resolve).not.toHaveBeenCalled();
+});
+it("More deduplicates matching display rows without losing other quick suggestions", async () => {
+  const quick = provider(),
+    more = provider();
+  quick.complete.mockResolvedValue([
+    candidate(),
+    { ...candidate(), title: "Other suggestion" },
+  ]);
+  more.search.mockResolvedValue([
+    candidate("mapItem"),
+    { ...candidate("mapItem"), title: "Extra place" },
+  ]);
+  const session = new PlaceSearchSession(quick, more, vi.fn());
+  session.update({ text: "Sky Tower" });
+  await vi.advanceTimersByTimeAsync(450);
+  await session.searchMore();
+  expect(session.state.rows.map((r) => r.title)).toEqual([
+    "Sky Tower",
+    "Other suggestion",
+    "Extra place",
+  ]);
 });

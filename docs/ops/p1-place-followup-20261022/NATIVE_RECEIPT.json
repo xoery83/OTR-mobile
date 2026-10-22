@@ -1,0 +1,36 @@
+{
+  "status": "BOUNDED_SIMULATOR_PASS",
+  "base": "11dc1e26386d40465e3adfaee3a9e3920c6c6d18",
+  "target": "AD5 iOS27",
+  "metroPort": 8083,
+  "metroSession": 22493,
+  "observed": {
+    "query": "Beijing forbidden city",
+    "quickCount": 5,
+    "moreCount": 6,
+    "retainedAllFiveQuick": true,
+    "addedResult": "Beijin Village supplied by Apple, not a fabricated relevant result",
+    "region": "Select Beijing, China => Beijing chip selected, original query restored; new nearby-biased results observed",
+    "worldwide": "Selected state restored and query retained after clearing region",
+    "keyboard": "Device Hub Toggle Software Keyboard => actual keyboard visible, secondary manual button stays above it",
+    "manual": "Use entered address => authored text fills Location, Plan name remains empty",
+    "currencyRead": "QA Trip currency screen resolves exact ER02 Local Edit QA and NZD; local Ledger exists"
+  },
+  "newPlansOrCurrencyMutations": false,
+  "phoneInstall": false,
+  "permissionsSchemaHostedChange": false,
+  "validation": {
+    "targetedTests": "4suites50 PASS",
+    "ledgerInitialization": "TCL01 4PASS/50 skipped, no financial mutation code modified",
+    "typecheck": "PASS",
+    "uiGuard": "PASS473/139",
+    "independentReview": "PASS, includes keyboard wrapper delta",
+    "expandedTripRepositoryTests": "52PASS/2 timestamp assertions failed in unchanged Reference fixture path; no full suite PASS claimed"
+  },
+  "remainingLimits": [
+    "MapKit ranking/relevance/count of genuinely new results is provider-dependent",
+    "Region is a bias, not hard geographic exclusion",
+    "Dark/large text/physical VQA not repeated",
+    "Sync activation, authoritative Trip acceptance and local-only settlement-currency capability remain separate work"
+  ]
+}
