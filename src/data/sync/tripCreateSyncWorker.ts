@@ -1,5 +1,7 @@
+import { getAccountGeneration } from "../auth/accountGeneration";
 import {
   captureAccountScope,
+  assertAccountRequestGeneration,
   assertAccountRequestContext,
 } from "../auth/accountRequestContext";
 import {
@@ -65,6 +67,7 @@ export function createTripCreateSyncCoordinator(
   portEnabled: () => boolean = () => false,
   target?: TripCreateTarget,
 ) {
+  const selected = target && Object.freeze({ ...target });
   const engine = createSyncEngine(
     queue,
     worker,
@@ -72,16 +75,22 @@ export function createTripCreateSyncCoordinator(
     (operation) =>
       operation.operationType === "CREATE_TRIP" &&
       operation.entityType === "TRIP" &&
-      (!target ||
-        (operation.id === target.operationId &&
-          operation.tripId === target.tripId &&
-          operation.ownerUserId === target.accountId)),
+      (!selected ||
+        (operation.id === selected.operationId &&
+          operation.tripId === selected.tripId &&
+          operation.ownerUserId === selected.accountId)),
   );
   return {
     async run(authState: Parameters<typeof engine.run>[0]) {
       if (!portEnabled()) return { status: "closed" as const, processedCount: 0 };
+      const scope = selected && {
+        accountId: selected.accountId,
+        generation: getAccountGeneration(),
+      };
+      if (scope) assertAccountRequestGeneration(scope);
       if (authState === "AUTHENTICATED_ONLINE")
-        await repository.resumeCreateTrips(target);
+        await repository.resumeCreateTrips(selected);
+      if (scope) assertAccountRequestGeneration(scope);
       return engine.run(authState);
     },
   };

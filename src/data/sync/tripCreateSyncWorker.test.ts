@@ -1,3 +1,4 @@
+import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import type { SyncOperation } from "./syncOperationRepository";
@@ -124,4 +125,34 @@ it("keeps dedicated queue dormant until explicit port enablement", async () => {
   );
   expect((await enabled.run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
   expect(f.repository.resumeCreateTrips).toHaveBeenCalledOnce();
+});
+
+it("rejects Account ABA while a targeted Create resumes before any queue or transport dispatch", async () => {
+  const f = fixture();
+  f.repository.resumeCreateTrips.mockImplementationOnce(async () => {
+    advanceAccountGeneration();
+    advanceAccountGeneration();
+  });
+  const queue = {
+    listPending: vi.fn(async () => []),
+    markCompleted: vi.fn(),
+    markRetryable: vi.fn(),
+    markProcessing: vi.fn(),
+  };
+  const runner = createTripCreateSyncCoordinator(
+    queue,
+    f.worker,
+    f.repository,
+    () => true,
+    {
+      accountId: actor,
+      tripId: f.request.tripId,
+      operationId: f.request.operationId,
+    },
+  );
+  await expect(runner.run("AUTHENTICATED_ONLINE")).rejects.toThrow("Account changed");
+  expect(queue.listPending).not.toHaveBeenCalled();
+  expect(f.transport.receipt).not.toHaveBeenCalled();
+  expect(f.transport.create).not.toHaveBeenCalled();
+  expect(f.repository.acceptCreate).not.toHaveBeenCalled();
 });
