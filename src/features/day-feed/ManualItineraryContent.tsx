@@ -27,6 +27,7 @@ export function ManualItineraryContent({
   generation,
   initialDate,
   tripStartDate,
+  tripEndDate,
   onClose,
   registerDismissHandler,
   onSaved,
@@ -35,6 +36,7 @@ export function ManualItineraryContent({
   generation: number;
   initialDate: string | null;
   tripStartDate?: string | null;
+  tripEndDate?: string | null;
   onClose(): void;
   registerDismissHandler?: (handler: () => void) => () => void;
   onSaved(itemId: string): void;
@@ -48,25 +50,31 @@ export function ManualItineraryContent({
   const colors = useUiTheme();
   const [family, setFamily] = useState<Family | null>(null);
   const [startDate, setStartDate] = useState(tripStartDate ?? null);
+  const [endDate, setEndDate] = useState(tripEndDate ?? null);
   useEffect(() => {
     let active = true;
-    if (tripStartDate === undefined)
+    if (tripStartDate === undefined || tripEndDate === undefined)
       void readLocalTripRepository()
         .then((repo) => repo.getTrip(tripId))
         .then((trip) => {
-          if (active && generation === getAccountGeneration())
-            setStartDate(trip?.startDate ?? null);
+          if (active && generation === getAccountGeneration()) {
+            setStartDate(
+              tripStartDate === undefined ? (trip?.startDate ?? null) : tripStartDate,
+            );
+            setEndDate(tripEndDate === undefined ? (trip?.endDate ?? null) : tripEndDate);
+          }
         })
         .catch(() => {});
     return () => {
       active = false;
     };
-  }, [tripId, generation, tripStartDate]);
+  }, [tripId, generation, tripStartDate, tripEndDate]);
   if (currentGeneration !== generation) return null;
   const props = {
     tripId,
     initialDate,
     tripStartDate: startDate,
+    tripEndDate: endDate,
     embedded: true,
     registerDismissHandler,
     onClose,

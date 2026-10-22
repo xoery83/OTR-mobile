@@ -35,12 +35,14 @@ export function PlaceSearchSheet({
   binding,
   initialQuery,
   nameChoice,
+  selectionMode = "confirm",
   onCancel,
   onConfirm,
 }: {
   binding: PlaceSearchBinding;
   initialQuery: string;
   nameChoice: boolean;
+  selectionMode?: "confirm" | "immediate";
   onCancel(): void;
   onConfirm(result: PlaceSearchResult): void;
 }) {
@@ -163,6 +165,14 @@ export function PlaceSearchSheet({
       setRegionName(resolved.title);
       setRegionSearch(false);
       update(targetQuery.current);
+      return;
+    }
+    if (selectionMode === "immediate") {
+      if (!resolved.address?.trim() || resolved.address.length > 500) {
+        setInputError(true);
+        return;
+      }
+      onConfirm({ kind: "SELECTED", place: resolved, usePlaceName: false });
       return;
     }
     setSelection(resolved);

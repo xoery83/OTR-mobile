@@ -7,8 +7,16 @@ import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  Alert,
+  Keyboard,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
@@ -17,14 +25,16 @@ import {
   type ManualPlanFields,
   type ManualPlanRepository,
 } from "@/data/repositories/manualPlanRepository";
-import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
+import { UiButton, UiText as Text } from "@/ui/controls";
+import { UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { CalendarField } from "./TripCalendarField";
+import { TripCalendarRangeField } from "./TripCalendarRangeField";
+import { PlanParticipantsField } from "./PlanParticipantsField";
+import { AppIcon } from "@/components/AppIcon";
 
 type Opened = { repository: ManualPlanRepository; draft: ManualPlanDraft };
 
@@ -39,11 +49,13 @@ function TimeField({
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
+  const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
   return (
-    <View>
+    <View style={styles.timeField}>
       <UiFormRow
+        variant="field"
         label={label}
         value={value ?? t("tripCreate.notSet")}
         disabled={disabled}
@@ -54,8 +66,28 @@ function TimeField({
           setOpen(true);
         }}
       />
-      {open ? (
-        <View>
+      <Modal
+        visible={open}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        allowSwipeDismissal
+        onRequestClose={() => setOpen(false)}
+      >
+        <SafeAreaView edges={["bottom"]} style={styles.timeSheet}>
+          <SheetHeader
+            category="picker"
+            safeTop={false}
+            title={label}
+            onLeft={() => setOpen(false)}
+            onRight={() => {
+              if (!disabled)
+                onChange(
+                  `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                );
+              setOpen(false);
+            }}
+            rightDisabled={disabled}
+          />
           <UiDatePicker
             mode="time"
             display="spinner"
@@ -66,29 +98,16 @@ function TimeField({
             }}
           />
           <UiButton
-            label={t("common.done")}
-            onPress={() => {
-              onChange(
-                `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-              );
-              setOpen(false);
-            }}
-          />
-          <UiButton
             label={t("tripCreate.clearTime")}
             variant="text"
+            disabled={disabled}
             onPress={() => {
               onChange(null);
               setOpen(false);
             }}
           />
-          <UiButton
-            label={t("common.cancel")}
-            variant="text"
-            onPress={() => setOpen(false)}
-          />
-        </View>
-      ) : null}
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }
@@ -100,6 +119,7 @@ export function P1PlanEditor({
   itemId,
   initialDate,
   tripStartDate,
+  tripEndDate,
   opened,
   onClose,
   onSaved,
@@ -114,6 +134,7 @@ export function P1PlanEditor({
   itemId?: string;
   initialDate?: string | null;
   tripStartDate?: string | null;
+  tripEndDate?: string | null;
   opened?: Opened;
   onClose(): void;
   onSaved(itemId: string): void;
@@ -124,6 +145,7 @@ export function P1PlanEditor({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const generation = getAccountGeneration();
   const alive = useRef(true);
   const closedRef = useRef(false);
@@ -222,7 +244,7 @@ export function P1PlanEditor({
       setPlaceSearch({
         binding,
         target,
-        query: target === "FIND_PLACE" ? snapshot.title : (snapshot.location ?? ""),
+        query: snapshot.location || snapshot.title,
         fields: snapshot,
       });
     } catch {
@@ -233,45 +255,15 @@ export function P1PlanEditor({
     const search = placeSearch;
     if (!search || !search.binding.isCurrent() || fieldsRef.current !== search.fields)
       return;
-    const apply = (replaceLocation: boolean) => {
-      if (!search.binding.isCurrent() || fieldsRef.current !== search.fields) return;
-      const next: Partial<ManualPlanFields> = {};
-      if (result.kind === "MANUAL") {
-        if (search.target === "LOCATION") {
-          if (result.text.length > 500) return;
-          next.location = result.text || null;
-        } else if (!search.fields.title.trim()) {
-          if (result.text.length > 200) return;
-          next.title = result.text;
-        }
-      } else {
-        if (
-          !result.place.address?.trim() ||
-          result.place.address.length > 500 ||
-          (result.usePlaceName && result.place.title.length > 200)
-        )
-          return;
-        if (replaceLocation) next.location = result.place.address;
-        if (search.target === "FIND_PLACE" && result.usePlaceName)
-          next.title = result.place.title;
-      }
+    if (result.kind === "MANUAL") {
+      if (result.text.length > 500) return;
       closePlaceSearch();
-      if (Object.keys(next).length) change(next);
-    };
-    if (
-      result.kind === "SELECTED" &&
-      search.fields.location?.trim() &&
-      search.fields.location.trim() !== result.place.address?.trim()
-    ) {
-      Alert.alert(t("placeSearch.replaceTitle"), t("placeSearch.replaceHint"), [
-        {
-          text: t("placeSearch.keepLocation"),
-          style: "cancel",
-          onPress: () => apply(false),
-        },
-        { text: t("placeSearch.replaceLocation"), onPress: () => apply(true) },
-      ]);
-    } else apply(true);
+      change({ location: result.text || null });
+    } else {
+      if (!result.place.address?.trim() || result.place.address.length > 500) return;
+      closePlaceSearch();
+      change({ location: result.place.address });
+    }
   };
   const close = (then = onClose) => {
     if (!current() || busyRef.current) return;
@@ -355,7 +347,11 @@ export function P1PlanEditor({
     >
       <SafeAreaProvider style={styles.body}>
         <SheetHeader
+          category="form"
           title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}
+          rightLabel={t(itemId ? "tripCreate.saveChanges" : "tripCreate.createPlan")}
+          rightDisabled={!valid || saving || (frozen && status !== "ERROR")}
+          onRight={() => void save()}
           leftLabel={t("common.cancel")}
           leftDisabled={saving}
           onLeft={() => close()}
@@ -404,171 +400,128 @@ export function P1PlanEditor({
                   onPress={() => close(onChooseTransport)}
                 />
               ) : null}
-              <UiSection title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}>
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.planName")}
-                  placeholder={t("tripCreate.planName")}
-                  value={fields.title}
-                  maxLength={200}
-                  editable={!saving && !frozen}
-                  onChangeText={(title) => change({ title })}
-                />
-                <UiButton
-                  label={t("tripCreate.findPlace")}
-                  variant="text"
-                  disabled={saving || frozen}
-                  onPress={() => {
-                    if (onFindPlace) onFindPlace(fieldsRef.current?.title ?? "");
-                    else void openPlaceSearch("FIND_PLACE");
-                  }}
-                />
-                <CalendarField
+              <View style={styles.form}>
+                <View style={styles.field}>
+                  <Text style={styles.caption}>{t("tripCreate.planName")}</Text>
+                  <UiTextInput
+                    accessibilityLabel={t("tripCreate.planName")}
+                    placeholder={t("tripCreate.planName")}
+                    value={fields.title}
+                    maxLength={200}
+                    editable={!saving && !frozen}
+                    onChangeText={(title) => change({ title })}
+                  />
+                </View>
+                <View style={styles.field}>
+                  <View style={styles.labelRow}>
+                    <Text style={styles.caption}>{t("tripCreate.planLocation")}</Text>
+                    <UiButton
+                      label={t("tripCreate.findPlace")}
+                      variant="text"
+                      disabled={saving || frozen}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        if (onFindPlace)
+                          onFindPlace(
+                            fieldsRef.current?.location || fieldsRef.current?.title || "",
+                          );
+                        else void openPlaceSearch("LOCATION");
+                      }}
+                    />
+                  </View>
+                  <View>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.planLocation")}
+                      placeholder={t("tripCreate.planLocation")}
+                      value={fields.location ?? ""}
+                      maxLength={500}
+                      editable={!saving && !frozen}
+                      style={styles.locationInput}
+                      onFocus={() => {
+                        Keyboard.dismiss();
+                        void openPlaceSearch("LOCATION");
+                      }}
+                      onChangeText={(location) => change({ location: location || null })}
+                    />
+                    {fields.location ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t("tripCreate.clearLocation")}
+                        disabled={saving || frozen}
+                        onPress={() => change({ location: null })}
+                        style={styles.clearLocation}
+                      >
+                        <AppIcon name="xmark.circle.fill" color={colors.textSecondary} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  {placeError ? (
+                    <Text accessibilityRole="alert" style={styles.meta}>
+                      {t("placeSearch.contextUnavailable")}
+                    </Text>
+                  ) : null}
+                </View>
+                <TripCalendarRangeField
                   label={t("tripCreate.itemDate")}
-                  value={fields.startDate}
+                  presentation="field"
+                  value={{ start: fields.startDate, end: fields.endDate ?? "" }}
+                  referenceRange={{ start: tripStartDate ?? "", end: tripEndDate ?? "" }}
                   initialNavigationDate={tripStartDate}
                   disabled={saving || frozen}
-                  onChange={(startDate) => change({ startDate })}
+                  onChange={({ start, end }) =>
+                    change({
+                      startDate: start,
+                      endDate: end || null,
+                      ...(end ? {} : { endTime: null }),
+                    })
+                  }
                 />
                 {!fields.startDate ? (
                   <Text style={styles.meta}>{t("tripCreate.planStartRequired")}</Text>
                 ) : null}
-                <TimeField
-                  label={t("tripCreate.startTime")}
-                  value={fields.startTime}
-                  disabled={saving || frozen}
-                  onChange={(startTime) => change({ startTime })}
-                />
-                <CalendarField
-                  label={t("tripCreate.endDate")}
-                  value={fields.endDate ?? ""}
-                  disabled={saving || frozen}
-                  onChange={(endDate) =>
-                    change({
-                      endDate: endDate || null,
-                      ...(endDate ? {} : { endTime: null }),
-                    })
-                  }
-                />
-                {fields.endDate ? (
+                <View style={styles.times}>
+                  <TimeField
+                    label={t("tripCreate.startTime")}
+                    value={fields.startTime}
+                    disabled={saving || frozen}
+                    onChange={(startTime) => change({ startTime })}
+                  />
                   <TimeField
                     label={t("tripCreate.endTime")}
                     value={fields.endTime}
-                    disabled={saving || frozen}
-                    onChange={(endTime) => change({ endTime })}
+                    disabled={saving || frozen || !fields.startDate}
+                    onChange={(endTime) =>
+                      change({
+                        endTime,
+                        ...(endTime && !fields.endDate
+                          ? { endDate: fields.startDate }
+                          : {}),
+                      })
+                    }
                   />
-                ) : null}
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.planLocation")}
-                  placeholder={t("tripCreate.planLocation")}
-                  value={fields.location ?? ""}
-                  maxLength={500}
-                  editable={!saving && !frozen}
-                  onChangeText={(location) => change({ location: location || null })}
-                />
-                <UiButton
-                  label={t("placeSearch.searchLocation")}
-                  variant="text"
+                </View>
+                <View style={styles.field}>
+                  <Text style={styles.caption}>{t("tripCreate.planNotes")}</Text>
+                  <UiTextInput
+                    accessibilityLabel={t("tripCreate.planNotes")}
+                    placeholder={t("tripCreate.addNote")}
+                    value={fields.description ?? ""}
+                    maxLength={5000}
+                    multiline
+                    style={styles.notes}
+                    editable={!saving && !frozen}
+                    onChangeText={(description) =>
+                      change({ description: description || null })
+                    }
+                  />
+                </View>
+                <PlanParticipantsField
+                  value={fields.participation}
+                  options={source.draft.participantOptions}
                   disabled={saving || frozen}
-                  onPress={() => {
-                    void openPlaceSearch("LOCATION");
-                  }}
+                  onChange={(participation) => change({ participation })}
                 />
-                <Text style={styles.meta}>{t("placeSearch.manualHint")}</Text>
-                {placeError ? (
-                  <Text accessibilityRole="alert" style={styles.meta}>
-                    {t("placeSearch.contextUnavailable")}
-                  </Text>
-                ) : null}
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.planNotes")}
-                  placeholder={t("tripCreate.planNotes")}
-                  value={fields.description ?? ""}
-                  maxLength={5000}
-                  multiline
-                  editable={!saving && !frozen}
-                  onChangeText={(description) =>
-                    change({ description: description || null })
-                  }
-                />
-              </UiSection>
-              <UiSection title={t("tripCreate.planParticipants")}>
-                <UiChoiceChip
-                  label={t("tripCreate.planEveryone")}
-                  selected={fields.participation.mode === "WHOLE_GROUP"}
-                  onPress={() =>
-                    change({
-                      participation: {
-                        mode: "WHOLE_GROUP",
-                        people: [],
-                        selfPersonId: null,
-                      },
-                    })
-                  }
-                />
-                {fields.participation.selfPersonId ? (
-                  <UiChoiceChip
-                    label={t("tripCreate.planOnlyMe")}
-                    selected={fields.participation.mode === "SELF"}
-                    onPress={() =>
-                      change({
-                        participation: {
-                          mode: "SELF",
-                          people: [],
-                          selfPersonId: fields.participation.selfPersonId,
-                        },
-                      })
-                    }
-                  />
-                ) : null}
-                {source.draft.participantOptions.length ? (
-                  <UiChoiceChip
-                    label={t("tripCreate.planChooseMembers")}
-                    selected={fields.participation.mode === "SELECTED_MEMBERS"}
-                    onPress={() =>
-                      change({
-                        participation: {
-                          mode: "SELECTED_MEMBERS",
-                          people: fields.participation.people,
-                          selfPersonId: null,
-                        },
-                      })
-                    }
-                  />
-                ) : null}
-                {fields.participation.mode === "SELECTED_MEMBERS"
-                  ? source.draft.participantOptions.map((person) => (
-                      <UiChoiceChip
-                        key={person.personId}
-                        label={person.displayName}
-                        selected={fields.participation.people.includes(person.personId)}
-                        onPress={() =>
-                          change({
-                            participation: {
-                              mode: "SELECTED_MEMBERS",
-                              people: fields.participation.people.includes(
-                                person.personId,
-                              )
-                                ? fields.participation.people.filter(
-                                    (id) => id !== person.personId,
-                                  )
-                                : [...fields.participation.people, person.personId],
-                              selfPersonId: null,
-                            },
-                          })
-                        }
-                      />
-                    ))
-                  : null}
-                {fields.participation.mode === "SELECTED_MEMBERS" &&
-                fields.participation.people.length === 0 ? (
-                  <Text style={styles.meta}>{t("tripCreate.planChooseOne")}</Text>
-                ) : null}
-              </UiSection>
-              <UiButton
-                label={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
-                disabled={!valid || saving || (frozen && status !== "ERROR")}
-                onPress={() => void save()}
-              />
+              </View>
             </>
           ) : null}
         </ScrollView>
@@ -579,7 +532,8 @@ export function P1PlanEditor({
           <PlaceSearchSheet
             binding={placeSearch.binding}
             initialQuery={placeSearch.query}
-            nameChoice={placeSearch.target === "FIND_PLACE"}
+            nameChoice={false}
+            selectionMode="immediate"
             onCancel={closePlaceSearch}
             onConfirm={confirmPlace}
           />
@@ -594,4 +548,27 @@ const createStyles = (colors: UiColors) =>
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
     meta: { ...visual.type.meta, color: colors.textSecondary },
+    form: { gap: visual.space.section },
+    field: { gap: visual.space.heading },
+    caption: { ...visual.type.action, color: colors.textPrimary },
+    labelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+    },
+    locationInput: { paddingRight: 48 },
+    clearLocation: {
+      position: "absolute",
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    times: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.card },
+    timeField: { flexGrow: 1, flexBasis: 140, minWidth: 0 },
+    timeSheet: { backgroundColor: colors.surface, flex: 1 },
+    notes: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },
   });

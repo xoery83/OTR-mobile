@@ -1,0 +1,42 @@
+{
+  "status": "BOUNDED_SIMULATOR_PASS",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A iOS27.0",
+  "sourceBase": "a611c5e",
+  "preview": "/private/tmp/otr-import-evening-preview-v2-20261021",
+  "metroPort": 8083,
+  "metroSession": 16986,
+  "nativeApp": "Existing system-input-paste package retained; no Native rebuild required for P1 JS",
+  "ownerDraft": "Original New plan discarded only after explicit Owner answer",
+  "observed": [
+    "Location under Plan name with Find a place in caption row; focus opens full-screen search",
+    "Cancel search returns and does not reopen; reentry works",
+    "Actual MapKit Auckland City Domain Walking Track tap immediately fills location; authored Plan name unchanged; no confirmation card",
+    "Calendar defaults Trip month and highlights Dec30-Jan3; Dec29 outside reference range remains selectable",
+    "Cross-day selection Dec29-Dec31 applied; separate start16:15/end16:17 fields work",
+    "Participants empty selection disables Done; Cancel/reopen restores Everyone; explicit member selection Done yields1selected",
+    "Right header Create saved exactly one named QA Plan; Day then Edit reopens title/address/dates/times/1selected",
+    "Final Day list, no active editor/recording/draft"
+  ],
+  "qaPlan": {
+    "trip": "ER02 Local Edit QA \u00b7 Saved",
+    "title": "P1 Create UX QA 20261022",
+    "date": "2026-12-29 through 2026-12-31",
+    "time": "16:15 / 16:17",
+    "location": "Lower Domain Dr, Parnell, Auckland 1010, New Zealand",
+    "participation": "one existing member explicitly selected",
+    "retained": true
+  },
+  "checks": {
+    "writer": "6 suites74tests PASS",
+    "independent": "5 suites44tests + static source Review PASS",
+    "typecheck": "PASS",
+    "uiGuard": "PASS473/139",
+    "scopedLint": "PASS"
+  },
+  "limits": [
+    "Actual participant picker used one-member QA Trip; multi-member logic tested directly",
+    "Dark mode/large-text/manual Chinese device appearance not repeated in this bounded pass",
+    "Existing lazy metadata/photo repository require-cycle and package-export Metro warnings unchanged",
+    "No new phone install, Hosted/Production/Schema/Core or provider scope change"
+  ]
+}

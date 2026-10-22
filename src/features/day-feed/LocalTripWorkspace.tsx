@@ -867,6 +867,7 @@ function LocalTripContent({
                   registerDismissHandler={registerItemDismiss}
                   initialDate={itemStart || null}
                   tripStartDate={selected.startDate}
+                  tripEndDate={selected.endDate}
                   onClose={() => {
                     setItemFormOpen(false);
                     setItemStart("");

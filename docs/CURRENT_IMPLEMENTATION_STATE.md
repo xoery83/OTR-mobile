@@ -1,3 +1,7 @@
+## 22 October — P1 Create UX bounded Simulator PASS
+
+Calendar Trip-range reference/cross-day selection, immediate location-only MapKit selection, Location-under-Name focus search, aligned Date/Time fields, staged participant picker and top-right Create implemented.6suites74tests/TS/UIguard473/139/scopedlint and independentReview PASS. AD5 actual named QA Plan Create→Day→Edit restores title/address/date/time/participant. Original discarded test draft explicitly authorized. No phone install/Native rebuild/Schema/Core change. [Receipt](ops/p1-create-ux-20261022/NATIVE_RECEIPT.json).
+
 ## Experience Topbar native-edge / Start Trip caller — 21 October 2026 / NATIVE PENDING
 
 - Existing 4eb27ecd evidence proves Day underlap (Frame y0, cell y64 inside header116); legacy rectangular header material still failed actual transparency. No Frame/Reader/scroll-anchor or NativeHost change.

@@ -842,7 +842,7 @@ it("Create is one native sheet, Cancel writes nothing, and immediate double tap 
   expect(
     state.nodes.some((node) => node.accessibilityLabel === "tripCreate.baseCurrency"),
   ).toBe(false);
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
   expect(repo.createTrip).not.toHaveBeenCalled();
   input("createTripV2.name", "Name only");
@@ -859,7 +859,7 @@ it("Create is one native sheet, Cancel writes nothing, and immediate double tap 
   expect(payload).not.toHaveProperty("travelers");
   expect(payload).not.toHaveProperty("currency");
   expect(payload).not.toHaveProperty("cover");
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   expect(props.onBackToTrips).toHaveBeenCalledTimes(1);
   pending.resolve(trip(payload.tripId, payload.name));
   await flush();
@@ -1052,7 +1052,7 @@ it("Close confirms meaningful new Trip edits and never submits a create", async 
   render();
   input("createTripV2.name", "Unsaved trip");
   render();
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   expect(props.onBackToTrips).not.toHaveBeenCalled();
   state.alert.mock.lastCall![2][1].onPress();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
@@ -1319,7 +1319,7 @@ it("holds Create while a destination selection resolves and protects unselected 
   button("createTripV2.create").onPress();
   await flush();
   expect(repo.createTrip).not.toHaveBeenCalled();
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   expect(state.alert).toHaveBeenCalled();
   expect(props.onBackToTrips).not.toHaveBeenCalled();
 });

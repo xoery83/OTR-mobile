@@ -51,11 +51,17 @@ export function TripCalendarRangeField({
   value,
   disabled = false,
   presentation = "row",
+  label = t("tripForm.dates"),
+  referenceRange,
+  initialNavigationDate,
   onChange,
 }: {
   value: TripDateRange;
   disabled?: boolean;
   presentation?: "row" | "field";
+  label?: string;
+  referenceRange?: TripDateRange;
+  initialNavigationDate?: string | null;
   onChange(range: TripDateRange): void;
 }) {
   useUiLocale();
@@ -65,7 +71,12 @@ export function TripCalendarRangeField({
   const gridWidth = Math.max(width - 2 * visual.space.page, cellSize * 7);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
-  const seed = (value.start || value.end || calendarDate(new Date())).slice(0, 7);
+  const seed = (
+    value.start ||
+    value.end ||
+    initialNavigationDate ||
+    calendarDate(new Date())
+  ).slice(0, 7);
   const [bounds, setBounds] = useState({
     first: adjacentTripMonth(seed, -12),
     last: adjacentTripMonth((value.end || value.start || `${seed}-01`).slice(0, 7), 12),
@@ -84,8 +95,12 @@ export function TripCalendarRangeField({
     <View>
       <UiFormRow
         variant={presentation}
-        label={t("tripForm.dates")}
-        value={tripRangeLabel(value)}
+        label={label}
+        value={
+          referenceRange && value.start && !value.end
+            ? displayDate(value.start)
+            : tripRangeLabel(value)
+        }
         stacked
         horizontalInset={0}
         disabled={disabled}
@@ -114,7 +129,7 @@ export function TripCalendarRangeField({
         <SafeAreaView edges={["bottom"]} style={styles.sheet}>
           <SheetHeader
             category="picker"
-            title={t("tripForm.dates")}
+            title={label}
             safeTop={false}
             leftLabel={t("common.cancel")}
             onLeft={() => setOpen(false)}
@@ -201,29 +216,48 @@ export function TripCalendarRangeField({
                             {Array.from({ length: 7 }, (_, day) => {
                               const index = week * 7 + day;
                               const date = dates[index] ?? null;
+                              const reference =
+                                !!date &&
+                                !!referenceRange?.start &&
+                                date >= referenceRange.start &&
+                                date <= (referenceRange.end || referenceRange.start);
+                              const chosen =
+                                !!date &&
+                                !!draft.start &&
+                                date >= draft.start &&
+                                date <= (draft.end || draft.start);
                               return date ? (
                                 <Pressable
                                   key={date}
                                   accessibilityRole="button"
                                   accessibilityLabel={accessibleDate(date)}
+                                  accessibilityHint={
+                                    reference
+                                      ? t("tripCreate.tripDateReference")
+                                      : undefined
+                                  }
                                   accessibilityState={{
                                     selected: date === draft.start || date === draft.end,
                                   }}
                                   style={[
                                     styles.day,
                                     { width: gridWidth / 7, height: cellSize },
-                                    draft.start &&
-                                    draft.end &&
-                                    date >= draft.start &&
-                                    date <= draft.end
-                                      ? styles.inRange
-                                      : null,
+                                    reference && styles.inRange,
+                                    chosen &&
+                                      (referenceRange
+                                        ? styles.activityRange
+                                        : styles.inRange),
                                     (date === draft.start || date === draft.end) &&
                                       styles.endpoint,
                                   ]}
                                   onPress={() => setDraft(selectTripRange(draft, date))}
                                 >
-                                  <UiText style={styles.label}>
+                                  <UiText
+                                    style={[
+                                      styles.label,
+                                      referenceRange && chosen && styles.activityText,
+                                    ]}
+                                  >
                                     {formatUiNumber(+date.slice(8))}
                                   </UiText>
                                 </Pressable>
@@ -247,6 +281,16 @@ export function TripCalendarRangeField({
             />
           ) : null}
           <View style={styles.content}>
+            {referenceRange?.start ? (
+              <>
+                <UiText style={styles.meta}>
+                  {t("tripCreate.tripDateReference")} · {tripRangeLabel(referenceRange)}
+                </UiText>
+                <UiText style={styles.meta}>
+                  {t("tripCreate.activityDateReferenceHint")}
+                </UiText>
+              </>
+            ) : null}
             <UiButton
               variant="text"
               label={t("tripForm.clearDates")}
@@ -271,6 +315,8 @@ const createStyles = (c: UiColors) =>
     },
     day: { justifyContent: "center", alignItems: "center" },
     inRange: { backgroundColor: c.selected },
+    activityRange: { backgroundColor: c.accent, borderRadius: visual.radius.control },
+    activityText: { color: c.onAccent },
     endpoint: {
       borderWidth: 1,
       borderColor: c.accent,
