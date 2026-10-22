@@ -1,0 +1,30 @@
+import { z } from "zod";
+import { coreUuid } from "./tripCoreV2";
+import { tripMetadataSchema, tripMetadataUpdateSchema } from "./tripMetadataContract";
+
+// Explicit proposal-only V2. Never synthesize a revision for a V1 queued operation.
+export const tripMetadataV2UpdateSchema = tripMetadataUpdateSchema.extend({
+  formatVersion: z.literal(2),
+  expectedMetadataRevision: z.number().int().nonnegative().safe(),
+});
+export type TripMetadataV2Update = z.infer<typeof tripMetadataV2UpdateSchema>;
+export const tripMetadataV2ReceiptSchema = tripMetadataV2UpdateSchema
+  .extend({
+    actorAccountId: coreUuid,
+    resultMetadataRevision: z.number().int().nonnegative().safe(),
+  })
+  .refine((v) => {
+    const same = (Object.keys(v.before) as (keyof typeof v.before)[]).every(
+      (key) => v.before[key] === v.after[key],
+    );
+    return v.resultMetadataRevision === v.expectedMetadataRevision + (same ? 0 : 1);
+  });
+export type TripMetadataV2Receipt = z.infer<typeof tripMetadataV2ReceiptSchema>;
+export const tripMetadataV2SnapshotSchema = z.strictObject({
+  formatVersion: z.literal(2),
+  actorAccountId: coreUuid,
+  tripId: coreUuid,
+  metadataRevision: z.number().int().nonnegative().safe(),
+  metadata: tripMetadataSchema,
+});
+export type TripMetadataV2Snapshot = z.infer<typeof tripMetadataV2SnapshotSchema>;

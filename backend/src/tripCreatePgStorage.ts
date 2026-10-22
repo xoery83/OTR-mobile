@@ -21,6 +21,8 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
     parameters: readonly unknown[],
     actorAccountId: string,
     tripId: string | null,
+    operationId: string,
+    request?: TripCreateRequest,
   ) {
     try {
       return await connection.withLease(async (lease) => {
@@ -29,8 +31,8 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
           const finiteScope = async () => {
             const allowed = (
               await lease.query(
-                "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
-                [actorAccountId, tripId],
+                "SELECT public.trip_create_finite_scope_allowed($1::uuid,$2::uuid,$3::uuid) AS allowed",
+                [actorAccountId, tripId, operationId],
               )
             ).rows[0]?.allowed;
             if (allowed !== true) throw new TripCreateError(503, "TRIP_CREATE_CLOSED");
@@ -39,6 +41,20 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
           const rows = (await lease.query(sql, parameters)).rows;
           const result = rows[0]?.result;
           const checked = result === null ? null : tripCreateResultSchema.parse(result);
+          if (
+            checked &&
+            (checked.actorAccountId !== actorAccountId ||
+              checked.operationId !== operationId ||
+              (tripId !== null && checked.tripId !== tripId) ||
+              (request &&
+                (checked.name !== request.name ||
+                  checked.destination !== request.destination ||
+                  checked.startDate !== request.startDate ||
+                  checked.endDate !== request.endDate)))
+          )
+            throw new TripCreateError(503, "TRIP_CREATE_RESULT_MISMATCH");
+          if (request && !checked)
+            throw new TripCreateError(503, "TRIP_CREATE_RESULT_INVALID");
           await finiteScope();
           await lease.query("COMMIT");
           return checked;
@@ -67,6 +83,8 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
         ],
         actorAccountId,
         input.tripId,
+        input.operationId,
+        input,
       );
       if (!result) throw new TripCreateError(503, "TRIP_CREATE_RESULT_INVALID");
       return result;
@@ -77,6 +95,7 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
         [operationId, actorAccountId],
         actorAccountId,
         null,
+        operationId,
       );
     },
   };

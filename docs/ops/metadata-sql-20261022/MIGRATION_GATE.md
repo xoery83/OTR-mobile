@@ -1,0 +1,33 @@
+# Metadata V2 Migration / Backend Gate — candidate, never executed in DEV
+
+Install/activation status: **NOT_AUTHORIZED / NOT_RUN**. The Owner approved only isolated implementation/testing. The base is1238a5c2; final commit/manifest accompanies this candidate. Four-path DEV E2E remains separate.
+
+## Necessary exact delta
+
+- One `trips.metadata_revision bigint NOT NULL DEFAULT0` bounded0…9007199254740991. New BEFORE INSERT/UPDATE guard rejects client-assigned revision; metadata/creator changes increment monotonically, unrelated cover/storage columns do not. No Core revision substitution. Existing rows start a new metadata version baseline0; old V1 clients get no inferred expected revision.
+- `trip_metadata_update_receipts` stores operation/actor/Trip, immutable original request/result, before/result metadata revisions and accepted timestamp. Create receipts encode creation/bootstrap; Ledger keys/receipts encode financial actions; Core journal encodes graph commands. None can be overwritten or recast as an Edit receipt without mixing authority and breaking replay. One dedicated table is the smallest legitimate receipt record here.
+- `trip_metadata_activation_gate` is one private finite operation/request/actor/Trip/expiry. It cannot share the accepted Create gate because opening Edit must never grant Create/Core/Source authority. Bound window<=15min; request exact V2. No role LOGIN/password/gate activation is performed by installation.
+- Both new tables are **internal direct-RPC only**, postgres-owned, RLS enabled, no policies, no PUBLIC/anon/authenticated/service_role/gateway table grants. Owner-definer functions alone access them. RLS not FORCE is deliberate because the private postgres-definer must operate independent of BYPASSRLS assumptions. Direct roles are tested denied under adverse creator-default grants. No Data API table exposure is requested.
+- New NOLOGIN/NOINHERIT/NOSUPERUSER/NOCREATEDB/NOCREATEROLE/NOREPLICATION/NOBYPASSRLS Metadata gateway; schema USAGE only, EXECUTE on exact private snapshot, command, result and finite predicate. No Create/Core/Source role reuse. Auxiliary revision/receipt/deferred guards have no client RPC EXECUTE. No global grants/default privilege changes in production SQL.
+- Exact four approved TCL function definition MD5 preimages required. Existing Trip/Core LOGINs and activation gates must be closed before installation. The only modified accepted function is `trip_create_result(uuid,uuid)`: original metadata comes from stored immutable request_payload rather than live trips; existing current creator/linked owner/Core identity checks and old wire shape remain intact. Never reapply accepted R3/TCL forwards in DEV.
+
+## Authorization and CAS policy
+
+Only the current Trip creator **and** their current linked owner Person can read/update/recover this finite candidate. Group members, administrators without that exact creator/linked-owner relationship, another actor or the Create/Core/Source principals are denied. This is a narrow finite qualification, not a new general organizer policy. The HTTP layer still authenticates the actor normally. Locks cover Trip and current membership; exact immutable operation replay does not rewrite current metadata, while a changed operation baseline must match both monotonic revision and tuple. Expiry is checked before/after SQL and by deferred receipt trigger at COMMIT. No model-supplied actor/scope authority.
+
+## Exact later Owner execution approval must bind
+
+1. Candidate SHA, reviewed V2 contract and exact SQL/bundle hashes; dormant installation transaction only, new role remains NOLOGIN and gate empty. New Schema/grants require explicit approval, not this proposal.
+2. Current read-only preimages and existing function/ACL/table/column provenance; no unexpected object reuse or unreviewed principal. Require existing Trip/Core gates closed. Root owns exact target DEV project/Backend image/rollback and synthetic identity approval.
+3. Explicit optional finite activation separately: one legitimate synthetic actor/Trip/new operation/request hash/current revision, private mount owner/mode, dedicated Metadata credential custody, short start/expiry and close owner. No copied real Session/user data, Provider/Core/Source opening or global queue dispatch. Auth provisioning/new test identities are outside this SQL.
+4. V2 opt-in HTTP header/schema plus genuine snapshot supplies revision; no conversion of old pending V1 operations. Queue codec preparation is a follow-up candidate on the same existing repository/worker, not proof of current Native runtime. Final combined Review/validation required before claiming an executable new-operation queue gate.
+
+## Rollback / retention
+
+The separate `.rollback.sql` is deactivation only: requires Metadata gate disabled, principal NOLOGIN and no active Metadata session, then revokes its RPC EXECUTE. It preserves original Trip metadata, monotonic column/trigger, immutable receipts, gate and the corrected immutable Create receipt. Dropping revision would permit stale replay after reinstall; deleting receipts would lose unknown-outcome recovery. No data/schema deletion, Auth reset or general user logout is included. Re-enablement requires an exact future reviewed recovery/grant Gate; do not rerun install on retained objects.
+
+## Current evidence and limits
+
+Real cached PG17 network-none Server84 fixture:26checks PASS. V2/TCL/V1 Backend tests:72 PASS; TS and Capture Backend bundle compile PASS. Real local fixture SQL uses only generated synthetic rows. Normal function calls use the actual dedicated LOGIN principal; duplicate concurrency uses two real PG sessions with fixture-only SET SESSION AUTHORIZATION so SQL locks/replay are exercised while the normal principal connlimit1 is not relaxed. It is not real Auth or Host admission. Distinct-operation same-baseline loser currently tested serially under exact singleton gates, not falsely labeled simultaneous two-operation activation.
+
+No DEV SQL/Auth/Hosted/business call, Native GUI, migration application, deployment, credential or Session read occurred in this implementation checkpoint. Root’s latest read-only SQL absence receipt remains the last DEV fact. Independent Reviewer must qualify fixed source; this packet alone is not Review PASS or four-path Cloud E2E.
