@@ -2,24 +2,30 @@
   "status": "ISOLATED_CHECKS_PASS_NATIVE_NOT_RUN",
   "base": "1238a5c2a1c6b4e2c1a95974d25737068e3d7217",
   "checks": {
-    "focusedSuites": 14,
-    "focusedTests": 166,
+    "focusedTests": 204,
     "typecheck": "PASS",
     "uiGuard": "PASS473/139",
     "scopedLint": "PASS_WITH_EXISTING_CAPTURE_REQUIRE_WARNING",
     "format": "PASS",
-    "diffWhitespace": "PASS"
+    "diffWhitespace": "PASS",
+    "focusedFiles": 17
   },
   "keyboardContainersAdded": 52,
   "participantNegative": {
     "sqlite": "REAL_ISOLATED",
-    "namedPeople": 2,
-    "eligibleCoreOptions": 1,
-    "nonSelfSave": "CROSS_TRIP_PERSON",
-    "itemPendingIntents": 0
+    "namedPeople": 3,
+    "eligibleLocalCoreOptions": 3,
+    "twoSelectedSaveReopen": "PASS",
+    "staleOrInvalidRoster": "REJECTED_NO_PARTIAL_ITEM",
+    "personQueueStillBlocked": true,
+    "acceptedCertificatesOrBindingsCreated": 0
   },
   "knownExpandedCollectionFailure": "Unchanged localTripPersonRepository.test.ts imports React Native Flow; Node Vitest cannot parse it",
   "native": "NOT_RUN_OCCUPANCY_NOT_CONFIRMED",
   "phaseCChanges": false,
-  "hostedAuthSchemaWrites": false
+  "hostedAuthSchemaWrites": false,
+  "knownExpandedFailures": [
+    "Unchanged localTripPersonRepository.test.ts imports React Native Flow; Node Vitest cannot parse it",
+    "tripLocalManualRead hotel/floating test DAY_ZONE_INVALID independently reproduced at1238a5c2;15othersPASS"
+  ]
 }

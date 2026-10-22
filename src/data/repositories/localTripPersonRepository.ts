@@ -15,25 +15,11 @@ import { coreUuid } from "@/domain/trip/tripCoreV2";
 import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
 import type { LedgerReadDatabase } from "./ledgerReadRepository";
 
-// Called inside the existing Trip create transaction; never starts or commits one.
-export async function initializeLocalTripPersons(
+async function localPersonCreator(
   database: LedgerReadDatabase,
   context: AccountRequestContext,
   account: () => Promise<string>,
-  input: readonly LocalPersonNameSlot[],
-  clock = () => new Date().toISOString(),
 ) {
-  const tripId = coreUuid.parse(context.tripId);
-  const slots = input
-    .map((slot) => localPersonNameSlotSchema.parse(slot))
-    .map((slot) => ({ ...slot, displayName: slot.displayName.trim() }))
-    .filter((slot) => slot.displayName.length > 0);
-  if (
-    new Set(slots.map((slot) => slot.operationId)).size !== slots.length ||
-    new Set(slots.map((slot) => slot.personId)).size !== slots.length
-  )
-    throw new Error("TRIP_PERSON_DUPLICATE_INTENT");
-  const saved: LocalPersonCreate[] = [];
   await assertAccountRequestContext(context, account);
   const creator = await database.getFirstAsync<{
     operationId: string;
@@ -59,15 +45,94 @@ export async function initializeLocalTripPersons(
      AND op.operation_type='CREATE_TRIP' AND op.id=op.idempotency_key
      AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE','COMPLETED')`,
     context.accountId,
-    tripId,
+    context.tripId,
   );
   if (!creator) throw new Error("TRIP_PERSON_LOCAL_CREATOR_REQUIRED");
   const create = tripCreateRequestSchema.parse({
     operationId: creator.operationId,
     ...JSON.parse(creator.payload),
   });
-  if (create.tripId !== tripId || create.operationId !== creator.operationId)
+  if (create.tripId !== context.tripId || create.operationId !== creator.operationId)
     throw new Error("TRIP_PERSON_CREATE_BINDING_INVALID");
+  await assertAccountRequestContext(context, account);
+  return creator;
+}
+
+/** Caller holds the Account gate/transaction and the existing local creator proof. */
+export async function readLocalTripPersonRosterWithinTransaction(
+  database: LedgerReadDatabase,
+  context: AccountRequestContext,
+  account: () => Promise<string>,
+  expectedTripCreateOperationId: string,
+) {
+  const creator = await localPersonCreator(database, context, account);
+  if (creator.operationId !== expectedTripCreateOperationId)
+    throw new Error("TRIP_PERSON_CREATE_BINDING_INVALID");
+  const rows = await database.getAllAsync<{
+    operationId: string;
+    personId: string;
+    displayName: string;
+    payload: string;
+  }>(
+    `SELECT op.id AS operationId,m.id AS personId,m.display_name AS displayName,
+       op.payload_json AS payload
+     FROM sync_operations op JOIN ledger_members m
+       ON m.id=op.entity_id AND m.journey_id=op.trip_id
+     WHERE op.owner_user_id=? AND op.trip_id=? AND op.entity_type='TRIP_PERSON'
+       AND op.operation_type=? AND op.id=op.idempotency_key
+       AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')
+       AND m.status='local' AND m.role IS NULL
+       AND m.participation_revision IS NULL AND m.participation_active IS NULL
+     ORDER BY m.id,op.id`,
+    context.accountId,
+    context.tripId,
+    localPersonCreateKind,
+  );
+  const roster: LocalPersonCreate[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const parsed = localPersonCreateSchema.safeParse(JSON.parse(row.payload));
+    if (!parsed.success) throw new Error("TRIP_PERSON_INTENT_REUSE_MISMATCH");
+    const command = parsed.data;
+    if (
+      command.operationId !== row.operationId ||
+      command.personId !== row.personId ||
+      command.tripId !== context.tripId ||
+      command.accountId !== context.accountId ||
+      command.tripCreateOperationId !== creator.operationId ||
+      command.displayName !== row.displayName ||
+      seen.has(command.personId)
+    )
+      throw new Error("TRIP_PERSON_INTENT_REUSE_MISMATCH");
+    if (command.personId === creator.personId)
+      throw new Error("TRIP_PERSON_CREATOR_ID_RESERVED");
+    seen.add(command.personId);
+    roster.push(command);
+  }
+  await assertAccountRequestContext(context, account);
+  return roster;
+}
+
+// Called inside the existing Trip create transaction; never starts or commits one.
+export async function initializeLocalTripPersons(
+  database: LedgerReadDatabase,
+  context: AccountRequestContext,
+  account: () => Promise<string>,
+  input: readonly LocalPersonNameSlot[],
+  clock = () => new Date().toISOString(),
+) {
+  const tripId = coreUuid.parse(context.tripId);
+  const slots = input
+    .map((slot) => localPersonNameSlotSchema.parse(slot))
+    .map((slot) => ({ ...slot, displayName: slot.displayName.trim() }))
+    .filter((slot) => slot.displayName.length > 0);
+  if (
+    new Set(slots.map((slot) => slot.operationId)).size !== slots.length ||
+    new Set(slots.map((slot) => slot.personId)).size !== slots.length
+  )
+    throw new Error("TRIP_PERSON_DUPLICATE_INTENT");
+  const saved: LocalPersonCreate[] = [];
+  const creator = await localPersonCreator(database, context, account);
   for (const slot of slots) {
     if (slot.personId === creator.personId)
       throw new Error("TRIP_PERSON_CREATOR_ID_RESERVED");

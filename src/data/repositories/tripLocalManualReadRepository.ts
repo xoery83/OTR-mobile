@@ -7,6 +7,10 @@ import {
 import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import type { CoreActor } from "@/domain/trip/tripCoreV2Mutation";
+import { coreHashValue } from "@/domain/trip/tripCoreV2Read";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
+import { readLocalTripPersonRosterWithinTransaction } from "./localTripPersonRepository";
+import type { LocalPersonCreate } from "@/domain/trip/localTripPerson";
 import { projectCoreDay } from "@/domain/trip/tripCoreV2Day";
 import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
@@ -36,6 +40,7 @@ export async function readLocalManualSnapshotWithinTransaction(
   const tripId = scope.tripId;
   await assertAccountRequestContext(scope, account);
   let actor: CoreActor | undefined = accepted?.actor;
+  let localRoster: LocalPersonCreate[] = [];
   if (!actor) {
     // Never replace known Core access/certificate authority with creator history.
     const known = await database.getFirstAsync<{ revoked: number }>(
@@ -101,18 +106,35 @@ export async function readLocalManualSnapshotWithinTransaction(
     const personId = local.accepted_at
       ? coreUuid.parse(local.owner_person_id)
       : local.person_id;
+    localRoster = await readLocalTripPersonRosterWithinTransaction(
+      database,
+      scope,
+      account,
+      local.create_operation_id,
+    );
     actor = {
       accountId: scope.accountId,
       tripId,
       active: true,
       canManageShared: true,
       personId,
-      personIds: [personId],
+      // Local participation identities only; not an Account link or accepted certificate.
+      personIds: [personId, ...localRoster.map((person) => person.personId)],
     };
   }
   const snapshot = await core.manualReadSnapshot(scope, actor, !!accepted);
+  const fingerprint = localRoster.length
+    ? await coreHashValue(
+        "otr-local-manual-person-roster-v1",
+        {
+          sourceFingerprint: snapshot.fingerprint,
+          localRoster,
+        },
+        tripCoreSha256Hex,
+      )
+    : snapshot.fingerprint;
   await assertAccountRequestContext(scope, account);
-  return { ...snapshot, actor };
+  return { ...snapshot, actor, fingerprint };
 }
 
 // A separate read authority; this never constructs a Hosted certificate or canonical Source.

@@ -474,31 +474,184 @@ it("changing only a date retains an unchanged authored seconds tuple while clear
   });
 });
 
-it("retained local-only names do not silently become admitted Core participation identities", async () => {
-  const f = await fixture();
-  const personId = randomUUID();
-  await createLocalTripPersonRepository(f.coreDatabase, f.identity).initialize(f.tripId, [
-    {
-      personId,
-      operationId: randomUUID(),
-      displayName: "Other named traveller",
-    },
-  ]);
-  const people = await createTripPersonRepository(
+async function namedPeople(f: Awaited<ReturnType<typeof fixture>>) {
+  const people = ["Other named traveller", "第三位旅客"].map((displayName) => ({
+    personId: randomUUID(),
+    operationId: randomUUID(),
+    displayName,
+  }));
+  await createLocalTripPersonRepository(f.coreDatabase, f.identity).initialize(
+    f.tripId,
+    people,
+  );
+  return people;
+}
+it("uses qualified retained local Person intents for multi-person P1 Save/reopen without inventing accepted membership", async () => {
+  const f = await fixture(),
+    people = await namedPeople(f);
+  const roster = await createTripPersonRepository(
     f.coreDatabase,
     f.identity,
   ).listTripPersons(f.tripId);
-  expect(people).toHaveLength(2);
-  expect(people.find((p) => p.personId === personId)?.localState).toBe("LOCAL_PENDING");
+  expect(roster).toHaveLength(3);
+  expect(roster.filter((p) => p.localState === "LOCAL_PENDING")).toHaveLength(2);
   const repo = f.repo(),
     draft = await repo.createDraft(f.tripId);
-  expect(draft.participantOptions).toHaveLength(1);
-  expect(draft.participantOptions.some((p) => p.personId === personId)).toBe(false);
+  expect(draft.participantOptions).toHaveLength(3);
+  const participation = {
+    mode: "SELECTED_MEMBERS" as const,
+    people: people.map((p) => p.personId).sort(),
+    selfPersonId: null,
+  };
+  await repo.save(draft, { ...values(draft.fields), participation });
+  const reopened = await f.repo().read(f.tripId, draft.itemId);
+  expect(reopened.fields.participation).toEqual(participation);
+  expect(reopened.participantOptions).toHaveLength(3);
+  expect((await f.read(f.tripId))?.items).toHaveLength(1);
+  const operations = f.sql
+    .prepare(
+      "SELECT status,last_error_code FROM sync_operations WHERE entity_type='TRIP_PERSON'",
+    )
+    .all();
+  expect(operations).toEqual(
+    Array(2).fill({
+      status: "DEPENDENCY_BLOCKED",
+      last_error_code: "PERSON_CREATE_HOSTED_UNAVAILABLE",
+    }),
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) n FROM trip_core_read_certificates").get()!.n,
+  ).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM trip_core_person_bindings").get()!.n).toBe(
+    0,
+  );
+  expect(
+    f.sql
+      .prepare("SELECT role,status FROM ledger_members WHERE id=?")
+      .get(people[0].personId),
+  ).toEqual({ role: null, status: "local" });
+});
+
+it.each([
+  ["failed intent", "UPDATE sync_operations SET status='FAILED' WHERE id=?", "operation"],
+  ["deleted name", "DELETE FROM ledger_members WHERE id=?", "person"],
+  ["inactive name", "UPDATE ledger_members SET status='inactive' WHERE id=?", "person"],
+  [
+    "observed revoked participation",
+    "UPDATE ledger_members SET participation_active=0,participation_revision=1 WHERE id=?",
+    "person",
+  ],
+  [
+    "foreign Account",
+    "UPDATE sync_operations SET owner_user_id='10000000-0000-4000-8000-000000000099' WHERE id=?",
+    "operation",
+  ],
+  [
+    "foreign Trip",
+    "UPDATE sync_operations SET trip_id='10000000-0000-4000-8000-000000000099' WHERE id=?",
+    "operation",
+  ],
+  [
+    "changed idempotency key",
+    "UPDATE sync_operations SET idempotency_key='10000000-0000-4000-8000-000000000099' WHERE id=?",
+    "operation",
+  ],
+] as const)(
+  "rejects a stale selected local participant after %s",
+  async (_label, query, target) => {
+    const f = await fixture(),
+      people = await namedPeople(f),
+      repo = f.repo(),
+      draft = await repo.createDraft(f.tripId);
+    f.sql
+      .prepare(query)
+      .run(target === "person" ? people[0].personId : people[0].operationId);
+    await expect(
+      repo.save(draft, {
+        ...values(draft.fields),
+        participation: {
+          mode: "SELECTED_MEMBERS",
+          people: [people[0].personId],
+          selfPersonId: null,
+        },
+      }),
+    ).rejects.toThrow();
+    expect(count(f.sql)).toBe(0);
+    const next = await f.repo().createDraft(f.tripId);
+    expect(next.participantOptions.some((p) => p.personId === people[0].personId)).toBe(
+      false,
+    );
+  },
+);
+
+it("pins the full retained Person intent, including same-ID changed name, during an open draft", async () => {
+  const f = await fixture(),
+    people = await namedPeople(f),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const row = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(people[0].operationId)!;
+  const changed = {
+    ...JSON.parse(row.payload_json as string),
+    displayName: "Replaced name",
+  };
+  f.sql
+    .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+    .run(JSON.stringify(changed), people[0].operationId);
+  f.sql
+    .prepare("UPDATE ledger_members SET display_name=? WHERE id=?")
+    .run(changed.displayName, people[0].personId);
   await expect(
     repo.save(draft, {
       ...values(draft.fields),
-      participation: { mode: "SELECTED_MEMBERS", people: [personId], selfPersonId: null },
+      participation: {
+        mode: "SELECTED_MEMBERS",
+        people: [people[0].personId],
+        selfPersonId: null,
+      },
     }),
-  ).rejects.toThrow("CROSS_TRIP_PERSON");
+  ).rejects.toThrow("MANUAL_PLAN_CONFLICT");
   expect(count(f.sql)).toBe(0);
+});
+
+it("rejects mismatched retained Person payload rather than trusting a cached display row", async () => {
+  const f = await fixture(),
+    people = await namedPeople(f);
+  const row = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(people[0].operationId)!;
+  f.sql.prepare("UPDATE sync_operations SET payload_json=? WHERE id=?").run(
+    JSON.stringify({
+      ...JSON.parse(row.payload_json as string),
+      tripCreateOperationId: randomUUID(),
+    }),
+    people[0].operationId,
+  );
+  await expect(f.repo().createDraft(f.tripId)).rejects.toThrow(
+    "TRIP_PERSON_INTENT_REUSE_MISMATCH",
+  );
+  expect(count(f.sql)).toBe(0);
+});
+
+it("retains Account/generation/creator fences with a qualified local Person roster", async () => {
+  const f = await fixture();
+  await namedPeople(f);
+  const repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  f.switchAccount();
+  await expect(repo.save(draft, values(draft.fields))).rejects.toThrow();
+  expect(count(f.sql)).toBe(0);
+  const g = await fixture();
+  await namedPeople(g);
+  g.aba();
+  await expect(g.repo().createDraft(g.tripId)).rejects.toThrow();
+  expect(count(g.sql)).toBe(0);
+  const h = await fixture();
+  await namedPeople(h);
+  h.sql
+    .prepare("UPDATE ledger_actor_context SET role='member' WHERE journey_id=?")
+    .run(h.tripId);
+  await expect(h.repo().createDraft(h.tripId)).rejects.toThrow();
+  expect(count(h.sql)).toBe(0);
 });
