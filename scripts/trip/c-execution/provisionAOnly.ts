@@ -106,7 +106,13 @@ export async function executeAOnly(
       status: "A_CREATED_REQUIRES_EXACT_READONLY_VERIFICATION",
       attempts: attempted.size,
       diagnostics,
-      receipt: { id: data.user.id, email: A_EMAIL, project, newlyCreated: true },
+      receipt: {
+        id: data.user.id,
+        email: A_EMAIL,
+        project,
+        newlyCreated: true,
+        createdAt: data.user.created_at,
+      },
     };
   } catch {
     return {

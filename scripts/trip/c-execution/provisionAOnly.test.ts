@@ -59,6 +59,7 @@ test("A-only success dispatches exactly one A and never B; safe new identity rec
     id,
     email: A_EMAIL,
     private_data: secret,
+    created_at: "2026-10-22T23:05:00Z",
   });
   assert.equal(result.status, "A_CREATED_REQUIRES_EXACT_READONLY_VERIFICATION");
   assert.equal(result.attempts, 1);
