@@ -415,7 +415,10 @@ export function LedgerExpenseDetailScreen() {
           }
         />
       </Stack.Toolbar>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+      >
         <Text accessibilityRole="header" style={styles.title}>
           {expense.title}
         </Text>

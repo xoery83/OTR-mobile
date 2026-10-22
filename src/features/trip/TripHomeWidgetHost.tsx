@@ -40,6 +40,7 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
   return (
     <View style={styles.host}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tags}
@@ -57,6 +58,7 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
         ))}
       </ScrollView>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         ref={scroll}
         horizontal
         pagingEnabled

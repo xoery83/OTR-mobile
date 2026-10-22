@@ -120,7 +120,10 @@ export default function DataSyncRoute() {
   const technicalDetails = technicalDataHealthDetails(report, debugMode);
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.content}
+    >
       <Text style={styles.body}>{t("health.intro")}</Text>
       <ExpenseConflictList title={t("health.decisions")} />
 

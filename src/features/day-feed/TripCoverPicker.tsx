@@ -153,7 +153,11 @@ export function TripCoverPicker({
             leftDisabled={saving}
             safeTop={false}
           />
-          <ScrollView style={styles.root} contentContainerStyle={styles.list}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            style={styles.root}
+            contentContainerStyle={styles.list}
+          >
             <View style={styles.firstRow}>
               <View style={styles.tile}>
                 <TripCoverVisual

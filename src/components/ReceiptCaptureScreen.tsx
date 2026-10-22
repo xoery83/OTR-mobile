@@ -18,7 +18,11 @@ export function ReceiptCaptureScreen() {
     useReceiptCapture();
   const full = Boolean(expenseId) && receipts.length >= MAX_EXPENSE_ATTACHMENTS;
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.page}
+      contentContainerStyle={styles.content}
+    >
       <Stack.Screen
         options={{
           headerTitle: scan ? t("ledgerMigration.copy53") : t("ui.addAttachment"),

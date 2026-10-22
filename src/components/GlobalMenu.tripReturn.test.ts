@@ -160,25 +160,30 @@ it("Native Home All Trips preserves the current owner guard across a hot cross-T
   }
 });
 
-it("Trip menu exposes only live scoped existing Edit and Day actions", () => {
+it("Home and Day share the same scoped utility menu with disabled future Documents and Photos", () => {
   const editTrip = vi.fn(),
-    chooseDay = vi.fn();
-  state.actions = { tripId: "a", generation: 1, editTrip, chooseDay };
-  const items = () => (render().props.sections as any[][]).flat();
-  const edit = items().find((item) => item.label === "tripHome.edit");
-  edit.onPress();
-  expect(editTrip).toHaveBeenCalledOnce();
-  items()
-    .find((item) => item.label === "dayFeed.openDay")
-    .onPress();
-  expect(chooseDay).toHaveBeenCalledOnce();
-  state.actions = { tripId: "b", generation: 1, editTrip, chooseDay };
-  expect(items().some((item) => item.label === "tripHome.edit")).toBe(false);
-  edit.onPress();
-  expect(editTrip).toHaveBeenCalledOnce();
-  state.params.view = "trips";
-  state.actions = { tripId: "a", generation: 1, editTrip, chooseDay };
-  expect(items().some((item) => item.label === "tripHome.edit")).toBe(false);
+    chooseDay = vi.fn(),
+    members = vi.fn();
+  state.actions = { tripId: "a", generation: 1, editTrip, chooseDay, members };
+  for (const view of ["home", "day"]) {
+    state.params.view = view;
+    const items = (render().props.sections as any[][]).flat();
+    expect(
+      items.some((item) => ["tripHome.edit", "dayFeed.openDay"].includes(item.label)),
+    ).toBe(false);
+    expect(
+      items
+        .filter((item) => item.label.startsWith("tripHome."))
+        .map((item) => item.label),
+    ).toEqual(["tripHome.members", "tripHome.documents", "tripHome.photos"]);
+    for (const label of ["tripHome.documents", "tripHome.photos"]) {
+      const item = items.find((entry) => entry.label === label);
+      expect(item.disabled).toBe(true);
+      item.onPress();
+    }
+  }
+  expect(editTrip).not.toHaveBeenCalled();
+  expect(chooseDay).not.toHaveBeenCalled();
 });
 
 it("shows an existing scoped Members callback without fabricating a destination or invitation capability", () => {
@@ -186,7 +191,7 @@ it("shows an existing scoped Members callback without fabricating a destination 
   state.actions = { tripId: "a", generation: 1, members };
   const items = (render().props.sections as any[][]).flat();
   const entry = items.find((item) => item.label === "tripHome.members");
-  expect(items.some((item) => item.label === "tripHome.documents")).toBe(false);
+  expect(items.find((item) => item.label === "tripHome.documents").disabled).toBe(true);
   entry.onPress();
   expect(members).toHaveBeenCalledOnce();
   state.generation = 2;

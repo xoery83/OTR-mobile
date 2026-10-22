@@ -57,6 +57,7 @@ export function LedgerReviewScreen() {
     <>
       {header}
       <SectionList
+        keyboardShouldPersistTaps="handled"
         style={styles.viewport}
         contentContainerStyle={styles.content}
         sections={[
@@ -79,6 +80,7 @@ export function LedgerReviewScreen() {
               )}
             </Text>
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.chips}

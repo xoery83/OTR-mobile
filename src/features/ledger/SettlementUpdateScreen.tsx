@@ -138,7 +138,11 @@ export function SettlementUpdateScreen() {
   };
 
   return (
-    <ScrollView style={styles.viewport} contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.viewport}
+      contentContainerStyle={styles.content}
+    >
       <View style={styles.hero}>
         <Text accessibilityRole="header" style={styles.lead}>
           {t("settlement.balanceHeading")}

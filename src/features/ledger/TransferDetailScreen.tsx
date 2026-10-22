@@ -103,6 +103,7 @@ export function TransferDetailScreen({
     <>
       <Stack.Screen options={{ title: t("navigation.transfer") }} />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.page}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"

@@ -1170,6 +1170,7 @@ export function LedgerExpenseEntryScreen() {
         />
         <SafeAreaView edges={["bottom"]} style={styles.scanSourcePanel}>
           <ScrollView
+            keyboardShouldPersistTaps="handled"
             style={{ flexGrow: 0 }}
             contentContainerStyle={styles.scanSourceContent}
           >
@@ -1997,7 +1998,11 @@ export function LedgerExpenseEntryScreen() {
         visible={categorySheet}
       >
         <SheetHeader onLeft={() => setCategorySheet(false)} title={t("ui.category")} />
-        <ScrollView contentContainerStyle={styles.categoryContent} style={styles.flex}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.categoryContent}
+          style={styles.flex}
+        >
           {categoryGroups.map((group) => (
             <View key={t(group.titleKey)}>
               <Text style={styles.categoryHeading}>{t(group.titleKey)}</Text>

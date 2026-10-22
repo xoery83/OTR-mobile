@@ -1,0 +1,25 @@
+{
+  "status": "ISOLATED_CHECKS_PASS_NATIVE_NOT_RUN",
+  "base": "1238a5c2a1c6b4e2c1a95974d25737068e3d7217",
+  "checks": {
+    "focusedSuites": 14,
+    "focusedTests": 166,
+    "typecheck": "PASS",
+    "uiGuard": "PASS473/139",
+    "scopedLint": "PASS_WITH_EXISTING_CAPTURE_REQUIRE_WARNING",
+    "format": "PASS",
+    "diffWhitespace": "PASS"
+  },
+  "keyboardContainersAdded": 52,
+  "participantNegative": {
+    "sqlite": "REAL_ISOLATED",
+    "namedPeople": 2,
+    "eligibleCoreOptions": 1,
+    "nonSelfSave": "CROSS_TRIP_PERSON",
+    "itemPendingIntents": 0
+  },
+  "knownExpandedCollectionFailure": "Unchanged localTripPersonRepository.test.ts imports React Native Flow; Node Vitest cannot parse it",
+  "native": "NOT_RUN_OCCUPANCY_NOT_CONFIRMED",
+  "phaseCChanges": false,
+  "hostedAuthSchemaWrites": false
+}

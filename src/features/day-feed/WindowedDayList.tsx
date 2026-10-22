@@ -618,6 +618,7 @@ export function WindowedDayList<T>({
   );
   return (
     <FlatList
+      keyboardShouldPersistTaps="handled"
       key={`${scopeKey}:${windowStart.scopeKey === scopeKey ? windowStart.revision : 0}`}
       initialScrollIndex={0}
       ref={list}

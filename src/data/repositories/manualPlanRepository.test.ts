@@ -6,6 +6,8 @@ import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
+import { createLocalTripPersonRepository } from "./localTripPersonRepository";
+import { createTripPersonRepository } from "./tripPersonRepository";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
 import {
@@ -470,4 +472,33 @@ it("changing only a date retains an unchanged authored seconds tuple while clear
     startDate: "2026-10-21",
     startTime: "10:00",
   });
+});
+
+it("retained local-only names do not silently become admitted Core participation identities", async () => {
+  const f = await fixture();
+  const personId = randomUUID();
+  await createLocalTripPersonRepository(f.coreDatabase, f.identity).initialize(f.tripId, [
+    {
+      personId,
+      operationId: randomUUID(),
+      displayName: "Other named traveller",
+    },
+  ]);
+  const people = await createTripPersonRepository(
+    f.coreDatabase,
+    f.identity,
+  ).listTripPersons(f.tripId);
+  expect(people).toHaveLength(2);
+  expect(people.find((p) => p.personId === personId)?.localState).toBe("LOCAL_PENDING");
+  const repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  expect(draft.participantOptions).toHaveLength(1);
+  expect(draft.participantOptions.some((p) => p.personId === personId)).toBe(false);
+  await expect(
+    repo.save(draft, {
+      ...values(draft.fields),
+      participation: { mode: "SELECTED_MEMBERS", people: [personId], selfPersonId: null },
+    }),
+  ).rejects.toThrow("CROSS_TRIP_PERSON");
+  expect(count(f.sql)).toBe(0);
 });

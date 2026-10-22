@@ -641,6 +641,7 @@ function AcceptedDayFeed({
         animationType="slide"
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           style={styles.root}
           contentContainerStyle={styles.content}
           contentInsetAdjustmentBehavior="automatic"

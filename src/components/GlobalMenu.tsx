@@ -158,25 +158,9 @@ export function GlobalMenu({
     module === "TRIP" &&
     tripContextId &&
     quickActions?.tripId === tripContextId &&
-    quickActions.generation === generation &&
-    (!!quickActions.editTrip || !!quickActions.chooseDay || !!quickActions.members);
+    quickActions.generation === generation;
   const tripItems: AppNavigationMenuItem[] = hasTripItems
     ? [
-        ...(quickActions.editTrip
-          ? [
-              {
-                icon: "square.and.pencil" as const,
-                label: t("tripHome.edit"),
-                onPress: () => {
-                  if (
-                    currentReturn.current === returnLease &&
-                    generation === getAccountGeneration()
-                  )
-                    quickActions.editTrip?.();
-                },
-              },
-            ]
-          : []),
         ...(quickActions.members
           ? [
               {
@@ -192,21 +176,13 @@ export function GlobalMenu({
               },
             ]
           : []),
-        ...(quickActions.chooseDay
-          ? [
-              {
-                icon: "calendar" as const,
-                label: t("dayFeed.openDay"),
-                onPress: () => {
-                  if (
-                    currentReturn.current === returnLease &&
-                    generation === getAccountGeneration()
-                  )
-                    quickActions.chooseDay?.();
-                },
-              },
-            ]
-          : []),
+        {
+          icon: "doc.text",
+          label: t("tripHome.documents"),
+          disabled: true,
+          onPress: () => {},
+        },
+        { icon: "photo", label: t("tripHome.photos"), disabled: true, onPress: () => {} },
       ]
     : [];
   const returnTo = moduleReturnPath(module);

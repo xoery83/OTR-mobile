@@ -1294,6 +1294,7 @@ function TripContent({
     return (
       <View style={styles.root}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             styles.content,
             { paddingBottom: bottomBarHeight + visual.space.page },
@@ -1331,6 +1332,7 @@ function TripContent({
   return (
     <>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="never"
         style={styles.root}
         contentContainerStyle={[

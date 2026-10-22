@@ -176,6 +176,7 @@ export function DayFeedCalendarSheet({
         <SheetHeader title={tripName} onLeft={onClose} safeTop={false} />
         {rangeLabel ? <UiText style={styles.range}>{rangeLabel}</UiText> : null}
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           ref={scroll}
           style={styles.sheet}
           contentContainerStyle={[
@@ -207,6 +208,7 @@ export function DayFeedCalendarSheet({
                 })}
               </UiText>
               <ScrollView
+                keyboardShouldPersistTaps="handled"
                 horizontal
                 style={styles.horizontal}
                 showsHorizontalScrollIndicator={

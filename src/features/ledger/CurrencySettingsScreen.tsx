@@ -177,7 +177,10 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.headingRow}>
           <Text
             accessibilityRole="header"

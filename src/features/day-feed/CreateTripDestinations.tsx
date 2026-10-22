@@ -202,6 +202,7 @@ export function CreateTripDestinations({
       <UiText style={styles.caption}>{t("createTripV2.destinations")}</UiText>
       {items.length ? (
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           ref={tags}
           horizontal
           showsHorizontalScrollIndicator={false}

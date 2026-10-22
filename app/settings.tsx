@@ -49,7 +49,10 @@ export default function SettingsRoute() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.content}
+    >
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         {t("settings.system")}
       </Text>

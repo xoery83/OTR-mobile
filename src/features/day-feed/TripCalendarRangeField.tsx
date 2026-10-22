@@ -148,6 +148,7 @@ export function TripCalendarRangeField({
           </View>
           {open ? (
             <FlatList
+              keyboardShouldPersistTaps="handled"
               style={styles.sheet}
               data={months}
               keyExtractor={(month) => month}
@@ -189,6 +190,7 @@ export function TripCalendarRangeField({
                       })}
                     </UiText>
                     <ScrollView
+                      keyboardShouldPersistTaps="handled"
                       horizontal
                       showsHorizontalScrollIndicator={false}
                       style={{ height: gridHeight, flexGrow: 0, flexShrink: 0 }}

@@ -222,6 +222,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.root}>
       <View style={styles.filters}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categories}

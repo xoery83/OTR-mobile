@@ -43,7 +43,11 @@ export function CaptureProgress({
     error = true;
   }
   return (
-    <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.body}
+      contentContainerStyle={styles.content}
+    >
       <UiText style={styles.secondary}>{t("capture.progress.closeHint")}</UiText>
       {reading || busy ? (
         <UiText accessibilityLiveRegion="polite" style={styles.copy}>

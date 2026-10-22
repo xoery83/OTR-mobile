@@ -22,6 +22,7 @@ export type AppNavigationMenuItem = {
   label: string;
   onPress: () => void;
   selected?: boolean;
+  disabled?: boolean;
   destructive?: boolean;
 };
 
@@ -111,7 +112,11 @@ export function AppNavigationMenu({
               },
             ]}
           >
-            <ScrollView bounces={false} contentContainerStyle={styles.menuContent}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+              contentContainerStyle={styles.menuContent}
+            >
               <Pressable
                 accessibilityLabel={[identity.primary, identity.secondary]
                   .filter(Boolean)
@@ -144,17 +149,24 @@ export function AppNavigationMenu({
               {sections.map((items, sectionIndex) => (
                 <View key={sectionIndex} style={styles.section}>
                   {items.map((item) => {
-                    const color = item.destructive
-                      ? colors.destructive
-                      : item.selected
-                        ? colors.accent
-                        : colors.textTertiary;
+                    const color = item.disabled
+                      ? colors.disabled
+                      : item.destructive
+                        ? colors.destructive
+                        : item.selected
+                          ? colors.accent
+                          : colors.textTertiary;
                     return (
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityState={{ selected: Boolean(item.selected) }}
+                        accessibilityState={{
+                          selected: Boolean(item.selected),
+                          disabled: !!item.disabled,
+                        }}
+                        disabled={item.disabled}
                         key={item.label}
                         onPress={() => {
+                          if (item.disabled) return;
                           setVisible(false);
                           item.onPress();
                         }}
@@ -166,6 +178,7 @@ export function AppNavigationMenu({
                             styles.label,
                             item.selected && styles.selectedLabel,
                             item.destructive && styles.destructiveLabel,
+                            item.disabled && styles.disabledLabel,
                           ]}
                         >
                           {item.label}
@@ -237,5 +250,6 @@ const createStyles = (colors: UiColors) =>
     selectedRow: { backgroundColor: colors.selected },
     label: { color: colors.textPrimary, flex: 1, fontSize: 16, fontWeight: "500" },
     selectedLabel: { color: colors.accent, fontWeight: "700" },
+    disabledLabel: { color: colors.disabled },
     destructiveLabel: { color: colors.destructive, fontWeight: "600" },
   });

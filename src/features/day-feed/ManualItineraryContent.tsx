@@ -152,7 +152,11 @@ export function ManualItineraryContent({
           leftLabel={t("common.close")}
           onLeft={onClose}
         />
-        <ScrollView style={styles.choices} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.choices}
+          contentContainerStyle={styles.content}
+        >
           <UiText style={styles.prompt}>{t("formEntry.prompt")}</UiText>
           <View style={styles.row}>
             {manualItineraryTypes.slice(0, 2).map((type) => choice(type, false))}

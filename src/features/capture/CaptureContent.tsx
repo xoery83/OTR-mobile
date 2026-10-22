@@ -580,7 +580,11 @@ export function CaptureTray({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   return (
-    <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.body}
+      contentContainerStyle={styles.content}
+    >
       {onActivity ? (
         <UiButton
           label={t("capture.activity")}

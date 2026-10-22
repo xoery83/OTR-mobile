@@ -1,5 +1,6 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { AppIcon } from "@/components/AppIcon";
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import type { Trip } from "@/domain/trip/types";
@@ -101,7 +102,15 @@ export function MyTripsList({
           <Text style={styles.meta}>{t("myTrips.emptyHint")}</Text>
           <UiButton
             label={t("actionIsland.importPlans")}
-            onPress={() => router.navigate("/capture")}
+            onPress={() =>
+              router.push({
+                pathname: "/import-plans",
+                params: {
+                  origin: "TRIPS",
+                  originGeneration: String(getAccountGeneration()),
+                },
+              })
+            }
           />
           <UiButton
             label={t("actionIsland.createManually")}
@@ -152,6 +161,7 @@ export function MyTripsList({
   if (pastOnly)
     return (
       <FlatList
+        keyboardShouldPersistTaps="handled"
         style={styles.pastRoot}
         contentContainerStyle={[
           styles.pastContent,

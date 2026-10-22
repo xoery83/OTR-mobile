@@ -211,6 +211,7 @@ export function TripQuickAddMenu({
                   safeTop={false}
                 />
                 <ScrollView
+                  keyboardShouldPersistTaps="handled"
                   style={styles.menuScroll}
                   contentContainerStyle={styles.content}
                 >

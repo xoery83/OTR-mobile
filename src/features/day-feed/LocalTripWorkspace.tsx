@@ -574,6 +574,7 @@ function LocalTripContent({
           startDate: metadata.startDate,
           endDate: metadata.endDate,
           destination: metadata.destination,
+          destinations: "destinations" in metadata ? metadata.destinations : undefined,
         }
       : undefined,
     onSetup: receiveSetup,

@@ -223,7 +223,11 @@ export function ManualFlightEditor({
           leftDisabled={saving}
           onLeft={close}
         />
-        <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.body}
+          contentContainerStyle={styles.content}
+        >
           <ManualFlightForm
             tripId={tripId}
             initialDate={initialDate}

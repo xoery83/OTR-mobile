@@ -50,7 +50,11 @@ export function LocalCoreItemPreview({
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <SafeAreaProvider style={styles.body}>
         <SheetHeader title={item.title as string} onLeft={onClose} />
-        <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.body}
+          contentContainerStyle={styles.content}
+        >
           <Text style={styles.title}>{item.title as string}</Text>
           {item.localState === "PENDING" ? (
             <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>

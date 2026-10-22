@@ -174,6 +174,7 @@ export function CaptureActivityList({
   const scopedError = error || visibleJobs.length !== jobs.length;
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       style={expectedAccountId ? styles.sheetBody : styles.body}
       contentContainerStyle={styles.content}
     >

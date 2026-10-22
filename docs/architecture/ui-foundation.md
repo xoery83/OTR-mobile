@@ -149,6 +149,13 @@ space below short content. A themed parent outside Modal or a ScrollView
 contentContainerStyle does not theme the native modal host; apply semantic
 background to its flex body/ScrollView style as well as its children.
 
+Every production `ScrollView`, `FlatList` and `SectionList`, including nested
+parents around forms, uses `keyboardShouldPersistTaps="handled"`: a handled
+control receives the first tap while the keyboard is open; unhandled blank-space
+taps dismiss it. Do not install a parent capture responder or blanket keyboard
+dismiss wrapper that consumes the intended control tap. Preserve explicit
+keyboard handling needed by a specific native interaction.
+
 Reuse established form labels, values, placeholders, helper text, validation,
 picker/navigation rows, disabled state and destructive sections. Do not change
 commit/cancel behavior while migrating styles. Errors must be readable and
