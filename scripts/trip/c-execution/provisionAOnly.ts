@@ -70,6 +70,7 @@ export async function executeAOnly(
             body.user_metadata.display_name !== "DEV-METADATA-QA-20261022-01-A"
           )
             throw Error("A_ONLY_SCOPE_OR_RETRY_FORBIDDEN");
+          assertGate(gate);
           const diagnostic = reserveProvisionDispatch(attempted, body.email, diagnostics);
           stage = "OUTBOUND_AUTH";
           return fetchProvisionWithReceipt(req, diagnostic, transport);
@@ -167,6 +168,7 @@ async function main() {
     throw Error("A_ONLY_FRESH_RECEIPT_HASH_CHANGED");
   assertFreshAAbsent(JSON.parse(fresh.toString()));
   const secrets = JSON.parse(readFileSync(0, "utf8"));
+  assertFreshAAbsent(JSON.parse(fresh.toString()));
   const result = await executeAOnly(gate, secrets.existingAdminKey, secrets.password);
   console.log(JSON.stringify(result));
   if (!result.receipt) process.exitCode = 2;

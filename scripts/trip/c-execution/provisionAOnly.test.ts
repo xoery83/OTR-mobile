@@ -131,3 +131,19 @@ test("fresh exact-A empty receipt required; existing, stale, invalid or wrong pr
   ])
     assert.throws(() => assertFreshAAbsent({ ...good, ...delta }));
 });
+
+test("window expiry during async body read blocks dispatch", async () => {
+  let calls = 0;
+  const pending = executeAOnly(gate, "fake-key", secret, async () => {
+    calls++;
+    throw Error("must-not-dispatch");
+  });
+  mock.timers.setTime(Date.parse("2026-10-22T23:15:00Z"));
+  try {
+    const result = await pending;
+    assert.equal(calls, 0);
+    assert.equal(result.attempts, 0);
+  } finally {
+    mock.timers.setTime(Date.parse("2026-10-22T23:05:00Z"));
+  }
+});
