@@ -5,7 +5,13 @@ import { startDevBackend } from "./serverStartup";
 
 // Opt-in image command only. The ordinary server.ts remains CLOSED and unchanged.
 async function main() {
-  const runtime = await loadDevCaptureCustody(process.env);
+  let runtime: Awaited<ReturnType<typeof loadDevCaptureCustody>>;
+  try {
+    runtime = await loadDevCaptureCustody(process.env);
+  } catch {
+    // An unavailable finite capability must not prevent the closed Backend starting.
+    console.info("CAPTURE_RUNTIME_CLOSED");
+  }
   let trip: Awaited<ReturnType<typeof loadDevTripCreateRuntime>>;
   let metadata: Awaited<ReturnType<typeof loadDevTripMetadataV2Runtime>>;
   let server: ReturnType<typeof startDevBackend>;
