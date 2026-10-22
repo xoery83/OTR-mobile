@@ -97,7 +97,9 @@ export async function executeAOnly(
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         data.user.id,
       ) ||
-      data.user.email !== A_EMAIL
+      data.user.email !== A_EMAIL ||
+      !/^\d{4}-\d{2}-\d{2}T[0-9:.+-]+Z?$/.test(data.user.created_at ?? "") ||
+      !Number.isFinite(Date.parse(data.user.created_at))
     )
       throw Error("A_ONLY_IDENTITY_NOT_VERIFIED");
     return {
