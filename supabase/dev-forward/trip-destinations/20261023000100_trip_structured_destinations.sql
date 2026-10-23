@@ -68,6 +68,15 @@ ALTER TABLE public.trip_metadata_activation_gate ADD CONSTRAINT trip_metadata_ga
 
 CREATE OR REPLACE FUNCTION public.trip_metadata_revision_guard() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
 BEGIN
+ -- Only existing postgres-owned owning RPCs may introduce/change the new field.
+ -- SECURITY INVOKER preserves the effective RPC owner without extending client ACL.
+ IF current_user<>'postgres' THEN
+  IF TG_OP='INSERT' THEN
+   IF NEW.destinations IS NOT NULL THEN RAISE EXCEPTION 'TRIP_DESTINATIONS_OWNING_RPC_REQUIRED' USING ERRCODE='42501'; END IF;
+  ELSIF NEW.destinations IS DISTINCT FROM OLD.destinations THEN
+   RAISE EXCEPTION 'TRIP_DESTINATIONS_OWNING_RPC_REQUIRED' USING ERRCODE='42501';
+  END IF;
+ END IF;
  IF TG_OP='INSERT' THEN
   IF NEW.metadata_revision<>0 THEN RAISE EXCEPTION 'METADATA_REVISION_SERVER_OWNED' USING ERRCODE='42501'; END IF;
   RETURN NEW;

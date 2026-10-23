@@ -82,6 +82,9 @@ try:
  armcreate(create_req);created_result=json.loads(sql(createcmd(create_req),'otr_trip_create_gateway'))
  check('CreateV2 retains stable IDs order source/place fields in immutable receipt',created_result['destinations']==initial and created_result['formatVersion']==2 and created_result['metadataRevision']==0)
  check('Create atomically initializes same Trip ledger and linked owner',sql("select (s.settlement_currency='NZD' and s.revision=1 and m.user_id="+literal(ACTOR)+"::uuid and m.role='owner' and m.status='linked')::text from public.ledger_settings s join public.journey_members m on m.trip_id=s.journey_id where s.journey_id="+literal(TRIP)+"::uuid;")=='true')
+ sql('set role service_role;update public.trips set destinations='+literal(json.dumps([D1]))+'::jsonb where id='+literal(TRIP)+'::uuid;',failure='42501')
+ check('unauthenticated client table scope updates no rows',sql('set role authenticated;with changed as (update public.trips set destinations='+literal(json.dumps([D1]))+'::jsonb where id='+literal(TRIP)+'::uuid returning id) select count(*) from changed;')=='0')
+ check('existing service table grant cannot bypass owning structured mutation')
  check('same Create operation replays immutable receipt',json.loads(sql(createcmd(create_req),'otr_trip_create_gateway'))==created_result)
  sql("update public.trip_create_activation_gate set enabled=false,actor_account_id=null,trip_id=null,operation_id=null,request_payload=null,started_at=null,expires_at=null;alter role otr_trip_create_gateway nologin;")
  current={'name':'Structured QA','destination':None,'destinations':initial,'startDate':'2026-11-01','endDate':'2026-11-03'}
