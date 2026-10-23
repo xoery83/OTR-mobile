@@ -33,9 +33,7 @@ it("accepts JPEG container EOI with an opaque trailer without changing bytes", (
 
 it("rejects absent SOI, absent EOI, and a truncated EOI marker", () => {
   for (const bytes of [jpeg.slice(1), jpeg.slice(0, -2), jpeg.slice(0, -1)])
-    expect(() => captureCustodyMedia(bytes)).toThrow(
-      "CAPTURE_CUSTODY_MEDIA_INVALID",
-    );
+    expect(() => captureCustodyMedia(bytes)).toThrow("CAPTURE_CUSTODY_MEDIA_INVALID");
 });
 
 it("pins the complete trailer in both SHA and byte count", () => {
@@ -48,4 +46,73 @@ it("pins the complete trailer in both SHA and byte count", () => {
   expect(() => assertCaptureCustodyBytes(pinned, jpeg)).toThrow(
     "CAPTURE_CUSTODY_BYTES_INVALID",
   );
+});
+
+it("Universal v2 requires explicit typed provenance, strict UTF-8 and bounded N; v1 remains binary/exact2", async () => {
+  const {
+    captureCustodyBindingSchema,
+    captureCustodyBatchSchema,
+    captureUniversalCustodyBindingSchema,
+    captureUniversalCustodyBatchSchema,
+  } = await import("./captureCustody");
+  const bytes = new TextEncoder().encode("\ufeff周一：博物馆\nKeep original wording."),
+    text = {
+      ...binding(bytes),
+      version: 2 as const,
+      originalFilename: null,
+      acquisitionSource: "magic_input" as const,
+      kind: "TEXT" as const,
+      mediaType: "text/plain" as const,
+    };
+  expect(() => assertCaptureCustodyBytes(text, bytes)).not.toThrow();
+  expect(captureCustodyBindingSchema.safeParse(text).success).toBe(false);
+  expect(
+    captureCustodyBatchSchema.safeParse({
+      batchId: text.batchId,
+      jobId: text.jobId,
+      inputs: [binding(jpeg)],
+    }).success,
+  ).toBe(false);
+  expect(
+    captureUniversalCustodyBindingSchema.safeParse({
+      ...text,
+      acquisitionSource: "files",
+    }).success,
+  ).toBe(false);
+  expect(
+    captureUniversalCustodyBindingSchema.safeParse({ ...text, byteCount: 262145 })
+      .success,
+  ).toBe(false);
+  const batch = {
+    version: 2 as const,
+    batchId: text.batchId,
+    jobId: text.jobId,
+    inputs: [text],
+  };
+  expect(captureUniversalCustodyBatchSchema.safeParse(batch).success).toBe(true);
+  expect(
+    captureUniversalCustodyBatchSchema.safeParse({ ...batch, inputs: [text, text] })
+      .success,
+  ).toBe(false);
+  expect(
+    captureUniversalCustodyBatchSchema.safeParse({ ...batch, inputs: [] }).success,
+  ).toBe(false);
+  expect(
+    captureUniversalCustodyBatchSchema.safeParse({
+      ...batch,
+      inputs: Array(65).fill(text),
+    }).success,
+  ).toBe(false);
+  for (const invalid of [Uint8Array.of(255), new TextEncoder().encode("bad\0text")]) {
+    expect(() =>
+      assertCaptureCustodyBytes(
+        {
+          ...text,
+          sha256: createHash("sha256").update(invalid).digest("hex"),
+          byteCount: invalid.length,
+        },
+        invalid,
+      ),
+    ).toThrow("BYTES_INVALID");
+  }
 });

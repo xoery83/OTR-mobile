@@ -14,7 +14,7 @@ Owner authorized exactly one auxiliary Trip/P1 Writer alongside the existing Uni
 
 ## 24 October — Universal mixed C3 local candidate
 
-In isolated candidate only, SQLite73 preserves existing v1 rows/Source associations/Queue and adds explicit C3v2 text/clipboard provenance. Composer forwards all inputs as one Batch; local UTF-8 original and attachment bytes survive cold reopen.52 real SQLite tests plus19 UI/default-session checks, TS/UIguard PASS; no install/remote/AI claim. Custody-v2/owning Source registration and Backend Results remain active same-slice work. [Candidate handoff](ops/universal-native-mixed-20261024/HANDOFF.md). Backend adff007 independent local Review PASS is recorded there.
+In isolated candidate only, SQLite73 preserves existing v1 rows/Source associations/Queue and adds explicit C3v2 text/clipboard provenance. Composer forwards all inputs as one Batch; local UTF-8 original and attachment bytes survive cold reopen.52 real SQLite tests plus19 UI/default-session checks, TS/UIguard PASS; no install/remote/AI claim. Explicit custody-v2 boundedN/TEXT and opt-in FILE UTF8 profile now have scoped210tests/TS/lint and actual Linux anchored cold-reopen9checks PASS (Storage transport synthetic). Real C3/SQLite emits existing Source command intents with retained provenance; finite owning SQL candidate is isolated-only. Targeted registration dispatch and Backend Results remain active same-slice work. [Candidate handoff](ops/universal-native-mixed-20261024/HANDOFF.md). Backend adff007 independent local Review PASS is recorded there.
 
 ## 24 October — AD5 repair and bounded Native/DEV regression
 

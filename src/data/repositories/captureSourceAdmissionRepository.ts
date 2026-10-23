@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  UTF8_TEXT_FILE_PROFILE,
+  verifyUtf8TextFile,
+} from "@/domain/capture/utf8TextFile";
+import {
   captureAccountRequestContext,
   assertAccountRequestContext,
   withAccountApplyGate,
@@ -61,6 +65,8 @@ export type CaptureSourceDependencies = {
     sourceId: string,
     representationId: string,
   ): Promise<Uint8Array | null>;
+  // Explicit candidate capability only. Omission keeps the original v1 path closed.
+  utf8FileProfile?: typeof UTF8_TEXT_FILE_PROFILE;
   // Existing actual-format/profile verifier, never filename/declared MIME. This
   // dependency is deliberately unwired while Capture/Source runtime gates close.
   verifyBinary?(bytes: Uint8Array): Promise<{
@@ -272,15 +278,17 @@ export function createCaptureSourceAdmissionRepository(
     bytes: Uint8Array,
     materialHash: string,
     mimeType: string | null,
+    fileText: string | null,
   ) {
     const text =
       capture.kind === "TEXT"
         ? new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes)
-        : null;
+        : fileText;
     const d = {
       id: p.representation_id,
       material_kind: text === null ? "BINARY" : "TEXT",
-      original_filename: text === null ? capture.originalFilename : null,
+      original_filename:
+        text === null || fileText !== null ? capture.originalFilename : null,
       part_key: null,
       mime_type: mimeType,
       encoding: text === null ? null : "UTF-8",
@@ -320,8 +328,14 @@ export function createCaptureSourceAdmissionRepository(
     const cap = { completeness: "AS_SUPPLIED", capture_sha256: captureHash };
     const input = {
       source_kind:
-        text !== null ? "TEXT" : mimeType === "application/pdf" ? "FILE" : "IMAGE",
-      acquisition_channel: text !== null ? "PASTE" : "FILES",
+        fileText !== null
+          ? "FILE"
+          : text !== null
+            ? "TEXT"
+            : mimeType === "application/pdf"
+              ? "FILE"
+              : "IMAGE",
+      acquisition_channel: fileText === null && text !== null ? "PASTE" : "FILES",
       captured_at: null,
       capture_time_basis: "UNKNOWN",
     };
@@ -429,8 +443,20 @@ export function createCaptureSourceAdmissionRepository(
         validateCaptureUtf8(bytes);
         if (bytes.byteLength > 262144) fail("CAPTURE_SOURCE_TEXT_TOO_LARGE");
       }
+      let fileText: string | null = null;
+      if (
+        capture.kind === "FILE" &&
+        capture.declaredContentType === "text/plain" &&
+        dependencies.utf8FileProfile === UTF8_TEXT_FILE_PROFILE &&
+        plan.intent_kind === "NEW"
+      )
+        fileText = verifyUtf8TextFile(
+          bytes,
+          capture.originalFilename,
+          capture.declaredContentType,
+        ).text;
       let mimeType: string | null = null;
-      if (capture.kind !== "TEXT" && plan.intent_kind !== "REUSE") {
+      if (capture.kind !== "TEXT" && fileText === null && plan.intent_kind !== "REUSE") {
         if (!dependencies.verifyBinary) fail("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
         const proof = await dependencies.verifyBinary(new Uint8Array(bytes));
         if (
@@ -453,7 +479,7 @@ export function createCaptureSourceAdmissionRepository(
       const prepared =
         plan.intent_kind === "REUSE"
           ? null
-          : await command(c, plan, capture, bytes, materialHash, mimeType);
+          : await command(c, plan, capture, bytes, materialHash, mimeType, fileText);
       await assertAccountRequestContext(c, getAccountId);
       return scoped(c, async () => {
         const current = await database.getFirstAsync<Row>(

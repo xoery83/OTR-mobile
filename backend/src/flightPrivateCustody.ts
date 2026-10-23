@@ -1,8 +1,8 @@
 import {
-  captureCustodyBindingSchema,
+  captureMaterialBindingSchema,
   captureCustodyBindingJson,
   assertCaptureCustodyBytes,
-  type CaptureCustodyBinding,
+  type CaptureMaterialBinding,
   type CaptureMaterialCustody,
 } from "../../src/domain/capture/captureCustody";
 import { constants } from "node:fs";
@@ -261,10 +261,10 @@ export async function createFlightPrivateCustody(
         throw new Error("CUSTODY_RELEASE_CLOSED");
       },
     };
-    async function captureAssociation(binding: CaptureCustodyBinding) {
+    async function captureAssociation(binding: CaptureMaterialBinding) {
       try {
         const raw = z
-          .strictObject({ version: z.literal(1), binding: captureCustodyBindingSchema })
+          .strictObject({ version: z.literal(1), binding: captureMaterialBindingSchema })
           .parse(await read(name("capture-input", binding.accountId, binding.inputId)));
         if (captureCustodyBindingJson(raw.binding) !== captureCustodyBindingJson(binding))
           throw new Error("CAPTURE_CUSTODY_BINDING_CONFLICT");
@@ -276,7 +276,7 @@ export async function createFlightPrivateCustody(
     }
     const captureMaterial: CaptureMaterialCustody = {
       async put(raw, bytes) {
-        const binding = captureCustodyBindingSchema.parse(raw);
+        const binding = captureMaterialBindingSchema.parse(raw);
         assertCaptureCustodyBytes(binding, bytes);
         await captureAssociation(binding);
         if (!captureStorage) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
@@ -295,7 +295,7 @@ export async function createFlightPrivateCustody(
         }
       },
       async read(raw) {
-        const binding = captureCustodyBindingSchema.parse(raw);
+        const binding = captureMaterialBindingSchema.parse(raw);
         if (!(await captureAssociation(binding))) return null;
         if (!captureStorage) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
         const bytes = await captureStorage.read(binding);

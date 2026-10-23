@@ -79,3 +79,100 @@ it("rejects a foreign Input before transport", async () => {
   ).rejects.toThrow("INPUT_UNAVAILABLE");
   expect(x.transport.put).not.toHaveBeenCalled();
 });
+
+it("real SQLite C3v2 originals project TEXT and PDF custody identities, HTTP roundtrip and cold recovery", async () => {
+  const { captureCustodyBoundary } =
+    await import("../../../backend/src/captureCustodyHttp");
+  const f = fixture(true, 73),
+    q = f.request(),
+    text = "周一，参观博物馆。\nDo not rewrite my text.",
+    pdf = new TextEncoder().encode("%PDF-1.4\nsynthetic");
+  q.formatVersion = 2;
+  q.manifestVersion = 2;
+  q.inputs[0] = {
+    ...q.inputs[0],
+    kind: "TEXT",
+    acquisitionSource: "magic_input",
+    originalFilename: null,
+    declaredContentType: "text/plain",
+  };
+  q.inputs[1] = {
+    ...q.inputs[0],
+    id: randomUUID(),
+    itemKey: randomUUID(),
+    ordinal: 1,
+    kind: "FILE",
+    acquisitionSource: "files",
+    declaredContentType: "application/pdf",
+  };
+  await f.submissions.submit(
+    q,
+    new Map<
+      string,
+      () => Promise<import("../files/capturePayloadReader").CapturePayloadInput>
+    >([
+      [q.inputs[0].id, async () => ({ text })],
+      [q.inputs[1].id, async () => ({ bytes: pdf })],
+    ]),
+  );
+  const stored = new Map<string, { binding: string; bytes: Uint8Array }>(),
+    context = await captureAccountRequestContext("", f.getAccount);
+  const custody: import("@/domain/capture/captureCustody").CaptureMaterialCustody = {
+    async put(b, bytes) {
+      stored.set(b.inputId, {
+        binding: captureCustodyBindingJson(b),
+        bytes: bytes.slice(),
+      });
+    },
+    async read(b) {
+      const p = stored.get(b.inputId);
+      if (!p) return null;
+      if (p.binding !== captureCustodyBindingJson(b))
+        throw Error("CAPTURE_CUSTODY_BINDING_CONFLICT");
+      return p.bytes.slice();
+    },
+  };
+  const http = async (
+    b: import("@/domain/capture/captureCustody").CaptureMaterialBinding,
+    bytes?: Uint8Array,
+  ) => {
+    const response = await captureCustodyBoundary(
+      new Request(`https://fixture.test/v2/capture-inputs/${b.inputId}/material`, {
+        method: bytes ? "PUT" : "GET",
+        headers: {
+          "X-OTR-Capture-Binding": captureCustodyBindingJson(b),
+          ...(bytes
+            ? { "Content-Type": b.mediaType, "Content-Length": String(bytes.length) }
+            : {}),
+        },
+        ...(bytes ? { body: Uint8Array.from(bytes).buffer } : {}),
+      }),
+      context.accountId,
+      custody,
+    );
+    expect(response.status).toBe(200);
+    return new Uint8Array(await response.arrayBuffer());
+  };
+  const operation = () =>
+    createCaptureCustodyOperation({
+      submissions: f.submissions,
+      inbox: f.captures,
+      getAccountId: f.getAccount,
+      bindingVersion: 2,
+      transport: {
+        put: async (_c, b, bytes) => http(b, bytes),
+        read: async (_c, b) => http(b),
+      },
+    });
+  for (const input of q.inputs) {
+    const b = await operation().binding(context, q.jobId, input.id);
+    expect(b.version).toBe(2);
+    expect(b.mediaType).toBe(input.kind === "TEXT" ? "text/plain" : "application/pdf");
+    await operation().put(context, q.jobId, input.id);
+  }
+  f.reopen();
+  expect(await operation().recover(context, q.jobId, q.inputs[0].id)).toEqual(
+    new TextEncoder().encode(text),
+  );
+  expect(await operation().recover(context, q.jobId, q.inputs[1].id)).toEqual(pdf);
+});

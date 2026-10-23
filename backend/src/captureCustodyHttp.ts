@@ -1,5 +1,5 @@
 import {
-  captureCustodyBindingSchema,
+  captureMaterialBindingSchema,
   captureCustodyBindingJson,
   assertCaptureCustodyBytes,
   type CaptureMaterialCustody,
@@ -43,7 +43,7 @@ export async function captureCustodyBoundary(
     } catch {
       return failure(422, "CAPTURE_CUSTODY_REQUEST_INVALID");
     }
-    const binding = captureCustodyBindingSchema.parse(raw);
+    const binding = captureMaterialBindingSchema.parse(raw);
     if (binding.inputId !== match[1])
       return failure(422, "CAPTURE_CUSTODY_REQUEST_INVALID");
     if (binding.accountId !== actor) return failure(403, "CAPTURE_CUSTODY_FORBIDDEN");
