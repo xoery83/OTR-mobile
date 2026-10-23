@@ -145,7 +145,11 @@ export class CRequestBudget {
     this.#used.mutations++;
   }
 }
-export function assertExactUndispatchedCreateResume(path: string, accountId: string) {
+export function assertExactUndispatchedCreateResume(
+  path: string,
+  accountId: string,
+  receiptOnlyFailure = false,
+) {
   path = assertPrivateQaDatabasePath(path, false);
   const sql = new DatabaseSync(path, { readOnly: true });
   try {
@@ -167,8 +171,12 @@ export function assertExactUndispatchedCreateResume(path: string, accountId: str
       operation.base_version !== null ||
       operation.owner_user_id !== accountId ||
       operation.trip_id !== QA.tripId ||
-      !["PENDING", "DEPENDENCY_BLOCKED"].includes(String(operation.status)) ||
-      operation.attempt_count !== 0 ||
+      (receiptOnlyFailure
+        ? operation.status !== "RETRYABLE" ||
+          operation.attempt_count !== 2 ||
+          operation.last_error_code !== "TRIP_CREATE_UNAVAILABLE"
+        : !["PENDING", "DEPENDENCY_BLOCKED"].includes(String(operation.status)) ||
+          operation.attempt_count !== 0) ||
       !same(JSON.parse(String(operation.payload_json)), request) ||
       trip.account_id !== accountId ||
       trip.id !== QA.tripId ||

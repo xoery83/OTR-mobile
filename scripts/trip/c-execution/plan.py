@@ -13,6 +13,8 @@ def main():
  p['baseline']=b;p['bodyHashes']={'create':PAYLOADS['create']['sha256Utf8'],'metadata':PAYLOADS['editProposal']['sha256Utf8'],'preview':PAYLOADS['currencyPreview']['sha256Utf8']}
  here=pathlib.Path(__file__).resolve().parent
  import hashlib
+ p['databaseCA']=(here/'supabase-prod-ca-2021.crt').read_text()
+ assert hashlib.sha256(p['databaseCA'].encode()).hexdigest()=='700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7'
  p['serviceHelperSHA256']=hashlib.sha256((here/'service.py').read_bytes()).hexdigest();p['controlSHA256']=hashlib.sha256((here/'control.py').read_bytes()).hexdigest();p['controlPath']=str(here/'control.py')
  p['windowId']=digest({k:p[k] for k in ['project','image','bundle','actorIds','startsAt','expiresAt','bodyHashes']})
  p.pop('manifestSHA256',None);p['manifestSHA256']=digest(p)

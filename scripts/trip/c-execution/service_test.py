@@ -5,9 +5,11 @@ import service, control
 from control_test import plan
 
 class Tests(unittest.TestCase):
- def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False):
+ def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False):
   temporary=tempfile.TemporaryDirectory();root=pathlib.Path(temporary.name)
   p=plan();p['ownerAuthorized']=True;p['payloads']=control.PAYLOADS
+  p['databaseCA']=pathlib.Path(__file__).with_name('supabase-prod-ca-2021.crt').read_text()
+  if bad_ca:p['databaseCA']='untrusted peer certificate'
   if wait_expiry:p['expiresAt']=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(seconds=.1)).isoformat()
   composeCalls=0
   mounts=[{'source':'/fixture/a','destination':'/run/otr/catalog-reader.json','rw':False},{'source':'/fixture/b','destination':'/run/otr/capture-custody.json','rw':False},{'source':'/fixture/c','destination':'/var/lib/otr/capture-custody','rw':True}]
@@ -84,6 +86,8 @@ class Tests(unittest.TestCase):
   temporary.cleanup();return result
  def test_non_alphabetical_compose_order_survives_sorted_hash_map(self):self.assertTrue(self.fixture('restore',nonalphabetical=True)['verified'])
  def test_exact_mounts_and_runtime_then_restore(self):self.assertTrue(self.fixture('restore')['verified'])
+ def test_untrusted_ca_cannot_activate(self):
+  with self.assertRaises(AssertionError):self.fixture(bad_ca=True)
  def test_persist_failure_still_restores_but_cannot_pass(self):
   result=self.fixture("restore-only",persist_failure=True);self.assertTrue(result["restorationVerified"]);self.assertFalse(result["verified"]);self.assertFalse(result["beforeDiagnosticPersisted"]);self.assertEqual(result["fixtureComposeCalls"],1)
  def test_actual_activation_waits_lock_then_rejects_expired_without_compose(self):

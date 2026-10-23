@@ -52,6 +52,25 @@ async function main() {
   )
     throw Error("C_EXACT_MANIFEST_REQUIRED");
   const credentials = JSON.parse(readFileSync(0, "utf8"));
+  const receiptOnlyResume = gate.resume?.kind === "EXACT_RECEIPT_ONLY_FAILURE_CREATE";
+  if (receiptOnlyResume) {
+    const previousBytes = readFileSync(
+      "/private/tmp/otr-c-qa-20261023-recovery/execution-summary.json",
+    );
+    const previous = JSON.parse(previousBytes.toString());
+    if (
+      createHash("sha256").update(previousBytes).digest("hex") !==
+        gate.resume.previousSummarySHA256 ||
+      previous.counts.reads !== 8 ||
+      previous.counts.mutations !== 0 ||
+      previous.close?.status !== "CLOSED_VERIFIED" ||
+      previous.create ||
+      previous.edit ||
+      gate.resume.previousReadCharges !== 8 ||
+      gate.resume.previousMutationCharges !== 0
+    )
+      throw Error("C_ACTUAL_RECEIPT_ONLY_FAILURE_PROOF_REQUIRED");
+  }
   // Actual admin provisioning receipts, not caller-picked fixture identities. Provisioning is a separate
   // approved Auth-only step; this driver never assumes an existing user or scans Auth users.
   for (const label of ["A", "B"] as const) {
@@ -85,12 +104,16 @@ async function main() {
   }
   if (existsSync(gate.databasePath)) {
     if (
-      gate.resume?.kind !== "EXACT_UNDISPATCHED_CREATE_ONLY" ||
-      gate.resume.previousReadCharges !== 3 ||
+      (!receiptOnlyResume && gate.resume?.kind !== "EXACT_UNDISPATCHED_CREATE_ONLY") ||
+      gate.resume.previousReadCharges !== (receiptOnlyResume ? 8 : 3) ||
       gate.resume.previousMutationCharges !== 0
     )
       throw Error("C_QA_STATE_ALREADY_EXISTS_STOP_NO_RETRY");
-    assertExactUndispatchedCreateResume(gate.databasePath, gate.actorIds.A);
+    assertExactUndispatchedCreateResume(
+      gate.databasePath,
+      gate.actorIds.A,
+      receiptOnlyResume,
+    );
   } else if (gate.resume) throw Error("C_EXPECTED_QA_RESUME_STATE_MISSING");
   const runner = await createAuthenticatedHeadlessRunner({
     window: {
@@ -157,22 +180,23 @@ async function main() {
   };
 
   try {
-    for (const label of ["A", "B"] as const)
+    for (const label of (receiptOnlyResume ? ["A"] : ["A", "B"]) as ("A" | "B")[])
       await runner.login(
         label,
         credentials[label].password,
         credentials[label].provisionReceipt,
       );
     await runner.select("A");
-    const empty = await read();
+    const empty = receiptOnlyResume ? null : await read();
     if (
-      empty.trip ||
-      empty.ledger ||
-      empty.owners.length ||
-      empty.expenses ||
-      empty.payments ||
-      empty.personalPayments ||
-      empty.settlements
+      empty &&
+      (empty.trip ||
+        empty.ledger ||
+        empty.owners.length ||
+        empty.expenses ||
+        empty.payments ||
+        empty.personalPayments ||
+        empty.settlements)
     )
       throw Error("C_QA_COLLISION");
     await command("arm");
@@ -222,9 +246,11 @@ async function main() {
     runner.setOnline(false);
     await runner.dispatchEdit();
     await runner.reopen();
-    await runner.select("B");
-    await runner.dispatchEdit();
-    await runner.select("A");
+    if (!receiptOnlyResume) {
+      await runner.select("B");
+      await runner.dispatchEdit();
+      await runner.select("A");
+    }
     runner.setOnline(true);
     await runner.dispatchEdit();
     await runner.recoverQueuedReceipt("metadata");
@@ -244,11 +270,13 @@ async function main() {
       edited.trip.destination !== "Auckland, New Zealand"
     )
       throw Error("C_EDIT_READBACK_MISMATCH");
-    await runner.replayEdit();
-    await denied(() => runner.collisionEdit(), 409, "TRIP_METADATA_COLLISION");
-    await runner.select("B");
-    await denied(() => runner.replayEdit(), 403, "TRIP_METADATA_FORBIDDEN");
-    await runner.select("A");
+    if (!receiptOnlyResume) {
+      await runner.replayEdit();
+      await denied(() => runner.collisionEdit(), 409, "TRIP_METADATA_COLLISION");
+      await runner.select("B");
+      await denied(() => runner.replayEdit(), 403, "TRIP_METADATA_FORBIDDEN");
+      await runner.select("A");
+    }
     const original = await runner.originalCreateReceipt();
     if (JSON.stringify(original) !== JSON.stringify(cr))
       throw Error("C_ORIGINAL_CREATE_RECEIPT_MUTATED");
@@ -260,6 +288,12 @@ async function main() {
     )
       throw Error("C_EDIT_CLIENT_RECOVERY_MISMATCH");
     summary.edit = { accepted: true, serverVerified: true, queue: runner.queueState() };
+    if (receiptOnlyResume) {
+      summary.status = "REAL_DEV_CREATE_LEDGER_EDIT_RECEIPTS_READY_FOR_REVIEW";
+      summary.currency = { status: "BLOCKED_BY_READ_BUDGET", attempted: false };
+      summary.remainingNegativeCases = "NOT_RUN_IN_REAL_DEV_READ_BUDGET_RETAINED";
+      return;
+    }
     // Resume conserves the cumulative read budget using this run's actual owning
     // readback. Only metadata replay/denial checks occur between it and Preview.
     const zero = gate.resume ? edited : await read();

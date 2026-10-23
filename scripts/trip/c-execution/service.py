@@ -14,6 +14,8 @@ def remote_locked(p,action,secret):
     def instant(v): return datetime.datetime.fromisoformat(v.replace('Z','+00:00')).timestamp()
     root=Path('/opt/otr/dev-backend/env/c-finite-'+p['windowId'])
     before=current(); baseline=p['baseline']; expectedMounts=sorted([(m['source'],m['destination'],m['rw']) for m in baseline['mounts']])
+    if action=='activate':
+        assert hashlib.sha256(p['databaseCA'].encode()).hexdigest()=='700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7'
     assert before['Image']==p['image'] and before['Config']['User']=='otr' and before['Config']['Cmd']==['node','server-capture.mjs']
     assert baseline['environmentSHA256']=='cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f'
     assert canonical(env(before))==baseline['environmentSHA256']
@@ -87,7 +89,7 @@ def remote_locked(p,action,secret):
             kind=secret['kind']; assert kind in ('create','metadata')
             runtime=root/(kind+'.json'); assert not runtime.exists()
             request=p['payloads']['create' if kind=='create' else 'editProposal']['body']
-            config={'version':1,'enabled':True,'expiresAt':p['expiresAt'],'actorAccountId':p['actorIds']['A'],'request':request,('tripPg' if kind=='create' else 'metadataPg'):{'host':'db.tuqigdxrvrerfewsxqgm.supabase.co','port':5432,'database':'postgres','password':secret['password']}}
+            config={'version':1,'enabled':True,'expiresAt':p['expiresAt'],'actorAccountId':p['actorIds']['A'],'request':request,('tripPg' if kind=='create' else 'metadataPg'):{'host':'db.tuqigdxrvrerfewsxqgm.supabase.co','port':5432,'database':'postgres','password':secret['password'],'ca':p['databaseCA']}}
             fd=os.open(runtime,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o440)
             with os.fdopen(fd,'w') as f: json.dump(config,f)
             os.chown(runtime,0,999); os.chmod(runtime,0o440)

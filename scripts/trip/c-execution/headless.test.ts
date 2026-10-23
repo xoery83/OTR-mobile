@@ -363,7 +363,23 @@ test("real HTTP + existing SQLite/targeted workers: offline create/edit, receipt
     const resumeDb = await openQaDatabase(dir + "/qa-state.sqlite");
     resumeDb.sql.exec("UPDATE sync_operations SET attempt_count=1");
     assert.throws(() => assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A));
-    resumeDb.sql.exec("UPDATE sync_operations SET attempt_count=0");
+    assert.throws(() =>
+      assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A, true),
+    );
+    resumeDb.sql.exec(
+      "UPDATE sync_operations SET attempt_count=2,status='RETRYABLE',last_error_code='TRIP_CREATE_UNAVAILABLE'",
+    );
+    assert.doesNotThrow(() =>
+      assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A, true),
+    );
+    assert.throws(() => assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A));
+    resumeDb.sql.exec("UPDATE sync_operations SET last_error_code='UNKNOWN_OUTCOME'");
+    assert.throws(() =>
+      assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A, true),
+    );
+    resumeDb.sql.exec(
+      "UPDATE sync_operations SET attempt_count=0,status='PENDING',last_error_code=NULL",
+    );
     resumeDb.close();
     await runner.dispatchCreate();
     assert.equal(seen.filter((s) => s.startsWith("POST /v2/")).length, 0);
