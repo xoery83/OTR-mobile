@@ -4,6 +4,10 @@ Fixed code `bfcb466169ea38221affa4806e406a3a022d0880`, approved base1238a5c2. My
 
 ## 22 October — Trip DEV Phase A / Create invocation safety
 
+## C execution preparation candidate — 23 October 2026
+
+Isolated owning branch only: fixed-QA Auth-adopted Headless composition and independent finite watchdog/service return are implemented under `scripts/trip/c-execution/`; details and evidence scopes are in `docs/ops/c-execution-prep-20261023/README.md`. Native defaults retained through narrowly lazy DI leaves; no schema/queue model changes. Candidate requires independent Review and a fresh exact Owner C Gate. No real Auth/DEV/SQL/deployment/Native operation performed by this preparation; previous dormant A/closed B remain the accepted infrastructure baseline. L2 fixtures do not establish four-path Cloud E2E.
+
 Independent assigned DEV subagent obtained sanitized readonly health/project/deployed-image evidence: current healthy012f2d contains Currency but no new Metadata boundary/Pg markers or Trip finite mount. Live SQL catalog and valid synthetic Auth/fixtures remain unqualified. Create runner/coordinator now pin account generation across DB/Repo/resume awaits, matching Metadata lifetime protection; Root independently reviewed subagent patch and 5suites17tests/TS/scopedlint PASS. Default gates unchanged, no product/GUI/Hosted activation. Phase B remains blocked before exact Owner write Gate (deployed artifact/SQL/independent synthetic IDs/window/request hashes missing). Root central packet `docs/ops/trip-ledger-dev-gate-20261022/`; no fresh server receipts or Native E2E claim.
 
 ## 22 October — Trip/Ledger bounded integration audit; cloud stays CLOSED
@@ -1693,3 +1697,22 @@ Date: 2026-10-06 (Pacific/Auckland).
 ## Capture C4-L local evidence candidate — 2026-10-16 / REVIEW PENDING
 
 - Schema67 extends the existing C3 Account/Input queue with immutable local PDF/Vision evidence and per-input events. The same foreground timer runs C3 then C4 after accepted originals validate. The pure Flight line grammar has an Account/Input-only projection; Import still requires real Trip/Source pins. Local-model service hints, if available, remain separate advisory evidence. No remote dispatch, Trip assignment, Source registration, Core write, or Review authority is added. See `docs/adr/2026-10-16-capture-c4-local-evidence.md`.
+
+## Isolated Metadata V2 candidate — 2026-10-22
+
+- Dedicated candidate branch only: Metadata monotonic revision, immutable receipt, finite separate Edit principal and V2 Backend; preserves immutable Create metadata receipt. Same repository/queue/worker/transport accepts explicitly new V2 requests; old V1 payloads/default UI unchanged, no SQLite DDL. Accepted TCL runtime reused, not Core authority.
+- Local evidence: real disposable network-none PG27 checks (including explicit arbitrary-SQL expiry limitation), combined143 PASS/4 Reference excluded, TS/lint/UI guard/Capture bundle PASS. Trusted fixed Backend credential custody/transaction is required; no claim against malicious SQL credential holder.
+- See `docs/ops/metadata-sql-20261022/` Compatibility Delta, Migration Gate, Local Queue Handoff and receipts. Independent combined Review pending. DEV/Hosted/Auth/Schema install/activation/Native remain NOT_RUN and need exact Owner Gate; no four-path Cloud E2E claim.
+
+## Metadata B recovery — 2026-10-22 isolated preparation
+
+- Live fact from prior run: A dormant SQL installed/closed; B unhealthy then old image012f2d and original bundle/three mounts/config restored healthy; C remains BLOCKED. This recovery made only an authorized read-only healthy-host baseline; no deployment/SQL reinstall/Auth/business/Native operation.
+- Deterministic blocker reproduced: failed b677 Capture entry aborts on a synthetic expired custody config; current mounted config is expired. Historical failed-container logs remain missing, so not all historical causes are reconstructed. Production fix c0ab4677 only closes unavailable optional custody at startup; strict loader validation and authority remain intact.
+- Fixed qualification12d6b2f, final local image4c8d6a04/bundlea9124ac6. Real network-none final health200 and five unauthenticated route401;61 Backend tests/9 diagnostic fixtures/TS/lint/UI guard PASS. Earlier provisional-case receipts are separately labeled. Default-dry retry diagnostic script captures/redacts before rollback and verifies normalized environment/restoration; exact B-only Owner authorization still required.
+- See `docs/ops/metadata-b-recovery-20261022/B_RETRY_GATE.md` and manifest. No business Cloud E2E or real Auth/Provider/Native acceptance claim. Independent fixed-packet review is separate.
+
+## Metadata B-only DEV retry — 2026-10-22 infrastructure PASS
+
+- Owner-approved unique attempt09:23:15Z (405seconds remaining in09:15–09:30), completed09:23:37Z. Exact source12d6b2f/image4c8d6a04/Capture bundlea9124ac6 deployed via saved-image transfer, no DEV build. Public development health200 and five no-Auth route401; canonical env/HostConfig/user/three mounts preserved. Startup diagnostics saved before potential rollback; rollback unused/resources retained.
+- Independent B_CLOSED_DEPLOYMENT_PASS is infrastructure-only. Fresh SQL catalog/ACL unchanged, five business gates false, principals NOLOGIN, Metadata receipts0. A not reinstalled. No Auth/C/business/Native/Source operation; four business paths still CLOUD_PENDING. Stop remote work; only prepare existing bounded C packet for separate Owner approval.
+- Actual receipts/manifest/review: `docs/ops/metadata-b-retry-20261022/`. L1 Native N/A/NOT_RUN; prior L2 retained; business L3 NOT_RUN.

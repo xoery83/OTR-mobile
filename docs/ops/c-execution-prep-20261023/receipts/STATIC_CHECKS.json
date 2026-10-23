@@ -1,0 +1,9 @@
+{
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "uiGuard": "PASS",
+  "native": "NOT_RUN",
+  "hosted": "NOT_RUN",
+  "realAuth": "NOT_RUN",
+  "businessWrites": 0
+}

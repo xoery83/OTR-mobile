@@ -1,3 +1,9 @@
+import { readTripMetadataConfirmation } from "./tripMetadataConfirmation";
+import {
+  structuredTripMetadataReceiptSchema,
+  structuredTripMetadataUpdateSchema,
+} from "@/domain/trip/tripStructuredDestinationContract";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import type * as SQLite from "expo-sqlite";
 import {
   parseLocalTripDestinations,
@@ -11,7 +17,7 @@ import {
   type LocalTripDestinationsChange,
 } from "@/domain/trip/localTripDestinationUpdate";
 
-type Database = Pick<SQLite.SQLiteDatabase, "getAllAsync" | "runAsync">;
+type Database = Pick<SQLite.SQLiteDatabase, "getAllAsync" | "getFirstAsync" | "runAsync">;
 type Row = {
   trip_id: string;
   created_at: string;
@@ -125,13 +131,67 @@ async function verifyDestinationHistory(
     idempotency_key: string;
     status: string;
     payload_json: string;
+    operation_type: string;
   }>(
-    "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type='TRIP_DESTINATIONS_LOCAL_SAVE' ORDER BY rowid",
+    "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND (operation_type='TRIP_DESTINATIONS_LOCAL_SAVE' OR (operation_type='UPDATE_TRIP_METADATA' AND json_extract(payload_json,'$.formatVersion')=3)) ORDER BY rowid",
     accountId,
     tripId,
   );
-  let expected = initial === undefined ? undefined : parseLocalTripDestinations(initial);
+  const confirmed = await readTripMetadataConfirmation(database, accountId, tripId);
+  let expected =
+    confirmed?.metadata.destinations ??
+    (initial === undefined ? undefined : parseLocalTripDestinations(initial));
+  if (confirmed && initial !== undefined) {
+    const original = await database.getFirstAsync<{ metadata_json: string }>(
+      "SELECT metadata_json FROM local_trip_metadata_confirmations WHERE account_id=? AND trip_id=? AND source_kind='CREATE_RECEIPT'",
+      accountId,
+      tripId,
+    );
+    if (
+      !original ||
+      canonicalCoreJson(JSON.parse(original.metadata_json).destinations as Json) !==
+        canonicalCoreJson(initial as unknown as Json)
+    )
+      throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+  }
   for (const row of history) {
+    if (row.operation_type === "UPDATE_TRIP_METADATA") {
+      const request = structuredTripMetadataUpdateSchema.parse(
+        JSON.parse(row.payload_json),
+      );
+      if (row.status === "COMPLETED" && confirmed) {
+        const stored = await database.getFirstAsync<{ proof_json: string }>(
+          "SELECT proof_json FROM local_trip_metadata_confirmations WHERE account_id=? AND operation_id=? AND source_kind='METADATA_RECEIPT'",
+          accountId,
+          row.id,
+        );
+        if (!stored) throw Error("TRIP_DESTINATIONS_CONFIRMED_RECEIPT_REQUIRED");
+        const receipt = structuredTripMetadataReceiptSchema.parse(
+          JSON.parse(stored.proof_json),
+        );
+        const { actorAccountId, resultMetadataRevision, ...accepted } = receipt;
+        if (
+          actorAccountId !== accountId ||
+          resultMetadataRevision > confirmed.metadataRevision ||
+          canonicalCoreJson(accepted as Json) !== canonicalCoreJson(request as Json)
+        )
+          throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+        continue;
+      }
+      expected ??= request.before.destinations;
+      if (
+        row.entity_type !== "TRIP" ||
+        row.id !== row.idempotency_key ||
+        row.entity_id !== tripId ||
+        row.trip_id !== tripId ||
+        request.tripId !== tripId ||
+        request.operationId !== row.id ||
+        JSON.stringify(request.before.destinations) !== JSON.stringify(expected)
+      )
+        throw new Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+      expected = request.after.destinations;
+      continue;
+    }
     const receipt = localTripDestinationsReceiptSchema.parse(
       JSON.parse(row.payload_json),
     );
@@ -182,11 +242,6 @@ export async function replaceLocalTripDestinations(
   await verifyDestinationHistory(database, accountId, tripId, before);
   if (JSON.stringify(before) !== JSON.stringify(change.before))
     throw new Error("TRIP_DESTINATIONS_LOCAL_CONFLICT");
-  const timestamps = await database.getAllAsync<Row>(
-    "SELECT * FROM local_trip_destinations WHERE account_id=? AND trip_id=?",
-    accountId,
-    tripId,
-  );
   const retained = new Map(existing.map((item) => [item.destinationId, item]));
   for (const item of change.after) {
     const previous = retained.get(item.destinationId);
@@ -199,12 +254,42 @@ export async function replaceLocalTripDestinations(
     )
       throw new Error("TRIP_DESTINATIONS_IDENTITY_MISMATCH");
   }
+  await writeDestinationRows(database, accountId, tripId, change.after, now);
+}
+// Only the owning confirmed snapshot apply calls this after no-dirty/revision/account checks.
+export async function applyConfirmedTripDestinationRows(
+  database: Database,
+  accountId: string,
+  tripId: string,
+  items: readonly LocalTripDestinationInput[],
+  now: string,
+) {
+  await writeDestinationRows(
+    database,
+    accountId,
+    tripId,
+    parseLocalTripDestinations(items),
+    now,
+  );
+}
+async function writeDestinationRows(
+  database: Database,
+  accountId: string,
+  tripId: string,
+  items: readonly LocalTripDestinationInput[],
+  now: string,
+) {
+  const timestamps = await database.getAllAsync<Row>(
+    "SELECT * FROM local_trip_destinations WHERE account_id=? AND trip_id=?",
+    accountId,
+    tripId,
+  );
   await database.runAsync(
     "DELETE FROM local_trip_destinations WHERE account_id=? AND trip_id=?",
     accountId,
     tripId,
   );
-  for (const [ordinal, item] of change.after.entries()) {
+  for (const [ordinal, item] of items.entries()) {
     const previous = timestamps.find((row) => row.destination_id === item.destinationId);
     await database.runAsync(
       "INSERT INTO local_trip_destinations(account_id,trip_id,destination_id,ordinal,source_kind,display_label,manual_claim,provider,provider_place_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",

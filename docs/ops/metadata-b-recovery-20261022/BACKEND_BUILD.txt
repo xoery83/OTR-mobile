@@ -1,0 +1,8 @@
+
+> otr-mobile@0.1.0 backend:build:capture
+> esbuild backend/src/serverCapture.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --outfile=dist/server-capture.mjs --banner:js='import { createRequire } from "node:module"; const require = createRequire(import.meta.url);'
+
+
+  dist/server-capture.mjs  2.6mb ⚠️
+
+⚡ Done in 56ms

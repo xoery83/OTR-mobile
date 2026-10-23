@@ -1,3 +1,5 @@
+import { retainTripMetadataConfirmation } from "./tripMetadataConfirmation";
+import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
 import { parseLocalTripDestinations } from "@/domain/trip/localTripDestination";
 import {
   readLocalTripDestinations,
@@ -18,19 +20,16 @@ import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { corePayloadSchemas } from "@/domain/trip/tripCoreV2Commands";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import {
-  tripCreateRequestSchema,
-  tripCreateResultSchema,
-  type TripCreateResult,
-  type TripCreateTarget,
-} from "@/domain/trip/tripCreateContract";
+  tripCreateWireRequestSchema as tripCreateRequestSchema,
+  tripCreateWireResultSchema as tripCreateResultSchema,
+  type TripCreateWireResult as TripCreateResult,
+} from "@/domain/trip/tripCreateWireContract";
 import {
   captureAccountScope,
   assertAccountRequestContext,
   withAccountApplyGate,
   type AccountScope,
 } from "../auth/accountRequestContext";
-import { readInitializedDatabase } from "../db/database";
-import { requireActiveUserId, readLocalSession } from "../auth/authRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { createTripMetadataRepository } from "./tripMetadataRepository";
@@ -46,6 +45,8 @@ type Core = Pick<
   "captureContext" | "enqueue" | "pending"
 >;
 type Row = {
+  create_operation_id?: string;
+  create_payload_json?: string;
   id: string;
   name: string;
   destination: string | null;
@@ -58,7 +59,17 @@ type Row = {
   selected_cover_asset_id?: string | null;
   metadata_pending?: number;
 };
+const originalCreateVersion = (row: Row): 2 | undefined => {
+  if (!row.create_payload_json || !row.create_operation_id) return undefined;
+  const request = tripCreateRequestSchema.parse({
+    ...JSON.parse(row.create_payload_json),
+    operationId: row.create_operation_id,
+  });
+  if (request.tripId !== row.id) throw Error("TRIP_CREATE_LOCAL_MISMATCH");
+  return "formatVersion" in request ? 2 : undefined;
+};
 const trip = (row: Row): Trip => ({
+  syncFormatVersion: originalCreateVersion(row),
   id: row.id,
   serverId: row.accepted_at ? row.id : null,
   name: row.name,
@@ -199,7 +210,7 @@ export function createTripRepository(
     coreUuid.parse(id);
     const scope = await captureAccountScope(account);
     const row = await database.getFirstAsync<Row>(
-      "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
+      "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
       scope.accountId,
       id,
     );
@@ -221,7 +232,7 @@ export function createTripRepository(
         await assertAccountRequestContext(scope, account);
         await database.withTransactionAsync(async () => {
           const row = await database.getFirstAsync<Row>(
-            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json FROM local_trip_containers WHERE account_id=? AND id=?",
             scope.accountId,
             tripId,
           );
@@ -233,7 +244,7 @@ export function createTripRepository(
     async listTrips(): Promise<Trip[]> {
       const scope = await captureAccountScope(account);
       const rows = await database.getAllAsync<Row>(
-        "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
+        "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
         scope.accountId,
       );
       await assertAccountRequestContext(scope, account);
@@ -290,13 +301,26 @@ export function createTripRepository(
       const payload = {
         tripId: input.tripId,
         name: title(input.name),
-        destination: input.destination?.trim() || null,
+        destination:
+          input.syncFormatVersion === 2 ? null : input.destination?.trim() || null,
         startDate,
         endDate,
       };
       if (payload.destination && payload.destination.length > 256)
         throw new Error("TRIP_DESTINATION_INVALID");
-      const text = canonicalCoreJson(payload as Json);
+      const wirePayload =
+        input.syncFormatVersion === 2
+          ? {
+              ...payload,
+              formatVersion: 2 as const,
+              destination: null,
+              destinations: destinations ?? [],
+            }
+          : payload;
+      if (input.syncFormatVersion === 2 && input.destination != null)
+        throw new Error("TRIP_STRUCTURED_SCALAR_DESTINATION_FORBIDDEN");
+      tripCreateRequestSchema.parse({ ...wirePayload, operationId: input.operationId });
+      const text = canonicalCoreJson(wirePayload as Json);
       const scope = await captureAccountScope(account);
       const profileName = await displayName(scope.accountId);
       const name = explicitName ?? profileName;
@@ -313,7 +337,7 @@ export function createTripRepository(
             if (prior.payload_json !== text)
               throw new Error("TRIP_OPERATION_REUSE_MISMATCH");
             const row = await database.getFirstAsync<Row>(
-              "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+              "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json FROM local_trip_containers WHERE account_id=? AND id=?",
               scope.accountId,
               input.tripId,
             );
@@ -349,6 +373,8 @@ export function createTripRepository(
             );
             result = trip({
               id: input.tripId,
+              create_operation_id: input.operationId,
+              create_payload_json: text,
               name: payload.name,
               destination: payload.destination,
               start_date: startDate,
@@ -360,7 +386,7 @@ export function createTripRepository(
             });
           }
           const row = await database.getFirstAsync<Row>(
-            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json FROM local_trip_containers WHERE account_id=? AND id=?",
             scope.accountId,
             input.tripId,
           );
@@ -464,11 +490,17 @@ export function createTripRepository(
             proposed.name !== accepted.name ||
             proposed.destination !== accepted.destination ||
             proposed.startDate !== accepted.startDate ||
-            proposed.endDate !== accepted.endDate
+            proposed.endDate !== accepted.endDate ||
+            ("formatVersion" in proposed ? 2 : 1) !==
+              ("formatVersion" in accepted ? 2 : 1) ||
+            ("destinations" in proposed &&
+              (!("destinations" in accepted) ||
+                canonicalCoreJson(proposed.destinations as Json) !==
+                  canonicalCoreJson(accepted.destinations as Json)))
           )
             throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
           const row = await database.getFirstAsync<Row>(
-            "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
+            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
             scope.accountId,
             accepted.tripId,
             accepted.operationId,
@@ -480,6 +512,14 @@ export function createTripRepository(
             throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
           if (operation.status === "COMPLETED" && !row.accepted_at)
             throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+          if ("formatVersion" in accepted)
+            await retainTripMetadataConfirmation(
+              database,
+              scope.accountId,
+              accepted.operationId,
+              "CREATE_RECEIPT",
+              accepted,
+            );
           const now = clock();
           if (!row.accepted_at) {
             await initializeLedger(scope.accountId, row, name);
@@ -566,6 +606,9 @@ export function createTripRepository(
 }
 export type TripRepository = ReturnType<typeof createTripRepository>;
 export async function readLocalTripRepository(): Promise<TripRepository> {
+  const { readInitializedDatabase } = await import("../db/database");
+  const { requireActiveUserId, readLocalSession } =
+    await import("../auth/authRepository");
   const database = await readInitializedDatabase();
   const core = createTripCoreV2Repository(
     database,

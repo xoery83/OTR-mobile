@@ -1,0 +1,8 @@
+{
+  "fixedCodeSHA": "12d6b2f27d66305bba0cbfc81c1a7969b3c37e95",
+  "scriptSHA256": "3c68eb3a458b4533e82dcf097a444f8bc73d068e13683e074870694e93ea433a",
+  "gateSHA256": "77fd7de6c2ac1a0467fb0da19c5d6cbb0e318a7ec5cd55c1a02ea2f31410619a",
+  "image": "sha256:4c8d6a04c7e31f5f38d972990a626168fedfe7611e2a32ec92209b5f7a120e14",
+  "state": "PREPARED_PENDING_FRESH_READONLY_AND_WINDOW",
+  "attempts": 0
+}

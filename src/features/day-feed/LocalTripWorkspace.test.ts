@@ -291,6 +291,8 @@ const trip = (id: string, name: string): Trip => ({
 const repository = (list: Trip[] = []): TripRepository => ({
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
+  readMetadataEditBase: vi.fn(async () => ({ confirmed: null, pendingOperationIds: [] })),
+  retainMetadataSnapshot: vi.fn(async () => {}),
   canUpdateMetadata: vi.fn(async () => true),
   readMetadataEditBase: vi.fn(async () => ({ confirmed: null, pendingOperationIds: [] })),
   retainMetadataSnapshot: vi.fn(async () => {}),

@@ -10,6 +10,8 @@ import type { TripCoverAssetId } from "./tripCoverAssets";
 export type BuiltInTripCoverId = TripCoverAssetId;
 
 export type Trip = SyncableRecord & {
+  /** Stored original Create contract, never inferred from a local destination list. */
+  syncFormatVersion?: 2;
   destinations?: readonly LocalTripDestination[];
   name: string;
   destination: string | null;
@@ -23,7 +25,9 @@ export type Trip = SyncableRecord & {
 };
 
 export type CreateTripInput = {
-  /** Local ordered authored destinations, excluded from Hosted CREATE proof. */
+  /** Explicit new Cloud-shared structured contract; never upgrades an old operation. */
+  syncFormatVersion?: 2;
+  /** Ordered destinations; Cloud-shared only for explicit syncFormatVersion2. */
   destinations?: readonly LocalTripDestinationInput[];
   /** Local creator nickname only; never changes Account identity or Hosted CREATE proof. */
   creatorDisplayName?: string;

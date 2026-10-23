@@ -67,6 +67,7 @@ const pendingStatuses = new Set([
 export function createLedgerReadRepository(
   database: LedgerReadDatabase,
   getActiveUserId: () => Promise<string>,
+  participationHash?: (bytes: string) => Promise<string>,
 ) {
   return {
     // Foundation seam only. Central reporting cycle must drain earlier reads
@@ -219,7 +220,8 @@ export function createLedgerReadRepository(
       if (certified && !requestContext)
         throw new Error("Certified snapshot requires request context.");
       await assertAccountRequestContext(context, getActiveUserId);
-      if (certified) await validateParticipationBootstrap(response, context);
+      if (certified)
+        await validateParticipationBootstrap(response, context, participationHash);
       await withAccountApplyGate(() =>
         database.withTransactionAsync(async () => {
           await assertAccountRequestContext(context, getActiveUserId);
@@ -276,7 +278,13 @@ export function createLedgerReadRepository(
             response.serverTime,
             userId,
           );
-          if (certified) await saveParticipationBootstrap(database, response, context);
+          if (certified)
+            await saveParticipationBootstrap(
+              database,
+              response,
+              context,
+              participationHash,
+            );
           await assertAccountRequestContext(context, getActiveUserId);
         }),
       );

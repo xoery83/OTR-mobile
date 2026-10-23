@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /private/tmp/otr-metadata-sql-20261022
+
+
+ Test Files  11 passed (11)
+      Tests  143 passed | 4 skipped (147)
+   Start at  20:35:45
+   Duration  10.66s (transform 2.02s, setup 0ms, import 3.61s, tests 9.93s, environment 2ms)
+

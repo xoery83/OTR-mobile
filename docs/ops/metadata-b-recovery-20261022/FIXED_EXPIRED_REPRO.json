@@ -1,0 +1,15 @@
+{
+  "case": "expired",
+  "state": "HEALTH_RESPONSE",
+  "status": 200,
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "stdout": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"error\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":99,\"usefulWork\":false,\"claimedRateDemands\":null,\"personalPaymentFxWork\":null,\"autoReferenceDemands\":null,\"autoReferenceWork\":null,\"nextIntervalMs\":60000,\"failureCount\":1,\"failureClass\":\"Error\",\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"dd5d996a-db7d-4ce1-832d-22010970ae9d\",\"route\":\"health\",\"status\":200,\"durationMs\":28}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"9e8ffe82-ad1c-4cc3-80d0-ab3fd1b9fd26\",\"route\":\"health\",\"status\":200,\"durationMs\":8}\n",
+  "stderr": "",
+  "image": "sha256:7267219e9fc42d5e6304cdc5c7091fbe2e3547861693dd1a2583c6a84aca67a7",
+  "network": "none",
+  "syntheticOnly": true,
+  "actualDEVConfigCopied": false
+}

@@ -1,0 +1,95 @@
+{
+  "status": "PUBLIC_COMPATIBILITY_CLOSED_PASS",
+  "observedAt": "2026-10-22T09:24:24.128751+00:00",
+  "image": "sha256:4c8d6a04c7e31f5f38d972990a626168fedfe7611e2a32ec92209b5f7a120e14",
+  "entry": [
+    "node",
+    "server-capture.mjs"
+  ],
+  "health": "healthy",
+  "publicHealth": {
+    "status": 200,
+    "body": {
+      "status": "ok",
+      "environment": "development"
+    }
+  },
+  "noAuthRoutes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "7326becc-b30e-4ec2-bde7-1f51dd8588e1"
+        }
+      }
+    },
+    "/v2/trip-metadata-operations/11111111-1111-4111-8111-111111111111": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "f4738178-7756-4be6-85f0-7a38c1898152"
+        }
+      }
+    },
+    "/v2/trip-create-operations/11111111-1111-4111-8111-111111111111": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "1b6f757a-16e1-4c4f-9e52-4f35f4aac694"
+        }
+      }
+    },
+    "/v2/trips/11111111-1111-4111-8111-111111111111/source-import-catalogs": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "7a5dbfe1-5dfc-4812-aeb7-706628e180b2"
+        }
+      }
+    },
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "a86deca3-457a-4705-af58-5a3fcf72874a"
+        }
+      }
+    }
+  },
+  "newBusinessRuntimeMountsAbsent": true,
+  "providerFlagsClosed": true,
+  "custodyHash": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+  "custodyExpired": true,
+  "mounts": [
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/capture-custody",
+      "destination": "/var/lib/otr/capture-custody",
+      "rw": true
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "rw": false
+    }
+  ],
+  "canonicalEnvironmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "user": "otr",
+  "hostConfigSHA256": "f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0",
+  "phaseCExecuted": false,
+  "authOrBusinessCalls": 0
+}

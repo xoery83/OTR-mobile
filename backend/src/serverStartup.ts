@@ -46,6 +46,7 @@ export function startDevBackend(
     BackendDependencies,
     | "tripCreatePort"
     | "tripMetadataPort"
+    | "tripMetadataV2Port"
     | "coreConnection"
     | "documentOriginalReader"
     | "captureMaterialCustody"
@@ -93,6 +94,7 @@ export function startDevBackend(
     captureMaterialCustody: startOptions.captureMaterialCustody,
     tripCreatePort: startOptions.tripCreatePort,
     tripMetadataPort: startOptions.tripMetadataPort,
+    tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,
     documentOriginalReader: startOptions.documentOriginalReader,
     log(event) {

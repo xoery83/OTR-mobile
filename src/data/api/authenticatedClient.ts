@@ -4,13 +4,13 @@ import {
   type AccountScope,
 } from "@/data/auth/accountRequestContext";
 import { createApiClient, type ApiClientOptions } from "./client";
-import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
+import type { sessionAccessToken } from "@/data/auth/sessionAccessToken";
 
 type TokenProvider = typeof sessionAccessToken;
 
 export function createAuthenticatedApiClient(
   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
-  tokenProvider: TokenProvider = sessionAccessToken,
+  tokenProvider?: TokenProvider,
   context?: AccountScope,
 ) {
   let userId: string | undefined = context?.accountId;
@@ -29,7 +29,10 @@ export function createAuthenticatedApiClient(
       : {}),
     accessTokenProvider: async (forceRefresh, rejectedToken) => {
       if (context) assertAccountRequestGeneration(context);
-      const session = await tokenProvider({
+      const provider =
+        tokenProvider ??
+        (await import("@/data/auth/sessionAccessToken")).sessionAccessToken;
+      const session = await provider({
         expectedUserId: userId,
         forceRefresh,
         rejectedToken,

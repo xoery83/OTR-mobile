@@ -1,3 +1,4 @@
+import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
 import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCustody";
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
@@ -614,6 +615,7 @@ export type BackendDependencies = {
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
+  tripMetadataV2Port?: TripMetadataV2Port;
   documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
   flightTextSourceConnection?: FlightTextSourceConnection;
@@ -2359,6 +2361,7 @@ export function createDevBackendHandler({
   captureMaterialCustody,
   tripCreatePort,
   tripMetadataPort,
+  tripMetadataV2Port,
   documentOriginalReader,
   flightTextSourceConnection,
   coreConnection,
@@ -2470,7 +2473,11 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/metadata";
         const actor = await authenticate(request, gateway);
-        response = await tripMetadataBoundary(request, actor.id, tripMetadataPort);
+        response = ["2", "3"].includes(
+          request.headers.get("OTR-Trip-Metadata-Version") ?? "",
+        )
+          ? await tripMetadataV2Boundary(request, actor.id, tripMetadataV2Port)
+          : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
       } else if (
         url.pathname === "/v2/trips" ||
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)

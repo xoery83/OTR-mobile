@@ -1,8 +1,6 @@
 import { getAccountGeneration } from "../auth/accountGeneration";
-import {
-  tripMetadataUpdateSchema,
-  type TripMetadataSyncTarget,
-} from "@/domain/trip/tripMetadataContract";
+import type { TripMetadataSyncTarget } from "@/domain/trip/tripMetadataContract";
+import { tripMetadataWireUpdateSchema } from "@/domain/trip/tripMetadataV2Contract";
 import {
   captureAccountScope,
   assertAccountRequestGeneration,
@@ -18,11 +16,13 @@ import type { TripMetadataTransport } from "./tripMetadataTransport";
 
 export function createTripMetadataSyncWorker(
   repository: Pick<TripRepository, "acceptMetadataUpdate">,
-  transport: TripMetadataTransport,
+  transport: Pick<TripMetadataTransport, "receipt" | "update">,
   account: () => Promise<string>,
+  dispatchGuard: () => void = () => {},
 ): SyncWorker {
   return {
     async push(operation) {
+      dispatchGuard();
       if (
         operation.operationType !== "UPDATE_TRIP_METADATA" ||
         operation.entityType !== "TRIP" ||
@@ -33,13 +33,23 @@ export function createTripMetadataSyncWorker(
       const scope = await captureAccountScope(account);
       if (scope.accountId !== operation.ownerUserId)
         throw new Error("TRIP_METADATA_ACCOUNT_MISMATCH");
-      const request = tripMetadataUpdateSchema.parse(JSON.parse(operation.payloadJson));
+      const request = tripMetadataWireUpdateSchema.parse(
+        JSON.parse(operation.payloadJson),
+      );
       if (request.operationId !== operation.id || request.tripId !== operation.tripId)
         throw new Error("TRIP_METADATA_QUEUE_MISMATCH");
-      let receipt = await transport.receipt(scope, request.operationId);
+      const version = "formatVersion" in request ? request.formatVersion : 1;
+      let receipt =
+        version !== 1
+          ? await transport.receipt(scope, request.operationId, version)
+          : await transport.receipt(scope, request.operationId);
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (!receipt) receipt = await transport.update(scope, request);
       await assertAccountRequestContext(scope, account);
+      if (("formatVersion" in receipt ? receipt.formatVersion : 1) !== version)
+        throw new Error("TRIP_METADATA_WIRE_VERSION_MISMATCH");
+      dispatchGuard();
       await repository.acceptMetadataUpdate(receipt, scope);
     },
   };

@@ -1,0 +1,12 @@
+{
+  "case": "expired",
+  "state": "EXITED_BEFORE_HEALTH",
+  "code": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "CAPTURE_RUNTIME_UNAVAILABLE\n",
+  "image": "sha256:070b8626a26bfca82b9d0fad543a1f6f70a69bd1bccf241e41ecf857c8a40db8",
+  "network": "none",
+  "syntheticOnly": true,
+  "actualDEVConfigCopied": false
+}

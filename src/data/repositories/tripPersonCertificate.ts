@@ -14,8 +14,11 @@ import type {
 } from "@/data/api/ledgerReadContracts";
 import type { LedgerReadDatabase } from "./ledgerReadRepository";
 
-export async function fingerprintParticipation(rows: readonly unknown[]) {
-  return hashTripPersonBytes(serializeParticipationVector(rows));
+export async function fingerprintParticipation(
+  rows: readonly unknown[],
+  hash = hashTripPersonBytes,
+) {
+  return hash(serializeParticipationVector(rows));
 }
 export async function hashTripPersonBytes(value: string) {
   const crypto = await import("expo-crypto");
@@ -32,6 +35,7 @@ function invalidCertificate(): never {
 export async function validateParticipationBootstrap(
   response: LedgerBootstrapResponse,
   context: AccountRequestContext,
+  hash = hashTripPersonBytes,
 ) {
   const snapshot = participationSnapshotSchema.parse(response.participationSnapshot);
   const token = decodeSharedLedgerCursor(
@@ -44,7 +48,7 @@ export async function validateParticipationBootstrap(
     response.actor.userId !== context.accountId ||
     snapshot.personCount !== response.members.length ||
     token.participationFingerprint !== snapshot.fingerprint ||
-    (await fingerprintParticipation(response.members)) !== snapshot.fingerprint
+    (await fingerprintParticipation(response.members, hash)) !== snapshot.fingerprint
   )
     throw new Error("Invalid Trip Person snapshot binding.");
 }
@@ -68,12 +72,15 @@ export async function saveParticipationBootstrap(
   database: LedgerReadDatabase,
   response: LedgerBootstrapResponse,
   context: AccountRequestContext,
+  hash = hashTripPersonBytes,
 ) {
   const snapshot = participationSnapshotSchema.parse(response.participationSnapshot);
   const ids = canonicalParticipationIds(response.members);
   if (
-    (await fingerprintParticipation(await localVector(database, context.tripId, ids))) !==
-    snapshot.fingerprint
+    (await fingerprintParticipation(
+      await localVector(database, context.tripId, ids),
+      hash,
+    )) !== snapshot.fingerprint
   )
     invalidCertificate();
   await database.runAsync(
