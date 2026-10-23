@@ -108,9 +108,13 @@ it("opens currency on the parent Stack with the same Trip, rejecting a late acco
         .content as import("react").ReactElement<{ onCurrency(): void }>
     ).props.onCurrency;
   };
-  state.read.mockResolvedValue(view.read);
+  const facts = {
+    context: view.read.scope,
+    currency: { state: "AVAILABLE", permission: "OWNER", lock: "NOT_OBSERVED" },
+  };
+  state.setup.mockResolvedValue(facts);
   state.cursor = 0;
-  state.values = [view.read, "READY", { context: view.read.scope }];
+  state.values = [view.read, "READY", facts];
   CurrencyHarness()();
   await vi.waitFor(() =>
     expect(router.push).toHaveBeenCalledExactlyOnceWith({
@@ -119,14 +123,14 @@ it("opens currency on the parent Stack with the same Trip, rejecting a late acco
     }),
   );
   vi.mocked(router.push).mockClear();
-  let resolve!: (value: typeof view.read) => void;
-  state.read.mockReturnValue(new Promise((done) => (resolve = done)));
+  let resolve!: (value: typeof facts) => void;
+  state.setup.mockReturnValue(new Promise((done) => (resolve = done)));
   state.cursor = 0;
-  state.values = [view.read, "READY", { context: view.read.scope }];
+  state.values = [view.read, "READY", facts];
   CurrencyHarness()();
   await vi.waitFor(() => expect(resolve).toBeTypeOf("function"));
   state.generation = 2;
-  resolve(view.read);
+  resolve(facts);
   for (let i = 0; i < 12; i++) await Promise.resolve();
   expect(router.push).not.toHaveBeenCalled();
 });
@@ -356,3 +360,69 @@ it("drops a late source resolution after the widget leaves focus", async () => {
   expect(view.local).not.toHaveBeenCalled();
   expect(view.accepted).not.toHaveBeenCalled();
 });
+
+it.each(["absent", "unavailable"])(
+  "keeps Ledger setup independent when itinerary is %s",
+  async (mode) => {
+    const receive = vi.fn();
+    const view = PreparationHarness(false, receive);
+    const facts = {
+      context: view.read.scope,
+      currency: {
+        state: "AVAILABLE",
+        code: "NZD",
+        scale: 2,
+        permission: "OWNER",
+        lock: "NOT_OBSERVED",
+      },
+      members: { state: "UNKNOWN" },
+    };
+    if (mode === "absent") state.read.mockResolvedValue(null);
+    else state.read.mockRejectedValue(new Error("CORE_READER_UNAVAILABLE"));
+    state.setup.mockResolvedValue(facts);
+    state.effects[0]();
+    await vi.waitFor(() => expect(receive).toHaveBeenCalledExactlyOnceWith(facts));
+    expect(state.values[0]).toBeNull();
+    state.cursor = 0;
+    const widget = useTripPreparationWidget({ tripId: "trip", undated: true });
+    const props = (widget!.content as import("react").ReactElement<any>).props;
+    expect(props.setup).toEqual(facts);
+    expect(props.onImport).toBeUndefined();
+    expect(props.onBuildItinerary).toBeUndefined();
+    props.onCurrency();
+    await vi.waitFor(() =>
+      expect(router.push).toHaveBeenCalledExactlyOnceWith({
+        pathname: "/trip-currency",
+        params: { journeyId: "trip" },
+      }),
+    );
+  },
+);
+
+it.each(["READ_ONLY", "FINALIZED", "OTHER_ACCOUNT", "OTHER_TRIP"])(
+  "does not open currency after Ledger qualification changes: %s",
+  async (denial) => {
+    const view = PreparationHarness(false);
+    const facts = {
+      context: view.read.scope,
+      currency: { state: "AVAILABLE", permission: "OWNER", lock: "NOT_OBSERVED" },
+    };
+    state.cursor = 0;
+    state.values = [null, "UNAVAILABLE", facts];
+    const widget = useTripPreparationWidget({ tripId: "trip", undated: true });
+    const changed = {
+      ...facts,
+      context: { ...facts.context },
+      currency: { ...facts.currency },
+    };
+    if (denial === "READ_ONLY") changed.currency.permission = "READ_ONLY";
+    if (denial === "FINALIZED") changed.currency.lock = "FINALIZED";
+    if (denial === "OTHER_ACCOUNT") changed.context.accountId = "other";
+    if (denial === "OTHER_TRIP") changed.context.tripId = "other";
+    state.setup.mockResolvedValue(changed);
+    (widget!.content as import("react").ReactElement<any>).props.onCurrency();
+    await vi.waitFor(() => expect(state.setup).toHaveBeenCalled());
+    for (let i = 0; i < 12; i++) await Promise.resolve();
+    expect(router.push).not.toHaveBeenCalled();
+  },
+);
