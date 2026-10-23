@@ -1,3 +1,7 @@
+# 24 October — People and Identity design baseline registered
+
+Owner-approved three DOCX/four PNG originals retained with SHA256 [manifest](people/design-v1-20261024/MANIFEST.json); [bounded coverage and owning gaps](people/design-v1-20261024/INTAKE_AND_GAPS.md) registered in existing Decision/Interface/Execution records. Written People/direct Add Traveler/unchecked AKA/overflow Reset rules override directional images. No coding line added. Existing Person local intents/roster do not prove normal shared Person creation or Claim; generic Core shared-management predicate needs Item-specific Creator/Everyone qualification before new permissions activate. Current Trip/P1 handles only necessary dependencies; Universal name/AKA observations confer no identity or access. No Native/DEV/schema/permission change for intake.
+
 ## 24 October — Coordinator integration and bounded Trip/P1 side slice
 
 Reviewed Universal Backend adff007 and Native a8fdbeb now compose in one isolated Coordinator tree. Typecheck/build/UI guard and scoped tests pass; actual Linux Docker packaging/startup with network disabled gives development/ok, unauthorized Universal401, all optional capabilities absent/CLOSED and clean exit0. Docker context now includes the existing Repository/SQLite/Trip dependencies previously omitted by the Ledger-only build input. This is local integration only; no deployment, Provider call or AD5 install. [Receipt](ops/universal-coordinator-integration-20261024/INTEGRATION_RECEIPT.json).

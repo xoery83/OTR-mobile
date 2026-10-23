@@ -1,3 +1,7 @@
+# People / Identity V1 owning gaps — 24 October 2026
+
+Latest approved presentation baseline and source/section mapping: [People intake and interface matrix](../people/design-v1-20261024/INTAKE_AND_GAPS.md). Reuse Trip Person identity and explicit local intent/owner bindings, normal Auth adoption, existing Core mutations and receipts. Person-create Cloud authority, atomic Claim/switch/reset, original Owner/delegated role grant/revoke, private Profile/AKA, immutable date cutoff and Entitlement remain separate owning qualifications. `coreCanManage()` non-PRIVATE/shared-manager predicate is not the new Everyone/Creator Item authorization rule. Trip/P1 may implement only its required existing Person/Creator dependencies; Universal keeps name/AKA observations without identity/access promotion. No duplicate ACL/Person/Invite authority or fresh execution Gate is introduced by this intake.
+
 ## EXPERIENCE-REVIEW-02 interfaces / 2026-10-18
 
 Existing local repository commit is Edit success boundary, Hosted pending is nonblocking. Retain Account/Trip/version fencing for projection caches and semantic Day anchor identities. No new data model/API/schema authorized. File owners and field-level preflight: `../ops/experience-review02-20261018/PREFLIGHT.md`.

@@ -1,3 +1,7 @@
+# People / Identity V1 intake — 24 October 2026
+
+Owner-approved PD/UB/IH originals (three DOCX, four directional PNG) registered in [People V1 intake](../people/design-v1-20261024/INTAKE_AND_GAPS.md), with exact [manifest](../people/design-v1-20261024/MANIFEST.json). People is the roster/profile presentation term; Account/Person/Creator/Owner/Organizer/Entitlement remain separate authorities. Written rules override older image labels/chooser/checked AKA/prominent Reset. No inference-based Claim/access, no offline sensitive identity/permission queue, no other-creator non-Everyone Item editing. AUTH + LANG V1.0 and existing owning contracts retain priority. Design intake only; no code/schema/deployment/permission scope increase. Current Trip/P1 and Universal Writers retain their boundaries.
+
 ## EXPERIENCE-REVIEW-02 approved / 2026-10-18
 
 Owner approved finite TH01–13, ET01–04 and DS01–09 correction. Originals: `experience-review02-20261018/`. Existing P1–P6/Reader/Composer/TIME-01/NOW/TTR/NTC and Admission contracts remain unchanged. AD5 exclusive Owner preview retained. Cover Gallery/Tag Matching remains open under TH09.

@@ -1,3 +1,7 @@
+# People / Identity V1 — DESIGN_REGISTERED / IMPLEMENTATION_QUEUED / 2026-10-24
+
+Source identity and gaps: [intake](../people/design-v1-20261024/INTAKE_AND_GAPS.md). Queue PEOPLE-01 Home/Detail/Nickname → PEOPLE-02 Add Traveler/Cloud Person → PEOPLE-03 Invite/Claim/connection → PEOPLE-04 Organizer/Creator, Switch/Reset, private AKA. Assign one Writer and exact L1/L2/L3 slice only when implementation is authorized. Current Universal main + Trip/P1 auxiliary continue unchanged; no new agent, GUI, schema, permission, Provider or Hosted action. Blocked owning interfaces remain explicit; no mock identity authority.
+
 ## Universal main + Trip/P1 Sync auxiliary / IN_PROGRESS / 2026-10-24
 
 Owner permits one Universal Writer plus exactly one bounded Trip/P1 Sync Writer. Universal retains Source/Task/Provider/N→M ownership. Trip/P1 owns isolated Repository/Queue/adapters and minimal existing Core Mutation qualification; no shared Bootstrap/Worker/Native operations. Coordinator integrates common files, deployment and AD5 serially. Closure requires actual normal new-Trip full destinations and P1 Create/Edit SERVER_ACCEPTED, independent SERVER_VERIFIED and cold recovery; earlier finite QA receipts are scoped references only. New SQL/ACL/authority/deployment remains gated. Local-private Person names are neither promoted nor silently omitted. [Current integration receipt](../ops/universal-coordinator-integration-20261024/INTEGRATION_RECEIPT.json).
