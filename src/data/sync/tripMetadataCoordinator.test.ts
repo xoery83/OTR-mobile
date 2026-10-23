@@ -55,6 +55,7 @@ it("explicit installed-port composition reaches the existing queue/worker with n
     mocks.repository,
     mocks.transport,
     expect.any(Function),
+    expect.any(Function),
   );
   expect(mocks.coordinator).toHaveBeenCalledWith(
     mocks.queue,

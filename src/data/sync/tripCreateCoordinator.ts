@@ -19,6 +19,7 @@ import {
 export function createNativeTripCreateSyncRunner(
   target?: TripCreateTarget,
   portEnabled: () => boolean = () => false,
+  lastAttemptAt?: string | null,
 ) {
   const selected = target && Object.freeze({ ...target });
   const dispatchGuard = () => {
@@ -40,7 +41,15 @@ export function createNativeTripCreateSyncRunner(
     const repository = await readLocalTripRepository();
     await assertAccountRequestContext(scope, requireActiveUserId);
     return createTripCreateSyncCoordinator(
-      createSyncOperationRepository(database, requireActiveUserId),
+      createSyncOperationRepository(
+        database,
+        requireActiveUserId,
+        undefined,
+        selected && {
+          ...selected,
+          ...(lastAttemptAt === undefined ? {} : { lastAttemptAt }),
+        },
+      ),
       createTripCreateSyncWorker(
         repository,
         createTripCreateTransport(requireActiveUserId, {}, undefined, dispatchGuard),

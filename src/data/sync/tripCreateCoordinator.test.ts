@@ -60,6 +60,7 @@ it("explicit composition reuses the existing queue, worker, formal transport and
     mocks.repository,
     mocks.transport,
     expect.any(Function),
+    expect.any(Function),
   );
   expect(mocks.coordinator).toHaveBeenCalledWith(
     mocks.queue,

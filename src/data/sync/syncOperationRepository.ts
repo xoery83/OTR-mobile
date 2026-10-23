@@ -63,9 +63,31 @@ export const createSyncOperationClaimOwner = () =>
 
 export function createSyncOperationRepository(
   database: SyncQueueDatabase,
-  getActiveUserId: () => Promise<string>,
+  readActiveUserId: () => Promise<string>,
   clockNow: () => string = () => new Date().toISOString(),
+  target?: Readonly<{
+    accountId: string;
+    tripId: string;
+    operationId: string;
+    lastAttemptAt?: string | null;
+  }>,
 ) {
+  const selected = target && Object.freeze({ ...target });
+  const identitySql = selected ? " AND id=? AND trip_id=?" : "";
+  const identityParams = selected ? [selected.operationId, selected.tripId] : [];
+  const capped = selected && "lastAttemptAt" in selected;
+  const attemptSql = capped ? " AND last_attempt_at IS ?" : "";
+  const attemptParams = capped ? [selected.lastAttemptAt ?? null] : [];
+  const getActiveUserId = async () => {
+    const accountId = await readActiveUserId();
+    if (selected && accountId !== selected.accountId)
+      throw new Error("SYNC_TARGET_ACCOUNT_CHANGED");
+    return accountId;
+  };
+  const assertTarget = async (id: string) => {
+    if (selected && id !== selected.operationId) throw new Error("SYNC_TARGET_MISMATCH");
+    await getActiveUserId();
+  };
   return {
     async recoverInterrupted() {
       const now = clockNow();
@@ -79,7 +101,7 @@ export function createSyncOperationRepository(
           AND operation_type NOT IN (?,?)
           AND (claim_owner IS NULL OR
             (claim_owner <> ? AND NOT (operation_type=? AND substr(claim_owner,1,?)=?))
-            OR lease_expires_at <= ?)`,
+            OR lease_expires_at <= ?)${identitySql}`,
         now,
         now,
         userId,
@@ -90,9 +112,11 @@ export function createSyncOperationRepository(
         processClaimOwner.length + 1,
         `${processClaimOwner}:`,
         now,
+        ...identityParams,
       );
     },
     async enqueue(operation: EnqueueSyncOperation) {
+      if (selected) await assertTarget(operation.id);
       const now = clockNow();
       const userId = await getActiveUserId();
 
@@ -121,7 +145,7 @@ export function createSyncOperationRepository(
 
     async listPending() {
       const userId = await getActiveUserId();
-      await wakeCompletedDependencies(database, userId);
+      if (!selected) await wakeCompletedDependencies(database, userId);
       return database.getAllAsync<SyncOperation>(
         `SELECT
           id,
@@ -143,11 +167,13 @@ export function createSyncOperationRepository(
         FROM sync_operations
         WHERE owner_user_id = ? AND status IN (?, ?)
           AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
-          AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+          AND (next_attempt_at IS NULL OR next_attempt_at <= ?)${identitySql}${attemptSql}
         ORDER BY created_at ASC, rowid ASC`,
         userId,
         ...pendingStatuses,
         clockNow(),
+        ...identityParams,
+        ...attemptParams,
       );
     },
 
@@ -158,14 +184,17 @@ export function createSyncOperationRepository(
          WHERE owner_user_id = ? AND status = 'RETRYABLE'
            AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
            AND failure_category IN ('UNKNOWN', 'NETWORK', 'TIMEOUT', 'SERVER',
-             'RATE_LIMIT', 'RESPONSE_INVALID')`,
+             'RATE_LIMIT', 'RESPONSE_INVALID')${identitySql}`,
         clockNow(),
         userId,
+        ...identityParams,
       );
     },
 
     async claim(id: string) {
+      if (selected) await assertTarget(id);
       const now = clockNow();
+      if (capped && now === selected.lastAttemptAt) return false;
       const userId = await getActiveUserId();
       const result = await database.runAsync(
         `UPDATE sync_operations SET status = 'PROCESSING', claim_owner = ?,
@@ -173,7 +202,7 @@ export function createSyncOperationRepository(
          WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE') AND owner_user_id = ?
            AND status IN ('PENDING', 'RETRYABLE')
            AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
-           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
+           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)${identitySql}${attemptSql}`,
         processClaimOwner,
         new Date(Date.parse(now) + 5 * 60_000).toISOString(),
         now,
@@ -181,11 +210,14 @@ export function createSyncOperationRepository(
         id,
         userId,
         now,
+        ...identityParams,
+        ...attemptParams,
       );
       return result.changes === 1;
     },
 
     async markProcessing(id: string) {
+      if (selected) await assertTarget(id);
       await database.runAsync(
         "UPDATE sync_operations SET status = ?, last_attempt_at = ?, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')",
         "PROCESSING",
@@ -196,6 +228,7 @@ export function createSyncOperationRepository(
     },
 
     async markCompleted(id: string) {
+      if (selected) await assertTarget(id);
       const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE sync_operations SET status = ?, next_attempt_at = NULL,
@@ -206,10 +239,11 @@ export function createSyncOperationRepository(
         clockNow(),
         id,
       );
-      await wakeCompletedDependencies(database, userId, id);
+      if (!selected) await wakeCompletedDependencies(database, userId, id);
     },
 
     async markConflict(id: string, error: Error) {
+      if (selected) await assertTarget(id);
       const failure = errorDetails(error);
       await database.runAsync(
         `UPDATE sync_operations
@@ -228,6 +262,7 @@ export function createSyncOperationRepository(
     },
 
     async markRetryable(id: string, error: Error, nextAttemptAt: string) {
+      if (selected) await assertTarget(id);
       const failure = errorDetails(error);
       await database.runAsync(
         `UPDATE sync_operations
@@ -248,6 +283,7 @@ export function createSyncOperationRepository(
       );
     },
     async markFailed(id: string, error: Error) {
+      if (selected) await assertTarget(id);
       const failure = errorDetails(error);
       await database.runAsync(
         `UPDATE sync_operations SET status = 'FAILED', failure_category = ?,
@@ -265,6 +301,7 @@ export function createSyncOperationRepository(
       );
     },
     async markPending(id: string, error?: Error) {
+      if (selected) await assertTarget(id);
       const failure = error ? errorDetails(error) : null;
       await database.runAsync(
         `UPDATE sync_operations SET status = 'PENDING', next_attempt_at = NULL,
@@ -281,6 +318,7 @@ export function createSyncOperationRepository(
       );
     },
     async markDependencyBlocked(id: string, dependencyOperationId?: string) {
+      if (selected) await assertTarget(id);
       const userId = await getActiveUserId();
       const invalid = await database.getAllAsync<{ id: string }>(
         `SELECT dependency.id FROM sync_operations operation

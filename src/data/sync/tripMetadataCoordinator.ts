@@ -10,6 +10,7 @@ import type { TripMetadataSyncTarget } from "@/domain/trip/tripMetadataContract"
 export function createNativeTripMetadataSyncRunner(
   portEnabled: () => boolean = () => false,
   target?: TripMetadataSyncTarget,
+  lastAttemptAt?: string | null,
 ) {
   const selected = target && Object.freeze({ ...target });
   const dispatchGuard = () => {
@@ -51,7 +52,15 @@ export function createNativeTripMetadataSyncRunner(
     const database = await readInitializedDatabase();
     if (scope) await assertAccountRequestContext(scope, requireActiveUserId);
     return createTripMetadataSyncCoordinator(
-      createSyncOperationRepository(database, requireActiveUserId),
+      createSyncOperationRepository(
+        database,
+        requireActiveUserId,
+        undefined,
+        selected && {
+          ...selected,
+          ...(lastAttemptAt === undefined ? {} : { lastAttemptAt }),
+        },
+      ),
       createTripMetadataSyncWorker(
         repository,
         createTripMetadataTransport(requireActiveUserId, {}, undefined, dispatchGuard),

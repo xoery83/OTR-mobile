@@ -99,12 +99,13 @@ it("passes only exact approved targets to the existing coordinators, Create firs
   expect(state.createFactory).toHaveBeenCalledWith(
     { accountId: a, tripId: trip, operationId: create },
     expect.any(Function),
+    null,
   );
-  expect(state.editFactory).toHaveBeenCalledWith(expect.any(Function), {
-    accountId: a,
-    tripId: trip,
-    operationId: edit,
-  });
+  expect(state.editFactory).toHaveBeenCalledWith(
+    expect.any(Function),
+    { accountId: a, tripId: trip, operationId: edit },
+    null,
+  );
   expect(state.createFactory.mock.invocationCallOrder[0]).toBeLessThan(
     state.editFactory.mock.invocationCallOrder[0],
   );
@@ -116,6 +117,20 @@ it("stops after expiry across an awaited Create, without entering Edit", async (
   expect(await runNativeTripQaSync()).toBeNull();
   expect(state.editFactory).not.toHaveBeenCalled();
   expect(state.createFactory.mock.calls[0][1]()).toBe(false);
+});
+it("retains the actual previous claim timestamp when a reconciled operation is explicitly resumed", async () => {
+  const config = fixture();
+  const lastAttemptAt = "2026-10-23T02:50:00Z";
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify({
+    ...config,
+    creates: [{ ...config.creates[0], lastAttemptAt }],
+  }));
+  await runNativeTripQaSync();
+  expect(state.createFactory).toHaveBeenCalledWith(
+    { accountId: a, tripId: trip, operationId: create },
+    expect.any(Function),
+    lastAttemptAt,
+  );
 });
 it("rejects an Account ABA while Create is pending", async () => {
   state.create.mockImplementationOnce(async () => {

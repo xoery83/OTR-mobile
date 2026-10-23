@@ -6,7 +6,11 @@ import {
 } from "../auth/accountRequestContext";
 import { requireActiveUserId } from "../auth/authRepository";
 
-const target = z.strictObject({ tripId: coreUuid, operationId: coreUuid });
+const target = z.strictObject({
+  tripId: coreUuid,
+  operationId: coreUuid,
+  lastAttemptAt: z.iso.datetime().nullable().optional(),
+});
 const configuration = z
   .strictObject({
     version: z.literal(1),
@@ -95,18 +99,22 @@ export async function runNativeTripQaSync() {
   for (const item of scope.creates) {
     await assertAccountRequestContext(actor, requireActiveUserId);
     if (!enabled()) return null;
+    const { lastAttemptAt = null, ...target } = item;
     await createNativeTripCreateSyncRunner(
-      { ...item, accountId: actor.accountId },
+      { ...target, accountId: actor.accountId },
       enabled,
+      lastAttemptAt,
     )();
   }
   for (const item of scope.edits) {
     await assertAccountRequestContext(actor, requireActiveUserId);
     if (!enabled()) return null;
-    await createNativeTripMetadataSyncRunner(enabled, {
-      ...item,
-      accountId: actor.accountId,
-    })();
+    const { lastAttemptAt = null, ...target } = item;
+    await createNativeTripMetadataSyncRunner(
+      enabled,
+      { ...target, accountId: actor.accountId },
+      lastAttemptAt,
+    )();
   }
   await assertAccountRequestContext(actor, requireActiveUserId);
   if (!enabled()) return null;
