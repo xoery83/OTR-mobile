@@ -505,6 +505,8 @@ export const en = {
   "createTripV2.nameSuggestions": "Suggested places from trip name",
   "createTripV2.custom": "Add “{query}” as a custom destination",
   "createTripV2.removeDestination": "Remove {name}",
+  "createTripV2.moveDestinationEarlier": "Move {name} earlier",
+  "createTripV2.moveDestinationLater": "Move {name} later",
   "createTripV2.searching": "Searching places…",
   "createTripV2.noResults": "No matching places",
   "createTripV2.searchUnavailable":
@@ -3115,6 +3117,8 @@ export const zhHans: Record<MessageKey, string> = {
   "createTripV2.nameSuggestions": "根据旅行名称推荐的地点",
   "createTripV2.custom": "将“{query}”添加为自定义目的地",
   "createTripV2.removeDestination": "移除 {name}",
+  "createTripV2.moveDestinationEarlier": "将 {name} 前移",
+  "createTripV2.moveDestinationLater": "将 {name} 后移",
   "createTripV2.searching": "正在搜索地点…",
   "createTripV2.noResults": "未找到匹配地点",
   "createTripV2.searchUnavailable": "地点搜索暂不可用，可以添加自定义目的地。",

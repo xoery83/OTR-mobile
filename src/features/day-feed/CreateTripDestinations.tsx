@@ -197,6 +197,15 @@ export function CreateTripDestinations({
       }
     }
   };
+  const move = (localId: string, offset: -1 | 1) => {
+    if (!current() || disabled || choosing) return;
+    const from = items.findIndex((item) => item.localId === localId);
+    const to = from + offset;
+    if (from < 0 || to < 0 || to >= items.length) return;
+    const next = [...items];
+    [next[from], next[to]] = [next[to], next[from]];
+    onChange(Object.freeze(next));
+  };
   return (
     <View style={styles.section}>
       <UiText style={styles.caption}>{t("createTripV2.destinations")}</UiText>
@@ -209,7 +218,7 @@ export function CreateTripDestinations({
           contentContainerStyle={styles.tags}
           onContentSizeChange={() => tags.current?.scrollToEnd({ animated: true })}
         >
-          {items.map((item) => (
+          {items.map((item, index) => (
             <View
               key={item.localId}
               style={styles.tag}
@@ -218,6 +227,32 @@ export function CreateTripDestinations({
               }
             >
               <UiText style={styles.tagText}>{item.text}</UiText>
+              {index > 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("createTripV2.moveDestinationEarlier", {
+                    name: item.text,
+                  })}
+                  disabled={disabled || choosing}
+                  onPress={() => move(item.localId, -1)}
+                  style={styles.remove}
+                >
+                  <AppIcon name="chevron.left" size={14} color={colors.textSecondary} />
+                </Pressable>
+              ) : null}
+              {index < items.length - 1 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("createTripV2.moveDestinationLater", {
+                    name: item.text,
+                  })}
+                  disabled={disabled || choosing}
+                  onPress={() => move(item.localId, 1)}
+                  style={styles.remove}
+                >
+                  <AppIcon name="chevron.right" size={14} color={colors.textSecondary} />
+                </Pressable>
+              ) : null}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("createTripV2.removeDestination", {
