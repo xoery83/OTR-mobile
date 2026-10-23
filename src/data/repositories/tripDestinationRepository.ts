@@ -1,3 +1,4 @@
+import { retainedDeferredTripMetadataSchema } from "@/domain/trip/tripDeferredMetadata";
 import { readTripMetadataConfirmation } from "./tripMetadataConfirmation";
 import {
   structuredTripMetadataReceiptSchema,
@@ -133,7 +134,7 @@ async function verifyDestinationHistory(
     payload_json: string;
     operation_type: string;
   }>(
-    "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND (operation_type='TRIP_DESTINATIONS_LOCAL_SAVE' OR (operation_type='UPDATE_TRIP_METADATA' AND json_extract(payload_json,'$.formatVersion')=3)) ORDER BY rowid",
+    "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND (operation_type IN ('TRIP_DESTINATIONS_LOCAL_SAVE','TRIP_METADATA_DEFERRED') OR (operation_type='UPDATE_TRIP_METADATA' AND json_extract(payload_json,'$.formatVersion')=3)) ORDER BY rowid",
     accountId,
     tripId,
   );
@@ -155,6 +156,32 @@ async function verifyDestinationHistory(
       throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
   }
   for (const row of history) {
+    if (row.operation_type === "TRIP_METADATA_DEFERRED") {
+      const action = retainedDeferredTripMetadataSchema.parse(
+        JSON.parse(row.payload_json),
+      );
+      if (
+        action.actionId !== row.id ||
+        action.tripId !== tripId ||
+        row.entity_type !== "TRIP_LOCAL_ACTION" ||
+        row.idempotency_key !== row.id ||
+        row.entity_id !== tripId ||
+        !["DEPENDENCY_BLOCKED", "COMPLETED"].includes(row.status)
+      )
+        throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+      const wire = await database.getFirstAsync<{ status: string }>(
+        "SELECT status FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND id=? AND operation_type='UPDATE_TRIP_METADATA'",
+        accountId,
+        tripId,
+        action.operationId,
+      );
+      if (wire?.status === "COMPLETED" && confirmed) continue;
+      expected ??= action.before.destinations;
+      if (JSON.stringify(expected) !== JSON.stringify(action.before.destinations))
+        throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+      expected = action.after.destinations;
+      continue;
+    }
     if (row.operation_type === "UPDATE_TRIP_METADATA") {
       const request = structuredTripMetadataUpdateSchema.parse(
         JSON.parse(row.payload_json),
@@ -174,6 +201,34 @@ async function verifyDestinationHistory(
           actorAccountId !== accountId ||
           resultMetadataRevision > confirmed.metadataRevision ||
           canonicalCoreJson(accepted as Json) !== canonicalCoreJson(request as Json)
+        )
+          throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+        continue;
+      }
+      if (
+        row.entity_type !== "TRIP" ||
+        row.id !== row.idempotency_key ||
+        row.entity_id !== tripId ||
+        row.trip_id !== tripId ||
+        request.tripId !== tripId ||
+        request.operationId !== row.id
+      )
+        throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+      const deferred = history.find(
+        (action) =>
+          action.operation_type === "TRIP_METADATA_DEFERRED" &&
+          retainedDeferredTripMetadataSchema.parse(JSON.parse(action.payload_json))
+            .operationId === row.id,
+      );
+      if (deferred) {
+        const action = retainedDeferredTripMetadataSchema.parse(
+          JSON.parse(deferred.payload_json),
+        );
+        if (
+          canonicalCoreJson(action.before as Json) !==
+            canonicalCoreJson(request.before as Json) ||
+          canonicalCoreJson(action.after as Json) !==
+            canonicalCoreJson(request.after as Json)
         )
           throw Error("TRIP_DESTINATIONS_REPLAY_MISMATCH");
         continue;

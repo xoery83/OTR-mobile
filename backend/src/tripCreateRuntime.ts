@@ -1,14 +1,25 @@
+import { createHash } from "node:crypto";
+import {
+  createNormalDevTripPorts,
+  normalDevTripRuntimeSchema,
+} from "./tripNormalRuntime";
+import {
+  createTripPgConnection,
+  createTripMetadataPgConnection,
+  createCorePgConnection,
+} from "./tripCoreV2PgConnection";
+import { createTripMetadataV2PgStorage } from "./tripMetadataV2PgStorage";
+import { createCorePgHttpConnection } from "./tripCoreV2PgHttpConnection";
 import { constants } from "node:fs";
 import { open } from "node:fs/promises";
 import { z } from "zod";
 import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "../../src/domain/trip/tripCreateWireContract";
 import { TripCreateError, type TripCreatePort } from "./tripCreate";
-import { createTripPgConnection } from "./tripCoreV2PgConnection";
 import { createTripPgStorage } from "./tripCreatePgStorage";
 
 // Proposed private mount only; loading it cannot provision a principal or open SQL gates.
 export const tripCreateRuntimePath = "/run/otr/trip-create-runtime.json";
-export const tripCreateRuntimeSchema = z.strictObject({
+const finiteTripCreateRuntimeSchema = z.strictObject({
   version: z.literal(1),
   enabled: z.literal(true),
   expiresAt: z.iso.datetime({ offset: true }),
@@ -22,6 +33,37 @@ export const tripCreateRuntimeSchema = z.strictObject({
     ca: z.string().min(1).optional(),
   }),
 });
+
+// Same private owning mount; disjoint version, never reinterpret a finite request.
+const pgConfig = finiteTripCreateRuntimeSchema.shape.tripPg;
+const normalTripCreateRuntimeSchema = z
+  .strictObject({
+    version: z.literal(2),
+    enabled: z.literal(true),
+    expiresAt: z.iso.datetime(),
+    actorAccountId: z.uuid(),
+    adoptionCutoff: z.iso.datetime(),
+    startsAt: z.iso.datetime(),
+    tripPg: pgConfig,
+    metadataPg: pgConfig,
+    corePg: pgConfig,
+  })
+  .superRefine((v, ctx) => {
+    if (
+      !normalDevTripRuntimeSchema.safeParse({
+        version: 1,
+        actorAccountId: v.actorAccountId,
+        adoptionCutoff: v.adoptionCutoff,
+        startsAt: v.startsAt,
+        expiresAt: v.expiresAt,
+      }).success
+    )
+      ctx.addIssue({ code: "custom", message: "INVALID_NORMAL_DEV_SCOPE" });
+  });
+export const tripCreateRuntimeSchema = z.union([
+  finiteTripCreateRuntimeSchema,
+  normalTripCreateRuntimeSchema,
+]);
 
 export async function loadDevTripCreateRuntime(
   environment: Record<string, string | undefined>,
@@ -52,6 +94,7 @@ export async function loadDevTripCreateRuntime(
     if (Buffer.byteLength(body) > 139264) throw 0;
     config = tripCreateRuntimeSchema.parse(JSON.parse(body));
     if (
+      config.version === 1 &&
       !("formatVersion" in config.request) &&
       (stat.size > 16384 || Buffer.byteLength(body) > 16384)
     )
@@ -60,7 +103,7 @@ export async function loadDevTripCreateRuntime(
     // Keep the existing finite activation's maximum 15-minute window; no automatic renewal.
     if (
       remaining <= 0 ||
-      remaining > 900000 ||
+      remaining > (config.version === 2 ? 86400000 : 900000) ||
       environment.OTR_DEV_BACKEND_NETWORK_MODE !== "host" ||
       environment.OTR_DEV_SUPABASE_URL !== "https://tuqigdxrvrerfewsxqgm.supabase.co"
     )
@@ -69,6 +112,33 @@ export async function loadDevTripCreateRuntime(
     throw new Error("TRIP_CREATE_RUNTIME_UNAVAILABLE");
   } finally {
     await file.close();
+  }
+  if (config.version === 2) {
+    const normal = createNormalDevTripPorts(
+      {
+        version: 1,
+        actorAccountId: config.actorAccountId,
+        adoptionCutoff: config.adoptionCutoff,
+        startsAt: config.startsAt,
+        expiresAt: config.expiresAt,
+      },
+      {
+        create: createTripPgStorage(createTripPgConnection(config.tripPg)),
+        metadata: createTripMetadataV2PgStorage(
+          createTripMetadataPgConnection(config.metadataPg),
+        ),
+        core: createCorePgHttpConnection(
+          createCorePgConnection(config.corePg),
+          async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+        ),
+      },
+    );
+    return {
+      ...normal,
+      async close() {
+        normal.close();
+      },
+    };
   }
   const storage = createTripPgStorage(createTripPgConnection(config.tripPg));
   let closed = false;

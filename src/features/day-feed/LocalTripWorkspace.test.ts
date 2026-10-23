@@ -291,6 +291,9 @@ const trip = (id: string, name: string): Trip => ({
 const repository = (list: Trip[] = []): TripRepository => ({
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
+  readDeferredMetadataEditBase: vi.fn(),
+  deferMetadataUpdate: vi.fn(),
+  materializeDeferredMetadata: vi.fn(),
   readMetadataEditBase: vi.fn(async () => ({ confirmed: null, pendingOperationIds: [] })),
   retainMetadataSnapshot: vi.fn(async () => {}),
   canUpdateMetadata: vi.fn(async () => true),
@@ -1518,3 +1521,42 @@ it("opts new Native QA Create into the complete structured wire format without f
   );
   expect(vi.mocked(repo.createTrip).mock.calls[0][0].destination).toBeUndefined();
 });
+
+it.each(["missing", "pending"])(
+  "uses one deferred local Save for %s confirmation, preserving ordered destinations",
+  async (kind) => {
+    const { current, confirmed } = structuredFixture();
+    const repo = repository([current]);
+    vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+      confirmed: kind === "missing" ? null : confirmed,
+      pendingOperationIds: kind === "pending" ? ["old-op"] : [],
+    });
+    vi.mocked(repo.readDeferredMetadataEditBase).mockResolvedValue({
+      createOperationId: "create-parent",
+      metadata: confirmed.metadata,
+    });
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await flush();
+    render();
+    button("tripHome.edit").onPress();
+    await flush();
+    render();
+    input("tripCreate.name", "Offline newer");
+    render();
+    button("ui.save").onPress();
+    await flush();
+    render();
+    expect(repo.deferMetadataUpdate).toHaveBeenCalledTimes(1);
+    expect(repo.deferMetadataUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localActionVersion: 1,
+        tripId: current.id,
+        before: confirmed.metadata,
+        after: { ...confirmed.metadata, name: "Offline newer" },
+      }),
+    );
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
+  },
+);

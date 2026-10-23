@@ -16,7 +16,7 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
-import { coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
+import { coreUuid, coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import {
   coreHashValue,
@@ -1118,17 +1118,20 @@ export function createTripCoreV2Repository(
       result.pages,
     );
   }
-  async function resume(ctx: AccountRequestContext) {
+  async function resume(ctx: AccountRequestContext, operationId?: string) {
+    if (operationId) coreUuid.parse(operationId);
     await withAccountApplyGate(async () => {
       await assertContext(ctx);
       await scope(ctx);
       await database.withTransactionAsync(async () => {
         await database.runAsync(
-          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT'))",
+          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT')) AND (? IS NULL OR id=?)",
           ctx.accountId,
           ctx.tripId,
           ctx.accountId,
           ctx.tripId,
+          operationId ?? null,
+          operationId ?? null,
         );
         await assertContext(ctx);
       });

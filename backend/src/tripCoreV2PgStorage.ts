@@ -1,3 +1,4 @@
+import { isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
 import { randomUUID } from "node:crypto";
 import {
   coreUuid,
@@ -355,16 +356,42 @@ export function createCorePgStorage(
               return locked;
             },
             async verifyAdmission(command, intent, graph) {
-              const finiteFamily = (command.payload as { family?: string }).family;
+              const activation = (
+                await lease.query(
+                  "SELECT enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
+                )
+              ).rows[0];
+              const normal = isNormalP1Gate(activation);
+              const finiteFamily =
+                command.command === "CREATE_ITEM"
+                  ? (command.payload as { family?: string }).family
+                  : graph.itinerary_events.find((item) => item.id === command.target.id)
+                      ?.experience_family;
               if (
-                String(command.command) !== "CREATE_ITEM" ||
-                String(command.admission.mode) !== "MANUAL" ||
-                (finiteFamily !== "P1" && finiteFamily !== "P3")
+                normal
+                  ? command.admission.mode !== "MANUAL" ||
+                    finiteFamily !== "P1" ||
+                    !(normalP1Commands as readonly string[]).includes(command.command)
+                  : command.command !== "CREATE_ITEM" ||
+                    command.admission.mode !== "MANUAL" ||
+                    (finiteFamily !== "P1" && finiteFamily !== "P3")
               )
                 throw new Error("CORE_CAPABILITY_CLOSED");
+              if (
+                normal &&
+                command.command !== "CREATE_ITEM" &&
+                graph.itinerary_events.find((item) => item.id === command.target.id)
+                  ?.owner_account_id !== actor.accountId
+              )
+                throw new Error("CORE_CREATOR_REQUIRED");
               await lease.query(
-                "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true)",
-                [command.command, finiteFamily, command.admission.mode],
+                "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true),set_config('otr.core.target_item',$4,true)",
+                [
+                  command.command,
+                  finiteFamily,
+                  command.admission.mode,
+                  command.target.id,
+                ],
               );
               if (collision) throw new Error("REVISION_CONFLICT");
               if (command.command === "SET_ORDINARY_ORDER") {

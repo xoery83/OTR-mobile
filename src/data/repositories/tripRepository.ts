@@ -210,7 +210,7 @@ export function createTripRepository(
     coreUuid.parse(id);
     const scope = await captureAccountScope(account);
     const row = await database.getFirstAsync<Row>(
-      "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
+      "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
       scope.accountId,
       id,
     );
@@ -244,7 +244,7 @@ export function createTripRepository(
     async listTrips(): Promise<Trip[]> {
       const scope = await captureAccountScope(account);
       const rows = await database.getAllAsync<Row>(
-        "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
+        "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
         scope.accountId,
       );
       await assertAccountRequestContext(scope, account);
@@ -500,7 +500,7 @@ export function createTripRepository(
           )
             throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
           const row = await database.getFirstAsync<Row>(
-            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
+            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
             scope.accountId,
             accepted.tripId,
             accepted.operationId,

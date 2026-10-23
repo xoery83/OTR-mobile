@@ -189,6 +189,10 @@ function LocalTripContent({
   const [coverOpen, setCoverOpen] = useState(false);
   const [metadataBaseError, setMetadataBaseError] = useState(false);
   const metadataEditBase = useRef<StructuredTripMetadataSnapshot | null>(null);
+  const deferredMetadataEditBase = useRef<
+    StructuredTripMetadataSnapshot["metadata"] | null
+  >(null);
+  const deferredMetadataActionId = useRef<string | null>(null);
   const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
   const personalCover = useTripPersonalCover(tripId);
   const [editorSaving, setEditorSaving] = useState(false);
@@ -481,6 +485,8 @@ function LocalTripContent({
   const openTripEditor = useCallback(async () => {
     if (!selected || !alive.current || generation !== getAccountGeneration()) return;
     metadataEditBase.current = null;
+    deferredMetadataEditBase.current = null;
+    deferredMetadataActionId.current = null;
     setMetadataBaseError(false);
     if (selected.syncFormatVersion === 2) {
       try {
@@ -502,10 +508,18 @@ function LocalTripContent({
           canonicalCoreJson(local as Json) !==
             canonicalCoreJson(base.confirmed.metadata as Json)
         ) {
-          setMetadataBaseError(true);
-          return;
-        }
-        metadataEditBase.current = base.confirmed;
+          const localBase = await repo.readDeferredMetadataEditBase(selected.id);
+          if (!alive.current || generation !== getAccountGeneration()) return;
+          if (
+            canonicalCoreJson(local as Json) !==
+            canonicalCoreJson(localBase.metadata as Json)
+          ) {
+            setMetadataBaseError(true);
+            return;
+          }
+          deferredMetadataEditBase.current = localBase.metadata;
+          deferredMetadataActionId.current = createUuid();
+        } else metadataEditBase.current = base.confirmed;
       } catch {
         if (alive.current && generation === getAccountGeneration())
           setMetadataBaseError(true);
@@ -880,26 +894,46 @@ function LocalTripContent({
                     if (!alive.current || generation !== getAccountGeneration())
                       throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
                     if (selected.syncFormatVersion === 2) {
+                      const deferred = deferredMetadataEditBase.current;
+                      const actionId = deferredMetadataActionId.current;
                       const base = metadataEditBase.current;
-                      if (!base || base.tripId !== selected.id)
-                        throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
-                      await repo.updateMetadata(
-                        {
-                          formatVersion: 3,
+                      if (deferred && actionId) {
+                        await repo.deferMetadataUpdate({
+                          localActionVersion: 1,
+                          actionId,
                           operationId,
                           tripId: selected.id,
-                          expectedMetadataRevision: base.metadataRevision,
-                          before: base.metadata,
+                          before: deferred,
                           after: {
                             ...after,
                             destination: null,
                             destinations: [
-                              ...(destinations?.after ?? base.metadata.destinations),
+                              ...(destinations?.after ?? deferred.destinations),
                             ],
                           },
-                        },
-                        cover,
-                      );
+                          ...(cover ? { cover } : {}),
+                        });
+                      } else {
+                        if (!base || base.tripId !== selected.id)
+                          throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+                        await repo.updateMetadata(
+                          {
+                            formatVersion: 3,
+                            operationId,
+                            tripId: selected.id,
+                            expectedMetadataRevision: base.metadataRevision,
+                            before: base.metadata,
+                            after: {
+                              ...after,
+                              destination: null,
+                              destinations: [
+                                ...(destinations?.after ?? base.metadata.destinations),
+                              ],
+                            },
+                          },
+                          cover,
+                        );
+                      }
                     } else {
                       await repo.updateMetadata(
                         { operationId, tripId: selected.id, before, after },

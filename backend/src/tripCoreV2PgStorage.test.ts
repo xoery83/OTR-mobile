@@ -2,6 +2,9 @@ import { randomUUID, createHash } from "node:crypto";
 import { it, expect, vi } from "vitest";
 import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
+import { normalP1Commands } from "./tripNormalP1Policy";
+import { emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
+import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
 const actor = randomUUID(),
   trip = randomUUID(),
@@ -154,3 +157,70 @@ it("scope expiry after receipt lookup rolls back current replay without deleting
   expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
   expect(f.queries.some((q) => q.sql.startsWith("DELETE"))).toBe(false);
 });
+
+it.each(["PRIVATE", "SELECTED_PERSONS", "GROUP"])(
+  "normal P1 scope never edits another Creator's %s Item, even for organizer",
+  async (visibility) => {
+    const f = fixture(),
+      query = f.lease.query;
+    f.lease.query = async (sql, params) => {
+      if (
+        sql ===
+        "SELECT enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton"
+      )
+        return {
+          rows: [
+            {
+              enabled_commands: [...normalP1Commands],
+              enabled_families: ["P1"],
+              enabled_admission_modes: ["MANUAL"],
+            },
+          ],
+        };
+      if (sql.includes("trip_core_lock_actor_scope"))
+        return {
+          rows: [
+            {
+              actor: {
+                accountId: actor,
+                tripId: trip,
+                active: true,
+                canManageShared: true,
+                personId: randomUUID(),
+                personIds: [],
+              },
+            },
+          ],
+        };
+      return query(sql, params);
+    };
+    const graph = emptyCoreGraph();
+    graph.itinerary_events = [
+      {
+        id,
+        trip_id: trip,
+        experience_family: "P1",
+        owner_account_id: randomUUID(),
+        visibility,
+      } as never,
+    ];
+    const c = validateCoreCommand({
+      ...command(),
+      command: "SET_ITEM_TEXT",
+      payload: { title: "Forbidden change" },
+      baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    });
+    await expect(
+      f.storage.withLockedCommand(
+        {
+          actorAccountId: actor,
+          tripId: trip,
+          operationId: operation,
+          baseVector: c.baseVector,
+        },
+        (tx) => tx.verifyAdmission(c, "a".repeat(64), graph),
+      ),
+    ).rejects.toThrow("CORE_CREATOR_REQUIRED");
+    expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(false);
+  },
+);

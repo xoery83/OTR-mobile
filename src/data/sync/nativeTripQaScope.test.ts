@@ -17,9 +17,13 @@ const state = vi.hoisted(() => ({
   edit: vi.fn(),
   createFactory: vi.fn(),
   editFactory: vi.fn(),
+  normal: vi.fn(),
+  normalFactory: vi.fn(),
+  session: vi.fn(),
 }));
 vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
+  readLocalSession: state.session,
 }));
 vi.mock("./transportSelection", () => ({
   getSyncTransportMode: () => process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT ?? "fake",
@@ -29,6 +33,9 @@ vi.mock("./tripCreateCoordinator", () => ({
 }));
 vi.mock("./tripMetadataCoordinator", () => ({
   createNativeTripMetadataSyncRunner: state.editFactory,
+}));
+vi.mock("./tripNormalCoordinator", () => ({
+  createNativeNormalTripSyncRunner: state.normalFactory,
 }));
 const fixture = () => ({
   version: 1,
@@ -43,6 +50,11 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-23T03:01:00Z"));
   state.account = a;
+  state.normalFactory.mockReturnValue(state.normal);
+  state.session.mockResolvedValue({
+    accessToken: "synthetic",
+    expiresAt: "2026-10-23T04:00:00Z",
+  });
   state.create.mockResolvedValue({ processedCount: 1 });
   state.edit.mockResolvedValue({ processedCount: 1 });
   state.createFactory.mockReturnValue(state.create);
@@ -221,3 +233,39 @@ it("keeps view isolation stable across later finite operation windows", async ()
   expect(await runNativeTripQaSync()).toBeNull();
   expect(state.createFactory).not.toHaveBeenCalled();
 });
+it("reuses the existing scoped lifecycle for an explicit bounded normal profile only", async () => {
+  const config = {
+    ...fixture(),
+    expiresAt: "2026-10-24T03:00:00Z",
+    normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+    creates: [],
+    edits: [],
+  };
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(config));
+  await runNativeTripQaSync();
+  expect(state.normalFactory).toHaveBeenCalledWith(
+    { accountId: a, newTripsFrom: config.normal.newTripsFrom },
+    expect.any(Function),
+  );
+  expect(state.normal).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
+  expect(state.createFactory).not.toHaveBeenCalled();
+  expect(state.editFactory).not.toHaveBeenCalled();
+});
+it.each(["overlong", "mixed"])(
+  "keeps invalid %s normal profile closed without falling through to history",
+  async (kind) => {
+    vi.stubEnv(
+      "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+      JSON.stringify({
+        ...fixture(),
+        expiresAt: kind === "overlong" ? "2026-10-24T03:00:01Z" : "2026-10-24T03:00:00Z",
+        normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+        creates: kind === "mixed" ? fixture().creates : [],
+        edits: [],
+      }),
+    );
+    expect(hasNativeTripQaScope()).toBe(true);
+    expect(await runNativeTripQaSync()).toBeNull();
+    expect(state.normalFactory).not.toHaveBeenCalled();
+  },
+);

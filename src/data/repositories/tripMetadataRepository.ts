@@ -1,3 +1,4 @@
+import { createTripDeferredMetadataRepository } from "./tripDeferredMetadataRepository";
 import {
   readTripMetadataConfirmation,
   retainTripMetadataConfirmation,
@@ -53,7 +54,9 @@ export function createTripMetadataRepository(
   clock: () => string,
   resolvePhoto?: typeof import("../files/tripPhotoFileStore").resolveRetainedTripPhoto,
 ) {
+  const deferred = createTripDeferredMetadataRepository(database, account, clock);
   return {
+    ...deferred,
     async readMetadataEditBase(tripId: string) {
       coreUuid.parse(tripId);
       const scope = await captureAccountScope(account);
@@ -63,7 +66,7 @@ export function createTripMetadataRepository(
         tripId,
       );
       const pending = await database.getAllAsync<{ id: string }>(
-        "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' ORDER BY rowid",
+        "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND status<>'COMPLETED' ORDER BY rowid",
         scope.accountId,
         tripId,
       );
@@ -88,7 +91,7 @@ export function createTripMetadataRepository(
             snapshot.tripId,
           );
           const pending = await database.getFirstAsync<{ id: string }>(
-            "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' LIMIT 1",
+            "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND status<>'COMPLETED' LIMIT 1",
             scope.accountId,
             snapshot.tripId,
           );
@@ -413,7 +416,7 @@ export function createTripMetadataRepository(
               );
             const previous = await database.getFirstAsync<{ id: string }>(
               `SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_type='TRIP'
-             AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' ORDER BY rowid DESC LIMIT 1`,
+             AND operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND status<>'COMPLETED' ORDER BY rowid DESC LIMIT 1`,
               scope.accountId,
               request.tripId,
             );
@@ -517,6 +520,7 @@ export function createTripMetadataRepository(
         if (selected.accountId !== scope.accountId)
           throw new Error("TRIP_METADATA_ACCOUNT_MISMATCH");
       }
+      if (selected) await deferred.materializeDeferredMetadata(selected.tripId);
       await withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         await database.runAsync(

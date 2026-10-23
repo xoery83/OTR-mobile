@@ -8,9 +8,19 @@ const f = vi.hoisted(() => ({
   storage: vi.fn(),
   create: vi.fn(),
   receipt: vi.fn(),
+  core: vi.fn(),
+  metadata: vi.fn(),
 }));
 vi.mock("node:fs/promises", () => ({ open: f.open }));
-vi.mock("./tripCoreV2PgConnection", () => ({ createTripPgConnection: f.pg }));
+vi.mock("./tripCoreV2PgConnection", () => ({
+  createTripPgConnection: f.pg,
+  createTripMetadataPgConnection: f.pg,
+  createCorePgConnection: f.pg,
+}));
+vi.mock("./tripMetadataV2PgStorage", () => ({
+  createTripMetadataV2PgStorage: f.metadata,
+}));
+vi.mock("./tripCoreV2PgHttpConnection", () => ({ createCorePgHttpConnection: f.core }));
 vi.mock("./tripCreatePgStorage", () => ({ createTripPgStorage: f.storage }));
 const environment = {
   OTR_DEV_BACKEND_NETWORK_MODE: "host",
@@ -207,4 +217,38 @@ it("rejects a foreign Trip in a same-operation receipt and preserves a missing r
       v.config.request.operationId,
     ),
   ).toBeNull();
+});
+it("reuses the existing private Create mount for a disjoint normal runtime and existing owning ports", async () => {
+  const v = fixture();
+  const now = Date.now();
+  const config = {
+    version: 2,
+    enabled: true,
+    actorAccountId: v.config.actorAccountId,
+    adoptionCutoff: new Date(now - 1000).toISOString(),
+    startsAt: new Date(now - 1000).toISOString(),
+    expiresAt: new Date(now + 3600000).toISOString(),
+    tripPg: v.config.tripPg,
+    metadataPg: v.config.tripPg,
+    corePg: v.config.tripPg,
+  };
+  f.open.mockResolvedValue({
+    stat: async () => v.stat,
+    readFile: async () => JSON.stringify(config),
+    close: vi.fn(),
+  });
+  f.metadata.mockReturnValue({ update: vi.fn(), receipt: vi.fn(), snapshot: vi.fn() });
+  f.core.mockReturnValue({
+    hash: vi.fn(),
+    commands: { withLockedCommand: vi.fn() },
+    readOperation: vi.fn(),
+  });
+  const runtime = await loadDevTripCreateRuntime(environment);
+  expect(runtime).toHaveProperty("coreConnection");
+  expect(runtime).toHaveProperty("tripMetadataV2Port");
+  expect(f.pg).toHaveBeenCalledTimes(3);
+  await runtime?.close();
+  await expect(
+    runtime!.tripCreatePort.receipt(config.actorAccountId, randomUUID()),
+  ).rejects.toMatchObject({ code: "TRIP_NORMAL_DEV_CLOSED" });
 });

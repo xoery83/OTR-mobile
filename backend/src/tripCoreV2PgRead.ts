@@ -1,3 +1,4 @@
+import { isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import {
@@ -194,12 +195,20 @@ export function createCorePgReader(
               coreUuid.safeParse(state?.epoch).success &&
               (await allowed());
           }
+          const gate = enabled
+            ? (
+                await lease.query(
+                  "SELECT enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
+                )
+              ).rows[0]
+            : undefined;
+          const normal = isNormalP1Gate(gate);
           const result = enabled
             ? coreCapabilitiesSchema.parse({
                 ...coreClosedCapabilities,
                 activationState: "ENABLED",
-                enabledCommands: ["CREATE_ITEM"],
-                enabledFamilies: ["P1", "P3"],
+                enabledCommands: normal ? [...normalP1Commands] : ["CREATE_ITEM"],
+                enabledFamilies: normal ? ["P1"] : ["P1", "P3"],
                 enabledAdmissionModes: ["MANUAL"],
               })
             : coreClosedCapabilities;

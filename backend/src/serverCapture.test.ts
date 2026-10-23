@@ -86,3 +86,25 @@ it("unavailable Trip and Metadata still fail closed independently", async () => 
     universalImportPort: undefined,
   });
 });
+
+it("mounts the explicit normal Trip ports without loading a second Metadata runtime", async () => {
+  const trip = {
+    tripCreatePort: {},
+    tripMetadataV2Port: {},
+    coreConnection: {},
+    close: vi.fn(),
+  };
+  mocks.trip.mockResolvedValue(trip);
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+  expect(mocks.metadata).not.toHaveBeenCalled();
+  expect(mocks.start).toHaveBeenCalledWith(
+    expect.objectContaining({
+      tripCreatePort: trip.tripCreatePort,
+      tripMetadataV2Port: trip.tripMetadataV2Port,
+      coreConnection: trip.coreConnection,
+    }),
+  );
+  mocks.server.once.mock.calls[0][1]();
+  expect(trip.close).toHaveBeenCalledOnce();
+});

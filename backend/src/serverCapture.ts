@@ -29,12 +29,18 @@ async function main() {
       console.info("TRIP_CREATE_RUNTIME_CLOSED");
     }
     try {
-      metadata = await loadDevTripMetadataV2Runtime(process.env);
+      metadata =
+        trip && "tripMetadataV2Port" in trip
+          ? trip
+          : await loadDevTripMetadataV2Runtime(process.env);
     } catch {
       console.info("TRIP_METADATA_RUNTIME_CLOSED");
     }
     server = startDevBackend({
       tripMetadataV2Port: metadata?.tripMetadataV2Port,
+      ...(trip && "coreConnection" in trip
+        ? { coreConnection: trip.coreConnection }
+        : {}),
       tripCreatePort: trip?.tripCreatePort,
       captureMaterialCustody: runtime?.captureMaterialCustody,
       universalImportPort: universal?.universalImportPort,
@@ -42,14 +48,14 @@ async function main() {
     });
   } catch (error) {
     await universal?.close();
-    await metadata?.close();
+    if (metadata !== trip) await metadata?.close();
     await trip?.close();
     await runtime?.close();
     throw error;
   }
   server.once("close", () => {
     void universal?.close();
-    void metadata?.close();
+    if (metadata !== trip) void metadata?.close();
     void trip?.close();
     void runtime?.close();
   });

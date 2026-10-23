@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { readLocalSession, requireActiveUserId } from "../auth/authRepository";
+import { stateFromSessionAndNetwork } from "@/domain/auth/localSession";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
   captureAccountScope,
   assertAccountRequestContext,
 } from "../auth/accountRequestContext";
-import { requireActiveUserId } from "../auth/authRepository";
 
 const target = z.strictObject({
   tripId: coreUuid,
@@ -18,6 +19,7 @@ const configuration = z
     startsAt: z.iso.datetime(),
     expiresAt: z.iso.datetime(),
     viewIsolationStartedAt: z.iso.datetime().optional(),
+    normal: z.strictObject({ newTripsFrom: z.iso.datetime() }).optional(),
     creates: z.array(target).max(3),
     edits: z.array(target).max(6),
   })
@@ -26,7 +28,10 @@ const configuration = z
     const operations = [...value.creates, ...value.edits].map((item) => item.operationId);
     if (
       duration <= 0 ||
-      duration > 900_000 ||
+      duration > (value.normal ? 86_400_000 : 900_000) ||
+      (value.normal &&
+        (operations.length > 0 ||
+          Date.parse(value.normal.newTripsFrom) > Date.parse(value.startsAt))) ||
       new Set(operations).size !== operations.length
     )
       context.addIssue({ code: "custom", message: "INVALID_FINITE_QA_SCOPE" });
@@ -98,6 +103,20 @@ export async function runNativeTripQaSync() {
   if (!enabled()) return null;
   const actor = await captureAccountScope(requireActiveUserId);
   if (actor.accountId !== scope.accountId || !enabled()) return null;
+  if (scope.normal) {
+    const session = await readLocalSession();
+    await assertAccountRequestContext(actor, requireActiveUserId);
+    const { createNativeNormalTripSyncRunner } = await import("./tripNormalCoordinator");
+    await assertAccountRequestContext(actor, requireActiveUserId);
+    if (!enabled()) return null;
+    const result = await createNativeNormalTripSyncRunner(
+      { accountId: scope.accountId, newTripsFrom: scope.normal.newTripsFrom },
+      enabled,
+    )(stateFromSessionAndNetwork(session, true));
+    await assertAccountRequestContext(actor, requireActiveUserId);
+    if (!enabled()) return null;
+    return { ...actor, journeyIds: result && "tripIds" in result ? result.tripIds ?? [] : [] };
+  }
   const [{ createNativeTripCreateSyncRunner }, { createNativeTripMetadataSyncRunner }] =
     await Promise.all([
       import("./tripCreateCoordinator"),
