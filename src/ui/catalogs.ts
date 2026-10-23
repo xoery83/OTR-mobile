@@ -703,6 +703,8 @@ export const en = {
   "tripCreate.saveItem": "Save item",
   "tripCreate.unavailable":
     "Saved Trips could not be opened. Sign in or refresh and try again.",
+  "tripMetadata.confirmedBaseUnavailable":
+    "This Trip’s confirmed cloud version is not ready for another edit. Your saved changes are retained.",
   "tripCreate.saveFailed": "Could not save. Check the name and dates, then try again.",
 
   "dayLab.snapshotScenario": "Synthetic Flexible snapshots + TTR",
@@ -3291,6 +3293,8 @@ export const zhHans: Record<MessageKey, string> = {
     "无法确认是否已保存。请用相同内容重试，或关闭后重新打开。",
   "tripCreate.saveItem": "保存项目",
   "tripCreate.unavailable": "无法打开已保存的旅行。请登录或刷新后重试。",
+  "tripMetadata.confirmedBaseUnavailable":
+    "此旅行的已确认云端版本暂不可用于新的编辑，已保存的修改会保留。",
   "tripCreate.saveFailed": "未能保存，请检查名称和日期后重试。",
 
   "dayLab.snapshotScenario": "合成 Flexible 快照与 TTR",

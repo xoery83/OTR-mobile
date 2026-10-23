@@ -42,6 +42,15 @@ function readConfiguration() {
   }
 }
 
+// Local opt-in only. It cannot enable dispatch or upgrade an existing queued request.
+export function nativeTripQaCreateFormat(accountId: string | null): 2 | undefined {
+  const scope = readConfiguration();
+  return process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
+    scope?.accountId === accountId
+    ? 2
+    : undefined;
+}
+
 // View-only isolation; retained historical rows/receipts are neither deleted nor relabelled.
 export function filterNativeTripQaList<T extends { id: string }>(
   accountId: string | null,
@@ -51,6 +60,13 @@ export function filterNativeTripQaList<T extends { id: string }>(
   if (!scope || scope.accountId !== accountId) return trips;
   const ids = new Set([...scope.creates, ...scope.edits].map((item) => item.tripId));
   return trips.filter((item) => ids.has(item.id));
+}
+
+export function kickNativeTripQaSync() {
+  if (!hasNativeTripQaScope()) return;
+  void import("./ledgerOperationalSync")
+    .then(({ kickLedgerOperationalSync }) => kickLedgerOperationalSync())
+    .catch(() => undefined);
 }
 
 export async function runNativeTripQaSync() {

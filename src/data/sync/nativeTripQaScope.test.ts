@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import {
   filterNativeTripQaList,
+  nativeTripQaCreateFormat,
   hasNativeTripQaScope,
   runNativeTripQaSync,
 } from "./nativeTripQaScope";
@@ -136,4 +137,15 @@ it("filters only the configured Account view without deleting/relabeling histori
   expect(rows[1]).toEqual({ id: "historical", localStatus: "PENDING" });
   vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "");
   expect(filterNativeTripQaList(a, rows)).toBe(rows);
+});
+
+it("opts in only new local creates for the configured Account, without opening dispatch", async () => {
+  vi.setSystemTime(new Date("2026-10-23T04:00:00Z"));
+  expect(nativeTripQaCreateFormat(a)).toBe(2);
+  expect(nativeTripQaCreateFormat("another-account")).toBeUndefined();
+  expect(nativeTripQaCreateFormat(null)).toBeUndefined();
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(state.createFactory).not.toHaveBeenCalled();
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "");
+  expect(nativeTripQaCreateFormat(a)).toBeUndefined();
 });

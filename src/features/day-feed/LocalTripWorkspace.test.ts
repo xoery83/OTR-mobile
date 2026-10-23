@@ -1,3 +1,4 @@
+import { readLocalSession } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
   CreateTripDestinations: (props: any) => {
     state.nodes.push({ destinations: props });
@@ -223,6 +224,9 @@ vi.mock("@/domain/localId", async (original) => ({
   createUuid: () =>
     `00000000-0000-4000-8000-${(++state.serial).toString(16).padStart(12, "0")}`,
 }));
+vi.mock("@/data/sync/ledgerOperationalSync", () => ({
+  kickLedgerOperationalSync: vi.fn(),
+}));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("@/data/auth/authRepository", () => ({
   requireActiveUserId: vi.fn(),
@@ -288,6 +292,8 @@ const repository = (list: Trip[] = []): TripRepository => ({
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
   canUpdateMetadata: vi.fn(async () => true),
+  readMetadataEditBase: vi.fn(async () => ({ confirmed: null, pendingOperationIds: [] })),
+  retainMetadataSnapshot: vi.fn(async () => {}),
   updateMetadata: vi.fn(async () => {}),
   acceptMetadataUpdate: vi.fn(async () => {}),
   resumeMetadataUpdates: vi.fn(async () => {}),
@@ -353,6 +359,8 @@ function input(label: string, value: string) {
   state.nodes.find((node) => node.accessibilityLabel === label)!.onChangeText(value);
 }
 beforeEach(() => {
+  vi.unstubAllEnvs();
+  vi.mocked(readLocalSession).mockReset();
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   state.effects = [];
@@ -1364,4 +1372,149 @@ it("submits ordered destination identities and creator nickname without flatteni
       providerPlaceId: "real-kyoto-id",
     },
   ]);
+});
+
+const structuredFixture = () => {
+  const id = "10000000-0000-4000-8000-000000000002";
+  const destination = {
+    destinationId: "10000000-0000-4000-8000-000000000005",
+    displayLabel: "Tokyo",
+    source: "MANUAL" as const,
+  };
+  const current = {
+    ...trip(id, "Original"),
+    syncFormatVersion: 2 as const,
+    destinations: [{ ...destination, ordinal: 0 }],
+  };
+  const confirmed = {
+    formatVersion: 3 as const,
+    actorAccountId: "10000000-0000-4000-8000-000000000001",
+    tripId: id,
+    metadataRevision: 7,
+    metadata: {
+      name: "Original",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [destination],
+    },
+  };
+  return { current, confirmed };
+};
+
+it("captures the confirmed ordered-list baseline on opening, never rebases revision at Save", async () => {
+  const { current, confirmed } = structuredFixture();
+  const repo = repository([current]);
+  vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+    confirmed,
+    pendingOperationIds: [],
+  });
+  state.repo.mockResolvedValue(repo);
+  props.tripId = current.id;
+  render();
+  await flush();
+  render();
+  button("tripHome.edit").onPress();
+  await flush();
+  render();
+  vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+    confirmed: { ...confirmed, metadataRevision: 8 },
+    pendingOperationIds: [],
+  });
+  input("tripCreate.name", "Updated");
+  render();
+  button("ui.save").onPress();
+  await flush();
+  render();
+  expect(repo.readMetadataEditBase).toHaveBeenCalledTimes(1);
+  expect(repo.updateMetadata).toHaveBeenCalledWith(
+    expect.objectContaining({
+      formatVersion: 3,
+      tripId: current.id,
+      expectedMetadataRevision: 7,
+      before: confirmed.metadata,
+      after: { ...confirmed.metadata, name: "Updated" },
+    }),
+    undefined,
+  );
+});
+
+it.each(["missing", "pending", "different-local-list"])(
+  "never falls back to scalar edit for %s structured baseline",
+  async (kind) => {
+    const { current, confirmed } = structuredFixture();
+    const repo = repository([current]);
+    vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+      confirmed:
+        kind === "missing"
+          ? null
+          : kind === "different-local-list"
+            ? { ...confirmed, metadata: { ...confirmed.metadata, destinations: [] } }
+            : confirmed,
+      pendingOperationIds: kind === "pending" ? ["old-operation"] : [],
+    });
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await flush();
+    render();
+    button("tripHome.edit").onPress();
+    await flush();
+    const html = render();
+    expect(html).toContain("tripMetadata.confirmedBaseUnavailable");
+    expect(state.nodes.find((node) => node.label === "ui.save")).toBeUndefined();
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
+  },
+);
+
+it("opts new Native QA Create into the complete structured wire format without flattening", async () => {
+  const accountId = "10000000-0000-4000-8000-000000000001";
+  vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "dev");
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 1,
+      accountId,
+      startsAt: "2026-10-23T03:00:00Z",
+      expiresAt: "2026-10-23T03:15:00Z",
+      creates: [],
+      edits: [],
+    }),
+  );
+  vi.mocked(readLocalSession).mockResolvedValue({
+    identity: { userId: accountId, displayName: "QA" },
+  } as never);
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "QA cloud trip");
+  render();
+  state.nodes
+    .find((node) => node.destinations)!
+    .destinations.onChange([
+      {
+        localId: "10000000-0000-4000-8000-000000000005",
+        text: "Tokyo",
+        source: "MANUAL",
+      },
+    ]);
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledWith(
+    expect.objectContaining({
+      syncFormatVersion: 2,
+      destinations: [
+        {
+          destinationId: "10000000-0000-4000-8000-000000000005",
+          displayLabel: "Tokyo",
+          source: "MANUAL",
+        },
+      ],
+    }),
+  );
+  expect(vi.mocked(repo.createTrip).mock.calls[0][0].destination).toBeUndefined();
 });

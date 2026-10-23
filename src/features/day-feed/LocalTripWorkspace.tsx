@@ -1,4 +1,10 @@
-import { filterNativeTripQaList } from "@/data/sync/nativeTripQaScope";
+import {
+  filterNativeTripQaList,
+  nativeTripQaCreateFormat,
+  kickNativeTripQaSync,
+} from "@/data/sync/nativeTripQaScope";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import type { StructuredTripMetadataSnapshot } from "@/domain/trip/tripStructuredDestinationContract";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import { readLocalSession } from "@/data/auth/authRepository";
 import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
@@ -181,6 +187,8 @@ function LocalTripContent({
   const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
   const [destinationBusy, setDestinationBusy] = useState(false);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [metadataBaseError, setMetadataBaseError] = useState(false);
+  const metadataEditBase = useRef<StructuredTripMetadataSnapshot | null>(null);
   const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
   const personalCover = useTripPersonalCover(tripId);
   const [editorSaving, setEditorSaving] = useState(false);
@@ -358,7 +366,11 @@ function LocalTripContent({
     try {
       const repo = await readLocalTripRepository();
       if (!current()) return;
+      const accountId = (await readLocalSession())?.identity?.userId ?? null;
+      if (!current()) return;
+      const syncFormatVersion = nativeTripQaCreateFormat(accountId);
       const trip = await repo.createTrip({
+        ...(syncFormatVersion ? { syncFormatVersion } : {}),
         ...tripOperation.current,
         name,
         destinations: destinations.map((item): LocalTripDestinationInput => {
@@ -389,6 +401,7 @@ function LocalTripContent({
           : {}),
       });
       if (!current()) return;
+      kickNativeTripQaSync();
       onOpen(trip.id);
     } catch {
       if (current()) setError(true);
@@ -465,6 +478,43 @@ function LocalTripContent({
     await repo.selectBuiltInCover(trip.id, id);
     if (alive.current && generation === getAccountGeneration()) await load();
   };
+  const openTripEditor = useCallback(async () => {
+    if (!selected || !alive.current || generation !== getAccountGeneration()) return;
+    metadataEditBase.current = null;
+    setMetadataBaseError(false);
+    if (selected.syncFormatVersion === 2) {
+      try {
+        const repo = await readLocalTripRepository();
+        if (!alive.current || generation !== getAccountGeneration()) return;
+        const base = await repo.readMetadataEditBase(selected.id);
+        if (!alive.current || generation !== getAccountGeneration()) return;
+        const local = {
+          name: selected.name,
+          destination: selected.destination,
+          startDate: selected.startDate,
+          endDate: selected.endDate,
+          destinations:
+            selected.destinations?.map(({ ordinal: _ordinal, ...item }) => item) ?? [],
+        };
+        if (
+          !base.confirmed ||
+          base.pendingOperationIds.length ||
+          canonicalCoreJson(local as Json) !==
+            canonicalCoreJson(base.confirmed.metadata as Json)
+        ) {
+          setMetadataBaseError(true);
+          return;
+        }
+        metadataEditBase.current = base.confirmed;
+      } catch {
+        if (alive.current && generation === getAccountGeneration())
+          setMetadataBaseError(true);
+        return;
+      }
+    }
+    setCoverOpen(true);
+  }, [selected, generation]);
+
   const leaveHome = useCallback(() => {
     if (!alive.current || generation !== getAccountGeneration()) return;
     if (!itemStart) {
@@ -500,7 +550,7 @@ function LocalTripContent({
             ? {
                 editTrip: () => {
                   if (alive.current && generation === getAccountGeneration())
-                    setCoverOpen(true);
+                    void openTripEditor();
                 },
               }
             : {}),
@@ -546,6 +596,7 @@ function LocalTripContent({
       publishQuickActions,
       quickActionsOwner,
       leaveHome,
+      openTripEditor,
       onChooseDay,
     ]),
   );
@@ -587,7 +638,7 @@ function LocalTripContent({
         }
       : undefined,
     onSetup: receiveSetup,
-    onEdit: selected && metadataEditable ? () => setCoverOpen(true) : undefined,
+    onEdit: selected && metadataEditable ? () => void openTripEditor() : undefined,
     onCover: openPersonalCover,
     undated: lifecycle === "Undated",
     onImport: selected
@@ -695,7 +746,7 @@ function LocalTripContent({
               metadataEditable
                 ? () => {
                     if (alive.current && generation === getAccountGeneration())
-                      setCoverOpen(true);
+                      void openTripEditor();
                   }
                 : undefined
             }
@@ -762,6 +813,11 @@ function LocalTripContent({
               {t("tripCreate.saveFailed")}
             </Text>
           ) : null}
+          {metadataBaseError ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {t("tripMetadata.confirmedBaseUnavailable")}
+            </Text>
+          ) : null}
           <TripMembersSheet
             visible={
               menuMembersTrip === selected.id &&
@@ -823,16 +879,34 @@ function LocalTripContent({
                     const repo = await readLocalTripRepository();
                     if (!alive.current || generation !== getAccountGeneration())
                       throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    await repo.updateMetadata(
-                      {
-                        operationId,
-                        tripId: selected.id,
-                        before,
-                        after,
-                      },
-                      cover,
-                      destinations,
-                    );
+                    if (selected.syncFormatVersion === 2) {
+                      const base = metadataEditBase.current;
+                      if (!base || base.tripId !== selected.id)
+                        throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+                      await repo.updateMetadata(
+                        {
+                          formatVersion: 3,
+                          operationId,
+                          tripId: selected.id,
+                          expectedMetadataRevision: base.metadataRevision,
+                          before: base.metadata,
+                          after: {
+                            ...after,
+                            destination: null,
+                            destinations:
+                              destinations?.after ?? base.metadata.destinations,
+                          },
+                        },
+                        cover,
+                      );
+                    } else {
+                      await repo.updateMetadata(
+                        { operationId, tripId: selected.id, before, after },
+                        cover,
+                        destinations,
+                      );
+                    }
+                    kickNativeTripQaSync();
                     const committed = await repo.getTrip(selected.id);
                     if (alive.current && generation === getAccountGeneration()) {
                       // Fence an older focus read that started before this local commit.
