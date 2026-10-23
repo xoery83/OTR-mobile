@@ -240,7 +240,18 @@ async function main() {
       JSON.stringify({ windowId: gate.windowId, ...created }),
       { flag: "wx", mode: 0o600 },
     );
-    summary.create = { accepted: true, serverVerified: true, local: runner.localState() };
+    summary.create = {
+      accepted: true,
+      serverVerified: true,
+      receipt: cr,
+      local: runner.localState(),
+    };
+    summary.ledgerInit = {
+      accepted: true,
+      serverVerified: true,
+      owningReadback: created.ledger,
+      local: runner.localState().ledger,
+    };
     await command("activate-metadata");
     await runner.saveEdit();
     runner.setOnline(false);
@@ -270,6 +281,11 @@ async function main() {
       edited.trip.destination !== "Auckland, New Zealand"
     )
       throw Error("C_EDIT_READBACK_MISMATCH");
+    writeFileSync(
+      dir + "/canonical-edit-readback.json",
+      JSON.stringify({ windowId: gate.windowId, receipt: mr, ...edited }),
+      { flag: "wx", mode: 0o600 },
+    );
     if (!receiptOnlyResume) {
       await runner.replayEdit();
       await denied(() => runner.collisionEdit(), 409, "TRIP_METADATA_COLLISION");
@@ -287,7 +303,15 @@ async function main() {
       editedLocal.trip?.destination !== payloads.editProposal.body.after.destination
     )
       throw Error("C_EDIT_CLIENT_RECOVERY_MISMATCH");
-    summary.edit = { accepted: true, serverVerified: true, queue: runner.queueState() };
+    summary.edit = {
+      accepted: true,
+      serverVerified: true,
+      receipt: mr,
+      queue: runner.queueState(),
+      local: editedLocal,
+      originalCreateReceiptStable: true,
+      originalCreateReceipt: original,
+    };
     if (receiptOnlyResume) {
       summary.status = "REAL_DEV_CREATE_LEDGER_EDIT_RECEIPTS_READY_FOR_REVIEW";
       summary.currency = { status: "BLOCKED_BY_READ_BUDGET", attempted: false };
