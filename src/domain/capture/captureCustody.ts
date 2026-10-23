@@ -57,6 +57,18 @@ export type CaptureMaterialBinding = z.infer<typeof captureMaterialBindingSchema
 export const captureCustodyBindingJson = (raw: CaptureMaterialBinding) =>
   JSON.stringify(captureMaterialBindingSchema.parse(raw));
 
+// Header values are ByteString. Escape UTF16 code units only on the new wire version;
+// identity JSON, filenames, payload bytes/hashes and all legacy v1 bytes stay unchanged.
+export const captureCustodyBindingHeader = (raw: CaptureMaterialBinding) => {
+  const json = captureCustodyBindingJson(raw);
+  return raw.version === 1
+    ? json
+    : json.replace(
+        /[\u007f-\uffff]/g,
+        (unit) => "\\u" + unit.charCodeAt(0).toString(16).padStart(4, "0"),
+      );
+};
+
 // Container signatures only; this grants no parser, semantic or Source admission.
 export function captureCustodyMedia(
   bytes: Uint8Array,

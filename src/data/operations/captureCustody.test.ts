@@ -5,6 +5,7 @@ import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { createCaptureCustodyOperation } from "./captureCustody";
 import {
   captureCustodyBindingJson,
+  captureCustodyBindingHeader,
   type CaptureCustodyBinding,
 } from "@/domain/capture/captureCustody";
 
@@ -140,7 +141,7 @@ it("real SQLite C3v2 originals project TEXT and PDF custody identities, HTTP rou
       new Request(`https://fixture.test/v2/capture-inputs/${b.inputId}/material`, {
         method: bytes ? "PUT" : "GET",
         headers: {
-          "X-OTR-Capture-Binding": captureCustodyBindingJson(b),
+          "X-OTR-Capture-Binding": captureCustodyBindingHeader(b),
           ...(bytes
             ? { "Content-Type": b.mediaType, "Content-Length": String(bytes.length) }
             : {}),

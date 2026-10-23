@@ -10,7 +10,7 @@ import { createRequestBoundary, readBoundedBytes } from "./requestBoundary";
 import {
   assertCaptureCustodyBytes,
   captureMaterialBindingSchema,
-  captureCustodyBindingJson,
+  captureCustodyBindingHeader,
   type CaptureMaterialBinding,
 } from "@/domain/capture/captureCustody";
 
@@ -52,7 +52,7 @@ export function createCaptureCustodyTransport(
     bytes?: Uint8Array,
   ) {
     const binding = captureMaterialBindingSchema.parse(raw);
-    const encoded = captureCustodyBindingJson(binding);
+    const encoded = captureCustodyBindingHeader(binding);
     if (context.tripId !== "" || context.accountId !== binding.accountId)
       throw new Error("CAPTURE_CUSTODY_SCOPE_INVALID");
     if (bytes) assertCaptureCustodyBytes(binding, bytes);

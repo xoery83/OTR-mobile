@@ -1,3 +1,4 @@
+import { captureCustodyBindingHeader } from "../../../src/domain/capture/captureCustody";
 // Disposable network-none Linux proof. Synthetic Storage transport, actual private
 // file loader/anchored custody/HTTP; no Hosted, Auth or Provider claim.
 import assert from "node:assert/strict";
@@ -32,7 +33,7 @@ export async function runCaptureUniversalCustodyFixture() {
   ];
   const inputs = originals.map((bytes, n) => ({
     version: 2 as const,
-    originalFilename: n === 1 ? "synthetic.pdf" : n === 3 ? "synthetic.txt" : null,
+    originalFilename: n === 1 ? "synthetic.pdf" : n === 3 ? "行程✈️.txt" : null,
     accountId,
     batchId,
     jobId,
@@ -91,14 +92,14 @@ export async function runCaptureUniversalCustodyFixture() {
   };
   let runtime = await loadDevCaptureCustody(environment);
   assert.ok(runtime);
-  const http = async (binding: CaptureMaterialBinding, bytes?: Uint8Array) =>
+  const http = async (binding: CaptureMaterialBinding, bytes?: Uint8Array, invalidWire?: string) =>
     captureCustodyBoundary(
       new Request(
         `https://fixture.invalid/v2/capture-inputs/${binding.inputId}/material`,
         {
           method: bytes ? "PUT" : "GET",
           headers: {
-            "X-OTR-Capture-Binding": JSON.stringify(binding),
+            "X-OTR-Capture-Binding": invalidWire ?? captureCustodyBindingHeader(binding),
             ...(bytes
               ? {
                   "Content-Type": binding.mediaType,
@@ -138,7 +139,7 @@ export async function runCaptureUniversalCustodyFixture() {
           ...inputs[0],
           version: 1,
           mediaType: "application/pdf",
-        } as unknown as CaptureMaterialBinding)
+        } as unknown as CaptureMaterialBinding, undefined, JSON.stringify({...inputs[0],version:1,mediaType:"application/pdf"}))
       ).status,
       422,
     );

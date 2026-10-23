@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import { createCaptureCustodyTransport } from "./captureCustodyTransport";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
-import { captureCustodyBindingJson } from "@/domain/capture/captureCustody";
+import { captureCustodyBindingHeader } from "@/domain/capture/captureCustody";
 vi.mock("expo/fetch", () => ({ fetch: vi.fn() }));
 vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 const bytes = new TextEncoder().encode("%PDF-1.4 synthetic");
@@ -27,7 +27,7 @@ const response = (body = bytes) =>
       "Content-Type": b.mediaType,
       "Content-Length": String(b.byteCount),
       ETag: `"${b.sha256}"`,
-      "X-OTR-Capture-Binding": captureCustodyBindingJson(b),
+      "X-OTR-Capture-Binding": captureCustodyBindingHeader(b),
       "Cache-Control": "private, no-store",
       Vary: "Authorization",
     },
@@ -55,7 +55,7 @@ it("uses exact tuple/bytes, bounded verified readback and one401 refresh", async
   expect((fetcher.mock.calls[1] as unknown as [string, RequestInit])[1]).toMatchObject({
     method: "PUT",
     redirect: "error",
-    headers: { "X-OTR-Capture-Binding": captureCustodyBindingJson(b) },
+    headers: { "X-OTR-Capture-Binding": captureCustodyBindingHeader(b) },
   });
 });
 it("404 recovery is unavailable, not new upload; malformed bytes and overflow reject", async () => {
@@ -183,9 +183,9 @@ it("v2 text uses normal authenticated transport with exact provenance and verifi
     pin = {
       ...b,
       version: 2 as const,
-      originalFilename: null,
-      kind: "TEXT" as const,
-      acquisitionSource: "magic_input" as const,
+      originalFilename: "行程✈️.txt",
+      kind: "FILE" as const,
+      acquisitionSource: "files" as const,
       mediaType: "text/plain" as const,
       byteCount: text.length,
       sha256: createHash("sha256").update(text).digest("hex"),
@@ -198,7 +198,7 @@ it("v2 text uses normal authenticated transport with exact provenance and verifi
             "Content-Type": "text/plain",
             "Content-Length": String(text.length),
             ETag: `"${pin.sha256}"`,
-            "X-OTR-Capture-Binding": captureCustodyBindingJson(pin),
+            "X-OTR-Capture-Binding": captureCustodyBindingHeader(pin),
             "Cache-Control": "private, no-store",
             Vary: "Authorization",
           },
@@ -211,7 +211,7 @@ it("v2 text uses normal authenticated transport with exact provenance and verifi
     (x.fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].headers,
   ).toMatchObject({
     Authorization: "Bearer synthetic",
-    "X-OTR-Capture-Binding": captureCustodyBindingJson(pin),
+    "X-OTR-Capture-Binding": captureCustodyBindingHeader(pin),
     "Content-Type": "text/plain",
   });
 });

@@ -3,6 +3,8 @@ import { expect, it } from "vitest";
 import {
   assertCaptureCustodyBytes,
   captureCustodyMedia,
+  captureCustodyBindingJson,
+  captureCustodyBindingHeader,
   type CaptureCustodyBinding,
 } from "./captureCustody";
 
@@ -114,5 +116,33 @@ it("Universal v2 requires explicit typed provenance, strict UTF-8 and bounded N;
         invalid,
       ),
     ).toThrow("BYTES_INVALID");
+  }
+});
+
+it("v2 header escapes Chinese/emoji as ASCII without changing identity JSON or v1 wire bytes", () => {
+  const v1 = binding(jpeg);
+  expect(captureCustodyBindingHeader(v1)).toBe(captureCustodyBindingJson(v1));
+  for (const originalFilename of [
+    "行程.txt",
+    "行程✈️🧳.txt",
+    "行".repeat(251) + ".txt",
+  ]) {
+    const b = {
+      ...v1,
+      version: 2 as const,
+      kind: "FILE" as const,
+      acquisitionSource: "files" as const,
+      originalFilename,
+    };
+    const identity = captureCustodyBindingJson(b),
+      wire = captureCustodyBindingHeader(b);
+    expect(identity).toContain(originalFilename);
+    expect(wire).toMatch(/^[\x20-\x7e]+$/);
+    const headers = new Headers({ "X-OTR-Capture-Binding": wire });
+    const response = new Response(null, { headers });
+    expect(JSON.parse(response.headers.get("X-OTR-Capture-Binding")!)).toEqual(
+      JSON.parse(identity),
+    );
+    expect(() => new Headers({ "X-OTR-Capture-Binding": identity })).toThrow();
   }
 });
