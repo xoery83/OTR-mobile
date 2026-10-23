@@ -105,6 +105,26 @@ const post = (url: string, body: unknown = input, token = "valid") =>
     },
     body: JSON.stringify(body),
   });
+it.each(["acquire", "result"])(
+  "bounds Universal original %s before buffering or authentication",
+  async (resource) => {
+    const { startDevBackend } = await import("./serverStartup");
+    const url = await address(startDevBackend());
+    const response = await fetch(
+      `${url}/v2/trips/${input.tripId}/universal-source-originals/${resource}`,
+      {
+        method: "POST",
+        body: "x".repeat(2097153),
+      },
+    );
+    expect(response.status).toBe(413);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(await response.json()).toMatchObject({
+      error: { code: "INVALID_SOURCE_COMMAND" },
+    });
+    expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+  },
+);
 it("importing the startup factory performs no startup IO", async () => {
   await import("./serverStartup");
   expect(fixtures.servers).toHaveLength(0);

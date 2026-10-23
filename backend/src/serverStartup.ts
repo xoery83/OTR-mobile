@@ -122,7 +122,7 @@ export function startDevBackend(
     try {
       const chunks: Buffer[] = [];
       const textSourceRoute =
-        /^\/v2\/trips\/[^/]+\/sources\/(?:acquire|runs\/publish)(?:\?|$)/.test(
+        /^\/v2\/trips\/[^/]+\/(?:sources\/(?:acquire|runs\/publish)|universal-source-originals\/(?:acquire|result))(?:\?|$)/.test(
           incoming.url ?? "",
         );
       const originalRoute =
