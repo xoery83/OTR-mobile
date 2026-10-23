@@ -24,6 +24,7 @@ const state = vi.hoisted(() => ({
   voiceCancel: vi.fn(),
   voiceClose: vi.fn(),
   actionSheet: vi.fn(),
+  dismissKeyboard: vi.fn(),
   buttons: [] as any[],
   nodes: [] as any[],
   confirm: vi.fn(),
@@ -71,6 +72,7 @@ vi.mock("react-native", () => {
     Image: primitive,
     Modal: primitive,
     KeyboardAvoidingView: primitive,
+    Keyboard: { dismiss: state.dismissKeyboard },
     Platform: {
       get OS() {
         return state.os;
@@ -165,6 +167,7 @@ beforeEach(() => {
     fn.mockReset();
   state.cursor = 0;
   state.actionSheet.mockReset();
+  state.dismissKeyboard.mockReset();
   state.confirm.mockReset();
   setUiLocale("en");
   state.scheme = "light";
@@ -194,6 +197,7 @@ it("empty composer offers real intake sources and a persistent disabled send in 
 it("attachment popover picks the requested source without a system alert or submission", () => {
   render();
   button("capture.composer.addAttachments").onPress();
+  expect(state.dismissKeyboard).toHaveBeenCalledOnce();
   const { props } = render();
   const file = state.buttons.find(
     (b) => b.children?.[1]?.props?.children === t("capture.composer.files"),

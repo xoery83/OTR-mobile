@@ -4,6 +4,7 @@ import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -147,7 +148,10 @@ export function CaptureComposer({
     if (content != null || page !== "composer") closeVoice();
   }, [content, page, closeVoice]);
   const attachments = () => {
-    if (!locked) setMenu((value) => !value);
+    if (!locked) {
+      Keyboard.dismiss();
+      setMenu((value) => !value);
+    }
   };
   const header =
     page === "email"
