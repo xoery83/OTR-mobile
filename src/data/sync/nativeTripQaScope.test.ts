@@ -121,10 +121,13 @@ it("stops after expiry across an awaited Create, without entering Edit", async (
 it("retains the actual previous claim timestamp when a reconciled operation is explicitly resumed", async () => {
   const config = fixture();
   const lastAttemptAt = "2026-10-23T02:50:00Z";
-  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify({
-    ...config,
-    creates: [{ ...config.creates[0], lastAttemptAt }],
-  }));
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      ...config,
+      creates: [{ ...config.creates[0], lastAttemptAt }],
+    }),
+  );
   await runNativeTripQaSync();
   expect(state.createFactory).toHaveBeenCalledWith(
     { accountId: a, tripId: trip, operationId: create },
@@ -163,4 +166,24 @@ it("opts in only new local creates for the configured Account, without opening d
   expect(state.createFactory).not.toHaveBeenCalled();
   vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "");
   expect(nativeTripQaCreateFormat(a)).toBeUndefined();
+});
+
+it("keeps new owning V2 local creates visible after expiry while historical pending stays quarantined", async () => {
+  vi.setSystemTime(new Date("2026-10-24T04:00:00Z"));
+  const rows = [
+    { id: trip },
+    {
+      id: "historical",
+      syncFormatVersion: 2 as const,
+      createdAt: "2026-10-22T00:00:00Z",
+    },
+    { id: "new-local", syncFormatVersion: 2 as const, createdAt: "2026-10-24T00:00:00Z" },
+    { id: "legacy", createdAt: "2026-10-24T00:00:00Z" },
+    { id: "invalid-date", syncFormatVersion: 2 as const, createdAt: "invalid" },
+  ];
+  expect(filterNativeTripQaList(a, rows).map((v) => v.id)).toEqual([trip, "new-local"]);
+  expect(filterNativeTripQaList("other", rows)).toBe(rows);
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(state.createFactory).not.toHaveBeenCalled();
+  expect(state.editFactory).not.toHaveBeenCalled();
 });

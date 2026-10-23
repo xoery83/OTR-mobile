@@ -56,14 +56,21 @@ export function nativeTripQaCreateFormat(accountId: string | null): 2 | undefine
 }
 
 // View-only isolation; retained historical rows/receipts are neither deleted nor relabelled.
-export function filterNativeTripQaList<T extends { id: string }>(
-  accountId: string | null,
-  trips: readonly T[],
-): readonly T[] {
+export function filterNativeTripQaList<
+  T extends { id: string; syncFormatVersion?: 2; createdAt?: string | null },
+>(accountId: string | null, trips: readonly T[]): readonly T[] {
   const scope = readConfiguration();
   if (!scope || scope.accountId !== accountId) return trips;
   const ids = new Set([...scope.creates, ...scope.edits].map((item) => item.tripId));
-  return trips.filter((item) => ids.has(item.id));
+  return trips.filter(
+    (item) =>
+      ids.has(item.id) ||
+      // New local V2 creates remain visible after finite dispatch expires.
+      // The owning Repository supplies Account-scoped original CREATE provenance.
+      (item.syncFormatVersion === 2 &&
+        typeof item.createdAt === "string" &&
+        Date.parse(item.createdAt) >= Date.parse(scope.startsAt)),
+  );
 }
 
 export function kickNativeTripQaSync() {
