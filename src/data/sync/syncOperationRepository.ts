@@ -18,8 +18,10 @@ import { canonicalEventJson } from "@/domain/trip/eventIntentJson";
 import {
   withAccountApplyGate,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
+import { getAccountGeneration } from "../auth/accountGeneration";
 
 export type SyncOperationStatus =
   | "PENDING"
@@ -73,13 +75,19 @@ export function createSyncOperationRepository(
   }>,
 ) {
   const selected = target && Object.freeze({ ...target });
+  const targetScope = selected && {
+    accountId: selected.accountId,
+    generation: getAccountGeneration(),
+  };
   const identitySql = selected ? " AND id=? AND trip_id=?" : "";
   const identityParams = selected ? [selected.operationId, selected.tripId] : [];
   const capped = selected && "lastAttemptAt" in selected;
   const attemptSql = capped ? " AND last_attempt_at IS ?" : "";
   const attemptParams = capped ? [selected.lastAttemptAt ?? null] : [];
   const getActiveUserId = async () => {
+    if (targetScope) assertAccountRequestGeneration(targetScope);
     const accountId = await readActiveUserId();
+    if (targetScope) assertAccountRequestGeneration(targetScope);
     if (selected && accountId !== selected.accountId)
       throw new Error("SYNC_TARGET_ACCOUNT_CHANGED");
     return accountId;
@@ -213,6 +221,7 @@ export function createSyncOperationRepository(
         ...identityParams,
         ...attemptParams,
       );
+      if (targetScope) assertAccountRequestGeneration(targetScope);
       return result.changes === 1;
     },
 

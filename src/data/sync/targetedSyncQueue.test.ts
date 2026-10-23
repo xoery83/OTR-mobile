@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { ApiClientError } from "../api/client";
+import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createSyncEngine } from "./syncEngine";
 import {
   createSyncOperationRepository,
@@ -15,10 +16,15 @@ const target = { accountId: "qa", tripId: "new-trip", operationId: "new-op", las
 let directory: string;
 let db: DatabaseSync;
 let now = "2026-10-23T06:00:00.000Z";
+let afterClaim: (() => void) | undefined;
 const open = () => {
   db = new DatabaseSync(join(directory, "queue.db"));
   const adapter: SyncQueueDatabase = {
-    runAsync: async (sql, ...params) => db.prepare(sql).run(...(params as SQLInputValue[])) as never,
+    runAsync: async (sql, ...params) => {
+      const result = db.prepare(sql).run(...(params as SQLInputValue[]));
+      if (sql.includes("SET status = 'PROCESSING'")) afterClaim?.();
+      return result as never;
+    },
     getAllAsync: async <T>(sql: string, ...params: unknown[]) =>
       db.prepare(sql).all(...(params as SQLInputValue[])) as T[],
   };
@@ -27,6 +33,7 @@ const open = () => {
 function fixture() {
   directory = mkdtempSync(join(tmpdir(), "otr-exact-queue-"));
   now = "2026-10-23T06:00:00.000Z";
+  afterClaim = undefined;
   const queue = open();
   db.exec(`CREATE TABLE sync_operations (
     id TEXT PRIMARY KEY,trip_id TEXT,entity_type TEXT,entity_id TEXT,operation_type TEXT,
@@ -84,5 +91,17 @@ it("completes only its selected operation without waking historical dependent ro
   await createSyncEngine(queue, { push }, () => now, (op) => op.id === target.operationId).run("AUTHENTICATED_ONLINE");
   expect(push).toHaveBeenCalledTimes(1);
   expect(db.prepare("SELECT status FROM sync_operations WHERE id='new-op'").get()).toMatchObject({ status: "COMPLETED" });
+  expect(history()).toBe(before);
+});
+it("sends nothing after an Account ABA while the actual claim is awaiting completion", async () => {
+  const queue = fixture(), before = history();
+  afterClaim = () => {
+    advanceAccountGeneration();
+    advanceAccountGeneration();
+  };
+  const push = vi.fn();
+  await expect(createSyncEngine(queue, { push }, () => now, (op) => op.id === target.operationId).run("AUTHENTICATED_ONLINE")).rejects.toThrow("Account changed");
+  expect(push).not.toHaveBeenCalled();
+  expect(db.prepare("SELECT last_attempt_at,status FROM sync_operations WHERE id='new-op'").get()).toMatchObject({ last_attempt_at: now, status: "PROCESSING" });
   expect(history()).toBe(before);
 });

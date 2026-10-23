@@ -19,6 +19,7 @@ import {
   type LedgerOperationalSyncCompletion,
 } from "@/data/sync/ledgerOperationalSync";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
+import { hasNativeTripQaScope } from "@/data/sync/nativeTripQaScope";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import {
   refreshJourneyLedgerWithStatus,
@@ -167,6 +168,7 @@ async function scheduleAutomaticDataHealth(
   journeyIds: readonly string[] = [],
   expected?: LedgerOperationalSyncCompletion,
 ) {
+  if (hasNativeTripQaScope()) return;
   if (expected) {
     if (expected.generation !== getAccountGeneration()) return;
     const session = await readLocalSession();
@@ -185,7 +187,8 @@ async function refreshThenSync() {
   const context = await captureAccountScope(requireActiveUserId);
   await runLedgerOperationalSync();
   await assertAccountRequestContext(context, requireActiveUserId);
-  if (getSyncTransportMode() === "dev") await discoverAccountJourneys(context);
+  if (getSyncTransportMode() === "dev" && !hasNativeTripQaScope())
+    await discoverAccountJourneys(context);
 }
 
 async function discoverAccountJourneys(context: AccountScope) {
