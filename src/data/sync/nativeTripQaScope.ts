@@ -17,6 +17,7 @@ const configuration = z
     accountId: coreUuid,
     startsAt: z.iso.datetime(),
     expiresAt: z.iso.datetime(),
+    viewIsolationStartedAt: z.iso.datetime().optional(),
     creates: z.array(target).max(3),
     edits: z.array(target).max(6),
   })
@@ -69,7 +70,8 @@ export function filterNativeTripQaList<
       // The owning Repository supplies Account-scoped original CREATE provenance.
       (item.syncFormatVersion === 2 &&
         typeof item.createdAt === "string" &&
-        Date.parse(item.createdAt) >= Date.parse(scope.startsAt)),
+        Date.parse(item.createdAt) >=
+          Date.parse(scope.viewIsolationStartedAt ?? scope.startsAt)),
   );
 }
 

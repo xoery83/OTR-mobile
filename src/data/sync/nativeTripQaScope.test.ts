@@ -187,3 +187,37 @@ it("keeps new owning V2 local creates visible after expiry while historical pend
   expect(state.createFactory).not.toHaveBeenCalled();
   expect(state.editFactory).not.toHaveBeenCalled();
 });
+
+it("keeps view isolation stable across later finite operation windows", async () => {
+  const scope = JSON.parse(process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE!);
+  scope.viewIsolationStartedAt = "2026-10-23T05:45:23.954Z";
+  scope.startsAt = "2026-10-24T04:00:00Z";
+  scope.expiresAt = "2026-10-24T04:15:00Z";
+  scope.creates = [];
+  scope.edits = [];
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
+  const rows = [
+    {
+      id: "old-success",
+      syncFormatVersion: 2 as const,
+      createdAt: "2026-10-23T05:45:23.954Z",
+    },
+    {
+      id: "new-success",
+      syncFormatVersion: 2 as const,
+      createdAt: "2026-10-23T18:34:01.964Z",
+    },
+    {
+      id: "historical",
+      syncFormatVersion: 2 as const,
+      createdAt: "2026-10-22T00:00:00Z",
+    },
+  ];
+  expect(filterNativeTripQaList(a, rows).map((v) => v.id)).toEqual([
+    "old-success",
+    "new-success",
+  ]);
+  vi.setSystemTime(new Date("2026-10-25T00:00:00Z"));
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(state.createFactory).not.toHaveBeenCalled();
+});
