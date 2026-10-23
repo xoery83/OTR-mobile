@@ -3,6 +3,7 @@ import { loadDevCaptureCustody } from "./captureCustodyRuntime";
 import { loadDevTripCreateRuntime } from "./tripCreateRuntime";
 import { startDevBackend } from "./serverStartup";
 import { loadDevUniversalRuntime } from "./universalFiniteRuntime";
+import { loadDevUniversalOriginalSourceRuntime } from "./universalOriginalSourceRuntime";
 
 // Opt-in image command only. The ordinary server.ts remains CLOSED and unchanged.
 async function main() {
@@ -11,6 +12,15 @@ async function main() {
     universal = await loadDevUniversalRuntime(process.env);
   } catch {
     console.info("UNIVERSAL_RUNTIME_CLOSED");
+  }
+  let originals: Awaited<ReturnType<typeof loadDevUniversalOriginalSourceRuntime>>;
+  try {
+    originals = await loadDevUniversalOriginalSourceRuntime(
+      process.env,
+      universal?.catalogConnection,
+    );
+  } catch {
+    console.info("UNIVERSAL_SOURCE_RUNTIME_CLOSED");
   }
   let runtime: Awaited<ReturnType<typeof loadDevCaptureCustody>>;
   try {
@@ -44,9 +54,12 @@ async function main() {
       tripCreatePort: trip?.tripCreatePort,
       captureMaterialCustody: runtime?.captureMaterialCustody,
       universalImportPort: universal?.universalImportPort,
-      publicationCatalogConnection: universal?.catalogConnection,
+      universalOriginalSourcePort: originals?.universalOriginalSourcePort,
+      publicationCatalogConnection:
+        universal?.catalogConnection ?? originals?.catalogConnection,
     });
   } catch (error) {
+    await originals?.close();
     await universal?.close();
     if (metadata !== trip) await metadata?.close();
     await trip?.close();
@@ -54,6 +67,7 @@ async function main() {
     throw error;
   }
   server.once("close", () => {
+    void originals?.close();
     void universal?.close();
     if (metadata !== trip) void metadata?.close();
     void trip?.close();

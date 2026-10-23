@@ -415,6 +415,7 @@ export function CaptureContent({
               />
             ) : attempted || reopening || model ? (
               <CaptureProgress
+                isCurrent={current}
                 model={model}
                 accountId={accountId}
                 busy={busy}

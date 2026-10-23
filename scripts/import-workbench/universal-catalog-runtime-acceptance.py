@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='otr-universal-catalog-') as directory:
  path=Path(directory);snapshot=path/'catalog.json'
  env=dict(os.environ,OTR_UNIVERSAL_FIXTURE_SNAPSHOT=str(snapshot))
- source=subprocess.run(['python3',str(ROOT/'scripts/import-workbench/universal-source-sql-acceptance.py')],env=env,cwd=ROOT,text=True,capture_output=True)
+ source=subprocess.run(['python3',str(ROOT/'scripts/import-workbench'/os.environ.get('OTR_UNIVERSAL_SOURCE_ACCEPTANCE','universal-source-sql-acceptance.py'))],env=env,cwd=ROOT,text=True,capture_output=True)
  if source.returncode:raise RuntimeError(source.stderr)
  pg=json.loads(source.stdout)
  entry=path/'runner.ts';bundle=path/'runner.mjs'

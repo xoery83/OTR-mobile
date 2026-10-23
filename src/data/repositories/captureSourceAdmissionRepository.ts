@@ -865,6 +865,7 @@ export function createCaptureSourceAdmissionRepository(
         if (binding.intent_kind !== "REUSE" && !queue) fail();
         return {
           binding,
+          operationId: queue ? (queue.id as string) : null,
           command: queue ? parseEventJson(queue.payload_json as string, 2097152) : null,
         };
       });

@@ -73,6 +73,9 @@ export function createUniversalCaptureConsumer(dependencies: {
     return result;
   }
   return {
+    get canDispatch() {
+      return !dispatchUncertain;
+    },
     start: (model: CaptureJobReadModel) => read(model, true),
     recover: (model: CaptureJobReadModel) => read(model, false),
   };

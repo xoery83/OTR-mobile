@@ -1,5 +1,8 @@
+import { prepareUniversalOriginalBatch } from "../operations/universalOriginalBatch";
+import { dispatchUniversalOriginalSource } from "../operations/universalOriginalSource";
+import { importDigest } from "@/domain/trip/flightImportReview";
 import { randomUUID, createHash } from "node:crypto";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { fixture, sha256, now } from "./__fixtures__/captureBatchAssessment";
 import { createCaptureSourceAdmissionRepository } from "./captureSourceAdmissionRepository";
 import { UTF8_TEXT_FILE_PROFILE } from "@/domain/capture/utf8TextFile";
@@ -172,31 +175,37 @@ it("same real C3 mixed Batch prepares two owning Source commands without a model
     readSelectedMaterial: async () => null,
     utf8FileProfile: UTF8_TEXT_FILE_PROFILE,
   });
-  const c = await repo.captureContext(trip),
-    commands = [];
-  for (const input of job.inputs) {
-    const capture = await f.captures.assign(
-      input.captureId!,
-      trip,
-      input.captureRevision!,
-    );
-    const plan = {
-      id: randomUUID(),
-      admission_key: randomUUID(),
-      capture_id: capture.id,
-      capture_revision: capture.revision,
-      intent_kind: "NEW" as const,
-      source_id: randomUUID(),
-      representation_id: randomUUID(),
-      material_revision: 1,
-      expected_source_revision: null,
-      source_operation_id: randomUUID(),
-      source_operation_key: randomUUID(),
-    };
-    await repo.admit(c, plan);
-    const recovery = await repo.recovery(c, plan.id);
-    commands.push((recovery.command as { source_command: unknown }).source_command);
-  }
+  const c = await repo.captureContext(trip);
+  const plans = job.inputs.map((input) => ({
+    inputId: input.id,
+    bindingId: randomUUID(),
+    sourceId: randomUUID(),
+    representationId: randomUUID(),
+    operationId: randomUUID(),
+    operationKey: randomUUID(),
+  }));
+  const dependencies = {
+    getAccountId: f.getAccount,
+    hash: sha256,
+    submissions: f.submissions,
+    captures: f.captures,
+    sources: repo,
+  };
+  await expect(
+    prepareUniversalOriginalBatch(
+      c,
+      q.jobId,
+      [plans[0], { ...plans[1], operationKey: plans[0].operationKey }],
+      dependencies,
+    ),
+  ).rejects.toThrow("UNIVERSAL_SOURCE_PLAN_REUSED");
+  expect(f.sql.prepare("SELECT count(*) AS n FROM trip_sources").get()!.n).toBe(0);
+  const prepared = await prepareUniversalOriginalBatch(c, q.jobId, plans, dependencies);
+  expect(prepared.unhandledInputIds).toEqual([]);
+  expect(await prepareUniversalOriginalBatch(c, q.jobId, plans, dependencies)).toEqual(
+    prepared,
+  );
+  const commands = prepared.inputs.map((i) => i.sourceCommand);
   expect(
     f.sql.prepare("SELECT count(*) AS n FROM capture_submission_batches").get()!.n,
   ).toBe(1);
@@ -223,4 +232,171 @@ it("same real C3 mixed Batch prepares two owning Source commands without a model
         2,
       ),
     );
+});
+
+async function receiptFor(x: Awaited<ReturnType<typeof setup>>) {
+  const r = {
+    contract_version: 1,
+    operation_id: x.plan.source_operation_id,
+    operation_key: x.plan.source_operation_key,
+    command: "ACQUIRE_SOURCE",
+    operation_sha256: "",
+    outcome: "APPLIED",
+    error_code: null,
+    completed_at: "2026-10-24T00:00:00.000000Z",
+    source_id: x.plan.source_id,
+    result_source_row_revision: 1,
+    result_material_revision: 1,
+    representation_id: x.plan.representation_id,
+    result_representation_row_revision: 1,
+    result_remote_state: "NOT_APPLICABLE",
+    result_retention_state: "RETAINED",
+    result_action_id: randomUUID(),
+    result_verified_at: null,
+    result_sha256: "",
+  };
+  const b = x.f.sql
+    .prepare(
+      "SELECT source_operation_sha256 FROM local_capture_source_bindings WHERE id=?",
+    )
+    .get(x.plan.id)!;
+  r.operation_sha256 = b.source_operation_sha256 as string;
+  r.result_sha256 = await importDigest(
+    "otr-source-result-v1",
+    [
+      1,
+      r.operation_id,
+      r.command,
+      r.operation_sha256,
+      r.outcome,
+      null,
+      r.completed_at,
+      1,
+      1,
+      1,
+      r.result_remote_state,
+      r.result_retention_state,
+      r.result_action_id,
+      null,
+    ],
+    sha256,
+  );
+  return JSON.stringify(r);
+}
+it("targeted existing Source queue reconciles UNKNOWN without redispatch and cold recovery completes only after catalog", async () => {
+  const x = await setup(),
+    repository = x.repo(true),
+    c = await repository.captureContext(x.trip);
+  await repository.admit(c, x.plan);
+  // A fixture catalog installation is explicit here; the genuine PG→catalog path is a separate acceptance receipt.
+  const refreshOwningCatalog = async () => {
+    for (const t of [
+      "trip_sources",
+      "trip_source_revisions",
+      "trip_source_representations",
+    ])
+      x.f.sql.exec(
+        `UPDATE ${t} SET registration_state='REGISTERED',created_at='2026-10-24T00:00:00.000000Z'`,
+      );
+  };
+  let retained: string | null = null;
+  const acquire = vi.fn(async () => {
+    throw new Error("SIMULATED_CONNECTION_LOST");
+  });
+  const dependencies = {
+    database: x.f.db,
+    getAccountId: x.f.getAccount,
+    repository,
+    transport: { lookup: async () => retained, acquire },
+    refreshOwningCatalog,
+  };
+  await expect(
+    dispatchUniversalOriginalSource(c, x.plan.id, dependencies),
+  ).rejects.toThrow("SIMULATED_CONNECTION_LOST");
+  expect((await repository.recovery(c, x.plan.id)).binding.state).toBe("OUTCOME_UNKNOWN");
+  expect(await dispatchUniversalOriginalSource(c, x.plan.id, dependencies)).toEqual({
+    state: "OUTCOME_UNKNOWN",
+  });
+  expect(acquire).toHaveBeenCalledTimes(1);
+  retained = await receiptFor(x);
+  x.f.reopen();
+  expect(
+    await dispatchUniversalOriginalSource(c, x.plan.id, {
+      ...dependencies,
+      repository: x.repo(true),
+    }),
+  ).toEqual({ state: "ADMITTED" });
+  expect(
+    x.f.sql
+      .prepare(
+        "SELECT status FROM sync_operations WHERE operation_type='C_ADMIT_CAPTURE_SOURCE'",
+      )
+      .get()!.status,
+  ).toBe("COMPLETED");
+  expect(acquire).toHaveBeenCalledTimes(1);
+});
+it("account change after result lookup cannot dispatch a Source write", async () => {
+  const x = await setup(),
+    repository = x.repo(true),
+    c = await repository.captureContext(x.trip);
+  await repository.admit(c, x.plan);
+  const acquire = vi.fn();
+  await expect(
+    dispatchUniversalOriginalSource(c, x.plan.id, {
+      database: x.f.db,
+      getAccountId: x.f.getAccount,
+      repository,
+      transport: {
+        lookup: async () => {
+          await x.f.switchTo(randomUUID());
+          return null;
+        },
+        acquire,
+      },
+      refreshOwningCatalog: vi.fn(),
+    }),
+  ).rejects.toThrow();
+  expect(acquire).not.toHaveBeenCalled();
+});
+
+it("recovers an interrupted pre-send claim only for the exact Source queue target", async () => {
+  const x = await setup(),
+    repository = x.repo(true),
+    c = await repository.captureContext(x.trip);
+  await repository.admit(c, x.plan);
+  const r = await repository.recovery(c, x.plan.id);
+  x.f.sql
+    .prepare(
+      "UPDATE sync_operations SET status='PROCESSING',claim_owner='old-process',lease_expires_at='2026-01-01T00:00:00.000Z' WHERE id=?",
+    )
+    .run(r.operationId!);
+  const oldId = randomUUID();
+  x.f.sql
+    .prepare(
+      "INSERT INTO sync_operations(id,owner_user_id,trip_id,entity_type,entity_id,operation_type,idempotency_key,base_version,payload_json,status,created_at,updated_at,claim_owner,lease_expires_at) VALUES(?,?,?,'TRIP_IMPORT',?,'C_ADMIT_CAPTURE_SOURCE',?,NULL,'{}','PROCESSING',?,?,'old-process','2026-01-01T00:00:00.000Z')",
+    )
+    .run(oldId, c.accountId, c.tripId, randomUUID(), randomUUID(), now(), now());
+  const raw = await receiptFor(x),
+    acquire = vi.fn(async () => raw);
+  const result = await dispatchUniversalOriginalSource(c, x.plan.id, {
+    database: x.f.db,
+    getAccountId: x.f.getAccount,
+    repository,
+    transport: { lookup: async () => null, acquire },
+    refreshOwningCatalog: async () => {
+      for (const t of [
+        "trip_sources",
+        "trip_source_revisions",
+        "trip_source_representations",
+      ])
+        x.f.sql.exec(
+          `UPDATE ${t} SET registration_state='REGISTERED',created_at='2026-10-24T00:00:00.000000Z'`,
+        );
+    },
+  });
+  expect(result).toEqual({ state: "ADMITTED" });
+  expect(acquire).toHaveBeenCalledOnce();
+  expect(
+    x.f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(oldId)!.status,
+  ).toBe("PROCESSING");
 });

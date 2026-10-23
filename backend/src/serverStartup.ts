@@ -52,6 +52,7 @@ export function startDevBackend(
     | "documentOriginalReader"
     | "captureMaterialCustody"
     | "universalImportPort"
+    | "universalOriginalSourcePort"
   > & {
     publicationCatalogConnection?: PublicationCatalogConnection & {
       close(): Promise<void>;
@@ -106,6 +107,7 @@ export function startDevBackend(
     coreConnection: startOptions.coreConnection,
     documentOriginalReader: startOptions.documentOriginalReader,
     universalImportPort: startOptions.universalImportPort,
+    universalOriginalSourcePort: startOptions.universalOriginalSourcePort,
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
     },

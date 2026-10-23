@@ -1,3 +1,4 @@
+import { universalOriginalSourceBoundary, createUniversalOriginalSourceConnection } from "./universalOriginalSource";
 import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
 import { universalBoundary, type UniversalPort } from "./universalImport";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
@@ -614,6 +615,7 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   universalImportPort?: UniversalPort;
+  universalOriginalSourcePort?: ReturnType<typeof createUniversalOriginalSourceConnection>;
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
@@ -2361,6 +2363,7 @@ function reportingFilters(url: URL): ReportingFilters {
 
 export function createDevBackendHandler({
   universalImportPort,
+  universalOriginalSourcePort,
   captureMaterialCustody,
   tripCreatePort,
   tripMetadataPort,
@@ -2456,6 +2459,10 @@ export function createDevBackendHandler({
         route = "/v2/import-batches/:batchId/interpretations";
         const actor = await authenticate(request, gateway);
         response = await universalBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalImportPort);
+      } else if (/^\/v2\/trips\/[^/]+\/universal-source-originals\/(?:acquire|result)$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/universal-source-originals/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await universalOriginalSourceBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalOriginalSourcePort);
       } else if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
         route = "/v2/capture-inputs/:inputId/material";
         const actor = await authenticate(request, gateway);

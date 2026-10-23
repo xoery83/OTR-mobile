@@ -13,7 +13,7 @@ import {
 } from "../../src/data/api/requestBoundary";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 
-const acquisition = z.strictObject({
+export const flightTextAcquisitionSchema = z.strictObject({
   contract_version: z.literal(1),
   command: z.literal("ACQUIRE_SOURCE"),
   operation_id: coreUuid,
@@ -78,7 +78,7 @@ export function createFlightTextSourceConnection(
   }
   return {
     async acquire(actor: string, trip: string, input: unknown) {
-      const q = acquisition.parse(input);
+      const q = flightTextAcquisitionSchema.parse(input);
       if (q.actor_account_id !== actor || q.trip_id !== trip)
         throw new Error("SOURCE_ACCESS_DENIED");
       const bytes = new TextEncoder().encode(q.payload.original.text_content);
@@ -91,40 +91,7 @@ export function createFlightTextSourceConnection(
         "SELECT public.trip_source_acquire_source($1::uuid,$2) AS result",
         [actor, canonicalEventJson(q as Json)],
       )) as Record<string, Json>;
-      if (
-        r.operation_id !== q.operation_id ||
-        r.operation_key !== q.operation_key ||
-        r.operation_sha256 !== q.operation_sha256 ||
-        r.source_id !== q.source_id ||
-        r.representation_id !== q.payload.original.id ||
-        r.command !== "ACQUIRE_SOURCE" ||
-        r.outcome !== "APPLIED" ||
-        r.result_material_revision !== 1 ||
-        r.result_remote_state !== "NOT_APPLICABLE" ||
-        r.result_retention_state !== "RETAINED" ||
-        r.result_sha256 !==
-          (await importDigest(
-            "otr-source-result-v1",
-            [
-              1,
-              r.operation_id,
-              r.command,
-              r.operation_sha256,
-              r.outcome,
-              r.error_code,
-              r.completed_at,
-              r.result_source_row_revision,
-              r.result_material_revision,
-              r.result_representation_row_revision,
-              r.result_remote_state,
-              r.result_retention_state,
-              r.result_action_id,
-              r.result_verified_at,
-            ],
-            hash,
-          ))
-      )
-        throw new Error("REPLAY_UNAVAILABLE");
+      await verifySourceAcquisitionResult(q, r, hash);
       return r;
     },
     async publishRun(actor: string, trip: string, input: unknown) {
@@ -144,6 +111,53 @@ export function createFlightTextSourceConnection(
       return r;
     },
   };
+}
+// Shared existing Source receipt verification; this conveys no PDF or admission authority.
+export async function verifySourceAcquisitionResult(
+  q: {
+    operation_id: string;
+    operation_key: string;
+    operation_sha256: string;
+    source_id: string;
+    payload: { original: { id: string } };
+  },
+  r: Record<string, Json>,
+  hash: ImportHash,
+) {
+  if (
+    r.operation_id !== q.operation_id ||
+    r.operation_key !== q.operation_key ||
+    r.operation_sha256 !== q.operation_sha256 ||
+    r.source_id !== q.source_id ||
+    r.representation_id !== q.payload.original.id ||
+    r.command !== "ACQUIRE_SOURCE" ||
+    r.outcome !== "APPLIED" ||
+    r.result_material_revision !== 1 ||
+    r.result_remote_state !== "NOT_APPLICABLE" ||
+    r.result_retention_state !== "RETAINED" ||
+    r.result_sha256 !==
+      (await importDigest(
+        "otr-source-result-v1",
+        [
+          1,
+          r.operation_id,
+          r.command,
+          r.operation_sha256,
+          r.outcome,
+          r.error_code,
+          r.completed_at,
+          r.result_source_row_revision,
+          r.result_material_revision,
+          r.result_representation_row_revision,
+          r.result_remote_state,
+          r.result_retention_state,
+          r.result_action_id,
+          r.result_verified_at,
+        ],
+        hash,
+      ))
+  )
+    throw new Error("REPLAY_UNAVAILABLE");
 }
 export async function flightTextSourceBoundary(
   request: Request,

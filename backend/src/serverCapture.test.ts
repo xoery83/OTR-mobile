@@ -3,6 +3,8 @@ const mocks = vi.hoisted(() => ({
   custody: vi.fn(),
   trip: vi.fn(),
   metadata: vi.fn(),
+  universal: vi.fn(),
+  originals: vi.fn(),
   start: vi.fn(),
   server: { once: vi.fn(), close: vi.fn() },
 }));
@@ -12,12 +14,16 @@ vi.mock("./tripMetadataRuntime", () => ({
   loadDevTripMetadataV2Runtime: mocks.metadata,
 }));
 vi.mock("./serverStartup", () => ({ startDevBackend: mocks.start }));
+vi.mock("./universalFiniteRuntime", () => ({ loadDevUniversalRuntime: mocks.universal }));
+vi.mock("./universalOriginalSourceRuntime", () => ({ loadDevUniversalOriginalSourceRuntime: mocks.originals }));
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   mocks.custody.mockResolvedValue(undefined);
   mocks.trip.mockResolvedValue(undefined);
   mocks.metadata.mockResolvedValue(undefined);
+  mocks.universal.mockResolvedValue(undefined);
+  mocks.originals.mockResolvedValue(undefined);
   mocks.start.mockReturnValue(mocks.server);
   vi.spyOn(console, "info").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -107,4 +113,41 @@ it("mounts the explicit normal Trip ports without loading a second Metadata runt
   );
   mocks.server.once.mock.calls[0][1]();
   expect(trip.close).toHaveBeenCalledOnce();
+});
+it("mounts Source-only custody without inventing a Task or losing the normal Trip ports", async () => {
+  const trip = { tripCreatePort: {}, tripMetadataV2Port: {}, coreConnection: {}, close: vi.fn() };
+  const originals = { universalOriginalSourcePort: {}, catalogConnection: {}, close: vi.fn() };
+  mocks.trip.mockResolvedValue(trip);
+  mocks.originals.mockResolvedValue(originals);
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+  expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({
+    tripCreatePort: trip.tripCreatePort,
+    coreConnection: trip.coreConnection,
+    universalImportPort: undefined,
+    universalOriginalSourcePort: originals.universalOriginalSourcePort,
+    publicationCatalogConnection: originals.catalogConnection,
+  }));
+  mocks.server.once.mock.calls[0][1]();
+  expect(trip.close).toHaveBeenCalledOnce();
+  expect(originals.close).toHaveBeenCalledOnce();
+});
+it("closes all acquired resources when shared startup fails and logs no private failure", async () => {
+  const trip = { tripCreatePort: {}, tripMetadataV2Port: {}, coreConnection: {}, close: vi.fn() };
+  const originals = { universalOriginalSourcePort: {}, catalogConnection: {}, close: vi.fn() };
+  const universal = { universalImportPort: {}, catalogConnection: {}, close: vi.fn() };
+  mocks.trip.mockResolvedValue(trip);
+  mocks.originals.mockResolvedValue(originals);
+  mocks.universal.mockResolvedValue(universal);
+  mocks.start.mockImplementation(() => { throw Error("private-startup-value"); });
+  const before = process.exitCode;
+  try {
+    await import("./serverCapture");
+    await vi.waitFor(() => expect(console.error).toHaveBeenCalledWith("CAPTURE_RUNTIME_UNAVAILABLE"));
+    expect(mocks.originals).toHaveBeenCalledWith(process.env, universal.catalogConnection);
+    expect(trip.close).toHaveBeenCalledOnce();
+    expect(originals.close).toHaveBeenCalledOnce();
+    expect(universal.close).toHaveBeenCalledOnce();
+    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain("private-startup-value");
+  } finally { process.exitCode = before; }
 });

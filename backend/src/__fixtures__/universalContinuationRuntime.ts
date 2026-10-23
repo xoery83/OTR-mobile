@@ -479,6 +479,24 @@ export async function runUniversalContinuationFixture(
           assert.equal(r.providerOutcome, "LOCAL_FIXTURE");
         },
       });
+    // Synthetic responses still have to cite text actually retained by the owning Sources.
+    const activityName = representations.some((r) =>
+      r.bytes.toString("utf8").includes("Museum walk"),
+    )
+      ? "Museum walk"
+      : "Waterfront morning walk";
+    const propertyName = representations.some((r) =>
+      r.bytes.toString("utf8").includes("Grand Hotel"),
+    )
+      ? "Grand Hotel"
+      : "Harbour QA Hotel";
+    const activitySource = representations.findIndex((r) =>
+      r.bytes.toString("utf8").includes(activityName),
+    );
+    const propertySource = representations.findIndex((r) =>
+      r.bytes.toString("utf8").includes(propertyName),
+    );
+    assert(activitySource >= 0 && propertySource >= 0);
     let dispatches = 0;
     const provider = {
       mode: "LOCAL_FIXTURE" as const,
@@ -492,13 +510,13 @@ export async function runUniversalContinuationFixture(
                 id: "i1",
                 kind: "P1",
                 subtype: "ACTIVITY",
-                f: [[0, "activity.name", "Museum walk"]],
+                f: [[activitySource, "activity.name", activityName]],
               },
               {
                 id: "i2",
                 kind: "P3",
                 subtype: "ACCOMMODATION",
-                f: [[sourceFixture ? 0 : 1, "property.name", "Grand Hotel"]],
+                f: [[propertySource, "property.name", propertyName]],
               },
             ],
             bookings: [],
