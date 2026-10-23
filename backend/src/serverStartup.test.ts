@@ -130,6 +130,25 @@ it("importing the startup factory performs no startup IO", async () => {
   expect(fixtures.servers).toHaveLength(0);
   expect(fixtures.createGateway).not.toHaveBeenCalled();
 });
+it.each(["people", `person-create-operations/${randomUUID()}`])(
+  "bounds Person %s before authentication and keeps it closed by default",
+  async (resource) => {
+    const { startDevBackend } = await import("./serverStartup");
+    const url = await address(startDevBackend());
+    const response = await fetch(`${url}/v2/trips/${input.tripId}/${resource}`, {
+      method: "POST",
+      body: "x".repeat(8193),
+    });
+    expect(response.status).toBe(413);
+    expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+    const unauthenticated = await fetch(`${url}/v2/trips/${input.tripId}/${resource}`);
+    expect(unauthenticated.status).toBe(401);
+    const closed = await fetch(`${url}/v2/trips/${input.tripId}/${resource}`, {
+      headers: { Authorization: "Bearer valid" },
+    });
+    expect(closed.status).toBe(503);
+  },
+);
 it("normal no-options startup keeps optional ports CLOSED and health unchanged", async () => {
   const { startDevBackend } = await import("./serverStartup");
   const url = await address(startDevBackend());

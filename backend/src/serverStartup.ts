@@ -46,6 +46,7 @@ export function startDevBackend(
   startOptions: Pick<
     BackendDependencies,
     | "tripCreatePort"
+    | "tripPersonCloudCreatePort"
     | "tripMetadataPort"
     | "tripMetadataV2Port"
     | "coreConnection"
@@ -102,6 +103,7 @@ export function startDevBackend(
     gateway,
     captureMaterialCustody: startOptions.captureMaterialCustody,
     tripCreatePort: startOptions.tripCreatePort,
+    tripPersonCloudCreatePort: startOptions.tripPersonCloudCreatePort,
     tripMetadataPort: startOptions.tripMetadataPort,
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,
@@ -129,12 +131,20 @@ export function startDevBackend(
         /^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original(?:\?|$)/.test(
           incoming.url ?? "",
         );
+      const personCreateRoute = /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)(?:\?|$)/.test(incoming.url ?? "");
       const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
         incoming.url ?? "",
       );
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (personCreateRoute && (byteCount > 8192 || incoming.method !== "POST")) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "PERSON_CREATE_INVALID" } }));
+          return;
+        }
         if (originalRoute && byteCount > 0) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");

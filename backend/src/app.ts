@@ -1,3 +1,4 @@
+import { tripPersonCloudCreateBoundary, type TripPersonCloudCreatePort } from "./tripPersonCloudCreateHttp";
 import { universalOriginalSourceBoundary, createUniversalOriginalSourceConnection } from "./universalOriginalSource";
 import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
 import { universalBoundary, type UniversalPort } from "./universalImport";
@@ -614,6 +615,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   universalImportPort?: UniversalPort;
   universalOriginalSourcePort?: ReturnType<typeof createUniversalOriginalSourceConnection>;
   captureMaterialCustody?: CaptureMaterialCustody;
@@ -2362,6 +2364,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  tripPersonCloudCreatePort,
   universalImportPort,
   universalOriginalSourcePort,
   captureMaterialCustody,
@@ -2463,6 +2466,10 @@ export function createDevBackendHandler({
         route = "/v2/trips/:tripId/universal-source-originals/:resource";
         const actor = await authenticate(request, gateway);
         response = await universalOriginalSourceBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalOriginalSourcePort);
+      } else if (/^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/people/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await tripPersonCloudCreateBoundary(request, actor.id, (a,t) => gateway.canReadTrip(a,t), tripPersonCloudCreatePort);
       } else if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
         route = "/v2/capture-inputs/:inputId/material";
         const actor = await authenticate(request, gateway);

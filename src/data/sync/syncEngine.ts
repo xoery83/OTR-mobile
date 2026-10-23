@@ -141,6 +141,8 @@ const closedImportOperations = new Set([
   "TRIP_COVER_LOCAL_SAVE",
   "TRIP_DESTINATIONS_LOCAL_SAVE",
   "TRIP_PERSON_CREATE",
+  "TRIP_NORMAL_READBACK",
+  "TRIP_METADATA_DEFERRED",
   "C_PREPARE_CONFIRMATION",
   "C_EXECUTE_EVENT_SLOT",
   "C_FINALIZE_EVENT_SLOT",
@@ -157,7 +159,8 @@ export function createSyncEngine(
   shouldProcess: (operation: SyncOperation) => boolean = (operation) =>
     operation.operationType !== "CORE_V2_COMMAND" &&
     operation.operationType !== "CREATE_TRIP" &&
-    operation.operationType !== "UPDATE_TRIP_METADATA",
+    operation.operationType !== "UPDATE_TRIP_METADATA" &&
+    operation.operationType !== "TRIP_PERSON_CLOUD_CREATE",
   localCaptureProcessing = false,
 ) {
   return {

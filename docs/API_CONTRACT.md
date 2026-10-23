@@ -1168,3 +1168,9 @@ immutable binding conflict409, oversized stream413, missing association404 and
 unavailable port/store503 expose finite codes only. Optional composition remains
 absent at default startup. This is Account staging, not Trip Source/Representation
 admission, processing or canonical acceptance. No table/role/migration is added.
+# Candidate: explicit authored Trip Person creation (24 October 2026)
+
+DEV candidate, default CLOSED and pending the precise Person SQL/ACL authorization. Normal authenticated `POST /v2/trips/:tripId/people` consumes `personCloudCreateSchema`, with an exact `Idempotency-Key` equal to `operationId`; `GET /v2/trips/:tripId/person-create-operations/:operationId` returns the immutable typed receipt or exact `PERSON_CREATE_NOT_FOUND`. Both require current Trip read authorization plus owning SQL creation/result qualification, have private/no-store responses, and bind Actor/Trip/Operation/Person without name-based identity inference. The 8 KiB request limit applies before Node buffers the body.
+
+Only a new explicit `CLOUD_SHARED_AUTHORED` intent can use this contract. Existing private name intents are not upgraded. The created Person is unlinked, has no Account, invitation or access grant, and retains its stable Person ID. This is an owning Person creation extension, not an extension of SET_PARTICIPATION, Invite or Claim. Receipt/readback validation and local SQLite74 qualification precede P1 dependency resolution. No endpoint or local receipt implies a DEV deployment or Cloud acceptance.
+
