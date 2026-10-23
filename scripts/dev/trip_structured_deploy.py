@@ -1,5 +1,5 @@
 """Exact dormant SQL / closed image preparation. No SSH/SQL without explicit approval."""
-import argparse, datetime, hashlib, inspect, json, os, shlex, stat, subprocess, tempfile
+import argparse, ast, datetime, hashlib, json, os, shlex, stat, subprocess, tempfile
 from pathlib import Path
 import metadata_closed_retry as shared
 
@@ -66,6 +66,18 @@ def qualification(rows):
     return q
 
 
+def pinned_artifacts(gate):
+    sql_body=MIGRATION.read_bytes()
+    helper_body=Path(shared.__file__).read_bytes()
+    assert hashlib.sha256(sql_body).hexdigest()==gate['sqlSHA256']
+    assert hashlib.sha256(helper_body).hexdigest()==gate['helperSHA256']
+    source=helper_body.decode(); tree=ast.parse(source)
+    names=('redact','environment_projection','diagnostics','deployment_host_config','remote_deploy')
+    functions={node.name:ast.get_source_segment(source,node) for node in tree.body if isinstance(node,ast.FunctionDef)}
+    remote='import json,sys,hashlib,hmac,re,os,subprocess,time,urllib.request,urllib.error,datetime\nfrom pathlib import Path\n'+'\n\n'.join(functions[n] for n in names)+'\nprint(json.dumps(remote_deploy(json.load(sys.stdin))))'
+    return sql_body.decode(),remote
+
+
 def persist(path, value):
     fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
     with os.fdopen(fd,'w') as stream: json.dump(value,stream,indent=2);stream.flush();os.fsync(stream.fileno())
@@ -74,6 +86,7 @@ def persist(path, value):
 
 def execute(gate, phase, directory):
     assert_window(gate); validate(gate)
+    sql_body,remote=pinned_artifacts(gate)
     assert gate['ownerAuthorized'] is True and phase in gate['authorizedPhases']
     # O_EXCL durable attempt reservation: any failed/unknown execution requires reconciliation.
     directory.mkdir(mode=0o700,exist_ok=True)
@@ -86,12 +99,12 @@ def execute(gate, phase, directory):
     persist(directory/(phase+'-preflight.json'),{'observedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'catalog':before,'expectedMatches':before==expected})
     assert before==expected, 'CATALOG_OR_ACL_DRIFT_STOP'
     assert_window(gate)
+    # Drift during catalog I/O stops; even without drift only pinned bytes can execute.
+    assert pinned_artifacts(gate)==(sql_body,remote), 'EXECUTION_SOURCE_DRIFT'
     if phase=='sql':
-        sql(gate,MIGRATION.read_text())
+        sql(gate,sql_body)
         after=qualification(sql(gate,CATALOG_SQL));assert after==gate['catalogAfterSQL'], 'POST_SQL_DRIFT_RECONCILE'
         return {'status':'DORMANT_SQL_VERIFIED','catalog':after,'sqlSHA256':SQL_SHA}
-    functions='\n\n'.join(inspect.getsource(f) for f in (shared.redact,shared.environment_projection,shared.diagnostics,shared.deployment_host_config,shared.remote_deploy))
-    remote='import json,sys,hashlib,hmac,re,os,subprocess,time,urllib.request,urllib.error,datetime\nfrom pathlib import Path\n'+functions+'\nprint(json.dumps(remote_deploy(json.load(sys.stdin))))'
     result=subprocess.run(['ssh','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8',shared.HOST,'python3 -c '+shlex.quote(remote)],input=json.dumps(gate),capture_output=True,text=True,timeout=240)
     if result.returncode: raise RuntimeError('DEPLOY_TRANSPORT_OR_PRECONDITION_UNKNOWN_RECONCILE_NO_RETRY')
     report=json.loads(result.stdout)

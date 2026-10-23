@@ -244,7 +244,7 @@
   "linkedWorktree": "/Users/xoery/Project/otr-mobile-canonical",
   "sqlSHA256": "59e88813b58983b435f7647e46d387daba91ee3456f1ffd9a90acf80ffab6410",
   "helperSHA256": "30eedd4d653b928c62cb468c7276267bb7f1d67157adcaa3fb619dd492e29ff2",
-  "entrySHA256": "9b9f98fd57b00f4399e7b3287b38342b0b5f611083ec486202a408f6f164397a",
+  "entrySHA256": "c434bfbd5410200dbe409f6c4bcf23b50623d9cc7eef822c6b08ebd09ec7448f",
   "catalogBeforeSQL": {
     "trips": {
       "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,otr_trip_event_receipt_reader=r/postgres,otr_trip_source_operation_reader=r/postgres}",

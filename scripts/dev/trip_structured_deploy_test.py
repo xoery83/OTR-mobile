@@ -1,4 +1,4 @@
-import copy,datetime,importlib.util,json,tempfile,unittest
+import copy,datetime,importlib.util,itertools,json,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 import trip_structured_deploy as deploy
@@ -29,6 +29,18 @@ class StructuredDeployTests(unittest.TestCase):
    with self.assertRaises(AssertionError):deploy.execute(gate,'deploy',Path(d))
    with self.assertRaises(FileExistsError):deploy.execute(gate,'deploy',Path(d))
    self.assertEqual(sql.call_count,1)
+ def test_source_changes_during_catalog_stop_before_mutation(self):
+  for target,phase in itertools.product((deploy.MIGRATION,Path(deploy.shared.__file__)),('sql','deploy')):
+   gate=self.gate();now=datetime.datetime.now(datetime.timezone.utc);gate.update(startsAt=(now-datetime.timedelta(seconds=1)).isoformat(),expiresAt=(now+datetime.timedelta(seconds=600)).isoformat(),ownerAuthorized=True,authorizedPhases=['sql','deploy'])
+   original=Path.read_bytes; changed=False
+   def read(path):return original(path)+(b'\n# UNAPPROVED CHANGE' if changed and path==target else b'')
+   def readback(*args):
+    nonlocal changed
+    changed=True
+    return [{'qualification':gate['catalogBeforeSQL' if phase=='sql' else 'catalogAfterSQL']}]
+   with tempfile.TemporaryDirectory() as d,patch.object(Path,'read_bytes',read),patch.object(deploy,'sql',side_effect=readback) as sql,patch.object(deploy.subprocess,'run') as remote:
+    with self.assertRaises(AssertionError):deploy.execute(gate,phase,Path(d))
+    self.assertEqual(sql.call_count,1);remote.assert_not_called()
  def test_sql_phase_exact_preimage_and_postverification(self):
   gate=self.gate();now=datetime.datetime.now(datetime.timezone.utc);gate.update(startsAt=(now-datetime.timedelta(seconds=1)).isoformat(),expiresAt=(now+datetime.timedelta(seconds=600)).isoformat(),ownerAuthorized=True,authorizedPhases=['sql'])
   with tempfile.TemporaryDirectory() as d,patch.object(deploy,'sql',side_effect=[[{'qualification':gate['catalogBeforeSQL']}],[],[{'qualification':gate['catalogAfterSQL']}]]) as sql:
