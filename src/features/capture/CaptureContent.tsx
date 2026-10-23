@@ -81,7 +81,7 @@ export function CaptureContent({
   const [submitError, setSubmitError] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [submittedSelections, setSubmittedSelections] = useState<
-    readonly import("./captureStaging").StagedCaptureItem[] | null
+    readonly import("./captureStaging").CaptureDraftItem[] | null
   >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
@@ -182,26 +182,11 @@ export function CaptureContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staging]);
   const submit = async () => {
-    if (
-      !current() ||
-      running.current ||
-      snapshot.selecting ||
-      !(submittedSelections ?? snapshot.items).length
-    )
-      return;
+    if (!current() || running.current || snapshot.selecting) return;
     const roster =
       submittedSelections ?? (draftStaging ? staging.prepareSubmit() : snapshot.items);
-    if (
-      !roster?.length ||
-      roster.some((item) => item.source === "magic_input" || item.source === "clipboard")
-    )
-      return;
-    const selected = roster
-      .filter(
-        (item): item is import("./captureStaging").StagedCaptureItem =>
-          item.source !== "magic_input" && item.source !== "clipboard",
-      )
-      .map((item) => ({ ...item }));
+    if (!roster?.length) return;
+    const selected = roster.map((item) => ({ ...item }));
     const submitPrior = submittedSelections
       ? submittedTripPrior.current
       : selectedTripPrior;
@@ -224,13 +209,14 @@ export function CaptureContent({
       const owner = await session.current;
       if (!current()) return;
       if (draftStaging && !submittedSelections) {
-        // The existing C3 invocation now owns this frozen roster, not the pre-submit draft.
+        // Keep transient paste leases until C3 has actually retained every original.
         submittedTripPrior.current = submitPrior;
         setSubmittedSelections(selected);
-        staging.cancel();
       }
-      if (submitPrior) await owner.submit(selected, progress, submitPrior);
-      else await owner.submit(selected, progress);
+      const retained = submitPrior
+        ? await owner.submit(selected, progress, submitPrior)
+        : await owner.submit(selected, progress);
+      if (draftStaging && current() && retained.allInputsAccepted) staging.cancel();
     } catch {
       if (current()) {
         setSubmitError(true);
@@ -558,7 +544,9 @@ export function CaptureTray({
   reading = false,
   readError = false,
 }: {
-  snapshot: CaptureStagingSnapshot;
+  snapshot: Omit<CaptureStagingSnapshot, "items"> & {
+    items: readonly import("./captureStaging").CaptureDraftItem[];
+  };
   tripName?: string;
   onFiles: () => void;
   onPhotos: () => void;
@@ -743,20 +731,29 @@ export function CaptureTray({
             <Text style={styles.secondary}>{t("capture.empty")}</Text>
           ) : null}
           {snapshot.items.map((item) => {
-            const name = item.name ?? t("capture.unnamed");
+            const name =
+              item.source === "magic_input"
+                ? item.text
+                : (item.name ?? t("capture.unnamed"));
             return (
               <View key={item.stagingId} style={styles.item}>
                 <Text style={styles.name}>{name}</Text>
                 <Text style={styles.secondary}>
                   {t(
-                    item.source === "files"
-                      ? "capture.sourceFiles"
-                      : "capture.sourcePhotos",
+                    item.source === "magic_input"
+                      ? "capture.sourceText"
+                      : item.source === "clipboard"
+                        ? "capture.sourceClipboard"
+                        : item.source === "camera"
+                          ? "capture.sourceCamera"
+                          : item.source === "files"
+                            ? "capture.sourceFiles"
+                            : "capture.sourcePhotos",
                   )}
                 </Text>
                 <Text style={styles.secondary}>
                   {t(
-                    item.availability === "unavailable"
+                    item.source !== "magic_input" && item.availability === "unavailable"
                       ? "capture.unavailable"
                       : "capture.unverified",
                   )}

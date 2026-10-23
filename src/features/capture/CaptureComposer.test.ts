@@ -214,15 +214,17 @@ it("outside dismissal preserves rather than clears the unsent draft", () => {
   expect(props.onClose).toHaveBeenCalledOnce();
   expect(props.onClear).not.toHaveBeenCalled();
 });
-it("native paste retains text exactly and unsupported text never silently submits files", () => {
+it("native paste retains text exactly; explicit submit supports mixed batch intake", () => {
   const { props, html } = render({ ...empty, editorText: "Original note" }, 1);
   const input = state.nodes.find((n) => n.multiline);
   const pasted = "Day 1\n東京\nDay 2\nKyoto";
   input.onChangeText(pasted);
   expect(props.onText).toHaveBeenCalledWith(pasted);
   expect(props.onSubmit).not.toHaveBeenCalled();
-  expect(button("capture.composer.submit").disabled).toBe(true);
-  expect(html).toContain(t("capture.composer.textSubmitUnavailable"));
+  expect(button("capture.composer.submit").disabled).toBe(false);
+  button("capture.composer.submit").onPress();
+  expect(props.onSubmit).toHaveBeenCalledOnce();
+  expect(html).not.toContain(t("capture.composer.textSubmitUnavailable"));
   expect(input.style[1].maxHeight).toBeLessThan(400);
   expect(input.style[1].height).toBeUndefined();
 });
@@ -377,7 +379,7 @@ it("an added multiline text card keeps its complete draft content without growin
   expect(
     state.buttons.find((button) => button.label === t("capture.composer.submit"))
       .disabled,
-  ).toBe(true);
+  ).toBe(false);
 });
 
 it("voice input starts from the exact draft and active recording locks conflicting actions", () => {
@@ -402,7 +404,7 @@ it("voice input starts from the exact draft and active recording locks conflicti
   expect(props.onClose).toHaveBeenCalledOnce();
 });
 
-it("clipboard intake stays visible as an image and cannot enter the existing file-only submit path", () => {
+it("clipboard intake stays visible as an image and can explicitly submit its own provenance", () => {
   const pasted = {
     source: "clipboard" as const,
     stagingId: 1,
@@ -414,6 +416,6 @@ it("clipboard intake stays visible as an image and cannot enter the existing fil
     availability: "unverified" as const,
   };
   render({ ...empty, items: [pasted] }, 1);
-  expect(button("capture.composer.submit").disabled).toBe(true);
+  expect(button("capture.composer.submit").disabled).toBe(false);
   expect(state.nodes.some((node) => node.source?.uri === pasted.temporaryUri)).toBe(true);
 });

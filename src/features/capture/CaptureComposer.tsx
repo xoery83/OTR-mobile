@@ -129,10 +129,7 @@ export function CaptureComposer({
     }
   };
   const maxInputHeight = 6 * 22 * Math.max(1, fontScale) + 16;
-  const mixed =
-    !!snapshot.editorText.trim() ||
-    snapshot.items.some((i) => i.source === "magic_input" || i.source === "clipboard");
-  const sendDisabled = locked || !count || mixed;
+  const sendDisabled = locked || !count;
   const context =
     contextLabel ??
     (tripName
@@ -482,11 +479,6 @@ export function CaptureComposer({
                     </Pressable>
                   </View>
                 </UiGlassSurface>
-                {mixed ? (
-                  <UiText style={styles.submitHelp}>
-                    {t("capture.composer.textSubmitUnavailable")}
-                  </UiText>
-                ) : null}
                 {voice.state.status !== "idle" ? (
                   <View style={styles.voiceStatus}>
                     <UiText accessibilityLiveRegion="polite" style={styles.secondary}>

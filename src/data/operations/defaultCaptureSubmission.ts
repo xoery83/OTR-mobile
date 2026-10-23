@@ -1,3 +1,4 @@
+import { imagePasteItemSchema } from "@/native/imagePasteContract";
 import { randomUUID } from "expo-crypto";
 import { AppState } from "react-native";
 import {
@@ -141,6 +142,17 @@ export async function createDefaultCaptureSubmissionSession(
     open: async (selection) => ({
       reader: await openCaptureUriReader(selection.temporaryUri),
     }),
+    openClipboard: async (selection) => {
+      const verified = imagePasteItemSchema.parse({
+        token: selection.token,
+        uri: selection.temporaryUri,
+        byteSize: selection.size,
+        mimeType: selection.typeHint,
+        source: "clipboard",
+        representation: "item-provider",
+      });
+      return { reader: await openCaptureUriReader(verified.uri) };
+    },
   });
 }
 

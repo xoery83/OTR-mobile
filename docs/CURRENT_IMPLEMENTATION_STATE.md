@@ -1,3 +1,7 @@
+## 24 October — Universal mixed C3 local candidate
+
+In isolated candidate only, SQLite73 preserves existing v1 rows/Source associations/Queue and adds explicit C3v2 text/clipboard provenance. Composer forwards all inputs as one Batch; local UTF-8 original and attachment bytes survive cold reopen.52 real SQLite tests plus19 UI/default-session checks, TS/UIguard PASS; no install/remote/AI claim. Custody-v2/owning Source registration and Backend Results remain active same-slice work. [Candidate handoff](ops/universal-native-mixed-20261024/HANDOFF.md). Backend adff007 independent local Review PASS is recorded there.
+
 ## 24 October — AD5 repair and bounded Native/DEV regression
 
 Original AD5 identity, cached session and SQLite72 retained. Two local provenance readers now consume existing strict V1/V2 Create wire union, fixing named-traveler Create rollback and V2 Day Feed denial (`36520f5`). Stopped dedicated Metro was restored: actual six cover photos render; no cover data/ACL workaround. QA presentation isolation has stable view-only cutoff independent of finite dispatch windows (`49883ea`). Capture attachment tap now dismisses keyboard while opening the existing menu on the same tap; actual AD5 menu/Photos cancel/draft retention and 12 component tests PASS.

@@ -1,3 +1,4 @@
+import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
 import { tripMetadataConfirmationsMigration } from "./migrations/tripMetadataConfirmations";
 import { localTripDestinationsMigration } from "./migrations/localTripDestinations";
 import { localCoreAuthorityMigration } from "./migrations/localCoreAuthority";
@@ -1727,4 +1728,5 @@ export const migrations: Migration[] = [
   personalTripCoverPreferencesMigration,
   localTripDestinationsMigration,
   tripMetadataConfirmationsMigration,
+  captureMixedInputsMigration,
 ];
