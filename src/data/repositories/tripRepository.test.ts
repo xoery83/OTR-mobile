@@ -3401,3 +3401,34 @@ it("recovers a V2 unknown response from the exact receipt after SQLite reopen wi
     ),
   ).toEqual(request);
 });
+
+it("atomically creates structured V2 Trip with six named travelers and an unchanged cloud proof", async () => {
+  const f = local();
+  const command = {
+    ...input(),
+    syncFormatVersion: 2 as const,
+    destination: null,
+    destinations: [manualDestination("Auckland"), manualDestination("Wellington")],
+    travelers: ["Softer", "Maggie", "Celine", "Judy", "Eyan", "George"].map(
+      (displayName) => ({
+        operationId: randomUUID(),
+        personId: randomUUID(),
+        displayName,
+      }),
+    ),
+  };
+  const result = await f.repo.createTrip(command);
+  expect(result.destinations).toHaveLength(2);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(7);
+  await f.repo.createTrip(command);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(7);
+  const proof = JSON.parse(
+    String(
+      f.sql
+        .prepare("SELECT payload_json p FROM sync_operations WHERE id=?")
+        .get(command.operationId)?.p,
+    ),
+  );
+  expect(proof).toMatchObject({ formatVersion: 2, destinations: command.destinations });
+  expect(proof).not.toHaveProperty("travelers");
+});

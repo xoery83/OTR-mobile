@@ -12,7 +12,7 @@ import {
   type LocalPersonNameSlot,
 } from "@/domain/trip/localTripPerson";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
-import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
+import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "@/domain/trip/tripCreateWireContract";
 import type { LedgerReadDatabase } from "./ledgerReadRepository";
 
 async function localPersonCreator(

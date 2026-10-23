@@ -4,7 +4,7 @@ import {
   withAccountApplyGate,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
-import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
+import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "@/domain/trip/tripCreateWireContract";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import type { CoreActor } from "@/domain/trip/tripCoreV2Mutation";
 import { coreHashValue } from "@/domain/trip/tripCoreV2Read";
