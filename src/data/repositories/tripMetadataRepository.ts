@@ -1,4 +1,12 @@
 import {
+  readTripMetadataConfirmation,
+  retainTripMetadataConfirmation,
+} from "./tripMetadataConfirmation";
+import {
+  structuredTripMetadataSnapshotSchema,
+  type StructuredTripMetadataSnapshot,
+} from "@/domain/trip/tripStructuredDestinationContract";
+import {
   tripMetadataWireUpdateSchema,
   tripMetadataWireReceiptSchema,
   metadataRequestFromReceipt,
@@ -7,6 +15,8 @@ import {
 } from "@/domain/trip/tripMetadataV2Contract";
 import {
   replaceLocalTripDestinations,
+  readLocalTripDestinations,
+  applyConfirmedTripDestinationRows,
   verifyLocalTripDestinationHistory,
 } from "./tripDestinationRepository";
 import {
@@ -23,7 +33,7 @@ import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import type * as SQLite from "expo-sqlite";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
-import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
+import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "@/domain/trip/tripCreateWireContract";
 import { type TripMetadataSyncTarget } from "@/domain/trip/tripMetadataContract";
 import {
   captureAccountScope,
@@ -44,6 +54,92 @@ export function createTripMetadataRepository(
   resolvePhoto?: typeof import("../files/tripPhotoFileStore").resolveRetainedTripPhoto,
 ) {
   return {
+    async readMetadataEditBase(tripId: string) {
+      coreUuid.parse(tripId);
+      const scope = await captureAccountScope(account);
+      const confirmed = await readTripMetadataConfirmation(
+        database,
+        scope.accountId,
+        tripId,
+      );
+      const pending = await database.getAllAsync<{ id: string }>(
+        "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' ORDER BY rowid",
+        scope.accountId,
+        tripId,
+      );
+      await assertAccountRequestContext(scope, account);
+      return { confirmed, pendingOperationIds: pending.map((row) => row.id) };
+    },
+    async retainMetadataSnapshot(
+      input: StructuredTripMetadataSnapshot,
+      operationId: string,
+    ) {
+      const snapshot = structuredTripMetadataSnapshotSchema.parse(input);
+      coreUuid.parse(operationId);
+      const scope = await captureAccountScope(account);
+      if (scope.accountId !== snapshot.actorAccountId)
+        throw Error("TRIP_METADATA_ACCOUNT_MISMATCH");
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(scope, account);
+          const confirmed = await readTripMetadataConfirmation(
+            database,
+            scope.accountId,
+            snapshot.tripId,
+          );
+          const pending = await database.getFirstAsync<{ id: string }>(
+            "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' LIMIT 1",
+            scope.accountId,
+            snapshot.tripId,
+          );
+          const local = await database.getFirstAsync<{
+            accepted_at: string | null;
+            payload_json: string;
+          }>(
+            "SELECT trip.accepted_at,op.payload_json FROM local_trip_containers trip JOIN sync_operations op ON op.id=trip.create_operation_id AND op.owner_user_id=trip.account_id WHERE trip.account_id=? AND trip.id=?",
+            scope.accountId,
+            snapshot.tripId,
+          );
+          if (!local?.accepted_at || JSON.parse(local.payload_json).formatVersion !== 2)
+            throw Error("TRIP_STRUCTURED_ACCEPTED_TRIP_REQUIRED");
+          if (
+            !pending &&
+            (!confirmed || snapshot.metadataRevision >= confirmed.metadataRevision)
+          ) {
+            if (
+              confirmed &&
+              snapshot.metadataRevision === confirmed.metadataRevision &&
+              json(snapshot.metadata) !== json(confirmed.metadata)
+            )
+              throw Error("TRIP_METADATA_CONFIRMATION_REVISION_MISMATCH");
+            await applyConfirmedTripDestinationRows(
+              database,
+              scope.accountId,
+              snapshot.tripId,
+              snapshot.metadata.destinations,
+              clock(),
+            );
+            await database.runAsync(
+              "UPDATE local_trip_containers SET name=?,destination=NULL,start_date=?,end_date=?,updated_at=? WHERE account_id=? AND id=?",
+              snapshot.metadata.name,
+              snapshot.metadata.startDate,
+              snapshot.metadata.endDate,
+              clock(),
+              scope.accountId,
+              snapshot.tripId,
+            );
+          }
+          await retainTripMetadataConfirmation(
+            database,
+            scope.accountId,
+            operationId,
+            "SNAPSHOT",
+            snapshot,
+          );
+          await assertAccountRequestContext(scope, account);
+        }),
+      );
+    },
     async canUpdateMetadata(tripId: string) {
       const scope = await captureAccountScope(account);
       const row = await database.getFirstAsync<{ id: string; payload_json: string }>(
@@ -200,11 +296,29 @@ export function createTripMetadataRepository(
             });
             if (original.tripId !== request.tripId)
               throw new Error("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
+            if (
+              "formatVersion" in original &&
+              (!("formatVersion" in request) || request.formatVersion !== 3)
+            )
+              throw new Error("TRIP_STRUCTURED_WIRE_VERSION_REQUIRED");
             const before = {
               name: row.name,
               destination: row.destination,
               startDate: row.start_date,
               endDate: row.end_date,
+              ...("formatVersion" in request && request.formatVersion === 3
+                ? {
+                    destinations: (
+                      (
+                        await readLocalTripDestinations(
+                          database,
+                          scope.accountId,
+                          request.tripId,
+                        )
+                      ).get(request.tripId) ?? []
+                    ).map(({ ordinal: _ordinal, ...item }) => item),
+                  }
+                : {}),
             };
             if (json(before) !== json(request.before))
               throw new Error("TRIP_METADATA_LOCAL_CONFLICT");
@@ -285,6 +399,18 @@ export function createTripMetadataRepository(
               await assertAccountRequestContext(scope, account);
               return;
             }
+            if ("formatVersion" in request && request.formatVersion === 3)
+              await replaceLocalTripDestinations(
+                database,
+                scope.accountId,
+                request.tripId,
+                {
+                  operationId: request.operationId,
+                  before: request.before.destinations,
+                  after: request.after.destinations,
+                },
+                clock(),
+              );
             const previous = await database.getFirstAsync<{ id: string }>(
               `SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_type='TRIP'
              AND operation_type='UPDATE_TRIP_METADATA' AND status<>'COMPLETED' ORDER BY rowid DESC LIMIT 1`,
@@ -362,6 +488,14 @@ export function createTripMetadataRepository(
           const request = metadataRequestFromReceipt(receipt);
           if (!operation || operation.payload_json !== json(request))
             throw new Error("TRIP_METADATA_RECEIPT_MISMATCH");
+          if ("formatVersion" in receipt && receipt.formatVersion === 3)
+            await retainTripMetadataConfirmation(
+              database,
+              scope.accountId,
+              receipt.operationId,
+              "METADATA_RECEIPT",
+              receipt,
+            );
           // Never replace a newer local edit with an older server receipt.
           await database.runAsync(
             "UPDATE sync_operations SET status='COMPLETED',next_attempt_at=NULL,last_error_code=NULL,updated_at=? WHERE id=? AND owner_user_id=?",

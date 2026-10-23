@@ -6,22 +6,28 @@ import {
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import {
-  tripMetadataV2UpdateSchema,
-  tripMetadataV2ReceiptSchema,
-  tripMetadataV2SnapshotSchema,
-  type TripMetadataV2Update,
-  type TripMetadataV2Receipt,
-  type TripMetadataV2Snapshot,
+  tripMetadataRevisionedUpdateSchema,
+  tripMetadataRevisionedReceiptSchema,
+  tripMetadataRevisionedSnapshotSchema,
+  type TripMetadataRevisionedUpdate,
+  type TripMetadataRevisionedReceipt,
+  type TripMetadataRevisionedSnapshot,
 } from "../../src/domain/trip/tripMetadataV2Contract";
 import { TripMetadataError } from "./tripMetadata";
 export type TripMetadataV2Port = {
-  update(actor: string, request: TripMetadataV2Update): Promise<TripMetadataV2Receipt>;
-  receipt(actor: string, operation: string): Promise<TripMetadataV2Receipt | null>;
+  update(
+    actor: string,
+    request: TripMetadataRevisionedUpdate,
+  ): Promise<TripMetadataRevisionedReceipt>;
+  receipt(
+    actor: string,
+    operation: string,
+  ): Promise<TripMetadataRevisionedReceipt | null>;
   snapshot(
     actor: string,
     trip: string,
     operation: string,
-  ): Promise<TripMetadataV2Snapshot>;
+  ): Promise<TripMetadataRevisionedSnapshot>;
 };
 const reply = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -41,7 +47,7 @@ export async function tripMetadataV2Boundary(
   port?: TripMetadataV2Port,
 ) {
   if (!port) return failure(503, "TRIP_METADATA_CLOSED");
-  if (request.headers.get("OTR-Trip-Metadata-Version") !== "2")
+  if (!["2", "3"].includes(request.headers.get("OTR-Trip-Metadata-Version") ?? ""))
     return failure(400, "TRIP_METADATA_VERSION_REQUIRED");
   const url = new URL(request.url);
   if (url.search) return failure(400, "TRIP_METADATA_INVALID");
@@ -51,20 +57,26 @@ export async function tripMetadataV2Boundary(
       const boundary = createRequestBoundary(15000, request.signal);
       let body: unknown;
       try {
-        body = await readBoundedJson(new Response(request.body), 8192, boundary);
+        body = await readBoundedJson(
+          new Response(request.body),
+          request.headers.get("OTR-Trip-Metadata-Version") === "3" ? 262144 : 8192,
+          boundary,
+        );
       } catch {
         return failure(400, "TRIP_METADATA_INVALID");
       } finally {
         boundary.close();
       }
-      const parsed = tripMetadataV2UpdateSchema.safeParse(body);
+      const parsed = tripMetadataRevisionedUpdateSchema.safeParse(body);
       if (
         !parsed.success ||
+        String(parsed.data.formatVersion) !==
+          request.headers.get("OTR-Trip-Metadata-Version") ||
         parsed.data.tripId !== target[1] ||
         request.headers.get("Idempotency-Key") !== parsed.data.operationId
       )
         return failure(400, "TRIP_METADATA_INVALID");
-      const result = tripMetadataV2ReceiptSchema.parse(
+      const result = tripMetadataRevisionedReceiptSchema.parse(
         await port.update(actor, parsed.data),
       );
       const { actorAccountId, resultMetadataRevision: _revision, ...input } = result;
@@ -82,10 +94,15 @@ export async function tripMetadataV2Boundary(
       );
       if (!trip.success || !operation.success || request.body !== null)
         return failure(400, "TRIP_METADATA_INVALID");
-      const result = tripMetadataV2SnapshotSchema.parse(
+      const result = tripMetadataRevisionedSnapshotSchema.parse(
         await port.snapshot(actor, trip.data, operation.data),
       );
-      if (result.actorAccountId !== actor || result.tripId !== trip.data)
+      if (
+        String(result.formatVersion) !==
+          request.headers.get("OTR-Trip-Metadata-Version") ||
+        result.actorAccountId !== actor ||
+        result.tripId !== trip.data
+      )
         throw new TripMetadataError(503, "TRIP_METADATA_RESULT_MISMATCH");
       return reply(200, result);
     }
@@ -96,8 +113,13 @@ export async function tripMetadataV2Boundary(
         return failure(400, "TRIP_METADATA_INVALID");
       const found = await port.receipt(actor, id.data);
       if (!found) return failure(404, "TRIP_METADATA_RECEIPT_NOT_FOUND");
-      const result = tripMetadataV2ReceiptSchema.parse(found);
-      if (result.actorAccountId !== actor || result.operationId !== id.data)
+      const result = tripMetadataRevisionedReceiptSchema.parse(found);
+      if (
+        String(result.formatVersion) !==
+          request.headers.get("OTR-Trip-Metadata-Version") ||
+        result.actorAccountId !== actor ||
+        result.operationId !== id.data
+      )
         throw new TripMetadataError(503, "TRIP_METADATA_RESULT_MISMATCH");
       return reply(200, result);
     }

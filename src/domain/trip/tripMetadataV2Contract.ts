@@ -1,3 +1,8 @@
+import {
+  structuredTripMetadataUpdateSchema,
+  structuredTripMetadataReceiptSchema,
+  structuredTripMetadataSnapshotSchema,
+} from "./tripStructuredDestinationContract";
 import { z } from "zod";
 import { coreUuid } from "./tripCoreV2";
 import {
@@ -35,12 +40,14 @@ export type TripMetadataV2Snapshot = z.infer<typeof tripMetadataV2SnapshotSchema
 
 // Versioned codec for the existing queue only; V1 payloads remain V1 forever.
 export const tripMetadataWireUpdateSchema = z.union([
+  structuredTripMetadataUpdateSchema,
   tripMetadataV2UpdateSchema,
   tripMetadataUpdateSchema,
 ]);
 export type TripMetadataWireUpdate = z.infer<typeof tripMetadataWireUpdateSchema>;
 
 export const tripMetadataWireReceiptSchema = z.union([
+  structuredTripMetadataReceiptSchema,
   tripMetadataV2ReceiptSchema,
   tripMetadataReceiptSchema,
 ]);
@@ -55,10 +62,35 @@ export function metadataRequestFromReceipt(
     after: receipt.after,
   };
   return "formatVersion" in receipt
-    ? tripMetadataV2UpdateSchema.parse({
+    ? (receipt.formatVersion === 3
+        ? structuredTripMetadataUpdateSchema
+        : tripMetadataV2UpdateSchema
+      ).parse({
         ...request,
-        formatVersion: 2,
+        formatVersion: receipt.formatVersion,
         expectedMetadataRevision: receipt.expectedMetadataRevision,
       })
     : tripMetadataUpdateSchema.parse(request);
 }
+
+export const tripMetadataRevisionedUpdateSchema = z.union([
+  structuredTripMetadataUpdateSchema,
+  tripMetadataV2UpdateSchema,
+]);
+export const tripMetadataRevisionedReceiptSchema = z.union([
+  structuredTripMetadataReceiptSchema,
+  tripMetadataV2ReceiptSchema,
+]);
+export const tripMetadataRevisionedSnapshotSchema = z.union([
+  structuredTripMetadataSnapshotSchema,
+  tripMetadataV2SnapshotSchema,
+]);
+export type TripMetadataRevisionedUpdate = z.infer<
+  typeof tripMetadataRevisionedUpdateSchema
+>;
+export type TripMetadataRevisionedReceipt = z.infer<
+  typeof tripMetadataRevisionedReceiptSchema
+>;
+export type TripMetadataRevisionedSnapshot = z.infer<
+  typeof tripMetadataRevisionedSnapshotSchema
+>;

@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
 import { open } from "node:fs/promises";
 import { z } from "zod";
-import { tripCreateRequestSchema } from "../../src/domain/trip/tripCreateContract";
+import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "../../src/domain/trip/tripCreateWireContract";
 import { TripCreateError, type TripCreatePort } from "./tripCreate";
 import { createTripPgConnection } from "./tripCoreV2PgConnection";
 import { createTripPgStorage } from "./tripCreatePgStorage";
@@ -45,12 +45,13 @@ export async function loadDevTripCreateRuntime(
       stat.gid !== 999 ||
       (stat.mode & 0o777) !== 0o440 ||
       stat.nlink !== 1 ||
-      stat.size > 16384
+      stat.size > 139264
     )
       throw 0;
     const body = await file.readFile("utf8");
-    if (Buffer.byteLength(body) > 16384) throw 0;
+    if (Buffer.byteLength(body) > 139264) throw 0;
     config = tripCreateRuntimeSchema.parse(JSON.parse(body));
+    if (!("formatVersion" in config.request) && Buffer.byteLength(body) > 16384) throw 0;
     const remaining = Date.parse(config.expiresAt) - Date.now();
     // Keep the existing finite activation's maximum 15-minute window; no automatic renewal.
     if (
@@ -82,7 +83,8 @@ export async function loadDevTripCreateRuntime(
         checked.name !== config.request.name ||
         checked.destination !== config.request.destination ||
         checked.startDate !== config.request.startDate ||
-        checked.endDate !== config.request.endDate
+        checked.endDate !== config.request.endDate ||
+        JSON.stringify(checked) !== JSON.stringify(config.request)
       )
         throw new TripCreateError(409, "TRIP_CREATE_COLLISION");
       const result = await storage.create(actor, checked);

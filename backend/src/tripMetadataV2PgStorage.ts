@@ -1,7 +1,7 @@
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 import {
-  tripMetadataV2ReceiptSchema,
-  tripMetadataV2SnapshotSchema,
+  tripMetadataRevisionedReceiptSchema,
+  tripMetadataRevisionedSnapshotSchema,
 } from "../../src/domain/trip/tripMetadataV2Contract";
 import type { TripMetadataV2Port } from "./tripMetadataV2";
 import { TripMetadataError } from "./tripMetadata";
@@ -34,8 +34,8 @@ export function createTripMetadataV2PgStorage(
             result === null && kind === "receipt"
               ? null
               : kind === "snapshot"
-                ? tripMetadataV2SnapshotSchema.parse(result)
-                : tripMetadataV2ReceiptSchema.parse(result);
+                ? tripMetadataRevisionedSnapshotSchema.parse(result)
+                : tripMetadataRevisionedReceiptSchema.parse(result);
           if (
             checked !== null &&
             (checked.actorAccountId !== actor ||
@@ -65,7 +65,7 @@ export function createTripMetadataV2PgStorage(
   }
   return {
     async update(actor, input) {
-      return tripMetadataV2ReceiptSchema.parse(
+      return tripMetadataRevisionedReceiptSchema.parse(
         await query(
           "SELECT public.trip_metadata_update_command($1::uuid,$2::uuid,$3::uuid,$4::jsonb) AS result",
           [input.operationId, actor, input.tripId, JSON.stringify(input)],
@@ -85,10 +85,10 @@ export function createTripMetadataV2PgStorage(
         operation,
         "receipt",
       );
-      return result === null ? null : tripMetadataV2ReceiptSchema.parse(result);
+      return result === null ? null : tripMetadataRevisionedReceiptSchema.parse(result);
     },
     async snapshot(actor, trip, operation) {
-      return tripMetadataV2SnapshotSchema.parse(
+      return tripMetadataRevisionedSnapshotSchema.parse(
         await query(
           "SELECT public.trip_metadata_snapshot($1::uuid,$2::uuid,$3::uuid) AS result",
           [actor, trip, operation],

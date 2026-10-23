@@ -1,3 +1,5 @@
+import { tripMetadataRevisionedSnapshotSchema } from "@/domain/trip/tripMetadataV2Contract";
+import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import { ApiClientError, type ApiClientOptions } from "@/data/api/client";
 import {
@@ -9,7 +11,6 @@ import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import {
   tripMetadataWireReceiptSchema,
   tripMetadataWireUpdateSchema,
-  tripMetadataV2SnapshotSchema,
   metadataRequestFromReceipt,
   type TripMetadataWireUpdate,
   type TripMetadataWireReceipt,
@@ -19,7 +20,7 @@ export type TripMetadataTransport = {
   receipt(
     scope: AccountScope,
     operationId: string,
-    version?: 1 | 2,
+    version?: 1 | 2 | 3,
   ): Promise<TripMetadataWireReceipt | null>;
   update(
     scope: AccountScope,
@@ -29,13 +30,28 @@ export type TripMetadataTransport = {
     scope: AccountScope,
     tripId: string,
     operationId: string,
-  ): Promise<TripMetadataV2Snapshot>;
+    version?: 2 | 3,
+  ): Promise<
+    | TripMetadataV2Snapshot
+    | import("zod").z.infer<typeof structuredTripMetadataSnapshotSchema>
+  >;
 };
 export function createTripMetadataTransport(
   account: () => Promise<string>,
   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
+  dispatchGuard: () => void = () => {},
 ): TripMetadataTransport {
+  const underlyingFetch = options.fetchImplementation ?? fetch;
+  options = {
+    ...options,
+    fetchImplementation: async (input, init) => {
+      dispatchGuard();
+      const response = await underlyingFetch(input, init);
+      dispatchGuard();
+      return response;
+    },
+  };
   return {
     async receipt(scope, operationId, version = 1) {
       await assertAccountRequestContext(scope, account);
@@ -47,13 +63,13 @@ export function createTripMetadataTransport(
         ).get(
           `/v2/trip-metadata-operations/${operationId}`,
           tripMetadataWireReceiptSchema,
-          version === 2 ? { "OTR-Trip-Metadata-Version": "2" } : undefined,
+          version !== 1 ? { "OTR-Trip-Metadata-Version": String(version) } : undefined,
         );
         await assertAccountRequestContext(scope, account);
         if (
           result.actorAccountId !== scope.accountId ||
           result.operationId !== operationId ||
-          ("formatVersion" in result ? 2 : 1) !== version
+          ("formatVersion" in result ? result.formatVersion : 1) !== version
         )
           throw new Error("TRIP_METADATA_RECEIPT_MISMATCH");
         return result;
@@ -81,7 +97,9 @@ export function createTripMetadataTransport(
         tripMetadataWireReceiptSchema,
         {
           "Idempotency-Key": request.operationId,
-          ...("formatVersion" in request ? { "OTR-Trip-Metadata-Version": "2" } : {}),
+          ...("formatVersion" in request
+            ? { "OTR-Trip-Metadata-Version": String(request.formatVersion) }
+            : {}),
         },
       );
       await assertAccountRequestContext(scope, account);
@@ -93,7 +111,7 @@ export function createTripMetadataTransport(
         throw new Error("TRIP_METADATA_RECEIPT_MISMATCH");
       return result;
     },
-    async snapshot(scope, tripId, operationId) {
+    async snapshot(scope, tripId, operationId, version = 2) {
       coreUuid.parse(tripId);
       coreUuid.parse(operationId);
       await assertAccountRequestContext(scope, account);
@@ -101,12 +119,16 @@ export function createTripMetadataTransport(
         options,
         tokenProvider,
         scope,
-      ).get(`/v2/trips/${tripId}/metadata`, tripMetadataV2SnapshotSchema, {
-        "OTR-Trip-Metadata-Version": "2",
+      ).get(`/v2/trips/${tripId}/metadata`, tripMetadataRevisionedSnapshotSchema, {
+        "OTR-Trip-Metadata-Version": String(version),
         "OTR-Metadata-Operation-Id": operationId,
       });
       await assertAccountRequestContext(scope, account);
-      if (result.actorAccountId !== scope.accountId || result.tripId !== tripId)
+      if (
+        result.formatVersion !== version ||
+        result.actorAccountId !== scope.accountId ||
+        result.tripId !== tripId
+      )
         throw new Error("TRIP_METADATA_SNAPSHOT_MISMATCH");
       return result;
     },

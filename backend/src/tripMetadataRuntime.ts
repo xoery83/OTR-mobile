@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
 import { open } from "node:fs/promises";
 import { z } from "zod";
-import { tripMetadataV2UpdateSchema } from "../../src/domain/trip/tripMetadataV2Contract";
+import { tripMetadataRevisionedUpdateSchema } from "../../src/domain/trip/tripMetadataV2Contract";
 import { type TripMetadataV2Port } from "./tripMetadataV2";
 import { TripMetadataError } from "./tripMetadata";
 import { createTripMetadataPgConnection } from "./tripCoreV2PgConnection";
@@ -14,7 +14,7 @@ export const tripMetadataV2RuntimeSchema = z.strictObject({
   enabled: z.literal(true),
   expiresAt: z.iso.datetime({ offset: true }),
   actorAccountId: z.uuid(),
-  request: tripMetadataV2UpdateSchema,
+  request: tripMetadataRevisionedUpdateSchema,
   metadataPg: z.strictObject({
     host: z.literal("db.tuqigdxrvrerfewsxqgm.supabase.co"),
     port: z.literal(5432),
@@ -46,12 +46,13 @@ export async function loadDevTripMetadataV2Runtime(
       stat.gid !== 999 ||
       (stat.mode & 0o777) !== 0o440 ||
       stat.nlink !== 1 ||
-      stat.size > 16384
+      stat.size > 270336
     )
       throw 0;
     const body = await file.readFile("utf8");
-    if (Buffer.byteLength(body) > 16384) throw 0;
+    if (Buffer.byteLength(body) > 270336) throw 0;
     config = tripMetadataV2RuntimeSchema.parse(JSON.parse(body));
+    if (config.request.formatVersion === 2 && Buffer.byteLength(body) > 16384) throw 0;
     const remaining = Date.parse(config.expiresAt) - Date.now();
     // Keep the existing finite activation's maximum 15-minute window; no automatic renewal.
     if (
@@ -79,7 +80,7 @@ export async function loadDevTripMetadataV2Runtime(
   const tripMetadataV2Port: TripMetadataV2Port = {
     async update(actor, request) {
       scope(actor, request.operationId);
-      const checked = tripMetadataV2UpdateSchema.parse(request);
+      const checked = tripMetadataRevisionedUpdateSchema.parse(request);
       if (JSON.stringify(checked) !== JSON.stringify(config.request))
         throw new TripMetadataError(409, "TRIP_METADATA_COLLISION");
       const result = await storage.update(actor, checked);

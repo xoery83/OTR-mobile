@@ -2473,10 +2473,11 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/metadata";
         const actor = await authenticate(request, gateway);
-        response =
-          request.headers.get("OTR-Trip-Metadata-Version") === "2"
-            ? await tripMetadataV2Boundary(request, actor.id, tripMetadataV2Port)
-            : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
+        response = ["2", "3"].includes(
+          request.headers.get("OTR-Trip-Metadata-Version") ?? "",
+        )
+          ? await tripMetadataV2Boundary(request, actor.id, tripMetadataV2Port)
+          : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
       } else if (
         url.pathname === "/v2/trips" ||
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)

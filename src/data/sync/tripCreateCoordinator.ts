@@ -21,6 +21,9 @@ export function createNativeTripCreateSyncRunner(
   portEnabled: () => boolean = () => false,
 ) {
   const selected = target && Object.freeze({ ...target });
+  const dispatchGuard = () => {
+    if (!portEnabled()) throw new Error("TRIP_QA_DISPATCH_CLOSED");
+  };
   return async () => {
     if (!selected || !portEnabled())
       return { status: "closed" as const, processedCount: 0 };
@@ -40,8 +43,9 @@ export function createNativeTripCreateSyncRunner(
       createSyncOperationRepository(database, requireActiveUserId),
       createTripCreateSyncWorker(
         repository,
-        createTripCreateTransport(requireActiveUserId),
+        createTripCreateTransport(requireActiveUserId, {}, undefined, dispatchGuard),
         requireActiveUserId,
+        dispatchGuard,
       ),
       repository,
       portEnabled,

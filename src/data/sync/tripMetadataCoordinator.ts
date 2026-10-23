@@ -12,6 +12,9 @@ export function createNativeTripMetadataSyncRunner(
   target?: TripMetadataSyncTarget,
 ) {
   const selected = target && Object.freeze({ ...target });
+  const dispatchGuard = () => {
+    if (!portEnabled()) throw new Error("TRIP_QA_DISPATCH_CLOSED");
+  };
   return async () => {
     if (!portEnabled()) return { status: "closed" as const, processedCount: 0 };
     const scope = selected && {
@@ -51,8 +54,9 @@ export function createNativeTripMetadataSyncRunner(
       createSyncOperationRepository(database, requireActiveUserId),
       createTripMetadataSyncWorker(
         repository,
-        createTripMetadataTransport(requireActiveUserId),
+        createTripMetadataTransport(requireActiveUserId, {}, undefined, dispatchGuard),
         requireActiveUserId,
+        dispatchGuard,
       ),
       repository,
       portEnabled,

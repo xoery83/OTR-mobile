@@ -18,9 +18,11 @@ export function createTripMetadataSyncWorker(
   repository: Pick<TripRepository, "acceptMetadataUpdate">,
   transport: Pick<TripMetadataTransport, "receipt" | "update">,
   account: () => Promise<string>,
+  dispatchGuard: () => void = () => {},
 ): SyncWorker {
   return {
     async push(operation) {
+      dispatchGuard();
       if (
         operation.operationType !== "UPDATE_TRIP_METADATA" ||
         operation.entityType !== "TRIP" ||
@@ -36,16 +38,18 @@ export function createTripMetadataSyncWorker(
       );
       if (request.operationId !== operation.id || request.tripId !== operation.tripId)
         throw new Error("TRIP_METADATA_QUEUE_MISMATCH");
-      const version = "formatVersion" in request ? 2 : 1;
+      const version = "formatVersion" in request ? request.formatVersion : 1;
       let receipt =
-        version === 2
-          ? await transport.receipt(scope, request.operationId, 2)
+        version !== 1
+          ? await transport.receipt(scope, request.operationId, version)
           : await transport.receipt(scope, request.operationId);
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (!receipt) receipt = await transport.update(scope, request);
       await assertAccountRequestContext(scope, account);
-      if (("formatVersion" in receipt ? 2 : 1) !== version)
+      if (("formatVersion" in receipt ? receipt.formatVersion : 1) !== version)
         throw new Error("TRIP_METADATA_WIRE_VERSION_MISMATCH");
+      dispatchGuard();
       await repository.acceptMetadataUpdate(receipt, scope);
     },
   };
