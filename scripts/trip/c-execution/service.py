@@ -5,6 +5,12 @@ sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[2]/'dev'))
 from metadata_closed_retry import diagnostics, environment_projection, redact
 from control import load_plan, IMAGE, BUNDLE
 
+def host_config(value):
+    result=dict(value)
+    if isinstance(result.get('Mounts'),list):
+        result['Mounts']=sorted(result['Mounts'],key=lambda item:json.dumps(item,sort_keys=True,separators=(',',':')))
+    return result
+
 def remote_locked(p,action,secret):
     def command(a): return subprocess.check_output(a,timeout=8,text=True)
     def current(): return json.loads(command(['docker','inspect','otr-dev-backend']))[0]
@@ -42,9 +48,14 @@ def remote_locked(p,action,secret):
     # A delayed old watchdog cannot touch another window's mounts/config/container.
     assert all(m['Source'].startswith(str(root)+'/') and m['RW'] is False for m in extras)
     beforeNormalized=dict(before['HostConfig']); beforeNormalized['Binds']=baseline['hostConfig']['Binds']
-    assert beforeNormalized==baseline['hostConfig']
+    assert host_config(beforeNormalized)==host_config(baseline['hostConfig'])
     identity=root/'window.json'
-    if root.exists(): assert json.loads(identity.read_text())=={'windowId':p['windowId']}
+    if root.exists():
+        info=root.lstat(); assert stat.S_ISDIR(info.st_mode)and not root.is_symlink()and info.st_uid==os.geteuid()and (info.st_mode&0o777)==0o700
+        fd=os.open(identity,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+        with os.fdopen(fd)as stream:
+            info=os.fstat(stream.fileno());assert stat.S_ISREG(info.st_mode)and info.st_uid==os.geteuid()and (info.st_mode&0o777)==0o600 and info.st_nlink==1
+            assert json.load(stream)=={'windowId':p['windowId']}
     else:
         assert not extras; root.mkdir(mode=0o700); identity.write_text(json.dumps({'windowId':p['windowId']})); os.chmod(identity,0o600)
     forward=root/'finite.yml'
@@ -105,20 +116,20 @@ def remote_locked(p,action,secret):
             assert instant(p['startsAt'])<=time.time()<instant(p['expiresAt'])
             extra=[str(forward)]
         else: extra=[]
-        changed=True
-        r=subprocess.run(compose(extra)+['up','-d','--no-build','--pull','never','backend'],env=composeEnv,capture_output=True,timeout=30)
+        changed=action!='reconcile'
+        r=subprocess.run(compose(extra)+['up','-d','--no-build','--pull','never','backend'],env=composeEnv,capture_output=True,timeout=30) if changed else subprocess.CompletedProcess([],0)
         deadline=time.monotonic()+40
         while time.monotonic()<deadline:
             s=current()
             if s['State'].get('Health',{}).get('Status')=='healthy': break
             time.sleep(.5)
         s=current(); normalized=dict(s['HostConfig']); normalized['Binds']=baseline['hostConfig']['Binds']
-        good=(r.returncode==0 and s['State'].get('Health',{}).get('Status')=='healthy' and s['Image']==p['image'] and env(s)==env(before) and s['Config']['Cmd']==['node','server-capture.mjs'] and normalized==baseline['hostConfig'])
+        good=(r.returncode==0 and s['State'].get('Health',{}).get('Status')=='healthy' and s['Image']==p['image'] and env(s)==env(before) and s['Config']['Cmd']==['node','server-capture.mjs'] and host_config(normalized)==host_config(baseline['hostConfig']))
         health=json.load(urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=4))
         good=good and health=={'status':'ok','environment':'development'}
         report['bundleSHA256']=hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat','/app/server-capture.mjs'],timeout=8)).hexdigest()
         good=good and report['bundleSHA256']==p['bundle']
-        if action=='restore': good=good and mounts(s)==expectedMounts and s['HostConfig']==baseline['hostConfig']
+        if action in ('restore','reconcile'): good=good and mounts(s)==expectedMounts and host_config(s['HostConfig'])==host_config(baseline['hostConfig'])
         else:
             expectedExtras=sorted([(v['source'],v['target'],False) for v in volumes])
             good=good and mounts(s)==sorted(expectedMounts+expectedExtras)
@@ -126,10 +137,10 @@ def remote_locked(p,action,secret):
                 body=json.loads(Path(v['source']).read_text())
                 k='create' if v['target']=='/run/otr/trip-create-runtime.json' else 'metadata'
                 good=good and body['request']==p['payloads']['create' if k=='create' else 'editProposal']['body'] and body['actorAccountId']==p['actorIds']['A'] and body['expiresAt']==p['expiresAt']
-                stat=Path(v['source']).stat()
-                good=good and stat.st_uid==0 and stat.st_gid==999 and (stat.st_mode&0o777)==0o440 and stat.st_nlink==1
+                runtimeStat=Path(v['source']).stat()
+                good=good and runtimeStat.st_uid==0 and runtimeStat.st_gid==999 and (runtimeStat.st_mode&0o777)==0o440 and runtimeStat.st_nlink==1
                 report.setdefault('runtimeSHA256',{})[v['target']]=hashlib.sha256(Path(v['source']).read_bytes()).hexdigest()
-        report.update(health=health,image=s['Image'],environmentSHA256=canonical(env(s)),mountsMatch=bool(good),mounts=[{'source':m['Source'],'destination':m['Destination'],'rw':m['RW']} for m in s['Mounts']],normalizedHostConfigSHA256=canonical(normalized),hostConfigSHA256=canonical(s['HostConfig']),user=s['Config']['User'],entry=s['Config']['Cmd'])
+        report.update(health=health,image=s['Image'],environmentSHA256=canonical(env(s)),mountsMatch=bool(good),mounts=[{'source':m['Source'],'destination':m['Destination'],'rw':m['RW']} for m in s['Mounts']],normalizedHostConfigSHA256=canonical(normalized),hostConfigSHA256=canonical(s['HostConfig']),hostConfigSemanticallyEqual=host_config(s['HostConfig'])==host_config(baseline['hostConfig']),rawHostConfigEqual=s['HostConfig']==baseline['hostConfig'],user=s['Config']['User'],entry=s['Config']['Cmd'])
     except Exception: good=False
     finally:
         # Preserve ONLY sanitized diagnostics before caller's SQL-close/service restoration.
@@ -137,12 +148,27 @@ def remote_locked(p,action,secret):
             s=current(); report['diagnostic']=capture(s)
             report['diagnosticCaptured']=True
         except Exception: good=False; report['diagnosticCaptured']=False
-        report['restorationVerified']=bool(good) if action=='restore' else False
+        report['restorationVerified']=bool(good) if action in ('restore','reconcile') else False
         good=good and report['beforeDiagnosticCaptured'] and report['beforeDiagnosticPersisted']
         report['verified']=bool(good)
         # After verified restoration unlink only this window's two private runtime secrets.
-        if action=='restore' and good and root.exists():
+        if action in ('restore','reconcile') and good and root.exists():
+            # Validate BOTH exact unmounted files before deleting either; no symlink,
+            # foreign window/actor/request, owner/mode/link or mount drift accepted.
+            for k in ('create','metadata'):
+                runtime=root/(k+'.json')
+                if not runtime.exists()and not runtime.is_symlink():continue
+                fd=os.open(runtime,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+                with os.fdopen(fd) as stream:
+                    st=os.fstat(stream.fileno()); assert stat.S_ISREG(st.st_mode) and st.st_uid==0 and st.st_gid==999 and (st.st_mode&0o777)==0o440 and st.st_nlink==1 and st.st_size<=16384
+                    body=json.load(stream)
+                assert body['version']==1 and body['enabled']is True and body['actorAccountId']==p['actorIds']['A'] and body['expiresAt']==p['expiresAt'] and body['request']==p['payloads']['create'if k=='create'else'editProposal']['body']
             for k in ('create','metadata'): (root/(k+'.json')).unlink(missing_ok=True)
+            directory=os.open(root,os.O_RDONLY|os.O_DIRECTORY)
+            try:os.fsync(directory)
+            finally:os.close(directory)
+            assert all(not(root/(k+'.json')).exists()and not(root/(k+'.json')).is_symlink()for k in ('create','metadata'))
+            report['runtimeSecretsRemoved']=True
         if root.exists():
             evidence=root/('service-'+action+'-'+str(time.time_ns())+'.json')
             evidence.write_text(json.dumps(report)); os.chmod(evidence,0o600)
@@ -168,9 +194,14 @@ def remote(p,action,secret):
 
 def main():
     p=load_plan(sys.argv[2]); assert p['manifestSHA256']==sys.argv[3] and p['ownerAuthorized'] is True
-    secret=json.load(sys.stdin); action=sys.argv[1]; assert action in ('activate','restore')
+    assert hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()==p['serviceHelperSHA256']
+    secret=json.load(sys.stdin); action=sys.argv[1]; assert action in ('activate','restore','reconcile')
+    if action=='reconcile':
+        from control import Operator
+        result=Operator(p,pathlib.Path(sys.argv[2]).parent).sql("BEGIN READ ONLY; SELECT (NOT EXISTS(SELECT 1 FROM public.trip_create_activation_gate WHERE enabled) AND NOT EXISTS(SELECT 1 FROM public.trip_metadata_activation_gate WHERE enabled) AND NOT EXISTS(SELECT 1 FROM public.trip_core_activation_gate WHERE runtime_enabled) AND NOT EXISTS(SELECT 1 FROM public.trip_source_command_gate WHERE enabled) AND NOT EXISTS(SELECT 1 FROM public.trip_source_pdf_gate WHERE enabled) AND NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN ('otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_core_v2_gateway','otr_trip_core_v2_writer') AND rolcanlogin) AND NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename IN ('otr_trip_create_gateway','otr_trip_metadata_gateway'))) AS closed; ROLLBACK;")
+        rows=result if isinstance(result,list)else result.get('rows'); assert isinstance(rows,list)and len(rows)==1 and rows[0]=={'closed':True}
     p['payloads']=json.loads(pathlib.Path(__file__).with_name('proposed-payloads.json').read_text())
-    remoteCode='import json,sys,hashlib,hmac,re,os,subprocess,time,urllib.request,datetime,fcntl,stat\nfrom pathlib import Path\n'+'\n\n'.join(inspect.getsource(f) for f in (redact,environment_projection,diagnostics,remote_locked,remote))+"\np,action,secret=json.load(sys.stdin)\nprint(json.dumps(remote(p,action,secret)))"
+    remoteCode='import json,sys,hashlib,hmac,re,os,subprocess,time,urllib.request,datetime,fcntl,stat\nfrom pathlib import Path\n'+'\n\n'.join(inspect.getsource(f) for f in (redact,environment_projection,diagnostics,host_config,remote_locked,remote))+"\np,action,secret=json.load(sys.stdin)\nprint(json.dumps(remote(p,action,secret)))"
     r=subprocess.run(['ssh','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8','root@178.105.151.143','python3 -c '+shlex.quote(remoteCode)],input=json.dumps([p,action,secret]),capture_output=True,text=True,timeout=240)
     if r.returncode: raise RuntimeError('C_SERVICE_TRANSPORT_RECONCILE_REQUIRED')
     result=json.loads(r.stdout); print(json.dumps(result)); sys.exit(0 if result['verified'] else 2)

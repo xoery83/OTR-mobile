@@ -5,7 +5,7 @@ import service, control
 from control_test import plan
 
 class Tests(unittest.TestCase):
- def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False):
+ def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False,bad_second=False,broken_second=False):
   temporary=tempfile.TemporaryDirectory();root=pathlib.Path(temporary.name)
   p=plan();p['ownerAuthorized']=True;p['payloads']=control.PAYLOADS
   p['databaseCA']=pathlib.Path(__file__).with_name('supabase-prod-ca-2021.crt').read_text()
@@ -14,7 +14,7 @@ class Tests(unittest.TestCase):
   composeCalls=0
   mounts=[{'source':'/fixture/a','destination':'/run/otr/catalog-reader.json','rw':False},{'source':'/fixture/b','destination':'/run/otr/capture-custody.json','rw':False},{'source':'/fixture/c','destination':'/var/lib/otr/capture-custody','rw':True}]
   env={'OTR_DEV_SUPABASE_URL':'https://tuqigdxrvrerfewsxqgm.supabase.co','A_SECRET':'fixture-env-secret'}
-  hc={'Binds':['a','b','c'],'NetworkMode':'host'};basefile=root/('z-base.yml'if nonalphabetical else'base.yml');basefile.write_text('fixture baseline')
+  hc={'Binds':['a','b','c'],'NetworkMode':'host','Mounts':[{'Source':m['source'],'Target':m['destination'],'ReadOnly':not m['rw'],'Type':'bind'}for m in mounts]};basefile=root/('z-base.yml'if nonalphabetical else'base.yml');basefile.write_text('fixture baseline')
   basefiles=[basefile]
   if nonalphabetical:
    override=root/'a-last-override.yml';override.write_text('fixture override');basefiles.append(override)
@@ -64,12 +64,18 @@ class Tests(unittest.TestCase):
   import io
   service.Path=path;service.datetime=datetime;service.time=time;service.urllib=urllib
   realstat=os.stat
+  realfstat=os.fstat
+  def fstat(fd):
+   value=realfstat(fd)
+   if (value.st_mode&0o777)==0o440:
+    parts=list(value);parts[4]=0;parts[5]=999;return os.stat_result(parts)
+   return value
   def stat(p,*args,**kwargs):
    value=realstat(p,*args,**kwargs)
    if str(p).endswith('/create.json'):
     parts=list(value);parts[4]=0;parts[5]=999;return os.stat_result(parts)
    return value
-  with patch.object(service.os,'fsync',side_effect=RuntimeError('fixture persist gap')) if persist_failure else patch.object(service.os,'fsync',wraps=os.fsync),patch.object(service.os,'stat',stat),patch.object(service.hashlib,'sha256',sha),patch.object(service.subprocess,'check_output',output),patch.object(service.subprocess,'run',run),patch.object(service.urllib.request,'urlopen',lambda *a,**k:io.BytesIO(json.dumps({'status':'broken' if health_failure else 'ok','environment':'development'}).encode())),patch.object(service.os,'chown',lambda *a:None):
+  with patch.object(service.os,'fsync',side_effect=RuntimeError('fixture persist gap')) if persist_failure else patch.object(service.os,'fsync',wraps=os.fsync),patch.object(service.os,'fstat',fstat),patch.object(service.os,'stat',stat),patch.object(service.hashlib,'sha256',sha),patch.object(service.subprocess,'check_output',output),patch.object(service.subprocess,'run',run),patch.object(service.urllib.request,'urlopen',lambda *a,**k:io.BytesIO(json.dumps({'status':'broken' if health_failure else 'ok','environment':'development'}).encode())),patch.object(service.os,'chown',lambda *a:None):
    if wait_expiry:
     import concurrent.futures,fcntl
     lockfd=os.open(root/'service.lock',os.O_CREAT|os.O_RDWR,0o600);fcntl.flock(lockfd,fcntl.LOCK_EX)
@@ -82,12 +88,31 @@ class Tests(unittest.TestCase):
    if action=='restore' and result['verified']:
     if exited:state['State']={'Status':'exited','Running':False,'ExitCode':42,'Health':{'Status':'unhealthy'}}
     result=service.remote(p,'restore',{})
+   if action=='reconcile'and result['verified']:
+    create=remote_root/'create.json';metadata=remote_root/'metadata.json';body=json.loads(create.read_text());body['request']=p['payloads']['editProposal']['body'];body['metadataPg']=body.pop('tripPg')
+    if bad_second:body['actorAccountId']='foreign-actor'
+    if broken_second:metadata.symlink_to(remote_root/'missing-private-target')
+    else:metadata.write_text(json.dumps(body));metadata.chmod(0o440)
+    state['Mounts']=[{'Source':m['source'],'Destination':m['destination'],'RW':m['rw']}for m in mounts];state['HostConfig']=copy.deepcopy(hc);state['HostConfig']['Mounts'].reverse()
+    beforecalls=composeCalls
+    try:
+     result=service.remote(p,'reconcile',{})
+     self.assertFalse(create.exists());self.assertFalse(metadata.exists());self.assertTrue(result['runtimeSecretsRemoved'])
+    except (AssertionError,OSError):
+     self.assertTrue(bad_second or broken_second);self.assertTrue(create.exists());self.assertTrue(metadata.exists()or metadata.is_symlink());result={'verified':False,'invalidSecondPreservedBoth':True}
+    self.assertEqual(composeCalls,beforecalls)
   result["fixtureComposeCalls"]=composeCalls
   temporary.cleanup();return result
  def test_non_alphabetical_compose_order_survives_sorted_hash_map(self):self.assertTrue(self.fixture('restore',nonalphabetical=True)['verified'])
  def test_exact_mounts_and_runtime_then_restore(self):self.assertTrue(self.fixture('restore')['verified'])
  def test_untrusted_ca_cannot_activate(self):
   with self.assertRaises(AssertionError):self.fixture(bad_ca=True)
+ def test_hostconfig_normalizes_only_mount_order_preserving_every_value(self):
+  a={'Other':{'keep':True},'Mounts':[{'Source':'a','ReadOnly':True},{'Source':'b','ReadOnly':False}]};b=copy.deepcopy(a);b['Mounts'].reverse()
+  self.assertEqual(service.host_config(a),service.host_config(b));self.assertNotEqual(a,b)
+  b['Mounts'][0]['ReadOnly']=True;self.assertNotEqual(service.host_config(a),service.host_config(b))
+  b=copy.deepcopy(a);b['Other']['keep']=False;self.assertNotEqual(service.host_config(a),service.host_config(b))
+  b=copy.deepcopy(a);b['Mounts'].append(copy.deepcopy(b['Mounts'][0]));self.assertNotEqual(service.host_config(a),service.host_config(b))
  def test_persist_failure_still_restores_but_cannot_pass(self):
   result=self.fixture("restore-only",persist_failure=True);self.assertTrue(result["restorationVerified"]);self.assertFalse(result["verified"]);self.assertFalse(result["beforeDiagnosticPersisted"]);self.assertEqual(result["fixtureComposeCalls"],1)
  def test_actual_activation_waits_lock_then_rejects_expired_without_compose(self):
@@ -95,6 +120,9 @@ class Tests(unittest.TestCase):
  def test_stopped_candidate_captured_before_restore_without_preexec(self):
   result=self.fixture('restore',exited=True);self.assertTrue(result['verified']);self.assertEqual(result['beforeDiagnostic']['state']['ExitCode'],42);self.assertEqual(result['bundleSHA256'],control.BUNDLE)
  def test_same_count_wrong_target_fails(self):self.assertFalse(self.fixture(wrong_mount=True)['verified'])
+ def test_reconcile_no_compose_removes_only_two_exact_unmounted_runtime_files(self):self.assertTrue(self.fixture('reconcile')['verified'])
+ def test_second_foreign_runtime_prevents_deleting_first(self):self.assertTrue(self.fixture('reconcile',bad_second=True)['invalidSecondPreservedBoth'])
+ def test_second_broken_symlink_prevents_deleting_first(self):self.assertTrue(self.fixture('reconcile',broken_second=True)['invalidSecondPreservedBoth'])
  def test_diagnostic_failure_not_pass(self):self.assertFalse(self.fixture(diagnostic_failure=True)['verified'])
  def test_http_health_failure_not_pass(self):self.assertFalse(self.fixture(health_failure=True)['verified'])
 if __name__=='__main__':unittest.main()
