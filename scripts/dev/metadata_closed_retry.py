@@ -67,6 +67,13 @@ def diagnostics(snapshot, log_text, before_environment, comparison_key):
     return clean(result)
 
 
+def deployment_host_config(value):
+    result = dict(value)
+    if isinstance(result.get('Mounts'), list):
+        result['Mounts'] = sorted(result['Mounts'], key=lambda item: json.dumps(item, sort_keys=True, separators=(',', ':')))
+    return result
+
+
 def remote_deploy(gate):
     def command(args):
         return subprocess.check_output(args, text=True, timeout=5)
@@ -76,9 +83,21 @@ def remote_deploy(gate):
         return dict(v.split('=', 1) for v in snapshot['Config']['Env'])
     def mounts(snapshot):
         return sorted([(m['Source'], m['Destination'], m['RW']) for m in snapshot['Mounts']])
+    def same_host(a, b):
+        return deployment_host_config(a) == deployment_host_config(b) if gate.get('semanticHostConfig') else a == b
+    def same_mounts(a, b):
+        if gate.get('semanticHostConfig'):
+            return sorted(a['Mounts'], key=lambda m: json.dumps(m, sort_keys=True)) == sorted(b['Mounts'], key=lambda m: json.dumps(m, sort_keys=True))
+        return mounts(a) == mounts(b)
+    bundle_path = gate.get('beforeBundlePath', '/app/server.mjs')
+    rollback_command = gate.get('rollbackCommand', ['node', 'server.mjs'])
     before = current()
     assert before['Image'] == gate['beforeImage'] and before['State']['Health']['Status'] == 'healthy'
-    assert hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat','/app/server.mjs'],timeout=5)).hexdigest() == gate['beforeBundleSHA256'], 'BASELINE_BUNDLE_DRIFT'
+    assert hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat',bundle_path],timeout=5)).hexdigest() == gate['beforeBundleSHA256'], 'BASELINE_BUNDLE_DRIFT'
+    if gate.get('semanticHostConfig'):
+        assert before['Config']['Cmd'] == rollback_command and before['Config']['User'] == gate['expectedUser']
+        assert deployment_host_config(before['HostConfig']) == deployment_host_config(gate['expectedHostConfig']), 'BASELINE_HOST_CONFIG_DRIFT'
+        assert mounts(before) == sorted(tuple(m) for m in gate['expectedMounts']), 'BASELINE_MOUNTS_DRIFT'
     before_env = env(before)
     assert hashlib.sha256(json.dumps(before_env, sort_keys=True, separators=(',', ':')).encode()).hexdigest() == gate['beforeEnvironmentSHA256'], 'BASELINE_ENV_DRIFT'
     assert before_env.get('OTR_DEV_SUPABASE_URL') == 'https://tuqigdxrvrerfewsxqgm.supabase.co'
@@ -92,7 +111,7 @@ def remote_deploy(gate):
     def assert_b_window_and_closed_custody():
         now = datetime.datetime.now(datetime.timezone.utc)
         start, end = [datetime.datetime.fromisoformat(gate[k].replace('Z', '+00:00')) for k in ('startsAt','expiresAt')]
-        assert start <= now < end and (end-start).total_seconds() <= 900, 'B_WINDOW_CLOSED'
+        assert start <= now < end and (end-start).total_seconds() <= 900 and (end-now).total_seconds() >= gate.get('minimumServiceChangeReserveSeconds', 0), 'B_WINDOW_CLOSED'
         path = Path('/opt/otr/dev-backend/env/capture-custody.json')
         body = path.read_bytes()  # Hash/expiry only; never persist/export body or batch.
         assert hashlib.sha256(body).hexdigest() == gate['expectedCustodySHA256'], 'CUSTODY_CONFIG_DRIFT'
@@ -104,7 +123,7 @@ def remote_deploy(gate):
     forward = release / 'compose.forward.closed.yml'
     rollback = release / 'compose.rollback.closed.yml'
     forward.write_text('services:\n  backend:\n    image: "' + gate['candidateImage'] + '"\n    command: ["node", "server-capture.mjs"]\n')
-    rollback.write_text('services:\n  backend:\n    image: "' + before['Image'] + '"\n    command: ["node", "server.mjs"]\n')
+    rollback.write_text('services:\n  backend:\n    image: "' + before['Image'] + '"\n    command: ' + json.dumps(rollback_command) + '\n')
     compose_env = dict(os.environ, OTR_DEV_BACKEND_REVIEWED_IMAGE_ID=before['Image'])
     def compose(extra):
         args = ['docker', 'compose', '-p', 'dev-backend']
@@ -112,7 +131,8 @@ def remote_deploy(gate):
             args += ['-f', str(file)]
         return args
     def render(extra):
-        return json.loads(subprocess.check_output(compose(extra) + ['config', '--no-env-resolution', '--no-interpolate', '--format', 'json'], env=compose_env, timeout=5))['services']['backend']
+        flags = ['config', '--no-env-resolution'] + ([] if gate.get('resolveComposeInterpolation') else ['--no-interpolate']) + ['--format', 'json']
+        return json.loads(subprocess.check_output(compose(extra) + flags, env=compose_env, timeout=5))['services']['backend']
     base, candidate = render([]), render([forward])
     base_without = {k: v for k, v in base.items() if k not in ('image', 'command')}
     assert base_without == {k: v for k, v in candidate.items() if k not in ('image', 'command')}
@@ -133,11 +153,25 @@ def remote_deploy(gate):
                 break
             time.sleep(min(2, max(0, deadline-time.monotonic())))
         after = current()
-        healthy = run.returncode == 0 and after['Image'] == gate['candidateImage'] and after['State'].get('Health', {}).get('Status') == 'healthy' and env(after) == before_env and mounts(after) == mounts(before) and after['HostConfig'] == before['HostConfig'] and after['Config']['User'] == before['Config']['User'] and after['Config']['Cmd'] == ['node', 'server-capture.mjs']
+        healthy = run.returncode == 0 and after['Image'] == gate['candidateImage'] and after['State'].get('Health', {}).get('Status') == 'healthy' and env(after) == before_env and same_mounts(after, before) and same_host(after['HostConfig'], before['HostConfig']) and after['Config']['User'] == before['Config']['User'] and after['Config']['Cmd'] == ['node', 'server-capture.mjs']
         if healthy:
             report['httpHealth'] = json.load(urllib.request.urlopen('http://127.0.0.1:8787/health', timeout=3))
             report['bundleSHA256'] = hashlib.sha256(subprocess.check_output(['docker', 'exec', 'otr-dev-backend', 'cat', '/app/server-capture.mjs'], timeout=5)).hexdigest()
             healthy = report['httpHealth'] == {'status': 'ok', 'environment': 'development'} and report['bundleSHA256'] == gate['bundleSHA256']
+            if healthy and gate.get('secondaryBundleSHA256'):
+                report['secondaryBundleSHA256'] = hashlib.sha256(subprocess.check_output(['docker', 'exec', 'otr-dev-backend', 'cat', '/app/server.mjs'], timeout=5)).hexdigest()
+                healthy = report['secondaryBundleSHA256'] == gate['secondaryBundleSHA256']
+            if healthy and gate.get('verifyProtectedRoutes'):
+                report['protectedRoutes'] = {}
+                for path, headers in gate['protectedRoutes']:
+                    try:
+                        response = urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8787'+path, headers=headers), timeout=3)
+                        status = response.status
+                    except urllib.error.HTTPError as error:
+                        status = error.code
+                    report['protectedRoutes'][path] = status
+                healthy = all(v == 401 for v in report['protectedRoutes'].values())
+
     except Exception as error:
         healthy = False
         report['attemptErrorClass'] = type(error).__name__
@@ -151,7 +185,14 @@ def remote_deploy(gate):
             if logs.returncode != 0 or after['Image'] != gate['candidateImage']:
                 raise RuntimeError('CANDIDATE_DIAGNOSTIC_INCOMPLETE')
             report['diagnosticsCapturedBeforeRollback'] = True
-            (release / 'candidate-diagnostic.json').write_text(json.dumps(report, indent=2) + '\n')
+            diagnostic_path = release / 'candidate-diagnostic.json'
+            if gate.get('semanticHostConfig'):
+                fd = os.open(diagnostic_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, 'w') as stream:
+                    stream.write(json.dumps(report, indent=2) + '\n'); stream.flush(); os.fsync(stream.fileno())
+                fd = os.open(release, os.O_RDONLY | os.O_DIRECTORY); os.fsync(fd); os.close(fd)
+            else:
+                diagnostic_path.write_text(json.dumps(report, indent=2) + '\n')
         except Exception as error:
             healthy = False
             report['diagnosticsCapturedBeforeRollback'] = False
@@ -170,8 +211,8 @@ def remote_deploy(gate):
                 restored_state = current()
                 report['rollbackExit'] = restored.returncode
                 report['rollbackImage'] = restored_state['Image']
-                report['rollbackVerified'] = restored.returncode == 0 and restored_state['Image'] == before['Image'] and restored_state['Config']['Cmd'] == before['Config']['Cmd'] and restored_state['State'].get('Health', {}).get('Status') == 'healthy' and env(restored_state) == before_env and mounts(restored_state) == mounts(before) and restored_state['HostConfig'] == before['HostConfig'] and restored_state['Config']['User'] == before['Config']['User'] and all(hashlib.sha256(Path(f).read_bytes()).hexdigest() == h for f,h in gate['beforeConfigHashes'].items())
-                report['rollbackBundleSHA256'] = hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat','/app/server.mjs'],timeout=5)).hexdigest()
+                report['rollbackVerified'] = restored.returncode == 0 and restored_state['Image'] == before['Image'] and restored_state['Config']['Cmd'] == before['Config']['Cmd'] and restored_state['State'].get('Health', {}).get('Status') == 'healthy' and env(restored_state) == before_env and same_mounts(restored_state, before) and same_host(restored_state['HostConfig'], before['HostConfig']) and restored_state['Config']['User'] == before['Config']['User'] and all(hashlib.sha256(Path(f).read_bytes()).hexdigest() == h for f,h in gate['beforeConfigHashes'].items())
+                report['rollbackBundleSHA256'] = hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat',bundle_path],timeout=5)).hexdigest()
                 report['rollbackVerified'] = report['rollbackVerified'] and report['rollbackBundleSHA256'] == gate['beforeBundleSHA256']
                 report['rollbackHttpHealth'] = json.load(urllib.request.urlopen('http://127.0.0.1:8787/health', timeout=3))
                 report['rollbackVerified'] = report['rollbackVerified'] and report['rollbackHttpHealth'] == {'status': 'ok', 'environment': 'development'}
@@ -199,7 +240,7 @@ def main():
     assert start <= now < end and (end - start).total_seconds() <= 900
     assert re.fullmatch(r'sha256:[a-f0-9]{64}', gate['candidateImage'])
     assert re.fullmatch(r'/opt/otr/dev-backend/releases/metadata-recovery-[a-z0-9-]+', gate['releaseDirectory'])
-    functions = '\n\n'.join(inspect.getsource(f) for f in (redact, environment_projection, diagnostics, remote_deploy))
+    functions = '\n\n'.join(inspect.getsource(f) for f in (redact, environment_projection, diagnostics, deployment_host_config, remote_deploy))
     remote = 'import json,sys,pathlib,hashlib,hmac,re,os,subprocess,time,urllib.request,datetime\nfrom pathlib import Path\n' + functions + '\nprint(json.dumps(remote_deploy(json.load(sys.stdin))))'
     result = subprocess.run(['ssh', '-oBatchMode=yes', '-oStrictHostKeyChecking=yes', '-oConnectTimeout=8', HOST, 'python3 -c ' + shlex.quote(remote)], input=json.dumps(gate), capture_output=True, text=True, timeout=240)
     # Remote stdout is the sanitized receipt; stderr is not exported because arbitrary tool output may contain private values.

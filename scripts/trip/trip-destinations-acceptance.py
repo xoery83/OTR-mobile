@@ -5,6 +5,9 @@ import subprocess
 import time
 import uuid
 import concurrent.futures
+import sys
+sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'dev'))
+from trip_structured_deploy import CATALOG_SQL
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 IMAGE='otr-core-v2-server84-fixture:20261012'
 NAME='otr-structured-trip-'+uuid.uuid4().hex[:12]
@@ -61,10 +64,14 @@ try:
  sql("select public.trip_create_command("+literal(legacy_op)+"::uuid,"+literal(ACTOR)+"::uuid,"+literal(LEGACY)+"::uuid,'Legacy QA','Coast',NULL,NULL);",'otr_trip_create_gateway')
  sql("update public.trip_create_activation_gate set enabled=false,actor_account_id=null,trip_id=null,operation_id=null,request_payload=null,started_at=null,expires_at=null;alter role otr_trip_create_gateway nologin;")
  acl_before=sql("select jsonb_build_object('acl',relacl::text,'rls',relrowsecurity,'force',relforcerowsecurity) from pg_class where oid='public.trips'::regclass;")
+ # This minimal clone does not install Source PDF; omit only those unrelated live checks in fixture projection.
+ fixture_catalog=CATALOG_SQL.replace(" and not exists(select 1 from public.trip_source_command_gate where enabled)","").replace(" and not exists(select 1 from public.trip_source_pdf_gate where enabled)","")
+ print('CATALOG_BEFORE '+sql(fixture_catalog))
  preimages=sql("select jsonb_object_agg(oid::regprocedure::text,md5(pg_get_functiondef(oid))) from pg_proc where oid in ('public.trip_create_result(uuid,uuid)'::regprocedure,'public.trip_create_finite_scope_allowed(uuid,uuid,uuid)'::regprocedure,'public.trip_metadata_revision_guard()'::regprocedure,'public.trip_metadata_snapshot(uuid,uuid,uuid)'::regprocedure,'public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)'::regprocedure);")
  print('ACCEPTED_PREIMAGES '+preimages)
  sql('set role postgres;'+(ROOT/'supabase/dev-forward/trip-destinations/20261023000100_trip_structured_destinations.sql').read_text())
 
+ print('CATALOG_AFTER '+sql(fixture_catalog))
  check('structured migration installs on dormant accepted base')
  check('existing Trip table RLS and ACL unchanged',acl_before==sql("select jsonb_build_object('acl',relacl::text,'rls',relrowsecurity,'force',relforcerowsecurity) from pg_class where oid='public.trips'::regclass;"))
  check('preexisting scalar row remains NULL without historical backfill',sql("select (destinations IS NULL)::text from public.trips where id="+literal(LEGACY)+"::uuid;")=='true')

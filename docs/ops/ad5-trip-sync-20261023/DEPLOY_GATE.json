@@ -1,0 +1,403 @@
+{
+  "schemaVersion": 1,
+  "ownerAuthorized": false,
+  "authorizedPhases": [],
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "beforeImage": "sha256:4c8d6a04c7e31f5f38d972990a626168fedfe7611e2a32ec92209b5f7a120e14",
+  "candidateImage": "sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30",
+  "beforeBundlePath": "/app/server-capture.mjs",
+  "beforeBundleSHA256": "a9124ac674e3c79003024d88a8123e2fb0cd766e80808e2f679d01898dde0dce",
+  "bundleSHA256": "95b9c8018b8bc516cf5fc27b5d6c857836d15ee3d44a4a3f092da8dc22ad3aec",
+  "secondaryBundleSHA256": "d37a587df58108554f6bc13c99f0f5e73641204c579268e304459e8c97a853f1",
+  "rollbackCommand": [
+    "node",
+    "server-capture.mjs"
+  ],
+  "beforeEnvironmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "beforeConfigFiles": [
+    "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml",
+    "/opt/otr/dev-backend/env/backend-api-key.cutover.yml",
+    "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml",
+    "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml",
+    "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml",
+    "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml",
+    "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml",
+    "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml",
+    "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml"
+  ],
+  "beforeConfigHashes": {
+    "/opt/otr/dev-backend/env/backend-api-key.cutover.yml": "b849fcbf2680f7349da4fba6e4a6e7e030bc9577d0ddcb2978f025477698b465",
+    "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml": "89e8cc6afccb157f9e96196b6ffc2ddf00d616b81c6553e5e4ddaeefa0d77a24",
+    "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml": "813b731b2eba440d4b8ba5aaa6fbaa7135bb83d529ccaf175a44a07f3abfec49",
+    "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml": "1834d961bc616dceea905a449f68cb965f9f549339f0df9e0a901bae2fdd0e76",
+    "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml": "fbd5b1e05573335e9f68f2d37539de277299121c79fd826f83b0dc14ef752bba",
+    "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml": "6cc4bf28b90c7c36bd0812e2098f513fb509dd9cd47fd07f0a6eb69d4aec2873",
+    "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml": "ff48b999cb9f3474a07bfdf0264204b05103699e5ed25c60ca427ac21b8914c7",
+    "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml": "41026f94c644e3e1ba69e86df7d8c49bb43eef5a58ef76140f601923be9d1736",
+    "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml": "ee1867ae8fe5a378e7d747068bca729f195f289084c6ad345e59aca69d972d47"
+  },
+  "expectedCustodySHA256": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+  "expectedUser": "otr",
+  "expectedHostConfig": {
+    "AutoRemove": false,
+    "Binds": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceWriteIOps": null,
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "Cgroup": "",
+    "CgroupParent": "",
+    "CgroupnsMode": "private",
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "ContainerIDFile": "",
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpuShares": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "Devices": null,
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IOMaximumBandwidth": 0,
+    "IOMaximumIOps": 0,
+    "IpcMode": "private",
+    "Isolation": "",
+    "Links": null,
+    "LogConfig": {
+      "Config": {
+        "max-file": "3",
+        "max-size": "10m"
+      },
+      "Type": "json-file"
+    },
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "Memory": 402653184,
+    "MemoryReservation": 0,
+    "MemorySwap": 805306368,
+    "MemorySwappiness": null,
+    "Mounts": [
+      {
+        "BindOptions": {},
+        "ReadOnly": true,
+        "Source": "/run/otr-r3a5-catalog/catalog-reader.json",
+        "Target": "/run/otr/catalog-reader.json",
+        "Type": "bind"
+      },
+      {
+        "BindOptions": {},
+        "Source": "/opt/otr/dev-backend/private/capture-custody",
+        "Target": "/var/lib/otr/capture-custody",
+        "Type": "bind"
+      },
+      {
+        "BindOptions": {},
+        "ReadOnly": true,
+        "Source": "/opt/otr/dev-backend/env/capture-custody.json",
+        "Target": "/run/otr/capture-custody.json",
+        "Type": "bind"
+      }
+    ],
+    "NanoCpus": 0,
+    "NetworkMode": "host",
+    "OomKillDisable": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "PidsLimit": null,
+    "PortBindings": {},
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "unless-stopped"
+    },
+    "Runtime": "runc",
+    "SecurityOpt": [
+      "no-new-privileges:true"
+    ],
+    "ShmSize": 67108864,
+    "Tmpfs": {
+      "/tmp": "size=16m,mode=1777"
+    },
+    "UTSMode": "",
+    "Ulimits": [
+      {
+        "Hard": 0,
+        "Name": "core",
+        "Soft": 0
+      }
+    ],
+    "UsernsMode": "",
+    "VolumeDriver": "",
+    "VolumesFrom": null
+  },
+  "expectedMounts": [
+    [
+      "/run/otr-r3a5-catalog/catalog-reader.json",
+      "/run/otr/catalog-reader.json",
+      false
+    ],
+    [
+      "/opt/otr/dev-backend/private/capture-custody",
+      "/var/lib/otr/capture-custody",
+      true
+    ],
+    [
+      "/opt/otr/dev-backend/env/capture-custody.json",
+      "/run/otr/capture-custody.json",
+      false
+    ]
+  ],
+  "semanticHostConfig": true,
+  "resolveComposeInterpolation": true,
+  "minimumServiceChangeReserveSeconds": 240,
+  "maxDeploymentAttempts": 1,
+  "startsAt": null,
+  "expiresAt": null,
+  "phaseCAllowed": false,
+  "authOperations": 0,
+  "businessMutations": 0,
+  "verifyProtectedRoutes": true,
+  "protectedRoutes": [
+    [
+      "/v2/trips/11111111-1111-4111-8111-111111111111/metadata",
+      {
+        "OTR-Trip-Metadata-Version": "3",
+        "OTR-Metadata-Operation-Id": "11111111-1111-4111-8111-111111111111",
+        "X-OTR-Publication-Catalog-Version": "1"
+      }
+    ],
+    [
+      "/v2/trip-metadata-operations/11111111-1111-4111-8111-111111111111",
+      {
+        "OTR-Trip-Metadata-Version": "3",
+        "OTR-Metadata-Operation-Id": "11111111-1111-4111-8111-111111111111",
+        "X-OTR-Publication-Catalog-Version": "1"
+      }
+    ],
+    [
+      "/v2/trip-create-operations/11111111-1111-4111-8111-111111111111",
+      {
+        "OTR-Trip-Metadata-Version": "3",
+        "OTR-Metadata-Operation-Id": "11111111-1111-4111-8111-111111111111",
+        "X-OTR-Publication-Catalog-Version": "1"
+      }
+    ],
+    [
+      "/v2/trips/11111111-1111-4111-8111-111111111111/source-import-catalogs",
+      {
+        "OTR-Trip-Metadata-Version": "3",
+        "OTR-Metadata-Operation-Id": "11111111-1111-4111-8111-111111111111",
+        "X-OTR-Publication-Catalog-Version": "1"
+      }
+    ],
+    [
+      "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap",
+      {
+        "OTR-Trip-Metadata-Version": "3",
+        "OTR-Metadata-Operation-Id": "11111111-1111-4111-8111-111111111111",
+        "X-OTR-Publication-Catalog-Version": "1"
+      }
+    ]
+  ],
+  "releaseDirectory": "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023",
+  "supabaseCli": "/private/tmp/otr-c-execution-prep-20261023/node_modules/.bin/supabase",
+  "linkedWorktree": "/Users/xoery/Project/otr-mobile-canonical",
+  "sqlSHA256": "59e88813b58983b435f7647e46d387daba91ee3456f1ffd9a90acf80ffab6410",
+  "helperSHA256": "30eedd4d653b928c62cb468c7276267bb7f1d67157adcaa3fb619dd492e29ff2",
+  "entrySHA256": "9b9f98fd57b00f4399e7b3287b38342b0b5f611083ec486202a408f6f164397a",
+  "catalogBeforeSQL": {
+    "trips": {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,otr_trip_event_receipt_reader=r/postgres,otr_trip_source_operation_reader=r/postgres}",
+      "rls": true,
+      "forceRls": false
+    },
+    "closed": true,
+    "sessions": 0,
+    "functions": {
+      "public.trip_create_result(uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "ad2c2778f5a15811b6ef806a6ba2d8d0",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_metadata_revision_guard()": {
+        "acl": "{postgres=X/postgres}",
+        "md5": "f387200202891b93b90e01119a511a3b",
+        "owner": "postgres",
+        "securityDefiner": false
+      },
+      "public.trip_metadata_snapshot(uuid,uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+        "md5": "ed57d227810145d5da847346b57503dd",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_metadata_update_result(uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+        "md5": "df4d8ff6fab2e7313d925b10bab1cff3",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "4915f242e9e98a31800669b91d81b9bf",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)": {
+        "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+        "md5": "8d7cdc0f81877718e8d785fc9f8ff991",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_create_command(uuid,uuid,uuid,text,text,date,date)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "9e28168bf2c88fc9fbd6dec4209f62ca",
+        "owner": "postgres",
+        "securityDefiner": true
+      }
+    },
+    "constraints": {
+      "trips_pkey": "PRIMARY KEY (id)",
+      "trips_created_by_fkey": "FOREIGN KEY (created_by) REFERENCES public.profiles(id)",
+      "trip_create_scope_shape": "CHECK ((((NOT enabled) AND (actor_account_id IS NULL) AND (trip_id IS NULL) AND (operation_id IS NULL) AND (request_payload IS NULL) AND (started_at IS NULL) AND (expires_at IS NULL)) OR (enabled AND (actor_account_id IS NOT NULL) AND (trip_id IS NOT NULL) AND (operation_id IS NOT NULL) AND (request_payload IS NOT NULL) AND (jsonb_typeof(request_payload) = 'object'::text) AND (octet_length((request_payload)::text) <= 2048) AND (request_payload ?& ARRAY['tripId'::text, 'name'::text, 'destination'::text, 'startDate'::text, 'endDate'::text]) AND ((request_payload - ARRAY['tripId'::text, 'name'::text, 'destination'::text, 'startDate'::text, 'endDate'::text]) = '{}'::jsonb) AND COALESCE(((request_payload ->> 'tripId'::text) = (trip_id)::text), false) AND (started_at IS NOT NULL) AND (expires_at IS NOT NULL) AND isfinite(started_at) AND isfinite(expires_at) AND (expires_at > started_at) AND (expires_at <= (started_at + '00:15:00'::interval)))))",
+      "trips_metadata_revision_check": "CHECK (((metadata_revision >= 0) AND (metadata_revision <= '9007199254740991'::bigint)))",
+      "trip_create_activation_gate_pkey": "PRIMARY KEY (singleton)",
+      "trips_photo_storage_status_check": "CHECK ((photo_storage_status = ANY (ARRAY['not_connected'::text, 'connected'::text, 'disconnected'::text, 'error'::text])))",
+      "trip_metadata_activation_gate_pkey": "PRIMARY KEY (singleton)",
+      "trips_photo_storage_provider_check": "CHECK ((photo_storage_provider = ANY (ARRAY['google_drive'::text, 'onedrive'::text, 'supabase_legacy'::text])))",
+      "trip_metadata_activation_gate_check": "CHECK ((((NOT enabled) AND (actor_account_id IS NULL) AND (trip_id IS NULL) AND (operation_id IS NULL) AND (request_payload IS NULL) AND (started_at IS NULL) AND (expires_at IS NULL)) OR (enabled AND (actor_account_id IS NOT NULL) AND (trip_id IS NOT NULL) AND (operation_id IS NOT NULL) AND (request_payload IS NOT NULL) AND (jsonb_typeof(request_payload) = 'object'::text) AND (octet_length((request_payload)::text) <= 8192) AND (request_payload ?& ARRAY['formatVersion'::text, 'operationId'::text, 'tripId'::text, 'before'::text, 'after'::text, 'expectedMetadataRevision'::text]) AND ((request_payload - ARRAY['formatVersion'::text, 'operationId'::text, 'tripId'::text, 'before'::text, 'after'::text, 'expectedMetadataRevision'::text]) = '{}'::jsonb) AND ((request_payload -> 'formatVersion'::text) = '2'::jsonb) AND ((request_payload ->> 'operationId'::text) = (operation_id)::text) AND ((request_payload ->> 'tripId'::text) = (trip_id)::text) AND (started_at IS NOT NULL) AND (expires_at IS NOT NULL) AND isfinite(started_at) AND isfinite(expires_at) AND (expires_at > started_at) AND (expires_at <= (started_at + '00:15:00'::interval)))))",
+      "trip_create_activation_gate_singleton_check": "CHECK (singleton)",
+      "trip_metadata_activation_gate_singleton_check": "CHECK (singleton)"
+    },
+    "rolesClosed": true,
+    "destinations": null
+  },
+  "catalogAfterSQL": {
+    "trips": {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,otr_trip_event_receipt_reader=r/postgres,otr_trip_source_operation_reader=r/postgres}",
+      "rls": true,
+      "forceRls": false
+    },
+    "closed": true,
+    "sessions": 0,
+    "functions": {
+      "public.trip_create_result(uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "50e31c3bb0b9b385e8cf764eba5c59fa",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_destinations_valid(jsonb)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "md5": "d8ba64b0cff4e0a4c9b83cf1b224ddd6",
+        "owner": "postgres",
+        "securityDefiner": false
+      },
+      "public.trip_metadata_revision_guard()": {
+        "acl": "{postgres=X/postgres}",
+        "md5": "60ce3a801acd1f40034e58bdba8139d3",
+        "owner": "postgres",
+        "securityDefiner": false
+      },
+      "public.trip_metadata_snapshot(uuid,uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+        "md5": "4bb7e25ff9ef1077ecd5cf955bebb331",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_metadata_update_result(uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+        "md5": "df4d8ff6fab2e7313d925b10bab1cff3",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_create_command(uuid,uuid,uuid,jsonb)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "12e1d4a45e37e5cff9fb6a6385c82b45",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "b3d8d5717f3beee8953270578c0dbebb",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)": {
+        "acl": "{postgres=X/postgres,otr_trip_metadata_gateway=X/postgres}",
+        "md5": "5063f939eb660b54a57b30f58b84cc73",
+        "owner": "postgres",
+        "securityDefiner": true
+      },
+      "public.trip_create_command(uuid,uuid,uuid,text,text,date,date)": {
+        "acl": "{postgres=X/postgres,otr_trip_create_gateway=X/postgres}",
+        "md5": "9e28168bf2c88fc9fbd6dec4209f62ca",
+        "owner": "postgres",
+        "securityDefiner": true
+      }
+    },
+    "constraints": {
+      "trips_pkey": "PRIMARY KEY (id)",
+      "trips_created_by_fkey": "FOREIGN KEY (created_by) REFERENCES public.profiles(id)",
+      "trip_destinations_valid": "CHECK (((destinations IS NULL) OR ((destination IS NULL) AND public.trip_destinations_valid(destinations))))",
+      "trips_metadata_revision_check": "CHECK (((metadata_revision >= 0) AND (metadata_revision <= '9007199254740991'::bigint)))",
+      "trip_create_activation_gate_pkey": "PRIMARY KEY (singleton)",
+      "trip_create_gate_request_version": "CHECK (((((NOT enabled) AND (actor_account_id IS NULL) AND (trip_id IS NULL) AND (operation_id IS NULL) AND (request_payload IS NULL) AND (started_at IS NULL) AND (expires_at IS NULL)) OR (enabled AND (actor_account_id IS NOT NULL) AND (trip_id IS NOT NULL) AND (operation_id IS NOT NULL) AND (jsonb_typeof(request_payload) = 'object'::text) AND ((request_payload ->> 'tripId'::text) = (trip_id)::text) AND ((((request_payload - ARRAY['tripId'::text, 'name'::text, 'destination'::text, 'startDate'::text, 'endDate'::text]) = '{}'::jsonb) AND (request_payload ?& ARRAY['tripId'::text, 'name'::text, 'destination'::text, 'startDate'::text, 'endDate'::text]) AND (octet_length((request_payload)::text) <= 2048)) OR (((request_payload -> 'formatVersion'::text) = '2'::jsonb) AND ((request_payload - ARRAY['formatVersion'::text, 'tripId'::text, 'name'::text, 'destination'::text, 'destinations'::text, 'startDate'::text, 'endDate'::text]) = '{}'::jsonb) AND (request_payload ?& ARRAY['formatVersion'::text, 'tripId'::text, 'name'::text, 'destination'::text, 'destinations'::text, 'startDate'::text, 'endDate'::text]) AND (octet_length((request_payload)::text) <= 131072))) AND (started_at IS NOT NULL) AND (expires_at IS NOT NULL) AND isfinite(started_at) AND isfinite(expires_at) AND (expires_at > started_at) AND (expires_at <= (started_at + '00:15:00'::interval)))) IS TRUE))",
+      "trips_photo_storage_status_check": "CHECK ((photo_storage_status = ANY (ARRAY['not_connected'::text, 'connected'::text, 'disconnected'::text, 'error'::text])))",
+      "trip_metadata_activation_gate_pkey": "PRIMARY KEY (singleton)",
+      "trip_metadata_gate_request_version": "CHECK (((((NOT enabled) AND (actor_account_id IS NULL) AND (trip_id IS NULL) AND (operation_id IS NULL) AND (request_payload IS NULL) AND (started_at IS NULL) AND (expires_at IS NULL)) OR (enabled AND (actor_account_id IS NOT NULL) AND (trip_id IS NOT NULL) AND (operation_id IS NOT NULL) AND (jsonb_typeof(request_payload) = 'object'::text) AND (request_payload ?& ARRAY['formatVersion'::text, 'operationId'::text, 'tripId'::text, 'before'::text, 'after'::text, 'expectedMetadataRevision'::text]) AND ((request_payload - ARRAY['formatVersion'::text, 'operationId'::text, 'tripId'::text, 'before'::text, 'after'::text, 'expectedMetadataRevision'::text]) = '{}'::jsonb) AND ((((request_payload -> 'formatVersion'::text) = '2'::jsonb) AND (octet_length((request_payload)::text) <= 8192)) OR (((request_payload -> 'formatVersion'::text) = '3'::jsonb) AND (octet_length((request_payload)::text) <= 262144))) AND ((request_payload ->> 'operationId'::text) = (operation_id)::text) AND ((request_payload ->> 'tripId'::text) = (trip_id)::text) AND (started_at IS NOT NULL) AND (expires_at IS NOT NULL) AND isfinite(started_at) AND isfinite(expires_at) AND (expires_at > started_at) AND (expires_at <= (started_at + '00:15:00'::interval)))) IS TRUE))",
+      "trips_photo_storage_provider_check": "CHECK ((photo_storage_provider = ANY (ARRAY['google_drive'::text, 'onedrive'::text, 'supabase_legacy'::text])))",
+      "trip_create_activation_gate_singleton_check": "CHECK (singleton)",
+      "trip_metadata_activation_gate_singleton_check": "CHECK (singleton)"
+    },
+    "rolesClosed": true,
+    "destinations": {
+      "type": "jsonb",
+      "nullable": true
+    }
+  },
+  "baselineEvidenceOnlyNotFresh": true,
+  "catalogProjectionOrigin": "ISOLATED_ACCEPTED_PG_FIXTURE; LIVE_ALL_FIVE_GATES_QUERY_REQUIRED",
+  "executionRecordDirectory": "/private/tmp/otr-ad5-structured-deploy-20261023"
+}
