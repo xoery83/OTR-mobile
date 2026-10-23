@@ -155,3 +155,51 @@ it("does not disclose a V2 snapshot across an Account generation ABA", async () 
     "Account changed",
   );
 });
+
+it("does not return a snapshot whose body finishes after the finite dispatch window", async () => {
+  const actor = randomUUID(),
+    tripId = randomUUID(),
+    op = randomUUID();
+  let open = true;
+  let release!: () => void;
+  const snapshot = {
+    formatVersion: 3,
+    actorAccountId: actor,
+    tripId,
+    metadataRevision: 0,
+    metadata: {
+      name: "QA",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    },
+  };
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      release = () => {
+        open = false;
+        controller.enqueue(new TextEncoder().encode(JSON.stringify(snapshot)));
+        controller.close();
+      };
+    },
+  });
+  const fetchImplementation = vi.fn(async () => new Response(body, { status: 200 }));
+  const scope = await captureAccountScope(async () => actor);
+  const transport = createTripMetadataTransport(
+    async () => actor,
+    {
+      baseUrl: "https://api.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "test-only", userId: actor }),
+    () => {
+      if (!open) throw Error("CLOSED");
+    },
+  );
+  const pending = transport.snapshot(scope, tripId, op, 3);
+  await new Promise((r) => setTimeout(r, 0));
+  expect(fetchImplementation).toHaveBeenCalledOnce();
+  release();
+  await expect(pending).rejects.toThrow("CLOSED");
+});

@@ -52,7 +52,11 @@ export async function loadDevTripMetadataV2Runtime(
     const body = await file.readFile("utf8");
     if (Buffer.byteLength(body) > 270336) throw 0;
     config = tripMetadataV2RuntimeSchema.parse(JSON.parse(body));
-    if (config.request.formatVersion === 2 && Buffer.byteLength(body) > 16384) throw 0;
+    if (
+      config.request.formatVersion === 2 &&
+      (stat.size > 16384 || Buffer.byteLength(body) > 16384)
+    )
+      throw 0;
     const remaining = Date.parse(config.expiresAt) - Date.now();
     // Keep the existing finite activation's maximum 15-minute window; no automatic renewal.
     if (

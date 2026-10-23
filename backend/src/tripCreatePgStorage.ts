@@ -11,7 +11,7 @@ function classify(error: unknown): never {
   if (pg.code === "55000") throw new TripCreateError(503, "TRIP_CREATE_CLOSED");
   if (pg.code === "23505") throw new TripCreateError(409, "TRIP_CREATE_COLLISION");
   if (pg.code === "42501") throw new TripCreateError(403, "TRIP_CREATE_FORBIDDEN");
-  if (pg.code === "22023" || pg.code === "22P02")
+  if (["22023", "22P02", "22007", "22008"].includes(pg.code ?? ""))
     throw new TripCreateError(400, "TRIP_CREATE_INVALID");
   throw new TripCreateError(503, "TRIP_CREATE_UNAVAILABLE");
 }

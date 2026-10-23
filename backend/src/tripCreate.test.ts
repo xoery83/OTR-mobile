@@ -122,3 +122,46 @@ it("mounts the route behind the existing bearer-token authentication boundary", 
   expect((await handle(send("valid"))).status).toBe(201);
   expect(storage.create).toHaveBeenCalledWith(actor, input);
 });
+
+it("CreateV2 requires explicit version and preserves complete list in command and receipt", async () => {
+  const input = {
+    ...request(),
+    formatVersion: 2 as const,
+    destination: null,
+    destinations: [
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Nelson",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "synthetic-place",
+      },
+    ],
+  };
+  const p = {
+    create: vi.fn(async () => ({
+      ...input,
+      metadataRevision: 0 as const,
+      actorAccountId: actor,
+      ownerPersonId: randomUUID(),
+      coreEpoch: randomUUID(),
+      coreRevision: 1,
+      coreAccessRevision: 1,
+    })),
+    receipt: vi.fn(async () => null),
+  };
+  const make = (version?: string) =>
+    new Request("http://unit/v2/trips", {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": input.operationId,
+        ...(version ? { "OTR-Trip-Create-Version": version } : {}),
+      },
+      body: JSON.stringify(input),
+    });
+  expect((await tripCreateBoundary(make(), actor, p)).status).toBe(400);
+  const result = await tripCreateBoundary(make("2"), actor, p);
+  expect(result.status).toBe(201);
+  expect((await result.json()).destinations).toEqual(input.destinations);
+  expect(p.create).toHaveBeenCalledTimes(1);
+});

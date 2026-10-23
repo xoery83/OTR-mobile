@@ -125,3 +125,44 @@ it("malformed V2 or a queue identity mismatch cannot reach transport", async () 
     expect(f.transport.update).not.toHaveBeenCalled();
   }
 });
+
+it("V3 pinned receipt recovery uses same queue and cannot dispatch after finite guard expires", async () => {
+  const f = fixture();
+  const before = { ...f.request.before, destinations: [] };
+  const request = {
+    ...f.request,
+    formatVersion: 3 as const,
+    before,
+    after: { ...before, name: "After" },
+  };
+  const result = { ...request, actorAccountId: f.actor, resultMetadataRevision: 5 };
+  const operation = { ...f.operation, payloadJson: JSON.stringify(request) };
+  f.transport.receipt.mockResolvedValueOnce(result);
+  const worker = createTripMetadataSyncWorker(
+    f.repository,
+    f.transport,
+    async () => f.actor,
+  );
+  await worker.push(operation);
+  expect(f.transport.receipt).toHaveBeenCalledWith(
+    expect.objectContaining({ accountId: f.actor }),
+    request.operationId,
+    3,
+  );
+  expect(f.transport.update).not.toHaveBeenCalled();
+  let open = true;
+  f.transport.receipt.mockImplementationOnce(async () => {
+    open = false;
+    return null;
+  });
+  const guarded = createTripMetadataSyncWorker(
+    f.repository,
+    f.transport,
+    async () => f.actor,
+    () => {
+      if (!open) throw Error("CLOSED");
+    },
+  );
+  await expect(guarded.push(operation)).rejects.toThrow("CLOSED");
+  expect(f.transport.update).not.toHaveBeenCalled();
+});

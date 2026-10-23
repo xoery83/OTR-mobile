@@ -55,6 +55,7 @@ export function createTripMetadataTransport(
   return {
     async receipt(scope, operationId, version = 1) {
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       try {
         const result = await createAuthenticatedApiClient(
           options,
@@ -66,6 +67,7 @@ export function createTripMetadataTransport(
           version !== 1 ? { "OTR-Trip-Metadata-Version": String(version) } : undefined,
         );
         await assertAccountRequestContext(scope, account);
+        dispatchGuard();
         if (
           result.actorAccountId !== scope.accountId ||
           result.operationId !== operationId ||
@@ -75,6 +77,7 @@ export function createTripMetadataTransport(
         return result;
       } catch (error) {
         await assertAccountRequestContext(scope, account);
+        dispatchGuard();
         if (
           error instanceof ApiClientError &&
           error.status === 404 &&
@@ -87,6 +90,7 @@ export function createTripMetadataTransport(
     async update(scope, input) {
       const request = tripMetadataWireUpdateSchema.parse(input);
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       const result = await createAuthenticatedApiClient(
         options,
         tokenProvider,
@@ -103,6 +107,7 @@ export function createTripMetadataTransport(
         },
       );
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (
         result.actorAccountId !== scope.accountId ||
         canonicalCoreJson(metadataRequestFromReceipt(result) as Json) !==
@@ -115,6 +120,7 @@ export function createTripMetadataTransport(
       coreUuid.parse(tripId);
       coreUuid.parse(operationId);
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       const result = await createAuthenticatedApiClient(
         options,
         tokenProvider,
@@ -124,6 +130,7 @@ export function createTripMetadataTransport(
         "OTR-Metadata-Operation-Id": operationId,
       });
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (
         result.formatVersion !== version ||
         result.actorAccountId !== scope.accountId ||

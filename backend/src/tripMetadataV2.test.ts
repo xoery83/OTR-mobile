@@ -126,3 +126,45 @@ it("does not accept a changed server receipt or forged revision", async () => {
   vi.mocked(p.update).mockResolvedValueOnce({ ...result, resultMetadataRevision: 10 });
   expect((await tripMetadataV2Boundary(request(), actor, p)).status).toBe(503);
 });
+
+it("V3 keeps ordered destination fields and requires the matching explicit header", async () => {
+  const d = {
+    destinationId: randomUUID(),
+    displayLabel: "Auckland",
+    source: "MANUAL" as const,
+  };
+  const before3 = { ...before, destinations: [d] };
+  const input3 = {
+    ...input,
+    formatVersion: 3 as const,
+    before: before3,
+    after: { ...before3, destinations: [] },
+  };
+  const result3 = { ...input3, actorAccountId: actor, resultMetadataRevision: 8 };
+  const p: TripMetadataV2Port = {
+    update: vi.fn(async () => result3),
+    receipt: vi.fn(async () => result3),
+    snapshot: vi.fn(async () => ({
+      ...snapshot,
+      formatVersion: 3 as const,
+      metadata: before3,
+    })),
+  };
+  const headers = { "OTR-Trip-Metadata-Version": "3", "Idempotency-Key": operationId };
+  expect((await tripMetadataV2Boundary(request(input3, headers), actor, p)).status).toBe(
+    200,
+  );
+  expect((await tripMetadataV2Boundary(request(input3), actor, p)).status).toBe(400);
+  const read = await tripMetadataV2Boundary(
+    new Request(`http://unit/v2/trips/${tripId}/metadata`, {
+      headers: {
+        "OTR-Trip-Metadata-Version": "3",
+        "OTR-Metadata-Operation-Id": operationId,
+      },
+    }),
+    actor,
+    p,
+  );
+  expect(read.status).toBe(200);
+  expect((await read.json()).metadata.destinations).toEqual([d]);
+});

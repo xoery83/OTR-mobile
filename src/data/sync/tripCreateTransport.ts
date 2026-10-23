@@ -39,6 +39,7 @@ export function createTripCreateTransport(
   return {
     async receipt(scope, operationId, version = 1) {
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       let result: TripCreateResult;
       try {
         result = await client(scope).get(
@@ -47,6 +48,8 @@ export function createTripCreateTransport(
           version === 2 ? { "OTR-Trip-Create-Version": "2" } : undefined,
         );
       } catch (error) {
+        await assertAccountRequestContext(scope, account);
+        dispatchGuard();
         if (
           error instanceof ApiClientError &&
           error.status === 404 &&
@@ -56,6 +59,7 @@ export function createTripCreateTransport(
         throw error;
       }
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (
         result.actorAccountId !== scope.accountId ||
         result.operationId !== operationId ||
@@ -66,6 +70,7 @@ export function createTripCreateTransport(
     },
     async create(scope, request) {
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       const result = await client(scope).post(
         "/v2/trips",
         request,
@@ -76,6 +81,7 @@ export function createTripCreateTransport(
         },
       );
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (
         result.actorAccountId !== scope.accountId ||
         result.operationId !== request.operationId ||

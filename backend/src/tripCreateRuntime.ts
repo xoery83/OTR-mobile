@@ -51,7 +51,11 @@ export async function loadDevTripCreateRuntime(
     const body = await file.readFile("utf8");
     if (Buffer.byteLength(body) > 139264) throw 0;
     config = tripCreateRuntimeSchema.parse(JSON.parse(body));
-    if (!("formatVersion" in config.request) && Buffer.byteLength(body) > 16384) throw 0;
+    if (
+      !("formatVersion" in config.request) &&
+      (stat.size > 16384 || Buffer.byteLength(body) > 16384)
+    )
+      throw 0;
     const remaining = Date.parse(config.expiresAt) - Date.now();
     // Keep the existing finite activation's maximum 15-minute window; no automatic renewal.
     if (
