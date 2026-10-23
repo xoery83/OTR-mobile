@@ -280,6 +280,31 @@ export async function loadDevUniversalRuntime(
     timer.unref();
     return {
       universalImportPort: {
+        async readContext(actorId: string, batchId: string, tripId: string) {
+          if (actorId !== config.actorId || batchId !== config.task.import_id ||
+              tripId !== config.task.trip_id) return null;
+          await assertAuth();
+          const currentManifest = await readSources(config.task);
+          const current = prepareUniversalDispatch(actorId, batchId, {
+            version: UNIVERSAL_IMPORT_VERSION,
+            tripId,
+            taskId: config.task.task_id,
+          }, currentManifest);
+          if (current.requestSha256 !== plan.requestSha256) return null;
+          // Read the existing owning Task after current Source qualification.
+          const snapshot = await boot.repository.snapshot(boot.context, config.task.task_id);
+          if (snapshot.task.publication_fence !== config.task.publication_fence ||
+              snapshot.task.cancellation_disposition !== "NONE") return null;
+          await assertAuth();
+          return {
+            version: "otr.backend.universal-context/1" as const,
+            actorId,
+            accountId: config.task.account_id,
+            tripId,
+            batchId,
+            taskId: config.task.task_id,
+          };
+        },
         async execute(...args: Parameters<typeof port.execute>) {
           await assertAuth();
           return port.execute(...args);

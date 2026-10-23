@@ -126,12 +126,26 @@ export type UniversalResult = {
   canonicalWrites: false;
 };
 export type UniversalPort = {
+  // Disclosure of an already-bootstrapped owning Task only; never creates one.
+  readContext?(
+    actorId: string,
+    batchId: string,
+    tripId: string,
+  ): Promise<UniversalExecutionContext | null>;
   execute(
     actorId: string,
     batchId: string,
     request: UniversalRequest,
   ): Promise<UniversalResult>;
   read(actorId: string, batchId: string, taskId: string): Promise<UniversalResult | null>;
+};
+export type UniversalExecutionContext = {
+  version: "otr.backend.universal-context/1";
+  actorId: string;
+  accountId: string;
+  tripId: string;
+  batchId: string;
+  taskId: string;
 };
 export type UniversalHost = {
   // Reader must enforce Actor/Account/Trip/Batch and return actual retained Source material.
@@ -597,6 +611,26 @@ export async function universalBoundary(
   )
     return Response.json({ error: { code: "INVALID_IMPORT_ID" } }, { status: 400 });
   const batchId = match[1];
+  if (request.method === "GET" && !match[2]) {
+    const tripId = url.searchParams.get("tripId");
+    if (!tripId || !uuid.safeParse(tripId).success)
+      return Response.json({ error: { code: "INVALID_TRIP_ID" } }, { status: 400 });
+    if (!(await canReadTrip(actorId, tripId)))
+      return Response.json({ error: { code: "TRIP_READ_FORBIDDEN" } }, { status: 403 });
+    if (!port.readContext)
+      return Response.json({ error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } }, { status: 503 });
+    try {
+      const binding = await port.readContext(actorId, batchId, tripId);
+      if (!binding || binding.version !== "otr.backend.universal-context/1" ||
+          binding.actorId !== actorId || binding.accountId !== actorId ||
+          binding.tripId !== tripId || binding.batchId !== batchId ||
+          !uuid.safeParse(binding.taskId).success)
+        return Response.json({ error: { code: "TASK_NOT_FOUND" } }, { status: 404 });
+      return Response.json(binding, { headers: { "Cache-Control": "no-store" } });
+    } catch {
+      return Response.json({ error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } }, { status: 503 });
+    }
+  }
   if (request.method === "POST" && !match[2]) {
     const body = await request.text();
     if (Buffer.byteLength(body) > 2048)

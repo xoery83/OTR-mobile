@@ -1,5 +1,32 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## Universal existing Task context and Native consumer candidate — 24 October 2026
+
+`GET /v2/import-batches/:batchId/interpretations?tripId=:tripId` is a read-only
+discovery of an already-bootstrapped owning Task. It returns
+`otr.backend.universal-context/1` with exact Actor/Account/Trip/Batch/Task IDs;
+it never creates a Task, Source, Run or Provider call. Normal Auth/Trip read,
+finite current capability, retained Source/request hash and current Task
+publication/cancellation fences must pass. Missing reader/capability is503,
+unavailable/mismatched identity404; response is `Cache-Control: no-store`.
+
+Native uses this returned Task ID for the existing strict POST/idempotency key
+or GET `/:taskId?tripId=...`. The existing authenticated Backend API transport
+provides bounded JSON, normal token refresh and Account-generation fencing;
+there is no Native Provider credential or new configuration source.
+`universalImportContracts.ts` validates the frozen enriched candidate wire,
+retaining temporary IDs, per-field Source evidence, readiness, optional Source
+observations, Booking observations and Ticket `authority: NONE`.
+
+`universalCaptureConsumer` requires all accepted C3 Batch inputs to be represented
+with their exact original hashes before exposing results. Reopen recovery is
+read-only; only an exact absent result allows initial explicit dispatch, and an
+uncertain send cannot be blindly repeated. This is a transient projection of the
+existing Backend Task, not a new queue, admission or local result authority.
+Current candidate requires a legal Trip-bound owning context; an unassigned
+Capture is retained but cannot invent a Trip/Task binding. UI installation,
+real DEV/Provider and formal Review/Admission are not proven by consumer tests.
+
 ## Trip metadata update — local implementation, Hosted port CLOSED
 
 Authenticated `POST /v2/trips/:tripId/metadata` accepts strict
