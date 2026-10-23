@@ -1,3 +1,4 @@
+import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { ApiClientError } from "@/data/api/client";
 import type { AccountRequestContext } from "@/data/auth/accountRequestContext";
 import {
@@ -21,8 +22,7 @@ export async function fingerprintParticipation(
   return hash(serializeParticipationVector(rows));
 }
 export async function hashTripPersonBytes(value: string) {
-  const crypto = await import("expo-crypto");
-  return crypto.digestStringAsync(crypto.CryptoDigestAlgorithm.SHA256, value);
+  return tripCoreSha256Hex(new TextEncoder().encode(value));
 }
 function invalidCertificate(): never {
   throw new ApiClientError(
