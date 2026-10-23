@@ -893,8 +893,9 @@ function LocalTripContent({
                           after: {
                             ...after,
                             destination: null,
-                            destinations:
-                              destinations?.after ?? base.metadata.destinations,
+                            destinations: [
+                              ...(destinations?.after ?? base.metadata.destinations),
+                            ],
                           },
                         },
                         cover,
