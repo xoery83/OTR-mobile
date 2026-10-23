@@ -1,0 +1,39 @@
+{
+  "status": "ISOLATED_PG_CATALOG_SQLITE_HOST_PASS",
+  "pgSource": {
+    "status": "ISOLATED_PG_SOURCE_PASS",
+    "schemaSha256": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
+    "fixture": "otr-universal-source-4d585a453167",
+    "checks": [
+      "historical Flight publisher/catalog guard and administrator role edge unchanged",
+      "install default CLOSED without opening Source/Import gates",
+      "unprovisioned begin denied",
+      "real Run/Input PENDING creation and retained TEXT read before any model result",
+      "generic owning catalog includes PENDING Run while preserving V1 physical columns",
+      "exact begin replay has one immutable Run",
+      "changed request rejected",
+      "cross-account material unavailable",
+      "expired begin capability denied",
+      "retention/lifecycle revocation blocks current material read",
+      "no Candidate/Admission and original Source gate remains CLOSED"
+    ],
+    "hostedWrites": 0,
+    "providerCalls": 0
+  },
+  "sqliteCustodyHttp": {
+    "status": "LOCAL_CONTINUATION_CUSTODY_PASS",
+    "provider": "SYNTHETIC_LOCAL_FIXTURE",
+    "realProviderCalls": 0,
+    "checks": [
+      "actual PostgreSQL owning PENDING catalog -> existing repository validated SQLite cache (no manual Source inserts)",
+      "finite bootstrap reuses actual Task Repository + signalIntelligenceWake + claim (no manual Task/Queue rows)",
+      "real SQLite continuation + anchored private custody + HTTP mixed-candidate publication",
+      "cold SQLite/custody reopen replays exact result without Provider redispatch",
+      "revoked current Source admission withholds retained result",
+      "HTTP authentication enforced"
+    ]
+  },
+  "realAuth": "NOT_RUN_SYNTHETIC_LOCAL_CONTEXT",
+  "realProviderCalls": 0,
+  "hostedWrites": 0
+}

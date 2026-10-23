@@ -1,3 +1,7 @@
+## Universal main + Trip/P1 Sync auxiliary / IN_PROGRESS / 2026-10-24
+
+Owner permits one Universal Writer plus exactly one bounded Trip/P1 Sync Writer. Universal retains Source/Task/Provider/N→M ownership. Trip/P1 owns isolated Repository/Queue/adapters and minimal existing Core Mutation qualification; no shared Bootstrap/Worker/Native operations. Coordinator integrates common files, deployment and AD5 serially. Closure requires actual normal new-Trip full destinations and P1 Create/Edit SERVER_ACCEPTED, independent SERVER_VERIFIED and cold recovery; earlier finite QA receipts are scoped references only. New SQL/ACL/authority/deployment remains gated. Local-private Person names are neither promoted nor silently omitted. [Current integration receipt](../ops/universal-coordinator-integration-20261024/INTEGRATION_RECEIPT.json).
+
 ## EXPERIENCE-REVIEW-02 / IN_PROGRESS / 2026-10-18
 
 Isolated f87e119 baseline; A Day and B Home builders active, C Edit queued for finite builder slot. P0 first; shared root integration serial. Import P0 resources remain exclusive. Native Gate waits for independent simulator coordination; no AD5 installation/operation.

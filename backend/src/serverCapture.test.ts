@@ -37,6 +37,8 @@ it.each(["expired", "malformed", "permission denied", "missing"])(
         captureMaterialCustody: undefined,
         tripCreatePort: undefined,
         tripMetadataV2Port: undefined,
+        universalImportPort: undefined,
+        publicationCatalogConnection: undefined,
       }),
     );
     expect(console.error).not.toHaveBeenCalled();
@@ -65,6 +67,7 @@ it("valid custody remains available and all acquired finite resources close with
     captureMaterialCustody: custody.captureMaterialCustody,
     tripCreatePort: trip.tripCreatePort,
     tripMetadataV2Port: metadata.tripMetadataV2Port,
+    universalImportPort: undefined,
   });
   mocks.server.once.mock.calls[0][1]();
   expect(custody.close).toHaveBeenCalledOnce();
@@ -80,5 +83,6 @@ it("unavailable Trip and Metadata still fail closed independently", async () => 
     captureMaterialCustody: undefined,
     tripCreatePort: undefined,
     tripMetadataV2Port: undefined,
+    universalImportPort: undefined,
   });
 });

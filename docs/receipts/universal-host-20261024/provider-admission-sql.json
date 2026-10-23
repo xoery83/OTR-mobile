@@ -1,0 +1,26 @@
+{
+  "status": "ISOLATED_PG_UNIVERSAL_ADMISSION_PASS",
+  "checks": [
+    "three protected Flight bodies preserved byte-for-byte after removing Universal hooks",
+    "candidate installs CLOSED without global Provider runtime activation",
+    "missing finite scope denies without writes",
+    "conservative cost ceiling rejects before reservation",
+    "cross-account call rejected",
+    "Flight-only profile cannot authorize Universal",
+    "null Batch binding rejected",
+    "old generic reserve cannot commit unbound Universal call",
+    "real one-call ModelTask admission and exact replay",
+    "same Task second paid-call identity denied",
+    "expiry blocks actual dispatch transition",
+    "exact Universal dispatch succeeds while global runtime stays CLOSED",
+    "duplicate dispatch rejected",
+    "protected current Task/START receipt readback",
+    "post-dispatch environment kill revokes credential/current-scope read before send",
+    "existing CP14 completion/terminal immutable receipt independent readback",
+    "finite scope FORCE RLS and direct role access denied",
+    "finite capability removed and global runtime remains CLOSED"
+  ],
+  "fixture": "otr-universal-provider-bbd3aa1c5bb7",
+  "providerCalls": 0,
+  "hostedWrites": 0
+}

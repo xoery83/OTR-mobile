@@ -60,6 +60,7 @@ export async function readPublicationCatalog(
   actor: string,
   trip: string,
   signal: AbortSignal,
+  project: typeof publicationCatalogBody = publicationCatalogBody,
 ) {
   if (
     !connection ||
@@ -103,7 +104,7 @@ export async function readPublicationCatalog(
             ),
           );
           if (result.rows.length !== 1) throw unavailable();
-          const body = publicationCatalogBody(result.rows[0].catalog, actor, trip);
+          const body = project(result.rows[0].catalog, actor, trip);
           await boundary.run(() => lease.query("COMMIT", [], boundary.signal));
           began = false;
           return body;

@@ -31,7 +31,7 @@
     "stage9:recover:replay": "tsx scripts/stage9/recover-hosted-dev-replay.ts",
     "fixture:ui-polish": "node --env-file=.env.backend --import tsx scripts/dev/create-ui-polish-journey.ts",
     "fixture:settlement": "node --env-file=.env.backend --import tsx scripts/dev/enable-settlement-test-fixture.ts",
-    "backend:build:capture": "esbuild backend/src/serverCapture.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --outfile=dist/server-capture.mjs --banner:js='import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);'"
+    "backend:build:capture": "esbuild backend/src/serverCapture.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --external:react-native --external:expo-* --outfile=dist/server-capture.mjs --banner:js='import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);'"
   },
   "dependencies": {
     "@noble/hashes": "1.8.0",

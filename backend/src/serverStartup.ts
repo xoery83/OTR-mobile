@@ -7,6 +7,7 @@ import { createSupabaseDevGateway } from "./supabaseGateway";
 import { createReceiptOcrProvider } from "./receiptOcrProvider";
 import { initializeDevFlightLiveHost } from "./flightLiveHost";
 import { loadDevPublicationCatalog } from "./tripPublicationCatalogRuntime";
+import type { PublicationCatalogConnection } from "./tripPublicationCatalogRead";
 import { createRateDemandScanner } from "./rateDemandScanner";
 
 const environmentSchema = z
@@ -50,7 +51,12 @@ export function startDevBackend(
     | "coreConnection"
     | "documentOriginalReader"
     | "captureMaterialCustody"
-  > = {},
+    | "universalImportPort"
+  > & {
+    publicationCatalogConnection?: PublicationCatalogConnection & {
+      close(): Promise<void>;
+    };
+  } = {},
 ) {
   const environment = environmentSchema.parse(process.env);
   // Backend-private, unprovisioned and CLOSED. No HTTP route, polling or provider call.
@@ -60,10 +66,12 @@ export function startDevBackend(
     );
   });
   let scanner: ReturnType<typeof createRateDemandScanner> | null = null;
-  const publicationCatalogConnection = loadDevPublicationCatalog(
-    environment.OTR_DEV_BACKEND_NETWORK_MODE,
-    environment.OTR_DEV_SUPABASE_URL,
-  );
+  const publicationCatalogConnection =
+    startOptions.publicationCatalogConnection ??
+    loadDevPublicationCatalog(
+      environment.OTR_DEV_BACKEND_NETWORK_MODE,
+      environment.OTR_DEV_SUPABASE_URL,
+    );
   const gateway = createSupabaseDevGateway({
     publicationCatalogConnection,
     url: environment.OTR_DEV_SUPABASE_URL,
@@ -97,6 +105,7 @@ export function startDevBackend(
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,
     documentOriginalReader: startOptions.documentOriginalReader,
+    universalImportPort: startOptions.universalImportPort,
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
     },

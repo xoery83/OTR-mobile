@@ -1,4 +1,5 @@
 import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
+import { universalBoundary, type UniversalPort } from "./universalImport";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
 import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCustody";
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
@@ -612,6 +613,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  universalImportPort?: UniversalPort;
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
@@ -2358,6 +2360,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  universalImportPort,
   captureMaterialCustody,
   tripCreatePort,
   tripMetadataPort,
@@ -2449,7 +2452,11 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
+      if (/^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)) {
+        route = "/v2/import-batches/:batchId/interpretations";
+        const actor = await authenticate(request, gateway);
+        response = await universalBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalImportPort);
+      } else if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
         route = "/v2/capture-inputs/:inputId/material";
         const actor = await authenticate(request, gateway);
         response = await captureCustodyBoundary(
