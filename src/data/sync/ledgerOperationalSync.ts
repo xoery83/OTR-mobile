@@ -1,4 +1,8 @@
-import { hasNativeTripQaScope, runNativeTripQaSync } from "./nativeTripQaScope";
+import {
+  getNativeTripQaQueueActivity,
+  hasNativeTripQaScope,
+  runNativeTripQaSync,
+} from "./nativeTripQaScope";
 import {
   runNativeTripMetadataSync,
   isTripMetadataSyncEnabled,
@@ -52,7 +56,7 @@ export async function setIntelligenceSchedulingAdapter(
   }
 }
 async function scheduledQueueActivity() {
-  if (hasNativeTripQaScope()) return { actionableNow: 0, nextActionableAt: null };
+  if (hasNativeTripQaScope()) return getNativeTripQaQueueActivity();
   const ledger = await getLedgerQueueActivity();
   const extras = [];
   if (await isTripMetadataSyncEnabled())

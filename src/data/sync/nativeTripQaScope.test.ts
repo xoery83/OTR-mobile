@@ -5,6 +5,7 @@ import {
   nativeTripQaCreateFormat,
   hasNativeTripQaScope,
   runNativeTripQaSync,
+  getNativeTripQaQueueActivity,
 } from "./nativeTripQaScope";
 
 const a = "10000000-0000-4000-8000-000000000001";
@@ -20,6 +21,8 @@ const state = vi.hoisted(() => ({
   normal: vi.fn(),
   normalFactory: vi.fn(),
   session: vi.fn(),
+  activity: vi.fn(),
+  database: {},
 }));
 vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
@@ -37,6 +40,12 @@ vi.mock("./tripMetadataCoordinator", () => ({
 vi.mock("./tripNormalCoordinator", () => ({
   createNativeNormalTripSyncRunner: state.normalFactory,
 }));
+vi.mock("../db/database", () => ({
+  readInitializedDatabase: async () => state.database,
+}));
+vi.mock("./tripNormalQueueActivity", () => ({
+  getNormalTripQueueActivity: state.activity,
+}));
 const fixture = () => ({
   version: 1,
   accountId: a,
@@ -51,6 +60,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-10-23T03:01:00Z"));
   state.account = a;
   state.normalFactory.mockReturnValue(state.normal);
+  state.activity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
   state.session.mockResolvedValue({
     accessToken: "synthetic",
     expiresAt: "2026-10-23T04:00:00Z",
@@ -269,3 +279,63 @@ it.each(["overlong", "mixed"])(
     expect(state.normalFactory).not.toHaveBeenCalled();
   },
 );
+
+it("keeps finite targets unscheduled while normal retries use the owning selector", async () => {
+  expect(await getNativeTripQaQueueActivity()).toEqual({
+    actionableNow: 0,
+    nextActionableAt: null,
+  });
+  expect(state.activity).not.toHaveBeenCalled();
+  const scope = {
+    ...fixture(),
+    normal: { newTripsFrom: fixture().startsAt },
+    creates: [],
+    edits: [],
+  };
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
+  state.activity.mockResolvedValue({ actionableNow: 1, nextActionableAt: null });
+  expect(await getNativeTripQaQueueActivity()).toEqual({
+    actionableNow: 1,
+    nextActionableAt: null,
+  });
+  expect(state.activity).toHaveBeenCalledWith(state.database, {
+    accountId: a,
+    newTripsFrom: scope.normal.newTripsFrom,
+  });
+});
+it("does not schedule normal work with an expired offline token", async () => {
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      ...fixture(),
+      normal: { newTripsFrom: fixture().startsAt },
+      creates: [],
+      edits: [],
+    }),
+  );
+  state.session.mockResolvedValue({
+    accessToken: "synthetic",
+    expiresAt: "2026-10-23T03:00:00Z",
+  });
+  expect(await getNativeTripQaQueueActivity()).toEqual({
+    actionableNow: 0,
+    nextActionableAt: null,
+  });
+  expect(state.activity).not.toHaveBeenCalled();
+});
+it("rejects Account changes across the normal activity read", async () => {
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      ...fixture(),
+      normal: { newTripsFrom: fixture().startsAt },
+      creates: [],
+      edits: [],
+    }),
+  );
+  state.activity.mockImplementationOnce(async () => {
+    state.account = "20000000-0000-4000-8000-000000000001";
+    return { actionableNow: 1, nextActionableAt: null };
+  });
+  await expect(getNativeTripQaQueueActivity()).rejects.toThrow("Account changed");
+});

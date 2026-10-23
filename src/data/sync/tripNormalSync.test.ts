@@ -34,6 +34,7 @@ function fixture() {
     account: async () => actor,
     enabled: () => enabled,
     deferred: { materializeDeferredMetadata: vi.fn().mockResolvedValue(0) },
+    recoverTripReadback: vi.fn().mockResolvedValue(undefined),
     recoverP1Readback: vi.fn().mockResolvedValue(undefined),
     runCreate: vi.fn().mockResolvedValue({}),
     runMetadata: vi.fn().mockResolvedValue({}),

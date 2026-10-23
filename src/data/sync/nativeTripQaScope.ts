@@ -52,6 +52,41 @@ function readConfiguration() {
   }
 }
 
+function scopeEnabled(scope: NonNullable<ReturnType<typeof readConfiguration>>) {
+  const now = Date.now();
+  return (
+    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
+    process.env.EXPO_PUBLIC_OTR_API_BASE_URL === "https://api-dev.xoery.art" &&
+    now >= Date.parse(scope.startsAt) &&
+    now < Date.parse(scope.expiresAt)
+  );
+}
+
+// Only the owning normal selector contributes work to the existing operational timer.
+// Exact finite QA and historical queues remain unscheduled.
+export async function getNativeTripQaQueueActivity() {
+  const idle = { actionableNow: 0, nextActionableAt: null };
+  const scope = readConfiguration();
+  if (!scope?.normal || !scopeEnabled(scope)) return idle;
+  const actor = await captureAccountScope(requireActiveUserId);
+  if (actor.accountId !== scope.accountId) return idle;
+  const session = await readLocalSession();
+  await assertAccountRequestContext(actor, requireActiveUserId);
+  if (stateFromSessionAndNetwork(session, true) !== "AUTHENTICATED_ONLINE") return idle;
+  const [{ readInitializedDatabase }, { getNormalTripQueueActivity }] = await Promise.all(
+    [import("../db/database"), import("./tripNormalQueueActivity")],
+  );
+  const database = await readInitializedDatabase();
+  await assertAccountRequestContext(actor, requireActiveUserId);
+  if (!scopeEnabled(scope)) return idle;
+  const activity = await getNormalTripQueueActivity(database, {
+    accountId: actor.accountId,
+    newTripsFrom: scope.normal.newTripsFrom,
+  });
+  await assertAccountRequestContext(actor, requireActiveUserId);
+  return scopeEnabled(scope) ? activity : idle;
+}
+
 // Local opt-in only. It cannot enable dispatch or upgrade an existing queued request.
 export function nativeTripQaCreateFormat(accountId: string | null): 2 | undefined {
   const scope = readConfiguration();
@@ -91,15 +126,7 @@ export async function runNativeTripQaSync() {
   const parsed = readConfiguration();
   if (!parsed) return null;
   const scope = Object.freeze(parsed);
-  const enabled = () => {
-    const now = Date.now();
-    return (
-      process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
-      process.env.EXPO_PUBLIC_OTR_API_BASE_URL === "https://api-dev.xoery.art" &&
-      now >= Date.parse(scope.startsAt) &&
-      now < Date.parse(scope.expiresAt)
-    );
-  };
+  const enabled = () => scopeEnabled(scope);
   if (!enabled()) return null;
   const actor = await captureAccountScope(requireActiveUserId);
   if (actor.accountId !== scope.accountId || !enabled()) return null;
@@ -115,7 +142,10 @@ export async function runNativeTripQaSync() {
     )(stateFromSessionAndNetwork(session, true));
     await assertAccountRequestContext(actor, requireActiveUserId);
     if (!enabled()) return null;
-    return { ...actor, journeyIds: result && "tripIds" in result ? result.tripIds ?? [] : [] };
+    return {
+      ...actor,
+      journeyIds: result && "tripIds" in result ? (result.tripIds ?? []) : [],
+    };
   }
   const [{ createNativeTripCreateSyncRunner }, { createNativeTripMetadataSyncRunner }] =
     await Promise.all([

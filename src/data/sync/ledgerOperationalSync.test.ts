@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   qaConfigured: false,
   qaRun: vi.fn(),
+  qaActivity: vi.fn(),
   openDatabase: vi.fn(),
   reactivateOperations: vi.fn(),
   reactivateAssets: vi.fn(),
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("./nativeTripQaScope", () => ({
   hasNativeTripQaScope: () => mocks.qaConfigured,
   runNativeTripQaSync: mocks.qaRun,
+  getNativeTripQaQueueActivity: mocks.qaActivity,
 }));
 
 vi.mock("./tripMetadataCoordinator", () => ({
@@ -93,6 +95,7 @@ describe("Ledger mutation sync kick", () => {
     vi.clearAllMocks();
     mocks.qaConfigured = false;
     mocks.qaRun.mockResolvedValue(null);
+    mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
     mocks.metadataEnabled.mockResolvedValue(false);
     mocks.metadataRun.mockResolvedValue({ status: "closed", processedCount: 0 });
     mocks.getMetadataActivity.mockResolvedValue({
@@ -150,6 +153,76 @@ describe("Ledger mutation sync kick", () => {
     await run;
     expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
     setTripCreateSyncRunner(null);
+  });
+
+  it("retries normal Trip work on the existing timer without waking historical Ledger queues", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.qaConfigured = true;
+      mocks.qaActivity.mockResolvedValue({
+        actionableNow: 0,
+        nextActionableAt: Date.now() + 4000,
+      });
+      await runLedgerOperationalSync();
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(1);
+      await vi.advanceTimersByTimeAsync(3999);
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+      mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mocks.qaRun).toHaveBeenCalledTimes(2);
+      expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+      expect(mocks.getQueueActivity).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      await pauseLedgerOperationalSync();
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not lose a deferred successor queued during normal Trip dispatch", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.qaConfigured = true;
+      let release!: () => void;
+      mocks.qaRun.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            release = resolve;
+          }),
+      );
+      const first = runLedgerOperationalSync();
+      await vi.advanceTimersByTimeAsync(0);
+      mocks.qaActivity.mockResolvedValue({ actionableNow: 1, nextActionableAt: null });
+      for (const listener of mocks.queueListeners) listener();
+      release();
+      await first;
+      mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mocks.qaRun).toHaveBeenCalledTimes(2);
+      expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+    } finally {
+      await pauseLedgerOperationalSync();
+      vi.useRealTimers();
+    }
+  });
+
+  it("drops a scheduled normal Trip retry after Account generation changes", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.qaConfigured = true;
+      mocks.qaActivity.mockResolvedValue({
+        actionableNow: 0,
+        nextActionableAt: Date.now() + 4000,
+      });
+      await runLedgerOperationalSync();
+      mocks.generation += 2;
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+    } finally {
+      await pauseLedgerOperationalSync();
+      vi.useRealTimers();
+    }
   });
 
   it("a closed/failing Trip runner leaves unrelated Ledger work available", async () => {

@@ -34,6 +34,7 @@ type Deps = {
     "materializeDeferredMetadata"
   >;
   recoverP1Readback(tripId: string): Promise<void>;
+  recoverTripReadback(tripId: string, createOperationId: string): Promise<void>;
   runCreate(target: TripCreateTarget): Promise<unknown>;
   runMetadata(target: TripCreateTarget): Promise<unknown>;
   /** Existing Core worker must still enforce capabilities, Actor, Person and receipt contracts. */
@@ -94,6 +95,8 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
       await guard();
       runnerCalls++;
       try {
+        await deps.recoverTripReadback(row.trip_id, row.id);
+        await guard();
         await deps.deferred.materializeDeferredMetadata(row.trip_id);
         await deps.recoverP1Readback(row.trip_id);
       } catch {
@@ -132,6 +135,8 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             continue;
           await guard();
           await deps.runMetadata(selected);
+          await guard();
+          await deps.recoverTripReadback(row.trip_id, row.id);
           await guard();
           runnerCalls++;
         } else {

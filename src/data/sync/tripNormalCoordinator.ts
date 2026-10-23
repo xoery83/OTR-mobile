@@ -1,3 +1,8 @@
+import { createUuid } from "@/domain/localId";
+import { createTripNormalReadbackRepository } from "../repositories/tripNormalReadbackRepository";
+import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
+import { createTripMetadataTransport } from "./tripMetadataTransport";
+import { createTripMetadataRepository } from "../repositories/tripMetadataRepository";
 import { createNormalTripSyncWake, type NormalTripSyncScope } from "./tripNormalSync";
 import { createNativeTripCreateSyncRunner } from "./tripCreateCoordinator";
 import { createNativeTripMetadataSyncRunner } from "./tripMetadataCoordinator";
@@ -16,6 +21,7 @@ import {
   assertAccountRequestContext,
 } from "../auth/accountRequestContext";
 
+const coldReadbackSeen = new Set<string>();
 // Host installs this single wake beside existing queue notifications. Default is CLOSED.
 export function createNativeNormalTripSyncRunner(
   input: NormalTripSyncScope,
@@ -45,37 +51,58 @@ export function createNativeNormalTripSyncRunner(
       tripCoreSha256Hex,
     );
     const persons = createTripPersonRepository(database, requireActiveUserId);
+    const readback = createTripNormalReadbackRepository(database, requireActiveUserId);
+    const recoverReadback = async (tripId: string, createOperationId: string) => {
+      const local = await repository.getTrip(tripId);
+      await assertAccountRequestContext(account, requireActiveUserId);
+      if (local?.serverId !== tripId) return;
+      const trigger = await database.getAllAsync<{ id: string }>(
+        "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND') ORDER BY id",
+        account.accountId,
+        tripId,
+      );
+      await assertAccountRequestContext(account, requireActiveUserId);
+      const coldKey = `${account.generation}:${account.accountId}:${tripId}`;
+      await readback.run(
+        { ...account, tripId },
+        createOperationId,
+        async () => {
+          const snapshot = await createTripMetadataTransport(
+            requireActiveUserId,
+            {},
+            undefined,
+            () => {
+              if (!enabled()) throw Error("TRIP_SYNC_PORT_CLOSED");
+            },
+          ).snapshot(account, tripId, createOperationId, 3);
+          await assertAccountRequestContext(account, requireActiveUserId);
+          await createTripMetadataRepository(database, requireActiveUserId, () =>
+            new Date().toISOString(),
+          ).retainMetadataSnapshot(
+            structuredTripMetadataSnapshotSchema.parse(snapshot),
+            createUuid(),
+          );
+          const context = await core.captureContext(tripId);
+          const pending = await core.pending(context);
+          if (pending.some((i) => i.state === "APPLIED"))
+            await core.refresh(
+              context,
+              createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex),
+            );
+        },
+        JSON.stringify(trigger.map((row) => row.id)),
+        !coldReadbackSeen.has(coldKey),
+      );
+      coldReadbackSeen.add(coldKey);
+    };
     return createNormalTripSyncWake(
       {
         database,
         account: requireActiveUserId,
         enabled,
         deferred: repository,
-        recoverP1Readback: async (tripId) => {
-          const context = await core.captureContext(tripId);
-          const pending = await core.pending(context);
-          if (!pending.some((intent) => intent.state === "APPLIED")) return;
-          const ids = new Set(
-            (await core.readGraph(context)).itinerary_events
-              .filter((item) => item.experience_family === "P1")
-              .map((item) => item.id),
-          );
-          for (const { command } of pending)
-            if (
-              command.command === "CREATE_ITEM" &&
-              (command.payload as { family: string }).family === "P1"
-            )
-              ids.add(command.target.id);
-          if (
-            pending.some(
-              (intent) => intent.state === "APPLIED" && ids.has(intent.command.target.id),
-            )
-          )
-            await core.refresh(
-              context,
-              createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex),
-            );
-        },
+        recoverTripReadback: recoverReadback,
+        recoverP1Readback: async () => {},
         runCreate: (target) => createNativeTripCreateSyncRunner(target, enabled)(),
         runMetadata: (target) => createNativeTripMetadataSyncRunner(enabled, target)(),
         runP1: async (target) => {
@@ -101,7 +128,16 @@ export function createNativeNormalTripSyncRunner(
           const intent = (await core.pending(context)).find(
             (item) => item.command.operationId === target.operationId,
           );
-          if (intent?.state === "APPLIED") await core.refresh(context, transport);
+          if (intent?.state === "APPLIED") {
+            const row = await database.getFirstAsync<{ create_operation_id: string }>(
+              "SELECT create_operation_id FROM local_trip_containers WHERE account_id=? AND id=?",
+              account.accountId,
+              target.tripId,
+            );
+            await assertAccountRequestContext(account, requireActiveUserId);
+            if (!row) throw Error("TRIP_CREATE_LOCAL_MISSING");
+            await recoverReadback(target.tripId, row.create_operation_id);
+          }
           return result;
         },
         isP1Item: async (tripId, itemId) => {
