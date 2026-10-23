@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import {
   CRequestBudget,
+  assertExactUndispatchedCreateResume,
   createAuthenticatedHeadlessRunner,
   openQaDatabase,
 } from "./headless";
@@ -351,6 +352,15 @@ test("real HTTP + existing SQLite/targeted workers: offline create/edit, receipt
     await runner.select("A");
     runner.setOnline(false);
     await runner.saveCreate();
+    assert.doesNotThrow(() =>
+      assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A),
+    );
+    assert.throws(() => assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", B));
+    const resumeDb = await openQaDatabase(dir + "/qa-state.sqlite");
+    resumeDb.sql.exec("UPDATE sync_operations SET attempt_count=1");
+    assert.throws(() => assertExactUndispatchedCreateResume(dir + "/qa-state.sqlite", A));
+    resumeDb.sql.exec("UPDATE sync_operations SET attempt_count=0");
+    resumeDb.close();
     await runner.dispatchCreate();
     assert.equal(seen.filter((s) => s.startsWith("POST /v2/")).length, 0);
     await runner.reopen();
@@ -473,4 +483,14 @@ test("Auth provisioning refuses malformed window/hash before any outbound attemp
   } finally {
     rmSync(dir, { recursive: true });
   }
+});
+
+test("prior read charges carry across a resumed finite window without refund", () => {
+  const b = new CRequestBudget(window(), () => Date.now(), 3);
+  assert.equal(b.counts.reads, 3);
+  for (let n = 0; n < 13; n++) b.reserve("reads");
+  assert.equal(b.counts.reads, 16);
+  assert.throws(() => b.reserve("reads"));
+  for (const bad of [-1, 17, 1.5])
+    assert.throws(() => new CRequestBudget(window(), () => Date.now(), bad));
 });

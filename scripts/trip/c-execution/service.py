@@ -22,13 +22,16 @@ def remote_locked(p,action,secret):
         assert before['State'].get('Health',{}).get('Status')=='healthy'
         assert hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat','/app/server-capture.mjs'],timeout=8)).hexdigest()==p['bundle']
     for f,h in baseline['configHashes'].items(): assert hashlib.sha256(Path(f).read_bytes()).hexdigest()==h
-    files=list(baseline['configHashes'])
+    files=baseline['composeFiles']
+    assert isinstance(files,list) and len(files)==len(set(files)) and set(files)==set(baseline['configHashes'])
+    actualFiles=before['Config'].get('Labels',{}).get('com.docker.compose.project.config_files','').split(',')
+    assert actualFiles==files or actualFiles==files+[str(root/'finite.yml')]
     def compose(extra):
         a=['docker','compose','-p','dev-backend']
         for f in files+extra: a+=['-f',str(f)]
         return a
     composeEnv=dict(os.environ,OTR_DEV_BACKEND_REVIEWED_IMAGE_ID=p['image'])
-    def render(extra): return json.loads(subprocess.check_output(compose(extra)+['config','--no-env-resolution','--no-interpolate','--format','json'],env=composeEnv,timeout=8))['services']['backend']
+    def render(extra): return json.loads(subprocess.check_output(compose(extra)+['config','--no-env-resolution','--format','json'],env=composeEnv,timeout=8))['services']['backend']
     base=render([])
     assert base['image']==p['image'] and base['command']==['node','server-capture.mjs']
     allowed={'/run/otr/trip-create-runtime.json','/run/otr/trip-metadata-runtime.json'}

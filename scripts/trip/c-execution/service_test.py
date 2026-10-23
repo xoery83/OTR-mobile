@@ -5,19 +5,22 @@ import service, control
 from control_test import plan
 
 class Tests(unittest.TestCase):
- def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False):
+ def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False):
   temporary=tempfile.TemporaryDirectory();root=pathlib.Path(temporary.name)
   p=plan();p['ownerAuthorized']=True;p['payloads']=control.PAYLOADS
   if wait_expiry:p['expiresAt']=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(seconds=.1)).isoformat()
   composeCalls=0
   mounts=[{'source':'/fixture/a','destination':'/run/otr/catalog-reader.json','rw':False},{'source':'/fixture/b','destination':'/run/otr/capture-custody.json','rw':False},{'source':'/fixture/c','destination':'/var/lib/otr/capture-custody','rw':True}]
   env={'OTR_DEV_SUPABASE_URL':'https://tuqigdxrvrerfewsxqgm.supabase.co','A_SECRET':'fixture-env-secret'}
-  hc={'Binds':['a','b','c'],'NetworkMode':'host'};basefile=root/'base.yml';basefile.write_text('fixture baseline')
+  hc={'Binds':['a','b','c'],'NetworkMode':'host'};basefile=root/('z-base.yml'if nonalphabetical else'base.yml');basefile.write_text('fixture baseline')
+  basefiles=[basefile]
+  if nonalphabetical:
+   override=root/'a-last-override.yml';override.write_text('fixture override');basefiles.append(override)
   custody=root/'custody.json';custody.write_text(json.dumps({'expiresAt':'2020-01-01T00:00:00Z'}))
   realhash=hashlib.sha256
-  p['baseline']={'mounts':mounts,'hostConfig':hc,'environmentSHA256':'cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f','custodySHA256':realhash(custody.read_bytes()).hexdigest(),'configHashes':{str(basefile):realhash(basefile.read_bytes()).hexdigest()}}
+  p['baseline']={'mounts':mounts,'hostConfig':hc,'environmentSHA256':'cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f','custodySHA256':realhash(custody.read_bytes()).hexdigest(),'configHashes':{str(f):realhash(f.read_bytes()).hexdigest()for f in sorted(basefiles)},'composeFiles':[str(f)for f in basefiles]}
   base={'image':control.IMAGE,'command':['node','server-capture.mjs'],'volumes':[{'source':m['source'],'target':m['destination'],'read_only':not m['rw']} for m in mounts]}
-  state={'Image':control.IMAGE,'Config':{'User':'otr','Cmd':['node','server-capture.mjs'],'Env':[k+'='+v for k,v in env.items()]},'Mounts':[{'Source':m['source'],'Destination':m['destination'],'RW':m['rw']} for m in mounts],'HostConfig':hc,'State':{'Status':'running','Running':True,'Health':{'Status':'healthy'}}}
+  state={'Image':control.IMAGE,'Config':{'User':'otr','Cmd':['node','server-capture.mjs'],'Env':[k+'='+v for k,v in env.items()],'Labels':{'com.docker.compose.project.config_files':','.join(str(f)for f in basefiles)}},'Mounts':[{'Source':m['source'],'Destination':m['destination'],'RW':m['rw']} for m in mounts],'HostConfig':hc,'State':{'Status':'running','Running':True,'Health':{'Status':'healthy'}}}
   prefix='/opt/otr/dev-backend/env/c-finite-'+p['windowId']; remote_root=root/'finite'
   def path(v):
    text=str(v)
@@ -34,9 +37,11 @@ class Tests(unittest.TestCase):
     if state['State']['Status']=='exited':raise RuntimeError('cannot exec stopped container')
     return b'fixture bundle'
    if 'config' in args:
+    assert '--no-env-resolution'in args and '--no-interpolate'not in args
+    files=[args[i+1] for i,x in enumerate(args) if x=='-f'];assert files[:len(basefiles)]==[str(f)for f in basefiles]
     rendered=copy.deepcopy(base)
     files=[args[i+1] for i,x in enumerate(args) if x=='-f']
-    if len(files)>1:rendered['volumes']+=json.loads(path(files[-1]).read_text())['services']['backend']['volumes']
+    if len(files)>len(basefiles):rendered['volumes']+=json.loads(path(files[-1]).read_text())['services']['backend']['volumes']
     return json.dumps({'services':{'backend':rendered}}).encode()
    raise AssertionError(args)
   def run(args,**kw):
@@ -48,7 +53,7 @@ class Tests(unittest.TestCase):
     persisted=list(remote_root.glob('before-*.json'));assert persisted
     assert all('SYNTHETIC_PRIVATE_RUNTIME_SECRET' not in f.read_text() for f in persisted)
    files=[args[i+1] for i,x in enumerate(args) if x=='-f'];volumes=copy.deepcopy(base['volumes'])
-   if len(files)>1:volumes+=json.loads(path(files[-1]).read_text())['services']['backend']['volumes']
+   if len(files)>len(basefiles):volumes+=json.loads(path(files[-1]).read_text())['services']['backend']['volumes']
    state['State']={'Status':'running','Running':True,'ExitCode':0,'Health':{'Status':'healthy'}}
    state['Mounts']=[{'Source':v['source'],'Destination':v['target'],'RW':not v['read_only']} for v in volumes]
    state['HostConfig']={**hc,'Binds':hc['Binds']+[v['source']+':'+v['target']+':ro' for v in volumes[3:]]}
@@ -77,6 +82,7 @@ class Tests(unittest.TestCase):
     result=service.remote(p,'restore',{})
   result["fixtureComposeCalls"]=composeCalls
   temporary.cleanup();return result
+ def test_non_alphabetical_compose_order_survives_sorted_hash_map(self):self.assertTrue(self.fixture('restore',nonalphabetical=True)['verified'])
  def test_exact_mounts_and_runtime_then_restore(self):self.assertTrue(self.fixture('restore')['verified'])
  def test_persist_failure_still_restores_but_cannot_pass(self):
   result=self.fixture("restore-only",persist_failure=True);self.assertTrue(result["restorationVerified"]);self.assertFalse(result["verified"]);self.assertFalse(result["beforeDiagnosticPersisted"]);self.assertEqual(result["fixtureComposeCalls"],1)

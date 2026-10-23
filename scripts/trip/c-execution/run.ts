@@ -4,12 +4,23 @@
  */
 import { ApiClientError } from "../../../src/data/api/client";
 import payloads from "./proposed-payloads.json";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  lstatSync,
+  realpathSync,
+} from "node:fs";
 import { resolve, dirname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createHash } from "node:crypto";
-import { createAuthenticatedHeadlessRunner, QA } from "./headless";
+import {
+  createAuthenticatedHeadlessRunner,
+  QA,
+  assertExactUndispatchedCreateResume,
+} from "./headless";
 import { canonicalReadback } from "./readback";
 const execute = promisify(execFile);
 const canonical = (v: unknown): string =>
@@ -51,9 +62,36 @@ async function main() {
     )
       throw Error("C_REAL_PROVISION_RECEIPT_REQUIRED");
   }
-  const dir = dirname(resolve(gate.databasePath));
-  if (existsSync(gate.databasePath))
-    throw Error("C_QA_STATE_ALREADY_EXISTS_STOP_NO_RETRY");
+  const databaseDirectory = dirname(resolve(gate.databasePath));
+  const dir = gate.resume
+    ? resolve(gate.resume.evidenceDirectory ?? "")
+    : databaseDirectory;
+  if (gate.resume) {
+    if (
+      !dir.startsWith("/private/tmp/otr-c-qa-") ||
+      dir === databaseDirectory ||
+      existsSync(dir)
+    )
+      throw Error("C_FRESH_RESUME_EVIDENCE_DIRECTORY_REQUIRED");
+    mkdirSync(dir, { mode: 0o700 });
+    const info = lstatSync(dir);
+    if (
+      info.isSymbolicLink() ||
+      info.uid !== process.getuid?.() ||
+      (info.mode & 0o777) !== 0o700 ||
+      realpathSync(dir) !== dir
+    )
+      throw Error("C_RESUME_EVIDENCE_CUSTODY_INVALID");
+  }
+  if (existsSync(gate.databasePath)) {
+    if (
+      gate.resume?.kind !== "EXACT_UNDISPATCHED_CREATE_ONLY" ||
+      gate.resume.previousReadCharges !== 3 ||
+      gate.resume.previousMutationCharges !== 0
+    )
+      throw Error("C_QA_STATE_ALREADY_EXISTS_STOP_NO_RETRY");
+    assertExactUndispatchedCreateResume(gate.databasePath, gate.actorIds.A);
+  } else if (gate.resume) throw Error("C_EXPECTED_QA_RESUME_STATE_MISSING");
   const runner = await createAuthenticatedHeadlessRunner({
     window: {
       startsAt: gate.startsAt,
@@ -62,6 +100,7 @@ async function main() {
       mode: "DEV",
     },
     databasePath: gate.databasePath,
+    previousReadCharges: gate.resume?.previousReadCharges,
     publishableKey: credentials.publishableKey,
     authOrigin: "https://tuqigdxrvrerfewsxqgm.supabase.co",
     backendOrigin: "https://api-dev.xoery.art",
@@ -221,9 +260,23 @@ async function main() {
     )
       throw Error("C_EDIT_CLIENT_RECOVERY_MISMATCH");
     summary.edit = { accepted: true, serverVerified: true, queue: runner.queueState() };
-    const zero = await read();
+    // Resume conserves the cumulative read budget using this run's actual owning
+    // readback. Only metadata replay/denial checks occur between it and Preview.
+    const zero = gate.resume ? edited : await read();
     if (zero.expenses || zero.payments || zero.personalPayments || zero.settlements)
       throw Error("C_UNEXPECTED_FX_DEMAND");
+    summary.zeroFinancialQualification = {
+      source: gate.resume
+        ? "ACTUAL_EDITED_CANONICAL_READBACK_REUSED_NO_INTERVENING_FINANCIAL_WRITES"
+        : "ACTUAL_PREVIEW_CANONICAL_READBACK",
+      actorAccountId: gate.actorIds.A,
+      tripId: QA.tripId,
+      reusedReadback: Boolean(gate.resume),
+      expenses: zero.expenses,
+      payments: zero.payments,
+      personalPayments: zero.personalPayments,
+      settlements: zero.settlements,
+    };
     await runner.previewCurrency();
     const firstCommit = await runner.commitCurrency();
     const replayCommit = await runner.commitCurrency();
@@ -245,6 +298,7 @@ async function main() {
     summary.counts = runner.budget.counts;
     summary.status = "REAL_DEV_FOUR_PATH_RECEIPTS_READY_FOR_REVIEW";
   } finally {
+    summary.counts = runner.budget.counts;
     await runner.close();
     if (armed) {
       try {

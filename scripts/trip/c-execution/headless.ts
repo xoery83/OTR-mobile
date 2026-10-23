@@ -85,7 +85,15 @@ export class CRequestBudget {
   constructor(
     window: RunnerWindow,
     readonly now = () => Date.now(),
+    previousReadCharges = 0,
   ) {
+    if (
+      !Number.isInteger(previousReadCharges) ||
+      previousReadCharges < 0 ||
+      previousReadCharges > 16
+    )
+      throw Error("C_INVALID_PRIOR_READ_CHARGES");
+    this.#used.reads = previousReadCharges;
     this.#window = Object.freeze({
       ...window,
       actorIds: Object.freeze({ ...window.actorIds }),
@@ -135,6 +143,45 @@ export class CRequestBudget {
       throw Error("C_BUDGET_EXHAUSTED");
     this.#used[kind]++;
     this.#used.mutations++;
+  }
+}
+export function assertExactUndispatchedCreateResume(path: string, accountId: string) {
+  const sql = new DatabaseSync(path, { readOnly: true });
+  try {
+    const operations = sql.prepare("SELECT * FROM sync_operations").all();
+    const trips = sql.prepare("SELECT * FROM local_trip_containers").all();
+    const operation = operations[0],
+      trip = trips[0];
+    const { operationId: _operationId, ...request } = payloads.create.body;
+    if (
+      operations.length !== 1 ||
+      trips.length !== 1 ||
+      !operation ||
+      !trip ||
+      operation.id !== QA.createOperationId ||
+      operation.operation_type !== "CREATE_TRIP" ||
+      operation.entity_type !== "TRIP" ||
+      operation.entity_id !== QA.tripId ||
+      operation.idempotency_key !== QA.createOperationId ||
+      operation.base_version !== null ||
+      operation.owner_user_id !== accountId ||
+      operation.trip_id !== QA.tripId ||
+      !["PENDING", "DEPENDENCY_BLOCKED"].includes(String(operation.status)) ||
+      operation.attempt_count !== 0 ||
+      !same(JSON.parse(String(operation.payload_json)), request) ||
+      trip.account_id !== accountId ||
+      trip.id !== QA.tripId ||
+      trip.create_operation_id !== QA.createOperationId ||
+      trip.accepted_at !== null ||
+      trip.owner_person_id !== null ||
+      trip.name !== request.name ||
+      trip.destination !== request.destination ||
+      trip.start_date !== request.startDate ||
+      trip.end_date !== request.endDate
+    )
+      throw Error("C_QA_RESUME_SCOPE_OR_DISPATCH_DRIFT");
+  } finally {
+    sql.close();
   }
 }
 export async function openQaDatabase(path: string) {
@@ -193,10 +240,11 @@ export async function createAuthenticatedHeadlessRunner(input: {
   publishableKey: string;
   authOrigin: string;
   backendOrigin: string;
+  previousReadCharges?: number;
   fetchImplementation?: typeof fetch;
   now?: () => number;
 }) {
-  const budget = new CRequestBudget(input.window, input.now),
+  const budget = new CRequestBudget(input.window, input.now, input.previousReadCharges),
     now = input.now ?? (() => Date.now());
   const window = budget.window;
   const databasePath = resolve(input.databasePath);
