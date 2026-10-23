@@ -184,7 +184,7 @@ export function TripPreparationWidget({
           </View>
         </>
       )}
-      {ready ? (
+      {ready || setup ? (
         <TripSetupRows
           setup={setup}
           metadata={metadata}
