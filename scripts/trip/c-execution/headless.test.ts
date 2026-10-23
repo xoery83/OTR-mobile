@@ -5,6 +5,7 @@ import { createServer } from "node:http";
 import {
   CRequestBudget,
   assertExactUndispatchedCreateResume,
+  assertAcceptedQaCurrencyResume,
   createAuthenticatedHeadlessRunner,
   openQaDatabase,
 } from "./headless";
@@ -169,7 +170,7 @@ test("actual loopback password login + server getUser + ordinary selfprofile + a
   }
 });
 
-test("real HTTP + existing SQLite/targeted workers: offline create/edit, receipt-first recovery, scoped denials, currency owning client recovery", async () => {
+async function runProtocolFixture(currencyOnlyCase: boolean) {
   const { QA } = await import("./headless");
   const { default: p } = await import("./proposed-payloads.json");
   const owner = "10000000-0000-4000-8000-000000000003",
@@ -340,7 +341,7 @@ test("real HTTP + existing SQLite/targeted workers: offline create/edit, receipt
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const port = (server.address() as { port: number }).port,
     dir = mkdtempSync("/private/tmp/otr-c-qa-flow-");
-  const runner = await createAuthenticatedHeadlessRunner({
+  let runner = await createAuthenticatedHeadlessRunner({
     window: window(),
     databasePath: dir + "/qa-state.sqlite",
     publishableKey: "isolated",
@@ -401,6 +402,60 @@ test("real HTTP + existing SQLite/targeted workers: offline create/edit, receipt
     runner.setOnline(true);
     await runner.dispatchEdit();
     assert.ok(runner.queueState().every((r) => r.status === "COMPLETED"));
+    if (currencyOnlyCase) {
+      assert.doesNotThrow(() =>
+        assertAcceptedQaCurrencyResume(dir + "/qa-state.sqlite", A),
+      );
+      assert.throws(() => assertAcceptedQaCurrencyResume(dir + "/qa-state.sqlite", B));
+      await runner.close();
+      runner = await createAuthenticatedHeadlessRunner({
+        window: window(),
+        databasePath: dir + "/qa-state.sqlite",
+        publishableKey: "isolated",
+        authOrigin: `http://127.0.0.1:${port}`,
+        backendOrigin: `http://127.0.0.1:${port}`,
+        previousReadCharges: 15,
+        currencyOnlyContinuation: "APPROVED_CURRENCY_ONLY_20",
+      });
+      const before = seen.length;
+      await runner.login("A", "fixture", {
+        id: A,
+        email: "otr-meta-qa-20261022-01-a@example.invalid",
+      });
+      await runner.select("A");
+      await assert.rejects(
+        runner.login("B", "fixture", {
+          id: B,
+          email: "otr-meta-qa-20261022-01-b@example.invalid",
+        }),
+        /C_CURRENCY_ONLY_ACTOR_A/,
+      );
+      // Management readback is independently tested elsewhere; count its two
+      // actual CLI dispatch boundaries explicitly in this loopback-only fixture.
+      runner.budget.reserve("reads");
+      await runner.previewCurrency();
+      await runner.commitCurrency();
+      const replay = await runner.commitCurrency();
+      assert.equal(replay.idempotentReplay, true);
+      runner.budget.reserve("reads");
+      await runner.reopen();
+      assert.equal(runner.localState().ledger?.settlement_currency, "USD");
+      assert.equal(runner.budget.counts.reads, 20);
+      assert.equal(runner.budget.counts.mutations, 5);
+      assert.throws(() => runner.budget.reserve("reads"));
+      const atCap = seen.length;
+      await assert.rejects(
+        runner.originalCreateReceipt(),
+        (error: { kind?: string }) => error.kind === "network",
+      );
+      assert.equal(seen.length, atCap);
+      assert.ok(
+        seen
+          .slice(before)
+          .every((row) => !row.includes("metadata") && !row.includes("trip-create")),
+      );
+      return;
+    }
     await runner.replayEdit();
     await assert.rejects(
       runner.collisionEdit(),
@@ -441,7 +496,11 @@ test("real HTTP + existing SQLite/targeted workers: offline create/edit, receipt
     await new Promise<void>((r) => server.close(() => r()));
     rmSync(dir, { recursive: true });
   }
-});
+}
+test("real HTTP + existing SQLite/targeted workers and owning Currency commands", () =>
+  runProtocolFixture(false));
+test("Currency-only resumed protocol carries15/2, denies old routes and reaches exact cap20", () =>
+  runProtocolFixture(true));
 
 test("canonical readback refuses missing counts instead of assuming zero", async () => {
   const { canonicalReadbackSchema } = await import("./readback");
@@ -513,4 +572,29 @@ test("prior read charges carry across a resumed finite window without refund", (
   assert.throws(() => b.reserve("reads"));
   for (const bad of [-1, 17, 1.5])
     assert.throws(() => new CRequestBudget(window(), () => Date.now(), bad));
+});
+
+test("explicit currency continuation alone permits cap20 and preserves prior mutations", () => {
+  const b = new CRequestBudget(
+    window(),
+    () => Date.now(),
+    15,
+    "APPROVED_CURRENCY_ONLY_20",
+  );
+  assert.equal(b.counts.mutations, 2);
+  assert.equal(b.counts.create, 1);
+  assert.equal(b.counts.metadata, 1);
+  for (let i = 0; i < 5; i++) b.reserve("reads");
+  assert.equal(b.counts.reads, 20);
+  assert.throws(() => b.reserve("reads"));
+  assert.throws(() => b.reserveMutation("create"));
+  assert.throws(() => b.reserveMutation("metadata"));
+  b.reserveMutation("preview");
+  b.reserveMutation("commit");
+  b.reserveMutation("commit");
+  assert.equal(b.counts.mutations, 5);
+  assert.throws(() => b.reserveMutation("commit"));
+  assert.throws(
+    () => new CRequestBudget(window(), () => Date.now(), 14, "APPROVED_CURRENCY_ONLY_20"),
+  );
 });

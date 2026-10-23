@@ -33,6 +33,9 @@ def load_plan(path):
     # Entire execution manifest is pinned, including helpers and recovery target.
     manifest=dict(p); claimed=manifest.pop('manifestSHA256')
     assert claimed==digest(manifest)
+    if p.get('currencyOnly'):
+        assert p.get('currencyBudgetAuthorizationSHA256')=='4abb4c84da8ea1acb5a5bc734ef8e8b291184775f342c9fc0428a2504daf6210'
+        assert p['resume']['kind']=='CURRENCY_ONLY_AFTER_VERIFIED_CREATE_EDIT'and p['resume']['previousReadCharges']==15 and p['resume']['previousMutationCharges']==2
     return p
 class Operator:
     def __init__(self,p,run_dir,executor=None):
@@ -107,8 +110,14 @@ COMMIT;"""
     def close(self):
         status='RECONCILE_REQUIRED'; stages={'sqlClosed':False,'serviceRestored':False}
         try:
-            self.sql(self.close_sql()); stages['sqlClosed']=True
-            restored=self.service('restore'); assert restored.get('verified') is True; stages['serviceRestored']=True
+            if self.p.get('currencyOnly'):
+                # This phase opens no SQL role or runtime mount; verify closed state,
+                # do not restart B or rewrite even the already-closed activation rows.
+                restored=self.service('reconcile'); assert restored.get('verified') is True
+                stages['sqlClosed']=True;stages['serviceRestored']=True
+            else:
+                self.sql(self.close_sql()); stages['sqlClosed']=True
+                restored=self.service('restore'); assert restored.get('verified') is True; stages['serviceRestored']=True
             # Actual postchecks are part of helper/SQL, no inference from command exit alone.
             check=self.sql("BEGIN READ ONLY; SELECT NOT EXISTS(SELECT 1 FROM public.trip_create_activation_gate WHERE enabled) AND NOT EXISTS(SELECT 1 FROM public.trip_metadata_activation_gate WHERE enabled) AND NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN ('otr_trip_create_gateway','otr_trip_metadata_gateway') AND rolcanlogin) AS closed; ROLLBACK;")
             rows=check if isinstance(check,list) else check.get('rows') if isinstance(check,dict) else None
@@ -120,6 +129,7 @@ COMMIT;"""
         path=self.dir/f"close-{time.time_ns()}.json"; private_write(path,receipt)
         return receipt
     def activate(self,kind):
+        if self.p.get('currencyOnly'):raise RuntimeError('C_CURRENCY_ONLY_NO_SQL_ACTIVATION')
         self.open()
         armed=json.loads((self.dir/'watchdog-armed.json').read_text())
         heartbeat=json.loads((self.dir/'watchdog-heartbeat.json').read_text())

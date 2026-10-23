@@ -20,6 +20,7 @@ import {
   createAuthenticatedHeadlessRunner,
   QA,
   assertExactUndispatchedCreateResume,
+  assertAcceptedQaCurrencyResume,
 } from "./headless";
 import { canonicalReadback } from "./readback";
 const execute = promisify(execFile);
@@ -53,6 +54,47 @@ async function main() {
     throw Error("C_EXACT_MANIFEST_REQUIRED");
   const credentials = JSON.parse(readFileSync(0, "utf8"));
   const receiptOnlyResume = gate.resume?.kind === "EXACT_RECEIPT_ONLY_FAILURE_CREATE";
+  const currencyOnly =
+    gate.currencyOnly === true &&
+    gate.resume?.kind === "CURRENCY_ONLY_AFTER_VERIFIED_CREATE_EDIT";
+  if (gate.currencyOnly && !currencyOnly) throw Error("C_CURRENCY_SCOPE_REQUIRED");
+  if (currencyOnly) {
+    const authority = readFileSync(
+      "/private/tmp/otr-local-first-core-20261019/docs/ops/c-currency-resume-20261023/OWNER_AUTHORIZATION.json",
+    );
+    const authoritySHA =
+      "4abb4c84da8ea1acb5a5bc734ef8e8b291184775f342c9fc0428a2504daf6210";
+    const previousBytes = readFileSync(
+      "/private/tmp/otr-c-qa-20261023-final/execution-summary.json",
+    );
+    const previous = JSON.parse(previousBytes.toString());
+    const closure = JSON.parse(
+      readFileSync(
+        "/private/tmp/otr-c-final-execution-20261023/ACTUAL_SEMANTIC_RECONCILE.json",
+        "utf8",
+      ),
+    );
+    if (
+      createHash("sha256").update(authority).digest("hex") !== authoritySHA ||
+      gate.currencyBudgetAuthorizationSHA256 !== authoritySHA ||
+      createHash("sha256").update(previousBytes).digest("hex") !==
+        gate.resume.previousSummarySHA256 ||
+      previous.counts.reads !== 15 ||
+      previous.counts.mutations !== 2 ||
+      !previous.create?.accepted ||
+      !previous.edit?.accepted ||
+      previous.edit.receipt?.resultMetadataRevision !== 1 ||
+      previous.edit.receipt?.actorAccountId !== gate.actorIds.A ||
+      previous.edit.receipt?.tripId !== QA.tripId ||
+      previous.edit.receipt?.operationId !== QA.metadataOperationId ||
+      previous.currency?.attempted !== false ||
+      closure.result?.verified !== true ||
+      closure.result?.runtimeSecretsRemoved !== true ||
+      gate.resume.previousReadCharges !== 15 ||
+      gate.resume.previousMutationCharges !== 2
+    )
+      throw Error("C_AUTHORIZED_CAP20_AND_ACTUAL_PRIOR_RECEIPTS_REQUIRED");
+  }
   if (receiptOnlyResume) {
     const previousBytes = readFileSync(
       "/private/tmp/otr-c-qa-20261023-recovery/execution-summary.json",
@@ -103,17 +145,20 @@ async function main() {
       throw Error("C_RESUME_EVIDENCE_CUSTODY_INVALID");
   }
   if (existsSync(gate.databasePath)) {
-    if (
-      (!receiptOnlyResume && gate.resume?.kind !== "EXACT_UNDISPATCHED_CREATE_ONLY") ||
-      gate.resume.previousReadCharges !== (receiptOnlyResume ? 8 : 3) ||
-      gate.resume.previousMutationCharges !== 0
-    )
-      throw Error("C_QA_STATE_ALREADY_EXISTS_STOP_NO_RETRY");
-    assertExactUndispatchedCreateResume(
-      gate.databasePath,
-      gate.actorIds.A,
-      receiptOnlyResume,
-    );
+    if (currencyOnly) assertAcceptedQaCurrencyResume(gate.databasePath, gate.actorIds.A);
+    else {
+      if (
+        (!receiptOnlyResume && gate.resume?.kind !== "EXACT_UNDISPATCHED_CREATE_ONLY") ||
+        gate.resume.previousReadCharges !== (receiptOnlyResume ? 8 : 3) ||
+        gate.resume.previousMutationCharges !== 0
+      )
+        throw Error("C_QA_STATE_ALREADY_EXISTS_STOP_NO_RETRY");
+      assertExactUndispatchedCreateResume(
+        gate.databasePath,
+        gate.actorIds.A,
+        receiptOnlyResume,
+      );
+    }
   } else if (gate.resume) throw Error("C_EXPECTED_QA_RESUME_STATE_MISSING");
   const runner = await createAuthenticatedHeadlessRunner({
     window: {
@@ -124,6 +169,7 @@ async function main() {
     },
     databasePath: gate.databasePath,
     previousReadCharges: gate.resume?.previousReadCharges,
+    currencyOnlyContinuation: currencyOnly ? "APPROVED_CURRENCY_ONLY_20" : undefined,
     publishableKey: credentials.publishableKey,
     authOrigin: "https://tuqigdxrvrerfewsxqgm.supabase.co",
     backendOrigin: "https://api-dev.xoery.art",
@@ -180,13 +226,80 @@ async function main() {
   };
 
   try {
-    for (const label of (receiptOnlyResume ? ["A"] : ["A", "B"]) as ("A" | "B")[])
+    if (currencyOnly) {
+      await command("arm");
+      armed = true;
+      const deadline = Date.now() + 3000;
+      while (!existsSync(dir + "/watchdog-armed.json") && Date.now() < deadline)
+        await new Promise((r) => setTimeout(r, 20));
+      if (!existsSync(dir + "/watchdog-armed.json")) throw Error("C_WATCHDOG_NOT_ARMED");
+    }
+    for (const label of (receiptOnlyResume || currencyOnly ? ["A"] : ["A", "B"]) as (
+      "A" | "B"
+    )[])
       await runner.login(
         label,
         credentials[label].password,
         credentials[label].provisionReceipt,
       );
     await runner.select("A");
+    if (currencyOnly) {
+      const zero = await read();
+      if (
+        !zero.trip || zero.trip.created_by !== gate.actorIds.A ||
+        zero.trip.metadata_revision !== 1 ||
+        zero.trip.name !== payloads.editProposal.body.after.name ||
+        zero.ledger?.settlement_currency !== "NZD" ||
+        zero.owners.length !== 1 ||
+        zero.owners[0].status !== "linked" ||
+        zero.owners[0].role !== "owner" ||
+        zero.expenses ||
+        zero.payments ||
+        zero.personalPayments ||
+        zero.settlements
+      )
+        throw Error("C_CURRENCY_FRESH_ZERO_OWNING_QUALIFICATION_REQUIRED");
+      writeFileSync(
+        dir + "/canonical-currency-zero.json",
+        JSON.stringify({ windowId: gate.windowId, ...zero }),
+        { flag: "wx", mode: 0o600 },
+      );
+      const preview = await runner.previewCurrency();
+      summary.preview = preview;
+      const firstCommit = await runner.commitCurrency();
+      summary.firstCommit = firstCommit;
+      const replayCommit = await runner.commitCurrency();
+      summary.replayCommit = replayCommit;
+      if (
+        firstCommit.settlementCurrency !== "USD" ||
+        replayCommit.changeId !== firstCommit.changeId ||
+        replayCommit.settingsRevision !== firstCommit.settingsRevision ||
+        !replayCommit.idempotentReplay
+      )
+        throw Error("C_CURRENCY_RECEIPT_MISMATCH");
+      const verified = await read();
+      if (verified.ledger?.settlement_currency !== "USD")
+        throw Error("C_CURRENCY_READBACK_MISMATCH");
+      writeFileSync(
+        dir + "/canonical-currency-usd.json",
+        JSON.stringify({ windowId: gate.windowId, ...verified }),
+        { flag: "wx", mode: 0o600 },
+      );
+      await runner.reopen();
+      const local = runner.localState();
+      if (local.ledger?.settlement_currency !== "USD")
+        throw Error("C_LEDGER_CLIENT_RECOVERY_MISMATCH");
+      summary.currency = {
+        accepted: true,
+        serverVerified: true,
+        preview,
+        firstCommit,
+        replayCommit,
+        local,
+      };
+      summary.status = "REAL_DEV_CURRENCY_ACCEPTED_VERIFIED_CLIENT_RECOVERED";
+      return;
+    }
     const empty = receiptOnlyResume ? null : await read();
     if (
       empty &&

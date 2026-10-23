@@ -27,4 +27,11 @@ class Tests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d:
    op=control.Operator(plan(),d)
    with self.assertRaises(AssertionError):op.activation_sql('create','synthetic')
+ def test_currency_only_cannot_activate_and_closes_without_sql_mutation_or_service_restart(self):
+  with tempfile.TemporaryDirectory()as d:
+   p=plan();p['currencyOnly']=True;queries=[];actions=[]
+   def read(text):queries.append(text);return {'rows':[{'closed':True}]}
+   op=control.Operator(p,d,read);op.service=lambda action:(actions.append(action)or{'verified':True})
+   with self.assertRaisesRegex(RuntimeError,'C_CURRENCY_ONLY_NO_SQL_ACTIVATION'):op.activate('create')
+   self.assertEqual(op.close()['status'],'CLOSED_VERIFIED');self.assertEqual(actions,['reconcile']);self.assertTrue(all(text.startswith('BEGIN READ ONLY;')for text in queries))
 if __name__=='__main__':unittest.main()

@@ -13,4 +13,10 @@ class Scope(unittest.TestCase):
   with self.assertRaises(ValueError):reserve(counts,'B',True)
   reserve(counts,'A',True);self.assertEqual(counts,{'A':2,'B':1})
   with self.assertRaises(ValueError):reserve(counts,'A',True)
+ def test_currency_A_third_reservation_requires_distinct_safe_permission_and_cannot_repeat(self):
+  counts={'A':2,'B':1}
+  with self.assertRaises(ValueError):reserve(counts,'A',True)
+  with self.assertRaises(ValueError):reserve(counts,'B',False,True)
+  reserve(counts,'A',False,True);self.assertEqual(counts,{'A':3,'B':1})
+  with self.assertRaises(ValueError):reserve(counts,'A',False,True)
 if __name__=='__main__':unittest.main()

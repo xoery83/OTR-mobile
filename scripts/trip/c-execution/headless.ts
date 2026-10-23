@@ -76,6 +76,7 @@ export class CRequestBudget {
     commit: 0,
   };
   readonly #window: RunnerWindow;
+  readonly #currencyOnly: boolean;
   get window() {
     return this.#window;
   }
@@ -86,7 +87,9 @@ export class CRequestBudget {
     window: RunnerWindow,
     readonly now = () => Date.now(),
     previousReadCharges = 0,
+    continuation?: "APPROVED_CURRENCY_ONLY_20",
   ) {
+    this.#currencyOnly = continuation === "APPROVED_CURRENCY_ONLY_20";
     if (
       !Number.isInteger(previousReadCharges) ||
       previousReadCharges < 0 ||
@@ -94,6 +97,12 @@ export class CRequestBudget {
     )
       throw Error("C_INVALID_PRIOR_READ_CHARGES");
     this.#used.reads = previousReadCharges;
+    if (this.#currencyOnly) {
+      if (previousReadCharges !== 15) throw Error("C_CURRENCY_PRIOR_CHARGES_REQUIRED");
+      this.#used.mutations = 2;
+      this.#used.create = 1;
+      this.#used.metadata = 1;
+    }
     this.#window = Object.freeze({
       ...window,
       actorIds: Object.freeze({ ...window.actorIds }),
@@ -126,7 +135,7 @@ export class CRequestBudget {
       signIns: 2,
       identityReads: 2,
       profileInitializations: 2,
-      reads: 16,
+      reads: this.#currencyOnly ? 20 : 16,
       mutations: 8,
       create: 1,
       metadata: 4,
@@ -138,6 +147,8 @@ export class CRequestBudget {
   }
   reserveMutation(kind: "create" | "metadata" | "preview" | "commit") {
     this.assertOpen();
+    if (this.#currencyOnly && (kind === "create" || kind === "metadata"))
+      throw Error("C_CURRENCY_ONLY_NO_CREATE_EDIT");
     const limits = { create: 1, metadata: 4, preview: 1, commit: 2 };
     if (this.#used[kind] >= limits[kind] || this.#used.mutations >= 8)
       throw Error("C_BUDGET_EXHAUSTED");
@@ -189,6 +200,58 @@ export function assertExactUndispatchedCreateResume(
       trip.end_date !== request.endDate
     )
       throw Error("C_QA_RESUME_SCOPE_OR_DISPATCH_DRIFT");
+  } finally {
+    sql.close();
+  }
+}
+export function assertAcceptedQaCurrencyResume(path: string, accountId: string) {
+  path = assertPrivateQaDatabasePath(path, false);
+  const sql = new DatabaseSync(path, { readOnly: true });
+  try {
+    const operations = sql.prepare("SELECT * FROM sync_operations").all();
+    const trip = sql
+      .prepare("SELECT * FROM local_trip_containers WHERE id=? AND account_id=?")
+      .get(QA.tripId, accountId);
+    const ledger = sql
+      .prepare("SELECT * FROM ledger_journeys WHERE journey_id=?")
+      .get(QA.tripId);
+    if (
+      operations.length !== 2 ||
+      ![QA.createOperationId, QA.metadataOperationId].every((id) =>
+        operations.some(
+          (row) =>
+            row.id === id &&
+            row.status === "COMPLETED" &&
+            row.owner_user_id === accountId &&
+            row.trip_id === QA.tripId,
+        ),
+      ) ||
+      !trip ||
+      !trip.accepted_at ||
+      !trip.owner_person_id ||
+      trip.name !== payloads.editProposal.body.after.name ||
+      trip.destination !== payloads.editProposal.body.after.destination ||
+      trip.start_date !== payloads.editProposal.body.after.startDate ||
+      trip.end_date !== payloads.editProposal.body.after.endDate ||
+      !ledger ||
+      ledger.settlement_currency !== "NZD"
+    )
+      throw Error("C_ACCEPTED_CREATE_EDIT_NZD_REQUIRED");
+    const { operationId: _operationId, ...createRequest } = payloads.create.body;
+    for (const row of operations) {
+      const create = row.id === QA.createOperationId;
+      if (
+        row.entity_type !== "TRIP" ||
+        row.entity_id !== QA.tripId ||
+        row.idempotency_key !== row.id ||
+        row.operation_type !== (create ? "CREATE_TRIP" : "UPDATE_TRIP_METADATA") ||
+        !same(
+          JSON.parse(String(row.payload_json)),
+          create ? createRequest : payloads.editProposal.body,
+        )
+      )
+        throw Error("C_CURRENCY_ORIGINAL_REQUEST_DRIFT");
+    }
   } finally {
     sql.close();
   }
@@ -255,10 +318,17 @@ export async function createAuthenticatedHeadlessRunner(input: {
   authOrigin: string;
   backendOrigin: string;
   previousReadCharges?: number;
+  currencyOnlyContinuation?: "APPROVED_CURRENCY_ONLY_20";
   fetchImplementation?: typeof fetch;
   now?: () => number;
 }) {
-  const budget = new CRequestBudget(input.window, input.now, input.previousReadCharges),
+  const currencyOnly = input.currencyOnlyContinuation === "APPROVED_CURRENCY_ONLY_20";
+  const budget = new CRequestBudget(
+      input.window,
+      input.now,
+      input.previousReadCharges,
+      input.currencyOnlyContinuation,
+    ),
     now = input.now ?? (() => Date.now());
   const window = budget.window;
   const databasePath = resolve(input.databasePath);
@@ -305,6 +375,7 @@ export async function createAuthenticatedHeadlessRunner(input: {
       )
         budget.reserve("reads");
       else if (req.method === "POST" && !u.search) {
+        if (currencyOnly) throw Error("C_EXISTING_PROFILE_REQUIRED");
         const body = await req.clone().json();
         if (
           !Object.values(window.actorIds).includes(body.id) ||
@@ -391,6 +462,15 @@ export async function createAuthenticatedHeadlessRunner(input: {
       metaReceipt = `/v2/trip-metadata-operations/${QA.metadataOperationId}`,
       meta = `/v2/trips/${QA.tripId}/metadata`,
       currency = `/v2/trips/${QA.tripId}/ledger/journey-currency/`;
+    if (
+      currencyOnly &&
+      ![
+        currency + "preview",
+        currency + "commit",
+        `/v2/trips/${QA.tripId}/ledger/bootstrap`,
+      ].includes(u.pathname)
+    )
+      throw Error("C_CURRENCY_ONLY_ROUTE_REQUIRED");
     if (
       req.method === "GET" &&
       [
@@ -518,6 +598,7 @@ export async function createAuthenticatedHeadlessRunner(input: {
       adminReceipt: { id: string; email: string },
     ) {
       budget.assertOpen();
+      if (currencyOnly && label !== "A") throw Error("C_CURRENCY_ONLY_ACTOR_A");
       if (
         verified.has(label) ||
         adminReceipt.id !== window.actorIds[label] ||
