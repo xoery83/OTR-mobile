@@ -146,6 +146,7 @@ export class CRequestBudget {
   }
 }
 export function assertExactUndispatchedCreateResume(path: string, accountId: string) {
+  path = assertPrivateQaDatabasePath(path, false);
   const sql = new DatabaseSync(path, { readOnly: true });
   try {
     const operations = sql.prepare("SELECT * FROM sync_operations").all();
@@ -184,13 +185,13 @@ export function assertExactUndispatchedCreateResume(path: string, accountId: str
     sql.close();
   }
 }
-export async function openQaDatabase(path: string) {
+function assertPrivateQaDatabasePath(path: string, allowCreate: boolean) {
   // Only an operator-owned, dedicated private QA directory. Never an App DB or symlink.
   path = resolve(path);
   const dir = dirname(path);
   if (basename(path) !== "qa-state.sqlite" || !basename(dir).startsWith("otr-c-qa-"))
     throw Error("C_PRIVATE_QA_DATABASE_REQUIRED");
-  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  if (allowCreate) mkdirSync(dir, { recursive: true, mode: 0o700 });
   const stat = lstatSync(dir);
   if (
     stat.isSymbolicLink() ||
@@ -200,11 +201,16 @@ export async function openQaDatabase(path: string) {
   )
     throw Error("C_PRIVATE_QA_DATABASE_REQUIRED");
   try {
-    if (!lstatSync(path).isFile() || lstatSync(path).isSymbolicLink())
+    const file = lstatSync(path);
+    if (!file.isFile() || file.isSymbolicLink() || file.uid !== process.getuid?.())
       throw Error("C_DB_INVALID");
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+    if (!allowCreate || (e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
   }
+  return path;
+}
+export async function openQaDatabase(path: string) {
+  path = assertPrivateQaDatabasePath(path, true);
   const sql = new DatabaseSync(path);
   const database = serializeDatabaseTransactions({
     async execAsync(text: string) {

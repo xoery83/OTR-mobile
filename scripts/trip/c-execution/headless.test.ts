@@ -34,6 +34,10 @@ test("budget pins window/actors, never refunds throws, immutable snapshots", () 
 });
 test("dedicated SQLite rejects App path and restores real migrations on reopen", async () => {
   await assert.rejects(openQaDatabase("/tmp/user-app.sqlite"));
+  assert.throws(
+    () => assertExactUndispatchedCreateResume("/tmp/user-app.sqlite", A),
+    /C_PRIVATE_QA_DATABASE_REQUIRED/,
+  );
   const dir = mkdtempSync("/private/tmp/otr-c-qa-test-");
   try {
     const db = await openQaDatabase(dir + "/qa-state.sqlite");
