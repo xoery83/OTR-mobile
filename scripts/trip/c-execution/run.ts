@@ -53,6 +53,12 @@ async function main() {
   )
     throw Error("C_EXACT_MANIFEST_REQUIRED");
   const credentials = JSON.parse(readFileSync(0, "utf8"));
+  if (gate.resume?.kind === "CURRENCY_RECEIPT_RECOVERY") {
+    await (
+      await import("./currencyRecovery")
+    ).executeCurrencyRecovery(path, gate, credentials);
+    return;
+  }
   const receiptOnlyResume = gate.resume?.kind === "EXACT_RECEIPT_ONLY_FAILURE_CREATE";
   const currencyOnly =
     gate.currencyOnly === true &&
@@ -246,7 +252,8 @@ async function main() {
     if (currencyOnly) {
       const zero = await read();
       if (
-        !zero.trip || zero.trip.created_by !== gate.actorIds.A ||
+        !zero.trip ||
+        zero.trip.created_by !== gate.actorIds.A ||
         zero.trip.metadata_revision !== 1 ||
         zero.trip.name !== payloads.editProposal.body.after.name ||
         zero.ledger?.settlement_currency !== "NZD" ||

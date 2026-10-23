@@ -35,7 +35,7 @@ def load_plan(path):
     assert claimed==digest(manifest)
     if p.get('currencyOnly'):
         assert p.get('currencyBudgetAuthorizationSHA256')=='4abb4c84da8ea1acb5a5bc734ef8e8b291184775f342c9fc0428a2504daf6210'
-        assert p['resume']['kind']=='CURRENCY_ONLY_AFTER_VERIFIED_CREATE_EDIT'and p['resume']['previousReadCharges']==15 and p['resume']['previousMutationCharges']==2
+        assert (p['resume']['kind'],p['resume']['previousReadCharges'],p['resume']['previousMutationCharges']) in [('CURRENCY_ONLY_AFTER_VERIFIED_CREATE_EDIT',15,2),('CURRENCY_RECEIPT_RECOVERY',18,4)]
     return p
 class Operator:
     def __init__(self,p,run_dir,executor=None):

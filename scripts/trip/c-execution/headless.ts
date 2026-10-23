@@ -87,21 +87,30 @@ export class CRequestBudget {
     window: RunnerWindow,
     readonly now = () => Date.now(),
     previousReadCharges = 0,
-    continuation?: "APPROVED_CURRENCY_ONLY_20",
+    continuation?: "APPROVED_CURRENCY_ONLY_20" | "APPROVED_CURRENCY_RECEIPT_RECOVERY_20",
   ) {
-    this.#currencyOnly = continuation === "APPROVED_CURRENCY_ONLY_20";
+    this.#currencyOnly = continuation !== undefined;
     if (
       !Number.isInteger(previousReadCharges) ||
       previousReadCharges < 0 ||
-      previousReadCharges > 16
+      previousReadCharges > (this.#currencyOnly ? 20 : 16)
     )
       throw Error("C_INVALID_PRIOR_READ_CHARGES");
     this.#used.reads = previousReadCharges;
     if (this.#currencyOnly) {
-      if (previousReadCharges !== 15) throw Error("C_CURRENCY_PRIOR_CHARGES_REQUIRED");
+      if (
+        previousReadCharges !==
+        (continuation === "APPROVED_CURRENCY_RECEIPT_RECOVERY_20" ? 18 : 15)
+      )
+        throw Error("C_CURRENCY_PRIOR_CHARGES_REQUIRED");
       this.#used.mutations = 2;
       this.#used.create = 1;
       this.#used.metadata = 1;
+      if (continuation === "APPROVED_CURRENCY_RECEIPT_RECOVERY_20") {
+        this.#used.mutations = 4;
+        this.#used.preview = 1;
+        this.#used.commit = 1;
+      }
     }
     this.#window = Object.freeze({
       ...window,
@@ -318,17 +327,42 @@ export async function createAuthenticatedHeadlessRunner(input: {
   authOrigin: string;
   backendOrigin: string;
   previousReadCharges?: number;
-  currencyOnlyContinuation?: "APPROVED_CURRENCY_ONLY_20";
+  currencyOnlyContinuation?:
+    "APPROVED_CURRENCY_ONLY_20" | "APPROVED_CURRENCY_RECEIPT_RECOVERY_20";
+  recovery?: {
+    budget: CRequestBudget;
+    profile: { id: string; account_role: "free_user" };
+    preview: JourneyCurrencyPreview;
+  };
   fetchImplementation?: typeof fetch;
   now?: () => number;
 }) {
-  const currencyOnly = input.currencyOnlyContinuation === "APPROVED_CURRENCY_ONLY_20";
-  const budget = new CRequestBudget(
-      input.window,
-      input.now,
-      input.previousReadCharges,
-      input.currencyOnlyContinuation,
-    ),
+  const currencyOnly = input.currencyOnlyContinuation !== undefined;
+  const recovery = input.recovery
+    ? Object.freeze({
+        ...input.recovery,
+        profile: Object.freeze({ ...input.recovery.profile }),
+        preview: Object.freeze({ ...input.recovery.preview }),
+      })
+    : undefined;
+  if (
+    recovery &&
+    (input.currencyOnlyContinuation !== "APPROVED_CURRENCY_RECEIPT_RECOVERY_20" ||
+      recovery.profile.id !== input.window.actorIds.A ||
+      recovery.profile.account_role !== "free_user" ||
+      recovery.budget.counts.reads !== 19 ||
+      recovery.budget.counts.mutations !== 4 ||
+      JSON.stringify(recovery.budget.window) !== JSON.stringify(input.window))
+  )
+    throw Error("C_EXACT_RECOVERY_PROOF_REQUIRED");
+  const budget =
+      recovery?.budget ??
+      new CRequestBudget(
+        input.window,
+        input.now,
+        input.previousReadCharges,
+        input.currencyOnlyContinuation,
+      ),
     now = input.now ?? (() => Date.now());
   const window = budget.window;
   const databasePath = resolve(input.databasePath);
@@ -560,7 +594,7 @@ export async function createAuthenticatedHeadlessRunner(input: {
         (await sessions.readAdoptedLocalSession())?.identity?.displayName ?? id,
     );
   }
-  let preview: JourneyCurrencyPreview | undefined;
+  let preview: JourneyCurrencyPreview | undefined = recovery?.preview;
   const currency = async () => {
     const scope = await captureAccountRequestContext(QA.tripId, account);
     return createLedgerCurrencyCommands(
@@ -572,10 +606,9 @@ export async function createAuthenticatedHeadlessRunner(input: {
           scope,
         ).get(`/v2/trips/${QA.tripId}/ledger/bootstrap`, ledgerBootstrapResponseSchema);
         await assertAccountRequestContext(scope, account);
-        await createLedgerReadRepository(db.database, account).applyBootstrap(
-          response,
-          scope,
-        );
+        await createLedgerReadRepository(db.database, account, async (bytes) =>
+          createHash("sha256").update(bytes).digest("hex"),
+        ).applyBootstrap(response, scope);
       },
     );
   };
@@ -632,11 +665,13 @@ export async function createAuthenticatedHeadlessRunner(input: {
         throw Error("C_SESSION_WINDOW_INSUFFICIENT");
       budget.assertOpen();
       // Existing authenticated self-profile INSERT policy only; no admin upsert or invitation RPC.
-      const { data: profile, error: readError } = await auth
-        .from("profiles")
-        .select("id,account_role")
-        .eq("id", adminReceipt.id)
-        .maybeSingle();
+      const { data: profile, error: readError } = recovery
+        ? { data: recovery.profile, error: null }
+        : await auth
+            .from("profiles")
+            .select("id,account_role")
+            .eq("id", adminReceipt.id)
+            .maybeSingle();
       if (
         readError ||
         (profile &&

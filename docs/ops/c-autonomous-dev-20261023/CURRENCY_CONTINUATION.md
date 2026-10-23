@@ -13,3 +13,22 @@ Independent watchdog arms before normal A login. This phase opens no SQL role or
 Validation:12 Node tests PASS (real loopback SDK/SQLite, two protocol modes, cumulative20/5, no B/old-route wire, existing default16),28 Python tests PASS, TypeScript/scoped ESLint PASS. Full Node run preceded a semantically identical extraction of shared test fixture; final module/budget test load also passed. These are L2 fixtures, not actual Auth or Currency DEV success.
 
 Data Path Checklist: unchanged Cloud Ledger ownership; same QA SQLite/private operational receipts with transient secrets only; same Backend commands/bootstrap contract; idempotency/offline fences retained; L2 above with actual L3 still required, Native not run; remaining delta is exact reviewed bounded Auth/Currency execution and actual receipts/readback/client recovery/safe close.
+
+### Actual first Commit and bounded recovery
+
+Currency-only 3cb actual usage is now 18 reads / 4 mutations. Preview succeeded;
+original Commit and its bootstrap returned HTTP 200, but the client did not return
+an accepted receipt. The original evidence remains unchanged and closed verified.
+Node cannot load the default expo-crypto hash; the candidate supplies an optional
+same-bytes SHA256 dependency to certified bootstrap validation/application, while
+Native defaults and all certificate/account checks remain unchanged.
+
+The fixed receipt-recovery branch uses the held password, never another password
+update. One exact read (#19) must prove the original operation's immutable response,
+Actor/Trip/request hash, USD/revision2 and the actual own free_user profile. Only
+then normal password signin + server getUser bind that profile to Account adoption.
+It replays the identical original operation/body once; its existing owning bootstrap
+is read #20, validates the actual certificate and applies through the repository.
+Reopen must show USD. There is no new Preview, Create/Edit, profile fetch, extra
+readback, blind retry or read #21. Fresh finite watchdog and readonly close apply.
+This is a preparation change; actual read #19/replay are pending independent review.

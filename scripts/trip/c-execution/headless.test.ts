@@ -1,3 +1,8 @@
+import { createHash } from "node:crypto";
+import {
+  encodeSharedLedgerCursor,
+  serializeParticipationVector,
+} from "../../../src/domain/trip/participationSnapshot";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -333,7 +338,22 @@ async function runProtocolFixture(currencyOnlyCase: boolean) {
             canSettle: true,
           },
         },
-        cursor: null,
+        cursor: encodeSharedLedgerCursor(
+          1,
+          QA.tripId,
+          A,
+          createHash("sha256").update(serializeParticipationVector([])).digest("hex"),
+        ),
+        participationSnapshot: {
+          contractVersion: 1,
+          complete: true,
+          personCount: 0,
+          fingerprintVersion: 1,
+          fingerprint: createHash("sha256")
+            .update(serializeParticipationVector([]))
+            .digest("hex"),
+          observedAt: "2026-10-23T00:00:00.000000Z",
+        },
         serverTime: new Date().toISOString(),
       });
     fail(404, "UNEXPECTED_FIXTURE_ROUTE");
@@ -454,6 +474,65 @@ async function runProtocolFixture(currencyOnlyCase: boolean) {
           .slice(before)
           .every((row) => !row.includes("metadata") && !row.includes("trip-create")),
       );
+      // A fresh real normal Auth session consumes the actual independent-read
+      // profile proof; certified bootstrap still uses the existing repository.
+      await runner.close();
+      const recoveryWindow = window();
+      const recoveryBudget = new CRequestBudget(
+        recoveryWindow,
+        Date.now,
+        18,
+        "APPROVED_CURRENCY_RECEIPT_RECOVERY_20",
+      );
+      recoveryBudget.reserve("reads");
+      const profileReadsBefore = seen.filter((row) => row.includes("profiles")).length;
+      runner = await createAuthenticatedHeadlessRunner({
+        window: recoveryWindow,
+        databasePath: dir + "/qa-state.sqlite",
+        publishableKey: "isolated",
+        authOrigin: `http://127.0.0.1:${port}`,
+        backendOrigin: `http://127.0.0.1:${port}`,
+        currencyOnlyContinuation: "APPROVED_CURRENCY_RECEIPT_RECOVERY_20",
+        recovery: {
+          budget: recoveryBudget,
+          profile: { id: A, account_role: "free_user" },
+          preview: {
+            currentCurrency: "NZD",
+            currentScale: 2,
+            proposedCurrency: "USD",
+            proposedScale: 2,
+            settingsRevision: 1,
+            previewDigest: "a".repeat(64),
+            affectedExpenses: 0,
+            sameCurrencyCount: 0,
+            referenceCandidateCount: 0,
+            missingEconomicDateCount: 0,
+            missingHistoricalQuoteCount: 0,
+            manualAgreedCount: 0,
+            actualPayerCostCount: 0,
+            otherPolicyCount: 0,
+            conflictCount: 0,
+            expectedUnresolvedCount: 0,
+            openSettlementCount: 0,
+            finalizedSettlementCount: 0,
+            totalsAvailable: true,
+            requiresAbandonPreview: false,
+          },
+        },
+      });
+      await runner.login("A", "fixture", {
+        id: A,
+        email: "otr-meta-qa-20261022-01-a@example.invalid",
+      });
+      assert.equal(
+        seen.filter((row) => row.includes("profiles")).length,
+        profileReadsBefore,
+      );
+      assert.equal((await runner.commitCurrency()).idempotentReplay, true);
+      await runner.reopen();
+      assert.equal(runner.localState().ledger?.settlement_currency, "USD");
+      assert.equal(runner.budget.counts.reads, 20);
+      assert.equal(runner.budget.counts.mutations, 5);
       return;
     }
     await runner.replayEdit();
