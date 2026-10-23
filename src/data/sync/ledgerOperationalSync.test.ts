@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  qaConfigured: false,
+  qaRun: vi.fn(),
   openDatabase: vi.fn(),
   reactivateOperations: vi.fn(),
   reactivateAssets: vi.fn(),
@@ -12,6 +14,11 @@ const mocks = vi.hoisted(() => ({
   metadataRun: vi.fn(),
   queueListeners: new Set<() => void>(),
   generation: 7,
+}));
+
+vi.mock("./nativeTripQaScope", () => ({
+  hasNativeTripQaScope: () => mocks.qaConfigured,
+  runNativeTripQaSync: mocks.qaRun,
 }));
 
 vi.mock("./tripMetadataCoordinator", () => ({
@@ -84,6 +91,8 @@ describe("Ledger mutation sync kick", () => {
   beforeEach(() => {
     setTripCreateSyncRunner(null);
     vi.clearAllMocks();
+    mocks.qaConfigured = false;
+    mocks.qaRun.mockResolvedValue(null);
     mocks.metadataEnabled.mockResolvedValue(false);
     mocks.metadataRun.mockResolvedValue({ status: "closed", processedCount: 0 });
     mocks.getMetadataActivity.mockResolvedValue({
@@ -106,6 +115,24 @@ describe("Ledger mutation sync kick", () => {
     });
     mocks.generation = 7;
   });
+
+  it.each(["expired", "malformed", "active"])(
+    "never drains historical queues when a %s QA configuration is present",
+    async () => {
+      mocks.qaConfigured = true;
+      const oldCreate = vi.fn();
+      setTripCreateSyncRunner(oldCreate);
+      await runLedgerOperationalSync();
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+      expect(oldCreate).not.toHaveBeenCalled();
+      expect(mocks.metadataRun).not.toHaveBeenCalled();
+      expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+      expect(runLedgerReceiptSync).not.toHaveBeenCalled();
+      expect(runLedgerPersonalPaymentSync).not.toHaveBeenCalled();
+      expect(mocks.getAllAsync).not.toHaveBeenCalled();
+      expect(mocks.getQueueActivity).not.toHaveBeenCalled();
+    },
+  );
 
   it("awaits the explicitly installed Trip receipt/mapping runner before selecting Expenses", async () => {
     let finish!: () => void;
@@ -134,6 +161,14 @@ describe("Ledger mutation sync kick", () => {
     await runLedgerOperationalSync();
     expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
     setTripCreateSyncRunner(null);
+  });
+
+  it("does not change historical failure statuses in a finite QA preview", async () => {
+    mocks.qaConfigured = true;
+    await reactivateLongLivedLedgerFailures();
+    expect(mocks.reactivateOperations).not.toHaveBeenCalled();
+    expect(mocks.reactivateAssets).not.toHaveBeenCalled();
+    expect(mocks.openDatabase).not.toHaveBeenCalled();
   });
 
   it("reactivates sparse user and asset mutations on a recovery event", async () => {

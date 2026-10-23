@@ -1,3 +1,4 @@
+import { filterNativeTripQaList } from "@/data/sync/nativeTripQaScope";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import { readLocalSession } from "@/data/auth/authRepository";
 import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
@@ -233,7 +234,10 @@ function LocalTripContent({
     try {
       const repo = await readLocalTripRepository();
       const local = tripId ? await repo.getTrip(tripId) : null;
-      const list = tripId ? [] : await repo.listTrips();
+      const qaAccountId = (await readLocalSession())?.identity?.userId ?? null;
+      const list = tripId
+        ? []
+        : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
       // A local Repository result already wins; discovery is only needed for list/remote fallback.
       const discovery = local
@@ -259,9 +263,14 @@ function LocalTripContent({
       setRemoteTrips(
         tripId
           ? []
-          : (discovery?.trips.filter(
-              (trip) => trip.localStatus === null && !localIds.has(trip.id),
-            ) ?? []),
+          : [
+              ...filterNativeTripQaList(
+                qaAccountId,
+                discovery?.trips.filter(
+                  (trip) => trip.localStatus === null && !localIds.has(trip.id),
+                ) ?? [],
+              ),
+            ],
       );
       setEligibleToday({});
       setSelected(local);

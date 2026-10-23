@@ -1,3 +1,4 @@
+import { hasNativeTripQaScope, runNativeTripQaSync } from "./nativeTripQaScope";
 import {
   runNativeTripMetadataSync,
   isTripMetadataSyncEnabled,
@@ -45,12 +46,13 @@ export async function setIntelligenceSchedulingAdapter(
   adapter: IntelligenceSchedulingAdapter | null,
 ) {
   intelligenceScheduling = adapter;
-  if (adapter) {
+  if (adapter && !hasNativeTripQaScope()) {
     await adapter.resume("COLD_START");
     if (intelligenceScheduling === adapter) kickLedgerOperationalSync();
   }
 }
 async function scheduledQueueActivity() {
+  if (hasNativeTripQaScope()) return { actionableNow: 0, nextActionableAt: null };
   const ledger = await getLedgerQueueActivity();
   const extras = [];
   if (await isTripMetadataSyncEnabled())
@@ -223,6 +225,11 @@ export function runLedgerOperationalSync(
 }
 
 async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
+  if (hasNativeTripQaScope()) {
+    const completion = await runNativeTripQaSync();
+    if (completion) notifyLedgerReadCompletion(completion);
+    return;
+  }
   const completion = await captureEligibleScopes();
   // Receipt mapping commits before any dependent Expense can be selected for dispatch.
   await tripCreateSync?.().catch(() => undefined);
@@ -333,7 +340,7 @@ export async function pauseLedgerOperationalSync() {
 
 export function allowLedgerOperationalSync() {
   paused = false;
-  if (intelligenceScheduling)
+  if (intelligenceScheduling && !hasNativeTripQaScope())
     void intelligenceScheduling
       .resume("RECONNECT")
       .then(() => kickLedgerOperationalSync())
@@ -341,6 +348,7 @@ export function allowLedgerOperationalSync() {
 }
 
 export async function reactivateLongLivedLedgerFailures() {
+  if (hasNativeTripQaScope()) return;
   const database = await openDatabase();
   await Promise.all([
     createSyncOperationRepository(
