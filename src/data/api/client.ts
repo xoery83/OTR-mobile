@@ -183,6 +183,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
     body?: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
+    let diagnosticHttpCode: string | undefined;
     const boundary = createRequestBoundary(
       timeoutMs,
       options.signal,
@@ -228,6 +229,24 @@ export function createApiClient(options: ApiClientOptions = {}) {
         const error = z
           .object({ error: z.object({ code: z.string() }) })
           .safeParse(payload);
+        if (
+          error.success &&
+          [
+            "NOT_VISIBLE",
+            "CORE_REPLAY_UNAVAILABLE",
+            "CORE_CAPABILITY_CLOSED",
+            "CORE_READ_UNAVAILABLE",
+            "CORE_EXECUTION_UNAVAILABLE",
+            "INVALID_PAYLOAD",
+            "UNSUPPORTED_CLIENT",
+            "OPERATION_REUSE_MISMATCH",
+            "REVISION_CONFLICT",
+            "GRAPH_CHANGED",
+            "INVALID_BASE_VECTOR",
+            "INVALID_TARGET_KIND",
+          ].includes(error.data.error.code)
+        )
+          diagnosticHttpCode = error.data.error.code;
         const code =
           error.success &&
           [
@@ -264,15 +283,28 @@ export function createApiClient(options: ApiClientOptions = {}) {
       boundary.assertCurrent();
       return parsed.data;
     } catch (error) {
-      if (error instanceof ApiClientError) throw error;
-      if (error instanceof RequestBoundaryError)
-        throw new ApiClientError(
-          "OTR API read is unavailable.",
-          error.code === "REQUEST_TIMEOUT" ? "timeout" : "validation",
-          undefined,
-          error.code,
-        );
-      throw new ApiClientError("OTR API read is unavailable.", "network");
+      const failure =
+        error instanceof ApiClientError
+          ? error
+          : error instanceof RequestBoundaryError
+            ? new ApiClientError(
+                "OTR API read is unavailable.",
+                error.code === "REQUEST_TIMEOUT" ? "timeout" : "validation",
+                undefined,
+                error.code,
+              )
+            : new ApiClientError("OTR API read is unavailable.", "network");
+      // Same metadata-only diagnostic as ordinary requests. Never retain payload, headers or error.details.
+      lastFailure = {
+        method,
+        route: path.split("?")[0].replace(/[0-9a-f]{8}-[0-9a-f-]{27}/gi, ":id"),
+        kind: failure.kind,
+        status: failure.status,
+        code: failure.code ?? diagnosticHttpCode,
+        at: new Date().toISOString(),
+      };
+      console.info(JSON.stringify({ event: "api_request_failed", ...lastFailure }));
+      throw failure;
     } finally {
       boundary.close();
     }

@@ -199,3 +199,87 @@ describe("OTR API client", () => {
     expect(accessTokenProvider).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("bounded API metadata-only diagnostics", () => {
+  const route =
+    "/v2/trips/10000000-0000-4000-8000-000000000001/core/operations/10000000-0000-4000-8000-000000000002?private=secret";
+  it("retains safe Core HTTP status/code without changing original error mapping", async () => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      const client = createApiClient({
+        baseUrl: "https://api.example.com",
+        accessToken: "PRIVATE_TOKEN",
+        maxResponseBytes: 128,
+        fetchImplementation: async () =>
+          new Response(
+            JSON.stringify({
+              error: {
+                code: "CORE_EXECUTION_UNAVAILABLE",
+                message: "PRIVATE_BODY",
+                token: "PRIVATE_TOKEN",
+              },
+            }),
+            { status: 503 },
+          ),
+      });
+      await expect(client.get(route, responseSchema)).rejects.toMatchObject({
+        kind: "http",
+        status: 503,
+        code: undefined,
+      });
+      expect(readLastApiFailure()).toMatchObject({
+        route: "/v2/trips/:id/core/operations/:id",
+        kind: "http",
+        status: 503,
+        code: "CORE_EXECUTION_UNAVAILABLE",
+      });
+      expect(JSON.stringify([readLastApiFailure(), log.mock.calls])).not.toMatch(
+        /PRIVATE_|private=|10000000/,
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
+  it("records actual missing-stream code without choosing a fetch replacement", async () => {
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      maxResponseBytes: 128,
+      fetchImplementation: async () => new Response(null, { status: 200 }),
+    });
+    await expect(client.get(route, responseSchema)).rejects.toMatchObject({
+      code: "STREAM_UNAVAILABLE",
+    });
+    expect(readLastApiFailure()).toMatchObject({
+      kind: "validation",
+      code: "STREAM_UNAVAILABLE",
+    });
+  });
+  it("records existing bounded-body limit failure without retaining content", async () => {
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      maxResponseBytes: 4,
+      fetchImplementation: async () =>
+        new Response(JSON.stringify({ id: "PRIVATE_BODY" }), { status: 200 }),
+    });
+    await expect(client.get(route, responseSchema)).rejects.toMatchObject({
+      code: "BODY_LIMIT",
+    });
+    expect(readLastApiFailure()?.code).toBe("BODY_LIMIT");
+    expect(JSON.stringify(readLastApiFailure())).not.toContain("PRIVATE_BODY");
+  });
+  it("does not log arbitrary response error codes", async () => {
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      maxResponseBytes: 128,
+      fetchImplementation: async () =>
+        new Response(JSON.stringify({ error: { code: "PRIVATE_UNTRUSTED_CODE" } }), {
+          status: 503,
+        }),
+    });
+    await expect(client.get(route, responseSchema)).rejects.toBeInstanceOf(
+      ApiClientError,
+    );
+    expect(readLastApiFailure()?.code).toBeUndefined();
+    expect(JSON.stringify(readLastApiFailure())).not.toContain("PRIVATE_UNTRUSTED");
+  });
+});
