@@ -2,6 +2,8 @@
 
 **Not authorized / not executable until the real Provider facts below are supplied and sealed.** This supersedes earlier conditional execution instructions; it does not reuse the consumed closed-deployment Start/window. No further architecture or Trip/P1 audit is requested.
 
+Fixed integrated preparation code: `aaa83c5` (necessary Native/dependency/config-control/read-budget reviews archived). No new DEV activation executed.
+
 ## Fixed implementation and actual inputs
 
 - DEV `tuqigdxrvrerfewsxqgm`, existing `otr-dev-backend`, accepted image `sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4`. Preserve sustained Trip/P1, all four baseline mounts, existing users/data and immutable receipts.

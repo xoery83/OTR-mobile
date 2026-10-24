@@ -1,5 +1,5 @@
 {
-  "status": "NOT_EXECUTABLE_ACTUAL_DEPENDENCY_PROVIDER_CONFIGURATION_AND_AUTHORIZATION_BLOCKERS",
+  "status": "BLOCKED_BY_PROVIDER_CONFIGURATION_AND_DEV_ACTIVATION_AUTHORITY",
   "project": "tuqigdxrvrerfewsxqgm",
   "ownerAuthorized": false,
   "baselineCode": "e625cc5082b4f3f2a4520358350d4423c99a1471",
@@ -334,5 +334,7 @@
     "dataRegion": null,
     "routingClass": null,
     "ownerConfigurationQuestionPending": true
-  }
+  },
+  "fixedPreparationCode": "aaa83c5",
+  "finalPublicHealth": "receipts/FINAL_PUBLIC_HEALTH.json"
 }
