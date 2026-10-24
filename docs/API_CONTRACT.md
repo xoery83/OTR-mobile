@@ -27,6 +27,17 @@ Current candidate requires a legal Trip-bound owning context; an unassigned
 Capture is retained but cannot invent a Trip/Task binding. UI installation,
 real DEV/Provider and formal Review/Admission are not proven by consumer tests.
 
+Settled-result recovery candidate (25 October): the same GET routes may be
+mounted with a finite settled-only Host. Its POST is always closed. Recovery
+requires the original retained raw response, exact Task/Attempt/Call/request
+hashes, an immutable successful owning COMPLETION receipt, current normal
+Auth/Trip access and current owning V2 Source qualification. It reuses existing
+Task CAS/result installation, including legitimately completed work after its
+original dispatch deadline; it never extends that deadline or calls Provider.
+The explicit trusted Host selection is mutually exclusive with paid transport,
+uses the fixed protected recovery config mount and expires within600seconds.
+This candidate does not imply deployment, Native Results or Admission PASS.
+
 ## Trip metadata update — local implementation, Hosted port CLOSED
 
 Authenticated `POST /v2/trips/:tripId/metadata` accepts strict

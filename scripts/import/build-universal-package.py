@@ -13,7 +13,7 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-BASE_IMAGE = "sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30"
+BASE_IMAGE = "sha256:40e998c31815a77452dd52dbbd6d8789ea8a815a6d1afba068029e97e919bbaa"
 
 
 def candidate_dockerfile(root):
@@ -21,7 +21,7 @@ def candidate_dockerfile(root):
     # Only reviewed bundles change; no dependency install or networked build.
     return ("FROM " + BASE_IMAGE + "\n" +
             "\n".join("COPY --chown=otr:otr " + name + " /app/" + name
-                      for name in ["server.mjs", "server-capture.mjs", "universal-prepare.mjs"]) + "\n")
+                      for name in ["server.mjs", "server-capture.mjs", "universal-prepare.mjs", "universal-settled-recovery.mjs"]) + "\n")
 
 
 def prepare(root, output):
@@ -51,7 +51,8 @@ def main():
     manifest = prepare(root, output)
     if args.build_local:
         entries = {"server.mjs": "backend/src/server.ts", "server-capture.mjs": "backend/src/serverCapture.ts",
-                   "universal-prepare.mjs": "backend/src/universalPreparationMain.ts"}
+                   "universal-prepare.mjs": "backend/src/universalPreparationMain.ts",
+                   "universal-settled-recovery.mjs": "backend/src/universalSettledRecoveryMain.ts"}
         for name, entry in entries.items():
             bundle_args = ["npx", "--no-install", "esbuild", entry, "--bundle", "--platform=node", "--target=node24", "--format=esm", "--alias:@=./src",
                     "--outfile=" + str(output / name), '--banner:js=import { createRequire } from "node:module"; const require = createRequire(import.meta.url);']
@@ -67,7 +68,7 @@ def main():
         # stopped owned container, then remove only that container.
         container = subprocess.check_output(docker + ["create", "--network", "none", image], text=True).strip()
         try:
-            for name in ["server.mjs", "server-capture.mjs", "universal-prepare.mjs"]:
+            for name in entries:
                 subprocess.run(docker + ["cp", container + ":/app/" + name, str(output / name)], check=True)
                 manifest["bundles"][name] = digest(output / name)
         finally:

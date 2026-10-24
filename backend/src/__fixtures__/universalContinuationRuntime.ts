@@ -11,8 +11,14 @@ import {
   type ContinuationDatabase,
 } from "../../../src/data/repositories/intelligenceContinuationRepository";
 import { captureAccountRequestContext } from "../../../src/data/auth/accountRequestContext";
-import { attemptSchema, taskSchema } from "../../../src/domain/intelligence/persistence";
-import { canonicalEventJson, type Json } from "../../../src/domain/trip/eventIntentJson";
+import {
+  attemptSchema,
+  taskSchema,
+} from "../../../src/domain/intelligence/persistence";
+import {
+  canonicalEventJson,
+  type Json,
+} from "../../../src/domain/trip/eventIntentJson";
 import { createFlightPrivateCustody } from "../flightPrivateCustody";
 import { createUniversalContinuationHost } from "../universalContinuationHost";
 import {
@@ -30,8 +36,20 @@ import { createLedgerReadRepository } from "../../../src/data/repositories/ledge
 import { ledgerBootstrapResponseSchema } from "../../../src/data/api/ledgerReadContracts";
 import { createDevBackendHandler, type DevBackendGateway } from "../app";
 
+import {
+  recoverSettledUniversalTask,
+  createSettledUniversalReadPort,
+} from "../universalSettledRecovery";
+import { buildUniversalDeepSeekRequest } from "../universalProviderRequest";
+import {
+  universalInstruction,
+  universalAdvisoryInstruction,
+} from "../universalPrompt";
+import { COMPACT_PROMPT_VERSION } from "../../frozen-workbench/scripts/import-workbench/real-llm-compact";
+
 const sha = (v: Uint8Array) => createHash("sha256").update(v).digest("hex");
-const jsonHash = (v: unknown) => sha(Buffer.from(canonicalEventJson(v as Json)));
+const jsonHash = (v: unknown) =>
+  sha(Buffer.from(canonicalEventJson(v as Json)));
 export async function runUniversalContinuationFixture(
   base: string,
   sourceFixture?: {
@@ -55,8 +73,13 @@ export async function runUniversalContinuationFixture(
       }[];
     };
   },
+  settledRecovery = false,
 ) {
-  assert.equal(process.platform, "linux", "Actual anchored custody requires Linux");
+  assert.equal(
+    process.platform,
+    "linux",
+    "Actual anchored custody requires Linux",
+  );
   await fs.mkdir(base, { recursive: true, mode: 0o700 });
   const directory = await fs.mkdtemp(join(base, "universal-"));
   const root = join(directory, "custody");
@@ -128,7 +151,14 @@ export async function runUniversalContinuationFixture(
           .prepare(
             "INSERT INTO trip_sources(cache_account_id,id,trip_id,acquired_by,acquisition_key,acquisition_sha256,source_kind,acquisition_channel,capture_time_basis,current_material_revision,row_revision) VALUES(?,?,?,?,?,?,'TEXT','PASTE','UNKNOWN',1,1)",
           )
-          .run(account, r.sourceId, trip, account, r.sourceId, r.originalSha256);
+          .run(
+            account,
+            r.sourceId,
+            trip,
+            account,
+            r.sourceId,
+            r.originalSha256,
+          );
         sql
           .prepare(
             "INSERT INTO trip_source_revisions(cache_account_id,source_id,material_revision,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES(?,?,1,?,?,?,?,'AS_SUPPLIED','ACQUISITION')",
@@ -208,7 +238,11 @@ export async function runUniversalContinuationFixture(
       },
     };
     let authorized = true;
-    const context = await captureAccountRequestContext(trip, async () => account);
+    let effectiveNow = now;
+    const context = await captureAccountRequestContext(
+      trip,
+      async () => account,
+    );
     if (sourceFixture) {
       const ledger = ledgerBootstrapResponseSchema.parse({
         journey: {
@@ -262,7 +296,7 @@ export async function runUniversalContinuationFixture(
     }
     let repo = createIntelligenceContinuationRepository(db, {
       getAccountId: async () => account,
-      now: () => now,
+      now: () => effectiveNow,
       sha256: async (bytes) => sha(bytes),
       async validateAdmission() {
         assert(authorized, "CURRENT_SOURCE_RIGHT_REVOKED");
@@ -284,7 +318,9 @@ export async function runUniversalContinuationFixture(
       budget_nanos: null,
       route: "DETERMINISTIC",
       max_attempts: 1,
-      deadline: null,
+      deadline: settledRecovery
+        ? new Date(Date.now() + 60000).toISOString()
+        : null,
     };
     const task = taskSchema.parse({
       account_id: account,
@@ -292,7 +328,8 @@ export async function runUniversalContinuationFixture(
       format_version: 1,
       import_id: batch,
       manifest_version: 1,
-      manifest_sha256: sourceFixture?.manifest.submissionSha256 ?? jsonHash(inputPins),
+      manifest_sha256:
+        sourceFixture?.manifest.submissionSha256 ?? jsonHash(inputPins),
       trip_id: trip,
       stage: "INTERPRETATION",
       logical_request_id: randomUUID(),
@@ -359,7 +396,11 @@ export async function runUniversalContinuationFixture(
     const request = { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId };
     const plan = prepareUniversalDispatch(account, batch, request, manifest);
     const bytes = Buffer.from(JSON.stringify(plan.dispatchMarker));
-    const admission = { version: 1, policy_sha256: task.policy_sha256, allowed: true };
+    const admission = {
+      version: 1,
+      policy_sha256: task.policy_sha256,
+      allowed: true,
+    };
     const attempt = attemptSchema.parse({
       account_id: account,
       attempt_id: randomUUID(),
@@ -393,7 +434,7 @@ export async function runUniversalContinuationFixture(
       policy_admission_sha256: jsonHash(admission),
       task_publication_fence: bound.publication_fence,
       sync_operation_id: queue,
-      usage_correlation_id: null,
+      usage_correlation_id: settledRecovery ? randomUUID() : null,
       fallback_chain_id: randomUUID(),
       shadow: false,
       shadow_of_attempt_id: null,
@@ -416,6 +457,246 @@ export async function runUniversalContinuationFixture(
       updated_at: now,
       update_clock: "SERVER_OBSERVED",
     });
+    if (settledRecovery) {
+      // Synthetic terminal evidence only; real SQL completion is validated separately.
+      await stores.custody.put({
+        accountId: account,
+        reservationId: attempt.request_material_reference!,
+        sha256: sha(bytes),
+        byteCount: bytes.length,
+        bytes,
+      });
+      let active = await repo.reserveAttempt(
+        context,
+        attempt,
+        bound.row_revision,
+      );
+      active = await repo.beginExecution(
+        context,
+        active.attempt_id,
+        active.row_revision,
+        "START_DURABLE",
+      );
+      await repo.admitExecution(context, active, () => {});
+      effectiveNow = new Date(
+        Date.parse(policy.deadline!) + 1000,
+      ).toISOString();
+      const source = plan.ready.map((p, index) => ({
+        index,
+        sourceId: p.sourceId,
+        mime: p.mime,
+        modality: p.modality as "TEXT" | "IMAGE",
+        sha256: p.submittedSha256,
+        bytes: p.bytes,
+      }));
+      const providerRequest = buildUniversalDeepSeekRequest({
+        taskId,
+        actorId: account,
+        accountId: account,
+        tripId: trip,
+        batchId: batch,
+        promptVersion: COMPACT_PROMPT_VERSION,
+        instruction: universalInstruction,
+        advisoryInstruction: universalAdvisoryInstruction,
+        sources: source,
+      });
+      const rawBytes = Buffer.from(
+        JSON.stringify({
+          id: "synthetic-provider-completion",
+          model: "deepseek-flash",
+          choices: [
+            {
+              finish_reason: "stop",
+              message: {
+                content: JSON.stringify({
+                  v: 2,
+                  items: [],
+                  bookings: [],
+                  tickets: [],
+                  links: [],
+                  issues: [],
+                }),
+              },
+            },
+          ],
+          usage: {
+            prompt_tokens: 100,
+            completion_tokens: 20,
+            total_tokens: 120,
+            prompt_cache_hit_tokens: 0,
+          },
+        }),
+      );
+      const call = attempt.usage_correlation_id!;
+      await stores.custody.put({
+        accountId: account,
+        reservationId: call,
+        sha256: sha(rawBytes),
+        byteCount: rawBytes.length,
+        bytes: rawBytes,
+      });
+      await stores.retainRaw(
+        account,
+        call,
+        { reference: call, sha256: sha(rawBytes), byteCount: rawBytes.length },
+        {
+          version: 1,
+          taskId,
+          requestSha256: providerRequest.requestSha256,
+          httpStatus: 200,
+        },
+      );
+      let completionAllowed = false;
+      const deps = {
+        context,
+        task,
+        attemptId: attempt.attempt_id,
+        callId: call,
+        requestMaterialByteCount: bytes.length,
+        repository: repo,
+        stores,
+        priceSchedule: {
+          currency: "USD" as const,
+          inputNanosPerMillion: "1000000000",
+          cachedInputNanosPerMillion: "100000000",
+          outputNanosPerMillion: "2000000000",
+        },
+        async assertCurrentAuth() {
+          assert(authorized, "CURRENT_SOURCE_RIGHT_REVOKED");
+        },
+        async readSourceManifest() {
+          assert(authorized);
+          return manifest;
+        },
+        checks: {
+          async assertCompletion(result: unknown) {
+            assert(completionAllowed, "SETTLEMENT_PROOF_REQUIRED");
+            assert.equal(
+              (result as { providerOutcome: string }).providerOutcome,
+              "SETTLED",
+            );
+          },
+        },
+      };
+      await assert.rejects(
+        () => recoverSettledUniversalTask(deps),
+        /SETTLEMENT_PROOF_REQUIRED/,
+      );
+      assert.equal(
+        (await repo.snapshot(context, taskId)).task.work_disposition,
+        "RUNNING",
+      );
+      completionAllowed = true;
+      await assert.rejects(
+        () =>
+          recoverSettledUniversalTask({
+            ...deps,
+            stores: {
+              ...stores,
+              async readRaw(account, call) {
+                const value = await stores.readRaw(account, call);
+                return {
+                  ...value,
+                  binding: {
+                    version: 1,
+                    taskId: randomUUID(),
+                    requestSha256: providerRequest.requestSha256,
+                    httpStatus: 200,
+                  },
+                };
+              },
+            },
+          }),
+        /RAW_BINDING/,
+      );
+      await assert.rejects(
+        () =>
+          recoverSettledUniversalTask({
+            ...deps,
+            async readSourceManifest() {
+              return { ...manifest, batchId: randomUUID() };
+            },
+          }),
+        /SCOPE|BINDING|MANIFEST|OWNING_READER_UNAVAILABLE/,
+      );
+      await assert.rejects(
+        () => recoverSettledUniversalTask({ ...deps, callId: randomUUID() }),
+        /RECOVERY_BINDING/,
+      );
+      const result = await recoverSettledUniversalTask(deps);
+      const state = await repo.snapshot(context, taskId);
+      assert.equal(state.task.work_disposition, "PUBLISHED");
+      assert.equal(state.attempts[0].result_install_disposition, "INSTALLED");
+      assert.equal(state.task.policy_sha256, task.policy_sha256);
+      assert.equal(state.task.policy_snapshot.deadline, policy.deadline);
+      assert(Date.parse(effectiveNow) > Date.parse(policy.deadline!));
+      checks.push(
+        "real SQLite owning observe/install accepts already-settled result after immutable deadline, no new Task/Attempt",
+      );
+      sql.close();
+      sql = new DatabaseSync(join(directory, "continuations.db"));
+      await stores.close();
+      stores = await createFlightPrivateCustody(root, identity);
+      deps.stores = stores;
+      assert.deepEqual(await recoverSettledUniversalTask(deps), result);
+      checks.push(
+        "anchored retained raw/result and actual SQLite reopen idempotent replay, zero Provider port",
+      );
+      const settledPort = createSettledUniversalReadPort(deps);
+      const readHandler = createDevBackendHandler({
+        gateway: {
+          validateAccessToken: async (token: string) =>
+            token === "synthetic" ? { id: account } : null,
+          canReadTrip: async (a: string, t: string) =>
+            a === account && t === trip,
+        } as never,
+        universalImportPort: settledPort,
+      });
+      const url = `http://local/v2/import-batches/${batch}/interpretations`;
+      assert.equal(
+        (
+          await readHandler(
+            new Request(`${url}?tripId=${trip}`, {
+              headers: { Authorization: "Bearer synthetic" },
+            }),
+          )
+        ).status,
+        200,
+      );
+      const resultResponse = await readHandler(
+        new Request(`${url}/${taskId}?tripId=${trip}`, {
+          headers: { Authorization: "Bearer synthetic" },
+        }),
+      );
+      assert.equal(resultResponse.status, 200);
+      assert.deepEqual(await resultResponse.json(), result);
+      const post = await readHandler(
+        new Request(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer synthetic",
+            "Idempotency-Key": taskId,
+          },
+          body: JSON.stringify(request),
+        }),
+      );
+      assert.equal(post.status, 503);
+      checks.push(
+        "existing authenticated GET context/results reads settled result; POST remains CLOSED without Provider",
+      );
+      authorized = false;
+      await assert.rejects(
+        () => recoverSettledUniversalTask(deps),
+        /CURRENT_SOURCE_RIGHT_REVOKED/,
+      );
+      checks.push("revoked current Auth/Source withholds recovery");
+      return {
+        status: "LOCAL_SETTLED_RECOVERY_PASS",
+        provider: "SYNTHETIC_TERMINAL_EVIDENCE",
+        realProviderCalls: 0,
+        checks,
+      };
+    }
     if (sourceFixture) {
       const ledger = ledgerBootstrapResponseSchema.parse({
         journey: {
@@ -455,7 +736,9 @@ export async function runUniversalContinuationFixture(
         task,
         startsAt: new Date(Date.now() - 1000).toISOString(),
         expiresAt: new Date(Date.now() + 60000).toISOString(),
-      } as unknown as Parameters<typeof createUniversalOriginalSourceRuntime>[0];
+      } as unknown as Parameters<
+        typeof createUniversalOriginalSourceRuntime
+      >[0];
       // The Source rows/catalog were produced by actual isolated PG. Driver I/O
       // and normal Auth are synthetic here; existing reader validates the rows/bytes.
       const sourceRuntime = createUniversalOriginalSourceRuntime(
@@ -522,7 +805,9 @@ export async function runUniversalContinuationFixture(
             close: async () => {},
           };
         },
-      } as unknown as NonNullable<Parameters<typeof prepareUniversalTaskHost>[2]>);
+      } as unknown as NonNullable<
+        Parameters<typeof prepareUniversalTaskHost>[2]
+      >);
       assert.equal(ready.status, "TASK_CONTEXT_READY");
       checks.push(
         "explicit trusted recover: owning PG snapshot reader -> actual SQLite Task/Queue -> existing context, zero Source writes or Provider dispatch",
@@ -592,7 +877,10 @@ export async function runUniversalContinuationFixture(
             links: [],
             issues: [],
           },
-          providerReceipt: { outcome: "LOCAL_FIXTURE" as const, requestId: null },
+          providerReceipt: {
+            outcome: "LOCAL_FIXTURE" as const,
+            requestId: null,
+          },
         };
       },
     };
@@ -610,7 +898,10 @@ export async function runUniversalContinuationFixture(
     const post = () =>
       new Request(url, {
         method: "POST",
-        headers: { Authorization: "Bearer synthetic", "Idempotency-Key": taskId },
+        headers: {
+          Authorization: "Bearer synthetic",
+          "Idempotency-Key": taskId,
+        },
         body: JSON.stringify(request),
       });
     const response = await handler()(post());
@@ -647,7 +938,8 @@ export async function runUniversalContinuationFixture(
     assert.equal((await handler()(get())).status, 503);
     checks.push("revoked current Source admission withholds retained result");
     assert.equal(
-      (await handler()(new Request(url, { method: "POST", body: "{}" }))).status,
+      (await handler()(new Request(url, { method: "POST", body: "{}" })))
+        .status,
       401,
     );
     checks.push("HTTP authentication enforced");

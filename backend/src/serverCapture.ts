@@ -4,12 +4,23 @@ import { loadDevTripCreateRuntime } from "./tripCreateRuntime";
 import { startDevBackend } from "./serverStartup";
 import { loadDevUniversalRuntime } from "./universalFiniteRuntime";
 import { loadDevUniversalOriginalSourceRuntime } from "./universalOriginalSourceRuntime";
+import { loadSettledUniversalReadRuntime } from "./universalSettledRecoveryOperator";
+import { settledReadSettings } from "./universalSettledReadBootstrap";
 
 // Opt-in image command only. The ordinary server.ts remains CLOSED and unchanged.
 async function main() {
+  let settled: Awaited<ReturnType<typeof loadSettledUniversalReadRuntime>> | undefined;
+  try {
+    const selection = settledReadSettings(process.env);
+    if (selection)
+      settled = await loadSettledUniversalReadRuntime(selection, process.env);
+  } catch {
+    console.info("UNIVERSAL_SETTLED_READ_CLOSED");
+  }
   let universal: Awaited<ReturnType<typeof loadDevUniversalRuntime>>;
   try {
-    universal = await loadDevUniversalRuntime(process.env);
+    if (process.env.OTR_DEV_UNIVERSAL_SETTLED_RECOVERY === undefined)
+      universal = await loadDevUniversalRuntime(process.env);
   } catch {
     console.info("UNIVERSAL_RUNTIME_CLOSED");
   }
@@ -56,12 +67,13 @@ async function main() {
         ? { tripPersonCloudCreatePort: trip.tripPersonCloudCreatePort }
         : {}),
       captureMaterialCustody: runtime?.captureMaterialCustody,
-      universalImportPort: universal?.universalImportPort,
+      universalImportPort: settled?.universalImportPort ?? universal?.universalImportPort,
       universalOriginalSourcePort: originals?.universalOriginalSourcePort,
       publicationCatalogConnection:
         universal?.catalogConnection ?? originals?.catalogConnection,
     });
   } catch (error) {
+    await settled?.close();
     await originals?.close();
     await universal?.close();
     if (metadata !== trip) await metadata?.close();
@@ -70,6 +82,7 @@ async function main() {
     throw error;
   }
   server.once("close", () => {
+    void settled?.close();
     void originals?.close();
     void universal?.close();
     if (metadata !== trip) void metadata?.close();

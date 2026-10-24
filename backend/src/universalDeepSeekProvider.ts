@@ -1,7 +1,10 @@
 import { FLIGHT_MODEL_CONFORMANCE } from "./flightHostProtocol";
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { DEEPSEEK_FLIGHT_DESTINATION, mapDeepSeekFlightUsage } from "./deepSeekFlight";
+import {
+  DEEPSEEK_FLIGHT_DESTINATION,
+  mapDeepSeekFlightUsage,
+} from "./deepSeekFlight";
 import { createFlightHttpsSend } from "./flightHttpsTransport";
 import { calculateScheduledCost } from "./externalIntegrationPersistence";
 import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
@@ -46,7 +49,8 @@ export type UniversalPriceSchedule = {
   outputNanosPerMillion: string;
 };
 type Send = ReturnType<typeof createFlightHttpsSend>;
-const sha = (v: Uint8Array | string) => createHash("sha256").update(v).digest("hex");
+const sha = (v: Uint8Array | string) =>
+  createHash("sha256").update(v).digest("hex");
 const completion = z.object({
   id: z.string().min(1).max(200),
   model: z.string().min(1).max(200),
@@ -60,6 +64,71 @@ const completion = z.object({
     .length(1),
   usage: z.unknown(),
 });
+export function decodeUniversalDeepSeekResponse(
+  bytes: Uint8Array,
+  priceSchedule?: UniversalPriceSchedule,
+) {
+  const buffer = Buffer.from(bytes);
+  if (buffer.byteLength > 131072) throw Error("UNIVERSAL_RESPONSE_BOUND");
+  let raw: unknown;
+  try {
+    raw = JSON.parse(buffer.toString("utf8"));
+  } catch {
+    throw new Error("UNIVERSAL_PROVIDER_JSON_INVALID");
+  }
+  const parsed = completion.safeParse(raw);
+  if (!parsed.success) throw new Error("UNIVERSAL_PROVIDER_COMPLETION_INVALID");
+  if (
+    !(
+      FLIGHT_MODEL_CONFORMANCE.accepted_returned_models as readonly string[]
+    ).includes(parsed.data.model)
+  )
+    throw new Error("UNIVERSAL_PROVIDER_MODEL_UNRESOLVED");
+  const usage = mapDeepSeekFlightUsage(parsed.data.usage);
+  let output: unknown;
+  try {
+    output = JSON.parse(parsed.data.choices[0].message.content);
+  } catch {
+    throw new Error("UNIVERSAL_PROVIDER_OUTPUT_INVALID");
+  }
+  const schedule = priceSchedule;
+  const n = (value: string) => (/^\d+$/.test(value) ? value : null);
+  const costNanos =
+    schedule &&
+    n(schedule.inputNanosPerMillion) !== null &&
+    n(schedule.cachedInputNanosPerMillion) !== null &&
+    n(schedule.outputNanosPerMillion) !== null &&
+    usage.usage_quality === "ACTUAL_REPORTED" &&
+    usage.cached_input_tokens !== null &&
+    usage.input_tokens !== null &&
+    usage.output_tokens !== null
+      ? calculateScheduledCost([
+          {
+            quantity: BigInt(usage.input_tokens - usage.cached_input_tokens),
+            quantityPerRate: 1000000n,
+            rate: schedule.inputNanosPerMillion,
+            relationship: "DISJOINT",
+            billable: true,
+          },
+          {
+            quantity: BigInt(usage.cached_input_tokens),
+            quantityPerRate: 1000000n,
+            rate: schedule.cachedInputNanosPerMillion,
+            relationship: "DISJOINT",
+            billable: true,
+          },
+          {
+            quantity: BigInt(usage.output_tokens),
+            quantityPerRate: 1000000n,
+            rate: schedule.outputNanosPerMillion,
+            relationship: "DISJOINT",
+            billable: true,
+          },
+        ])
+      : null;
+  return { output, usage, costNanos, providerRequestId: parsed.data.id };
+}
+
 export function createUniversalDeepSeekProvider(deps: {
   custody: UniversalProviderCustody;
   send: Send;
@@ -118,69 +187,15 @@ export function createUniversalDeepSeekProvider(deps: {
       await credential.assertCurrent();
       if (response.status !== 200 || response.redirected)
         throw new Error("UNIVERSAL_PROVIDER_HTTP_FAILURE");
-      let raw: unknown;
-      try {
-        raw = JSON.parse(bytes.toString("utf8"));
-      } catch {
-        throw new Error("UNIVERSAL_PROVIDER_JSON_INVALID");
-      }
-      const parsed = completion.safeParse(raw);
-      if (!parsed.success) throw new Error("UNIVERSAL_PROVIDER_COMPLETION_INVALID");
-      if (
-        !(
-          FLIGHT_MODEL_CONFORMANCE.accepted_returned_models as readonly string[]
-        ).includes(parsed.data.model)
-      )
-        throw new Error("UNIVERSAL_PROVIDER_MODEL_UNRESOLVED");
-      const usage = mapDeepSeekFlightUsage(parsed.data.usage);
-      let output: unknown;
-      try {
-        output = JSON.parse(parsed.data.choices[0].message.content);
-      } catch {
-        throw new Error("UNIVERSAL_PROVIDER_OUTPUT_INVALID");
-      }
-      const schedule = deps.priceSchedule;
-      const n = (value: string) => (/^\d+$/.test(value) ? value : null);
-      const costNanos =
-        schedule &&
-        n(schedule.inputNanosPerMillion) !== null &&
-        n(schedule.cachedInputNanosPerMillion) !== null &&
-        n(schedule.outputNanosPerMillion) !== null &&
-        usage.usage_quality === "ACTUAL_REPORTED" &&
-        usage.cached_input_tokens !== null &&
-        usage.input_tokens !== null &&
-        usage.output_tokens !== null
-          ? calculateScheduledCost([
-              {
-                quantity: BigInt(usage.input_tokens - usage.cached_input_tokens),
-                quantityPerRate: 1000000n,
-                rate: schedule.inputNanosPerMillion,
-                relationship: "DISJOINT",
-                billable: true,
-              },
-              {
-                quantity: BigInt(usage.cached_input_tokens),
-                quantityPerRate: 1000000n,
-                rate: schedule.cachedInputNanosPerMillion,
-                relationship: "DISJOINT",
-                billable: true,
-              },
-              {
-                quantity: BigInt(usage.output_tokens),
-                quantityPerRate: 1000000n,
-                rate: schedule.outputNanosPerMillion,
-                relationship: "DISJOINT",
-                billable: true,
-              },
-            ])
-          : null;
+      const { output, usage, costNanos, providerRequestId } =
+        decodeUniversalDeepSeekResponse(bytes, deps.priceSchedule);
       await credential.assertCurrent();
       await deps.custody.settle({
         accountId: input.accountId,
         taskId: input.taskId,
         requestSha256: request.requestSha256,
         responseSha256: sha(bytes),
-        providerRequestId: parsed.data.id,
+        providerRequestId,
         usage,
         costNanos,
       });
@@ -189,7 +204,7 @@ export function createUniversalDeepSeekProvider(deps: {
         output,
         providerReceipt: {
           outcome: "SETTLED" as const,
-          requestId: parsed.data.id,
+          requestId: providerRequestId,
           requestSha256: request.requestSha256,
           responseSha256: sha(bytes),
           usage,
