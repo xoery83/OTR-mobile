@@ -30,9 +30,9 @@ Existing scope close/readback runs first; then existing SECURITY_ADMIN commands 
 
 Acceptance requires actual Native request, genuine Source/catalog/Run/Task receipts, Provider request/usage/cost/raw hash, mixed evidence-backed Results and abstentions in AD5, read-only cold recovery without second call, then verified closure. HIGH remains interpretation only; formal Admission gaps stay explicit.
 
-## Required Owner configuration input — currently absent
+## Credential source resolved; remaining protected configuration
 
-- A legitimate **credential SOURCE reference/path**, never the Key value in chat. The Backend binding is `OTR_DEV_DEEPSEEK_API_KEY`; no trusted custody source is currently identified.
+- **Resolved by Owner authorization:** existing Web OTR `.env.local` `DEEPSEEK_API_KEY` was copied and exact-verified in dormant DEV Backend `/opt/otr/dev-backend/env/universal-provider-20261025.env` (root0600). No Key value/hash in receipts, Native or Git. Service environment is unchanged; no paid validity test or activation. Only the credential was reused, not the Web default model/parser. See `credential-binding/ACTUAL_DORMANT_BACKEND_COPY.json`.
 - Actual approved Provider model/version, price/units/source/effective version, data region and routing class. Frozen Prompt/behavior does not supply these operational facts; acceptance fixture rates/references are not usable.
 - Approval of the six fixed dormant SQL candidates, finite existing admin permissions, temporary environment-kill change, finite runtime overlay, one paid call and new bounded reads above.
 

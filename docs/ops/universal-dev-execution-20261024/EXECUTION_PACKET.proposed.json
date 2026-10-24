@@ -306,7 +306,8 @@
     "syntheticActorAdminGrantCount": 0,
     "adminGatewayLogin": false,
     "existingCp15Dependencies": "PRESENT",
-    "modelTaskDependency": "EXACT_EXISTING_OWNING_SQL_WITH_MEMBERSHIP_WRAPPER_READY_NOT_INSTALLED"
+    "modelTaskDependency": "EXACT_EXISTING_OWNING_SQL_WITH_MEMBERSHIP_WRAPPER_READY_NOT_INSTALLED",
+    "backendCredentialDormantFileVerified": true
   },
   "nativeReadBudget": {
     "originalAdditionalNativeLimit": 72,
@@ -326,8 +327,23 @@
     "backend/sql/universal_task_read_candidate.sql"
   ],
   "realProviderConfiguration": {
-    "status": "MISSING_ACTUAL_CONFIGURATION_NOT_FIXTURE",
-    "credentialSource": null,
+    "status": "CREDENTIAL_COPIED_DORMANT_MODEL_PRICE_REGION_ROUTE_AND_ACTIVATION_PENDING",
+    "credentialSource": {
+      "project": "/Users/xoery/Project/otr",
+      "file": ".env.local",
+      "variable": "DEEPSEEK_API_KEY",
+      "ownerAuthorizedReuse": true,
+      "remoteDormantFile": "/opt/otr/dev-backend/env/universal-provider-20261025.env",
+      "backendVariable": "OTR_DEV_DEEPSEEK_API_KEY",
+      "exactCopyVerified": true,
+      "mode": "0600",
+      "owner": "root",
+      "activeServiceBinding": false,
+      "providerCredentialValidity": "NOT_NETWORK_TESTED",
+      "receipt": "credential-binding/ACTUAL_DORMANT_BACKEND_COPY.json",
+      "review": "credential-binding/INDEPENDENT_REVIEW.json",
+      "reviewSha256": "ac52edd9ae9bb8a524230d6a3ce46ef4147813ac51465bd65b8c96d050820219"
+    },
     "backendBinding": "OTR_DEV_DEEPSEEK_API_KEY",
     "approvedModelVersion": null,
     "priceScheduleAndUnitsSource": null,
