@@ -34,15 +34,25 @@
         "byteCount": 1598,
         "sha256": "5db86cb62b681cc69eeee224f4af940cf10de5df6daa165102b3a37454a35592",
         "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
-        "owningSourceId": null,
-        "owningRepresentationId": null,
+        "owningSourceId": "b17adf6c-d7b6-4cfa-9af2-0201025d7849",
+        "owningRepresentationId": "934f9157-7702-44b0-aa6d-65081c4d837c",
         "realC3InputId": "9c3d39c3-1ac7-4e2c-b554-2c568c0dd46b",
         "ordinal": 0,
         "acquisitionSource": "files",
-        "bindingId": null,
-        "queueOperationId": null,
-        "sourceCommandPin": null,
-        "sourceState": "SOURCE_OPERATION_NOT_PREPARED"
+        "bindingId": "0de870da-5ad0-45e5-902e-fc2c7b9b1de3",
+        "queueOperationId": "60ea15c4-5409-47cd-a4da-152ccd3f3aae",
+        "sourceCommandPin": {
+          "profile": "OTR_UTF8_TEXT_FILE_V1",
+          "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+          "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+          "sourceId": "b17adf6c-d7b6-4cfa-9af2-0201025d7849",
+          "representationId": "934f9157-7702-44b0-aa6d-65081c4d837c",
+          "operationId": "14b1f067-40bd-492c-973a-4d126d378faf",
+          "operationKey": "d3ac907a-8b79-4677-939c-9e351ee6c90b",
+          "operationSha256": "93021303a1d92e4770314eb5af82cf3cea77f6deb0adc1344b8f8811094758dd"
+        },
+        "sourceState": "PREPARED",
+        "qualification": "LOCAL_PROPOSED_COMMAND_IDENTITY_NOT_SERVER_SOURCE_PROOF"
       },
       {
         "kind": "FILE",
@@ -51,15 +61,25 @@
         "byteCount": 433,
         "sha256": "6a1ee8c1d59b603926523315563174f49cefc066ea96a45c8e028fc21e0a6af2",
         "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
-        "owningSourceId": null,
-        "owningRepresentationId": null,
+        "owningSourceId": "56d7c073-8235-47c9-a3c3-81c7d2c6ad99",
+        "owningRepresentationId": "63beacf3-0c63-4ed8-a2ce-639dafa73d71",
         "realC3InputId": "24dd338b-9568-4136-9b45-143540a794ac",
         "ordinal": 1,
         "acquisitionSource": "files",
-        "bindingId": null,
-        "queueOperationId": null,
-        "sourceCommandPin": null,
-        "sourceState": "SOURCE_OPERATION_NOT_PREPARED"
+        "bindingId": "a09f16ed-adf4-417b-953c-e5a4ab378d05",
+        "queueOperationId": "eb2197a3-a418-4366-9497-40016dcd9eb7",
+        "sourceCommandPin": {
+          "profile": "OTR_UTF8_TEXT_FILE_V1",
+          "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+          "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+          "sourceId": "56d7c073-8235-47c9-a3c3-81c7d2c6ad99",
+          "representationId": "63beacf3-0c63-4ed8-a2ce-639dafa73d71",
+          "operationId": "c06d4bcf-0372-47a4-b3b8-490a49c5f958",
+          "operationKey": "3f273d29-7f1d-4c0a-9bb3-e5a8b7c191e7",
+          "operationSha256": "f782c6e7b5c950af7f4efa02d00035a151dae99b5b03a897536d7b0d67bcaff7"
+        },
+        "sourceState": "PREPARED",
+        "qualification": "LOCAL_PROPOSED_COMMAND_IDENTITY_NOT_SERVER_SOURCE_PROOF"
       },
       {
         "kind": "TEXT",
@@ -68,21 +88,36 @@
         "byteCount": 172,
         "sha256": "e2fc3cf6fae139733cd7cf00fb1b058385870e33c6612b21b9ab1762bfe0e071",
         "contentProfile": "OTR_SUBMITTED_TEXT_V1",
-        "owningSourceId": null,
-        "owningRepresentationId": null,
+        "owningSourceId": "0562c0b1-83af-4945-8ce9-9df2c66ebb27",
+        "owningRepresentationId": "b6469013-35df-4b95-b2dc-e8a57d6da2f7",
         "realC3InputId": "47a8cd86-c74a-43de-89eb-6bda99f32885",
         "ordinal": 2,
         "acquisitionSource": "magic_input",
-        "bindingId": null,
-        "queueOperationId": null,
-        "sourceCommandPin": null,
-        "sourceState": "SOURCE_OPERATION_NOT_PREPARED"
+        "bindingId": "9bea5ea0-1ed8-46a7-928d-e1251774e7c2",
+        "queueOperationId": "cf4315b4-fc42-4894-80c2-9705d85022b1",
+        "sourceCommandPin": {
+          "profile": "OTR_SUBMITTED_TEXT_V1",
+          "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+          "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+          "sourceId": "0562c0b1-83af-4945-8ce9-9df2c66ebb27",
+          "representationId": "b6469013-35df-4b95-b2dc-e8a57d6da2f7",
+          "operationId": "2f0bb9b8-f38d-4d3b-b14c-ea5a88e26184",
+          "operationKey": "f2d73815-55f6-4be2-875c-ec267948cd33",
+          "operationSha256": "27f50931ea158269e76a907f74658642097cb9e1be0a294ec45c9698fdf0f324"
+        },
+        "sourceState": "PREPARED",
+        "qualification": "LOCAL_PROPOSED_COMMAND_IDENTITY_NOT_SERVER_SOURCE_PROOF"
       }
     ],
     "createdAt": "2026-10-24T08:37:09.370Z",
     "localReceipt": {
       "path": "docs/ops/universal-native-capture-pins-20261024/receipts/ACTUAL_C3_LOCAL_PINS.json",
       "sha256": "83e3aecbb997df0986df3cf52e643c2dfe8e8909aa5e8b144b8233f945f9e9cb",
+      "qualification": "LOCAL_C3_AND_EXISTING_COMMANDS_ONLY_NOT_SOURCE_PROOF"
+    },
+    "localCommandReceipt": {
+      "path": "native-receiver/ACTUAL_LOCAL_SOURCE_PINS.json",
+      "sha256": "03d9a5a32f4fab8467f8224ace90fee8be18d1646b2a5b9930859d6f74ab8221",
       "qualification": "LOCAL_C3_AND_EXISTING_COMMANDS_ONLY_NOT_SOURCE_PROOF"
     }
   },
@@ -122,14 +157,12 @@
   },
   "sqlCandidateSha256": {
     "backend/sql/universal_original_result_candidate.sql": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
-    "backend/sql/universal_original_source_candidate.sql": "53cf71671c8e69ed509f534c6c4d81dce0361f93713b6df62157aaf5e671df53",
+    "backend/sql/universal_original_source_candidate.sql": "b93a6648f2831597c43e07e8c89bebd9f3c8d3832bf158d13752f95f1263ecf4",
     "backend/sql/universal_provider_admission_candidate.sql": "365db344435020d52b397824bc8b03384d2c07360a61d978692dfcf0e785c372",
     "backend/sql/universal_source_host_candidate.sql": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
     "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95"
   },
   "blockers": [
-    "NORMAL_LOCAL_SOURCE_PREPARATION_AND_EXACT_COMMAND_PINS_REQUIRED",
-    "NATIVE_ERROR_CODE_FIX_SHA_AND_SEALED_RECEIVER_QUALIFICATION_REQUIRED",
     "OWNING_SOURCE_SQL_PREIMAGE_ACL_AND_READER_QUALIFICATION_REQUIRED",
     "UNIVERSAL_PROVIDER_CONFIG_PRICE_KILL_CREDENTIAL_QUALIFICATION_REQUIRED",
     "ACTUAL_BACKEND_TASK_CUSTODY_AND_FINITE_WINDOW_WATCHDOG_PINS_REQUIRED",
@@ -163,6 +196,20 @@
       "status": "PASS_LOCAL_L2_BOTH_P2_CLOSED",
       "reviewReceipt": "/private/tmp/otr-universal-native-pins-review-20261024/FIXED_REVIEW.json",
       "reviewReceiptSha256": "7b7bcbfb44766a3e00e51b7b09b6bc5d4658f9131e6b18dcebfefc3348ccc427"
+    },
+    "sourcePdfV4Compatibility": {
+      "code": "8222e47",
+      "writerCode": "422f2af00b19dfcde72d196fbcbfaab6c362b693",
+      "review": "SOURCE_COMPATIBILITY_REVIEW_PASS_NOT_DEV_EXECUTABLE",
+      "receipt": "source-pdf-v4-compat/review/INDEPENDENT_REVIEW.json",
+      "pdfPositiveE2E": "NOT_TESTED"
+    },
+    "nativeReceiverRepair": {
+      "review": "NATIVE_RECEIVER_AND_LOCAL_PREPARATION_BOUNDED_REVIEW_PASS",
+      "receipt": "native-receiver/FINAL_LOCAL_REVIEW.json",
+      "sha256": "e917d6544c9f365134cb3983f7ed7987247ed68689800145ffbbf5167b3fad62",
+      "nativeNormalFullButtonPath": "NOT_PASSED",
+      "formalSourceProof": false
     }
   },
   "closedDeployment": {
@@ -175,7 +222,7 @@
       "at": "2026-10-24T09:03:25Z",
       "source": "Coordinator actual Native normalAuth observation; not repeated by Writer"
     },
-    "nativeClientErrorCodeFixSha": null
+    "nativeClientErrorCodeFixSha": "ac8fd3d"
   },
   "scopeBindingRule": {
     "sourceCommandPins": "Derive only by existing normal Native C3/Source Repository preparation for the exact retained Batch+inputs; re-export and seal before any remote Source scope. No replacement UUID or SQL row seed.",
@@ -205,7 +252,7 @@
     "code": "ac8fd3d",
     "localTests": 25,
     "independentReview": "BOUNDED_REVIEW_PASS",
-    "actualRetest": "NOT_RUN_OLD_START_ALLOWANCE_CONSUMED"
+    "actualRetest": "ACTUAL_NORMAL_NATIVE_503_CODE_PRESERVED; FULL_POST_REPAIR_BUTTON_PATH_NOT_PASSED_READ_ALLOWANCE_EXHAUSTED"
   },
   "liveQualification": {
     "receipt": "receipts/ACTUAL_DEV_METADATA_QUALIFICATION.json",
@@ -215,10 +262,25 @@
     "devGlobalKillSwitch": true,
     "modelTaskAdmissionRelation": "ABSENT",
     "protectedModelTaskFunctions": "ABSENT",
-    "sourceRegisterPreimage": "EXACT_EXISTING_PDF_UPLOAD_V4_DIFFERENCE_COMPATIBILITY_PATCH_IN_PROGRESS",
+    "sourceRegisterPreimage": "EXACT_PDF_V4_COMPATIBILITY_REVIEW_PASS_LOCAL_NOT_INSTALLED",
     "markDispatchPreimage": "EXISTING_FLIGHT_FOUNDATION_20261007000100",
     "status": "BLOCKED_BY_UNDEPLOYED_OWNING_DEPENDENCIES_AND_PROVIDER_CONFIGURATION",
     "backendDeepSeekKeyPresent": false,
-    "sourceGateGuards": "EXISTING_PDF_V4_PREIMAGES_REQUIRE_COMPATIBILITY"
+    "sourceGateGuards": "EXACT_PDF_V4_COMPATIBILITY_REVIEW_PASS_LOCAL_NOT_INSTALLED",
+    "nativeReceiver": "ACTUAL_SIGNED_HOST_SESSION_RESTORED_FACTORY_READY_LOCAL_SOURCE_PREPARED_ONLY",
+    "adminDependenciesReceipt": "receipts/ACTUAL_ADMIN_DEPENDENCIES.json",
+    "devEnvironmentConfigVersion": 1,
+    "devRuntimeEnabled": false,
+    "syntheticActorAdminGrantCount": 0,
+    "adminGatewayLogin": false,
+    "existingCp15Dependencies": "PRESENT"
+  },
+  "nativeReadBudget": {
+    "originalAdditionalNativeLimit": 72,
+    "nativeConsumed": 72,
+    "operatorConsumed": 6,
+    "totalConsumed": 78,
+    "originalAdditionalTotal": 96,
+    "policy": "No reset/reallocation/bypass; new bounded Universal reads require exact Owner authorization."
   }
 }

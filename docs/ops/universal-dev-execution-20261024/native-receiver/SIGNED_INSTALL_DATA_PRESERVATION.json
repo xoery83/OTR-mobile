@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-24T10:22:58.518344+00:00",
+  "dataContainer": "/Users/xoery/Library/Developer/CoreSimulator/Devices/AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A/data/Containers/Data/Application/99C9CC3A-3D9F-4C04-B21E-00C964D3B799",
+  "unchanged": {
+    "Documents/SQLite/otr-mobile.db": true,
+    "Documents/SQLite/otr-mobile.db-wal": true,
+    "Documents/otr-native-qa-read-budget-v1.json": true
+  },
+  "beforeFirstLaunch": true,
+  "signedIdentifier": "com.xoery.otrmobile",
+  "entitlements": {},
+  "reset": false
+}

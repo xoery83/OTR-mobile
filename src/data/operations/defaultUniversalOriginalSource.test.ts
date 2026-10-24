@@ -103,3 +103,33 @@ it("missing native receiving authority blocks before any Source intent or dispat
   expect(f.plans).not.toHaveBeenCalled();
   expect(f.run).not.toHaveBeenCalled();
 });
+
+it("receiver diagnostics expose fixed stage metadata only and retain the failure", async () => {
+  vi.stubGlobal("__DEV__", true);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  const failure = Error("private content must never be logged");
+  const account = randomUUID(),
+    getAccountId = async () => account;
+  const context = await captureAccountRequestContext(randomUUID(), getAccountId);
+  f.native.mockRejectedValue(failure);
+  try {
+    await expect(
+      prepareDefaultUniversalCaptureSources(context, {} as CaptureJobReadModel, {
+        baseUrl: "https://api-dev.xoery.art",
+        getAccountId,
+        assertCurrent() {},
+      }),
+    ).rejects.toBe(failure);
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        event: "universal_source_native_receiver",
+        state: "UNAVAILABLE",
+      }),
+    );
+    expect(f.plans).not.toHaveBeenCalled();
+    expect(f.run).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+    vi.unstubAllGlobals();
+  }
+});

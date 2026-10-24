@@ -1,0 +1,13 @@
+{
+  "status": "SIGNED_SIMULATOR_IDENTITY_CORRECTION_VERIFIED_RUNTIME_SESSION_PENDING",
+  "correction": "Initial packaging review missed simulator-specific application-identifier because ordinary codesign entitlements and app.xcent were empty. The original ready-for-install conclusion was incomplete for SecureStore identity compatibility; original review is preserved, not rewritten.",
+  "actualFailureReportedByRoot": "SecureStore ERR_KEY_CHAIN / required-entitlement=true after unsigned build; database and read-ledger bytes preserved across container relocation.",
+  "independentChecks": [
+    "Baseline and candidate OTRMobile.app-Simulated.xcent both exactly application-identifier=U9D5C58Z94.com.xoery.otrmobile.",
+    "Baseline and candidate OTRMobile.app.xcent both empty dictionaries.",
+    "Final actual codesign Identifier=com.xoery.otrmobile, adhoc, bound Info.plist46 entries and Resources104 files match baseline signature metadata.",
+    "Final candidate codesign --verify --strict exits0."
+  ],
+  "scope": "Normal Simulator signing restored baseline identity, not new accessgroup/grant. No reviewer Native/Keychain/DEV operation. Actual original Session and receiver factory verification remain Coordinator runtime acceptance.",
+  "receiptSHA256": "66e42a8b6a58a33453b7d6a8056bc556464a92a0e0ed267cc68114c051b8318f"
+}

@@ -28,7 +28,22 @@ export async function prepareDefaultUniversalCaptureSources(
   const database = await openDatabase();
   const captures = await getDefaultLocalCaptureInboxRepository();
   const submissions = await getDefaultCaptureSubmissionRepository();
-  const fetchImplementation = await createPublicationCatalogNativeFetch();
+  const fetchImplementation = await createPublicationCatalogNativeFetch().catch(
+    (error) => {
+      if (typeof __DEV__ !== "undefined" && __DEV__)
+        console.info(
+          JSON.stringify({
+            event: "universal_source_native_receiver",
+            state: "UNAVAILABLE",
+          }),
+        );
+      throw error;
+    },
+  );
+  if (typeof __DEV__ !== "undefined" && __DEV__)
+    console.info(
+      JSON.stringify({ event: "universal_source_native_receiver", state: "READY" }),
+    );
   options.assertCurrent();
   const { sha256, now, newId } = captureStorageDependencies;
   const sources = createCaptureSourceAdmissionRepository(database, options.getAccountId, {

@@ -43,10 +43,7 @@ export function bindPublicationCatalogNativeDeadline(
 
 // Explicit dormant factory; no global fetch, application caller or caller-supplied capability flag.
 export async function createPublicationCatalogNativeFetch(): Promise<typeof fetch> {
-  const [{ requireNativeModule }, { Platform }] = await Promise.all([
-    import("expo"),
-    import("./publicationCatalogPlatform"),
-  ]);
+  const { requireNativeModule, Platform } = await import("./publicationCatalogPlatform");
   if (Platform.OS !== "ios") unavailable();
   let native: NativeReceiver;
   try {
