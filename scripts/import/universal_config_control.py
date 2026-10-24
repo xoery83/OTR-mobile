@@ -118,23 +118,31 @@ def activate_once(plan,sql,admin_sql=None,now=time.time):
         o,outcome=dispatch_once(a,x,sql,admin_sql,now);outcomes.append(outcome)
     return {'status':'FINITE_CONFIG_ACTIVE','writeDispositions':outcomes}
 
+def grant_identity_sql(r):
+    original={k:v for k,v in r.items() if k not in ['revoked_at','grant_revision','created_at','expires_at']}
+    return ("to_jsonb(g)-ARRAY['revoked_at','grant_revision','created_at','expires_at']="+quote(canonical(original).decode())+"::jsonb AND g.created_at="+quote(r['created_at'])+"::timestamptz AND g.expires_at="+quote(r['expires_at'])+"::timestamptz")
+
 def revoke_sql(a):
     guards=[];updates=[]
     for r in a['temporaryGrants']:
-        original=quote(canonical({k:v for k,v in r.items() if k not in ['created_at','expires_at']}).decode())+'::jsonb';key=quote(r['admin_grant_id'])+'::uuid'
-        exact="to_jsonb(g)-ARRAY['created_at','expires_at']="+original+" AND g.created_at="+quote(r['created_at'])+"::timestamptz AND g.expires_at="+quote(r['expires_at'])+"::timestamptz"
-        # Unknown prior writes are reconciled read-only; this is never rerun on UNKNOWN.
-        guards.append("PERFORM 1 FROM public.external_integration_admin_grants WHERE admin_grant_id="+key+" FOR UPDATE; IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE g.admin_grant_id="+key+" AND NOT ("+exact+")) OR NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE g.admin_grant_id="+key+") THEN RAISE EXCEPTION 'ADMIN_GRANT_DRIFT'; END IF;")
-        updates.append("UPDATE public.external_integration_admin_grants SET revoked_at=clock_timestamp(),grant_revision=grant_revision+1 WHERE admin_grant_id="+key+';')
-    guards.append("IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit AND rolvaliduntil="+quote(a['expiresAt'])+"::timestamptz) THEN RAISE EXCEPTION 'ADMIN_ROLE_DRIFT'; END IF;")
+        key=quote(r['admin_grant_id'])+'::uuid';exact=grant_identity_sql(r)
+        # A transaction may never have provisioned this ID. Present rows must be
+        # the exact active original or its exact once-revoked successor.
+        shape="("+exact+") AND ((g.revoked_at IS NULL AND g.grant_revision=1) OR (g.revoked_at IS NOT NULL AND g.grant_revision=2))"
+        guards.append("PERFORM 1 FROM public.external_integration_admin_grants WHERE admin_grant_id="+key+" FOR UPDATE; IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE g.admin_grant_id="+key+" AND NOT ("+shape+")) THEN RAISE EXCEPTION 'ADMIN_GRANT_DRIFT'; END IF;")
+        updates.append("UPDATE public.external_integration_admin_grants SET revoked_at=clock_timestamp(),grant_revision=grant_revision+1 WHERE admin_grant_id="+key+' AND revoked_at IS NULL AND grant_revision=1;')
+    ids=','.join(quote(r['admin_grant_id'])+'::uuid' for r in a['temporaryGrants'])
+    guards.append("IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants WHERE actor_id="+quote(a['actorId'])+"::uuid AND environment='DEV' AND revoked_at IS NULL AND admin_grant_id NOT IN ("+ids+")) THEN RAISE EXCEPTION 'ADMIN_FOREIGN_GRANT'; END IF;")
+    guards.append("IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit AND (NOT rolcanlogin OR rolvaliduntil="+quote(a['expiresAt'])+"::timestamptz)) THEN RAISE EXCEPTION 'ADMIN_ROLE_DRIFT'; END IF;")
+    guards.append("IF EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename='"+ADMIN+"' AND (backend_start<"+quote(a['startsAt'])+"::timestamptz OR backend_start>="+quote(a['expiresAt'])+"::timestamptz)) THEN RAISE EXCEPTION 'ADMIN_FOREIGN_SESSION'; END IF;")
     return ("BEGIN; SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(714024,3); DO $finite$ BEGIN "+''.join(guards)+" END $finite$; "+''.join(updates)+" ALTER ROLE "+ADMIN+" NOLOGIN; SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='"+ADMIN+"' AND backend_start>="+quote(a['startsAt'])+"::timestamptz AND backend_start<"+quote(a['expiresAt'])+"::timestamptz AND pid<>pg_backend_pid(); COMMIT;")
 
 def revoked_sql(a):
     grants=[]
     for r in a['temporaryGrants']:
-        original={k:v for k,v in r.items() if k not in ['revoked_at','grant_revision','created_at','expires_at']}
-        grants.append("EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE admin_grant_id="+quote(r['admin_grant_id'])+"::uuid AND to_jsonb(g)-ARRAY['revoked_at','grant_revision','created_at','expires_at']="+quote(canonical(original).decode())+"::jsonb AND created_at="+quote(r['created_at'])+"::timestamptz AND expires_at="+quote(r['expires_at'])+"::timestamptz AND revoked_at IS NOT NULL AND grant_revision=2)")
-    return "BEGIN READ ONLY; SELECT "+' AND '.join(grants+["NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND rolcanlogin)","NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename='"+ADMIN+"' AND backend_start>="+quote(a['startsAt'])+"::timestamptz AND backend_start<"+quote(a['expiresAt'])+"::timestamptz)"])+" AS closed; COMMIT;"
+        grants.append("NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE admin_grant_id="+quote(r['admin_grant_id'])+"::uuid AND NOT (("+grant_identity_sql(r)+") AND revoked_at IS NOT NULL AND grant_revision=2))")
+    grants += ["NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants WHERE actor_id="+quote(a['actorId'])+"::uuid AND environment='DEV' AND revoked_at IS NULL)","EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND NOT rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit)","NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename='"+ADMIN+"')"]
+    return "BEGIN READ ONLY; SELECT "+' AND '.join(grants)+" AS closed; COMMIT;"
 
 def restore_once(plan,sql,recover_only=False,now=time.time,admin_sql=None):
     a=validate_admin(plan)
@@ -143,12 +151,21 @@ def restore_once(plan,sql,recover_only=False,now=time.time,admin_sql=None):
         o=observe(a,sql)
         for x,key,baseline in [(a['restore'][0],'environment',a['environmentBaseline']),(a['restore'][1],'integration',None)]:
             current=o[key];c=x['command']
-            if current==baseline:continue
+            if current==baseline:
+                # Missing NEW integration is legal only before any of its commands
+                # is acknowledged. Never erase an UNKNOWN/acknowledged configure.
+                scoped=[y for y in a['activation']+a['restore'] if y['command']['integration_id']==a['integrationId']]
+                if key=='integration' and any(r['command_id'] in [y['command']['request_id'] for y in scoped] for r in o['audits']):return {'status':'RECONCILE_REQUIRED','adminClosed':False}
+                if key=='environment' and any(r['command_id'] in [a['activation'][4]['command']['request_id'],a['restore'][0]['command']['request_id']] for r in o['audits']):return {'status':'RECONCILE_REQUIRED','adminClosed':False}
+                continue
             if current=={'config_version':c['expected_version']+1,'kill_switch':True} and receipted(o,x):continue
-            if key=='integration' and current=={'config_version':1,'kill_switch':True}:continue
+            if key=='integration' and current=={'config_version':1,'kill_switch':True} and receipted(o,a['activation'][0]):continue
             if current!={'config_version':c['expected_version'],'kill_switch':False} or recover_only:return {'status':'RECONCILE_REQUIRED','adminClosed':False}
             o,_=dispatch_once(a,x,sql,admin_sql,now)
             if o[key]!={'config_version':c['expected_version']+1,'kill_switch':True}:return {'status':'RECONCILE_REQUIRED','adminClosed':False}
+        if o['integration'] is None and o['environment']==a['environmentBaseline'] and not o['audits']:
+            initial=sql(revoked_sql(a));rows=initial if isinstance(initial,list) else initial.get('rows')
+            if rows==[{'closed':True}]:return {'status':'CLOSED_VERIFIED','adminClosed':True}
         if not recover_only:
             try:sql(revoke_sql(a))
             except Exception:pass

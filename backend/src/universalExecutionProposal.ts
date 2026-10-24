@@ -100,44 +100,49 @@ export async function buildUniversalExecutionProposal(
     ...ids.runInputIds,
   ];
   if (new Set(values).size !== values.length) throw Error("PROPOSED_IDENTITY_REUSED");
+  if (ids.runInputIds.some((id, index) => id !== r.inputs[index].inputId))
+    throw Error("ACTUAL_SOURCE_INPUT_BINDING_CHANGED");
   const seen = new Set<string>();
-  const representations = r.inputs.map((i, n) => {
-    const p = i.sourceCommandPin,
-      b = originals.get(i.inputId);
-    if (
-      i.ordinal !== n ||
-      p.actorId !== r.accountId ||
-      p.tripId !== r.tripId ||
-      !b ||
-      b.length !== i.byteCount ||
-      hash(b) !== i.sha256 ||
-      !Buffer.from(b.toString("utf8")).equals(b) ||
-      b.includes(0) ||
-      seen.has(p.sourceId) ||
-      seen.has(p.representationId)
-    )
-      throw Error("ACTUAL_SOURCE_INPUT_BINDING_CHANGED");
-    if (
-      (i.kind === "FILE") !== (p.profile === "OTR_UTF8_TEXT_FILE_V1") ||
-      (i.kind === "FILE") !== (i.acquisitionSource === "files") ||
-      (i.kind === "TEXT" && i.originalFilename !== null)
-    )
-      throw Error("SOURCE_PROFILE_CHANGED");
-    seen.add(p.sourceId);
-    seen.add(p.representationId);
-    return {
-      accountId: r.accountId,
-      tripId: r.tripId,
-      batchId: r.batchId,
-      inputId: ids.runInputIds[n],
-      sourceId: p.sourceId,
-      representationId: p.representationId,
-      revision: 1,
-      originalSha256: i.sha256,
-      mime: "text/plain",
-      bytes: b,
-    };
-  });
+  const representations = r.inputs
+    .map((i, n) => {
+      const p = i.sourceCommandPin,
+        b = originals.get(i.inputId);
+      if (
+        i.ordinal !== n ||
+        p.actorId !== r.accountId ||
+        p.tripId !== r.tripId ||
+        !b ||
+        b.length !== i.byteCount ||
+        hash(b) !== i.sha256 ||
+        !Buffer.from(b.toString("utf8")).equals(b) ||
+        b.includes(0) ||
+        seen.has(p.sourceId) ||
+        seen.has(p.representationId)
+      )
+        throw Error("ACTUAL_SOURCE_INPUT_BINDING_CHANGED");
+      if (
+        (i.kind === "FILE") !== (p.profile === "OTR_UTF8_TEXT_FILE_V1") ||
+        (i.kind === "FILE") !== (i.acquisitionSource === "files") ||
+        (i.kind === "TEXT" && i.originalFilename !== null)
+      )
+        throw Error("SOURCE_PROFILE_CHANGED");
+      seen.add(p.sourceId);
+      seen.add(p.representationId);
+      return {
+        accountId: r.accountId,
+        tripId: r.tripId,
+        batchId: r.batchId,
+        inputId: ids.runInputIds[n],
+        sourceId: p.sourceId,
+        representationId: p.representationId,
+        revision: 1,
+        originalSha256: i.sha256,
+        mime: "text/plain",
+        bytes: b,
+      };
+    })
+    .sort((a, b) => (a.inputId < b.inputId ? -1 : a.inputId > b.inputId ? 1 : 0));
+  // The owning reader orders trip_source_inputs by id; freeze identical aliases/body pins.
   if (originals.size !== 3) throw Error("EXACT_THREE_ORIGINALS_REQUIRED");
   const inputPins = representations.map((x) => ({
     kind: "SOURCE" as const,

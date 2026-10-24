@@ -1,0 +1,27 @@
+{
+  "status": "OOM_NULL_TO_FALSE_COMPATIBILITY_NOT_SECURITY_RELAXATION",
+  "finding": null,
+  "scope": "Only OomKillDisable:null -> false, contingent on recorded actual raw diff having no other unapproved fields",
+  "primaryEvidence": [
+    {
+      "url": "https://raw.githubusercontent.com/moby/moby/v27.5.1/daemon/daemon_unix.go",
+      "lines": "337-339",
+      "fact": "Moby defaults nil OomKillDisable to an explicit false pointer."
+    },
+    {
+      "url": "https://docs.docker.com/engine/containers/resource_constraints/",
+      "fact": "OOM killer enabled by default; oom-kill-disable disables it."
+    }
+  ],
+  "gateInterpretation": {
+    "source": "docs/ops/universal-dev-execution-20261024/OWNER_ACTIVATION_GATE.md:21",
+    "exactClause": "Recreate the same accepted image with an exact temporary RO capability and dedicated Backend custody RW mount; preserve baseline environment except approved Universal additions.",
+    "conclusion": "No explicit active nullable HostConfig byte-identity requirement in this clause. The one field encoding change preserves default OOM-killer behavior, not a privilege/protection expansion."
+  },
+  "conditions": [
+    "Record actual active rawHostConfig SHA and exact diff false; do not claim unchanged raw bytes or normalize unrelated drift.",
+    "Image, original environment except approved additions, original four mounts, privileges and all other resource/security settings must remain exactly scoped.",
+    "Retained original container remains authoritative rollback; final rawHostConfig must restore original null exactly."
+  ],
+  "boundary": "No DEV/GUI or activation performed by reviewer; technical official-source check only. No broader deployment/Provider authority granted."
+}

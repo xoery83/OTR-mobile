@@ -3,11 +3,11 @@
   "unitTests": 33,
   "isolatedPgChecks": 6,
   "files": {
-    "scripts/import/universal_config_control.py": "6e4b868eb91517b2c01478f44b7b6e0a91be3e2d96d055586789dcdc370a1e26",
+    "scripts/import/universal_config_control.py": "4ac0e98efba073fa653d1059b763fd764707a1371c4aab6747fe13dfd8f21958",
     "scripts/import/universal_scope_close.py": "812a8d583f07e1b09903730f3f0d8acd873b2627c3939fb65c43f8a8a2694212",
     "scripts/import/universal_watchdog.py": "6b0ebed6116dd7a7909e7fe82a2a3f94d538db66c4b04d3b79ebf5ee336eeb6f",
-    "scripts/import/universal_runtime_close.py": "195d07eb35984df210dfb87a6eaeef0119e06f4dc3b05d6fc6db0c1736a7c98c",
-    "scripts/import-workbench/universal-config-sql-acceptance.py": "d9dd10b071705be4b118173daf565588284e05ecc53b2d58e00b54023bf15f2f"
+    "scripts/import/universal_runtime_close.py": "45146faff622c46b3cfa201cc5ebf983a6761ad1f8bf07e4a76974ba1826a3e3",
+    "scripts/import-workbench/universal-config-sql-acceptance.py": "6e7b91322450f624f5631d28d18553ef4c5f40482c4ccd55f6e6b1c2650ab83b"
   },
   "hostedWrites": 0,
   "providerCalls": 0,
@@ -18,5 +18,7 @@
   "reviewSha256": "1a6749e6990886e52729b4616cc037f06fb548f4ad0b9066d1ca1a4298d7eb3d",
   "sshTransportWriter": "c822e36eb54f3272746fcdcdb1ec1a8aa289dbe4",
   "sshTransportReview": "0557b3ea495420639b1953861a36a6576ec4314d5988eee0497a739df8509be9",
-  "exactPidReview": "6c65622361657456d7be1f6196dc17cfd265d65c012d9be8db9a2903e6a0238e"
+  "exactPidReview": "6c65622361657456d7be1f6196dc17cfd265d65c012d9be8db9a2903e6a0238e",
+  "partialProvisionClosureWriter": "8798a8b",
+  "partialProvisionClosureReview": "8288636c31f294490404fb604806c34bc6745ef1c08ea9fcc31b2e402169171a"
 }

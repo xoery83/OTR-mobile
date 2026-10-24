@@ -73,7 +73,7 @@ function fixture() {
     idempotencyKey: randomUUID(),
     requestMaterialReference: randomUUID(),
     fallbackChainId: randomUUID(),
-    runInputIds: [randomUUID(), randomUUID(), randomUUID()],
+    runInputIds: inputs.map((input) => input.inputId),
   };
   const facts = {
     integrationId: "ISOLATED_ONLY",
@@ -214,3 +214,23 @@ it("actual no-network CLI seals only exact receipt hash, refuses overwrite, leav
     rmSync(root, { recursive: true, force: true });
   }
 }, 30000);
+
+it("preserves actual Native input identities through owning Run inputs and Results", async () => {
+  const f = fixture();
+  const output = await buildUniversalExecutionProposal(
+    f.receipt,
+    f.ids,
+    f.facts,
+    f.originals,
+  );
+  expect(output.runInputProposal.map((input) => input.id)).toEqual(
+    f.receipt.inputs.map((input) => input.inputId).sort(),
+  );
+  expect(output.task.input_pins.map((pin) => pin.input_id)).toEqual(
+    f.receipt.inputs.map((input) => input.inputId).sort(),
+  );
+  f.ids.runInputIds[0] = randomUUID();
+  await expect(
+    buildUniversalExecutionProposal(f.receipt, f.ids, f.facts, f.originals),
+  ).rejects.toThrow("ACTUAL_SOURCE_INPUT_BINDING_CHANGED");
+});

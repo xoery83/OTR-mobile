@@ -50,12 +50,6 @@ try:
       'grantorActorId':actor,'reasonCode':a['activation'][0]['command']['reason_code'],
       'integrationRow':i,'providerRow':cfg,'priceRow':price,'priceUnits':a['activation'][2]['command']['units']}
     p.pop('adminControl');p=build_admin_plan(p,facts);a=p['adminControl']
-    for g in a['temporaryGrants']:
-        # Isolated pre-existing fixture permission is replaced with this exact finite grant.
-        g['actor_id']=actor;g['created_by']=actor
-        sql("insert into public.external_integration_admin_grants select (jsonb_populate_record(null::public.external_integration_admin_grants,"+ns['literal'](g)+")).*;")
-    sql("alter role otr_external_integration_admin_gateway login password 'ISOLATED_SYNTHETIC_NO_DEV_CREDENTIAL' valid until '"+a['expiresAt']+"';")
-    rehash(p);validate_admin(p);checks=[]
     def transport(q):
         result=sql(q,'postgres',True)
         if result.returncode:
@@ -64,6 +58,35 @@ try:
     def wrapped(q):
         result=transport(q)
         return [{'observation':result}] if 'AS observation' in q else [{'closed':result=='t'}] if ' AS closed;' in q else [{'ready':result=='t'}] if ' AS ready;' in q else result
+    checks=[]
+    # Arm-before-provision: original empty grants + NOLOGIN is already closed.
+    assert restore_once(p,wrapped)['status']=='CLOSED_VERIFIED'
+    checks.append('never-activated empty integration/grants and NOLOGIN confirmed closed without provisioning')
+    partial=json.loads(json.dumps(p).replace(actor,ns['other']));pa=partial['adminControl']
+    for x in pa['activation']+pa['restore']:
+        c=x['command'];c['request_sha256']=hashlib.sha256(canonical({'domain':'otr-cp14-command-v1','command':{k:v for k,v in c.items() if k!='request_sha256'}})).hexdigest();x['context']['request_sha256']=c['request_sha256']
+    for g in pa['temporaryGrants']:g['admin_grant_id']=str(uuid.uuid4())
+    g=pa['temporaryGrants'][0]
+    sql("insert into public.external_integration_admin_grants select (jsonb_populate_record(null::public.external_integration_admin_grants,"+ns['literal'](g)+")).*;")
+    sql("alter role otr_external_integration_admin_gateway login password 'ISOLATED_SYNTHETIC_NO_DEV_CREDENTIAL' valid until '"+pa['expiresAt']+"';")
+    drift=copy.deepcopy(partial);drift['adminControl']['temporaryGrants'][0]['created_by']=str(uuid.uuid4())
+    assert restore_once(drift,wrapped)['status']=='RECONCILE_REQUIRED'
+    assert sql("select revoked_at is null from public.external_integration_admin_grants where admin_grant_id='"+g['admin_grant_id']+"';").stdout.strip()=='t'
+    foreign=copy.deepcopy(pa['temporaryGrants'][1]);foreign['admin_grant_id']=str(uuid.uuid4())
+    sql("insert into public.external_integration_admin_grants select (jsonb_populate_record(null::public.external_integration_admin_grants,"+ns['literal'](foreign)+")).*;")
+    assert restore_once(partial,wrapped)['status']=='RECONCILE_REQUIRED'
+    assert sql("select revoked_at is null from public.external_integration_admin_grants where admin_grant_id='"+g['admin_grant_id']+"';").stdout.strip()=='t'
+    # Disposable fixture owner withdraws its foreign grant; control never touches it.
+    sql("update public.external_integration_admin_grants set revoked_at=clock_timestamp(),grant_revision=2 where admin_grant_id='"+foreign['admin_grant_id']+"';")
+    assert restore_once(partial,wrapped)['status']=='CLOSED_VERIFIED'
+    assert restore_once(partial,wrapped,recover_only=True)['status']=='CLOSED_VERIFIED'
+    checks.append('pre-configure one-grant partial provisioning revoked exactly; absent second grant accepted, drift/foreign grant rejected without mutation')
+    for g in a['temporaryGrants']:
+        # Isolated pre-existing fixture permission is replaced with this exact finite grant.
+        g['actor_id']=actor;g['created_by']=actor
+        sql("insert into public.external_integration_admin_grants select (jsonb_populate_record(null::public.external_integration_admin_grants,"+ns['literal'](g)+")).*;")
+    sql("alter role otr_external_integration_admin_gateway login password 'ISOLATED_SYNTHETIC_NO_DEV_CREDENTIAL' valid until '"+a['expiresAt']+"';")
+    rehash(p);validate_admin(p)
     def admin_transport(q):
         # Actual dedicated fixture LOGIN; local trusted socket, no copied Auth/session/secret.
         r=subprocess.run(['docker','exec','-i','-e','PGPASSWORD=ISOLATED_SYNTHETIC_NO_DEV_CREDENTIAL',NAME,'psql','-h','127.0.0.1','-X','-qAt','-v','ON_ERROR_STOP=1','-U','otr_external_integration_admin_gateway','-d','universal_config_clean'],input=q,text=True,capture_output=True)

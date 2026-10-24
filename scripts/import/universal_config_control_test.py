@@ -41,6 +41,31 @@ class ConfigTests(unittest.TestCase):
         for mutation in [lambda p:p['adminControl']['restore'][0]['command'].update(expected_version=9),lambda p:p['adminControl']['activation'][0]['command']['row'].update(kill_switch=False),lambda p:p['adminControl']['activation'][1]['command']['row'].update(schema_contracts=[{'id':'flight','version':1,'dialect':'otr'}])]:
             q=copy.deepcopy(p);mutation(q)
             with self.assertRaises(ValueError):validate_admin(q)
+    def test_never_activated_baseline_is_confirmed_read_only(self):
+        p=fixture();a=p['adminControl'];base=[{'observation':{'environment':a['environmentBaseline'],'integration':None,'audits':[]}}]
+        for readonly in [False,True]:
+            sql=Mock(side_effect=[base,[{'closed':True}]])
+            self.assertTrue(restore_once(p,sql,recover_only=readonly)['adminClosed'])
+            self.assertTrue(all('BEGIN READ ONLY' in c.args[0] for c in sql.call_args_list))
+    def test_provisioned_grants_before_configure_are_exactly_revoked(self):
+        p=fixture();a=p['adminControl'];base=[{'observation':{'environment':a['environmentBaseline'],'integration':None,'audits':[]}}]
+        sql=Mock(side_effect=[base,[{'closed':False}],[],[{'closed':True}]])
+        self.assertTrue(restore_once(p,sql)['adminClosed']);self.assertIn('ADMIN_FOREIGN_GRANT',sql.call_args_list[2].args[0])
+        admin=Mock();sql=Mock(side_effect=[base,[{'closed':False}],[{'closed':False}]])
+        self.assertFalse(restore_once(p,sql,recover_only=True,admin_sql=admin)['adminClosed']);admin.assert_not_called()
+        self.assertTrue(all('BEGIN READ ONLY' in c.args[0] for c in sql.call_args_list))
+    def test_missing_integration_with_acknowledged_configure_is_not_closed(self):
+        p=fixture();a=p['adminControl'];x=a['activation'][0];c=x['command']
+        receipt={'command_id':c['request_id'],'admin_actor_id':a['actorId'],'new_version':1,'safe_diff':{'request_sha256':c['request_sha256'],'command_kind':x['kind'],'scope_sha256':context_scope_hash(x['context'])}}
+        for integration in [None,{'config_version':1,'kill_switch':True}]:
+            audits=[receipt] if integration is None else []
+            sql=Mock(return_value=[{'observation':{'environment':a['environmentBaseline'],'integration':integration,'audits':audits}}])
+            self.assertFalse(restore_once(p,sql)['adminClosed']);self.assertEqual(sql.call_count,1)
+    def test_configured_closed_integration_requires_owning_receipt(self):
+        p=fixture();a=p['adminControl'];x=a['activation'][0];c=x['command']
+        receipt={'command_id':c['request_id'],'admin_actor_id':a['actorId'],'new_version':1,'safe_diff':{'request_sha256':c['request_sha256'],'command_kind':x['kind'],'scope_sha256':context_scope_hash(x['context'])}}
+        sql=Mock(side_effect=[[{'observation':{'environment':a['environmentBaseline'],'integration':{'config_version':1,'kill_switch':True},'audits':[receipt]}}],[],[{'closed':True}]])
+        self.assertTrue(restore_once(p,sql)['adminClosed']);self.assertIn('ADMIN_GRANT_DRIFT',sql.call_args_list[1].args[0])
     def test_unknown_restore_reconciles_without_retry_then_revokes(self):
         p=fixture();a=p['adminControl'];env={'config_version':3,'kill_switch':True};both=observation(p,env,{'config_version':3,'kill_switch':True},a['restore'])
         sql=Mock(side_effect=[observation(p),RuntimeError('UNKNOWN'),observation(p,env,receipts=[a['restore'][0]]),[],both,[],[{'closed':True}]])
