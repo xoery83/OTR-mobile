@@ -1,0 +1,24 @@
+{
+  "fixedSha": "9deccc81872c575ca31a097375d08acb269a5401",
+  "qaAllowlistFix": "b4bc798",
+  "status": "PASS_LOCAL_L2_BOTH_P2_CLOSED",
+  "closedFindings": [
+    "P2_NATIVE_PINS_01",
+    "P2_NATIVE_PINS_02"
+  ],
+  "openFindings": [],
+  "validation": {
+    "actualBundledReadonlySqliteTests": 4,
+    "actualLoopbackIdleExpiryTests": 1,
+    "loopbackTestDurationSeconds": 1.123,
+    "approvedExpectedFileSHA256": "318dac3f8ed0a2153f097fdc80411d34bae25adb8f1ecadb6c91ec4bed92cdc6"
+  },
+  "scope": [
+    "CLI checks exact expected-file bytes hash before opening SQLite; changed list/job input whitelist rejects without export/write.",
+    "Threaded daemon handlers have shared deadline, socket timeout and response expiry check; idle connection cannot block process expiry.",
+    "Only known synthetic originals are served; original readonly/proof boundaries unchanged."
+  ],
+  "DEV": false,
+  "NativeGUI": false,
+  "ProviderCalls": 0
+}

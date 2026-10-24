@@ -30,7 +30,7 @@
       {
         "kind": "FILE",
         "originalFilename": "universal-mixed-bookings-utf8.txt",
-        "path": "/private/tmp/otr-universal-qa-20261024/universal-mixed-bookings-utf8.txt",
+        "path": "docs/ops/universal-dev-execution-20261024/qa-originals/universal-mixed-bookings-utf8.txt",
         "byteCount": 1598,
         "sha256": "5db86cb62b681cc69eeee224f4af940cf10de5df6daa165102b3a37454a35592",
         "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
@@ -41,7 +41,7 @@
       {
         "kind": "FILE",
         "originalFilename": "lodging-supplement.txt",
-        "path": "/private/tmp/otr-universal-native-first-source-20261024/docs/ops/universal-dev-execution-20261024/qa-originals/lodging-supplement.txt",
+        "path": "docs/ops/universal-dev-execution-20261024/qa-originals/lodging-supplement.txt",
         "byteCount": 433,
         "sha256": "6a1ee8c1d59b603926523315563174f49cefc066ea96a45c8e028fc21e0a6af2",
         "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
@@ -52,7 +52,7 @@
       {
         "kind": "TEXT",
         "originalFilename": null,
-        "path": "/private/tmp/otr-universal-qa-20261024/submitted-user-text.txt",
+        "path": "docs/ops/universal-dev-execution-20261024/qa-originals/submitted-user-text.txt",
         "byteCount": 172,
         "sha256": "e2fc3cf6fae139733cd7cf00fb1b058385870e33c6612b21b9ab1762bfe0e071",
         "contentProfile": "OTR_SUBMITTED_TEXT_V1",
@@ -98,9 +98,8 @@
     "REAL_NATIVE_C3_BATCH_SOURCE_COMMAND_PINS_REQUIRED",
     "NORMAL_QA_AUTH_ACTOR_TRIP_READER_QUALIFICATION_REQUIRED",
     "FINITE_PROVIDER_CONFIG_PRICE_CREDENTIAL_QUALIFICATION_REQUIRED",
-    "INDEPENDENT_SCOPE_AND_RUNTIME_CLOSE_PACKAGE_REQUIRED",
-    "EXACT_OWNER_DEPLOYMENT_SQL_PROVIDER_AUTHORIZATION_REQUIRED",
-    "INDEPENDENT_PACKAGE_REVIEW_PENDING"
+    "FINITE_WINDOW_SERVICE_ROLE_PREIMAGES_AND_WATCHDOG_ARMING_REQUIRED",
+    "EXACT_OWNER_DEPLOYMENT_SQL_PROVIDER_AUTHORIZATION_REQUIRED"
   ],
   "claims": {
     "sourceRegistration": false,
@@ -111,5 +110,25 @@
   },
   "imageSourceHead": "157bb95879836d8d06a2d7d93dc29a5d6a0c262f",
   "sharedBaseline": "ce3a44b",
-  "packagingDockerfileSha256": "11ea0e3329ce5fe90828bd73f98c829c6e2c66a6ab7092ab9c1740f5c5a09d5e"
+  "packagingDockerfileSha256": "11ea0e3329ce5fe90828bd73f98c829c6e2c66a6ab7092ab9c1740f5c5a09d5e",
+  "reviewedLocalPreparation": {
+    "closedPackage": {
+      "fixedSha": "bf080ba7939cba0082557801f1b6e36537fa51e0",
+      "status": "PASS_BOUNDED_LOCAL_CLOSED_PACKAGE",
+      "reviewReceipt": "/private/tmp/otr-universal-dev-package-review-20261024/INDEPENDENT_REVIEW.json",
+      "reviewReceiptSha256": "9ae6a29c36806714e55bfc9430d23d2f7a1ff563445bbc51b5f163c00a3e1d99"
+    },
+    "finiteCloseWatchdog": {
+      "fixedSha": "92acdd12b0d2502e6148e91eed24d2e57caab093",
+      "status": "PASS_LOCAL_L2_FIXED_P2",
+      "reviewReceipt": "/private/tmp/otr-universal-close-review-20261024/FIXED_REVIEW.json",
+      "reviewReceiptSha256": "3ead2c5833b2d400729a2d77390ff42906eee9ce9f89156f5bddbe15041a0d95"
+    },
+    "nativePinCollection": {
+      "fixedSha": "9deccc81872c575ca31a097375d08acb269a5401",
+      "status": "PASS_LOCAL_L2_BOTH_P2_CLOSED",
+      "reviewReceipt": "/private/tmp/otr-universal-native-pins-review-20261024/FIXED_REVIEW.json",
+      "reviewReceiptSha256": "7b7bcbfb44766a3e00e51b7b09b6bc5d4658f9131e6b18dcebfefc3348ccc427"
+    }
+  }
 }

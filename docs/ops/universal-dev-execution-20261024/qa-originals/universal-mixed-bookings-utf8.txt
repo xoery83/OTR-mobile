@@ -1,0 +1,32 @@
+DEVELOPMENT QA ITINERARY AND BOOKING OBSERVATIONS
+All names and references below are synthetic. This document is not valid for travel, admission or payment.
+
+Flight booking confirmation: QA-FLIGHT-20261024
+Airline: Air New Zealand. Flight number: NZ9997.
+Departure: Auckland Airport (AKL), 2026-11-02 09:00 Pacific/Auckland.
+Arrival: Wellington Airport (WLG), 2026-11-02 10:05 Pacific/Auckland.
+
+Hotel booking confirmation: QA-STAY-20261024
+Hotel: Harbour QA Hotel, Wellington, New Zealand.
+Check-in: 2026-11-02 15:00 Pacific/Auckland.
+Check-out: 2026-11-04 11:00 Pacific/Auckland.
+Room: one queen room; breakfast included.
+
+Car rental confirmation: QA-CAR-20261024
+Supplier: Harbour QA Rentals. Vehicle class: compact hatchback.
+Pickup: Wellington Airport, 2026-11-02 10:30 Pacific/Auckland.
+Return: Wellington Airport, 2026-11-04 15:00 Pacific/Auckland.
+
+Train reservation and ticket observation: QA-RAIL-20261024
+Train number: QA105. Wellington Station to Palmerston North Station.
+Departure: 2026-11-03 10:00 Pacific/Auckland.
+Arrival: 2026-11-03 12:00 Pacific/Auckland. Seat: coach B, seat 7A.
+Ticket display reference: QA-RAIL-TICKET. No real ticket entitlement exists.
+
+Activity reservation and ticket observation: QA-ACTIVITY-20261024
+Activity: QA museum guided tour. Location: Wellington, New Zealand.
+Start: 2026-11-04 13:00 Pacific/Auckland. End: 2026-11-04 14:00 Pacific/Auckland.
+Ticket display reference: QA-TOUR-TICKET. No real ticket entitlement exists.
+
+Itinerary note: Waterfront morning walk, 2026-11-03 08:00, Wellington waterfront.
+Meet outside the hotel lobby before walking.

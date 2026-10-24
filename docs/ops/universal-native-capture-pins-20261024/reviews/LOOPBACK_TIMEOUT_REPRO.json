@@ -1,0 +1,7 @@
+{
+  "secondsRequested": 1,
+  "idleLocalConnection": "connected without HTTP request bytes",
+  "stillRunningAfterTwoSeconds": true,
+  "exitedAfterIdleClientClosed": true,
+  "noOtherServiceTouched": true
+}

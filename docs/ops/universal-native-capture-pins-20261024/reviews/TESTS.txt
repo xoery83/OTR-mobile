@@ -1,0 +1,13 @@
+
+> otr-mobile@0.1.0 test
+> vitest run --configLoader runner src/data/operations/universalCapturePins.test.ts src/data/operations/universalOriginalBatch.test.ts
+
+
+ RUN  v4.1.11 /private/tmp/otr-universal-native-pins-review-20261024/snapshot
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:45:57
+   Duration  1.62s (transform 230ms, setup 0ms, import 356ms, tests 1.19s, environment 0ms)
+
