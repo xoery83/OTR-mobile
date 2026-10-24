@@ -18,6 +18,12 @@ def remote_locked(p,action,secret):
     def mounts(s): return sorted([(m['Source'],m['Destination'],m['RW']) for m in s['Mounts']])
     def canonical(v): return hashlib.sha256(json.dumps(v,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     def instant(v): return datetime.datetime.fromisoformat(v.replace('Z','+00:00')).timestamp()
+    sustained = p.get('runtimeKind') == 'SUSTAINED_TRIP_P1'
+    if sustained:
+        assert p.get('approvedGateSHA256') == '0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0'
+        assert 0 < instant(p['expiresAt'])-instant(p['startsAt']) <= 900
+        assert len(p.get('sustainedRuntimeSHA256','')) == 64
+        if action == 'activate': assert instant(p['expiresAt'])-time.time() >= 240
     root=Path('/opt/otr/dev-backend/env/c-finite-'+p['windowId'])
     before=current(); baseline=p['baseline']; expectedMounts=sorted([(m['source'],m['destination'],m['rw']) for m in baseline['mounts']])
     if action=='activate':
@@ -25,7 +31,7 @@ def remote_locked(p,action,secret):
     assert before['Image']==p['image'] and before['Config']['User']=='otr' and before['Config']['Cmd']==['node','server-capture.mjs']
     assert baseline['environmentSHA256']=='cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f'
     assert canonical(env(before))==baseline['environmentSHA256']
-    assert canonical(baseline['hostConfig'])=='f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0'
+    assert canonical(baseline['hostConfig'])==('2ea3f3786cae510e0c6b4f8509df83d8a1afd612d72fc8ab7ace2f3f9d9a0d6a' if sustained else 'f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0')
     if action=='activate':
         assert before['State'].get('Health',{}).get('Status')=='healthy'
         assert hashlib.sha256(subprocess.check_output(['docker','exec','otr-dev-backend','cat','/app/server-capture.mjs'],timeout=8)).hexdigest()==p['bundle']
@@ -47,7 +53,20 @@ def remote_locked(p,action,secret):
     assert mounts(before)==sorted(expectedMounts+[(m['Source'],m['Destination'],m['RW']) for m in extras])
     # A delayed old watchdog cannot touch another window's mounts/config/container.
     assert all(m['Source'].startswith(str(root)+'/') and m['RW'] is False for m in extras)
-    beforeNormalized=dict(before['HostConfig']); beforeNormalized['Binds']=baseline['hostConfig']['Binds']
+    def normalize_owned_host(value):
+        result=dict(value); result['Binds']=baseline['hostConfig']['Binds']
+        if sustained and result.get('Mounts') != baseline['hostConfig'].get('Mounts'):
+            remaining=[]; added=[]
+            for mount in result.get('Mounts',[]):
+                if mount.get('Target')=='/run/otr/trip-create-runtime.json':
+                    assert mount.get('Source')==str(root/'create.json') and mount.get('Type')=='bind' and mount.get('ReadOnly') is True
+                    assert set(mount)<= {'Type','Source','Target','ReadOnly','BindOptions'} and mount.get('BindOptions',{}) in ({},{'CreateMountpoint':True})
+                    added.append(mount)
+                else: remaining.append(mount)
+            assert len(added)==1
+            result['Mounts']=remaining
+        return result
+    beforeNormalized=normalize_owned_host(before['HostConfig'])
     assert host_config(beforeNormalized)==host_config(baseline['hostConfig'])
     identity=root/'window.json'
     if root.exists():
@@ -67,10 +86,16 @@ def remote_locked(p,action,secret):
         if logs.returncode: raise RuntimeError('C_DIAGNOSTIC_GAP')
         secretEnvironment=env(before)
         if secret.get('password'): secretEnvironment['C_NEW_PASSWORD']=secret['password']
+        if sustained and isinstance(secret.get('runtime'),dict):
+            for key in ('tripPg','metadataPg','corePg','personPg'):
+                secretEnvironment['C_NEW_'+key+'_PASSWORD']=secret['runtime'].get(key,{}).get('password','')
         for k in ('create','metadata'):
             runtime=root/(k+'.json')
             if runtime.exists():
                 cfg=json.loads(runtime.read_text()); secretEnvironment['C_'+k+'_PASSWORD']=cfg['tripPg' if k=='create' else 'metadataPg']['password']
+                if cfg.get('version') == 3:
+                    for key in ('tripPg','metadataPg','corePg','personPg'):
+                        secretEnvironment['C_'+key+'_PASSWORD']=cfg.get(key,{}).get('password','')
         result=diagnostics(snapshot,logs.stdout+logs.stderr,env(before),os.urandom(32))
         def clean(value):
             if isinstance(value,str): return redact(value,secretEnvironment)
@@ -99,8 +124,18 @@ def remote_locked(p,action,secret):
             assert hashlib.sha256(custody).hexdigest()==baseline['custodySHA256'] and instant(json.loads(custody)['expiresAt'])<=time.time()
             kind=secret['kind']; assert kind in ('create','metadata')
             runtime=root/(kind+'.json'); assert not runtime.exists()
-            request=p['payloads']['create' if kind=='create' else 'editProposal']['body']
-            config={'version':1,'enabled':True,'expiresAt':p['expiresAt'],'actorAccountId':p['actorIds']['A'],'request':request,('tripPg' if kind=='create' else 'metadataPg'):{'host':'db.tuqigdxrvrerfewsxqgm.supabase.co','port':5432,'database':'postgres','password':secret['password'],'ca':p['databaseCA']}}
+            request=None if sustained else p['payloads']['create' if kind=='create' else 'editProposal']['body']
+            config=secret['runtime'] if sustained else {'version':1,'enabled':True,'expiresAt':p['expiresAt'],'actorAccountId':p['actorIds']['A'],'request':request,('tripPg' if kind=='create' else 'metadataPg'):{'host':'db.tuqigdxrvrerfewsxqgm.supabase.co','port':5432,'database':'postgres','password':secret['password'],'ca':p['databaseCA']}}
+            if sustained:
+                assert kind == 'create'
+                config = secret['runtime']
+                assert set(config) == {'version','enabled','tripPg','metadataPg','corePg','personPg'} and config['version'] == 3 and config['enabled'] is True
+                assert canonical(config) == p['sustainedRuntimeSHA256']
+                for key in ('tripPg','metadataPg','corePg','personPg'):
+                    pg = config[key]
+                    assert set(pg) == {'host','port','database','password','ca'}
+                    assert pg['host'] == 'db.tuqigdxrvrerfewsxqgm.supabase.co' and pg['port'] == 5432 and pg['database'] == 'postgres'
+                    assert pg['ca'] == p['databaseCA'] and isinstance(pg['password'],str) and len(pg['password']) >= 32
             fd=os.open(runtime,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o440)
             with os.fdopen(fd,'w') as f: json.dump(config,f)
             os.chown(runtime,0,999); os.chmod(runtime,0o440)
@@ -123,7 +158,7 @@ def remote_locked(p,action,secret):
             s=current()
             if s['State'].get('Health',{}).get('Status')=='healthy': break
             time.sleep(.5)
-        s=current(); normalized=dict(s['HostConfig']); normalized['Binds']=baseline['hostConfig']['Binds']
+        s=current(); normalized=normalize_owned_host(s['HostConfig'])
         good=(r.returncode==0 and s['State'].get('Health',{}).get('Status')=='healthy' and s['Image']==p['image'] and env(s)==env(before) and s['Config']['Cmd']==['node','server-capture.mjs'] and host_config(normalized)==host_config(baseline['hostConfig']))
         health=json.load(urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=4))
         good=good and health=={'status':'ok','environment':'development'}
@@ -136,7 +171,10 @@ def remote_locked(p,action,secret):
             for v in volumes:
                 body=json.loads(Path(v['source']).read_text())
                 k='create' if v['target']=='/run/otr/trip-create-runtime.json' else 'metadata'
-                good=good and body['request']==p['payloads']['create' if k=='create' else 'editProposal']['body'] and body['actorAccountId']==p['actorIds']['A'] and body['expiresAt']==p['expiresAt']
+                if sustained:
+                    good=good and k=='create' and body.get('version')==3 and canonical(body)==p['sustainedRuntimeSHA256']
+                else:
+                    good=good and body['request']==p['payloads']['create' if k=='create' else 'editProposal']['body'] and body['actorAccountId']==p['actorIds']['A'] and body['expiresAt']==p['expiresAt']
                 runtimeStat=Path(v['source']).stat()
                 good=good and runtimeStat.st_uid==0 and runtimeStat.st_gid==999 and (runtimeStat.st_mode&0o777)==0o440 and runtimeStat.st_nlink==1
                 report.setdefault('runtimeSHA256',{})[v['target']]=hashlib.sha256(Path(v['source']).read_bytes()).hexdigest()
@@ -162,7 +200,10 @@ def remote_locked(p,action,secret):
                 with os.fdopen(fd) as stream:
                     st=os.fstat(stream.fileno()); assert stat.S_ISREG(st.st_mode) and st.st_uid==0 and st.st_gid==999 and (st.st_mode&0o777)==0o440 and st.st_nlink==1 and st.st_size<=16384
                     body=json.load(stream)
-                assert body['version']==1 and body['enabled']is True and body['actorAccountId']==p['actorIds']['A'] and body['expiresAt']==p['expiresAt'] and body['request']==p['payloads']['create'if k=='create'else'editProposal']['body']
+                if sustained:
+                    assert k=='create' and body.get('version')==3 and canonical(body)==p['sustainedRuntimeSHA256']
+                else:
+                    assert body['version']==1 and body['enabled']is True and body['actorAccountId']==p['actorIds']['A'] and body['expiresAt']==p['expiresAt'] and body['request']==p['payloads']['create'if k=='create'else'editProposal']['body']
             for k in ('create','metadata'): (root/(k+'.json')).unlink(missing_ok=True)
             directory=os.open(root,os.O_RDONLY|os.O_DIRECTORY)
             try:os.fsync(directory)

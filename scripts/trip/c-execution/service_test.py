@@ -5,11 +5,15 @@ import service, control
 from control_test import plan
 
 class Tests(unittest.TestCase):
- def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False,bad_second=False,broken_second=False):
+ def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False,bad_second=False,broken_second=False,sustained=False,bad_runtime=False):
   temporary=tempfile.TemporaryDirectory();root=pathlib.Path(temporary.name)
   p=plan();p['ownerAuthorized']=True;p['payloads']=control.PAYLOADS
   p['databaseCA']=pathlib.Path(__file__).with_name('supabase-prod-ca-2021.crt').read_text()
   if bad_ca:p['databaseCA']='untrusted peer certificate'
+  runtime_config={'version':3,'enabled':True,**{key:{'host':'db.tuqigdxrvrerfewsxqgm.supabase.co','port':5432,'database':'postgres','password':'SYNTHETIC_PRIVATE_RUNTIME_SECRET_'+key,'ca':p['databaseCA']}for key in ('tripPg','metadataPg','corePg','personPg')}}
+  if sustained:
+   p.update(runtimeKind='SUSTAINED_TRIP_P1',approvedGateSHA256='0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0',sustainedRuntimeSHA256=hashlib.sha256(json.dumps(runtime_config,sort_keys=True,separators=(',',':')).encode()).hexdigest())
+   if bad_runtime: runtime_config['personPg']['host']='foreign.invalid'
   if wait_expiry:p['expiresAt']=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(seconds=.1)).isoformat()
   composeCalls=0
   mounts=[{'source':'/fixture/a','destination':'/run/otr/catalog-reader.json','rw':False},{'source':'/fixture/b','destination':'/run/otr/capture-custody.json','rw':False},{'source':'/fixture/c','destination':'/var/lib/otr/capture-custody','rw':True}]
@@ -31,7 +35,7 @@ class Tests(unittest.TestCase):
    if text=='/opt/otr/dev-backend/env/capture-custody.json':return custody
    return pathlib.Path(v)
   def sha(v=b''):
-   fake={json.dumps(env,sort_keys=True,separators=(',',':')).encode():'cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f',json.dumps(hc,sort_keys=True,separators=(',',':')).encode():'f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0',b'fixture bundle':control.BUNDLE}
+   fake={json.dumps(env,sort_keys=True,separators=(',',':')).encode():'cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f',json.dumps(hc,sort_keys=True,separators=(',',':')).encode():('2ea3f3786cae510e0c6b4f8509df83d8a1afd612d72fc8ab7ace2f3f9d9a0d6a'if sustained else'f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0'),b'fixture bundle':control.BUNDLE}
    return types.SimpleNamespace(hexdigest=lambda:fake[v]) if v in fake else realhash(v)
   def output(args,**kw):
    if args[:2]==['docker','inspect']:return json.dumps([state])
@@ -59,6 +63,8 @@ class Tests(unittest.TestCase):
    state['State']={'Status':'running','Running':True,'ExitCode':0,'Health':{'Status':'healthy'}}
    state['Mounts']=[{'Source':v['source'],'Destination':v['target'],'RW':not v['read_only']} for v in volumes]
    state['HostConfig']={**hc,'Binds':hc['Binds']+[v['source']+':'+v['target']+':ro' for v in volumes[3:]]}
+   if sustained:
+    state['HostConfig']={**hc,'Mounts':hc['Mounts']+[{'Type':'bind','Source':v['source'],'Target':v['target'],'ReadOnly':v['read_only'],'BindOptions':{}}for v in volumes[3:]]}
    if wrong_mount and len(state['Mounts'])>3:state['Mounts'][-1]['Destination']='/wrong-target'
    return subprocess.CompletedProcess(args,0,stdout='',stderr='')
   import io
@@ -83,7 +89,7 @@ class Tests(unittest.TestCase):
      with concurrent.futures.ThreadPoolExecutor(1) as pool:
       future=pool.submit(service.remote,p,'activate',{'kind':'create','password':'SYNTHETIC_PRIVATE_RUNTIME_SECRET'});time.sleep(.15);fcntl.flock(lockfd,fcntl.LOCK_UN);result=future.result(2)
     finally:os.close(lockfd)
-   else:result=service.remote(p,'restore' if action=='restore-only' else 'activate',{'kind':'create','password':'SYNTHETIC_PRIVATE_RUNTIME_SECRET'})
+   else:result=service.remote(p,'restore' if action=='restore-only' else 'activate',{'kind':'create','password':'SYNTHETIC_PRIVATE_RUNTIME_SECRET',**({'runtime':runtime_config}if sustained else{})})
    self.assertNotIn('SYNTHETIC_PRIVATE_RUNTIME_SECRET',json.dumps(result))
    if action=='restore' and result['verified']:
     if exited:state['State']={'Status':'exited','Running':False,'ExitCode':42,'Health':{'Status':'unhealthy'}}
@@ -103,6 +109,8 @@ class Tests(unittest.TestCase):
     self.assertEqual(composeCalls,beforecalls)
   result["fixtureComposeCalls"]=composeCalls
   temporary.cleanup();return result
+ def test_sustained_private_v3_mount_and_exact_restore(self):self.assertTrue(self.fixture('restore',sustained=True)['verified'])
+ def test_sustained_wrong_runtime_hash_fails_without_success(self):self.assertFalse(self.fixture(sustained=True,bad_runtime=True)['verified'])
  def test_non_alphabetical_compose_order_survives_sorted_hash_map(self):self.assertTrue(self.fixture('restore',nonalphabetical=True)['verified'])
  def test_exact_mounts_and_runtime_then_restore(self):self.assertTrue(self.fixture('restore')['verified'])
  def test_untrusted_ca_cannot_activate(self):
