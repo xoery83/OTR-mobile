@@ -1,0 +1,27 @@
+{
+  "status": "OFFICIAL_DOCUMENTATION_OPERATIONAL_FACTS_NOT_PROVIDER_CALL_PROOF",
+  "observedAt": "2026-10-24T15:59:44.249382+00:00",
+  "modelId": "deepseek-flash",
+  "modelFamily": "DeepSeek-V4.1-Flash",
+  "reportedServedVersion": "DeepSeek-V4.1-Flash-1017",
+  "responseModelAlias": "deepseek-flash",
+  "region": "CN",
+  "regionQualification": "vendor privacy-policy reported; not machine-location proof",
+  "route": "DIRECT",
+  "endpoint": "https://api.deepseek.com/chat/completions",
+  "currency": "USD",
+  "weekendOffPeakNanosPerMillion": {
+    "cached_input_tokens": "3000000",
+    "input_tokens": "150000000",
+    "output_tokens": "600000000"
+  },
+  "unitRelationship": "DISJOINT; input_tokens excludes cached_input_tokens",
+  "callMaximum": 1,
+  "maximumOutputTokens": 4096,
+  "maximumCostNanos": "1000000000",
+  "sources": [
+    "https://api-docs.deepseek.com/quick_start/pricing/",
+    "https://api-docs.deepseek.com/api/create-chat-completion/",
+    "https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html"
+  ]
+}

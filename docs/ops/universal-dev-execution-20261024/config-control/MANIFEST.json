@@ -3,7 +3,7 @@
   "unitTests": 33,
   "isolatedPgChecks": 6,
   "files": {
-    "scripts/import/universal_config_control.py": "bd915bd871c432f262684e6e92d10b1ae610f1ef9ae2f4fe6b47a71df3893211",
+    "scripts/import/universal_config_control.py": "6e4b868eb91517b2c01478f44b7b6e0a91be3e2d96d055586789dcdc370a1e26",
     "scripts/import/universal_scope_close.py": "812a8d583f07e1b09903730f3f0d8acd873b2627c3939fb65c43f8a8a2694212",
     "scripts/import/universal_watchdog.py": "6b0ebed6116dd7a7909e7fe82a2a3f94d538db66c4b04d3b79ebf5ee336eeb6f",
     "scripts/import/universal_runtime_close.py": "195d07eb35984df210dfb87a6eaeef0119e06f4dc3b05d6fc6db0c1736a7c98c",
@@ -15,5 +15,8 @@
   "strictAuthorityPreflight": "exact grant rows, role/window, zero existing admin sessions, zero DEV integrations",
   "receiptSHA256": "4caf9c7ea43712da0fcd7a8c2a5a2ce668edf7e3ea6b95df65e0259063af97e7",
   "writerCode": "f46d7e1f795e3bb0f38821f38593ce6745844de7",
-  "reviewSha256": "1a6749e6990886e52729b4616cc037f06fb548f4ad0b9066d1ca1a4298d7eb3d"
+  "reviewSha256": "1a6749e6990886e52729b4616cc037f06fb548f4ad0b9066d1ca1a4298d7eb3d",
+  "sshTransportWriter": "c822e36eb54f3272746fcdcdb1ec1a8aa289dbe4",
+  "sshTransportReview": "0557b3ea495420639b1953861a36a6576ec4314d5988eee0497a739df8509be9",
+  "exactPidReview": "6c65622361657456d7be1f6196dc17cfd265d65c012d9be8db9a2903e6a0238e"
 }

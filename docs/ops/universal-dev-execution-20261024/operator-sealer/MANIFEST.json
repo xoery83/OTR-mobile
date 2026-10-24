@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_NO_NETWORK_PROPOSAL_SEALER_REVIEW_PENDING",
+  "tests": 16,
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "qualification": "PROPOSED only; owning Source/Run/Task validation still required",
+  "files": {
+    "backend/src/universalExecutionProposal.ts": "cba34afd28ae01ca3ea85a2a313a55dd04b85956b6a9287b1abafe8662a6d379",
+    "backend/src/universalExecutionProposal.test.ts": "f775b2c59f9fef17d104ecd5c51d64234385299b09a6300031808660c953e7d7",
+    "scripts/import/seal-universal-execution.ts": "8977b7ed5c6094ec12f02f3f28d413fb432b582ce23c3bfde093e870fc35ac15"
+  },
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "gui": false
+}

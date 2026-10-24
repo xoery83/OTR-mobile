@@ -1,9 +1,9 @@
-import copy,datetime as dt,hashlib,unittest,uuid,json,os,tempfile,time,threading
+import copy,datetime as dt,hashlib,unittest,uuid,json,os,tempfile,time,threading,socket
 from pathlib import Path
 from unittest.mock import Mock,patch
 from universal_close_test import plan,rehash
 from universal_scope_close import canonical,close_once,validate
-from universal_config_control import validate_admin,activate_once,restore_once,command_sql,revoke_sql,AdminSqlTransport,context_scope_hash
+from universal_config_control import validate_admin,activate_once,restore_once,command_sql,revoke_sql,AdminSqlTransport,context_scope_hash,trusted_tunnel_argv,validate_tunnel
 import universal_watchdog as watchdog
 
 def fixture():
@@ -90,6 +90,40 @@ class ConfigTests(unittest.TestCase):
                 transport(command_sql(p['adminControl']['restore'][0]));self.assertNotIn('ISOLATED_ONLY',str(run.call_args));self.assertEqual(run.call_args.kwargs['env']['PGSERVICEFILE'],str(service))
             service.write_text(service.read_text().replace('ISOLATED_ONLY','CHANGED'))
             with self.assertRaises(ValueError):transport('SELECT 1')
+    def test_tunnel_launch_proposal_does_not_require_invented_process_identity(self):
+        route={'remoteUser':'root','remoteHost':'178.105.151.143','targetHost':'db.tuqigdxrvrerfewsxqgm.supabase.co','targetPort':5432,'localPort':15432,'sshBinary':'/usr/bin/ssh','controlSocket':'/private/tmp/qa-control/socket'}
+        args=trusted_tunnel_argv(route);self.assertIn('127.0.0.1:15432:db.tuqigdxrvrerfewsxqgm.supabase.co:5432',args);self.assertIn('-oStrictHostKeyChecking=yes',args)
+        with self.assertRaises((ValueError,KeyError)):validate_tunnel(route)
+    def test_strict_trusted_tunnel_keeps_logical_tls_origin_and_rechecks_master(self):
+        p=fixture()
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d).resolve();os.chmod(root,0o700)
+            binary=root/'psql';binary.write_text('fixture psql');binary.chmod(0o700)
+            ssh=root/'ssh';ssh.write_text('fixture ssh');ssh.chmod(0o700)
+            ca=root/'ca.pem';ca.write_bytes((Path(__file__).parents[1]/'trip/c-execution/supabase-prod-ca-2021.crt').read_bytes());ca.chmod(0o644)
+            control=root/'socket';server=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM);server.bind(str(control));control.chmod(0o600)
+            try:
+                snapshot='Sun Oct 25 01:00:00 2026 ssh: private-master [mux]'
+                t={'pid':12345,'processStartedAt':'Sun Oct 25 01:00:00 2026','processCommandSHA256':hashlib.sha256(snapshot.encode()).hexdigest(),'launchReceiptFile':str(root/'launch.json'),'launchReceiptSHA256':'a'*64,'sshBinary':str(ssh),'sshBinarySHA256':hashlib.sha256(ssh.read_bytes()).hexdigest(),'controlSocket':str(control),'localPort':15432,'remoteUser':'root','remoteHost':'178.105.151.143','targetHost':'db.tuqigdxrvrerfewsxqgm.supabase.co','targetPort':5432,'caFile':str(ca),'caFileSHA256':hashlib.sha256(ca.read_bytes()).hexdigest()}
+                launch={'version':1,'pid':t['pid'],'processStartedAt':t['processStartedAt'],'processCommandSHA256':t['processCommandSHA256'],'argv':trusted_tunnel_argv(t)}
+                Path(t['launchReceiptFile']).write_text(json.dumps(launch));Path(t['launchReceiptFile']).chmod(0o600);t['launchReceiptSHA256']=hashlib.sha256(Path(t['launchReceiptFile']).read_bytes()).hexdigest()
+                service=root/'service.conf';service.write_text('[qa_admin]\nhost=db.tuqigdxrvrerfewsxqgm.supabase.co\nhostaddr=127.0.0.1\nport=15432\nuser=otr_external_integration_admin_gateway\ndbname=postgres\nsslmode=verify-full\nsslrootcert='+str(ca)+'\nconnect_timeout=8\npassword=ISOLATED_ONLY\n');service.chmod(0o600)
+                p['adminControl']['connection']={'psql':str(binary),'psqlSHA256':hashlib.sha256(binary.read_bytes()).hexdigest(),'serviceFile':str(service),'serviceFileSHA256':hashlib.sha256(service.read_bytes()).hexdigest(),'serviceName':'qa_admin','sshTunnel':t}
+                def run(args,**kwargs):
+                    if args[0]=='/bin/ps':return Mock(returncode=0,stdout=snapshot+'\n')
+                    if '-O' in args:return Mock(returncode=0,stdout='',stderr='Master running (pid=12345)')
+                    return Mock(returncode=0,stdout='{}')
+                with patch('universal_config_control.subprocess.run',side_effect=run) as mocked:
+                    transport=AdminSqlTransport(p);transport('SELECT 1');self.assertEqual(mocked.call_count,5);self.assertIn('verify-full',service.read_text());self.assertNotIn('ISOLATED_ONLY',str(mocked.call_args))
+                with patch('universal_config_control.subprocess.run',return_value=Mock(returncode=0,stdout='foreign pid')) as mocked:
+                    with self.assertRaisesRegex(ValueError,'TUNNEL_PROCESS_CHANGED'):transport('SELECT 1')
+                    self.assertEqual(mocked.call_count,1)
+                with patch('universal_config_control.subprocess.run',side_effect=lambda args,**kwargs:Mock(returncode=0,stdout=snapshot+'\n',stderr='') if args[0]=='/bin/ps' else Mock(returncode=0,stdout='',stderr='Master running (pid=123456)')) as mocked:
+                    with self.assertRaisesRegex(ValueError,'TUNNEL_MASTER_UNCONFIRMED'):transport('SELECT 1')
+                    self.assertEqual(mocked.call_count,2)
+                t['remoteHost']='production.invalid'
+                with self.assertRaises(ValueError):validate_tunnel(t)
+            finally:server.close()
     def test_activation_needs_live_independent_watch_and_claims_once(self):
         p=fixture();digest='a'*64
         with tempfile.TemporaryDirectory() as d:

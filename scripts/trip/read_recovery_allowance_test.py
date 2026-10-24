@@ -35,3 +35,17 @@ class AllowanceTests(unittest.TestCase):
                 reserve(path, 'CORE_RESULT')
             with self.assertRaisesRegex(ValueError, 'PURPOSE'):
                 reserve(path, 'anything')
+
+    def test_universal_append_cap_and_policy_fence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)
+            for ordinal in range(1, 33):
+                self.assertEqual(reserve(path, 'SOURCE_RESULT', 'UNIVERSAL_20261025'), ordinal)
+            before = (path / 'operator-read-ledger.json').read_bytes()
+            with self.assertRaisesRegex(ValueError, 'EXHAUSTED'):
+                reserve(path, 'TASK_RESULT', 'UNIVERSAL_20261025')
+            with self.assertRaisesRegex(ValueError, 'IDENTITY'):
+                reserve(path, 'CORE_RESULT')
+            with self.assertRaisesRegex(ValueError, 'PURPOSE'):
+                reserve(path, 'CORE_RESULT', 'UNIVERSAL_20261025')
+            self.assertEqual(before, (path / 'operator-read-ledger.json').read_bytes())

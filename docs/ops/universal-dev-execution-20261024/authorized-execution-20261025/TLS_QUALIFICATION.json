@@ -1,0 +1,1 @@
+{"status": "TRUSTED_TUNNEL_TLS_QUALIFIED", "exitCode": 0, "logicalHost": "db.tuqigdxrvrerfewsxqgm.supabase.co", "tlsMode": "verify-full", "authorityActivated": false, "result": {"principal": "otr_trip_publication_catalog_reader", "tls": true, "qualification": 1}}

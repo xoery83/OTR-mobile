@@ -419,3 +419,18 @@ it("clipboard intake stays visible as an image and can explicitly submit its own
   expect(button("capture.composer.submit").disabled).toBe(false);
   expect(state.nodes.some((node) => node.source?.uri === pasted.temporaryUri)).toBe(true);
 });
+
+it("reopens retained batches from the existing attachment menu without submitting again", () => {
+  render();
+  button("capture.composer.addAttachments").onPress();
+  const { props, html } = render();
+  expect(html).toContain(t("capture.activity"));
+  const activity = state.buttons.find((b) =>
+    Array.isArray(b.children) && b.children[1]?.props?.children === t("capture.activity"),
+  );
+  expect(activity).toBeDefined();
+  activity.onPress();
+  expect(props.onActivity).toHaveBeenCalledOnce();
+  expect(props.onSubmit).not.toHaveBeenCalled();
+  expect(render().html).not.toContain(t("capture.activity"));
+});

@@ -1,0 +1,17 @@
+{
+  "exitCode": 0,
+  "result": {
+    "status": "DEDICATED_BACKEND_CUSTODY_PREPARED_EMPTY",
+    "path": "/opt/otr/dev-backend/private/universal-custody-1624499c-18d7-4026-b3fe-7346ab1f825d",
+    "identity": {
+      "store_id": "82fb1769-7849-4682-b524-6863a2f9af6b",
+      "device": "2049",
+      "inode": "1093084"
+    },
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "uid": 10001,
+    "copiedAppDatabase": false,
+    "businessWrite": false
+  }
+}

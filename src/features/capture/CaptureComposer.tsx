@@ -73,6 +73,7 @@ export function CaptureComposer({
   onRemove,
   onText,
   onSubmit,
+  onActivity,
 }: Props) {
   const locale = useUiLocale();
   const voice = useImportDictation(onText);
@@ -528,6 +529,11 @@ export function CaptureComposer({
                   icon: "paperclip" as const,
                   label: t("capture.composer.files"),
                   press: onFiles,
+                },
+                {
+                  icon: "clock.arrow.circlepath" as const,
+                  label: t("capture.activity"),
+                  press: onActivity,
                 },
               ].map((item) => (
                 <Pressable

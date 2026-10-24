@@ -1,7 +1,7 @@
 {
-  "status": "BLOCKED_BY_PROVIDER_CONFIGURATION_AND_DEV_ACTIVATION_AUTHORITY",
+  "status": "AUTHORIZED_SQL_INSTALLED_CLOSED_EXECUTION_BINDINGS_IN_PROGRESS",
   "project": "tuqigdxrvrerfewsxqgm",
-  "ownerAuthorized": false,
+  "ownerAuthorized": true,
   "baselineCode": "e625cc5082b4f3f2a4520358350d4423c99a1471",
   "imageId": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
   "bundleHashes": {
@@ -170,10 +170,8 @@
     "backend/sql/universal_model_task_dependency_candidate.sql": "5366c24291c3df8426cb350e7c1b428630e2906d6629d8e64f35d0ce26695576"
   },
   "blockers": [
-    "OWNING_SOURCE_SQL_PREIMAGE_ACL_AND_READER_QUALIFICATION_REQUIRED",
-    "UNIVERSAL_PROVIDER_CONFIG_PRICE_KILL_CREDENTIAL_QUALIFICATION_REQUIRED",
-    "ACTUAL_BACKEND_TASK_CUSTODY_AND_FINITE_WINDOW_WATCHDOG_PINS_REQUIRED",
-    "EXACT_OWNER_COMPLETE_SOURCE_TASK_PROVIDER_AUTHORIZATION_REQUIRED"
+    "ACTUAL_FINITE_RUNTIME_AND_ADMIN_CONTROL_WINDOW_NOT_YET_SEALED",
+    "NO_REMOTE_SOURCE_TASK_OR_PROVIDER_RESULT_YET"
   ],
   "claims": {
     "sourceRegistration": false,
@@ -327,7 +325,7 @@
     "backend/sql/universal_task_read_candidate.sql"
   ],
   "realProviderConfiguration": {
-    "status": "CREDENTIAL_COPIED_DORMANT_MODEL_PRICE_REGION_ROUTE_AND_ACTIVATION_PENDING",
+    "status": "DORMANT_KEY_AND_OFFICIAL_OPERATIONAL_FACTS_QUALIFIED_NOT_ACTIVATED",
     "credentialSource": {
       "project": "/Users/xoery/Project/otr",
       "file": ".env.local",
@@ -345,12 +343,14 @@
       "reviewSha256": "ac52edd9ae9bb8a524230d6a3ce46ef4147813ac51465bd65b8c96d050820219"
     },
     "backendBinding": "OTR_DEV_DEEPSEEK_API_KEY",
-    "approvedModelVersion": null,
-    "priceScheduleAndUnitsSource": null,
-    "dataRegion": null,
-    "routingClass": null,
-    "ownerConfigurationQuestionPending": true
+    "approvedModelVersion": "DeepSeek-V4.1-Flash",
+    "priceScheduleAndUnitsSource": "authorized-execution-20261025/PROVIDER_OPERATIONAL_FACTS.json",
+    "dataRegion": "CN",
+    "routingClass": "DIRECT",
+    "ownerConfigurationQuestionPending": false
   },
   "fixedPreparationCode": "aaa83c5",
-  "finalPublicHealth": "receipts/FINAL_PUBLIC_HEALTH.json"
+  "finalPublicHealth": "receipts/FINAL_PUBLIC_HEALTH.json",
+  "authorizationReceipt": "authorized-execution-20261025/OWNER_AUTHORIZATION.json",
+  "actualSqlPostinstall": "authorized-execution-20261025/SQL_POSTINSTALL.json"
 }

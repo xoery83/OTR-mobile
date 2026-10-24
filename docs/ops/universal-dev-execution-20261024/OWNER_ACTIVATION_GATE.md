@@ -1,6 +1,6 @@
 # Universal actual Batch — one bounded DEV activation request
 
-**Not authorized / not executable until the real Provider facts below are supplied and sealed.** This supersedes earlier conditional execution instructions; it does not reuse the consumed closed-deployment Start/window. No further architecture or Trip/P1 audit is requested.
+**Owner approved this complete bounded Gate on 25 October. Six pinned SQL installs and independent dormant/ACL readback PASS; finite runtime/admin/source/provider execution is not yet activated.** This supersedes earlier conditional execution instructions; it does not reuse the consumed closed-deployment Start/window. No further architecture or Trip/P1 audit is requested.
 
 Fixed integrated preparation code: `aaa83c5` (necessary Native/dependency/config-control/read-budget reviews archived). No new DEV activation executed.
 
@@ -37,3 +37,7 @@ Acceptance requires actual Native request, genuine Source/catalog/Run/Task recei
 - Approval of the six fixed dormant SQL candidates, finite existing admin permissions, temporary environment-kill change, finite runtime overlay, one paid call and new bounded reads above.
 
 Until these facts and authority are present, `BLOCKED_BY_PROVIDER_CONFIGURATION_AND_DEV_ACTIVATION_AUTHORITY` is exact. Local preparation/review PASS is not `BACKEND_UNIVERSAL_DEV_PASS` or `NATIVE_CAPTURE_AI_PREVIEW_PASS`.
+
+## Actual approved execution checkpoint
+
+Owner approval is retained in `authorized-execution-20261025/OWNER_AUTHORIZATION.json`. Six SQL installations, independent closed readback, healthy unchanged image99966 baseline, normal SyntheticA Auth and strict TLS via dedicated trusted SSH are recorded there. Official operational facts are recorded separately; no Provider response or paid usage exists yet. Runtime window and actual Source/Task/AI evidence remain in progress. Earlier pending language above is retained as original Gate history, superseded by this checkpoint.

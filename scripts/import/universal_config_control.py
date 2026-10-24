@@ -19,8 +19,10 @@ def validate_admin(plan):
     if not re.fullmatch('[A-Za-z0-9._:-]{1,128}',a['integrationId']):raise ValueError('ADMIN_INTEGRATION_REQUIRED')
     if not 0<e-s<=900 or not s<=instant(plan['startsAt'])<instant(plan['expiresAt'])<=e-300 or instant(plan['expiresAt'])-instant(plan['startsAt'])>600:raise ValueError('ADMIN_RESTORATION_TAIL_REQUIRED')
     connection=a['connection']
-    if set(connection)!={'psql','psqlSHA256','serviceFile','serviceFileSHA256','serviceName'} or not Path(connection['psql']).is_absolute() or not Path(connection['serviceFile']).is_absolute() or not re.fullmatch('[A-Za-z0-9_-]{1,64}',connection['serviceName']):raise ValueError('SEALED_ADMIN_CONNECTION_REQUIRED')
+    connectionKeys={'psql','psqlSHA256','serviceFile','serviceFileSHA256','serviceName'}|({'sshTunnel'} if 'sshTunnel' in connection else set())
+    if set(connection)!=connectionKeys or not Path(connection['psql']).is_absolute() or not Path(connection['serviceFile']).is_absolute() or not re.fullmatch('[A-Za-z0-9_-]{1,64}',connection['serviceName']):raise ValueError('SEALED_ADMIN_CONNECTION_REQUIRED')
     digest(connection['psqlSHA256']);digest(connection['serviceFileSHA256'])
+    if 'sshTunnel' in connection:validate_tunnel(connection['sshTunnel'])
     uid(a['actorId']);digest(a['verifiedAuthorityReceiptSHA256'])
     if a['verifiedAuthorityReceiptSHA256']=='0'*64:raise ValueError('VERIFIED_ADMIN_AUTHORITY_REQUIRED')
     if a['role']!={'name':ADMIN,'priorCanLogin':False,'expiresAt':a['expiresAt']}:raise ValueError('EXACT_TEMP_ADMIN_ROLE_REQUIRED')
@@ -155,6 +157,43 @@ def restore_once(plan,sql,recover_only=False,now=time.time,admin_sql=None):
         return {'status':'CLOSED_VERIFIED' if closed else 'RECONCILE_REQUIRED','adminClosed':closed}
     except Exception:return {'status':'RECONCILE_REQUIRED','adminClosed':False}
 
+TUNNEL_HOST='178.105.151.143'
+DB_HOST='db.tuqigdxrvrerfewsxqgm.supabase.co'
+PINNED_DEV_CA_SHA256='700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7'
+def validate_tunnel(t):
+    keys={'pid','processStartedAt','processCommandSHA256','launchReceiptSHA256','launchReceiptFile','sshBinary','sshBinarySHA256','controlSocket','localPort','remoteUser','remoteHost','targetHost','targetPort','caFile','caFileSHA256'}
+    if set(t)!=keys or not isinstance(t['pid'],int) or t['pid']<1 or not isinstance(t['localPort'],int) or not 1024<=t['localPort']<=65535 or t['remoteUser']!='root' or t['remoteHost']!=TUNNEL_HOST or t['targetHost']!=DB_HOST or t['targetPort']!=5432 or not t['processStartedAt']:raise ValueError('EXACT_TRUSTED_TUNNEL_REQUIRED')
+    for key in ['processCommandSHA256','launchReceiptSHA256','sshBinarySHA256','caFileSHA256']:digest(t[key])
+    if t['caFileSHA256']!=PINNED_DEV_CA_SHA256:raise ValueError('PINNED_SUPABASE_CA_REQUIRED')
+    for key in ['sshBinary','controlSocket','caFile','launchReceiptFile']:
+        if not Path(t[key]).is_absolute():raise ValueError('ABSOLUTE_TUNNEL_PATH_REQUIRED')
+    return t
+
+def trusted_tunnel_argv(t):
+    # Pure launch proposal: PID/start/receipt do not exist until Root launches it.
+    if t['remoteUser']!='root' or t['remoteHost']!=TUNNEL_HOST or t['targetHost']!=DB_HOST or t['targetPort']!=5432 or not isinstance(t['localPort'],int) or not 1024<=t['localPort']<=65535 or not Path(t['sshBinary']).is_absolute() or not Path(t['controlSocket']).is_absolute():raise ValueError('EXACT_TRUSTED_TUNNEL_REQUIRED')
+    return [t['sshBinary'],'-M','-S',t['controlSocket'],'-N','-L',f"127.0.0.1:{t['localPort']}:{DB_HOST}:5432",'-oExitOnForwardFailure=yes','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8',f"root@{TUNNEL_HOST}"]
+
+def assert_tunnel(t):
+    validate_tunnel(t)
+    for path,h in [(t['sshBinary'],t['sshBinarySHA256']),(t['caFile'],t['caFileSHA256'])]:
+        p=Path(path);st=p.lstat()
+        if p.is_symlink() or not stat.S_ISREG(st.st_mode) or st.st_uid not in [0,os.getuid()] or st.st_mode&0o022 or sha(p.read_bytes())!=h:raise ValueError('TUNNEL_TRUST_INPUT_CHANGED')
+    p=Path(t['controlSocket']);st=p.lstat();parent=p.parent.lstat()
+    if p.is_symlink() or not stat.S_ISSOCK(st.st_mode) or st.st_uid!=os.getuid() or st.st_mode&0o777!=0o600 or p.parent.is_symlink() or not stat.S_ISDIR(parent.st_mode) or parent.st_uid!=os.getuid() or parent.st_mode&0o777!=0o700:raise ValueError('PRIVATE_TUNNEL_SOCKET_REQUIRED')
+    receipt=Path(t['launchReceiptFile']);st=receipt.lstat();parent=receipt.parent.lstat()
+    if receipt.is_symlink() or not stat.S_ISREG(st.st_mode) or st.st_uid!=os.getuid() or st.st_nlink!=1 or st.st_mode&0o777!=0o600 or receipt.parent.is_symlink() or parent.st_uid!=os.getuid() or parent.st_mode&0o777!=0o700 or sha(receipt.read_bytes())!=t['launchReceiptSHA256']:raise ValueError('PRIVATE_TUNNEL_RECEIPT_REQUIRED')
+    launch=json.loads(receipt.read_text())
+    expected={'version':1,'pid':t['pid'],'processStartedAt':t['processStartedAt'],'processCommandSHA256':t['processCommandSHA256'],'argv':trusted_tunnel_argv(t)}
+    if launch!=expected:raise ValueError('TRUSTED_TUNNEL_LAUNCH_CHANGED')
+    env=dict(os.environ,LC_ALL='C')
+    r=subprocess.run(['/bin/ps','-p',str(t['pid']),'-o','lstart=','-o','command='],capture_output=True,text=True,env=env,timeout=3)
+    if r.returncode or not r.stdout.strip().startswith(t['processStartedAt']) or sha(r.stdout.strip().encode())!=t['processCommandSHA256']:raise ValueError('TUNNEL_PROCESS_CHANGED')
+    # Root seals the launch receipt for trusted_tunnel_argv; this process must still
+    # own its private master socket. Never create/reconfigure a tunnel from this reader.
+    r=subprocess.run([t['sshBinary'],'-S',t['controlSocket'],'-O','check','-oBatchMode=yes','-oStrictHostKeyChecking=yes',f"root@{TUNNEL_HOST}"],capture_output=True,text=True,timeout=3)
+    if r.returncode or not re.search(r'\bpid='+str(t['pid'])+r'\)',r.stderr+r.stdout):raise ValueError('TUNNEL_MASTER_UNCONFIRMED')
+
 class AdminSqlTransport:
     """Dedicated LOGIN, never management-role impersonation or credentials in argv."""
     def __init__(self,plan):
@@ -167,12 +206,17 @@ class AdminSqlTransport:
         parser=configparser.ConfigParser(interpolation=None);parser.read(c['serviceFile'])
         if parser.sections()!=[c['serviceName']]:raise ValueError('ONE_ADMIN_SERVICE_REQUIRED')
         fields=dict(parser[c['serviceName']])
-        if set(fields)-{'host','port','dbname','user','password','sslmode','sslrootcert','connect_timeout'} or fields.get('host')!='db.tuqigdxrvrerfewsxqgm.supabase.co' or fields.get('user')!=ADMIN or fields.get('dbname')!='postgres' or fields.get('sslmode')!='verify-full' or fields.get('sslrootcert')!='system' or fields.get('connect_timeout')!='8' or not fields.get('password') or fields.get('port','5432')!='5432':raise ValueError('EXACT_DEV_ADMIN_SERVICE_REQUIRED')
+        tunnel=c.get('sshTunnel')
+        allowed={'host','port','dbname','user','password','sslmode','sslrootcert','connect_timeout'}|({'hostaddr'} if tunnel else set())
+        root=tunnel['caFile'] if tunnel else 'system';port=str(tunnel['localPort']) if tunnel else '5432'
+        if set(fields)-allowed or fields.get('host')!=DB_HOST or fields.get('user')!=ADMIN or fields.get('dbname')!='postgres' or fields.get('sslmode')!='verify-full' or fields.get('sslrootcert')!=root or fields.get('connect_timeout')!='8' or not fields.get('password') or fields.get('port','5432')!=port or (tunnel and fields.get('hostaddr')!='127.0.0.1'):raise ValueError('EXACT_DEV_ADMIN_SERVICE_REQUIRED')
+        if tunnel:assert_tunnel(tunnel)
     def __call__(self,q):
         if time.time()>=self.expires:raise ValueError('ADMIN_AUTHORITY_EXPIRED')
         # Recheck sealed private input on every command, without logging its content.
         c=self.config;p=Path(c['serviceFile']);st=p.lstat()
         if p.is_symlink() or st.st_mode&0o777!=0o600 or st.st_uid not in [0,os.getuid()] or st.st_nlink!=1 or sha(p.read_bytes())!=c['serviceFileSHA256'] or sha(Path(c['psql']).read_bytes())!=c['psqlSHA256']:raise ValueError('ADMIN_PRIVATE_FILE_CHANGED')
+        if 'sshTunnel' in c:assert_tunnel(c['sshTunnel'])
         env={k:v for k,v in os.environ.items() if not k.startswith('PG')}
         env['PGSERVICEFILE']=c['serviceFile']
         r=subprocess.run([c['psql'],'service='+c['serviceName'],'-X','-qAt','--no-password','-v','ON_ERROR_STOP=1'],input=q,text=True,capture_output=True,env=env,timeout=35)
