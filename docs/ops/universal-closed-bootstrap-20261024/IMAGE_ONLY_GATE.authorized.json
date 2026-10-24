@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "project": "tuqigdxrvrerfewsxqgm",
+  "ownerAuthorized": true,
+  "activationId": "9db9c41f-5406-41af-9550-c3bcc3d622f5",
+  "releaseDirectory": "/opt/otr/dev-backend/releases/universal-closed-9db9c41f-5406-41af-9550-c3bcc3d622f5",
+  "startsAt": "2026-10-24T08:50:00Z",
+  "expiresAt": "2026-10-24T09:05:00Z",
+  "baselineImage": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "candidateImage": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+  "candidateBundles": {
+    "server.mjs": "90015fb2a1f87b5604419f4be24b75e579e53029282ecbec56a36244c0b6b058",
+    "server-capture.mjs": "08dbb04259de5372e667c1f2da7ab69a3179c84d1d5eb1276ddb9590b3968b27",
+    "universal-prepare.mjs": "2f8c65bb7b68a0e5b66aebddd5e79a9dea0f8da322697386ee1b690e62d67eeb"
+  },
+  "operatorSHA256": "78285a267ef15bbdce1ca6a7cff730a9f5f9d129b13535178526747915d18475",
+  "diagnosticsHelperSHA256": "30eedd4d653b928c62cb468c7276267bb7f1d67157adcaa3fb619dd492e29ff2",
+  "remoteProgramSHA256": "7b815f82a4ae5433c13f68f77e28e4592b48e46b3d8e43fe034c75b408cd23e8",
+  "baseline": {
+    "environmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+    "rawHostConfigSHA256": "df2d008d29c14129954ca39acc650d5b0ca58dfdee1a01d57f9ead60532ebce5",
+    "mountsSHA256": "62b918c94ec69b8c01b1dfefb2268b6acad2bb231516501e8a95c22b2e140b4c",
+    "composeFiles": [
+      "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml",
+      "/opt/otr/dev-backend/env/backend-api-key.cutover.yml",
+      "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml",
+      "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml",
+      "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml",
+      "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml",
+      "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml",
+      "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml",
+      "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T005419Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/sustained-original-rollback-20261024T023716Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T025507Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/finite.yml"
+    ],
+    "composeHashes": {
+      "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml": "ee1867ae8fe5a378e7d747068bca729f195f289084c6ad345e59aca69d972d47",
+      "/opt/otr/dev-backend/env/backend-api-key.cutover.yml": "b849fcbf2680f7349da4fba6e4a6e7e030bc9577d0ddcb2978f025477698b465",
+      "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml": "813b731b2eba440d4b8ba5aaa6fbaa7135bb83d529ccaf175a44a07f3abfec49",
+      "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml": "1834d961bc616dceea905a449f68cb965f9f549339f0df9e0a901bae2fdd0e76",
+      "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml": "89e8cc6afccb157f9e96196b6ffc2ddf00d616b81c6553e5e4ddaeefa0d77a24",
+      "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml": "fbd5b1e05573335e9f68f2d37539de277299121c79fd826f83b0dc14ef752bba",
+      "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml": "41026f94c644e3e1ba69e86df7d8c49bb43eef5a58ef76140f601923be9d1736",
+      "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml": "6cc4bf28b90c7c36bd0812e2098f513fb509dd9cd47fd07f0a6eb69d4aec2873",
+      "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml": "ff48b999cb9f3474a07bfdf0264204b05103699e5ed25c60ca427ac21b8914c7",
+      "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T005419Z/compose.forward.closed.yml": "109c50f6b4365258a69bed92662605c7e7b95153453891d8a69c575e364b5ba2",
+      "/opt/otr/dev-backend/releases/sustained-original-rollback-20261024T023716Z/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T025507Z/compose.forward.closed.yml": "109c50f6b4365258a69bed92662605c7e7b95153453891d8a69c575e364b5ba2",
+      "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/finite.yml": "efb62537c916f7a749bd4a5200e000093d4e897744745c226c8389dd50f0d9f1"
+    },
+    "privateFiles": {
+      "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json": {
+        "sha256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+        "uid": 0,
+        "gid": 999,
+        "mode": 288
+      },
+      "/run/otr-r3a5-catalog/catalog-reader.json": {
+        "sha256": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+        "uid": 0,
+        "gid": 999,
+        "mode": 288
+      },
+      "/opt/otr/dev-backend/env/capture-custody.json": {
+        "sha256": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+        "uid": 0,
+        "gid": 999,
+        "mode": 288
+      }
+    },
+    "custodyDirectory": {
+      "path": "/opt/otr/dev-backend/private/capture-custody",
+      "uid": 10001,
+      "gid": 999,
+      "mode": 448,
+      "device": 2049,
+      "inode": 1092861
+    },
+    "captureBundleSHA256": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9"
+  }
+}
