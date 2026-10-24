@@ -1,17 +1,17 @@
 {
-  "status": "LOCAL_CLOSED_PACKAGE_READY_ACTIVATION_BLOCKED",
+  "status": "NOT_EXECUTABLE_ACTUAL_DEPENDENCY_PROVIDER_CONFIGURATION_AND_AUTHORIZATION_BLOCKERS",
   "project": "tuqigdxrvrerfewsxqgm",
   "ownerAuthorized": false,
   "baselineCode": "e625cc5082b4f3f2a4520358350d4423c99a1471",
-  "imageId": "sha256:68f362ce956769bbd89f5859b2803a6558892c3628db935d2deb76bc71a461c2",
+  "imageId": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
   "bundleHashes": {
-    "server.mjs": "7c304662e9864e0e41488bcd0c510d5740f9eba1753f5368cf00b3ce45b93fff",
-    "server-capture.mjs": "4471a972a66abf766a90dd9b06e177177d641f24ad43da49557244d896e83393",
-    "universal-prepare.mjs": "ea76332b677d329f567fbda85ba20be59319fcf95adc4922c7102f0d8da9b8b2"
+    "server.mjs": "90015fb2a1f87b5604419f4be24b75e579e53029282ecbec56a36244c0b6b058",
+    "server-capture.mjs": "08dbb04259de5372e667c1f2da7ab69a3179c84d1d5eb1276ddb9590b3968b27",
+    "universal-prepare.mjs": "2f8c65bb7b68a0e5b66aebddd5e79a9dea0f8da322697386ee1b690e62d67eeb"
   },
   "qaIdentity": {
-    "actorId": null,
-    "tripId": null,
+    "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+    "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
     "requireSynthetic": true,
     "authMethod": "normal DEV Auth; no copied Session"
   },
@@ -23,9 +23,9 @@
     "closeOwner": "independent existing trusted Operator/watchdog"
   },
   "realC3": {
-    "batchId": null,
-    "jobId": null,
-    "submissionSha256": null,
+    "batchId": "3665f191-1605-4365-92ca-30403d90b191",
+    "jobId": "e8085c43-fb11-46e6-aaed-7d14c3c806be",
+    "submissionSha256": "37ba0e4c8b235d14a1729dc041b41f51252576b0c97692a5e8733197e774e4be",
     "sources": [
       {
         "kind": "FILE",
@@ -36,7 +36,13 @@
         "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
         "owningSourceId": null,
         "owningRepresentationId": null,
-        "realC3InputId": null
+        "realC3InputId": "9c3d39c3-1ac7-4e2c-b554-2c568c0dd46b",
+        "ordinal": 0,
+        "acquisitionSource": "files",
+        "bindingId": null,
+        "queueOperationId": null,
+        "sourceCommandPin": null,
+        "sourceState": "SOURCE_OPERATION_NOT_PREPARED"
       },
       {
         "kind": "FILE",
@@ -47,7 +53,13 @@
         "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
         "owningSourceId": null,
         "owningRepresentationId": null,
-        "realC3InputId": null
+        "realC3InputId": "24dd338b-9568-4136-9b45-143540a794ac",
+        "ordinal": 1,
+        "acquisitionSource": "files",
+        "bindingId": null,
+        "queueOperationId": null,
+        "sourceCommandPin": null,
+        "sourceState": "SOURCE_OPERATION_NOT_PREPARED"
       },
       {
         "kind": "TEXT",
@@ -58,9 +70,21 @@
         "contentProfile": "OTR_SUBMITTED_TEXT_V1",
         "owningSourceId": null,
         "owningRepresentationId": null,
-        "realC3InputId": null
+        "realC3InputId": "47a8cd86-c74a-43de-89eb-6bda99f32885",
+        "ordinal": 2,
+        "acquisitionSource": "magic_input",
+        "bindingId": null,
+        "queueOperationId": null,
+        "sourceCommandPin": null,
+        "sourceState": "SOURCE_OPERATION_NOT_PREPARED"
       }
-    ]
+    ],
+    "createdAt": "2026-10-24T08:37:09.370Z",
+    "localReceipt": {
+      "path": "docs/ops/universal-native-capture-pins-20261024/receipts/ACTUAL_C3_LOCAL_PINS.json",
+      "sha256": "83e3aecbb997df0986df3cf52e643c2dfe8e8909aa5e8b144b8233f945f9e9cb",
+      "qualification": "LOCAL_C3_AND_EXISTING_COMMANDS_ONLY_NOT_SOURCE_PROOF"
+    }
   },
   "task": {
     "taskId": null,
@@ -85,7 +109,16 @@
     "maxOutputTokens": 4096,
     "budgetCurrency": "USD",
     "maximumCostNanos": "1000000000",
-    "unknownPolicy": "reconcile exact existing result/receipt; no automatic Provider retry"
+    "unknownPolicy": "reconcile exact existing result/receipt; no automatic Provider retry",
+    "newExplicitNativeStartsMax": 3,
+    "closedLocalSourcePreparationStartsMax": 1,
+    "finiteSourceDispatchStartsMax": 1,
+    "finitePaidInterpretationStartsMax": 1,
+    "priorClosedStartAllowanceConsumed": true,
+    "closedPreparationSourceResultReadsMax": 1,
+    "providerPaidRetriesMax": 0,
+    "sourceOriginalCount": 3,
+    "sourceOriginalTotalBytes": 2203
   },
   "sqlCandidateSha256": {
     "backend/sql/universal_original_result_candidate.sql": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
@@ -95,11 +128,12 @@
     "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95"
   },
   "blockers": [
-    "REAL_NATIVE_C3_BATCH_SOURCE_COMMAND_PINS_REQUIRED",
-    "NORMAL_QA_AUTH_ACTOR_TRIP_READER_QUALIFICATION_REQUIRED",
-    "FINITE_PROVIDER_CONFIG_PRICE_CREDENTIAL_QUALIFICATION_REQUIRED",
-    "FINITE_WINDOW_SERVICE_ROLE_PREIMAGES_AND_WATCHDOG_ARMING_REQUIRED",
-    "EXACT_OWNER_DEPLOYMENT_SQL_PROVIDER_AUTHORIZATION_REQUIRED"
+    "NORMAL_LOCAL_SOURCE_PREPARATION_AND_EXACT_COMMAND_PINS_REQUIRED",
+    "NATIVE_ERROR_CODE_FIX_SHA_AND_SEALED_RECEIVER_QUALIFICATION_REQUIRED",
+    "OWNING_SOURCE_SQL_PREIMAGE_ACL_AND_READER_QUALIFICATION_REQUIRED",
+    "UNIVERSAL_PROVIDER_CONFIG_PRICE_KILL_CREDENTIAL_QUALIFICATION_REQUIRED",
+    "ACTUAL_BACKEND_TASK_CUSTODY_AND_FINITE_WINDOW_WATCHDOG_PINS_REQUIRED",
+    "EXACT_OWNER_COMPLETE_SOURCE_TASK_PROVIDER_AUTHORIZATION_REQUIRED"
   ],
   "claims": {
     "sourceRegistration": false,
@@ -108,8 +142,8 @@
     "nativeResults": false,
     "formalReviewAdmission": false
   },
-  "imageSourceHead": "157bb95879836d8d06a2d7d93dc29a5d6a0c262f",
-  "sharedBaseline": "ce3a44b",
+  "imageSourceHead": "e9afb98a5cf78d03a048ff12510d96cfcdf363a9",
+  "sharedBaseline": "e9afb98a5cf78d03a048ff12510d96cfcdf363a9",
   "packagingDockerfileSha256": "11ea0e3329ce5fe90828bd73f98c829c6e2c66a6ab7092ab9c1740f5c5a09d5e",
   "reviewedLocalPreparation": {
     "closedPackage": {
@@ -130,5 +164,61 @@
       "reviewReceipt": "/private/tmp/otr-universal-native-pins-review-20261024/FIXED_REVIEW.json",
       "reviewReceiptSha256": "7b7bcbfb44766a3e00e51b7b09b6bc5d4658f9131e6b18dcebfefc3348ccc427"
     }
+  },
+  "closedDeployment": {
+    "status": "CLOSED_DEPLOYMENT_PASS",
+    "acceptedAt": "2026-10-24T08:52:09.832147+00:00",
+    "receipt": "docs/ops/universal-closed-bootstrap-20261024/receipts/ACTUAL_WATCHDOG_HANDOFF.json",
+    "receiptSha256": "7e5c04c70257020c79982493b4eada6140bfa8129857af9ad3d49e85e9507e23",
+    "normalNativeContextObservation": {
+      "status": 503,
+      "at": "2026-10-24T09:03:25Z",
+      "source": "Coordinator actual Native normalAuth observation; not repeated by Writer"
+    },
+    "nativeClientErrorCodeFixSha": null
+  },
+  "scopeBindingRule": {
+    "sourceCommandPins": "Derive only by existing normal Native C3/Source Repository preparation for the exact retained Batch+inputs; re-export and seal before any remote Source scope. No replacement UUID or SQL row seed.",
+    "taskAndRunPins": "Only existing trusted Operator/owning Run+ModelTask contracts, bound to those actual Source receipts. Do not infer Task from Source preparation.",
+    "preActivationConditions": [
+      "Native code fix independently verified against actual transport; fixed SHA recorded",
+      "PublicationCatalogReceive contractVersion1 factory available; otherwise stop before local Source preparation",
+      "all three existing Source command pins exported and correlated with exact C3 IDs/SHA",
+      "exact SQL preimages/config/price/Auth/readers/credentials qualified without write",
+      "one sealed <=900s UTC window and independent existing92acdd1 watchdog acknowledged"
+    ],
+    "ownerApprovalModel": "One complete bounded vertical slice approval after read-only qualification; local-only IDs may be filled from the exact authorized Repository derivation without inventing them or expanding inputs. This proposal is not an activation grant."
+  },
+  "runtimePreparation": {
+    "baselineImage": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+    "preserveCurrentSustainedTripP1": true,
+    "finiteRuntimeTarget": "/run/otr/universal-runtime.json",
+    "finiteRuntimeMode": "root:999 0440, exact SHA; private activation directory0700",
+    "taskCustodyTarget": "/var/lib/otr/universal-custody",
+    "taskCustodyKind": "Dedicated Backend store, owned UID10001 mode0700, actual store/device/inode identity; existing custody initializer only. No AppDB/session copy.",
+    "taskDatabase": "/var/lib/otr/universal-custody/continuations.db",
+    "taskDatabasePrecondition": "Pre-existing real regular UID10001/0600/nlink1 file created in that dedicated store, then existing initializeUniversalTaskDatabase; never use App SQLite.",
+    "activeMounts": "Keep actual4 baseline mounts/types/RW/privatefileSHA; finite overlay adds RO capability and RW dedicated Backend custody. Pin whole active and baseline projections. Close restores same99966+original4mounts; retain custody host data/receipts.",
+    "credentialPolicy": "Existing legal Backend DEV sources only; no provider key in Native/packet/receipts. Missing/Flight-only config or missing legitimate credential is BLOCKED, not authority to mint a substitute."
+  },
+  "nativeTransportFix": {
+    "code": "ac8fd3d",
+    "localTests": 25,
+    "independentReview": "BOUNDED_REVIEW_PASS",
+    "actualRetest": "NOT_RUN_OLD_START_ALLOWANCE_CONSUMED"
+  },
+  "liveQualification": {
+    "receipt": "receipts/ACTUAL_DEV_METADATA_QUALIFICATION.json",
+    "providerConfigCount": 0,
+    "devIntegrationCount": 0,
+    "deepSeekPriceCount": 0,
+    "devGlobalKillSwitch": true,
+    "modelTaskAdmissionRelation": "ABSENT",
+    "protectedModelTaskFunctions": "ABSENT",
+    "sourceRegisterPreimage": "EXACT_EXISTING_PDF_UPLOAD_V4_DIFFERENCE_COMPATIBILITY_PATCH_IN_PROGRESS",
+    "markDispatchPreimage": "EXISTING_FLIGHT_FOUNDATION_20261007000100",
+    "status": "BLOCKED_BY_UNDEPLOYED_OWNING_DEPENDENCIES_AND_PROVIDER_CONFIGURATION",
+    "backendDeepSeekKeyPresent": false,
+    "sourceGateGuards": "EXISTING_PDF_V4_PREIMAGES_REQUIRE_COMPATIBILITY"
   }
 }

@@ -20,7 +20,7 @@
   },
   "runtime": {
     "container": "otr-dev-backend",
-    "imageId": "sha256:68f362ce956769bbd89f5859b2803a6558892c3628db935d2deb76bc71a461c2",
+    "imageId": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
     "runtimeSource": null,
     "runtimeSHA256": null,
     "finiteComposeFile": null,
