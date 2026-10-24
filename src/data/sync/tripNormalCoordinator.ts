@@ -94,13 +94,19 @@ export function createNativeNormalTripSyncRunner(
             createUuid(),
           );
           const context = await core.captureContext(tripId);
-          const transport = createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex);
+          const transport = createCoreV2Transport(
+            requireActiveUserId,
+            tripCoreSha256Hex,
+            { timeoutMs: 60_000 },
+          );
           await core.recoverP1Receipts(context, transport);
           const pending = await core.pending(context);
           if (pending.some((i) => i.state === "APPLIED"))
             await core.refresh(
               context,
-              createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex),
+              createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex, {
+                timeoutMs: 60_000,
+              }),
             );
         },
         JSON.stringify(trigger.map((row) => [row.id, row.status, row.attempt_count])),
@@ -157,7 +163,11 @@ export function createNativeNormalTripSyncRunner(
         runCreate: (target) => createNativeTripCreateSyncRunner(target, enabled)(),
         runMetadata: (target) => createNativeTripMetadataSyncRunner(enabled, target)(),
         runP1: async (target) => {
-          const transport = createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex);
+          const transport = createCoreV2Transport(
+            requireActiveUserId,
+            tripCoreSha256Hex,
+            { timeoutMs: 60_000 },
+          );
           const result = await createCoreV2SyncCoordinator(
             createSyncOperationRepository(
               database,

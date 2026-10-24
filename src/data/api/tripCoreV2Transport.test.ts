@@ -155,3 +155,115 @@ it("validates publication request/response scope and rejects a late account-swit
   switchAccount = true;
   await expect(transport.publishSourceCandidates(context, publication)).rejects.toThrow();
 });
+
+it("allows a bounded normal Core receipt after the global fifteen-second default", async () => {
+  vi.useFakeTimers();
+  try {
+    const operation = randomUUID();
+    const context = await captureAccountRequestContext(trip, async () => actor);
+    const transport = createCoreV2Transport(
+      async () => actor,
+      hash,
+      {
+        baseUrl: "http://core.local",
+        timeoutMs: 60_000,
+        fetchImplementation: async () =>
+          new Promise<Response>((resolve) =>
+            setTimeout(
+              () =>
+                resolve(
+                  new Response(
+                    JSON.stringify({
+                      projection: "STATUS_ONLY",
+                      domainReceiptId: randomUUID(),
+                      receiptSha256: "a".repeat(64),
+                      operationId: operation,
+                      outcome: "APPLIED",
+                      targetRevision: null,
+                    }),
+                  ),
+                ),
+              18_000,
+            ),
+          ),
+      },
+      token,
+    );
+    const result = transport.receipt(context, operation);
+    await vi.advanceTimersByTimeAsync(18_000);
+    expect(await result).toMatchObject({
+      projection: "STATUS_ONLY",
+      operationId: operation,
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("keeps the normal Core sixty-second deadline finite", async () => {
+  vi.useFakeTimers();
+  try {
+    const context = await captureAccountRequestContext(trip, async () => actor);
+    const transport = createCoreV2Transport(
+      async () => actor,
+      hash,
+      {
+        baseUrl: "http://core.local",
+        timeoutMs: 60_000,
+        fetchImplementation: async () => new Promise<Response>(() => {}),
+      },
+      token,
+    );
+    const assertion = expect(
+      transport.receipt(context, randomUUID()),
+    ).rejects.toMatchObject({ kind: "timeout", code: "REQUEST_TIMEOUT" });
+    await vi.advanceTimersByTimeAsync(60_000);
+    await assertion;
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("fences a long normal Core receipt after an account generation change", async () => {
+  vi.useFakeTimers();
+  try {
+    const operation = randomUUID();
+    const context = await captureAccountRequestContext(trip, async () => actor);
+    const transport = createCoreV2Transport(
+      async () => actor,
+      hash,
+      {
+        baseUrl: "http://core.local",
+        timeoutMs: 60_000,
+        fetchImplementation: async () =>
+          new Promise<Response>((resolve) =>
+            setTimeout(
+              () =>
+                resolve(
+                  new Response(
+                    JSON.stringify({
+                      projection: "STATUS_ONLY",
+                      domainReceiptId: randomUUID(),
+                      receiptSha256: "a".repeat(64),
+                      operationId: operation,
+                      outcome: "APPLIED",
+                      targetRevision: null,
+                    }),
+                  ),
+                ),
+              18_000,
+            ),
+          ),
+      },
+      token,
+    );
+    const assertion = expect(transport.receipt(context, operation)).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(16_000);
+    const lease = await beginAccountTransition();
+    endAccountTransition(lease);
+    await vi.advanceTimersByTimeAsync(2_000);
+    await assertion;
+  } finally {
+    vi.useRealTimers();
+  }
+});
