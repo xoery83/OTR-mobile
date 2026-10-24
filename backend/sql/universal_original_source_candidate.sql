@@ -95,12 +95,27 @@ begin
  return j;
 end $function$
 ;
-do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.trip_source_register(text,uuid,text)'::regprocedure;if md5(original)<>'a25126415f6a910930c8dab6287d0437' then raise exception 'UTF8_SOURCE_PREIMAGE';end if;definition:=replace(definition,$old0$ j:=public.trip_source_command_codec(raw); p:=j->'payload';$old0$,$new0$ if public.trip_source_universal_original_pin()->>'profile'='OTR_UTF8_TEXT_FILE_V1' then j:=public.trip_source_utf8_file_codec(raw); else j:=public.trip_source_command_codec(raw);end if; p:=j->'payload';
+do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.trip_source_register(text,uuid,text)'::regprocedure;if md5(original) not in ('a25126415f6a910930c8dab6287d0437','0a350c6e55e425dbd6c225a26fb3fd76') then raise exception 'UTF8_SOURCE_PREIMAGE';end if;
+-- The second exact preimage is the deployed PDF V4 guard hook. Never remove or bypass it.
+if md5(original)='0a350c6e55e425dbd6c225a26fb3fd76' and position('perform public.trip_source_assert_gate(); perform public.trip_source_pdf_upload_v4_command(j);' in original)=0 then raise exception 'UTF8_SOURCE_PDF_V4_PREIMAGE';end if;if md5(original)='0a350c6e55e425dbd6c225a26fb3fd76' then definition:=replace(definition,'perform public.trip_source_pdf_upload_v4_command(j);','if public.trip_source_universal_original_pin() is null then perform public.trip_source_pdf_upload_v4_command(j);end if;');end if;definition:=replace(definition,$old0$ j:=public.trip_source_command_codec(raw); p:=j->'payload';$old0$,$new0$ if public.trip_source_universal_original_pin()->>'profile'='OTR_UTF8_TEXT_FILE_V1' then j:=public.trip_source_utf8_file_codec(raw); else j:=public.trip_source_command_codec(raw);end if; p:=j->'payload';
  if public.trip_source_universal_original_pin() is not null and (family<>'ACQUIRE_SOURCE' or j->>'operation_id'<>public.trip_source_universal_original_pin()->>'operationId' or j->>'operation_sha256'<>public.trip_source_universal_original_pin()->>'operationSha256' or j->>'source_id'<>public.trip_source_universal_original_pin()->>'sourceId' or p->'original'->>'id'<>public.trip_source_universal_original_pin()->>'representationId') then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;$new0$);definition:=replace(definition,$old1$ perform public.trip_source_lock_scope(actor,(j->>'trip_id')::uuid,(j->>'source_id')::uuid);$old1$,$new1$ if public.trip_source_universal_original_pin() is not null then if not public.trip_source_lock_universal_actor(actor,(j->>'trip_id')::uuid,true) then raise exception 'SOURCE_ACCESS_DENIED';end if;else perform public.trip_source_lock_scope(actor,(j->>'trip_id')::uuid,(j->>'source_id')::uuid);end if;$new1$);definition:=replace(definition,$old2$ select * into o from public.trip_source_operations where trip_id=(j->>'trip_id')::uuid and actor_account_id=actor and operation_key=j->>'operation_key' for update;$old2$,$new2$ if public.trip_source_universal_original_pin() is not null then select * into o from public.trip_source_operations where trip_id=(j->>'trip_id')::uuid and actor_account_id=actor and operation_key=j->>'operation_key';else select * into o from public.trip_source_operations where trip_id=(j->>'trip_id')::uuid and actor_account_id=actor and operation_key=j->>'operation_key' for update;end if;$new2$);definition:=replace(definition,$old3$ select * into s from public.trip_sources where id=(j->>'source_id')::uuid for update;$old3$,$new3$ if public.trip_source_universal_original_pin() is not null then select * into s from public.trip_sources where id=(j->>'source_id')::uuid;else select * into s from public.trip_sources where id=(j->>'source_id')::uuid for update;end if;$new3$);execute definition;end$patch$;
-do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.trip_source_assert_gate()'::regprocedure;if md5(original)<>'7bfe15b4e59362c42791543560e537cc' then raise exception 'UTF8_SOURCE_PREIMAGE: trip_source_assert_gate()';end if;execute replace(definition,$old$ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) then$old$,$new$ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) and public.trip_source_universal_original_pin() is null then$new$);end$patch$;
-do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.trip_source_operation_guard()'::regprocedure;if md5(original)<>'b4f8b227701407bab318bbc0f734243b' then raise exception 'UTF8_SOURCE_PREIMAGE: trip_source_operation_guard()';end if;execute replace(definition,$old$ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) then$old$,$new$ if public.trip_source_universal_original_pin() is not null and tg_level='ROW' then if (tg_op<>'INSERT' or new.command<>'ACQUIRE_SOURCE' or new.id::text<>public.trip_source_universal_original_pin()->>'operationId' or new.actor_account_id::text<>public.trip_source_universal_original_pin()->>'actorId' or new.trip_id::text<>public.trip_source_universal_original_pin()->>'tripId' or new.source_id::text<>public.trip_source_universal_original_pin()->>'sourceId' or new.operation_key<>public.trip_source_universal_original_pin()->>'operationKey' or new.operation_sha256<>public.trip_source_universal_original_pin()->>'operationSha256') then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;end if;
- if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) and public.trip_source_universal_original_pin() is null then$new$);end$patch$;
-do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.guard_trip_source_mutation()'::regprocedure;if md5(original)<>'bfbe648b10b86df5b6f03e8ab56d21db' then raise exception 'UTF8_SOURCE_PREIMAGE: guard_trip_source_mutation()';end if;execute replace(definition,$old$ begin raise exception using errcode='42501',message='TRIP_SOURCE_COMMANDS_DISABLED'; end $old$,$new$declare p jsonb:=public.trip_source_universal_original_pin();r jsonb;begin
+do $patch$declare original text;definition text;begin
+ select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.trip_source_assert_gate()'::regprocedure;
+ if md5(original)='7bfe15b4e59362c42791543560e537cc' then
+  execute replace(definition,$old$ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) then$old$,$new$ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) and public.trip_source_universal_original_pin() is null then$new$);
+ elsif md5(original)='3795be2dcc8592878e385e54c81f2c66' then
+  execute replace(definition,'perform public.trip_source_pdf_upload_v4_scope();','if public.trip_source_universal_original_pin() is null then perform public.trip_source_pdf_upload_v4_scope();end if;');
+ else raise exception 'UTF8_SOURCE_PREIMAGE: trip_source_assert_gate()';end if;
+end$patch$;
+do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.trip_source_operation_guard()'::regprocedure;if md5(original)='b4f8b227701407bab318bbc0f734243b' then execute replace(definition,$old$ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) then$old$,$new$ if public.trip_source_universal_original_pin() is not null and tg_level='ROW' then if (tg_op<>'INSERT' or new.command<>'ACQUIRE_SOURCE' or new.id::text<>public.trip_source_universal_original_pin()->>'operationId' or new.actor_account_id::text<>public.trip_source_universal_original_pin()->>'actorId' or new.trip_id::text<>public.trip_source_universal_original_pin()->>'tripId' or new.source_id::text<>public.trip_source_universal_original_pin()->>'sourceId' or new.operation_key<>public.trip_source_universal_original_pin()->>'operationKey' or new.operation_sha256<>public.trip_source_universal_original_pin()->>'operationSha256') then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;end if;
+ if not exists(select 1 from public.trip_source_command_gate where singleton and enabled) and public.trip_source_universal_original_pin() is null then$new$);elsif md5(original)='6bc6b65899e617c163a36f57ba5049be' then
+ execute replace(definition,'perform public.trip_source_pdf_upload_v4_operation(new);',$universal$
+ if public.trip_source_universal_original_pin() is null then perform public.trip_source_pdf_upload_v4_operation(new);
+ elsif tg_op<>'INSERT' or new.command<>'ACQUIRE_SOURCE' or new.id::text<>public.trip_source_universal_original_pin()->>'operationId' or new.actor_account_id::text<>public.trip_source_universal_original_pin()->>'actorId' or new.trip_id::text<>public.trip_source_universal_original_pin()->>'tripId' or new.source_id::text<>public.trip_source_universal_original_pin()->>'sourceId' or new.operation_key<>public.trip_source_universal_original_pin()->>'operationKey' or new.operation_sha256<>public.trip_source_universal_original_pin()->>'operationSha256' then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+$universal$);
+ else raise exception 'UTF8_SOURCE_PREIMAGE: trip_source_operation_guard()';end if;
+end$patch$;
+do $patch$declare original text;definition text;begin select prosrc,pg_get_functiondef(oid) into original,definition from pg_proc where oid='public.guard_trip_source_mutation()'::regprocedure;if md5(original)='bfbe648b10b86df5b6f03e8ab56d21db' then execute replace(definition,$old$ begin raise exception using errcode='42501',message='TRIP_SOURCE_COMMANDS_DISABLED'; end $old$,$new$declare p jsonb:=public.trip_source_universal_original_pin();r jsonb;begin
  if p is not null then
   if tg_op<>'INSERT' then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
   if tg_level='STATEMENT' then return null;end if;
@@ -118,7 +133,32 @@ do $patch$declare original text;definition text;begin select prosrc,pg_get_funct
   else raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
   return new;
  end if;
- raise exception using errcode='42501',message='TRIP_SOURCE_COMMANDS_DISABLED'; end $new$);end$patch$;
+ raise exception using errcode='42501',message='TRIP_SOURCE_COMMANDS_DISABLED'; end $new$);elsif md5(original)='141489b395b3a9093388fed9ceb244c3' then
+ execute replace(definition,'declare b jsonb;begin','declare b jsonb;begin'||$universal$
+/* UNIVERSAL_ORIGINAL_INSERT_BEGIN */
+declare p jsonb:=public.trip_source_universal_original_pin();r jsonb;begin
+ if p is not null then
+  if tg_op<>'INSERT' then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+  if tg_level='STATEMENT' then return null;end if;
+  r:=to_jsonb(new);
+  if tg_table_name='trip_sources' then
+   if r->>'id'<>p->>'sourceId' or r->>'trip_id'<>p->>'tripId' or r->>'acquired_by'<>p->>'actorId' or
+    r->>'acquisition_key'<>p->>'operationKey' or r->>'current_material_revision'<>'1' or r->>'row_revision'<>'1' or
+    not (p->>'profile'='OTR_UTF8_TEXT_FILE_V1' and r->>'source_kind'='FILE' and r->>'acquisition_channel'='FILES' or p->>'profile'='OTR_SUBMITTED_TEXT_V1' and r->>'source_kind'='TEXT' and r->>'acquisition_channel'='PASTE') then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+  elsif tg_table_name='trip_source_revisions' then
+   if r->>'source_id'<>p->>'sourceId' or r->>'created_by'<>p->>'actorId' or r->>'material_revision'<>'1' or r->>'operation_key'<>p->>'operationKey' or r->'original_representation_ids'<>jsonb_build_array(p->>'representationId') then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+  elsif tg_table_name='trip_source_representations' then
+   if r->>'source_id'<>p->>'sourceId' or r->>'id'<>p->>'representationId' or r->>'material_kind'<>'TEXT' or r->>'role'<>'ORIGINAL' or r->>'remote_state'<>'NOT_APPLICABLE' then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+  elsif tg_table_name='trip_source_actions' then
+   if r->>'source_id'<>p->>'sourceId' or r->>'actor_account_id'<>p->>'actorId' or r->>'action'<>'ACQUIRE' or r->>'operation_key'<>p->>'operationKey' or r->>'operation_sha256'<>p->>'operationSha256' then raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+  else raise exception 'UNIVERSAL_SOURCE_COMMAND_DENIED';end if;
+  return new;
+ end if;
+end;
+/* UNIVERSAL_ORIGINAL_INSERT_END */
+$universal$);
+ else raise exception 'UTF8_SOURCE_PREIMAGE: guard_trip_source_mutation()';end if;
+end$patch$;
 -- Necessary closed capability, not general writer activation. No UPDATE/DELETE grants.
 grant insert on public.trip_sources,public.trip_source_revisions,public.trip_source_representations,public.trip_source_actions,public.trip_source_operations to otr_trip_source_writer;
 grant select on public.trip_source_operations,public.trip_source_actions to otr_trip_source_writer;

@@ -1,0 +1,26 @@
+{
+  "status": "ISOLATED_OWNING_SOURCE_ORIGINAL_PASS",
+  "schemaSha256": "b93a6648f2831597c43e07e8c89bebd9f3c8d3832bf158d13752f95f1263ecf4",
+  "resultSchemaSha256": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
+  "checks": [
+    "exact four observed PDF V4 roots and register0a350 installed; PDF private dependencies CLOSED sentinels, not PDF Runtime PASS",
+    "PDF validator unchanged; removing finite-only branches exactly recovers legacy gate/operation/mutation bodies and missing-scope negative remains denied",
+    "legacy codec/owner edge preserved and global Source gate CLOSED",
+    "unprovisioned new owning entry CLOSED",
+    "NULL/foreign/hash-changed forged settings cannot enter finite branch; closed PDF legacy rejection retained",
+    "scoped result reuses owning READ COMMITTED gate and denies stale-snapshot isolation",
+    "real existing Source command/journal/action/receipt creation and exact replay/result lookup for FILE and PASTE",
+    "independent owning catalog readback preserves filename, FILE/FILES vs TEXT/PASTE, BOM/CRLF/Unicode/hash/bytes",
+    "actual registered Sources feed initial PENDING Run and retained Universal read without a model result",
+    "old entry cannot silently acquire FILE UTF8 through its V1 codec",
+    "cross-account denied",
+    "unpinned operation denied despite same allowed Actor/Trip",
+    "PDF masquerade/wrong filename/oversize reject; no new profile permissiveness",
+    "exact size/filename boundary, NUL/null filename, direct app-role denial and no UPDATE grants",
+    "result lookup works before Source exists; exact pinned receipt read closes immediately when SQL scope pins revoked",
+    "expired formerly valid setting falls back to original closed PDF guard",
+    "expiry stops wrapper; exactly2 immutable operations; no Candidate/Admission/global activation"
+  ],
+  "providerCalls": 0,
+  "hostedWrites": 0
+}

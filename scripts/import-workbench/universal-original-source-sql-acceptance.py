@@ -1,5 +1,5 @@
 """Actual owning UTF8 file + typed Source commands on isolated PG17, no seed Source rows."""
-import hashlib,json,pathlib,subprocess,time,uuid,os
+import hashlib,json,pathlib,subprocess,time,uuid,os,re,sys
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 NAME='otr-universal-original-'+uuid.uuid4().hex[:10]
 ACTOR='00000000-0000-4000-8000-000000000002';OTHER='00000000-0000-4000-8000-000000000003';TRIP='10000000-0000-4000-8000-000000000001'
@@ -38,7 +38,46 @@ try:
  before=sql("select md5(prosrc) from pg_proc where oid='public.trip_source_command_codec(text)'::regprocedure;")
  edges=sql("select coalesce(jsonb_agg(to_jsonb(m) order by m.oid),'[]') from pg_auth_members m where roleid='otr_trip_source_writer'::regrole and member='postgres'::regrole;")
  source=(ROOT/'backend/sql/universal_source_host_candidate.sql').read_text();candidate=(ROOT/'backend/sql/universal_original_source_candidate.sql').read_text()
- sql('SET ROLE postgres;'+source);sql('SET ROLE postgres;'+candidate)
+ pdf_before={};pdf_mode=os.environ.get('OTR_UNIVERSAL_PDF_V4_FIXTURE')=='1'
+ if pdf_mode:
+  observed=json.loads((ROOT/'scripts/import-workbench/fixtures/universal-pdf-v4-observed-roots.json').read_text())
+  # Actual observed root definitions. Missing private PDF scope dependencies are
+  # deliberately CLOSED test sentinels, never fake positive PDF proof/authority.
+  sql("create function public.trip_source_pdf_upload_v4_scope() returns jsonb language plpgsql as $$begin raise exception 'PDF_V4_FIXTURE_CLOSED';end$$;create function public.trip_source_pdf_registration_gate() returns void language plpgsql as $$begin raise exception 'PDF_REGISTRATION_FIXTURE_CLOSED';end$$;")
+  for root in observed['roots']:
+   sql(root['definition']+';')
+   if root['name']=='trip_source_pdf_upload_v4_command(jsonb)':sql('alter function public.'+root['name']+' owner to otr_trip_source_writer;')
+   actual=sql("select md5(prosrc) from pg_proc where oid="+lit('public.'+root['name'])+"::regprocedure;")
+   assert actual==root['body_md5'],(root['name'],actual)
+   pdf_before[root['name']]=sql("select prosrc from pg_proc where oid="+lit('public.'+root['name'])+"::regprocedure;")
+  sql("DO $patch$declare d text;begin select pg_get_functiondef(oid) into d from pg_proc where oid='public.trip_source_register(text,uuid,text)'::regprocedure;execute replace(d,'perform public.trip_source_assert_gate();','perform public.trip_source_assert_gate(); perform public.trip_source_pdf_upload_v4_command(j);');end$patch$;")
+  assert sql("select md5(prosrc) from pg_proc where oid='public.trip_source_register(text,uuid,text)'::regprocedure;")=='0a350c6e55e425dbd6c225a26fb3fd76'
+  sql("create function public.fixture_pdf_gate() returns void language plpgsql security definer set search_path=pg_catalog as $$begin perform public.trip_source_assert_gate();end$$;alter function public.fixture_pdf_gate() owner to otr_trip_source_writer;create function public.fixture_pdf_command() returns void language plpgsql security definer set search_path=pg_catalog as $$begin perform public.trip_source_pdf_upload_v4_command('{}'::jsonb);end$$;alter function public.fixture_pdf_command() owner to otr_trip_source_writer;")
+  sql(gateway("select public.fixture_pdf_gate();"),error='PDF_V4_FIXTURE_CLOSED')
+  checks.append('exact four observed PDF V4 roots and register0a350 installed; PDF private dependencies CLOSED sentinels, not PDF Runtime PASS')
+  bad=os.environ.get('OTR_UNIVERSAL_BAD_PDF_PREIMAGE')
+  if bad:
+   assert bad in ['trip_source_register(text,uuid,text)','trip_source_assert_gate()','trip_source_operation_guard()','guard_trip_source_mutation()']
+   sql("DO $patch$declare d text;b text;begin select pg_get_functiondef(oid),prosrc into d,b from pg_proc where oid="+lit('public.'+bad)+"::regprocedure;execute replace(d,b,b||E'\\n-- UNAPPROVED DRIFT');end$patch$;")
+ sql('SET ROLE postgres;'+source)
+ if pdf_mode and os.environ.get('OTR_UNIVERSAL_BAD_PDF_PREIMAGE'):
+  sql('SET ROLE postgres;'+candidate,error='UTF8_SOURCE_PREIMAGE')
+  assert sql("select to_regprocedure('public.trip_source_universal_original_pin()') is null;")=='t'
+  assert sql('select count(*) from trip_source_universal_scope;')=='0'
+  print(json.dumps({'status':'ISOLATED_PG_UNKNOWN_PREIMAGE_DENIED','root':bad,'providerCalls':0,'hostedWrites':0}));sys.exit(0)
+ sql('SET ROLE postgres;'+candidate)
+ if pdf_mode:
+  def body(name):return sql("select prosrc from pg_proc where oid="+lit('public.'+name)+"::regprocedure;")
+  assert body('trip_source_pdf_upload_v4_command(jsonb)')==pdf_before['trip_source_pdf_upload_v4_command(jsonb)']
+  assert body('trip_source_assert_gate()').replace('if public.trip_source_universal_original_pin() is null then perform public.trip_source_pdf_upload_v4_scope();end if;','perform public.trip_source_pdf_upload_v4_scope();')==pdf_before['trip_source_assert_gate()']
+  wrap=re.search(r"replace\(definition,'perform public.trip_source_pdf_upload_v4_operation\(new\);',\$universal\$(.*?)\$universal\$",candidate,re.S).group(1)
+  assert body('trip_source_operation_guard()').replace(wrap,'perform public.trip_source_pdf_upload_v4_operation(new);')==pdf_before['trip_source_operation_guard()']
+  original_trigger=re.sub(r'\n/\* UNIVERSAL_ORIGINAL_INSERT_BEGIN \*/.*?/\* UNIVERSAL_ORIGINAL_INSERT_END \*/\n','',body('guard_trip_source_mutation()'),flags=re.S)
+  assert original_trigger==pdf_before['guard_trip_source_mutation()']
+  assert body('trip_source_register(text,uuid,text)').count('perform public.trip_source_pdf_upload_v4_command(j);')==1
+  sql(gateway("select public.fixture_pdf_gate();"),error='PDF_V4_FIXTURE_CLOSED')
+  sql(gateway("select public.fixture_pdf_command();"),error='PDF_V4_FIXTURE_CLOSED')
+  checks.append('PDF validator unchanged; removing finite-only branches exactly recovers legacy gate/operation/mutation bodies and missing-scope negative remains denied')
  result_candidate=(ROOT/'backend/sql/universal_original_result_candidate.sql').read_text();sql('SET ROLE postgres;'+result_candidate)
  assert before==sql("select md5(prosrc) from pg_proc where oid='public.trip_source_command_codec(text)'::regprocedure;")
  assert edges==sql("select coalesce(jsonb_agg(to_jsonb(m) order by m.oid),'[]') from pg_auth_members m where roleid='otr_trip_source_writer'::regrole and member='postgres'::regrole;")
@@ -67,6 +106,11 @@ try:
  descriptors=[[i['id'],i['source_id'],1,i['representation_id'],i['payload_sha256'],i['byte_count'],1,False,1,'ORIGINAL','TEXT',None,None,None,[]] for i in sorted(inputs,key=lambda i:(i['source_id'],i['material_revision'],i['representation_id'],i['id']))]
  expected_input_hash=hashv('otr-source-run-input-v1',[1,descriptors])
  sql("insert into trip_source_universal_scope(singleton,actor_id,trip_id,batch_id,task_id,run_id,submission_sha256,input_sha256,starts_at,expires_at,source_command_pins) values(true,"+','.join(lit(x)+'::uuid' for x in [ACTOR,TRIP,ids['batch'],ids['task'],ids['run']])+","+lit(submission_hash)+","+lit(expected_input_hash)+",clock_timestamp()-interval '1 second',clock_timestamp()+interval '120 seconds',"+lit(canon(pins))+"::jsonb);")
+ if pdf_mode:
+  foreign_pin={**pins[0],'actorId':OTHER};changed_pin={**pins[0],'operationSha256':'f'*64}
+  for invalid_pin in [None,foreign_pin,changed_pin]:
+   sql(gateway("select set_config('otr.universal.source_pin',"+lit(canon(invalid_pin))+",false);select public.fixture_pdf_gate();"),error='PDF_V4_FIXTURE_CLOSED')
+  checks.append('NULL/foreign/hash-changed forged settings cannot enter finite branch; closed PDF legacy rejection retained')
  sql(gateway('BEGIN ISOLATION LEVEL REPEATABLE READ;select trip_source_lookup_universal_original('+lit(ACTOR)+'::uuid,'+lit(canon(commands[0][0]))+');'),error='UNSUPPORTED_TRANSACTION_ISOLATION')
  checks.append('scoped result reuses owning READ COMMITTED gate and denies stale-snapshot isolation')
  for q,p in commands:
@@ -113,6 +157,9 @@ try:
  sql("update trip_source_universal_scope set starts_at=clock_timestamp()-interval '120 seconds',expires_at=clock_timestamp()-interval '1 second';")
  sql(gateway('BEGIN;'+acquire(commands[1][0])),error='UNIVERSAL_SOURCE_SCOPE_CLOSED')
  sql(gateway('select trip_source_lookup_universal_original('+lit(ACTOR)+'::uuid,'+lit(canon(commands[1][0]))+');'),error='UNIVERSAL_SOURCE_SCOPE_CLOSED')
+ if pdf_mode:
+  sql(gateway("select set_config('otr.universal.source_pin',"+lit(canon(pins[0]))+",false);select public.fixture_pdf_gate();"),error='PDF_V4_FIXTURE_CLOSED')
+  checks.append('expired formerly valid setting falls back to original closed PDF guard')
  assert sql('select not enabled from trip_source_command_gate;')=='t'
  assert sql("select count(*) from trip_source_operations where trip_id='10000000-0000-4000-8000-000000000001';")=='2'
  assert sql("select count(*) from trip_source_candidates where run_id="+lit(ids['run'])+';')=='0'
