@@ -1070,3 +1070,198 @@ it("finite Forms batch adds P5 with transport endpoint commands but refuses them
     0,
   );
 });
+
+async function lostP1RecoveryFixture() {
+  const f = fixture();
+  const ctx = await f.repo.captureContext(trip);
+  const command = {
+    ...sparse(),
+    command: "CREATE_ITEM",
+    payload: {
+      family: "P1",
+      core: { title: "Lost P1 response" },
+      schedule: { start: ordinaryTime() },
+      place: ordinaryPlace(),
+      ...coreDefaults("member"),
+    },
+  };
+  await f.repo.enqueue(ctx, command);
+  let graph = emptyCoreGraph();
+  let stored: { domainReceiptId: string; receiptText: string } | null = null;
+  const storage: CoreCommandStorage = {
+    async withLockedCommand(_scope, work) {
+      return work({
+        actor,
+        readReceipt: async () => stored,
+        hasLegacyOperation: async () => false,
+        canReadReceipt: async () => true,
+        enabledCommands: async () => ["CREATE_ITEM"],
+        readLockedGraph: async () => graph,
+        verifyAdmission: async () => {},
+        lifecycleGraphHash: async () => undefined,
+        async commit(mutation, receipt) {
+          if (mutation) graph = mutation.graph;
+          stored = {
+            domainReceiptId: randomUUID(),
+            receiptText: JSON.stringify(receipt),
+          };
+          return stored.domainReceiptId;
+        },
+      });
+    },
+  };
+  const receipt = await executeCoreCommandV2(
+    storage,
+    account,
+    trip,
+    command,
+    hash,
+    () => stamp,
+  );
+  const due = "2099-01-01T00:00:00Z";
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET status='RETRYABLE',attempt_count=7,next_attempt_at=?,failure_category='NETWORK' WHERE id=?",
+    )
+    .run(due, command.operationId);
+  const transport = {
+    receipt: async () => receipt,
+    collection: async () => collection(true, graph),
+  };
+  return { ...f, ctx, command, receipt, due, transport };
+}
+it("recovers accepted P1 through readonly same-operation receipt and verified collection before future retry", async () => {
+  const f = await lostP1RecoveryFixture();
+  expect(await f.repo.recoverP1Receipts(f.ctx, f.transport)).toEqual({ recovered: 1 });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT status,next_attempt_at,attempt_count FROM sync_operations WHERE id=?",
+      )
+      .get(f.command.operationId),
+  ).toMatchObject({ status: "COMPLETED", next_attempt_at: null, attempt_count: 7 });
+  expect(await f.repo.pending(f.ctx)).toEqual([]);
+  expect((await f.repo.readGraph(f.ctx)).itinerary_events[0].experience_family).toBe(
+    "P1",
+  );
+  expect(
+    await f.repo.recoverP1Receipts(f.ctx, {
+      receipt: async () => {
+        throw Error("no repeated read");
+      },
+      collection: async () => {
+        throw Error("no repeated read");
+      },
+    }),
+  ).toEqual({ recovered: 0 });
+});
+it("missing or status-only P1 receipt never changes future business retry or submits", async () => {
+  for (const projection of [
+    null,
+    {
+      projection: "STATUS_ONLY",
+      domainReceiptId: randomUUID(),
+      receiptSha256: "a".repeat(64),
+      operationId: randomUUID(),
+      outcome: "APPLIED",
+      targetRevision: null,
+    },
+  ] as const) {
+    const f = await lostP1RecoveryFixture();
+    expect(
+      await f.repo.recoverP1Receipts(f.ctx, {
+        ...f.transport,
+        receipt: async () => projection,
+        collection: async () => {
+          throw Error("must not collect");
+        },
+      }),
+    ).toEqual({ recovered: 0 });
+    expect(
+      f.sql
+        .prepare("SELECT status,next_attempt_at FROM sync_operations WHERE id=?")
+        .get(f.command.operationId),
+    ).toMatchObject({ status: "RETRYABLE", next_attempt_at: f.due });
+  }
+});
+it("failed collection preserves future retry despite durable accepted receipt", async () => {
+  const f = await lostP1RecoveryFixture();
+  await expect(
+    f.repo.recoverP1Receipts(f.ctx, {
+      ...f.transport,
+      collection: async () => {
+        throw Error("read unavailable");
+      },
+    }),
+  ).rejects.toThrow("read unavailable");
+  expect(
+    f.sql
+      .prepare("SELECT status,next_attempt_at FROM sync_operations WHERE id=?")
+      .get(f.command.operationId),
+  ).toMatchObject({ status: "RETRYABLE", next_attempt_at: f.due });
+  expect((await f.repo.pending(f.ctx))[0].state).toBe("APPLIED");
+});
+it("readonly recovery cannot ACK over a newer live queue claim", async () => {
+  const f = await lostP1RecoveryFixture();
+  expect(
+    await f.repo.recoverP1Receipts(f.ctx, {
+      ...f.transport,
+      collection: async () => {
+        f.sql
+          .prepare(
+            "UPDATE sync_operations SET status='PROCESSING',claim_owner='new-owner' WHERE id=?",
+          )
+          .run(f.command.operationId);
+        return f.transport.collection();
+      },
+    }),
+  ).toEqual({ recovered: 0 });
+  expect(
+    f.sql
+      .prepare("SELECT status,claim_owner FROM sync_operations WHERE id=?")
+      .get(f.command.operationId),
+  ).toMatchObject({ status: "PROCESSING", claim_owner: "new-owner" });
+});
+it("readonly recovery fences Account changes and altered queue pins", async () => {
+  const f = await lostP1RecoveryFixture();
+  await expect(
+    f.repo.recoverP1Receipts(f.ctx, {
+      ...f.transport,
+      receipt: async () => {
+        f.switchTo(randomUUID());
+        return f.receipt;
+      },
+    }),
+  ).rejects.toThrow();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(f.command.operationId)?.status,
+  ).toBe("RETRYABLE");
+  const tampered = await lostP1RecoveryFixture();
+  tampered.sql
+    .prepare("UPDATE sync_operations SET payload_json='{}' WHERE id=?")
+    .run(tampered.command.operationId);
+  await expect(
+    tampered.repo.recoverP1Receipts(tampered.ctx, {
+      ...tampered.transport,
+      receipt: async () => {
+        throw Error("network must not start");
+      },
+    }),
+  ).rejects.toThrow("CORE_RECOVERY_QUEUE_PIN");
+});
+it("auth-paused and never-dispatched P1 commands are excluded from automatic readonly recovery", async () => {
+  for (const change of ["attempt_count=0", "failure_category='AUTH'"]) {
+    const f = await lostP1RecoveryFixture();
+    f.sql.exec("UPDATE sync_operations SET " + change);
+    expect(
+      await f.repo.recoverP1Receipts(f.ctx, {
+        ...f.transport,
+        receipt: async () => {
+          throw Error("must not request");
+        },
+      }),
+    ).toEqual({ recovered: 0 });
+  }
+});

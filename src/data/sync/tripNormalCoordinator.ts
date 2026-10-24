@@ -63,8 +63,12 @@ export function createNativeNormalTripSyncRunner(
       const local = await repository.getTrip(tripId);
       await assertAccountRequestContext(account, requireActiveUserId);
       if (local?.serverId !== tripId) return;
-      const trigger = await database.getAllAsync<{ id: string }>(
-        "SELECT id FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND') ORDER BY id",
+      const trigger = await database.getAllAsync<{
+        id: string;
+        status: string;
+        attempt_count: number;
+      }>(
+        "SELECT id,status,attempt_count FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND ((status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND')) OR (entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND' AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND attempt_count>0 AND failure_category IS NOT 'AUTH')) ORDER BY id",
         account.accountId,
         tripId,
       );
@@ -90,6 +94,8 @@ export function createNativeNormalTripSyncRunner(
             createUuid(),
           );
           const context = await core.captureContext(tripId);
+          const transport = createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex);
+          await core.recoverP1Receipts(context, transport);
           const pending = await core.pending(context);
           if (pending.some((i) => i.state === "APPLIED"))
             await core.refresh(
@@ -97,7 +103,7 @@ export function createNativeNormalTripSyncRunner(
               createCoreV2Transport(requireActiveUserId, tripCoreSha256Hex),
             );
         },
-        JSON.stringify(trigger.map((row) => row.id)),
+        JSON.stringify(trigger.map((row) => [row.id, row.status, row.attempt_count])),
         !coldReadbackSeen.has(coldKey),
       );
       coldReadbackSeen.add(coldKey);
@@ -109,7 +115,15 @@ export function createNativeNormalTripSyncRunner(
         enabled,
         deferred: repository,
         recoverTripReadback: recoverReadback,
-        recoverP1Readback: async () => {},
+        recoverP1Readback: async (tripId) => {
+          const row = await database.getFirstAsync<{ create_operation_id: string }>(
+            "SELECT create_operation_id FROM local_trip_containers WHERE account_id=? AND id=?",
+            account.accountId,
+            tripId,
+          );
+          await assertAccountRequestContext(account, requireActiveUserId);
+          if (row) await recoverReadback(tripId, row.create_operation_id);
+        },
         runPerson: async (target) => {
           const context = { ...account, tripId: target.tripId };
           const people = createTripPersonCloudCreateRepository(
