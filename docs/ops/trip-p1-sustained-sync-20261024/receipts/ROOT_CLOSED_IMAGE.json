@@ -1,0 +1,24 @@
+{
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "status": 200,
+  "routes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+    "/v2/trip-metadata-operations/11111111-1111-4111-8111-111111111111": 401,
+    "/v2/trip-create-operations/11111111-1111-4111-8111-111111111111": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/source-import-catalogs": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/person-create-operations/11111111-1111-4111-8111-111111111111": 401
+  },
+  "uid": 10001,
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "code": "1d0c979",
+  "network": "none",
+  "realDEV": false,
+  "gates": "NO_RUNTIME_MOUNTS",
+  "bundleSHA256": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9",
+  "secondaryBundleSHA256": "7c304662e9864e0e41488bcd0c510d5740f9eba1753f5368cf00b3ce45b93fff",
+  "result": "LOCAL_CLOSED_IMAGE_PASS"
+}

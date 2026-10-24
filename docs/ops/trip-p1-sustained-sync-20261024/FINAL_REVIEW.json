@@ -1,0 +1,79 @@
+{
+  "fixed_sha": "8e773ef6b3d76e301aca0849faef987ea382fb48",
+  "conclusion": "PASS_BOUNDED_LOCAL_L2_CLOUD_PENDING",
+  "findings": [
+    {
+      "id": "P1-PERSON-01",
+      "file": "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql",
+      "lines": [
+        31,
+        35
+      ],
+      "priority": "P1",
+      "title": "JSON null bypasses Person SQL ownership and request-binding checks",
+      "repro": "Under existing qualified gateway/policy, retain valid actor/trip/op SQL arguments but set request.tripId=null, operationId=null or dataOwnership=null. Each returns a newly inserted unlinked Person and immutable receipt. Owning IF uses <> on extracted nullable text, so expression becomes SQL NULL, not true. Probes run in BEGIN/ROLLBACK on disposable PG, no retained test writes.",
+      "impact": "Invalid unbound/unclassified authored requests can mutate through owning SQL and create receipts violating its fixed typed contract. Reviewed HTTP/Pg typed validation prevents direct current HTTP reachability, but SQL authority must fail closed independently.",
+      "fix": "Use null-safe exact comparisons plus required JSON types/non-null UUID bindings; add actual SQL negatives and regenerate checked postimage/rollback.",
+      "status": "FIXED_VERIFIED_9c093e4"
+    }
+  ],
+  "validation": {
+    "deterministic": "47tests/6files PASS",
+    "isolated_pg": "29checks+8 actual typed PgPort/Core checks PASS",
+    "source_guard": "actual supplied c493 preimage and Source helper loaded; early branch preserved; rollback restores all original function hashes",
+    "rollback_exact_bytes": {
+      "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.rollback.sql": true,
+      "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql": true
+    },
+    "null_probes": "3 actual SQL successful invalid command results; transactionally rolled back; see SQL_NULL_PROBE.txt",
+    "roster_sustained_runtime": "40tests/4files PASS",
+    "fixed_isolated_pg": "37 checks +8 actual typed Person PgPort/Core checks PASS; all7 JSON fields x null/object/boolean reject, no extra Person/receipt",
+    "root_composition": "190tests/9files:188PASS,2existing Reference created_at assertions fail",
+    "baseline_confirmation": "69897aa Reference tests independently rerun: same2 failures at557/770; 3PASS/56skipped"
+  },
+  "sql_sha256": {
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.sql": "c9215ce88face89967cb5d3e32b6609498168cfb45112e7d53697442304f3009",
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql": "21d2ed4d4d67fc6da8ded7e6112cc98761b0e15a1ec4e595ae52408e535a7964",
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.rollback.sql": "9e07538a8daa4dc970557cf3f7079d3a671cd4aae2f4552c03fb19cffc9e825b",
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql": "b8fcea7c513e45cb1e5e10a61eccda842f42c819de52633e8c42cfa7a0d1f479"
+  },
+  "not_run": [
+    "DEV writes/deployment",
+    "Provider",
+    "Native/GUI",
+    "Cloud E2E"
+  ],
+  "remaining": "Actual DEV SQL/preimage Gate, deployment/activation and Native/Cloud E2E pending. No open findings in reviewed delta.",
+  "fixed_followup_sha": "9c093e4f0556468936c40de1abfe1f64e65cea02",
+  "root_sha": "1d0c9798a48053f2a02611bb32e4710a7c4f6abc",
+  "fixed_sql_sha256": {
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.sql": "c9215ce88face89967cb5d3e32b6609498168cfb45112e7d53697442304f3009",
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql": "bdac8861e65a73af72ff27c39161be40e21dadd10fb9c269c79289d5f12a5f09",
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.rollback.sql": "9e07538a8daa4dc970557cf3f7079d3a671cd4aae2f4552c03fb19cffc9e825b",
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql": "dc580ff40047d8bd2579ef0f63e9ecb782636e43ac14ded0f2c4435d80ed7521"
+  },
+  "fixed_rollback_exact_bytes": {
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.rollback.sql": true,
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql": true
+  },
+  "root_transplant_exact": {
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.sql": true,
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql": true,
+    "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.rollback.sql": true,
+    "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql": true,
+    "backend/src/tripPersonCloudCreatePg.ts": true,
+    "backend/src/tripSustainedRuntime.ts": true,
+    "src/data/repositories/tripPersonCloudCreateRepository.ts": true,
+    "src/data/repositories/tripNormalReadbackRepository.ts": true,
+    "src/data/sync/tripPersonCloudCreateSync.ts": true
+  },
+  "owner_gate": {
+    "sha256": "5716ea3fb29ed3aff9f179030400b8b6b626a0fe9ba0b16171cb7e20001f61f0",
+    "copied_snapshot": "OWNER_EXECUTION_GATE_REVIEWED.md",
+    "status": "READY_FOR_OWNER_DECISION_NOT_EXECUTION_AUTHORIZED",
+    "scope": "Explicit additional two SQL installs/ACL, four existing persistent gateway profiles, synthetic Account revocable policy, reviewed Backend/Native and capped48mutation192read QA",
+    "persistent_vs_temporary": "900s applies transition watchdog and rollback reserve; successful synthetic-account service deliberately stays active; temporary admin material retires; finite/Source/Provider gates remain CLOSED",
+    "rollback": "Stop/revoke policy and principals before fixed rollback; preserve accepted rows/receipts and c493 Source branch",
+    "image_receipt": "Root reported closed-network Linux image6b11b6...; not independently rerun by this reviewer"
+  }
+}

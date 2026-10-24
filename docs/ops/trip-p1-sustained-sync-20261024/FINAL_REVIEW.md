@@ -1,0 +1,18 @@
+# Sustained Trip / Person final independent review
+
+Fixed owning follow-up `9c093e4` (parent `8e773ef`) and Root composition `1d0c9798a48053f2a02611bb32e4710a7c4f6abc`: **PASS for bounded Local/L2 delta; CLOUD_PENDING. No open P0/P1/P2.**
+
+- **P1-PERSON-01 closed.** Fixed SQL uses null-safe typed ownership/Trip/operation comparisons and rejects null SQL arguments. Independently rerun actual network-none PG: all7 request fields × null/object/boolean reject before writes; no extra Person/receipt.37checks +8 actual typed Person PgPort/Core checks PASS.
+- Revocable Account policy has immutable adoption cutoff and requires owning accepted V2 Create + current owner membership. Scalar/V1 history excluded. Metadata full-list CAS, exact idempotent requests, five MANUAL P1 commands and creator-only mutations retained. No invitation/User-ID claim/Account authority inferred from authored names.
+- Fresh cloud-authored travelers are retained separately from old private intents. Existing targeted queue/Auth fencing and independent canonical Person readback qualify them; legacy names are not scanned/promoted.
+- Readback protects active leases, fences completion by claim token and excludes AUTH failures from queue activity; existing timer remains the only scheduler. Source c493 guard branch survives patch and exact rollback; data/receipts survive rollback. Fixed regenerated rollback bytes match candidate.
+- Root v3 private mount preserves0440 ownership and canonical DEV bindings, mounts four existing owning connections including Person and real SQL capabilities, stays CLOSED without explicit config. Composite resource closes once; old finite versions remain disjoint. Native sustained v2 retains canonical DEV/Account fences without fake expiry. SQLite74 follows Source73.
+- Trip projection remains pending before a current independent SNAPSHOT and while authored Person/readback/deferred work is unresolved. Older successful snapshot cannot qualify a newer accepted metadata revision. No Form Save/acceptance-only Cloud success.
+- Independently rerun Root190tests/9files:188PASS;2 pre-existing Reference created_at precision assertions fail. Independently reproduced the identical2 failures on fixed69897aa baseline (3Reference PASS/56skipped). No failing assertion was changed. Prior owning suites47+40 PASS.
+- No DEV writes, deployment, real Auth/Provider or Native GUI acceptance performed. Actual live preimage/ACL qualification, approved deployment/activation and Native Cloud readback/cold recovery remain required. Supplied DEV function compatibility in isolated PG does not prove current live deployment.
+
+Evidence: FIXED_PG.txt, ROOT_COMPOSITION_TESTS.txt, BASELINE_REFERENCE_TESTS.txt, prior targeted receipts and FINAL_REVIEW.json.
+
+## Exact pending Owner Gate check
+
+Reviewed copied `OWNER_EXECUTION_GATE_REVIEWED.md` SHA256 `5716ea3fb29ed3aff9f179030400b8b6b626a0fe9ba0b16171cb7e20001f61f0`. **Ready for Owner decision; no execution authority inferred.** It explicitly requests the new SQL/ACL/continuous gateway and synthetic Account policy changes, fixed images/bundles, capped48mutation/192read acceptance and precise rollback. Its900-second clock is only deployment transition safety (240-second rollback reserve); successful normal Account service stays active and revocable. It does not incorrectly close normal service after QA or label it finite-gate success. Temporary admin/watchdog resources retire; finite/Source/Provider gates remain closed. Failure disables only the new policy/runtime, stops principals, restores original image/config and preserves accepted data/immutable receipts; exact SQL rollback preserves c493 Source branch. Root reported local closed image startup; reviewer did not rerun that image.
