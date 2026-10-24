@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "project": "tuqigdxrvrerfewsxqgm",
+  "ownerAuthorized": false,
+  "activationId": null,
+  "releaseDirectory": null,
+  "startsAt": null,
+  "expiresAt": null,
+  "baselineImage": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "candidateImage": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+  "candidateBundles": {
+    "server.mjs": "90015fb2a1f87b5604419f4be24b75e579e53029282ecbec56a36244c0b6b058",
+    "server-capture.mjs": "08dbb04259de5372e667c1f2da7ab69a3179c84d1d5eb1276ddb9590b3968b27",
+    "universal-prepare.mjs": "2f8c65bb7b68a0e5b66aebddd5e79a9dea0f8da322697386ee1b690e62d67eeb"
+  },
+  "operatorSHA256": "78285a267ef15bbdce1ca6a7cff730a9f5f9d129b13535178526747915d18475",
+  "diagnosticsHelperSHA256": "30eedd4d653b928c62cb468c7276267bb7f1d67157adcaa3fb619dd492e29ff2",
+  "remoteProgramSHA256": "7b815f82a4ae5433c13f68f77e28e4592b48e46b3d8e43fe034c75b408cd23e8",
+  "baseline": null
+}

@@ -1,0 +1,19 @@
+{
+  "status": "LOCAL_IMAGE_FIXED_NOT_DEPLOYED",
+  "sourceHead": "e9afb98a5cf78d03a048ff12510d96cfcdf363a9",
+  "dockerfileSha256": "11ea0e3329ce5fe90828bd73f98c829c6e2c66a6ab7092ab9c1740f5c5a09d5e",
+  "baseImageId": "sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30",
+  "imageId": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+  "bundles": {
+    "server.mjs": "90015fb2a1f87b5604419f4be24b75e579e53029282ecbec56a36244c0b6b058",
+    "server-capture.mjs": "08dbb04259de5372e667c1f2da7ab69a3179c84d1d5eb1276ddb9590b3968b27",
+    "universal-prepare.mjs": "2f8c65bb7b68a0e5b66aebddd5e79a9dea0f8da322697386ee1b690e62d67eeb"
+  },
+  "sql": {
+    "backend/sql/universal_original_result_candidate.sql": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
+    "backend/sql/universal_original_source_candidate.sql": "53cf71671c8e69ed509f534c6c4d81dce0361f93713b6df62157aaf5e671df53",
+    "backend/sql/universal_provider_admission_candidate.sql": "365db344435020d52b397824bc8b03384d2c07360a61d978692dfcf0e785c372",
+    "backend/sql/universal_source_host_candidate.sql": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
+    "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95"
+  }
+}

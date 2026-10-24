@@ -1,0 +1,38 @@
+{
+  "oldExecutableSource": "157bb95879836d8d06a2d7d93dc29a5d6a0c262f",
+  "newExecutableSource": "e9afb98a5cf78d03a048ff12510d96cfcdf363a9",
+  "oldImage": "sha256:68f362ce956769bbd89f5859b2803a6558892c3628db935d2deb76bc71a461c2",
+  "newImage": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+  "backendSrcChanged": false,
+  "metafileConfirmedChangedInputs": {
+    "server.mjs": [
+      "src/data/api/requestBoundary.ts"
+    ],
+    "server-capture.mjs": [
+      "src/data/api/client.ts",
+      "src/data/api/nativeFetchDiagnostic.ts",
+      "src/data/api/nativeQaReadBudget.ts",
+      "src/data/api/requestBoundary.ts"
+    ],
+    "universal-prepare.mjs": [
+      "src/data/api/client.ts",
+      "src/data/api/nativeFetchDiagnostic.ts",
+      "src/data/api/nativeQaReadBudget.ts",
+      "src/data/api/requestBoundary.ts"
+    ]
+  },
+  "existingScopedTests": {
+    "universalImport": true,
+    "universalFiniteRuntime": true,
+    "universalOriginalSourceRuntime": true,
+    "universalCaptureConsumer": true,
+    "defaultUniversalOriginalSource": true,
+    "universalContext": true,
+    "files": 6,
+    "tests": 47
+  },
+  "localImageSmoke": "CLOSED_IMAGE.json",
+  "DEVOperations": 0,
+  "ProviderCalls": 0,
+  "NativeGUI": false
+}
