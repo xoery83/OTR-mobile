@@ -112,3 +112,8 @@ WP05 additivepurebridge edcbd exposes `createCoreP1P3DayFeedReader`/`projectCore
 WP04-U accepted UX58caf retains G2 lease/summaryonly/Immersive ownership; functional93PASS/ordinary6 newNativeimages are scopebounded, fullheld/armed/zeroPast notverified and UIadoptionnoteligible. No actualCore/privateAccount runtime claimed from syntheticLab.
 
 P3 incremental renderer intake (BD42, Delta10-13): Core accepted Stay UUID/revision and CHECKIN/BASE/TONIGHT/CHECKOUT rows remain sole projection inputs; reuse edcbd bridge. P3 content/intents use existing one Composer/Focus/NOW/Stay Immersive. Documents supplies authorized original handles/common viewer/chooser; Photos supplies permitted Stay links/count/top-three; Ledger supplies authorized currency/FX/share summary, unknown values stay absent. Source/Trip Member identity cannot synthesize registered guests. Finite Experience renderer contract must trace14Delta cases and actual port absence, no authority/schema/control framework duplication. Ordinary implementation authorized; protected runtime unchanged.
+
+
+## 24 October — Day Feed / P1 final UX approval
+
+Day Feed/P1 Native Fidelity consumes frozen design + existing behavior contracts; Golden Slice acceptance precedes remaining interactions. No new business/Source/ACL authority. [Intake and remaining file qualification](../ops/day-feed-p1-native-fidelity-v1-20261024/HANDOFF.md).

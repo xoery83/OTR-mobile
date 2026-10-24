@@ -301,3 +301,8 @@ Normative incremental IDs (all27, kept separate from Archive92):
 Acceptance trace: Delta§7 cases1–14 each require separate functional/observed Visual attribution (currently NOT VERIFIED): 1three-night role/same detail; 2same-day distinct Stay roles; 3unknown time; 4original/multi-document chooser; 5evidence-only status; 6exact map versus keyword search/no TTR qualification; 7instructions/fallback/absence/no AI; 8sourced guest privacy; 9authorized Past counts; 10top-three/empty-photo absence; 11Ledger grouped amounts/multicurrency/unknown; 12owning add/lifecycle; 13offline original honesty/no hidden model; 14shared Focus/NOW/date/scroll/P1/P2/TTR unaffected. Existing edcbd P1/P3 accepted-read bridge is reused, not a claim these scenarios pass or a replacement renderer.
 
 BD42 durable evidence: [exact approved P3 Delta](../trip/OTR_P3_PRODUCT_DESIGN_DELTA_2026-10-13.md) is a byte-exact Git-preserved copy of the supplied source (SHA256 `e1ba268b554f70619e08892569832b948ab7fcbc2d06cab7e56b7410f7ccfd0f`). Delta§7 is the canonical14-case reference; original document wording/history stays intact, latest explicit Owner authorization above governs current execution.
+
+
+## 24 October — Day Feed / P1 final UX approval
+
+Owner final UX approval: Day Feed Shell + P1 Fidelity V1 = APPROVED_NATIVE_UX_REFERENCE_V1; DS-01–DS-29 and all listed visual/interaction alternatives are final. No visual approval pending. Existing behavior/Core authority retained. [Intake and remaining file qualification](../ops/day-feed-p1-native-fidelity-v1-20261024/HANDOFF.md).

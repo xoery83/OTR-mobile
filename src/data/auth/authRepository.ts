@@ -3,7 +3,9 @@ import { createAuthRepository, type SecureSessionStorage } from "./authSessionRe
 export type { AccountIdentity, LocalSession } from "@/domain/auth/localSession";
 export { createAuthRepository, type SecureSessionStorage } from "./authSessionRepository";
 
-const secureStore = () => import("expo-secure-store");
+// Metro must bundle this dependency; defer evaluation for the headless host.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const secureStore = () => require("expo-secure-store") as typeof import("expo-secure-store");
 
 const secureStoreAdapter: SecureSessionStorage = {
   getItem: async (key) => (await secureStore()).getItemAsync(key),
