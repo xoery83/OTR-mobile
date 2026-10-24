@@ -306,3 +306,7 @@ BD42 durable evidence: [exact approved P3 Delta](../trip/OTR_P3_PRODUCT_DESIGN_D
 ## 24 October — Day Feed / P1 final UX approval
 
 Owner final UX approval: Day Feed Shell + P1 Fidelity V1 = APPROVED_NATIVE_UX_REFERENCE_V1; DS-01–DS-29 and all listed visual/interaction alternatives are final. No visual approval pending. Existing behavior/Core authority retained. [Intake and remaining file qualification](../ops/day-feed-p1-native-fidelity-v1-20261024/HANDOFF.md).
+
+## 24 October — Focused Repair Mode V1 trial
+
+Owner directs debug-first, one repair owner, smallest safe patch and risk-proportionate checks. Preserve unaffected receipts; do not repeat global Auth/Trip/People/Import audits or turn a stage report into a stop. Coordinator retains shared files/DEV/AD5. R1 uses targeted reproduction; R2 adds adjacent contracts and corresponding E2E; R3 keeps independent Review, negative cases, exact authority Gate and L3. Record actual phase durations, reproduction/file/rework counts for the next three real bugs in existing Bug Contexts; do not invent retrospective timing or add a management system. Current My Trips/Account shared startup fix8618c1b remains trusted after observed Native recovery; current focused failure is Native P1 FETCH.

@@ -1,0 +1,16 @@
+{
+  "sha": "9aab88460b6238e96a9ad9df941bddfdc281cfbc",
+  "status": "PASS_FOCUSED_LOCAL_L2",
+  "findings": [],
+  "tests": 27,
+  "files": 3,
+  "verified": [
+    "Internal first terminalReason preserves TIMEOUT/CANCELED even when Native signal.reason/fetch rejection are undefined.",
+    "Timeout/cancel remains failclosed for late results; 18-second read succeeds under finite60s;60s deadline and Account-generation rejection tested.",
+    "Only3 normal Core transport instances use60s; global/Source defaults15s, bounded bytes, queue backoff/5min claim and permissions unchanged."
+  ],
+  "scopeClarification": "The runP1 instance also owns its existing submit POST; timeoutMs applies to all methods on that instance, not GET alone. No new POST path or permission added.",
+  "DEV": false,
+  "NativeGUI": false,
+  "remaining": "Actual AD5 recovery remains Root acceptance; no real timeout/Transcript/Cloud claim from tests."
+}

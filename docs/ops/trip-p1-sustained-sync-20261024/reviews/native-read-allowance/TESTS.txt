@@ -1,0 +1,13 @@
+
+> otr-mobile@0.1.0 test
+> vitest run --configLoader runner src/data/api/nativeQaReadBudget.test.ts src/data/api/nativeFetchDiagnostic.test.ts src/data/api/client.test.ts src/data/api/clientBounded.test.ts
+
+
+ RUN  v4.1.11 /private/tmp/otr-native-read-allowance-review-20261024/snapshot
+
+
+ Test Files  4 passed (4)
+      Tests  41 passed (41)
+   Start at  18:05:36
+   Duration  319ms (transform 109ms, setup 0ms, import 292ms, tests 226ms, environment 0ms)
+

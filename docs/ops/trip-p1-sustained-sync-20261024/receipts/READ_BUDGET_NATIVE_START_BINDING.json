@@ -1,0 +1,11 @@
+{
+  "apiBaseUrl": "https://api-dev.xoery.art",
+  "qaReadBudget": {
+    "version": 1,
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 72
+  },
+  "normalScopeSHA256": "d220463448431efb1741d19c1b5ee4d770d45017267e6b835738779be57a151f",
+  "startScriptSHA256": "97254f4a97ee04bdb041d059b13e91105b479d07e043f4417f0e65aa8e437dce",
+  "appNotYetResumed": true
+}

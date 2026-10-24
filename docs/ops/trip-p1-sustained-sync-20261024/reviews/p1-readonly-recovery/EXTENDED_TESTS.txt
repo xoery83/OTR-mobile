@@ -1,0 +1,13 @@
+
+> otr-mobile@0.1.0 test
+> vitest run --configLoader runner src/data/repositories/tripCoreV2Repository.test.ts src/data/sync/tripNormalSync.test.ts src/data/api/client.test.ts src/data/api/clientBounded.test.ts
+
+
+ RUN  v4.1.11 /private/tmp/otr-p1-readonly-recovery-review-20261024/snapshot
+
+
+ Test Files  4 passed (4)
+      Tests  71 passed (71)
+   Start at  17:37:19
+   Duration  6.48s (transform 427ms, setup 0ms, import 761ms, tests 6.20s, environment 0ms)
+

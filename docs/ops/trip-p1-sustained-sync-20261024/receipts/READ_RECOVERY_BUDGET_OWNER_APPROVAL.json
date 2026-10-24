@@ -1,0 +1,11 @@
+{
+  "approvedAt": "2026-10-24T04:55:23.525562+00:00",
+  "ownerReply": "\u6279\u51c6\u8ffd\u52a0 96 \u6b21\u53d7\u63a7\u53ea\u8bfb\u8bf7\u6c42",
+  "gateSHA256": "12dec2343bad7c590e3e01ed0d223d9298788b618faa32348ae7832cfa8b60e4",
+  "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+  "additionalReadLimit": 96,
+  "nativeReadAllocation": 72,
+  "operatorReadAllocation": 24,
+  "mutationTotalLimitUnchanged": 48,
+  "state": "APPROVED_NOT_YET_RESUMED"
+}

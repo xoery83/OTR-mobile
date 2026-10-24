@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-24T05:11:30.839489+00:00",
+  "operatorOrdinal": 1,
+  "durationMs": 17872,
+  "status": 200,
+  "bodyBytes": 10414,
+  "operationId": "1a9d006e-6554-4780-824c-09cf3b37ef7b",
+  "outcome": "APPLIED",
+  "receiptSha256": "4b0b85bae9340156b6c1d2d60ca947c1c0d5f918f60b4be17883577fbcb1daa5",
+  "redirects": "prohibited",
+  "requestMethod": "GET",
+  "readOnly": true
+}
