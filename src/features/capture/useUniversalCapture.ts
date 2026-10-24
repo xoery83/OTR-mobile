@@ -62,6 +62,21 @@ export function useUniversalCapture(
           getAccountId,
           transport,
           isCurrent: current,
+          prepareSources: async (context, job) => {
+            if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+            const { prepareDefaultUniversalCaptureSources } =
+              await import("@/data/operations/defaultUniversalOriginalSource");
+            await prepareDefaultUniversalCaptureSources(context, job, {
+              baseUrl,
+              getAccountId: async () => {
+                if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+                return getAccountId();
+              },
+              assertCurrent: () => {
+                if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+              },
+            });
+          },
         });
       }
       const next = await consumer.current[execute ? "start" : "recover"](model);

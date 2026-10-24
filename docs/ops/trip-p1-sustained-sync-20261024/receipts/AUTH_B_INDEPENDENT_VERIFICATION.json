@@ -1,0 +1,19 @@
+{
+  "label": "B",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "actual": {
+    "created_at": "2026-10-24 01:25:47.14728+00",
+    "email": "otr.ad5.sustained.20261024.b@example.invalid",
+    "id": "ec5bd6e9-13ee-4789-95fa-98be6678f7e6"
+  },
+  "requestReceipt": {
+    "id": "ec5bd6e9-13ee-4789-95fa-98be6678f7e6",
+    "email": "otr.ad5.sustained.20261024.b@example.invalid",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "newlyCreated": true,
+    "createdAt": "2026-10-24T01:25:47.14728Z"
+  },
+  "serverVerified": true,
+  "verifiedAt": "2026-10-24T01:25:52.732200+00:00",
+  "normalLoginVerified": false
+}

@@ -1,0 +1,79 @@
+{
+  "observedAt": "2026-10-24T02:26:29.721267+00:00",
+  "readback": {
+    "people": [
+      {
+        "id": "7c2f8123-317b-4b22-b202-5ab55403f567",
+        "name": "AD5 Sustained QA A",
+        "role": "owner",
+        "status": "linked",
+        "userId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424"
+      }
+    ],
+    "personRoleOwnsObjects": 0,
+    "receipt": {
+      "actor_account_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "created_at": "2026-10-24T02:22:41.247597+00:00",
+      "operation_id": "707dd915-d49d-4dec-b443-0ad4c79b5754",
+      "request_payload": {
+        "destination": null,
+        "destinations": [
+          {
+            "destinationId": "20e5a18b-75ed-458e-95fe-b7493b8784ba",
+            "displayLabel": "Auckland",
+            "source": "MANUAL"
+          },
+          {
+            "destinationId": "b2f4661f-d558-42a7-a4c5-405d53012417",
+            "displayLabel": "Wellington",
+            "source": "MANUAL"
+          }
+        ],
+        "endDate": null,
+        "formatVersion": 2,
+        "name": "AD5 Sustained Cloud 20261024",
+        "startDate": null,
+        "tripId": "c0eeb345-4049-4d75-8d17-ff309ea89745"
+      },
+      "trip_id": "c0eeb345-4049-4d75-8d17-ff309ea89745"
+    },
+    "roleMemberships": [
+      {
+        "admin": true,
+        "grantor": "supabase_admin",
+        "inherit": false,
+        "member": "postgres",
+        "role": "otr_trip_person_command_gateway",
+        "set": false
+      },
+      {
+        "admin": false,
+        "grantor": "postgres",
+        "inherit": false,
+        "member": "postgres",
+        "role": "otr_trip_person_command_gateway",
+        "set": false
+      }
+    ],
+    "trip": {
+      "createdBy": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "destinations": [
+        {
+          "destinationId": "20e5a18b-75ed-458e-95fe-b7493b8784ba",
+          "displayLabel": "Auckland",
+          "source": "MANUAL"
+        },
+        {
+          "destinationId": "b2f4661f-d558-42a7-a4c5-405d53012417",
+          "displayLabel": "Wellington",
+          "source": "MANUAL"
+        }
+      ],
+      "endDate": null,
+      "id": "c0eeb345-4049-4d75-8d17-ff309ea89745",
+      "metadataRevision": 0,
+      "name": "AD5 Sustained Cloud 20261024",
+      "startDate": null
+    }
+  }
+}

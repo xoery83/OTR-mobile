@@ -847,6 +847,17 @@ export function createCaptureSourceAdmissionRepository(
         return { state, source_receipt_sha256: r.result_sha256 };
       });
     },
+    async readAdmissionByKey(c: AccountRequestContext, admissionKey: string) {
+      key.parse(admissionKey);
+      return scoped(c, () =>
+        database.getFirstAsync<Row>(
+          "SELECT * FROM local_capture_source_bindings WHERE account_id=? AND trip_id=? AND admission_key=?",
+          c.accountId,
+          c.tripId,
+          admissionKey,
+        ),
+      );
+    },
     async recovery(c: AccountRequestContext, bindingId: string) {
       return scoped(c, async () => {
         const binding = await database.getFirstAsync<Row>(

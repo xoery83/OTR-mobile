@@ -95,6 +95,28 @@ try:
  person_id=str(uuid.uuid4());person_op=str(uuid.uuid4())
  person_request={'version':1,'operationId':person_op,'tripId':TRIP,'personId':person_id,'tripCreateOperationId':create_id,'dataOwnership':'CLOUD_SHARED_AUTHORED','displayName':'Synthetic Traveler'}
  def person_command(req,actor=ACTOR):return 'select public.trip_person_cloud_create_command('+','.join([literal(actor)+'::uuid',literal(req['tripId'])+'::uuid',literal(req['operationId'])+'::uuid',literal(json.dumps(req))+'::jsonb'])+');'
+ # Reproduce the two real DEV grantor rows without touching any deployed membership.
+ sql("GRANT otr_trip_person_command_gateway TO postgres WITH ADMIN TRUE, INHERIT FALSE, SET FALSE GRANTED BY supabase_admin;set role postgres;GRANT otr_trip_person_command_gateway TO postgres WITH ADMIN FALSE, INHERIT FALSE, SET FALSE GRANTED BY postgres;")
+ membership_before=sql("select jsonb_agg(to_jsonb(m) order by grantor) from pg_auth_members m where roleid='otr_trip_person_command_gateway'::regrole;")
+ sql(person_command(person_request),'otr_trip_person_command_gateway',failure='PERSON_CREATE_FORBIDDEN');check('exact actual redundant owner membership reproduces Person403 before patch')
+ helper_before=sql("select pg_get_functiondef('public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)'::regprocedure);")
+ sql("update public.trip_sustained_dev_policy set enabled=false where actor_account_id="+literal(ACTOR)+";")
+ for role in ['otr_trip_create_gateway',ROLE,'otr_trip_core_v2_gateway','otr_trip_person_command_gateway']:sql("alter role "+role+" nologin;")
+ sql('set role postgres;'+(ROOT/'supabase/dev-forward/trip-sustained-sync/20261024000400_person_redundant_owner_membership.sql').read_text())
+ membership_posthash=sql("select md5(pg_get_functiondef('public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)'::regprocedure));")
+ check('membership compatibility patch preserves every role grant row',membership_before==sql("select jsonb_agg(to_jsonb(m) order by grantor) from pg_auth_members m where roleid='otr_trip_person_command_gateway'::regrole;"))
+ sql("update public.trip_sustained_dev_policy set enabled=true,revoked_at=null where actor_account_id="+literal(ACTOR)+";")
+ for role in ['otr_trip_create_gateway',ROLE,'otr_trip_core_v2_gateway','otr_trip_person_command_gateway']:sql("alter role "+role+" login;")
+ # Narrow negative: inherited/settable redundant owner grant is still forbidden; restoring it is fixture-only.
+ sql("set role postgres;GRANT otr_trip_person_command_gateway TO postgres WITH ADMIN FALSE, INHERIT FALSE, SET TRUE GRANTED BY postgres;")
+ sql(person_command(person_request),'otr_trip_person_command_gateway',failure='PERSON_CREATE_FORBIDDEN');check('redundant owner SET privilege still rejected')
+ sql("set role postgres;GRANT otr_trip_person_command_gateway TO postgres WITH ADMIN FALSE, INHERIT FALSE, SET FALSE GRANTED BY postgres;")
+ sql("set role postgres;GRANT otr_trip_person_command_gateway TO postgres WITH ADMIN FALSE, INHERIT TRUE, SET FALSE GRANTED BY postgres;")
+ sql(person_command(person_request),'otr_trip_person_command_gateway',failure='PERSON_CREATE_FORBIDDEN');check('redundant owner INHERIT privilege still rejected')
+ sql("set role postgres;GRANT otr_trip_person_command_gateway TO postgres WITH ADMIN FALSE, INHERIT FALSE, SET FALSE GRANTED BY postgres;")
+ sql("CREATE ROLE otr_person_membership_probe NOLOGIN;GRANT otr_trip_person_command_gateway TO otr_person_membership_probe WITH ADMIN FALSE, INHERIT FALSE, SET FALSE;")
+ sql(person_command(person_request),'otr_trip_person_command_gateway',failure='PERSON_CREATE_FORBIDDEN');check('foreign member edge still rejected')
+ sql("REVOKE otr_trip_person_command_gateway FROM otr_person_membership_probe;DROP ROLE otr_person_membership_probe;")
  person_receipt=json.loads(sql(person_command(person_request),'otr_trip_person_command_gateway'))
  check('explicit authored Person creates unlinked identity without Account grant',person_receipt['person']['userId'] is None and person_receipt['person']['status']=='unlinked')
  check('Person exact replay is immutable',json.loads(sql(person_command(person_request),'otr_trip_person_command_gateway'))==person_receipt)
@@ -127,6 +149,10 @@ try:
  for role in ['otr_trip_create_gateway',ROLE,'otr_trip_core_v2_gateway','otr_trip_person_command_gateway']:sql("alter role "+role+" nologin;")
  sql("update public.trip_sustained_dev_policy set adoption_cutoff=adoption_cutoff-interval '1 day';",failure='SUSTAINED_POLICY_IDENTITY_IMMUTABLE');check('adoption cutoff cannot silently reopen historical scope')
  check('all service principals closed explicitly',sql("select (not exists(select 1 from pg_roles where rolname in ('otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_core_v2_gateway') and rolcanlogin))::text;")=='true')
+ membership_rollback="BEGIN;SET LOCAL search_path=pg_catalog;DO $$BEGIN IF EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE enabled) OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN ('otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_core_v2_gateway','otr_trip_person_command_gateway') AND rolcanlogin) OR EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename IN ('otr_trip_create_gateway','otr_trip_metadata_gateway','otr_trip_core_v2_gateway','otr_trip_person_command_gateway')) THEN RAISE EXCEPTION 'PERSON_MEMBERSHIP_ROLLBACK_REQUIRES_CLOSED';END IF;IF md5(pg_get_functiondef('public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)'::regprocedure)) IS DISTINCT FROM '"+membership_posthash+"' THEN RAISE EXCEPTION 'PERSON_MEMBERSHIP_POSTIMAGE_DRIFT';END IF;END$$;\n"+helper_before+";COMMIT;"
+ (ROOT/'supabase/dev-forward/trip-sustained-sync/20261024000400_person_redundant_owner_membership.rollback.sql').write_text(membership_rollback)
+ sql('set role postgres;'+membership_rollback)
+ check('membership patch rollback restores exact helper without changing memberships',sql("select md5(pg_get_functiondef('public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)'::regprocedure));")=='54d94b8e00ee7228cfe2d38085475089' and membership_before==sql("select jsonb_agg(to_jsonb(m) order by grantor) from pg_auth_members m where roleid='otr_trip_person_command_gateway'::regrole;"))
  person_rollback_path=ROOT/'supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql'
  person_rollback="BEGIN;SET LOCAL search_path=pg_catalog;DO $$BEGIN IF EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE enabled) OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname='otr_trip_person_command_gateway' AND rolcanlogin) THEN RAISE EXCEPTION 'PERSON_ROLLBACK_REQUIRES_CLOSED';END IF;END$$;\n"
  for signature,h in person_hashes.items():person_rollback+="DO $$BEGIN IF md5(pg_get_functiondef("+literal(signature)+"::regprocedure))<>"+literal(h)+" THEN RAISE EXCEPTION 'PERSON_ROLLBACK_POSTIMAGE_MISMATCH';END IF;END$$;\n"

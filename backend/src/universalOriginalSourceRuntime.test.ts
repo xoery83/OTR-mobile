@@ -79,8 +79,40 @@ function setup() {
       validateAccessToken: vi.fn(async () => ({ id: actor })),
       canReadTrip: vi.fn(async () => true),
     };
+  const config = capability();
   const query = vi.fn(async (sql: string, params?: unknown[]) => {
     calls.push(sql);
+    if (sql.includes("read_universal_inputs")) {
+      return {
+        rows: [
+          {
+            manifest: {
+              accountId: actor,
+              tripId: trip,
+              batchId: batch,
+              taskId: task,
+              runId: run,
+              submissionSha256: config.task.manifest_sha256,
+              representations: [
+                {
+                  inputId:
+                    config.task.input_pins[0].kind === "SOURCE"
+                      ? config.task.input_pins[0].input_id
+                      : null,
+                  sourceId: source,
+                  representationId: representation,
+                  revision: 1,
+                  sha256: digest,
+                  byteCount: bytes.length,
+                  mime: "text/plain",
+                  text: "Original text",
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
     if (sql.includes("begin_universal")) {
       const q = JSON.parse(params?.[2] as string);
       expect(q).toMatchObject({ runId: run, batchId: batch, taskId: task });
@@ -95,7 +127,7 @@ function setup() {
     return { rows: sql.startsWith("SELECT") ? [{ result: null }] : [] };
   });
   const runtime = createUniversalOriginalSourceRuntime(
-    capability(),
+    config,
     { OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT: "enabled" },
     {
       gateway,
@@ -146,4 +178,20 @@ it("only explicit trusted prepare invokes existing PENDING begin; close blocks b
   await expect(
     f.runtime.universalOriginalSourcePort.lookup(actor, trip, command),
   ).rejects.toThrow("RUNTIME_CLOSED");
+});
+
+it("trusted read independently qualifies pinned retained Run material and rechecks Auth without writes", async () => {
+  const f = setup();
+  try {
+    expect(await f.runtime.readPreparedInputs()).toMatchObject({
+      batchId: batch,
+      tripId: trip,
+    });
+    expect(f.calls.filter((q) => q.includes("read_universal_inputs"))).toHaveLength(2);
+    expect(f.calls.some((q) => q.includes("begin_universal"))).toBe(false);
+    f.gateway.canReadTrip.mockResolvedValueOnce(false);
+    await expect(f.runtime.readPreparedInputs()).rejects.toThrow("ACCESS_DENIED");
+  } finally {
+    f.runtime.close();
+  }
 });

@@ -22,6 +22,8 @@ import {
   type UniversalManifest,
 } from "../universalImport";
 import { bootstrapUniversalTask } from "../universalTaskBootstrap";
+import { createUniversalOriginalSourceRuntime } from "../universalOriginalSourceRuntime";
+import { prepareUniversalTaskHost } from "../universalPreparationOperator";
 import { intelligenceWakeIdentity } from "../../../src/data/sync/syncOperationRepository";
 import { createTripImportAdmissionRepository } from "../../../src/data/repositories/tripImportAdmissionRepository";
 import { createLedgerReadRepository } from "../../../src/data/repositories/ledgerReadRepository";
@@ -447,18 +449,84 @@ export async function runUniversalContinuationFixture(
         cursor: null,
         serverTime: now,
       });
-      const boot = await bootstrapUniversalTask({
-        db: db as never,
+      const config = {
+        actorId: account,
+        bearer: "synthetic-auth-not-a-session",
         task,
-        attempt,
-        catalog: JSON.stringify({ ...sourceFixture.catalog, version: 2 }),
-        ledger,
-        getAccountId: async () => account,
-        assertCurrent() {
-          assert(authorized, "CURRENT_SOURCE_RIGHT_REVOKED");
+        startsAt: new Date(Date.now() - 1000).toISOString(),
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      } as unknown as Parameters<typeof createUniversalOriginalSourceRuntime>[0];
+      // The Source rows/catalog were produced by actual isolated PG. Driver I/O
+      // and normal Auth are synthetic here; existing reader validates the rows/bytes.
+      const sourceRuntime = createUniversalOriginalSourceRuntime(
+        config,
+        { OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT: "enabled" },
+        {
+          gateway: {
+            validateAccessToken: async () => ({ id: account }),
+            canReadTrip: async () => true,
+          } as never,
+          connection: {
+            withLease: async (work) =>
+              work({
+                async query(q) {
+                  assert(
+                    !q.includes("begin_universal"),
+                    "RECOVERY_MUST_NOT_WRITE_SOURCE",
+                  );
+                  return {
+                    rows: q.includes("read_universal_inputs")
+                      ? [{ manifest: sourceFixture.manifest }]
+                      : [],
+                  };
+                },
+                retire() {},
+              }),
+          },
         },
-      });
-      repo = boot.repository;
+      );
+      const ready = await prepareUniversalTaskHost("RECOVER_ONLY", {}, {
+        config: async () => config,
+        source: async () => ({
+          ...sourceRuntime,
+          close: async () => sourceRuntime.close(),
+        }),
+        task: async () => {
+          const boot = await bootstrapUniversalTask({
+            db: db as never,
+            task,
+            attempt,
+            catalog: JSON.stringify({ ...sourceFixture.catalog, version: 2 }),
+            ledger,
+            getAccountId: async () => account,
+            assertCurrent() {
+              assert(authorized, "CURRENT_SOURCE_RIGHT_REVOKED");
+            },
+          });
+          repo = boot.repository;
+          return {
+            universalImportPort: {
+              async readContext() {
+                const snapshot = await repo.snapshot(context, taskId);
+                assert.equal(snapshot.task.task_id, taskId);
+                return {
+                  version: "otr.backend.universal-context/1",
+                  actorId: account,
+                  accountId: account,
+                  tripId: trip,
+                  batchId: batch,
+                  taskId,
+                };
+              },
+            },
+            close: async () => {},
+          };
+        },
+      } as unknown as NonNullable<Parameters<typeof prepareUniversalTaskHost>[2]>);
+      assert.equal(ready.status, "TASK_CONTEXT_READY");
+      checks.push(
+        "explicit trusted recover: owning PG snapshot reader -> actual SQLite Task/Queue -> existing context, zero Source writes or Provider dispatch",
+      );
       checks.push(
         "finite bootstrap reuses actual Task Repository + signalIntelligenceWake + claim (no manual Task/Queue rows)",
       );

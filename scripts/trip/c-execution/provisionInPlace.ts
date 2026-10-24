@@ -168,8 +168,11 @@ async function executeScopedInPlace(
       throw Error("AUTH_CREATE_STOP");
     }
     stage = "IDENTITY_VALIDATION";
-    if (profile === "AD5_SUSTAINED" && diagnostics.at(-1)?.httpStatus !== 201)
-      throw Error("AUTH_201_RECEIPT_REQUIRED");
+    if (
+      profile === "AD5_SUSTAINED" &&
+      ![200, 201].includes(diagnostics.at(-1)?.httpStatus ?? 0)
+    )
+      throw Error("AUTH_200_OR_201_RECEIPT_REQUIRED");
     if (
       data.user?.email !== email ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(

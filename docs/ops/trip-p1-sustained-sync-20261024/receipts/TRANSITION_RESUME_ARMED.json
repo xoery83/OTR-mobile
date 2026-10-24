@@ -1,0 +1,13 @@
+{
+  "status": "INDEPENDENT_TRANSITION_WATCHDOG_ARMED",
+  "pid": 17046,
+  "claim": {
+    "pid": 17046,
+    "planSHA256": "19df68687c979fddd042de86102eee04923303f5cababe3ac22854be2b5b5397"
+  },
+  "planSHA256": "19df68687c979fddd042de86102eee04923303f5cababe3ac22854be2b5b5397",
+  "startsAt": "2026-10-24T03:01:10.719Z",
+  "expiresAt": "2026-10-24T03:16:10.719Z",
+  "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "transitionId": "04ae158a-1645-4128-8c7b-61aa252866c1"
+}

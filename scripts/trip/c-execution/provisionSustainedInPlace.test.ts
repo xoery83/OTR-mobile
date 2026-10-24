@@ -151,11 +151,11 @@ test("UNKNOWN stops with original dispatch metadata and no automatic retry", asy
   assert.equal(out.diagnostics[0].outcome, "TRANSPORT_EXCEPTION");
   assert(!JSON.stringify(out).includes(secret));
 });
-test("non201 success remains reconcile-required without trusting SDK body", async () => {
-  const out = await executeSustainedInPlace(input(), env, transport(200));
+test("other2xx success remains reconcile-required without trusting SDK body", async () => {
+  const out = await executeSustainedInPlace(input(), env, transport(202));
   assert.equal(out.receipt, null);
   assert.equal(out.attempts, 1);
-  assert.equal(out.diagnostics[0].httpStatus, 200);
+  assert.equal(out.diagnostics[0].httpStatus, 202);
   assert.equal(out.stage, "IDENTITY_VALIDATION");
 });
 test("caller mutation cannot redirect fixed identity", async () => {
@@ -191,4 +191,33 @@ test("HTTP rejection and malformed201 retain no invented identity", async () => 
     assert.equal(out.receipt, null);
     assert(!JSON.stringify(out).includes(secret));
   }
+});
+
+test("HTTP200 legal identity is accepted without any second dispatch", async () => {
+  let calls = 0;
+  const out = await executeSustainedInPlace(input(), env, async (...args) => {
+    calls++;
+    return transport(200)(...args);
+  });
+  assert.equal(calls, 1);
+  assert.equal(out.attempts, 1);
+  assert.equal(out.diagnostics[0].httpStatus, 200);
+  assert.equal(out.receipt?.id, "10000000-0000-4000-8000-000000000001");
+  assert.equal(out.receipt.email, input().absence.email);
+});
+test("HTTP200 missing UUID stops without identity or retry", async () => {
+  let calls = 0;
+  const out = await executeSustainedInPlace(input(), env, async () => {
+    calls++;
+    return new Response(
+      JSON.stringify({
+        email: input().absence.email,
+        created_at: new Date().toISOString(),
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  });
+  assert.equal(calls, 1);
+  assert.equal(out.receipt, null);
+  assert.equal(out.stage, "IDENTITY_VALIDATION");
 });

@@ -18,7 +18,67 @@ const plan = z.strictObject({
   operationId: z.uuid(),
   operationKey: z.string().regex(/^[A-Za-z0-9._:-]{1,128}$/),
 });
-// Trusted finite operator supplies only existing Source command IDs. There are no Task/Run IDs here.
+async function admissionKey(batchId: string, inputId: string, hash: ImportHash) {
+  return (
+    "u-source:" +
+    (await hash(new TextEncoder().encode(canonicalEventJson([batchId, inputId]))))
+  );
+}
+// Source command IDs are created locally once and retained by the existing owning binding.
+// Reopen derives the same key from real C3 identities; no Task/Run identity is minted.
+export async function recoverUniversalOriginalPlans(
+  context: AccountRequestContext,
+  jobId: string,
+  deps: Parameters<typeof prepareUniversalOriginalBatch>[3] & { newId(): string },
+) {
+  await assertAccountRequestContext(context, deps.getAccountId);
+  const job = await deps.submissions.reopen(jobId, context);
+  if (
+    !job.allInputsAccepted ||
+    job.batch.accountId !== context.accountId ||
+    job.inputs.some(
+      (i) =>
+        i.kind !== "TEXT" &&
+        !(i.kind === "FILE" && i.declaredContentType === "text/plain"),
+    )
+  )
+    throw new Error("UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE");
+  const plans = [];
+  for (const input of job.inputs) {
+    const key = await admissionKey(job.batch.batchId, input.id, deps.hash);
+    const existing = await deps.sources.readAdmissionByKey(context, key);
+    if (
+      existing &&
+      (existing.intent_kind !== "NEW" || existing.capture_id !== input.captureId)
+    )
+      throw new Error("UNIVERSAL_CAPTURE_INPUT_CHANGED");
+    plans.push(
+      plan.parse(
+        existing
+          ? {
+              inputId: input.id,
+              bindingId: existing.id,
+              sourceId: existing.source_id,
+              representationId: existing.representation_id,
+              operationId: existing.source_operation_id,
+              operationKey: existing.source_operation_key,
+            }
+          : {
+              inputId: input.id,
+              bindingId: deps.newId(),
+              sourceId: deps.newId(),
+              representationId: deps.newId(),
+              operationId: deps.newId(),
+              operationKey: deps.newId(),
+            },
+      ),
+    );
+  }
+  await assertAccountRequestContext(context, deps.getAccountId);
+  return plans;
+}
+
+// Plans contain only Source command IDs, recovered by the owning admission key or supplied by the finite operator. No Task/Run IDs.
 // The retained C3 job and its original bytes remain the identity/provenance authority.
 export async function prepareUniversalOriginalBatch(
   context: AccountRequestContext,
@@ -84,14 +144,10 @@ export async function prepareUniversalOriginalBatch(
             retained.capture.revision,
           );
     await current();
-    const admissionKey =
-      "u-source:" +
-      (await deps.hash(
-        new TextEncoder().encode(canonicalEventJson([job.batch.batchId, input.id])),
-      ));
+    const key = await admissionKey(job.batch.batchId, input.id, deps.hash);
     await deps.sources.admit(context, {
       id: p.bindingId,
-      admission_key: admissionKey,
+      admission_key: key,
       capture_id: capture.id,
       capture_revision: capture.revision,
       intent_kind: "NEW",

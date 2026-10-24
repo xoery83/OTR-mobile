@@ -1,4 +1,7 @@
-import { prepareUniversalOriginalBatch } from "../operations/universalOriginalBatch";
+import {
+  prepareUniversalOriginalBatch,
+  recoverUniversalOriginalPlans,
+} from "../operations/universalOriginalBatch";
 import { dispatchUniversalOriginalSource } from "../operations/universalOriginalSource";
 import { importDigest } from "@/domain/trip/flightImportReview";
 import { randomUUID, createHash } from "node:crypto";
@@ -399,4 +402,34 @@ it("recovers an interrupted pre-send claim only for the exact Source queue targe
   expect(
     x.f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(oldId)!.status,
   ).toBe("PROCESSING");
+});
+
+it("first Native preparation recovers persisted Source IDs from real C3 identity after cold reopen", async () => {
+  const x = await setup(),
+    repo = x.repo(true),
+    context = await repo.captureContext(x.trip);
+  const deps = {
+    getAccountId: x.f.getAccount,
+    hash: sha256,
+    newId: randomUUID,
+    submissions: x.f.submissions,
+    captures: x.f.captures,
+    sources: repo,
+  };
+  const plans = await recoverUniversalOriginalPlans(context, x.r.jobId, deps);
+  const prepared = await prepareUniversalOriginalBatch(context, x.r.jobId, plans, deps);
+  x.f.reopen();
+  const next = { ...deps, sources: x.repo(true) };
+  expect(await recoverUniversalOriginalPlans(context, x.r.jobId, next)).toEqual(plans);
+  expect(await prepareUniversalOriginalBatch(context, x.r.jobId, plans, next)).toEqual(
+    prepared,
+  );
+  expect(
+    x.f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE operation_type='C_ADMIT_CAPTURE_SOURCE'",
+      )
+      .get()!.n,
+  ).toBe(1);
+  expect(x.f.sql.prepare("SELECT count(*) AS n FROM trip_source_runs").get()!.n).toBe(0);
 });

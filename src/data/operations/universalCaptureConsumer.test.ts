@@ -10,14 +10,21 @@ import { createUniversalCaptureConsumer } from "./universalCaptureConsumer";
 
 vi.mock("expo/fetch", () => ({ fetch: vi.fn() }));
 vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
-function fixture() {
+function fixture(
+  prepareSources?: Parameters<typeof createUniversalCaptureConsumer>[0]["prepareSources"],
+) {
   const accountId = randomUUID(),
     tripId = randomUUID(),
     batchId = randomUUID(),
     inputId = randomUUID();
   // Explicit local unit fixtures; they are not Source proof or runtime receipts.
   const model = {
-    batch: { accountId, batchId, context: { tripPrior: { id: tripId } } },
+    batch: {
+      accountId,
+      batchId,
+      jobId: randomUUID(),
+      context: { tripPrior: { id: tripId } },
+    },
     allInputsAccepted: true,
     inputs: [{ id: inputId, state: "ACCEPTED", contentSha256: "a".repeat(64) }],
   } as unknown as CaptureJobReadModel;
@@ -45,6 +52,7 @@ function fixture() {
     getAccountId: async () => accountId,
     isCurrent: () => active,
     transport,
+    prepareSources,
   });
   return {
     accountId,
@@ -115,4 +123,86 @@ it("a closed screen cannot expose an asynchronous context result", async () => {
   await expect(f.consumer.start(f.model)).rejects.toThrow("STALE");
   expect(f.transport.result).not.toHaveBeenCalled();
   expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+const missingContext = () =>
+  new ApiClientError("closed", "http", 503, "UNIVERSAL_CONTEXT_UNAVAILABLE");
+it("first explicit Start prepares real Sources only on exact missing context and then obtains Task from Backend", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare);
+  f.transport.context.mockRejectedValueOnce(missingContext());
+  expect(await f.consumer.start(f.model)).toBe(f.result);
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(prepare.mock.calls[0]).toEqual([
+    expect.objectContaining({
+      accountId: f.accountId,
+      tripId: f.model.batch.context.tripPrior!.id,
+    }),
+    f.model,
+  ]);
+  expect(f.transport.context).toHaveBeenCalledTimes(2);
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+it("missing context recovery remains read-only", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare);
+  f.transport.context.mockRejectedValueOnce(missingContext());
+  await expect(f.consumer.recover(f.model)).rejects.toThrow();
+  expect(prepare).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+it.each([
+  new ApiClientError("denied", "http", 403, "FORBIDDEN"),
+  new ApiClientError("auth", "http", 401, "AUTH_REQUIRED"),
+  new ApiClientError("provider", "http", 503, "PROVIDER_UNAVAILABLE"),
+  new ApiClientError("arbitrary", "http", 503, "SOURCE_IO_UNAVAILABLE"),
+  new ApiClientError("network", "network"),
+])(
+  "context failure without a precise prerequisite signal never prepares Sources",
+  async (error) => {
+    const prepare = vi.fn(async () => {}),
+      f = fixture(prepare);
+    f.transport.context.mockRejectedValueOnce(error);
+    await expect(f.consumer.start(f.model)).rejects.toThrow();
+    expect(prepare).not.toHaveBeenCalled();
+    expect(f.transport.execute).not.toHaveBeenCalled();
+  },
+);
+it("Source authority failure blocks Task/Provider and does not invent context", async () => {
+  const prepare = vi.fn(async () => {
+      throw Error("SOURCE_CAPABILITY_CLOSED");
+    }),
+    f = fixture(prepare);
+  f.transport.context.mockRejectedValueOnce(missingContext());
+  await expect(f.consumer.start(f.model)).rejects.toThrow("SOURCE_CAPABILITY_CLOSED");
+  expect(f.transport.context).toHaveBeenCalledOnce();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+it("registered Sources without an owning Run/Task remain unavailable, never fake a Task", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare);
+  f.transport.context.mockRejectedValue(missingContext());
+  await expect(f.consumer.start(f.model)).rejects.toMatchObject({
+    code: "OWNING_TASK_READER_UNAVAILABLE",
+  });
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(f.transport.result).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+it("a paid UNKNOWN or closed view cannot fall back into Source writes", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare);
+  f.transport.result.mockRejectedValueOnce(absent());
+  f.transport.execute.mockRejectedValueOnce(Error("UNKNOWN"));
+  await expect(f.consumer.start(f.model)).rejects.toThrow();
+  f.transport.context.mockRejectedValueOnce(missingContext());
+  await expect(f.consumer.start(f.model)).rejects.toThrow();
+  expect(prepare).not.toHaveBeenCalled();
+  const g = fixture(async () => {
+    g.close();
+  });
+  g.transport.context.mockRejectedValueOnce(missingContext());
+  await expect(g.consumer.start(g.model)).rejects.toThrow("STALE");
+  expect(g.transport.context).toHaveBeenCalledOnce();
+  expect(g.transport.execute).not.toHaveBeenCalled();
 });

@@ -1,0 +1,42 @@
+{
+  "state": "NO_MUTATION_EXACTLY_RECONCILED",
+  "cause": "local baseline comparison sorted Mounts list in-place, causing reviewed literal HostConfig preimage hash mismatch before remote mutation",
+  "readOnly": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "health": "healthy",
+    "mounts": [
+      [
+        "/opt/otr/dev-backend/env/capture-custody.json",
+        "/run/otr/capture-custody.json",
+        false
+      ],
+      [
+        "/opt/otr/dev-backend/private/capture-custody",
+        "/var/lib/otr/capture-custody",
+        true
+      ],
+      [
+        "/run/otr-r3a5-catalog/catalog-reader.json",
+        "/run/otr/catalog-reader.json",
+        false
+      ]
+    ],
+    "runtimeRootExists": false,
+    "runtimeFileExists": false,
+    "configFiles": [
+      "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml",
+      "/opt/otr/dev-backend/env/backend-api-key.cutover.yml",
+      "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml",
+      "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml",
+      "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml",
+      "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml",
+      "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml",
+      "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml",
+      "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T005419Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/sustained-original-rollback-20261024T023716Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T025507Z/compose.forward.closed.yml"
+    ]
+  }
+}

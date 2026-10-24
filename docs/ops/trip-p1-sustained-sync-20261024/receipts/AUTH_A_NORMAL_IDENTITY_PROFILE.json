@@ -1,0 +1,37 @@
+{
+  "label": "A",
+  "id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "email": "otr.ad5.sustained.20261024.a@example.invalid",
+  "normalLoginVerified": true,
+  "serverIdentityVerified": true,
+  "profileVerified": true,
+  "profileInitializations": 1,
+  "trace": [
+    {
+      "method": "POST",
+      "path": "/auth/v1/token",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/user",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/rest/v1/profiles",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/rest/v1/profiles",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/rest/v1/profiles",
+      "status": 200
+    }
+  ],
+  "sessionExported": false
+}

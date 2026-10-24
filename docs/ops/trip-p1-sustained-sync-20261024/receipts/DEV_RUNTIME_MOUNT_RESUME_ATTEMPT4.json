@@ -1,0 +1,168 @@
+{
+  "windowId": "388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11",
+  "action": "activate",
+  "verified": true,
+  "beforeDiagnosticCaptured": true,
+  "beforeDiagnosticPersisted": true,
+  "beforeDiagnostic": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Error": "",
+      "StartedAt": "2026-10-24T02:55:13.810622786Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "health": {
+      "status": "healthy",
+      "failingStreak": 0,
+      "log": [
+        {
+          "Start": "2026-10-24T02:57:19.481469411Z",
+          "End": "2026-10-24T02:57:19.637777937Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T02:57:49.639010426Z",
+          "End": "2026-10-24T02:57:49.777918316Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T02:58:19.778568154Z",
+          "End": "2026-10-24T02:58:19.923144201Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T02:58:49.924054169Z",
+          "End": "2026-10-24T02:58:50.077787602Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T02:59:20.079005923Z",
+          "End": "2026-10-24T02:59:20.225202769Z",
+          "ExitCode": 0,
+          "Output": ""
+        }
+      ]
+    },
+    "logs": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":2626,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":30000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"49310c45-cf0e-4900-8848-492bf3d032b5\",\"route\":\"health\",\"status\":200,\"durationMs\":2}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"98471602-7a3a-4326-8e31-2def3267e0fe\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"1e69db6e-526e-4e13-a199-51b34a2e2039\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"2cf1ef24-1a9a-46a2-a5d7-989cda6d1b91\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"16e69359-ee6e-4c0f-941b-9e7fc20f6203\",\"route\":\"/v2/trips:create\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"423375d1-0483-48a7-8965-f7091d0d76a2\",\"route\":\"/v2/trips/:tripId/source-import-catalogs\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"147b0223-cea4-4884-9fa8-cd86827e041b\",\"route\":\"/v2/trips/:id/ledger/bootstrap\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"685fbb87-0b48-4ac3-8238-d18d5e7948d6\",\"route\":\"/v2/trips/:tripId/people/:resource\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"52ec2819-d3d8-4b85-8d6b-e0aad865c1ac\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":2,\"durationMs\":3709,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":60000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"0d0bb0f3-d358-4da2-b4d4-ca5cf4993e41\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"e43b5bfe-be13-483b-9521-4d6a4110e081\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":3,\"durationMs\":2509,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":120000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"10aba813-086e-4460-9a3a-bcb0be8091c6\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"867cdfbf-c4f5-4e07-9f10-085be94f062e\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"3bdebcd4-2b88-456a-83a8-ab64b0521ca9\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"ab43f1a0-e481-4022-a4be-3bd6e5a81ddd\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":4,\"durationMs\":1865,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"7179b023-a016-43a7-a53e-1c5c7bac8cd3\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n",
+    "environment": {
+      "equal": true,
+      "changedKeys": [],
+      "beforeCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterKeyedHashes": {
+        "NODE_ENV": "d18159fb21ec55a71d0a00d840c11fcd0543ce4067aa73a2a81f54d5145e02f6",
+        "NODE_VERSION": "b13113a06f36fac738adef2b31e684f3a61d0dfaa8ae799f174ba9cd6d9599c1",
+        "OTR_DEV_BACKEND_BIND_ADDRESS": "40ee065469aac8ccf8d98f730aa1e1be541d1f8581485d42d6344f386c604141",
+        "OTR_DEV_BACKEND_NETWORK_MODE": "c978f194ed54262107a6964be4fb42482fb651c6a29e9437ca871e3f94f1a50a",
+        "OTR_DEV_BACKEND_PORT": "2a407db043c310760cb217ae6228f237bfafeab5d375621c7ea16d20658b0c8e",
+        "OTR_DEV_FLIGHT_ONE_SHOT": "238a642e5a9fef188cb4e856ca22abfde236034b2a84408fc24c08e3323df4e0",
+        "OTR_DEV_FLIGHT_REMOTE_TRANSPORT": "238a642e5a9fef188cb4e856ca22abfde236034b2a84408fc24c08e3323df4e0",
+        "OTR_DEV_SOURCE_PDF2_TRANSPORT": "e2b65c2c08bd73c7fa469f5d4df9459166462f335eb1878c5843c12f5d18af93",
+        "OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "57c13cd3e0f8903baebdb68447ef81aabe1a120f681b4610018dbb33042b7422",
+        "OTR_DEV_SUPABASE_SECRET_KEY": "290974aa4c82c1dadee48de3229955fcedeea811b5f6af7e6a3ec374e6822018",
+        "OTR_DEV_SUPABASE_URL": "72d7b4fb7808909af7f9967d035a42183ce388c71a92e4d0df2ec9ce68c8a092",
+        "PATH": "fa3da350c8c7c2d358dd78890fb6a405f35debc0c7d8a1a9181b91bc89ed9a82",
+        "YARN_VERSION": "215c877cfdbe193825e33e6f3633aeb954e268e36dbe65a2100df3c8ba4109e2"
+      }
+    }
+  },
+  "beforeDiagnosticPath": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/before-activate-1792810768089490355.json",
+  "bundleSHA256": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9",
+  "runtimeSHA256": {
+    "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5"
+  },
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "environmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "mountsMatch": true,
+  "mounts": [
+    {
+      "source": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json",
+      "destination": "/run/otr/trip-create-runtime.json",
+      "rw": false
+    },
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/capture-custody",
+      "destination": "/var/lib/otr/capture-custody",
+      "rw": true
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "rw": false
+    }
+  ],
+  "normalizedHostConfigSHA256": "f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0",
+  "hostConfigSHA256": "df2d008d29c14129954ca39acc650d5b0ca58dfdee1a01d57f9ead60532ebce5",
+  "hostConfigSemanticallyEqual": false,
+  "rawHostConfigEqual": false,
+  "user": "otr",
+  "entry": [
+    "node",
+    "server-capture.mjs"
+  ],
+  "diagnostic": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Error": "",
+      "StartedAt": "2026-10-24T02:59:28.862808683Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "health": {
+      "status": "healthy",
+      "failingStreak": 0,
+      "log": [
+        {
+          "Start": "2026-10-24T02:59:33.95894991Z",
+          "End": "2026-10-24T02:59:34.095780684Z",
+          "ExitCode": 0,
+          "Output": ""
+        }
+      ]
+    },
+    "logs": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":3374,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":30000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"53e1b51d-ec59-4a20-9ade-438dcac05957\",\"route\":\"health\",\"status\":200,\"durationMs\":2}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"13e773d9-1b87-4982-80ed-c55478f0f21a\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n",
+    "environment": {
+      "equal": true,
+      "changedKeys": [],
+      "beforeCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterKeyedHashes": {
+        "NODE_ENV": "2080d41e768a5c4738ee6ee700f3f15f5edac14fe28131b6f63f0c5c744d2c4b",
+        "NODE_VERSION": "7bccf3bfa51eee47d5d691bb73b1632f78625b4c8a981819d37addfe441629a1",
+        "OTR_DEV_BACKEND_BIND_ADDRESS": "4c9038f77b4d340b2bc520620f93fa22e62981d2bf395c8b7987299ce7018a45",
+        "OTR_DEV_BACKEND_NETWORK_MODE": "de5c2f8659a4e8bd12d23eed06adb203ce7ef3b873565646d4efaeedf306b57f",
+        "OTR_DEV_BACKEND_PORT": "69d6959eb757eb901d91956bbbf59c934fac69573d53d750e8b02d7dbde17220",
+        "OTR_DEV_FLIGHT_ONE_SHOT": "405798912bcfa2c7c2f7e80558e1b70aeddf7872f575b659903a536825f39952",
+        "OTR_DEV_FLIGHT_REMOTE_TRANSPORT": "405798912bcfa2c7c2f7e80558e1b70aeddf7872f575b659903a536825f39952",
+        "OTR_DEV_SOURCE_PDF2_TRANSPORT": "42f488dd29617aef7444b073f5f99b6fd93bd578a46379d01fa43f7ae74aebef",
+        "OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "adac3d43439e981f50799f2e1053d4d35e8bc5c46548245a867afd1a25dc14eb",
+        "OTR_DEV_SUPABASE_SECRET_KEY": "473c2e8b306da1b5e47cf8cbde7d8293b7f30822fce8aeb86d0596151c75f95e",
+        "OTR_DEV_SUPABASE_URL": "648b3289d16afbc5d350a404febd74126b127e6f437c12d60fb9724fa3dd52df",
+        "PATH": "d95fb40f1f30066f57e58bef3c20ee48d8fe4cf843ee6106988b17e73c5683b2",
+        "YARN_VERSION": "009854861fff1cb7f00bc24ce7be5a1012cfcbb3ca8bbf92d290f84e0a8615a6"
+      }
+    }
+  },
+  "diagnosticCaptured": true,
+  "restorationVerified": false
+}

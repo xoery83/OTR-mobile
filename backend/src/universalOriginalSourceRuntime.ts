@@ -13,6 +13,7 @@ import {
   universalOriginalAcquisitionSchema,
 } from "./universalOriginalSource";
 import { universalPgTransaction } from "./universalPg";
+import { createUniversalSourceReader } from "./universalSourceRead";
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 
@@ -100,6 +101,19 @@ export function createUniversalOriginalSourceRuntime(
         await authorize(actor, requestedTrip);
         return result;
       },
+    },
+    // Existing owning read only: independently reconciles the fixed Run after an uncertain begin.
+    // The current finite original profile supports retained UTF8; binary is never relabeled as text.
+    async readPreparedInputs() {
+      await authorize(config.actorId, trip);
+      const manifest = await createUniversalSourceReader({
+        connection: deps.connection,
+        async readBinary() {
+          throw new Error("UNIVERSAL_SOURCE_BINARY_PROFILE_UNAVAILABLE");
+        },
+      })(config.task);
+      await authorize(config.actorId, trip);
+      return manifest;
     },
     // Trusted Operator only. Never mounted as a Native endpoint and never invoked by startup.
     // Real Sources must already exist; the owning command validates the finite scope/input hash.

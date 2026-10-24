@@ -1,0 +1,18 @@
+✔ each fixed identity sends one ordinary SDK request, retains exact201 and no secrets/session (25.849167ms)
+✔ wrong scope/authority/approvedGate/window reject without transport (0.254833ms)
+✔ existing/stale/wrongIdentity/unknown prior attempt orordinal never dispatch (0.20275ms)
+✔ second safe ordinal allowed only with newfresh exactabsence (0.871ms)
+✔ UNKNOWN stops with original dispatch metadata and no automatic retry (0.495291ms)
+✔ other2xx success remains reconcile-required without trusting SDK body (0.674417ms)
+✔ caller mutation cannot redirect fixed identity (0.6355ms)
+✔ HTTP rejection and malformed201 retain no invented identity (0.765083ms)
+✔ HTTP200 legal identity is accepted without any second dispatch (0.746917ms)
+✔ HTTP200 missing UUID stops without identity or retry (0.710042ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 269.660042

@@ -37,6 +37,10 @@ export function createUniversalCaptureConsumer(dependencies: {
   getAccountId(): Promise<string>;
   transport: ReturnType<typeof createUniversalImportTransport>;
   isCurrent(): boolean;
+  prepareSources?(
+    context: import("../auth/accountRequestContext").AccountRequestContext,
+    model: CaptureJobReadModel,
+  ): Promise<void>;
 }) {
   let dispatchUncertain = false;
   const current = () => {
@@ -50,7 +54,47 @@ export function createUniversalCaptureConsumer(dependencies: {
     current();
     if (context.accountId !== model.batch.accountId)
       throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
-    const binding = await dependencies.transport.context(context, model.batch.batchId);
+    let binding;
+    try {
+      binding = await dependencies.transport.context(context, model.batch.batchId);
+    } catch (error) {
+      current();
+      if (
+        !allowDispatch ||
+        dispatchUncertain ||
+        !dependencies.prepareSources ||
+        !(
+          error instanceof ApiClientError &&
+          error.status === 503 &&
+          ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
+            error.code ?? "",
+          )
+        )
+      )
+        throw error;
+      await dependencies.prepareSources(context, model);
+      current();
+      // Only owning Backend context can supply the Task, including after Source preparation.
+      try {
+        binding = await dependencies.transport.context(context, model.batch.batchId);
+      } catch (error) {
+        current();
+        if (
+          error instanceof ApiClientError &&
+          error.status === 503 &&
+          ["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"].includes(
+            error.code ?? "",
+          )
+        )
+          throw new ApiClientError(
+            "OWNING_TASK_READER_UNAVAILABLE",
+            "http",
+            503,
+            "OWNING_TASK_READER_UNAVAILABLE",
+          );
+        throw error;
+      }
+    }
     current();
     let result: UniversalImportResult;
     try {
