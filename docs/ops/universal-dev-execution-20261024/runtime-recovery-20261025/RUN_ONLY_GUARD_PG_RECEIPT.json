@@ -1,0 +1,30 @@
+{
+  "status": "EXACT_SYNTHETIC_SOURCE_SQL_PASS",
+  "fixtureSHA256": "5af0bcacae82acdbac0a9a0bf71b536b4b54150d417a89974d0f9d3099455db8",
+  "requestSHA256": "d9c71d62b16eba6f237d0c8bc50968d0421bc1308b02cf87822a61cd0e5d9ddb",
+  "owningInputSHA256": "35a252f6b372b33d741f6ba429c490f23f90518ebd07bb192094c768bf7b244d",
+  "checks": [
+    "same three exact Source/revision/representation rows; only local FK fixtures and capability UTC changed",
+    "actual input_valid true for three pins",
+    "same Run/Batch/Task begin creates one PENDING Run and three Inputs",
+    "same owning retained Source read returns three materials",
+    "exact replay returns same Run"
+  ],
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "notAuthOrActualRuntimePASS": true,
+  "installedCandidates": [
+    "backend/sql/universal_source_host_candidate.sql",
+    "backend/sql/universal_original_source_candidate.sql",
+    "backend/sql/universal_original_result_candidate.sql",
+    "backend/sql/universal_model_task_dependency_candidate.sql",
+    "backend/sql/universal_provider_admission_candidate.sql",
+    "backend/sql/universal_task_read_candidate.sql"
+  ],
+  "actualWriteBoundaryChecks": [
+    "exact actual catalog write guard + private run-only guard reproduces PDF-scope refusal; Run absent after rollback",
+    "finite prefix only; PDF remainder, function owner/ACL/invoker/search_path and catalog write guard byte-preserved",
+    "negative current/scope/expiry/Actor/Trip/Batch/Task/source/representation/hash/revision/lifecycle/op/extra-field/role cases deny; original PDF path remains CLOSED; reapply refuses"
+  ],
+  "pdfPrivateDependencies": "CLOSED fixture sentinels; exact observed four roots, no PDF Runtime claim"
+}

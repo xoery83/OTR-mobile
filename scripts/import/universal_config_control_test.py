@@ -35,7 +35,7 @@ class ConfigTests(unittest.TestCase):
         from build_universal_admin_plan_test import input_fixture
         from build_universal_admin_plan import build_admin_plan,ORDER
         p,f=input_fixture();p['ownerAuthorized']=True
-        f.update(integrationBaseline={'config_version':3,'kill_switch':True},priceBaselineVersion='old-price',priceBaselineId=str(uuid.uuid4()))
+        f.update(integrationBaseline={'config_version':3,'kill_switch':True},priceBaselineVersion='old-price',priceBaselineId=str(uuid.uuid4()),priceBaselineUntil=None)
         f['priceRow']['supersedes_schedule_id']=f['priceBaselineId']
         f['environmentBaseline']={'config_version':3,'kill_switch':True};f['commandIdentities']={k:v for k,v in f['commandIdentities'].items() if k in ORDER[2:]}
         p=build_admin_plan(p,f);a=p['adminControl'];baseline=[{'observation':{'environment':a['environmentBaseline'],'integration':a['integrationBaseline'],'audits':[]}}]

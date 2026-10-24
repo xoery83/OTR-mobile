@@ -1,0 +1,12 @@
+{
+  "status": "FIRST_CONFIRMED_RUN_WRITE_BOUNDARY",
+  "actualFunction": "trip_source_run_only_row(text,text,jsonb)",
+  "definitionSHA256": "0a073973b7e89e66f0a41460a9f97d8327153b87b1a2dba1ffbbe415ef388358",
+  "actualTrigger": "trip_import_catalog_write_guard -> trip_source_run_only_row -> trip_source_pdf_upload_v4_scope",
+  "actualRestriction": "single PDF source scope only; no Universal finite branch",
+  "actualRuns": 0,
+  "actualInputs": 0,
+  "actualPaidCalls": 0,
+  "sqlAction": "NO_PATCH_INSTALLED_YET",
+  "previousUnknownReceiptsPreserved": true
+}

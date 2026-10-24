@@ -1,6 +1,6 @@
 """Exact synthetic Source metadata reproduction on owned network-none PG only."""
 import argparse,json,pathlib
-args=argparse.ArgumentParser();args.add_argument('--fixture',required=True);args.add_argument('--request',required=True);args.add_argument('--all-candidates',action='store_true');a=args.parse_args()
+args=argparse.ArgumentParser();args.add_argument('--fixture',required=True);args.add_argument('--request',required=True);args.add_argument('--all-candidates',action='store_true');args.add_argument('--actual-write-boundary');args.add_argument('--apply-guard-delta',action='store_true');a=args.parse_args()
 fixture_path=pathlib.Path(a.fixture);request_path=pathlib.Path(a.request)
 actual=json.loads(fixture_path.read_text());request=json.loads(request_path.read_text())
 assert actual.get('syntheticOnly') is True and actual.get('readOnly') is True
@@ -50,13 +50,61 @@ body=r'''
  for pin in pins:
   valid.append(sql('select public.trip_import_input_valid(jsonb_populate_record(null::public.trip_source_inputs,'+lit(json.dumps({**pin,'run_id':request['runId'],'confirmation_id':None}))+'::jsonb),'+lit(actor)+'::uuid,'+lit(trip)+'::uuid,true);'))
  assert valid==['t']*3,valid
+
+ boundary_checks=[]
+ if boundary_path:
+  metadata=json.loads(pathlib.Path(boundary_path).read_text())
+  definitions={t['function']:t['body'] for t in metadata['triggers']}
+  for definition in definitions.values():sql(definition+';')
+  sql(metadata['runOnlyGuard']+';')
+  sql("alter function public.trip_source_run_only_row(text,text,jsonb) owner to otr_trip_source_writer;revoke all on function public.trip_source_run_only_row(text,text,jsonb) from public,anon,authenticated,service_role,authenticator,postgres;grant execute on function public.trip_source_run_only_row(text,text,jsonb) to otr_trip_source_writer;")
+  sql(gateway('select public.trip_source_begin_universal_inputs('+lit(actor)+'::uuid,'+lit(trip)+'::uuid,'+lit(json.dumps(request))+');'),error='PDF_V4_FIXTURE_CLOSED')
+  assert sql('select count(*) from public.trip_source_runs where id='+lit(scope['run_id'])+';')=='0'
+  boundary_checks.append('exact actual catalog write guard + private run-only guard reproduces PDF-scope refusal; Run absent after rollback')
+  if not apply_delta:
+   print(json.dumps({'status':'EXACT_ACTUAL_WRITE_BOUNDARY_REPRODUCED','checks':boundary_checks,'hostedWrites':0,'providerCalls':0},indent=2));raise SystemExit(0)
+  before_guard=sql("select prosrc from pg_proc where oid='public.trip_source_run_only_row(text,text,jsonb)'::regprocedure;")
+  before_meta=sql("select jsonb_build_array(proowner,proacl,prosecdef,proconfig) from pg_proc where oid='public.trip_source_run_only_row(text,text,jsonb)'::regprocedure;")
+  sql('SET SESSION AUTHORIZATION postgres;'+(ROOT/'backend/sql/universal_run_only_guard_candidate.sql').read_text())
+  after_guard=sql("select prosrc from pg_proc where oid='public.trip_source_run_only_row(text,text,jsonb)'::regprocedure;")
+  import re
+  assert re.sub(r' /\* UNIVERSAL_RUN_ONLY_BEGIN \*/.*? /\* UNIVERSAL_RUN_ONLY_END \*/\n','',after_guard,flags=re.S)==before_guard
+  assert before_meta==sql("select jsonb_build_array(proowner,proacl,prosecdef,proconfig) from pg_proc where oid='public.trip_source_run_only_row(text,text,jsonb)'::regprocedure;")
+  assert sql("select md5(prosrc) from pg_proc where oid='public.trip_import_catalog_write_guard()'::regprocedure;")=='f8d041b3f82024d9d3f5472cb0ffe363'
+  boundary_checks.append('finite prefix only; PDF remainder, function owner/ACL/invoker/search_path and catalog write guard byte-preserved')
  result=json.loads(sql(gateway('select public.trip_source_begin_universal_inputs('+lit(actor)+'::uuid,'+lit(trip)+'::uuid,'+lit(json.dumps(request))+');')))
  assert result['id']==request['runId'] and result['state']=='PENDING'
  manifest=json.loads(sql(gateway('select public.trip_source_read_universal_inputs('+','.join(lit(v)+'::uuid' for v in [actor,trip,scope['batch_id'],scope['task_id'],scope['run_id']])+');')))
  assert len(manifest['representations'])==3
  assert json.loads(sql(gateway('select public.trip_source_begin_universal_inputs('+lit(actor)+'::uuid,'+lit(trip)+'::uuid,'+lit(json.dumps(request))+');')))['id']==request['runId']
- print(json.dumps({'status':'EXACT_SYNTHETIC_SOURCE_SQL_PASS','fixtureSHA256':hashlib.sha256(fixture_path.read_bytes()).hexdigest(),'requestSHA256':hashlib.sha256(request_path.read_bytes()).hexdigest(),'owningInputSHA256':actual_input_sha,'checks':['same three exact Source/revision/representation rows; only local FK fixtures and capability UTC changed','actual input_valid true for three pins','same Run/Batch/Task begin creates one PENDING Run and three Inputs','same owning retained Source read returns three materials','exact replay returns same Run'],'hostedWrites':0,'providerCalls':0,'notAuthOrActualRuntimePASS':True,'installedCandidates':installed,'pdfPrivateDependencies':'CLOSED fixture sentinels; exact observed four roots, no PDF Runtime claim' if all_candidates else 'not installed'},indent=2))
+
+ if boundary_path and apply_delta:
+  sql("create function public.fixture_check_run_guard(tab text,op text,n jsonb) returns void language plpgsql security definer set search_path=pg_catalog as $$begin perform public.trip_source_run_only_row(tab,op,n);end$$;alter function public.fixture_check_run_guard(text,text,jsonb) owner to otr_trip_source_writer;")
+  def guard(row,tab='trip_source_runs',op='INSERT',prefix='',error=None,as_gateway=True):
+   query='select public.fixture_check_run_guard('+lit(tab)+','+lit(op)+','+lit(json.dumps(row))+'::jsonb);'
+   return sql(prefix+(gateway(query) if as_gateway else query),error=error)
+  row=json.loads(sql('select to_jsonb(r) from public.trip_source_runs r where id='+lit(scope['run_id'])+';'))
+  guard(row)
+  for key,value in [('actor_account_id',OTHER),('trip_id',TRIP),('capture_batch_id',ids['batch']),('interpretation_task_id',ids['task']),('capture_submission_sha256','0'*64),('input_sha256','0'*64),('state','RUNNING'),('retention_state','IDENTITY_ONLY'),('row_revision',2),('row_revision',None),('state',None),('created_at',None),('scope_source_ids',row['scope_source_ids'][:-1]),('extra_field',True)]:
+   changed=dict(row);changed[key]=value;guard(changed,error='UNIVERSAL_RUN_WRITE_DENIED')
+  guard(row,op='UPDATE',error='UNIVERSAL_RUN_WRITE_DENIED')
+  guard({'run_id':scope['run_id']},tab='trip_source_candidates',error='UNIVERSAL_RUN_WRITE_DENIED')
+  guard(row,as_gateway=False,error='UNIVERSAL_RUN_WRITE_DENIED')
+  for update in ["delete from public.trip_source_universal_scope;","update public.trip_source_universal_scope set starts_at=clock_timestamp()-interval '120 seconds',expires_at=clock_timestamp()-interval '1 second';","update public.trip_source_universal_scope set source_command_pins=jsonb_set(source_command_pins,'{0,representationId}',to_jsonb('00000000-0000-4000-8000-000000000099'::text));"]:
+   guard(row,prefix='BEGIN;'+update,error='UNIVERSAL_RUN_WRITE_DENIED')
+  pinrow=json.loads(sql('select to_jsonb(i) from public.trip_source_inputs i where run_id='+lit(scope['run_id'])+' order by id limit 1;'))
+  guard(pinrow,tab='trip_source_inputs')
+  for key,value in [('payload_sha256','0'*64),('byte_count',pinrow['byte_count']+1),('material_revision',2),('observed_source_row_revision',2),('historical_selection',True),('historical_selection',None),('observed_source_row_revision',None),('representation_id',ids['representation']),('confirmation_id',ids['input']),('extra_field',True)]:
+   changed=dict(pinrow);changed[key]=value;guard(changed,tab='trip_source_inputs',error='UNIVERSAL_RUN_WRITE_DENIED')
+  guard(pinrow,tab='trip_source_inputs',op='UPDATE',error='UNIVERSAL_RUN_WRITE_DENIED')
+  guard(row,prefix='BEGIN;ALTER TABLE public.trip_sources DISABLE TRIGGER USER;update public.trip_sources set lifecycle=\'DELETED\',deleted_at=clock_timestamp(),deleted_by='+lit(actor)+' where id='+lit(row['scope_source_ids'][0])+';',error='UNIVERSAL_RUN_WRITE_DENIED')
+  # Non-Universal/PDF-shaped rows still reach the original CLOSED PDF scope.
+  pdf=dict(row);pdf.update(extractor_key='existing-pdf-extractor',capture_batch_id=None,interpretation_task_id=None,capture_submission_sha256=None,id=ids['run'])
+  guard(pdf,error='PDF_V4_FIXTURE_CLOSED')
+  sql('SET SESSION AUTHORIZATION postgres;'+(ROOT/'backend/sql/universal_run_only_guard_candidate.sql').read_text(),error='UNIVERSAL_RUN_GUARD_PREIMAGE')
+  boundary_checks.append('negative current/scope/expiry/Actor/Trip/Batch/Task/source/representation/hash/revision/lifecycle/op/extra-field/role cases deny; original PDF path remains CLOSED; reapply refuses')
+ print(json.dumps({'status':'EXACT_SYNTHETIC_SOURCE_SQL_PASS','fixtureSHA256':hashlib.sha256(fixture_path.read_bytes()).hexdigest(),'requestSHA256':hashlib.sha256(request_path.read_bytes()).hexdigest(),'owningInputSHA256':actual_input_sha,'checks':['same three exact Source/revision/representation rows; only local FK fixtures and capability UTC changed','actual input_valid true for three pins','same Run/Batch/Task begin creates one PENDING Run and three Inputs','same owning retained Source read returns three materials','exact replay returns same Run'],'hostedWrites':0,'providerCalls':0,'notAuthOrActualRuntimePASS':True,'installedCandidates':installed,'actualWriteBoundaryChecks':boundary_checks,'pdfPrivateDependencies':'CLOSED fixture sentinels; exact observed four roots, no PDF Runtime claim' if all_candidates else 'not installed'},indent=2))
 finally:
  if created:docker('rm','-f',NAME)
 '''
-exec(compile(prefix+body,str(base),'exec'),{'__file__':str(base),'actual':actual,'request':request,'fixture_path':fixture_path,'request_path':request_path,'all_candidates':a.all_candidates})
+exec(compile(prefix+body,str(base),'exec'),{'__file__':str(base),'actual':actual,'request':request,'fixture_path':fixture_path,'request_path':request_path,'all_candidates':a.all_candidates,'boundary_path':a.actual_write_boundary,'apply_delta':a.apply_guard_delta})
