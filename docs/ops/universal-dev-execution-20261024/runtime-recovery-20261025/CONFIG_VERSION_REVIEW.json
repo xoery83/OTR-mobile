@@ -1,0 +1,17 @@
+{
+  "status": "PROPOSED_CONFIG_REVISION_NARROW_REVIEW_PASS",
+  "findings": [],
+  "independentTests": 21,
+  "scope": "Only Operator proposal configVersion safe integer >=2 and corresponding tests/Source union type narrowing",
+  "confirmed": [
+    "Actual resumed integration revision4 and configurationSHA persist in attempt/runtime proposal; Source scope and interpretation/provider request hashes stay unchanged.",
+    "Unsafe integer, fraction, non-number, NaN/Infinity or <2 rejects.",
+    "No actual config row, Runtime activation, SQL/Schema, authority or frozen Prompt changed; owning config identity/closed/open eligibility remains separate validation."
+  ],
+  "limits": "Proposal acceptance is not evidence of actual revision eligibility or Run/AI success. No reviewer DEV/GUI/network/secret read.",
+  "patchSHA256": "1835782a3e337af427ecc57cf6eae719efd488cd89ae6a380dadb09a31824c27",
+  "sha256": {
+    "backend/src/universalExecutionProposal.ts": "39c8d68c0b8cb817519b37e3528ecdb8142cb38df195b8710d0d8efe397db4ae",
+    "backend/src/universalExecutionProposal.test.ts": "8d3df5deba456491e84c536d74954ff547be55f8b98dd653effeb910562d9f5e"
+  }
+}

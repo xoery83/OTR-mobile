@@ -1,0 +1,3 @@
+# Actual retained Batch Source acceptance
+
+AD5 explicitly started original Batch3665f191 (two retained files and submitted text). All three exact original Source operations are FINAL/APPLIED, Sources ACTIVE revision1/material1, independent Supabase readback IDs/operation hashes match original local command pins. Native owning binding states all ADMITTED revision3; no fabricated snapshots or substitute Source IDs. Normal authenticated original Result HTTP200 JSON with no Content-Encoding. Source window independently CLOSED_VERIFIED, original Backend restored. This proves Source acquisition and Native receipt consumption only: no Run/Task/paid call/AI Results/Canonical Admission PASS yet. Source acquisitions3/3, paid0/1; no further Source acquire authorized or required.

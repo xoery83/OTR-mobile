@@ -27,10 +27,41 @@ def fixture():
 def observation(p,env=None,integration=None,receipts=None):
     a=p['adminControl'];audits=[]
     for x in receipts or []:
-        c=x['command'];audits.append({'command_id':c['request_id'],'admin_actor_id':a['actorId'],'new_version':3,'safe_diff':{'request_sha256':c['request_sha256'],'command_kind':x['kind'],'scope_sha256':context_scope_hash(x['context'])}})
+        c=x['command'];audits.append({'command_id':c['request_id'],'admin_actor_id':a['actorId'],'new_version':c['expected_version']+1,'safe_diff':{'request_sha256':c['request_sha256'],'command_kind':x['kind'],'scope_sha256':context_scope_hash(x['context'])}})
     return [{'observation':{'environment':env or {'config_version':2,'kill_switch':False},'integration':integration or {'config_version':2,'kill_switch':False},'audits':audits}}]
 
 class ConfigTests(unittest.TestCase):
+    def test_existing_closed_integration_restores_exact_cas_without_reconfigure(self):
+        from build_universal_admin_plan_test import input_fixture
+        from build_universal_admin_plan import build_admin_plan,ORDER
+        p,f=input_fixture();p['ownerAuthorized']=True
+        f.update(integrationBaseline={'config_version':3,'kill_switch':True},priceBaselineVersion='old-price')
+        f['environmentBaseline']={'config_version':3,'kill_switch':True};f['commandIdentities']={k:v for k,v in f['commandIdentities'].items() if k in ORDER[2:]}
+        p=build_admin_plan(p,f);a=p['adminControl'];baseline=[{'observation':{'environment':a['environmentBaseline'],'integration':a['integrationBaseline'],'audits':[]}}]
+        sql=Mock(side_effect=[baseline,[{'closed':True}]])
+        self.assertTrue(restore_once(p,sql,recover_only=True)['adminClosed'])
+        self.assertTrue(all('BEGIN READ ONLY' in c.args[0] for c in sql.call_args_list))
+        from universal_config_control import authority_sql
+        authority=authority_sql(a)
+        self.assertIn("count(*)=1 FROM public.external_integrations",authority)
+        for value in [a['integrationId'],a['retainedConfiguration']['providerConfigId'],a['retainedConfiguration']['providerConfigurationSHA256'],a['retainedConfiguration']['integrationConfigSHA256']]:self.assertIn(value,authority)
+        self.assertIn('config_version=3',authority)
+        contradictory=observation(p,a['environmentBaseline'],a['integrationBaseline'],[a['activation'][1]])
+        sql=Mock(return_value=contradictory);admin=Mock()
+        self.assertFalse(restore_once(p,sql,admin_sql=admin)['adminClosed']);admin.assert_not_called()
+        from universal_config_control import context_scope_hash
+        def acknowledged(x):
+            c=x['command'];return {'command_id':c['request_id'],'admin_actor_id':a['actorId'],'new_version':1 if x['kind']=='external_integration_price_append' else c['expected_version']+1,'safe_diff':{'request_sha256':c['request_sha256'],'command_kind':x['kind'],'scope_sha256':context_scope_hash(x['context'])}}
+        responses=[[{'ready':True}],baseline]
+        for n,x in enumerate(a['activation']):responses.append([{'observation':{'environment':a['environmentBaseline'] if n<2 else {'config_version':4,'kill_switch':False},'integration':a['integrationBaseline'] if n<1 else {'config_version':4,'kill_switch':False},'audits':[acknowledged(y) for y in a['activation'][:n+1]]}}])
+        sql=Mock(side_effect=responses);admin=Mock()
+        self.assertEqual(activate_once(p,sql,admin_sql=admin,now=lambda:watchdog.instant(p['startsAt'])+10)['status'],'FINITE_CONFIG_ACTIVE');self.assertEqual(admin.call_count,3)
+        env={'config_version':5,'kill_switch':True};closed={'config_version':5,'kill_switch':True}
+        sql=Mock(side_effect=[observation(p,{'config_version':4,'kill_switch':False},{'config_version':4,'kill_switch':False}),observation(p,env,{'config_version':4,'kill_switch':False},[a['restore'][0]]),observation(p,env,closed,a['restore']),[],[{'closed':True}]])
+        admin=Mock();r=restore_once(p,sql,admin_sql=admin,now=lambda:watchdog.instant(p['startsAt'])+10)
+        self.assertEqual(r['status'],'CLOSED_VERIFIED');self.assertEqual(admin.call_count,2)
+        drift=Mock(return_value=observation(p,{'config_version':3,'kill_switch':True},{'config_version':6,'kill_switch':False}));admin=Mock()
+        self.assertFalse(restore_once(p,drift,admin_sql=admin)['adminClosed']);admin.assert_not_called()
     def test_exact_finite_plan_and_unbound_authority(self):
         p=fixture();validate(p)
         for mutation in [lambda p:p['adminControl'].update(verifiedAuthorityReceiptSHA256=None),lambda p:p['adminControl'].update(integrationBaseline={}),lambda p:p['adminControl']['role'].update(priorCanLogin=True),lambda p:p['adminControl']['temporaryGrants'][0].update(actor_id=str(uuid.uuid4())),lambda p:p['adminControl'].update(expiresAt=p['expiresAt'])]:
@@ -189,6 +220,16 @@ class ConfigTests(unittest.TestCase):
             watchdog.write(root/'watch-claimed.json',{'planSHA256':digest,'pid':os.getpid()})
             with patch('universal_config_control.activate_once',side_effect=RuntimeError('UNKNOWN')):
                 self.assertEqual(watchdog.activate_config(p,root,digest,Mock(),Mock())['status'],'RECONCILE_REQUIRED');self.assertTrue((root/'close-requested').exists())
+    def test_safe_activation_failure_boundary_never_records_raw_private_message(self):
+        for error,code in [(FileNotFoundError('PRIVATE_SECRET_FILE'),'LOCAL_BOUND_INPUT_MISSING'),(ValueError('TUNNEL_MASTER_UNCONFIRMED'),'TUNNEL_MASTER_UNCONFIRMED'),(RuntimeError('PRIVATE_PASSWORD_TOKEN'),'CONFIG_ACTIVATION_UNCONFIRMED')]:
+            p=fixture();digest='a'*64
+            with tempfile.TemporaryDirectory() as d:
+                root=Path(d);os.chmod(root,0o700)
+                watchdog.write(root/'heartbeat.json',{'planSHA256':digest,'pid':os.getpid(),'observedAt':time.time()});watchdog.write(root/'watch-claimed.json',{'planSHA256':digest,'pid':os.getpid()})
+                with patch('universal_config_control.activate_once',side_effect=error):
+                    result=watchdog.activate_config(p,root,digest,Mock(),Mock())
+                self.assertEqual(result['safeFailureBoundary'],code);self.assertEqual(result['status'],'RECONCILE_REQUIRED')
+                self.assertTrue((root/'close-requested').exists());self.assertNotIn('PRIVATE_',json.dumps(result))
     def test_activation_owner_and_window_required_without_effect(self):
         p=fixture();sql=Mock();p['ownerAuthorized']=False
         with self.assertRaises(ValueError):activate_once(p,sql)

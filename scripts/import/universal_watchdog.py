@@ -117,9 +117,11 @@ def _activate_config_locked(plan,directory,digest,sql=None,admin_sql=None):
         sql=sql or SqlTransport(transport['supabaseCli'],transport['linkedWorktree'],str(directory))
         admin_sql=admin_sql or AdminSqlTransport(plan)
         result=activate_once(plan,sql,admin_sql=admin_sql)
-    except Exception:
+    except Exception as error:
         if not (directory/'close-requested').exists():write(directory/'close-requested',{'planSHA256':digest})
-        result={'status':'RECONCILE_REQUIRED','windowId':plan['windowId']}
+        safe={'ADMIN_PRIVATE_DIRECTORY_REQUIRED','ADMIN_PRIVATE_FILE_CHANGED','EXACT_DEV_ADMIN_SERVICE_REQUIRED','TUNNEL_PROCESS_CHANGED','TUNNEL_MASTER_UNCONFIRMED','PRIVATE_TUNNEL_SOCKET_REQUIRED','ADMIN_COMMAND_UNKNOWN_OR_REJECTED','EXACT_FINITE_ADMIN_AUTHORITY_UNAVAILABLE','ADMIN_BASELINE_DRIFT','ADMIN_COMMAND_TRANSPORT_UNKNOWN'}
+        code='LOCAL_BOUND_INPUT_MISSING' if isinstance(error,FileNotFoundError) else str(error) if isinstance(error,(ValueError,RuntimeError)) and str(error) in safe else 'CONFIG_ACTIVATION_UNCONFIRMED'
+        result={'status':'RECONCILE_REQUIRED','windowId':plan['windowId'],'safeFailureBoundary':code,'errorClass':type(error).__name__}
     write(directory/'admin-activation-result.json',{**result,'planSHA256':digest})
     return result
 

@@ -7,3 +7,7 @@
 - Owner preauthorized bounded continuation for next three hours. Original business/cost/read limits remain; fresh finite windows require independent watcher. No Production, canonical Admission or historical Trip/P1 replay.
 
 Durations: runtime recovery actual 17:30:50–17:31:00 UTC; first restore rejection17:19:15–17:19:23. Other diagnosis/coding/test/review subintervals were not separately timed and are not reported as measurements.
+
+- Resume-02 exact role/Source activation readback passed; candidate raw hashes passed and listening logged. Operator health wait25s was shorter than retained Docker Healthcheck interval30s, so it failed without waiting for the first probe. Watcher actual CLOSED_VERIFIED and exact original healthy; Source0/Run0/paid0. Wait corrected to60s and health status/running/exit metadata captured. Existing contracts unchanged; no new schema or permission.
+
+Actual focused diagnostic 2026-10-24 19:25 UTC: reviewed SHA296c6b standalone CLI ran --recover-only inside watched candidate; beginInvocations0/Provider0, owning read returned UNIVERSAL_SOURCE_RUN_UNAVAILABLE. Normal Auth and Source connector reached owning function; no Run existed. Independent watcher CLOSED_VERIFIED SQL/admin/runtime, one closure attempt, original container restored. Same six SQL + actual four function definitions + exact three-Source fixture pass locally. Existing closed config continuation and real version4 binder have independent narrow Review; no new runtime/AI PASS.

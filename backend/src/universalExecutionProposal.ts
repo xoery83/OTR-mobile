@@ -67,7 +67,7 @@ export const universalOperatorIdentitiesSchema = z.strictObject({
 });
 export const universalExecutionFactsSchema = z.strictObject({
   integrationId: label,
-  configVersion: z.literal(2),
+  configVersion: z.number().int().safe().min(2),
   configurationSha256: digest,
   providerConfigId: uuid,
   priceScheduleId: uuid,

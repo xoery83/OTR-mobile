@@ -22,6 +22,16 @@ class BuilderTests(unittest.TestCase):
   self.assertEqual({r['admin_grant_id'] for r in a['temporaryGrants']},set(f['grantIdentities'].values()));self.assertEqual(result,build_admin_plan(p,f))
   for x in a['activation']+a['restore']:
    self.assertEqual(x['context']['verified_at'],f['authContextBase']['verified_at']);self.assertEqual(x['context']['auth_session_reference'],'vault:ISOLATED_ONLY')
+ def test_closed_existing_integration_only_price_and_exact_kill_cas(self):
+  p,f=input_fixture();f.update(integrationBaseline={'config_version':3,'kill_switch':True},priceBaselineVersion='previous-closed-price')
+  f['environmentBaseline']={'config_version':5,'kill_switch':True};f['commandIdentities']={k:v for k,v in f['commandIdentities'].items() if k in ORDER[2:]}
+  result=build_admin_plan(p,f);a=validate_admin(result)
+  self.assertEqual([x['kind'] for x in a['activation']],['external_integration_price_append','external_integration_set_kill','external_integration_set_kill'])
+  self.assertEqual([x['command']['expected_version'] for x in a['activation']],['previous-closed-price',3,5])
+  self.assertEqual([x['command']['expected_version'] for x in a['restore']],[6,4])
+  for mutate in [lambda f:f['integrationBaseline'].update(kill_switch=False),lambda f:f['integrationBaseline'].update(config_version=0),lambda f:f.pop('priceBaselineVersion'),lambda f:f['commandIdentities'].update(configure={'requestId':str(uuid.uuid4()),'auditId':str(uuid.uuid4())})]:
+   q=copy.deepcopy(f);mutate(q)
+   with self.assertRaises((ValueError,TypeError)):build_admin_plan(p,q)
  def test_unbound_foreign_user_expired_and_changed_rows_refused(self):
   mutations=[lambda f:f['authContextBase'].update(principal_kind='OTR_USER'),lambda f:f.update(actorId=str(uuid.uuid4())),lambda f:f.update(authSessionExpiresAt=f['outerStartsAt']),lambda f:f['providerRow'].update(provider_config_id=str(uuid.uuid4())),lambda f:f['integrationRow'].update(credential_reference='RAW_SECRET_NOT_REFERENCE'),lambda f:f['priceUnits'][0]['unit_definition'].update(relationship='INCLUDED'),lambda f:f['integrationRow'].update(unapproved_field=True),lambda f:f['commandIdentities']['configure'].update(requestId=f['commandIdentities']['price']['requestId']),lambda f:f['authContextBase'].update(auth_session_reference=None)]
   for change in mutations:

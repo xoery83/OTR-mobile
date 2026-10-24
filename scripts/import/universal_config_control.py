@@ -31,11 +31,16 @@ def validate_admin(plan):
     if a['verifiedAuthorityReceiptSHA256']=='0'*64:raise ValueError('VERIFIED_ADMIN_AUTHORITY_REQUIRED')
     if a['role']!={'name':ADMIN,'priorCanLogin':False,'expiresAt':a['expiresAt']}:raise ValueError('EXACT_TEMP_ADMIN_ROLE_REQUIRED')
     if a['environmentBaseline']['kill_switch'] is not True or not isinstance(a['environmentBaseline']['config_version'],int) or a['environmentBaseline']['config_version']<1:raise ValueError('CLOSED_ENVIRONMENT_BASELINE_REQUIRED')
-    # This Gate is for one NEW integration, never an existing shared integration.
-    if a['integrationBaseline'] is not None:raise ValueError('NEW_INTEGRATION_ONLY')
-    if [x['kind'] for x in a['activation']]!=KINDS or len(a['restore'])!=2:raise ValueError('EXACT_ADMIN_COMMAND_SEQUENCE_REQUIRED')
+    prior=a['integrationBaseline'];existing=prior is not None
+    if existing and (set(prior)!={'config_version','kill_switch'} or type(prior['config_version']) is not int or prior['config_version']<1 or prior['kill_switch'] is not True or not re.fullmatch('[A-Za-z0-9._:-]{1,128}',a.get('priceBaselineVersion',''))):raise ValueError('EXACT_CLOSED_INTEGRATION_BASELINE_REQUIRED')
+    if existing:
+        retained=a['retainedConfiguration']
+        if set(retained)!={'providerConfigId','providerConfigurationSHA256','integrationConfigSHA256'} or retained['providerConfigId']!=plan['providerScope']['provider_config_id']:raise ValueError('EXACT_RETAINED_CONFIGURATION_REQUIRED')
+        digest(retained['providerConfigurationSHA256']);digest(retained['integrationConfigSHA256'])
+    if [x['kind'] for x in a['activation']]!=(KINDS[2:] if existing else KINDS) or len(a['restore'])!=2:raise ValueError('EXACT_ADMIN_COMMAND_SEQUENCE_REQUIRED')
     ids=set();audits=set()
-    for index,x in enumerate(a['activation']+a['restore']):
+    for offset,x in enumerate(a['activation']+a['restore']):
+        index=offset+2 if existing else offset
         c,v=x['command'],x['context'];kind=x['kind']
         if kind not in KINDS or c['environment']!='DEV' or c['actor_id']!=a['actorId'] or c['version']!=1:raise ValueError('ADMIN_COMMAND_SCOPE')
         if c['request_id'] in ids or c['audit_id'] in audits:raise ValueError('ADMIN_COMMAND_ID_REUSED')
@@ -53,9 +58,9 @@ def validate_admin(plan):
             if index==1:
                 r=c['row']
                 if r['provider_config_id']!=plan['providerScope']['provider_config_id'] or r['schema_contracts']!=[{'id':'universal-import','version':1,'dialect':'otr'}] or r['privacy_policy']!='REMOTE_ALLOWED' or not r['schema_output']:raise ValueError('UNIVERSAL_CONFIG_REQUIRED')
-            elif c['row']['price_schedule_id']!=plan['providerScope']['price_schedule_id']:raise ValueError('PRICE_SCOPE')
+            elif c['row']['price_schedule_id']!=plan['providerScope']['price_schedule_id'] or c['expected_version']!=(a['priceBaselineVersion'] if existing else None):raise ValueError('PRICE_SCOPE')
         else:
-            expected=[None,None,None,1,a['environmentBaseline']['config_version'],a['environmentBaseline']['config_version']+1,2][index]
+            expected=[None,None,None,prior['config_version'] if existing else 1,a['environmentBaseline']['config_version'],a['environmentBaseline']['config_version']+1,(prior['config_version'] if existing else 1)+1][index]
             if c['expected_version']!=expected or c['kill_switch'] is not (index>=5):raise ValueError('EXACT_KILL_CAS_REQUIRED')
     for x,target in zip(a['restore'],[None,a['integrationId']]):
         if x['kind']!='external_integration_set_kill' or x['command']['integration_id']!=target:raise ValueError('RESTORE_ORDER_REQUIRED')
@@ -116,7 +121,11 @@ def authority_sql(a):
     for r in a['temporaryGrants']:
         fields={k:v for k,v in r.items() if k not in ['created_at','expires_at']}
         exact.append("EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE to_jsonb(g)-ARRAY['created_at','expires_at']="+quote(canonical(fields).decode())+"::jsonb AND created_at="+quote(r['created_at'])+"::timestamptz AND expires_at="+quote(r['expires_at'])+"::timestamptz)")
-    exact += ["NOT EXISTS(SELECT 1 FROM public.external_integrations WHERE environment='DEV')","(SELECT count(*)=2 FROM public.external_integration_admin_grants WHERE actor_id="+quote(a['actorId'])+"::uuid AND environment='DEV' AND revoked_at IS NULL AND expires_at>clock_timestamp())", "EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit AND rolvaliduntil="+quote(a['expiresAt'])+"::timestamptz)", "NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename='"+ADMIN+"')"]
+    baseline="NOT EXISTS(SELECT 1 FROM public.external_integrations WHERE environment='DEV')"
+    if a['integrationBaseline'] is not None:
+        r=a['retainedConfiguration'];i=quote(a['integrationId']);b=a['integrationBaseline']
+        baseline="(SELECT count(*)=1 FROM public.external_integrations WHERE environment='DEV') AND EXISTS(SELECT 1 FROM public.external_integrations WHERE environment='DEV' AND integration_id="+i+" AND category='INTELLIGENCE_OUTBOUND' AND vendor_namespace='DeepSeek' AND enabled AND kill_switch AND config_version="+str(b['config_version'])+" AND config_sha256="+quote(r['integrationConfigSHA256'])+" AND created_by="+quote(a['actorId'])+"::uuid) AND EXISTS(SELECT 1 FROM public.intelligence_provider_configs WHERE integration_id="+i+" AND provider_config_id="+quote(r['providerConfigId'])+"::uuid AND configuration_sha256="+quote(r['providerConfigurationSHA256'])+" AND schema_contracts='[{\"id\":\"universal-import\",\"version\":1,\"dialect\":\"otr\"}]'::jsonb AND privacy_policy='REMOTE_ALLOWED')"
+    exact += [baseline,"(SELECT count(*)=2 FROM public.external_integration_admin_grants WHERE actor_id="+quote(a['actorId'])+"::uuid AND environment='DEV' AND revoked_at IS NULL AND expires_at>clock_timestamp())", "EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit AND rolvaliduntil="+quote(a['expiresAt'])+"::timestamptz)", "NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename='"+ADMIN+"')"]
     return "BEGIN READ ONLY; SELECT "+' AND '.join(exact)+" AS ready; COMMIT;"
 
 def activate_once(plan,sql,admin_sql=None,now=time.time):
@@ -126,7 +135,7 @@ def activate_once(plan,sql,admin_sql=None,now=time.time):
     ready=sql(authority_sql(a));rows=ready if isinstance(ready,list) else ready.get('rows')
     if rows!=[{'ready':True}]:raise ValueError('EXACT_FINITE_ADMIN_AUTHORITY_UNAVAILABLE')
     o=observe(a,sql)
-    if o['environment']!=a['environmentBaseline'] or o['integration'] is not None or o['audits']:raise ValueError('ADMIN_BASELINE_DRIFT')
+    if o['environment']!=a['environmentBaseline'] or o['integration']!=a['integrationBaseline'] or o['audits']:raise ValueError('ADMIN_BASELINE_DRIFT')
     outcomes=[]
     for x in a['activation']:
         if now()>=instant(plan['expiresAt'])-80:raise ValueError('INNER_ACTIVATION_WINDOW_EXPIRED')
@@ -189,21 +198,21 @@ def restore_once(plan,sql,recover_only=False,now=time.time,admin_sql=None):
     if plan['ownerAuthorized'] is not True:raise ValueError('OWNER_EXECUTION_REQUIRED')
     try:
         o=observe(a,sql)
-        for x,key,baseline in [(a['restore'][0],'environment',a['environmentBaseline']),(a['restore'][1],'integration',None)]:
+        for x,key,baseline in [(a['restore'][0],'environment',a['environmentBaseline']),(a['restore'][1],'integration',a['integrationBaseline'])]:
             current=o[key];c=x['command']
             if current==baseline:
                 # Missing NEW integration is legal only before any of its commands
                 # is acknowledged. Never erase an UNKNOWN/acknowledged configure.
                 scoped=[y for y in a['activation']+a['restore'] if y['command']['integration_id']==a['integrationId']]
-                if key=='integration' and any(r['command_id'] in [y['command']['request_id'] for y in scoped] for r in o['audits']):return {'status':'RECONCILE_REQUIRED','adminClosed':False}
-                if key=='environment' and any(r['command_id'] in [a['activation'][4]['command']['request_id'],a['restore'][0]['command']['request_id']] for r in o['audits']):return {'status':'RECONCILE_REQUIRED','adminClosed':False}
+                if key=='integration' and any(r['command_id'] in [y['command']['request_id'] for y in scoped if baseline is None or y['kind']=='external_integration_set_kill'] for r in o['audits']):return {'status':'RECONCILE_REQUIRED','adminClosed':False}
+                if key=='environment' and any(r['command_id'] in [a['activation'][-1]['command']['request_id'],a['restore'][0]['command']['request_id']] for r in o['audits']):return {'status':'RECONCILE_REQUIRED','adminClosed':False}
                 continue
             if current=={'config_version':c['expected_version']+1,'kill_switch':True} and receipted(o,x):continue
-            if key=='integration' and current=={'config_version':1,'kill_switch':True} and receipted(o,a['activation'][0]):continue
+            if key=='integration' and a['integrationBaseline'] is None and current=={'config_version':1,'kill_switch':True} and receipted(o,a['activation'][0]):continue
             if current!={'config_version':c['expected_version'],'kill_switch':False} or recover_only:return {'status':'RECONCILE_REQUIRED','adminClosed':False}
             o,_=dispatch_once(a,x,sql,admin_sql,now)
             if o[key]!={'config_version':c['expected_version']+1,'kill_switch':True}:return {'status':'RECONCILE_REQUIRED','adminClosed':False}
-        if o['integration'] is None and o['environment']==a['environmentBaseline'] and not o['audits']:
+        if o['integration']==a['integrationBaseline'] and o['environment']==a['environmentBaseline'] and not o['audits']:
             initial=sql(revoked_sql(a));rows=initial if isinstance(initial,list) else initial.get('rows')
             if rows==[{'closed':True}]:return {'status':'CLOSED_VERIFIED','adminClosed':True}
         if not recover_only:
@@ -229,7 +238,7 @@ def validate_tunnel(t):
 def trusted_tunnel_argv(t):
     # Pure launch proposal: PID/start/receipt do not exist until Root launches it.
     if t['remoteUser']!='root' or t['remoteHost']!=TUNNEL_HOST or t['targetHost']!=DB_HOST or t['targetPort']!=5432 or not isinstance(t['localPort'],int) or not 1024<=t['localPort']<=65535 or not Path(t['sshBinary']).is_absolute() or not Path(t['controlSocket']).is_absolute():raise ValueError('EXACT_TRUSTED_TUNNEL_REQUIRED')
-    return [t['sshBinary'],'-M','-S',t['controlSocket'],'-N','-L',f"127.0.0.1:{t['localPort']}:{DB_HOST}:5432",'-oExitOnForwardFailure=yes','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8',f"root@{TUNNEL_HOST}"]
+    return [t['sshBinary'],'-M','-S',t['controlSocket'],'-N','-L',f"127.0.0.1:{t['localPort']}:{DB_HOST}:5432",'-oExitOnForwardFailure=yes','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8','-oServerAliveInterval=15','-oServerAliveCountMax=3',f"root@{TUNNEL_HOST}"]
 
 def assert_tunnel(t):
     validate_tunnel(t)

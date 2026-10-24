@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { prepareUniversalTaskHost } from "./universalPreparationOperator";
+import {
+  prepareUniversalTaskHost,
+  classifyPreparationFailure,
+  UniversalPreparationUnconfirmed,
+} from "./universalPreparationOperator";
 
 // Loader I/O synthetic. Real SQLite/custody and isolated owning PG are separate receipts.
 function fixture() {
@@ -102,4 +106,53 @@ it("missing or substituted real Task context blocks and closes Task runtime", as
   });
   await expect(f.run("RECOVER_ONLY")).rejects.toThrow("OWNING_TASK_READER_UNAVAILABLE");
   expect(f.task.close).toHaveBeenCalledTimes(2);
+});
+
+it("unconfirmed stages retain only allowlisted owning or SQLSTATE categories", async () => {
+  const f = fixture();
+  f.source.prepareInputs.mockRejectedValueOnce(
+    Object.assign(Error("private SQL query and credential"), {
+      code: "42702",
+      detail: "secret",
+    }),
+  );
+  f.source.readPreparedInputs.mockRejectedValueOnce(
+    Error("UNIVERSAL_SOURCE_RUN_UNAVAILABLE"),
+  );
+  try {
+    await f.run("PREPARE_ONCE");
+    throw Error("EXPECTED_REFUSAL");
+  } catch (error) {
+    expect(error).toBeInstanceOf(UniversalPreparationUnconfirmed);
+    expect((error as UniversalPreparationUnconfirmed).diagnostic).toEqual({
+      begin: "SQLSTATE_42702",
+      read: "UNIVERSAL_SOURCE_RUN_UNAVAILABLE",
+    });
+    expect(JSON.stringify(error)).not.toContain("private");
+    expect(JSON.stringify(error)).not.toContain("secret");
+  }
+  expect(f.source.prepareInputs).toHaveBeenCalledOnce();
+  expect(f.source.readPreparedInputs).toHaveBeenCalledOnce();
+  expect(f.loaders.task).not.toHaveBeenCalled();
+  expect(f.source.close).toHaveBeenCalledOnce();
+});
+it("diagnostic rejects arbitrary messages/codes and recover never begins", async () => {
+  expect(classifyPreparationFailure({ message: "Bearer private", code: "PRIVATE" })).toBe(
+    "UNCLASSIFIED",
+  );
+  expect(classifyPreparationFailure({ message: "SOURCE_ACCESS_DENIED private" })).toBe(
+    "UNCLASSIFIED",
+  );
+  expect(classifyPreparationFailure({ code: "28P01", message: "password raw" })).toBe(
+    "SQLSTATE_28P01",
+  );
+  const f = fixture();
+  f.source.readPreparedInputs.mockRejectedValueOnce({
+    code: "ECONNRESET",
+    message: "raw private",
+  });
+  await expect(f.run("RECOVER_ONLY")).rejects.toMatchObject({
+    diagnostic: { begin: "NOT_ATTEMPTED", read: "ECONNRESET" },
+  });
+  expect(f.source.prepareInputs).not.toHaveBeenCalled();
 });

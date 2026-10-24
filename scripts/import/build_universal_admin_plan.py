@@ -23,7 +23,8 @@ def command_hash(value):
  return sha(json.dumps({'domain':'otr-cp14-command-v1','command':value},sort_keys=True,separators=(',',':'),ensure_ascii=False).encode())
 
 def build_admin_plan(raw_plan,facts):
- if set(facts) not in [FACT_KEYS,FACT_KEYS|{'grantRenewalPreimages'}] or facts['version']!=1:raise ValueError('EXACT_ADMIN_BINDING_FACTS_REQUIRED')
+ existing='integrationBaseline' in facts
+ if set(facts)-{'grantRenewalPreimages','integrationBaseline','priceBaselineVersion'}!=FACT_KEYS or existing!=('priceBaselineVersion' in facts) or facts['version']!=1:raise ValueError('EXACT_ADMIN_BINDING_FACTS_REQUIRED')
  p=copy.deepcopy(raw_plan)
  if p.get('adminControl') is not None:raise ValueError('ADMIN_CONTROL_ALREADY_BOUND')
  actor=facts['actorId'];uid(actor);uid(facts['grantorActorId'])
@@ -40,7 +41,7 @@ def build_admin_plan(raw_plan,facts):
  if subject is not None:
   if set(subject)!={'issuer_namespace','subject_digest'} or not re.fullmatch('[A-Za-z0-9._:-]{1,128}',subject['issuer_namespace']):raise ValueError('ACTUAL_AUTH_SUBJECT_REQUIRED')
   digest(subject['subject_digest'])
- if set(facts['commandIdentities'])!=set(ORDER) or set(facts['grantIdentities'])!={'CONFIG_ADMIN','SECURITY_ADMIN'}:raise ValueError('EXPLICIT_SEVEN_COMMAND_TWO_GRANT_IDS_REQUIRED')
+ if set(facts['commandIdentities'])!=set(ORDER[2:] if existing else ORDER) or set(facts['grantIdentities'])!={'CONFIG_ADMIN','SECURITY_ADMIN'}:raise ValueError('EXPLICIT_SEVEN_COMMAND_TWO_GRANT_IDS_REQUIRED')
  seen=set()
  for identity in facts['commandIdentities'].values():
   if set(identity)!={'requestId','auditId'}:raise ValueError('EXACT_REQUEST_AUDIT_IDS_REQUIRED')
@@ -84,10 +85,14 @@ def build_admin_plan(raw_plan,facts):
    for key in ['admin_grant_id','actor_id','environment','permission']:
     if prior[key]!=r[key]:raise ValueError('GRANT_RENEWAL_IDENTITY_DRIFT')
    r.update(grant_revision=prior['grant_revision']+1,created_at=prior['created_at'],created_by=prior['created_by'])
+ if existing:
+  a['integrationBaseline']=copy.deepcopy(facts['integrationBaseline']);a['priceBaselineVersion']=facts['priceBaselineVersion']
+  a['retainedConfiguration']={'providerConfigId':c['provider_config_id'],'providerConfigurationSHA256':c['configuration_sha256'],'integrationConfigSHA256':i['config_sha256']}
  for n,name in enumerate(ORDER):
+  if existing and n<2:continue
   kind=['external_integration_configure','intelligence_provider_config_append','external_integration_price_append',*(['external_integration_set_kill']*4)][n]
   identity=facts['commandIdentities'][name]
-  cmd={'version':1,'environment':'DEV','request_id':identity['requestId'],'actor_id':actor,'integration_id':None if n in [4,5] else integration,'expected_version':[None,None,None,1,baseline['config_version'],baseline['config_version']+1,2][n],'audit_id':identity['auditId'],'reason_code':facts['reasonCode']}
+  cmd={'version':1,'environment':'DEV','request_id':identity['requestId'],'actor_id':actor,'integration_id':None if n in [4,5] else integration,'expected_version':[None,None,facts['priceBaselineVersion'] if existing else None,a['integrationBaseline']['config_version'] if existing else 1,baseline['config_version'],baseline['config_version']+1,(a['integrationBaseline']['config_version'] if existing else 1)+1][n],'audit_id':identity['auditId'],'reason_code':facts['reasonCode']}
   if n<3:cmd['row']=rows[['integration','provider','price'][n]]
   if n==2:cmd['units']=units
   if n>=3:cmd['kill_switch']=n>=5

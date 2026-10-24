@@ -226,11 +226,58 @@ it("preserves actual Native input identities through owning Run inputs and Resul
   expect(output.runInputProposal.map((input) => input.id)).toEqual(
     f.receipt.inputs.map((input) => input.inputId).sort(),
   );
-  expect(output.task.input_pins.map((pin) => pin.input_id)).toEqual(
-    f.receipt.inputs.map((input) => input.inputId).sort(),
-  );
+  expect(
+    output.task.input_pins.map((pin) => {
+      if (pin.kind !== "SOURCE") throw Error("EXPECTED_SOURCE_PIN");
+      return pin.input_id;
+    }),
+  ).toEqual(f.receipt.inputs.map((input) => input.inputId).sort());
   f.ids.runInputIds[0] = randomUUID();
   await expect(
     buildUniversalExecutionProposal(f.receipt, f.ids, f.facts, f.originals),
   ).rejects.toThrow("ACTUAL_SOURCE_INPUT_BINDING_CHANGED");
 });
+
+it("binds actual resumed config revision and hash without changing the interpretation request", async () => {
+  const f = fixture();
+  const original = await buildUniversalExecutionProposal(
+    f.receipt,
+    f.ids,
+    f.facts,
+    f.originals,
+  );
+  expect(original.attempt.config_version).toBe("2");
+  const actualFacts = {
+    ...f.facts,
+    configVersion: 4,
+    configurationSha256: "f".repeat(64),
+  };
+  const resumed = await buildUniversalExecutionProposal(
+    f.receipt,
+    f.ids,
+    actualFacts,
+    f.originals,
+  );
+  expect(resumed.attempt.config_version).toBe("4");
+  expect(resumed.attempt.configuration_sha256).toBe(actualFacts.configurationSha256);
+  expect(resumed.runtimePublic.attempt).toEqual(resumed.attempt);
+  expect(resumed.attempt.request_sha256).toBe(original.attempt.request_sha256);
+  expect(resumed.providerScope.provider_request_sha256).toBe(
+    original.providerScope.provider_request_sha256,
+  );
+  expect(resumed.sourceScope).toEqual(original.sourceScope);
+});
+it.each([0, 1, -1, 2.5, Number.MAX_SAFE_INTEGER + 1, Infinity, NaN, "4", null])(
+  "rejects unsafe or unsupported config version %s",
+  async (configVersion) => {
+    const f = fixture();
+    await expect(
+      buildUniversalExecutionProposal(
+        f.receipt,
+        f.ids,
+        { ...f.facts, configVersion },
+        f.originals,
+      ),
+    ).rejects.toThrow();
+  },
+);

@@ -1,4 +1,7 @@
-import { prepareUniversalTaskHost } from "./universalPreparationOperator";
+import {
+  prepareUniversalTaskHost,
+  UniversalPreparationUnconfirmed,
+} from "./universalPreparationOperator";
 
 // No default activation. Caller must already hold the exact finite DEV Gate; this
 // command neither installs permissions nor changes the private capability/window.
@@ -24,11 +27,16 @@ if (
       "UNIVERSAL_SOURCE_RUNTIME_CLOSED",
       "UNIVERSAL_RUNTIME_CLOSED",
     ]);
-    console.error(
-      error instanceof Error && safeCodes.has(error.message)
-        ? error.message
-        : "UNIVERSAL_PREPARATION_BLOCKED_CHECK_OWNING_RECEIPTS",
-    );
+    if (error instanceof UniversalPreparationUnconfirmed)
+      console.error(
+        JSON.stringify({ status: error.message, diagnostic: error.diagnostic }),
+      );
+    else
+      console.error(
+        error instanceof Error && safeCodes.has(error.message)
+          ? error.message
+          : "UNIVERSAL_PREPARATION_BLOCKED_CHECK_OWNING_RECEIPTS",
+      );
     process.exitCode = 1;
   }
 }
