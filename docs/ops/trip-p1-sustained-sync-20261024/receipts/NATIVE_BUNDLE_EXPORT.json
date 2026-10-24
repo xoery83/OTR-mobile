@@ -1,0 +1,16 @@
+{
+  "code": "1d0c979",
+  "type": "LOCAL_IOS_HERMES_EXPORT",
+  "result": "PASS",
+  "bundle": "/private/tmp/otr-trip-p1-native-export-20261024/_expo/static/js/ios/entry-ff53be0889f699b4d4d2dcb8d2477770.hbc",
+  "sha256": "3d03e1ed61e0d1f492a8fb3e1ba20395e0441a6ea82b48d3fd261edc89bfbbba",
+  "bytes": 12595989,
+  "modules": 2067,
+  "assets": 99,
+  "installedAD5": false,
+  "realNativeL1": "NOT_RUN",
+  "realDEVL3": "NOT_RUN",
+  "warnings": [
+    "@noble/hashes crypto.js export fallback; package resolution succeeded"
+  ]
+}
