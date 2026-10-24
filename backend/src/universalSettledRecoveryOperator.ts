@@ -5,10 +5,13 @@ import { DatabaseSync } from "node:sqlite";
 import { universalFiniteConfigSchema } from "./universalFiniteConfig";
 import { createFlightPrivateCustody } from "./flightPrivateCustody";
 import { createPublicationCatalogPgConnection } from "./tripPublicationCatalogPgConnection";
-import { createModelTaskPgConnection } from "./tripCoreV2PgConnection";
+import {
+  createModelTaskPgConnection,
+  createSourcePgConnection,
+} from "./tripCoreV2PgConnection";
 import { createSupabaseDevGateway } from "./supabaseGateway";
 import { readUniversalCatalog } from "./universalCatalog";
-import { universalImportSnapshotSchema } from "../../src/data/api/tripImportCatalogContracts";
+import { createUniversalSourceReader } from "./universalSourceRead";
 import { createTripImportAdmissionRepository } from "../../src/data/repositories/tripImportAdmissionRepository";
 import { createIntelligenceContinuationRepository } from "../../src/data/repositories/intelligenceContinuationRepository";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
@@ -22,101 +25,12 @@ import type { Task } from "../../src/domain/intelligence/persistence";
 import {
   prepareUniversalDispatch,
   UNIVERSAL_IMPORT_VERSION,
-  type UniversalManifest,
 } from "./universalImport";
 import type { UniversalPriceSchedule } from "./universalDeepSeekProvider";
 import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 
 const digest = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
-// Current generic owning catalog, never an Operator-created Source proof. This
-// bounded recovery supports retained text only; binary recovery is not implied.
-export function retainedRecoveryManifest(
-  task: Readonly<Task>,
-  raw: string,
-): UniversalManifest {
-  const catalog = universalImportSnapshotSchema.parse(JSON.parse(raw));
-  if (
-    catalog.actor_account_id !== task.account_id ||
-    catalog.trip_id !== task.trip_id
-  )
-    throw Error("UNIVERSAL_RECOVERY_CATALOG_SCOPE");
-  const rows = catalog as unknown as Record<string, Record<string, unknown>[]>;
-  const run = rows.trip_source_runs.find(
-    (r) =>
-      r.id === task.run_id &&
-      r.actor_account_id === task.account_id &&
-      r.trip_id === task.trip_id &&
-      r.generation === task.expected_run_generation &&
-      r.retention_state === "RETAINED" &&
-      r.superseded_by === null,
-  );
-  if (!run) throw Error("UNIVERSAL_RECOVERY_RUN_UNAVAILABLE");
-  const representations = task.input_pins.map((pin) => {
-    if (pin.kind !== "SOURCE" || !pin.input_id)
-      throw Error("UNIVERSAL_RECOVERY_SOURCE_REQUIRED");
-    const source = rows.trip_sources.find(
-      (s) =>
-        s.id === pin.source_id &&
-        s.acquired_by === task.account_id &&
-        s.trip_id === task.trip_id &&
-        s.lifecycle === "ACTIVE" &&
-        s.retention_state === "RETAINED" &&
-        s.current_material_revision === pin.material_revision,
-    );
-    const input = rows.trip_source_inputs.find(
-      (i) =>
-        i.id === pin.input_id &&
-        i.run_id === task.run_id &&
-        i.source_id === pin.source_id &&
-        i.representation_id === pin.representation_id &&
-        i.payload_sha256 === pin.payload_sha256 &&
-        i.byte_count === pin.byte_count &&
-        i.material_revision === pin.material_revision,
-    );
-    const rep = rows.trip_source_representations.find(
-      (r) =>
-        r.id === pin.representation_id &&
-        r.source_id === pin.source_id &&
-        r.retention_state === "RETAINED" &&
-        r.payload_sha256 === pin.payload_sha256 &&
-        r.byte_count === pin.byte_count &&
-        r.material_kind === "TEXT" &&
-        typeof r.text_content === "string" &&
-        ["text/plain", "text/html"].includes(r.mime_type as string),
-    );
-    if (
-      !source ||
-      !input ||
-      !rep ||
-      source.row_revision !== input.observed_source_row_revision ||
-      input.historical_selection !== false
-    )
-      throw Error("UNIVERSAL_RECOVERY_CURRENT_SOURCE_UNAVAILABLE");
-    const bytes = Buffer.from(rep.text_content as string, "utf8");
-    if (bytes.length !== pin.byte_count || digest(bytes) !== pin.payload_sha256)
-      throw Error("UNIVERSAL_RECOVERY_SOURCE_BYTES");
-    return {
-      accountId: task.account_id,
-      tripId: task.trip_id!,
-      batchId: task.import_id!,
-      inputId: pin.input_id,
-      sourceId: pin.source_id,
-      representationId: pin.representation_id,
-      revision: pin.material_revision,
-      originalSha256: pin.payload_sha256,
-      mime: rep.mime_type as string,
-      bytes,
-    };
-  });
-  return {
-    accountId: task.account_id,
-    tripId: task.trip_id!,
-    batchId: task.import_id!,
-    representations,
-  };
-}
-
 // Explicit Operator invocation only. Original config/task deadline is never renewed.
 // The independent recovery window authorizes only existing local publication and reads.
 export async function loadSettledUniversalReadRuntime(
@@ -252,16 +166,29 @@ export async function loadSettledUniversalReadRuntime(
         throw Error("UNIVERSAL_RECOVERY_NO_CREATE");
       },
     );
+    // Catalog is only the owning local cache projection, never Source qualification.
+    const raw = await readUniversalCatalog(
+      catalogConnection,
+      config.task,
+      AbortSignal.timeout(Math.min(5000, end - Date.now())),
+    );
+    current();
+    await imports.applyUniversalCatalogs(context, raw);
+    const readSources = createUniversalSourceReader({
+      connection: createSourcePgConnection(config.sourcePg),
+      readBinary: async (scope) =>
+        stores.custody.read({
+          accountId: scope.accountId,
+          reference: scope.representationId,
+          sha256: scope.sha256,
+          byteCount: scope.byteCount,
+        }),
+    });
     const readSourceManifest = async (task: Readonly<Task>) => {
       await auth();
-      const raw = await readUniversalCatalog(
-        catalogConnection,
-        task,
-        AbortSignal.timeout(Math.min(5000, end - Date.now())),
-      );
+      const manifest = await readSources(task);
       current();
-      await imports.applyUniversalCatalogs(context, raw);
-      return retainedRecoveryManifest(task, raw);
+      return manifest;
     };
     const repository = createIntelligenceContinuationRepository(db, {
       getAccountId: async () => {

@@ -13,58 +13,58 @@ it.skipIf(process.platform !== "linux")(
   },
 );
 
-import { retainedRecoveryManifest } from "./universalSettledRecoveryOperator";
-import fixture from "../../src/data/repositories/__fixtures__/tripImportCatalogs.json";
+import { createUniversalSourceReader } from "./universalSourceRead";
 import type { Task } from "../../src/domain/intelligence/persistence";
+import { vi } from "vitest";
+import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-function sourceFixture() {
-  const raw = structuredClone(fixture);
-  const input = raw.trip_source_inputs.find((i) => i.run_id !== null)!;
-  const source = raw.trip_sources.find((s) => s.id === input.source_id)!;
-  source.current_material_revision = input.material_revision;
-  source.row_revision = input.observed_source_row_revision;
-  source.acquired_by = raw.actor_account_id;
-  const rep = raw.trip_source_representations.find(
-    (r) => r.id === input.representation_id,
-  )!;
-  rep.mime_type = "text/plain" as never;
-  const run = raw.trip_source_runs.find((r) => r.id === input.run_id)!;
-  const task = {
-    account_id: raw.actor_account_id,
-    trip_id: raw.trip_id,
-    import_id: randomUUID(),
-    run_id: run.id,
-    expected_run_generation: run.generation,
-    input_pins: [
-      {
-        kind: "SOURCE",
-        source_id: input.source_id,
-        representation_id: input.representation_id,
-        material_revision: input.material_revision,
-        payload_sha256: input.payload_sha256,
-        byte_count: input.byte_count,
-        input_id: input.id,
+it.each([
+  "registration",
+  "revision",
+  "ancestry",
+  "failed_run",
+  "batch_binding",
+  "task_binding",
+])(
+  "owning Source reader rejection propagates for %s, no generic fallback",
+  async (reason) => {
+    const ids = Array.from({ length: 5 }, () => randomUUID());
+    const task = {
+      account_id: ids[0],
+      trip_id: ids[1],
+      import_id: ids[2],
+      task_id: ids[3],
+      run_id: ids[4],
+    } as Task;
+    const query = vi.fn(
+      async (sql: string, parameters?: readonly unknown[]) => {
+        if (sql.includes("trip_source_read_universal_inputs")) {
+          expect(parameters).toEqual(ids);
+          throw Error("OWNING_SOURCE_QUALIFICATION_REJECTED");
+        }
+        return { rows: [] };
       },
-    ],
-  } as Task;
-  return { raw: { ...raw, version: 2 }, task, source, rep };
-}
-it("settled recovery projection uses current owning catalog exact source/input/bytes and rejects deleted/foreign/drift", () => {
-  const x = sourceFixture();
-  const manifest = retainedRecoveryManifest(x.task, JSON.stringify(x.raw));
-  expect(manifest.representations).toHaveLength(1);
-  x.source.lifecycle = "DELETED";
-  expect(() => retainedRecoveryManifest(x.task, JSON.stringify(x.raw))).toThrow(
-    "CURRENT_SOURCE_UNAVAILABLE",
+    );
+    const readBinary = vi.fn();
+    const reader = createUniversalSourceReader({
+      connection: { withLease: async (work) => work({ query, retire() {} }) },
+      readBinary,
+    });
+    await expect(reader(task)).rejects.toThrow(
+      "OWNING_SOURCE_QUALIFICATION_REJECTED",
+    );
+    expect(readBinary).not.toHaveBeenCalled();
+    expect(query).toHaveBeenCalledWith("ROLLBACK");
+  },
+);
+it("recovery composition installs existing Source reader, never a catalog-derived qualifier or Source command port", () => {
+  const source = readFileSync(
+    new URL("./universalSettledRecoveryOperator.ts", import.meta.url),
+    "utf8",
   );
-  x.source.lifecycle = "ACTIVE";
-  x.source.acquired_by = randomUUID();
-  expect(() => retainedRecoveryManifest(x.task, JSON.stringify(x.raw))).toThrow(
-    "CURRENT_SOURCE_UNAVAILABLE",
-  );
-  x.source.acquired_by = x.task.account_id;
-  x.rep.text_content += "drift";
-  expect(() => retainedRecoveryManifest(x.task, JSON.stringify(x.raw))).toThrow(
-    "SOURCE_BYTES",
-  );
+  expect(source).toContain("createUniversalSourceReader({");
+  expect(source).toContain("createSourcePgConnection(config.sourcePg)");
+  expect(source).not.toContain("retainedRecoveryManifest");
+  expect(source).not.toContain("trip_sources.find");
+  expect(source).not.toContain("universalOriginalSourcePort");
 });
