@@ -1,0 +1,33 @@
+{
+  "status": "ACTUAL_NATIVE_C3_LOCAL_PASS_NOT_SOURCE_OR_AI_PASS",
+  "codeBeforePinReaderRepair": "6937283",
+  "actualBatchId": "3665f191-1605-4365-92ca-30403d90b191",
+  "actualJobId": "e8085c43-fb11-46e6-aaed-7d14c3c806be",
+  "inputs": 3,
+  "fileByteCounts": [
+    1598,
+    433
+  ],
+  "textByteCount": 172,
+  "allExpectedHashesIndependentlyMatched": true,
+  "normalFilesPicker": true,
+  "normalComposerSubmit": true,
+  "fixtureOriginalPreparation": "Two fixed SHA-checked synthetic files exclusively created in AD5 Files local storage; no OTR database writes, Source or Batch creation by preparation. Safari download/save unavailable.",
+  "earlierFailure": {
+    "batchId": "4224a346-e6b1-4cde-9552-de280f9afdcd",
+    "files": "READER_FAILURE",
+    "text": "ACCEPTED_172_BYTES",
+    "reacquiredOneFile": "ACCEPTED_IN_EXISTING_CONTINUATION",
+    "rootCause": "NOT_CONFIRMED",
+    "noFunctionalReaderChange": true
+  },
+  "pinToolRepair": {
+    "firstFailure": "Real App PRAGMA user_version is0; owning schema_migrations has migration73/74",
+    "patch": "Read exact migration73 journal name instead of unrelated PRAGMA",
+    "tests": "4 focused tests PASS, actual same App SQLite readonly exporter success",
+    "databaseMutation": false
+  },
+  "sourceCommandsPrepared": false,
+  "providerCalls": 0,
+  "formalAdmission": false
+}

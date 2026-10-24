@@ -62,11 +62,10 @@ try {
     throw Error("EXACT_TWO_FILES_AND_TEXT_REQUIRED");
   sql = new DatabaseSync(values.sqlite, { readOnly: true });
   sql.exec("PRAGMA query_only=ON");
-  if (
-    Number(
-      (sql.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
-    ) < 73
-  )
+  const migration = sql.prepare(
+    "SELECT name FROM schema_migrations WHERE id=73",
+  ).get() as { name: string } | undefined;
+  if (migration?.name !== "capture_mixed_inputs_v2")
     throw Error("SQLITE73_REQUIRED");
   let inTransaction = false;
   const database = {

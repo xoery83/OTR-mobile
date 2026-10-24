@@ -37,3 +37,9 @@ Do not use `listDefaultCaptureJobs`/`reopenDefaultCaptureJob` for this tool: the
 ## Local evidence / next action
 
 Four actual SQLite tests include missing-source/no-write, exact prepared pins and cold read, Account/Trip rejection, and the **actual bundled operator reading the same existing SQLite file with its file hash unchanged**. The bundled CLI positive uses the three approved originals; substitution negatives cover both list/job modes and unchanged database bytes. Combined existing Source tests11 PASS; TS/lint PASS. No Native UI/real Auth/Source/AI PASS is claimed. Root can now collect actual inputs, attach the pin proposal to the fixed Gate, qualify normal Auth/readers/provider/current service preimages and seal the reviewed finite watchdog plan. Original Sources are not registered by this runbook or exporter.
+
+## Actual Coordinator checkpoint
+
+Normal AD5 Files picker + exact172-byte text submitted one real Batch3665f191… / Jobe8085c43…; all3 originals accepted with independent retained-byte hashes ([receipt](receipts/ACTUAL_NATIVE_C3_RECEIPT.json), [pins](receipts/ACTUAL_C3_LOCAL_PINS.json)). File originals were seeded exclusively into Files local storage, not OTR tables; this prepares originals only. Prior failed Batch and its normal continuation remain retained. No functional file-reader patch is claimed: fresh full intake passed, initial transient READER_FAILURE cause remains unconfirmed.
+
+The readonly exporter now checks the actual App schema_migrations journal (migration73 exactname), because native PRAGMA user_version is0. Its fixture now uses the same journal and leaves PRAGMA0;4 scoped tests and actual readonly export PASS. This changes no App schema/Source/Sync authority. Source pins remain null until approved closed Context/normal local preparation.

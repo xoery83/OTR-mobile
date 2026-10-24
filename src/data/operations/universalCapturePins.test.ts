@@ -146,8 +146,9 @@ it("the actual bundled operator reads the same file in SQLite readOnly mode with
   const x = await setup(true),
     directory = mkdtempSync(join(tmpdir(), "otr-pin-reader-"));
   try {
-    // The generic repository fixture applies SQL directly; emulate the App migration marker.
-    x.f.sql.exec("PRAGMA user_version=73");
+    // Match the real App migration journal; PRAGMA user_version remains zero.
+    x.f.sql.exec("CREATE TABLE schema_migrations (id INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL); INSERT INTO schema_migrations VALUES(73, 'capture_mixed_inputs_v2', '2026-10-24T00:00:00Z')");
+    expect(x.f.sql.prepare("PRAGMA user_version").get()).toMatchObject({ user_version: 0 });
     const bundle = join(directory, "reader.mjs"),
       expectedPath = join(
         process.cwd(),
@@ -191,7 +192,7 @@ it("the actual bundled operator reads the same file in SQLite readOnly mode with
     expect(hash()).toBe(before);
     // Even a valid 2 FILE + 1 TEXT replacement whitelist cannot widen this QA CLI.
     const other = await setup();
-    other.f.sql.exec("PRAGMA user_version=73");
+    other.f.sql.exec("CREATE TABLE schema_migrations (id INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL); INSERT INTO schema_migrations VALUES(73, 'capture_mixed_inputs_v2', '2026-10-24T00:00:00Z')");
     const otherPins = await readUniversalOriginalPins(
       other.context,
       other.q.jobId,
