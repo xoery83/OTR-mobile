@@ -178,3 +178,21 @@ it("preserves optional Source observations and rejects evidence outside the retu
   invalid.candidates[0].fields[0].sourceId = "UNBOUND";
   expect(universalResultSchema.safeParse(invalid).success).toBe(false);
 });
+
+it.each(["UNIVERSAL_IMPORT_CLOSED", "UNIVERSAL_CONTEXT_UNAVAILABLE"])(
+  "preserves exact closed context code %s through the real API client",
+  async (code) => {
+    const f = await fixture();
+    const fetcher = vi.fn(async () => Response.json({ error: { code } }, { status: 503 }));
+    const transport = createUniversalImportTransport(async () => f.account, {
+      baseUrl: "https://api.example",
+      tokenProvider: async () => ({ userId: f.account, token: "synthetic" }),
+      fetchImplementation: fetcher,
+    });
+    await expect(transport.context(f.context, f.batch)).rejects.toMatchObject({
+      kind: "http", status: 503, code,
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(f.interpret).not.toHaveBeenCalled();
+  },
+);
