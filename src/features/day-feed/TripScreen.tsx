@@ -1,3 +1,4 @@
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import {
   DayFeedIntroduction,
   DayFeedShellTitle,
@@ -474,11 +475,24 @@ function TripContent({
       const sub = AppState.addEventListener("change", (state) => {
         if (state === "active") void load();
       });
+      const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+        if (
+          event.generation === generation &&
+          generation === getAccountGeneration() &&
+          event.accountId === trip?.scope.accountId &&
+          requested &&
+          event.journeyIds.includes(requested)
+        ) {
+          setRevision((value) => value + 1);
+          void load();
+        }
+      });
       return () => {
+        stopSync();
         request.current += 1;
         sub.remove();
       };
-    }, [load]),
+    }, [load, generation, trip?.scope.accountId, requested]),
   );
   const open = (id: string) => {
     if (generation !== getAccountGeneration()) return;

@@ -1,3 +1,4 @@
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
@@ -105,12 +106,24 @@ export function useTripPreparationWidget({
       const sub = AppState.addEventListener("change", (value) => {
         if (value === "active") void load();
       });
+      const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+        if (
+          active &&
+          event.generation === generation &&
+          generation === getAccountGeneration() &&
+          event.accountId === read?.scope.accountId &&
+          tripId &&
+          event.journeyIds.includes(tripId)
+        )
+          void load();
+      });
       return () => {
+        stopSync();
         active = false;
         cancelPending();
         sub.remove();
       };
-    }, [load, cancelPending]),
+    }, [load, cancelPending, generation, read?.scope.accountId, tripId]),
   );
   const visible =
     read?.scope.tripId === tripId && read.scope.generation === generation ? read : null;

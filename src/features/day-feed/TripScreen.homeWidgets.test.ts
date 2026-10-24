@@ -55,11 +55,22 @@ const state = vi.hoisted(() => ({
   routeMode: "home" as "home" | "day",
   headerHeight: 103,
   shellVisibleDates: null as null | { first: string; last: string },
+  syncCompletion: null as
+    | ((event: { accountId: string; generation: number; journeyIds: string[] }) => void)
+    | null,
   appActive: null as (() => void) | null,
   resume: null as any,
   quickActions: null as any,
   observeShellScroll: vi.fn(),
   observeReadingMotion: vi.fn(),
+}));
+vi.mock("@/data/sync/ledgerOperationalSync", () => ({
+  subscribeLedgerOperationalSyncCompletion: (callback: typeof state.syncCompletion) => {
+    state.syncCompletion = callback;
+    return () => {
+      state.syncCompletion = null;
+    };
+  },
 }));
 vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
   readLocalTripDiscoveryRepository: async () => ({

@@ -9,7 +9,18 @@ const state = vi.hoisted(() => ({
   resolveSource: vi.fn(),
   setup: vi.fn(),
   effects: [] as (() => () => void)[],
+  completion: null as
+    | ((event: { accountId: string; generation: number; journeyIds: string[] }) => void)
+    | null,
   active: null as ((value: string) => void) | null,
+}));
+vi.mock("@/data/sync/ledgerOperationalSync", () => ({
+  subscribeLedgerOperationalSyncCompletion: (callback: typeof state.completion) => {
+    state.completion = callback;
+    return () => {
+      state.completion = null;
+    };
+  },
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -426,3 +437,66 @@ it.each(["READ_ONLY", "FINALIZED", "OTHER_ACCOUNT", "OTHER_TRIP"])(
     expect(router.push).not.toHaveBeenCalled();
   },
 );
+
+it("refreshes retained pending Preparation on same scoped cache completion and releases its listener on blur", async () => {
+  const harness = PreparationHarness(true);
+  state.read.mockResolvedValue({
+    ...harness.read,
+    epoch: "accepted-epoch",
+    preparation: { itemCount: 1, counts: [], recent: [] },
+  });
+  state.setup.mockResolvedValue(null);
+  const blur = state.effects[0]();
+  await vi.waitFor(() => expect(state.read).toHaveBeenCalledTimes(1));
+  state.read.mockClear();
+  for (const event of [
+    { accountId: "other", generation: 1, journeyIds: ["trip"] },
+    { accountId: "actor", generation: 2, journeyIds: ["trip"] },
+    { accountId: "actor", generation: 1, journeyIds: ["other"] },
+  ])
+    state.completion!(event);
+  await Promise.resolve();
+  expect(state.read).not.toHaveBeenCalled();
+  state.completion!({ accountId: "actor", generation: 1, journeyIds: ["trip"] });
+  await vi.waitFor(() => expect(state.read).toHaveBeenCalledTimes(1));
+  expect((state.values[0] as typeof harness.read).epoch).toBe("accepted-epoch");
+  blur();
+  expect(state.completion).toBeNull();
+});
+it("Pending→accepted completion makes the next Recent click use the fresh accepted Source token", async () => {
+  const view = RecentNavigationHarness();
+  state.read.mockResolvedValue(view.read);
+  state.setup.mockResolvedValue(null);
+  state.effects.at(-1)!();
+  await vi.waitFor(() => expect(state.read).toHaveBeenCalledOnce());
+  const token = {
+    kind: "ACCEPTED",
+    scope: view.scope,
+    certificate: { epoch: "new-epoch" },
+  };
+  const accepted = { ...view.read, epoch: "new-epoch", sourceToken: token };
+  state.read.mockResolvedValue(accepted);
+  state.completion!({ accountId: "actor", generation: 1, journeyIds: ["trip"] });
+  await vi.waitFor(() => expect(state.values[0]).toEqual(accepted));
+  state.cursor = 0;
+  const widget = useTripPreparationWidget({
+    tripId: "trip",
+    undated: false,
+    onOpenItem: view.accepted,
+    onOpenLocalItem: view.local,
+  });
+  state.resolveSource.mockResolvedValue({
+    scope: view.scope,
+    epoch: "new-epoch",
+    sourceToken: token,
+    item: { itemId: "item", localState: "ACCEPTED" },
+  });
+  (
+    widget!.content as import("react").ReactElement<{ onOpenItem(id: string): void }>
+  ).props.onOpenItem("item");
+  await vi.waitFor(() =>
+    expect(view.accepted).toHaveBeenCalledExactlyOnceWith("trip", "item", "new-epoch"),
+  );
+  expect(state.resolveSource).toHaveBeenLastCalledWith("trip", "item", token);
+  expect(view.local).not.toHaveBeenCalled();
+});
