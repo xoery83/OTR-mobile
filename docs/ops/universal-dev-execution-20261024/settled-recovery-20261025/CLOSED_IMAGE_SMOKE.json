@@ -1,0 +1,30 @@
+{
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "status": "LOCAL_CLOSED_IMAGE_PASS",
+  "routes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/universal-source-originals/acquire": 401,
+    "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": 401
+  },
+  "uid": 10001,
+  "sourceHead": "02f874a2cc33d8fa48444a3a1a6e07d526ce1975",
+  "imageId": "sha256:33272c2a5a820a1cc6469b7cbf10b9ec2a26e3a8164587052ee76f9e566fb051",
+  "bundles": {
+    "server.mjs": "94403ad89e71ec155b795f8690d3bd7c00e0b353ee61c57ee0bdf510f8044b2a",
+    "server-capture.mjs": "d22e24b879cb6c27d78c4c2589112be27b03831738de485edc4c6d159dee808e",
+    "universal-prepare.mjs": "01e7f526956c801415ab8e081abd33aa986fc4c7cd326a7eb6d8acd065bea9ad",
+    "universal-settled-recovery.mjs": "2b1af939a8f14b7c02e7ccca919a346a13aa5f66424982bab15e2af99ef4b7e1"
+  },
+  "network": "none",
+  "rootFilesystem": "read-only",
+  "runtimeMounts": 0,
+  "operator": {
+    "status": "CLOSED"
+  },
+  "hostedWrites": 0,
+  "providerCalls": 0
+}
