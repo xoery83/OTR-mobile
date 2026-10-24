@@ -1,3 +1,4 @@
+import { subscribeLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import {
   ordinaryFixture,
   ordinaryTime,
@@ -1263,5 +1264,70 @@ it("auth-paused and never-dispatched P1 commands are excluded from automatic rea
         },
       }),
     ).toEqual({ recovered: 0 });
+  }
+});
+
+it("manual batch wakes the existing queue only after durable commit, never for rollback or an empty replay", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-postcommit-"));
+  folders.push(folder);
+  const path = join(folder, "core.db"),
+    f = fixture(path),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const command = {
+    ...sparse(),
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    payload: {
+      family: "P1",
+      core: { title: "Postcommit plan" },
+      schedule: {
+        start: coreDateBoundary("2026-11-02"),
+        end: coreDateBoundary("2026-11-03"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const observations: number[] = [];
+  const unsubscribe = subscribeLedgerQueueWorkAvailable(() => {
+    const reader = new DatabaseSync(path, { readOnly: true });
+    try {
+      observations.push(
+        Number(
+          reader
+            .prepare("SELECT count(*) n FROM sync_operations WHERE id=?")
+            .get(command.operationId)!.n,
+        ),
+      );
+    } finally {
+      reader.close();
+    }
+  });
+  try {
+    await expect(
+      f.repo.commitManualBatch(ctx, async () => ({
+        commands: [command],
+        result: async () => {
+          throw Error("QA_ROLLBACK");
+        },
+      })),
+    ).rejects.toThrow("QA_ROLLBACK");
+    expect(observations).toEqual([]);
+    expect(
+      f.sql.prepare("SELECT count(*) n FROM trip_core_pending_intents").get()!.n,
+    ).toBe(0);
+    await f.repo.commitManualBatch(ctx, async () => ({
+      commands: [command],
+      result: async () => true,
+    }));
+    expect(observations).toEqual([1]);
+    await f.repo.commitManualBatch(ctx, async () => ({
+      commands: [],
+      result: async () => true,
+    }));
+    expect(observations).toEqual([1]);
+  } finally {
+    unsubscribe();
   }
 });

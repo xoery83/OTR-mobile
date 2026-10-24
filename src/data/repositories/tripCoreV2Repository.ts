@@ -36,6 +36,7 @@ import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
 export type CoreDatabase = Pick<
   SQLite.SQLiteDatabase,
@@ -606,6 +607,7 @@ export function createTripCoreV2Repository(
     return withAccountApplyGate(async () => {
       await assertContext(ctx);
       let result!: T;
+      let queued = false;
       await database.withTransactionAsync(async () => {
         await scope(ctx);
         const prepared = await prepare();
@@ -672,10 +674,12 @@ export function createTripCoreV2Repository(
             throw new Error("MANUAL_BATCH_INVALID");
         }
         for (const command of commands) await enqueueWithinTransaction(ctx, command);
+        queued = commands.length > 0;
         result = await prepared.result();
         await assertContext(ctx);
       });
       await assertContext(ctx);
+      if (queued) announceLedgerQueueWorkAvailable();
       return result;
     });
   }
