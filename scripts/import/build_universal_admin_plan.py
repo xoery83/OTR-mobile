@@ -23,7 +23,7 @@ def command_hash(value):
  return sha(json.dumps({'domain':'otr-cp14-command-v1','command':value},sort_keys=True,separators=(',',':'),ensure_ascii=False).encode())
 
 def build_admin_plan(raw_plan,facts):
- if set(facts)!=FACT_KEYS or facts['version']!=1:raise ValueError('EXACT_ADMIN_BINDING_FACTS_REQUIRED')
+ if set(facts) not in [FACT_KEYS,FACT_KEYS|{'grantRenewalPreimages'}] or facts['version']!=1:raise ValueError('EXACT_ADMIN_BINDING_FACTS_REQUIRED')
  p=copy.deepcopy(raw_plan)
  if p.get('adminControl') is not None:raise ValueError('ADMIN_CONTROL_ALREADY_BOUND')
  actor=facts['actorId'];uid(actor);uid(facts['grantorActorId'])
@@ -74,8 +74,16 @@ def build_admin_plan(raw_plan,facts):
  baseline=facts['environmentBaseline']
  if set(baseline)!={'config_version','kill_switch'} or type(baseline['config_version']) is not int or baseline['config_version']<1 or baseline['kill_switch'] is not True:raise ValueError('ACTUAL_CLOSED_ENVIRONMENT_BASELINE_REQUIRED')
  a={'version':1,'actorId':actor,'integrationId':integration,'startsAt':facts['outerStartsAt'],'expiresAt':facts['outerExpiresAt'],'connection':copy.deepcopy(facts['connection']),'verifiedAuthorityReceiptSHA256':facts['verifiedAuthorityReceiptSHA256'],'normalAuthReceiptSHA256':facts['normalAuthReceiptSHA256'],'role':{'name':ADMIN,'priorCanLogin':False,'expiresAt':facts['outerExpiresAt']},'environmentBaseline':copy.deepcopy(baseline),'integrationBaseline':None,'temporaryGrants':[],'activation':[],'restore':[]}
+ if 'grantRenewalPreimages' in facts:a['grantRenewalPreimages']=copy.deepcopy(facts['grantRenewalPreimages'])
  for permission,gid in facts['grantIdentities'].items():
   a['temporaryGrants'].append({'admin_grant_id':gid,'actor_id':actor,'environment':'DEV','permission':permission,'grant_revision':1,'expires_at':facts['outerExpiresAt'],'revoked_at':None,'created_at':facts['outerStartsAt'],'created_by':facts['grantorActorId']})
+ if a.get('grantRenewalPreimages'):
+  if set(a['grantRenewalPreimages'])!={'CONFIG_ADMIN','SECURITY_ADMIN'}:raise ValueError('EXACT_TWO_RENEWAL_PREIMAGES_REQUIRED')
+  for r in a['temporaryGrants']:
+   prior=a['grantRenewalPreimages'][r['permission']]
+   for key in ['admin_grant_id','actor_id','environment','permission']:
+    if prior[key]!=r[key]:raise ValueError('GRANT_RENEWAL_IDENTITY_DRIFT')
+   r.update(grant_revision=prior['grant_revision']+1,created_at=prior['created_at'],created_by=prior['created_by'])
  for n,name in enumerate(ORDER):
   kind=['external_integration_configure','intelligence_provider_config_append','external_integration_price_append',*(['external_integration_set_kill']*4)][n]
   identity=facts['commandIdentities'][name]

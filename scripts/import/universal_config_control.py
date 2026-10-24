@@ -13,6 +13,10 @@ KINDS=['external_integration_configure','intelligence_provider_config_append','e
 ADMIN='otr_external_integration_admin_gateway'
 CONTEXT={'version','principal_kind','verified_actor_id','verified_client_identity','verified_external_subject','verified_account_id','verified_environment','auth_source','auth_config_version','auth_session_reference','verified_at','expires_at','revoked','request_id','request_sha256','command_kind','gateway_identity'}
 
+def grant_instant(value):
+    # PostgreSQL row preimages use +00:00; preserve their exact text in the seal.
+    return instant(value[:-6]+'Z' if isinstance(value,str) and value.endswith('+00:00') else value)
+
 def validate_admin(plan):
     a=plan['adminControl'];s,e=instant(a['startsAt']),instant(a['expiresAt'])
     if a['version']!=1 or a['actorId']!=plan['sourceScope']['actor_id'] or a['integrationId']!=plan['providerScope']['integration_id']:raise ValueError('ADMIN_SCOPE_MISMATCH')
@@ -57,9 +61,20 @@ def validate_admin(plan):
         if x['kind']!='external_integration_set_kill' or x['command']['integration_id']!=target:raise ValueError('RESTORE_ORDER_REQUIRED')
     grants=a['temporaryGrants']
     if len(grants)!=2 or {r['permission'] for r in grants}!={'CONFIG_ADMIN','SECURITY_ADMIN'}:raise ValueError('EXACT_TEMP_ADMIN_GRANTS_REQUIRED')
+    preimages=a.get('grantRenewalPreimages',{})
+    if 'grantRenewalPreimages' in a and set(preimages)!={'CONFIG_ADMIN','SECURITY_ADMIN'}:raise ValueError('EXACT_TWO_RENEWAL_PREIMAGES_REQUIRED')
+    grantKeys={'admin_grant_id','actor_id','environment','permission','grant_revision','expires_at','revoked_at','created_at','created_by'}
     for r in grants:
-        if set(r)!={'admin_grant_id','actor_id','environment','permission','grant_revision','expires_at','revoked_at','created_at','created_by'} or r['actor_id']!=a['actorId'] or r['environment']!='DEV' or r['revoked_at'] is not None or r['grant_revision']!=1 or instant(r['expires_at'])!=e or instant(r['created_at'])!=s:raise ValueError('TEMP_ADMIN_GRANT_SCOPE')
+        prior=preimages.get(r['permission'])
+        revision=1;created=s
+        if prior is not None:
+            if set(prior)!=grantKeys or type(prior['grant_revision']) is not int or prior['grant_revision']<2 or prior['grant_revision']%2 or prior['grant_revision']>=2147483646 or prior['revoked_at'] is None:raise ValueError('EXACT_REVOKED_GRANT_PREIMAGE_REQUIRED')
+            if not grant_instant(prior['created_at'])<=grant_instant(prior['revoked_at'])<=s or grant_instant(prior['expires_at'])<=grant_instant(prior['created_at']):raise ValueError('GRANT_PREIMAGE_TIME_DRIFT')
+            if {k:v for k,v in prior.items() if k not in ['grant_revision','expires_at','revoked_at']}!={k:v for k,v in r.items() if k not in ['grant_revision','expires_at','revoked_at']}:raise ValueError('GRANT_RENEWAL_IDENTITY_DRIFT')
+            revision=prior['grant_revision']+1;created=grant_instant(prior['created_at'])
+        if set(r)!=grantKeys or r['actor_id']!=a['actorId'] or r['environment']!='DEV' or r['revoked_at'] is not None or type(r['grant_revision']) is not int or r['grant_revision']!=revision or instant(r['expires_at'])!=e or grant_instant(r['created_at'])!=created:raise ValueError('TEMP_ADMIN_GRANT_SCOPE')
         uid(r['admin_grant_id']);uid(r['created_by'])
+    if len({r['admin_grant_id'] for r in grants})!=2:raise ValueError('GRANT_ID_REUSED')
     return a
 
 def command_sql(x):
@@ -122,15 +137,36 @@ def grant_identity_sql(r):
     original={k:v for k,v in r.items() if k not in ['revoked_at','grant_revision','created_at','expires_at']}
     return ("to_jsonb(g)-ARRAY['revoked_at','grant_revision','created_at','expires_at']="+quote(canonical(original).decode())+"::jsonb AND g.created_at="+quote(r['created_at'])+"::timestamptz AND g.expires_at="+quote(r['expires_at'])+"::timestamptz")
 
+def grant_preimage_sql(r):
+    return '('+grant_identity_sql(r)+') AND g.grant_revision='+str(r['grant_revision'])+' AND g.revoked_at='+quote(r['revoked_at'])+'::timestamptz'
+
+def prepare_grant_provision_sql(plan, transaction=True):
+    # Pure preparation only. Root executes within its approved finite transaction.
+    a=validate_admin(plan);guards=[];updates=[]
+    for r in a['temporaryGrants']:
+        prior=a.get('grantRenewalPreimages',{}).get(r['permission']);key=quote(r['admin_grant_id'])+'::uuid'
+        if prior is not None:
+            exact=grant_preimage_sql(prior)
+            guards.append("PERFORM 1 FROM public.external_integration_admin_grants WHERE admin_grant_id="+key+" FOR UPDATE; IF NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE g.admin_grant_id="+key+" AND "+exact+") THEN RAISE EXCEPTION 'ADMIN_RENEWAL_PREIMAGE_DRIFT'; END IF;")
+            updates.append("UPDATE public.external_integration_admin_grants g SET expires_at="+quote(r['expires_at'])+"::timestamptz,revoked_at=NULL,grant_revision="+str(r['grant_revision'])+" WHERE g.admin_grant_id="+key+" AND "+exact+";")
+        else:
+            guards.append("IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants WHERE actor_id="+quote(r['actor_id'])+"::uuid AND environment='DEV' AND permission="+quote(r['permission'])+") THEN RAISE EXCEPTION 'ADMIN_NEW_GRANT_ALREADY_EXISTS'; END IF;")
+            updates.append("INSERT INTO public.external_integration_admin_grants SELECT (jsonb_populate_record(null::public.external_integration_admin_grants,"+quote(canonical(r).decode())+"::jsonb)).*;")
+    if type(transaction) is not bool:raise ValueError("EXPLICIT_TRANSACTION_MODE_REQUIRED")
+    statements="SELECT pg_advisory_xact_lock(714024,3); DO $finite$ BEGIN "+''.join(guards)+" END $finite$; "+''.join(updates)
+    return "BEGIN; SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='20s'; "+statements+" COMMIT;" if transaction else statements
+
 def revoke_sql(a):
     guards=[];updates=[]
     for r in a['temporaryGrants']:
         key=quote(r['admin_grant_id'])+'::uuid';exact=grant_identity_sql(r)
         # A transaction may never have provisioned this ID. Present rows must be
         # the exact active original or its exact once-revoked successor.
-        shape="("+exact+") AND ((g.revoked_at IS NULL AND g.grant_revision=1) OR (g.revoked_at IS NOT NULL AND g.grant_revision=2))"
-        guards.append("PERFORM 1 FROM public.external_integration_admin_grants WHERE admin_grant_id="+key+" FOR UPDATE; IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE g.admin_grant_id="+key+" AND NOT ("+shape+")) THEN RAISE EXCEPTION 'ADMIN_GRANT_DRIFT'; END IF;")
-        updates.append("UPDATE public.external_integration_admin_grants SET revoked_at=clock_timestamp(),grant_revision=grant_revision+1 WHERE admin_grant_id="+key+' AND revoked_at IS NULL AND grant_revision=1;')
+        revision=r['grant_revision'];prior=a.get('grantRenewalPreimages',{}).get(r['permission'])
+        shape="("+exact+") AND ((g.revoked_at IS NULL AND g.grant_revision="+str(revision)+") OR (g.revoked_at IS NOT NULL AND g.grant_revision="+str(revision+1)+"))"
+        if prior is not None:shape="("+shape+") OR ("+grant_preimage_sql(prior)+")"
+        guards.append("PERFORM 1 FROM public.external_integration_admin_grants WHERE admin_grant_id="+key+" FOR UPDATE; IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE g.admin_grant_id="+key+" AND NOT ("+shape+"))"+(" OR NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants WHERE admin_grant_id="+key+")" if prior is not None else "")+" THEN RAISE EXCEPTION 'ADMIN_GRANT_DRIFT'; END IF;")
+        updates.append("UPDATE public.external_integration_admin_grants SET revoked_at=clock_timestamp(),grant_revision=grant_revision+1 WHERE admin_grant_id="+key+' AND revoked_at IS NULL AND grant_revision='+str(revision)+';')
     ids=','.join(quote(r['admin_grant_id'])+'::uuid' for r in a['temporaryGrants'])
     guards.append("IF EXISTS(SELECT 1 FROM public.external_integration_admin_grants WHERE actor_id="+quote(a['actorId'])+"::uuid AND environment='DEV' AND revoked_at IS NULL AND admin_grant_id NOT IN ("+ids+")) THEN RAISE EXCEPTION 'ADMIN_FOREIGN_GRANT'; END IF;")
     guards.append("IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit AND (NOT rolcanlogin OR rolvaliduntil="+quote(a['expiresAt'])+"::timestamptz)) THEN RAISE EXCEPTION 'ADMIN_ROLE_DRIFT'; END IF;")
@@ -140,7 +176,11 @@ def revoke_sql(a):
 def revoked_sql(a):
     grants=[]
     for r in a['temporaryGrants']:
-        grants.append("NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE admin_grant_id="+quote(r['admin_grant_id'])+"::uuid AND NOT (("+grant_identity_sql(r)+") AND revoked_at IS NOT NULL AND grant_revision=2))")
+        prior=a.get('grantRenewalPreimages',{}).get(r['permission'])
+        closed="("+grant_identity_sql(r)+") AND revoked_at IS NOT NULL AND grant_revision="+str(r['grant_revision']+1)
+        if prior is not None:
+            grants.append("EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE admin_grant_id="+quote(r['admin_grant_id'])+"::uuid AND (("+closed+") OR ("+grant_preimage_sql(prior)+")))")
+        else:grants.append("NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants g WHERE admin_grant_id="+quote(r['admin_grant_id'])+"::uuid AND NOT ("+closed+"))")
     grants += ["NOT EXISTS(SELECT 1 FROM public.external_integration_admin_grants WHERE actor_id="+quote(a['actorId'])+"::uuid AND environment='DEV' AND revoked_at IS NULL)","EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+ADMIN+"' AND NOT rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls AND NOT rolinherit)","NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE usename='"+ADMIN+"')"]
     return "BEGIN READ ONLY; SELECT "+' AND '.join(grants)+" AS closed; COMMIT;"
 
