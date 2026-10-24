@@ -24,7 +24,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
 }));
 const opened: DatabaseSync[] = [];
 afterEach(() => opened.splice(0).forEach((s) => s.close()));
-async function fixture() {
+async function fixture(structured = false) {
   const sql = new DatabaseSync(":memory:");
   opened.push(sql);
   sql.exec("PRAGMA foreign_keys=ON");
@@ -77,6 +77,7 @@ async function fixture() {
     tripId,
     operationId: randomUUID(),
     name: "Winter trip",
+    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
     destination: null,
     startDate: "2026-12-30",
     endDate: "2027-04-28",
@@ -656,8 +657,8 @@ it("retains Account/generation/creator fences with a qualified local Person rost
   expect(count(h.sql)).toBe(0);
 });
 
-async function acceptedPlanFixture(foreignOwner = false) {
-  const f = await fixture();
+async function acceptedPlanFixture(foreignOwner = false, withPerson = false) {
+  const f = await fixture(true);
   const repo = f.repo(),
     draft = await repo.createDraft(f.tripId);
   const saved = await repo.save(draft, values(draft.fields));
@@ -710,6 +711,41 @@ async function acceptedPlanFixture(foreignOwner = false) {
     .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
     .run(saved.operationIds[0]);
   if (foreignOwner) graph.itinerary_events[0].owner_account_id = randomUUID();
+  let personId: string | undefined;
+  if (withPerson) {
+    const { createTripPersonCloudCreateRepository } =
+      await import("./tripPersonCloudCreateRepository");
+    const repo = createTripPersonCloudCreateRepository(f.coreDatabase, f.identity);
+    const request = await repo.createAuthored({
+      tripId: f.tripId,
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName: "Accepted traveller",
+      dataOwnership: "CLOUD_SHARED_AUTHORED",
+    });
+    await repo.accept(
+      {
+        receiptVersion: 1,
+        actorAccountId: f.originalAccount,
+        request,
+        person: {
+          personId: request.personId,
+          tripId: f.tripId,
+          displayName: request.displayName,
+          status: "unlinked",
+          userId: null,
+          participationActive: true,
+          participationRevision: 0,
+        },
+        acceptedAt: "2026-10-20T00:00:00.000Z",
+      },
+      context,
+    );
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(request.operationId);
+    personId = request.personId;
+  }
   const bundle = await buildCoreActorCollection(
     graph,
     snapshot.actor,
@@ -727,6 +763,17 @@ async function acceptedPlanFixture(foreignOwner = false) {
         participating: true,
         revision: 1,
       },
+      ...(personId
+        ? [
+            {
+              person_id: personId,
+              account_id: null,
+              active: true,
+              participating: true,
+              revision: 0,
+            },
+          ]
+        : []),
     ],
     hash,
   );
@@ -734,6 +781,7 @@ async function acceptedPlanFixture(foreignOwner = false) {
   return {
     ...f,
     itemId: draft.itemId,
+    personId,
     revision: Number(graph.itinerary_events[0].semantic_revision),
   };
 }
@@ -776,4 +824,62 @@ it("does not edit an accepted P1 owned by another Creator even with local Create
   await expect(f.repo().read(f.tripId, f.itemId, f.revision)).rejects.toThrow(
     "MANUAL_PLAN_UNAVAILABLE",
   );
+});
+
+it("accepted P1 picker includes exact receipted unlinked Person without claiming an Account", async () => {
+  const f = await acceptedPlanFixture(false, true),
+    repo = f.repo();
+  const draft = await repo.read(f.tripId, f.itemId, f.revision);
+  expect(draft.participantOptions).toContainEqual({
+    personId: f.personId,
+    displayName: "Accepted traveller",
+  });
+  await repo.save(draft, {
+    ...draft.fields,
+    participation: {
+      mode: "SELECTED_MEMBERS",
+      people: [f.personId!],
+      selfPersonId: null,
+    },
+  });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending[0].command).toMatchObject({
+    command: "SET_ITEM_PARTICIPATION",
+    payload: { participation: { people: [f.personId] } },
+  });
+  expect(
+    f.sql.prepare("SELECT status FROM ledger_members WHERE id=?").get(f.personId!),
+  ).toEqual({ status: "unlinked" });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT linked_account_id FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? AND person_id=?",
+      )
+      .get(f.originalAccount, f.tripId, f.personId!),
+  ).toEqual({ linked_account_id: null });
+});
+it("does not expose an inactive receipted Person as a P1 participant", async () => {
+  const f = await acceptedPlanFixture(false, true);
+  f.sql
+    .prepare("UPDATE ledger_members SET participation_active=0 WHERE id=?")
+    .run(f.personId!);
+  expect(
+    (await f.repo().read(f.tripId, f.itemId, f.revision)).participantOptions.some(
+      (p) => p.personId === f.personId,
+    ),
+  ).toBe(false);
+});
+
+it("does not use an unlinked name without its completed owning Person receipt operation", async () => {
+  const f = await acceptedPlanFixture(false, true);
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_PERSON'",
+    )
+    .run();
+  expect(
+    (await f.repo().read(f.tripId, f.itemId, f.revision)).participantOptions.some(
+      (p) => p.personId === f.personId,
+    ),
+  ).toBe(false);
 });

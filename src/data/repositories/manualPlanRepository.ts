@@ -26,6 +26,7 @@ import { requireActiveUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
+import { readLocalTripPersonRosterWithinTransaction } from "./localTripPersonRepository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 
 const json = (value: unknown) => canonicalCoreJson(value as Json);
@@ -411,8 +412,32 @@ export function createManualItemRepository(
               description: null,
               participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
             };
-        const members = await database.getAllAsync<{ id: string; display_name: string }>(
-          "SELECT id,display_name FROM ledger_members WHERE journey_id=? AND status IN ('local','linked') ORDER BY id",
+        const creator =
+          family === "P1"
+            ? await database.getFirstAsync<{ create_operation_id: string }>(
+                "SELECT create_operation_id FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=? AND authority='LOCAL_CREATOR'",
+                context.accountId,
+                tripId,
+              )
+            : null;
+        const authoredPersons = creator
+          ? await readLocalTripPersonRosterWithinTransaction(
+              database,
+              context,
+              account,
+              creator.create_operation_id,
+            )
+          : [];
+        const authoredPersonIds = new Set(
+          authoredPersons.map((person) => person.personId),
+        );
+        const members = await database.getAllAsync<{
+          id: string;
+          display_name: string;
+          status: string;
+          participation_active: number | null;
+        }>(
+          "SELECT id,display_name,status,participation_active FROM ledger_members WHERE journey_id=? AND status IN ('local','linked','unlinked') ORDER BY id",
           tripId,
         );
         draft = Object.freeze({
@@ -420,7 +445,14 @@ export function createManualItemRepository(
           itemId: itemId ?? newId(),
           fields: structuredClone(fields),
           participantOptions: (family === "P4" ? [] : members)
-            .filter((m) => snapshot.actor.personIds.includes(m.id))
+            .filter(
+              (m) =>
+                snapshot.actor.personIds.includes(m.id) &&
+                (m.status !== "unlinked" ||
+                  (family === "P1" &&
+                    m.participation_active === 1 &&
+                    authoredPersonIds.has(m.id))),
+            )
             .map((m) => ({ personId: m.id, displayName: m.display_name })),
         });
         drafts.set(draft, {
