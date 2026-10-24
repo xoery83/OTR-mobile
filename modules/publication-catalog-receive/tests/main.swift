@@ -59,7 +59,14 @@ if arguments[1] == "policy" {
   }
   precondition(PublicationCatalogReceiver.request(tripId: "../other", token: "x") == nil)
   precondition(PublicationCatalogReceiver.request(tripId: trip.uppercased(), token: "x") == nil)
-  print("policy PASS")
+  let v2 = PublicationCatalogReceiver.request(tripId: trip, token: "synthetic-token", version: 2)!
+  precondition(v2.value(forHTTPHeaderField: "X-OTR-Publication-Catalog-Version") == "2")
+  precondition(v2.url == request.url && v2.httpMethod == request.httpMethod)
+  precondition(v2.value(forHTTPHeaderField: "Authorization") == request.value(forHTTPHeaderField: "Authorization"))
+  for version in [-1, 0, 3, Int.max] {
+    precondition(PublicationCatalogReceiver.request(tripId: trip, token: "synthetic-token", version: version) == nil)
+  }
+  print("policy V1/V2 PASS")
   exit(0)
 }
 

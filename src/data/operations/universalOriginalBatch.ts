@@ -336,8 +336,8 @@ export async function runUniversalOriginalBatch(
       repository: deps.sources,
       transport: deps.transport,
       refreshOwningCatalog: async (c) => {
-        const raw = await deps.catalog.read(c);
-        await deps.imports.applyCatalogs(c, raw);
+        const raw = await deps.catalog.readUniversal(c);
+        await deps.imports.applyUniversalCatalogs(c, raw);
       },
     });
     results.push({ inputId: input.inputId, ...result });

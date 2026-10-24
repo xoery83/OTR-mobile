@@ -1,0 +1,18 @@
+{
+  "status": "ACTUAL_SAME_LEDGER_APPEND_VERIFIED",
+  "ledgerSHA256": "60ec95e9307be7d7a85a2ee376e25f48aa98c83b0a840238a1d41a7f9b301513",
+  "originalRunId": "3665f191-1605-4365-92ca-30403d90b191",
+  "preservedPrefixCount": 27,
+  "amendment": {
+    "freshBatchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+    "previousMaximum": 32,
+    "maximum": 48,
+    "additionalMaximum": 16,
+    "previousLedgerSHA256": "d82e95d61a3e4cedcbc76c6e1f3479de46dacd12b9d8a936c97a6567a649f0e3",
+    "prefixSHA256": "84c5a604e580739eee6a81c8c3bf9e745515c0e63d7dc886d6a473b501d4d223",
+    "startsAtOrdinal": 28,
+    "prefixCount": 27
+  },
+  "usedAfterAmendment": 27,
+  "noConsumedReadsReset": true
+}

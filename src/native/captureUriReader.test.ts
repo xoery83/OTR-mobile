@@ -39,3 +39,27 @@ it("expired/unreadable native URI fails safely without provider error disclosure
     code: "READER_FAILURE",
   });
 });
+it("diagnoses API versus permission failures without URI, message or stack", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  try {
+    native.open.mockImplementation(() => { throw Object.assign(new Error("file:///private/secret-token"), { name: "MissingPermissionException", code: "ERR_MISSING_PERMISSION" }); });
+    await expect(openCaptureUriReader("file:///private/user-document")).rejects.toMatchObject({ code: "READER_FAILURE" });
+    expect(warn).toHaveBeenLastCalledWith("OTR_CAPTURE_URI_READER_FAILURE", { stage: "open", name: "MissingPermissionException", code: "ERR_MISSING_PERMISSION" });
+    native.open.mockImplementation(() => { throw new TypeError("private native API detail"); });
+    await expect(openCaptureUriReader("file:///private/user-document")).rejects.toMatchObject({ code: "READER_FAILURE" });
+    expect(warn).toHaveBeenLastCalledWith("OTR_CAPTURE_URI_READER_FAILURE", { stage: "open", name: "TypeError", code: "OTHER" });
+    expect(JSON.stringify(warn.mock.calls)).not.toMatch(/file:|private|secret|stack|message/);
+  } finally { warn.mockRestore(); }
+});
+it("bounds untrusted names/codes and reports late native reads separately", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  try {
+    native.open.mockReturnValue({ size: 1, readBytes() { throw { name: "private/path", code: "secret-token", message: "private" }; }, close: native.close });
+    const reader = await openCaptureUriReader("file://unreported");
+    await expect(reader.read(1)).rejects.toMatchObject({ code: "READER_FAILURE" });
+    expect(warn).toHaveBeenLastCalledWith("OTR_CAPTURE_URI_READER_FAILURE", { stage: "read", name: "OTHER", code: "OTHER" });
+    warn.mockImplementation(() => { throw new Error("logger unavailable"); });
+    await expect(reader.read(1)).rejects.toMatchObject({ code: "READER_FAILURE" });
+    await reader.close();
+  } finally { warn.mockRestore(); }
+});

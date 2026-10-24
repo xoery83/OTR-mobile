@@ -1034,7 +1034,7 @@ read-only SQL in the DEV runbook; no application grants are widened.
 ## Dormant authenticated Publication Catalog read — Owner-authorized Builder
 
 GET `/v2/trips/:tripId/source-import-catalogs` requires bearer Auth and
-`X-OTR-Publication-Catalog-Version: 1`. No body/query/pagination/actor parameter;
+`X-OTR-Publication-Catalog-Version: 1` or explicit `2`. V1 retains its READY/FAILED projection; V2 uses the existing Universal snapshot including PENDING/RUNNING, with identical verified Actor/Trip/owning Reader permission and bounds. No Task is required for this Source-only read. No body/query/pagination/actor parameter;
 unsupported method/UUID/request/version returns405/400/400/426 before SQL. Server
 actor comes only from verified Supabase Auth; definitive recognized invalid-session
 codes return401, transient or unknown Auth failure returns503. Existing Trip read

@@ -6,15 +6,32 @@ public final class PublicationCatalogReceiveModule: Module {
 
   public func definition() -> ModuleDefinition {
     Name("PublicationCatalogReceive")
-    Function("contractVersion") { 1 }
+    Function("contractVersion") { 2 }
 
     AsyncFunction("receive") {
       (
         id: String, tripId: String, token: String, timeoutMs: Int, expiresMs: Double,
         promise: Promise
       ) in
+      self.receive(id: id, tripId: tripId, token: token, timeoutMs: timeoutMs,
+        expiresMs: expiresMs, version: 1, promise: promise)
+    }.runOnQueue(slot.queue)
+
+    AsyncFunction("receiveUniversal") {
+      (id: String, tripId: String, token: String, timeoutMs: Int, expiresMs: Double,
+       promise: Promise) in
+      self.receive(id: id, tripId: tripId, token: token, timeoutMs: timeoutMs,
+        expiresMs: expiresMs, version: 2, promise: promise)
+    }.runOnQueue(slot.queue)
+
+    Function("cancel") { (id: String) in self.slot.cancel(id) }
+    Function("release") { (id: String) in self.slot.release(id) }
+    OnDestroy { self.slot.close() }
+  }
+  private func receive(id: String, tripId: String, token: String, timeoutMs: Int,
+    expiresMs: Double, version: Int, promise: Promise) {
       guard !id.isEmpty, id.utf8.count <= 80, (1...30_000).contains(timeoutMs),
-        let request = PublicationCatalogReceiver.request(tripId: tripId, token: token)
+        let request = PublicationCatalogReceiver.request(tripId: tripId, token: token, version: version)
       else {
         promise.resolve(["error": "INVALID_RESPONSE"])
         return
@@ -33,10 +50,5 @@ public final class PublicationCatalogReceiveModule: Module {
           promise.resolve(["error": code])
         }
       }
-    }.runOnQueue(slot.queue)
-
-    Function("cancel") { (id: String) in self.slot.cancel(id) }
-    Function("release") { (id: String) in self.slot.release(id) }
-    OnDestroy { self.slot.close() }
   }
 }

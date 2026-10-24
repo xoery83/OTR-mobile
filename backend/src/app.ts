@@ -191,6 +191,7 @@ export type DevBackendGateway = {
     actor: string,
     trip: string,
     signal: AbortSignal,
+    version?: 1 | 2,
   ): Promise<string>;
 
   observeCanonicalEventCollection?(userId: string, tripId: string): Promise<unknown>;
@@ -977,11 +978,12 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
       "INVALID_PUBLICATION_READ",
       "A body and query are not supported.",
     );
-  if (request.headers.get("X-OTR-Publication-Catalog-Version") !== "1")
+  const requestedCatalogVersion = request.headers.get("X-OTR-Publication-Catalog-Version");
+  if (requestedCatalogVersion !== "1" && requestedCatalogVersion !== "2")
     throw new HttpError(
       426,
       "UNSUPPORTED_PUBLICATION_CATALOG_VERSION",
-      "Catalog version1 is required.",
+      "Catalog version1 or version2 is required.",
     );
   const token = getBearerToken(request);
   if (!gateway.validatePublicationAccessToken || !gateway.readPublicationImportCatalogs)
@@ -1011,7 +1013,9 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
     if (!(await phase(() => gateway.canReadTrip(auth.user.id, match[1]))))
       throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
     const body = await phase((signal) =>
-      gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
+      requestedCatalogVersion === "2"
+        ? gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal, 2)
+        : gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
     );
     // The gateway returns canonical bounded text, never arbitrary HTTP error details.
     if (Buffer.byteLength(body, "utf8") > 4194304)
@@ -1022,7 +1026,7 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
     } catch {
       throw new PublicationCatalogError(503, "PUBLICATION_MEMBERSHIP_INTEGRITY");
     }
-    const checked = publicationCatalogBody(original, auth.user.id, match[1]);
+    const checked = publicationCatalogBody(original, auth.user.id, match[1], requestedCatalogVersion === "2" ? 2 : 1);
     boundary.assertCurrent();
     return new Response(checked, {
       status: 200,
