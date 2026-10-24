@@ -112,6 +112,10 @@ it("consumes the actual Backend contract with two sources and mixed candidates, 
   const binding = await f.transport.context(f.context, f.batch);
   expect(binding).toEqual(f.binding);
   expect(f.interpret).not.toHaveBeenCalled();
+  await expect(f.transport.result(f.context, binding)).rejects.toMatchObject({
+    kind: "http", status: 404, code: "TASK_NOT_FOUND",
+  });
+  expect(f.interpret).not.toHaveBeenCalled();
   const result = await f.transport.execute(f.context, binding);
   expect(result.candidates.map((c) => c.kind)).toEqual(["P1", "P3"]);
   expect(result.sourceBindings).toHaveLength(2);

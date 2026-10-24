@@ -1,0 +1,37 @@
+{
+  "closed": true,
+  "function": {
+    "acl": [
+      "otr_trip_source_writer=X/otr_trip_source_writer"
+    ],
+    "bodyMD5": "116a2da66b315366c59dc56649ed4686",
+    "config": [
+      "search_path=pg_catalog"
+    ],
+    "owner": "otr_trip_source_writer",
+    "securityDefiner": false
+  },
+  "ownerEdges": [
+    {
+      "admin_option": true,
+      "grantor": "10",
+      "inherit_option": false,
+      "member": "16388",
+      "oid": "57820",
+      "roleid": "57819",
+      "set_option": false
+    },
+    {
+      "admin_option": false,
+      "grantor": "16388",
+      "inherit_option": false,
+      "member": "16388",
+      "oid": "64306",
+      "roleid": "57819",
+      "set_option": false
+    }
+  ],
+  "rolesClosed": true,
+  "sessionsAbsent": true,
+  "writerCreate": false
+}

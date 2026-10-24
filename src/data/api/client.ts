@@ -289,6 +289,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
             "BACKEND_UNAVAILABLE",
             "UNIVERSAL_IMPORT_CLOSED",
             "UNIVERSAL_CONTEXT_UNAVAILABLE",
+            "TASK_NOT_FOUND",
           ].includes(error.data.error.code)
             ? error.data.error.code
             : undefined;

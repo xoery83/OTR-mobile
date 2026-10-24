@@ -1,0 +1,17 @@
+{
+  "status": "RETAINED_SYNTHETIC_TASK_READ_ONLY",
+  "task": {
+    "task_id": "464c8e08-e0a4-48e7-9a8f-3a2b045e77c5",
+    "account_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+    "trip_id": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+    "import_id": "3665f191-1605-4365-92ca-30403d90b191",
+    "run_id": "528ecbd1-1504-4cd9-9c01-9200add82e59",
+    "row_revision": 2,
+    "work_disposition": "PENDING",
+    "current_attempt_id": null,
+    "policy_sha256": "06bc3108399722daa99ebbd3dacd44f260a4d5357db6b0d327ad7e753b633963",
+    "policyDeadline": "2026-10-24T20:18:44Z",
+    "attemptCount": 0
+  },
+  "databaseModified": false
+}
