@@ -1,0 +1,15 @@
+{
+  "status": "D9_PRIVATE_SCRIPT_VERSION_PRICE_BINDING_REVIEW_PASS",
+  "findings": [],
+  "checks": [
+    "execute closed environment/integration versions independently from plan.adminControl, pre-Source exact baseline and Provider eachbaseline+1; no firstwindowliteral2/3 guard.",
+    "seal executionFacts.configVersion from actualclosed integration+1.",
+    "priceRow.supersedes_schedule_id and facts.priceBaselineId same actualclosed price UUID; expected baseline scheduleVersion from same actualclosed row.",
+    "Final admin environment/integration baseline overrides initial template placeholders with actual closed values. Immutable row description config_version1 remains descriptive only; existing-mode omits configure/providerAppend."
+  ],
+  "reviewerBoundary": "Read-only script inspection only, no execution/DEV/network/secret file reads.",
+  "sha256": {
+    "/private/tmp/otr-universal-resume09-execute-window-20261025.py": "3a91d9b950e4149a0f7f993d72668536ebcbb7d2327c3c4c8ca022911e2860f1",
+    "/private/tmp/otr-universal-resume09-seal-actual-window-20261025.py": "7d4a45a04933caae1090827f3209c0fb2a11d4e7c5dc8ffea52eccc329e14662"
+  }
+}

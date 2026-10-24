@@ -34,6 +34,7 @@ def validate_admin(plan):
     prior=a['integrationBaseline'];existing=prior is not None
     if existing and (set(prior)!={'config_version','kill_switch'} or type(prior['config_version']) is not int or prior['config_version']<1 or prior['kill_switch'] is not True or not re.fullmatch('[A-Za-z0-9._:-]{1,128}',a.get('priceBaselineVersion',''))):raise ValueError('EXACT_CLOSED_INTEGRATION_BASELINE_REQUIRED')
     if existing:
+        uid(a['priceBaselineId'])
         retained=a['retainedConfiguration']
         if set(retained)!={'providerConfigId','providerConfigurationSHA256','integrationConfigSHA256'} or retained['providerConfigId']!=plan['providerScope']['provider_config_id']:raise ValueError('EXACT_RETAINED_CONFIGURATION_REQUIRED')
         digest(retained['providerConfigurationSHA256']);digest(retained['integrationConfigSHA256'])
@@ -58,7 +59,7 @@ def validate_admin(plan):
             if index==1:
                 r=c['row']
                 if r['provider_config_id']!=plan['providerScope']['provider_config_id'] or r['schema_contracts']!=[{'id':'universal-import','version':1,'dialect':'otr'}] or r['privacy_policy']!='REMOTE_ALLOWED' or not r['schema_output']:raise ValueError('UNIVERSAL_CONFIG_REQUIRED')
-            elif c['row']['price_schedule_id']!=plan['providerScope']['price_schedule_id'] or c['expected_version']!=(a['priceBaselineVersion'] if existing else None):raise ValueError('PRICE_SCOPE')
+            elif c['row']['price_schedule_id']!=plan['providerScope']['price_schedule_id'] or c['expected_version']!=(a['priceBaselineVersion'] if existing else None) or (existing and c['row']['supersedes_schedule_id']!=a['priceBaselineId']):raise ValueError('PRICE_SCOPE')
         else:
             expected=[None,None,None,prior['config_version'] if existing else 1,a['environmentBaseline']['config_version'],a['environmentBaseline']['config_version']+1,(prior['config_version'] if existing else 1)+1][index]
             if c['expected_version']!=expected or c['kill_switch'] is not (index>=5):raise ValueError('EXACT_KILL_CAS_REQUIRED')

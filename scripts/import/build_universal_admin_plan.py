@@ -24,7 +24,7 @@ def command_hash(value):
 
 def build_admin_plan(raw_plan,facts):
  existing='integrationBaseline' in facts
- if set(facts)-{'grantRenewalPreimages','integrationBaseline','priceBaselineVersion'}!=FACT_KEYS or existing!=('priceBaselineVersion' in facts) or facts['version']!=1:raise ValueError('EXACT_ADMIN_BINDING_FACTS_REQUIRED')
+ if set(facts)-{'grantRenewalPreimages','integrationBaseline','priceBaselineVersion','priceBaselineId'}!=FACT_KEYS or existing!=('priceBaselineVersion' in facts) or existing!=('priceBaselineId' in facts) or facts['version']!=1:raise ValueError('EXACT_ADMIN_BINDING_FACTS_REQUIRED')
  p=copy.deepcopy(raw_plan)
  if p.get('adminControl') is not None:raise ValueError('ADMIN_CONTROL_ALREADY_BOUND')
  actor=facts['actorId'];uid(actor);uid(facts['grantorActorId'])
@@ -65,7 +65,7 @@ def build_admin_plan(raw_plan,facts):
  if i['auth_config_reference'] is not None and not re.fullmatch(r'[A-Za-z0-9._:/-]{1,160}',i['auth_config_reference']):raise ValueError('AUTH_CONFIGURATION_REFERENCE_ONLY')
  digest(i['config_sha256']);digest(c['configuration_sha256']);digest(price['schedule_sha256'])
  if c['provider_config_id']!=p['providerScope']['provider_config_id'] or c['config_version']!=1 or c['provider_id']!='DeepSeek' or c['model_id']!='deepseek-flash' or c['model_version']!='DeepSeek-V4.1-Flash' or c['provider_class']!='COMMERCIAL_REMOTE' or c['network_required'] is not True or c['routing_eligibility']!='ELIGIBLE':raise ValueError('QUALIFIED_UNIVERSAL_PROVIDER_ROW_REQUIRED')
- if price['price_schedule_id']!=p['providerScope']['price_schedule_id'] or price['provider_id']!=c['provider_id'] or price['model_id']!=c['model_id'] or price['currency']!='USD' or price['supersedes_schedule_id'] is not None or price['rounding_policy']!='SUM_THEN_CEIL_NANOS_V1':raise ValueError('EXACT_NEW_PRICE_SCHEDULE_REQUIRED')
+ if price['price_schedule_id']!=p['providerScope']['price_schedule_id'] or price['provider_id']!=c['provider_id'] or price['model_id']!=c['model_id'] or price['currency']!='USD' or price['supersedes_schedule_id']!=(facts['priceBaselineId'] if existing else None) or price['rounding_policy']!='SUM_THEN_CEIL_NANOS_V1':raise ValueError('EXACT_NEW_PRICE_SCHEDULE_REQUIRED')
  instant(price['effective_from'])
  if price['effective_until'] is not None and instant(price['effective_until'])<=instant(price['effective_from']):raise ValueError('PRICE_WINDOW_INVALID')
  units=copy.deepcopy(facts['priceUnits']);kinds={'input_tokens','cached_input_tokens','output_tokens'}
@@ -86,7 +86,7 @@ def build_admin_plan(raw_plan,facts):
     if prior[key]!=r[key]:raise ValueError('GRANT_RENEWAL_IDENTITY_DRIFT')
    r.update(grant_revision=prior['grant_revision']+1,created_at=prior['created_at'],created_by=prior['created_by'])
  if existing:
-  a['integrationBaseline']=copy.deepcopy(facts['integrationBaseline']);a['priceBaselineVersion']=facts['priceBaselineVersion']
+  a['integrationBaseline']=copy.deepcopy(facts['integrationBaseline']);a['priceBaselineVersion']=facts['priceBaselineVersion'];a['priceBaselineId']=facts['priceBaselineId']
   a['retainedConfiguration']={'providerConfigId':c['provider_config_id'],'providerConfigurationSHA256':c['configuration_sha256'],'integrationConfigSHA256':i['config_sha256']}
  for n,name in enumerate(ORDER):
   if existing and n<2:continue

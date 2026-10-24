@@ -1,0 +1,35 @@
+{
+  "fixedImage": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+  "fixedBundleSHA256": "2f8c65bb7b68a0e5b66aebddd5e79a9dea0f8da322697386ee1b690e62d67eeb",
+  "currentDiagnosticBundleSHA256": "296c6b968dfa59d4b9ac3f322ca9da386decac794bc17590f841d1598f1e7789",
+  "modules": [
+    {
+      "module": "backend/src/universalOriginalSourceRuntime.ts",
+      "byteIdentical": true,
+      "fixedModuleSHA256": "069e891deaf471e3dd62bb50cb9db74b81b59dd222afffffe4a211e09d510499",
+      "currentModuleSHA256": "069e891deaf471e3dd62bb50cb9db74b81b59dd222afffffe4a211e09d510499"
+    },
+    {
+      "module": "backend/src/universalPg.ts",
+      "byteIdentical": true,
+      "fixedModuleSHA256": "e0847cf981a81b56579759bb3bca52b1f4ac5a3f89eec77ffb77eab07b17ef31",
+      "currentModuleSHA256": "e0847cf981a81b56579759bb3bca52b1f4ac5a3f89eec77ffb77eab07b17ef31"
+    },
+    {
+      "module": "backend/src/tripCoreV2PgConnection.ts",
+      "byteIdentical": true,
+      "fixedModuleSHA256": "9aa031f809abd54dfe6c72ff69408bf792227cbc64387480217113919c0b3aff",
+      "currentModuleSHA256": "9aa031f809abd54dfe6c72ff69408bf792227cbc64387480217113919c0b3aff"
+    },
+    {
+      "module": "src/domain/trip/eventIntentJson.ts",
+      "byteIdentical": true,
+      "fixedModuleSHA256": "46ae769d4fe7359412329da23418d5d8b948a0d58bbab624f63d0b5eeb2400b1",
+      "currentModuleSHA256": "46ae769d4fe7359412329da23418d5d8b948a0d58bbab624f63d0b5eeb2400b1"
+    }
+  ],
+  "containerNeverStarted": true,
+  "ownContainerRemoved": true,
+  "hostedOperations": 0,
+  "providerCalls": 0
+}
