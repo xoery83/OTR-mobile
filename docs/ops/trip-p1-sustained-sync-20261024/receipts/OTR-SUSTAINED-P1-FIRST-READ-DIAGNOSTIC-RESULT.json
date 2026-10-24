@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-24T03:52:46.766469+00:00",
+  "actor": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "normalSyntheticAuth": true,
+  "readOnly": true,
+  "results": [
+    {
+      "route": "/v2/trips/c0eeb345-4049-4d75-8d17-ff309ea89745/core/operations/ec17119e-14cd-42d8-b40c-a394052e5a01",
+      "status": 200,
+      "error": null,
+      "capability": null
+    },
+    {
+      "route": "/v2/trips/c0eeb345-4049-4d75-8d17-ff309ea89745/core/capabilities",
+      "status": 503,
+      "error": {
+        "code": "CORE_EXECUTION_UNAVAILABLE",
+        "message": "CORE_EXECUTION_UNAVAILABLE"
+      },
+      "capability": null
+    }
+  ]
+}

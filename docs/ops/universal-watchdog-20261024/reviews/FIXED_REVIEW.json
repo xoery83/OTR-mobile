@@ -1,0 +1,25 @@
+{
+  "reviewedSha": "92acdd12b0d2502e6148e91eed24d2e57caab093",
+  "parent": "168a0a5e85e708fe7dafdb4eaa969d9e57c6d472",
+  "status": "PASS_LOCAL_L2_FIXED_P2",
+  "closedFinding": "P2_UNIVERSAL_CLOSE_01",
+  "openFindings": [],
+  "validation": {
+    "unitChecks": 15,
+    "actualIsolatedPgChecks": 7,
+    "realThreadInterleavings": [
+      "manual inflight then watch",
+      "watch inflight then manual"
+    ],
+    "losingPath": "zero SQL/runtime invocation; returns bound saved result or RECONCILE_REQUIRED",
+    "sameDigestCompletedResult": "read only zero retry"
+  },
+  "scope": "Only watcher common execution claim changed; SQL/runtime close boundaries unchanged. Original report/repro retained.",
+  "remaining": [
+    "Actual plan/Reader/Provider/Auth/C3/service preimages and exact authorized window still required.",
+    "Actual DEV closure/runtime restore not executed; remote runtime restoration is simulated in tests."
+  ],
+  "DEV": false,
+  "ProviderCalls": 0,
+  "NativeGUI": false
+}

@@ -1,0 +1,48 @@
+{
+  "at": "2026-10-24T03:49:45.883360+00:00",
+  "actor": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "normalSyntheticAuth": true,
+  "readOnly": true,
+  "results": [
+    {
+      "route": "/v2/trips/9a5b7ef6-db4c-4b33-be42-406cdfd292ab/core/operations/1a9d006e-6554-4780-824c-09cf3b37ef7b",
+      "status": 404,
+      "error": {
+        "code": "NOT_VISIBLE",
+        "message": "NOT_VISIBLE"
+      },
+      "capability": null
+    },
+    {
+      "route": "/v2/trips/9a5b7ef6-db4c-4b33-be42-406cdfd292ab/core/capabilities",
+      "status": 200,
+      "error": null,
+      "capability": {
+        "contractVersion": 2,
+        "commandVersion": 2,
+        "readVersion": 2,
+        "captureVersion": 2,
+        "activationState": "ENABLED",
+        "enabledCommands": [
+          "CREATE_ITEM",
+          "SET_ITEM_TEXT",
+          "SET_ITEM_SCHEDULE",
+          "SET_ITEM_PLACE",
+          "SET_ITEM_PARTICIPATION"
+        ],
+        "enabledFamilies": [
+          "P1"
+        ],
+        "enabledAdmissionModes": [
+          "MANUAL"
+        ],
+        "maximumRequestBytes": 32768,
+        "maximumAffectedRoots": 32,
+        "maximumRelations": 64,
+        "resolverAvailable": false,
+        "sourceEvidenceAvailable": false,
+        "operationalCustodyAvailable": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "status": "LOCAL_CLOSED_PACKAGE_READY_ACTIVATION_BLOCKED",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "ownerAuthorized": false,
+  "baselineCode": "e625cc5082b4f3f2a4520358350d4423c99a1471",
+  "imageId": "sha256:68f362ce956769bbd89f5859b2803a6558892c3628db935d2deb76bc71a461c2",
+  "bundleHashes": {
+    "server.mjs": "7c304662e9864e0e41488bcd0c510d5740f9eba1753f5368cf00b3ce45b93fff",
+    "server-capture.mjs": "4471a972a66abf766a90dd9b06e177177d641f24ad43da49557244d896e83393",
+    "universal-prepare.mjs": "ea76332b677d329f567fbda85ba20be59319fcf95adc4922c7102f0d8da9b8b2"
+  },
+  "qaIdentity": {
+    "actorId": null,
+    "tripId": null,
+    "requireSynthetic": true,
+    "authMethod": "normal DEV Auth; no copied Session"
+  },
+  "window": {
+    "startsAt": null,
+    "expiresAt": null,
+    "maximumSeconds": 900,
+    "operator": "Unified Coordinator",
+    "closeOwner": "independent existing trusted Operator/watchdog"
+  },
+  "realC3": {
+    "batchId": null,
+    "jobId": null,
+    "submissionSha256": null,
+    "sources": [
+      {
+        "kind": "FILE",
+        "originalFilename": "universal-mixed-bookings-utf8.txt",
+        "path": "/private/tmp/otr-universal-qa-20261024/universal-mixed-bookings-utf8.txt",
+        "byteCount": 1598,
+        "sha256": "5db86cb62b681cc69eeee224f4af940cf10de5df6daa165102b3a37454a35592",
+        "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
+        "owningSourceId": null,
+        "owningRepresentationId": null,
+        "realC3InputId": null
+      },
+      {
+        "kind": "FILE",
+        "originalFilename": "lodging-supplement.txt",
+        "path": "/private/tmp/otr-universal-native-first-source-20261024/docs/ops/universal-dev-execution-20261024/qa-originals/lodging-supplement.txt",
+        "byteCount": 433,
+        "sha256": "6a1ee8c1d59b603926523315563174f49cefc066ea96a45c8e028fc21e0a6af2",
+        "contentProfile": "OTR_UTF8_TEXT_FILE_V1",
+        "owningSourceId": null,
+        "owningRepresentationId": null,
+        "realC3InputId": null
+      },
+      {
+        "kind": "TEXT",
+        "originalFilename": null,
+        "path": "/private/tmp/otr-universal-qa-20261024/submitted-user-text.txt",
+        "byteCount": 172,
+        "sha256": "e2fc3cf6fae139733cd7cf00fb1b058385870e33c6612b21b9ab1762bfe0e071",
+        "contentProfile": "OTR_SUBMITTED_TEXT_V1",
+        "owningSourceId": null,
+        "owningRepresentationId": null,
+        "realC3InputId": null
+      }
+    ]
+  },
+  "task": {
+    "taskId": null,
+    "runId": null,
+    "attemptId": null,
+    "callId": null,
+    "logicalRequestId": null,
+    "requestSha256": null,
+    "providerRequestSha256": null,
+    "inputSha256": null,
+    "providerConfigId": null,
+    "priceScheduleId": null
+  },
+  "proposedBounds": {
+    "sourceAcquireMutationMax": 3,
+    "sourceResultReadMax": 9,
+    "catalogReadMax": 3,
+    "runBeginInvocationMax": 1,
+    "taskContextReadMax": 4,
+    "interpretationCallsMax": 1,
+    "resultsReadMax": 4,
+    "maxOutputTokens": 4096,
+    "budgetCurrency": "USD",
+    "maximumCostNanos": "1000000000",
+    "unknownPolicy": "reconcile exact existing result/receipt; no automatic Provider retry"
+  },
+  "sqlCandidateSha256": {
+    "backend/sql/universal_original_result_candidate.sql": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
+    "backend/sql/universal_original_source_candidate.sql": "53cf71671c8e69ed509f534c6c4d81dce0361f93713b6df62157aaf5e671df53",
+    "backend/sql/universal_provider_admission_candidate.sql": "365db344435020d52b397824bc8b03384d2c07360a61d978692dfcf0e785c372",
+    "backend/sql/universal_source_host_candidate.sql": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
+    "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95"
+  },
+  "blockers": [
+    "REAL_NATIVE_C3_BATCH_SOURCE_COMMAND_PINS_REQUIRED",
+    "NORMAL_QA_AUTH_ACTOR_TRIP_READER_QUALIFICATION_REQUIRED",
+    "FINITE_PROVIDER_CONFIG_PRICE_CREDENTIAL_QUALIFICATION_REQUIRED",
+    "INDEPENDENT_SCOPE_AND_RUNTIME_CLOSE_PACKAGE_REQUIRED",
+    "EXACT_OWNER_DEPLOYMENT_SQL_PROVIDER_AUTHORIZATION_REQUIRED",
+    "INDEPENDENT_PACKAGE_REVIEW_PENDING"
+  ],
+  "claims": {
+    "sourceRegistration": false,
+    "taskReady": false,
+    "realProvider": false,
+    "nativeResults": false,
+    "formalReviewAdmission": false
+  },
+  "imageSourceHead": "157bb95879836d8d06a2d7d93dc29a5d6a0c262f",
+  "sharedBaseline": "ce3a44b",
+  "packagingDockerfileSha256": "11ea0e3329ce5fe90828bd73f98c829c6e2c66a6ab7092ab9c1740f5c5a09d5e"
+}

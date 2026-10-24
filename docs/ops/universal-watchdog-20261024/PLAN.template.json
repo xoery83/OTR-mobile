@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "project": "tuqigdxrvrerfewsxqgm",
+  "activationId": null,
+  "windowId": null,
+  "ownerAuthorized": false,
+  "startsAt": null,
+  "expiresAt": null,
+  "sourceScope": null,
+  "providerScope": null,
+  "temporaryRoles": [],
+  "helperHashes": {
+    "universal_scope_close.py": "0c08a8bf519953a167f4a85b9bc5642622d09000f638cd8f473dd53b5f163d02",
+    "universal_runtime_close.py": "d4f7104a0e6d5b78054f06d34dac523082e186433555acbd91b1b5fa41bd8436",
+    "universal_watchdog.py": "e4d737cda2d51d96f666a7632897b28ac89e44bd1cee8d634a71acbe7ae54bf3"
+  },
+  "management": {
+    "supabaseCli": null,
+    "linkedWorktree": null
+  },
+  "runtime": {
+    "container": "otr-dev-backend",
+    "imageId": "sha256:68f362ce956769bbd89f5859b2803a6558892c3628db935d2deb76bc71a461c2",
+    "runtimeSource": null,
+    "runtimeSHA256": null,
+    "finiteComposeFile": null,
+    "finiteComposeSHA256": null,
+    "baselineComposeFiles": [],
+    "composeHashes": {},
+    "baselineEnvironmentSHA256": null,
+    "activeEnvironmentSHA256": null,
+    "baselineHostConfigSHA256": null,
+    "activeHostConfigSHA256": null,
+    "baselineMountsSHA256": null,
+    "activeMountsSHA256": null
+  }
+}

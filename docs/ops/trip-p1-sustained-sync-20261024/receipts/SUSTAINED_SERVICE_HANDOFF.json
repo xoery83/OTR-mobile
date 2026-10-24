@@ -1,0 +1,23 @@
+{
+  "state": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "health": {
+      "status": "ok",
+      "environment": "development"
+    },
+    "mountCount": 4,
+    "bundle": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9"
+  },
+  "handoff": {
+    "status": "SUSTAINED_HANDOFF_VERIFIED",
+    "planSHA256": "19df68687c979fddd042de86102eee04923303f5cababe3ac22854be2b5b5397",
+    "approvedGateSHA256": "0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0",
+    "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+    "adoptionCutoff": "2026-10-24T01:41:25.160Z",
+    "transitionId": "04ae158a-1645-4128-8c7b-61aa252866c1",
+    "serviceAndPolicyVerified": true
+  },
+  "at": "2026-10-24T03:15:45.707811+00:00",
+  "qaStatus": "IN_PROGRESS_NO_PERSON_P1_PASS_CLAIM",
+  "remaining": "existing retry backoff; ordinary UI/queue recovery continuation"
+}
