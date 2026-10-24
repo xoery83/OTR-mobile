@@ -1,6 +1,7 @@
 import {
   filterNativeTripQaList,
   nativeTripQaCreateFormat,
+  nativeTripAuthoredCloudTravelers,
   kickNativeTripQaSync,
 } from "@/data/sync/nativeTripQaScope";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
@@ -398,9 +399,23 @@ function LocalTripContent({
         endDate: end || null,
         ...(travelers.some((slot) => slot.displayName.trim())
           ? {
-              travelers: travelers
-                .filter((slot) => slot.displayName.trim())
-                .map((slot) => ({ ...slot, displayName: slot.displayName.trim() })),
+              ...(nativeTripAuthoredCloudTravelers(accountId)
+                ? {
+                    cloudTravelers: {
+                      dataOwnership: "CLOUD_SHARED_AUTHORED" as const,
+                      slots: travelers
+                        .filter((slot) => slot.displayName.trim())
+                        .map((slot) => ({
+                          ...slot,
+                          displayName: slot.displayName.trim(),
+                        })),
+                    },
+                  }
+                : {
+                    travelers: travelers
+                      .filter((slot) => slot.displayName.trim())
+                      .map((slot) => ({ ...slot, displayName: slot.displayName.trim() })),
+                  }),
             }
           : {}),
       });

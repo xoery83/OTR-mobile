@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /private/tmp/otr-trip-p1-sustained-sync-20261024
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  12:20:13
+   Duration  717ms (transform 165ms, setup 0ms, import 297ms, tests 492ms, environment 0ms)
+

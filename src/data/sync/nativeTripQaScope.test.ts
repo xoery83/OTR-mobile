@@ -6,6 +6,7 @@ import {
   hasNativeTripQaScope,
   runNativeTripQaSync,
   getNativeTripQaQueueActivity,
+  nativeTripAuthoredCloudTravelers,
 } from "./nativeTripQaScope";
 
 const a = "10000000-0000-4000-8000-000000000001";
@@ -339,3 +340,42 @@ it("rejects Account changes across the normal activity read", async () => {
   });
   await expect(getNativeTripQaQueueActivity()).rejects.toThrow("Account changed");
 });
+
+it("sustained adoption has no Trip targets or expiring dispatch window", async () => {
+  const scope = {
+    version: 2,
+    accountId: a,
+    normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+  };
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
+  vi.setSystemTime(new Date("2027-10-24T00:00:00Z"));
+  state.session.mockResolvedValue({
+    accessToken: "synthetic",
+    expiresAt: "2027-10-24T01:00:00Z",
+  });
+  state.normal.mockResolvedValue({ tripIds: [trip] });
+  expect(nativeTripAuthoredCloudTravelers(a)).toBe(true);
+  expect(nativeTripAuthoredCloudTravelers("other")).toBe(false);
+  expect(await runNativeTripQaSync()).toMatchObject({ accountId: a, journeyIds: [trip] });
+  expect(state.normal).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
+  expect(state.createFactory).not.toHaveBeenCalled();
+  expect(state.editFactory).not.toHaveBeenCalled();
+});
+it.each(["expiresAt", "creates", "actorAccountId"])(
+  "rejects mixed sustained field %s without draining history",
+  async (field) => {
+    vi.stubEnv(
+      "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+      JSON.stringify({
+        version: 2,
+        accountId: a,
+        normal: { newTripsFrom: fixture().startsAt },
+        [field]: field === "creates" ? [] : fixture().expiresAt,
+      }),
+    );
+    expect(hasNativeTripQaScope()).toBe(true);
+    expect(nativeTripAuthoredCloudTravelers(a)).toBe(false);
+    expect(await runNativeTripQaSync()).toBeNull();
+    expect(state.normal).not.toHaveBeenCalled();
+  },
+);

@@ -1,3 +1,4 @@
+import type { AuthoredCloudTravelers } from "./tripPersonCloudCreate";
 import type {
   LocalTripDestination,
   LocalTripDestinationInput,
@@ -33,6 +34,8 @@ export type CreateTripInput = {
   creatorDisplayName?: string;
   /** Local-only named slots; never part of the Hosted CREATE proof. */
   travelers?: readonly LocalPersonNameSlot[];
+  /** Explicit current Add Traveler action; independent Person operations, never part of Trip Create wire. */
+  cloudTravelers?: AuthoredCloudTravelers;
   operationId: string;
   tripId: string;
   name: string;

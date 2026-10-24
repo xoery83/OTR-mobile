@@ -1,3 +1,4 @@
+import { readCoreGate, type CoreGateMode } from "./tripSustainedGate";
 import { isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
 import { randomUUID } from "node:crypto";
 import {
@@ -235,6 +236,7 @@ export function createCorePgStorage(
   connection: CorePgConnection,
   hash: ImportHash,
   admission?: CorePgAdmission,
+  gateMode?: CoreGateMode,
 ): CoreCommandStorage {
   return {
     async withLockedCommand(scope, work) {
@@ -317,11 +319,13 @@ export function createCorePgStorage(
               );
             },
             async enabledCommands() {
-              const r = (
-                await lease.query(
-                  "SELECT runtime_enabled,enabled_commands FROM public.trip_core_activation_gate WHERE singleton",
-                )
-              ).rows[0];
+              const r = await readCoreGate(
+                lease,
+                actor.accountId,
+                actor.tripId,
+                gateMode,
+                "runtime_enabled,enabled_commands",
+              );
               return r?.runtime_enabled ? (r.enabled_commands as CoreCommandName[]) : [];
             },
             async readLockedGraph(command) {
@@ -356,11 +360,12 @@ export function createCorePgStorage(
               return locked;
             },
             async verifyAdmission(command, intent, graph) {
-              const activation = (
-                await lease.query(
-                  "SELECT enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
-                )
-              ).rows[0];
+              const activation = await readCoreGate(
+                lease,
+                actor.accountId,
+                actor.tripId,
+                gateMode,
+              );
               const normal = isNormalP1Gate(activation);
               const finiteFamily =
                 command.command === "CREATE_ITEM"
@@ -418,11 +423,13 @@ export function createCorePgStorage(
                   throw new Error("INVALID_SELF_PERSON");
               }
 
-              const gate = (
-                await lease.query(
-                  "SELECT enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
-                )
-              ).rows[0];
+              const gate = await readCoreGate(
+                lease,
+                actor.accountId,
+                actor.tripId,
+                gateMode,
+                "enabled_families,enabled_admission_modes",
+              );
               const family =
                 command.command === "CREATE_SPARSE_FLIGHT"
                   ? "P2"

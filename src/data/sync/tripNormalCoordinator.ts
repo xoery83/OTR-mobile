@@ -1,3 +1,10 @@
+import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
+import {
+  createPersonCloudSyncWorker,
+  createPersonCloudTransport,
+} from "./tripPersonCloudCreateSync";
+import { createSyncEngine } from "./syncEngine";
+import { personCloudCreateKind } from "@/domain/trip/tripPersonCloudCreate";
 import { createUuid } from "@/domain/localId";
 import { createTripNormalReadbackRepository } from "../repositories/tripNormalReadbackRepository";
 import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
@@ -103,6 +110,36 @@ export function createNativeNormalTripSyncRunner(
         deferred: repository,
         recoverTripReadback: recoverReadback,
         recoverP1Readback: async () => {},
+        runPerson: async (target) => {
+          const context = { ...account, tripId: target.tripId };
+          const people = createTripPersonCloudCreateRepository(
+            database,
+            requireActiveUserId,
+          );
+          await people.resume(context, target.operationId);
+          await assertAccountRequestContext(account, requireActiveUserId);
+          if (!enabled()) throw Error("PERSON_PORT_CLOSED");
+          const result = await createSyncEngine(
+            createSyncOperationRepository(
+              database,
+              requireActiveUserId,
+              undefined,
+              target,
+            ),
+            createPersonCloudSyncWorker(
+              people,
+              createPersonCloudTransport(requireActiveUserId, enabled),
+              requireActiveUserId,
+            ),
+            undefined,
+            (op) =>
+              op.id === target.operationId &&
+              op.entityType === "TRIP_PERSON" &&
+              op.operationType === personCloudCreateKind,
+          ).run("AUTHENTICATED_ONLINE");
+          await assertAccountRequestContext(account, requireActiveUserId);
+          return result;
+        },
         runCreate: (target) => createNativeTripCreateSyncRunner(target, enabled)(),
         runMetadata: (target) => createNativeTripMetadataSyncRunner(enabled, target)(),
         runP1: async (target) => {

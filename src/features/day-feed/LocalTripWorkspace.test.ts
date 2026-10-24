@@ -1560,3 +1560,46 @@ it.each(["missing", "pending"])(
     expect(repo.updateMetadata).not.toHaveBeenCalled();
   },
 );
+
+it("authors current Add Traveler slots explicitly as shared only for sustained v2 scope", async () => {
+  const accountId = "10000000-0000-4000-8000-000000000001";
+  vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "dev");
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://api-dev.xoery.art");
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId,
+      normal: { newTripsFrom: "2026-10-24T00:00:00.000Z" },
+    }),
+  );
+  vi.mocked(readLocalSession).mockResolvedValue({
+    identity: { userId: accountId, displayName: "QA" },
+  } as never);
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Current authored");
+  render();
+  const slot = {
+    operationId: "10000000-0000-4000-8000-000000000006",
+    personId: "10000000-0000-4000-8000-000000000007",
+    displayName: "  New Traveler  ",
+  };
+  state.nodes.find((node) => node.createFields)!.createFields.onTravelers([slot]);
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  const inputValue = vi.mocked(repo.createTrip).mock.calls[0][0];
+  expect(inputValue).toMatchObject({
+    syncFormatVersion: 2,
+    cloudTravelers: {
+      dataOwnership: "CLOUD_SHARED_AUTHORED",
+      slots: [{ ...slot, displayName: "New Traveler" }],
+    },
+  });
+  expect(inputValue).not.toHaveProperty("travelers");
+});

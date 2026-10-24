@@ -1,3 +1,7 @@
+import {
+  personCloudCreateKind,
+  personCloudCreateSchema,
+} from "@/domain/trip/tripPersonCloudCreate";
 import type * as SQLite from "expo-sqlite";
 import { z } from "zod";
 import { structuredTripCreateRequestSchema } from "@/domain/trip/tripStructuredDestinationContract";
@@ -39,6 +43,7 @@ type Deps = {
   runMetadata(target: TripCreateTarget): Promise<unknown>;
   /** Existing Core worker must still enforce capabilities, Actor, Person and receipt contracts. */
   runP1(target: TripCreateTarget): Promise<unknown>;
+  runPerson(target: TripCreateTarget): Promise<unknown>;
   isP1Item(tripId: string, itemId: string): Promise<boolean>;
   participantsReady(tripId: string, command: CoreCommand): Promise<boolean>;
 };
@@ -90,92 +95,116 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         tripId: row.trip_id,
         operationId: row.id,
       };
-      await guard();
-      await deps.runCreate(target);
-      await guard();
-      runnerCalls++;
       try {
-        await deps.recoverTripReadback(row.trip_id, row.id);
         await guard();
-        await deps.deferred.materializeDeferredMetadata(row.trip_id);
-        await deps.recoverP1Readback(row.trip_id);
-      } catch {
+        await deps.runCreate(target);
         await guard();
-        blockedTripIds.push(row.trip_id);
-        continue;
-      }
-      await guard();
-      const pending = await deps.database.getAllAsync<Row>(
-        "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND status NOT IN ('COMPLETED','FAILED','CONFLICT') AND operation_type IN ('UPDATE_TRIP_METADATA','CORE_V2_COMMAND') ORDER BY created_at,rowid",
-        scope.accountId,
-        row.trip_id,
-      );
-      await guard();
-      for (const operation of pending) {
-        const selected = { ...target, operationId: operation.id };
-        if (operation.idempotency_key !== operation.id) continue;
-        if (operation.operation_type === "UPDATE_TRIP_METADATA") {
-          let wire;
-          try {
-            wire = tripMetadataWireUpdateSchema.safeParse(
-              JSON.parse(operation.payload_json),
-            );
-          } catch {
-            continue;
-          }
-          if (
-            !wire.success ||
-            !("formatVersion" in wire.data) ||
-            wire.data.formatVersion !== 3 ||
-            wire.data.tripId !== row.trip_id ||
-            wire.data.operationId !== operation.id ||
-            operation.entity_id !== row.trip_id ||
-            operation.entity_type !== "TRIP"
-          )
-            continue;
-          await guard();
-          await deps.runMetadata(selected);
-          await guard();
+        runnerCalls++;
+        try {
           await deps.recoverTripReadback(row.trip_id, row.id);
           await guard();
-          runnerCalls++;
-        } else {
-          let command;
-          try {
-            command = validateCoreCommand(JSON.parse(operation.payload_json));
-          } catch {
-            continue;
-          }
-          if (
-            operation.entity_type !== "TRIP_CORE_V2" ||
-            command.operationId !== operation.id ||
-            command.tripId !== row.trip_id ||
-            command.target.id !== operation.entity_id ||
-            command.target.kind !== "ITEM" ||
-            command.admission.mode !== "MANUAL"
-          )
-            continue;
-          const p1 =
-            command.command === "CREATE_ITEM"
-              ? (command.payload as { family: string }).family === "P1"
-              : [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PLACE",
-                  "SET_ITEM_PARTICIPATION",
-                ].includes(command.command) &&
-                (await deps.isP1Item(row.trip_id, command.target.id));
+          await deps.deferred.materializeDeferredMetadata(row.trip_id);
+          await deps.recoverP1Readback(row.trip_id);
+        } catch {
           await guard();
-          if (p1) {
-            const ready = await deps.participantsReady(row.trip_id, command);
+          blockedTripIds.push(row.trip_id);
+          continue;
+        }
+        await guard();
+        const pending = await deps.database.getAllAsync<Row>(
+          "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND status NOT IN ('COMPLETED','FAILED','CONFLICT') AND operation_type IN ('UPDATE_TRIP_METADATA','TRIP_PERSON_CLOUD_CREATE','CORE_V2_COMMAND') ORDER BY created_at,rowid",
+          scope.accountId,
+          row.trip_id,
+        );
+        await guard();
+        for (const operation of pending) {
+          const selected = { ...target, operationId: operation.id };
+          if (operation.idempotency_key !== operation.id) continue;
+          if (operation.operation_type === "UPDATE_TRIP_METADATA") {
+            let wire;
+            try {
+              wire = tripMetadataWireUpdateSchema.safeParse(
+                JSON.parse(operation.payload_json),
+              );
+            } catch {
+              continue;
+            }
+            if (
+              !wire.success ||
+              !("formatVersion" in wire.data) ||
+              wire.data.formatVersion !== 3 ||
+              wire.data.tripId !== row.trip_id ||
+              wire.data.operationId !== operation.id ||
+              operation.entity_id !== row.trip_id ||
+              operation.entity_type !== "TRIP"
+            )
+              continue;
             await guard();
-            if (ready) {
-              await deps.runP1(selected);
+            await deps.runMetadata(selected);
+            await guard();
+            await deps.recoverTripReadback(row.trip_id, row.id);
+            await guard();
+            runnerCalls++;
+          } else if (operation.operation_type === personCloudCreateKind) {
+            let person;
+            try {
+              person = personCloudCreateSchema.parse(JSON.parse(operation.payload_json));
+            } catch {
+              continue;
+            }
+            if (
+              operation.entity_type !== "TRIP_PERSON" ||
+              person.operationId !== operation.id ||
+              person.tripId !== row.trip_id ||
+              person.personId !== operation.entity_id ||
+              person.tripCreateOperationId !== row.id
+            )
+              continue;
+            await guard();
+            await deps.runPerson(selected);
+            await guard();
+            runnerCalls++;
+          } else {
+            let command;
+            try {
+              command = validateCoreCommand(JSON.parse(operation.payload_json));
+            } catch {
+              continue;
+            }
+            if (
+              operation.entity_type !== "TRIP_CORE_V2" ||
+              command.operationId !== operation.id ||
+              command.tripId !== row.trip_id ||
+              command.target.id !== operation.entity_id ||
+              command.target.kind !== "ITEM" ||
+              command.admission.mode !== "MANUAL"
+            )
+              continue;
+            const p1 =
+              command.command === "CREATE_ITEM"
+                ? (command.payload as { family: string }).family === "P1"
+                : [
+                    "SET_ITEM_TEXT",
+                    "SET_ITEM_SCHEDULE",
+                    "SET_ITEM_PLACE",
+                    "SET_ITEM_PARTICIPATION",
+                  ].includes(command.command) &&
+                  (await deps.isP1Item(row.trip_id, command.target.id));
+            await guard();
+            if (p1) {
+              const ready = await deps.participantsReady(row.trip_id, command);
               await guard();
-              runnerCalls++;
+              if (ready) {
+                await deps.runP1(selected);
+                await guard();
+                runnerCalls++;
+              }
             }
           }
         }
+      } catch {
+        await guard(); // Security/account revocation remains a fatal fence, never a per-Trip fallback.
+        if (!blockedTripIds.includes(row.trip_id)) blockedTripIds.push(row.trip_id);
       }
     }
     return { status: "ready" as const, runnerCalls, blockedTripIds, tripIds };

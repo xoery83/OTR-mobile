@@ -1,4 +1,10 @@
 import { createHash } from "node:crypto";
+import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
+import { createTripPersonCloudCreatePgPort } from "./tripPersonCloudCreatePg";
+import {
+  PersonCloudCreateError,
+  type TripPersonCloudCreatePort,
+} from "./tripPersonCloudCreateHttp";
 import {
   createNormalDevTripPorts,
   normalDevTripRuntimeSchema,
@@ -7,6 +13,7 @@ import {
   createTripPgConnection,
   createTripMetadataPgConnection,
   createCorePgConnection,
+  createPersonPgConnection,
 } from "./tripCoreV2PgConnection";
 import { createTripMetadataV2PgStorage } from "./tripMetadataV2PgStorage";
 import { createCorePgHttpConnection } from "./tripCoreV2PgHttpConnection";
@@ -60,9 +67,18 @@ const normalTripCreateRuntimeSchema = z
     )
       ctx.addIssue({ code: "custom", message: "INVALID_NORMAL_DEV_SCOPE" });
   });
+const sustainedTripCreateRuntimeSchema = z.strictObject({
+  version: z.literal(3),
+  enabled: z.literal(true),
+  tripPg: pgConfig,
+  metadataPg: pgConfig,
+  corePg: pgConfig,
+  personPg: pgConfig,
+});
 export const tripCreateRuntimeSchema = z.union([
   finiteTripCreateRuntimeSchema,
   normalTripCreateRuntimeSchema,
+  sustainedTripCreateRuntimeSchema,
 ]);
 
 export async function loadDevTripCreateRuntime(
@@ -99,11 +115,12 @@ export async function loadDevTripCreateRuntime(
       (stat.size > 16384 || Buffer.byteLength(body) > 16384)
     )
       throw 0;
-    const remaining = Date.parse(config.expiresAt) - Date.now();
+    const remaining =
+      config.version === 3 ? null : Date.parse(config.expiresAt) - Date.now();
     // Keep the existing finite activation's maximum 15-minute window; no automatic renewal.
     if (
-      remaining <= 0 ||
-      remaining > (config.version === 2 ? 86400000 : 900000) ||
+      (remaining !== null &&
+        (remaining <= 0 || remaining > (config.version === 2 ? 86400000 : 900000))) ||
       environment.OTR_DEV_BACKEND_NETWORK_MODE !== "host" ||
       environment.OTR_DEV_SUPABASE_URL !== "https://tuqigdxrvrerfewsxqgm.supabase.co"
     )
@@ -112,6 +129,53 @@ export async function loadDevTripCreateRuntime(
     throw new Error("TRIP_CREATE_RUNTIME_UNAVAILABLE");
   } finally {
     await file.close();
+  }
+  if (config.version === 3) {
+    const sustained = createSustainedDevTripPorts(
+      {
+        create: createTripPgStorage(createTripPgConnection(config.tripPg)),
+        metadata: createTripMetadataV2PgStorage(
+          createTripMetadataPgConnection(config.metadataPg),
+        ),
+        core: createCorePgHttpConnection(
+          createCorePgConnection(config.corePg),
+          async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+          undefined,
+          { sustainedDev: true },
+        ),
+      },
+      true,
+    );
+    if (!sustained) throw new Error("TRIP_CREATE_RUNTIME_UNAVAILABLE");
+    const person = createTripPersonCloudCreatePgPort(
+      createPersonPgConnection(config.personPg),
+    );
+    let closed = false;
+    const guard = () => {
+      if (closed) throw new PersonCloudCreateError(503, "PERSON_CREATE_CLOSED");
+    };
+    const tripPersonCloudCreatePort: TripPersonCloudCreatePort = {
+      async create(actor, request) {
+        guard();
+        const result = await person.create(actor, request);
+        guard();
+        return result;
+      },
+      async receipt(actor, trip, operation) {
+        guard();
+        const result = await person.receipt(actor, trip, operation);
+        guard();
+        return result;
+      },
+    };
+    return {
+      ...sustained,
+      tripPersonCloudCreatePort,
+      async close() {
+        closed = true;
+        sustained.close();
+      },
+    };
   }
   if (config.version === 2) {
     const normal = createNormalDevTripPorts(

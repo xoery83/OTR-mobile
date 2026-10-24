@@ -12,7 +12,7 @@ const target = z.strictObject({
   operationId: coreUuid,
   lastAttemptAt: z.iso.datetime().nullable().optional(),
 });
-const configuration = z
+const finiteConfiguration = z
   .strictObject({
     version: z.literal(1),
     accountId: coreUuid,
@@ -36,6 +36,13 @@ const configuration = z
     )
       context.addIssue({ code: "custom", message: "INVALID_FINITE_QA_SCOPE" });
   });
+const sustainedConfiguration = z.strictObject({
+  version: z.literal(2),
+  accountId: coreUuid,
+  normal: z.strictObject({ newTripsFrom: z.iso.datetime() }),
+  viewIsolationStartedAt: z.iso.datetime().optional(),
+});
+const configuration = z.union([finiteConfiguration, sustainedConfiguration]);
 
 // Presence keeps historical queues quarantined even after expiry or malformed config.
 export function hasNativeTripQaScope() {
@@ -57,8 +64,8 @@ function scopeEnabled(scope: NonNullable<ReturnType<typeof readConfiguration>>) 
   return (
     process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
     process.env.EXPO_PUBLIC_OTR_API_BASE_URL === "https://api-dev.xoery.art" &&
-    now >= Date.parse(scope.startsAt) &&
-    now < Date.parse(scope.expiresAt)
+    (scope.version === 2 ||
+      (now >= Date.parse(scope.startsAt) && now < Date.parse(scope.expiresAt)))
   );
 }
 
@@ -96,13 +103,28 @@ export function nativeTripQaCreateFormat(accountId: string | null): 2 | undefine
     : undefined;
 }
 
+// Only a fresh authored action opts into Person cloud creation; retained v1 names stay private.
+export function nativeTripAuthoredCloudTravelers(accountId: string | null) {
+  const scope = readConfiguration();
+  return (
+    !!scope && scope.version === 2 && scope.accountId === accountId && scopeEnabled(scope)
+  );
+}
+
 // View-only isolation; retained historical rows/receipts are neither deleted nor relabelled.
 export function filterNativeTripQaList<
   T extends { id: string; syncFormatVersion?: 2; createdAt?: string | null },
 >(accountId: string | null, trips: readonly T[]): readonly T[] {
   const scope = readConfiguration();
   if (!scope || scope.accountId !== accountId) return trips;
-  const ids = new Set([...scope.creates, ...scope.edits].map((item) => item.tripId));
+  const ids = new Set(
+    scope.version === 1
+      ? [...scope.creates, ...scope.edits].map((item) => item.tripId)
+      : [],
+  );
+  const cutoff =
+    scope.viewIsolationStartedAt ??
+    (scope.version === 2 ? scope.normal.newTripsFrom : scope.startsAt);
   return trips.filter(
     (item) =>
       ids.has(item.id) ||
@@ -110,8 +132,7 @@ export function filterNativeTripQaList<
       // The owning Repository supplies Account-scoped original CREATE provenance.
       (item.syncFormatVersion === 2 &&
         typeof item.createdAt === "string" &&
-        Date.parse(item.createdAt) >=
-          Date.parse(scope.viewIsolationStartedAt ?? scope.startsAt)),
+        Date.parse(item.createdAt) >= Date.parse(cutoff)),
   );
 }
 
@@ -147,6 +168,7 @@ export async function runNativeTripQaSync() {
       journeyIds: result && "tripIds" in result ? (result.tripIds ?? []) : [],
     };
   }
+  if (scope.version !== 1) return null;
   const [{ createNativeTripCreateSyncRunner }, { createNativeTripMetadataSyncRunner }] =
     await Promise.all([
       import("./tripCreateCoordinator"),

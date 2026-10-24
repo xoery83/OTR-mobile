@@ -52,6 +52,9 @@ async function main() {
         ? { coreConnection: trip.coreConnection }
         : {}),
       tripCreatePort: trip?.tripCreatePort,
+      ...(trip && "tripPersonCloudCreatePort" in trip
+        ? { tripPersonCloudCreatePort: trip.tripPersonCloudCreatePort }
+        : {}),
       captureMaterialCustody: runtime?.captureMaterialCustody,
       universalImportPort: universal?.universalImportPort,
       universalOriginalSourcePort: originals?.universalOriginalSourcePort,

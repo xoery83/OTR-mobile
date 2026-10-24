@@ -224,3 +224,80 @@ it("cold request may refresh once; old Account generation cannot commit readback
       .get(),
   ).toMatchObject({ status: "PROCESSING" });
 });
+it("AUTH-paused operations never schedule a timer retry", async () => {
+  const f = fixture();
+  f.sql.exec(
+    "UPDATE sync_operations SET status='RETRYABLE',failure_category='AUTH',next_attempt_at='2026-10-24T02:00:01.000Z'",
+  );
+  expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+    actionableNow: 0,
+    nextActionableAt: null,
+  });
+});
+it("a different trigger cannot steal a live read; one newer follow-up survives old completion", async () => {
+  const f = fixture(),
+    scope = await captureAccountRequestContext(f.tripId, async () => f.scope.accountId),
+    repo = createTripNormalReadbackRepository(
+      f.db,
+      async () => f.scope.accountId,
+      () => f.now,
+    );
+  let done!: () => void;
+  const first = repo.run(
+    scope,
+    f.createId,
+    () =>
+      new Promise<void>((r) => {
+        done = r;
+      }),
+    "v1",
+  );
+  await vi.waitFor(() => expect(done).toBeTypeOf("function"));
+  const next = vi.fn().mockResolvedValue(undefined);
+  expect(await repo.run(scope, f.createId, next, "v2")).toBe(false);
+  expect(next).not.toHaveBeenCalled();
+  done();
+  expect(await first).toBe(true);
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE entity_type='TRIP_READBACK'")
+      .get(),
+  ).toMatchObject({ status: "RETRYABLE" });
+  expect(await repo.run(scope, f.createId, next, "v2")).toBe(true);
+  expect(next).toHaveBeenCalledTimes(1);
+});
+it("late old ACK cannot complete a newer claim after lease expiry", async () => {
+  const f = fixture();
+  let now = f.now;
+  const scope = await captureAccountRequestContext(
+      f.tripId,
+      async () => f.scope.accountId,
+    ),
+    repo = createTripNormalReadbackRepository(
+      f.db,
+      async () => f.scope.accountId,
+      () => now,
+    );
+  let done!: () => void;
+  const first = repo.run(
+    scope,
+    f.createId,
+    () =>
+      new Promise<void>((r) => {
+        done = r;
+      }),
+    "v1",
+  );
+  await vi.waitFor(() => expect(done).toBeTypeOf("function"));
+  now += 30001;
+  expect(await repo.run(scope, f.createId, async () => {}, "v2")).toBe(true);
+  done();
+  expect(await first).toBe(false);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT status,json_extract(payload_json,'$.triggerVersion') AS version FROM sync_operations WHERE entity_type='TRIP_READBACK'",
+      )
+      .get(),
+  ).toMatchObject({ status: "COMPLETED", version: "v2" });
+});

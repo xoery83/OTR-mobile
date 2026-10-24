@@ -38,6 +38,7 @@ function fixture() {
     recoverP1Readback: vi.fn().mockResolvedValue(undefined),
     runCreate: vi.fn().mockResolvedValue({}),
     runMetadata: vi.fn().mockResolvedValue({}),
+    runPerson: vi.fn().mockResolvedValue({}),
     runP1: vi.fn().mockResolvedValue({}),
     isP1Item: vi.fn().mockResolvedValue(false),
     participantsReady: vi.fn().mockResolvedValue(false),
@@ -190,4 +191,29 @@ it("only sends manual P1 after exact participant qualification, leaving local-pr
     tripId: f.tripId,
     operationId: coreId,
   });
+});
+it("isolates an ordinary failed Trip without poisoning another eligible Trip", async () => {
+  const f = fixture(),
+    trip2 = randomUUID(),
+    op2 = randomUUID(),
+    second = {
+      ...f.create,
+      id: op2,
+      trip_id: trip2,
+      entity_id: trip2,
+      idempotency_key: op2,
+      payload_json: JSON.stringify({
+        ...JSON.parse(f.create.payload_json),
+        tripId: trip2,
+      }),
+    };
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockResolvedValueOnce([f.create, second])
+    .mockResolvedValue([]);
+  f.deps.runCreate.mockRejectedValueOnce(Error("network")).mockResolvedValue({});
+  const result = await f.run();
+  expect(result.blockedTripIds).toEqual([f.tripId]);
+  expect(f.deps.runCreate).toHaveBeenCalledTimes(2);
+  expect(f.deps.recoverTripReadback).toHaveBeenCalledWith(trip2, op2);
 });

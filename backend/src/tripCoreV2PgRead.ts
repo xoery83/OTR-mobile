@@ -1,3 +1,4 @@
+import { readCoreGate, type CoreGateMode } from "./tripSustainedGate";
 import { isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
@@ -35,6 +36,7 @@ export function createCorePgReader(
   connection: CorePgConnection,
   hash: ImportHash,
   authority?: CorePgReadAuthority,
+  gateMode?: CoreGateMode,
 ) {
   async function snapshot(
     actorAccountId: string,
@@ -77,10 +79,8 @@ export function createCorePgReader(
         if (!actor.active) throw new Error("NOT_VISIBLE");
         if (
           !(
-            await lease.query(
-              "SELECT runtime_enabled FROM public.trip_core_activation_gate WHERE singleton",
-            )
-          ).rows[0]?.runtime_enabled
+            await readCoreGate(lease, actorAccountId, tripId, gateMode, "runtime_enabled")
+          )?.runtime_enabled
         )
           throw new Error("CORE_CAPABILITY_CLOSED");
         const state = (
@@ -196,11 +196,7 @@ export function createCorePgReader(
               (await allowed());
           }
           const gate = enabled
-            ? (
-                await lease.query(
-                  "SELECT enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
-                )
-              ).rows[0]
+            ? await readCoreGate(lease, actorAccountId, tripId, gateMode)
             : undefined;
           const normal = isNormalP1Gate(gate);
           const result = enabled

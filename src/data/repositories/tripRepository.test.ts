@@ -3432,3 +3432,88 @@ it("atomically creates structured V2 Trip with six named travelers and an unchan
   expect(proof).toMatchObject({ formatVersion: 2, destinations: command.destinations });
   expect(proof).not.toHaveProperty("travelers");
 });
+
+it("keeps structured Trip pending until current independent readback and authored Persons finish", async () => {
+  const f = local();
+  const operationId = randomUUID(),
+    tripId = randomUUID();
+  const slot = {
+    operationId: randomUUID(),
+    personId: randomUUID(),
+    displayName: "New traveler",
+  };
+  const saved = await f.repo.createTrip({
+    operationId,
+    tripId,
+    name: "Verified only",
+    syncFormatVersion: 2,
+    destinations: [],
+    cloudTravelers: { dataOwnership: "CLOUD_SHARED_AUTHORED", slots: [slot] },
+  });
+  const metadata = {
+    name: saved.name,
+    destination: null,
+    startDate: null,
+    endDate: null,
+    destinations: [],
+  };
+  const receipt = {
+    ...metadata,
+    operationId,
+    tripId,
+    formatVersion: 2 as const,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    metadataRevision: 0 as const,
+  };
+  expect((await f.repo.acceptCreate(receipt)).syncStatus).toBe("PENDING_UPDATE");
+  expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("PENDING_UPDATE");
+  await f.repo.retainMetadataSnapshot(
+    { formatVersion: 3, actorAccountId: accountA, tripId, metadataRevision: 0, metadata },
+    randomUUID(),
+  );
+  // An actual snapshot alone cannot hide an unresolved authored Person operation.
+  for (const status of ["DEPENDENCY_BLOCKED", "RETRYABLE", "FAILED", "CONFLICT"]) {
+    f.sql
+      .prepare("UPDATE sync_operations SET status=? WHERE id=?")
+      .run(status, slot.operationId);
+    expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("PENDING_UPDATE");
+  }
+  // Isolated queue-state projection: worker qualification itself is tested in Person tests.
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(slot.operationId);
+  expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("SYNCED");
+  const update = {
+    formatVersion: 3 as const,
+    operationId: randomUUID(),
+    tripId,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Newer edit" },
+  };
+  await f.repo.updateMetadata(update);
+  await f.repo.acceptMetadataUpdate({
+    ...update,
+    actorAccountId: accountA,
+    resultMetadataRevision: 1,
+  });
+  // Old successful snapshot cannot qualify a newer accepted revision.
+  expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("PENDING_UPDATE");
+  await f.repo.retainMetadataSnapshot(
+    {
+      formatVersion: 3,
+      actorAccountId: accountA,
+      tripId,
+      metadataRevision: 1,
+      metadata: update.after,
+    },
+    randomUUID(),
+  );
+  expect((await f.repo.listTrips()).find((t) => t.id === tripId)?.syncStatus).toBe(
+    "SYNCED",
+  );
+});

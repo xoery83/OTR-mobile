@@ -1,3 +1,5 @@
+import { authoredCloudTravelersSchema } from "@/domain/trip/tripPersonCloudCreate";
+import { retainAuthoredCloudTravelerWithinTransaction } from "./tripPersonCloudCreateRepository";
 import { retainTripMetadataConfirmation } from "./tripMetadataConfirmation";
 import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
 import { parseLocalTripDestinations } from "@/domain/trip/localTripDestination";
@@ -58,6 +60,7 @@ type Row = {
   accepted_at: string | null;
   selected_cover_asset_id?: string | null;
   metadata_pending?: number;
+  metadata_verified?: number;
 };
 const originalCreateVersion = (row: Row): 2 | undefined => {
   if (!row.create_payload_json || !row.create_operation_id) return undefined;
@@ -80,7 +83,7 @@ const trip = (row: Row): Trip => ({
   updatedAt: row.updated_at,
   deletedAt: null,
   syncStatus: row.accepted_at
-    ? row.metadata_pending
+    ? row.metadata_pending || (originalCreateVersion(row) === 2 && !row.metadata_verified)
       ? "PENDING_UPDATE"
       : "SYNCED"
     : "PENDING_CREATE",
@@ -210,7 +213,7 @@ export function createTripRepository(
     coreUuid.parse(id);
     const scope = await captureAccountScope(account);
     const row = await database.getFirstAsync<Row>(
-      "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
+      "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND ((op.entity_type='TRIP' AND op.operation_type='UPDATE_TRIP_METADATA') OR (op.entity_type='TRIP_LOCAL_ACTION' AND op.operation_type='TRIP_METADATA_DEFERRED') OR (op.entity_type='TRIP_PERSON' AND op.operation_type='TRIP_PERSON_CLOUD_CREATE') OR (op.entity_type='TRIP_READBACK' AND op.operation_type='TRIP_NORMAL_READBACK')) AND op.status<>'COMPLETED') AS metadata_pending,EXISTS(SELECT 1 FROM local_trip_metadata_confirmations verified WHERE verified.account_id=local_trip_containers.account_id AND verified.trip_id=local_trip_containers.id AND verified.source_kind='SNAPSHOT' AND verified.metadata_revision >= (SELECT MAX(accepted.metadata_revision) FROM local_trip_metadata_confirmations accepted WHERE accepted.account_id=local_trip_containers.account_id AND accepted.trip_id=local_trip_containers.id)) AS metadata_verified FROM local_trip_containers WHERE account_id=? AND id=?",
       scope.accountId,
       id,
     );
@@ -244,7 +247,7 @@ export function createTripRepository(
     async listTrips(): Promise<Trip[]> {
       const scope = await captureAccountScope(account);
       const rows = await database.getAllAsync<Row>(
-        "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
+        "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND ((op.entity_type='TRIP' AND op.operation_type='UPDATE_TRIP_METADATA') OR (op.entity_type='TRIP_LOCAL_ACTION' AND op.operation_type='TRIP_METADATA_DEFERRED') OR (op.entity_type='TRIP_PERSON' AND op.operation_type='TRIP_PERSON_CLOUD_CREATE') OR (op.entity_type='TRIP_READBACK' AND op.operation_type='TRIP_NORMAL_READBACK')) AND op.status<>'COMPLETED') AS metadata_pending,EXISTS(SELECT 1 FROM local_trip_metadata_confirmations verified WHERE verified.account_id=local_trip_containers.account_id AND verified.trip_id=local_trip_containers.id AND verified.source_kind='SNAPSHOT' AND verified.metadata_revision >= (SELECT MAX(accepted.metadata_revision) FROM local_trip_metadata_confirmations accepted WHERE accepted.account_id=local_trip_containers.account_id AND accepted.trip_id=local_trip_containers.id)) AS metadata_verified FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
         scope.accountId,
       );
       await assertAccountRequestContext(scope, account);
@@ -280,6 +283,19 @@ export function createTripRepository(
       });
     },
     async createTrip(input: CreateTripInput): Promise<Trip> {
+      const authored =
+        input.cloudTravelers === undefined
+          ? undefined
+          : authoredCloudTravelersSchema.parse(input.cloudTravelers);
+      if (authored && (input.travelers !== undefined || input.syncFormatVersion !== 2))
+        throw Error("PERSON_OWNERSHIP_AMBIGUOUS");
+      if (
+        authored &&
+        (new Set(authored.slots.map((s) => s.personId)).size !== authored.slots.length ||
+          new Set(authored.slots.map((s) => s.operationId)).size !==
+            authored.slots.length)
+      )
+        throw Error("PERSON_DUPLICATE_INTENT");
       const destinations =
         input.destinations === undefined
           ? undefined
@@ -401,6 +417,16 @@ export function createTripRepository(
             row.created_at,
           );
           result = { ...result!, destinations: savedDestinations };
+          if (authored) {
+            for (const slot of authored.slots)
+              await retainAuthoredCloudTravelerWithinTransaction(
+                database,
+                { ...scope, tripId: input.tripId },
+                account,
+                { ...slot, tripId: input.tripId, dataOwnership: authored.dataOwnership },
+                clock,
+              );
+          }
           if (input.travelers) {
             await initializeLocalTripPersons(
               database,
@@ -500,7 +526,7 @@ export function createTripRepository(
           )
             throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
           const row = await database.getFirstAsync<Row>(
-            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED') AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
+            "SELECT *,(SELECT payload_json FROM sync_operations original WHERE original.id=local_trip_containers.create_operation_id AND original.owner_user_id=local_trip_containers.account_id) AS create_payload_json,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND ((op.entity_type='TRIP' AND op.operation_type='UPDATE_TRIP_METADATA') OR (op.entity_type='TRIP_LOCAL_ACTION' AND op.operation_type='TRIP_METADATA_DEFERRED') OR (op.entity_type='TRIP_PERSON' AND op.operation_type='TRIP_PERSON_CLOUD_CREATE') OR (op.entity_type='TRIP_READBACK' AND op.operation_type='TRIP_NORMAL_READBACK')) AND op.status<>'COMPLETED') AS metadata_pending,EXISTS(SELECT 1 FROM local_trip_metadata_confirmations verified WHERE verified.account_id=local_trip_containers.account_id AND verified.trip_id=local_trip_containers.id AND verified.source_kind='SNAPSHOT' AND verified.metadata_revision >= (SELECT MAX(accepted.metadata_revision) FROM local_trip_metadata_confirmations accepted WHERE accepted.account_id=local_trip_containers.account_id AND accepted.trip_id=local_trip_containers.id)) AS metadata_verified FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
             scope.accountId,
             accepted.tripId,
             accepted.operationId,

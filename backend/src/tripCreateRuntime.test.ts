@@ -10,18 +10,23 @@ const f = vi.hoisted(() => ({
   receipt: vi.fn(),
   core: vi.fn(),
   metadata: vi.fn(),
+  person: vi.fn(),
 }));
 vi.mock("node:fs/promises", () => ({ open: f.open }));
 vi.mock("./tripCoreV2PgConnection", () => ({
   createTripPgConnection: f.pg,
   createTripMetadataPgConnection: f.pg,
   createCorePgConnection: f.pg,
+  createPersonPgConnection: f.pg,
 }));
 vi.mock("./tripMetadataV2PgStorage", () => ({
   createTripMetadataV2PgStorage: f.metadata,
 }));
 vi.mock("./tripCoreV2PgHttpConnection", () => ({ createCorePgHttpConnection: f.core }));
 vi.mock("./tripCreatePgStorage", () => ({ createTripPgStorage: f.storage }));
+vi.mock("./tripPersonCloudCreatePg", () => ({
+  createTripPersonCloudCreatePgPort: f.person,
+}));
 const environment = {
   OTR_DEV_BACKEND_NETWORK_MODE: "host",
   OTR_DEV_SUPABASE_URL: "https://tuqigdxrvrerfewsxqgm.supabase.co",
@@ -252,3 +257,84 @@ it("reuses the existing private Create mount for a disjoint normal runtime and e
     runtime!.tripCreatePort.receipt(config.actorAccountId, randomUUID()),
   ).rejects.toMatchObject({ code: "TRIP_NORMAL_DEV_CLOSED" });
 });
+
+it("reuses the private mount for non-expiring sustained ports without minting an Account/Trip permission", async () => {
+  const v = fixture();
+  const config = {
+    version: 3,
+    enabled: true,
+    tripPg: v.config.tripPg,
+    metadataPg: v.config.tripPg,
+    corePg: v.config.tripPg,
+    personPg: v.config.tripPg,
+  };
+  f.open.mockResolvedValue({
+    stat: async () => v.stat,
+    readFile: async () => JSON.stringify(config),
+    close: v.close,
+  });
+  f.core.mockReturnValue({
+    hash: vi.fn(),
+    commands: { withLockedCommand: vi.fn() },
+    readOperation: vi.fn(),
+  });
+  f.metadata.mockReturnValue({ update: vi.fn(), receipt: vi.fn(), snapshot: vi.fn() });
+  const person = { create: vi.fn(), receipt: vi.fn(async () => null) };
+  f.person.mockReturnValue(person);
+  const runtime = await loadDevTripCreateRuntime(environment);
+  expect(f.pg).toHaveBeenCalledTimes(4);
+  expect(f.core).toHaveBeenCalledWith(v.connection, expect.any(Function), undefined, {
+    sustainedDev: true,
+  });
+  expect(runtime && "tripPersonCloudCreatePort" in runtime).toBe(true);
+  if (!runtime || !("tripPersonCloudCreatePort" in runtime))
+    throw Error("MISSING_PERSON_PORT");
+  expect(
+    await runtime.tripPersonCloudCreatePort.receipt(
+      v.config.actorAccountId,
+      v.config.request.tripId,
+      v.config.request.operationId,
+    ),
+  ).toBeNull();
+  expect(person.receipt).toHaveBeenCalledWith(
+    v.config.actorAccountId,
+    v.config.request.tripId,
+    v.config.request.operationId,
+  );
+  await runtime.close();
+  await expect(
+    runtime.tripPersonCloudCreatePort.receipt(
+      v.config.actorAccountId,
+      v.config.request.tripId,
+      v.config.request.operationId,
+    ),
+  ).rejects.toMatchObject({ code: "PERSON_CREATE_CLOSED" });
+  await expect(
+    runtime.tripCreatePort.create(v.config.actorAccountId, v.config.request),
+  ).rejects.toMatchObject({ code: "TRIP_SUSTAINED_DEV_CLOSED" });
+});
+it.each(["actorAccountId", "request", "expiresAt", "missingPerson"])(
+  "rejects mixed or incomplete sustained mount %s",
+  async (field) => {
+    const v = fixture();
+    const config: Record<string, unknown> = {
+      version: 3,
+      enabled: true,
+      tripPg: v.config.tripPg,
+      metadataPg: v.config.tripPg,
+      corePg: v.config.tripPg,
+      personPg: v.config.tripPg,
+    };
+    if (field === "missingPerson") delete config.personPg;
+    else config[field] = field === "request" ? v.config.request : v.config.expiresAt;
+    f.open.mockResolvedValue({
+      stat: async () => v.stat,
+      readFile: async () => JSON.stringify(config),
+      close: v.close,
+    });
+    await expect(loadDevTripCreateRuntime(environment)).rejects.toThrow(
+      "TRIP_CREATE_RUNTIME_UNAVAILABLE",
+    );
+    expect(f.pg).not.toHaveBeenCalled();
+  },
+);

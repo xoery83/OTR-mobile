@@ -1,3 +1,4 @@
+import { localPersonNameSlotSchema } from "./localTripPerson";
 import { z } from "zod";
 import { coreUuid, coreText } from "./tripCoreV2";
 export const personCloudCreateKind = "TRIP_PERSON_CLOUD_CREATE";
@@ -36,3 +37,9 @@ export const personCloudCreateReceiptSchema = z
       c.addIssue({ code: "custom", message: "PERSON_RECEIPT_BINDING" });
   });
 export type PersonCloudCreateReceipt = z.infer<typeof personCloudCreateReceiptSchema>;
+
+export const authoredCloudTravelersSchema = z.strictObject({
+  dataOwnership: z.literal("CLOUD_SHARED_AUTHORED"),
+  slots: z.array(localPersonNameSlotSchema).max(256),
+});
+export type AuthoredCloudTravelers = z.infer<typeof authoredCloudTravelersSchema>;

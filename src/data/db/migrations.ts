@@ -1,3 +1,4 @@
+import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
 import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
 import { tripMetadataConfirmationsMigration } from "./migrations/tripMetadataConfirmations";
 import { localTripDestinationsMigration } from "./migrations/localTripDestinations";
@@ -1729,4 +1730,5 @@ export const migrations: Migration[] = [
   localTripDestinationsMigration,
   tripMetadataConfirmationsMigration,
   captureMixedInputsMigration,
+  tripPersonCloudCreateMigration,
 ];

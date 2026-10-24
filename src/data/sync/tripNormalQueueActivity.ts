@@ -22,6 +22,7 @@ type Row = {
   idempotency_key: string;
   payload_json: string;
   status: string;
+  failure_category: string | null;
   dependency_operation_id: string | null;
   next_attempt_at: string | null;
   last_error_code: string | null;
@@ -62,7 +63,7 @@ export async function getNormalTripQueueActivity(
       );
       for (const op of ops) {
         try {
-          if (op.id !== op.idempotency_key) continue;
+          if (op.id !== op.idempotency_key || op.failure_category === "AUTH") continue;
           let eligible = false;
           if (op.id === create.id) eligible = true;
           else if (create.status !== "COMPLETED") continue;

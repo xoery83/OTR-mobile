@@ -2,6 +2,7 @@ import type * as SQLite from "expo-sqlite";
 
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import type { AccountUserId, TripId, TripPerson } from "@/domain/trip/person";
+import { personCloudCreateKind } from "@/domain/trip/tripPersonCloudCreate";
 import { localPersonCreateKind } from "@/domain/trip/localTripPerson";
 
 export function createTripPersonRepository(
@@ -28,8 +29,8 @@ export function createTripPersonRepository(
            m.participation_revision AS participationRevision,
            EXISTS (SELECT 1 FROM sync_operations op WHERE op.owner_user_id=?
              AND op.trip_id=m.journey_id AND op.entity_id=m.id
-             AND op.entity_type='TRIP_PERSON' AND op.operation_type=?
-             AND op.status<>'COMPLETED' AND m.status='local'
+             AND op.entity_type='TRIP_PERSON' AND op.operation_type IN (?,?)
+             AND m.status='local'
              AND m.participation_revision IS NULL) AS localPending
          FROM ledger_members m
          WHERE m.journey_id = ?
@@ -38,6 +39,7 @@ export function createTripPersonRepository(
          ORDER BY m.display_name ASC, m.id ASC`,
         userId,
         localPersonCreateKind,
+        personCloudCreateKind,
         tripId,
         userId,
       );
