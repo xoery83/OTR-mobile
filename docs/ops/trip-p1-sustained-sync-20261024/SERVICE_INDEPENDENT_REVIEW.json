@@ -1,0 +1,28 @@
+{
+  "fixed_sha": "4b9f2c4c52128c67c0b1c4d77feeac097a307355",
+  "scope": "service.py/service_test.py mount, diagnostic and restore delta only",
+  "conclusion": "PASS_SCOPED_LOCAL_TRANSPORT",
+  "findings": [],
+  "validation": "15 local mocked transport tests independently PASS; no remote execution",
+  "checks": [
+    "approved Gate SHA fixed; runtime canonicalSHA and strictv3/fourPg/canonicalDEV/CA/secretmin validation",
+    "window<=900 and activation>=240 seconds reserve; restoration identifies samewindow exact mount only",
+    "baseline2ea3 HostConfig for sustained, oldf072 finite preserved; only exactnewROcreate mount normalized",
+    "root-owned0440/nlink1 private runtime; fourPg secrets included in diagnostic redaction",
+    "prechange sanitizeddiagnostic fsync; startup/image/bundle/health/environment/mount verification failclosed",
+    "restoration exact baseline/mounts before unlink; foreign/symlink/unverified file never deleted"
+  ],
+  "wrapper_handoff": [
+    "Transport is not SQL policy/Person closure proof; sustained wrapper must use renderer four-role/policy closed_verified, not old finite CLI reconcile proof",
+    "Retained cleanup guard accepts<=16384-byte private runtime; wrapper must bound actual serializedv3 config to this limit",
+    "Retire pending transition watchdog after successful persistent service handoff, per approved Gate"
+  ],
+  "not_run": [
+    "DEV",
+    "Remote SSH",
+    "SQL",
+    "GUI",
+    "Deployment"
+  ],
+  "future": "Auth/activation wrapper awaits separate fixed bounded review; no approval of unreviewed wrapper inferred."
+}

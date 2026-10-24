@@ -55,7 +55,7 @@ def remote_locked(p,action,secret):
     assert all(m['Source'].startswith(str(root)+'/') and m['RW'] is False for m in extras)
     def normalize_owned_host(value):
         result=dict(value); result['Binds']=baseline['hostConfig']['Binds']
-        if sustained and result.get('Mounts') != baseline['hostConfig'].get('Mounts'):
+        if sustained and host_config({'Mounts':result.get('Mounts')}) != host_config({'Mounts':baseline['hostConfig'].get('Mounts')}):
             remaining=[]; added=[]
             for mount in result.get('Mounts',[]):
                 if mount.get('Target')=='/run/otr/trip-create-runtime.json':

@@ -5,7 +5,7 @@ import service, control
 from control_test import plan
 
 class Tests(unittest.TestCase):
- def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False,bad_second=False,broken_second=False,sustained=False,bad_runtime=False):
+ def fixture(self,action='activate',wrong_mount=False,health_failure=False,diagnostic_failure=False,exited=False,wait_expiry=False,persist_failure=False,nonalphabetical=False,bad_ca=False,bad_second=False,broken_second=False,sustained=False,bad_runtime=False,mount_order=False):
   temporary=tempfile.TemporaryDirectory();root=pathlib.Path(temporary.name)
   p=plan();p['ownerAuthorized']=True;p['payloads']=control.PAYLOADS
   p['databaseCA']=pathlib.Path(__file__).with_name('supabase-prod-ca-2021.crt').read_text()
@@ -27,6 +27,7 @@ class Tests(unittest.TestCase):
   p['baseline']={'mounts':mounts,'hostConfig':hc,'environmentSHA256':'cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f','custodySHA256':realhash(custody.read_bytes()).hexdigest(),'configHashes':{str(f):realhash(f.read_bytes()).hexdigest()for f in sorted(basefiles)},'composeFiles':[str(f)for f in basefiles]}
   base={'image':control.IMAGE,'command':['node','server-capture.mjs'],'volumes':[{'source':m['source'],'target':m['destination'],'read_only':not m['rw']} for m in mounts]}
   state={'Image':control.IMAGE,'Config':{'User':'otr','Cmd':['node','server-capture.mjs'],'Env':[k+'='+v for k,v in env.items()],'Labels':{'com.docker.compose.project.config_files':','.join(str(f)for f in basefiles)}},'Mounts':[{'Source':m['source'],'Destination':m['destination'],'RW':m['rw']} for m in mounts],'HostConfig':hc,'State':{'Status':'running','Running':True,'Health':{'Status':'healthy'}}}
+  if mount_order:state['HostConfig']={**hc,'Mounts':list(reversed(copy.deepcopy(hc['Mounts'])))}
   prefix='/opt/otr/dev-backend/env/c-finite-'+p['windowId']; remote_root=root/'finite'
   def path(v):
    text=str(v)
@@ -109,6 +110,7 @@ class Tests(unittest.TestCase):
     self.assertEqual(composeCalls,beforecalls)
   result["fixtureComposeCalls"]=composeCalls
   temporary.cleanup();return result
+ def test_sustained_accepts_only_mount_order_difference(self):self.assertTrue(self.fixture('restore',sustained=True,mount_order=True)['verified'])
  def test_sustained_private_v3_mount_and_exact_restore(self):self.assertTrue(self.fixture('restore',sustained=True)['verified'])
  def test_sustained_wrong_runtime_hash_fails_without_success(self):self.assertFalse(self.fixture(sustained=True,bad_runtime=True)['verified'])
  def test_non_alphabetical_compose_order_survives_sorted_hash_map(self):self.assertTrue(self.fixture('restore',nonalphabetical=True)['verified'])

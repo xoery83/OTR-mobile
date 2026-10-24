@@ -13,11 +13,28 @@ const project = "tuqigdxrvrerfewsxqgm",
   origin = `https://${project}.supabase.co`;
 export const autonomousOwnerSHA =
   "a6682cdcfec889d64d02627c1f8fa144db0e828b77841e66fdac2bfc405d5e5e";
-export function exactIdentityQuery(label: "A" | "B") {
-  const email = `otr-meta-qa-20261022-01-${label.toLowerCase()}@example.invalid`;
+const sustainedGateSHA =
+  "0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0";
+const sustainedOwnerSHA =
+  "52d1a268af09506c311644529d8d26e050515b345a4b7d5e32c6a68e8ae8a956";
+type Profile = "LEGACY_C" | "AD5_SUSTAINED";
+function identityEmail(label: "A" | "B", profile: Profile) {
+  return profile === "AD5_SUSTAINED"
+    ? `otr.ad5.sustained.20261024.${label.toLowerCase()}@example.invalid`
+    : `otr-meta-qa-20261022-01-${label.toLowerCase()}@example.invalid`;
+}
+function identityQuery(label: "A" | "B", profile: Profile) {
+  if (label !== "A" && label !== "B") throw Error("LABEL_NOT_ALLOWED");
+  const email = identityEmail(label, profile);
   return `BEGIN READ ONLY;\nSELECT id,email,created_at FROM auth.users\nWHERE email = '${email}';\nROLLBACK;\n`;
 }
-type Input = {
+export function exactIdentityQuery(label: "A" | "B") {
+  return identityQuery(label, "LEGACY_C");
+}
+export function exactSustainedIdentityQuery(label: "A" | "B") {
+  return identityQuery(label, "AD5_SUSTAINED");
+}
+export type InPlaceAuthInput = {
   gateJSON: string;
   gateSHA256: string;
   label: "A" | "B";
@@ -29,10 +46,12 @@ type Input = {
     utc: string;
     rows: unknown[];
     querySHA256: string;
+    noUnresolvedPriorAttempt?: boolean;
   };
 };
-export async function executeInPlace(
-  input: Input,
+async function executeScopedInPlace(
+  input: InPlaceAuthInput,
+  profile: Profile,
   environment: NodeJS.ProcessEnv = process.env,
   transport: typeof fetch = fetch,
 ) {
@@ -46,8 +65,11 @@ export async function executeInPlace(
     const gate = JSON.parse(input.gateJSON),
       label = input.label;
     if (label !== "A" && label !== "B") throw Error("LABEL_NOT_ALLOWED");
-    const email = `otr-meta-qa-20261022-01-${label.toLowerCase()}@example.invalid`,
-      display = `DEV-METADATA-QA-20261022-01-${label}`;
+    const email = identityEmail(label, profile),
+      display =
+        profile === "AD5_SUSTAINED"
+          ? `AD5 Sustained 20261024 ${label}`
+          : `DEV-METADATA-QA-20261022-01-${label}`;
     const start = Date.parse(gate.startsAt),
       end = Date.parse(gate.expiresAt);
     const assertScope = () => {
@@ -55,8 +77,17 @@ export async function executeInPlace(
         now = Date.now();
       if (
         gate.ownerAuthorized !== true ||
-        gate.scope !== "AUTONOMOUS_DEV_C_AUTH_IN_PLACE" ||
-        gate.ownerAuthorizationSHA256 !== autonomousOwnerSHA ||
+        gate.scope !==
+          (profile === "AD5_SUSTAINED"
+            ? "AD5_SUSTAINED_AUTH_IN_PLACE"
+            : "AUTONOMOUS_DEV_C_AUTH_IN_PLACE") ||
+        gate.ownerAuthorizationSHA256 !==
+          (profile === "AD5_SUSTAINED" ? sustainedOwnerSHA : autonomousOwnerSHA) ||
+        (profile === "AD5_SUSTAINED" &&
+          (gate.approvedGateSHA256 !== sustainedGateSHA ||
+            input.absence?.noUnresolvedPriorAttempt !== true ||
+            !/^\d{4}-\d{2}-\d{2}T[0-9:.]+Z$/.test(gate.startsAt ?? "") ||
+            !/^\d{4}-\d{2}-\d{2}T[0-9:.]+Z$/.test(gate.expiresAt ?? ""))) ||
         gate.project !== project ||
         !Number.isFinite(start) ||
         !Number.isFinite(end) ||
@@ -72,7 +103,7 @@ export async function executeInPlace(
         !Array.isArray(input.absence.rows) ||
         input.absence.rows.length !== 0 ||
         input.absence.querySHA256 !==
-          createHash("sha256").update(exactIdentityQuery(label)).digest("hex") ||
+          createHash("sha256").update(identityQuery(label, profile)).digest("hex") ||
         !Number.isFinite(proof) ||
         proof < start ||
         proof > now ||
@@ -137,6 +168,8 @@ export async function executeInPlace(
       throw Error("AUTH_CREATE_STOP");
     }
     stage = "IDENTITY_VALIDATION";
+    if (profile === "AD5_SUSTAINED" && diagnostics.at(-1)?.httpStatus !== 201)
+      throw Error("AUTH_201_RECEIPT_REQUIRED");
     if (
       data.user?.email !== email ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -171,6 +204,20 @@ export async function executeInPlace(
       receipt: null,
     };
   }
+}
+export function executeInPlace(
+  input: InPlaceAuthInput,
+  environment: NodeJS.ProcessEnv = process.env,
+  transport: typeof fetch = fetch,
+) {
+  return executeScopedInPlace(input, "LEGACY_C", environment, transport);
+}
+export function executeSustainedInPlace(
+  input: InPlaceAuthInput,
+  environment: NodeJS.ProcessEnv = process.env,
+  transport: typeof fetch = fetch,
+) {
+  return executeScopedInPlace(input, "AD5_SUSTAINED", environment, transport);
 }
 export async function inPlaceMain() {
   try {
