@@ -1,0 +1,21 @@
+{
+  "sha": "bfbc117c3f450d35d069e94aa8ae402b0e53f9aa",
+  "parent": "6e01a465f5adc132871d0850abc6337461db6693",
+  "status": "PASS_FOCUSED_LOCAL_L2",
+  "findings": [],
+  "tests": {
+    "baseline": 82,
+    "extended": 83,
+    "files": 2,
+    "reviewerNegative": "Successful scoped completion preserves already-open P1 editor opened/draft identity and does not reopen repository draft"
+  },
+  "verified": [
+    "Existing completion event only; Account, current generation and matching Trip filter unchanged owning read path.",
+    "Focus cleanup unsubscribes, cancels pending read ticket and AppState listener. Preparation also requires active focus flag.",
+    "New Source read replaces stale pending token with accepted token; unrelated/stale events ignored.",
+    "No form state cleared or editor key changed by completion refresh; no queue/network authority added."
+  ],
+  "DEV": false,
+  "GUI": false,
+  "remaining": "Root actual cold recovery and accepted Home/Day preview/edit remain Native acceptance, not inferred from component harness tests."
+}

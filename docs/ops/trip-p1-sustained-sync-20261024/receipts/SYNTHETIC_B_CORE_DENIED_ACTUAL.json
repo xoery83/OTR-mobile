@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-24T06:55:12.496917+00:00",
+  "operatorOrdinal": 4,
+  "normalSyntheticAuthB": true,
+  "targetQaTrip": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+  "status": 404,
+  "errorCode": "NOT_VISIBLE",
+  "denied": true,
+  "readOnly": true,
+  "redirects": "prohibited"
+}

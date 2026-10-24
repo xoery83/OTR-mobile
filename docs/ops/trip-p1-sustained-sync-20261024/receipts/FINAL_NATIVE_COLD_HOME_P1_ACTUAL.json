@@ -1,0 +1,42 @@
+{
+  "observedAt": "2026-10-24T07:14:42.320527+00:00",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "appIdentity": "com.xoery.otrmobile",
+  "code": "7253c12",
+  "normalUiOnly": true,
+  "finalCold": {
+    "trip2Name": "AD5 Sustained 20261024 Auto Second Edited",
+    "destinations": [
+      "Queenstown"
+    ],
+    "currency": "USD",
+    "p1Name": "AD5 Sustained Auto P1 Verified",
+    "p1Start": "2026-11-02",
+    "p1End": "2026-11-03",
+    "p1Place": "Queenstown Gardens QA meeting point",
+    "p1SelectedParticipants": [
+      "0954dff9-a064-4763-8f7b-ec59fce9f521"
+    ],
+    "p1SelectedDisplayNames": [
+      "Synthetic Traveler Two"
+    ],
+    "canOpenAcceptedP1FromHome": true,
+    "canEditAcceptedP1AsCreator": true,
+    "noOpenDraft": true
+  },
+  "homeCompletion": {
+    "operationId": "3334e39a-7f3b-4045-81e4-38e469c50dbf",
+    "withoutRestartOrRouteToggle": true,
+    "automaticQueueCompleted": true,
+    "directHomeOpenAfterCompletion": true
+  },
+  "readAllowance": {
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "NativeUsed": 42,
+    "operatorUsed": 6,
+    "total": 48,
+    "limit": 96
+  },
+  "physicalAirplaneMode": "NOT_TESTED; offline contract fixtures and actual Native timeout/retained operation recovery are separate evidence",
+  "unchangedHistoricalData": "No reset/deletion/history replay; prior read-only preservation receipt retained"
+}

@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-24T07:05:20.188516+00:00",
+  "readOnly": true,
+  "reason": "Use exact approved post-runtime raw HostConfig hash; initial helper incorrectly compared a differently sorted four-mount projection with the pre-runtime normalized hash. No deployed change. Original observation retained.",
+  "rawHostConfigSHA256": "df2d008d29c14129954ca39acc650d5b0ca58dfdee1a01d57f9ead60532ebce5",
+  "approvedRawHostConfigSHA256": "df2d008d29c14129954ca39acc650d5b0ca58dfdee1a01d57f9ead60532ebce5",
+  "allApprovedRuntimeFieldsMatch": true,
+  "health": "healthy",
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95"
+}
