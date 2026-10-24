@@ -1,0 +1,14 @@
+{
+  "status": "LOCAL_ISOLATED_MODEL_TASK_DEPENDENCY_PASS",
+  "checks": [
+    "unknown root rejected atomically without table or membership change",
+    "both observed grantor edges/options preserved after install",
+    "temporary public CREATE revoked",
+    "owning empty admission table FORCE RLS; no business write",
+    "public clients receive no admission data/mutation rights",
+    "environment remains dormant",
+    "reapply refuses installed state without side effects"
+  ],
+  "hostedWrites": 0,
+  "providerCalls": 0
+}

@@ -160,7 +160,8 @@
     "backend/sql/universal_original_source_candidate.sql": "b93a6648f2831597c43e07e8c89bebd9f3c8d3832bf158d13752f95f1263ecf4",
     "backend/sql/universal_provider_admission_candidate.sql": "365db344435020d52b397824bc8b03384d2c07360a61d978692dfcf0e785c372",
     "backend/sql/universal_source_host_candidate.sql": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
-    "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95"
+    "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95",
+    "backend/sql/universal_model_task_dependency_candidate.sql": "5366c24291c3df8426cb350e7c1b428630e2906d6629d8e64f35d0ce26695576"
   },
   "blockers": [
     "OWNING_SOURCE_SQL_PREIMAGE_ACL_AND_READER_QUALIFICATION_REQUIRED",
@@ -210,6 +211,14 @@
       "sha256": "e917d6544c9f365134cb3983f7ed7987247ed68689800145ffbbf5167b3fad62",
       "nativeNormalFullButtonPath": "NOT_PASSED",
       "formalSourceProof": false
+    },
+    "modelTaskDependency": {
+      "original": "supabase/migrations/20261012000100_model_task_protected_admission.sql",
+      "originalSha256": "efee375bec1da7c12d33e7d7994d8983ad9fb32ba7851a56cc4f82b550d65e94",
+      "status": "LOCAL_ISOLATED_AND_INDEPENDENT_REVIEW_PASS_NOT_DEV_INSTALLED",
+      "review": "model-task-dependency/INDEPENDENT_REVIEW.json",
+      "actualPreimages": "model-task-dependency/ACTUAL_DEV_PREIMAGES.json",
+      "ownerMemberships": "Both observed grantor edges/options preserved; no unqualified revoke."
     }
   },
   "closedDeployment": {
@@ -273,7 +282,8 @@
     "devRuntimeEnabled": false,
     "syntheticActorAdminGrantCount": 0,
     "adminGatewayLogin": false,
-    "existingCp15Dependencies": "PRESENT"
+    "existingCp15Dependencies": "PRESENT",
+    "modelTaskDependency": "EXACT_EXISTING_OWNING_SQL_WITH_MEMBERSHIP_WRAPPER_READY_NOT_INSTALLED"
   },
   "nativeReadBudget": {
     "originalAdditionalNativeLimit": 72,
