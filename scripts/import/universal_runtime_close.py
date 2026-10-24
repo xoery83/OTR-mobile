@@ -27,7 +27,71 @@ def validate_runtime(plan):
     if not isinstance(files,list) or not files or len(set(files))!=len(files) or set(files)!=set(r['composeHashes']):raise ValueError('BASELINE_COMPOSE_PINS')
     for f,h in r['composeHashes'].items():
         if not f.startswith('/opt/otr/dev-backend/') or '..' in Path(f).parts or f==r['finiteComposeFile'] or not re.fullmatch('[0-9a-f]{64}',h):raise ValueError('COMPOSE_PATH')
+    retained={'originalContainerId','backupContainerName','baselineConfigSHA256','activeConfigSHA256'}
+    if retained.intersection(r):
+        if not retained.issubset(r) or not re.fullmatch('[0-9a-f]{64}',r['originalContainerId']) or r['backupContainerName']!='otr-universal-original-'+activation:raise ValueError('EXACT_RETAINED_ORIGINAL_REQUIRED')
+        for key in ['baselineConfigSHA256','activeConfigSHA256']:
+            if not re.fullmatch('[0-9a-f]{64}',r[key]):raise ValueError('RETAINED_CONFIG_PREIMAGE_REQUIRED')
     return r
+
+def retained_state(plan,call,check):
+    r=plan['runtime']
+    def lookup(name,kind='name'):
+        selector='^/'+name+'$' if kind=='name' else name
+        ids=call(['docker','container','ls','--all','--no-trunc','--format','{{.ID}}','--filter',kind+'='+selector]).strip().splitlines()
+        if not ids:return None
+        if len(ids)!=1 or not re.fullmatch('[0-9a-f]{64}',ids[0]):raise ValueError('CONTAINER_LOOKUP_UNCONFIRMED')
+        value=json.loads(call(['docker','inspect',ids[0]]))[0]
+        if value['Id']!=ids[0] or kind=='name' and value['Name']!='/'+name:raise ValueError('CONTAINER_LOOKUP_DRIFT')
+        return value
+    original=lookup(r['originalContainerId'],'id')
+    if original is None:raise ValueError('RETAINED_ORIGINAL_MISSING')
+    check(original,False)
+    if original['Name'] not in ['/'+r['container'],'/'+r['backupContainerName']]:raise ValueError('ORIGINAL_NAME_DRIFT')
+    if original['Name']=='/'+r['backupContainerName'] and original['State'].get('Running',False):raise ValueError('RETAINED_BACKUP_UNEXPECTEDLY_RUNNING')
+    current=lookup(r['container'])
+    backup=lookup(r['backupContainerName'])
+    if backup is not None and backup['Id']!=r['originalContainerId']:raise ValueError('BACKUP_IDENTITY_DRIFT')
+    if current is not None:
+        if current['Id']==r['originalContainerId']:
+            if backup is not None:raise ValueError('DUPLICATE_ORIGINAL_NAME')
+        else:
+            if original['Name']!='/'+r['backupContainerName']:raise ValueError('ORIGINAL_NOT_RETAINED')
+            check(current,True)
+    elif original['Name']!='/'+r['backupContainerName']:raise ValueError('ORIGINAL_NAME_UNCONFIRMED')
+    return current,original,lookup
+
+def restore_retained(plan,call,check,read_only=False):
+    r=plan['runtime'];current,original,lookup=retained_state(plan,call,check)
+    needed=current is None or current['Id']!=r['originalContainerId'] or not original['State'].get('Running',False)
+    if needed and read_only:raise RuntimeError('READ_ONLY_RUNTIME_STILL_ACTIVE')
+    if not needed:return
+    if current is not None and current['Id']!=r['originalContainerId']:
+        candidate=current['Id']
+        # All mutations use exact IDs. UNKNOWN outcomes are only inspected, never retried.
+        if current['State'].get('Running',False):
+            try:call(['docker','stop','--time','10',candidate])
+            except subprocess.SubprocessError:pass
+        stopped=lookup(candidate,'id')
+        if stopped is None:raise RuntimeError('CANDIDATE_DISAPPEARED_BEFORE_REMOVE')
+        check(stopped,True)
+        if stopped['State'].get('Running',False):raise RuntimeError('CANDIDATE_STOP_UNCONFIRMED')
+        # No force or volumes option: retained baseline and shared volumes cannot be removed.
+        try:call(['docker','rm',candidate])
+        except subprocess.SubprocessError:pass
+        if lookup(candidate,'id') is not None:raise RuntimeError('CANDIDATE_REMOVE_UNCONFIRMED')
+    original=lookup(r['originalContainerId'],'id');check(original,False)
+    if original['Name']=='/'+r['backupContainerName']:
+        if lookup(r['container']) is not None:raise ValueError('SERVICE_NAME_COLLISION')
+        try:call(['docker','rename',r['originalContainerId'],r['container']])
+        except subprocess.SubprocessError:pass
+        original=lookup(r['originalContainerId'],'id');check(original,False)
+        if original['Name']!='/'+r['container']:raise RuntimeError('ORIGINAL_RENAME_UNCONFIRMED')
+    if not original['State'].get('Running',False):
+        try:call(['docker','start',r['originalContainerId']])
+        except subprocess.SubprocessError:pass
+        original=lookup(r['originalContainerId'],'id');check(original,False)
+        if original['Name']!='/'+r['container'] or not original['State'].get('Running',False):raise RuntimeError('ORIGINAL_START_UNCONFIRMED')
 
 def service_projection(snapshot):
     # Return hashes only; never export raw environment/credentials from inspect.
@@ -56,6 +120,12 @@ def remote_close(plan,read_only=False):
         projection=service_projection(s)
         prefix='active' if active else 'baseline'
         if projection['environmentSHA256']!=r[prefix+'EnvironmentSHA256'] or projection['hostConfigSHA256']!=r[prefix+'HostConfigSHA256'] or projection['mountsSHA256']!=r[prefix+'MountsSHA256']:raise ValueError('SERVICE_PREIMAGE_DRIFT')
+        if 'originalContainerId' in r:
+            if sha(canonical(s['Config']))!=r[prefix+'ConfigSHA256']:raise ValueError('RETAINED_CONFIG_DRIFT')
+            if not active and s['Id']!=r['originalContainerId']:raise ValueError('RETAINED_ORIGINAL_ID_DRIFT')
+            if active:
+                marker=s['Config'].get('Labels',{})
+                if marker.get('io.otr.universal.activation')!=plan['activationId'] or marker.get('io.otr.universal.original-container')!=r['originalContainerId'] or s['Id']==r['originalContainerId']:raise ValueError('FINITE_CONTAINER_LABEL_DRIFT')
         expected=r['baselineComposeFiles']+([r['finiteComposeFile']] if active else [])
         if labels(s)!=expected:raise ValueError('COMPOSE_IDENTITY_DRIFT')
         extra=[m for m in s['Mounts'] if m['Destination']=='/run/otr/universal-runtime.json']
@@ -72,8 +142,13 @@ def remote_close(plan,read_only=False):
             except BlockingIOError:
                 if time.monotonic()>=until:raise RuntimeError('SERVICE_LOCK_UNCONFIRMED')
                 time.sleep(.1)
-        before=current();active=any(m['Destination']=='/run/otr/universal-runtime.json' for m in before['Mounts'])
-        check(before,active)
+        retained='originalContainerId' in r
+        if retained:
+            before,original,_=retained_state(plan,call,check)
+            active=before is None or before['Id']!=r['originalContainerId'] or not original['State'].get('Running',False)
+        else:
+            before=current();active=any(m['Destination']=='/run/otr/universal-runtime.json' for m in before['Mounts'])
+            check(before,active)
         directory=Path(r['runtimeSource']).parent
         if directory.exists() or directory.is_symlink():
             d=directory.lstat()
@@ -84,7 +159,9 @@ def remote_close(plan,read_only=False):
             if Path(path).exists() or Path(path).is_symlink():private_hash(path,h,mode)
             elif active:raise ValueError('MOUNT_FILE_MISSING')
         if active and read_only:raise RuntimeError('READ_ONLY_RUNTIME_STILL_ACTIVE')
-        if active:
+        if retained:
+            restore_retained(plan,call,check,read_only)
+        elif active:
             args=['docker','compose','-p','dev-backend']
             for f in r['baselineComposeFiles']:args+=['-f',f]
             environment=dict(os.environ,OTR_DEV_BACKEND_REVIEWED_IMAGE_ID=r['imageId'])
@@ -111,7 +188,7 @@ def remote_close(plan,read_only=False):
 
 def close_runtime(plan,read_only=False):
     validate_runtime(plan)
-    code='import fcntl,hashlib,json,os,re,stat,subprocess,time,uuid\nfrom pathlib import Path\n'+'\n\n'.join(inspect.getsource(f) for f in [canonical,sha,validate_runtime,service_projection,remote_close])+"\nprint(json.dumps(remote_close(json.load(__import__('sys').stdin),read_only="+repr(read_only)+")))"
+    code='import fcntl,hashlib,json,os,re,stat,subprocess,time,uuid\nfrom pathlib import Path\n'+'\n\n'.join(inspect.getsource(f) for f in [canonical,sha,validate_runtime,retained_state,restore_retained,service_projection,remote_close])+"\nprint(json.dumps(remote_close(json.load(__import__('sys').stdin),read_only="+repr(read_only)+")))"
     result=subprocess.run(['ssh','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8','root@178.105.151.143','python3 -c '+shlex.quote(code)],input=json.dumps(plan),capture_output=True,text=True,timeout=140)
     if result.returncode:raise RuntimeError('UNIVERSAL_RUNTIME_CLOSE_UNCONFIRMED')
     return json.loads(result.stdout)
