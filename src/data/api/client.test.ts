@@ -283,3 +283,36 @@ describe("bounded API metadata-only diagnostics", () => {
     expect(JSON.stringify(readLastApiFailure())).not.toContain("PRIVATE_UNTRUSTED");
   });
 });
+
+it("bounded diagnostic identifies safe error stage/name without exception messages", async () => {
+  for (const stage of ["AUTH", "FETCH", "READ", "VALIDATE"] as const) {
+    const fail = () => {
+      throw new TypeError("PRIVATE_EXCEPTION_BODY");
+    };
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      maxResponseBytes: 128,
+      ...(stage === "AUTH" ? { accessTokenProvider: async () => fail() } : {}),
+      fetchImplementation: async () => {
+        if (stage === "FETCH") return fail();
+        const response = new Response(JSON.stringify({ id: "okay" }), { status: 200 });
+        if (stage === "READ")
+          Object.defineProperty(response, "body", { value: { getReader: fail } });
+        return response;
+      },
+    });
+    const schema = stage === "VALIDATE" ? z.unknown().transform(fail) : responseSchema;
+    await expect(
+      client.get(
+        "/v2/trips/10000000-0000-4000-8000-000000000001/core/operations/10000000-0000-4000-8000-000000000002",
+        schema,
+      ),
+    ).rejects.toBeInstanceOf(ApiClientError);
+    expect(readLastApiFailure()).toMatchObject({
+      kind: "network",
+      stage,
+      errorName: "TypeError",
+    });
+    expect(JSON.stringify(readLastApiFailure())).not.toContain("PRIVATE_EXCEPTION");
+  }
+});

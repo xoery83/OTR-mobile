@@ -32,6 +32,8 @@ export type ApiFailureDiagnostic = {
   code?: string;
   requestId?: string;
   at: string;
+  stage?: "AUTH" | "FETCH" | "READ" | "VALIDATE";
+  errorName?: "TypeError" | "Error" | "AbortError";
 };
 let lastFailure: ApiFailureDiagnostic | null = null;
 export function readLastApiFailure() {
@@ -184,6 +186,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
     headers?: Record<string, string>,
   ): Promise<T> {
     let diagnosticHttpCode: string | undefined;
+    let stage: "AUTH" | "FETCH" | "READ" | "VALIDATE" = "AUTH";
     const boundary = createRequestBoundary(
       timeoutMs,
       options.signal,
@@ -197,6 +200,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
         ? await boundary.run(() => options.accessTokenProvider!(false))
         : options.accessToken;
       async function send() {
+        stage = "FETCH";
         return boundary.run(() =>
           fetchImplementation(`${baseUrl}${path}`, {
             method,
@@ -214,11 +218,13 @@ export function createApiClient(options: ApiClientOptions = {}) {
       let response = await send();
       if (response.status === 401 && options.accessTokenProvider) {
         void response.body?.cancel().catch(() => undefined);
+        stage = "AUTH";
         token = await boundary.run(() =>
           options.accessTokenProvider!(true, token ?? undefined),
         );
         response = await send();
       }
+      stage = "READ";
       const payload = await readBoundedJson(
         response,
         response.ok ? maximum : 8192,
@@ -272,6 +278,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
           code,
         );
       }
+      stage = "VALIDATE";
       const parsed = schema.safeParse(payload);
       if (!parsed.success)
         throw new ApiClientError(
@@ -301,6 +308,12 @@ export function createApiClient(options: ApiClientOptions = {}) {
         kind: failure.kind,
         status: failure.status,
         code: failure.code ?? diagnosticHttpCode,
+        stage,
+        errorName:
+          error instanceof Error &&
+          ["TypeError", "Error", "AbortError"].includes(error.name)
+            ? (error.name as "TypeError" | "Error" | "AbortError")
+            : undefined,
         at: new Date().toISOString(),
       };
       console.info(JSON.stringify({ event: "api_request_failed", ...lastFailure }));
