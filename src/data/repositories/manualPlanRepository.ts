@@ -13,6 +13,8 @@ import {
 } from "@/domain/trip/tripCoreV2Temporal";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import { validateCoreReceipt } from "@/domain/trip/tripCoreV2Receipt";
+import { coreHashValue } from "@/domain/trip/tripCoreV2Read";
 import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { applyCoreCommand, coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import {
@@ -122,7 +124,11 @@ type ManualItemDraft<F extends ManualPlanFields = ManualItemFields> = Omit<
   Readonly<{ fields: F }>;
 type ManualItemRepository<F extends ManualPlanFields> = {
   createDraft(tripId: string): Promise<ManualItemDraft<F>>;
-  read(tripId: string, itemId: string): Promise<ManualItemDraft<F>>;
+  read(
+    tripId: string,
+    itemId: string,
+    expectedRevision?: number,
+  ): Promise<ManualItemDraft<F>>;
   save(draft: ManualItemDraft<F>, fields: F): Promise<ManualPlanSaveResult>;
 };
 type DraftState = {
@@ -213,7 +219,7 @@ function editable(
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
     !row ||
-    !snapshot.predictedIds.has(itemId) ||
+    (!snapshot.predictedIds.has(itemId) && !(family === "P1" && snapshot.cert)) ||
     row.experience_family !== family ||
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
@@ -282,7 +288,63 @@ export function createManualItemRepository(
     if (!snapshot) throw new Error("MANUAL_PLAN_UNAVAILABLE");
     return snapshot;
   }
-  async function open(tripId: string, itemId?: string): Promise<ManualItemDraft> {
+  async function acceptedManualCreate(context: AccountRequestContext, itemId: string) {
+    const rows = await database.getAllAsync<{
+      operation_id: string;
+      canonical_intent_text: string;
+      intent_sha256: string;
+      payload_json: string;
+      body_json: string;
+      receipt_sha256: string;
+    }>(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,op.payload_json,r.body_json,r.receipt_sha256
+       FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id
+       AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id AND op.entity_id=?
+       AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND'
+       AND op.idempotency_key=i.operation_id AND op.id=i.operation_id AND op.status='COMPLETED'
+       JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id AND r.trip_id=i.trip_id
+       AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
+       WHERE i.account_id=? AND i.trip_id=? AND i.state='APPLIED' AND i.reconciled_revision IS NOT NULL`,
+      itemId,
+      context.accountId,
+      context.tripId,
+    );
+    for (const row of rows) {
+      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      if (
+        command.command !== "CREATE_ITEM" ||
+        command.admission.mode !== "MANUAL" ||
+        command.target.id !== itemId ||
+        command.tripId !== context.tripId ||
+        (command.payload as { family?: string }).family !== "P1"
+      )
+        continue;
+      const receipt = await validateCoreReceipt(
+        JSON.parse(row.body_json),
+        tripCoreSha256Hex,
+      );
+      if (
+        command.operationId === row.operation_id &&
+        row.payload_json === row.canonical_intent_text &&
+        (await coreHashValue("otr-trip-core-intent-v2", command, tripCoreSha256Hex)) ===
+          row.intent_sha256 &&
+        receipt.actorAccountId === context.accountId &&
+        receipt.tripId === context.tripId &&
+        receipt.operationId === command.operationId &&
+        receipt.command === "CREATE_ITEM" &&
+        receipt.intentSha256 === row.intent_sha256 &&
+        receipt.receiptSha256 === row.receipt_sha256 &&
+        receipt.outcome === "APPLIED"
+      )
+        return true;
+    }
+    return false;
+  }
+  async function open(
+    tripId: string,
+    itemId?: string,
+    expectedRevision?: number,
+  ): Promise<ManualItemDraft> {
     coreUuid.parse(tripId);
     if (itemId) coreUuid.parse(itemId);
     const context = await core.captureContext(tripId);
@@ -294,12 +356,23 @@ export function createManualItemRepository(
         // Exact MANUAL CREATE provenance is retained independently from accepted facts.
         if (
           row &&
+          expectedRevision !== undefined &&
+          row.semantic_revision !== expectedRevision
+        )
+          throw new Error("MANUAL_PLAN_CONFLICT");
+        if (
+          row &&
           !(await core.pending(context)).some(
             (p) =>
               snapshot.operations.some((o) => o.operationId === p.command.operationId) &&
               p.command.target.id === itemId &&
               p.command.command === "CREATE_ITEM" &&
               p.command.admission.mode === "MANUAL",
+          ) &&
+          !(
+            family === "P1" &&
+            snapshot.cert &&
+            (await acceptedManualCreate(context, itemId!))
           )
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");
@@ -366,7 +439,8 @@ export function createManualItemRepository(
   }
   return {
     createDraft: (tripId: string) => open(tripId),
-    read: (tripId: string, itemId: string) => open(tripId, itemId),
+    read: (tripId: string, itemId: string, expectedRevision?: number) =>
+      open(tripId, itemId, expectedRevision),
     async save(
       draft: ManualItemDraft,
       input: ManualItemFields,

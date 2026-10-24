@@ -209,6 +209,11 @@ function TripContent({
   const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
   const [localItem, setLocalItem] = useState<LocalItem | null>(null);
+  const [acceptedPlan, setAcceptedPlan] = useState<{
+    read: TripRead;
+    item: Parameters<typeof LocalCoreItemPreview>[0]["item"];
+    editor: { repository: ManualPlanRepository; draft: ManualPlanDraft } | null;
+  } | null>(null);
   const [planEditError, setPlanEditError] = useState(false);
   const [planEdit, setPlanEdit] = useState<{
     tripId: string;
@@ -603,6 +608,7 @@ function TripContent({
         return;
       setRevision((value) => value + 1);
       setLocalItem(null);
+      setAcceptedPlan(null);
       void load();
     },
     [requested, generation, load],
@@ -685,6 +691,45 @@ function TripContent({
         });
       }
     : undefined;
+  const openAcceptedPlan = async (
+    itemId: string,
+    expectedRevision: number,
+    knownRead?: TripRead,
+  ) => {
+    const ticket = request.current;
+    const result = knownRead ?? (await (await readTripDayFeed()).trip(requested));
+    const projection = result.observed?.projection;
+    if (
+      projection?.version !== 2 ||
+      result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
+      projection.tripId !== requested ||
+      result.scope.generation !== generation ||
+      generation !== getAccountGeneration()
+    )
+      return;
+    const item = projection.items.find(
+      (i) =>
+        i.itemId === itemId &&
+        i.itemRevision === expectedRevision &&
+        i.family === "P1" &&
+        !i.hidden &&
+        !["cancelled", "skipped"].includes(String(i.status)),
+    );
+    if (!item) return;
+    let editor: { repository: ManualPlanRepository; draft: ManualPlanDraft } | null =
+      null;
+    try {
+      const repository = await createDefaultManualPlanRepository();
+      const draft = await repository.read(requested, itemId, expectedRevision);
+      if (draft.itemId === itemId) editor = { repository, draft };
+    } catch {
+      /* Readable accepted facts never confer Creator editing authority. */
+    }
+    if (ticket !== request.current || generation !== getAccountGeneration()) return;
+    setTrip(result);
+    setPlanEditError(false);
+    setAcceptedPlan({ read: result, item, editor });
+  };
   const openHomeItem = async (value: SnapshotItem) => {
     const itemRevision = value.item.itemRevision;
     if (
@@ -702,6 +747,8 @@ function TripContent({
         item.itemRevision === value.item.itemRevision,
     );
     if (!current) throw new Error("HOME_RENDERER_UNAVAILABLE");
+    if (current.family === "P1")
+      return openAcceptedPlan(current.itemId, itemRevision, result);
     const header = acceptedHomeHeader(
       projection.events,
       (date, zone) => projection.query(date, zone),
@@ -930,6 +977,38 @@ function TripContent({
     localItem.source.fingerprint === visibleTrip.localManual.source.fingerprint
       ? localItem
       : null;
+  const acceptedPlanPreview =
+    acceptedPlan &&
+    !planEdit &&
+    acceptedPlan.read.observed?.projection.tripId === requested &&
+    acceptedPlan.read.scope.generation === generation &&
+    generation === getAccountGeneration() &&
+    acceptedPlan.read.scope.accountId === visibleTrip?.scope.accountId &&
+    visibleTrip.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
+    visibleTrip.observed.projection.version === 2 &&
+    acceptedPlan.read.observed?.projection.version === 2 &&
+    acceptedPlan.read.observed.projection.source.epoch ===
+      visibleTrip.observed.projection.source.epoch &&
+    visibleTrip.observed.projection.items.some(
+      (item) =>
+        item.itemId === acceptedPlan.item.itemId &&
+        item.itemRevision === acceptedPlan.item.itemRevision &&
+        !item.hidden &&
+        !["cancelled", "skipped"].includes(String(item.status)),
+    ) ? (
+      <LocalCoreItemPreview
+        item={acceptedPlan.item}
+        onClose={() => setAcceptedPlan(null)}
+        onEdit={
+          acceptedPlan.editor
+            ? () => {
+                const editor = acceptedPlan.editor!;
+                setPlanEdit({ tripId: requested, generation, ...editor });
+              }
+            : undefined
+        }
+      />
+    ) : null;
   const localPreview =
     visibleLocalItem && !planEdit && !stayEdit && !rentalEdit && !transportEdit ? (
       <LocalCoreItemPreview
@@ -1014,6 +1093,7 @@ function TripContent({
         onSaved={() => {
           if (generation !== getAccountGeneration()) return;
           setPlanEdit(null);
+          setAcceptedPlan(null);
           setLocalItem(null);
           setRevision((value) => value + 1);
           void load();
@@ -1240,6 +1320,11 @@ function TripContent({
             dates={calendarDates ?? [dayContext.date]}
             zone={dayContext.zone}
             viewMode={dayContext.viewMode}
+            onOpenAcceptedP1={(id, revision) => {
+              void openAcceptedPlan(id, revision).catch(() => {
+                void load();
+              });
+            }}
             services={visibleTrip.services}
             renderer={
               visibleTrip.observed?.projection.version === 2
@@ -1272,6 +1357,7 @@ function TripContent({
           }}
         />
         {localPreview}
+        {acceptedPlanPreview}
         {planEditor}
         {stayEditor}
         {rentalEditor}
@@ -1431,6 +1517,7 @@ function TripContent({
         )}
       </ScrollView>
       {localPreview}
+      {acceptedPlanPreview}
       {planEditor}
       {stayEditor}
       {rentalEditor}

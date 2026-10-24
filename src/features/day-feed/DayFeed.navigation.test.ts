@@ -505,3 +505,28 @@ it("rejects explicit Floating on legacy accepted projection without dropping it 
     render({ zone: null, viewMode: "FLOATING", localManual: localManual() }),
   ).toThrow("DAY_ZONE_INVALID");
 });
+
+it("accepted Core P1 richer detail delegates to the owning preview without losing Day focus", () => {
+  const open = vi.fn();
+  const props = {
+    projection: {
+      ...fixture.day,
+      version: 2,
+      items: [{ itemId: fixture.before.id, itemRevision: 4, family: "P1" }],
+      flightFacts: {},
+      query: (date: string, zone: string) => itemsForLocalDate(fixture.day, date, zone),
+    },
+    onOpenAcceptedP1: open,
+  };
+  render(props);
+  state.nodes
+    .find((p) => p.event?.id === fixture.before.id && p.depth === "B")
+    .onDepth("F");
+  render(props);
+  state.nodes
+    .find((p) => p.event?.id === fixture.before.id && p.depth === "F")
+    .onDepth("I");
+  expect(open).toHaveBeenCalledWith(fixture.before.id, 4);
+  expect(render(props)).toContain(`${fixture.before.id}:F`);
+  expect(state.nodes.some((p) => p.depth === "I")).toBe(false);
+});

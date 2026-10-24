@@ -88,6 +88,7 @@ export type DayFeedPresentation = {
 type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & {
   projection?: DayProjection | CoreFlightDayProjection;
   localManual?: LocalManualRead | null;
+  onOpenAcceptedP1?: (itemId: string, revision: number) => void;
   onOpenLocalItem?: (
     itemId: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
@@ -135,8 +136,10 @@ function AcceptedDayFeed({
   directItem,
   localManual,
   onOpenLocalItem,
+  onOpenAcceptedP1,
 }: {
   localManual?: LocalManualRead | null;
+  onOpenAcceptedP1?: (itemId: string, revision: number) => void;
   onOpenLocalItem?: (
     itemId: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
@@ -349,6 +352,21 @@ function AcceptedDayFeed({
         : "B";
   const change = (id: string, next: Depth) => {
     interactedContext.current = viewContext;
+    if (next === "I" && projection.version === 2 && onOpenAcceptedP1) {
+      const eventId = rows.find((row) => row.focusKey === id)?.item.event.id;
+      const item = projection.items.find(
+        (item) => item.itemId === eventId && item.family === "P1",
+      );
+      if (
+        item &&
+        typeof item.itemRevision === "number" &&
+        Number.isSafeInteger(item.itemRevision) &&
+        item.itemRevision > 0
+      ) {
+        onOpenAcceptedP1(item.itemId, item.itemRevision);
+        return;
+      }
+    }
     if (next === "I") {
       returnAnchor.current = scroll.current?.saveAnchor() ?? null;
       setImmersive(id);

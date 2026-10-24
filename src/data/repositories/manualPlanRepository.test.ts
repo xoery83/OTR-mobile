@@ -655,3 +655,125 @@ it("retains Account/generation/creator fences with a qualified local Person rost
   await expect(h.repo().createDraft(h.tripId)).rejects.toThrow();
   expect(count(h.sql)).toBe(0);
 });
+
+async function acceptedPlanFixture(foreignOwner = false) {
+  const f = await fixture();
+  const repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const saved = await repo.save(draft, values(draft.fields));
+  const context = await f.core.captureContext(f.tripId);
+  const { readLocalManualSnapshotWithinTransaction } =
+    await import("./tripLocalManualReadRepository");
+  const snapshot = (await readLocalManualSnapshotWithinTransaction(
+    f.coreDatabase,
+    f.identity,
+    f.core,
+    context,
+    null,
+  ))!;
+  const command = (await f.core.pending(context))[0].command;
+  const { executeCoreCommandV2 } =
+    await import("../../../backend/src/tripCoreV2Commands");
+  const { emptyCoreGraph } = await import("@/domain/trip/tripCoreV2Mutation");
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  let graph = emptyCoreGraph();
+  const result = await executeCoreCommandV2(
+    {
+      withLockedCommand: async (_scope, work) =>
+        work({
+          actor: snapshot.actor,
+          readReceipt: async () => null,
+          hasLegacyOperation: async () => false,
+          canReadReceipt: async () => true,
+          enabledCommands: async () => ["CREATE_ITEM"],
+          readLockedGraph: async () => graph,
+          verifyAdmission: async () => {},
+          lifecycleGraphHash: async () => undefined,
+          commit: async (mutation) => {
+            if (mutation) graph = mutation.graph;
+            return randomUUID();
+          },
+        }),
+    },
+    f.originalAccount,
+    f.tripId,
+    command,
+    hash,
+    () => "2026-10-20T00:00:00.000Z",
+  );
+  if (result.projection !== "FULL") throw new Error("TEST_RECEIPT");
+  await f.core.applyReceipt(context, result.receipt);
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(saved.operationIds[0]);
+  if (foreignOwner) graph.itinerary_events[0].owner_account_id = randomUUID();
+  const bundle = await buildCoreActorCollection(
+    graph,
+    snapshot.actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-20T00:00:00.000Z",
+    },
+    [
+      {
+        person_id: snapshot.actor.personId!,
+        account_id: f.originalAccount,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+    ],
+    hash,
+  );
+  await f.core.refresh(context, { collection: async () => bundle });
+  return {
+    ...f,
+    itemId: draft.itemId,
+    revision: Number(graph.itinerary_events[0].semantic_revision),
+  };
+}
+it("reopens reconciled accepted self-Creator P1 at its actual revision and saves a normal edit", async () => {
+  const f = await acceptedPlanFixture(),
+    repo = f.repo();
+  expect(await f.core.pending(await f.core.captureContext(f.tripId))).toEqual([]);
+  const draft = await repo.read(f.tripId, f.itemId, f.revision);
+  expect(draft.mode).toBe("EDIT");
+  await repo.save(draft, { ...draft.fields, title: "Accepted plan edited" });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending).toHaveLength(1);
+  expect(pending[0].command).toMatchObject({
+    command: "SET_ITEM_TEXT",
+    baseVector: [{ id: f.itemId, revision: f.revision }],
+  });
+});
+it("rejects accepted P1 stale revision and missing immutable manual Create provenance", async () => {
+  const f = await acceptedPlanFixture(),
+    repo = f.repo();
+  await expect(repo.read(f.tripId, f.itemId, f.revision + 1)).rejects.toThrow(
+    "MANUAL_PLAN_CONFLICT",
+  );
+  f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+  f.sql
+    .prepare(
+      "UPDATE trip_core_pending_intents SET canonical_intent_text='{}' WHERE reconciled_revision IS NOT NULL",
+    )
+    .run();
+  await expect(repo.read(f.tripId, f.itemId, f.revision)).rejects.toThrow();
+});
+it("accepted P1 cannot be opened under another Account", async () => {
+  const f = await acceptedPlanFixture();
+  f.switchAccount();
+  await expect(f.repo().read(f.tripId, f.itemId, f.revision)).rejects.toThrow();
+});
+
+it("does not edit an accepted P1 owned by another Creator even with local Create history", async () => {
+  const f = await acceptedPlanFixture(true);
+  await expect(f.repo().read(f.tripId, f.itemId, f.revision)).rejects.toThrow(
+    "MANUAL_PLAN_UNAVAILABLE",
+  );
+});

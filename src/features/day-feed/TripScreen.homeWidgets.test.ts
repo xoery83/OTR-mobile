@@ -1466,3 +1466,66 @@ it.each(["26.0", "27.0"])(
     );
   },
 );
+
+it("accepted date-only P1 opens its existing preview without a fabricated zone and enables only owning-repository qualified Edit", async () => {
+  state.result.scope.tripId = reference;
+  const item = {
+    itemId: "accepted-plan",
+    itemRevision: 4,
+    family: "P1",
+    localState: "ACCEPTED",
+    title: "Garden",
+    hidden: false,
+    status: "planned",
+    schedule: { start: { localDate: "2027-02-06" } },
+    details: {},
+  };
+  state.result.observed.projection.items = [item];
+  state.result.observed.projection.events = [
+    {
+      id: item.itemId,
+      status: "planned",
+      boundaries: [{ local_date: "2027-02-06", zone_id: null }],
+    },
+  ];
+  const draft = { mode: "EDIT", itemId: item.itemId, fields: {}, participantOptions: [] };
+  const repository = { read: vi.fn(async () => draft) };
+  vi.mocked(createDefaultManualPlanRepository).mockResolvedValue(repository as any);
+  const p = page(await loaded());
+  await p.content.props.onOpenItem({
+    scope: state.snapshot.scope,
+    certificate: { epoch: "epoch" },
+    item,
+  });
+  const preview = find(render(), "LocalItemPreview");
+  expect(preview.item).toEqual(item);
+  expect(repository.read).toHaveBeenCalledWith(reference, item.itemId, 4);
+  expect(preview.onEdit).toBeTypeOf("function");
+  preview.onEdit();
+  expect(find(render(), "PlanEditor").opened.draft).toEqual(draft);
+  expect(state.select).not.toHaveBeenCalled();
+});
+it("accepted readable P1 stays read-only when the owning repository refuses Creator editing", async () => {
+  state.result.scope.tripId = reference;
+  const item = {
+    itemId: "other-plan",
+    itemRevision: 2,
+    family: "P1",
+    localState: "ACCEPTED",
+    hidden: false,
+    status: "planned",
+  };
+  state.result.observed.projection.items = [item];
+  vi.mocked(createDefaultManualPlanRepository).mockResolvedValue({
+    read: vi.fn(async () => {
+      throw new Error("MANUAL_PLAN_UNAVAILABLE");
+    }),
+  } as any);
+  const p = page(await loaded());
+  await p.content.props.onOpenItem({
+    scope: state.snapshot.scope,
+    certificate: { epoch: "epoch" },
+    item,
+  });
+  expect(find(render(), "LocalItemPreview").onEdit).toBeUndefined();
+});
