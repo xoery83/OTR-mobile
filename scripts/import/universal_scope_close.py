@@ -59,6 +59,10 @@ def validate(plan):
         names.append(role['name'])
     if len(set(names))!=len(names):raise ValueError('ROLE_REUSED')
     expected={'universal_scope_close.py','universal_runtime_close.py','universal_watchdog.py'}
+    if 'adminControl' in plan:
+        from universal_config_control import validate_admin
+        validate_admin(plan)
+        expected.add('universal_config_control.py')
     if set(plan['helperHashes'])!=expected:raise ValueError('FIXED_HELPERS_REQUIRED')
     for name,h in plan['helperHashes'].items():
         digest(h)
@@ -116,7 +120,7 @@ class SqlTransport:
             return json.loads(r.stdout)
         finally:os.unlink(path)
 
-def close_once(plan,sql,runtime,recover_only=False):
+def close_once(plan,sql,runtime,recover_only=False,admin_sql=None):
     validate(plan)
     if plan['ownerAuthorized'] is not True:raise ValueError('OWNER_EXECUTION_REQUIRED')
     disposition='READ_ONLY' if recover_only else 'ACKNOWLEDGED'
@@ -127,8 +131,12 @@ def close_once(plan,sql,runtime,recover_only=False):
     try:closed=is_closed(sql(readback_sql(plan)))
     except Exception:closed=False
     if not closed:return {'status':'RECONCILE_REQUIRED','windowId':plan['windowId'],'sqlWriteDisposition':disposition,'sqlClosed':False,'runtimeClosed':False}
+    if 'adminControl' in plan:
+        from universal_config_control import restore_once
+        admin=restore_once(plan,sql,recover_only=recover_only,admin_sql=admin_sql)
+        if not admin['adminClosed']:return {'status':'RECONCILE_REQUIRED','windowId':plan['windowId'],'sqlWriteDisposition':disposition,'sqlClosed':True,'adminClosed':False,'runtimeClosed':False}
     try:
         r=runtime(plan)
         restored=r=={'verified':True,'windowId':plan['windowId']}
     except Exception:restored=False
-    return {'status':'CLOSED_VERIFIED' if restored else 'RECONCILE_REQUIRED','windowId':plan['windowId'],'sqlWriteDisposition':disposition,'sqlClosed':True,'runtimeClosed':restored}
+    return {'status':'CLOSED_VERIFIED' if restored else 'RECONCILE_REQUIRED','windowId':plan['windowId'],'sqlWriteDisposition':disposition,'sqlClosed':True,'runtimeClosed':restored,**({'adminClosed':True} if 'adminControl' in plan else {})}

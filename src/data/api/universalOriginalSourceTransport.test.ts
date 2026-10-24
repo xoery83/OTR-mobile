@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { createUniversalOriginalSourceTransport } from "./universalOriginalSourceTransport";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 vi.mock("expo/fetch", () => ({ fetch: vi.fn<typeof fetch>() }));
-vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn<typeof fetch>() }));
+vi.mock("../auth/sessionAccessToken", () => ({
+  sessionAccessToken: vi.fn<typeof fetch>(),
+}));
 async function setup(fetcher: typeof fetch) {
   const accountId = randomUUID(),
     getAccount = async () => accountId,
@@ -44,4 +46,13 @@ it("withholds a response after Account generation changes", async () => {
     }),
     { t, context } = await setup(fetcher);
   await expect(t.lookup(context, {})).rejects.toThrow();
+});
+
+afterEach(() => vi.unstubAllEnvs());
+it("rejects Source result before network when the explicit QA read allocation is invalid", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_QA_READ_BUDGET", "invalid");
+  const fetcher = vi.fn<typeof fetch>();
+  const { t, context } = await setup(fetcher);
+  await expect(t.lookup(context, {})).rejects.toThrow("QA_READ_BUDGET_CLOSED");
+  expect(fetcher).not.toHaveBeenCalled();
 });

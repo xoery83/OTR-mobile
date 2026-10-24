@@ -1,3 +1,5 @@
+> 25 October update: use [the consolidated activation request](OWNER_ACTIVATION_GATE.md) and current proposed packet. Native receiver is now installed/qualified and all three actual local command pins exist. Model Task membership-preserving dependency is independently reviewed. The historical conditions below are retained as execution history; no activation authority follows from them. Current blocker: real Provider configuration/credential source and explicit protected DEV activation permission.
+
 # One real C3 Batch → Source → Task → Universal Provider → Native Results
 
 **NOT_EXECUTABLE — actual read-only qualifications found missing owning dependencies/configuration; ownerAuthorized=false.** This supersedes the old proposed68f package/empty C3 placeholders for this scenario, not historic receipts. No further write/start/deployment/Provider authority is implied. This Writer performed local preparation only.

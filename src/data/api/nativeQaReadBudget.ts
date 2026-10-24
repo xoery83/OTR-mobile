@@ -13,9 +13,9 @@ type Store = {
   write(text: string): void;
 };
 type Config = { version: 1; runId: string; maximum: number };
-type Entry = { ordinal: number; method: "GET"; route: string; at: string };
+type Entry = { ordinal: number; method: "GET" | "POST"; route: string; at: string };
 const routeWords = new Set(
-  "v1 v2 trips journeys core operations commands capabilities collection items people person-create-operations metadata metadata-operations metadata-snapshot bootstrap report review payments personal-payments expenses ledger settings currency preview commit receipts settlement-review balances settlements destinations sources batches tasks results publications snapshot".split(
+  "v1 v2 trips journeys core operations commands capabilities collection items people person-create-operations metadata metadata-operations metadata-snapshot bootstrap report review payments personal-payments expenses ledger settings currency preview commit receipts settlement-review balances settlements destinations sources batches tasks results publications snapshot universal-source-originals result".split(
     " ",
   ),
 );
@@ -28,6 +28,14 @@ export function redactQaReadRoute(path: string) {
       .filter(Boolean)
       .map((part) => (routeWords.has(part) ? part : ":id"))
       .join("/")
+  );
+}
+function isResultRead(method: string, path: string) {
+  return (
+    method === "POST" &&
+    /^\/v2\/trips\/[0-9a-f-]{36}\/universal-source-originals\/result$/.test(
+      path.split("?")[0],
+    )
   );
 }
 function closed(): never {
@@ -47,7 +55,7 @@ function config(raw: string): Config {
     typeof value.runId !== "string" ||
     value.runId !== "afdf5785-670b-44c1-951d-9864dc1307f6" ||
     !Number.isSafeInteger(value.maximum) ||
-    value.maximum !== 72
+    (value.maximum !== 72 && value.maximum !== 136)
   )
     return closed();
   return value;
@@ -66,7 +74,8 @@ function load(text: string, expected: Config): Entry[] {
     ledger.runId !== expected.runId ||
     ledger.maximum !== expected.maximum ||
     !Array.isArray(ledger.entries) ||
-    ledger.entries.length > expected.maximum
+    ledger.entries.length > expected.maximum ||
+    (expected.maximum === 136 && ledger.entries.length < 72)
   )
     return closed();
   for (const [index, entry] of ledger.entries.entries()) {
@@ -74,7 +83,11 @@ function load(text: string, expected: Config): Entry[] {
       !entry ||
       Object.keys(entry).sort().join() !== "at,method,ordinal,route" ||
       entry.ordinal !== index + 1 ||
-      entry.method !== "GET" ||
+      (entry.method !== "GET" &&
+        !(
+          entry.method === "POST" &&
+          entry.route === "/v2/trips/:id/universal-source-originals/result"
+        )) ||
       typeof entry.route !== "string" ||
       !entry.route.startsWith("/") ||
       redactQaReadRoute(entry.route) !== entry.route ||
@@ -93,7 +106,7 @@ export function createQaGetReservation(
 ) {
   let observed = false;
   return (method: string, path: string, baseUrl: string) => {
-    if (method !== "GET") return;
+    if (method !== "GET" && !isResultRead(method, path)) return;
     const raw = readConfig();
     if (!raw) return;
     const identity = config(raw);
@@ -101,14 +114,14 @@ export function createQaGetReservation(
     try {
       const store = open();
       const exists = store.exists();
-      if (!exists && observed) return closed();
+      if (!exists && (observed || identity.maximum === 136)) return closed();
       const entries = exists ? load(store.read(), identity) : [];
       observed = true;
       if (entries.length >= identity.maximum)
         throw new QaReadBudgetError("QA_READ_BUDGET_EXHAUSTED");
       const entry: Entry = {
         ordinal: entries.length + 1,
-        method: "GET",
+        method: method as "GET" | "POST",
         route: redactQaReadRoute(path),
         at: now(),
       };

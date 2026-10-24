@@ -37,7 +37,7 @@ def service_projection(snapshot):
         'mountsSHA256':sha(canonical(sorted(snapshot['Mounts'],key=lambda m:(m['Destination'],m['Source'])))),
     }
 
-def remote_close(plan):
+def remote_close(plan,read_only=False):
     r=validate_runtime(plan)
     def call(args,environment=None):return subprocess.check_output(args,text=True,stderr=subprocess.PIPE,timeout=35,env=environment)
     def current():return json.loads(call(['docker','inspect',r['container']]))[0]
@@ -83,6 +83,7 @@ def remote_close(plan):
         for path,h,mode in [(r['runtimeSource'],r['runtimeSHA256'],0o440),(r['finiteComposeFile'],r['finiteComposeSHA256'],0o600)]:
             if Path(path).exists() or Path(path).is_symlink():private_hash(path,h,mode)
             elif active:raise ValueError('MOUNT_FILE_MISSING')
+        if active and read_only:raise RuntimeError('READ_ONLY_RUNTIME_STILL_ACTIVE')
         if active:
             args=['docker','compose','-p','dev-backend']
             for f in r['baselineComposeFiles']:args+=['-f',f]
@@ -100,15 +101,17 @@ def remote_close(plan):
         check(current(),False)
         for path,h,mode in [(r['runtimeSource'],r['runtimeSHA256'],0o440),(r['finiteComposeFile'],r['finiteComposeSHA256'],0o600)]:
             if Path(path).exists() or Path(path).is_symlink():
-                private_hash(path,h,mode);os.unlink(path)
+                private_hash(path,h,mode)
+                if read_only:raise RuntimeError('READ_ONLY_FINITE_FILE_REMAINS')
+                os.unlink(path)
         if Path(r['runtimeSource']).exists() or Path(r['finiteComposeFile']).exists():raise ValueError('FINITE_SECRET_REMAINS')
         return {'verified':True,'windowId':plan['windowId']}
     finally:
         fcntl.flock(lock,fcntl.LOCK_UN);os.close(lock)
 
-def close_runtime(plan):
+def close_runtime(plan,read_only=False):
     validate_runtime(plan)
-    code='import fcntl,hashlib,json,os,re,stat,subprocess,time,uuid\nfrom pathlib import Path\n'+'\n\n'.join(inspect.getsource(f) for f in [canonical,sha,validate_runtime,service_projection,remote_close])+"\nprint(json.dumps(remote_close(json.load(__import__('sys').stdin))))"
+    code='import fcntl,hashlib,json,os,re,stat,subprocess,time,uuid\nfrom pathlib import Path\n'+'\n\n'.join(inspect.getsource(f) for f in [canonical,sha,validate_runtime,service_projection,remote_close])+"\nprint(json.dumps(remote_close(json.load(__import__('sys').stdin),read_only="+repr(read_only)+")))"
     result=subprocess.run(['ssh','-oBatchMode=yes','-oStrictHostKeyChecking=yes','-oConnectTimeout=8','root@178.105.151.143','python3 -c '+shlex.quote(code)],input=json.dumps(plan),capture_output=True,text=True,timeout=140)
     if result.returncode:raise RuntimeError('UNIVERSAL_RUNTIME_CLOSE_UNCONFIRMED')
     return json.loads(result.stdout)

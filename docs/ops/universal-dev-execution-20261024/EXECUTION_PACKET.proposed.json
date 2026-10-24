@@ -20,7 +20,9 @@
     "expiresAt": null,
     "maximumSeconds": 900,
     "operator": "Unified Coordinator",
-    "closeOwner": "independent existing trusted Operator/watchdog"
+    "closeOwner": "independent existing trusted Operator/watchdog",
+    "maximumInnerSourceProviderSeconds": 600,
+    "minimumAdminRestorationTailSeconds": 300
   },
   "realC3": {
     "batchId": "3665f191-1605-4365-92ca-30403d90b191",
@@ -153,7 +155,11 @@
     "closedPreparationSourceResultReadsMax": 1,
     "providerPaidRetriesMax": 0,
     "sourceOriginalCount": 3,
-    "sourceOriginalTotalBytes": 2203
+    "sourceOriginalTotalBytes": 2203,
+    "additionalBusinessReadMaximum": 96,
+    "additionalNativeReadMaximum": 64,
+    "additionalOperatorReadMaximum": 32,
+    "oldReadLedgerPolicy": "Preserve previous72Native+6Operator consumed; noreset/reallocation. Additional quota only after explicit Owner approval; count POST results as reads."
   },
   "sqlCandidateSha256": {
     "backend/sql/universal_original_result_candidate.sql": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
@@ -219,6 +225,23 @@
       "review": "model-task-dependency/INDEPENDENT_REVIEW.json",
       "actualPreimages": "model-task-dependency/ACTUAL_DEV_PREIMAGES.json",
       "ownerMemberships": "Both observed grantor edges/options preserved; no unqualified revoke."
+    },
+    "finiteConfigControl": {
+      "writerCode": "f46d7e1f795e3bb0f38821f38593ce6745844de7",
+      "status": "INDEPENDENT_REVIEW_PASS_LOCAL_ONLY",
+      "review": "config-control/INDEPENDENT_REVIEW.json",
+      "reviewSha256": "1a6749e6990886e52729b4616cc037f06fb548f4ad0b9066d1ca1a4298d7eb3d",
+      "unitTests": 33,
+      "isolatedPgChecks": 6,
+      "realBindings": "UNBOUND_NOT_AUTHORITY"
+    },
+    "nativeReadBudget": {
+      "review": "read-budget/INDEPENDENT_REVIEW.json",
+      "reviewSha256": "40a1284bd628f9fd3992730a47d326cc3745c7dd38a66274edb0eb447099c59c",
+      "tests": 15,
+      "actualQuotaChanged": false,
+      "sourcePostReadCounted": true,
+      "extensionCondition": "Explicit Ownerapproval; preserve full first72bytes/identity and old ledger snapshot; Operator only upgrades metadata72to136, appenv136 matches; newOperator32 uses existing bounded allowance tooling with append-only receipt."
     }
   },
   "closedDeployment": {
@@ -241,7 +264,7 @@
       "PublicationCatalogReceive contractVersion1 factory available; otherwise stop before local Source preparation",
       "all three existing Source command pins exported and correlated with exact C3 IDs/SHA",
       "exact SQL preimages/config/price/Auth/readers/credentials qualified without write",
-      "one sealed <=900s UTC window and independent existing92acdd1 watchdog acknowledged"
+      "one sealed outer<=900s/inner<=600s UTC window with>=300s restoration tail and independently armed fixed reviewed config-control watcher; exact helper hashes, never old92ac plan pins"
     ],
     "ownerApprovalModel": "One complete bounded vertical slice approval after read-only qualification; local-only IDs may be filled from the exact authorized Repository derivation without inventing them or expanding inputs. This proposal is not an activation grant."
   },
@@ -292,5 +315,24 @@
     "totalConsumed": 78,
     "originalAdditionalTotal": 96,
     "policy": "No reset/reallocation/bypass; new bounded Universal reads require exact Owner authorization."
+  },
+  "consolidatedOwnerGate": "OWNER_ACTIVATION_GATE.md",
+  "sqlInstallOrder": [
+    "backend/sql/universal_source_host_candidate.sql",
+    "backend/sql/universal_original_source_candidate.sql",
+    "backend/sql/universal_original_result_candidate.sql",
+    "backend/sql/universal_model_task_dependency_candidate.sql",
+    "backend/sql/universal_provider_admission_candidate.sql",
+    "backend/sql/universal_task_read_candidate.sql"
+  ],
+  "realProviderConfiguration": {
+    "status": "MISSING_ACTUAL_CONFIGURATION_NOT_FIXTURE",
+    "credentialSource": null,
+    "backendBinding": "OTR_DEV_DEEPSEEK_API_KEY",
+    "approvedModelVersion": null,
+    "priceScheduleAndUnitsSource": null,
+    "dataRegion": null,
+    "routingClass": null,
+    "ownerConfigurationQuestionPending": true
   }
 }

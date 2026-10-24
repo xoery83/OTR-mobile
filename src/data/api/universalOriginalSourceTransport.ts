@@ -1,4 +1,5 @@
 import { fetch as expoFetch } from "expo/fetch";
+import { reserveNativeQaGet } from "./nativeQaReadBudget";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
 import {
   assertAccountRequestContext,
@@ -53,21 +54,21 @@ export function createUniversalOriginalSourceTransport(
       );
       if (session.userId !== context.accountId) throw new Error("SOURCE_ACCOUNT_CHANGED");
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
+      const path = `/v2/trips/${context.tripId}/universal-source-originals/${method}`;
+      // Result is a read despite POST; never evade an explicit QA read allowance.
+      reserveNativeQaGet("POST", path, origin.origin);
       const response = await boundary.run(() =>
-        fetcher(
-          `${origin.origin}/v2/trips/${context.tripId}/universal-source-originals/${method}`,
-          {
-            method: "POST",
-            redirect: "error",
-            signal: boundary.signal,
-            headers: {
-              Authorization: `Bearer ${session.token}`,
-              "Content-Type": "application/json",
-              "Accept-Encoding": "identity",
-            },
-            body,
+        fetcher(`${origin.origin}${path}`, {
+          method: "POST",
+          redirect: "error",
+          signal: boundary.signal,
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+            "Content-Type": "application/json",
+            "Accept-Encoding": "identity",
           },
-        ),
+          body,
+        }),
       );
       if (response.status !== 200)
         throw new Error(

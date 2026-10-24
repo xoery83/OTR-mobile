@@ -1,0 +1,16 @@
+{
+  "status": "LOCAL_ISOLATED_CP14_CONFIG_RESTORE_PASS",
+  "fixtureDatabase": "new schema-only universal_config_clean; cached original DB unchanged; zero DEV integrations before activation",
+  "checks": [
+    "real configure/configAppend/priceAppend and two set_kill commands; UNKNOWN COMMIT reconciled by immutable audit",
+    "global runtime_enabled remains false",
+    "actual owning CAS conflict denies restore without overwrite",
+    "real environment then integration owning CAS restore, exact grants revoked and admin role NOLOGIN",
+    "restart recovery read-only confirms exact restore audit and revoked authority",
+    "unrelated existing grant untouched"
+  ],
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "auth": "synthetic FK/context fixture, not actual normal Auth qualification",
+  "prices": "synthetic rates only, not deployable schedule"
+}

@@ -213,3 +213,55 @@ it("failed synchronous write stops the request before HTTP", async () => {
   });
   expect(calls).toBe(0);
 });
+
+it("Source result POST consumes the same durable read quota; acquire does not", () => {
+  const f = fixture();
+  const result =
+    "/v2/trips/10000000-0000-4000-8000-000000000001/universal-source-originals/result";
+  f.reserve("POST", result, base);
+  expect(JSON.parse(f.read()!).entries[0]).toMatchObject({
+    method: "POST",
+    route: "/v2/trips/:id/universal-source-originals/result",
+  });
+  f.reserve("POST", result.replace("/result", "/acquire"), base);
+  expect(f.writes()).toBe(1);
+  const restarted = createQaGetReservation(
+    () => raw,
+    () => f.store,
+  );
+  for (let n = 1; n < 72; n++) restarted("POST", result, base);
+  const prior = f.read();
+  expect(() => restarted("POST", result, base)).toThrow("QA_READ_BUDGET_EXHAUSTED");
+  expect(f.read()).toBe(prior);
+});
+
+it("proposed64-read extension requires preserved72 entries and explicit matching ledger; env alone cannot reset or extend", () => {
+  const f = fixture();
+  for (let n = 0; n < 72; n++) f.reserve("GET", route, base);
+  const extension = { ...config, maximum: 136 };
+  const proposed = createQaGetReservation(
+    () => JSON.stringify(extension),
+    () => f.store,
+  );
+  expect(() => proposed("GET", route, base)).toThrow("QA_READ_BUDGET_CLOSED");
+  const old = JSON.parse(f.read()!);
+  // Simulates the separately authorized Operator metadata extension, retaining all entries.
+  f.store.write(JSON.stringify({ ...old, maximum: 136 }));
+  for (let n = 0; n < 64; n++) proposed("GET", route, base);
+  expect(() => proposed("GET", route, base)).toThrow("QA_READ_BUDGET_EXHAUSTED");
+  expect(JSON.parse(f.read()!).entries.slice(0, 72)).toEqual(old.entries);
+  const missing = fixture();
+  expect(() =>
+    createQaGetReservation(
+      () => JSON.stringify(extension),
+      () => missing.store,
+    )("GET", route, base),
+  ).toThrow("QA_READ_BUDGET_CLOSED");
+  const empty = fixture(JSON.stringify({ ...extension, entries: [] }));
+  expect(() =>
+    createQaGetReservation(
+      () => JSON.stringify(extension),
+      () => empty.store,
+    )("GET", route, base),
+  ).toThrow("QA_READ_BUDGET_CLOSED");
+});

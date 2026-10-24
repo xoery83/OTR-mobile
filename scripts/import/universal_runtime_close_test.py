@@ -53,6 +53,15 @@ class RuntimeTests(unittest.TestCase):
     def test_exact_mount_removed_trip_baseline_preserved_idempotent(self):self.run_case()
     def test_unknown_compose_success_independently_inspected_no_retry(self):self.run_case(unknown=True)
     def test_foreign_environment_stops_before_service_or_file_change(self):self.run_case(drift=True)
+    def test_read_only_recovery_never_composes_or_unlinks(self):
+        import contextlib
+        p,r,files,state,calls,patches=self.fixture()
+        with contextlib.ExitStack() as stack:
+            for item in patches:stack.enter_context(item)
+            with self.assertRaisesRegex(RuntimeError,'READ_ONLY_RUNTIME_STILL_ACTIVE'):runtime.remote_close(p,read_only=True)
+            self.assertFalse(any('up' in c for c in calls));self.assertIn(r['runtimeSource'],files)
+            runtime.remote_close(p)
+            count=len(calls);self.assertTrue(runtime.remote_close(p,read_only=True)['verified']);self.assertFalse(any('up' in c for c in calls[count:]))
     def test_cross_window_mount_path_rejected(self):
         p=plan();p['runtime']['runtimeSource']='/opt/otr/dev-backend/env/universal-finite-other/runtime.json'
         with self.assertRaises(ValueError):runtime.validate_runtime(p)
