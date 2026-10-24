@@ -1,4 +1,9 @@
 import {
+  nativeFetchDiagnostic,
+  type NativeFetchDiagnostic,
+  type SafeFetchName,
+} from "./nativeFetchDiagnostic";
+import {
   createRequestBoundary,
   readBoundedJson,
   RequestBoundaryError,
@@ -33,7 +38,11 @@ export type ApiFailureDiagnostic = {
   requestId?: string;
   at: string;
   stage?: "AUTH" | "FETCH" | "READ" | "VALIDATE";
-  errorName?: "TypeError" | "Error" | "AbortError";
+  errorName?: SafeFetchName;
+  thrownType?: NativeFetchDiagnostic["thrownType"];
+  fetchClass?: NativeFetchDiagnostic["fetchClass"];
+  nativeDomain?: NativeFetchDiagnostic["nativeDomain"];
+  nativeCode?: number;
 };
 let lastFailure: ApiFailureDiagnostic | null = null;
 export function readLastApiFailure() {
@@ -314,6 +323,9 @@ export function createApiClient(options: ApiClientOptions = {}) {
           ["TypeError", "Error", "AbortError"].includes(error.name)
             ? (error.name as "TypeError" | "Error" | "AbortError")
             : undefined,
+        ...((stage as NonNullable<ApiFailureDiagnostic["stage"]>) === "FETCH"
+          ? nativeFetchDiagnostic(error)
+          : {}),
         at: new Date().toISOString(),
       };
       console.info(JSON.stringify({ event: "api_request_failed", ...lastFailure }));

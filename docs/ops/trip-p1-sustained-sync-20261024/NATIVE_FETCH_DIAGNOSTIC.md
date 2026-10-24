@@ -1,0 +1,7 @@
+# Narrow Expo Native fetch diagnostic
+
+No fetch implementation, redirect policy, byte bound, credentials or business retry was changed. Actual Metro showed stage FETCH with an unknown thrown name; headless GET succeeds. The candidate expands only fixed metadata classification. Three suites20 tests PASS; Typecheck/scoped lint PASS. No DEV/GUI operation performed.
+
+Installed Expo source was checked directly: `expo/src/winter/runtime.native.ts` installs streaming fetch by default; `expo/ios/Fetch/NativeRequestInit.swift` exposes redirect, and NativeRequestRedirect explicitly supports follow/manual/error. `FetchExceptions.swift` supplies exact redirect/cancellation reasons; JS FetchErrors wraps errors and native exceptions need not pass same-realm instanceof Error. These facts do not prove the running binary's exact failure or justify removing redirect:error.
+
+FETCH diagnostics now accept only finite structural error names and thrown type, fixed fetchClass, and known integer NSURLErrorDomain codes from at most two cause links. Error text is inspected only for bounded SDK fixed phrases/domain-code syntax and converted to an enum; it is never returned/logged/hashed. No URL/message/stack/header/body/token or arbitrary code/name is retained. Native data getters are guarded. Unknown error content stays UNCLASSIFIED. Root must reproduce against the actual Native call before choosing a repair.
