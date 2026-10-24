@@ -6,6 +6,7 @@ sys.path.insert(0,str(ROOT/'scripts/import'))
 from universal_config_control_test import fixture,rehash
 from universal_config_control import activate_once,restore_once,command_sql,observe_sql,validate_admin
 from universal_scope_close import canonical
+from build_universal_admin_plan import build_admin_plan,AUTH_BASE,ORDER
 NAME='otr-universal-config-'+uuid.uuid4().hex[:12]
 created=False
 try:
@@ -36,6 +37,19 @@ try:
     a['activation'][2]['command']['units']=[{'price_schedule_id':price['price_schedule_id'],'unit_key':k,'measurement_unit':k,'unit_quantity':1000,'price_per_quantity':'0.000001','unit_definition':{'version':1,'relationship':'DISJOINT','included_in':None,'billable':True}} for k in ['input_tokens','cached_input_tokens','output_tokens']]
     for x in a['activation']+a['restore']:
         c=x['command'];c['request_sha256']=hashlib.sha256(canonical({'domain':'otr-cp14-command-v1','command':{k:v for k,v in c.items() if k!='request_sha256'}})).hexdigest();x['context'].update(verified_actor_id=actor,verified_account_id=actor,request_sha256=c['request_sha256'])
+    # Bind all seven commands through the same no-network Root packaging entry.
+    # These are declared synthetic authority facts, never actual normal Auth evidence.
+    auth={k:v for k,v in a['activation'][0]['context'].items() if k in AUTH_BASE}
+    auth['auth_session_reference']='vault:isolated-normal-auth'
+    facts={'version':1,'actorId':actor,'outerStartsAt':a['startsAt'],'outerExpiresAt':a['expiresAt'],
+      'environmentBaseline':baseline,'connection':a['connection'],
+      'verifiedAuthorityReceiptSHA256':a['verifiedAuthorityReceiptSHA256'],'normalAuthReceiptSHA256':'f'*64,
+      'authSessionExpiresAt':a['expiresAt'],'authContextBase':auth,
+      'commandIdentities':{name:{'requestId':x['command']['request_id'],'auditId':x['command']['audit_id']} for name,x in zip(ORDER,a['activation']+a['restore'])},
+      'grantIdentities':{g['permission']:g['admin_grant_id'] for g in a['temporaryGrants']},
+      'grantorActorId':actor,'reasonCode':a['activation'][0]['command']['reason_code'],
+      'integrationRow':i,'providerRow':cfg,'priceRow':price,'priceUnits':a['activation'][2]['command']['units']}
+    p.pop('adminControl');p=build_admin_plan(p,facts);a=p['adminControl']
     for g in a['temporaryGrants']:
         # Isolated pre-existing fixture permission is replaced with this exact finite grant.
         g['actor_id']=actor;g['created_by']=actor
@@ -61,7 +75,7 @@ try:
         result=admin_transport(q)
         if 'public.external_integration_configure(' in q and not lost[0]:lost[0]=True;raise RuntimeError('SIMULATED_RESPONSE_LOSS_AFTER_COMMIT')
         return result
-    assert activate_once(p,wrapped,admin_sql=unknown_once)['writeDispositions'][0]=='UNKNOWN';checks.append('real configure/configAppend/priceAppend and two set_kill commands; UNKNOWN COMMIT reconciled by immutable audit')
+    assert activate_once(p,wrapped,admin_sql=unknown_once)['writeDispositions'][0]=='UNKNOWN';checks.append('binder-generated real configure/configAppend/priceAppend and two set_kill commands; UNKNOWN COMMIT reconciled by immutable audit')
     assert json.loads(sql("select to_jsonb(s) from public.external_integration_environment_state s where environment='DEV';").stdout)['runtime_enabled'] is False;checks.append('global runtime_enabled remains false')
     # Wrong CAS is rejected by the actual owning function; no state mutation.
     bad=copy.deepcopy(a['restore'][0]);bad['command']['expected_version']=9
