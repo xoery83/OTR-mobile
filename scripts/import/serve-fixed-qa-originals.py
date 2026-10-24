@@ -37,7 +37,7 @@ def main():
             path=urlsplit(self.path)
             name=path.path.removeprefix('/')
             if path.query or name not in files:self.send_error(404);return
-            data=files[name];self.send_response(200);self.send_header('Content-Type','text/plain; charset=utf-8');self.send_header('Content-Disposition','attachment; filename="'+name+'"');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.end_headers()
+            data=files[name];self.send_response(200);self.send_header('Content-Type','text/plain; charset=utf-8');self.send_header('Content-Disposition','inline; filename="'+name+'"');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.end_headers()
             if body:self.wfile.write(data)
         def do_GET(self):self.response(True)
         def do_HEAD(self):self.response(False)

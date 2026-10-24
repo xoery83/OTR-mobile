@@ -29,6 +29,7 @@ class FiniteTransferTest(unittest.TestCase):
                 ready = json.loads(child.stdout.readline())
                 self.assertEqual(ready['expiresInSeconds'], 1)
                 with urlopen(ready['urls'][0], timeout=1) as response:
+                    self.assertEqual(response.headers['Content-Disposition'], 'inline; filename="universal-mixed-bookings-utf8.txt"')
                     self.assertEqual(response.read(), (qa / 'universal-mixed-bookings-utf8.txt').read_bytes())
                 idle = socket.create_connection(('127.0.0.1', port), timeout=1)
                 started = time.monotonic()
