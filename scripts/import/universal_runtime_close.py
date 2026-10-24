@@ -27,6 +27,10 @@ def validate_runtime(plan):
     if not isinstance(files,list) or not files or len(set(files))!=len(files) or set(files)!=set(r['composeHashes']):raise ValueError('BASELINE_COMPOSE_PINS')
     for f,h in r['composeHashes'].items():
         if not f.startswith('/opt/otr/dev-backend/') or '..' in Path(f).parts or f==r['finiteComposeFile'] or not re.fullmatch('[0-9a-f]{64}',h):raise ValueError('COMPOSE_PATH')
+    if 'createdHostConfigSHA256' in r and (not re.fullmatch('[0-9a-f]{64}',r['createdHostConfigSHA256']) or 'originalContainerId' not in r):raise ValueError('CREATED_HOSTCONFIG_PIN')
+    metadata=r.get('baselineComposeFileMetadata',{})
+    if not isinstance(metadata,dict) or any(path not in r['composeHashes'] or not isinstance(m,dict) or set(m)!={'uid','gid','mode','nlink'} or m['uid']!=0 or m['gid']!=0 or m['nlink']!=1 or type(m['mode']) is not int or m['mode'] not in [0o400,0o440,0o600,0o640,0o644,0o660,0o664] for path,m in metadata.items()):raise ValueError('BASELINE_FILE_METADATA_PIN')
+    if metadata and 'originalContainerId' not in r:raise ValueError('METADATA_REQUIRES_RETAINED_ORIGINAL')
     retained={'originalContainerId','backupContainerName','baselineConfigSHA256','activeConfigSHA256'}
     if retained.intersection(r):
         if not retained.issubset(r) or not re.fullmatch('[0-9a-f]{64}',r['originalContainerId']) or r['backupContainerName']!='otr-universal-original-'+activation:raise ValueError('EXACT_RETAINED_ORIGINAL_REQUIRED')
@@ -106,11 +110,13 @@ def remote_close(plan,read_only=False):
     def call(args,environment=None):return subprocess.check_output(args,text=True,stderr=subprocess.PIPE,timeout=35,env=environment)
     def current():return json.loads(call(['docker','inspect',r['container']]))[0]
     def labels(s):return s['Config'].get('Labels',{}).get('com.docker.compose.project.config_files','').split(',')
-    def private_hash(path,expected,mode):
+    def private_hash(path,expected,mode,metadata=None):
         fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
         try:
             s=os.fstat(fd)
-            if mode==0o440 and s.st_gid!=999:raise ValueError('PRIVATE_RUNTIME_GROUP')
+            if metadata is not None and any(getattr(s,'st_'+key)!=value for key,value in metadata.items() if key!='mode'):raise ValueError('BASELINE_FILE_METADATA_DRIFT')
+            if metadata is not None:mode=metadata['mode']
+            if metadata is None and mode==0o440 and s.st_gid!=999:raise ValueError('PRIVATE_RUNTIME_GROUP')
             if not stat.S_ISREG(s.st_mode) or s.st_uid!=0 or s.st_nlink!=1 or (mode is not None and s.st_mode&0o777!=mode or mode is None and s.st_mode&0o022!=0):raise ValueError('PRIVATE_RUNTIME_FILE')
             with os.fdopen(fd,'rb',closefd=False) as f:actual=sha(f.read(262145))
             if actual!=expected:raise ValueError('RUNTIME_HASH_DRIFT')
@@ -119,7 +125,9 @@ def remote_close(plan,read_only=False):
         if s['Image']!=r['imageId'] or s['Config']['User']!='otr' or s['Config']['Cmd']!=['node','server-capture.mjs']:raise ValueError('SERVICE_IDENTITY_DRIFT')
         projection=service_projection(s)
         prefix='active' if active else 'baseline'
-        if projection['environmentSHA256']!=r[prefix+'EnvironmentSHA256'] or projection['hostConfigSHA256']!=r[prefix+'HostConfigSHA256'] or projection['mountsSHA256']!=r[prefix+'MountsSHA256']:raise ValueError('SERVICE_PREIMAGE_DRIFT')
+        expected_host=r[prefix+'HostConfigSHA256']
+        if active and s['State'].get('Status')=='created' and not s['State'].get('Running',False):expected_host=r.get('createdHostConfigSHA256',expected_host)
+        if projection['environmentSHA256']!=r[prefix+'EnvironmentSHA256'] or projection['hostConfigSHA256']!=expected_host or projection['mountsSHA256']!=r[prefix+'MountsSHA256']:raise ValueError('SERVICE_PREIMAGE_DRIFT')
         if 'originalContainerId' in r:
             if sha(canonical(s['Config']))!=r[prefix+'ConfigSHA256']:raise ValueError('RETAINED_CONFIG_DRIFT')
             if not active and s['Id']!=r['originalContainerId']:raise ValueError('RETAINED_ORIGINAL_ID_DRIFT')
@@ -154,7 +162,7 @@ def remote_close(plan,read_only=False):
             d=directory.lstat()
             if directory.is_symlink() or not stat.S_ISDIR(d.st_mode) or d.st_uid!=0 or d.st_mode&0o777!=0o700:raise ValueError('PRIVATE_WINDOW_DIRECTORY')
         elif active:raise ValueError('PRIVATE_WINDOW_DIRECTORY_MISSING')
-        for path,h in r['composeHashes'].items():private_hash(path,h,None)
+        for path,h in r['composeHashes'].items():private_hash(path,h,None,r.get('baselineComposeFileMetadata',{}).get(path))
         for path,h,mode in [(r['runtimeSource'],r['runtimeSHA256'],0o440),(r['finiteComposeFile'],r['finiteComposeSHA256'],0o600)]:
             if Path(path).exists() or Path(path).is_symlink():private_hash(path,h,mode)
             elif active:raise ValueError('MOUNT_FILE_MISSING')

@@ -1,0 +1,9 @@
+{
+  "startedAt": "2026-10-24T17:30:50.193285+00:00",
+  "result": {
+    "verified": true,
+    "windowId": "d58c47e78b6f263dad7e1ac04a92ff59dd8984b1fb5102c2de813e61d6bb9816"
+  },
+  "status": "RUNTIME_RESTORED_VERIFIED",
+  "endedAt": "2026-10-24T17:31:00.950594+00:00"
+}

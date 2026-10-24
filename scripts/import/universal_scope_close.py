@@ -116,7 +116,17 @@ class SqlTransport:
         try:
             with os.fdopen(fd,'w') as f:f.write(text)
             r=subprocess.run([self.cli,'db','query','--linked','--project-ref','tuqigdxrvrerfewsxqgm','--file',path,'--output','json'],cwd=self.cwd,capture_output=True,text=True,timeout=35)
-            if r.returncode:raise RuntimeError('UNIVERSAL_MANAGEMENT_TRANSPORT_UNKNOWN')
+            if r.returncode:
+                # Never retain raw CLI output: it may echo credential-bearing SQL.
+                error=r.stderr+'\n'+r.stdout
+                category=('SQL_DUPLICATE_KEY' if 'duplicate key value violates unique constraint' in error else
+                          'SQL_PERMISSION_REJECTED' if 'permission denied' in error else
+                          'SQL_GUARD_REJECTED' if re.search(r'\b(?:FINITE|CP14|UNIVERSAL)_[A-Z_]+\b',error) else
+                          'TRANSPORT_UNKNOWN')
+                guardPresent=bool(re.search(r'\b(?:FINITE|CP14|UNIVERSAL)_[A-Z_]+\b',error))
+                fd,diagnostic=tempfile.mkstemp(prefix='universal-management-safe-error-',suffix='.json',dir=self.directory);os.fchmod(fd,0o600)
+                with os.fdopen(fd,'w') as stream:json.dump({'category':category,'exitCode':r.returncode,'guardPrefixPresent':guardPresent},stream)
+                raise RuntimeError('UNIVERSAL_MANAGEMENT_'+category)
             return json.loads(r.stdout)
         finally:os.unlink(path)
 

@@ -52,6 +52,44 @@ class RetainedRuntimeTests(unittest.TestCase):
    self.assertFalse(any('compose' in c for c in calls));self.assertNotIn(r['runtimeSource'],files)
    count=len(calls);self.assertTrue(runtime.remote_close(p,read_only=True)['verified'])
    self.assertFalse(any(c[1] in ['stop','rm','rename','start'] for c in calls[count:]))
+ def test_exact_pinned_group_writable_baseline_preserved_without_permission_change(self):
+  p,r,files,containers,calls,patches=self.fixture();path=r['baselineComposeFiles'][0]
+  files[path]=(files[path][0],0o664,0)
+  r['baselineComposeFileMetadata']={path:{'uid':0,'gid':0,'mode':0o664,'nlink':1}};rehash(p)
+  with contextlib.ExitStack() as stack:
+   for item in patches:stack.enter_context(item)
+   self.assertTrue(runtime.remote_close(p)['verified']);self.assertEqual(files[path][1:],(0o664,0))
+   self.assertFalse(any('chmod' in c or 'compose' in c for c in calls))
+ def test_baseline_metadata_drift_rejected_before_runtime_mutation(self):
+  for mode,group in [(0o644,0),(0o664,1),(0o666,0)]:
+   p,r,files,containers,calls,patches=self.fixture();path=r['baselineComposeFiles'][0]
+   files[path]=(files[path][0],mode,group)
+   r['baselineComposeFileMetadata']={path:{'uid':0,'gid':0,'mode':0o664,'nlink':1}};rehash(p)
+   with contextlib.ExitStack() as stack:
+    for item in patches:stack.enter_context(item)
+    with self.assertRaises(ValueError):runtime.remote_close(p)
+    self.assertFalse(any(c[1] in ['stop','rm','rename','start'] for c in calls))
+ def test_metadata_may_not_pin_foreign_path_or_unsafe_owner_permissions(self):
+  for change in ['path','owner','mode','link']:
+   p,r,files,containers,calls,patches=self.fixture();path=r['baselineComposeFiles'][0]
+   m={'uid':0,'gid':0,'mode':0o664,'nlink':1}
+   if change=='path':path='/foreign'
+   if change=='owner':m['uid']=1
+   if change=='mode':m['mode']=0o666
+   if change=='link':m['nlink']=2
+   r['baselineComposeFileMetadata']={path:m}
+   with self.assertRaises(ValueError):runtime.validate_runtime(p)
+ def test_created_phase_exact_hash_restores_without_accepting_running_drift(self):
+  for phase in ['created','running']:
+   p,r,files,containers,calls,patches=self.fixture();candidate=containers['b'*64]
+   candidate['HostConfig']['OomKillDisable']=False;candidate['State'].update(Status=phase,Running=phase=='running')
+   r['createdHostConfigSHA256']=runtime.service_projection(candidate)['hostConfigSHA256'];rehash(p)
+   with contextlib.ExitStack() as stack:
+    for item in patches:stack.enter_context(item)
+    if phase=='created':self.assertTrue(runtime.remote_close(p)['verified'])
+    else:
+     with self.assertRaisesRegex(ValueError,'SERVICE_PREIMAGE_DRIFT'):runtime.remote_close(p)
+     self.assertFalse(any(c[1] in ['stop','rm','rename','start'] for c in calls))
  def test_exact_original_restored_without_compose_or_volume_remove(self):self.run_case()
  def test_partial_remove_and_rename_recover_without_recreation(self):
   for phase in ['removed','renamed','baseline']:self.run_case(phase)
