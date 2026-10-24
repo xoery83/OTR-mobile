@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { readLocalSession, requireActiveUserId } from "../auth/authRepository";
+import { ApiClientError } from "../api/client";
+import { sessionAccessToken } from "../auth/sessionAccessToken";
 import { stateFromSessionAndNetwork } from "@/domain/auth/localSession";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
@@ -69,6 +71,28 @@ function scopeEnabled(scope: NonNullable<ReturnType<typeof readConfiguration>>) 
   );
 }
 
+// Existing token provider refreshes/persists only this Account; failure pauses dispatch, never local access.
+async function readNormalDispatchSession(
+  actor: Awaited<ReturnType<typeof captureAccountScope>>,
+  enabled: () => boolean,
+) {
+  await assertAccountRequestContext(actor, requireActiveUserId);
+  if (!enabled()) return null;
+  try {
+    await sessionAccessToken({ expectedUserId: actor.accountId });
+  } catch (error) {
+    // Account-generation changes must escape instead of being mistaken for a network pause.
+    await assertAccountRequestContext(actor, requireActiveUserId);
+    if (error instanceof ApiClientError && error.kind === "network") return null;
+    throw error;
+  }
+  await assertAccountRequestContext(actor, requireActiveUserId);
+  if (!enabled()) return null;
+  const session = await readLocalSession();
+  await assertAccountRequestContext(actor, requireActiveUserId);
+  return enabled() && session?.identity?.userId === actor.accountId ? session : null;
+}
+
 // Only the owning normal selector contributes work to the existing operational timer.
 // Exact finite QA and historical queues remain unscheduled.
 export async function getNativeTripQaQueueActivity() {
@@ -77,8 +101,7 @@ export async function getNativeTripQaQueueActivity() {
   if (!scope?.normal || !scopeEnabled(scope)) return idle;
   const actor = await captureAccountScope(requireActiveUserId);
   if (actor.accountId !== scope.accountId) return idle;
-  const session = await readLocalSession();
-  await assertAccountRequestContext(actor, requireActiveUserId);
+  const session = await readNormalDispatchSession(actor, () => scopeEnabled(scope));
   if (stateFromSessionAndNetwork(session, true) !== "AUTHENTICATED_ONLINE") return idle;
   const [{ readInitializedDatabase }, { getNormalTripQueueActivity }] = await Promise.all(
     [import("../db/database"), import("./tripNormalQueueActivity")],
@@ -152,8 +175,8 @@ export async function runNativeTripQaSync() {
   const actor = await captureAccountScope(requireActiveUserId);
   if (actor.accountId !== scope.accountId || !enabled()) return null;
   if (scope.normal) {
-    const session = await readLocalSession();
-    await assertAccountRequestContext(actor, requireActiveUserId);
+    const session = await readNormalDispatchSession(actor, enabled);
+    if (stateFromSessionAndNetwork(session, true) !== "AUTHENTICATED_ONLINE") return null;
     const { createNativeNormalTripSyncRunner } = await import("./tripNormalCoordinator");
     await assertAccountRequestContext(actor, requireActiveUserId);
     if (!enabled()) return null;

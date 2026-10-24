@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { ApiClientError } from "../api/client";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import {
   filterNativeTripQaList,
@@ -22,6 +23,7 @@ const state = vi.hoisted(() => ({
   normal: vi.fn(),
   normalFactory: vi.fn(),
   session: vi.fn(),
+  token: vi.fn(),
   activity: vi.fn(),
   database: {},
 }));
@@ -29,6 +31,7 @@ vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
   readLocalSession: state.session,
 }));
+vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: state.token }));
 vi.mock("./transportSelection", () => ({
   getSyncTransportMode: () => process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT ?? "fake",
 }));
@@ -62,8 +65,10 @@ beforeEach(() => {
   state.account = a;
   state.normalFactory.mockReturnValue(state.normal);
   state.activity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
+  state.token.mockResolvedValue({ token: "synthetic", userId: a });
   state.session.mockResolvedValue({
     accessToken: "synthetic",
+    identity: { userId: a },
     expiresAt: "2026-10-23T04:00:00Z",
   });
   state.create.mockResolvedValue({ processedCount: 1 });
@@ -316,6 +321,7 @@ it("does not schedule normal work with an expired offline token", async () => {
   );
   state.session.mockResolvedValue({
     accessToken: "synthetic",
+    identity: { userId: a },
     expiresAt: "2026-10-23T03:00:00Z",
   });
   expect(await getNativeTripQaQueueActivity()).toEqual({
@@ -351,6 +357,7 @@ it("sustained adoption has no Trip targets or expiring dispatch window", async (
   vi.setSystemTime(new Date("2027-10-24T00:00:00Z"));
   state.session.mockResolvedValue({
     accessToken: "synthetic",
+    identity: { userId: a },
     expiresAt: "2027-10-24T01:00:00Z",
   });
   state.normal.mockResolvedValue({ tripIds: [trip] });
@@ -379,3 +386,87 @@ it.each(["expiresAt", "creates", "actorAccountId"])(
     expect(state.normal).not.toHaveBeenCalled();
   },
 );
+
+const sustainedScope = () =>
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: fixture().startsAt },
+    }),
+  );
+it("refreshes expired session with the existing provider before normal dispatch and scheduling", async () => {
+  sustainedScope();
+  let session = {
+    accessToken: "expired",
+    identity: { userId: a },
+    expiresAt: "2026-10-23T03:00:00Z",
+  };
+  state.session.mockImplementation(async () => session);
+  state.token.mockImplementation(async (request) => {
+    expect(request).toEqual({ expectedUserId: a });
+    session = { ...session, accessToken: "refreshed", expiresAt: "2026-10-23T04:00:00Z" };
+    return { token: "refreshed", userId: a };
+  });
+  state.normal.mockResolvedValue({ tripIds: [trip] });
+  expect(await runNativeTripQaSync()).toMatchObject({ journeyIds: [trip] });
+  expect(state.normal).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
+  state.activity.mockResolvedValue({ actionableNow: 1, nextActionableAt: null });
+  expect(await getNativeTripQaQueueActivity()).toEqual({
+    actionableNow: 1,
+    nextActionableAt: null,
+  });
+  expect(state.token).toHaveBeenCalledTimes(2);
+});
+it("refresh network failure pauses normal work without mutation or a signed-out state", async () => {
+  sustainedScope();
+  const cached = {
+    accessToken: "expired",
+    identity: { userId: a },
+    expiresAt: "2026-10-23T03:00:00Z",
+  };
+  state.session.mockResolvedValue(cached);
+  state.token.mockRejectedValue(
+    new ApiClientError(
+      "network unavailable",
+      "network",
+      undefined,
+      "AUTH_REFRESH_UNAVAILABLE",
+    ),
+  );
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(await getNativeTripQaQueueActivity()).toEqual({
+    actionableNow: 0,
+    nextActionableAt: null,
+  });
+  expect(state.normalFactory).not.toHaveBeenCalled();
+  expect(state.activity).not.toHaveBeenCalled();
+  expect(await state.session()).toBe(cached);
+});
+it("fences Account switch or same-Account generation replacement during refresh", async () => {
+  for (const switchIdentity of [false, true]) {
+    sustainedScope();
+    state.account = a;
+    state.token.mockImplementationOnce(async () => {
+      if (switchIdentity) state.account = "20000000-0000-4000-8000-000000000001";
+      advanceAccountGeneration();
+      return { token: "other", userId: state.account };
+    });
+    await expect(runNativeTripQaSync()).rejects.toThrow();
+    expect(state.normalFactory).not.toHaveBeenCalled();
+  }
+});
+
+it("preserves explicit auth-required rejection instead of treating invalid sessions as ordinary expiry", async () => {
+  sustainedScope();
+  const rejected = new ApiClientError(
+    "invalid refresh session",
+    "http",
+    401,
+    "AUTH_REQUIRED",
+  );
+  state.token.mockRejectedValue(rejected);
+  await expect(runNativeTripQaSync()).rejects.toBe(rejected);
+  expect(state.normalFactory).not.toHaveBeenCalled();
+});
