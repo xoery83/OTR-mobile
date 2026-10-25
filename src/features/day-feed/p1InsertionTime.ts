@@ -58,31 +58,53 @@ export function p1InsertionTime(
   const previousZone = end?.zone_id ?? previousStart?.zone_id;
   if (previousZone && start?.zone_id && previousZone !== start.zone_id)
     return { ...result, reason: "ZONE_MISMATCH" };
+  if (
+    previousStart?.local_time &&
+    previousStart.local_date &&
+    previousStart.local_date !== date
+  )
+    return { ...result, reason: "CROSS_DAY" };
   const a = minutes(end),
-    b = minutes(start);
+    b = minutes(start),
+    previousMinute = minutes(previousStart);
   const time = (value: number) =>
     `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
-  if (a !== null && b !== null) {
-    if ((end?.zone_id ?? null) !== (start?.zone_id ?? null))
-      return { ...result, reason: "ZONE_MISMATCH" };
-    if (a >= b) return { ...result, reason: "OVERLAP" };
-    const middle = (a + b) / 2,
-      rounded = Math.round(middle / 10) * 10;
-    const suggestion = rounded >= a && rounded < b ? rounded : Math.floor(middle);
-    return { ...result, startTime: time(suggestion), reason: "MID_GAP" };
-  }
-  if (a !== null) return { ...result, startTime: time(a), reason: "PREVIOUS_END" };
-  if (b !== null) {
-    const candidate = Math.max(0, b - 30);
-    const previousMinute = minutes(previousStart);
-    if (previousMinute !== null && candidate <= previousMinute)
-      return { ...result, reason: "UNKNOWN" };
+  const suggest = (value: number, reason: InsertionTimeSuggestion["reason"]) =>
+    value >= 0 && value < 1440
+      ? { ...result, startTime: time(value), reason }
+      : { ...result, reason: "CROSS_DAY" as const };
+  const midpoint = (lower: number, upper: number): InsertionTimeSuggestion => {
+    if (lower >= upper) return { ...result, reason: "OVERLAP" };
+    const middle = (lower + upper) / 2;
+    const rounded = Math.round(middle / 5) * 5;
+    return suggest(
+      rounded > lower && rounded < upper ? rounded : Math.floor(middle),
+      "MID_GAP",
+    );
+  };
+  if (
+    (a !== null || previousMinute !== null) &&
+    b !== null &&
+    (previousZone ?? null) !== (start?.zone_id ?? null)
+  )
+    return { ...result, reason: "ZONE_MISMATCH" };
+  if (a !== null && b !== null && a >= b) return { ...result, reason: "OVERLAP" };
+  if (side === "BEFORE") {
+    if (b === null) return result;
+    const lower = a ?? previousMinute;
     if (
-      previousMinute !== null &&
-      (previousStart?.zone_id ?? null) !== (start?.zone_id ?? null)
+      lower !== null &&
+      ((previousMinute !== null && b - previousMinute <= 70) || b - lower <= 70)
     )
-      return { ...result, reason: "ZONE_MISMATCH" };
-    return { ...result, startTime: time(candidate), reason: "BEFORE_NEXT" };
+      return midpoint(lower, b);
+    return suggest(b - 60, "BEFORE_NEXT");
   }
-  return result;
+  // A missing end gets an advisory 30-minute allowance, never a persisted duration.
+  const effectiveEnd = a ?? (previousMinute === null ? null : previousMinute + 30);
+  if (effectiveEnd === null) return result;
+  if (b !== null && b - effectiveEnd <= 70) {
+    // An estimated end cannot turn two point events into a proven overlap.
+    return midpoint(a === null && effectiveEnd >= b ? previousMinute! : effectiveEnd, b);
+  }
+  return suggest(effectiveEnd + 20, "PREVIOUS_END");
 }

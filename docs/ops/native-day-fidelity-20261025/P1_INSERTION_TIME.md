@@ -1,12 +1,13 @@
-# P1 gap insertion start-time default — 25 October 2026
+# P1 insertion defaults — Owner revision, 25 October 2026
 
-Owner requests the Focus before/after shortcut to carry date and start time through the chooser into P1 Create. This supersedes the older no-neighbor-inference rule only for an editable form default; it creates no duration, free-capacity assertion, timezone proof or Core instant.
+Editable form defaults only; never a duration, free-capacity claim, timezone proof or Core instant. This revision supersedes the earlier symmetric gap/10-minute recommendation.
 
-- BEFORE uses the immediate previous row and reference row. AFTER uses the reference row and immediate next row. Both entry points to the same gap return the same result.
-- With a comparable same-day previous END/DESTINATION and next START/ORIGIN, choose the midpoint. Prefer the nearest 10-minute mark if still inside the gap; otherwise keep a whole-minute midpoint.
-- Previous end only: use that end. Next start only: suggest 30 minutes earlier, clamped to midnight; leave blank if that would be at/before the preceding known start.
-- Overlap, nonmatching known zones, timed cross-day endpoints or no useful clock: leave time blank. Never skip over an immediately adjacent untimed row to invent a gap.
-- Keep the clicked date. Pass `initialStartTime` through the existing chooser into the existing P1 editor. Apply only to new drafts; never overwrite Edit. The default remains editable and passes through normal save validation.
-- DST: this helper carries a local clock default only. It does not resolve a local clock into an instant or claim DST gap/fold validity. Existing time/Core authority remains responsible for qualification.
+- BEFORE: if the preceding start is within 70 minutes, or its end is within 70 minutes of the reference start, use the midpoint of previous end (fallback previous start) and reference start. Otherwise suggest reference start minus 60 minutes.
+- AFTER: use actual end, or start plus 30 minutes as an advisory calculation only. No next timed boundary, or a gap greater than 70 minutes: suggest effective end plus 20 minutes. Gap at most 70 minutes: use its midpoint. If only the estimated end crosses the next start, use the actual start-to-start bracket; never declare an invented duration an actual overlap.
+- Midpoints prefer the nearest five-minute tick strictly inside the bracket; if none fits, retain a whole-minute midpoint. A one-minute bracket can retain its lower minute.
+- Actual overlap, conflicting/one-sided known zones in a two-clock bracket, cross-day endpoints or an out-of-day offset leave the time blank. Adjacent untimed rows are not skipped to invent an available gap.
+- The two directions intentionally differ in a wide gap: previous end12:00 / next start15:00 → below12:20 / above14:00. Exactly70minutes uses midpoint.
+- Keep the selected date, pass initialStartTime through the existing chooser to the existing P1 Create editor, and never overwrite an Edit draft. No inferred end is persisted.
+- DST remains owning Temporal qualification: this helper does not resolve civil clocks into instants or approve gaps/folds.
 
-Validation: 34 focused tests across helper, P1 editor and chooser pass. Forms QA native observation: Botanical garden visit ends12:00, next Local art studio visit starts13:00; Add below opens chooser with suggested12:30, then New plan displays Jan16,2027/start12:30/endNotset. Screenshot `/private/tmp/otr-p1-insertion-prefill-20261025.png`. Fixture is still a DEV-only, non-saving preview. Real Reader insertion UI integration and full Move persistence remain pending; this observation is not Core/Cloud PASS.
+Helper unit cases cover cutoff, direction, point fallback, tiny gap, midnight, overlap, zones, cross-day and input immutability. The existing form-prefill test remains in force. Production insertion callback now connects the current Core P1 renderer to the normal chooser and Repository form; only existing eligible qualified START rows expose shortcuts. Pending/Floating rows retain their current restrictions. Dedicated Forms QA has real local P1 but no qualified accepted P1, so this production shortcut does not yet have a real Native acceptance receipt.
