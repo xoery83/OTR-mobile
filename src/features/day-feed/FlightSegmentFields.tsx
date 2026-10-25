@@ -8,6 +8,8 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { CalendarField } from "./TripCalendarField";
+import { selectedAirportZone } from "./airportSuggestions";
+import { FlightAirportField } from "./FlightAirportField";
 import { PlanParticipantsField } from "./PlanParticipantsField";
 import type { FlightSegmentDraft } from "./manualFlightFormFields";
 function FlightTimeField({
@@ -145,8 +147,15 @@ export function FlightSegmentFields({
       {full ? (
         <>
           <UiText style={styles.section}>{t("manualFlight.departure")}</UiText>
-          {text("originCode", t("manualFlight.originCode"), true)}
-          {text("originName", t("manualFlight.originName"))}
+          <FlightAirportField
+            label={t("manualFlight.originAirport")}
+            code={value.originCode}
+            name={value.originName}
+            disabled={disabled}
+            onChange={({ code, name, zone }) =>
+              onChange({ originCode: code, originName: name, departureZone: zone ?? "" })
+            }
+          />
           <FlightTimeField
             label={t("manualFlight.departureTime")}
             onEditingChange={(open) => onPickerChange("departureTime", open)}
@@ -154,10 +163,29 @@ export function FlightSegmentFields({
             disabled={disabled}
             onChange={(departureTime) => onChange({ departureTime })}
           />
-          {text("departureZone", t("manualFlight.departureZone"))}
+          {value.departureZone &&
+          selectedAirportZone(value.originCode, value.originName) ===
+            value.departureZone ? (
+            <UiText style={styles.meta}>
+              {t("manualFlight.airportZone", { zone: value.departureZone })}
+            </UiText>
+          ) : (
+            text("departureZone", t("manualFlight.departureZone"))
+          )}
           <UiText style={styles.section}>{t("manualFlight.arrival")}</UiText>
-          {text("destinationCode", t("manualFlight.destinationCode"), true)}
-          {text("destinationName", t("manualFlight.destinationName"))}
+          <FlightAirportField
+            label={t("manualFlight.destinationAirport")}
+            code={value.destinationCode}
+            name={value.destinationName}
+            disabled={disabled}
+            onChange={({ code, name, zone }) =>
+              onChange({
+                destinationCode: code,
+                destinationName: name,
+                arrivalZone: zone ?? "",
+              })
+            }
+          />
           <CalendarField
             variant="field"
             label={t("manualFlight.arrivalDate")}
@@ -174,7 +202,15 @@ export function FlightSegmentFields({
             disabled={disabled}
             onChange={(arrivalTime) => onChange({ arrivalTime })}
           />
-          {text("arrivalZone", t("manualFlight.arrivalZone"))}
+          {value.arrivalZone &&
+          selectedAirportZone(value.destinationCode, value.destinationName) ===
+            value.arrivalZone ? (
+            <UiText style={styles.meta}>
+              {t("manualFlight.airportZone", { zone: value.arrivalZone })}
+            </UiText>
+          ) : (
+            text("arrivalZone", t("manualFlight.arrivalZone"))
+          )}
           <UiText style={styles.meta}>{t("manualFlight.unknownHint")}</UiText>
         </>
       ) : null}
