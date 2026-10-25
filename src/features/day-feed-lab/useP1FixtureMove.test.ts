@@ -91,11 +91,11 @@ const list = {
     jumpToDayHeader: vi.fn(),
   },
 };
-function render(key = "test") {
+function render(key = "test", onFinish?: () => void) {
   hooks.cursor = 0;
   // Hook slots/effects are driven by the repository's deterministic hook harness.
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const value = useP1FixtureMove(list, key, 100);
+  const value = useP1FixtureMove(list, key, 100, 34, onFinish);
   hooks.effects.splice(0).forEach((effect) => effect());
   if (!hooks.geometryRegistered) {
     hooks.geometryRegistered = true;
@@ -191,6 +191,26 @@ afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+it("ordinary feed release/cancellation never invokes move-finish chrome restoration", () => {
+  const finished = vi.fn();
+  let move = render("test", finished);
+  move.touchHandlers.onTouchEnd(touch(200, 450, 0));
+  move.touchHandlers.onTouchCancel();
+  move.touchHandlers.onResponderRelease();
+  hooks.appState?.("inactive");
+  expect(finished).not.toHaveBeenCalled();
+  move.handlers.start("syn-p1-exact", { x: 200, y: 450 });
+  move = render("test", finished);
+  move.touchHandlers.onResponderRelease();
+  move.touchHandlers.onTouchEnd(touch(200, 450, 0));
+  move.touchHandlers.onTouchCancel();
+  expect(finished).toHaveBeenCalledTimes(1);
+  move.handlers.start("syn-p1-exact", { x: 200, y: 450 });
+  move = render("test", finished);
+  move.touchHandlers.onTouchCancel();
+  move.touchHandlers.onTouchEnd(touch(200, 450, 0));
+  expect(finished).toHaveBeenCalledTimes(2);
 });
 it("stationary hold/release ends immediately without confirmation or a running timer", () => {
   let move = render();

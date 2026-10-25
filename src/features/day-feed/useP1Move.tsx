@@ -286,13 +286,10 @@ export function useP1Move(
     [previews, width, measure],
   );
   const end = useCallback(() => {
-    finishCallback.current?.();
     const d = drag.current;
-    if (!d) {
-      setActive(null);
-      return;
-    }
+    if (!d) return;
     drag.current = null;
+    finishCallback.current?.();
     setActive(null);
     console.info(
       JSON.stringify({
@@ -308,11 +305,10 @@ export function useP1Move(
     }
   }, []);
   const cancel = useCallback(() => {
-    finishCallback.current?.();
-    const wasDragging = drag.current !== null;
+    if (!drag.current) return;
     drag.current = null;
+    finishCallback.current?.();
     setActive(null);
-    if (!wasDragging) return;
     console.info(JSON.stringify({ event: "p1_move_cancel" }));
   }, []);
   useEffect(() => {
