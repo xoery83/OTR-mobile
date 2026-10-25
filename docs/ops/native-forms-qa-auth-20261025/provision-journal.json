@@ -1,0 +1,22 @@
+{
+  "scope": "FORMS_QA_AUTH_ONLY_OWNER_20261025",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "email": "otr.forms.qa.20261025@example.invalid",
+  "maximumCreates": 1,
+  "normalLoginRequired": true,
+  "authorityExpansion": false,
+  "utc": "2026-10-25T04:11:07.034Z",
+  "status": "CREATED_NORMAL_LOGIN_PENDING",
+  "diagnostics": [
+    {
+      "attempt": 1,
+      "outcome": "HTTP_RESPONSE",
+      "httpStatus": 200,
+      "category": "HTTP_SUCCESS",
+      "providerRequestId": "01a17141-4c92-769c-8af2-3fa68fc3ce99",
+      "sdkCode": null
+    }
+  ],
+  "id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "createdAt": "2026-10-25T04:11:07.954088Z"
+}

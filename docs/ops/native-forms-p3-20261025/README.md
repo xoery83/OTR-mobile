@@ -1,6 +1,8 @@
 # P3 Manual Stay — independent local candidate, 25 October 2026
 
-Status: **LOCAL_PASS for the bounded synthetic Native scenario / CLOUD_PENDING**. The full P3 feature remains **BLOCKED_BY_OWNING_INTERFACE**. No claim of a normal authenticated journey, full Product Delta completion or Cloud success.
+Follow-up: [normal Auth and normal Native P3 route PASS](../native-forms-qa-auth-20261025/README.md); the authentication blocker below is resolved by that separate receipt. Earlier evidence remains unchanged.
+
+Status at this original checkpoint: **LOCAL_PASS for the bounded synthetic Native scenario / CLOUD_PENDING**. The full P3 feature remains **BLOCKED_BY_OWNING_INTERFACE**. No claim of a normal authenticated journey, full Product Delta completion or Cloud success.
 
 ## Fixed candidate and scope
 
