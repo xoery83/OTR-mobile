@@ -45,6 +45,7 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
+  useWindowDimensions: () => ({ fontScale: 1 }),
   Modal: (p: any) => {
     state.modalProps = p;
     return p.visible ? createElement("div", null, p.children) : null;
@@ -153,6 +154,15 @@ it("arrows change only weak menu date and pass it into the existing create callb
   expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("2027-01-01");
   expect(render()).not.toContain("actionIsland.weakDate");
   expect(render()).not.toContain("quickAdd.selectedDay");
+  for (const label of [
+    "actionIsland.importPlans",
+    "quickAdd.itinerary",
+    "quickAdd.expense",
+    "quickAdd.member",
+    "quickAdd.photos",
+  ]) {
+    expect(button(label).compact).toBe(true);
+  }
   button("quickAdd.itinerary").onPress();
   expect(itinerary).toHaveBeenCalledWith("2027-01-01");
   expect(expense).not.toHaveBeenCalled();

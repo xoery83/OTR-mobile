@@ -10,6 +10,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
@@ -149,6 +150,7 @@ export function TripQuickAddMenu({
     close();
     action();
   };
+  const largeText = useWindowDimensions().fontScale > 2;
   const knownDate = validSuggestedDate(suggested);
   const dateLabel = knownDate
     ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
@@ -225,7 +227,7 @@ export function TripQuickAddMenu({
                   contentContainerStyle={styles.content}
                 >
                   {showDate ? (
-                    <View style={styles.dates}>
+                    <View style={[styles.dates, !largeText && styles.tightDates]}>
                       <View style={styles.dateRow}>
                         {([-1, 0, 1] as const).map((direction) =>
                           direction === 0 ? (
@@ -308,6 +310,7 @@ export function TripQuickAddMenu({
                   ) : null}
                   <UiFormRow
                     variant="action"
+                    compact
                     value={t(
                       captureReady
                         ? "quickAdd.importHint"
@@ -337,13 +340,14 @@ export function TripQuickAddMenu({
                     <View style={styles.tile}>
                       <UiFormRow
                         variant="action"
+                        compact
                         value={t("quickAdd.itineraryHint")}
                         label={t("quickAdd.itinerary")}
                         leading={
                           <View style={styles.icon}>
                             <AppIcon
                               name="calendar.badge.plus"
-                              size={25}
+                              size={22}
                               color={colors.accent}
                             />
                           </View>
@@ -361,11 +365,12 @@ export function TripQuickAddMenu({
                     <View style={styles.tile}>
                       <UiFormRow
                         variant="action"
+                        compact
                         value={t("quickAdd.expenseHint")}
                         label={t("quickAdd.expense")}
                         leading={
                           <View style={styles.expenseIcon}>
-                            <AppIcon name="banknote" size={25} color={colors.warning} />
+                            <AppIcon name="banknote" size={22} color={colors.warning} />
                           </View>
                         }
                         disabled={!expenseReady || (showDate && !knownDate)}
@@ -375,13 +380,14 @@ export function TripQuickAddMenu({
                     <View style={styles.tile}>
                       <UiFormRow
                         variant="action"
+                        compact
                         value={t("quickAdd.membersHint")}
                         label={t("quickAdd.member")}
                         leading={
                           <View style={styles.icon}>
                             <AppIcon
                               name="person.badge.plus"
-                              size={25}
+                              size={22}
                               color={colors.textSecondary}
                             />
                           </View>
@@ -393,11 +399,12 @@ export function TripQuickAddMenu({
                     <View style={styles.tile}>
                       <UiFormRow
                         variant="action"
+                        compact
                         value={t("quickAdd.photosHint")}
                         label={t("quickAdd.photos")}
                         leading={
                           <View style={styles.icon}>
-                            <AppIcon name="photo" size={25} color={colors.accent} />
+                            <AppIcon name="photo" size={22} color={colors.accent} />
                           </View>
                         }
                         disabled={!photos}
@@ -427,21 +434,22 @@ const createStyles = (c: UiColors) =>
       overflow: "hidden",
     },
     menuScroll: { flexGrow: 0, flexShrink: 1 },
-    content: { padding: visual.space.page, paddingTop: 0, gap: visual.space.card },
+    content: { padding: visual.space.page, paddingTop: 0, gap: visual.space.heading },
     dates: { gap: visual.space.heading },
+    tightDates: { marginTop: -visual.space.page },
     grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     tile: { flexBasis: "47%", flexGrow: 1 },
     icon: {
-      width: 44,
-      minHeight: 48,
+      width: 36,
+      minHeight: 36,
       borderRadius: visual.radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: c.accentSurface,
     },
     expenseIcon: {
-      width: 44,
-      minHeight: 48,
+      width: 36,
+      minHeight: 36,
       borderRadius: visual.radius.card,
       alignItems: "center",
       justifyContent: "center",
