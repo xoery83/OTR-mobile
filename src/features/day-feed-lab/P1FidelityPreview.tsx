@@ -33,6 +33,7 @@ import { visual } from "@/ui/visual";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 import {
   p1FidelityFixture,
+  p1FidelityFocusKey,
   p1FidelityPack,
   type P1FidelityClock,
 } from "./p1FidelityFixture";
@@ -81,6 +82,8 @@ export function P1FidelityPreview() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const list = useRef<DayListHandle | null>(null);
   const key = JSON.stringify([clock, depth, target]);
+  const [dismissedImmersive, setDismissedImmersive] = useState<string | null>(null);
+  const targetFocusKey = p1FidelityFocusKey(initialFixture, target);
   const shell = useDayFeedShellState(key);
   const preview = () => setSheet("ACTION");
   const fixture = p1FidelityFixture(
@@ -181,8 +184,8 @@ export function P1FidelityPreview() {
             reading: { offset: 0, focus: depth === "B" ? null : target },
           }}
           directItem={
-            depth === "I"
-              ? { itemId: target, onClose: () => router.setParams({ depth: "F" }) }
+            depth === "I" && dismissedImmersive !== key && targetFocusKey
+              ? { itemId: targetFocusKey, onClose: () => setDismissedImmersive(key) }
               : undefined
           }
           presentation={{
@@ -212,7 +215,14 @@ export function P1FidelityPreview() {
             showTimeUnspecified: false,
             immersiveContentStyle: { paddingHorizontal: 0, paddingBottom: 0 },
             renderImmersiveHeader: (onClose) => (
-              <SheetHeader title="" leftLabel={t("common.back")} onLeft={onClose} />
+              <View style={{ paddingTop: insets.top, backgroundColor: colors.surface }}>
+                <SheetHeader
+                  safeTop={false}
+                  title=""
+                  leftLabel={t("common.back")}
+                  onLeft={onClose}
+                />
+              </View>
             ),
             renderDayHeading: (date, empty) => (
               <DayFeedFidelityHeading

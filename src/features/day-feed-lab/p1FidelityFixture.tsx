@@ -1,6 +1,11 @@
 import { createElement } from "react";
 import pack from "./fixtures/p1-fidelity-v2.json";
-import type { DayEvent, DayBoundary } from "@/domain/trip/dayReadModel";
+import {
+  itemsForLocalDate,
+  type DayEvent,
+  type DayBoundary,
+} from "@/domain/trip/dayReadModel";
+import { composeDayStream } from "@/features/day-feed/composition";
 import { P1Row } from "@/features/day-feed/P1Row";
 import type { P1ReadFacts, P1ReadActions } from "@/features/day-feed/p1ReadPresentation";
 import type { DayRowRenderer } from "@/features/day-feed/rendererContribution";
@@ -125,4 +130,18 @@ export function p1FidelityFixture(
       expected: visible.map((x) => x.expected),
     },
   };
+}
+
+// Direct detail must use the continuous-list occurrence key, not the Item identity.
+export function p1FidelityFocusKey(fixture: FixtureContribution, itemId: string) {
+  return fixture.dates
+    .flatMap(
+      (date) =>
+        composeDayStream(
+          itemsForLocalDate(fixture.projection, date, fixture.zone),
+          fixture.instant,
+          { occurrenceFocus: true },
+        ).rows,
+    )
+    .find((row) => row.item.event.id === itemId)?.focusKey;
 }

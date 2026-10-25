@@ -1,6 +1,10 @@
 import { expect, it, vi } from "vitest";
 vi.mock("@/features/day-feed/P1Row", () => ({ P1Row: () => null }));
-import { p1FidelityFixture, p1FidelityPack } from "./p1FidelityFixture";
+import {
+  p1FidelityFixture,
+  p1FidelityPack,
+  p1FidelityFocusKey,
+} from "./p1FidelityFixture";
 import { collectFixtureContributions } from "./contribution";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { composeDayStream } from "@/features/day-feed/composition";
@@ -41,4 +45,24 @@ it("three controlled clocks retain the same Item identities and source facts", (
   expect(all[0].projection.events).toEqual(all[1].projection.events);
   expect(all[1].projection.events).toEqual(all[2].projection.events);
   expect(new Set(all.map((x) => x.instant)).size).toBe(3);
+});
+
+it("direct detail resolves the owning continuous occurrence key across days", () => {
+  const f = p1FidelityFixture("today");
+  for (const id of ["syn-p1-exact", "syn-p1-crossday"]) {
+    const key = p1FidelityFocusKey(f, id);
+    expect(key).toBeTruthy();
+    expect(key).not.toBe(id);
+    expect(
+      f.dates
+        .flatMap(
+          (date) =>
+            composeDayStream(itemsForLocalDate(f.projection, date, f.zone), f.instant, {
+              occurrenceFocus: true,
+            }).rows,
+        )
+        .some((row) => row.focusKey === key && row.item.event.id === id),
+    ).toBe(true);
+  }
+  expect(p1FidelityFocusKey(f, "syn-p1-unavailable")).toBeUndefined();
 });
