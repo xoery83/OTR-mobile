@@ -1,0 +1,7 @@
+{
+  "status": "PASS_EXACT_ONE_LINE_SEALED_TARGET",
+  "file": "/private/tmp/otr-universal-startup-guard-window-20261025.py",
+  "sha256": "af86d721482846edda2e8267b6a68b45f242a87f5a552542f53e7effbf5c174b",
+  "check": "Exact byte comparison after only addition of runtimeMountTarget=/run/otr/universal-recovery.json to sealed runtime object; AST parse PASS. No other change.",
+  "authorityBoundary": "Static local review only. Future deployment/window and16 additional business reads need exact Owner authorization; previous UNKNOWN usage remains preserved and no counter reset is authorized."
+}

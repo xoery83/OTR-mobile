@@ -1,0 +1,13 @@
+{
+  "status": "LOCAL_FIXTURE_PASS",
+  "tests": 3,
+  "concurrentWorkers": 18,
+  "accepted": 16,
+  "denied": 2,
+  "actualLedgerReadOrWrite": false,
+  "DEVRequests": 0,
+  "hashes": {
+    "otr-universal-startup-guard-recovery-read-allowance.py": "582f8da4ebef72de6ccb46d0b56540fbb9587d69562d29bb3555681fe1a27f76",
+    "otr-universal-startup-guard-recovery-read-allowance-test.py": "c73ea357e40921a56bd98e929e0c29288bcff5ddb568d75c3b770232f8e09864"
+  }
+}
