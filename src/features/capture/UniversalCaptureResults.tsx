@@ -27,7 +27,6 @@ export function UniversalResultView({
   result,
   busy,
   unavailable,
-  attempted,
   canStart,
   isCurrent,
   start,
@@ -242,14 +241,12 @@ export function UniversalResultView({
           onPress={start}
         />
       ) : null}
-      {attempted || result ? (
-        <UiButton
-          label={t("capture.ai.check")}
-          variant="secondary"
-          disabled={busy || !ready}
-          onPress={recover}
-        />
-      ) : null}
+      <UiButton
+        label={t("capture.ai.check")}
+        variant="secondary"
+        disabled={busy || !ready}
+        onPress={recover}
+      />
       <CaptureManualFallback model={model} isCurrent={isCurrent} />
     </UiSection>
   );

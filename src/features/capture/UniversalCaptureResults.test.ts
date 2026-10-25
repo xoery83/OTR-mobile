@@ -223,3 +223,15 @@ it("Chinese preview keeps supplied original names and uses localized status", ()
   expect(html).toContain(t("capture.ai.manual"));
   setUiLocale("en");
 });
+
+it("offers GET-only recovery on a cold Batch before any new interpretation attempt", () => {
+  const f = fixture();
+  renderToStaticMarkup(createElement(UniversalResultView, {
+    ...f.props, result: null, attempted: false, canStart: true,
+  }));
+  const check = state.buttons.find((b) => b.label === t("capture.ai.check"));
+  expect(check?.disabled).toBe(false);
+  check!.onPress();
+  expect(f.props.recover).toHaveBeenCalledOnce();
+  expect(f.props.start).not.toHaveBeenCalled();
+});
