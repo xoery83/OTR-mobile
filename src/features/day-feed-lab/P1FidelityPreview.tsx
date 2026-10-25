@@ -77,8 +77,10 @@ export function P1FidelityPreview() {
     headerHeight = useHeaderHeight();
   const [sheet, setSheet] = useState<"CONTROLS" | "ADD" | "ACTION" | null>(null);
   const [calendar, setCalendar] = useState(false),
-    [pastIntroduction, setPastIntroduction] = useState(false),
+    [scrollOffset, setScrollOffset] = useState(0),
+    [introductionHeight, setIntroductionHeight] = useState(111),
     [summaries, setSummaries] = useState<DaySummary[]>([]);
+  const pastIntroduction = scrollOffset > introductionHeight;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const list = useRef<DayListHandle | null>(null);
   const key = JSON.stringify([clock, depth, target]);
@@ -209,6 +211,11 @@ export function P1FidelityPreview() {
             },
             header: (
               <View
+                onLayout={({ nativeEvent }) =>
+                  setIntroductionHeight(
+                    Math.max(0, nativeEvent.layout.height - headerHeight),
+                  )
+                }
                 style={{
                   paddingTop: headerHeight,
                   backgroundColor: colors.tripIntroduction,
@@ -265,7 +272,7 @@ export function P1FidelityPreview() {
             ),
             onOffsetChange: (offset) => {
               shell.observeScroll(offset, false);
-              setPastIntroduction(offset > 111);
+              setScrollOffset(offset);
             },
             onReadingMotion: shell.observeReadingMotion,
             onViewportChange: (viewport) =>

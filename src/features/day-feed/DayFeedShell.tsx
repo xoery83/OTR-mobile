@@ -33,6 +33,7 @@ export function DayFeedShellTitle({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={openCalendarLabel}
+      accessibilityValue={{ text: label }}
       onPress={onOpenCalendar}
       style={styles.titleTarget}
     >

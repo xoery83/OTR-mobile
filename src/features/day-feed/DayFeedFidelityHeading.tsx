@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { UiButton, UiText } from "@/ui/controls";
 import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -23,6 +23,7 @@ export function DayFeedFidelityHeading({
   dayColor?: string;
 }) {
   useUiLocale();
+  const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles);
   const ordinal =
     Math.round(
@@ -41,30 +42,40 @@ export function DayFeedFidelityHeading({
       ? t("fidelity.tomorrow")
       : formatUiDate(at, { weekday: "long", timeZone: "UTC" });
   return (
-    <View
-      style={[
-        styles.root,
-        previousColor && dayColor
-          ? {
+    <View style={[styles.root, { backgroundColor: dayColor }]}>
+      {previousColor && dayColor ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.transition,
+            {
               experimental_backgroundImage: [
                 {
                   type: "linear-gradient",
-                  // ui-foundation-exception: string -- Native gradient direction from the existing shared cover implementation.
+                  // ui-foundation-exception: string -- Native gradient direction identifier, not display copy.
                   direction: "to bottom",
                   colorStops: [
                     { color: previousColor, positions: ["0%"] },
-                    { color: dayColor, positions: ["38px", "100%"] },
+                    { color: dayColor, positions: ["100%"] },
                   ],
                 },
               ],
-            }
-          : undefined,
-      ]}
-    >
+            },
+          ]}
+        />
+      ) : null}
       <View style={[styles.heading, isToday && styles.todayHeading]}>
         <View
+          accessible
           accessibilityLabel={t("fidelity.dayOrdinal", { day: ordinal })}
-          style={[styles.badge, isToday && styles.todayBadge]}
+          style={[
+            styles.badge,
+            isToday && styles.todayBadge,
+            {
+              width: Math.max(isToday ? 49 : 43, 30 * fontScale),
+              height: Math.max(isToday ? 55 : 49, 32 * fontScale),
+            },
+          ]}
         >
           <View
             style={[
@@ -122,6 +133,7 @@ export function DayFeedFidelityHeading({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     root: { paddingTop: 20, paddingBottom: 10 },
+    transition: { position: "absolute", top: 0, left: 0, right: 0, height: 38 },
     heading: {
       minHeight: 58,
       flexDirection: "row",
