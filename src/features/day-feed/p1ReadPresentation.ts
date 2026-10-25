@@ -37,8 +37,7 @@ export function currentP1Facts(event: DayEvent, facts?: P1ReadFacts) {
 export function p1ReadClocks(event: DayEvent, role: "START" | "END" = "START") {
   const start = event.boundaries.find((b) => b.role === "START"),
     end = event.boundaries.find((b) => b.role === "END");
-  const clock = (b: typeof start) =>
-    b && acceptedBoundaryAnchor(b) ? (b.local_time?.slice(0, 5) ?? null) : null;
+  const clock = (b: typeof start) => b?.local_time?.slice(0, 5) ?? null;
   const offset =
     start?.local_date && end?.local_date
       ? Math.round(

@@ -1,3 +1,4 @@
+import { dayFeedPhaseColor } from "@/features/day-feed/dayFeedAppearance";
 import { useEffect, useRef, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -224,8 +225,7 @@ export function P1FidelityPreview() {
   ) : (
     <NavigationContextTitle title={fixture.title} />
   );
-  const phase = (date: string) =>
-    date < today ? colors.dayPast : date === today ? colors.surface : colors.dayFuture;
+  const phase = (date: string) => dayFeedPhaseColor(date, today, colors);
   return (
     <>
       <Stack.Screen

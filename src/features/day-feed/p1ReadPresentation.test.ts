@@ -8,7 +8,7 @@ import {
   p1InsertionEligible,
   p1FreshEntryFocus,
 } from "./p1ReadPresentation";
-it("keeps floating source clocks out of Browse without deleting them", () => {
+it("shows the authored floating clock without manufacturing an instant", () => {
   const event = place("p1", "Floating", "2027-01-16");
   event.boundaries = [
     {
@@ -18,7 +18,7 @@ it("keeps floating source clocks out of Browse without deleting them", () => {
       quality: "EXACT",
     },
   ];
-  expect(p1ReadClocks(event).primary).toBe(null);
+  expect(p1ReadClocks(event).primary).toBe("15:00");
   expect(event.boundaries[0].local_time).toBe("15:00:00");
 });
 it("retains one cross-day Item, an independent END rail and a display-only day offset", () => {

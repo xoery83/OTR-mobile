@@ -1,3 +1,10 @@
+import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
+import { useMinuteClock } from "./useMinuteClock";
+import { useP1CivilMove } from "./useP1CivilMove";
+import { P1MeasuredMoveRegion } from "./useP1Move";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { tripDestinationDisplay } from "./tripDestinationDisplay";
+import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import { DayFeedFidelityHeading } from "./DayFeedFidelityHeading";
 import { p1InsertionTime } from "./p1InsertionTime";
@@ -209,7 +216,7 @@ function TripContent({
   }>();
   const [dayTripFacts, setDayTripFacts] = useState<{
     generation: number;
-    trip: TripListSummary;
+    trip: TripListSummary & Pick<Trip, "destinations">;
   } | null>(null);
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [insertion, setInsertion] = useState<{
@@ -303,27 +310,6 @@ function TripContent({
     dayPastIntroduction && dayShell.visibleDates
       ? formatDayFeedVisibleDates(dayShell.visibleDates)
       : dayName;
-  useLayoutEffect(() => {
-    if (!dayActive || !navigation.isFocused()) return;
-    publishDayShellChrome(
-      {
-        tripId: requested,
-        generation,
-        owner: dayChromeOwner,
-        navigationVisible: dayShell.navigationVisible,
-      },
-      dayChromeOwner,
-    );
-    return () => publishDayShellChrome(null, dayChromeOwner);
-  }, [
-    dayActive,
-    requested,
-    generation,
-    dayChromeOwner,
-    dayShell.navigationVisible,
-    publishDayShellChrome,
-    navigation,
-  ]);
   const isMyTrips = !today && !requested && params.view !== "create";
   const immersiveHome = !today && home && !!requested;
   const headerTitle = isMyTrips
@@ -337,65 +323,6 @@ function TripContent({
       : dayActive
         ? dayTitle
         : t("navigation.trip");
-  useLayoutEffect(() => {
-    if (today && !dayActive) return;
-    const blurHeader = dayActive || (immersiveHome && !heroBehindStatus);
-    const nativeEdge =
-      Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
-    navigation.setOptions({
-      // Native Stack falls back to the route name when a custom title renders null.
-      title: headerTitle,
-      headerTransparent: true,
-      fullScreenGestureEnabled: immersiveHome,
-      headerStyle: {
-        backgroundColor:
-          dayActive && !dayPastIntroduction
-            ? colors.tripIntroduction
-            : colors.transparent,
-      },
-      headerShadowVisible: false,
-      // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
-      headerBlurEffect: blurHeader && !nativeEdge ? "systemUltraThinMaterial" : undefined,
-      scrollEdgeEffects: blurHeader
-        ? {
-            top: nativeEdge ? "soft" : "hidden",
-            bottom: "hidden",
-            left: "hidden",
-            right: "hidden",
-          }
-        : undefined,
-      statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
-      headerTitle: ({
-        onLayout,
-      }: {
-        onLayout?: import("react-native").TextProps["onLayout"];
-      }) =>
-        dayActive ? (
-          dayTitle ? (
-            <DayFeedShellTitle
-              label={dayTitle}
-              openCalendarLabel={t("dayShell.calendar.open")}
-              onOpenCalendar={() => setCalendarVisible(true)}
-            />
-          ) : null
-        ) : (
-          <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
-            {headerTitle}
-          </ThemedText>
-        ),
-    });
-  }, [
-    navigation,
-    today,
-    headerTitle,
-    styles.navTitle,
-    immersiveHome,
-    colors,
-    heroBehindStatus,
-    dayActive,
-    dayTitle,
-    dayPastIntroduction,
-  ]);
   const visibleTrip =
     trip?.scope.generation === generation &&
     (trip.observed?.projection.tripId === requested ||
@@ -433,12 +360,27 @@ function TripContent({
         const result = await reader.trip(requested);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         setTrip(result);
-        const rootFacts = await readLocalTripDiscoveryRepository()
-          .then((reader) => reader.readMerged())
-          .then((read) => read.trips.find((row) => row.id === requested))
-          .catch(() => undefined);
+        const [rootFacts, localMetadata] = await Promise.all([
+          readLocalTripDiscoveryRepository()
+            .then((reader) => reader.readMerged())
+            .then((read) => read.trips.find((row) => row.id === requested))
+            .catch(() => undefined),
+          readLocalTripRepository()
+            .then((reader) => reader.getTrip(requested))
+            .catch(() => null),
+        ]);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
-        setDayTripFacts(rootFacts ? { generation: captured, trip: rootFacts } : null);
+        setDayTripFacts(
+          rootFacts
+            ? {
+                generation: captured,
+                trip: {
+                  ...rootFacts,
+                  ...(localMetadata ? { destinations: localMetadata.destinations } : {}),
+                },
+              }
+            : null,
+        );
         if (
           !result.observed &&
           result.localManual?.scope.tripId === requested &&
@@ -1209,22 +1151,124 @@ function TripContent({
       : dayContext && dayFacts
         ? wholeTripCalendarDates(dayFacts, dateChoices, dayContext.date)
         : undefined;
+  const displayClock = useMinuteClock(dayContext?.zone ?? null);
   const qualifiedToday = dayContext?.zone
-    ? localCalendarDate(new Date().toISOString(), dayContext.zone)
+    ? localCalendarDate(displayClock.instant, dayContext.zone)
     : "";
-  const phase = (date: string) =>
-    !qualifiedToday
-      ? colors.background
-      : date >= qualifiedToday
-        ? colors.surface
-        : colors.dayPast;
+  const appearanceToday = dayFeedAppearanceDate(
+    displayClock.instant,
+    dayContext?.zone,
+    displayClock.deviceZone,
+  );
+  const phase = (date: string) => dayFeedPhaseColor(date, appearanceToday, colors);
+  const move = useP1CivilMove(
+    dayList,
+    dayActive ? visibleTrip : null,
+    requested,
+    generation,
+    calendarDates ?? [],
+    insets.top,
+    insets.bottom,
+    () => manualItemSaved(requested, generation),
+    () => dayShell.observeReadingStopped(),
+  );
+  const moveActive = move.active;
+  useLayoutEffect(() => {
+    if (!dayActive || !navigation.isFocused()) return;
+    publishDayShellChrome(
+      {
+        tripId: requested,
+        generation,
+        owner: dayChromeOwner,
+        navigationVisible: !moveActive && dayShell.navigationVisible,
+      },
+      dayChromeOwner,
+    );
+    return () => publishDayShellChrome(null, dayChromeOwner);
+  }, [
+    dayActive,
+    requested,
+    generation,
+    dayChromeOwner,
+    dayShell.navigationVisible,
+    moveActive,
+    publishDayShellChrome,
+    navigation,
+  ]);
+  useLayoutEffect(() => {
+    if (today && !dayActive) return;
+    const blurHeader = dayActive || (immersiveHome && !heroBehindStatus);
+    const nativeEdge =
+      Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
+    navigation.setOptions({
+      // Native Stack falls back to the route name when a custom title renders null.
+      title: moveActive ? "" : headerTitle,
+      headerTransparent: true,
+      fullScreenGestureEnabled: immersiveHome,
+      headerStyle: {
+        backgroundColor:
+          dayActive && !dayPastIntroduction && !moveActive
+            ? colors.tripIntroduction
+            : colors.transparent,
+      },
+      headerShadowVisible: false,
+      // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
+      headerBlurEffect:
+        !moveActive && blurHeader && !nativeEdge ? "systemUltraThinMaterial" : undefined,
+      scrollEdgeEffects: blurHeader
+        ? {
+            top: nativeEdge ? "soft" : "hidden",
+            bottom: "hidden",
+            left: "hidden",
+            right: "hidden",
+          }
+        : undefined,
+      statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
+      headerTitle: moveActive
+        ? () => null
+        : ({ onLayout }: { onLayout?: import("react-native").TextProps["onLayout"] }) =>
+            dayActive ? (
+              dayTitle ? (
+                <DayFeedShellTitle
+                  label={dayTitle}
+                  openCalendarLabel={t("dayShell.calendar.open")}
+                  onOpenCalendar={() => setCalendarVisible(true)}
+                />
+              ) : null
+            ) : (
+              <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
+                {headerTitle}
+              </ThemedText>
+            ),
+    });
+  }, [
+    navigation,
+    today,
+    headerTitle,
+    styles.navTitle,
+    immersiveHome,
+    colors,
+    heroBehindStatus,
+    dayActive,
+    dayTitle,
+    dayPastIntroduction,
+    moveActive,
+  ]);
+  const moveInteraction = {
+    canMove: move.canMove,
+    start: move.handlers.start,
+    wrapRow: move.wrapRow,
+    wrapClock: move.wrapClock,
+  };
   if (visibleTrip && dayContext && (visibleTrip.localManual || visibleTrip.observed))
     return (
       <>
-        <View style={styles.root}>
+        <View style={styles.root} {...move.touchHandlers}>
           <DayFeed
             bottomInset={bottomBarHeight}
             presentation={{
+              scrollEnabled: !move.active,
+              p1Move: moveInteraction,
               listStyle: { backgroundColor: colors.tripIntroduction },
               listContentStyle: {
                 backgroundColor: calendarDates?.length
@@ -1234,23 +1278,30 @@ function TripContent({
               showTimeUnspecified: false,
               renderDayHeading: dayFacts?.startDate
                 ? (date, empty) => (
-                    <DayFeedFidelityHeading
+                    <P1MeasuredMoveRegion
+                      regionKey={`day:${date}`}
                       date={date}
-                      start={dayFacts.startDate!}
-                      today={qualifiedToday}
-                      empty={empty}
-                      dayColor={phase(date)}
-                      previousColor={
-                        date === dayFacts.startDate
-                          ? colors.tripIntroduction
-                          : phase(
-                              new Date(Date.parse(date + "T12:00:00Z") - 86400000)
-                                .toISOString()
-                                .slice(0, 10),
-                            )
-                      }
-                      onAdd={() => setInsertion({ date, startTime: null })}
-                    />
+                      register={move.register}
+                      unregister={move.unregister}
+                    >
+                      <DayFeedFidelityHeading
+                        date={date}
+                        start={dayFacts.startDate!}
+                        today={qualifiedToday}
+                        empty={empty}
+                        dayColor={phase(date)}
+                        previousColor={
+                          date === dayFacts.startDate
+                            ? colors.tripIntroduction
+                            : phase(
+                                new Date(Date.parse(date + "T12:00:00Z") - 86400000)
+                                  .toISOString()
+                                  .slice(0, 10),
+                              )
+                        }
+                        onAdd={() => setInsertion({ date, startTime: null })}
+                      />
+                    </P1MeasuredMoveRegion>
                   )
                 : undefined,
               wrapDayRow: (date, content) => (
@@ -1301,7 +1352,7 @@ function TripContent({
                     fidelity
                     tripName={dayName}
                     rangeLabel={dayRangeLabel}
-                    locationSummary={dayFacts?.destination}
+                    locationSummary={dayFacts ? tripDestinationDisplay(dayFacts) : null}
                     openCalendarLabel={t("dayShell.calendar.open")}
                     onOpenCalendar={() => setCalendarVisible(true)}
                   />
@@ -1322,7 +1373,12 @@ function TripContent({
               onReadingMotion: dayShell.observeReadingMotion,
               onReadingStopped: dayShell.observeReadingStopped,
               onOffsetChange: (value) => {
-                if (dayIntroductionBottom.current !== null)
+                if (
+                  dayIntroductionBottom.current !== null &&
+                  (!move.active ||
+                    dayOffset.current >= dayIntroductionBottom.current !==
+                      value >= dayIntroductionBottom.current)
+                )
                   setDayPastIntroduction(
                     dayOrigin.current > 0 || value >= dayIntroductionBottom.current,
                   );
@@ -1390,7 +1446,9 @@ function TripContent({
                 : undefined
             }
           />
+          {move.overlay}
         </View>
+        {move.confirmation}
         <DayFeedCalendarSheet
           visible={calendarVisible}
           tripName={dayName}

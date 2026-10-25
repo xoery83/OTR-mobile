@@ -89,7 +89,7 @@ it("stale supplemental facts and actions never disclose Note, linked IDs or navi
   expect(html).not.toContain("Everyone");
   expect(node("Directions")).toBeUndefined();
 });
-it("Browse hides the unqualified original clock while Immersive retains it with a warning", () => {
+it("Browse and Immersive show the authored clock with an unconfirmed-zone warning", () => {
   const e = event();
   e.boundaries = [
     {
@@ -100,9 +100,9 @@ it("Browse hides the unqualified original clock while Immersive retains it with 
     },
   ];
   const props = { event: e, onDepth: vi.fn() };
-  expect(
-    renderToStaticMarkup(createElement(P1Row, { ...props, depth: "B" })),
-  ).not.toContain("15:00");
+  expect(renderToStaticMarkup(createElement(P1Row, { ...props, depth: "B" }))).toContain(
+    "15:00",
+  );
   const html = renderToStaticMarkup(createElement(P1Row, { ...props, depth: "I" }));
   expect(html).toContain("15:00");
   expect(html).toContain("Timezone not confirmed");
@@ -163,4 +163,34 @@ it("uses singular linked-record counts in Focus and accessible Immersive actions
   );
   for (const label of ["1 expense", "1 photo", "1 attachment"])
     expect(node(label)).toBeDefined();
+});
+
+it("marks an unqualified END even when START is qualified and both clocks are displayed", () => {
+  const value = event();
+  value.boundaries[1] = {
+    ...value.boundaries[1],
+    instant: null,
+    source_instant: null,
+    zone_id: null,
+    civil_resolution: "PENDING",
+  };
+  const html = renderToStaticMarkup(
+    createElement(P1Row, { event: value, depth: "F", onDepth: vi.fn() }),
+  );
+  expect(html).toContain("10:30");
+  expect(html).toContain("12:00");
+  expect(html).toContain("Timezone not confirmed");
+});
+it("native long press forwards the pickup point and suppresses its following normal tap", () => {
+  const start = vi.fn(),
+    onDepth = vi.fn();
+  renderToStaticMarkup(
+    createElement(P1Row, { event: event(), depth: "B", onDepth, moveGesture: { start } }),
+  );
+  const target = state.nodes.find((n) => n.onLongPress);
+  target.onPressIn();
+  target.onLongPress({ nativeEvent: { pageX: 200, pageY: 450 } });
+  target.onPress();
+  expect(start).toHaveBeenCalledWith({ x: 200, y: 450 });
+  expect(onDepth).not.toHaveBeenCalled();
 });

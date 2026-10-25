@@ -1,3 +1,4 @@
+import { useP1CivilMove } from "@/features/day-feed/useP1CivilMove";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { p1FidelityFixture } from "./p1FidelityFixture";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
@@ -75,6 +76,13 @@ vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/features/day-feed/P1Row", () => ({ P1Row: () => null }));
 vi.mock("./P1FixtureNowMarker", () => ({ P1FixtureNowMarker: () => null }));
+const real = vi.hoisted(() => ({ generation: 5, read: vi.fn(), save: vi.fn() }));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => real.generation,
+}));
+vi.mock("@/data/repositories/manualPlanRepository", () => ({
+  createDefaultManualPlanRepository: async () => ({ read: real.read, save: real.save }),
+}));
 const list = {
   current: {
     saveAnchor: vi.fn(() => null),
@@ -426,3 +434,144 @@ it("switching precision at a settled interior position does not resnap the selec
   move = render();
   expect(move.previews["syn-p1-exact"].time).toBe("12:00");
 });
+
+it.each(["RETRY", "CANCEL_NEW"])(
+  "real civil move handles a frozen draft after failure: %s",
+  async (recovery) => {
+    const date = "2026-10-25",
+      itemId = "real-p1";
+    const fields = {
+      title: "Local P1",
+      startDate: date,
+      startTime: "10:30",
+      endDate: null,
+      endTime: null,
+      location: "Garden",
+      description: null,
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+    };
+    const draft = { mode: "EDIT", itemId, fields, participantOptions: [] };
+    real.generation = 5;
+    real.read.mockReset();
+    real.save.mockReset();
+    real.read.mockResolvedValue({ ...draft }).mockResolvedValueOnce(draft);
+    const frozen = new WeakMap<object, string>();
+    let failures = 1;
+    real.save.mockImplementation(async (opened, fields) => {
+      const bytes = JSON.stringify(fields);
+      if (frozen.has(opened) && frozen.get(opened) !== bytes)
+        throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
+      frozen.set(opened, bytes);
+      if (failures-- > 0) throw new Error("transient after attempt");
+      return { itemId };
+    });
+    const rowKey = { itemId, projectionRole: "START", localDate: date };
+    const read = {
+      scope: { accountId: "account", generation: 5 },
+      observed: null,
+      localManual: {
+        scope: { accountId: "account", tripId: "trip", generation: 5 },
+        source: { fingerprint: "one" },
+        items: [
+          {
+            itemId,
+            itemRevision: 1,
+            family: "P1",
+            status: "planned",
+            title: "Local P1",
+            schedule: {
+              start: { localDate: date, localTime: "10:30", comparable: false },
+            },
+          },
+        ],
+        rows: (day: string) => (day === date ? [{ rowKey, itemRef: itemId }] : []),
+      },
+    } as any;
+    const saved = vi.fn(),
+      finish = vi.fn();
+    const renderReal = () => {
+      hooks.cursor = 0;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const value = useP1CivilMove(
+        list,
+        read,
+        "trip",
+        5,
+        [date, "2026-10-26"],
+        62,
+        34,
+        saved,
+        finish,
+      );
+      hooks.effects.splice(0).forEach((effect) => effect());
+      return value;
+    };
+    let move = renderReal();
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    move = renderReal();
+    expect(move.canMove(itemId)).toBe(true);
+    for (const [key, day, y, minute] of [
+      [`day:${date}`, date, 200, undefined],
+      [`local:${JSON.stringify(rowKey)}`, date, 400, undefined],
+      ["clock", date, 430, 630],
+      ["day:2026-10-26", "2026-10-26", 800, undefined],
+    ] as const)
+      move.register(
+        { measureInWindow: (cb: any) => cb(21, y, 360, 40) } as any,
+        day,
+        key,
+        minute,
+      );
+    move.handlers.start(itemId, { x: 200, y: 430 });
+    move = renderReal();
+    move.handlers.change({ x: 200, y: 600 });
+    move.handlers.end();
+    move = renderReal();
+    expect((move.confirmation as any).props.visible).toBe(true);
+    let header = (move.confirmation as any).props.children.props.children.props
+      .children[0];
+    header.props.onRight();
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    move = renderReal();
+    expect((move.confirmation as any).props.visible).toBe(true);
+    expect(saved).not.toHaveBeenCalled();
+    header = (move.confirmation as any).props.children.props.children.props.children[0];
+    if (recovery === "CANCEL_NEW") {
+      header.props.onLeft();
+      move = renderReal();
+      for (let i = 0; i < 8; i++) await Promise.resolve();
+      move = renderReal();
+      expect(real.read).toHaveBeenCalledTimes(2);
+      move.handlers.start(itemId, { x: 200, y: 430 });
+      move = renderReal();
+      move.handlers.change({ x: 200, y: 650 });
+      move.handlers.end();
+      move = renderReal();
+      header = (move.confirmation as any).props.children.props.children.props.children[0];
+    }
+    header.props.onRight();
+    header.props.onRight(); // same-frame double tap must not submit twice
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    move = renderReal();
+    expect(saved).toHaveBeenCalledTimes(recovery === "CANCEL_NEW" ? 2 : 1);
+    expect(real.save).toHaveBeenCalledTimes(2);
+    expect(real.save.mock.calls[0][0]).toBe(draft);
+    if (recovery === "RETRY")
+      expect(real.save.mock.calls[1]).toEqual(real.save.mock.calls[0]);
+    else {
+      expect(real.save.mock.calls[1][0]).not.toBe(draft);
+      expect(real.save.mock.calls[1][1].startTime).not.toBe(
+        real.save.mock.calls[0][1].startTime,
+      );
+    }
+    expect(real.save.mock.calls[1][1]).toMatchObject({
+      title: "Local P1",
+      location: "Garden",
+      endDate: null,
+      endTime: null,
+    });
+    expect(real.save.mock.calls[1][1].startTime).not.toBe("10:30");
+    expect(move.previews).toEqual({});
+    expect((move.confirmation as any).props.visible).toBe(false);
+  },
+);

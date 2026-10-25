@@ -9,6 +9,28 @@ import { createDefaultManualPlanRepository } from "@/data/repositories/manualPla
 import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
 import { createDefaultManualRentalRepository } from "@/data/repositories/manualRentalRepository";
 import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
+vi.mock("./useMinuteClock", () => ({
+  useMinuteClock: () => ({
+    instant: "2026-10-26T00:00:00Z",
+    deviceZone: "Pacific/Auckland",
+  }),
+}));
+vi.mock("./useP1CivilMove", () => ({
+  useP1CivilMove: () => ({
+    active: false,
+    canMove: () => false,
+    handlers: {},
+    touchHandlers: {},
+    wrapRow: (_k: string, _d: string, c: any) => c,
+    wrapClock: (_k: string, _d: string, _m: number, c: any) => c,
+  }),
+}));
+vi.mock("./useP1Move", () => ({ P1MeasuredMoveRegion: "MeasuredRegion" }));
+vi.mock("@/data/repositories/tripRepository", () => ({
+  readLocalTripRepository: async () => ({
+    getTrip: async () => ({ destinations: [{ displayLabel: "Auckland, New Zealand" }] }),
+  }),
+}));
 vi.mock("./ManualItineraryContent", () => ({ ManualItineraryContent: () => null }));
 vi.mock("./DayFeedFidelityHeading", () => ({ DayFeedFidelityHeading: () => null }));
 vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
@@ -1538,4 +1560,20 @@ it("accepted readable P1 routes without opening an editor even when Creator edit
     params: { tripId: reference, itemId: item.itemId },
   });
   expect(find(render(), "PlanEditor")).toBeNull();
+});
+
+it("Day introduction reads structured destinations through the existing local Trip repository", async () => {
+  state.routeMode = "day";
+  state.discovery = [
+    {
+      id: reference,
+      name: "QA Trip",
+      destination: null,
+      startDate: "2026-10-25",
+      endDate: "2026-10-30",
+    },
+  ];
+  const feed = find(await loaded(), DayFeed);
+  const text = JSON.stringify(feed.presentation.header);
+  expect(text).toContain("Auckland, New Zealand");
 });

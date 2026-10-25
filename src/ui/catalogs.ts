@@ -1038,6 +1038,8 @@ export const en = {
   "fidelity.moveStartTime": "Start: {time}",
   "fidelity.moveEndTime": "End: {time}",
   "fidelity.moveNoTime": "Not set",
+  "fidelity.moveLocalNotice":
+    "Updates the local date and time. Timezone remains unconfirmed.",
   "fidelity.movePreviewNotice": "Preview data only. Your trip won't be changed.",
   "fidelity.moveStep": "{minutes}-minute steps",
   "fidelity.moveMissingZone": "This plan’s time zone is unknown, so its time cannot be moved yet.",
@@ -3759,6 +3761,7 @@ export const zhHans: Record<MessageKey, string> = {
   "fidelity.moveStartTime": "开始：{time}",
   "fidelity.moveEndTime": "结束：{time}",
   "fidelity.moveNoTime": "未设置",
+  "fidelity.moveLocalNotice": "更新本地日期和时间，时区仍未确认。",
   "fidelity.movePreviewNotice": "当前为预览数据，不会更改真实旅行。",
   "fidelity.moveStep": "{minutes}分钟精度",
   "fidelity.moveMissingZone": "此计划尚未确定时区，暂时无法移动具体时间。",

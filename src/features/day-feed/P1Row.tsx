@@ -52,6 +52,12 @@ export type P1RowDisplay = Pick<
   };
 };
 
+export type P1MoveInteraction = {
+  canMove(id: string): boolean;
+  start(id: string, point: { x: number; y: number }): void;
+  wrapRow(key: string, date: string, content: ReactNode): ReactNode;
+  wrapClock(key: string, date: string, minute: number, content: ReactNode): ReactNode;
+};
 export function ReadFactTag({ label, onPress }: { label: string; onPress?: () => void }) {
   const styles = useThemedStyles(createStyles);
   const tag = <Text style={styles.tag}>{label}</Text>;
@@ -126,6 +132,13 @@ export function P1Row({
       event.authored_address ||
       event.accepted_address_line1 ||
       event.authored_address_line1;
+  const clockQualified = (boundary: typeof clocks.start | typeof clocks.end) =>
+    !!boundary &&
+    ("qualified" in boundary ? boundary.qualified : !!acceptedBoundaryAnchor(boundary));
+  const unconfirmedClock =
+    (clocks.primary &&
+      !clockQualified(occurrence === "END" ? clocks.end : clocks.start)) ||
+    (clocks.secondary && !clockQualified(clocks.end));
   const primaryLabel =
     clocks.primary && occurrence === "END"
       ? t("fidelity.endAtTime", { time: clocks.primary })
@@ -410,6 +423,8 @@ export function P1Row({
             moveGesture
               ? (event) => {
                   longPress.current = true;
+                  if (typeof __DEV__ !== "undefined" && __DEV__)
+                    console.info(JSON.stringify({ event: "p1_native_pickup" }));
                   moveGesture.start({
                     x: event.nativeEvent.pageX,
                     y: event.nativeEvent.pageY,
@@ -460,6 +475,9 @@ export function P1Row({
             ) : null}
             {facts?.pending ? (
               <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>
+            ) : null}
+            {unconfirmedClock ? (
+              <Text style={styles.meta}>{t("tripHome.today.timezoneUnknown")}</Text>
             ) : null}
             {focused ? (
               <>

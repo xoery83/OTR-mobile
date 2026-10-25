@@ -25,8 +25,7 @@ export function localP1Presentation(item: Item, occurrence: "START" | "END" = "S
       : undefined;
   const start = boundary("START", schedule.start),
     end = boundary("END", schedule.end);
-  const clock = (value?: CoreBoundaryView) =>
-    value?.comparable ? (value.localTime?.slice(0, 5) ?? null) : null;
+  const clock = (value?: CoreBoundaryView) => value?.localTime?.slice(0, 5) ?? null;
   const mode = item.participation.mode;
   const personIds = item.participation.personIds.filter(
     (id): id is string => typeof id === "string",

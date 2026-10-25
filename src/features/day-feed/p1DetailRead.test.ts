@@ -55,7 +55,7 @@ it("reads only the real scoped Item and enables Edit only after repository quali
     participation: { mode: "WHOLE_GROUP" },
   });
   expect(state?.presentation.display.clocks).toMatchObject({
-    primary: null,
+    primary: "10:30",
     start: { local_time: "10:30", qualified: false },
   });
   expect(JSON.stringify(record)).toBe(bytes);

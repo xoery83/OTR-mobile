@@ -1,3 +1,4 @@
+import { p1CivilMoveItem, p1CivilProposal } from "@/features/day-feed/p1CivilMove";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it, vi } from "vitest";
@@ -882,4 +883,44 @@ it("does not use an unlinked name without its completed owning Person receipt op
       (p) => p.personId === f.personId,
     ),
   ).toBe(false);
+});
+
+it("real civil move persists the same local P1 and a cancelled frozen attempt can re-read a fresh draft", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    created = await repo.createDraft(f.tripId);
+  await repo.save(created, {
+    ...values(created.fields),
+    startTime: "23:30",
+    endDate: "2026-10-21",
+    endTime: "01:00",
+  });
+  const local = (await f.read(f.tripId))!,
+    item = p1CivilMoveItem(local.items[0])!;
+  const proposal = p1CivilProposal(item, "2026-10-25", 1410);
+  const opened = await repo.read(f.tripId, created.itemId);
+  const fields = {
+    ...opened.fields,
+    startDate: proposal.date!,
+    startTime: proposal.time!,
+    endDate: proposal.endDate!,
+    endTime: proposal.endTime!,
+  };
+  f.failNext(1);
+  await expect(repo.save(opened, fields)).rejects.toThrow("TEST_WRITE_FAILURE");
+  await expect(repo.save(opened, { ...fields, startTime: "23:35" })).rejects.toThrow(
+    "MANUAL_PLAN_DRAFT_FROZEN",
+  );
+  const fresh = await repo.read(f.tripId, created.itemId);
+  f.failNext(0);
+  const result = await repo.save(fresh, { ...fields, startTime: "23:35" });
+  expect(result.itemId).toBe(created.itemId);
+  const restored = (await f.read(f.tripId))!;
+  expect(restored.items).toHaveLength(1);
+  expect(restored.items[0].schedule).toMatchObject({
+    start: { localDate: "2026-10-25", localTime: "23:35:00", comparable: false },
+    end: { localDate: "2026-10-26", localTime: "01:00:00", comparable: false },
+  });
+  expect(restored.items[0].place?.authoredLabel).toBe("Nelson gardens");
+  expect(count(f.sql)).toBe(2);
 });

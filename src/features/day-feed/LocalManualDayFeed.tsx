@@ -1,4 +1,4 @@
-import { P1Row } from "./P1Row";
+import { P1Row, type P1MoveInteraction } from "./P1Row";
 import { localP1Presentation } from "./localP1Presentation";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { DayFeedPresentation } from "./DayFeed";
@@ -102,6 +102,7 @@ export function LocalManualDayFeed({
             onlyRow={row}
             p1Focus={p1Focus}
             onP1Focus={setP1Focus}
+            move={presentation?.p1Move}
             onOpenItem={onOpenItem}
           />
         ),
@@ -110,6 +111,7 @@ export function LocalManualDayFeed({
   // Cell measurements must include spacing; FlatList estimates omit container gaps.
   return (
     <WindowedDayList
+      scrollEnabled={presentation?.scrollEnabled}
       rows={rows}
       renderRow={({ value, date }) =>
         presentation?.wrapDayRow ? (
@@ -165,11 +167,13 @@ export function LocalManualDayRows({
   onlyRow,
   p1Focus,
   onP1Focus,
+  move,
   read,
   date,
   onOpenItem,
 }: {
   read: LocalManualRead;
+  move?: P1MoveInteraction;
   p1Focus?: string | null;
   onP1Focus?(key: string | null): void;
   onlyRow?: ReturnType<LocalManualRead["rows"]>[number];
@@ -198,6 +202,9 @@ export function LocalManualDayRows({
             <LocalP1Row
               key={JSON.stringify(row.rowKey)}
               item={item}
+              move={move}
+              date={date}
+              rowKey={`local:${JSON.stringify(row.rowKey)}`}
               occurrence={role === "END" ? "END" : "START"}
               focused={
                 p1Focus === undefined ? undefined : p1Focus === JSON.stringify(row.rowKey)
@@ -248,10 +255,16 @@ export function LocalManualDayRows({
 function LocalP1Row({
   item,
   occurrence,
+  move,
+  rowKey,
+  date,
   onOpen,
   focused,
   onFocus,
 }: {
+  move?: P1MoveInteraction;
+  rowKey: string;
+  date: string;
   focused?: boolean;
   onFocus?(focused: boolean): void;
   item: LocalManualRead["items"][number];
@@ -260,16 +273,43 @@ function LocalP1Row({
 }) {
   const [depth, setDepth] = useState<"B" | "F">("B");
   const presentation = localP1Presentation(item, occurrence);
-  return presentation ? (
+  const content = presentation ? (
     <P1Row
       {...presentation}
       occurrence={occurrence}
+      moveGesture={
+        occurrence === "START" && move?.canMove(item.itemId)
+          ? { start: (point) => move.start(item.itemId, point) }
+          : undefined
+      }
+      wrapMoveClock={
+        move
+          ? (role, content) => {
+              const clock =
+                role === "PRIMARY"
+                  ? occurrence === "END"
+                    ? presentation.display.clocks.end
+                    : presentation.display.clocks.start
+                  : presentation.display.clocks.end;
+              return clock?.local_time && clock.local_date === date
+                ? move.wrapClock(
+                    `${rowKey}:${role}`,
+                    date,
+                    Number(clock.local_time.slice(0, 2)) * 60 +
+                      Number(clock.local_time.slice(3, 5)),
+                    content,
+                  )
+                : content;
+            }
+          : undefined
+      }
       depth={focused === undefined ? depth : focused ? "F" : "B"}
       onDepth={(next) =>
         next === "I" ? onOpen() : onFocus ? onFocus(next === "F") : setDepth(next)
       }
     />
   ) : null;
+  return content && move ? move.wrapRow(rowKey, date, content) : content;
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({

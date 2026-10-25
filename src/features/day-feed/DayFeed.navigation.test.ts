@@ -597,3 +597,20 @@ it("mixed Reader keeps exactly one Focus across local and accepted P1 rows", () 
   expect(html).toContain(`${fixture.before.id}:F`);
   expect(html).toContain("local-p1:B");
 });
+it("real local Reader P1 forwards the native pickup point to the owning move controller", () => {
+  const local = localManual("local-p1"),
+    start = vi.fn();
+  const presentation = {
+    p1Move: {
+      canMove: () => true,
+      start,
+      wrapRow: (_key: string, _date: string, content: any) => content,
+      wrapClock: (_key: string, _date: string, _minute: number, content: any) => content,
+    },
+  };
+  render({ projection: undefined, localManual: local, zone: "", presentation });
+  const row = state.nodes.find((p) => p.display?.id === "local-p1");
+  expect(row.moveGesture).toBeDefined();
+  row.moveGesture.start({ x: 200, y: 450 });
+  expect(start).toHaveBeenCalledWith("local-p1", { x: 200, y: 450 });
+});

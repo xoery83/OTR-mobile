@@ -45,7 +45,7 @@ import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { P1Row } from "./P1Row";
+import { P1Row, type P1MoveInteraction } from "./P1Row";
 import { TransitionRow, type ComposedTransition } from "./TransitionRow";
 import { FlightRows } from "./FlightRows";
 import { FlightFidelityGrid } from "./FlightFidelityGrid";
@@ -80,6 +80,7 @@ function ImmersiveHeaderSlot({
 }
 
 export type DayFeedPresentation = {
+  p1Move?: P1MoveInteraction;
   scrollEnabled?: boolean;
   // Optional presentation-only integration seams; composition and Reader authority stay unchanged.
   renderDayHeading?: (date: string, empty: boolean) => ReactNode;
@@ -637,6 +638,7 @@ function AcceptedDayFeed({
             onlyRow={row}
             p1Focus={focus}
             onP1Focus={setFocus}
+            move={presentation?.p1Move}
             onOpenItem={onOpenLocalItem}
           />
         ),
