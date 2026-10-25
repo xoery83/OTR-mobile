@@ -27,6 +27,7 @@ import {
 } from "./dayFeedWindow";
 
 export type DayListHandle = {
+  scrollBy?(delta: number): boolean;
   jumpToDayHeader(date: string, includeTripHeader?: boolean): boolean;
   restoreAnchor(anchor: DayScrollAnchor): boolean;
   saveAnchor(): DayScrollAnchor | null;
@@ -152,7 +153,9 @@ export function WindowedDayList<T>({
   } | null>(null);
   const lastNativeOffset = useRef(0);
   const prepending = useRef(false);
+  const followPrependOrigin = useRef<number | null>(null);
   const contentHeight = useRef(0);
+  const viewportHeight = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
   const pending = useRef<{
     anchor: DayScrollAnchor;
@@ -380,6 +383,7 @@ export function WindowedDayList<T>({
         contentHeight.current = 0;
         dragging.current = false;
         prepending.current = false;
+        followPrependOrigin.current = null;
         const row = live.current.rows[target.index];
         setWindowStart({
           scopeKey: live.current.scopeKey,
@@ -487,6 +491,21 @@ export function WindowedDayList<T>({
         includeTripHeader && header != null,
       );
     },
+    scrollBy(delta) {
+      if (!Number.isFinite(delta) || pending.current || !list.current) return false;
+      const next = Math.max(
+        0,
+        Math.min(
+          Math.max(0, contentHeight.current - viewportHeight.current),
+          offset.current + delta,
+        ),
+      );
+      if (delta < 0) prependPrevious(next, "follow");
+      if (Math.abs(next - offset.current) < 0.1) return false;
+      offset.current = next;
+      list.current.scrollToOffset({ offset: next, animated: false });
+      return true;
+    },
     restoreAnchor: restore,
     saveAnchor: () => saved.current,
   }));
@@ -509,6 +528,7 @@ export function WindowedDayList<T>({
       lastNativeOffset.current = 0;
       dragging.current = false;
       prepending.current = false;
+      followPrependOrigin.current = null;
       setWindowStart({ scopeKey, key: "", date: "", revision: epoch });
     }
     return () => {
@@ -557,12 +577,12 @@ export function WindowedDayList<T>({
     });
   }, []);
   const prependPrevious = useCallback(
-    (position: number, trigger: "drag-begin" | "scroll") => {
+    (position: number, trigger: "drag-begin" | "scroll" | "follow") => {
       const current = live.current;
       if (
         current.epoch !== listEpoch.current ||
         pending.current ||
-        !dragging.current ||
+        (trigger !== "follow" && !dragging.current) ||
         prepending.current ||
         position > 200 ||
         current.origin <= 0
@@ -571,6 +591,7 @@ export function WindowedDayList<T>({
       const previous = previousDayOrigin(current.rows, current.origin);
       const row = current.rows[previous];
       prepending.current = true;
+      if (trigger === "follow") followPrependOrigin.current = current.origin;
       trace("PREPEND", {
         fromOrigin: current.origin,
         origin: previous,
@@ -722,6 +743,7 @@ export function WindowedDayList<T>({
         }
       }}
       onLayout={({ nativeEvent }) => {
+        viewportHeight.current = nativeEvent.layout.height;
         if (renderedEpoch !== listEpoch.current) return;
         trace("VIEWPORT_LAYOUT", {
           height: nativeEvent.layout.height,
@@ -734,6 +756,7 @@ export function WindowedDayList<T>({
         dragging.current = true;
         // Layout/overscroll from this gesture must not unlock another previous-date prepend.
         prepending.current = false;
+        followPrependOrigin.current = null;
         diagnostic.current.count = 0;
         diagnostic.current.until = Date.now() + 10000;
         trace("DRAG_BEGIN", { origin, listEpoch: renderedEpoch });
@@ -763,6 +786,15 @@ export function WindowedDayList<T>({
       onScroll={(event) => {
         if (renderedEpoch !== listEpoch.current) return;
         const rawOffset = event.nativeEvent.contentOffset.y;
+        if (
+          followPrependOrigin.current !== null &&
+          live.current.origin < followPrependOrigin.current &&
+          rawOffset > 0
+        ) {
+          // Native maintainVisibleContentPosition has compensated the committed prepend.
+          prepending.current = false;
+          followPrependOrigin.current = null;
+        }
         const movingUp = dragging.current && rawOffset < lastNativeOffset.current - 1;
         lastNativeOffset.current = rawOffset;
         if (movingUp) prependPrevious(rawOffset, "scroll");

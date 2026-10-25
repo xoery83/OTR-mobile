@@ -23,6 +23,7 @@ export function p1FidelityFixture(
   move?: {
     previews: Record<string, FixtureMovePreview>;
     wrapRow?(key: string, date: string, content: ReactNode): ReactNode;
+    wrapClock?(key: string, date: string, minute: number, content: ReactNode): ReactNode;
     handlers: {
       start(id: string, point: MovePoint): void;
       change(point: MovePoint): void;
@@ -119,6 +120,28 @@ export function p1FidelityFixture(
       createElement(P1Row, {
         event: props.row.item.event,
         depth: props.depth,
+        wrapMoveClock: move?.wrapClock
+          ? (role, content) => {
+              const displayRole = props.row.item.roles.includes("START")
+                ? "START"
+                : "END";
+              const displayDate = props.row.item.event.boundaries.find(
+                (b) => b.role === displayRole,
+              )?.local_date;
+              const boundary = props.row.item.event.boundaries.find(
+                (b) => b.role === (role === "PRIMARY" ? displayRole : "END"),
+              );
+              const time = boundary?.local_time;
+              return time && boundary.local_date === displayDate
+                ? move.wrapClock!(
+                    `${props.row.key}:${role}`,
+                    displayDate!,
+                    Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)),
+                    content,
+                  )
+                : content;
+            }
+          : undefined,
         moveGesture:
           move &&
           !facts[props.row.item.event.id]?.pending &&

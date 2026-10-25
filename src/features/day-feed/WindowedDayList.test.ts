@@ -946,3 +946,36 @@ it("measures row spacing inside each cell while preserving header spacing and bo
   expect(state.nodes.at(-1).style).toContainEqual({ paddingBottom: 24 });
   expect(state.props.maintainVisibleContentPosition).toBeUndefined();
 });
+
+it("continuous display scrolling preserves the window and never starts an anchor restore", () => {
+  const { ref, rows, rerender, result } = setup();
+  state.props.onLayout({ nativeEvent: { layout: { height: 500 } } });
+  state.props.onContentSizeChange(390, 5000);
+  const first = state.props.data[0].key;
+  expect(ref.current!.scrollBy!(12)).toBe(true);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 12, animated: false });
+  expect(ref.current!.scrollBy!(8)).toBe(true);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 20, animated: false });
+  rerender(rows);
+  expect(state.props.data[0].key).toBe(first);
+  expect(result).not.toHaveBeenCalled();
+  expect(state.scrollToIndex).not.toHaveBeenCalled();
+  expect(ref.current!.scrollBy!(NaN)).toBe(false);
+});
+
+it("continuous follow can prepend again after native position compensation without a new gesture", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  scroll(0);
+  ref.current!.scrollBy!(-8);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[73]);
+  // Layout is committed; native maintains the old visible Item at a positive compensated offset.
+  scroll(100);
+  ref.current!.scrollBy!(-8);
+  rerender();
+  expect(state.props.data[0]).toBe(rows[72]);
+  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+});

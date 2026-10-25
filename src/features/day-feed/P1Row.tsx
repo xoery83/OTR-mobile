@@ -51,6 +51,7 @@ export function P1Row({
   hideDivider = false,
   showHeader = true,
   moveGesture,
+  wrapMoveClock,
 }: {
   event: DayEvent;
   depth: Depth;
@@ -65,6 +66,7 @@ export function P1Row({
   onInsert?(side: "BEFORE" | "AFTER"): void;
   hideDivider?: boolean;
   showHeader?: boolean;
+  wrapMoveClock?: (role: "PRIMARY" | "SECONDARY", content: ReactNode) => ReactNode;
   moveGesture?: {
     start(point: { x: number; y: number }): void;
   };
@@ -100,6 +102,8 @@ export function P1Row({
         })
       : t("fidelity.rowTime", { title: event.title, time: primaryLabel })
     : event.title;
+  const renderClock = (role: "PRIMARY" | "SECONDARY", content: ReactNode) =>
+    wrapMoveClock?.(role, content) ?? content;
   const focused = depth === "F",
     immersive = depth === "I";
   const count = {
@@ -373,15 +377,20 @@ export function P1Row({
                 {t(clocks.primary ? "fidelity.endAt" : "fidelity.end")}
               </Text>
             ) : null}
-            {clocks.primary ? <Text style={styles.clock}>{clocks.primary}</Text> : null}
-            {clocks.secondary ? (
-              <Text style={styles.endClock}>
-                {clocks.secondary}
-                {clocks.dayOffset ? (
-                  <Text style={styles.offset}>⁺{clocks.dayOffset}</Text>
-                ) : null}
-              </Text>
-            ) : null}
+            {clocks.primary
+              ? renderClock("PRIMARY", <Text style={styles.clock}>{clocks.primary}</Text>)
+              : null}
+            {clocks.secondary
+              ? renderClock(
+                  "SECONDARY",
+                  <Text style={styles.endClock}>
+                    {clocks.secondary}
+                    {clocks.dayOffset ? (
+                      <Text style={styles.offset}>⁺{clocks.dayOffset}</Text>
+                    ) : null}
+                  </Text>,
+                )
+              : null}
             {withinMarker}
           </View>
           <View style={styles.content}>

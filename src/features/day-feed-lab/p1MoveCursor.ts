@@ -16,60 +16,99 @@ export function movePrecision(x: number, width: number, previous?: MoveStep): Mo
   }
   return steps[band];
 }
-export function moveTickRate(offset: number, step: MoveStep) {
-  if (Math.abs(offset) <= 10) return 0;
-  const rates = { 10: [1.2, 3], 30: [0.9, 2.2], 60: [0.6, 1.6], 120: [0.5, 1.2] };
-  const [low, high] = rates[step];
-  const distance = Math.min(1, (Math.abs(offset) - 10) / 140);
-  return Math.sign(offset) * (low + (high - low) * distance ** 1.6);
-}
-export function moveClockTick(
-  date: string,
-  minute: number,
-  step: MoveStep,
-  ticks: number,
-  first: string,
-  last: string,
+export function moveFingerLineY(
+  fingerY: number,
+  topInset: number,
+  height: number,
+  labelBand = 64,
+  bottomInset = 34,
 ) {
-  if (!ticks) return { date, minute };
-  const next =
-    (ticks > 0 ? Math.floor(minute / step) : Math.ceil(minute / step)) * step +
-    ticks * step;
-  // UTC arithmetic here shifts a date-only key, not an Item instant or a 24h duration.
-  const day = new Date(`${date}T12:00:00Z`);
-  day.setUTCDate(day.getUTCDate() + Math.floor(next / 1440));
-  const target = day.toISOString().slice(0, 10);
-  if (target < first || target > last) return { date, minute };
-  return { date: target, minute: ((next % 1440) + 1440) % 1440 };
-}
-export function moveInsertionTarget(
-  rows: readonly PlacementRow[],
-  date: string,
-  minute: number,
-  itemId: string,
-  ntc: boolean,
-) {
-  const day = rows.filter((row) => row.date === date && row.itemId !== itemId);
-  const next = day.find((row) => row.minute !== null && (ntc || row.minute > minute));
-  if (next) return { key: next.key, date, edge: "BEFORE" as const };
-  const previous = day.at(-1);
-  return { key: previous?.key ?? `day:${date}`, date, edge: "AFTER" as const };
+  const bottom = height - bottomInset - 12;
+  return Math.max(Math.min(bottom, topInset + labelBand), Math.min(bottom, fingerY));
 }
 
-export function moveFollowAnchor(
-  anchor: { key: string; date: string; within: number },
-  delta: number,
-  rows: readonly PlacementRow[],
-  heightFor: (key: string) => number | undefined,
+export function moveEdgeVelocity(y: number, top: number, bottom: number, height: number) {
+  if (y < 0 || y > height) return 0;
+  const band = 56;
+  const upper = Math.max(0, Math.min(1, (top + band - y) / band));
+  const lower = Math.max(0, Math.min(1, (y - (bottom - band)) / band));
+  return upper > 0
+    ? -(36 + 480 * upper * upper)
+    : lower > 0
+      ? 36 + 480 * lower * lower
+      : 0;
+}
+
+export function moveDayAtY(
+  regions: readonly { top: number; bottom: number; date: string }[],
+  y: number,
 ) {
-  const within = anchor.within + delta;
-  if (within >= 0) return { ...anchor, within };
-  const index = rows.findIndex((row) => row.key === anchor.key);
-  const previous = rows[index - 1];
-  if (!previous) return { ...anchor, within: 0 };
+  const ordered = regions
+    .filter((r) => r.bottom > r.top)
+    .slice()
+    .sort((a, b) => a.top - b.top);
+  return (
+    ordered.filter((r) => r.top <= y && y <= r.bottom).at(-1)?.date ??
+    ordered.filter((r) => r.top <= y).at(-1)?.date ??
+    ordered[0]?.date ??
+    null
+  );
+}
+export function movePlacementAtY(
+  date: string,
+  anchors: readonly { y: number; minute: number }[],
+  y: number,
+  step: MoveStep,
+  fallback: number,
+) {
+  const points = anchors
+    .filter((a) => Number.isFinite(a.y))
+    .slice()
+    .sort((a, b) => a.y - b.y);
+  if (!points.length) return { date, minute: fallback };
+  const nearest = points.reduce((best, point) =>
+    Math.abs(point.y - y) < Math.abs(best.y - y) ? point : best,
+  );
+  if (Math.abs(nearest.y - y) <= 5) return { date, minute: nearest.minute };
+  const upper = points.find((a) => a.y >= y) ?? points[points.length - 1];
+  const lower = [...points].reverse().find((a) => a.y <= y) ?? points[0];
+  const ratio = upper.y > lower.y ? (y - lower.y) / (upper.y - lower.y) : 0;
+  const raw = lower.minute + (upper.minute - lower.minute) * ratio;
+  const bounded = Math.max(
+    Math.min(lower.minute, upper.minute),
+    Math.min(Math.max(lower.minute, upper.minute), Math.round(raw / step) * step),
+  );
+  return { date, minute: Math.max(0, Math.min(1439, bounded)) };
+}
+export function moveCardPosition(
+  lineY: number,
+  topInset: number,
+  height: number,
+  labelHeight: number,
+  cardHeight: number,
+  bottomInset = 34,
+) {
+  const above = lineY - 9 - labelHeight - 12 - cardHeight,
+    below = lineY + 24;
+  const minimum = topInset + 8,
+    maximum = height - bottomInset - 8 - cardHeight;
+  return above >= minimum
+    ? above
+    : below <= maximum
+      ? below
+      : Math.max(minimum, Math.min(maximum, above));
+}
+
+export function moveDayHeightTime(
+  date: string,
+  top: number,
+  bottom: number,
+  y: number,
+  step: MoveStep,
+) {
+  const fraction = Math.max(0, Math.min(1, (y - top) / Math.max(1, bottom - top)));
   return {
-    key: previous.key,
-    date: previous.date,
-    within: Math.max(0, (heightFor(previous.key) ?? 0) + within),
+    date,
+    minute: Math.max(0, Math.min(1439, Math.round((fraction * 1440) / step) * step)),
   };
 }

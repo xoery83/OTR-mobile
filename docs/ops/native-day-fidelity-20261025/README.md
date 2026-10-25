@@ -31,3 +31,6 @@ Owner resumed Day Feed/P1 while retaining P2 Create for later testing. Native re
 
 
 Latest Owner-requested no-ruler Move visual candidate: [V1 implementation and pending device acceptance](P1_MOVE_EFFECT_V1.md).107 directed tests PASS; real Reader/mutation/Cloud and sustained Native touch acceptance remain open.
+
+
+Current Owner-authorized interaction: [Direct drag and edge scroll V7](P1_MOVE_DIRECT_EDGE_V7.md),117 directed tests PASS, Native touch acceptance still in progress.

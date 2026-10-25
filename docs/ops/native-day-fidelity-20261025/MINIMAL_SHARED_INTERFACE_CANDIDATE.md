@@ -18,3 +18,6 @@ Native follow-up: optional renderImmersiveHeader keeps the canonical header outs
 
 
 Move effect V1 adds one minimal display candidate: optional DayFeedPresentation.scrollEnabled passthrough to the existing WindowedDayList/FlatList, defaulttrue;5added lines across2files. Only the isolated fixture uses false during pickup. This is fixed on the independent candidate branch for serial integration by the owning Writer; no merge to the active Universal branch. Cursor math, row measurement, mask/line/card and temporary preview remain in the DEV subtree.
+
+
+Owner V7 smoothing candidate adds optional DayListHandle.scrollBy(delta), using the existing native FlatList offset without resetting window identity or anchor restoration. Follow-only prepend unlocks after committed origin/native compensation; normal dragging remains unchanged. This is a serial display integration candidate, not Reader/Core/Navigation authority.

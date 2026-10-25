@@ -117,7 +117,13 @@ export function P1FidelityPreview() {
     p1FidelityPack.items.find((item) => item.id === target)?.date ??
     initialFixture.selectedDate;
   const shell = useDayFeedShellState(key);
-  const move = useP1FixtureMove(list, key, headerHeight);
+  const move = useP1FixtureMove(
+    list,
+    `${key}:visual-grounded-v7`,
+    insets.top,
+    insets.bottom,
+    () => shell.observeReadingStopped(),
+  );
   const preview = () => setSheet("ACTION");
   const openDetail = (itemId: string) =>
     router.push({
@@ -228,19 +234,21 @@ export function P1FidelityPreview() {
           headerShown: true,
           headerBackVisible: false,
           headerShadowVisible: false,
-          headerTitle: () => title,
+          title: move.active ? "" : fixture.title,
+          headerTitle: move.active ? "" : () => title,
           headerStyle: {
-            backgroundColor: pastIntroduction
-              ? colors.transparent
-              : colors.tripIntroduction,
+            backgroundColor:
+              move.active || pastIntroduction
+                ? colors.transparent
+                : colors.tripIntroduction,
           },
           headerBlurEffect:
-            pastIntroduction && shell.navigationVisible
+            !move.active && pastIntroduction && shell.navigationVisible
               ? "systemUltraThinMaterial"
               : undefined,
         }}
       />
-      {!pastIntroduction || shell.navigationVisible ? (
+      {!move.active && (!pastIntroduction || shell.navigationVisible) ? (
         <>
           <Stack.Toolbar placement="left">
             <Stack.Toolbar.Button
@@ -372,7 +380,11 @@ export function P1FidelityPreview() {
               ),
               onOffsetChange: (offset) => {
                 shell.observeScroll(offset, false);
-                setScrollOffset(offset);
+                if (
+                  !move.active ||
+                  offset > introductionHeight !== scrollOffset > introductionHeight
+                )
+                  setScrollOffset(offset);
               },
               onReadingMotion: shell.observeReadingMotion,
               onViewportChange: (viewport) => {
@@ -399,7 +411,7 @@ export function P1FidelityPreview() {
             style={StyleSheet.absoluteFill}
           >
             <ExperienceBottomShell
-              visible={!pastIntroduction || shell.navigationVisible}
+              visible={!move.active && (!pastIntroduction || shell.navigationVisible)}
               pathname="/"
             />
           </View>
@@ -470,6 +482,14 @@ export function P1FidelityPreview() {
               >
                 {sheet === "CONTROLS" ? (
                   <>
+                    <UiButton
+                      label={t("fidelity.moveLayoutPreview")}
+                      variant="secondary"
+                      onPress={() => {
+                        setSheet(null);
+                        move.showConfirmationPreview("syn-p1-exact");
+                      }}
+                    />
                     {(["future", "today", "past"] as const).map((c) => (
                       <View key={c} style={styles.matrix}>
                         {(["B", "F", "I"] as const).map((d) => (

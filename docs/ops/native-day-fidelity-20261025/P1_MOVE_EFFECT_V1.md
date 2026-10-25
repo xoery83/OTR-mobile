@@ -1,4 +1,8 @@
-# P1 move effect V1 — UI implemented / device QA pending
+Current Owner behavior is P1_MOVE_DIRECT_EDGE_V7.md; the gap-padding and distance-scrub receipts below are superseded.
+
+# P1 move effect V1 — UI implemented / continuous-touch QA pending
+
+Latest: GUI returned; current Native R3 hold/release and visual layout are observed after repair. See P1_MOVE_NATIVE_R3.md. The earlier pending-window text below is retained as the preceding candidate receipt, not the current lock state.
 
 Fixed source candidate:3098718e on codex/native-forms-p3-delivery. No main/Universal merge.
 
