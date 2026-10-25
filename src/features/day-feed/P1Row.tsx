@@ -4,7 +4,7 @@ import { acceptedBoundaryAnchor, type DayEvent } from "@/domain/trip/dayReadMode
 import { AppIcon } from "@/components/AppIcon";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText as Text } from "@/ui/controls";
-import { formatUiDate, t } from "@/ui/locale";
+import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -129,6 +129,10 @@ export function P1Row({
     instant &&
     onInsert &&
     p1InsertionEligible(event, occurrence, context, instant, !!facts?.pending);
+  const countLabel = (kind: "photos" | "attachments" | "expenses") =>
+    t(count[kind] === 1 ? `fidelity.${kind}.one` : `fidelity.${kind}`, {
+      count: formatUiNumber(count[kind] ?? 0),
+    });
   const tags = (
     <View style={styles.tags}>
       {people ? (
@@ -138,10 +142,10 @@ export function P1Row({
         />
       ) : null}
       {(context === "TODAY" || context === "PAST" || immersive) && !!count.expenses ? (
-        <ReadFactTag label={t("fidelity.expenses", { count: count.expenses })} />
+        <ReadFactTag label={countLabel("expenses")} />
       ) : null}
       {(context === "TODAY" || context === "PAST" || immersive) && !!count.photos ? (
-        <ReadFactTag label={t("fidelity.photos", { count: count.photos })} />
+        <ReadFactTag label={countLabel("photos")} />
       ) : null}
     </View>
   );
@@ -274,7 +278,7 @@ export function P1Row({
                   {count[kind]! > 0 && activeActions?.[kind] ? (
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={t(`fidelity.${kind}`, { count: count[kind]! })}
+                      accessibilityLabel={countLabel(kind)}
                       style={styles.countTarget}
                       onPress={activeActions[kind]}
                     >

@@ -134,3 +134,33 @@ it("retains meaningful real status without adding a generic Planned badge", () =
   expect(html).toContain("Cancelled");
   expect(html).not.toContain("Planned");
 });
+
+it("uses singular linked-record counts in Focus and accessible Immersive actions", () => {
+  const one = { ...facts(), photoIds: ["a", "a"], documentIds: ["d", "d"] };
+  const actions = { photos: vi.fn(), attachments: vi.fn(), expenses: vi.fn() };
+  const html = renderToStaticMarkup(
+    createElement(P1Row, {
+      event: event(),
+      depth: "F",
+      context: "TODAY",
+      facts: one,
+      actions,
+      onDepth: vi.fn(),
+    }),
+  );
+  expect(html).toContain("1 expense");
+  expect(html).toContain("1 photo");
+  expect(html).not.toContain("1 expenses");
+  expect(html).not.toContain("1 photos");
+  renderToStaticMarkup(
+    createElement(P1Row, {
+      event: event(),
+      depth: "I",
+      facts: one,
+      actions,
+      onDepth: vi.fn(),
+    }),
+  );
+  for (const label of ["1 expense", "1 photo", "1 attachment"])
+    expect(node(label)).toBeDefined();
+});
