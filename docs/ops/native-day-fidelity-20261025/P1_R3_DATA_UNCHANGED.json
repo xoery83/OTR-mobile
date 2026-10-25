@@ -1,0 +1,17 @@
+{
+  "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "034beec1-74ac-4358-b4b9-728651c03db3",
+  "businessReadOnlyEquality": [
+    "localCoreCommits",
+    "slots",
+    "queue",
+    "manualIntents"
+  ],
+  "result": "UNCHANGED",
+  "commits": 1,
+  "slots": 1,
+  "queue": 8,
+  "beforeReceipt": ".forms-qa/p2/after-airport-draft-cancel.json",
+  "afterReceipt": ".forms-qa/p2/after-p1-matrix.json"
+}

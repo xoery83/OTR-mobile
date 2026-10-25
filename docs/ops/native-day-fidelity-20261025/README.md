@@ -23,3 +23,8 @@ Global Trip/Shell integration, shared Shell large text, Move DS25–28 and lawfu
 P1 UI:116 focused tests, TypeScript, UI guard and scoped lint PASS. Adapter:6 actual Core projector tests, independent review PASS. Existing legacy render.test baseline27fail/29pass; P1 candidate31fail/25pass includes obsolete UI expectations plus existing missing FlatList mock; full rendering suite is not PASS.
 
 P2 pure flight grid has7 focused tests including sparse/Floating/date-line/terminal/large-text and the independently found sparse arrival-date fix; not yet wired or Native accepted. Owner now directs P2 Create/Edit first when real test data is needed. Reuse ManualFlightForm; booking-document upload/autofill excluded. Source and minimum legal-interface request: `../native-p2-form-20261025/CORE_INTEGRATION_REQUEST.md`. No Backend/Schema/Auth/Cloud gate expansion.
+
+
+## Current P1 replay60e09c6f
+
+Owner resumed Day Feed/P1 while retaining P2 Create for later testing. Native replay now fixes singular association count copy and context-change state leakage; final implementation preserves Native Stack header and tracks virtualized window origin. Key-remount candidate7df33d63 is superseded after observed blank deep title. Nine cells have been recaptured at one final UI SHA; see P1_NATIVE_CAPTURES_R3.json and P1_R3_DIFFERENCES.md. Back/deep jump/END/pending/empty preview also observed. Fixture-only Native observation; no real Reader/Cloud or complete shared integration claim. Actual QA business records and queues are unchanged.
