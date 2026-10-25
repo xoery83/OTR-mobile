@@ -2772,7 +2772,7 @@ export const en = {
   "quickAdd.photos": "Photos",
   "quickAdd.membersHint": "Not available yet.",
   "quickAdd.importHint": "Add travel plans from files, photos or text.",
-  "quickAdd.itineraryHint": "Plans and bookings.",
+  "quickAdd.itineraryHint": "Plans, bookings",
   "quickAdd.expenseHint": "Track trip costs.",
   "quickAdd.photosHint": "Add trip photos.",
   "actionIsland.suggestedDate": "Suggested date",
