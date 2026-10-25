@@ -23,3 +23,13 @@ Independent scoped review found no new blocker; four-file rerun106PASS/one same 
 - This observes visibility transitions; it does not certify full scroll frame pacing or the separate pending P1 continuous move/Confirm acceptance. Cloud gates unchanged; AD5 untouched.
 
 Include this source candidate after d0ae8f14 and the cumulative Forms/Day ancestors in UI_DETAILS_INTEGRATION_20261026.md. Do not overwrite current Universal/shared-shell source wholesale.
+
+## Required follow-up: idle host release (`31af6637`)
+
+Owner retest correctly found that ordinary release could still restore chrome. The preceding Native observation was insufficient: useP1Move's stable host receives ordinary feed touches too, and its end/cancel called onFinish even without an armed drag. Real onFinish calls the force-show shell reset. This separate callback path supersedes the earlier claim of complete settled-release coverage.
+
+The controller now returns immediately when drag.current is absent. An actual drag clears that reference before its finish callback, so responderRelease plus bubbling touchEnd cannot notify twice. Idle release, cancel and inactive AppState cause no move-finish chrome change; actual pickup release/cancel still notify exactly once.
+
+98 directed tests across four files PASS, TS/UIguard/scopedlint/diff check PASS. Added a regression for all idle events and duplicate actual-drop notifications. Independent review found no blocker; controller/shell rerun22/22 PASS. Forms QA ordinary forward gesture stayed hidden at delayed inspection and after an extra blank tap/release; screenshot idle-release-still-hidden.png retained beside earlier evidence. Reverse movement restored native Menu/Search; an incidental Add itinerary panel was closed without creating an Item. Full P1 continuous move/Confirm and scroll frame pacing remain separate acceptance gaps.
+
+Serial integration must include both797f959b and31af6637; the first commit alone does not fix the ordinary touch-end path.

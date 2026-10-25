@@ -38,3 +38,5 @@ Next serial integration acceptance: replay normal CreateTrip → real Day → Cr
 ## Follow-up scroll visibility candidate
 
 **Also include `797f959b`** after d0ae8f14: real Day Menu/Search and entire bottom row consume the existing scoped chrome state; forward reading stays hidden after release, reverse restores, native date control remains. Exact six-file diff and baseline-test exception are recorded in [scroll chrome repair](SCROLL_CHROME_REPAIR_20261026.md). TripRoute/ExperienceBottomShell are minimal serial shared-UI integration changes; preserve the current owning navigation structure and later changes.
+
+**Required release follow-up `31af6637`** after797f959b: useP1Move host must ignore idle touchEnd/touchCancel, otherwise ordinary feed release invokes real move-finish force-show. Added regression proves idle callbacks never restore chrome and actual release notifies only once. Include this even if the shared Route/Shell source changes are applied manually.
