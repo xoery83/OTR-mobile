@@ -1,7 +1,10 @@
+import type { z } from "zod";
 import { validateCalendarDate } from "../../domain/trip/dayReadModel";
 import { coreDefaults, coreUuid } from "../../domain/trip/tripCoreV2";
 import { corePayloadSchemas } from "../../domain/trip/tripCoreV2Commands";
 import { createUuid } from "../../domain/localId";
+import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
+import type { CoreFlightDayProjection } from "../../domain/trip/tripCoreV2DayFeed";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import type {
   LocalCommitEnvelope,
@@ -22,24 +25,40 @@ export type ManualFlightDraft = Readonly<{
   operationId: string;
   itemId: string;
 }>;
-export type ManualFlightFields = { flightNumberLiteral: string; departureDate: string };
+export const manualFlightFieldsSchema = corePayloadSchemas.CREATE_SPARSE_FLIGHT.pick({
+  flightNumberLiteral: true,
+  departureDate: true,
+  participation: true,
+}).partial({ participation: true });
+export type ManualFlightFields = z.infer<typeof manualFlightFieldsSchema>;
+
 type Core = Pick<
   ReturnType<typeof createTripCoreV2Repository>,
-  "captureContext" | "prepareLocalManualSparse" | "commitLocal" | "combinedSnapshot"
+  | "captureContext"
+  | "prepareLocalManualSparse"
+  | "commitLocal"
+  | "combinedSnapshot"
+  | "acceptedSnapshot"
 >;
+export type ManualFlightRead = CoreFlightDayProjection["items"][number];
 export type ManualFlightSaved = {
   status: "LOCAL_COMMITTED";
   itemId: string;
   receipt: LocalCoreReceipt;
 };
-const payload = (fields: ManualFlightFields) =>
-  corePayloadSchemas.CREATE_SPARSE_FLIGHT.parse({
+const payload = (input: ManualFlightFields) => {
+  const fields = manualFlightFieldsSchema.parse(input);
+  return corePayloadSchemas.CREATE_SPARSE_FLIGHT.parse({
     flightNumberLiteral: fields.flightNumberLiteral.trim(),
     departureDate: validateCalendarDate(fields.departureDate),
     ...coreDefaults("member"),
+    ...(fields.participation ? { participation: fields.participation } : {}),
   });
+};
 const same = (a: ManualFlightFields, b: ManualFlightFields) =>
-  a.flightNumberLiteral === b.flightNumberLiteral && a.departureDate === b.departureDate;
+  a.flightNumberLiteral === b.flightNumberLiteral &&
+  a.departureDate === b.departureDate &&
+  JSON.stringify(a.participation) === JSON.stringify(b.participation);
 export function createLocalManualFlightRepository(
   core: Core,
   account: () => Promise<string>,
@@ -96,6 +115,23 @@ export function createLocalManualFlightRepository(
       });
     },
     recover,
+    async readForForm(
+      tripId: string,
+      itemId: string,
+      expectedRevision?: number,
+    ): Promise<ManualFlightRead> {
+      const ctx = await core.captureContext(coreUuid.parse(tripId));
+      const observed = await createCoreP6DayFeedReader(core)(tripId);
+      await assertAccountRequestContext(ctx, account);
+      const item = observed?.projection.items.find(
+        (entry) => entry.itemId === coreUuid.parse(itemId),
+      );
+      if (!item || item.family !== "P2" || item.hidden || item.tripId !== tripId)
+        throw new Error("MANUAL_FLIGHT_READ_UNAVAILABLE");
+      if (expectedRevision !== undefined && item.itemRevision !== expectedRevision)
+        throw new Error("MANUAL_FLIGHT_READ_CHANGED");
+      return item;
+    },
     async save(
       draft: ManualFlightDraft,
       fields: ManualFlightFields,
@@ -105,6 +141,7 @@ export function createLocalManualFlightRepository(
         normalized = {
           flightNumberLiteral: parsed.flightNumberLiteral,
           departureDate: parsed.departureDate,
+          ...(fields.participation ? { participation: parsed.participation } : {}),
         };
       const ctx = await context(draft);
       if (!current()) throw new Error("LOCAL_MANUAL_INTENT_CLOSED");
@@ -121,6 +158,28 @@ export function createLocalManualFlightRepository(
           item?.start_local_date !== normalized.departureDate
         )
           throw new Error("LOCAL_MANUAL_OUTCOME_MISMATCH");
+        if (fields.participation) {
+          const participation = parsed.participation;
+          const selected =
+            snapshot?.graph.trip_item_participants
+              .filter((row) => row.item_id === draft.itemId && row.active)
+              .map((row) => String(row.person_id))
+              .sort() ?? [];
+          const expected =
+            participation.mode === "SELECTED_MEMBERS"
+              ? [...participation.people].sort()
+              : [];
+          const self =
+            participation.mode === "SELF"
+              ? (participation.selfPersonId ?? snapshot?.actor.personId)
+              : null;
+          if (
+            item?.participation_mode !== participation.mode ||
+            item?.self_person_id !== self ||
+            JSON.stringify(selected) !== JSON.stringify(expected)
+          )
+            throw new Error("LOCAL_MANUAL_OUTCOME_MISMATCH");
+        }
         if (!current()) throw new Error("LOCAL_MANUAL_INTENT_CLOSED");
         return saved;
       }

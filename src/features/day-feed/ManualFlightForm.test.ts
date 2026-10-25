@@ -1,5 +1,15 @@
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
-vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
+vi.mock("@/components/SheetHeader", () => ({
+  SheetHeader: (p: any) => {
+    if (p.onRight)
+      state.nodes.push({
+        label: p.rightLabel,
+        disabled: p.rightDisabled,
+        onPress: p.onRight,
+      });
+    return null;
+  },
+}));
 vi.mock("./ManualEditorPresentation", () => ({
   ManualEditorPresentation: (p: any) => {
     state.presentationClose = p.onClose;
@@ -32,11 +42,16 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {
     const i = state.cursor++;
-    if (!(i in state.values)) state.values[i] = initial;
+    if (!(i in state.values))
+      state.values[i] =
+        typeof initial === "function" ? (initial as () => unknown)() : initial;
     return [
       state.values[i],
       (next: unknown) => {
-        state.values[i] = next;
+        state.values[i] =
+          typeof next === "function"
+            ? (next as (value: unknown) => unknown)(state.values[i])
+            : next;
       },
     ];
   },
@@ -53,7 +68,7 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   View: (p: any) => createElement("div", null, p.children),
-  ScrollView: "div",
+  ScrollView: (p: any) => createElement("div", null, p.children),
   StyleSheet: { create: (value: unknown) => value },
   Alert: { alert: (...args: any[]) => state.alert(...args) },
 }));
@@ -75,6 +90,35 @@ vi.mock("./TripCalendarField", () => ({
     state.nodes.push(p);
     return createElement("span", null, p.value);
   },
+}));
+vi.mock("./FlightSegmentFields", () => ({
+  FlightSegmentFields: (p: any) => {
+    state.nodes.push({ ...p, label: "SEGMENT_FIELDS" });
+    state.nodes.push({
+      accessibilityLabel: "manualFlight.number",
+      value: p.value.flightNumberLiteral,
+      editable: !p.disabled,
+      onChangeText: (flightNumberLiteral: string) => p.onChange({ flightNumberLiteral }),
+    });
+    state.nodes.push({
+      label: "manualFlight.departureDate",
+      value: p.value.departureDate,
+      disabled: p.disabled,
+      initialNavigationDate: p.initialNavigationDate,
+      onChange: (departureDate: string) => p.onChange({ departureDate }),
+    });
+    return createElement("div", null, p.value.flightNumberLiteral);
+  },
+}));
+vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
+  readTripPreparationSetupRepository: async () => ({
+    read: async () => ({
+      members: {
+        state: "AVAILABLE",
+        people: [{ personId: "person-a", displayName: "Case A" }],
+      },
+    }),
+  }),
 }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
@@ -157,14 +201,18 @@ it("requires explicit number/date and reports save only after the repository's c
       (_draft: unknown, _fields: unknown, _current: () => boolean) => pending.promise,
     );
   const { repo, draft } = await ready(save);
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node(editorMode ? "ui.save" : "tripCreate.saveItem").disabled).toBe(false);
+  node(editorMode ? "ui.save" : "tripCreate.saveItem").onPress();
   render();
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node(editorMode ? "ui.save" : "tripCreate.saveItem").disabled).toBe(true);
   expect(props.onSaved).not.toHaveBeenCalled();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
-    { flightNumberLiteral: "NZ5069", departureDate: "2027-02-06" },
+    {
+      flightNumberLiteral: "NZ5069",
+      departureDate: "2027-02-06",
+      participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+    },
     expect.any(Function),
   );
   pending.resolve({ status: "LOCAL_COMMITTED", itemId: "item-a" });
@@ -178,7 +226,7 @@ it("preserves fields on a real claim-coverage failure and reuses the same draft 
     .mockRejectedValueOnce(new Error("LOCAL_CLAIM_COVERAGE_UNKNOWN"))
     .mockResolvedValue({ status: "LOCAL_COMMITTED", itemId: "item-a" });
   const { draft } = await ready(save);
-  node("tripCreate.saveItem").onPress();
+  node(editorMode ? "ui.save" : "tripCreate.saveItem").onPress();
   await flush();
   expect(render()).toContain("manualFlight.claimUnavailable");
   expect(node("manualFlight.number").value).toBe("NZ5069");
@@ -190,7 +238,7 @@ it("preserves fields on a real claim-coverage failure and reuses the same draft 
   expect(node("manualFlight.number").value).toBe("NZ5069");
   expect(node("manualFlight.departureDate").value).toBe("2027-02-06");
   expect(props.onSaved).not.toHaveBeenCalled();
-  node("tripCreate.saveItem").onPress();
+  node(editorMode ? "ui.save" : "tripCreate.saveItem").onPress();
   await flush();
   expect(save.mock.calls[1][0]).toBe(draft);
 });
@@ -200,7 +248,7 @@ it("closes its intent on unmount or Account ABA and never publishes a delayed sa
       (_draft: unknown, _fields: unknown, _current: () => boolean) => pending.promise,
     );
   await ready(save);
-  node("tripCreate.saveItem").onPress();
+  node(editorMode ? "ui.save" : "tripCreate.saveItem").onPress();
   const current = save.mock.calls[0][2];
   expect(current()).toBe(true);
   advanceAccountGeneration();
@@ -230,14 +278,14 @@ it("accepts Day's valid date hint but Home only navigates to Trip Start without 
     value: "",
     initialNavigationDate: "2027-02-01",
   });
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node(editorMode ? "ui.save" : "tripCreate.saveItem").disabled).toBe(true);
 });
 it("prefills an explicit Day date without inventing a flight number", () => {
   props.initialDate = "2027-02-08";
   render();
   expect(node("manualFlight.departureDate").value).toBe("2027-02-08");
   expect(node("manualFlight.number").value).toBe("");
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node(editorMode ? "ui.save" : "tripCreate.saveItem").disabled).toBe(true);
 });
 
 it("the embedded Flight wrapper protects dirty cancel and blocks dismissal during save", async () => {
@@ -248,7 +296,7 @@ it("the embedded Flight wrapper protects dirty cancel and blocks dismissal durin
   expect(props.onClose).not.toHaveBeenCalled();
   expect(state.alert).toHaveBeenCalledOnce();
   const discard = state.alert.mock.calls[0][2][1].onPress;
-  node("tripCreate.saveItem").onPress();
+  node(editorMode ? "ui.save" : "tripCreate.saveItem").onPress();
   render();
   state.presentationClose!();
   discard();
@@ -256,4 +304,60 @@ it("the embedded Flight wrapper protects dirty cancel and blocks dismissal durin
   pending.resolve({ status: "LOCAL_COMMITTED", itemId: "item-a" });
   await flush();
   expect(props.onSaved).toHaveBeenCalledWith("item-a");
+});
+
+it("retains manually entered endpoint fields and never calls the sparse writer with truncated values", async () => {
+  const { repo } = await ready();
+  node("manualFlight.manualDetails").onPress();
+  render();
+  expect(node("SEGMENT_FIELDS").full).toBe(true);
+  node("SEGMENT_FIELDS").onChange({ originCode: "AKL", departureTime: "09:00" });
+  expect(render()).toContain("manualFlight.detailsPending");
+  expect(node("SEGMENT_FIELDS").value).toMatchObject({
+    originCode: "AKL",
+    departureTime: "09:00",
+  });
+  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  node("tripCreate.saveItem").onPress();
+  await flush();
+  expect(repo.save).not.toHaveBeenCalled();
+});
+it("adds independent expanded draft segments without persisting an inferred Journey", async () => {
+  const { repo } = await ready();
+  node("manualFlight.addFlight").onPress();
+  render();
+  const sections = state.nodes.filter((entry) => entry.label === "SEGMENT_FIELDS");
+  expect(sections).toHaveLength(2);
+  expect(sections[0].value.key).not.toBe(sections[1].value.key);
+  sections[1].onChange({ flightNumberLiteral: "NZ5070", departureDate: "2027-02-07" });
+  expect(render()).toContain("manualFlight.journeyPending");
+  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(repo.save).not.toHaveBeenCalled();
+});
+
+it("invalidates an old header Save synchronously after confirmed Discard", async () => {
+  editorMode = true;
+  const { repo } = await ready();
+  const oldSave = node("ui.save").onPress;
+  state.presentationClose!();
+  const discard = state.alert.mock.calls[0][2][1].onPress;
+  discard();
+  expect(props.onClose).toHaveBeenCalledOnce();
+  oldSave();
+  await flush();
+  expect(repo.save).not.toHaveBeenCalled();
+});
+
+it("does not submit old dates while a picker has an unconfirmed selection", async () => {
+  const { repo } = await ready();
+  const oldSave = node("tripCreate.saveItem").onPress;
+  node("SEGMENT_FIELDS").onPickerChange("departureDate", true);
+  render();
+  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  oldSave();
+  await flush();
+  expect(repo.save).not.toHaveBeenCalled();
+  node("SEGMENT_FIELDS").onPickerChange("departureDate", false);
+  render();
+  expect(node("tripCreate.saveItem").disabled).toBe(false);
 });

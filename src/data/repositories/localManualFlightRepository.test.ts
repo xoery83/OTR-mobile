@@ -1,3 +1,4 @@
+import { flightSegmentFromRead } from "../../features/day-feed/manualFlightFormFields";
 import { runMigrations } from "../db/migrationRunner";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
@@ -50,7 +51,8 @@ function fixture(
         "CREATE TABLE schema_migrations(id INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL)",
       );
     for (const m of migrations) {
-      if (initialize === "gap" && m.id === 69) continue;
+      // Keep later independent Trip tables;69 must be repaired before73's dependent trigger hardening.
+      if (initialize === "gap" && (m.id === 69 || m.id >= 73)) continue;
       sql.exec(m.sql);
       if (initialize === "gap")
         sql
@@ -272,15 +274,16 @@ it("fills the real 68+70 registry gap transactionally, preserving photos and fou
       "INSERT INTO local_trip_photos VALUES(?,?,?,'image/jpeg',12,?,'file:///owned/photo.jpg',?)",
     )
     .run(f.accountId, d.tripId, "photo-owned", "a".repeat(64), localTestStamp);
+  const preservedTables = (
+    f.sql
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'local_core_%' AND name<>'schema_migrations' ORDER BY name",
+      )
+      .all() as { name: string }[]
+  ).map((row) => row.name);
   const preserved = () =>
     Object.fromEntries(
-      (
-        f.sql
-          .prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'local_core_%' AND name<>'schema_migrations' ORDER BY name",
-          )
-          .all() as { name: string }[]
-      ).map(({ name }) => [
+      preservedTables.map((name) => [
         name,
         f.sql.prepare(`SELECT * FROM "${name}" ORDER BY rowid`).all(),
       ]),
@@ -380,4 +383,116 @@ it("does not infer non-Flight coverage from an unpinned SET or corrupted Manual 
       f.sql.prepare("SELECT count(*) n FROM local_core_authority_commits").get()?.n,
     ).toBe(0);
   }
+});
+
+it("preserves explicit P1-style Everyone participation through normal sparse save and recovery", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  const input = {
+    ...fields,
+    participation: { mode: "WHOLE_GROUP" as const, people: [], selfPersonId: null },
+  };
+  const saved = await f.repo.save(d, input, () => true);
+  expect(await f.repo.save(d, input, () => true)).toEqual(saved);
+  const snapshot = await f.core.combinedSnapshot(await f.core.captureContext(d.tripId));
+  expect(snapshot!.graph.itinerary_events[0].participation_mode).toBe("WHOLE_GROUP");
+  await expect(
+    f.repo.save(
+      d,
+      { ...input, participation: { mode: "SELF", people: [], selfPersonId: null } },
+      () => true,
+    ),
+  ).rejects.toThrow("LOCAL_MANUAL_OUTCOME_MISMATCH");
+});
+it("preserves selected authorized people without duplicate local commits", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  const person = (
+    f.sql
+      .prepare(
+        "SELECT person_id FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=?",
+      )
+      .get(f.accountId, d.tripId) as { person_id: string }
+  ).person_id;
+  const input = {
+    ...fields,
+    participation: {
+      mode: "SELECTED_MEMBERS" as const,
+      people: [person],
+      selfPersonId: null,
+    },
+  };
+  const saved = await f.repo.save(d, input, () => true);
+  expect(await f.repo.save(d, input, () => true)).toEqual(saved);
+  const snapshot = await f.core.combinedSnapshot(await f.core.captureContext(d.tripId));
+  expect(
+    snapshot!.graph.trip_item_participants
+      .filter((row) => row.active)
+      .map((row) => row.person_id),
+  ).toEqual([person]);
+});
+it("rejects unsupported extra fields before committing rather than silently saving a truncated flight", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  await expect(
+    f.repo.save(d, { ...fields, departureTime: "09:00" } as any, () => true),
+  ).rejects.toThrow();
+  const snapshot = await f.core.combinedSnapshot(await f.core.captureContext(d.tripId));
+  expect(snapshot?.graph.trip_flight_intents ?? []).toHaveLength(0);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_core_authority_slots").get()?.n,
+  ).toBe(0);
+});
+
+it("loads only an actor-readable P2 Form snapshot and pins the requested revision", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  await f.repo.save(d, fields, () => true);
+  const read = await f.repo.readForForm(d.tripId, d.itemId, 1);
+  expect(read).toMatchObject({
+    itemId: d.itemId,
+    tripId: d.tripId,
+    family: "P2",
+    itemRevision: 1,
+    details: { flightNumberLiteral: "NZ5069" },
+  });
+  await expect(f.repo.readForForm(d.tripId, d.itemId, 2)).rejects.toThrow(
+    "MANUAL_FLIGHT_READ_CHANGED",
+  );
+  expect(read.capabilities).not.toMatchObject({ edit: true });
+  expect(flightSegmentFromRead(read)).toMatchObject({
+    flightNumberLiteral: fields.flightNumberLiteral,
+    departureDate: fields.departureDate,
+    departureTime: "",
+    departureZone: "",
+  });
+});
+it("never returns the previous Account's flight through Form loading", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  await f.repo.save(d, fields, () => true);
+  f.switchAccount();
+  await expect(f.repo.readForForm(d.tripId, d.itemId)).rejects.toThrow();
+});
+
+it("rejects participants outside the existing actor roster without creating a flight", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  await expect(
+    f.repo.save(
+      d,
+      {
+        ...fields,
+        participation: {
+          mode: "SELECTED_MEMBERS",
+          people: [randomUUID()],
+          selfPersonId: null,
+        },
+      },
+      () => true,
+    ),
+  ).rejects.toThrow();
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_core_authority_slots").get()?.n,
+  ).toBe(0);
 });
