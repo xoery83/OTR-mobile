@@ -1,3 +1,10 @@
+## Independent Native Forms Lane — Owner authorization 25 October 2026
+
+P3 only, independent Worktree and one reusable Forms QA. Code6242fe71+5a6176db;26tests and independentReview PASS. [Native receipt/scope and exact shared deltas](../ops/native-forms-p3-20261025/README.md). No main integration, AD5 or Universal modification. LOCAL_PASS is scoped synthetic fixture only; fullP3 CLOUD_PENDING/BLOCKED_BY_OWNING_INTERFACE.
+
+Data Path Checklist: (1) saved Stay fields Cloud-shared; editing Draft transient, not uploaded; (2) existing Repository/Core SQLite/Reader reused, no migration; (3) exact existing MANUAL queue, zeroCloudattempts; (4) CAS/account/same-op behavior preserved, invalid/conflict-stale Save guarded; (5)26L2 tests + actual synthetic NativeCreate/Edit/Day/Details/cold/error/EN/ZH/appearance evidence, normalAuth/L3 unverified; (6) Core Contact/Instructions port, Backend P3 gate, lawful existing QA login, optional durable-Draft restore and directModal appearance remain owning deltas. Existing later DeltaTracker is in separate contract tree; this fixed-source record carries the checklist for serial integration. No parallel management system.
+
+
 ## Current execution override — 25 October 2026
 
 Universal is the sole active Coding line. Trip/P1 specified normal DEV scenarios are accepted at7253c12/e9afb98; retain only the independent Person first-failure backoff and physical-disconnection qualifications. Earlier pending/parallel entries below are historical, not current work authorization. People/Fidelity/new Trip optimizations remain queued.

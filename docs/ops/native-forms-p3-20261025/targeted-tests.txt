@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/.codex/worktrees/native-forms-p3/otr-mobile-canonical
+
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  16:33:32
+   Duration  1.64s (transform 474ms, setup 0ms, import 688ms, tests 1.24s, environment 0ms)
+

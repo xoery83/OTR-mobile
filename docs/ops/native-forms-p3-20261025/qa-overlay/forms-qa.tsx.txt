@@ -1,0 +1,71 @@
+// Temporary QA route; remove before integration. Synthetic fixture does not establish a Session.
+import { useEffect, useState } from "react";
+import { View, useColorScheme } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { openFixture, qa } from "../.forms-qa/harness/nativeFixture";
+import { LocalManualDayFeed } from "@/features/day-feed/LocalManualDayFeed";
+import { LocalCoreItemPreview } from "@/features/day-feed/LocalCoreItemPreview";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
+import { P3StayEditor } from "@/features/day-feed/P3StayEditor";
+import type { ManualStayDraft } from "@/data/repositories/manualStayRepository";
+import { UiButton, UiSection, UiText } from "@/ui/controls";
+import { t, setUiLocale, getUiLocale } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useUiTheme } from "@/ui/theme";
+
+type Fixture = Awaited<ReturnType<typeof openFixture>>;
+export default function FormsQaRoute() {
+  useUiLocale();
+  const colors = useUiTheme();
+  const appearance = useColorScheme();
+  const [fixture, setFixture] = useState<Fixture | null>(null);
+  const [opened, setOpened] = useState<ManualStayDraft | null>(null);
+  const [snapshot, setSnapshot] = useState("");
+  const [lastId, setLastId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [read, setRead] = useState<LocalManualRead | null>(null);
+  const [showFeed, setShowFeed] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const refresh = async (f: Fixture) => {
+    const result = await f.read();
+    setRead(result);
+    setLastId(result?.items.at(-1)?.itemId ?? null);
+    setSnapshot(JSON.stringify({
+      label: qa.label, items: result?.items,
+      days: ["2026-11-01", "2026-11-02", "2026-11-03", "2026-11-04"].map(date => ({
+        date, roles: result?.rows(date).map(row => ({ itemId: row.itemRef, role: row.rowKey.projectionRole })),
+      })), operations: result?.operations,
+    }, null, 2));
+  };
+  useEffect(() => {
+    if (!__DEV__) return;
+    void openFixture().then(async f => { setFixture(f); await refresh(f); }).catch(e => setError(String(e)));
+  }, []);
+  if (!__DEV__) return null;
+  if (opened && fixture) return opened && fixture ? <P3StayEditor embedded key={opened.itemId} tripId={qa.trip}
+      itemId={opened.mode === "EDIT" ? opened.itemId : undefined}
+      tripStartDate="2026-11-01" opened={{ repository: fixture.repository, draft: opened }}
+      onClose={() => { setOpened(null); setDetailId(null); void refresh(fixture); }}
+      onSaved={() => { setOpened(null); setDetailId(null); void refresh(fixture); }} /> : null;
+  return <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ padding: 16, gap: 12 }}>
+      <UiSection title={qa.label}>
+        <UiButton label={t("tripCreate.newStay")} disabled={!fixture} onPress={() => void fixture!.repository.createDraft(qa.trip).then(setOpened).catch(e => setError(String(e)))} />
+        <UiButton label={t("tripCreate.editStay")} disabled={!fixture || !lastId} onPress={() => void fixture!.repository.read(qa.trip, lastId!).then(setOpened).catch(e => setError(String(e)))} />
+        <UiButton label={t("common.done")} onPress={() => setUiLocale(getUiLocale() === "en" ? "zh-Hans" : "en")} />
+        <UiButton label={t("tripCreate.saveFailed")} disabled={!fixture} onPress={() => fixture!.injectFailure()} />
+        <UiText>{String(appearance)}</UiText>
+        <UiText>{error}</UiText>
+        <UiButton label={t("shell.day")} onPress={() => setShowFeed(!showFeed)} />
+        {!showFeed ? <UiText>{snapshot}</UiText> : null}
+      </UiSection>
+    </View>
+    {showFeed && read ? <LocalManualDayFeed read={read} date="2026-11-01"
+      dates={["2026-11-01","2026-11-02","2026-11-03","2026-11-04"]}
+      onOpenItem={id => setDetailId(id)} /> : null}
+    {detailId && read?.items.some(i => i.itemId === detailId) && !opened ? <LocalCoreItemPreview
+      item={read.items.find(i => i.itemId === detailId)!} onClose={() => setDetailId(null)}
+      onEdit={() => void fixture!.repository.read(qa.trip, detailId).then(setOpened)} /> : null}
+
+  </SafeAreaView>;
+}

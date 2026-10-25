@@ -1,3 +1,10 @@
+## Independent Native Forms Lane — 25 October 2026
+
+Independent sourcecdd9d27, two-file P3 fixes6242fe71+5a6176db. One reusable Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA/iPhone18Pro/iOS27.0, independentMetro8096; AD5 untouched.26directedtests/independentReview/typecheck/UIguard/scopedlint PASS. Actual synthetic SQLite74 Form Create/Edit→existing Day/Details→process cold read and injected-error sameDraft recovery PASS;1Item/1CREATE/4SET/zeroCloudattempts. EN/ZH/staticLightDark and embedded hot-switch tested; directModal hotappearance remains separate gap. TempQAroute archived inert/removed. [Exact scope, receipts, source and remaining owning deltas](ops/native-forms-p3-20261025/README.md).
+
+`LOCAL_PASS` only for that fixture; fullP3 `CLOUD_PENDING / BLOCKED_BY_OWNING_INTERFACE`. Normal Email/Password UI exists but prior temporary A/B credential artifact is now absent; no reset/session manufacture. Contact/Instructions typed edit port and lawful P3 Cloud still need their unique owning Writers; no unapproved persistent pre-submit Draft added. Continue P3 only. Historical Universal context below is a retained baseline, not this lane's authority over the active Universal task.
+
+
 ## 25 October — Actual Universal Results and cold reload PASS; all temporary access closed
 
 Controlled synthetic Native Capture→Backend→one real DeepSeek call→mixedP1–P6 Results→cold existing-result GET now PASS. Same Batch5bafa531 retains2UTF8 originals+submitted text; sameTaskcd36d6f4 PUBLISHEDrev5, resultSHAb7c072ed5b5a7aeb1556928ad983c15c9d1b837c8ce32758eec39e4cd67159d3; independent Backend read confirms one original Attempt TERMINAL/COMPLETE/INSTALLED and originalCall43678b0c. No new Provider call or formal object. Original paid usage3457tokens/USD0.00099012.

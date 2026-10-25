@@ -1,0 +1,37 @@
+// Temporary local-only QA fixture: no Auth Session, network transport or global queue worker.
+import * as SQLite from "expo-sqlite";
+import { runMigrations } from "@/data/db/migrationRunner";
+import { serializeDatabaseTransactions } from "@/data/db/databaseConnection";
+import { createTripCoreV2Repository } from "@/data/repositories/tripCoreV2Repository";
+import { createTripRepository } from "@/data/repositories/tripRepository";
+import { createManualStayRepository } from "@/data/repositories/manualStayRepository";
+import { createTripLocalManualReader } from "@/data/repositories/tripLocalManualReadRepository";
+import { tripCoreSha256Hex } from "@/data/repositories/tripCoreSha256";
+
+export const qa = {
+  actor: "f3c02500-0000-4000-8000-000000000001",
+  trip: "f3c02500-0000-4000-8000-000000000002",
+  tripOperation: "f3c02500-0000-4000-8000-000000000003",
+  label: "SYNTHETIC LOCAL ONLY · Forms QA · No Auth / Cloud",
+};
+export async function openFixture() {
+  if (!__DEV__) throw new Error("QA_DEBUG_ONLY");
+  const database = serializeDatabaseTransactions(await SQLite.openDatabaseAsync("otr-forms-p3-fixture.db"));
+  await runMigrations(database);
+  const account = async () => qa.actor;
+  const core = createTripCoreV2Repository(database, account, tripCoreSha256Hex);
+  const trips = createTripRepository(database, account, core);
+  if (!(await trips.getTrip(qa.trip))) await trips.createTrip({
+    tripId: qa.trip, operationId: qa.tripOperation,
+    name: "OTR Forms QA · P3 Synthetic", destination: "Auckland",
+    startDate: "2026-11-01", endDate: "2026-11-05",
+  });
+  const repository = createManualStayRepository(database, account, core);
+  const read = createTripLocalManualReader(database, account, core);
+  let failOnce = false;
+  const observedRepository = { ...repository, async save(...args: Parameters<typeof repository.save>) {
+    if (failOnce) { failOnce = false; throw new Error("QA_INJECTED_PRE_WRITE_FAILURE"); }
+    return repository.save(...args);
+  } };
+  return { repository: observedRepository, read: () => read(qa.trip), injectFailure() { failOnce = true; } };
+}
