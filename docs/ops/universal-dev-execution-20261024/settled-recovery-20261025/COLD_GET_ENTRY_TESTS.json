@@ -1,0 +1,12 @@
+{
+  "codeSHA": "28befd6",
+  "scope": "Transient UI visibility/callback only",
+  "tests": 24,
+  "testFiles": 2,
+  "typescript": "PASS",
+  "uiGuard": "PASS",
+  "actualAD5EntryVisible": true,
+  "entryClickedAfterWindow": false,
+  "newDEVReads": 0,
+  "noPersistentFieldChange": true
+}
