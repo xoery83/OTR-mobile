@@ -1,5 +1,7 @@
 ## Independent Native Day Fidelity Lane — 25 October2026
 
+26Oct quick-add refinement `aa815ef3`: date closer to caption; all5cards use existing compact UiFormRow, smaller icon surfaces, natural wrapping. FormsQA compact layout observed;8tests/TS/UIguard/scopedlintPASS. Cumulative integration checklist includes this follow-up.
+
 26Oct quick-add detail `c5935ff4`: compact centered date plus small left/right arrows below Add to this trip title; no white Selected day card or gray explanation. Existing date default/picker guards retained. FormsQA layout and both arrows observed;8tests/TS/UIguardPASS, lint zeroerrors/4existingwarnings. Included in cumulative integration checklist.
 
 26Oct Calendar detail `9d469eaf`: remove visible Today caption from shared Trip/P3 picker; background-only mark and accessible hint retained, dates align. FormsQA observed;29Calendar/P3tests/UIguard/scopedlintPASS. Included in cumulative integration checklist.
