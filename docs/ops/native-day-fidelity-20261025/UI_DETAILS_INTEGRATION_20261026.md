@@ -34,3 +34,7 @@ Do not cherry-pick this detail commit alone and assume the whole Native lane is 
 - Exclude private `.forms-qa/`, credentials, QA account/Trip/Item identifiers, simulator data, node_modules link and generated build outputs from integration.
 
 Next serial integration acceptance: replay normal CreateTrip → real Day → Create/Edit P1, verify the seven presentation details and Today/Tomorrow, then obtain actual Native continuous drag/Confirm/cold read evidence separately. Main integration remains pending the owning serial integration window.
+
+## Follow-up scroll visibility candidate
+
+**Also include `797f959b`** after d0ae8f14: real Day Menu/Search and entire bottom row consume the existing scoped chrome state; forward reading stays hidden after release, reverse restores, native date control remains. Exact six-file diff and baseline-test exception are recorded in [scroll chrome repair](SCROLL_CHROME_REPAIR_20261026.md). TripRoute/ExperienceBottomShell are minimal serial shared-UI integration changes; preserve the current owning navigation structure and later changes.
