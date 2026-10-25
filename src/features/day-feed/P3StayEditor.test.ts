@@ -389,7 +389,11 @@ it("edits an existing P3 through its original repository draft and preserves the
   for (const effect of state.effects) effect();
   state.mount = false;
   render(p);
-  expect(node("tripCreate.stayArrivalFrom").value).toBe("15:00");
+  expect(node("tripCreate.stayArrivalFrom")).toBeUndefined();
+  expect(node("tripCreate.stayArrivalUntil")).toBeUndefined();
+  expect(node("tripCreate.stayCheckoutBy")).toBeUndefined();
+  expect(node("tripCreate.stayCheckinTime")).toBeDefined();
+  expect(node("tripCreate.stayCheckoutTime")).toBeDefined();
   node("tripCreate.stayName").onChangeText("Renamed stay");
   node("tripCreate.stayLocation").onChangeText("Museum entrance");
   render(p);

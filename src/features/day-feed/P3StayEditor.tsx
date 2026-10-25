@@ -228,13 +228,6 @@ export function P3StayEditor({
     fieldsRef.current = value;
     setFields(value);
   };
-  const changeStayTime = (
-    key: "permittedCheckinFrom" | "permittedCheckinUntil" | "permittedCheckoutBy",
-    value: string | null,
-  ) => {
-    if (!fieldsRef.current) return;
-    change({ stayDetails: { ...fieldsRef.current.stayDetails, [key]: value } });
-  };
   const close = (then = onClose) => {
     if (!current() || busyRef.current) return;
     const dirty =
@@ -443,28 +436,6 @@ export function P3StayEditor({
                     onChange={(endTime) => change({ endTime })}
                   />
                 </View>
-                {itemId ? (
-                  <View style={styles.times}>
-                    <TimeField
-                      label={t("tripCreate.stayArrivalFrom")}
-                      value={fields.stayDetails.permittedCheckinFrom}
-                      disabled={saving || frozen}
-                      onChange={(value) => changeStayTime("permittedCheckinFrom", value)}
-                    />
-                    <TimeField
-                      label={t("tripCreate.stayArrivalUntil")}
-                      value={fields.stayDetails.permittedCheckinUntil}
-                      disabled={saving || frozen}
-                      onChange={(value) => changeStayTime("permittedCheckinUntil", value)}
-                    />
-                    <TimeField
-                      label={t("tripCreate.stayCheckoutBy")}
-                      value={fields.stayDetails.permittedCheckoutBy}
-                      disabled={saving || frozen}
-                      onChange={(value) => changeStayTime("permittedCheckoutBy", value)}
-                    />
-                  </View>
-                ) : null}
                 <View style={styles.field}>
                   <Text style={styles.caption}>{t("tripCreate.stayNotes")}</Text>
                   <UiTextInput
