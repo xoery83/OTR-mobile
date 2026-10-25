@@ -150,6 +150,14 @@ export function TripQuickAddMenu({
     action();
   };
   const knownDate = validSuggestedDate(suggested);
+  const dateLabel = knownDate
+    ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : t("actionIsland.selectDate");
   return (
     <>
       <Pressable
@@ -219,38 +227,31 @@ export function TripQuickAddMenu({
                   {showDate ? (
                     <View style={styles.dates}>
                       <View style={styles.dateRow}>
-                        <AppIcon name="calendar" size={24} color={colors.textPrimary} />
-                        <View style={styles.dateCopy}>
-                          <UiFormRow
-                            stacked
-                            label={t("quickAdd.selectedDay")}
-                            value={
-                              knownDate
-                                ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                    timeZone: "UTC",
-                                  })
-                                : t("actionIsland.selectDate")
-                            }
-                            onPress={() => {
-                              setPickerValue(
-                                knownDate
-                                  ? new Date(
-                                      +knownDate.slice(0, 4),
-                                      +knownDate.slice(5, 7) - 1,
-                                      +knownDate.slice(8, 10),
-                                      12,
-                                    )
-                                  : new Date(),
-                              );
-                              setPickerOpen(true);
-                            }}
-                          />
-                        </View>
-                        <View style={styles.arrows}>
-                          {([-1, 1] as const).map((direction) => (
+                        {([-1, 0, 1] as const).map((direction) =>
+                          direction === 0 ? (
+                            <Pressable
+                              key={direction}
+                              accessibilityRole="button"
+                              accessibilityLabel={t("quickAdd.selectedDay")}
+                              accessibilityValue={{ text: dateLabel }}
+                              style={styles.dateTarget}
+                              onPress={() => {
+                                setPickerValue(
+                                  knownDate
+                                    ? new Date(
+                                        +knownDate.slice(0, 4),
+                                        +knownDate.slice(5, 7) - 1,
+                                        +knownDate.slice(8, 10),
+                                        12,
+                                      )
+                                    : new Date(),
+                                );
+                                setPickerOpen(true);
+                              }}
+                            >
+                              <UiText style={styles.meta}>{dateLabel}</UiText>
+                            </Pressable>
+                          ) : (
                             <Pressable
                               key={direction}
                               accessibilityRole="button"
@@ -270,12 +271,12 @@ export function TripQuickAddMenu({
                             >
                               <AppIcon
                                 name={direction === -1 ? "chevron.left" : "chevron.right"}
-                                size={18}
-                                color={knownDate ? colors.textPrimary : colors.disabled}
+                                size={12}
+                                color={knownDate ? colors.textSecondary : colors.disabled}
                               />
                             </Pressable>
-                          ))}
-                        </View>
+                          ),
+                        )}
                       </View>
                       {pickerOpen ? (
                         <View>
@@ -303,11 +304,6 @@ export function TripQuickAddMenu({
                           />
                         </View>
                       ) : null}
-                      <UiText style={styles.meta}>
-                        {t(
-                          knownDate ? "actionIsland.weakDate" : "actionIsland.selectDate",
-                        )}
-                      </UiText>
                     </View>
                   ) : null}
                   <UiFormRow
@@ -431,7 +427,7 @@ const createStyles = (c: UiColors) =>
       overflow: "hidden",
     },
     menuScroll: { flexGrow: 0, flexShrink: 1 },
-    content: { padding: visual.space.page, gap: visual.space.card },
+    content: { padding: visual.space.page, paddingTop: 0, gap: visual.space.card },
     dates: { gap: visual.space.heading },
     grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     tile: { flexBasis: "47%", flexGrow: 1 },
@@ -454,20 +450,20 @@ const createStyles = (c: UiColors) =>
     dateRow: {
       flexDirection: "row",
       alignItems: "center",
-      padding: 12,
-      gap: 10,
-      borderRadius: visual.radius.card,
-      backgroundColor: c.surface,
+      justifyContent: "center",
     },
-    dateCopy: { flex: 1 },
-    arrows: { flexDirection: "row", gap: 6 },
+    dateTarget: {
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+      flexShrink: 1,
+    },
     dateArrow: {
       minWidth: 44,
       minHeight: 44,
       borderRadius: visual.radius.pill,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: c.surface,
     },
     heading: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
