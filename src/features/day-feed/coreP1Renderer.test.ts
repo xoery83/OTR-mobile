@@ -117,3 +117,20 @@ it("never treats expense-link identities as Expense IDs or grants Document open"
   expect(props.facts.expenseIds).toBeUndefined();
   expect(props.actions).toBeUndefined();
 });
+
+it("forwards the owning insert callback with the actual Item/date and clock", () => {
+  const { projection, row } = read();
+  const onInsert = vi.fn(),
+    instant = "2027-01-01T12:00:00Z";
+  const element = createCoreP1Renderer(projection, { instant, onInsert })({
+    row,
+    container: undefined,
+    context: "FUTURE",
+    depth: "F",
+    onDepth: vi.fn(),
+  }) as any;
+  const props = element.type(element.props).props;
+  expect(props.instant).toBe(instant);
+  props.onInsert("AFTER");
+  expect(onInsert).toHaveBeenCalledWith(projection.items[0].itemId, "AFTER", date);
+});

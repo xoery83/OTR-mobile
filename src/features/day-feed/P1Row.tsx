@@ -20,6 +20,38 @@ import {
   type P1ReadActions,
 } from "./p1ReadPresentation";
 
+// A display-only shape for the existing local Reader; it cannot enter Day composition.
+export type P1RowDisplay = Pick<
+  DayEvent,
+  | "id"
+  | "semantic_revision"
+  | "title"
+  | "status"
+  | "authored_label"
+  | "accepted_address"
+  | "authored_address"
+  | "accepted_address_line1"
+  | "authored_address_line1"
+> & {
+  clocks: {
+    start?: {
+      role: "START";
+      local_date: string | null;
+      local_time: string | null;
+      qualified: boolean;
+    };
+    end?: {
+      role: "END";
+      local_date: string | null;
+      local_time: string | null;
+      qualified: boolean;
+    };
+    primary: string | null;
+    secondary: string | null;
+    dayOffset: number;
+  };
+};
+
 export function ReadFactTag({ label, onPress }: { label: string; onPress?: () => void }) {
   const styles = useThemedStyles(createStyles);
   const tag = <Text style={styles.tag}>{label}</Text>;
@@ -37,7 +69,8 @@ export function ReadFactTag({ label, onPress }: { label: string; onPress?: () =>
   );
 }
 export function P1Row({
-  event,
+  event: sourceEvent,
+  display,
   depth,
   onDepth,
   withinMarker,
@@ -53,7 +86,8 @@ export function P1Row({
   moveGesture,
   wrapMoveClock,
 }: {
-  event: DayEvent;
+  event?: DayEvent;
+  display?: P1RowDisplay;
   depth: Depth;
   onDepth(depth: Depth): void;
   withinMarker?: ReactNode;
@@ -76,10 +110,17 @@ export function P1Row({
   const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
-  const facts = currentP1Facts(event, suppliedFacts),
+  const event = sourceEvent ?? display;
+  if (!event) return null;
+  const facts = sourceEvent
+      ? currentP1Facts(sourceEvent, suppliedFacts)
+      : suppliedFacts?.itemId === event.id &&
+          suppliedFacts.semanticRevision === event.semantic_revision
+        ? suppliedFacts
+        : undefined,
     activeActions = suppliedFacts && !facts ? undefined : actions;
-  const clocks = p1ReadClocks(event, occurrence),
-    location = event.authored_label || eventLocation(event),
+  const clocks = sourceEvent ? p1ReadClocks(sourceEvent, occurrence) : display!.clocks,
+    location = event.authored_label || (sourceEvent ? eventLocation(sourceEvent) : null),
     address =
       event.accepted_address ||
       event.authored_address ||
@@ -135,9 +176,10 @@ export function P1Row({
         : undefined;
   const insert =
     focused &&
+    sourceEvent &&
     instant &&
     onInsert &&
-    p1InsertionEligible(event, occurrence, context, instant, !!facts?.pending);
+    p1InsertionEligible(sourceEvent, occurrence, context, instant, !!facts?.pending);
   const countLabel = (kind: "photos" | "attachments" | "expenses") =>
     t(count[kind] === 1 ? `fidelity.${kind}.one` : `fidelity.${kind}`, {
       count: formatUiNumber(count[kind] ?? 0),
@@ -190,8 +232,15 @@ export function P1Row({
         style={styles.insertTarget}
         onPress={() => {
           if (
+            sourceEvent &&
             instant &&
-            p1InsertionEligible(event, occurrence, context, instant, !!facts?.pending)
+            p1InsertionEligible(
+              sourceEvent,
+              occurrence,
+              context,
+              instant,
+              !!facts?.pending,
+            )
           )
             onInsert?.(side);
         }}
@@ -244,7 +293,8 @@ export function P1Row({
                   {b!.local_time ? (
                     <Text style={styles.largeClock}>{b!.local_time.slice(0, 5)}</Text>
                   ) : null}
-                  {b!.local_time && !acceptedBoundaryAnchor(b!) ? (
+                  {b!.local_time &&
+                  !("qualified" in b! ? b!.qualified : acceptedBoundaryAnchor(b!)) ? (
                     <Text style={styles.meta}>{t("tripHome.today.timezoneUnknown")}</Text>
                   ) : null}
                 </View>

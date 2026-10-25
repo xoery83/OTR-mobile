@@ -5,7 +5,14 @@ import { P1Row } from "./P1Row";
 import type { P1ReadFacts } from "./p1ReadPresentation";
 
 // Consume the existing actor-filtered Core projection; missing associations grant no actions.
-export function createCoreP1Renderer(projection: CoreFlightDayProjection) {
+export type CoreP1PresentationActions = {
+  instant?: string;
+  onInsert?(itemId: string, side: "BEFORE" | "AFTER", date: string): void;
+};
+export function createCoreP1Renderer(
+  projection: CoreFlightDayProjection,
+  actions?: CoreP1PresentationActions,
+) {
   const facts: Record<string, P1ReadFacts> = {};
   for (const item of projection.items) {
     const event = projection.events.find((entry) => entry.id === item.itemId);
@@ -52,6 +59,15 @@ export function createCoreP1Renderer(projection: CoreFlightDayProjection) {
         onDepth,
         context,
         facts,
+        instant: actions?.instant,
+        onInsert: actions?.onInsert
+          ? (side) => {
+              const date = row.item.event.boundaries.find(
+                (boundary) => boundary.role === "START",
+              )?.local_date;
+              if (date) actions.onInsert!(row.item.event.id, side, date);
+            }
+          : undefined,
         withinMarker,
         hideDivider: nextFocused,
         occurrence:

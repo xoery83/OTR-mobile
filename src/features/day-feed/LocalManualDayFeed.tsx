@@ -1,4 +1,6 @@
-import { useLayoutEffect, useRef } from "react";
+import { P1Row } from "./P1Row";
+import { localP1Presentation } from "./localP1Presentation";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { DayFeedPresentation } from "./DayFeed";
 import type { DayEntry, DayReading } from "./TripViewContext";
 import { WindowedDayList, type DayListHandle } from "./WindowedDayList";
@@ -44,6 +46,7 @@ export function LocalManualDayFeed({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const list = useRef<DayListHandle>(null);
+  const [p1Focus, setP1Focus] = useState<string | null>(null);
   const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
   const summaries = calendar.map((day) =>
     summarizeDay({ date: day, timed: [], nonComparable: [] }, read.rows(day)),
@@ -77,13 +80,16 @@ export function LocalManualDayFeed({
       key: `day:${day}`,
       isDayHeader: true,
       date: day,
-      value: () => (
-        <UiSection title={presentation?.formatDayHeading?.(day) ?? civil(day)}>
-          {!items.length ? (
-            <Text style={styles.meta}>{emptyMessage ?? t("tripHome.today.free")}</Text>
-          ) : null}
-        </UiSection>
-      ),
+      value: () =>
+        presentation?.renderDayHeading ? (
+          presentation.renderDayHeading(day, !items.length)
+        ) : (
+          <UiSection title={presentation?.formatDayHeading?.(day) ?? civil(day)}>
+            {!items.length ? (
+              <Text style={styles.meta}>{emptyMessage ?? t("tripHome.today.free")}</Text>
+            ) : null}
+          </UiSection>
+        ),
     });
     for (const row of items)
       rows.push({
@@ -94,6 +100,8 @@ export function LocalManualDayFeed({
             read={read}
             date={day}
             onlyRow={row}
+            p1Focus={p1Focus}
+            onP1Focus={setP1Focus}
             onOpenItem={onOpenItem}
           />
         ),
@@ -103,8 +111,14 @@ export function LocalManualDayFeed({
   return (
     <WindowedDayList
       rows={rows}
-      renderRow={({ value }) =>
-        presentation?.header ? <View style={styles.rowInset}>{value()}</View> : value()
+      renderRow={({ value, date }) =>
+        presentation?.wrapDayRow ? (
+          presentation.wrapDayRow(date, value())
+        ) : presentation?.header ? (
+          <View style={styles.rowInset}>{value()}</View>
+        ) : (
+          value()
+        )
       }
       listRef={(value) => {
         list.current = value;
@@ -119,12 +133,13 @@ export function LocalManualDayFeed({
       initialAnchor={initialAnchor}
       topInset={presentation?.topInset ?? 0}
       bottomInset={visual.space.section + bottomInset}
-      rowSpacing={visual.space.section}
+      rowSpacing={presentation?.wrapDayRow ? 0 : visual.space.section}
       header={presentation?.header}
-      style={styles.body}
+      style={[styles.body, presentation?.listStyle]}
       contentContainerStyle={[
         styles.content,
         presentation?.header ? styles.withIntroduction : undefined,
+        presentation?.listContentStyle,
       ]}
       onViewportChange={presentation?.onViewportChange}
       onOffsetChange={presentation?.onOffsetChange}
@@ -148,11 +163,15 @@ export function LocalManualDayFeed({
 // Row-only contribution for the existing Day scroll; it never renders accepted Items.
 export function LocalManualDayRows({
   onlyRow,
+  p1Focus,
+  onP1Focus,
   read,
   date,
   onOpenItem,
 }: {
   read: LocalManualRead;
+  p1Focus?: string | null;
+  onP1Focus?(key: string | null): void;
   onlyRow?: ReturnType<LocalManualRead["rows"]>[number];
   date: string;
   onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
@@ -174,6 +193,23 @@ export function LocalManualDayRows({
               : row.family === "P3"
                 ? t("tripHome.today.tonight")
                 : null;
+        if (item && row.family === "P1")
+          return (
+            <LocalP1Row
+              key={JSON.stringify(row.rowKey)}
+              item={item}
+              occurrence={role === "END" ? "END" : "START"}
+              focused={
+                p1Focus === undefined ? undefined : p1Focus === JSON.stringify(row.rowKey)
+              }
+              onFocus={
+                onP1Focus
+                  ? (next) => onP1Focus(next ? JSON.stringify(row.rowKey) : null)
+                  : undefined
+              }
+              onOpen={() => onOpenItem?.(row.itemRef, read)}
+            />
+          );
         return (
           <Pressable
             key={JSON.stringify(row.rowKey)}
@@ -208,6 +244,32 @@ export function LocalManualDayRows({
       })}
     </>
   );
+}
+function LocalP1Row({
+  item,
+  occurrence,
+  onOpen,
+  focused,
+  onFocus,
+}: {
+  focused?: boolean;
+  onFocus?(focused: boolean): void;
+  item: LocalManualRead["items"][number];
+  occurrence: "START" | "END";
+  onOpen(): void;
+}) {
+  const [depth, setDepth] = useState<"B" | "F">("B");
+  const presentation = localP1Presentation(item, occurrence);
+  return presentation ? (
+    <P1Row
+      {...presentation}
+      occurrence={occurrence}
+      depth={focused === undefined ? depth : focused ? "F" : "B"}
+      onDepth={(next) =>
+        next === "I" ? onOpen() : onFocus ? onFocus(next === "F") : setDepth(next)
+      }
+    />
+  ) : null;
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({

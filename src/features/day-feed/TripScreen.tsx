@@ -1,3 +1,6 @@
+import { ManualItineraryContent } from "./ManualItineraryContent";
+import { DayFeedFidelityHeading } from "./DayFeedFidelityHeading";
+import { p1InsertionTime } from "./p1InsertionTime";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import {
   DayFeedIntroduction,
@@ -42,11 +45,11 @@ import {
   readTripTodaysJourney,
   type createTripTodaysJourneyReader,
 } from "@/data/repositories/tripTodaysJourneyRepository";
-import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCallback,
   useEffect,
@@ -55,7 +58,15 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  AppState,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import {
   router,
   useLocalSearchParams,
@@ -201,6 +212,11 @@ function TripContent({
     trip: TripListSummary;
   } | null>(null);
   const [calendarVisible, setCalendarVisible] = useState(false);
+  const [insertion, setInsertion] = useState<{
+    date: string;
+    startTime: string | null;
+  } | null>(null);
+  const insertionDismiss = useRef<(() => void) | null>(null);
   const [daySummaries, setDaySummaries] = useState<DaySummary[]>([]);
   const dayList = useRef<DayListHandle>(null);
   const dayOffset = useRef(0);
@@ -210,11 +226,6 @@ function TripContent({
   const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
   const [localItem, setLocalItem] = useState<LocalItem | null>(null);
-  const [acceptedPlan, setAcceptedPlan] = useState<{
-    read: TripRead;
-    item: Parameters<typeof LocalCoreItemPreview>[0]["item"];
-    editor: { repository: ManualPlanRepository; draft: ManualPlanDraft } | null;
-  } | null>(null);
   const [planEditError, setPlanEditError] = useState(false);
   const [planEdit, setPlanEdit] = useState<{
     tripId: string;
@@ -291,7 +302,7 @@ function TripContent({
   const dayTitle =
     dayPastIntroduction && dayShell.visibleDates
       ? formatDayFeedVisibleDates(dayShell.visibleDates)
-      : "";
+      : dayName;
   useLayoutEffect(() => {
     if (!dayActive || !navigation.isFocused()) return;
     publishDayShellChrome(
@@ -336,7 +347,12 @@ function TripContent({
       title: headerTitle,
       headerTransparent: true,
       fullScreenGestureEnabled: immersiveHome,
-      headerStyle: { backgroundColor: colors.transparent },
+      headerStyle: {
+        backgroundColor:
+          dayActive && !dayPastIntroduction
+            ? colors.tripIntroduction
+            : colors.transparent,
+      },
       headerShadowVisible: false,
       // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
       headerBlurEffect: blurHeader && !nativeEdge ? "systemUltraThinMaterial" : undefined,
@@ -378,6 +394,7 @@ function TripContent({
     heroBehindStatus,
     dayActive,
     dayTitle,
+    dayPastIntroduction,
   ]);
   const visibleTrip =
     trip?.scope.generation === generation &&
@@ -609,6 +626,10 @@ function TripContent({
       throw new Error("LOCAL_ITEM_UNAVAILABLE");
     const current = await freshLocalRead(resolved);
     setTrip(current);
+    if (resolved.item.family === "P1") {
+      router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId: id } });
+      return;
+    }
     setLocalItem(resolved);
     setPlanEditError(false);
   };
@@ -622,7 +643,6 @@ function TripContent({
         return;
       setRevision((value) => value + 1);
       setLocalItem(null);
-      setAcceptedPlan(null);
       void load();
     },
     [requested, generation, load],
@@ -730,19 +750,10 @@ function TripContent({
         !["cancelled", "skipped"].includes(String(i.status)),
     );
     if (!item) return;
-    let editor: { repository: ManualPlanRepository; draft: ManualPlanDraft } | null =
-      null;
-    try {
-      const repository = await createDefaultManualPlanRepository();
-      const draft = await repository.read(requested, itemId, expectedRevision);
-      if (draft.itemId === itemId) editor = { repository, draft };
-    } catch {
-      /* Readable accepted facts never confer Creator editing authority. */
-    }
     if (ticket !== request.current || generation !== getAccountGeneration()) return;
     setTrip(result);
     setPlanEditError(false);
-    setAcceptedPlan({ read: result, item, editor });
+    router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId } });
   };
   const openHomeItem = async (value: SnapshotItem) => {
     const itemRevision = value.item.itemRevision;
@@ -991,38 +1002,6 @@ function TripContent({
     localItem.source.fingerprint === visibleTrip.localManual.source.fingerprint
       ? localItem
       : null;
-  const acceptedPlanPreview =
-    acceptedPlan &&
-    !planEdit &&
-    acceptedPlan.read.observed?.projection.tripId === requested &&
-    acceptedPlan.read.scope.generation === generation &&
-    generation === getAccountGeneration() &&
-    acceptedPlan.read.scope.accountId === visibleTrip?.scope.accountId &&
-    visibleTrip.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
-    visibleTrip.observed.projection.version === 2 &&
-    acceptedPlan.read.observed?.projection.version === 2 &&
-    acceptedPlan.read.observed.projection.source.epoch ===
-      visibleTrip.observed.projection.source.epoch &&
-    visibleTrip.observed.projection.items.some(
-      (item) =>
-        item.itemId === acceptedPlan.item.itemId &&
-        item.itemRevision === acceptedPlan.item.itemRevision &&
-        !item.hidden &&
-        !["cancelled", "skipped"].includes(String(item.status)),
-    ) ? (
-      <LocalCoreItemPreview
-        item={acceptedPlan.item}
-        onClose={() => setAcceptedPlan(null)}
-        onEdit={
-          acceptedPlan.editor
-            ? () => {
-                const editor = acceptedPlan.editor!;
-                setPlanEdit({ tripId: requested, generation, ...editor });
-              }
-            : undefined
-        }
-      />
-    ) : null;
   const localPreview =
     visibleLocalItem && !planEdit && !stayEdit && !rentalEdit && !transportEdit ? (
       <LocalCoreItemPreview
@@ -1107,7 +1086,6 @@ function TripContent({
         onSaved={() => {
           if (generation !== getAccountGeneration()) return;
           setPlanEdit(null);
-          setAcceptedPlan(null);
           setLocalItem(null);
           setRevision((value) => value + 1);
           void load();
@@ -1231,6 +1209,15 @@ function TripContent({
       : dayContext && dayFacts
         ? wholeTripCalendarDates(dayFacts, dateChoices, dayContext.date)
         : undefined;
+  const qualifiedToday = dayContext?.zone
+    ? localCalendarDate(new Date().toISOString(), dayContext.zone)
+    : "";
+  const phase = (date: string) =>
+    !qualifiedToday
+      ? colors.background
+      : date >= qualifiedToday
+        ? colors.surface
+        : colors.dayPast;
   if (visibleTrip && dayContext && (visibleTrip.localManual || visibleTrip.observed))
     return (
       <>
@@ -1238,6 +1225,44 @@ function TripContent({
           <DayFeed
             bottomInset={bottomBarHeight}
             presentation={{
+              listStyle: { backgroundColor: colors.tripIntroduction },
+              listContentStyle: {
+                backgroundColor: calendarDates?.length
+                  ? phase(calendarDates[calendarDates.length - 1])
+                  : colors.background,
+              },
+              showTimeUnspecified: false,
+              renderDayHeading: dayFacts?.startDate
+                ? (date, empty) => (
+                    <DayFeedFidelityHeading
+                      date={date}
+                      start={dayFacts.startDate!}
+                      today={qualifiedToday}
+                      empty={empty}
+                      dayColor={phase(date)}
+                      previousColor={
+                        date === dayFacts.startDate
+                          ? colors.tripIntroduction
+                          : phase(
+                              new Date(Date.parse(date + "T12:00:00Z") - 86400000)
+                                .toISOString()
+                                .slice(0, 10),
+                            )
+                      }
+                      onAdd={() => setInsertion({ date, startTime: null })}
+                    />
+                  )
+                : undefined,
+              wrapDayRow: (date, content) => (
+                <View
+                  style={{
+                    backgroundColor: phase(date),
+                    paddingHorizontal: visual.space.feedGutter,
+                  }}
+                >
+                  {content}
+                </View>
+              ),
               formatDayHeading: (date) => {
                 const day = tripCoreDayNumber(date, dayFacts);
                 const label = formatUiDate(new Date(`${date}T12:00:00Z`), {
@@ -1257,7 +1282,10 @@ function TripContent({
               topInset: dayTopInset,
               header: (
                 <View
-                  style={{ paddingTop: dayTopInset }}
+                  style={{
+                    paddingTop: dayTopInset,
+                    backgroundColor: colors.tripIntroduction,
+                  }}
                   onLayout={({ nativeEvent }) => {
                     dayIntroductionBottom.current = Math.max(
                       0,
@@ -1270,6 +1298,7 @@ function TripContent({
                   }}
                 >
                   <DayFeedIntroduction
+                    fidelity
                     tripName={dayName}
                     rangeLabel={dayRangeLabel}
                     locationSummary={dayFacts?.destination}
@@ -1342,7 +1371,22 @@ function TripContent({
             services={visibleTrip.services}
             renderer={
               visibleTrip.observed?.projection.version === 2
-                ? createCoreExperienceRenderer(visibleTrip.observed.projection)
+                ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
+                    instant: new Date().toISOString(),
+                    onInsert: (itemId, side, date) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const query = projection.query(date, dayContext);
+                      const rows = [...query.timed, ...query.nonComparable].map(
+                        (item) => item.event,
+                      );
+                      const suggestion = p1InsertionTime(rows, itemId, side, date);
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
+                  })
                 : undefined
             }
           />
@@ -1370,8 +1414,41 @@ function TripContent({
             dayList.current?.jumpToDayHeader(target, target === dayFacts?.startDate);
           }}
         />
+        <Modal
+          visible={!!insertion}
+          animationType="slide"
+          transparent
+          presentationStyle="overFullScreen"
+          onRequestClose={() =>
+            insertionDismiss.current ? insertionDismiss.current() : setInsertion(null)
+          }
+        >
+          <SafeAreaProvider style={{ flex: 1 }}>
+            {insertion ? (
+              <ManualItineraryContent
+                tripId={requested}
+                generation={generation}
+                initialDate={insertion.date}
+                initialStartTime={insertion.startTime}
+                tripStartDate={dayFacts?.startDate}
+                tripEndDate={dayFacts?.endDate}
+                registerDismissHandler={(handler) => {
+                  insertionDismiss.current = handler;
+                  return () => {
+                    if (insertionDismiss.current === handler)
+                      insertionDismiss.current = null;
+                  };
+                }}
+                onClose={() => setInsertion(null)}
+                onSaved={() => {
+                  setInsertion(null);
+                  manualItemSaved(requested, generation);
+                }}
+              />
+            ) : null}
+          </SafeAreaProvider>
+        </Modal>
         {localPreview}
-        {acceptedPlanPreview}
         {planEditor}
         {stayEditor}
         {rentalEditor}
@@ -1531,7 +1608,6 @@ function TripContent({
         )}
       </ScrollView>
       {localPreview}
-      {acceptedPlanPreview}
       {planEditor}
       {stayEditor}
       {rentalEditor}

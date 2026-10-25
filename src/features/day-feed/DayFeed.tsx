@@ -300,6 +300,22 @@ function AcceptedDayFeed({
       focus &&
       !sections.some(
         ({ stream }) => focus === stream.focus || focus === stream.suspendedFocus,
+      ) &&
+      !sections.some((section) =>
+        localManual
+          ?.rows(section.date)
+          .some(
+            (row) =>
+              row.family === "P1" &&
+              JSON.stringify(row.rowKey) === focus &&
+              localManual.items.some(
+                (item) =>
+                  item.itemId === row.itemRef &&
+                  item.family === "P1" &&
+                  !item.hidden &&
+                  !["cancelled", "skipped"].includes(String(item.status)),
+              ),
+          ),
       )
     )
       setFocus(null);
@@ -619,6 +635,8 @@ function AcceptedDayFeed({
             read={localManual!}
             date={section.date}
             onlyRow={row}
+            p1Focus={focus}
+            onP1Focus={setFocus}
             onOpenItem={onOpenLocalItem}
           />
         ),

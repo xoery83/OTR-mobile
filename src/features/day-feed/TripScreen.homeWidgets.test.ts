@@ -9,6 +9,8 @@ import { createDefaultManualPlanRepository } from "@/data/repositories/manualPla
 import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
 import { createDefaultManualRentalRepository } from "@/data/repositories/manualRentalRepository";
 import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
+vi.mock("./ManualItineraryContent", () => ({ ManualItineraryContent: () => null }));
+vi.mock("./DayFeedFidelityHeading", () => ({ DayFeedFidelityHeading: () => null }));
 vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
   dayNavigationBookmarkRepository: {
     list: vi.fn(async () => []),
@@ -193,6 +195,8 @@ vi.mock("@/ui/theme", () => ({
     transparent: "transparent",
     surface: "surface",
     floatingSurface: "floatingSurface",
+    tripIntroduction: "tripIntroduction",
+    dayPast: "dayPast",
     background: "background",
   }),
 }));
@@ -1112,23 +1116,23 @@ it("keeps unresolved Day entry in its loading shell rather than the legacy Today
   expect(find(node, "ThemedText").children).toBe("dayFeed.loading");
 });
 
-it("keeps Day header title blank until the actual textual introduction has scrolled off", async () => {
+it("keeps Trip title until the textual introduction scrolls off, then shows the visible date range", async () => {
   state.routeMode = "day";
   const feed = find(await loaded(), DayFeed);
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe("navigation.trip");
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).not.toBeNull();
   feed.presentation.header.props.onLayout({ nativeEvent: { layout: { height: 303 } } });
   feed.presentation.onOffsetChange(199);
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).not.toBeNull();
   feed.presentation.onOffsetChange(200);
   // Visible dates are supplied by the real list; unresolved dates must not fall back to duplicate Trip name.
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).toBeNull();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({})).not.toBeNull();
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
     "systemUltraThinMaterial",
   );
@@ -1181,7 +1185,7 @@ it("keeps the native toolbar transparent with a single measured Day boundary", a
   expect(options.headerTransparent).toBe(true);
   expect(options.fullScreenGestureEnabled).toBe(false);
   expect(options.headerBlurEffect).toBe("systemUltraThinMaterial");
-  expect(options.headerStyle.backgroundColor).toBe("transparent");
+  expect(options.headerStyle.backgroundColor).toBe("tripIntroduction");
   expect(find(node, DayFeed).presentation.topInset).toBe(103);
 });
 
@@ -1214,7 +1218,7 @@ it("Preparation local Recent reuses the existing current local detail and Close 
   expect(find(render(), LocalTripWorkspace)).not.toBeNull();
   expect(state.push).not.toHaveBeenCalled();
 });
-it("opens same-ID P1 edit only after the owning repository returns an editable draft", async () => {
+it("routes a current local P1 to the native detail without inventing Edit authority", async () => {
   state.result.observed = null;
   const plan = {
     ...localRead().items[0],
@@ -1234,20 +1238,12 @@ it("opens same-ID P1 edit only after the owning repository returns an editable d
   vi.mocked(createDefaultManualPlanRepository).mockResolvedValue(repository as any);
   const workspace = find(await loaded(), LocalTripWorkspace);
   await workspace.onOpenLocalHomeItem(reference, "manual-plan", localRead());
-  const preview = find(render(), "LocalItemPreview");
-  expect(preview.item.itemId).toBe("manual-plan");
-  preview.onEdit();
-  for (let i = 0; i < 12; i++) await Promise.resolve();
-  expect(repository.read).toHaveBeenCalledWith(reference, "manual-plan");
-  expect(find(render(), "LocalItemPreview")).toBeNull();
-  const editor = find(render(), "PlanEditor");
-  expect(editor).toMatchObject({
-    tripId: reference,
-    itemId: "manual-plan",
-    opened: { draft, repository },
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p1-detail",
+    params: { tripId: reference, itemId: "manual-plan" },
   });
-  editor.onClose();
-  expect(find(render(), "LocalItemPreview").item.itemId).toBe("manual-plan");
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+  expect(find(render(), "PlanEditor")).toBeNull();
 });
 it("opens same-ID P3 edit only after the owning stay repository returns an editable draft", async () => {
   state.result.observed = null;
@@ -1349,7 +1345,7 @@ it.each([103, 147])(
     feed.presentation.onOffsetChange(91);
     state.mount = true;
     render(true);
-    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("navigation.trip");
     feed.presentation.onOffsetChange(92);
     state.mount = true;
     render(true);
@@ -1357,7 +1353,7 @@ it.each([103, 147])(
     feed.presentation.onOffsetChange(0);
     state.mount = true;
     render(true);
-    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("navigation.trip");
   },
 );
 it("retains the measured boundary for a route without an owning Frame", async () => {
@@ -1383,7 +1379,7 @@ it.each([103, 147])(
     feed.presentation.onOffsetChange(91);
     state.mount = true;
     render(false);
-    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("navigation.trip");
     expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
       "systemUltraThinMaterial",
     );
@@ -1394,7 +1390,7 @@ it.each([103, 147])(
     feed.presentation.onOffsetChange(0);
     state.mount = true;
     render(false);
-    expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
+    expect(state.setOptions.mock.lastCall?.[0].title).toBe("navigation.trip");
   },
 );
 
@@ -1446,7 +1442,7 @@ it.each(["26.0", "27.0"])(
     expect(feed.presentation.header.props.style.paddingTop).toBe(103);
     expect(state.setOptions.mock.lastCall?.[0]).toMatchObject({
       headerTransparent: true,
-      headerStyle: { backgroundColor: "transparent" },
+      headerStyle: { backgroundColor: "tripIntroduction" },
       headerBlurEffect: undefined,
       scrollEdgeEffects: {
         top: "soft",
@@ -1478,7 +1474,7 @@ it.each(["26.0", "27.0"])(
   },
 );
 
-it("accepted date-only P1 opens its existing preview without a fabricated zone and enables only owning-repository qualified Edit", async () => {
+it("accepted date-only P1 opens native detail without a fabricated zone", async () => {
   state.result.scope.tripId = reference;
   const item = {
     itemId: "accepted-plan",
@@ -1508,15 +1504,14 @@ it("accepted date-only P1 opens its existing preview without a fabricated zone a
     certificate: { epoch: "epoch" },
     item,
   });
-  const preview = find(render(), "LocalItemPreview");
-  expect(preview.item).toEqual(item);
-  expect(repository.read).toHaveBeenCalledWith(reference, item.itemId, 4);
-  expect(preview.onEdit).toBeTypeOf("function");
-  preview.onEdit();
-  expect(find(render(), "PlanEditor").opened.draft).toEqual(draft);
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p1-detail",
+    params: { tripId: reference, itemId: item.itemId },
+  });
+  expect(find(render(), "LocalItemPreview")).toBeNull();
   expect(state.select).not.toHaveBeenCalled();
 });
-it("accepted readable P1 stays read-only when the owning repository refuses Creator editing", async () => {
+it("accepted readable P1 routes without opening an editor even when Creator editing is denied", async () => {
   state.result.scope.tripId = reference;
   const item = {
     itemId: "other-plan",
@@ -1538,5 +1533,9 @@ it("accepted readable P1 stays read-only when the owning repository refuses Crea
     certificate: { epoch: "epoch" },
     item,
   });
-  expect(find(render(), "LocalItemPreview").onEdit).toBeUndefined();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p1-detail",
+    params: { tripId: reference, itemId: item.itemId },
+  });
+  expect(find(render(), "PlanEditor")).toBeNull();
 });

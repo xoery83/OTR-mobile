@@ -108,7 +108,11 @@ vi.mock("./FlexibleBlockRow", () => ({ FlexibleBlockRow: () => null }));
 vi.mock("./P1Row", () => ({
   P1Row: (p: any) => {
     state.nodes.push(p);
-    return createElement("div", {}, `${p.event.id}:${p.depth}`);
+    return createElement(
+      "div",
+      {},
+      `${p.event?.id ?? p.display?.id}:${p.depth} ${p.display?.title ?? ""}`,
+    );
   },
 }));
 vi.mock("./FlightRows", () => ({ FlightRows: () => null }));
@@ -324,7 +328,19 @@ function localManual(changedId = fixture.before.id) {
   return {
     scope: { accountId: "account", tripId: "trip", generation: 0 },
     source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "local-read-pin" },
-    items: [{ itemId: changedId }, { itemId: "new-local" }],
+    items: [changedId, "new-local"].map((itemId) => ({
+      itemId,
+      itemRevision: 1,
+      tripId: "trip",
+      family: "P1",
+      title: `LOCAL ${itemId}`,
+      status: "planned",
+      hidden: false,
+      localState: "PENDING",
+      schedule: { start: { localDate: syntheticDate, comparable: false } },
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+    })),
     rows: (date: string) =>
       date === syntheticDate ? [row(changedId), row("new-local")] : [],
   } as any;
@@ -344,9 +360,7 @@ it("accepted plus local keeps the normal renderer, Focus/Immersive and a single 
   expect(html).toContain("LOCAL new-local");
   expect(state.nodes.some((p) => p.event?.id === fixture.before.id)).toBe(false);
   expect(state.nodes.filter((p) => p.isOwningList)).toHaveLength(1);
-  state.nodes
-    .find((p) => p.accessibilityLabel === `LOCAL ${fixture.before.id}`)
-    .onPress();
+  state.nodes.find((p) => p.display?.id === fixture.before.id).onDepth("I");
   expect(openLocal).toHaveBeenLastCalledWith(fixture.before.id, local);
   state.nodes
     .find((p) => p.event?.id === fixture.after.id && p.depth === "B")
@@ -554,4 +568,32 @@ it("omits a disabled TNS footer instead of leaving a zero-height viewability row
   expect(state.window.rows.some((row: any) => row.key.startsWith("footer:"))).toBe(true);
   render({ ...props, presentation: { showTimeUnspecified: false } });
   expect(state.window.rows.some((row: any) => row.key.startsWith("footer:"))).toBe(false);
+});
+
+it("mixed Reader keeps exactly one Focus across local and accepted P1 rows", () => {
+  const local = localManual("local-p1");
+  local.items = [
+    {
+      itemId: "local-p1",
+      itemRevision: 1,
+      tripId: "trip",
+      family: "P1",
+      title: "Pending plan",
+      status: "planned",
+      hidden: false,
+      localState: "PENDING",
+      schedule: { start: { localDate: syntheticDate, comparable: false } },
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+    },
+  ];
+  const props = { localManual: local };
+  render(props);
+  state.nodes.find((p) => p.display?.id === "local-p1").onDepth("F");
+  expect(render(props)).toContain("local-p1:F");
+  expect(render(props)).toContain("local-p1:F");
+  state.nodes.find((p) => p.event?.id === fixture.before.id).onDepth("F");
+  const html = render(props);
+  expect(html).toContain(`${fixture.before.id}:F`);
+  expect(html).toContain("local-p1:B");
 });
