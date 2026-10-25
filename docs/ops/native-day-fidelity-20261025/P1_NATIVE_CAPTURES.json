@@ -1,0 +1,95 @@
+{
+  "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "status": "NINE_STATES_OBSERVED_OWNER_REVIEW_PENDING",
+  "fixtureOnly": true,
+  "captures": [
+    {
+      "clock": "future",
+      "depth": "B",
+      "file": "future-browse.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "422db693fcfd5abf647b914800e8371203d9d27fcd1846be862741050657b618",
+      "capturedUTC": "2026-10-25T06:04:38.413246+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=future&depth=B"
+    },
+    {
+      "clock": "future",
+      "depth": "F",
+      "file": "future-focus.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "0a25ac50d1fbe568989059b7e6521bb9e9c8b5874cd4cf4d3e7bb7fc384c5ef9",
+      "capturedUTC": "2026-10-25T06:04:40.947089+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=future&depth=F"
+    },
+    {
+      "clock": "future",
+      "depth": "I",
+      "file": "future-immersive.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "9d8bd24b4f57a9485bce778699036e7be6072856344677d2442a977b766488b5",
+      "capturedUTC": "2026-10-25T06:04:43.500976+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=future&depth=I"
+    },
+    {
+      "clock": "today",
+      "depth": "B",
+      "file": "today-browse.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "78f2d841eaef364a92c667d77a34215d7c0a08be3871fe95566cfef5702866a0",
+      "capturedUTC": "2026-10-25T06:07:58.140736+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=today&depth=B"
+    },
+    {
+      "clock": "today",
+      "depth": "F",
+      "file": "today-focus.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "fa80380faa2733ea5ef3f7137cd8f003157ccacfc83ac11330cb45a4fa8d72c7",
+      "capturedUTC": "2026-10-25T06:08:00.656416+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=today&depth=F"
+    },
+    {
+      "clock": "today",
+      "depth": "I",
+      "file": "today-immersive.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "3fb696b86afeee63fb6589d1ac8b71df99aebb3d4dd9e9001fa6e330c487e35a",
+      "capturedUTC": "2026-10-25T06:08:03.166170+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=today&depth=I"
+    },
+    {
+      "clock": "past",
+      "depth": "B",
+      "file": "past-browse.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "0b442090e350ac551e196b979af7cdc476233486e3a721716750da2f5c4281b3",
+      "capturedUTC": "2026-10-25T06:09:15.763905+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=past&depth=B"
+    },
+    {
+      "clock": "past",
+      "depth": "F",
+      "file": "past-focus.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "4a68a8046ab2e8235df645922a9eff31cbc036ebbd325f30a265e1968e5296d0",
+      "capturedUTC": "2026-10-25T06:09:18.341121+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=past&depth=F"
+    },
+    {
+      "clock": "past",
+      "depth": "I",
+      "file": "past-immersive.png",
+      "sourceSHA": "52929ec0a22659af395545310f8479cf516a59c1",
+      "sha256": "9ab9b648db71792e94a6dd37b06e114bad5ba18f141c5920beab86a749e9c3ad",
+      "capturedUTC": "2026-10-25T06:09:20.874819+00:00",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=past&depth=I"
+    }
+  ],
+  "notClaimed": [
+    "REAL_ACCEPTED_P1_NATIVE_PASS",
+    "CLOUD_E2E",
+    "PIXEL_FIDELITY_PASS",
+    "MAX_DYNAMIC_TYPE_SHELL_PASS"
+  ]
+}
