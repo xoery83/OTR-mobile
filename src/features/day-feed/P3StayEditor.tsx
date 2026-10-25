@@ -1,7 +1,7 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Keyboard, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Alert, Keyboard, Modal, ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
@@ -11,14 +11,16 @@ import {
   type ManualStayFields,
   type ManualStayRepository,
 } from "@/data/repositories/manualStayRepository";
-import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
+import { UiButton, UiText as Text } from "@/ui/controls";
+import { UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { CalendarField } from "./TripCalendarField";
+import { TripCalendarRangeField } from "./TripCalendarRangeField";
+import { PlanParticipantsField } from "./PlanParticipantsField";
+import { P3StayLocationField } from "./P3StayLocationField";
 
 type Opened = { repository: ManualStayRepository; draft: ManualStayDraft };
 
@@ -33,11 +35,14 @@ function TimeField({
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
+  const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
   return (
-    <View>
+    <View style={styles.timeField}>
       <UiFormRow
+        stacked
+        horizontalInset={0}
         label={label}
         value={value ?? t("tripCreate.notSet")}
         disabled={disabled}
@@ -49,8 +54,28 @@ function TimeField({
           setOpen(true);
         }}
       />
-      {open && !disabled ? (
-        <View>
+      <Modal
+        visible={open && !disabled}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        allowSwipeDismissal
+        onRequestClose={() => setOpen(false)}
+      >
+        <SafeAreaView edges={["bottom"]} style={styles.timeSheet}>
+          <SheetHeader
+            category="picker"
+            safeTop={false}
+            title={label}
+            onLeft={() => setOpen(false)}
+            onRight={() => {
+              if (!disabled)
+                onChange(
+                  `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                );
+              setOpen(false);
+            }}
+            rightDisabled={disabled}
+          />
           <UiDatePicker
             mode="time"
             display="spinner"
@@ -61,29 +86,16 @@ function TimeField({
             }}
           />
           <UiButton
-            label={t("common.done")}
-            onPress={() => {
-              onChange(
-                `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-              );
-              setOpen(false);
-            }}
-          />
-          <UiButton
             label={t("tripCreate.clearTime")}
             variant="text"
+            disabled={disabled}
             onPress={() => {
               onChange(null);
               setOpen(false);
             }}
           />
-          <UiButton
-            label={t("common.cancel")}
-            variant="text"
-            onPress={() => setOpen(false)}
-          />
-        </View>
-      ) : null}
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }
@@ -95,6 +107,7 @@ export function P3StayEditor({
   itemId,
   initialDate,
   tripStartDate,
+  tripEndDate,
   opened,
   onClose,
   onSaved,
@@ -109,6 +122,7 @@ export function P3StayEditor({
   itemId?: string;
   initialDate?: string | null;
   tripStartDate?: string | null;
+  tripEndDate?: string | null;
   opened?: Opened;
   onClose(): void;
   onSaved(itemId: string): void;
@@ -135,6 +149,7 @@ export function P3StayEditor({
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
+  const [nameQuery, setNameQuery] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [frozen, setFrozen] = useState(false);
   useEffect(() => {
@@ -311,60 +326,77 @@ export function P3StayEditor({
                   onPress={() => close(onChooseTransport)}
                 />
               ) : null}
-              <UiSection title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}>
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.stayName")}
-                  placeholder={t("tripCreate.stayName")}
-                  value={fields.title}
-                  maxLength={200}
-                  editable={!saving && !frozen}
-                  onChangeText={(title) => change({ title })}
-                />
-                <View onTouchEnd={Keyboard.dismiss}>
-                  <CalendarField
-                    label={t("tripCreate.checkin")}
-                    value={fields.startDate}
-                    initialNavigationDate={tripStartDate}
-                    disabled={saving || frozen}
-                    onChange={(startDate) => change({ startDate })}
+              <View style={styles.form}>
+                <View style={styles.field}>
+                  <Text style={styles.caption}>{t("tripCreate.stayName")}</Text>
+                  <UiTextInput
+                    accessibilityLabel={t("tripCreate.stayName")}
+                    placeholder={t("tripCreate.stayName")}
+                    value={fields.title}
+                    maxLength={200}
+                    editable={!saving && !frozen}
+                    onChangeText={(title) => {
+                      if (!current() || busyRef.current || frozenRef.current) return;
+                      change({ title });
+                      setNameQuery(title);
+                    }}
                   />
                 </View>
-                {!fields.startDate ? (
-                  <Text style={styles.meta}>{t("tripCreate.stayDatesRequired")}</Text>
-                ) : null}
-                <TimeField
-                  label={t("tripCreate.stayCheckinTime")}
-                  value={fields.startTime}
-                  disabled={saving || frozen}
-                  onChange={(startTime) => change({ startTime })}
+                <P3StayLocationField
+                  tripId={tripId}
+                  editorId={source.draft.itemId}
+                  title={fields.title}
+                  nameQuery={nameQuery}
+                  value={fields.location}
+                  disabled={saving || frozen || status === "UNAVAILABLE"}
+                  isCurrent={() =>
+                    current() &&
+                    !busyRef.current &&
+                    !frozenRef.current &&
+                    !unavailableRef.current
+                  }
+                  onChange={(location) => change({ location })}
+                  onFindPlace={onFindPlace}
                 />
                 <View onTouchEnd={Keyboard.dismiss}>
-                  <CalendarField
-                    label={t("tripCreate.checkout")}
-                    value={fields.endDate ?? ""}
-                    initialNavigationDate={fields.startDate || tripStartDate}
+                  <TripCalendarRangeField
+                    label={t("tripCreate.stayDates")}
+                    presentation="field"
+                    value={{ start: fields.startDate, end: fields.endDate ?? "" }}
+                    referenceRange={{
+                      start: tripStartDate ?? "",
+                      end: tripEndDate ?? "",
+                    }}
+                    initialNavigationDate={tripStartDate}
                     disabled={saving || frozen}
-                    onChange={(endDate) =>
+                    onChange={({ start, end }) =>
                       change({
-                        endDate,
-                        ...(endDate ? {} : { endTime: null }),
+                        startDate: start,
+                        endDate: end || undefined,
+                        ...(end ? {} : { endTime: null }),
                       })
                     }
                   />
                 </View>
-                {!fields.endDate ? (
+                {!fields.startDate || !fields.endDate ? (
                   <Text style={styles.meta}>{t("tripCreate.stayDatesRequired")}</Text>
                 ) : null}
-                {fields.endDate ? (
+                <View style={styles.times}>
+                  <TimeField
+                    label={t("tripCreate.stayCheckinTime")}
+                    value={fields.startTime}
+                    disabled={saving || frozen}
+                    onChange={(startTime) => change({ startTime })}
+                  />
                   <TimeField
                     label={t("tripCreate.stayCheckoutTime")}
                     value={fields.endTime}
-                    disabled={saving || frozen}
+                    disabled={saving || frozen || !fields.endDate}
                     onChange={(endTime) => change({ endTime })}
                   />
-                ) : null}
+                </View>
                 {itemId ? (
-                  <>
+                  <View style={styles.times}>
                     <TimeField
                       label={t("tripCreate.stayArrivalFrom")}
                       value={fields.stayDetails.permittedCheckinFrom}
@@ -383,113 +415,30 @@ export function P3StayEditor({
                       disabled={saving || frozen}
                       onChange={(value) => changeStayTime("permittedCheckoutBy", value)}
                     />
-                  </>
+                  </View>
                 ) : null}
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.stayLocation")}
-                  placeholder={t("tripCreate.stayLocation")}
-                  value={fields.location ?? ""}
-                  maxLength={500}
-                  editable={!saving && !frozen}
-                  onChangeText={(location) => change({ location: location || null })}
-                />
-                {onFindPlace ? (
-                  <UiButton
-                    label={t("tripCreate.findPlace")}
-                    variant="text"
-                    disabled={saving || frozen}
-                    onPress={() => {
-                      if (!busyRef.current && !frozenRef.current)
-                        onFindPlace(fieldsRef.current?.location ?? "");
-                    }}
-                  />
-                ) : null}
-                <Text style={styles.meta}>{t("tripCreate.planManualPlace")}</Text>
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.stayNotes")}
-                  placeholder={t("tripCreate.stayNotes")}
-                  value={fields.description ?? ""}
-                  maxLength={5000}
-                  multiline
-                  editable={!saving && !frozen}
-                  onChangeText={(description) =>
-                    change({ description: description || null })
-                  }
-                />
-              </UiSection>
-              <UiSection title={t("tripCreate.planParticipants")}>
-                <UiChoiceChip
-                  label={t("tripCreate.planEveryone")}
-                  selected={fields.participation.mode === "WHOLE_GROUP"}
-                  onPress={() =>
-                    change({
-                      participation: {
-                        mode: "WHOLE_GROUP",
-                        people: [],
-                        selfPersonId: null,
-                      },
-                    })
-                  }
-                />
-                {fields.participation.selfPersonId ? (
-                  <UiChoiceChip
-                    label={t("tripCreate.planOnlyMe")}
-                    selected={fields.participation.mode === "SELF"}
-                    onPress={() =>
-                      change({
-                        participation: {
-                          mode: "SELF",
-                          people: [],
-                          selfPersonId: fields.participation.selfPersonId,
-                        },
-                      })
+                <View style={styles.field}>
+                  <Text style={styles.caption}>{t("tripCreate.stayNotes")}</Text>
+                  <UiTextInput
+                    accessibilityLabel={t("tripCreate.stayNotes")}
+                    placeholder={t("tripCreate.addNote")}
+                    value={fields.description ?? ""}
+                    maxLength={5000}
+                    multiline
+                    style={styles.notes}
+                    editable={!saving && !frozen}
+                    onChangeText={(description) =>
+                      change({ description: description || null })
                     }
                   />
-                ) : null}
-                {source.draft.participantOptions.length ? (
-                  <UiChoiceChip
-                    label={t("tripCreate.planChooseMembers")}
-                    selected={fields.participation.mode === "SELECTED_MEMBERS"}
-                    onPress={() =>
-                      change({
-                        participation: {
-                          mode: "SELECTED_MEMBERS",
-                          people: fields.participation.people,
-                          selfPersonId: null,
-                        },
-                      })
-                    }
-                  />
-                ) : null}
-                {fields.participation.mode === "SELECTED_MEMBERS"
-                  ? source.draft.participantOptions.map((person) => (
-                      <UiChoiceChip
-                        key={person.personId}
-                        label={person.displayName}
-                        selected={fields.participation.people.includes(person.personId)}
-                        onPress={() =>
-                          change({
-                            participation: {
-                              mode: "SELECTED_MEMBERS",
-                              people: fields.participation.people.includes(
-                                person.personId,
-                              )
-                                ? fields.participation.people.filter(
-                                    (id) => id !== person.personId,
-                                  )
-                                : [...fields.participation.people, person.personId],
-                              selfPersonId: null,
-                            },
-                          })
-                        }
-                      />
-                    ))
-                  : null}
-                {fields.participation.mode === "SELECTED_MEMBERS" &&
-                fields.participation.people.length === 0 ? (
-                  <Text style={styles.meta}>{t("tripCreate.planChooseOne")}</Text>
-                ) : null}
-              </UiSection>
+                </View>
+                <PlanParticipantsField
+                  value={fields.participation}
+                  options={source.draft.participantOptions}
+                  disabled={saving || frozen}
+                  onChange={(participation) => change({ participation })}
+                />
+              </View>
               <UiButton
                 label={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
                 disabled={saveDisabled}
@@ -508,4 +457,11 @@ const createStyles = (colors: UiColors) =>
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
     meta: { ...visual.type.meta, color: colors.textSecondary },
+    form: { gap: visual.space.section },
+    field: { gap: visual.space.heading },
+    caption: { ...visual.type.action, color: colors.textPrimary },
+    times: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.card },
+    timeField: { flexGrow: 1, flexBasis: 140, minWidth: 0 },
+    timeSheet: { backgroundColor: colors.surface, flex: 1 },
+    notes: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },
   });

@@ -4,6 +4,29 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ManualStayFields } from "@/data/repositories/manualStayRepository";
 import { P3StayEditor } from "./P3StayEditor";
 
+vi.mock("./P3StayLocationField", () => ({
+  P3StayLocationField: (p: any) => {
+    state.nodes.push({
+      ...p,
+      accessibilityLabel: "tripCreate.stayLocation",
+      onChangeText: p.onChange,
+    });
+    return null;
+  },
+}));
+vi.mock("./TripCalendarRangeField", () => ({
+  TripCalendarRangeField: (p: any) => {
+    state.nodes.push({ ...p, label: "stayDates" });
+    return null;
+  },
+}));
+vi.mock("./PlanParticipantsField", () => ({
+  PlanParticipantsField: (p: any) => {
+    state.nodes.push({ ...p, label: "participants" });
+    return null;
+  },
+}));
+
 const state = vi.hoisted(() => ({
   hooks: [] as unknown[],
   refs: [] as { current: unknown }[],
@@ -55,7 +78,7 @@ vi.mock("@/data/repositories/manualStayRepository", async () => ({
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
   Keyboard: { dismiss: () => state.dismissKeyboard() },
-  Modal: (p: any) => createElement("div", null, p.children),
+  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
   ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => {
     if (p.onTouchEnd)
@@ -66,6 +89,7 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("react-native-safe-area-context", () => ({
   SafeAreaProvider: (p: any) => createElement("div", null, p.children),
+  SafeAreaView: (p: any) => createElement("div", null, p.children),
 }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
@@ -161,11 +185,10 @@ async function open(p: ReturnType<typeof props>, repo: any) {
   return () => cleanups.forEach((cleanup) => cleanup());
 }
 function chooseDate(p: ReturnType<typeof props>, label: string, date: Date) {
-  node(label).onPress();
-  render(p);
-  state.nodes.find((entry) => entry.mode === "date")!.onChange(undefined, date);
-  render(p);
-  node("common.done").onPress();
+  const range = node("stayDates");
+  const key = label === "tripCreate.checkin" ? "start" : "end";
+  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  range.onChange({ ...range.value, [key]: value });
   render(p);
 }
 beforeEach(() => {
@@ -211,59 +234,27 @@ it("opens Transport from a clean P3 draft", async () => {
   expect(p.onClose).not.toHaveBeenCalled();
 });
 
-it("navigates to Trip Start without selecting and requires both stay dates", async () => {
-  const p = props();
-  const draft = {
-    mode: "CREATE",
-    itemId: "item-a",
-    fields: fields(),
-    participantOptions: [],
-  };
+it("reuses the Trip range calendar without preselecting dates and requires both stay dates", async () => {
+  const p = props(),
+    draft = { mode: "CREATE", itemId: "stay", fields: fields(), participantOptions: [] };
   const repo = {
     createDraft: vi.fn(async () => draft),
-    save: vi.fn(async () => ({
-      localStatus: "PENDING",
-      itemId: "item-a",
-      operationIds: ["op-a"],
+    save: vi.fn(async (_draft: unknown, _fields: ManualStayFields) => ({
+      itemId: "stay",
     })),
   };
   await open(p, repo);
   node("tripCreate.stayName").onChangeText("Harbour Inn");
-  expect(render(p)).toContain("tripCreate.stayDatesRequired");
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
-  node("tripCreate.checkin").onPress();
   render(p);
-  const picker = state.nodes.find((entry) => entry.mode === "date")!;
-  expect([
-    picker.value.getFullYear(),
-    picker.value.getMonth(),
-    picker.value.getDate(),
-  ]).toEqual([2027, 11, 30]);
-  node("common.cancel").onPress();
-  render(p);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
-  node("tripCreate.checkin").onPress();
-  render(p);
-  state.nodes
-    .find((entry) => entry.mode === "date")!
-    .onChange(undefined, new Date(2027, 11, 29, 12));
-  render(p);
-  node("common.done").onPress();
-  render(p);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
-  node("tripCreate.checkout").onPress();
-  render(p);
-  const checkoutPicker = state.nodes.find((entry) => entry.mode === "date")!;
-  expect([
-    checkoutPicker.value.getFullYear(),
-    checkoutPicker.value.getMonth(),
-    checkoutPicker.value.getDate(),
-  ]).toEqual([2027, 11, 29]);
-  node("common.cancel").onPress();
-  render(p);
+  expect(node("stayDates").initialNavigationDate).toBe("2027-12-30");
+  expect(node("stayDates").presentation).toBe("field");
+  expect(node("stayDates").value).toEqual({ start: "", end: "" });
+  expect(node("headerSave").disabled).toBe(true);
+  chooseDate(p, "tripCreate.checkin", new Date(2027, 11, 29, 12));
+  expect(node("headerSave").disabled).toBe(true);
   chooseDate(p, "tripCreate.checkout", new Date(2028, 0, 2, 12));
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node("headerSave").disabled).toBe(false);
+  node("headerSave").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
@@ -275,7 +266,6 @@ it("navigates to Trip Start without selecting and requires both stay dates", asy
       endTime: null,
     }),
   );
-  expect(p.onSaved).toHaveBeenCalledWith("item-a");
 });
 
 it("keeps the same draft and fields after an unknown save result; conflict disables retry", async () => {
@@ -296,14 +286,7 @@ it("keeps the same draft and fields after an unknown save result; conflict disab
   await open(p, repo);
   node("tripCreate.stayName").onChangeText("Walk");
   render(p);
-  node("tripCreate.checkin").onPress();
-  render(p);
-  state.nodes
-    .find((entry) => entry.mode === "date")!
-    .onChange(undefined, new Date(2027, 11, 29, 12));
-  render(p);
-  node("common.done").onPress();
-  render(p);
+  chooseDate(p, "tripCreate.checkin", new Date(2027, 11, 29, 12));
   chooseDate(p, "tripCreate.checkout", new Date(2028, 0, 2, 12));
   node("tripCreate.saveItem").onPress();
   await Promise.resolve();
@@ -345,14 +328,7 @@ it("blocks old same-turn handlers and retries only the first submitted fields", 
   };
   await open(p, repo);
   node("tripCreate.stayName").onChangeText("First title");
-  node("tripCreate.checkin").onPress();
-  render(p);
-  state.nodes
-    .find((entry) => entry.mode === "date")!
-    .onChange(undefined, new Date(2027, 11, 29, 12));
-  render(p);
-  node("common.done").onPress();
-  render(p);
+  chooseDate(p, "tripCreate.checkin", new Date(2027, 11, 29, 12));
   chooseDate(p, "tripCreate.checkout", new Date(2028, 0, 2, 12));
   const oldNameChange = node("tripCreate.stayName").onChangeText;
   const oldSave = node("tripCreate.saveItem").onPress;
@@ -528,9 +504,7 @@ it("keeps header Save and footer Save aligned and rejects stale Save after dates
   await open(p, repo);
   expect(node("headerSave").disabled).toBe(false);
   const oldSave = node("headerSave").onPress;
-  node("tripCreate.checkout").onPress();
-  render(p);
-  node("tripCreate.clearDate").onPress();
+  node("stayDates").onChange({ start: "2026-11-01", end: "" });
   render(p);
   expect(node("headerSave").disabled).toBe(true);
   expect(node("tripCreate.saveItem").disabled).toBe(true);
@@ -551,7 +525,9 @@ it("invalid fields remain editable rather than freezing the draft on a rejected 
       fields: value,
       participantOptions: [],
     })),
-    save: vi.fn(async () => ({ itemId: "stay" })),
+    save: vi.fn(async (_draft: unknown, _fields: ManualStayFields) => ({
+      itemId: "stay",
+    })),
   };
   await open(p, repo);
   expect(node("headerSave").disabled).toBe(true);
@@ -633,4 +609,55 @@ it("uses the short header Save label and dismisses the keyboard for P3 date/time
   node("calendarKeyboardDismiss").onTouchEnd();
   node("tripCreate.stayCheckinTime").onPress();
   expect(state.dismissKeyboard).toHaveBeenCalledTimes(2);
+});
+
+it("places location immediately after name and delegates participants to the P1 control", async () => {
+  const p = props(),
+    value = fields();
+  value.title = "Stay";
+  value.startDate = "2026-11-01";
+  value.endDate = "2026-11-04";
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [
+        { personId: "00000000-0000-4000-8000-000000000009", displayName: "QA" },
+      ],
+    })),
+    save: vi.fn(async (_draft: unknown, _fields: ManualStayFields) => ({
+      itemId: "stay",
+    })),
+  };
+  await open(p, repo);
+  const nameIndex = state.nodes.findIndex(
+    (n) => n.accessibilityLabel === "tripCreate.stayName",
+  );
+  expect(state.nodes[nameIndex + 1].accessibilityLabel).toBe("tripCreate.stayLocation");
+  expect(node("tripCreate.stayLocation").nameQuery).toBe(null);
+  node("tripCreate.stayName").onChangeText("Park Hyatt Auckland");
+  render(p);
+  expect(node("tripCreate.stayLocation").nameQuery).toBe("Park Hyatt Auckland");
+  expect(node("participants").options).toEqual([
+    { personId: "00000000-0000-4000-8000-000000000009", displayName: "QA" },
+  ]);
+  node("participants").onChange({
+    mode: "SELECTED_MEMBERS",
+    people: [],
+    selfPersonId: null,
+  });
+  render(p);
+  expect(node("headerSave").disabled).toBe(true);
+  node("participants").onChange({
+    mode: "SELECTED_MEMBERS",
+    people: ["00000000-0000-4000-8000-000000000009"],
+    selfPersonId: null,
+  });
+  render(p);
+  node("headerSave").onPress();
+  await Promise.resolve();
+  expect(repo.save.mock.calls[0][1].participation.people).toEqual([
+    "00000000-0000-4000-8000-000000000009",
+  ]);
 });

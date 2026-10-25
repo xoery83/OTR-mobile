@@ -680,6 +680,7 @@ export const en = {
   "tripCreate.planRetrySame":
     "Save could not be confirmed. Retry with the same values or close and reopen.",
   "tripCreate.saveChanges": "Save changes",
+  "tripCreate.stayDates": "Check-in / check-out dates",
   "tripCreate.checkin": "Check-in date",
   "tripCreate.checkout": "Check-out date",
   "tripCreate.newStay": "New stay",
@@ -3321,6 +3322,7 @@ export const zhHans: Record<MessageKey, string> = {
   "tripCreate.planUnavailable": "此计划暂时无法编辑，请关闭后重新打开。",
   "tripCreate.planRetrySame": "无法确认是否已保存。请用相同内容重试，或关闭后重新打开。",
   "tripCreate.saveChanges": "保存更改",
+  "tripCreate.stayDates": "入住／退房日期",
   "tripCreate.checkin": "入住日期",
   "tripCreate.checkout": "退房日期",
   "tripCreate.newStay": "新建住宿",
