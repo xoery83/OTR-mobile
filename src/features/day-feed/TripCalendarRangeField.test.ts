@@ -301,7 +301,7 @@ it("P3 starts each opened selection with check-in even when a start is prefilled
       (n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-02",
     )!;
     expect(today.props.accessibilityHint).toBe("search.today");
-    expect(nodes(today).some((n) => n.props.children === "search.today")).toBe(true);
+    expect(nodes(today).some((n) => n.props.children === "search.today")).toBe(false);
     expect(today.props.style).toContainEqual({ backgroundColor: lightPalette.selected });
     today.props.onPress();
     view = render();

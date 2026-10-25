@@ -289,16 +289,6 @@ export function TripCalendarRangeField({
                                   >
                                     {formatUiNumber(+date.slice(8))}
                                   </UiText>
-                                  {date === today ? (
-                                    <UiText
-                                      style={[
-                                        styles.today,
-                                        referenceRange && chosen && styles.activityText,
-                                      ]}
-                                    >
-                                      {t("search.today")}
-                                    </UiText>
-                                  ) : null}
                                 </Pressable>
                               ) : (
                                 <View
@@ -380,7 +370,6 @@ const createStyles = (c: UiColors) =>
       borderRadius: visual.radius.control,
     },
     todayActivityTint: { backgroundColor: c.textPrimary, opacity: 0.08 },
-    today: { ...visual.type.meta, color: c.accent },
     label: { ...visual.type.row, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
   });
