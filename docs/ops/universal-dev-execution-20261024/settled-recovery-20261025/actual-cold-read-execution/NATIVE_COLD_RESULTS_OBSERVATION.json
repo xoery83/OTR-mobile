@@ -1,0 +1,26 @@
+{
+  "status": "ACTUAL_COLD_NATIVE_RESULTS_PASS",
+  "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "batchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+  "taskId": "cd36d6f4-a09b-41ef-977e-bb4127920d7f",
+  "appProcessClosedAndRelaunched": true,
+  "originalBatchThreeMaterialsRestored": true,
+  "coldHookInitiallyHadNoResult": true,
+  "explicitCheckProcessingStatusOnly": true,
+  "readOnlyGETPath": true,
+  "resultsDisplayed": [
+    "Waterfront morning walk",
+    "Air New Zealand NZ9997",
+    "Harbour QA Hotel",
+    "Harbour QA Rentals",
+    "QA105",
+    "QA museum guided tour"
+  ],
+  "sourceEvidenceDisplayed": true,
+  "unresolvedDisplayed": true,
+  "noItemsOrBookingsSavedMessage": true,
+  "canonicalWrites": false,
+  "newProviderCalls": 0,
+  "paidPOSTTriggered": false,
+  "snapshotSource": "Coordinator actual CUA AX and screenshot after cold GET"
+}

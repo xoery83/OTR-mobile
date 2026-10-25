@@ -1,0 +1,31 @@
+{
+  "status": "PASS_ACTUAL_COLD_NATIVE_RESULTS_CONTROLLED_SYNTHETIC_QA",
+  "findings": [],
+  "priorGap": "Earlier cold Results was correctly unproven. New authorized same-result GET window closes that gap without rewriting prior failure/expiry receipts.",
+  "actualEvidence": {
+    "native": "Process closed/relaunched, original Batch and3materials restored with no in-memory result; explicit Check triggers2GET only and actual CUA records six candidates with Source/Evidence/Unresolved and No items/Bookings saved.",
+    "server": "Same Taskcd36d6f4-a09b-41ef-977e-bb4127920d7f PUBLISHED rev5/resultSHAb7c072ed5b5a7aeb1556928ad983c15c9d1b837c8ce32758eec39e4cd67159d3; unique original Attemptb8e1e9a0\u2026 TERMINAL/COMPLETE/INSTALLED and original Call43678b0c\u2026 retained.",
+    "execution": "No recoveryCLI/republish/newProvider/paidPOST/canonical write reported; current window reads only original result.",
+    "closure": "Final ACKNOWLEDGED close attempts1 CLOSED_VERIFIED; independent READ_ONLY closure matches samewindow and confirms SQL/runtime closed.",
+    "budget": "Operator currentwindow2 reserved, cumulative new policy9/16; Native122/136. Original12 startup consumption remainsUNKNOWN/refunded0."
+  },
+  "acceptedClaims": [
+    "ACTUAL_COLD_NATIVE_RESULTS_PASS for fixed synthetic sameTask/Batch/threeSource controlled authorized GET scenario.",
+    "Original real Backend LLM\u2192six-family candidate preview\u2192retained server result\u2192cold Native explicit read recovery verified within scoped receipts."
+  ],
+  "notImplied": [
+    "No permanent always-on Universal service or arbitrary new Import readiness.",
+    "No automatic offline Native result cache; recovery required explicit read-only Check and authorized Reader window.",
+    "No formal Review/Admission/Canonical Item/Booking/Ticket creation or entitlement PASS.",
+    "Past failure/UNKNOWN and automatic closure transport gap remain preserved."
+  ],
+  "fileSHA256": {
+    "/private/tmp/otr-universal-cold-read-execution-20261025/NATIVE_READ_RECEIPT.json": "2d72ae6759f4680344007415a8da7f84c28be29bae31732dc8f74d43eea6bc19",
+    "/private/tmp/otr-universal-cold-read-execution-20261025/NATIVE_COLD_RESULTS_OBSERVATION.json": "a976a09049764cedff738d2678c0f947097aea5ccb0c440aed2ddb08f312f34d",
+    "/private/tmp/otr-universal-cold-read-execution-20261025/INDEPENDENT_SERVER_TASK_READBACK.json": "09c2459d4df4312156760912a93cd9318ef0aeae1a6b446da73bbbcfd62b074c",
+    "/private/tmp/otr-universal-cold-read-execution-20261025/FINAL_CLOSURE.json": "c5aaf3b95da454099149ee11ac08aa3faa7ad8185d8a4887d8780c71d8f05639",
+    "/private/tmp/otr-universal-cold-read-execution-20261025/INDEPENDENT_READONLY_CLOSURE_VERIFICATION.json": "624ce9ed0969237bc8496fa1998bc92c4bed15f765445702ef29bd8e757b3f58",
+    "/private/tmp/otr-universal-cold-read-execution-20261025/OPERATOR_BUDGET_FINAL.json": "cd90108ceffc295feb8df0a0756a9f5669ead5e6f678f291dd5c8d8ac9f91503"
+  },
+  "reviewerBoundary": "Only named nonsecret local receipts read; actual GUI observation credited Coordinator. No Reviewer DEV/GUI/network/Provider/business reads."
+}
