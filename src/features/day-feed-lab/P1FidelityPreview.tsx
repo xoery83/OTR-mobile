@@ -40,18 +40,13 @@ import {
 
 // DEV fixture host: the existing DayFeed/composer/list/header/calendar/material render it.
 // It never adopts fixture identities into TripView, creates business records or dispatches actions.
-type P1PreviewParams = { clock?: string; depth?: string; item?: string };
 export function P1FidelityPreview() {
-  const params = useLocalSearchParams<P1PreviewParams>();
-  return (
-    <P1FidelityScene
-      key={JSON.stringify([params.clock, params.depth, params.item])}
-      params={params}
-    />
-  );
-}
-function P1FidelityScene({ params }: { params: P1PreviewParams }) {
   useUiLocale();
+  const params = useLocalSearchParams<{
+    clock?: string;
+    depth?: string;
+    item?: string;
+  }>();
   const clock: P1FidelityClock =
     params.clock === "future" || params.clock === "past" ? params.clock : "today";
   const initialFixture = p1FidelityFixture(clock);
@@ -83,14 +78,27 @@ function P1FidelityScene({ params }: { params: P1PreviewParams }) {
   const [sheet, setSheet] = useState<"CONTROLS" | "ADD" | "ACTION" | null>(null);
   const [calendar, setCalendar] = useState(false),
     [scrollOffset, setScrollOffset] = useState(0),
+    [originIndex, setOriginIndex] = useState(0),
     [introductionHeight, setIntroductionHeight] = useState(111),
     [summaries, setSummaries] = useState<DaySummary[]>([]);
-  const pastIntroduction = scrollOffset > introductionHeight;
+  const pastIntroduction = originIndex > 0 || scrollOffset > introductionHeight;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const list = useRef<DayListHandle | null>(null);
   const key = JSON.stringify([clock, depth, target]);
   const [detailState, setDetailState] = useState({ key, closed: false });
-  if (detailState.key !== key) setDetailState({ key, closed: false });
+  const [sceneKey, setSceneKey] = useState(key);
+  // Keep Stack.Screen mounted: remounting it during a virtualized deep jump loses the iOS title.
+  if (sceneKey !== key) {
+    setSceneKey(key);
+    setSheet(null);
+    setCalendar(false);
+    setScrollOffset(0);
+    setOriginIndex(0);
+    setIntroductionHeight(111);
+    setSummaries([]);
+    setSelectedDate(null);
+    setDetailState({ key, closed: false });
+  }
   const targetFocusKey = p1FidelityFocusKey(initialFixture, target);
   const targetDate =
     p1FidelityPack.items.find((item) => item.id === target)?.date ??
@@ -285,11 +293,13 @@ function P1FidelityScene({ params }: { params: P1PreviewParams }) {
               setScrollOffset(offset);
             },
             onReadingMotion: shell.observeReadingMotion,
-            onViewportChange: (viewport) =>
+            onViewportChange: (viewport) => {
+              setOriginIndex(viewport.originIndex);
               shell.observeVisibleDates({
                 first: viewport.firstVisibleDate,
                 last: viewport.lastVisibleDate,
-              }),
+              });
+            },
             onInteraction: () => setSelectedDate(null),
             onSummaries: setSummaries,
           }}
