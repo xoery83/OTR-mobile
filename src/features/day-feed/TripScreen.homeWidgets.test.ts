@@ -1214,6 +1214,10 @@ it("keeps the native toolbar transparent with a single measured Day boundary", a
   expect(options.fullScreenGestureEnabled).toBe(false);
   expect(options.headerBlurEffect).toBe("systemUltraThinMaterial");
   expect(options.headerStyle.backgroundColor).toBe("tripIntroduction");
+  const title = options.headerTitle({});
+  expect(title.type).toBe("ThemedText");
+  expect(typeof title.props.children).toBe("string");
+  expect(title.props.onPress).toBeUndefined();
   expect(find(node, DayFeed).presentation.topInset).toBe(103);
 });
 

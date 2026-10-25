@@ -1255,11 +1255,13 @@ function TripContent({
                     />
                   </UiGlassSurface>
                 ) : (
-                  <DayFeedShellTitle
-                    label={dayTitle}
-                    openCalendarLabel={t("dayShell.calendar.open")}
-                    onOpenCalendar={() => setCalendarVisible(true)}
-                  />
+                  <ThemedText
+                    onLayout={onLayout}
+                    numberOfLines={1}
+                    style={styles.navTitle}
+                  >
+                    {dayTitle}
+                  </ThemedText>
                 )
               ) : null
             ) : (
