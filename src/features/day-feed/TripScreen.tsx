@@ -1,3 +1,4 @@
+import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
 import { useP1CivilMove } from "./useP1CivilMove";
@@ -174,7 +175,14 @@ function TripContent({
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const insets = useSafeAreaInsets();
-  const headerBottom = Math.max(useHeaderHeight(), insets.top);
+  const measuredHeader = useHeaderHeight();
+  const [retainedHeader, setRetainedHeader] = useState(
+    Math.max(measuredHeader, insets.top),
+  );
+  // UIKit reports zero after hiding the bar; keep the measured list boundary.
+  if (measuredHeader > insets.top && measuredHeader !== retainedHeader)
+    setRetainedHeader(measuredHeader);
+  const headerBottom = Math.max(measuredHeader, retainedHeader, insets.top);
   const dayTopInset = contentFrameManaged ? 0 : headerBottom;
   const heroHeight = useRef(0);
   const homeScrollOffset = useRef(0);
@@ -1170,6 +1178,7 @@ function TripContent({
     () => dayShell.observeReadingStopped(),
   );
   const moveActive = move.active;
+  const readingOnly = dayActive && dayPastIntroduction && !dayShell.navigationVisible;
   useLayoutEffect(() => {
     if (!dayActive || !navigation.isFocused()) return;
     publishDayShellChrome(
@@ -1204,6 +1213,7 @@ function TripContent({
       // Native Stack falls back to the route name when a custom title renders null.
       title: moveActive ? "" : headerTitle,
       headerTransparent: true,
+      headerShown: !dayActive || (!readingOnly && !moveActive),
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: {
         backgroundColor:
@@ -1214,26 +1224,43 @@ function TripContent({
       headerShadowVisible: false,
       // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
       headerBlurEffect:
-        !moveActive && blurHeader && !nativeEdge ? "systemUltraThinMaterial" : undefined,
-      scrollEdgeEffects: blurHeader
-        ? {
-            top: nativeEdge ? "soft" : "hidden",
-            bottom: "hidden",
-            left: "hidden",
-            right: "hidden",
-          }
-        : undefined,
+        dayActive && (moveActive || !dayShell.navigationVisible)
+          ? "none"
+          : !moveActive && blurHeader && !nativeEdge
+            ? "systemUltraThinMaterial"
+            : undefined,
+      scrollEdgeEffects:
+        dayActive && (moveActive || !dayShell.navigationVisible)
+          ? { top: "hidden", bottom: "hidden", left: "hidden", right: "hidden" }
+          : blurHeader
+            ? {
+                top: nativeEdge ? "soft" : "hidden",
+                bottom: "hidden",
+                left: "hidden",
+                right: "hidden",
+              }
+            : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: moveActive
         ? () => null
         : ({ onLayout }: { onLayout?: import("react-native").TextProps["onLayout"] }) =>
             dayActive ? (
               dayTitle ? (
-                <DayFeedShellTitle
-                  label={dayTitle}
-                  openCalendarLabel={t("dayShell.calendar.open")}
-                  onOpenCalendar={() => setCalendarVisible(true)}
-                />
+                dayPastIntroduction ? (
+                  <UiGlassSurface style={styles.dateIsland}>
+                    <DayFeedShellTitle
+                      label={dayTitle}
+                      openCalendarLabel={t("dayShell.calendar.open")}
+                      onOpenCalendar={() => setCalendarVisible(true)}
+                    />
+                  </UiGlassSurface>
+                ) : (
+                  <DayFeedShellTitle
+                    label={dayTitle}
+                    openCalendarLabel={t("dayShell.calendar.open")}
+                    onOpenCalendar={() => setCalendarVisible(true)}
+                  />
+                )
               ) : null
             ) : (
               <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
@@ -1246,6 +1273,8 @@ function TripContent({
     today,
     headerTitle,
     styles.navTitle,
+    styles.dateIsland,
+    readingOnly,
     immersiveHome,
     colors,
     heroBehindStatus,
@@ -1446,6 +1475,20 @@ function TripContent({
                 : undefined
             }
           />
+          {readingOnly && !moveActive && dayTitle ? (
+            <View
+              pointerEvents="box-none"
+              style={[styles.dateOverlay, { top: insets.top }]}
+            >
+              <UiGlassSurface style={styles.dateIsland}>
+                <DayFeedShellTitle
+                  label={dayTitle}
+                  openCalendarLabel={t("dayShell.calendar.open")}
+                  onOpenCalendar={() => setCalendarVisible(true)}
+                />
+              </UiGlassSurface>
+            </View>
+          ) : null}
           {move.overlay}
         </View>
         {move.confirmation}
@@ -1702,6 +1745,15 @@ const createStyles = (c: UiColors) =>
     content: { padding: visual.space.page, gap: visual.space.heading },
     homeContent: { paddingHorizontal: 0, paddingTop: 0 },
     header: { paddingHorizontal: visual.space.page, paddingTop: visual.space.heading },
+    dateOverlay: { position: "absolute", left: 0, right: 0, alignItems: "center" },
+    dateIsland: {
+      minHeight: 44,
+      paddingHorizontal: 12,
+      borderRadius: visual.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.separator,
+      overflow: "hidden",
+    },
     navTitle: { ...visual.type.section, color: c.textPrimary },
     heading: { ...visual.type.metric, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },

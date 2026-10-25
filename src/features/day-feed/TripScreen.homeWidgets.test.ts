@@ -78,6 +78,7 @@ const state = vi.hoisted(() => ({
   routeTrip: null as string | null,
   routeMode: "home" as "home" | "day",
   headerHeight: 103,
+  shellNavigationVisible: true,
   shellVisibleDates: null as null | { first: string; last: string },
   syncCompletion: null as
     | ((event: { accountId: string; generation: number; journeyIds: string[] }) => void)
@@ -111,7 +112,7 @@ vi.mock("./DayFeedShell", () => ({
   DayFeedShellTitle: () => null,
   formatDayFeedVisibleDates: () => "visible dates",
   useDayFeedShellState: () => ({
-    navigationVisible: true,
+    navigationVisible: state.shellNavigationVisible,
     visibleDates: state.shellVisibleDates,
     observeScroll: state.observeShellScroll,
     observeReadingMotion: state.observeReadingMotion,
@@ -223,6 +224,7 @@ vi.mock("@/ui/theme", () => ({
   }),
 }));
 vi.mock("./TodaysJourneyWidget", () => ({ TodaysJourneyWidget: "TodaysJourney" }));
+vi.mock("@/ui/UiGlassSurface", () => ({ UiGlassSurface: "GlassSurface" }));
 vi.mock("@/ui/controls", () => ({ UiButton: "Button", UiText: "ThemedText" }));
 vi.mock("@/ui/forms", () => ({ UiTextInput: "Input", UiChoiceChip: "Choice" }));
 vi.mock("./LocalTripWorkspace", () => ({ LocalTripWorkspace: "Workspace" }));
@@ -310,6 +312,7 @@ beforeEach(() => {
   state.routeMode = "home";
   state.headerHeight = 103;
   state.shellVisibleDates = null;
+  state.shellNavigationVisible = true;
   state.routeTrip = null;
   state.hooks = [];
   state.callbacks = [];
@@ -1207,6 +1210,7 @@ it("keeps the native toolbar transparent with a single measured Day boundary", a
   const node = await loaded();
   const options = state.setOptions.mock.lastCall![0];
   expect(options.headerTransparent).toBe(true);
+  expect(options.headerShown).toBe(true);
   expect(options.fullScreenGestureEnabled).toBe(false);
   expect(options.headerBlurEffect).toBe("systemUltraThinMaterial");
   expect(options.headerStyle.backgroundColor).toBe("tripIntroduction");
@@ -1598,3 +1602,43 @@ it("uses the display civil date for Day headings when Reader zone is unresolved"
   expect(region.props.children.props.today).toBe("2026-10-26");
   expect(state.view.zone).toBe("");
 });
+
+it.each(["25.0", "27.0"])(
+  "reading-only topbar is transparent with explicit hidden native edges on iOS %s",
+  async (version) => {
+    state.platformVersion = version;
+    state.routeMode = "day";
+    state.shellVisibleDates = { first: "2027-02-01", last: "2027-02-03" };
+    const feed = find(await loaded(false), DayFeed);
+    feed.presentation.header.props.onLayout({ nativeEvent: { layout: { height: 195 } } });
+    feed.presentation.onOffsetChange(150);
+    state.shellNavigationVisible = false;
+    state.mount = true;
+    const hidden = render(false);
+    const options = state.setOptions.mock.lastCall?.[0];
+    expect(options.headerTransparent).toBe(true);
+    expect(options.headerShown).toBe(false);
+    expect(options.headerStyle.backgroundColor).toBe("transparent");
+    expect(options.headerBlurEffect).toBe("none");
+    expect(options.scrollEdgeEffects).toEqual({
+      top: "hidden",
+      bottom: "hidden",
+      left: "hidden",
+      right: "hidden",
+    });
+    const title = options.headerTitle({});
+    expect(title.type).toBe("GlassSurface");
+    expect(title.props.children.props.label).toBe("visible dates");
+    expect(typeof title.props.children.props.onOpenCalendar).toBe("function");
+    const island = find(hidden, "GlassSurface");
+    expect(island.children.props.label).toBe("visible dates");
+    state.headerHeight = 0;
+    state.mount = true;
+    const withoutNativeHeader = find(render(false), DayFeed);
+    expect(withoutNativeHeader.presentation.topInset).toBe(103);
+    state.shellNavigationVisible = true;
+    state.mount = true;
+    render(false);
+    expect(state.setOptions.mock.lastCall?.[0].headerShown).toBe(true);
+  },
+);
