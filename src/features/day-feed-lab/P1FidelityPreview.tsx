@@ -40,13 +40,18 @@ import {
 
 // DEV fixture host: the existing DayFeed/composer/list/header/calendar/material render it.
 // It never adopts fixture identities into TripView, creates business records or dispatches actions.
+type P1PreviewParams = { clock?: string; depth?: string; item?: string };
 export function P1FidelityPreview() {
+  const params = useLocalSearchParams<P1PreviewParams>();
+  return (
+    <P1FidelityScene
+      key={JSON.stringify([params.clock, params.depth, params.item])}
+      params={params}
+    />
+  );
+}
+function P1FidelityScene({ params }: { params: P1PreviewParams }) {
   useUiLocale();
-  const params = useLocalSearchParams<{
-    clock?: string;
-    depth?: string;
-    item?: string;
-  }>();
   const clock: P1FidelityClock =
     params.clock === "future" || params.clock === "past" ? params.clock : "today";
   const initialFixture = p1FidelityFixture(clock);
