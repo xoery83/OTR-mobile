@@ -21,12 +21,14 @@ export function UiButton({
   variant = "primary",
   disabled = false,
   size = "regular",
+  icon,
 }: {
   label: string;
   onPress: () => void;
   variant?: "primary" | "secondary" | "text" | "destructive";
   disabled?: boolean;
-  size?: "regular" | "large";
+  size?: "regular" | "large" | "tile";
+  icon?: ReactNode;
 }) {
   const styles = useThemedStyles(createStyles);
   return (
@@ -39,13 +41,17 @@ export function UiButton({
       style={[
         styles.button,
         size === "large" && styles.largeButton,
+        size === "tile" && styles.tileButton,
         styles[variant],
+        size === "tile" && variant === "secondary" && styles.tileSurface,
         disabled && styles.disabled,
       ]}
     >
+      {icon}
       <Text
         style={[
           styles.label,
+          size === "tile" && styles.tileLabel,
           variant === "primary" && styles.onPrimary,
           variant === "destructive" && styles.danger,
         ]}
@@ -77,6 +83,26 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: visual.radius.control,
+    },
+    tileButton: {
+      minHeight: 58,
+      borderRadius: visual.radius.feedFocus,
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      gap: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 11,
+    },
+    tileSurface: {
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.separator,
+    },
+    tileLabel: {
+      ...visual.type.meta,
+      fontWeight: "600",
+      flexShrink: 1,
+      color: colors.textPrimary,
     },
     largeButton: { minHeight: 88 },
     primary: { backgroundColor: colors.accent },

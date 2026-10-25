@@ -16,6 +16,8 @@ import {
   StyleSheet,
   Text,
   View,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 import type { DayProjection, DayViewContext } from "@/domain/trip/dayReadModel";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
@@ -67,6 +69,12 @@ function BlockSlot({
 }
 
 export type DayFeedPresentation = {
+  // Optional presentation-only integration seams; composition and Reader authority stay unchanged.
+  renderDayHeading?: (date: string, empty: boolean) => ReactNode;
+  wrapDayRow?: (date: string, content: ReactNode) => ReactNode;
+  listStyle?: StyleProp<ViewStyle>;
+  showTimeUnspecified?: boolean;
+  immersiveContentStyle?: StyleProp<ViewStyle>;
   listRef?: (value: DayListHandle | null) => void;
   header?: ReactNode;
   formatDayHeading?: (date: string) => string;
@@ -391,6 +399,11 @@ function AcceptedDayFeed({
     withinMarker?: React.ReactNode,
   ) => {
     const ownerStream = rowSections.get(row.key)!.stream;
+    const entryIndex = ownerStream.entries.findIndex(
+      (entry) => entry.kind === "ITEM" && entry.row.key === row.key,
+    );
+    const nextEntry = entryIndex >= 0 ? ownerStream.entries[entryIndex + 1] : undefined;
+    const nextFocused = nextEntry?.kind === "ITEM" && nextEntry.row.focused;
     const event = row.item.event;
     const flight = flightPresentation(
       event,
@@ -403,6 +416,13 @@ function AcceptedDayFeed({
         depth={mode}
         onDepth={(next) => (mode === "I" ? close() : change(row.focusKey, next))}
         withinMarker={withinMarker}
+        hideDivider={nextFocused}
+        occurrence={
+          row.item.roles.includes("END") && !row.item.roles.includes("START")
+            ? "END"
+            : "START"
+        }
+        context={ownerStream.context}
       />
     ) : (
       <View style={styles.flight}>
@@ -442,6 +462,7 @@ function AcceptedDayFeed({
         renderer={renderer}
         fallback={fallback}
         row={row}
+        nextFocused={nextFocused}
         container={ownerStream.containers.find((entry) => entry.id === row.containerId)}
         context={ownerStream.context}
         depth={mode}
@@ -515,18 +536,24 @@ function AcceptedDayFeed({
       key: `day:${section.date}`,
       isDayHeader: true,
       date: section.date,
-      value: () => (
-        <View>
-          {dates ? (
-            <Text accessibilityRole="header" style={styles.dateHeading}>
-              {presentation?.formatDayHeading?.(section.date) ?? section.date}
-            </Text>
-          ) : null}
-          {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
-            <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
-          ) : null}
-        </View>
-      ),
+      value: () =>
+        presentation?.renderDayHeading ? (
+          presentation.renderDayHeading(
+            section.date,
+            !section.stream.entries.length && !localManual?.rows(section.date).length,
+          )
+        ) : (
+          <View>
+            {dates ? (
+              <Text accessibilityRole="header" style={styles.dateHeading}>
+                {presentation?.formatDayHeading?.(section.date) ?? section.date}
+              </Text>
+            ) : null}
+            {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
+              <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+            ) : null}
+          </View>
+        ),
     });
     for (const entry of section.stream.entries)
       windowRows.push({
@@ -581,7 +608,8 @@ function AcceptedDayFeed({
             {section.stream.nowAfter ? (
               <NowMarker placement={section.stream.now} />
             ) : null}
-            {section.stream.rows.some((row) => row.position === "TNS") ? (
+            {presentation?.showTimeUnspecified !== false &&
+            section.stream.rows.some((row) => row.position === "TNS") ? (
               <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
             ) : null}
           </View>
@@ -605,8 +633,10 @@ function AcceptedDayFeed({
               presentation?.listRef?.(value);
             }}
             rows={windowRows}
-            renderRow={({ value }) =>
-              presentation?.header ? (
+            renderRow={({ value, date: rowDate }) =>
+              presentation?.wrapDayRow ? (
+                presentation.wrapDayRow(rowDate, value())
+              ) : presentation?.header ? (
                 <View style={styles.rowInset}>{value()}</View>
               ) : (
                 value()
@@ -624,7 +654,7 @@ function AcceptedDayFeed({
             topInset={presentation?.topInset ?? 0}
             bottomInset={visual.space.section + bottomInset}
             header={presentation?.header}
-            style={styles.root}
+            style={[styles.root, presentation?.listStyle]}
             contentContainerStyle={[
               styles.content,
               presentation?.header ? styles.withIntroduction : undefined,
@@ -661,7 +691,7 @@ function AcceptedDayFeed({
         <ScrollView
           keyboardShouldPersistTaps="handled"
           style={styles.root}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, presentation?.immersiveContentStyle]}
           contentInsetAdjustmentBehavior="automatic"
         >
           {selected ? render(selected, "I") : null}

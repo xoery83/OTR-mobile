@@ -1,0 +1,24 @@
+{
+  "p3PreservedThrough": "cab1fbbb",
+  "packages": [
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/19/01a15285-9a5d-7da0-909e-c7b0a2692165/otr-native-ux-fidelity-pilot/handoff/OTR_DAY_FEED_P1_NATIVE_FIDELITY_V1.zip",
+      "sha256": "a2794a13876cc3aa754b522906b458a575c1f7ae9b2d88638be2b7f04fd7539f",
+      "verifiedMembers": 39,
+      "sourceCommit": "883e6b533258c7596ec6ccd4dcc5af2db1d0adbf"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/19/01a15285-9a5d-7da0-909e-c7b0a2692165/otr-native-ux-fidelity-pilot/handoff/OTR_P2_FLIGHT_NATIVE_FIDELITY_V1.zip",
+      "sha256": "7e7b703fd29099bab9afcaf7fec73d0ba0387c1745392fa6d4011162b7c760d9",
+      "verifiedMembers": 163,
+      "sourceCommit": "9c10ea33bd18c79e70a30b379314e106686beca8"
+    }
+  ],
+  "referenceTests": {
+    "P1": 17,
+    "P2combined": 41
+  },
+  "deviceOverride": "Owner directs Forms QA; attached historical AD5 instructions do not authorize AD5 use",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "metro": 8096
+}

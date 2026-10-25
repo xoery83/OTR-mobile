@@ -1,6 +1,9 @@
 // Semantic pairs: only this module owns UI color literals.
 export const lightPalette = {
   background: "#F6F7F9",
+  tripIntroduction: "#E0F5F0",
+  dayFuture: "#F6FBFA",
+  dayPast: "#F2F3F6",
   groupedBackground: "#F1F5F9",
   controlTrack: "#F1F5F9",
   surface: "#FFFFFF",
@@ -43,6 +46,9 @@ export const lightPalette = {
 export type UiColors = { [K in keyof typeof lightPalette]: string };
 export const darkPalette: UiColors = {
   background: "#101112",
+  tripIntroduction: "#153B34",
+  dayFuture: "#1A2726",
+  dayPast: "#171819",
   groupedBackground: "#101112",
   controlTrack: "#1B1C1E",
   surface: "#1B1C1E",

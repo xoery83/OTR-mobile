@@ -1,3 +1,7 @@
+## Independent Native Day Fidelity Lane — 25 October 2026
+
+Owner authorized Shell/P1 then P2 in existing Forms QA only. P3 candidates through cab1fbbb preserved. Frozen P1 package a2794a13 and P2 package 7e7b703f verified; exact source/version/calibration in `ops/native-day-fidelity-20261025/`. P1 UI/read-only fixture candidate uses existing DayFeed/composer/list; 111 focused tests, TypeScript, UI guard and independent review PASS. Latest Owner overrides Top Bar selected-day pilot: actual viewport first–last date range. DEV fixture isolated behind release guard; never writes or supplies real-Trip fallback. Actual Native nine-state/return/appearance acceptance in progress, then P2. Real accepted Reader supplement facts and production Shell need minimal serial integration; no second Reader, imported Candidates, Backend or AD5 access. Fixed-HEAD legacy render suite already27fail/29pass (missing FlatList mock); current31fail/25pass also includes superseded P1 assertions, so full rendering regression is not PASS. Cloud not tested.
+
 ## Independent Native Forms Lane — 25 October 2026
 
 Owner latest correction: P3 Create/Edit displays only2optional check-in/out clocks; removed3hotel-policy time inputs without deleting stored fields.28editor/repositorytests +UIguard/scopedlint PASS; actual FormsQA Edit confirms exactly2clocks.

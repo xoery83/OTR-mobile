@@ -52,12 +52,14 @@ export function DayFeedShellTitle({
 
 // This belongs inside the owning virtualized list header, not a second vertical ScrollView.
 export function DayFeedIntroduction({
+  fidelity = false,
   tripName,
   rangeLabel,
   locationSummary,
   openCalendarLabel,
   onOpenCalendar,
 }: {
+  fidelity?: boolean;
   tripName: string;
   rangeLabel?: string | null;
   locationSummary?: string | null;
@@ -68,27 +70,50 @@ export function DayFeedIntroduction({
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   return (
-    <View style={styles.introduction}>
-      <View
-        pointerEvents="none"
-        accessible={false}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={styles.decoration}
-      />
-      <UiText accessibilityRole="header" style={styles.heading}>
-        {tripName}
-      </UiText>
+    <View
+      style={
+        fidelity
+          ? [styles.introduction, styles.fidelityIntroduction]
+          : styles.introduction
+      }
+    >
+      {!fidelity ? (
+        <View
+          pointerEvents="none"
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.decoration}
+        />
+      ) : null}
+      {!fidelity ? (
+        <UiText accessibilityRole="header" style={styles.heading}>
+          {tripName}
+        </UiText>
+      ) : null}
+      {fidelity && locationSummary ? (
+        <UiText style={styles.fidelityDestination}>{locationSummary}</UiText>
+      ) : null}
       {rangeLabel ? (
         onOpenCalendar ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={openCalendarLabel}
             onPress={onOpenCalendar}
-            style={styles.rangeTarget}
+            style={
+              fidelity ? [styles.rangeTarget, styles.fidelityRange] : styles.rangeTarget
+            }
           >
-            <AppIcon name="calendar" size={18} color={colors.textSecondary} />
-            <UiText style={[styles.meta, styles.flexible]}>{rangeLabel}</UiText>
+            {!fidelity ? (
+              <AppIcon name="calendar" size={18} color={colors.textSecondary} />
+            ) : null}
+            <UiText
+              style={
+                fidelity ? styles.fidelityRangeLabel : [styles.meta, styles.flexible]
+              }
+            >
+              {rangeLabel}
+            </UiText>
             <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
           </Pressable>
         ) : (
@@ -98,7 +123,7 @@ export function DayFeedIntroduction({
           </View>
         )
       ) : null}
-      {locationSummary ? (
+      {!fidelity && locationSummary ? (
         <View style={styles.contextRow}>
           <AppIcon name="mappin.and.ellipse" size={18} color={colors.textSecondary} />
           <UiText style={[styles.meta, styles.flexible]}>{locationSummary}</UiText>
@@ -273,6 +298,32 @@ const createStyles = (colors: UiColors) =>
     },
     title: {
       ...visual.type.tripRowTitle,
+      color: colors.textPrimary,
+      textAlign: "center",
+      flexShrink: 1,
+    },
+    fidelityIntroduction: {
+      minHeight: 111,
+      paddingTop: 13,
+      paddingBottom: 18,
+      paddingHorizontal: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      backgroundColor: colors.tripIntroduction,
+    },
+    fidelityDestination: {
+      ...visual.type.row,
+      fontWeight: "400",
+      color: colors.textSecondary,
+      textAlign: "center",
+    },
+    fidelityRange: { justifyContent: "center", gap: 6 },
+    fidelityRangeLabel: {
+      ...visual.type.row,
+      fontWeight: "700",
       color: colors.textPrimary,
       textAlign: "center",
       flexShrink: 1,

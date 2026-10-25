@@ -13,6 +13,7 @@ export type DayRowRendererProps = {
   depth: Depth;
   onDepth: (depth: Depth) => void;
   withinMarker?: ReactNode;
+  nextFocused?: boolean;
 };
 export type DayRowRenderer = (props: DayRowRendererProps) => ReactNode | null;
 export type RendererContribution<T> = Readonly<{
