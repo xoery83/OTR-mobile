@@ -6,6 +6,7 @@ import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   createDefaultManualStayRepository,
+  manualStayFieldsSchema,
   type ManualStayDraft,
   type ManualStayFields,
   type ManualStayRepository,
@@ -47,7 +48,7 @@ function TimeField({
           setOpen(true);
         }}
       />
-      {open ? (
+      {open && !disabled ? (
         <View>
           <UiDatePicker
             mode="time"
@@ -129,6 +130,7 @@ export function P3StayEditor({
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
   const firstAttemptRef = useRef<ManualStayFields | null>(null);
+  const unavailableRef = useRef(false);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
@@ -201,7 +203,15 @@ export function P3StayEditor({
     ]);
   };
   const save = async () => {
-    if (!source || !fieldsRef.current || busyRef.current || !current()) return;
+    if (
+      !source ||
+      !fieldsRef.current ||
+      busyRef.current ||
+      !current() ||
+      unavailableRef.current ||
+      !manualStayFieldsSchema.safeParse(fieldsRef.current).success
+    )
+      return;
     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
     firstAttemptRef.current = attempt;
     busyRef.current = true;
@@ -215,42 +225,28 @@ export function P3StayEditor({
     } catch (error) {
       if (current()) {
         const code = error instanceof Error ? error.message : "";
-        setStatus(
-          [
-            "MANUAL_PLAN_UNAVAILABLE",
-            "MANUAL_PLAN_SCOPE_CHANGED",
-            "MANUAL_PLAN_CONFLICT",
-            "MANUAL_PLAN_RETRY_MISMATCH",
-            "MANUAL_PLAN_DRAFT_UNAVAILABLE",
-            "MANUAL_PLAN_DRAFT_FROZEN",
-            "REVISION_CONFLICT",
-            "NOT_VISIBLE",
-            "CROSS_TRIP_PERSON",
-            "CORE_ACCESS_REVOKED",
-          ].includes(code)
-            ? "UNAVAILABLE"
-            : "ERROR",
-        );
+        unavailableRef.current = [
+          "MANUAL_PLAN_UNAVAILABLE",
+          "MANUAL_PLAN_SCOPE_CHANGED",
+          "MANUAL_PLAN_CONFLICT",
+          "MANUAL_PLAN_RETRY_MISMATCH",
+          "MANUAL_PLAN_DRAFT_UNAVAILABLE",
+          "MANUAL_PLAN_DRAFT_FROZEN",
+          "REVISION_CONFLICT",
+          "NOT_VISIBLE",
+          "CROSS_TRIP_PERSON",
+          "CORE_ACCESS_REVOKED",
+        ].includes(code);
+        setStatus(unavailableRef.current ? "UNAVAILABLE" : "ERROR");
       }
     } finally {
       busyRef.current = false;
       if (current()) setSaving(false);
     }
   };
-  const valid =
-    !!fields?.title.trim() &&
-    !!fields.startDate &&
-    (fields.participation.mode !== "SELECTED_MEMBERS" ||
-      fields.participation.people.length > 0) &&
-    !!fields.endDate &&
-    fields.endDate >= fields.startDate &&
-    (!fields.endTime || !!fields.endDate) &&
-    !(
-      fields.endDate === fields.startDate &&
-      fields.startTime &&
-      fields.endTime &&
-      fields.endTime < fields.startTime
-    );
+  const valid = manualStayFieldsSchema.safeParse(fields).success;
+  const saveDisabled =
+    !valid || saving || status === "UNAVAILABLE" || (frozen && status !== "ERROR");
   return (
     <ManualEditorPresentation
       embedded={embedded}
@@ -260,11 +256,16 @@ export function P3StayEditor({
       <SafeAreaProvider style={styles.body}>
         <SheetHeader
           title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}
+          category="form"
+          rightLabel={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
+          rightDisabled={saveDisabled}
+          onRight={() => void save()}
           leftLabel={t("common.cancel")}
           leftDisabled={saving}
           onLeft={() => close()}
         />
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           keyboardShouldPersistTaps="handled"
           style={styles.body}
           contentContainerStyle={styles.content}
@@ -485,7 +486,7 @@ export function P3StayEditor({
               </UiSection>
               <UiButton
                 label={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
-                disabled={!valid || saving || (frozen && status !== "ERROR")}
+                disabled={saveDisabled}
                 onPress={() => void save()}
               />
             </>

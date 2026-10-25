@@ -41,7 +41,14 @@ vi.mock("react", async (original) => ({
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
 }));
-vi.mock("@/data/repositories/manualStayRepository", () => ({
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+vi.mock("@/data/repositories/manualStayRepository", async () => ({
+  manualStayFieldsSchema: (
+    await vi.importActual<typeof import("@/data/repositories/manualStayRepository")>(
+      "@/data/repositories/manualStayRepository",
+    )
+  ).manualStayFieldsSchema,
   createDefaultManualStayRepository: () => state.repository(),
 }));
 vi.mock("react-native", () => ({
@@ -57,6 +64,11 @@ vi.mock("react-native-safe-area-context", () => ({
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
     state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
+    state.nodes.push({
+      label: "headerSave",
+      disabled: p.rightDisabled,
+      onPress: p.onRight,
+    });
     return null;
   },
 }));
@@ -488,4 +500,113 @@ it("rejects an old P3 Save after Discard closes a dirty draft", async () => {
   oldSave();
   expect(p.onClose).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
+});
+
+it("keeps header Save and footer Save aligned and rejects stale Save after dates are cleared", async () => {
+  const p = props(),
+    value = fields();
+  value.title = "Three night stay";
+  value.startDate = "2026-11-01";
+  value.endDate = "2026-11-04";
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(),
+  };
+  await open(p, repo);
+  expect(node("headerSave").disabled).toBe(false);
+  const oldSave = node("headerSave").onPress;
+  node("tripCreate.checkout").onPress();
+  render(p);
+  node("tripCreate.clearDate").onPress();
+  render(p);
+  expect(node("headerSave").disabled).toBe(true);
+  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  oldSave();
+  expect(repo.save).not.toHaveBeenCalled();
+});
+
+it("invalid fields remain editable rather than freezing the draft on a rejected attempt", async () => {
+  const p = props(),
+    value = fields();
+  value.title = "Stay";
+  value.startDate = "2026-02-30";
+  value.endDate = "2026-03-04";
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(async () => ({ itemId: "stay" })),
+  };
+  await open(p, repo);
+  expect(node("headerSave").disabled).toBe(true);
+  node("headerSave").onPress();
+  expect(repo.save).not.toHaveBeenCalled();
+  render(p);
+  expect(node("tripCreate.stayName").editable).toBe(true);
+  chooseDate(p, "tripCreate.checkin", new Date(2026, 2, 1, 12));
+  expect(node("headerSave").disabled).toBe(false);
+  node("headerSave").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledOnce();
+});
+
+it("removes an already-open time picker when Save freezes the P3 draft", async () => {
+  const p = props(),
+    value = fields();
+  value.title = "Stay";
+  value.startDate = "2026-11-01";
+  value.endDate = "2026-11-04";
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(() => new Promise(() => {})),
+  });
+  node("tripCreate.stayCheckinTime").onPress();
+  render(p);
+  expect(state.nodes.some((entry) => entry.mode === "time")).toBe(true);
+  node("headerSave").onPress();
+  render(p);
+  expect(state.nodes.some((entry) => entry.mode === "time")).toBe(false);
+  expect(node("headerSave").disabled).toBe(true);
+});
+
+it("rejects a retained Save callback after the owning repository reports a conflict", async () => {
+  const p = props(),
+    value = fields();
+  value.title = "Stay";
+  value.startDate = "2026-11-01";
+  value.endDate = "2026-11-04";
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(async () => {
+      throw new Error("MANUAL_PLAN_CONFLICT");
+    }),
+  };
+  await open(p, repo);
+  const oldSave = node("headerSave").onPress;
+  oldSave();
+  await new Promise((resolve) => setImmediate(resolve));
+  render(p);
+  expect(node("headerSave").disabled).toBe(true);
+  oldSave();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledOnce();
+  expect(p.onSaved).not.toHaveBeenCalled();
 });
