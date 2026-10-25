@@ -35,6 +35,7 @@ const digest = (bytes: Uint8Array) =>
 // The independent recovery window authorizes only existing local publication and reads.
 export async function loadSettledUniversalReadRuntime(
   args: {
+    startupKind: "HOST" | "OPERATOR";
     configPath: string;
     configSHA256: string;
     startsAt: string;
@@ -97,6 +98,21 @@ export async function loadSettledUniversalReadRuntime(
     !config.task.trip_id
   )
     throw Error("UNIVERSAL_RECOVERY_CONFIG_SCOPE");
+  const stores = await createFlightPrivateCustody(
+    config.directory,
+    config.identity,
+  );
+  try {
+    await stores.claimReadStartup({
+      kind: args.startupKind,
+      configSHA256: args.configSHA256,
+      startsAt: args.startsAt,
+      expiresAt: args.expiresAt,
+    });
+  } catch (error) {
+    await stores.close();
+    throw error;
+  }
   const gateway = createSupabaseDevGateway({
     url: environment.OTR_DEV_SUPABASE_URL!,
     publishableKey: environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "",
@@ -123,11 +139,12 @@ export async function loadSettledUniversalReadRuntime(
       b.close();
     }
   };
-  await auth();
-  const stores = await createFlightPrivateCustody(
-    config.directory,
-    config.identity,
-  );
+  try {
+    await auth();
+  } catch (error) {
+    await stores.close();
+    throw error;
+  }
   const stat = await lstat(config.taskDatabase);
   if (
     !stat.isFile() ||
@@ -246,6 +263,7 @@ export async function loadSettledUniversalReadRuntime(
     }, end - Date.now());
     timer.unref();
     return {
+      catalogConnection,
       universalImportPort: createSettledUniversalReadPort(deps),
       async recoverOnce() {
         current();
@@ -299,10 +317,16 @@ export async function loadSettledUniversalReadRuntime(
 }
 
 export async function runSettledUniversalRecoveryOperator(
-  args: Parameters<typeof loadSettledUniversalReadRuntime>[0],
+  args: Omit<
+    Parameters<typeof loadSettledUniversalReadRuntime>[0],
+    "startupKind"
+  >,
   environment: Record<string, string | undefined>,
 ) {
-  const runtime = await loadSettledUniversalReadRuntime(args, environment);
+  const runtime = await loadSettledUniversalReadRuntime(
+    { ...args, startupKind: "OPERATOR" },
+    environment,
+  );
   try {
     return await runtime.recoverOnce();
   } finally {

@@ -17,6 +17,11 @@ def canonical(value):return json.dumps(value,sort_keys=True,separators=(',',':')
 def sha(value):return hashlib.sha256(value).hexdigest()
 def validate_runtime(plan):
     r=plan['runtime'];activation=plan['activationId']
+    target=r.get('runtimeMountTarget','/run/otr/universal-runtime.json')
+    if target not in ['/run/otr/universal-runtime.json','/run/otr/universal-recovery.json']:raise ValueError('EXACT_RUNTIME_MOUNT_TARGET')
+    if target=='/run/otr/universal-recovery.json':
+        selection=r.get('recoverySettings')
+        if not isinstance(selection,dict) or selection.get('version')!=1 or selection.get('configSHA256')!=r.get('runtimeSHA256') or selection.get('startsAt')!=plan.get('startsAt'):raise ValueError('SETTLED_RECOVERY_BINDING_REQUIRED')
     if str(uuid.UUID(activation))!=activation:raise ValueError('ACTIVATION_ID')
     root='/opt/otr/dev-backend/env/universal-finite-'+activation
     if r['container']!='otr-dev-backend' or r['runtimeSource']!=root+'/runtime.json' or r['finiteComposeFile']!=root+'/finite.yml':raise ValueError('EXACT_RUNTIME_PATH')
@@ -136,7 +141,7 @@ def remote_close(plan,read_only=False):
                 if marker.get('io.otr.universal.activation')!=plan['activationId'] or marker.get('io.otr.universal.original-container')!=r['originalContainerId'] or s['Id']==r['originalContainerId']:raise ValueError('FINITE_CONTAINER_LABEL_DRIFT')
         expected=r['baselineComposeFiles']+([r['finiteComposeFile']] if active else [])
         if labels(s)!=expected:raise ValueError('COMPOSE_IDENTITY_DRIFT')
-        extra=[m for m in s['Mounts'] if m['Destination']=='/run/otr/universal-runtime.json']
+        extra=[m for m in s['Mounts'] if m['Destination']==r.get('runtimeMountTarget','/run/otr/universal-runtime.json')]
         if active:
             if len(extra)!=1 or extra[0]['Source']!=r['runtimeSource'] or extra[0]['RW'] is not False:raise ValueError('FINITE_MOUNT_DRIFT')
         elif extra:raise ValueError('UNIVERSAL_MOUNT_REMAINS')
@@ -155,7 +160,7 @@ def remote_close(plan,read_only=False):
             before,original,_=retained_state(plan,call,check)
             active=before is None or before['Id']!=r['originalContainerId'] or not original['State'].get('Running',False)
         else:
-            before=current();active=any(m['Destination']=='/run/otr/universal-runtime.json' for m in before['Mounts'])
+            before=current();active=any(m['Destination']==r.get('runtimeMountTarget','/run/otr/universal-runtime.json') for m in before['Mounts'])
             check(before,active)
         directory=Path(r['runtimeSource']).parent
         if directory.exists() or directory.is_symlink():

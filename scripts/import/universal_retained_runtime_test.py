@@ -132,5 +132,22 @@ class RetainedRuntimeTests(unittest.TestCase):
   for field,value in [('originalContainerId','bad'),('backupContainerName','otr-universal-original-other'),('baselineConfigSHA256','bad')]:
    q=copy.deepcopy(p);q['runtime'][field]=value
    with self.assertRaises(ValueError):runtime.validate_runtime(q)
+ def test_settled_recovery_mount_restores_exact_original(self):
+  p,r,files,containers,calls,patches=self.fixture()
+  r['runtimeMountTarget']='/run/otr/universal-recovery.json'
+  r['recoverySettings']={'version':1,'configSHA256':r['runtimeSHA256'],'startsAt':p['startsAt']}
+  active=containers['b'*64]
+  for mount in active['Mounts']:
+   if mount['Destination']=='/run/otr/universal-runtime.json':mount['Destination']=r['runtimeMountTarget']
+  r['activeMountsSHA256']=runtime.service_projection(active)['mountsSHA256'];rehash(p)
+  with contextlib.ExitStack() as stack:
+   for item in patches:stack.enter_context(item)
+   self.assertTrue(runtime.remote_close(p)['verified'])
+  self.assertNotIn('b'*64,containers);self.assertTrue(containers['a'*64]['State']['Running'])
+ def test_settled_mount_rejects_unbound_or_arbitrary_targets(self):
+  p,r,*_=self.fixture();r['runtimeMountTarget']='/run/otr/universal-recovery.json'
+  with self.assertRaisesRegex(ValueError,'SETTLED_RECOVERY_BINDING_REQUIRED'):runtime.validate_runtime(p)
+  r['runtimeMountTarget']='/tmp/arbitrary.json'
+  with self.assertRaisesRegex(ValueError,'EXACT_RUNTIME_MOUNT_TARGET'):runtime.validate_runtime(p)
 
 if __name__=='__main__':unittest.main()

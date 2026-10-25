@@ -1,0 +1,29 @@
+{
+  "status": "LOCAL_PASS",
+  "patchSHA256": "fa999cfa734cac683f4aeeb5608c19e02d7a343c0028ab628f1fa2bcd14b33d2",
+  "tsc": "PASS",
+  "vitest": {
+    "files": 2,
+    "tests": 4,
+    "command": "./node_modules/.bin/vitest run --configLoader runner --config vitest.config.mts backend/src/serverCapture.settledStartup.test.ts backend/src/universalSettledRecoveryOperator.startupClaim.test.ts",
+    "actualLoopbackHealth": "200 development/ok",
+    "actualEntrypointReboots": "12 module boots with claim-boundary fixture; separate Linux process proof below",
+    "deniedRebootPools": 0,
+    "fixtureAuthSQL": true
+  },
+  "linux": {
+    "status": "PASS",
+    "network": "none",
+    "anchoredCustody": true,
+    "separateProcesses": 18,
+    "admittedReadSentinels": 2,
+    "hostRebootsDenied": 12,
+    "operatorRepeatsDenied": 3,
+    "changedConfigDenied": true,
+    "equivalentUTCWindowDenied": true,
+    "markerRetained": true,
+    "remoteQueries": 0
+  },
+  "DEVExecuted": false,
+  "readBudget": "No DEV reads; startup claim is execution evidence, not Source proof."
+}

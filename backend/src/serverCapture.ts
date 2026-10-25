@@ -9,13 +9,21 @@ import { settledReadSettings } from "./universalSettledReadBootstrap";
 
 // Opt-in image command only. The ordinary server.ts remains CLOSED and unchanged.
 async function main() {
-  let settled: Awaited<ReturnType<typeof loadSettledUniversalReadRuntime>> | undefined;
+  let settled:
+    Awaited<ReturnType<typeof loadSettledUniversalReadRuntime>> | undefined;
   try {
     const selection = settledReadSettings(process.env);
     if (selection)
-      settled = await loadSettledUniversalReadRuntime(selection, process.env);
+      settled = await loadSettledUniversalReadRuntime(
+        { ...selection, startupKind: "HOST" },
+        process.env,
+      );
   } catch {
     console.info("UNIVERSAL_SETTLED_READ_CLOSED");
+    // An explicitly selected recovery must not fall through to a fresh Catalog
+    // connection after a denied/burned startup claim.
+    if (process.env.OTR_DEV_UNIVERSAL_SETTLED_RECOVERY !== undefined)
+      throw Error("UNIVERSAL_SETTLED_READ_STARTUP_CLOSED");
   }
   let universal: Awaited<ReturnType<typeof loadDevUniversalRuntime>>;
   try {
@@ -24,12 +32,15 @@ async function main() {
   } catch {
     console.info("UNIVERSAL_RUNTIME_CLOSED");
   }
-  let originals: Awaited<ReturnType<typeof loadDevUniversalOriginalSourceRuntime>>;
+  let originals: Awaited<
+    ReturnType<typeof loadDevUniversalOriginalSourceRuntime>
+  >;
   try {
-    originals = await loadDevUniversalOriginalSourceRuntime(
-      process.env,
-      universal?.catalogConnection,
-    );
+    if (process.env.OTR_DEV_UNIVERSAL_SETTLED_RECOVERY === undefined)
+      originals = await loadDevUniversalOriginalSourceRuntime(
+        process.env,
+        universal?.catalogConnection,
+      );
   } catch {
     console.info("UNIVERSAL_SOURCE_RUNTIME_CLOSED");
   }
@@ -67,10 +78,13 @@ async function main() {
         ? { tripPersonCloudCreatePort: trip.tripPersonCloudCreatePort }
         : {}),
       captureMaterialCustody: runtime?.captureMaterialCustody,
-      universalImportPort: settled?.universalImportPort ?? universal?.universalImportPort,
+      universalImportPort:
+        settled?.universalImportPort ?? universal?.universalImportPort,
       universalOriginalSourcePort: originals?.universalOriginalSourcePort,
       publicationCatalogConnection:
-        universal?.catalogConnection ?? originals?.catalogConnection,
+        settled?.catalogConnection ??
+        universal?.catalogConnection ??
+        originals?.catalogConnection,
     });
   } catch (error) {
     await settled?.close();

@@ -1,0 +1,14 @@
+{
+  "status": "LOCAL_PASS",
+  "vitest": {
+    "files": 4,
+    "passed": 15,
+    "skipped": 1,
+    "initialSandboxRun": "loopback EPERM; repeated with approved loopback capability and passed"
+  },
+  "typescript": "PASS",
+  "pythonClosureTests": 19,
+  "DEVReads": 0,
+  "ProviderCalls": 0,
+  "notActualDEVStartupPASS": true
+}
