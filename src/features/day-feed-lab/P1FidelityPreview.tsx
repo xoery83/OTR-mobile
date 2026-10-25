@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
@@ -84,6 +84,10 @@ export function P1FidelityPreview() {
   const key = JSON.stringify([clock, depth, target]);
   const [dismissedImmersive, setDismissedImmersive] = useState<string | null>(null);
   const targetFocusKey = p1FidelityFocusKey(initialFixture, target);
+  const targetDate =
+    p1FidelityPack.items.find((item) => item.id === target)?.date ??
+    initialFixture.selectedDate;
+  useEffect(() => setDismissedImmersive(null), [key]);
   const shell = useDayFeedShellState(key);
   const preview = () => setSheet("ACTION");
   const fixture = p1FidelityFixture(
@@ -181,7 +185,13 @@ export function P1FidelityPreview() {
           entry={{
             revision: 1,
             kind: "RESUME",
-            reading: { offset: 0, focus: depth === "B" ? null : target },
+            reading: {
+              offset: 0,
+              focus: depth === "B" ? null : (targetFocusKey ?? null),
+              ...(depth !== "B" && targetFocusKey && targetDate !== fixture.selectedDate
+                ? { anchor: { key: targetFocusKey, date: targetDate, within: 0 } }
+                : {}),
+            },
           }}
           directItem={
             depth === "I" && dismissedImmersive !== key && targetFocusKey
