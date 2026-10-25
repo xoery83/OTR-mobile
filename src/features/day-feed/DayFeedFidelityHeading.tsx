@@ -132,7 +132,12 @@ export function DayFeedFidelityHeading({
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
-    root: { paddingTop: 20, paddingBottom: 10 },
+    root: {
+      paddingTop: 20,
+      paddingBottom: 10,
+      marginHorizontal: -visual.space.feedGutter,
+      paddingHorizontal: visual.space.feedGutter,
+    },
     transition: { position: "absolute", top: 0, left: 0, right: 0, height: 38 },
     heading: {
       minHeight: 58,

@@ -266,7 +266,12 @@ export function P1FidelityPreview() {
               />
             ),
             wrapDayRow: (date, content) => (
-              <View style={{ backgroundColor: phase(date), paddingHorizontal: 21 }}>
+              <View
+                style={{
+                  backgroundColor: phase(date),
+                  paddingHorizontal: visual.space.feedGutter,
+                }}
+              >
                 {content}
               </View>
             ),

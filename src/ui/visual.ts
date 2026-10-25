@@ -8,7 +8,7 @@ export const visual = {
     sheet: 26,
     pill: 999,
   },
-  space: { page: 16, section: 24, heading: 9, card: 12, row: 14 },
+  space: { feedGutter: 21, page: 16, section: 24, heading: 9, card: 12, row: 14 },
   bottomShell: { height: 60, icon: 24, gap: 4 },
   type: {
     feedTitle: { fontSize: 15, fontWeight: "600" as const, lineHeight: 20 },
