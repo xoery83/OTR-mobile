@@ -1,5 +1,7 @@
 ## Independent Native Day Fidelity Lane — 25 October2026
 
+26Oct quick-add detail `c5935ff4`: compact centered date plus small left/right arrows below Add to this trip title; no white Selected day card or gray explanation. Existing date default/picker guards retained. FormsQA layout and both arrows observed;8tests/TS/UIguardPASS, lint zeroerrors/4existingwarnings. Included in cumulative integration checklist.
+
 26Oct Calendar detail `9d469eaf`: remove visible Today caption from shared Trip/P3 picker; background-only mark and accessible hint retained, dates align. FormsQA observed;29Calendar/P3tests/UIguard/scopedlintPASS. Included in cumulative integration checklist.
 
 26Oct date-island follow-up `dbc93d61`: Owner clarified fully transparent reading topbar. Owning native bar hides; existing UiGlassSurface/DayFeedShellTitle remains as sole date filter; last measured header boundary prevents inset collapse. Real FormsQA framed date and original calendar entry observed;100directedtests/TS/UIguard/scopedlintPASS, independent69PASS. Cumulative integration list includes this source after31af6637. [Updated chrome receipt](ops/native-day-fidelity-20261025/SCROLL_CHROME_REPAIR_20261026.md).
