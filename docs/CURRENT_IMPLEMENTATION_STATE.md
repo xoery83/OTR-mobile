@@ -1,5 +1,7 @@
 ## Independent Native Day Fidelity Lane — 25 October2026
 
+26Oct Calendar detail `9d469eaf`: remove visible Today caption from shared Trip/P3 picker; background-only mark and accessible hint retained, dates align. FormsQA observed;29Calendar/P3tests/UIguard/scopedlintPASS. Included in cumulative integration checklist.
+
 26Oct date-island follow-up `dbc93d61`: Owner clarified fully transparent reading topbar. Owning native bar hides; existing UiGlassSurface/DayFeedShellTitle remains as sole date filter; last measured header boundary prevents inset collapse. Real FormsQA framed date and original calendar entry observed;100directedtests/TS/UIguard/scopedlintPASS, independent69PASS. Cumulative integration list includes this source after31af6637. [Updated chrome receipt](ops/native-day-fidelity-20261025/SCROLL_CHROME_REPAIR_20261026.md).
 
 26Oct required release follow-up `31af6637`: Owner retest exposed useP1Move host invoking force-show on ordinary touchEnd/cancel even without pickup. Added idle guard and once-only actual-drag finish;98directedtests/TS/UIguard/scopedlintPASS, independent22PASS. Native forward settled + subsequent blank tap-release remain hidden. This supersedes prior797f959b-only completion claim; include both commits in serial integration. [Root cause and updated receipt](ops/native-day-fidelity-20261025/SCROLL_CHROME_REPAIR_20261026.md).

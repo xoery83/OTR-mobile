@@ -42,3 +42,5 @@ Next serial integration acceptance: replay normal CreateTrip → real Day → Cr
 **Required release follow-up `31af6637`** after797f959b: useP1Move host must ignore idle touchEnd/touchCancel, otherwise ordinary feed release invokes real move-finish force-show. Added regression proves idle callbacks never restore chrome and actual release notifies only once. Include this even if the shared Route/Shell source changes are applied manually.
 
 **Also retain `dbc93d61`**: transparent reading stage with the existing native-material rounded date filter, native bar hidden during reading, measured list boundary retained through header-height zero, and reverse restoration. Only TripScreen plus tests; no global navigation rewrite or separate calendar.
+
+**Also retain `9d469eaf`**: shared Trip/P3 Calendar marks Today with background only, removing its visible Today caption so day numbers align. Existing gray/green tint and VoiceOver Today hint remain. Forms QA selected-range Today alignment observed;29Calendar/P3 tests and UIguard/scopedlint/diff check PASS. No date selection or Save performed for visual verification.
