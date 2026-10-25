@@ -1,0 +1,13 @@
+# Actual Universal Results recovery
+
+Highest verified milestone: NATIVE_CAPTURE_AI_PREVIEW_PASS / mixed-family BATCH_N_TO_M_RESULTS_PASS, scoped to this synthetic Batch. Full cold Results E2E remains pending.
+
+- Code6748100469cabaadf00d934eee04ccdc1bed1b74; fixed image8d9a81d58c0d2fb4cb888315b30db066065ad6785c813fba791585e62516ba67 actually deployed/healthy.
+- Same existing Task cd36d6f4 published CANDIDATES_READY with6candidates. No new Provider call/Source/Task/Attempt/canonical object. Original one paid request remains3457tokens/USD0.00099012.
+- Native independently GET-read the published result00:31:43/00:31:56UTC and actually displayed P1–P6 mixed candidates, per-field source labels, unresolved content and truthful no-items/bookings-saved status. Two attachments plus submitted text retain separate source identities in one Batch. Interpretation HIGH does not mean Admission.
+- Actual process termination/relaunch restored original Batch and3local materials. Cold AI result reload NOT VERIFIED: results currently live in hook state and require an authorized existing-task GET after restart; finite window expired before that GET. Never press into a new interpretation to recreate results.
+- Finite window00:26:03–00:34:03UTC; outer00:36:03. Watcher initially reported RECONCILE_REQUIRED/transport UNKNOWN. Root exact state reconciliation then verified SQL scope absent, original roles NOLOGIN/no sessions and exact retained closed runtime/config restoration; temporary mount removed. Original failure preserved. The SAME watchdog read-only closure function under authorized network execution subsequently returns CLOSED_VERIFIED. This is reconciled closure, not an automatic watchdog PASS. Next arm must run in the authorized network environment and preflight its control transport.
+- New Operator allowance7of16 reserved (ord44–50),9remain; earlier12-start read consumption remains UNKNOWN without refund. Native120of136 consumed (2Universal GETs plus2unchanged normalTrip reads after cold launch);16remain. Paid cap remains1used; no further model call.
+- Independent actual receipt narrow Review PASS. Formal Source/Review/Admission/Booking/Ticket Save remains unavailable/not passed. Original custody does not claim long-term cloud backup.
+
+Data path: original Sources and Task/result use existing owning contracts; actual publication and independent Native result GET verified. Local original intake/cold Batch recovery verified. Same-task cold result GET pending; no new Cloud contract or schema. Next minimal delta is one read-only existing-result window using remaining allowance, not another deployment or paid request.

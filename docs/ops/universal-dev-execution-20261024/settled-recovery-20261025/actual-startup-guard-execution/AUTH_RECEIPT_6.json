@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-25T00:22:18.371Z",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "newAuthUsers": 0,
+  "credentialSource": "Existing dedicated SyntheticA password; normal login, not App Session",
+  "status": "NORMAL_DEV_AUTH_ACTOR_VERIFIED",
+  "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "normalIdentityRead": true,
+  "privateTokenRetainedOnly": true,
+  "expiresAt": "2026-10-25T01:22:19.000Z",
+  "authRequests": 2
+}

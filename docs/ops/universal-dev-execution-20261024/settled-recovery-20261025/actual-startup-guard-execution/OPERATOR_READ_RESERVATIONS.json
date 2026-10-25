@@ -1,0 +1,38 @@
+[
+  {
+    "ordinal": 45,
+    "policyReservationCount": 2,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59
+  },
+  {
+    "ordinal": 46,
+    "policyReservationCount": 3,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59
+  },
+  {
+    "ordinal": 47,
+    "policyReservationCount": 4,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59
+  },
+  {
+    "ordinal": 48,
+    "policyReservationCount": 5,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59
+  },
+  {
+    "ordinal": 49,
+    "policyReservationCount": 6,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59
+  },
+  {
+    "ordinal": 50,
+    "policyReservationCount": 7,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59
+  }
+]

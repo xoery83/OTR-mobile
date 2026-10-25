@@ -1,0 +1,40 @@
+{
+  "status": "ACTUAL_NATIVE_LIVE_AI_RESULTS_PASS",
+  "source": "Coordinator CUA observations, actual AD5 UI",
+  "batchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+  "nativeBackendReadTimes": [
+    "2026-10-25T00:31:43.621Z",
+    "2026-10-25T00:31:56.908Z"
+  ],
+  "sourceDisplay": [
+    "universal-mixed-bookings-utf8.txt",
+    "lodging-supplement.txt",
+    "Submitted text"
+  ],
+  "candidateDisplay": [
+    "Waterfront morning walk",
+    "Air New Zealand NZ9997",
+    "Harbour QA Hotel",
+    "Harbour QA Rentals",
+    "QA105",
+    "QA museum guided tour"
+  ],
+  "familyCoverage": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6"
+  ],
+  "fieldSourceEvidenceDisplayed": true,
+  "unresolvedDisplayed": true,
+  "noSuggestedItemOrBookingSavedMessageDisplayed": true,
+  "manualAddEntryRetained": true,
+  "coldAppProcessClosedViaAppSwitcher": true,
+  "coldAppRelaunchedViaSpringboardSearch": true,
+  "coldBatchThreeOriginalsRestored": true,
+  "coldAIResultReload": "NOT_VERIFIED_WINDOW_EXPIRED",
+  "originalsLongTermCloudBackup": "NOT_CLAIMED",
+  "formalAdmission": "NOT_PASSED"
+}
