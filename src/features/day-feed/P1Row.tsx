@@ -142,10 +142,18 @@ export function P1Row({
         />
       ) : null}
       {(context === "TODAY" || context === "PAST" || immersive) && !!count.expenses ? (
-        <ReadFactTag label={countLabel("expenses")} />
+        <ReadFactTag
+          label={t(count.expenses === 1 ? "fidelity.expenses.one" : "fidelity.expenses", {
+            count: formatUiNumber(count.expenses),
+          })}
+        />
       ) : null}
       {(context === "TODAY" || context === "PAST" || immersive) && !!count.photos ? (
-        <ReadFactTag label={countLabel("photos")} />
+        <ReadFactTag
+          label={t(count.photos === 1 ? "fidelity.photos.one" : "fidelity.photos", {
+            count: formatUiNumber(count.photos),
+          })}
+        />
       ) : null}
     </View>
   );
