@@ -205,6 +205,7 @@ export function TripQuickAddMenu({
               <SafeAreaView edges={["bottom", "left", "right"]} style={styles.menuSheet}>
                 <SheetHeader
                   category="action"
+                  surface="background"
                   title={t("actionIsland.addToTrip")}
                   leftLabel={t("common.cancel")}
                   onLeft={close}
@@ -424,7 +425,7 @@ const createStyles = (c: UiColors) =>
     backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: c.overlay },
     menuSheet: {
       maxHeight: "90%",
-      backgroundColor: c.surface,
+      backgroundColor: c.background,
       borderTopLeftRadius: visual.radius.sheet,
       borderTopRightRadius: visual.radius.sheet,
       overflow: "hidden",

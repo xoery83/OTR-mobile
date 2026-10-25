@@ -29,6 +29,7 @@ const state = vi.hoisted(() => ({
   nodes: [] as any[],
   confirm: vi.fn(),
   scheme: "light" as "light" | "dark",
+  runEffects: false,
 }));
 vi.mock("./useImportDictation", () => ({
   useImportDictation: () => ({
@@ -42,6 +43,9 @@ vi.mock("./useImportDictation", () => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useEffect: (effect: () => void) => {
+    if (state.runEffects) effect();
+  },
   useState: (initial: any) => {
     const index = state.cursor++;
     if (!(index in state.hooks)) state.hooks[index] = initial;
@@ -132,7 +136,7 @@ const empty: CaptureDraftSnapshot = {
   selecting: false,
   error: null,
 };
-function render(snapshot = empty, count = 0) {
+function render(snapshot = empty, count = 0, extra: Record<string, any> = {}) {
   state.cursor = 0;
   state.buttons = [];
   state.nodes = [];
@@ -150,6 +154,7 @@ function render(snapshot = empty, count = 0) {
     onClear: vi.fn(),
     onSubmit: vi.fn(),
     onActivity: vi.fn(),
+    ...extra,
   };
   const html = renderToStaticMarkup(createElement(CaptureComposer, props));
   return { props, html };
@@ -171,6 +176,7 @@ beforeEach(() => {
   state.confirm.mockReset();
   setUiLocale("en");
   state.scheme = "light";
+  state.runEffects = false;
 });
 const button = (key: Parameters<typeof t>[0]) =>
   state.buttons.find((b) => b.label === t(key));
@@ -425,12 +431,58 @@ it("reopens retained batches from the existing attachment menu without submittin
   button("capture.composer.addAttachments").onPress();
   const { props, html } = render();
   expect(html).toContain(t("capture.activity"));
-  const activity = state.buttons.find((b) =>
-    Array.isArray(b.children) && b.children[1]?.props?.children === t("capture.activity"),
+  const activity = state.buttons.find(
+    (b) =>
+      Array.isArray(b.children) &&
+      b.children[1]?.props?.children === t("capture.activity"),
   );
   expect(activity).toBeDefined();
   activity.onPress();
   expect(props.onActivity).toHaveBeenCalledOnce();
   expect(props.onSubmit).not.toHaveBeenCalled();
   expect(render().html).not.toContain(t("capture.activity"));
+});
+
+it("auxiliary email and AI actions use the intake link style, and the glass editor has no opaque input fill", () => {
+  render();
+  for (const key of [
+    "capture.composer.emailInstruction",
+    "capture.composer.aiInstruction",
+  ] as const) {
+    const action = link(key);
+    expect(action.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          color: uiPalette("light").accent,
+          textDecorationLine: "underline",
+        }),
+      ]),
+    );
+  }
+  const editor = state.nodes.find((n) => n.multiline);
+  expect(editor.style[0].backgroundColor).toBe(uiPalette("light").transparent);
+});
+it("Trip context lists only Trips while preserving the normal target action and draft", async () => {
+  state.runEffects = true;
+  const target = vi.fn(async () => true);
+  const extra = {
+    readTripTargets: async () => [{ id: "one", name: "QA Trip" }],
+    onTripTarget: target,
+  };
+  render(empty, 0, extra);
+  button("capture.composer.contextTitle").onPress();
+  render(empty, 0, extra);
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  const view = render(empty, 0, extra);
+  expect(view.html).toContain("QA Trip");
+  expect(button("capture.composer.unassigned")).toBeUndefined();
+  expect(button("common.back")).toBeUndefined();
+  const trip = state.buttons.find((b) => b.children?.props?.children === "QA Trip");
+  expect(trip).toBeDefined();
+  trip.onPress();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(target).toHaveBeenCalledWith(
+    { id: "one", name: "QA Trip" },
+    expect.any(Function),
+  );
 });

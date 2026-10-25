@@ -71,6 +71,7 @@ export function DayFeedFidelityHeading({
           style={[
             styles.badge,
             isToday && styles.todayBadge,
+            isTomorrow && styles.tomorrowBadge,
             {
               width: Math.max(isToday ? 49 : 43, 30 * fontScale),
               height: Math.max(isToday ? 55 : 49, 32 * fontScale),
@@ -82,6 +83,7 @@ export function DayFeedFidelityHeading({
               styles.binding,
               styles.bindingLeft,
               isToday && styles.bindingOnAccent,
+              isTomorrow && styles.bindingTomorrow,
             ]}
           />
           <View
@@ -89,9 +91,16 @@ export function DayFeedFidelityHeading({
               styles.binding,
               styles.bindingRight,
               isToday && styles.bindingOnAccent,
+              isTomorrow && styles.bindingTomorrow,
             ]}
           />
-          <UiText style={[styles.badgeLabel, isToday && styles.badgeOnAccent]}>
+          <UiText
+            style={[
+              styles.badgeLabel,
+              isToday && styles.badgeOnAccent,
+              isTomorrow && styles.badgeTomorrow,
+            ]}
+          >
             {formatUiNumber(ordinal)}
           </UiText>
         </View>
@@ -172,6 +181,10 @@ const createStyles = (c: UiColors) =>
       backgroundColor: c.accent,
       borderColor: c.accent,
     },
+    tomorrowBadge: {
+      backgroundColor: c.accentSurface,
+      borderColor: c.accent,
+    },
     binding: {
       position: "absolute",
       top: -9,
@@ -183,8 +196,10 @@ const createStyles = (c: UiColors) =>
     bindingLeft: { left: 10 },
     bindingRight: { right: 10 },
     bindingOnAccent: { backgroundColor: c.onAccent },
+    bindingTomorrow: { backgroundColor: c.accent },
     badgeLabel: { ...visual.type.section, fontSize: 22, color: c.textPrimary },
     badgeOnAccent: { color: c.onAccent },
+    badgeTomorrow: { color: c.accent },
     copy: { flex: 1, minWidth: 0, gap: 4 },
     title: { ...visual.type.section, color: c.textPrimary },
     past: { color: c.textSecondary },

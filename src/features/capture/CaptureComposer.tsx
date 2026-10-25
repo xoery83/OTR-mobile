@@ -233,12 +233,6 @@ export function CaptureComposer({
                     {t("capture.connections.targetError")}
                   </UiText>
                 ) : null}
-                <UiButton
-                  variant="text"
-                  label={t("capture.composer.unassigned")}
-                  disabled={targetBusy}
-                  onPress={() => void chooseTrip(null)}
-                />
                 {trips.map((trip) => (
                   <Pressable
                     key={trip.id}
@@ -250,11 +244,6 @@ export function CaptureComposer({
                     <UiText style={styles.bodyText}>{trip.name}</UiText>
                   </Pressable>
                 ))}
-                <UiButton
-                  variant="text"
-                  label={t("common.back")}
-                  onPress={() => setPage("composer")}
-                />
               </ScrollView>
             ) : (
               <>
@@ -338,59 +327,83 @@ export function CaptureComposer({
                     </ScrollView>
                   ) : (
                     <View style={styles.instructions}>
-                      <UiText style={styles.instruction}>
-                        {t("capture.composer.sourcesInstruction", {
-                          camera: "\uE000",
-                          photos: "\uE001",
-                          files: "\uE002",
-                        })
-                          .split(/([\uE000-\uE002])/)
-                          .map((part, index) => {
-                            const action =
-                              part === "\uE000"
-                                ? { label: t("capture.composer.camera"), press: onCamera }
-                                : part === "\uE001"
+                      <View style={styles.instructionRow}>
+                        <View
+                          accessible={false}
+                          importantForAccessibility="no"
+                          style={styles.bullet}
+                        />
+                        <UiText style={styles.instruction}>
+                          {t("capture.composer.sourcesInstruction", {
+                            camera: "\uE000",
+                            photos: "\uE001",
+                            files: "\uE002",
+                          })
+                            .split(/([\uE000-\uE002])/)
+                            .map((part, index) => {
+                              const action =
+                                part === "\uE000"
                                   ? {
-                                      label: t("capture.composer.photos"),
-                                      press: onPhotos,
+                                      label: t("capture.composer.camera"),
+                                      press: onCamera,
                                     }
-                                  : part === "\uE002"
+                                  : part === "\uE001"
                                     ? {
-                                        label: t("capture.composer.files"),
-                                        press: onFiles,
+                                        label: t("capture.composer.photos"),
+                                        press: onPhotos,
                                       }
-                                    : null;
-                            return action ? (
-                              <UiText
-                                key={index}
-                                accessibilityRole="link"
-                                style={styles.link}
-                                onPress={locked ? undefined : action.press}
-                                accessibilityState={{
-                                  disabled: locked || !action.press,
-                                }}
-                              >
-                                {action.label}
-                              </UiText>
-                            ) : (
-                              part
-                            );
-                          })}
-                      </UiText>
-                      <UiText
-                        style={styles.instruction}
-                        accessibilityRole="link"
-                        onPress={voice.busy ? undefined : () => setPage("email")}
-                      >
-                        {t("capture.composer.emailInstruction")}
-                      </UiText>
-                      <UiText
-                        style={styles.instruction}
-                        accessibilityRole="link"
-                        onPress={voice.busy ? undefined : () => setPage("ai")}
-                      >
-                        {t("capture.composer.aiInstruction")}
-                      </UiText>
+                                    : part === "\uE002"
+                                      ? {
+                                          label: t("capture.composer.files"),
+                                          press: onFiles,
+                                        }
+                                      : null;
+                              return action ? (
+                                <UiText
+                                  key={index}
+                                  accessibilityRole="link"
+                                  style={styles.link}
+                                  onPress={locked ? undefined : action.press}
+                                  accessibilityState={{
+                                    disabled: locked || !action.press,
+                                  }}
+                                >
+                                  {action.label}
+                                </UiText>
+                              ) : (
+                                part
+                              );
+                            })}
+                        </UiText>
+                      </View>
+                      <View style={styles.instructionRow}>
+                        <View
+                          accessible={false}
+                          importantForAccessibility="no"
+                          style={styles.bullet}
+                        />
+                        <UiText
+                          style={[styles.instruction, styles.link]}
+                          accessibilityRole="link"
+                          onPress={voice.busy ? undefined : () => setPage("email")}
+                        >
+                          {t("capture.composer.emailInstruction")}
+                        </UiText>
+                      </View>
+                      <View style={styles.instructionRow}>
+                        <View
+                          accessible={false}
+                          importantForAccessibility="no"
+                          style={styles.bullet}
+                        />
+                        <UiText
+                          style={[styles.instruction, styles.link]}
+                          accessibilityRole="link"
+                          onPress={voice.busy ? undefined : () => setPage("ai")}
+                        >
+                          {t("capture.composer.aiInstruction")}
+                        </UiText>
+                      </View>
                     </View>
                   )}
                   {snapshot.selecting ? (
@@ -414,72 +427,74 @@ export function CaptureComposer({
                     </UiText>
                   ) : null}
                 </ScrollView>
-                <UiGlassSurface style={styles.composer}>
-                  {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
-                  <View style={styles.footer}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={t("capture.composer.addAttachments")}
-                      accessibilityState={{ disabled: locked }}
-                      disabled={locked}
-                      style={styles.target}
-                      onPress={attachments}
-                    >
-                      <AppIcon name="plus" size={25} color={colors.textPrimary} />
-                    </Pressable>
-                    <View style={styles.spacer} />
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={t(
-                        voice.busy ? "capture.voice.stop" : "capture.voice.start",
-                      )}
-                      accessibilityState={{
-                        disabled:
+                <View style={styles.composerShadow}>
+                  <UiGlassSurface style={styles.composer}>
+                    {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
+                    <View style={styles.footer}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t("capture.composer.addAttachments")}
+                        accessibilityState={{ disabled: locked }}
+                        disabled={locked}
+                        style={styles.target}
+                        onPress={attachments}
+                      >
+                        <AppIcon name="plus" size={25} color={colors.textPrimary} />
+                      </Pressable>
+                      <View style={styles.spacer} />
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t(
+                          voice.busy ? "capture.voice.stop" : "capture.voice.start",
+                        )}
+                        accessibilityState={{
+                          disabled:
+                            snapshot.selecting ||
+                            voice.state.status === "starting" ||
+                            voice.state.status === "finishing",
+                        }}
+                        disabled={
                           snapshot.selecting ||
                           voice.state.status === "starting" ||
-                          voice.state.status === "finishing",
-                      }}
-                      disabled={
-                        snapshot.selecting ||
-                        voice.state.status === "starting" ||
-                        voice.state.status === "finishing"
-                      }
-                      onPress={() =>
-                        voice.busy
-                          ? voice.stop()
-                          : voice.start(
-                              snapshot.editorText,
-                              locale === "zh-Hans" ? "zh-CN" : "en-US",
-                            )
-                      }
-                      style={styles.target}
-                    >
-                      <AppIcon
-                        name={voice.busy ? "stop.fill" : "mic"}
-                        size={22}
-                        color={snapshot.selecting ? colors.disabled : colors.accent}
-                      />
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={t("capture.composer.submit")}
-                      accessibilityState={{ disabled: sendDisabled }}
-                      disabled={sendDisabled}
-                      onPress={onSubmit}
-                      style={[
-                        styles.target,
-                        styles.send,
-                        sendDisabled && styles.sendDisabled,
-                      ]}
-                    >
-                      <AppIcon
-                        name="arrow.up"
-                        size={23}
-                        color={sendDisabled ? colors.disabled : colors.onAccent}
-                      />
-                    </Pressable>
-                  </View>
-                </UiGlassSurface>
+                          voice.state.status === "finishing"
+                        }
+                        onPress={() =>
+                          voice.busy
+                            ? voice.stop()
+                            : voice.start(
+                                snapshot.editorText,
+                                locale === "zh-Hans" ? "zh-CN" : "en-US",
+                              )
+                        }
+                        style={styles.target}
+                      >
+                        <AppIcon
+                          name={voice.busy ? "stop.fill" : "mic"}
+                          size={22}
+                          color={snapshot.selecting ? colors.disabled : colors.accent}
+                        />
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t("capture.composer.submit")}
+                        accessibilityState={{ disabled: sendDisabled }}
+                        disabled={sendDisabled}
+                        onPress={onSubmit}
+                        style={[
+                          styles.target,
+                          styles.send,
+                          sendDisabled && styles.sendDisabled,
+                        ]}
+                      >
+                        <AppIcon
+                          name="arrow.up"
+                          size={23}
+                          color={sendDisabled ? colors.disabled : colors.onAccent}
+                        />
+                      </Pressable>
+                    </View>
+                  </UiGlassSurface>
+                </View>
                 {voice.state.status !== "idle" ? (
                   <View style={styles.voiceStatus}>
                     <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
@@ -589,7 +604,15 @@ const createStyles = (c: UiColors) =>
     content: { paddingHorizontal: visual.space.page, gap: 6 },
     contentViewport: { flexShrink: 1, minHeight: 44 },
     instructions: { paddingVertical: 4 },
-    instruction: { ...visual.type.meta, color: c.textSecondary, lineHeight: 24 },
+    instructionRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+    bullet: {
+      width: 3,
+      height: 3,
+      borderRadius: 2,
+      marginTop: 11,
+      backgroundColor: c.textSecondary,
+    },
+    instruction: { ...visual.type.meta, color: c.textSecondary, lineHeight: 24, flex: 1 },
     link: { color: c.accent, textDecorationLine: "underline" },
     tray: { gap: visual.space.card, paddingVertical: 8, paddingRight: 12 },
     tile: {
@@ -622,6 +645,8 @@ const createStyles = (c: UiColors) =>
       backgroundColor: c.surface,
     },
     input: {
+      backgroundColor: c.transparent,
+      borderRadius: 0,
       ...visual.type.row,
       lineHeight: 22,
       fontWeight: "400",
@@ -645,11 +670,15 @@ const createStyles = (c: UiColors) =>
     secondary: { ...visual.type.meta, color: c.textSecondary },
     error: { ...visual.type.meta, color: c.destructive },
     composer: {
+      borderRadius: 24,
+      overflow: "hidden",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.separator,
+    },
+    composerShadow: {
       marginHorizontal: visual.space.page,
       marginTop: 6,
       borderRadius: 24,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.separator,
       shadowColor: c.shadow,
       shadowOpacity: 0.08,
       shadowRadius: 12,

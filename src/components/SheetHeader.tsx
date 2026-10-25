@@ -17,6 +17,7 @@ export function SheetHeader({
   onRight,
   rightDisabled = false,
   safeTop = true,
+  surface = "surface",
 }: {
   title: string;
   category?: "legacy" | "action" | "composer" | "form" | "picker";
@@ -27,6 +28,7 @@ export function SheetHeader({
   onRight?: () => void;
   rightDisabled?: boolean;
   safeTop?: boolean;
+  surface?: "surface" | "background";
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -58,7 +60,10 @@ export function SheetHeader({
   ) : null;
   // Accessibility exception: large text keeps two title lines above the actions.
   return (
-    <SafeAreaView edges={safeTop ? ["top"] : []} style={styles.safe}>
+    <SafeAreaView
+      edges={safeTop ? ["top"] : []}
+      style={[styles.safe, surface === "background" && styles.background]}
+    >
       <View
         onTouchEnd={(event) => {
           if (!leftDisabled && event.nativeEvent.pageY - touchY.current > 80) onLeft();
@@ -153,6 +158,7 @@ function Action({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     safe: { backgroundColor: colors.surface },
+    background: { backgroundColor: colors.background },
     header: {
       alignItems: "center",
       flexDirection: "row",

@@ -1,5 +1,5 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { UiButton } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -323,4 +323,38 @@ it("P3 starts each opened selection with check-in even when a start is prefilled
   } finally {
     vi.useRealTimers();
   }
+});
+
+afterEach(() => vi.useRealTimers());
+it("shared Trip and Stay calendars mark Today without optional text in the Trip modal title", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 9, 26, 12));
+  const onChange = vi.fn(),
+    value = { start: "2026-10-25", end: "2026-10-30" };
+  const render = (referenceRange?: typeof value) => {
+    state.cursor = 0;
+    return nodes(TripCalendarRangeField({ value, onChange, referenceRange }));
+  };
+  let view = render();
+  view.find((n) => n.type === UiFormRow)!.props.onPress();
+  view = render();
+  expect(view.find((n) => n.type === SheetHeader)!.props.title).toBe(
+    "tripForm.dateTitle",
+  );
+  let today = view.find(
+    (n) => n.type === "Pressable" && n.props.accessibilityHint === "search.today",
+  )!;
+  expect(nodes(today).some((n) => n.props.testID === "calendar-today-selected")).toBe(
+    true,
+  );
+  state.values = [];
+  view = render({ start: "2026-10-20", end: "2026-11-01" });
+  view.find((n) => n.type === UiFormRow)!.props.onPress();
+  view = render({ start: "2026-10-20", end: "2026-11-01" });
+  today = view.find(
+    (n) => n.type === "Pressable" && n.props.accessibilityHint === "search.today",
+  )!;
+  expect(nodes(today).some((n) => n.props.testID === "calendar-today-selected")).toBe(
+    true,
+  );
 });

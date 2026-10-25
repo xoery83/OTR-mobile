@@ -392,16 +392,18 @@ export function TripBasicEditor({
           setup={currencySetup ?? setup}
           onOpen={saving || !currencyAvailable ? undefined : () => setCurrencyOpen(true)}
         />
-        <UiSection>
-          {saved ? (
-            <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
-          ) : null}
-          {error ? (
-            <UiText accessibilityRole="alert" style={styles.error}>
-              {t("tripCreate.saveFailed")}
-            </UiText>
-          ) : null}
-        </UiSection>
+        {saved || error ? (
+          <UiSection>
+            {saved ? (
+              <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
+            ) : null}
+            {error ? (
+              <UiText accessibilityRole="alert" style={styles.error}>
+                {t("tripCreate.saveFailed")}
+              </UiText>
+            ) : null}
+          </UiSection>
+        ) : null}
       </ScrollView>
       <Modal
         visible={currencyOpen}

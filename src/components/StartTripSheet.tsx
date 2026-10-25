@@ -41,6 +41,7 @@ export function StartTripSheet({
           <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
             <SheetHeader
               category="action"
+              surface="background"
               title={t("actionIsland.startTrip")}
               safeTop={false}
               leftLabel={t("common.cancel")}

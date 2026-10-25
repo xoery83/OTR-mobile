@@ -197,15 +197,6 @@ export function CreateTripDestinations({
       }
     }
   };
-  const move = (localId: string, offset: -1 | 1) => {
-    if (!current() || disabled || choosing) return;
-    const from = items.findIndex((item) => item.localId === localId);
-    const to = from + offset;
-    if (from < 0 || to < 0 || to >= items.length) return;
-    const next = [...items];
-    [next[from], next[to]] = [next[to], next[from]];
-    onChange(Object.freeze(next));
-  };
   return (
     <View style={styles.section}>
       <UiText style={styles.caption}>{t("createTripV2.destinations")}</UiText>
@@ -218,41 +209,17 @@ export function CreateTripDestinations({
           contentContainerStyle={styles.tags}
           onContentSizeChange={() => tags.current?.scrollToEnd({ animated: true })}
         >
-          {items.map((item, index) => (
+          {items.map((item) => (
             <View
               key={item.localId}
-              style={styles.tag}
+              style={styles.tagTarget}
               onLayout={(event) =>
                 tagPositions.current.set(item.localId, event.nativeEvent.layout.x)
               }
             >
-              <UiText style={styles.tagText}>{item.text}</UiText>
-              {index > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("createTripV2.moveDestinationEarlier", {
-                    name: item.text,
-                  })}
-                  disabled={disabled || choosing}
-                  onPress={() => move(item.localId, -1)}
-                  style={styles.remove}
-                >
-                  <AppIcon name="chevron.left" size={14} color={colors.textSecondary} />
-                </Pressable>
-              ) : null}
-              {index < items.length - 1 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("createTripV2.moveDestinationLater", {
-                    name: item.text,
-                  })}
-                  disabled={disabled || choosing}
-                  onPress={() => move(item.localId, 1)}
-                  style={styles.remove}
-                >
-                  <AppIcon name="chevron.right" size={14} color={colors.textSecondary} />
-                </Pressable>
-              ) : null}
+              <View style={styles.tag}>
+                <UiText style={styles.tagText}>{item.text}</UiText>
+              </View>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("createTripV2.removeDestination", {
@@ -262,7 +229,7 @@ export function CreateTripDestinations({
                 onPress={() => onChange(removeTripDestination(items, item.localId))}
                 style={styles.remove}
               >
-                <AppIcon name="xmark" size={14} color={colors.textSecondary} />
+                <AppIcon name="xmark" size={11} color={colors.accent} />
               </Pressable>
             </View>
           ))}
@@ -344,16 +311,20 @@ const createStyles = (colors: UiColors) =>
     caption: { ...visual.type.action, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
     tags: { gap: visual.space.heading },
+    tagTarget: { minHeight: 44, justifyContent: "center", position: "relative" },
     tag: {
-      flexDirection: "row",
-      alignItems: "center",
       borderRadius: visual.radius.pill,
       backgroundColor: colors.accentSurface,
-      paddingLeft: visual.space.card,
+      paddingVertical: 4,
+      paddingLeft: 9,
+      paddingRight: 30,
     },
-    tagText: { ...visual.type.meta, color: colors.textPrimary },
+    tagText: { ...visual.type.feedTag, color: colors.accent },
     remove: {
-      padding: visual.space.card,
+      position: "absolute",
+      right: 0,
+      top: 0,
+      bottom: 0,
       minWidth: 44,
       minHeight: 44,
       alignItems: "center",

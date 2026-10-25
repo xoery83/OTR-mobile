@@ -167,48 +167,26 @@ it("adds custom destinations explicitly, preserves selected order across name ch
   expect(items.map((i) => i.text)).toEqual(["Tokyo"]);
   expect(dirty).toHaveBeenLastCalledWith(false);
 });
-it("reorders whole destination selections without changing their identities or pending search", () => {
+it("retains destination identities and pending query with only compact remove actions", () => {
   for (const value of ["Nelson", "Auckland", "Tokyo"]) {
     render();
     input(value);
     render();
     press(`createTripV2.custom:${value}`);
   }
-  const [first, second, third] = items;
+  const original = items;
   render();
   input("Pending search");
   render();
   expect(
-    state.nodes.some(
-      (node) => node.accessibilityLabel === "createTripV2.moveDestinationEarlier:Nelson",
+    state.nodes.some((node) =>
+      String(node.accessibilityLabel).startsWith("createTripV2.moveDestination"),
     ),
   ).toBe(false);
-  expect(
-    state.nodes.some(
-      (node) => node.accessibilityLabel === "createTripV2.moveDestinationLater:Tokyo",
-    ),
-  ).toBe(false);
-  press("createTripV2.moveDestinationEarlier:Auckland");
-  expect(items).toEqual([second, first, third]);
-  expect(items[0]).toBe(second);
-  expect(items[1]).toBe(first);
-  render();
-  expect(state.nodes.find((node) => node.onChangeText).value).toBe("Pending search");
-  press("createTripV2.moveDestinationLater:Auckland");
-  expect(items).toEqual([first, second, third]);
-});
-it("does not reorder after the active Account generation changes", () => {
-  for (const value of ["Nelson", "Auckland"]) {
-    render();
-    input(value);
-    render();
-    press(`createTripV2.custom:${value}`);
-  }
-  render();
-  const original = items;
-  state.generation = 2;
-  press("createTripV2.moveDestinationLater:Nelson");
   expect(items).toBe(original);
+  expect(state.nodes.find((node) => node.onChangeText).value).toBe("Pending search");
+  press("createTripV2.removeDestination:Auckland");
+  expect(items).toEqual([original[0], original[2]]);
 });
 it("uses real provider completion then resolve before adding Apple destination metadata", async () => {
   render();

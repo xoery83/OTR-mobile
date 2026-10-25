@@ -53,7 +53,7 @@ export function TripCalendarRangeField({
   presentation = "row",
   label = t("tripForm.dates"),
   referenceRange,
-  markToday = false,
+  markToday = true,
   startWithCheckin = false,
   initialNavigationDate,
   onChange,
@@ -136,7 +136,7 @@ export function TripCalendarRangeField({
         <SafeAreaView edges={["bottom"]} style={styles.sheet}>
           <SheetHeader
             category="picker"
-            title={label}
+            title={label === t("tripForm.dates") ? t("tripForm.dateTitle") : label}
             safeTop={false}
             leftLabel={t("common.cancel")}
             onLeft={() => setOpen(false)}
@@ -260,6 +260,7 @@ export function TripCalendarRangeField({
                                         : styles.inRange),
                                     (date === draft.start || date === draft.end) &&
                                       styles.endpoint,
+                                    date === today && !chosen && styles.todayDay,
                                   ]}
                                   onPress={() => {
                                     setDraft(
@@ -270,6 +271,16 @@ export function TripCalendarRangeField({
                                     setChoosingEnd(startWithCheckin && !choosingEnd);
                                   }}
                                 >
+                                  {date === today && chosen ? (
+                                    <View
+                                      pointerEvents="none"
+                                      testID="calendar-today-selected"
+                                      style={[
+                                        styles.todayTint,
+                                        referenceRange && styles.todayActivityTint,
+                                      ]}
+                                    />
+                                  ) : null}
                                   <UiText
                                     style={[
                                       styles.label,
@@ -357,6 +368,18 @@ const createStyles = (c: UiColors) =>
       borderColor: c.accent,
       borderRadius: visual.radius.control,
     },
+    todayDay: { backgroundColor: c.separator, borderRadius: visual.radius.control },
+    todayTint: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: c.accent,
+      opacity: 0.12,
+      borderRadius: visual.radius.control,
+    },
+    todayActivityTint: { backgroundColor: c.textPrimary, opacity: 0.08 },
     today: { ...visual.type.meta, color: c.accent },
     label: { ...visual.type.row, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },

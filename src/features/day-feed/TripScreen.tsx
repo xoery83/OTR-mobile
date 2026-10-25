@@ -52,7 +52,7 @@ import {
   readTripTodaysJourney,
   type createTripTodaysJourneyReader,
 } from "@/data/repositories/tripTodaysJourneyRepository";
-import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
@@ -1152,9 +1152,6 @@ function TripContent({
         ? wholeTripCalendarDates(dayFacts, dateChoices, dayContext.date)
         : undefined;
   const displayClock = useMinuteClock(dayContext?.zone ?? null);
-  const qualifiedToday = dayContext?.zone
-    ? localCalendarDate(displayClock.instant, dayContext.zone)
-    : "";
   const appearanceToday = dayFeedAppearanceDate(
     displayClock.instant,
     dayContext?.zone,
@@ -1287,7 +1284,7 @@ function TripContent({
                       <DayFeedFidelityHeading
                         date={date}
                         start={dayFacts.startDate!}
-                        today={qualifiedToday}
+                        today={appearanceToday ?? ""}
                         empty={empty}
                         dayColor={phase(date)}
                         previousColor={

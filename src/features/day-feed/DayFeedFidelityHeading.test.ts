@@ -54,6 +54,28 @@ it("scales the day badge with Dynamic Type and keeps its spoken ordinal", () => 
   expect(badge.accessible).toBe(true);
   expect(badge.style.at(-1)).toEqual({ width: 90, height: 96 });
 });
+it("distinguishes Today solid and Tomorrow outlined accent badges", () => {
+  renderToStaticMarkup(createElement(DayFeedFidelityHeading, props));
+  const today = state.nodes.find((n) => n.accessibilityLabel === "Day 1");
+  expect(Object.assign({}, ...today.style.filter(Boolean))).toMatchObject({
+    backgroundColor: lightPalette.accent,
+    borderColor: lightPalette.accent,
+  });
+  state.nodes = [];
+  const html = renderToStaticMarkup(
+    createElement(DayFeedFidelityHeading, {
+      ...props,
+      date: "2027-01-17",
+    }),
+  );
+  expect(html).toContain("Tomorrow");
+  expect(html).toContain("Sunday");
+  const tomorrow = state.nodes.find((n) => n.accessibilityLabel === "Day 2");
+  expect(Object.assign({}, ...tomorrow.style.filter(Boolean))).toMatchObject({
+    backgroundColor: lightPalette.accentSurface,
+    borderColor: lightPalette.accent,
+  });
+});
 it("keeps a past empty day quiet and a future empty day actionable", () => {
   const onAdd = vi.fn();
   const past = renderToStaticMarkup(

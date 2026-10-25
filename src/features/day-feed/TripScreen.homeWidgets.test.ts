@@ -1577,3 +1577,22 @@ it("Day introduction reads structured destinations through the existing local Tr
   const text = JSON.stringify(feed.presentation.header);
   expect(text).toContain("Auckland, New Zealand");
 });
+it("uses the display civil date for Day headings when Reader zone is unresolved", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.routeMode = "day";
+  state.view.zone = "";
+  state.discovery = [
+    {
+      id: reference,
+      name: "Local trip",
+      startDate: "2026-10-25",
+      endDate: "2026-10-30",
+      destination: null,
+    },
+  ];
+  const feed = find(await loaded(), DayFeed);
+  const region = feed.presentation.renderDayHeading("2026-10-26", false);
+  expect(region.props.children.props.today).toBe("2026-10-26");
+  expect(state.view.zone).toBe("");
+});

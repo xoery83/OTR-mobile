@@ -68,6 +68,7 @@ export const en = {
   "tripForm.namedPeopleHint":
     "Includes the creator when listed. Names do not indicate account connections or invitations.",
   "tripForm.dates": "Travel dates (optional)",
+  "tripForm.dateTitle": "Travel dates",
   "tripForm.chooseStart": "Choose a start date, then an end date.",
   "tripForm.chooseEnd": "Choose an end date.",
   "tripForm.previousMonth": "Previous month",
@@ -2862,6 +2863,7 @@ export const zhHans: Record<MessageKey, string> = {
   "tripForm.namedPeopleHint":
     "创建者在名单中时也计入人数。姓名不代表账号已连接或已发出邀请。",
   "tripForm.dates": "旅行日期（可选）",
+  "tripForm.dateTitle": "旅行日期",
   "tripForm.chooseStart": "先选择开始日期，再选择结束日期。",
   "tripForm.chooseEnd": "选择结束日期。",
   "tripForm.previousMonth": "上个月",
