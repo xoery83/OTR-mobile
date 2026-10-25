@@ -1,5 +1,4 @@
 import { expect, it, vi } from "vitest";
-vi.mock("@/features/day-feed/P1Row", () => ({ P1Row: () => null }));
 import {
   p1FidelityFixture,
   p1FidelityPack,
@@ -8,6 +7,7 @@ import {
 import { collectFixtureContributions } from "./contribution";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { composeDayStream } from "@/features/day-feed/composition";
+vi.mock("@/features/day-feed/P1Row", () => ({ P1Row: () => null }));
 it("adapts the frozen24Item/10day pack into the existing reader DTO without unavailable disclosure", () => {
   const f = p1FidelityFixture("today");
   expect(p1FidelityPack.items).toHaveLength(24);

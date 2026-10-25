@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
@@ -82,12 +82,12 @@ export function P1FidelityPreview() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const list = useRef<DayListHandle | null>(null);
   const key = JSON.stringify([clock, depth, target]);
-  const [dismissedImmersive, setDismissedImmersive] = useState<string | null>(null);
+  const [detailState, setDetailState] = useState({ key, closed: false });
+  if (detailState.key !== key) setDetailState({ key, closed: false });
   const targetFocusKey = p1FidelityFocusKey(initialFixture, target);
   const targetDate =
     p1FidelityPack.items.find((item) => item.id === target)?.date ??
     initialFixture.selectedDate;
-  useEffect(() => setDismissedImmersive(null), [key]);
   const shell = useDayFeedShellState(key);
   const preview = () => setSheet("ACTION");
   const fixture = p1FidelityFixture(
@@ -194,8 +194,13 @@ export function P1FidelityPreview() {
             },
           }}
           directItem={
-            depth === "I" && dismissedImmersive !== key && targetFocusKey
-              ? { itemId: targetFocusKey, onClose: () => setDismissedImmersive(key) }
+            depth === "I" &&
+            !(detailState.key === key && detailState.closed) &&
+            targetFocusKey
+              ? {
+                  itemId: targetFocusKey,
+                  onClose: () => setDetailState({ key, closed: true }),
+                }
               : undefined
           }
           presentation={{
