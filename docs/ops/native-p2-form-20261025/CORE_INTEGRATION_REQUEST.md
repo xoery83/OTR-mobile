@@ -21,3 +21,6 @@ Owner explicitly directs P2 Create/Edit before producing real Trip test data for
 4. Reuse existing collision/claim assessment for additional segments and specify atomic/recoverable multi-segment results. Preserve actual Booking identities.
 
 This packet requests only a bounded shared-interface decision/unique-writer serial integration. It does not request deployment, SQL/RLS, Auth changes, DEV activation or Universal's ordinary coding/review time. Native fields, validation, Cancel/recovery tests and existing lawful sparse-create verification continue independently. Full P2 Form remains blocked until the relevant owning ports exist; no Cloud E2E claim.
+
+
+Owner timezone/DST clarification25October: Native397c5dd3 supplies automatic IANA zone draft context from the explicitly selected airport, with unknown/ambiguous/conflicting data left manual. It grants no time authority. The legal full manual executor must own endpoint-local date+minute+IANA resolution including GAP/FOLD clarification before a comparable instant; fixed-offset arithmetic is not sufficient. Keep original local fields and unresolved status when no unique result exists. No resolver/proof is fabricated by this lane.
