@@ -4,6 +4,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ManualStayFields } from "@/data/repositories/manualStayRepository";
 import { P3StayEditor } from "./P3StayEditor";
 
+vi.mock("@/data/repositories/tripRepository", () => ({
+  readLocalTripRepository: vi.fn(async () => ({
+    getTrip: vi.fn(async () => ({ startDate: "2027-12-30", endDate: "2028-01-09" })),
+  })),
+}));
 vi.mock("./P3StayLocationField", () => ({
   P3StayLocationField: (p: any) => {
     state.nodes.push({
@@ -78,7 +83,11 @@ vi.mock("@/data/repositories/manualStayRepository", async () => ({
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
   Keyboard: { dismiss: () => state.dismissKeyboard() },
-  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
+  Pressable: (p: any) => createElement("button", null, p.children),
+  Modal: (p: any) => {
+    if (p.visible) state.nodes.push({ ...p, label: "timeModal" });
+    return p.visible ? createElement("div", null, p.children) : null;
+  },
   ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => {
     if (p.onTouchEnd)
@@ -288,17 +297,17 @@ it("keeps the same draft and fields after an unknown save result; conflict disab
   render(p);
   chooseDate(p, "tripCreate.checkin", new Date(2027, 11, 29, 12));
   chooseDate(p, "tripCreate.checkout", new Date(2028, 0, 2, 12));
-  node("tripCreate.saveItem").onPress();
+  node("headerSave").onPress();
   await Promise.resolve();
   render(p);
   expect(node("tripCreate.stayName").editable).toBe(false);
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node("headerSave").disabled).toBe(false);
+  node("headerSave").onPress();
   await Promise.resolve();
   render(p);
   expect(repo.save).toHaveBeenCalledTimes(2);
   expect(repo.save.mock.calls[1]).toEqual(repo.save.mock.calls[0]);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("headerSave").disabled).toBe(true);
   expect(p.onSaved).not.toHaveBeenCalled();
   node("common.cancel").onPress();
   expect(p.onClose).not.toHaveBeenCalled();
@@ -331,7 +340,7 @@ it("blocks old same-turn handlers and retries only the first submitted fields", 
   chooseDate(p, "tripCreate.checkin", new Date(2027, 11, 29, 12));
   chooseDate(p, "tripCreate.checkout", new Date(2028, 0, 2, 12));
   const oldNameChange = node("tripCreate.stayName").onChangeText;
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("headerSave").onPress;
   const oldCancel = node("common.cancel").onPress;
   oldSave();
   oldNameChange("Changed after Save");
@@ -384,7 +393,7 @@ it("edits an existing P3 through its original repository draft and preserves the
   node("tripCreate.stayName").onChangeText("Renamed stay");
   node("tripCreate.stayLocation").onChangeText("Museum entrance");
   render(p);
-  node("tripCreate.saveChanges").onPress();
+  node("headerSave").onPress();
   await Promise.resolve();
   expect(repository.save).toHaveBeenCalledWith(
     draft,
@@ -419,7 +428,7 @@ it("ignores a queued Discard confirmation after P3 Save starts", async () => {
   node("tripCreate.stayName").onChangeText("Changed stay");
   render(p);
   const oldCancel = node("common.cancel").onPress;
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("headerSave").onPress;
   oldCancel();
   const discard = state.alert.mock.lastCall![2][1].onPress;
   oldSave();
@@ -476,7 +485,7 @@ it("rejects an old P3 Save after Discard closes a dirty draft", async () => {
   });
   node("tripCreate.stayName").onChangeText("Changed stay");
   render(p);
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("headerSave").onPress;
   const oldChange = node("tripCreate.stayName").onChangeText;
   node("common.cancel").onPress();
   state.alert.mock.lastCall![2][1].onPress();
@@ -486,7 +495,7 @@ it("rejects an old P3 Save after Discard closes a dirty draft", async () => {
   expect(save).not.toHaveBeenCalled();
 });
 
-it("keeps header Save and footer Save aligned and rejects stale Save after dates are cleared", async () => {
+it("has only header Save and rejects stale Save after dates are cleared", async () => {
   const p = props(),
     value = fields();
   value.title = "Three night stay";
@@ -507,7 +516,7 @@ it("keeps header Save and footer Save aligned and rejects stale Save after dates
   node("stayDates").onChange({ start: "2026-11-01", end: "" });
   render(p);
   expect(node("headerSave").disabled).toBe(true);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("headerSave").disabled).toBe(true);
   oldSave();
   expect(repo.save).not.toHaveBeenCalled();
 });
@@ -560,6 +569,12 @@ it("removes an already-open time picker when Save freezes the P3 draft", async (
   node("tripCreate.stayCheckinTime").onPress();
   render(p);
   expect(state.nodes.some((entry) => entry.mode === "time")).toBe(true);
+  expect(
+    state.nodes.find(
+      (entry) =>
+        entry.label === "timeModal" && entry.presentationStyle === "overFullScreen",
+    )?.transparent,
+  ).toBe(true);
   node("headerSave").onPress();
   render(p);
   expect(state.nodes.some((entry) => entry.mode === "time")).toBe(false);
@@ -606,6 +621,8 @@ it("uses the short header Save label and dismisses the keyboard for P3 date/time
     })),
   });
   expect(node("headerSave").visibleLabel).toBe("ui.save");
+  expect(node("tripCreate.saveItem")).toBeUndefined();
+  expect(node("tripCreate.saveChanges")).toBeUndefined();
   node("calendarKeyboardDismiss").onTouchEnd();
   node("tripCreate.stayCheckinTime").onPress();
   expect(state.dismissKeyboard).toHaveBeenCalledTimes(2);
@@ -660,4 +677,32 @@ it("places location immediately after name and delegates participants to the P1 
   expect(repo.save.mock.calls[0][1].participation.people).toEqual([
     "00000000-0000-4000-8000-000000000009",
   ]);
+});
+
+it("uses compact Participants and atomically accepts a hotel's resolved name and address", async () => {
+  const p = props();
+  const value = fields();
+  value.title = "my hotel";
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+  });
+  expect(node("participants").compact).toBe(true);
+  expect(node("stayDates").markToday).toBe(true);
+  expect(node("stayDates").startWithCheckin).toBe(true);
+  expect(node("stayDates").referenceRange).toEqual({
+    start: "2027-12-30",
+    end: "2028-01-09",
+  });
+  node("tripCreate.stayLocation").onSelectHotel(
+    "Park Hyatt Auckland",
+    "99 Halsey Street",
+  );
+  render(p);
+  expect(node("tripCreate.stayName").value).toBe("Park Hyatt Auckland");
+  expect(node("tripCreate.stayLocation").value).toBe("99 Halsey Street");
+  expect(node("tripCreate.stayLocation").nameQuery).toBe(null);
 });

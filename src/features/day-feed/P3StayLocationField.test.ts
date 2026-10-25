@@ -118,6 +118,8 @@ const props = () => ({
   disabled: false,
   isCurrent: () => true,
   onChange: vi.fn(),
+  onSelectHotel: vi.fn(),
+  onKeepName: vi.fn(),
 });
 function render(p: ReturnType<typeof props>) {
   state.cursor = 0;
@@ -158,7 +160,7 @@ afterEach(() => {
   state.deps.forEach((d) => d?.cleanup?.());
   vi.useRealTimers();
 });
-it("shows debounced Apple name matches without overwriting the address until selection", async () => {
+it("shows Apple matches before the address input and fills hotel name plus address only on selection", async () => {
   const p = props();
   render(p);
   await tick();
@@ -168,10 +170,15 @@ it("shows debounced Apple name matches without overwriting the address until sel
     expect.any(AbortSignal),
   );
   expect(p.onChange).not.toHaveBeenCalled();
+  expect(node("tripCreate.findPlace")).toBeUndefined();
+  expect(state.nodes.indexOf(node("Park Hyatt Auckland, Auckland"))).toBeLessThan(
+    state.nodes.indexOf(node("tripCreate.stayLocation")),
+  );
   node("Park Hyatt Auckland, Auckland").onPress();
   await tick();
   render(p);
-  expect(p.onChange).toHaveBeenCalledExactlyOnceWith(address);
+  expect(p.onSelectHotel).toHaveBeenCalledExactlyOnceWith("Park Hyatt Auckland", address);
+  expect(p.onChange).not.toHaveBeenCalled();
   expect(node("Park Hyatt Auckland, Auckland")).toBeUndefined();
 });
 it("opens the existing full-screen immediate address flow; Cancel preserves fields and manual entry is retained", async () => {
@@ -233,4 +240,40 @@ it("does not send a name search when opening an unchanged Edit, and closes pendi
   await tick();
   expect(state.closed).toHaveBeenCalled();
   expect(p.onChange).not.toHaveBeenCalled();
+});
+
+it("explicitly keeps the authored hotel name and address, cancelling a pending hotel resolution", async () => {
+  const p = { ...props(), value: "My custom address" };
+  let finish!: (v: any) => void;
+  state.resolve.mockImplementationOnce(
+    () => new Promise((resolve) => (finish = resolve)),
+  );
+  render(p);
+  await tick();
+  render(p);
+  node("Park Hyatt Auckland, Auckland").onPress();
+  node("placeSearch.useEnteredName").onPress();
+  finish({ ...candidate, kind: "mapItem", address });
+  await tick();
+  render(p);
+  expect(p.onKeepName).toHaveBeenCalledOnce();
+  expect(p.onSelectHotel).not.toHaveBeenCalled();
+  expect(p.onChange).not.toHaveBeenCalled();
+  expect(node("Park Hyatt Auckland, Auckland")).toBeUndefined();
+  expect(node("tripCreate.stayLocation").value).toBe("My custom address");
+});
+
+it("restarts suggestions when the hotel name is edited after keeping that same authored name", async () => {
+  const p = props();
+  render(p);
+  await tick();
+  render(p);
+  node("placeSearch.useEnteredName").onPress();
+  expect(p.onKeepName).toHaveBeenCalledOnce();
+  render({ ...p, nameQuery: null });
+  render(p);
+  await tick();
+  render(p);
+  expect(node("Park Hyatt Auckland, Auckland")).toBeDefined();
+  expect(p.onSelectHotel).not.toHaveBeenCalled();
 });

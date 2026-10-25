@@ -61,6 +61,7 @@ export function UiDatePicker(
   );
 }
 export function UiFormRow({
+  compact = false,
   label,
   value,
   onPress,
@@ -71,6 +72,7 @@ export function UiFormRow({
   leading,
   trailing,
 }: {
+  compact?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
   label: string;
@@ -93,7 +95,11 @@ export function UiFormRow({
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
-        style={[styles.actionCard, largeText && styles.rowLargeText]}
+        style={[
+          styles.actionCard,
+          compact && styles.compactActionCard,
+          largeText && styles.rowLargeText,
+        ]}
       >
         {leading}
         <View style={styles.actionCopy}>
@@ -209,6 +215,7 @@ const createStyles = (colors: UiColors) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.separator,
     },
+    compactActionCard: { flexGrow: 0, minHeight: 64, alignItems: "center" },
     actionCopy: { flex: 1, minWidth: 0, gap: 5 },
     actionTitle: { ...visual.type.row, color: colors.textPrimary },
     actionHint: { ...visual.type.meta, color: colors.textSecondary },

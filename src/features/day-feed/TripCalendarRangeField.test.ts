@@ -274,3 +274,53 @@ it("aligns the dates caption with the form fields without changing canonical def
   );
   expect(rows.find((n) => n.type === UiFormRow)!.props.horizontalInset).toBe(0);
 });
+
+it("P3 starts each opened selection with check-in even when a start is prefilled, and marks Today within Trip dates", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 10, 2, 12));
+  try {
+    const onChange = vi.fn();
+    const value = { start: "2026-11-01", end: "" };
+    const render = () => {
+      state.cursor = 0;
+      return nodes(
+        TripCalendarRangeField({
+          value,
+          onChange,
+          startWithCheckin: true,
+          markToday: true,
+          referenceRange: { start: "2026-11-01", end: "2026-11-07" },
+        }),
+      );
+    };
+    render()
+      .find((n) => n.type === UiFormRow)!
+      .props.onPress();
+    let view = render();
+    const today = view.find(
+      (n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-02",
+    )!;
+    expect(today.props.accessibilityHint).toBe("search.today");
+    expect(nodes(today).some((n) => n.props.children === "search.today")).toBe(true);
+    expect(today.props.style).toContainEqual({ backgroundColor: lightPalette.selected });
+    today.props.onPress();
+    view = render();
+    expect(
+      view.find(
+        (n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-02",
+      )!.props.accessibilityState.selected,
+    ).toBe(true);
+    view
+      .find((n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-05")!
+      .props.onPress();
+    render()
+      .find((n) => n.type === SheetHeader)!
+      .props.onRight();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({
+      start: "2026-11-02",
+      end: "2026-11-05",
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+});

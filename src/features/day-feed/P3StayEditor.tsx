@@ -1,8 +1,17 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Keyboard, Modal, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Keyboard,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   createDefaultManualStayRepository,
@@ -57,44 +66,56 @@ function TimeField({
       <Modal
         visible={open && !disabled}
         animationType="slide"
-        presentationStyle="pageSheet"
-        allowSwipeDismissal
+        transparent
+        presentationStyle="overFullScreen"
         onRequestClose={() => setOpen(false)}
       >
-        <SafeAreaView edges={["bottom"]} style={styles.timeSheet}>
-          <SheetHeader
-            category="picker"
-            safeTop={false}
-            title={label}
-            onLeft={() => setOpen(false)}
-            onRight={() => {
-              if (!disabled)
-                onChange(
-                  `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-                );
-              setOpen(false);
-            }}
-            rightDisabled={disabled}
-          />
-          <UiDatePicker
-            mode="time"
-            display="spinner"
-            value={selected}
-            accessibilityLabel={label}
-            onChange={(_, date) => {
-              if (date) setSelected(date);
-            }}
-          />
-          <UiButton
-            label={t("tripCreate.clearTime")}
-            variant="text"
-            disabled={disabled}
-            onPress={() => {
-              onChange(null);
-              setOpen(false);
-            }}
-          />
-        </SafeAreaView>
+        <SafeAreaProvider style={styles.timeHost}>
+          <View style={styles.timeBackdrop}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("common.cancel")}
+              style={StyleSheet.absoluteFill}
+              onPress={() => setOpen(false)}
+            />
+            <SafeAreaView edges={["bottom", "left", "right"]} style={styles.timeSheet}>
+              <SheetHeader
+                category="picker"
+                safeTop={false}
+                title={label}
+                onLeft={() => setOpen(false)}
+                onRight={() => {
+                  if (!disabled)
+                    onChange(
+                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                    );
+                  setOpen(false);
+                }}
+                rightDisabled={disabled}
+              />
+              <ScrollView keyboardShouldPersistTaps="handled" style={styles.timeScroll}>
+                <UiDatePicker
+                  mode="time"
+                  display="spinner"
+                  value={selected}
+                  accessibilityLabel={label}
+                  onChange={(_, date) => {
+                    if (date) setSelected(date);
+                  }}
+                />
+                <UiButton
+                  label={t("tripCreate.clearTime")}
+                  variant="text"
+                  disabled={disabled}
+                  onPress={() => {
+                    onChange(null);
+                    setOpen(false);
+                  }}
+                />
+              </ScrollView>
+            </SafeAreaView>
+          </View>
+        </SafeAreaProvider>
       </Modal>
     </View>
   );
@@ -114,7 +135,6 @@ export function P3StayEditor({
   onChoosePlan,
   onChooseRental,
   onChooseTransport,
-  onFindPlace,
 }: {
   tripId: string;
   embedded?: boolean;
@@ -129,7 +149,6 @@ export function P3StayEditor({
   onChoosePlan?(): void;
   onChooseRental?(): void;
   onChooseTransport?(): void;
-  onFindPlace?(current: string): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -149,6 +168,28 @@ export function P3StayEditor({
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
+  const [tripRange, setTripRange] = useState({
+    start: tripStartDate ?? "",
+    end: tripEndDate ?? "",
+  });
+  useEffect(() => {
+    let active = true;
+    if (tripStartDate === undefined || tripEndDate === undefined) {
+      void readLocalTripRepository()
+        .then((repository) => repository.getTrip(tripId))
+        .then((trip) => {
+          if (active && generation === getAccountGeneration())
+            setTripRange({
+              start: tripStartDate ?? trip?.startDate ?? "",
+              end: tripEndDate ?? trip?.endDate ?? "",
+            });
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [tripId, tripStartDate, tripEndDate, generation]);
   const [nameQuery, setNameQuery] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [frozen, setFrozen] = useState(false);
@@ -356,7 +397,12 @@ export function P3StayEditor({
                     !unavailableRef.current
                   }
                   onChange={(location) => change({ location })}
-                  onFindPlace={onFindPlace}
+                  onKeepName={() => setNameQuery(null)}
+                  onSelectHotel={(title, location) => {
+                    if (!current() || busyRef.current || frozenRef.current) return;
+                    change({ title, location });
+                    setNameQuery(null);
+                  }}
                 />
                 <View onTouchEnd={Keyboard.dismiss}>
                   <TripCalendarRangeField
@@ -364,10 +410,12 @@ export function P3StayEditor({
                     presentation="field"
                     value={{ start: fields.startDate, end: fields.endDate ?? "" }}
                     referenceRange={{
-                      start: tripStartDate ?? "",
-                      end: tripEndDate ?? "",
+                      start: tripStartDate ?? tripRange.start,
+                      end: tripEndDate ?? tripRange.end,
                     }}
-                    initialNavigationDate={tripStartDate}
+                    initialNavigationDate={tripStartDate ?? tripRange.start}
+                    markToday
+                    startWithCheckin
                     disabled={saving || frozen}
                     onChange={({ start, end }) =>
                       change({
@@ -433,17 +481,13 @@ export function P3StayEditor({
                   />
                 </View>
                 <PlanParticipantsField
+                  compact
                   value={fields.participation}
                   options={source.draft.participantOptions}
                   disabled={saving || frozen}
                   onChange={(participation) => change({ participation })}
                 />
               </View>
-              <UiButton
-                label={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
-                disabled={saveDisabled}
-                onPress={() => void save()}
-              />
             </>
           ) : null}
         </ScrollView>
@@ -462,6 +506,19 @@ const createStyles = (colors: UiColors) =>
     caption: { ...visual.type.action, color: colors.textPrimary },
     times: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.card },
     timeField: { flexGrow: 1, flexBasis: 140, minWidth: 0 },
-    timeSheet: { backgroundColor: colors.surface, flex: 1 },
+    timeHost: { flex: 1 },
+    timeBackdrop: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: colors.overlay,
+    },
+    timeSheet: {
+      backgroundColor: colors.surface,
+      maxHeight: "90%",
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      overflow: "hidden",
+    },
+    timeScroll: { flexGrow: 0, flexShrink: 1 },
     notes: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },
   });

@@ -13,11 +13,13 @@ import { visual } from "@/ui/visual";
 
 type Participation = ManualPlanFields["participation"];
 export function PlanParticipantsField({
+  compact = false,
   value,
   options,
   disabled,
   onChange,
 }: {
+  compact?: boolean;
   value: Participation;
   options: readonly { personId: string; displayName: string }[];
   disabled: boolean;
@@ -46,6 +48,7 @@ export function PlanParticipantsField({
       <UiText style={styles.caption}>{t("tripCreate.planParticipants")}</UiText>
       <UiFormRow
         variant="action"
+        compact={compact}
         label={summary}
         value={names.join(", ") || t("tripCreate.planChooseMembers")}
         disabled={disabled}

@@ -47,6 +47,8 @@ inventing a card radius, divider, font hierarchy or spacing rhythm.
 `UiFormRow variant="field"` presents its caption above a bordered value button,
 sharing `UiTextInput` field geometry and typography. Use it for date selectors
 within input forms; the default row presentation remains available for grouped settings.
+`UiFormRow compact` fits an action card to its content with a 64pt minimum; use it
+for the P3 Participants summary. Ordinary action cards retain their existing geometry.
 
 ## Segmented selection
 

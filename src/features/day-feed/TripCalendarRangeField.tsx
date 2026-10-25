@@ -53,6 +53,8 @@ export function TripCalendarRangeField({
   presentation = "row",
   label = t("tripForm.dates"),
   referenceRange,
+  markToday = false,
+  startWithCheckin = false,
   initialNavigationDate,
   onChange,
 }: {
@@ -61,6 +63,8 @@ export function TripCalendarRangeField({
   presentation?: "row" | "field";
   label?: string;
   referenceRange?: TripDateRange;
+  markToday?: boolean;
+  startWithCheckin?: boolean;
   initialNavigationDate?: string | null;
   onChange(range: TripDateRange): void;
 }) {
@@ -71,6 +75,8 @@ export function TripCalendarRangeField({
   const gridWidth = Math.max(width - 2 * visual.space.page, cellSize * 7);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
+  const [choosingEnd, setChoosingEnd] = useState(false);
+  const today = markToday ? calendarDate(new Date()) : null;
   const seed = (
     value.start ||
     value.end ||
@@ -106,6 +112,7 @@ export function TripCalendarRangeField({
         disabled={disabled}
         onPress={() => {
           setDraft(value);
+          setChoosingEnd(false);
           setInitialMonthIndex(
             monthNumber(seed) - monthNumber(adjacentTripMonth(seed, -12)),
           );
@@ -234,9 +241,11 @@ export function TripCalendarRangeField({
                                   accessibilityRole="button"
                                   accessibilityLabel={accessibleDate(date)}
                                   accessibilityHint={
-                                    reference
-                                      ? t("tripCreate.tripDateReference")
-                                      : undefined
+                                    date === today
+                                      ? t("search.today")
+                                      : reference
+                                        ? t("tripCreate.tripDateReference")
+                                        : undefined
                                   }
                                   accessibilityState={{
                                     selected: date === draft.start || date === draft.end,
@@ -252,7 +261,14 @@ export function TripCalendarRangeField({
                                     (date === draft.start || date === draft.end) &&
                                       styles.endpoint,
                                   ]}
-                                  onPress={() => setDraft(selectTripRange(draft, date))}
+                                  onPress={() => {
+                                    setDraft(
+                                      startWithCheckin && !choosingEnd
+                                        ? { start: date, end: "" }
+                                        : selectTripRange(draft, date),
+                                    );
+                                    setChoosingEnd(startWithCheckin && !choosingEnd);
+                                  }}
                                 >
                                   <UiText
                                     style={[
@@ -262,6 +278,16 @@ export function TripCalendarRangeField({
                                   >
                                     {formatUiNumber(+date.slice(8))}
                                   </UiText>
+                                  {date === today ? (
+                                    <UiText
+                                      style={[
+                                        styles.today,
+                                        referenceRange && chosen && styles.activityText,
+                                      ]}
+                                    >
+                                      {t("search.today")}
+                                    </UiText>
+                                  ) : null}
                                 </Pressable>
                               ) : (
                                 <View
@@ -289,14 +315,21 @@ export function TripCalendarRangeField({
                   {t("tripCreate.tripDateReference")} · {tripRangeLabel(referenceRange)}
                 </UiText>
                 <UiText style={styles.meta}>
-                  {t("tripCreate.activityDateReferenceHint")}
+                  {t(
+                    startWithCheckin
+                      ? "tripCreate.stayDateReferenceHint"
+                      : "tripCreate.activityDateReferenceHint",
+                  )}
                 </UiText>
               </>
             ) : null}
             <UiButton
               variant="text"
               label={t("tripForm.clearDates")}
-              onPress={() => setDraft({ start: "", end: "" })}
+              onPress={() => {
+                setDraft({ start: "", end: "" });
+                setChoosingEnd(false);
+              }}
             />
           </View>
         </SafeAreaView>
@@ -324,6 +357,7 @@ const createStyles = (c: UiColors) =>
       borderColor: c.accent,
       borderRadius: visual.radius.control,
     },
+    today: { ...visual.type.meta, color: c.accent },
     label: { ...visual.type.row, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
   });

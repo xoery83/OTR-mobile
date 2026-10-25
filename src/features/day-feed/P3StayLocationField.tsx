@@ -35,7 +35,8 @@ type Props = {
   disabled: boolean;
   isCurrent(): boolean;
   onChange(value: string | null): void;
-  onFindPlace?(current: string): void;
+  onSelectHotel(title: string, location: string): void;
+  onKeepName(): void;
 };
 const empty: PlaceSearchState = { status: "IDLE", rows: [], more: false };
 
@@ -58,8 +59,8 @@ export function P3StayLocationField(props: Props) {
     key: "",
     state: empty,
   });
-  const [suppressed, setSuppressed] = useState<string | null>(null);
   const [contextError, setContextError] = useState(false);
+  const [invalidSelection, setInvalidSelection] = useState<string | null>(null);
   const [search, setSearch] = useState<{
     binding: PlaceSearchBinding;
     query: string;
@@ -100,7 +101,7 @@ export function P3StayLocationField(props: Props) {
       generation === getAccountGeneration() &&
       latest.current.nameQuery === nameQuery &&
       latest.current.value === value;
-    if (disabled || !nameQuery?.trim() || suppressed === nameQuery || search) return;
+    if (disabled || !nameQuery?.trim() || search) return;
     void (async () => {
       const account = await captureAccountScope(requireActiveUserId);
       if (!valid() || account.generation !== generation) return;
@@ -152,7 +153,6 @@ export function P3StayLocationField(props: Props) {
     nameQuery,
     value,
     disabled,
-    suppressed,
     search,
     online,
     generation,
@@ -161,7 +161,9 @@ export function P3StayLocationField(props: Props) {
   ]);
   const apply = (text: string) => {
     if (!current() || text.length > 500) return;
-    setSuppressed(latest.current.nameQuery);
+    controller.current?.close();
+    controller.current = null;
+    latest.current.onKeepName();
     setState(empty);
     latest.current.onChange(text.trim() || null);
   };
@@ -177,10 +179,17 @@ export function P3StayLocationField(props: Props) {
       latest.current.value !== snapshot.value
     )
       return;
-    if (result.address?.trim()) {
-      Keyboard.dismiss();
-      apply(result.address);
+    const title = result.title.trim(),
+      address = result.address?.trim();
+    if (!title || title.length > 200 || !address || address.length > 500) {
+      setInvalidSelection(snapshot.nameQuery);
+      return;
     }
+    Keyboard.dismiss();
+    session.close();
+    controller.current = null;
+    setState(empty);
+    latest.current.onSelectHotel(title, address);
   };
   const closeSearch = () => {
     ticket.current.value++;
@@ -227,50 +236,9 @@ export function P3StayLocationField(props: Props) {
     apply(text);
   };
   return (
-    <View style={styles.field}>
-      <View style={styles.labelRow}>
-        <UiText style={styles.caption}>{t("tripCreate.stayLocation")}</UiText>
-        <UiButton
-          label={t("tripCreate.findPlace")}
-          variant="text"
-          disabled={disabled}
-          onPress={() => {
-            if (!current()) return;
-            if (props.onFindPlace) props.onFindPlace(value || props.title);
-            else void openSearch();
-          }}
-        />
-      </View>
-      <View>
-        <UiTextInput
-          accessibilityLabel={t("tripCreate.stayLocation")}
-          placeholder={t("tripCreate.stayLocation")}
-          value={value ?? ""}
-          maxLength={500}
-          editable={!disabled}
-          style={styles.locationInput}
-          onFocus={() => void openSearch()}
-          onChangeText={(text) => apply(text)}
-        />
-        {value ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("tripCreate.clearLocation")}
-            disabled={disabled}
-            style={styles.clearLocation}
-            onPress={() => apply("")}
-          >
-            <AppIcon name="xmark.circle.fill" color={colors.textSecondary} />
-          </Pressable>
-        ) : null}
-      </View>
-      {contextError ? (
-        <UiText accessibilityRole="alert" style={styles.meta}>
-          {t("placeSearch.contextUnavailable")}
-        </UiText>
-      ) : null}
-      {nameQuery && suppressed !== nameQuery && !disabled && !search ? (
-        <View>
+    <View style={styles.fields}>
+      {nameQuery && !disabled && !search ? (
+        <View style={styles.field}>
           {state.status === "LOADING" ? (
             <UiText accessibilityLiveRegion="polite" style={styles.meta}>
               {t("placeSearch.loading")}
@@ -306,8 +274,57 @@ export function P3StayLocationField(props: Props) {
               )}
             </UiText>
           ) : null}
+          {invalidSelection === nameQuery ? (
+            <UiText accessibilityRole="alert" style={styles.meta}>
+              {t("placeSearch.shorten")}
+            </UiText>
+          ) : null}
+          <UiButton
+            label={t("placeSearch.useEnteredName")}
+            variant="text"
+            disabled={disabled}
+            onPress={() => {
+              if (!current()) return;
+              controller.current?.close();
+              controller.current = null;
+              latest.current.onKeepName();
+              setState(empty);
+              Keyboard.dismiss();
+            }}
+          />
         </View>
       ) : null}
+      <View style={styles.field}>
+        <UiText style={styles.caption}>{t("tripCreate.stayLocation")}</UiText>
+        <View>
+          <UiTextInput
+            accessibilityLabel={t("tripCreate.stayLocation")}
+            placeholder={t("tripCreate.stayLocation")}
+            value={value ?? ""}
+            maxLength={500}
+            editable={!disabled}
+            style={styles.locationInput}
+            onFocus={() => void openSearch()}
+            onChangeText={(text) => apply(text)}
+          />
+          {value ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("tripCreate.clearLocation")}
+              disabled={disabled}
+              style={styles.clearLocation}
+              onPress={() => apply("")}
+            >
+              <AppIcon name="xmark.circle.fill" color={colors.textSecondary} />
+            </Pressable>
+          ) : null}
+        </View>
+        {contextError ? (
+          <UiText accessibilityRole="alert" style={styles.meta}>
+            {t("placeSearch.contextUnavailable")}
+          </UiText>
+        ) : null}
+      </View>
       {search && !disabled ? (
         <PlaceSearchSheet
           binding={search.binding}
@@ -325,12 +342,7 @@ const createStyles = (c: UiColors) =>
   StyleSheet.create({
     field: { gap: visual.space.heading },
     caption: { ...visual.type.action, color: c.textPrimary },
-    labelRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-    },
+    fields: { gap: visual.space.section },
     locationInput: { paddingRight: 48 },
     clearLocation: {
       position: "absolute",
