@@ -49,6 +49,7 @@ export function P1Row({
   instant,
   onInsert,
   hideDivider = false,
+  showHeader = true,
 }: {
   event: DayEvent;
   depth: Depth;
@@ -62,6 +63,7 @@ export function P1Row({
   instant?: string;
   onInsert?(side: "BEFORE" | "AFTER"): void;
   hideDivider?: boolean;
+  showHeader?: boolean;
 }) {
   useUiLocale();
   const { fontScale } = useWindowDimensions();
@@ -180,7 +182,13 @@ export function P1Row({
   if (immersive)
     return (
       <View style={styles.immersive}>
-        <SheetHeader title="" leftLabel={t("common.back")} onLeft={() => onDepth("F")} />
+        {showHeader ? (
+          <SheetHeader
+            title=""
+            leftLabel={t("common.back")}
+            onLeft={() => onDepth("F")}
+          />
+        ) : null}
         <View style={styles.immersiveBody}>
           <View style={styles.immersiveHeading}>
             <Text style={styles.kicker}>{t("fidelity.activity")}</Text>
@@ -453,7 +461,7 @@ const createStyles = (c: UiColors) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    immersive: { backgroundColor: c.background, flex: 1 },
+    immersive: { backgroundColor: c.background },
     immersiveBody: { paddingHorizontal: 18, paddingBottom: 54 },
     immersiveHeading: { paddingVertical: 28, gap: 12 },
     kicker: { ...visual.type.feedNote, fontWeight: "700", color: c.accent },

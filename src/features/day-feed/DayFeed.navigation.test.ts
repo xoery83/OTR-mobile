@@ -530,3 +530,27 @@ it("accepted Core P1 richer detail delegates to the owning preview without losin
   expect(render(props)).toContain(`${fixture.before.id}:F`);
   expect(state.nodes.some((p) => p.depth === "I")).toBe(false);
 });
+
+it("omits a disabled TNS footer instead of leaving a zero-height viewability row", () => {
+  const props = {
+    instant: "2030-01-01T00:00:00Z",
+    projection: {
+      ...fixture.day,
+      events: [
+        {
+          ...fixture.before,
+          boundaries: fixture.before.boundaries.map((b) => ({
+            ...b,
+            instant: null,
+            source_instant: null,
+            zone_id: null,
+          })),
+        },
+      ],
+    },
+  };
+  render(props);
+  expect(state.window.rows.some((row: any) => row.key.startsWith("footer:"))).toBe(true);
+  render({ ...props, presentation: { showTimeUnspecified: false } });
+  expect(state.window.rows.some((row: any) => row.key.startsWith("footer:"))).toBe(false);
+});

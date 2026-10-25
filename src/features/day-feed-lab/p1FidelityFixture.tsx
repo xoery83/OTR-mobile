@@ -75,6 +75,7 @@ export function p1FidelityFixture(
       onDepth: props.onDepth,
       withinMarker: props.withinMarker,
       hideDivider: props.nextFocused,
+      showHeader: false,
       facts: facts[props.row.item.event.id],
       actions,
       context: props.context,

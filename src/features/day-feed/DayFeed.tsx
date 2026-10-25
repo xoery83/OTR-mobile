@@ -73,8 +73,10 @@ export type DayFeedPresentation = {
   renderDayHeading?: (date: string, empty: boolean) => ReactNode;
   wrapDayRow?: (date: string, content: ReactNode) => ReactNode;
   listStyle?: StyleProp<ViewStyle>;
+  listContentStyle?: StyleProp<ViewStyle>;
   showTimeUnspecified?: boolean;
   immersiveContentStyle?: StyleProp<ViewStyle>;
+  renderImmersiveHeader?: (onClose: () => void) => ReactNode;
   listRef?: (value: DayListHandle | null) => void;
   header?: ReactNode;
   formatDayHeading?: (date: string) => string;
@@ -598,7 +600,8 @@ function AcceptedDayFeed({
       });
     if (
       section.stream.nowAfter ||
-      section.stream.rows.some((row) => row.position === "TNS")
+      (presentation?.showTimeUnspecified !== false &&
+        section.stream.rows.some((row) => row.position === "TNS"))
     )
       windowRows.push({
         key: `footer:${section.date}`,
@@ -658,6 +661,7 @@ function AcceptedDayFeed({
             contentContainerStyle={[
               styles.content,
               presentation?.header ? styles.withIntroduction : undefined,
+              presentation?.listContentStyle,
             ]}
             onViewportChange={presentation?.onViewportChange}
             onReadingMotion={presentation?.onReadingMotion}
@@ -688,34 +692,37 @@ function AcceptedDayFeed({
         }
         animationType="slide"
       >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          style={styles.root}
-          contentContainerStyle={[styles.content, presentation?.immersiveContentStyle]}
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          {selected ? render(selected, "I") : null}
-          {selectedBlock ? (
-            <BlockSlot
-              renderer={flexibleRenderer}
-              block={selectedBlock}
-              immersive
-              nestedItems={
-                <>
-                  {rows
-                    .filter((row) => row.containerId === selectedBlock.id)
-                    .map(renderItem)}
-                </>
-              }
-              onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
-              onChoiceFocusIntent={() => {}}
-              onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
-              onClose={close}
-              flexibleSnapshot={publication.snapshot}
-              onReplaceFlexibleSnapshot={publication.replace}
-            />
-          ) : null}
-        </ScrollView>
+        <View style={styles.root}>
+          {presentation?.renderImmersiveHeader?.(close)}
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            style={styles.root}
+            contentContainerStyle={[styles.content, presentation?.immersiveContentStyle]}
+            contentInsetAdjustmentBehavior="automatic"
+          >
+            {selected ? render(selected, "I") : null}
+            {selectedBlock ? (
+              <BlockSlot
+                renderer={flexibleRenderer}
+                block={selectedBlock}
+                immersive
+                nestedItems={
+                  <>
+                    {rows
+                      .filter((row) => row.containerId === selectedBlock.id)
+                      .map(renderItem)}
+                  </>
+                }
+                onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
+                onChoiceFocusIntent={() => {}}
+                onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
+                onClose={close}
+                flexibleSnapshot={publication.snapshot}
+                onReplaceFlexibleSnapshot={publication.replace}
+              />
+            ) : null}
+          </ScrollView>
+        </View>
       </Modal>
     </>
   );

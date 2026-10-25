@@ -206,9 +206,14 @@ export function P1FidelityPreview() {
                 />
               </View>
             ),
+            topInset: headerHeight,
             listStyle: styles.mint,
+            listContentStyle: { backgroundColor: phase(fixture.dateRange.end) },
             showTimeUnspecified: false,
             immersiveContentStyle: { paddingHorizontal: 0, paddingBottom: 0 },
+            renderImmersiveHeader: (onClose) => (
+              <SheetHeader title="" leftLabel={t("common.back")} onLeft={onClose} />
+            ),
             renderDayHeading: (date, empty) => (
               <DayFeedFidelityHeading
                 date={date}
