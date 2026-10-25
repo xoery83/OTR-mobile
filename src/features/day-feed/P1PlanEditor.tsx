@@ -118,6 +118,7 @@ export function P1PlanEditor({
   registerDismissHandler,
   itemId,
   initialDate,
+  initialStartTime,
   tripStartDate,
   tripEndDate,
   opened,
@@ -127,12 +128,16 @@ export function P1PlanEditor({
   onChooseRental,
   onChooseTransport,
   onFindPlace,
+  previewFields,
+  previewContextLabel,
+  previewParticipationKnown = true,
 }: {
   tripId: string;
   embedded?: boolean;
   registerDismissHandler?: (handler: () => void) => () => void;
   itemId?: string;
   initialDate?: string | null;
+  initialStartTime?: string | null;
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   opened?: Opened;
@@ -142,24 +147,35 @@ export function P1PlanEditor({
   onChooseRental?(): void;
   onChooseTransport?(): void;
   onFindPlace?(current: string): void;
+  // DEV visual fixture only; never a Repository draft or a writable Item.
+  previewFields?: ManualPlanFields;
+  previewContextLabel?: string;
+  previewParticipationKnown?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
+  const preview = typeof __DEV__ !== "undefined" && __DEV__ ? previewFields : undefined;
   const generation = getAccountGeneration();
   const alive = useRef(true);
   const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
   const [fields, setFields] = useState<ManualPlanFields | null>(
-    opened ? structuredClone(opened.draft.fields) : null,
+    opened
+      ? structuredClone(opened.draft.fields)
+      : preview
+        ? structuredClone(preview)
+        : null,
   );
   const fieldsRef = useRef(fields);
-  const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
+  const initialRef = useRef(
+    opened ? JSON.stringify(opened.draft.fields) : preview ? JSON.stringify(preview) : "",
+  );
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
   const firstAttemptRef = useRef<ManualPlanFields | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
-    opened ? "READY" : "LOADING",
+    opened || preview ? "READY" : "LOADING",
   );
   const placeRequest = useRef({ ticket: 0 });
   const [placeSearch, setPlaceSearch] = useState<{
@@ -174,7 +190,7 @@ export function P1PlanEditor({
   useEffect(() => {
     const placeRequests = placeRequest.current;
     alive.current = true;
-    if (!opened) {
+    if (!opened && !preview) {
       void (async () => {
         try {
           const repository = await createDefaultManualPlanRepository();
@@ -184,6 +200,12 @@ export function P1PlanEditor({
           if (!alive.current || generation !== getAccountGeneration()) return;
           const value = structuredClone(draft.fields);
           if (!itemId && initialDate) value.startDate = initialDate;
+          if (
+            !itemId &&
+            initialStartTime &&
+            /^([01]\d|2[0-3]):[0-5]\d$/.test(initialStartTime)
+          )
+            value.startTime = initialStartTime;
           setSource({ repository, draft });
           fieldsRef.current = value;
           setFields(value);
@@ -199,7 +221,7 @@ export function P1PlanEditor({
       alive.current = false;
       placeRequests.ticket++;
     };
-  }, [tripId, itemId, initialDate, opened, generation]);
+  }, [tripId, itemId, initialDate, initialStartTime, opened, generation, preview]);
   const current = () =>
     alive.current && !closedRef.current && generation === getAccountGeneration();
   const change = (next: Partial<ManualPlanFields>) => {
@@ -350,7 +372,7 @@ export function P1PlanEditor({
           category="form"
           title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}
           rightLabel={t(itemId ? "tripCreate.saveChanges" : "tripCreate.createPlan")}
-          rightDisabled={!valid || saving || (frozen && status !== "ERROR")}
+          rightDisabled={!!preview || !valid || saving || (frozen && status !== "ERROR")}
           onRight={() => void save()}
           leftLabel={t("common.cancel")}
           leftDisabled={saving}
@@ -361,6 +383,11 @@ export function P1PlanEditor({
           style={styles.body}
           contentContainerStyle={styles.content}
         >
+          {preview ? (
+            <Text style={styles.meta}>
+              {previewContextLabel ?? t("fidelity.previewOnly")}
+            </Text>
+          ) : null}
           {status === "LOADING" ? (
             <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
           ) : null}
@@ -374,7 +401,7 @@ export function P1PlanEditor({
               {t("tripCreate.planRetrySame")}
             </Text>
           ) : null}
-          {fields && source ? (
+          {fields && (source || preview) ? (
             <>
               {onChooseStay ? (
                 <UiButton
@@ -418,7 +445,7 @@ export function P1PlanEditor({
                     <UiButton
                       label={t("tripCreate.findPlace")}
                       variant="text"
-                      disabled={saving || frozen}
+                      disabled={!!preview || saving || frozen}
                       onPress={() => {
                         Keyboard.dismiss();
                         if (onFindPlace)
@@ -515,12 +542,16 @@ export function P1PlanEditor({
                     }
                   />
                 </View>
-                <PlanParticipantsField
-                  value={fields.participation}
-                  options={source.draft.participantOptions}
-                  disabled={saving || frozen}
-                  onChange={(participation) => change({ participation })}
-                />
+                {preview && !previewParticipationKnown ? (
+                  <Text style={styles.meta}>{t("fidelity.participantsUnknown")}</Text>
+                ) : (
+                  <PlanParticipantsField
+                    value={fields.participation}
+                    options={source?.draft.participantOptions ?? []}
+                    disabled={saving || frozen}
+                    onChange={(participation) => change({ participation })}
+                  />
+                )}
               </View>
             </>
           ) : null}

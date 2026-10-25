@@ -325,7 +325,7 @@ const createStyles = (colors: UiColors) =>
     fidelityRangeLabel: {
       ...visual.type.row,
       fontWeight: "700",
-      color: colors.textPrimary,
+      color: colors.textSecondary,
       textAlign: "center",
       flexShrink: 1,
     },

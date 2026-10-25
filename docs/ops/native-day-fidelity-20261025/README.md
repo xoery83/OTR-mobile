@@ -28,3 +28,6 @@ P2 pure flight grid has7 focused tests including sparse/Floating/date-line/termi
 ## Current P1 replay60e09c6f
 
 Owner resumed Day Feed/P1 while retaining P2 Create for later testing. Native replay now fixes singular association count copy and context-change state leakage; final implementation preserves Native Stack header and tracks virtualized window origin. Key-remount candidate7df33d63 is superseded after observed blank deep title. Nine cells have been recaptured at one final UI SHA; see P1_NATIVE_CAPTURES_R3.json and P1_R3_DIFFERENCES.md. Back/deep jump/END/pending/empty preview also observed. Fixture-only Native observation; no real Reader/Cloud or complete shared integration claim. Actual QA business records and queues are unchanged.
+
+
+Latest Owner-requested no-ruler Move visual candidate: [V1 implementation and pending device acceptance](P1_MOVE_EFFECT_V1.md).107 directed tests PASS; real Reader/mutation/Cloud and sustained Native touch acceptance remain open.

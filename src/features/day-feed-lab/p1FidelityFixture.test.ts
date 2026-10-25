@@ -7,6 +7,7 @@ import {
 import { collectFixtureContributions } from "./contribution";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { composeDayStream } from "@/features/day-feed/composition";
+vi.mock("./P1FixtureNowMarker", () => ({ P1FixtureNowMarker: () => null }));
 vi.mock("@/features/day-feed/P1Row", () => ({ P1Row: () => null }));
 it("adapts the frozen24Item/10day pack into the existing reader DTO without unavailable disclosure", () => {
   const f = p1FidelityFixture("today");
@@ -65,4 +66,53 @@ it("direct detail resolves the owning continuous occurrence key across days", ()
     ).toBe(true);
   }
   expect(p1FidelityFocusKey(f, "syn-p1-unavailable")).toBeUndefined();
+});
+
+it("move preview retains source identity and point shape without mutating the frozen pack", () => {
+  const original = JSON.stringify(p1FidelityPack);
+  const moved = p1FidelityFixture("future", {}, undefined, undefined, {
+    previews: {
+      "syn-p1-afternoon": {
+        date: "2027-01-17",
+        time: "14:00",
+        endDate: null,
+        endTime: null,
+        instant: "2027-01-17T01:00:00Z",
+        endInstant: null,
+        zone: "Pacific/Auckland",
+      },
+    },
+    handlers: { start() {}, change() {}, end() {} },
+  });
+  const point = moved.projection.events.find((event) => event.id === "syn-p1-afternoon")!;
+  expect(point.temporal_shape).toBe("POINT");
+  expect(point.boundaries).toHaveLength(1);
+  expect(point.boundaries[0].source_instant).toBeNull();
+  expect(JSON.stringify(p1FidelityPack)).toBe(original);
+});
+
+it("moved detail and Edit preview reuse the same qualified placement, ignoring route instants", async () => {
+  const { p1MoveDetailPreview } = await import("./p1MoveDetailPreview");
+  const moved = p1MoveDetailPreview(
+    "syn-p1-exact",
+    JSON.stringify({ date: "2027-01-17", time: "14:00", instant: "forged" }),
+  );
+  expect(moved).toMatchObject({
+    date: "2027-01-17",
+    time: "14:00",
+    endTime: "15:30",
+    instant: "2027-01-17T01:00:00.000Z",
+  });
+  expect(
+    p1MoveDetailPreview(
+      "syn-p1-exact",
+      JSON.stringify({ date: "2027-09-26", time: "02:30" }),
+    ),
+  ).toBeUndefined();
+  expect(
+    p1MoveDetailPreview(
+      "syn-p1-exact",
+      JSON.stringify({ date: "2027-01-17", time: "25:30" }),
+    ),
+  ).toBeUndefined();
 });

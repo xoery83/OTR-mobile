@@ -94,6 +94,7 @@ const props = {
   tripId: "trip-a",
   generation: 1,
   initialDate: "2027-02-08",
+  initialStartTime: "12:30",
   tripStartDate: "2027-02-01",
   onClose: vi.fn(),
   onSaved: vi.fn(),
@@ -151,6 +152,7 @@ it.each([
       tripStartDate: "2027-02-01",
       embedded: true,
     });
+    expect(state.editor.initialStartTime).toBe(family === "P1" ? "12:30" : undefined);
     state.editor.onSaved("item-a");
     expect(props.onSaved).toHaveBeenCalledWith("item-a");
   },

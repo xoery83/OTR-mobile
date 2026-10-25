@@ -80,6 +80,7 @@ function ImmersiveHeaderSlot({
 }
 
 export type DayFeedPresentation = {
+  scrollEnabled?: boolean;
   // Optional presentation-only integration seams; composition and Reader authority stay unchanged.
   renderDayHeading?: (date: string, empty: boolean) => ReactNode;
   wrapDayRow?: (date: string, content: ReactNode) => ReactNode;
@@ -655,6 +656,7 @@ function AcceptedDayFeed({
           }
         >
           <WindowedDayList
+            scrollEnabled={presentation?.scrollEnabled}
             listRef={(value) => {
               scroll.current = value;
               presentation?.listRef?.(value);

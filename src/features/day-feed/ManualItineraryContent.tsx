@@ -26,6 +26,7 @@ export function ManualItineraryContent({
   tripId,
   generation,
   initialDate,
+  initialStartTime,
   tripStartDate,
   tripEndDate,
   onClose,
@@ -35,6 +36,7 @@ export function ManualItineraryContent({
   tripId: string;
   generation: number;
   initialDate: string | null;
+  initialStartTime?: string | null;
   tripStartDate?: string | null;
   tripEndDate?: string | null;
   onClose(): void;
@@ -47,7 +49,6 @@ export function ManualItineraryContent({
     getAccountGeneration,
   );
   const styles = useThemedStyles(createStyles);
-  const colors = useUiTheme();
   const [family, setFamily] = useState<Family | null>(null);
   const [startDate, setStartDate] = useState(tripStartDate ?? null);
   const [endDate, setEndDate] = useState(tripEndDate ?? null);
@@ -86,7 +87,7 @@ export function ManualItineraryContent({
     family === "P2" ? (
       <ManualFlightEditor {...props} />
     ) : family === "P1" ? (
-      <P1PlanEditor {...props} />
+      <P1PlanEditor {...props} initialStartTime={initialStartTime} />
     ) : family === "P3" ? (
       <P3StayEditor {...props} />
     ) : family === "P4" ? (
@@ -95,6 +96,28 @@ export function ManualItineraryContent({
       <P5TransportEditor {...props} />
     ) : null;
   if (editor) return <View style={styles.body}>{editor}</View>;
+  return (
+    <ManualItineraryChooser
+      onClose={onClose}
+      onChoose={(id) => {
+        if (generation === getAccountGeneration()) setFamily(id as Family);
+      }}
+    />
+  );
+}
+
+export function ManualItineraryChooser({
+  onClose,
+  onChoose,
+  contextLabel,
+}: {
+  onClose(): void;
+  onChoose(id: string): void;
+  contextLabel?: string;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const choice = (type: (typeof manualItineraryTypes)[number], compact: boolean) => {
     const hint =
       "reasonKey" in type
@@ -111,8 +134,7 @@ export function ManualItineraryContent({
         accessibilityState={{ disabled: !type.enabled }}
         disabled={!type.enabled}
         onPress={() => {
-          if (type.enabled && generation === getAccountGeneration())
-            setFamily(type.id as Family);
+          if (type.enabled) onChoose(type.id);
         }}
         style={[
           styles.choice,
@@ -158,6 +180,7 @@ export function ManualItineraryContent({
           contentContainerStyle={styles.content}
         >
           <UiText style={styles.prompt}>{t("formEntry.prompt")}</UiText>
+          {contextLabel ? <UiText style={styles.meta}>{contextLabel}</UiText> : null}
           <View style={styles.row}>
             {manualItineraryTypes.slice(0, 2).map((type) => choice(type, false))}
           </View>

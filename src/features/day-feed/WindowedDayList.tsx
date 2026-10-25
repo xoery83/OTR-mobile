@@ -46,6 +46,7 @@ export function WindowedDayList<T>({
   topInset = 0,
   bottomInset = 0,
   rowSpacing = 0,
+  scrollEnabled = true,
   style,
   contentContainerStyle,
   header,
@@ -68,6 +69,7 @@ export function WindowedDayList<T>({
   topInset?: number;
   bottomInset?: number;
   rowSpacing?: number;
+  scrollEnabled?: boolean;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   header?: ReactNode;
@@ -618,6 +620,7 @@ export function WindowedDayList<T>({
   );
   return (
     <FlatList
+      scrollEnabled={scrollEnabled}
       keyboardShouldPersistTaps="handled"
       key={`${scopeKey}:${windowStart.scopeKey === scopeKey ? windowStart.revision : 0}`}
       initialScrollIndex={0}

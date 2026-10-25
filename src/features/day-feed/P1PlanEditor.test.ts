@@ -620,3 +620,57 @@ it("keeps button taps handled while the P1 Name keyboard is open", async () => {
   const sheet = await search(p);
   expect(sheet.initialQuery).toBe("Dinner with Friends");
 });
+
+it("prefills a new P1 date and advisory start time and saves the authored value", async () => {
+  const p = { ...props(), initialDate: "2027-01-16", initialStartTime: "12:30" };
+  const draft = {
+    mode: "CREATE",
+    itemId: "new-plan",
+    fields: fields(),
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn(async () => ({
+      itemId: "new-plan",
+      localStatus: "PENDING",
+      operationIds: [],
+    })),
+  };
+  await open(p, repo);
+  expect(node("tripCreate.itemDate").value.start).toBe("2027-01-16");
+  node("tripCreate.planName").onChangeText("Lunch");
+  render(p);
+  node("tripCreate.createPlan").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({ startTime: "12:30", startDate: "2027-01-16" }),
+  );
+  expect(draft.fields.startTime).toBeNull();
+});
+
+it("never applies insertion defaults over an existing P1 edit", async () => {
+  const p = {
+    ...props(),
+    itemId: "existing",
+    initialDate: "2027-01-16",
+    initialStartTime: "12:30",
+  };
+  const original = {
+    ...fields(),
+    title: "Existing",
+    startDate: "2027-02-08",
+    startTime: "09:15",
+  };
+  await open(p, {
+    read: vi.fn(async () => ({
+      mode: "EDIT",
+      itemId: "existing",
+      fields: original,
+      participantOptions: [],
+    })),
+  });
+  expect(node("tripCreate.itemDate").value.start).toBe("2027-02-08");
+  expect(state.hooks.some((value: any) => value?.startTime === "09:15")).toBe(true);
+});

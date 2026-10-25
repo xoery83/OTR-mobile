@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
@@ -22,7 +22,9 @@ import { DayFeedCalendarSheet } from "@/features/day-feed/DayFeedCalendarSheet";
 import type { DayListHandle } from "@/features/day-feed/WindowedDayList";
 import type { DaySummary } from "@/features/day-feed/dayFeedWindow";
 import { p1FreshEntryFocus } from "@/features/day-feed/p1ReadPresentation";
-import { localCalendarDate } from "@/domain/trip/dayReadModel";
+import { itemsForLocalDate, localCalendarDate } from "@/domain/trip/dayReadModel";
+import { composeDayStream } from "@/features/day-feed/composition";
+import { p1InsertionTime } from "@/features/day-feed/p1InsertionTime";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { t, formatUiNumber } from "@/ui/locale";
@@ -30,7 +32,10 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
+import { useP1FixtureMove, P1MeasuredMoveRegion } from "./useP1FixtureMove";
+import { ManualItineraryChooser } from "@/features/day-feed/ManualItineraryContent";
+import { P1PlanEditor } from "@/features/day-feed/P1PlanEditor";
+import type { ManualPlanFields } from "@/data/repositories/manualPlanRepository";
 import {
   p1FidelityFixture,
   p1FidelityFocusKey,
@@ -75,7 +80,7 @@ export function P1FidelityPreview() {
     styles = useThemedStyles(createStyles),
     insets = useSafeAreaInsets(),
     headerHeight = useHeaderHeight();
-  const [sheet, setSheet] = useState<"CONTROLS" | "ADD" | "ACTION" | null>(null);
+  const [sheet, setSheet] = useState<"CONTROLS" | "ADD" | "PLAN" | "ACTION" | null>(null);
   const [calendar, setCalendar] = useState(false),
     [scrollOffset, setScrollOffset] = useState(0),
     [originIndex, setOriginIndex] = useState(0),
@@ -83,9 +88,16 @@ export function P1FidelityPreview() {
     [summaries, setSummaries] = useState<DaySummary[]>([]);
   const pastIntroduction = originIndex > 0 || scrollOffset > introductionHeight;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [calendarRevision, setCalendarRevision] = useState(1);
+  const [insertion, setInsertion] = useState<{
+    side: "BEFORE" | "AFTER";
+    itemId: string;
+    date: string;
+    startTime: string | null;
+  } | null>(null);
   const list = useRef<DayListHandle | null>(null);
   const key = JSON.stringify([clock, depth, target]);
-  const [detailState, setDetailState] = useState({ key, closed: false });
+
   const [sceneKey, setSceneKey] = useState(key);
   // Keep Stack.Screen mounted: remounting it during a virtualized deep jump loses the iOS title.
   if (sceneKey !== key) {
@@ -97,14 +109,64 @@ export function P1FidelityPreview() {
     setIntroductionHeight(111);
     setSummaries([]);
     setSelectedDate(null);
-    setDetailState({ key, closed: false });
+    setCalendarRevision(1);
+    setInsertion(null);
   }
   const targetFocusKey = p1FidelityFocusKey(initialFixture, target);
   const targetDate =
     p1FidelityPack.items.find((item) => item.id === target)?.date ??
     initialFixture.selectedDate;
   const shell = useDayFeedShellState(key);
+  const move = useP1FixtureMove(list, key, headerHeight);
   const preview = () => setSheet("ACTION");
+  const openDetail = (itemId: string) =>
+    router.push({
+      pathname: "/p1-fidelity-detail",
+      params: {
+        clock,
+        item: itemId,
+        ...(move.previews[itemId]
+          ? {
+              placement: JSON.stringify({
+                date: move.previews[itemId].date,
+                time: move.previews[itemId].time,
+              }),
+            }
+          : {}),
+      },
+    });
+  const directDetail = useRef<string | null>(null);
+  useEffect(() => {
+    if (depth === "I" && directDetail.current !== key) {
+      directDetail.current = key;
+      router.push({ pathname: "/p1-fidelity-detail", params: { clock, item: target } });
+    }
+  }, [depth, key, clock, target]);
+  const insertionLabel = insertion
+    ? t(
+        insertion.side === "BEFORE"
+          ? "fidelity.insertBeforeContext"
+          : "fidelity.insertAfterContext",
+        {
+          title: p1FidelityPack.items.find((x) => x.id === insertion.itemId)?.title ?? "",
+          date: insertion.date,
+        },
+      )
+    : undefined;
+  const insertionContext = insertion?.startTime
+    ? `${insertionLabel} · ${t("fidelity.suggestedStart", { time: insertion.startTime })}`
+    : insertionLabel;
+  const newPlanFields: ManualPlanFields = {
+    title: "",
+    startDate: insertion?.date ?? selectedDate ?? initialFixture.selectedDate,
+    startTime: insertion?.startTime ?? null,
+    endDate: null,
+    endTime: null,
+    location: null,
+    description: null,
+    participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+  };
+
   const fixture = p1FidelityFixture(
     clock,
     {
@@ -119,7 +181,17 @@ export function P1FidelityPreview() {
       addExpense: preview,
       linkExpense: preview,
     },
-    () => setSheet("ADD"),
+    (side, itemId, date) => {
+      const rows = composeDayStream(
+        itemsForLocalDate(fixture.projection, date, fixture.zone),
+        fixture.instant,
+      ).rows.map((row) => row.item.event);
+      const suggested = p1InsertionTime(rows, itemId, side, date);
+      setInsertion({ side, itemId, date, startTime: suggested.startTime });
+      setSheet("ADD");
+    },
+    openDetail,
+    move,
   );
   const today = localCalendarDate(fixture.instant, fixture.zone);
   const range = formatDayFeedVisibleDates({
@@ -186,149 +258,162 @@ export function P1FidelityPreview() {
           </Stack.Toolbar>
         </>
       ) : null}
-      <NavigationContentFrame underlapHeader>
-        <DayFeed
-          key={key}
-          projection={fixture.projection}
-          date={fixture.selectedDate}
-          dates={fixture.dates}
-          zone={fixture.zone}
-          instant={fixture.instant}
-          services={fixture.services}
-          renderer={fixture.renderer}
-          bottomInset={insets.bottom + 90}
-          entry={{
-            revision: 1,
-            kind: "RESUME",
-            reading: {
-              offset: 0,
-              focus: depth === "B" ? null : (targetFocusKey ?? null),
-              ...(depth !== "B" && targetFocusKey && targetDate !== fixture.selectedDate
-                ? { anchor: { key: targetFocusKey, date: targetDate, within: 0 } }
-                : {}),
-            },
-          }}
-          directItem={
-            depth === "I" &&
-            !(detailState.key === key && detailState.closed) &&
-            targetFocusKey
-              ? {
-                  itemId: targetFocusKey,
-                  onClose: () => setDetailState({ key, closed: true }),
-                }
-              : undefined
-          }
-          presentation={{
-            listRef: (value) => {
-              list.current = value;
-            },
-            header: (
-              <View
-                onLayout={({ nativeEvent }) =>
-                  setIntroductionHeight(
-                    Math.max(0, nativeEvent.layout.height - headerHeight),
-                  )
-                }
-                style={{
-                  paddingTop: headerHeight,
-                  backgroundColor: colors.tripIntroduction,
-                }}
-              >
-                <DayFeedIntroduction
-                  fidelity
-                  tripName={fixture.title}
-                  rangeLabel={tripRange}
-                  locationSummary={p1FidelityPack.trip.destinations[0].displayLabel}
-                  openCalendarLabel={t("dayShell.calendar.open")}
-                  onOpenCalendar={() => setCalendar(true)}
-                />
-              </View>
-            ),
-            topInset: headerHeight,
-            listStyle: styles.mint,
-            listContentStyle: { backgroundColor: phase(fixture.dateRange.end) },
-            showTimeUnspecified: false,
-            immersiveContentStyle: { paddingHorizontal: 0, paddingBottom: 0 },
-            renderImmersiveHeader: (onClose) => (
-              <View style={{ paddingTop: insets.top, backgroundColor: colors.surface }}>
-                <SheetHeader
-                  safeTop={false}
-                  title=""
-                  leftLabel={t("common.back")}
-                  onLeft={onClose}
-                />
-              </View>
-            ),
-            renderDayHeading: (date, empty) => (
-              <DayFeedFidelityHeading
-                date={date}
-                start={fixture.dateRange.start}
-                today={today}
-                empty={empty}
-                dayColor={phase(date)}
-                previousColor={
-                  date === fixture.dateRange.start
-                    ? colors.tripIntroduction
-                    : phase(
-                        new Date(Date.parse(date + "T12:00:00Z") - 86400000)
-                          .toISOString()
-                          .slice(0, 10),
-                      )
-                }
-                onAdd={date >= today ? () => setSheet("ADD") : undefined}
-              />
-            ),
-            wrapDayRow: (date, content) => (
-              <View
-                style={{
-                  backgroundColor: phase(date),
-                  paddingHorizontal: visual.space.feedGutter,
-                }}
-              >
-                {content}
-              </View>
-            ),
-            onOffsetChange: (offset) => {
-              shell.observeScroll(offset, false);
-              setScrollOffset(offset);
-            },
-            onReadingMotion: shell.observeReadingMotion,
-            onViewportChange: (viewport) => {
-              setOriginIndex(viewport.originIndex);
-              shell.observeVisibleDates({
-                first: viewport.firstVisibleDate,
-                last: viewport.lastVisibleDate,
-              });
-            },
-            onInteraction: () => setSelectedDate(null),
-            onSummaries: setSummaries,
-          }}
-        />
-        {pastIntroduction ? (
+      <View style={styles.stage} {...move.touchHandlers}>
+        <NavigationContentFrame underlapHeader>
+          <DayFeed
+            key={key}
+            projection={fixture.projection}
+            date={fixture.selectedDate}
+            dates={fixture.dates}
+            zone={fixture.zone}
+            instant={fixture.instant}
+            services={fixture.services}
+            renderer={fixture.renderer}
+            bottomInset={insets.bottom + 90}
+            entry={{
+              revision: calendarRevision,
+              kind: "RESUME",
+              reading: {
+                offset: 0,
+                focus:
+                  calendarRevision > 1 || depth === "B" ? null : (targetFocusKey ?? null),
+                ...(calendarRevision === 1 &&
+                depth !== "B" &&
+                targetFocusKey &&
+                (targetDate !== fixture.selectedDate || !params.depth)
+                  ? { anchor: { key: targetFocusKey, date: targetDate, within: 0 } }
+                  : {}),
+                ...(calendarRevision > 1 && selectedDate
+                  ? {
+                      anchor: {
+                        key: `day:${selectedDate}`,
+                        date: selectedDate,
+                        within: 0,
+                      },
+                    }
+                  : {}),
+              },
+            }}
+            presentation={{
+              scrollEnabled: !move.active,
+              listRef: (value) => {
+                list.current = value;
+              },
+              header: (
+                <View
+                  onLayout={({ nativeEvent }) =>
+                    setIntroductionHeight(
+                      Math.max(0, nativeEvent.layout.height - headerHeight),
+                    )
+                  }
+                  style={{
+                    paddingTop: headerHeight,
+                    backgroundColor: colors.tripIntroduction,
+                  }}
+                >
+                  <DayFeedIntroduction
+                    fidelity
+                    tripName={fixture.title}
+                    rangeLabel={tripRange}
+                    locationSummary={p1FidelityPack.trip.destinations[0].displayLabel}
+                    openCalendarLabel={t("dayShell.calendar.open")}
+                    onOpenCalendar={() => setCalendar(true)}
+                  />
+                </View>
+              ),
+              topInset: headerHeight,
+              listStyle: styles.mint,
+              listContentStyle: { backgroundColor: phase(fixture.dateRange.end) },
+              showTimeUnspecified: false,
+              immersiveContentStyle: { paddingHorizontal: 0, paddingBottom: 0 },
+              renderDayHeading: (date, empty) => (
+                <P1MeasuredMoveRegion
+                  regionKey={`day:${date}`}
+                  date={date}
+                  register={move.register}
+                  unregister={move.unregister}
+                >
+                  <DayFeedFidelityHeading
+                    date={date}
+                    start={fixture.dateRange.start}
+                    today={today}
+                    empty={empty}
+                    dayColor={phase(date)}
+                    previousColor={
+                      date === fixture.dateRange.start
+                        ? colors.tripIntroduction
+                        : phase(
+                            new Date(Date.parse(date + "T12:00:00Z") - 86400000)
+                              .toISOString()
+                              .slice(0, 10),
+                          )
+                    }
+                    onAdd={
+                      date >= today
+                        ? () => {
+                            setInsertion(null);
+                            setSelectedDate(date);
+                            setSheet("ADD");
+                          }
+                        : undefined
+                    }
+                  />
+                </P1MeasuredMoveRegion>
+              ),
+              wrapDayRow: (date, content) => (
+                <View
+                  style={{
+                    backgroundColor: phase(date),
+                    paddingHorizontal: visual.space.feedGutter,
+                  }}
+                >
+                  {content}
+                </View>
+              ),
+              onOffsetChange: (offset) => {
+                shell.observeScroll(offset, false);
+                setScrollOffset(offset);
+              },
+              onReadingMotion: shell.observeReadingMotion,
+              onViewportChange: (viewport) => {
+                setOriginIndex(viewport.originIndex);
+                shell.observeVisibleDates({
+                  first: viewport.firstVisibleDate,
+                  last: viewport.lastVisibleDate,
+                });
+              },
+              onInteraction: () => setSelectedDate(null),
+              onSummaries: setSummaries,
+            }}
+          />
+          {pastIntroduction ? (
+            <View
+              pointerEvents="none"
+              style={[styles.statusCover, { height: insets.top }]}
+            />
+          ) : null}
           <View
             pointerEvents="none"
-            style={[styles.statusCover, { height: insets.top }]}
-          />
-        ) : null}
-        <View
-          pointerEvents="none"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={StyleSheet.absoluteFill}
-        >
-          <ExperienceBottomShell
-            visible={!pastIntroduction || shell.navigationVisible}
-            pathname="/"
-          />
-        </View>
-      </NavigationContentFrame>
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={StyleSheet.absoluteFill}
+          >
+            <ExperienceBottomShell
+              visible={!pastIntroduction || shell.navigationVisible}
+              pathname="/"
+            />
+          </View>
+        </NavigationContentFrame>
+        {move.overlay}
+      </View>
+      {move.confirmation}
       <DayFeedCalendarSheet
         visible={calendar}
         onClose={() => setCalendar(false)}
         onSelect={(date) => {
           setCalendar(false);
           setSelectedDate(date);
-          list.current?.jumpToDayHeader(date);
+          setCalendarRevision((revision) => revision + 1);
         }}
         tripName={fixture.title}
         rangeLabel={tripRange}
@@ -348,70 +433,81 @@ export function P1FidelityPreview() {
       />
       <Modal
         visible={!!sheet}
-        presentationStyle="pageSheet"
+        transparent
+        presentationStyle="overFullScreen"
         animationType="slide"
         onRequestClose={() => setSheet(null)}
       >
-        <View style={styles.sheet}>
-          <SheetHeader
-            category="action"
-            title={t(sheet === "ADD" ? "formEntry.title" : "dayLab.title")}
-            onLeft={() => setSheet(null)}
-          />
-          <ScrollView
-            style={styles.sheet}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.controls}
-          >
-            {sheet === "CONTROLS" ? (
-              <>
-                {(["future", "today", "past"] as const).map((c) => (
-                  <View key={c} style={styles.matrix}>
-                    {(["B", "F", "I"] as const).map((d) => (
-                      <UiButton
-                        key={d}
-                        label={t("fidelity.cell", {
-                          context: t(`fidelity.${c}`),
-                          depth: t(`fidelity.depth${d}`),
-                        })}
-                        variant="secondary"
-                        onPress={() => {
-                          setSheet(null);
-                          router.setParams({ clock: c, depth: d });
-                        }}
-                      />
+        <View style={sheet === "ADD" ? styles.transparentSheet : styles.modalBackdrop}>
+          {sheet === "ADD" ? (
+            <ManualItineraryChooser
+              contextLabel={insertionContext}
+              onClose={() => setSheet(null)}
+              onChoose={(id) => setSheet(id === "P1" ? "PLAN" : "ACTION")}
+            />
+          ) : sheet === "PLAN" ? (
+            <View style={styles.modalBody}>
+              <P1PlanEditor
+                embedded
+                tripId={fixture.id}
+                previewFields={newPlanFields}
+                previewContextLabel={insertionContext}
+                onClose={() => setSheet(null)}
+                onSaved={() => {}}
+              />
+            </View>
+          ) : (
+            <View style={styles.modalBody}>
+              <SheetHeader
+                category="action"
+                title={t("dayLab.title")}
+                onLeft={() => setSheet(null)}
+              />
+              <ScrollView
+                style={styles.sheet}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.controls}
+              >
+                {sheet === "CONTROLS" ? (
+                  <>
+                    {(["future", "today", "past"] as const).map((c) => (
+                      <View key={c} style={styles.matrix}>
+                        {(["B", "F", "I"] as const).map((d) => (
+                          <UiButton
+                            key={d}
+                            label={t("fidelity.cell", {
+                              context: t(`fidelity.${c}`),
+                              depth: t(`fidelity.depth${d}`),
+                            })}
+                            variant="secondary"
+                            onPress={() => {
+                              setSheet(null);
+                              router.setParams({ clock: c, depth: d });
+                            }}
+                          />
+                        ))}
+                      </View>
                     ))}
-                  </View>
-                ))}
-                {p1FidelityPack.items
-                  .filter((x) => x.availability !== "UNAVAILABLE")
-                  .map((item) => (
-                    <UiButton
-                      key={item.id}
-                      label={item.title}
-                      variant="text"
-                      onPress={() => {
-                        setSheet(null);
-                        router.setParams({ item: item.id, depth: "F" });
-                      }}
-                    />
-                  ))}
-              </>
-            ) : sheet === "ADD" ? (
-              <>
-                {manualItineraryTypes.map((type) => (
-                  <UiButton
-                    key={type.id}
-                    label={t(type.labelKey)}
-                    variant="secondary"
-                    onPress={preview}
-                  />
-                ))}
-              </>
-            ) : (
-              <UiText style={styles.meta}>{t("fidelity.previewOnly")}</UiText>
-            )}
-          </ScrollView>
+                    {p1FidelityPack.items
+                      .filter((x) => x.availability !== "UNAVAILABLE")
+                      .map((item) => (
+                        <UiButton
+                          key={item.id}
+                          label={item.title}
+                          variant="text"
+                          onPress={() => {
+                            setSheet(null);
+                            router.setParams({ item: item.id, depth: "F" });
+                          }}
+                        />
+                      ))}
+                  </>
+                ) : (
+                  <UiText style={styles.meta}>{t("fidelity.previewOnly")}</UiText>
+                )}
+              </ScrollView>
+            </View>
+          )}
         </View>
       </Modal>
     </>
@@ -419,6 +515,7 @@ export function P1FidelityPreview() {
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
+    stage: { flex: 1 },
     mint: { backgroundColor: c.tripIntroduction },
     dateIsland: {
       minHeight: 44,
@@ -433,6 +530,15 @@ const createStyles = (c: UiColors) =>
       backgroundColor: c.background,
     },
     sheet: { flex: 1, backgroundColor: c.background },
+    transparentSheet: { flex: 1, backgroundColor: c.transparent },
+    modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: c.overlay },
+    modalBody: {
+      height: "90%",
+      backgroundColor: c.background,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      overflow: "hidden",
+    },
     controls: { padding: 16, gap: 12 },
     matrix: { gap: 8 },
     meta: { ...visual.type.meta, color: c.textSecondary },

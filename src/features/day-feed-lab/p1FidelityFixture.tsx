@@ -1,4 +1,6 @@
-import { createElement } from "react";
+import { Fragment, createElement, type ReactNode } from "react";
+import type { FixtureMovePreview, MovePoint } from "./useP1FixtureMove";
+import { P1FixtureNowMarker } from "./P1FixtureNowMarker";
 import pack from "./fixtures/p1-fidelity-v2.json";
 import {
   itemsForLocalDate,
@@ -17,14 +19,29 @@ export function p1FidelityFixture(
   clock: P1FidelityClock,
   actions: P1ReadActions = {},
   onInsert?: (side: "BEFORE" | "AFTER", itemId: string, date: string) => void,
+  onDetail?: (itemId: string) => void,
+  move?: {
+    previews: Record<string, FixtureMovePreview>;
+    wrapRow?(key: string, date: string, content: ReactNode): ReactNode;
+    handlers: {
+      start(id: string, point: MovePoint): void;
+      change(point: MovePoint): void;
+      end(): void;
+      cancel?(): void;
+    };
+  },
 ): FixtureContribution {
-  const visible = pack.items.filter((item) => item.availability !== "UNAVAILABLE");
+  const visible = pack.items
+    .filter((item) => item.availability !== "UNAVAILABLE")
+    .map((item) => ({ ...item, ...move?.previews[item.id] }));
   const events = visible.map((item) => {
+    const original = pack.items.find((source) => source.id === item.id)!;
+    const hasEnd = "endTime" in original;
     const b = (
       role: DayBoundary["role"],
       date: string,
       time: string | null | undefined,
-      instant: string | undefined,
+      instant: string | null | undefined,
     ): DayBoundary => ({
       ...boundary(role, date),
       local_time: time ? time + ":00" : null,
@@ -32,24 +49,24 @@ export function p1FidelityFixture(
       zone_id: item.zone,
       quality: time ? "EXACT" : "UNKNOWN",
       instant: instant ?? null,
-      source_instant: instant ?? null,
-      source_instant_precision: instant ? 0 : null,
-      basis: instant ? "SOURCE_INSTANT" : "DERIVED_CIVIL",
+      source_instant: move?.previews[item.id] ? null : (instant ?? null),
+      source_instant_precision: move?.previews[item.id] ? null : instant ? 0 : null,
+      basis: instant && !move?.previews[item.id] ? "SOURCE_INSTANT" : "DERIVED_CIVIL",
       civil_resolution: instant ? "UNIQUE" : "PENDING",
     });
     return {
       ...place(item.id, item.title, item.date),
       authored_label: item.place ?? null,
       authored_address: "address" in item ? item.address : null,
-      temporal_shape: "endTime" in item ? "SPAN" : "POINT",
+      temporal_shape: hasEnd ? "SPAN" : "POINT",
       boundaries: [
         b("START", item.date, item.time, "instant" in item ? item.instant : undefined),
-        ...("endTime" in item
+        ...(hasEnd
           ? [
               b(
                 "END",
                 ("endDate" in item ? item.endDate : undefined) ?? item.date,
-                item.endTime,
+                "endTime" in item ? item.endTime : null,
                 "endInstant" in item ? item.endInstant : undefined,
               ),
             ]
@@ -73,32 +90,73 @@ export function p1FidelityFixture(
       } as P1ReadFacts,
     ]),
   );
-  const renderer: DayRowRenderer = (props) =>
-    createElement(P1Row, {
-      event: props.row.item.event,
-      depth: props.depth,
-      onDepth: props.onDepth,
-      withinMarker: props.withinMarker,
-      hideDivider: props.nextFocused,
-      showHeader: false,
-      facts: facts[props.row.item.event.id],
-      actions,
-      context: props.context,
-      occurrence:
-        props.row.item.roles.includes("END") && !props.row.item.roles.includes("START")
-          ? "END"
-          : "START",
-      instant: pack.clockPresets[clock],
-      onInsert: onInsert
-        ? (side) =>
-            onInsert(
-              side,
-              props.row.item.event.id,
-              props.row.item.event.boundaries.find((b) => b.role === "START")
-                ?.local_date ?? "",
-            )
-        : undefined,
-    });
+  const referenceNowBefore =
+    clock === "today"
+      ? visible
+          .filter(
+            (item) =>
+              item.availability === "AVAILABLE" &&
+              "instant" in item &&
+              item.instant &&
+              item.time &&
+              item.zone &&
+              item.date === pack.clockPresets[clock].slice(0, 10) &&
+              Date.parse(item.instant) > Date.parse(pack.clockPresets[clock]),
+          )
+          .sort(
+            (a, b) =>
+              Date.parse("instant" in a ? (a.instant ?? "") : "") -
+              Date.parse("instant" in b ? (b.instant ?? "") : ""),
+          )[0]?.id
+      : null;
+  const renderer: DayRowRenderer = (props) => {
+    const content = createElement(
+      Fragment,
+      null,
+      props.depth !== "I" && props.row.item.event.id === referenceNowBefore
+        ? createElement(P1FixtureNowMarker)
+        : null,
+      createElement(P1Row, {
+        event: props.row.item.event,
+        depth: props.depth,
+        moveGesture:
+          move &&
+          !facts[props.row.item.event.id]?.pending &&
+          props.row.item.roles.includes("START")
+            ? {
+                start: (point) => move.handlers.start(props.row.item.event.id, point),
+              }
+            : undefined,
+        onDepth: (next) => {
+          if (next === "I" && onDetail) onDetail(props.row.item.event.id);
+          else props.onDepth(next);
+        },
+        withinMarker: props.withinMarker,
+        hideDivider: props.nextFocused,
+        showHeader: false,
+        facts: facts[props.row.item.event.id],
+        actions,
+        context: props.context,
+        occurrence:
+          props.row.item.roles.includes("END") && !props.row.item.roles.includes("START")
+            ? "END"
+            : "START",
+        instant: pack.clockPresets[clock],
+        onInsert: onInsert
+          ? (side) =>
+              onInsert(
+                side,
+                props.row.item.event.id,
+                props.row.item.event.boundaries.find((b) => b.role === "START")
+                  ?.local_date ?? "",
+              )
+          : undefined,
+      }),
+    );
+    const role = props.row.item.roles.includes("START") ? "START" : "END";
+    const date = props.row.item.event.boundaries.find((b) => b.role === role)?.local_date;
+    return move?.wrapRow && date ? move.wrapRow(props.row.key, date, content) : content;
+  };
   const dates = Array.from({ length: 10 }, (_, i) => `2027-01-${16 + i}`);
   return {
     version: "day-feed-lab/1",
@@ -118,7 +176,10 @@ export function p1FidelityFixture(
       source: {
         epochId: "p1-fidelity-synthetic",
         revision: "2",
-        fingerprint: "frozen-883e6b5",
+        fingerprint:
+          move && Object.keys(move.previews).length
+            ? `fixture-move-preview:${JSON.stringify(move.previews)}`
+            : "frozen-883e6b5",
         appliedGeneration: 1,
       },
       events,

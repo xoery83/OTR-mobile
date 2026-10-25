@@ -108,10 +108,12 @@ export function DayFeedFidelityHeading({
             {title}
           </UiText>
           <UiText style={styles.meta}>
-            {formatUiDate(at, {
-              dateStyle: isToday || isTomorrow ? "full" : "medium",
-              timeZone: "UTC",
-            })}
+            {isToday || isTomorrow
+              ? t("fidelity.weekdayDate", {
+                  weekday: formatUiDate(at, { weekday: "long", timeZone: "UTC" }),
+                  date: formatUiDate(at, { dateStyle: "medium", timeZone: "UTC" }),
+                })
+              : formatUiDate(at, { dateStyle: "medium", timeZone: "UTC" })}
           </UiText>
         </View>
       </View>
@@ -181,7 +183,7 @@ const createStyles = (c: UiColors) =>
     bindingLeft: { left: 10 },
     bindingRight: { right: 10 },
     bindingOnAccent: { backgroundColor: c.onAccent },
-    badgeLabel: { ...visual.type.section, color: c.textPrimary },
+    badgeLabel: { ...visual.type.section, fontSize: 22, color: c.textPrimary },
     badgeOnAccent: { color: c.onAccent },
     copy: { flex: 1, minWidth: 0, gap: 4 },
     title: { ...visual.type.section, color: c.textPrimary },

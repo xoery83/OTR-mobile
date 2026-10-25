@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { acceptedBoundaryAnchor, type DayEvent } from "@/domain/trip/dayReadModel";
 import { AppIcon } from "@/components/AppIcon";
@@ -50,6 +50,7 @@ export function P1Row({
   onInsert,
   hideDivider = false,
   showHeader = true,
+  moveGesture,
 }: {
   event: DayEvent;
   depth: Depth;
@@ -64,8 +65,12 @@ export function P1Row({
   onInsert?(side: "BEFORE" | "AFTER"): void;
   hideDivider?: boolean;
   showHeader?: boolean;
+  moveGesture?: {
+    start(point: { x: number; y: number }): void;
+  };
 }) {
   useUiLocale();
+  const longPress = useRef(false);
   const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -187,7 +192,7 @@ export function P1Row({
             onInsert?.(side);
         }}
       >
-        <AppIcon name="plus" size={15} color={colors.textSecondary} />
+        <AppIcon name="plus" size={12} color={colors.textSecondary} />
       </Pressable>
     </View>
   );
@@ -343,7 +348,24 @@ export function P1Row({
           accessibilityLabel={rowLabel}
           accessibilityHint={t(focused ? "p1r.collapseHint" : "p1r.focusHint")}
           style={[styles.main, focused && styles.focusMain]}
-          onPress={() => onDepth(focused ? "B" : "F")}
+          onPressIn={() => {
+            longPress.current = false;
+          }}
+          delayLongPress={450}
+          onLongPress={
+            moveGesture
+              ? (event) => {
+                  longPress.current = true;
+                  moveGesture.start({
+                    x: event.nativeEvent.pageX,
+                    y: event.nativeEvent.pageY,
+                  });
+                }
+              : undefined
+          }
+          onPress={() => {
+            if (!longPress.current) onDepth(focused ? "B" : "F");
+          }}
         >
           <View style={[styles.rail, { width: 54 * Math.max(1, fontScale) }]}>
             {occurrence === "END" ? (
@@ -380,18 +402,22 @@ export function P1Row({
             {facts?.pending ? (
               <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>
             ) : null}
+            {focused ? (
+              <>
+                {event.status !== "planned" ? (
+                  <Text style={styles.meta}>{t(`dayFeed.status.${event.status}`)}</Text>
+                ) : null}
+                {tags}
+                {context !== "PAST" && facts?.note ? (
+                  <Text style={styles.note}>{p1NoteExcerpt(facts.note)}</Text>
+                ) : null}
+                {children}
+              </>
+            ) : null}
           </View>
         </Pressable>
         {focused ? (
           <View style={styles.focusBody}>
-            {event.status !== "planned" ? (
-              <Text style={styles.meta}>{t(`dayFeed.status.${event.status}`)}</Text>
-            ) : null}
-            {tags}
-            {context !== "PAST" && facts?.note ? (
-              <Text style={styles.note}>{p1NoteExcerpt(facts.note)}</Text>
-            ) : null}
-            {children}
             <View style={styles.focusActions}>
               {icon("arrow.up.left.and.arrow.down.right", t("p1r.richerDetails"), () =>
                 onDepth("I"),
@@ -431,7 +457,7 @@ const createStyles = (c: UiColors) =>
     },
     focusMain: { paddingHorizontal: 11, paddingBottom: 0 },
     rail: { width: 54, flexShrink: 0, paddingTop: 2 },
-    clock: { ...visual.type.feedClock, color: c.textPrimary },
+    clock: { ...visual.type.feedClock, color: c.textSecondary },
     endClock: { ...visual.type.feedEndClock, color: c.textSecondary, marginTop: 3 },
     endRole: { ...visual.type.feedTag, color: c.accent },
     offset: { ...visual.type.feedEndClock, color: c.accent, fontWeight: "700" },
