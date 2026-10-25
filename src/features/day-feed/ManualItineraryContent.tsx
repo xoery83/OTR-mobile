@@ -169,6 +169,7 @@ export function ManualItineraryChooser({
       <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
         <SheetHeader
           category="action"
+          surface="background"
           safeTop={false}
           title={t("formEntry.title")}
           leftLabel={t("common.close")}
@@ -187,13 +188,6 @@ export function ManualItineraryChooser({
           <View style={styles.row}>
             {manualItineraryTypes.slice(2).map((type) => choice(type, true))}
           </View>
-          {manualItineraryTypes
-            .filter((type) => !type.enabled)
-            .map((type) => (
-              <UiText key={type.id} style={styles.meta}>
-                {t("reasonKey" in type ? type.reasonKey : "formEntry.prompt")}
-              </UiText>
-            ))}
         </ScrollView>
       </SafeAreaView>
     </View>
