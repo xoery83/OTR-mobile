@@ -1,6 +1,6 @@
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Keyboard, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -42,6 +42,7 @@ function TimeField({
         value={value ?? t("tripCreate.notSet")}
         disabled={disabled}
         onPress={() => {
+          Keyboard.dismiss();
           const date = new Date();
           if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
           setSelected(date);
@@ -257,7 +258,7 @@ export function P3StayEditor({
         <SheetHeader
           title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}
           category="form"
-          rightLabel={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
+          rightLabel={t("ui.save")}
           rightDisabled={saveDisabled}
           onRight={() => void save()}
           leftLabel={t("common.cancel")}
@@ -265,6 +266,7 @@ export function P3StayEditor({
           onLeft={() => close()}
         />
         <ScrollView
+          keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets
           keyboardShouldPersistTaps="handled"
           style={styles.body}
@@ -318,13 +320,15 @@ export function P3StayEditor({
                   editable={!saving && !frozen}
                   onChangeText={(title) => change({ title })}
                 />
-                <CalendarField
-                  label={t("tripCreate.checkin")}
-                  value={fields.startDate}
-                  initialNavigationDate={tripStartDate}
-                  disabled={saving || frozen}
-                  onChange={(startDate) => change({ startDate })}
-                />
+                <View onTouchEnd={Keyboard.dismiss}>
+                  <CalendarField
+                    label={t("tripCreate.checkin")}
+                    value={fields.startDate}
+                    initialNavigationDate={tripStartDate}
+                    disabled={saving || frozen}
+                    onChange={(startDate) => change({ startDate })}
+                  />
+                </View>
                 {!fields.startDate ? (
                   <Text style={styles.meta}>{t("tripCreate.stayDatesRequired")}</Text>
                 ) : null}
@@ -334,18 +338,20 @@ export function P3StayEditor({
                   disabled={saving || frozen}
                   onChange={(startTime) => change({ startTime })}
                 />
-                <CalendarField
-                  label={t("tripCreate.checkout")}
-                  value={fields.endDate ?? ""}
-                  initialNavigationDate={fields.startDate || tripStartDate}
-                  disabled={saving || frozen}
-                  onChange={(endDate) =>
-                    change({
-                      endDate,
-                      ...(endDate ? {} : { endTime: null }),
-                    })
-                  }
-                />
+                <View onTouchEnd={Keyboard.dismiss}>
+                  <CalendarField
+                    label={t("tripCreate.checkout")}
+                    value={fields.endDate ?? ""}
+                    initialNavigationDate={fields.startDate || tripStartDate}
+                    disabled={saving || frozen}
+                    onChange={(endDate) =>
+                      change({
+                        endDate,
+                        ...(endDate ? {} : { endTime: null }),
+                      })
+                    }
+                  />
+                </View>
                 {!fields.endDate ? (
                   <Text style={styles.meta}>{t("tripCreate.stayDatesRequired")}</Text>
                 ) : null}

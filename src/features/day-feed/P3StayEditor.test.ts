@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
   generation: 1,
   repository: vi.fn(),
   alert: vi.fn(),
+  dismissKeyboard: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -53,9 +54,14 @@ vi.mock("@/data/repositories/manualStayRepository", async () => ({
 }));
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
+  Keyboard: { dismiss: () => state.dismissKeyboard() },
   Modal: (p: any) => createElement("div", null, p.children),
   ScrollView: (p: any) => createElement("div", null, p.children),
-  View: (p: any) => createElement("div", null, p.children),
+  View: (p: any) => {
+    if (p.onTouchEnd)
+      state.nodes.push({ label: "calendarKeyboardDismiss", onTouchEnd: p.onTouchEnd });
+    return createElement("div", null, p.children);
+  },
   StyleSheet: { create: (value: unknown) => value },
 }));
 vi.mock("react-native-safe-area-context", () => ({
@@ -66,6 +72,7 @@ vi.mock("@/components/SheetHeader", () => ({
     state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
     state.nodes.push({
       label: "headerSave",
+      visibleLabel: p.rightLabel,
       disabled: p.rightDisabled,
       onPress: p.onRight,
     });
@@ -170,6 +177,7 @@ beforeEach(() => {
   state.generation = 1;
   state.repository.mockReset();
   state.alert.mockReset();
+  state.dismissKeyboard.mockReset();
 });
 
 it("opens the sibling Rental form without changing a clean P3 draft", async () => {
@@ -609,4 +617,20 @@ it("rejects a retained Save callback after the owning repository reports a confl
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledOnce();
   expect(p.onSaved).not.toHaveBeenCalled();
+});
+
+it("uses the short header Save label and dismisses the keyboard for P3 date/time entry", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    })),
+  });
+  expect(node("headerSave").visibleLabel).toBe("ui.save");
+  node("calendarKeyboardDismiss").onTouchEnd();
+  node("tripCreate.stayCheckinTime").onPress();
+  expect(state.dismissKeyboard).toHaveBeenCalledTimes(2);
 });
