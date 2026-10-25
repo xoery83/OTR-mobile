@@ -1096,6 +1096,8 @@ it("keeps native compensation out of Shell direction and resets only at the whol
   expect(state.observeShellScroll).not.toHaveBeenCalled();
   feed.presentation.onReadingMotion(40);
   expect(state.observeReadingMotion).toHaveBeenCalledWith(40);
+  // Settling a forward read must not re-show navigation; reverse motion owns that.
+  expect(feed.presentation.onReadingStopped).toBeUndefined();
   feed.presentation.onViewportChange({ ...viewport, originIndex: 0 });
   expect(state.observeShellScroll).toHaveBeenCalledWith(0, false);
 });

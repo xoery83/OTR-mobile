@@ -717,7 +717,7 @@ it.each([0, 1])(
   },
 );
 
-it("Day chrome hides only its current navigation island while retaining Capture and layout", () => {
+it("Day chrome hides both navigation and quick add without changing layout", () => {
   state.view = { tripId: "a", date: "2026-10-16", zone: "", generation: 1 };
   state.workingTrip = { tripId: "a", generation: 1 };
   state.params = { view: "day", tripId: "a" };
@@ -741,7 +741,13 @@ it("Day chrome hides only its current navigation island while retaining Capture 
   expect(pressables(hidden[0]).map((x) => x.props.accessibilityLabel)).toContain(
     "shell.day",
   );
+  expect(hidden[0].props.importantForAccessibility).toBe("no-hide-descendants");
+  expect(JSON.stringify(hidden[0])).toContain("TripQuickAddMenu");
   expect(isValidElement(tree)).toBe(true);
+  state.dayShellChrome = { ...state.dayShellChrome!, generation: 0 };
+  hidden.length = 0;
+  walk(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(hidden).toHaveLength(0);
   state.dayShellChrome = { ...state.dayShellChrome!, tripId: "other" };
   hidden.length = 0;
   walk(ExperienceBottomShell({ visible: true, pathname: "/trip" }));

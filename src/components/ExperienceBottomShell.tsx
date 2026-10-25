@@ -256,6 +256,11 @@ export function ExperienceBottomShell({
     if (pathname === "/trip") router.setParams({ view: "trips" });
     else router.navigate({ pathname: "/trip", params: { view: "trips" } });
   };
+  const chromeHidden =
+    isDay &&
+    dayShellChrome?.tripId === shellTripId &&
+    dayShellChrome.generation === generation &&
+    !dayShellChrome.navigationVisible;
   return (
     <SafeAreaView
       edges={["bottom", "left", "right"]}
@@ -264,8 +269,15 @@ export function ExperienceBottomShell({
       style={styles.safe}
     >
       <View
-        pointerEvents="box-none"
-        style={[styles.row, tripList && styles.actionsOnly, largeText && styles.largeRow]}
+        pointerEvents={chromeHidden ? "none" : "box-none"}
+        accessibilityElementsHidden={chromeHidden}
+        importantForAccessibility={chromeHidden ? "no-hide-descendants" : "auto"}
+        style={[
+          styles.row,
+          tripList && styles.actionsOnly,
+          largeText && styles.largeRow,
+          chromeHidden && { opacity: 0 },
+        ]}
       >
         {!tripList ? (
           <Material
@@ -278,25 +290,8 @@ export function ExperienceBottomShell({
                     : colors.floatingSurface,
                 }
               : {})}
-            accessibilityElementsHidden={
-              isDay &&
-              dayShellChrome?.tripId === shellTripId &&
-              dayShellChrome?.generation === generation &&
-              !dayShellChrome.navigationVisible
-            }
-            pointerEvents={
-              isDay &&
-              dayShellChrome?.tripId === shellTripId &&
-              !dayShellChrome.navigationVisible
-                ? "none"
-                : "auto"
-            }
             style={[
               styles.navigationIsland,
-              isDay &&
-                dayShellChrome?.tripId === shellTripId &&
-                dayShellChrome?.generation === generation &&
-                !dayShellChrome.navigationVisible && { opacity: 0 },
               Glass && styles.nativeMaterial,
               reducedTransparency && styles.reducedMaterial,
               largeText && styles.largeNavigationIsland,

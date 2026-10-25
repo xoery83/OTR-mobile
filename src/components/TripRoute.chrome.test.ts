@@ -1,7 +1,28 @@
 import { Children, isValidElement, type ReactElement } from "react";
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import TripRoute from "../../app/(tabs)/trip";
-const route = vi.hoisted(() => ({ params: {} as { tripId?: string; view?: string } }));
+const route = vi.hoisted(() => ({
+  params: {} as { tripId?: string; view?: string },
+  chrome: null as null | {
+    tripId: string;
+    generation: number;
+    navigationVisible: boolean;
+  },
+}));
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useSyncExternalStore: () => 5,
+}));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => 5,
+  subscribeAccountGeneration: vi.fn(),
+}));
+vi.mock("@/features/day-feed/TripViewContext", () => ({
+  useTripView: () => ({ dayShellChrome: route.chrome }),
+}));
+beforeEach(() => {
+  route.chrome = null;
+});
 vi.mock("expo-router", () => ({ useLocalSearchParams: () => route.params }));
 vi.mock("react-native", () => ({ View: "View" }));
 vi.mock("@/features/day-feed/TripScreen", () => ({ TripScreen: "TripScreen" }));
@@ -36,4 +57,19 @@ it("Home still uses its existing immersive view and independent native edit acti
   expect(container.type).toBe("View");
   expect(container.props.children.props.contentFrameManaged).toBeUndefined();
   expect(search.props.showUnavailableTripEdit).toBe(true);
+});
+
+it("hides native Menu/Search only for the current Day scope and restores them on reversal", () => {
+  route.params = { tripId: "actual", view: "day" };
+  route.chrome = { tripId: "actual", generation: 5, navigationVisible: false };
+  expect(children().map((n) => n.type)).toEqual(["Frame"]);
+  route.chrome.navigationVisible = true;
+  expect(children()).toHaveLength(3);
+  route.chrome = { tripId: "other", generation: 5, navigationVisible: false };
+  expect(children()).toHaveLength(3);
+  route.chrome = { tripId: "actual", generation: 4, navigationVisible: false };
+  expect(children()).toHaveLength(3);
+  route.chrome.generation = 5;
+  route.params.view = "home";
+  expect(children()).toHaveLength(3);
 });

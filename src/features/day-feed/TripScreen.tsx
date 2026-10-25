@@ -1177,7 +1177,8 @@ function TripContent({
         tripId: requested,
         generation,
         owner: dayChromeOwner,
-        navigationVisible: !moveActive && dayShell.navigationVisible,
+        navigationVisible:
+          !moveActive && (!dayPastIntroduction || dayShell.navigationVisible),
       },
       dayChromeOwner,
     );
@@ -1188,13 +1189,15 @@ function TripContent({
     generation,
     dayChromeOwner,
     dayShell.navigationVisible,
+    dayPastIntroduction,
     moveActive,
     publishDayShellChrome,
     navigation,
   ]);
   useLayoutEffect(() => {
     if (today && !dayActive) return;
-    const blurHeader = dayActive || (immersiveHome && !heroBehindStatus);
+    const blurHeader =
+      (dayActive && dayShell.navigationVisible) || (immersiveHome && !heroBehindStatus);
     const nativeEdge =
       Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
     navigation.setOptions({
@@ -1248,6 +1251,7 @@ function TripContent({
     heroBehindStatus,
     dayActive,
     dayTitle,
+    dayShell.navigationVisible,
     dayPastIntroduction,
     moveActive,
   ]);
@@ -1368,7 +1372,6 @@ function TripContent({
                       )
                   : undefined,
               onReadingMotion: dayShell.observeReadingMotion,
-              onReadingStopped: dayShell.observeReadingStopped,
               onOffsetChange: (value) => {
                 if (
                   dayIntroductionBottom.current !== null &&
