@@ -40,7 +40,7 @@ import {
   type FlexibleBlockRendererProps,
 } from "./FlexibleBlockRow";
 import type { FlightService } from "@/domain/trip/flightAdmission";
-import { UiButton } from "@/ui/controls";
+import { UiButton, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -48,6 +48,7 @@ import { visual } from "@/ui/visual";
 import { P1Row } from "./P1Row";
 import { TransitionRow, type ComposedTransition } from "./TransitionRow";
 import { FlightRows } from "./FlightRows";
+import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
 import { flightPresentation, type Depth } from "./presentation";
@@ -66,6 +67,16 @@ function BlockSlot({
   ...props
 }: FlexibleBlockRendererProps & { renderer?: FlexibleBlockRenderer }) {
   return <Renderer {...props} />;
+}
+
+function ImmersiveHeaderSlot({
+  renderHeader,
+  onClose,
+}: {
+  renderHeader: (onClose: () => void) => ReactNode;
+  onClose: () => void;
+}) {
+  return renderHeader(onClose);
 }
 
 export type DayFeedPresentation = {
@@ -436,17 +447,30 @@ function AcceptedDayFeed({
           accessibilityHint={
             mode === "I"
               ? undefined
-              : t(mode === "F" ? "p1r.immersiveHint" : "p1r.focusHint")
+              : t(mode === "F" ? "flight.immersiveHint" : "flight.focusHint")
           }
           onPress={() => change(row.focusKey, mode === "F" ? "I" : "F")}
         >
-          <FlightRows
-            fixture={flight}
-            focused={mode === "F"}
-            immersive={mode === "I"}
-            withinMarker={withinMarker}
-          />
+          {flight.qualification === "SPARSE" ? (
+            <FlightFidelityGrid
+              flight={flight}
+              focused={mode === "F"}
+              immersive={mode === "I"}
+              withinMarker={withinMarker}
+            />
+          ) : (
+            <FlightRows
+              fixture={flight}
+              focused={mode === "F"}
+              immersive={mode === "I"}
+              withinMarker={withinMarker}
+            />
+          )}
         </Pressable>
+        {projection.version === 2 &&
+        projection.source.localTargetIds?.includes(event.id) ? (
+          <UiText style={styles.meta}>{t("tripCreate.itemPending")}</UiText>
+        ) : null}
         {mode === "F" ? (
           <UiButton
             label={t("feed.collapse")}
@@ -693,7 +717,12 @@ function AcceptedDayFeed({
         animationType="slide"
       >
         <View style={styles.root}>
-          {presentation?.renderImmersiveHeader?.(close)}
+          {presentation?.renderImmersiveHeader ? (
+            <ImmersiveHeaderSlot
+              renderHeader={presentation.renderImmersiveHeader}
+              onClose={close}
+            />
+          ) : null}
           <ScrollView
             keyboardShouldPersistTaps="handled"
             style={styles.root}

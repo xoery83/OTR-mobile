@@ -1,0 +1,138 @@
+{
+  "utc": "2026-10-25T06:58:27.007245+00:00",
+  "scope": "FORMS_QA_P2_NORMAL_AUTH_READ_ONLY",
+  "sourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "034beec1-74ac-4358-b4b9-728651c03db3",
+  "manualIntents": [
+    {
+      "operation_id": "55922aff-d66a-4592-be13-90806f75367f",
+      "intent_sha256": "3f072be2dfcd1e2a2ee78a7cb69084958b730ccbe8a56fc0ca90d3b51b021366",
+      "state": "BLOCKED",
+      "textSha256": "8f631ec1e32e42dd987972ba410500e772f032085dd5632c0b5380a009f7022e"
+    },
+    {
+      "operation_id": "84d6f57a-d705-4660-b51e-8993ef422aae",
+      "intent_sha256": "69976f32fad21963185b458e762fcf1429157a94f56654613ef22a25ca6b58b2",
+      "state": "BLOCKED",
+      "textSha256": "ac18155a48f8069f8ed941ae41bcdc8f554dc0e9ab817d1427bb66609fcea0a2"
+    },
+    {
+      "operation_id": "a0d2842d-e8f9-47ba-bfa6-bde1b396cd74",
+      "intent_sha256": "208cf41d36d5999659ce8f0187ae6f1931aea27dc3f5a8ccbddd1b7d636ace17",
+      "state": "BLOCKED",
+      "textSha256": "7d5403e37b27e19b606c431cdd68568e4ee98454ccc028535b65f358e6c82ef1"
+    },
+    {
+      "operation_id": "aa7a9691-8cdd-436d-910d-5ac36187cd95",
+      "intent_sha256": "a432e730158aeaa6828ff6c9264fb0323ed5f59e5f42e62d981c88cab476c3f3",
+      "state": "BLOCKED",
+      "textSha256": "5957ac255df9466a866fba1247f201df747f278535d082c634c3c127c06d08a3"
+    },
+    {
+      "operation_id": "e60be17b-574c-4833-ab96-5e2b78d3c552",
+      "intent_sha256": "f1f27036a2e7738755fe2a46510fdbee9a6325a29cde01fb2cfdbbab24fccac9",
+      "state": "BLOCKED",
+      "textSha256": "b7eb336df1d96b5350ee33e25a3656abdf8b7ea9317150a59a17df593f72e42e"
+    }
+  ],
+  "localCoreCommits": [
+    {
+      "commit_id": "7e57f799-f41c-49ab-8a5e-4a76c8d6abd3",
+      "authority_kind": "LOCAL_MANUAL",
+      "envelope_sha256": "aac0e21f0117ff23355d892f592f523dee59e7c9fc053fb2100222009a669620",
+      "outputs": [
+        {
+          "itemId": "a8d21da2-f7aa-4dfe-951f-933ddc508686",
+          "command": "CREATE_SPARSE_FLIGHT",
+          "fields": {
+            "acl": {
+              "people": [],
+              "visibility": "PRIVATE"
+            },
+            "departureDate": "2026-10-25",
+            "flightNumberLiteral": "ZZ2501",
+            "participation": {
+              "mode": "WHOLE_GROUP",
+              "people": [],
+              "selfPersonId": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "commit_id": "7e57f799-f41c-49ab-8a5e-4a76c8d6abd3",
+      "target_id": "a8d21da2-f7aa-4dfe-951f-933ddc508686",
+      "operation_id": "c32bffea-ac7d-447d-88f6-ff98489cc3e0",
+      "queue_operation_id": "c32bffea-ac7d-447d-88f6-ff98489cc3e0",
+      "disposition": "CREATE"
+    }
+  ],
+  "queue": [
+    {
+      "id": "55922aff-d66a-4592-be13-90806f75367f",
+      "entity_id": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "84d6f57a-d705-4660-b51e-8993ef422aae",
+      "entity_id": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "8cfa74c1-bd0a-4885-aff6-7f8db1eced3e",
+      "entity_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "operation_type": "TRIP_METADATA_DEFERRED",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "a0d2842d-e8f9-47ba-bfa6-bde1b396cd74",
+      "entity_id": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "aa7a9691-8cdd-436d-910d-5ac36187cd95",
+      "entity_id": "2e49b176-8aaa-4628-a876-19a9dca7d651",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "ba79c0e3-f6a9-4692-8016-06b575e2709d",
+      "entity_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "c32bffea-ac7d-447d-88f6-ff98489cc3e0",
+      "entity_id": "a8d21da2-f7aa-4dfe-951f-933ddc508686",
+      "operation_type": "LOCAL_CORE_COMMIT",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "e60be17b-574c-4833-ab96-5e2b78d3c552",
+      "entity_id": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    }
+  ],
+  "schema": [
+    {
+      "version": 74
+    }
+  ]
+}

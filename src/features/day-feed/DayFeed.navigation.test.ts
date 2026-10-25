@@ -112,6 +112,7 @@ vi.mock("./P1Row", () => ({
   },
 }));
 vi.mock("./FlightRows", () => ({ FlightRows: () => null }));
+vi.mock("./FlightFidelityGrid", () => ({ FlightFidelityGrid: () => null }));
 vi.mock("./NowMarker", () => ({ NowMarker: () => null }));
 vi.mock("./TransitionRow", () => ({ TransitionRow: () => null }));
 const fixture = faroeNegativeFixtures();

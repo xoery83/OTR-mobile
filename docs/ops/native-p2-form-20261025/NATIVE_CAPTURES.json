@@ -1,0 +1,24 @@
+{
+  "formSourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "nativeStatus": "BOUNDED_LOCAL_SPARSE_CREATE_COLD_READ_EDIT_DRAFT_CANCEL_OBSERVED",
+  "cloudStatus": "NOT_RUN_GATE_CLOSED",
+  "screenshots": [
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/edit-bottom-participants.png",
+      "sha256": "76bbd5243a0cc9b1ba4999b272f4f58a3353f68d53dc39b86689cc57d648bcd8"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/manual-endpoint-keyboard.png",
+      "sha256": "47dc6dd7d533bb39a8a969333c281a68ee911fad2a221c9bc1dfd28ac161da1b"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/real-edit-readback.png",
+      "sha256": "1f5a4b116de6a240e3a9e77c8bddc6e0616000e58d0307788b0835050965f525"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/zh-dark-edit.png",
+      "sha256": "cd10664d6cf05d9aa131cd62a2c02ec2f2609b6aa2c6c526b9ae3910810a5a20"
+    }
+  ]
+}
