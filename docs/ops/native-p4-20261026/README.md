@@ -67,3 +67,15 @@ R21 C0 normal cold launch→own Trip→real Day→P4 native Details restores `AA
 - Contact/Instructions persistence, Scan/Update from Document, authorized original/media/holder/driver/association/Item-expense-link and billing evidence remain owning-port pending. Cloud disabled; no Source/Admission/Backend/schema/Auth mutation.
 - Fixed sequence: Form `dac7c312` → real content/Details `ca9a1fbb` → frozen QA adapter `860af795` → visual repair `2e0e4a34`. Preserve all before serial integration; no main merge performed. P1–P3 candidate history is retained.
 - GUI returned explicitly to Universal after testing. C0 remains read-only P4 fixture Details; Phone MyTrips; no unsaved form, no AD5 operation.
+
+
+## Locale / appearance continuation — 27Oct R21
+
+After Universal explicitly returned GUI, only C0 was selected; AD5/Phone/Backend were not operated. Normal app Language action and device appearance controls exercised P4 without changing saved facts:
+
+- English Dark frozen Immersive bottom: provided Ledger values, all4actions and Safe Area readable (`dark-en-immersive-bottom.png`). Chinese Dark Focus: translated labels/actions and civil dates preserved (`dark-zh-focus.png`). Authored synthetic names/labels remain source text.
+- Real Chinese Dark Edit: restored original Rental Name/model/dates/clocks/places/Notes; shared range Calendar marks actual Today27Oct using background only, without adding visible Today text; compact time sheet opens correct22:06 and Cancel preserves it (`dark-zh-edit-top.png`, `dark-zh-calendar.png`, `dark-zh-time.png`).
+- Six-line real Notes and final-line caret remain above the real software keyboard in Chinese Dark (`dark-zh-notes-keyboard.png`). Reopen under static Light also fits full Notes above keyboard (`light-zh-edit-top.png`, `light-zh-notes-keyboard.png`). All forms canceled without saving; original Notes/times retained.
+- **Existing Modal hot-appearance limit reproduced**: while Edit/keyboard is open, switching Dark→Light retains the old Modal palette. Dismiss/reopen correctly inherits Light; values are retained. `hot-light-modal-retained-dark.png` is failure/limitation evidence, not a Light PASS. This matches the previously recorded P3 direct-Modal limit; no shared theme/Foundation rewrite performed in this P4 slice.
+
+Representational locale/static-theme checks are now evidenced, but not every9state×9variant×theme×language or maximum Dynamic Type. Full matrix remains bounded/pending; Contact/Instructions/Cloud owning gaps unchanged. QA device restored to English/Light, no unsaved Draft; GUI released again. This continuation changes receipts only, no product code or authority.
