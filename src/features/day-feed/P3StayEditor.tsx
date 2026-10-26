@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Modal,
   Pressable,
   ScrollView,
@@ -302,6 +304,14 @@ export function P3StayEditor({
       if (current()) setSaving(false);
     }
   };
+  const formScroll = useRef<ScrollView>(null);
+  const notesFocused = useRef(false);
+  useEffect(() => {
+    const subscription = Keyboard.addListener("keyboardDidShow", () => {
+      if (notesFocused.current) formScroll.current?.scrollToEnd({ animated: true });
+    });
+    return () => subscription.remove();
+  }, []);
   const valid = manualStayFieldsSchema.safeParse(fields).success;
   const saveDisabled =
     !valid || saving || status === "UNAVAILABLE" || (frozen && status !== "ERROR");
@@ -322,156 +332,172 @@ export function P3StayEditor({
           leftDisabled={saving}
           onLeft={() => close()}
         />
-        <ScrollView
-          keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
           style={styles.body}
-          contentContainerStyle={styles.content}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          {status === "LOADING" ? (
-            <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
-          ) : null}
-          {status === "UNAVAILABLE" ? (
-            <Text accessibilityRole="alert" style={styles.meta}>
-              {t("tripCreate.stayUnavailable")}
-            </Text>
-          ) : null}
-          {status === "ERROR" ? (
-            <Text accessibilityRole="alert" style={styles.meta}>
-              {t("tripCreate.stayRetrySame")}
-            </Text>
-          ) : null}
-          {fields && source ? (
-            <>
-              {onChoosePlan ? (
-                <UiButton
-                  label={t("tripCreate.activity")}
-                  variant="text"
-                  disabled={saving}
-                  onPress={() => close(onChoosePlan)}
-                />
-              ) : null}
-              {onChooseRental ? (
-                <UiButton
-                  label={t("tripCreate.rental")}
-                  variant="text"
-                  disabled={saving}
-                  onPress={() => close(onChooseRental)}
-                />
-              ) : null}
-              {onChooseTransport ? (
-                <UiButton
-                  label={t("tripCreate.transport")}
-                  variant="text"
-                  disabled={saving}
-                  onPress={() => close(onChooseTransport)}
-                />
-              ) : null}
-              <View style={styles.form}>
-                <View style={styles.field}>
-                  <Text style={styles.caption}>{t("tripCreate.stayName")}</Text>
-                  <UiTextInput
-                    accessibilityLabel={t("tripCreate.stayName")}
-                    placeholder={t("tripCreate.stayName")}
-                    value={fields.title}
-                    maxLength={200}
-                    editable={!saving && !frozen}
-                    onChangeText={(title) => {
-                      if (!current() || busyRef.current || frozenRef.current) return;
-                      change({ title });
-                      setNameQuery(title);
-                    }}
+          <ScrollView
+            ref={formScroll}
+            onLayout={() => {
+              if (notesFocused.current)
+                formScroll.current?.scrollToEnd({ animated: true });
+            }}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
+            style={styles.body}
+            contentContainerStyle={styles.content}
+          >
+            {status === "LOADING" ? (
+              <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
+            ) : null}
+            {status === "UNAVAILABLE" ? (
+              <Text accessibilityRole="alert" style={styles.meta}>
+                {t("tripCreate.stayUnavailable")}
+              </Text>
+            ) : null}
+            {status === "ERROR" ? (
+              <Text accessibilityRole="alert" style={styles.meta}>
+                {t("tripCreate.stayRetrySame")}
+              </Text>
+            ) : null}
+            {fields && source ? (
+              <>
+                {onChoosePlan ? (
+                  <UiButton
+                    label={t("tripCreate.activity")}
+                    variant="text"
+                    disabled={saving}
+                    onPress={() => close(onChoosePlan)}
                   />
-                </View>
-                <P3StayLocationField
-                  tripId={tripId}
-                  editorId={source.draft.itemId}
-                  title={fields.title}
-                  nameQuery={nameQuery}
-                  value={fields.location}
-                  disabled={saving || frozen || status === "UNAVAILABLE"}
-                  isCurrent={() =>
-                    current() &&
-                    !busyRef.current &&
-                    !frozenRef.current &&
-                    !unavailableRef.current
-                  }
-                  onChange={(location) => change({ location })}
-                  onKeepName={() => setNameQuery(null)}
-                  onSelectHotel={(title, location) => {
-                    if (!current() || busyRef.current || frozenRef.current) return;
-                    change({ title, location });
-                    setNameQuery(null);
-                  }}
-                />
-                <View onTouchEnd={Keyboard.dismiss}>
-                  <TripCalendarRangeField
-                    label={t("tripCreate.stayDates")}
-                    presentation="field"
-                    value={{ start: fields.startDate, end: fields.endDate ?? "" }}
-                    referenceRange={{
-                      start: tripStartDate ?? tripRange.start,
-                      end: tripEndDate ?? tripRange.end,
-                    }}
-                    initialNavigationDate={tripStartDate ?? tripRange.start}
-                    markToday
-                    startWithCheckin
-                    disabled={saving || frozen}
-                    onChange={({ start, end }) =>
-                      change({
-                        startDate: start,
-                        endDate: end || undefined,
-                        ...(end ? {} : { endTime: null }),
-                      })
-                    }
-                  />
-                </View>
-                {!fields.startDate || !fields.endDate ? (
-                  <Text style={styles.meta}>{t("tripCreate.stayDatesRequired")}</Text>
                 ) : null}
-                <View style={styles.times}>
-                  <TimeField
-                    label={t("tripCreate.stayCheckinTime")}
-                    defaultTime="17:00"
-                    value={fields.startTime}
-                    disabled={saving || frozen}
-                    onChange={(startTime) => change({ startTime })}
+                {onChooseRental ? (
+                  <UiButton
+                    label={t("tripCreate.rental")}
+                    variant="text"
+                    disabled={saving}
+                    onPress={() => close(onChooseRental)}
                   />
-                  <TimeField
-                    label={t("tripCreate.stayCheckoutTime")}
-                    defaultTime="10:00"
-                    value={fields.endTime}
-                    disabled={saving || frozen || !fields.endDate}
-                    onChange={(endTime) => change({ endTime })}
+                ) : null}
+                {onChooseTransport ? (
+                  <UiButton
+                    label={t("tripCreate.transport")}
+                    variant="text"
+                    disabled={saving}
+                    onPress={() => close(onChooseTransport)}
                   />
-                </View>
-                <View style={styles.field}>
-                  <Text style={styles.caption}>{t("tripCreate.stayNotes")}</Text>
-                  <UiTextInput
-                    accessibilityLabel={t("tripCreate.stayNotes")}
-                    placeholder={t("tripCreate.addNote")}
-                    value={fields.description ?? ""}
-                    maxLength={5000}
-                    multiline
-                    style={styles.notes}
-                    editable={!saving && !frozen}
-                    onChangeText={(description) =>
-                      change({ description: description || null })
+                ) : null}
+                <View style={styles.form}>
+                  <View style={styles.field}>
+                    <Text style={styles.caption}>{t("tripCreate.stayName")}</Text>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.stayName")}
+                      placeholder={t("tripCreate.stayName")}
+                      value={fields.title}
+                      maxLength={200}
+                      editable={!saving && !frozen}
+                      onChangeText={(title) => {
+                        if (!current() || busyRef.current || frozenRef.current) return;
+                        change({ title });
+                        setNameQuery(title);
+                      }}
+                    />
+                  </View>
+                  <P3StayLocationField
+                    tripId={tripId}
+                    editorId={source.draft.itemId}
+                    title={fields.title}
+                    nameQuery={nameQuery}
+                    value={fields.location}
+                    disabled={saving || frozen || status === "UNAVAILABLE"}
+                    isCurrent={() =>
+                      current() &&
+                      !busyRef.current &&
+                      !frozenRef.current &&
+                      !unavailableRef.current
                     }
+                    onChange={(location) => change({ location })}
+                    onKeepName={() => setNameQuery(null)}
+                    onSelectHotel={(title, location) => {
+                      if (!current() || busyRef.current || frozenRef.current) return;
+                      change({ title, location });
+                      setNameQuery(null);
+                    }}
+                  />
+                  <View onTouchEnd={Keyboard.dismiss}>
+                    <TripCalendarRangeField
+                      label={t("tripCreate.stayDates")}
+                      presentation="field"
+                      value={{ start: fields.startDate, end: fields.endDate ?? "" }}
+                      referenceRange={{
+                        start: tripStartDate ?? tripRange.start,
+                        end: tripEndDate ?? tripRange.end,
+                      }}
+                      initialNavigationDate={tripStartDate ?? tripRange.start}
+                      markToday
+                      startWithCheckin
+                      disabled={saving || frozen}
+                      onChange={({ start, end }) =>
+                        change({
+                          startDate: start,
+                          endDate: end || undefined,
+                          ...(end ? {} : { endTime: null }),
+                        })
+                      }
+                    />
+                  </View>
+                  {!fields.startDate || !fields.endDate ? (
+                    <Text style={styles.meta}>{t("tripCreate.stayDatesRequired")}</Text>
+                  ) : null}
+                  <View style={styles.times}>
+                    <TimeField
+                      label={t("tripCreate.stayCheckinTime")}
+                      defaultTime="17:00"
+                      value={fields.startTime}
+                      disabled={saving || frozen}
+                      onChange={(startTime) => change({ startTime })}
+                    />
+                    <TimeField
+                      label={t("tripCreate.stayCheckoutTime")}
+                      defaultTime="10:00"
+                      value={fields.endTime}
+                      disabled={saving || frozen || !fields.endDate}
+                      onChange={(endTime) => change({ endTime })}
+                    />
+                  </View>
+                  <View style={styles.field}>
+                    <Text style={styles.caption}>{t("tripCreate.stayNotes")}</Text>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.stayNotes")}
+                      placeholder={t("tripCreate.addNote")}
+                      value={fields.description ?? ""}
+                      maxLength={5000}
+                      multiline
+                      style={styles.notes}
+                      onFocus={() => {
+                        notesFocused.current = true;
+                        formScroll.current?.scrollToEnd({ animated: true });
+                      }}
+                      onBlur={() => {
+                        notesFocused.current = false;
+                      }}
+                      editable={!saving && !frozen}
+                      onChangeText={(description) =>
+                        change({ description: description || null })
+                      }
+                    />
+                  </View>
+                  <PlanParticipantsField
+                    compact
+                    value={fields.participation}
+                    options={source.draft.participantOptions}
+                    disabled={saving || frozen}
+                    onChange={(participation) => change({ participation })}
                   />
                 </View>
-                <PlanParticipantsField
-                  compact
-                  value={fields.participation}
-                  options={source.draft.participantOptions}
-                  disabled={saving || frozen}
-                  onChange={(participation) => change({ participation })}
-                />
-              </View>
-            </>
-          ) : null}
-        </ScrollView>
+              </>
+            ) : null}
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaProvider>
     </ManualEditorPresentation>
   );

@@ -21,9 +21,9 @@ it("orders authored civil clocks across families while preserving Base slots and
   expect(localDayDisplayOrder(rows).map((r) => r.title)).toEqual([
     "base",
     "NTC",
+    "P2",
     "P3",
     "P1",
-    "P2",
     "return",
   ]);
   expect(rows[1].title).toBe("P1");

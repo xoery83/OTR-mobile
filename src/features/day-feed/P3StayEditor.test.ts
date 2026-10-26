@@ -44,6 +44,8 @@ const state = vi.hoisted(() => ({
   repository: vi.fn(),
   alert: vi.fn(),
   dismissKeyboard: vi.fn(),
+  scrollToEnd: vi.fn(),
+  keyboardShown: null as null | (() => void),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -82,13 +84,25 @@ vi.mock("@/data/repositories/manualStayRepository", async () => ({
 }));
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
-  Keyboard: { dismiss: () => state.dismissKeyboard() },
+  Platform: { OS: "ios" },
+  KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
+  Keyboard: {
+    dismiss: () => state.dismissKeyboard(),
+    addListener: (_: string, callback: () => void) => {
+      state.keyboardShown = callback;
+      return { remove: vi.fn() };
+    },
+  },
   Pressable: (p: any) => createElement("button", null, p.children),
   Modal: (p: any) => {
     if (p.visible) state.nodes.push({ ...p, label: "timeModal" });
     return p.visible ? createElement("div", null, p.children) : null;
   },
-  ScrollView: (p: any) => createElement("div", null, p.children),
+  ScrollView: (p: any) => {
+    if (p.ref) p.ref.current = { scrollToEnd: state.scrollToEnd };
+    state.nodes.push({ ...p, label: "formScroll" });
+    return createElement("div", null, p.children);
+  },
   View: (p: any) => {
     if (p.onTouchEnd)
       state.nodes.push({ label: "calendarKeyboardDismiss", onTouchEnd: p.onTouchEnd });
@@ -733,4 +747,26 @@ it.each([
   node("common.cancel").onPress();
   render(p);
   expect(node(label).value).toBe("tripCreate.notSet");
+});
+it("keeps Notes visible when keyboard resizing changes the form viewport and stops scrolling after blur", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: fields(),
+      participantOptions: [],
+    }),
+  });
+  state.scrollToEnd.mockClear();
+  const notes = node("tripCreate.stayNotes"),
+    scroll = node("formScroll");
+  notes.onFocus();
+  scroll.onLayout();
+  state.keyboardShown?.();
+  expect(state.scrollToEnd).toHaveBeenCalledTimes(3);
+  notes.onBlur();
+  scroll.onLayout();
+  state.keyboardShown?.();
+  expect(state.scrollToEnd).toHaveBeenCalledTimes(3);
 });
