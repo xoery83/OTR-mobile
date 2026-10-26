@@ -768,3 +768,34 @@ it.each(["account", "trip", "generation", "epoch", "revision"])(
     expect(state.params).not.toHaveBeenCalled();
   },
 );
+
+it("date-only accepted P2 opens the existing viewing chooser without creating or editing a Flight", async () => {
+  const { item, event, target } = acceptedCivilStay();
+  Object.assign(item, {
+    family: "P2",
+    schedule: { origin: { time: item.schedule.start } },
+  });
+  event.boundaries = [{ ...event.boundaries[0], role: "ORIGIN" }];
+  const before = JSON.stringify([event, item]);
+  const p = page(await loaded());
+  await p.content.props.onOpenItem(target);
+  const dialog = find(render(), "Modal");
+  expect(dialog.visible).toBe(true);
+  expect(
+    find(dialog.children, "Input", (p) => p.accessibilityLabel === "dayFeed.date").value,
+  ).toBe("2026-11-02");
+  find(
+    dialog.children,
+    "Input",
+    (p) => p.accessibilityLabel === "dayFeed.zone",
+  ).onChangeText("Pacific/Auckland");
+  find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
+  expect(state.select).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2026-11-02",
+    zone: "Pacific/Auckland",
+    generation: 5,
+  });
+  expect(find(render(), DayFeed)).toBeNull();
+  expect(JSON.stringify([event, item])).toBe(before);
+});

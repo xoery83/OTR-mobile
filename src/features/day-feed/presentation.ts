@@ -11,6 +11,7 @@ import type { CoreFlightFacts } from "@/domain/trip/tripCoreV2DayFeed";
 export type Depth = "B" | "F" | "I";
 export type FlightPresentation = {
   qualification?: CoreFlightFacts["qualification"];
+  numberLiteral?: string | null;
   canonical: DayEvent;
   services: FlightService[];
   supplemental: {
@@ -24,7 +25,9 @@ export const endpoint = (f: FlightPresentation, role: "ORIGIN" | "DESTINATION") 
   f.canonical.boundaries.find((b) => b.role === role);
 export const flightNumber = (f: FlightPresentation) =>
   (f.services.find((s) => s.attribution === "MARKETING") ?? f.services[0])
-    ?.service_literal ?? null;
+    ?.service_literal ??
+  f.numberLiteral ??
+  null;
 export function durationMinutes(f: FlightPresentation) {
   const a = endpoint(f, "ORIGIN"),
     b = endpoint(f, "DESTINATION");
@@ -42,13 +45,13 @@ export function flightPresentation(
   facts?: CoreFlightFacts,
 ): FlightPresentation | null {
   if (
-    facts?.qualification === "SPARSE" ||
-    event.temporal_shape !== "TRANSPORT" ||
-    !(
-      facts?.qualification === "QUALIFIED" ||
-      event.event_type === "flight" ||
-      services.length
-    )
+    facts?.qualification !== "SPARSE" &&
+    (event.temporal_shape !== "TRANSPORT" ||
+      !(
+        facts?.qualification === "QUALIFIED" ||
+        event.event_type === "flight" ||
+        services.length
+      ))
   )
     return null;
   const endpointFacts = (role: "ORIGIN" | "DESTINATION") => ({
@@ -58,7 +61,9 @@ export function flightPresentation(
   });
   return {
     canonical: event,
-    ...(facts ? { qualification: facts.qualification } : {}),
+    ...(facts
+      ? { qualification: facts.qualification, numberLiteral: facts.flightNumberLiteral }
+      : {}),
     services: facts?.services ?? services,
     supplemental: {
       endpoints: facts?.endpoints ?? {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
-import { t } from "@/ui/locale";
+import { formatUiDate, t } from "@/ui/locale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { experienceVisualTokens as tokens, timeRailWidth } from "./visualTokens";
@@ -59,6 +59,30 @@ export function FlightRows({
   const arrivalTime = arr?.local_time?.slice(0, 5);
   const duration = durationLabel(durationMinutes(f));
   const legacyGeometry = f.qualification === undefined;
+  const sparseDate =
+    f.qualification === "SPARSE" && dep?.local_date
+      ? formatUiDate(new Date(`${dep.local_date}T12:00:00Z`), {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          timeZone: "UTC",
+        })
+      : null;
+  if (f.qualification === "SPARSE")
+    return (
+      <View testID="flight-sparse-summary" style={s.rows}>
+        <View style={s.row}>
+          <View style={[s.departure, rail]}>
+            <AppIcon name="airplane" size={18} color={colors.textSecondary} />
+            {withinMarker}
+          </View>
+          <View style={s.left}>
+            <Text style={s.airport}>{flightNumber(f)}</Text>
+            {showDate && sparseDate ? <Text style={s.meta}>{sparseDate}</Text> : null}
+          </View>
+        </View>
+      </View>
+    );
   if (focused && largeText && !immersive) {
     const route = t("flight.itinerary", {
       origin: airport(f, originRole),

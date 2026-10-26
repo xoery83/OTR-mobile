@@ -1914,3 +1914,77 @@ it("P1 displays known estimated minute and named place without presenting a reso
   expect(html).toContain(t("p6.plannedUnresolved"));
   expect(html.split("09:15")).toHaveLength(2);
 });
+
+it("accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without guessed airport/time facts", () => {
+  const sparse: DayEvent = {
+    ...flight,
+    id: "formal-sparse",
+    title: "ZZ2701",
+    temporal_shape: "POINT",
+    boundaries: [
+      {
+        ...flight.boundaries[0],
+        role: "ORIGIN",
+        local_time: null,
+        clock_precision: null,
+        quality: "UNKNOWN",
+        zone_id: null,
+        instant: null,
+        source_instant: null,
+      },
+    ],
+  };
+  const facts = {
+    qualification: "SPARSE" as const,
+    flightNumberLiteral: "ZZ2701",
+    services: [],
+    endpoints: {
+      ORIGIN: { code: null, name: null, terminal: null },
+      DESTINATION: { code: null, name: null, terminal: null },
+    },
+  };
+  const p = {
+    ...projection,
+    version: 2,
+    events: [sparse],
+    items: [{ itemId: sparse.id, family: "P2" }],
+    flightFacts: { [sparse.id]: facts },
+    source: {},
+    query: (date: string, zone: string) =>
+      itemsForLocalDate({ ...projection, events: [sparse] }, date, zone),
+  } as unknown as CoreFlightDayProjection;
+  const before = JSON.stringify([sparse, facts]);
+  const browse = render(
+    createElement(DayFeed, {
+      projection: p,
+      date: "2026-10-10",
+      zone: "Pacific/Auckland",
+      services: {},
+    }),
+  );
+  expect(browse).toContain("flight-sparse-summary");
+  const read = flightPresentation(sparse, [], facts)!;
+  for (const options of [{}, { focused: true }, { immersive: true }]) {
+    state.hooks = [];
+    const html = render(createElement(FlightRows, { fixture: read, ...options }));
+    expect(html).toContain("ZZ2701");
+    expect(html).toContain(
+      formatUiDate(new Date("2026-10-10T12:00:00Z"), {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      }),
+    );
+    expect(html).not.toContain(t("flight.unknownAirport"));
+    expect(html).not.toMatch(/undefined|NaN/);
+    expect(
+      state.nodes.some((n) =>
+        ["duration", "arrival-time", "flight-origin", "flight-destination"].includes(
+          n.testID,
+        ),
+      ),
+    ).toBe(false);
+  }
+  expect(JSON.stringify([sparse, facts])).toBe(before);
+});
