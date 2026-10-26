@@ -1,0 +1,17 @@
+{
+  "status": "ONE_TIME_THREAD_WAKE_CREATED",
+  "automationId": "universal-p2",
+  "targetThreadId": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "localScheduledTime": "2026-10-27T13:00:00+13:00",
+  "notBefore": "2026-10-27T00:00:00Z",
+  "hostTimezoneVerified": "NZDT",
+  "runCount": 1,
+  "ownerQuestionItemId": "call_396a2a27d156403eac4b5f97fa5c7082/0",
+  "ownerAnswer": "\u6388\u6743\u8fd9\u4e00\u6b21\u5b9a\u65f6\u5524\u9192\u4e0e\u63a5\u7eed\u6267\u884c",
+  "approvedExecutionGate": "8b9ee0ca",
+  "promptSHA256": "3ecca4dcd314277504a0691549d3f483eb5fe419b23d238f47ecbd24e621dd51",
+  "observedAt": "2026-10-26T21:10:23.326738+00:00",
+  "newObjectsCreatedThisTurn": 0,
+  "providerCallsThisTurn": 0,
+  "noAuthorityOrBudgetExpansion": true
+}

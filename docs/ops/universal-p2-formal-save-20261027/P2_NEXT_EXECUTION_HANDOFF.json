@@ -1,5 +1,5 @@
 {
-  "status": "APPROVED_GATE_TIME_BLOCKED",
+  "status": "APPROVED_ONE_TIME_WAKE_SCHEDULED_TIME_BLOCKED",
   "approvedGate": "8b9ee0ca",
   "notBefore": "2026-10-27T00:00:00Z",
   "localNotBefore": "2026-10-27 13:00 NZDT",
@@ -19,7 +19,14 @@
     "only approved next-day one-input/one-call chain; preserve UNKNOWN and no Save authority"
   ],
   "GUI": "returned CaptureKeyboard off",
-  "scheduling": "NO_AUTOMATION_CREATED: automatic approval review rejected scheduling future consequential paid/object action because explicit scheduling authorization is missing. Do not work around; request exact one-time wake authorization.",
+  "scheduling": {
+    "status": "ACTIVE_ONE_SHOT",
+    "automationId": "universal-p2",
+    "localTime": "2026-10-27T13:00:00+13:00",
+    "explicitOwnerAuthorization": "call_396a2a27d156403eac4b5f97fa5c7082/0",
+    "receipt": "P2_ONE_TIME_WAKE_AUTHORIZATION.json"
+  },
   "smoke": "actual main33 PASS",
-  "push": false
+  "push": false,
+  "observerStatus": "HANDOFF_VERIFIED; recheck at execution"
 }
