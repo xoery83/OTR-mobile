@@ -2,7 +2,7 @@
   "status": "INTEGRATION_CANDIDATE_CHECKS_PASS",
   "sourceBusinessE2E": "SCOPED_P1_PASS_SOURCE_IMAGE_d83ec6b3_4979d445",
   "mainDeployment": "NOT_DEPLOYED",
-  "mainIntegration": "PENDING_SERIAL_HEAD_CONFIRMATION",
+  "mainIntegration": "FAST_FORWARD_COMPLETED_fe9f3ca78cfb79efd27b7f79be50db465d05d214",
   "typecheck": "PASS",
   "uiGuard": "PASS 117 representative UI files; baseline not changed",
   "backendBuild": "PASS 3.7MB",
@@ -17,5 +17,9 @@
   "speechRegistration": "CLOSED; only retained-file/image-paste modules registered; no microphone permission added",
   "scopedLint": "PASS 0 errors /27 existing copied warnings; final hook test name repaired",
   "admissionHookRegression": "25 PASS incl 2 retained-action invalidation tests; typecheck PASS",
-  "finalDeltaIndependentReview": "NO_BLOCKER; layout-effect current-scope guards and closed speech registration"
+  "finalDeltaIndependentReview": "NO_BLOCKER; layout-effect current-scope guards and closed speech registration",
+  "remoteMain": "0c271171 unchanged; local integration not pushed",
+  "postMergeTests": "5 files/66 PASS +3 files/60 PASS on actual main",
+  "postMergeUiGuard": "PASS 117 files; baseline unchanged",
+  "nativeMainSmoke": "PENDING_SHORT_GUI_HANDOFF; Metro8097 main-port/P1false"
 }

@@ -1,4 +1,11 @@
-> 2026-10-26: isolated Universal main-port candidate in progress, based on local main e81eeb9f (remote0c271171 is its ancestor). Source branch formal P1 DEV E2E passed and Gate consumed/closed: Item34dece59, receiptc7b5aeae, independent readback, duplicate identity, AD5 Day/fullRestart and closed normalReader. Main-port tsc/UIguard/backend build pass; targeted tests and final serial merge/smoke still in progress. No main or protected DEV authority updated. P2–P6 remain unqualified. See docs/ops/universal-stage2-20261025/actual-execution/resume-20261026/P1_MAIN_PORT_SCOPE.json.
+# Universal Import current delivery — 2026-10-26
+
+- Stage II-A actual Source→DeepSeek→Results→Native recovery PASS. First bounded formal P1 Save PASS: same Batch5/Task861/i1, private SELF Item `34dece59-61ae-8716-a976-7d3da49b51d0`, receipt `c7b5aeae-ff1f-4305-a5fa-ed53273340f8`, independent Supabase readback, duplicate confirmation exactly one Item/receipt, AD5 Day Feed and full restart recovery. P1 final window consumed and closed; independent watchdog rollback verified. Never rearm it.
+- Source execution fixed `f79e3947`; default-off DEV image `sha256:4979d4450ab6bf3eedb6faf18663e34e12d77e1dcc632cad96959f780d145597` (source `d83ec6b3`). Same approved DEV service; no new authority from integration.
+- Local main serially fast-forwarded `e81eeb9f`→`fe9f3ca7` with independent limited merge review; original dirty files preserved. Remote `origin/main=0c271171`, not pushed. Native Feature candidates remain on their own branch. Main image not deployed; source L3 proof is separate.
+- Main-port checks: 420 focused assertions, tsc/build/UI guard; scoped lint zero errors/27 copied warnings. Final admission-hook repair 25 tests and independent review PASS. Actual main postmerge126 assertions/UI guard PASS. AD5 main read-only smoke pending GUI handoff; Metro8097 main-port with admission opt-in false.
+- Next: finish main smoke and record. P2–P6 remain unqualified; no formal save authority or booking/ticket qualification inferred. Existing tests reject them. Additional hosted business authority/objects/provider budget require an exact Owner Gate; ordinary default-closed coding allowed.
+- Authoritative receipt, scope, review and validation packet: `docs/ops/universal-stage2-20261025/actual-execution/resume-20261026/`. Production/real users/other worktrees untouched; no credentials copied.
 
 # C4-RB / Flight Partial integration checkpoint — 2026-10-17
 
