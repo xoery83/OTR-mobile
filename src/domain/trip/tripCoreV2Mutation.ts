@@ -1,6 +1,7 @@
 import {
   isVerifiedLocalOperation,
   localBookedFlightPayloadSchema,
+  localAuthoredFlightPayloadSchema,
   type VerifiedLocalOperation,
   type LocalMutationCommand,
 } from "./localCoreAuthority";
@@ -616,6 +617,68 @@ function executeCoreMutation(
     r.event_type = "transport";
   };
   switch (q.command) {
+    case "SAVE_AUTHORED_FLIGHT_LOCAL": {
+      if (!local || q.admission.mode !== "MANUAL")
+        throw new Error("LOCAL_CAPABILITY_REQUIRED");
+      const b = localAuthoredFlightPayloadSchema.parse(p);
+      const existing = g.itinerary_events.find((x) => x.id === q.target.id);
+      const intent = g.trip_flight_intents.find((x) => x.event_id === q.target.id);
+      if (
+        existing &&
+        (existing.experience_family !== "P2" || intent?.qualification !== "SPARSE")
+      )
+        throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+      const r = existing
+        ? root("ITEM", q.target.id, true)
+        : newItem("P2", b.flightNumberLiteral);
+      if (existing) touch("ITEM", r);
+      setParticipants(r, b.participation);
+      if (!existing) setAcl("ITEM", r, b.acl);
+      mark("ITEM", r, { title: b.flightNumberLiteral });
+      for (const [input, role] of [
+        ["origin", "ORIGIN"],
+        ["destination", "DESTINATION"],
+      ] as const) {
+        detail(
+          "itinerary_transport_endpoints",
+          r.id as string,
+          {
+            ...b[input].time,
+            authored_label: b[input].name,
+          },
+          role,
+        );
+        detail(
+          "trip_endpoint_details",
+          r.id as string,
+          {
+            airport_code: b[input].airportCode,
+            terminal: b[input].terminal,
+          },
+          role,
+        );
+      }
+      // Authored structure is unresolved; it does not qualify a physical or commercial flight.
+      r.temporal_shape = "TRANSPORT";
+      r.event_type = "flight";
+      for (const key of Object.keys(r))
+        if (
+          key.startsWith("start_") ||
+          key.startsWith("end_") ||
+          key === "planned_start" ||
+          key === "planned_end"
+        )
+          r[key] = null;
+      if (intent) intent.flight_number_literal = b.flightNumberLiteral;
+      else
+        g.trip_flight_intents.push({
+          trip_id: actor.tripId,
+          event_id: r.id,
+          flight_number_literal: b.flightNumberLiteral,
+          qualification: "SPARSE",
+        });
+      break;
+    }
     case "CREATE_BOOKING_EVIDENCED_FLIGHT_LOCAL": {
       if (!local || q.admission.mode !== "LOCAL_REVIEWED_SOURCE")
         throw new Error("LOCAL_CAPABILITY_REQUIRED");

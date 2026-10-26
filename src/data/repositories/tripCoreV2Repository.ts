@@ -1214,6 +1214,47 @@ export function createTripCoreV2Repository(
       new Set(operations.map((o) => o.operationId)),
       certifiedBase,
     );
+    // Reuse the verified local journal for P2; only Manual-owned targets join this reader.
+    const journalAvailable = await database.getFirstAsync(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='local_core_authority_commits'",
+    );
+    if (
+      journalAvailable &&
+      (await database.getFirstAsync(
+        "SELECT 1 FROM local_core_authority_commits WHERE account_id=? AND trip_id=? AND authority_kind='LOCAL_MANUAL' LIMIT 1",
+        ctx.accountId,
+        ctx.tripId,
+      ))
+    ) {
+      const local = await localCommits.readCommittedWithinTransaction(ctx, {
+        graph: projected.graph,
+        actor,
+        participatingPersonIds: projected.participatingPersonIds.length
+          ? projected.participatingPersonIds
+          : [...actor.personIds],
+        certificate: projected.cert,
+      });
+      const localFlights = local.graph.trip_flight_intents.filter(
+        (r) =>
+          local.perTargetAuthority[`ITEM:${r.event_id}`]?.authority === "LOCAL_MANUAL",
+      );
+      if (localFlights.length) {
+        Object.assign(projected.graph, local.graph);
+        for (const flight of localFlights)
+          projected.predictedIds.add(String(flight.event_id));
+        for (const receipt of local.receipts.filter(
+          (r) =>
+            r.authority === "LOCAL_MANUAL" &&
+            localFlights.some((f) => f.event_id === r.target.id),
+        ))
+          operations.push({
+            operationId: receipt.operationId,
+            sha256: receipt.intentSha256,
+            state: "LOCAL_COMMITTED",
+            receiptSha256: receipt.receiptSha256,
+          });
+      }
+    }
     const fingerprint = await coreHashValue(
       "otr-local-manual-read-v1",
       {

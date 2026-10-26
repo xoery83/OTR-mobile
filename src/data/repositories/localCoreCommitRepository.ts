@@ -23,6 +23,7 @@ import {
 } from "../../domain/trip/tripCoreV2Mutation";
 import {
   localHash,
+  localAuthoredFlightPayloadSchema,
   parseLocalCommitEnvelope,
   verifyLocalCommit,
   localCoreReceiptSchema,
@@ -102,6 +103,12 @@ const text = (x: unknown) => canonicalCoreJson(x as Json);
 const same = (a: unknown, b: unknown) => text(a) === text(b);
 const outputs = (e: LocalCommitEnvelope) =>
   e.authority === "LOCAL_MANUAL" ? e.outputs : e.slots;
+const isUpdate = (x: ReturnType<typeof outputs>[number]) =>
+  x.command === "QUALIFY_FLIGHT" ||
+  (x.command === "SAVE_AUTHORED_FLIGHT_LOCAL" &&
+    x.baseVector.some(
+      (v) => v.kind === x.target.kind && v.id === x.target.id && v.revision !== null,
+    ));
 const successful = (e: LocalCommitEnvelope) =>
   outputs(e).filter((x) => x.command !== null);
 const body = (x: Record<string, unknown>, key: string) =>
@@ -129,14 +136,30 @@ export function createLocalCoreCommitRepository(
   async function assess(c: AccountRequestContext, e: LocalCommitEnvelope, g: CoreGraph) {
     if (e.authority === "LOCAL_REVIEWED_SOURCE" && deps.assessClaimsWithinTransaction)
       return deps.assessClaimsWithinTransaction(c, e, g);
-    // First local Manual only: an entirely empty relevant scope is provably clear.
-    // Existing/unknown P2 or Source claims need the Source owner's collision assessment.
-    if (
-      e.authority !== "LOCAL_MANUAL" ||
-      e.outputs.length !== 1 ||
-      g.trip_flight_intents.length
-    )
+    // Only explicitly Manual-created P2 identities are eligible; Source contenders stay closed.
+    if (e.authority !== "LOCAL_MANUAL" || e.outputs.length !== 1)
       throw new Error("LOCAL_CLAIM_COVERAGE_UNKNOWN");
+    {
+      const targetAuthorities = new Map<string, LocalCommitEnvelope["authority"]>();
+      for (const h of await headers(c)) {
+        const old = parseLocalCommitEnvelope(String(h.envelope_json));
+        for (const output of outputs(old))
+          if (output.target) targetAuthorities.set(output.target.id, old.authority);
+      }
+      const manualIds = new Set(
+        [...targetAuthorities]
+          .filter(([, authority]) => authority === "LOCAL_MANUAL")
+          .map(([id]) => id),
+      );
+      if (g.trip_flight_intents.some((r) => !manualIds.has(String(r.event_id))))
+        throw new Error("LOCAL_CLAIM_COVERAGE_UNKNOWN");
+      const output = e.outputs[0];
+      const revision = output.baseVector.find(
+        (v) => v.kind === "ITEM" && v.id === output.target.id,
+      )?.revision;
+      if (revision != null && !manualIds.has(output.target.id))
+        throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+    }
     const legacy = await database.getFirstAsync<{ n: number }>(
       "SELECT count(*) AS n FROM trip_source_output_slots s JOIN trip_source_confirmations c ON c.cache_account_id=s.cache_account_id AND c.id=s.confirmation_id WHERE c.cache_account_id=? AND c.trip_id=?",
       c.accountId,
@@ -368,7 +391,7 @@ export function createLocalCoreCommitRepository(
         commit_id: e.commitId,
         slot_id: x.slotId,
         slot_key: "slotKey" in x ? x.slotKey : x.slotId,
-        disposition: x.command === "QUALIFY_FLIGHT" ? "UPDATE" : "CREATE",
+        disposition: isUpdate(x) ? "UPDATE" : "CREATE",
         target_kind: x.target.kind,
         target_id: x.target.id,
         operation_id: x.operationId,
@@ -381,7 +404,7 @@ export function createLocalCoreCommitRepository(
         proof_json: "proof" in x ? text(x.proof) : null,
         proof_sha256: "proof" in x ? x.proof.proofSha256 : null,
         depends_on_json: text(x.dependsOn),
-        claim_identity: x.command === "QUALIFY_FLIGHT" ? null : ready.claimKey,
+        claim_identity: isUpdate(x) ? null : ready.claimKey,
       };
       for (const [key, value] of Object.entries(expected))
         if (r[key] !== value) throw new Error("LOCAL_JOURNAL_CORRUPT");
@@ -504,13 +527,24 @@ export function createLocalCoreCommitRepository(
       operationId: string;
       itemId: string;
       payload: unknown;
+      command?: "SAVE_AUTHORED_FLIGHT_LOCAL";
+      expectedRevision?: number;
     },
   ) {
     coreUuid.parse(input.commitId);
     coreUuid.parse(input.slotId);
     coreUuid.parse(input.operationId);
     coreUuid.parse(input.itemId);
-    const payload = corePayloadSchemas.CREATE_SPARSE_FLIGHT.parse(input.payload);
+    const command = input.command ?? "CREATE_SPARSE_FLIGHT";
+    const payload =
+      command === "SAVE_AUTHORED_FLIGHT_LOCAL"
+        ? localAuthoredFlightPayloadSchema.parse(input.payload)
+        : corePayloadSchemas.CREATE_SPARSE_FLIGHT.parse(input.payload);
+    if (
+      input.expectedRevision !== undefined &&
+      (!Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 1)
+    )
+      throw new Error("INVALID_BASE_VECTOR");
     return withAccountApplyGate(async () => {
       await assert(c);
       let prepared: LocalCommitEnvelope | undefined;
@@ -532,8 +566,14 @@ export function createLocalCoreCommitRepository(
               slotId: input.slotId,
               operationId: input.operationId,
               target: { kind: "ITEM", id: input.itemId },
-              command: "CREATE_SPARSE_FLIGHT",
-              baseVector: [{ kind: "ITEM", id: input.itemId, revision: null }],
+              command,
+              baseVector: [
+                {
+                  kind: "ITEM",
+                  id: input.itemId,
+                  revision: input.expectedRevision ?? null,
+                },
+              ],
               reviewedPayload: payload,
               intentSha256: placeholder,
               manualProvenance: {
@@ -566,7 +606,7 @@ export function createLocalCoreCommitRepository(
             tripId: c.tripId,
             target: draft.outputs[0].target,
             operationId: input.operationId,
-            command: "CREATE_SPARSE_FLIGHT",
+            command,
             baseVector: draft.outputs[0].baseVector,
             reviewedPayload: payload,
             selectedFields: [],
@@ -741,7 +781,7 @@ export function createLocalCoreCommitRepository(
             commit_id: e.commitId,
             slot_id: x.slotId,
             slot_key: "slotKey" in x ? x.slotKey : x.slotId,
-            disposition: x.command === "QUALIFY_FLIGHT" ? "UPDATE" : "CREATE",
+            disposition: isUpdate(x) ? "UPDATE" : "CREATE",
             target_kind: x.target.kind,
             target_id: x.target.id,
             operation_id: x.operationId,
@@ -759,7 +799,7 @@ export function createLocalCoreCommitRepository(
             proof_json: "proof" in x ? text(x.proof) : null,
             receipt_json: text(receipt),
             depends_on_json: text(x.dependsOn),
-            claim_identity: x.command === "QUALIFY_FLIGHT" ? null : op.claimKey,
+            claim_identity: isUpdate(x) ? null : op.claimKey,
             created_at: now,
           });
           result.push(receipt);

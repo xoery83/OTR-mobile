@@ -314,12 +314,12 @@ function AcceptedDayFeed({
           ?.rows(section.date)
           .some(
             (row) =>
-              (row.family === "P1" || row.family === "P3") &&
+              ["P1", "P2", "P3"].includes(row.family) &&
               JSON.stringify(row.rowKey) === focus &&
               localManual.items.some(
                 (item) =>
                   item.itemId === row.itemRef &&
-                  (item.family === "P1" || item.family === "P3") &&
+                  ["P1", "P2", "P3"].includes(item.family) &&
                   !item.hidden &&
                   !["cancelled", "skipped"].includes(String(item.status)),
               ),

@@ -710,3 +710,27 @@ it("uses compact Participants and atomically accepts a hotel's resolved name and
   expect(node("tripCreate.stayLocation").value).toBe("99 Halsey Street");
   expect(node("tripCreate.stayLocation").nameQuery).toBe(null);
 });
+
+it.each([
+  ["tripCreate.stayCheckinTime", 17],
+  ["tripCreate.stayCheckoutTime", 10],
+])("seeds %s picker only, preserving an unset clock on Cancel", async (label, hour) => {
+  const p = props();
+  const value = { ...fields(), startDate: "2027-12-30", endDate: "2028-01-02" };
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "stay",
+      fields: value,
+      participantOptions: [],
+    })),
+  });
+  node(label).onPress();
+  render(p);
+  const picker = state.nodes.find((n) => n.mode === "time")!;
+  expect(picker.value.getHours()).toBe(hour);
+  expect(picker.value.getMinutes()).toBe(0);
+  node("common.cancel").onPress();
+  render(p);
+  expect(node(label).value).toBe("tripCreate.notSet");
+});

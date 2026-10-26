@@ -306,21 +306,23 @@ it("the embedded Flight wrapper protects dirty cancel and blocks dismissal durin
   expect(props.onSaved).toHaveBeenCalledWith("item-a");
 });
 
-it("retains manually entered endpoint fields and never calls the sparse writer with truncated values", async () => {
+it("saves manually entered endpoint fields without truncating to the sparse writer", async () => {
   const { repo } = await ready();
   node("manualFlight.manualDetails").onPress();
   render();
   expect(node("SEGMENT_FIELDS").full).toBe(true);
   node("SEGMENT_FIELDS").onChange({ originCode: "AKL", departureTime: "09:00" });
-  expect(render()).toContain("manualFlight.detailsPending");
+  expect(render()).not.toContain("manualFlight.detailsPending");
   expect(node("SEGMENT_FIELDS").value).toMatchObject({
     originCode: "AKL",
     departureTime: "09:00",
   });
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("tripCreate.saveItem").disabled).toBe(false);
   node("tripCreate.saveItem").onPress();
   await flush();
-  expect(repo.save).not.toHaveBeenCalled();
+  expect(vi.mocked(repo.save).mock.calls[0][1]).toMatchObject({
+    origin: { airportCode: "AKL", time: { local_time: "09:00", instant: null } },
+  });
 });
 it("adds independent expanded draft segments without persisting an inferred Journey", async () => {
   const { repo } = await ready();

@@ -52,8 +52,45 @@ export const localBookedFlightPayloadSchema = z
     acl: f.coreAclSchema,
   })
   .refine((v) => v.origin.airportCode !== v.destination.airportCode);
+const authoredFlightEndpoint = z.strictObject({
+  airportCode: f.coreText(8).nullable(),
+  name: f.coreText(255).nullable(),
+  terminal: f.coreText(128).nullable(),
+  time: coreBoundarySchema
+    .refine(
+      (t) =>
+        t.instant === null &&
+        t.source_instant === null &&
+        t.source_instant_precision === null &&
+        t.interpretation_key === null &&
+        t.interpretation_input_sha256 === null &&
+        t.provenance_refs === null &&
+        t.civil_resolution === "PENDING" &&
+        t.resolution_offset_seconds === null &&
+        t.supplied_offset_seconds === null &&
+        t.basis === "DERIVED_CIVIL",
+    )
+    .refine((t) => {
+      if (!t.zone_id) return true;
+      if (/^[+-]/.test(t.zone_id)) return false;
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: t.zone_id }).format(0);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
+});
+export const localAuthoredFlightPayloadSchema = z.strictObject({
+  flightNumberLiteral: f.coreText(255).refine((v) => !!v.trim()),
+  origin: authoredFlightEndpoint.refine((v) => v.time.local_date !== null),
+  destination: authoredFlightEndpoint,
+  participation: f.coreParticipationSchema,
+  acl: f.coreAclSchema,
+});
 export const localPayloadSchemas = {
   CREATE_SPARSE_FLIGHT: corePayloadSchemas.CREATE_SPARSE_FLIGHT,
+  SAVE_AUTHORED_FLIGHT_LOCAL: localAuthoredFlightPayloadSchema,
   QUALIFY_FLIGHT: corePayloadSchemas.QUALIFY_FLIGHT,
   CREATE_BOOKING: corePayloadSchemas.CREATE_BOOKING,
   CREATE_BOOKING_EVIDENCED_FLIGHT_LOCAL: localBookedFlightPayloadSchema,
@@ -78,7 +115,7 @@ const operation = {
 };
 const manualOutput = z.strictObject({
   ...operation,
-  command: z.literal("CREATE_SPARSE_FLIGHT"),
+  command: z.enum(["CREATE_SPARSE_FLIGHT", "SAVE_AUTHORED_FLIGHT_LOCAL"]),
   manualProvenance: z.strictObject({
     kind: z.literal("MANUAL"),
     actorPersonId: f.coreUuid,
@@ -302,6 +339,7 @@ export function parseLocalCommitEnvelope(input: unknown): LocalCommitEnvelope {
       throw new Error("INVALID_BASE_VECTOR");
     if (
       x.command !== "QUALIFY_FLIGHT" &&
+      x.command !== "SAVE_AUTHORED_FLIGHT_LOCAL" &&
       x.baseVector.find((v) => v.kind === x.target.kind && v.id === x.target.id)!
         .revision !== null
     )
@@ -364,7 +402,7 @@ export type LocalMutationCommand = {
   tripId: string;
   target: z.infer<typeof target>;
   baseVector: z.infer<typeof base>;
-  command: z.infer<typeof command>;
+  command: z.infer<typeof command> | "SAVE_AUTHORED_FLIGHT_LOCAL";
   payload: Json;
   admission: {
     mode: "MANUAL" | "LOCAL_REVIEWED_SOURCE";

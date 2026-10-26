@@ -1,3 +1,4 @@
+import type { FlightSegmentDraft } from "./manualFlightFormFields";
 import type { ReactNode } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
@@ -21,25 +22,60 @@ export function FlightFidelityGrid({
   focused = false,
   immersive = false,
   withinMarker,
+  pending = false,
 }: {
-  flight: FlightPresentation;
+  flight: FlightPresentation | { authored: FlightSegmentDraft };
   numberLiteral?: string | null;
   focused?: boolean;
   immersive?: boolean;
   withinMarker?: ReactNode;
+  pending?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const { fontScale } = useWindowDimensions();
   const stacked = fontScale > 1.5;
-  const departure = endpoint(flight, "ORIGIN"),
-    arrival = endpoint(flight, "DESTINATION");
-  const origin = flight.supplemental.endpoints.ORIGIN,
-    destination = flight.supplemental.endpoints.DESTINATION;
-  const number = flightNumber(flight) ?? numberLiteral;
-  const duration = durationMinutes(flight);
-  const middleWidth = (focused || immersive ? 52 : 68) * (stacked ? fontScale : 1);
+  const authored = "authored" in flight ? flight.authored : null;
+  const departure =
+    "authored" in flight
+      ? {
+          local_time: flight.authored.departureTime || null,
+          local_date: flight.authored.departureDate || null,
+          zone_id: flight.authored.departureZone || null,
+        }
+      : endpoint(flight, "ORIGIN");
+  const arrival =
+    "authored" in flight
+      ? {
+          local_time: flight.authored.arrivalTime || null,
+          local_date: flight.authored.arrivalDate || null,
+          zone_id: flight.authored.arrivalZone || null,
+        }
+      : endpoint(flight, "DESTINATION");
+  const origin =
+    "authored" in flight
+      ? {
+          code: flight.authored.originCode || null,
+          name: flight.authored.originName || null,
+          terminal: flight.authored.originTerminal || null,
+        }
+      : flight.supplemental.endpoints.ORIGIN;
+  const destination =
+    "authored" in flight
+      ? {
+          code: flight.authored.destinationCode || null,
+          name: flight.authored.destinationName || null,
+          terminal: flight.authored.destinationTerminal || null,
+        }
+      : flight.supplemental.endpoints.DESTINATION;
+  const number =
+    "authored" in flight
+      ? authored?.flightNumberLiteral
+      : (flightNumber(flight) ?? numberLiteral);
+  const duration = "authored" in flight ? null : durationMinutes(flight);
+  const middleWidth =
+    (focused || immersive ? (pending ? 68 : 52) : 68) * (stacked ? fontScale : 1);
   const gap = focused || immersive ? 8 : 12;
   const hasAirport = !!(
     origin.code ||
@@ -56,6 +92,15 @@ export function FlightFidelityGrid({
       : null;
   const terminal = (value: string | null) =>
     value ? t("flight.terminal", { terminal: value }) : null;
+  const pendingMarker = pending ? (
+    <UiText
+      accessibilityLabel={t("tripCreate.itemPending")}
+      style={{ color: colors.warning, fontSize: 8 }}
+    >
+      {" "}
+      ●
+    </UiText>
+  ) : null;
   const names = (facts: typeof origin, arrival = false) => (
     <>
       {facts.code ? (
@@ -90,7 +135,12 @@ export function FlightFidelityGrid({
             <View style={[styles.grid, { gap }, stacked && styles.stacked]}>
               <View style={styles.airport}>{names(origin)}</View>
               <View style={[styles.middle, { width: middleWidth }]}>
-                {number ? <UiText style={styles.number}>{number}</UiText> : null}
+                {number ? (
+                  <UiText style={styles.number}>
+                    {number}
+                    {pendingMarker}
+                  </UiText>
+                ) : null}
                 <View style={styles.planeLine}>
                   <View style={styles.line} />
                   <AppIcon name="airplane" size={18} color={colors.accent} />
@@ -150,7 +200,12 @@ export function FlightFidelityGrid({
           </View>
         ) : (
           <View style={styles.airport}>
-            {number ? <UiText style={styles.code}>{number}</UiText> : null}
+            {number ? (
+              <UiText style={styles.code}>
+                {number}
+                {pendingMarker}
+              </UiText>
+            ) : null}
             {departure?.local_date ? (
               <UiText style={styles.name}>{date(departure.local_date)}</UiText>
             ) : null}

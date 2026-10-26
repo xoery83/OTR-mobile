@@ -53,19 +53,18 @@ it.each([
   };
   const bytes = JSON.stringify(value);
   expect(sparseFlightSavePlan([value])).toMatchObject({
-    kind: "CORE_PENDING",
-    reason: "ENDPOINTS",
+    kind: "READY",
+    fields: { origin: {}, destination: {} },
   });
   expect(JSON.stringify(value)).toBe(bytes);
 });
-it("retains distinct segment keys and blocks unowned Journey/ Edit mutations", () => {
+it("retains distinct segment keys, supports single-flight Edit and blocks unowned Journey mutations", () => {
   expect(sparseFlightSavePlan([valid(), { ...valid(), key: "two" }])).toMatchObject({
     kind: "CORE_PENDING",
     reason: "JOURNEY",
   });
   expect(sparseFlightSavePlan([valid()], true)).toMatchObject({
-    kind: "CORE_PENDING",
-    reason: "EDIT",
+    kind: "READY",
   });
 });
 it("keeps cross-date-line endpoint dates and Floating clocks without inferring an instant", () => {
@@ -84,6 +83,7 @@ it("rejects invalid dates, clocks and IANA hints rather than assigning a fallbac
     { departureDate: "2027-02-30" },
     { departureTime: "25:00" },
     { departureZone: "Not/AZone" },
+    { departureZone: "+05:30" },
     { arrivalTime: "12:00" },
   ])
     expect(flightSegmentDraftSchema.safeParse({ ...valid(), ...changes }).success).toBe(

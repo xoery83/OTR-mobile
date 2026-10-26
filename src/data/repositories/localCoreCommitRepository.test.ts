@@ -398,11 +398,12 @@ describe("normal local Core commit is durable authority, never accepted mirror",
       f.sql.prepare("SELECT count(*) n FROM local_core_authority_slots").get(),
     ).toEqual({ n: 0 });
   });
-  it("cannot bypass incomplete competing claims by preparing a second flight", async () => {
+  it("permits a distinct second explicitly Manual flight without inferring a match", async () => {
     const f = fixture();
     const { context } = await create(f);
     await f.core.commitLocal(context, await prepared(f, context));
-    await expect(prepared(f, context)).rejects.toThrow("LOCAL_CLAIM_COVERAGE_UNKNOWN");
+    const second = await prepared(f, context);
+    expect((await f.core.commitLocal(context, second)).receipts).toHaveLength(1);
   });
 });
 

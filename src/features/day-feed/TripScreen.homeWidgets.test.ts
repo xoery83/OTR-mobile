@@ -31,6 +31,9 @@ vi.mock("@/data/repositories/tripRepository", () => ({
     getTrip: async () => ({ destinations: [{ displayLabel: "Auckland, New Zealand" }] }),
   }),
 }));
+vi.mock("./ManualFlightForm", () => ({
+  ManualFlightEditor: (p: any) => ({ type: "ManualFlightEditor", props: p }),
+}));
 vi.mock("./ManualItineraryContent", () => ({ ManualItineraryContent: () => null }));
 vi.mock("./DayFeedFidelityHeading", () => ({ DayFeedFidelityHeading: () => null }));
 vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
@@ -1646,3 +1649,23 @@ it.each(["25.0", "27.0"])(
     expect(state.setOptions.mock.lastCall?.[0].headerShown).toBe(true);
   },
 );
+
+it("opens the same real local P2 through its editable Flight form", async () => {
+  const local = localRead();
+  local.items[0] = { ...local.items[0], family: "P2", title: "NZ99" };
+  state.result.observed = null;
+  state.result.localManual = local;
+  state.routeMode = "day";
+  state.view.zone = "";
+  state.resolveLocalItem.mockResolvedValue({ ...local, item: local.items[0] });
+  find(await loaded(), DayFeed).onOpenLocalItem("manual-hotel", local);
+  for (let i = 0; i < 24; i++) await Promise.resolve();
+  find(render(), "LocalItemPreview").onEdit();
+  const editor = find(render(), (await import("./ManualFlightForm")).ManualFlightEditor);
+  expect(editor).toMatchObject({
+    tripId: reference,
+    itemId: "manual-hotel",
+    expectedRevision: 1,
+    embedded: false,
+  });
+});

@@ -122,7 +122,16 @@ vi.mock("./P1Row", () => ({
   },
 }));
 vi.mock("./FlightRows", () => ({ FlightRows: () => null }));
-vi.mock("./FlightFidelityGrid", () => ({ FlightFidelityGrid: () => null }));
+vi.mock("./FlightFidelityGrid", () => ({
+  FlightFidelityGrid: (p: any) => {
+    state.nodes.push(p);
+    return createElement(
+      "span",
+      {},
+      `FLIGHT ${p.flight?.authored?.flightNumberLiteral}:${p.focused ? "F" : "B"}`,
+    );
+  },
+}));
 vi.mock("./NowMarker", () => ({ NowMarker: () => null }));
 vi.mock("./TransitionRow", () => ({ TransitionRow: () => null }));
 const fixture = faroeNegativeFixtures();
@@ -655,4 +664,29 @@ it("accepted plus local retains P3 occurrence Focus and forwards its original ro
     role: "CHECKIN",
     date: syntheticDate,
   });
+});
+
+it("accepted plus local keeps P2 Focus stable and a second tap opens the real Item", () => {
+  const local = localManual("local-flight"),
+    item = local.items[0];
+  item.family = "P2";
+  item.details = { flightNumberLiteral: "NZ99" };
+  item.participation = { mode: "WHOLE_GROUP", personIds: [] };
+  const rowKey = {
+    itemId: item.itemId,
+    projectionRole: "ORIGIN",
+    localDate: syntheticDate,
+  };
+  local.rows = (date: string) =>
+    date === syntheticDate
+      ? [{ itemRef: item.itemId, rowKey, family: "P2", position: "TNS", title: "NZ99" }]
+      : [];
+  const open = vi.fn(),
+    props = { localManual: local, onOpenLocalItem: open };
+  render(props);
+  state.nodes.find((n) => n.accessibilityLabel === "NZ99").onPress();
+  expect(render(props)).toContain("FLIGHT NZ99:F");
+  expect(render(props)).toContain("FLIGHT NZ99:F");
+  state.nodes.find((n) => n.accessibilityLabel === "NZ99").onPress();
+  expect(open).toHaveBeenCalledWith(item.itemId, local);
 });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { coreParticipationSchema } from "@/domain/trip/tripCoreV2";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import type {
@@ -40,6 +41,7 @@ export const flightSegmentDraftSchema = z
     for (const field of ["departureZone", "arrivalZone"] as const) {
       if (value[field])
         try {
+          if (/^[+-]/.test(value[field])) throw new Error("INVALID_IANA_ZONE");
           localCalendarDate("2000-01-01T12:00:00Z", value[field]);
         } catch {
           context.addIssue({
@@ -121,16 +123,43 @@ export function sparseFlightSavePlan(
     )
   )
     return { kind: "INVALID" };
-  if (editing) return { kind: "CORE_PENDING", reason: "EDIT" };
   if (segments.length > 1) return { kind: "CORE_PENDING", reason: "JOURNEY" };
-  if (endpointFields.some((field) => segments[0][field].trim()))
-    return { kind: "CORE_PENDING", reason: "ENDPOINTS" };
+  const segment = segments[0];
+  const endpoint = (origin: boolean) => {
+    const date = origin ? segment.departureDate : segment.arrivalDate;
+    const time = origin ? segment.departureTime : segment.arrivalTime;
+    const zone = origin ? segment.departureZone : segment.arrivalZone;
+    return {
+      airportCode: (origin ? segment.originCode : segment.destinationCode).trim() || null,
+      name: (origin ? segment.originName : segment.destinationName).trim() || null,
+      terminal:
+        (origin ? segment.originTerminal : segment.destinationTerminal).trim() || null,
+      time: {
+        ...coreDateBoundary(segment.departureDate),
+        local_date: date || null,
+        local_time: time || null,
+        clock_precision: time ? -1 : null,
+        quality: time ? ("ESTIMATED" as const) : ("UNKNOWN" as const),
+        zone_id: zone || null,
+      },
+    };
+  };
+  const full = editing || endpointFields.some((field) => segment[field].trim());
+  if (
+    full &&
+    (segment.originCode.length > 8 ||
+      segment.destinationCode.length > 8 ||
+      segment.originTerminal.length > 128 ||
+      segment.destinationTerminal.length > 128)
+  )
+    return { kind: "INVALID" };
   return {
     kind: "READY",
     fields: {
       flightNumberLiteral: segments[0].flightNumberLiteral.trim(),
       departureDate: segments[0].departureDate,
       participation: structuredClone(segments[0].participation),
+      ...(full ? { origin: endpoint(true), destination: endpoint(false) } : {}),
     },
   };
 }
@@ -157,10 +186,10 @@ export function flightSegmentFromRead(item: ManualFlightRead): FlightSegmentDraf
     departureDate: string(start.localDate),
     departureTime: string(start.localTime).slice(0, 5),
     departureZone: string(start.zoneId),
-    originCode: string(origin.airport_code),
+    originCode: string(origin.airportCode ?? origin.airport_code),
     originName: string(record(origin.place).authoredLabel),
     originTerminal: string(origin.terminal),
-    destinationCode: string(destination.airport_code),
+    destinationCode: string(destination.airportCode ?? destination.airport_code),
     destinationName: string(record(destination.place).authoredLabel),
     destinationTerminal: string(destination.terminal),
     arrivalDate: string(end.localDate),

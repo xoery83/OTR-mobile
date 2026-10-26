@@ -1,3 +1,5 @@
+import { FlightFidelityGrid } from "./FlightFidelityGrid";
+import { flightSegmentFromRead } from "./manualFlightFormFields";
 import { StayReadRow } from "./StayReadView";
 import { localStayPresentation, localStayMapTargets } from "./localStayPresentation";
 import type { BookingContext } from "./bookingReadPresentation";
@@ -212,6 +214,28 @@ export function LocalManualDayRows({
               : row.family === "P3"
                 ? t("tripHome.today.tonight")
                 : null;
+        if (item && row.family === "P2") {
+          const focusKey = JSON.stringify(row.rowKey);
+          const focused = p1Focus === focusKey;
+          return (
+            <Pressable
+              key={focusKey}
+              accessibilityRole="button"
+              accessibilityLabel={row.title}
+              style={styles.row}
+              onPress={() => {
+                if (focused || !onP1Focus) onOpenItem?.(row.itemRef, read);
+                else onP1Focus(focusKey);
+              }}
+            >
+              <FlightFidelityGrid
+                flight={{ authored: flightSegmentFromRead(item) }}
+                focused={focused}
+                pending={item.localState === "PENDING"}
+              />
+            </Pressable>
+          );
+        }
         if (item && row.family === "P3")
           return (
             <LocalStayRow

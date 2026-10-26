@@ -1,7 +1,9 @@
-import type { z } from "zod";
+import { z } from "zod";
 import { validateCalendarDate } from "../../domain/trip/dayReadModel";
 import { coreDefaults, coreUuid } from "../../domain/trip/tripCoreV2";
 import { corePayloadSchemas } from "../../domain/trip/tripCoreV2Commands";
+import { localAuthoredFlightPayloadSchema } from "../../domain/trip/localCoreAuthority";
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { createUuid } from "../../domain/localId";
 import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
 import type { CoreFlightDayProjection } from "../../domain/trip/tripCoreV2DayFeed";
@@ -24,12 +26,18 @@ export type ManualFlightDraft = Readonly<{
   slotId: string;
   operationId: string;
   itemId: string;
+  expectedRevision?: number;
 }>;
 export const manualFlightFieldsSchema = corePayloadSchemas.CREATE_SPARSE_FLIGHT.pick({
   flightNumberLiteral: true,
   departureDate: true,
   participation: true,
-}).partial({ participation: true });
+})
+  .partial({ participation: true })
+  .extend({
+    origin: localAuthoredFlightPayloadSchema.shape.origin.optional(),
+    destination: localAuthoredFlightPayloadSchema.shape.destination.optional(),
+  });
 export type ManualFlightFields = z.infer<typeof manualFlightFieldsSchema>;
 
 type Core = Pick<
@@ -48,17 +56,33 @@ export type ManualFlightSaved = {
 };
 const payload = (input: ManualFlightFields) => {
   const fields = manualFlightFieldsSchema.parse(input);
-  return corePayloadSchemas.CREATE_SPARSE_FLIGHT.parse({
+  const sparse = corePayloadSchemas.CREATE_SPARSE_FLIGHT.parse({
     flightNumberLiteral: fields.flightNumberLiteral.trim(),
     departureDate: validateCalendarDate(fields.departureDate),
     ...coreDefaults("member"),
     ...(fields.participation ? { participation: fields.participation } : {}),
   });
+  if (!fields.origin && !fields.destination) return sparse;
+  return localAuthoredFlightPayloadSchema.parse({
+    flightNumberLiteral: sparse.flightNumberLiteral,
+    origin: fields.origin ?? {
+      airportCode: null,
+      name: null,
+      terminal: null,
+      time: coreDateBoundary(sparse.departureDate),
+    },
+    destination: fields.destination ?? {
+      airportCode: null,
+      name: null,
+      terminal: null,
+      time: coreDateBoundary(sparse.departureDate),
+    },
+    participation: sparse.participation,
+    acl: sparse.acl,
+  });
 };
 const same = (a: ManualFlightFields, b: ManualFlightFields) =>
-  a.flightNumberLiteral === b.flightNumberLiteral &&
-  a.departureDate === b.departureDate &&
-  JSON.stringify(a.participation) === JSON.stringify(b.participation);
+  JSON.stringify(a) === JSON.stringify(b);
 export function createLocalManualFlightRepository(
   core: Core,
   account: () => Promise<string>,
@@ -102,16 +126,37 @@ export function createLocalManualFlightRepository(
     return { status: "LOCAL_COMMITTED", itemId: draft.itemId, receipt };
   }
   return {
-    async createDraft(tripId: string): Promise<ManualFlightDraft> {
+    async createDraft(
+      tripId: string,
+      itemId?: string,
+      expectedRevision?: number,
+    ): Promise<ManualFlightDraft> {
       const ctx = await core.captureContext(coreUuid.parse(tripId));
       await assertAccountRequestContext(ctx, account);
+      if (itemId) {
+        const snapshot = await core.combinedSnapshot(ctx);
+        await assertAccountRequestContext(ctx, account);
+        const item = snapshot?.graph.itinerary_events.find((r) => r.id === itemId);
+        if (
+          !item ||
+          snapshot?.perTargetAuthority[`ITEM:${itemId}`]?.authority !== "LOCAL_MANUAL" ||
+          item.experience_family !== "P2" ||
+          snapshot.graph.trip_flight_intents.find((r) => r.event_id === itemId)
+            ?.qualification !== "SPARSE"
+        )
+          throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+        if (expectedRevision !== undefined && item.semantic_revision !== expectedRevision)
+          throw new Error("MANUAL_FLIGHT_READ_CHANGED");
+        expectedRevision = Number(item.semantic_revision);
+      }
       return Object.freeze({
         accountId: ctx.accountId,
         tripId,
         commitId: newId(),
         slotId: newId(),
         operationId: newId(),
-        itemId: newId(),
+        itemId: itemId ? coreUuid.parse(itemId) : newId(),
+        ...(expectedRevision === undefined ? {} : { expectedRevision }),
       });
     },
     recover,
@@ -137,12 +182,16 @@ export function createLocalManualFlightRepository(
       fields: ManualFlightFields,
       current: () => boolean,
     ): Promise<ManualFlightSaved> {
-      const parsed = payload(fields),
-        normalized = {
-          flightNumberLiteral: parsed.flightNumberLiteral,
-          departureDate: parsed.departureDate,
-          ...(fields.participation ? { participation: parsed.participation } : {}),
-        };
+      const parsed = payload(fields);
+      const normalized = manualFlightFieldsSchema.parse({
+        flightNumberLiteral: parsed.flightNumberLiteral,
+        departureDate:
+          "origin" in parsed ? parsed.origin.time.local_date : parsed.departureDate,
+        ...(fields.participation ? { participation: parsed.participation } : {}),
+        ...("origin" in parsed
+          ? { origin: parsed.origin, destination: parsed.destination }
+          : {}),
+      });
       const ctx = await context(draft);
       if (!current()) throw new Error("LOCAL_MANUAL_INTENT_CLOSED");
       const saved = await recover(draft);
@@ -155,9 +204,37 @@ export function createLocalManualFlightRepository(
           item = snapshot?.graph.itinerary_events.find((r) => r.id === draft.itemId);
         if (
           intent?.flight_number_literal !== normalized.flightNumberLiteral ||
-          item?.start_local_date !== normalized.departureDate
+          ("origin" in parsed
+            ? snapshot?.graph.itinerary_transport_endpoints.find(
+                (r) => r.event_id === draft.itemId && r.role === "ORIGIN",
+              )?.local_date
+            : item?.start_local_date) !== normalized.departureDate
         )
           throw new Error("LOCAL_MANUAL_OUTCOME_MISMATCH");
+        if ("origin" in parsed) {
+          for (const [side, role] of [
+            ["origin", "ORIGIN"],
+            ["destination", "DESTINATION"],
+          ] as const) {
+            const endpoint = snapshot?.graph.itinerary_transport_endpoints.find(
+              (r) => r.event_id === draft.itemId && r.role === role,
+            );
+            const detail = snapshot?.graph.trip_endpoint_details.find(
+              (r) => r.event_id === draft.itemId && r.role === role,
+            );
+            const wanted = parsed[side];
+            if (
+              endpoint?.authored_label !== wanted.name ||
+              detail?.airport_code !== wanted.airportCode ||
+              detail?.terminal !== wanted.terminal ||
+              endpoint?.local_date !== wanted.time.local_date ||
+              String(endpoint?.local_time ?? "").slice(0, 5) !==
+                (wanted.time.local_time ?? "").slice(0, 5) ||
+              endpoint?.zone_id !== wanted.time.zone_id
+            )
+              throw new Error("LOCAL_MANUAL_OUTCOME_MISMATCH");
+          }
+        }
         if (fields.participation) {
           const participation = parsed.participation;
           const selected =
@@ -191,6 +268,12 @@ export function createLocalManualFlightRepository(
         const envelope = await core.prepareLocalManualSparse(ctx, {
           ...draft,
           payload: parsed,
+          ...("origin" in parsed
+            ? {
+                command: "SAVE_AUTHORED_FLIGHT_LOCAL" as const,
+                expectedRevision: draft.expectedRevision,
+              }
+            : {}),
         });
         attempt = { fields: normalized, envelope };
         attempts.set(draft, attempt);

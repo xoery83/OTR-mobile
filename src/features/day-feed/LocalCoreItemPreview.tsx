@@ -1,3 +1,5 @@
+import { FlightFidelityGrid } from "./FlightFidelityGrid";
+import { flightSegmentFromRead } from "./manualFlightFormFields";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
@@ -55,8 +57,16 @@ export function LocalCoreItemPreview({
           style={styles.body}
           contentContainerStyle={styles.content}
         >
-          <Text style={styles.title}>{item.title as string}</Text>
-          {item.localState === "PENDING" ? (
+          {item.family === "P2" ? (
+            <FlightFidelityGrid
+              flight={{ authored: flightSegmentFromRead(item) }}
+              immersive
+              pending={item.localState === "PENDING"}
+            />
+          ) : (
+            <Text style={styles.title}>{item.title as string}</Text>
+          )}
+          {item.localState === "PENDING" && item.family !== "P2" ? (
             <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>
           ) : null}
           {item.family === "P3" ? (
@@ -209,13 +219,15 @@ export function LocalCoreItemPreview({
           {onEdit ? (
             <UiButton
               label={t(
-                item.family === "P4"
-                  ? "tripCreate.editRental"
-                  : item.family === "P5"
-                    ? "tripCreate.editTransport"
-                    : item.family === "P3"
-                      ? "tripCreate.editStay"
-                      : "tripCreate.editPlan",
+                item.family === "P2"
+                  ? "manualFlight.editFlight"
+                  : item.family === "P4"
+                    ? "tripCreate.editRental"
+                    : item.family === "P5"
+                      ? "tripCreate.editTransport"
+                      : item.family === "P3"
+                        ? "tripCreate.editStay"
+                        : "tripCreate.editPlan",
               )}
               onPress={onEdit}
             />

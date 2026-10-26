@@ -1,0 +1,27 @@
+# P2 Manual single-flight local Save — owning integration delta
+
+Owner explicitly requires real P2 Save for fidelity testing. Universal's unique shared Writer serially transferred only P2 LOCAL_MANUAL sections of localCoreAuthority, localCoreCommitRepository, tripCoreV2Repository and tripCoreV2Mutation plus tests to Native lane on 26 October. No simultaneous shared-file writes; fixed candidate and validation must be returned before handback.
+
+## Semantics and existing storage
+
+One authored Flight uses the existing Item, flight intent, transport endpoints and endpoint details. SPARSE means no qualified physical/commercial flight identity; authored endpoints do not confer QUALIFIED, booking evidence, service identity or an instant. TRANSPORT describes the user's two-endpoint structure only. Existing accepted Core command/schema and Source authority remain unchanged. No SQLite migration, second Core, Queue, Source, Admission or private shadow fields.
+
+A LOCAL_MANUAL-only authored-flight command carries literal flight number, two optional authored airport code/name/terminal and civil date/clock/IANA zone boundaries plus participation. Departure date remains required; absent fields stay absent. All boundaries remain unresolved (ESTIMATED if a clock exists, UNKNOWN otherwise), with null instant/source instant/resolution/proof. DST gaps/folds are retained civil inputs, never silently resolved. This local command cannot pass accepted Core command validation or Source verification.
+
+Create uses a new Item identity. Edit targets the same locally Manual-created SPARSE Item with expected semantic revision; Source-created or qualified Items fail closed. Preparation, immutable intent/receipt, retry, cancellation fences, account generation, transaction rollback and cold replay reuse the existing local authority journal. Existing Source contender rejection remains; multiple explicitly Manual-created Items are permitted without inferred flight matching. No grouping from PNR or airports; Journey remains a subsequent owning contract.
+
+## Owning interfaces and acceptance
+
+Repository must preserve every populated form field, return the existing LOCAL_COMMITTED receipt, read through the existing actor-filtered Reader and allow editing using the same revision. Form enables Save only for the lawful single-flight plan; multiple-flight grouping remains explicitly unavailable. Sparse number/date creation remains backward compatible.
+
+Required L2: full create/read/edit/cold reopen, second manual flight, retry identity and frozen payload, stale edit, foreign Account/Trip, Source/qualified edit rejection, unchanged Source authority tests, no invented service/instant. Required Native: actual form Save→Day→Details/Edit→Save→cold recovery on the independent Forms QA app. Pending Native/L2 until recorded. Cloud remains CLOSED; no Backend/normal-sync capability, permissions, grants or main merge is included.
+
+## Validation receipt
+
+Implementation uses SAVE_AUTHORED_FLIGHT_LOCAL only inside LOCAL_MANUAL; accepted command/Source enums reject it. Existing journal slot UPDATE/null-claim semantics are reused for Edit and semantic revision increments once. Explicit Manual ownership is required for all competing P2 identities; historical Source/accepted contenders and legacy Source confirmations still reject. No migration or Backend change.
+
+Real SQLite full Create→repeat retry→same-ID Edit/revision2→second Flight→close/reopen→Reader/local Day PASS. Existing sparse number/date second flight now passes under the same Manual-only identity checks. Wrong Account, stale edit, invalid date, invented instant, invalid zone and bare +05:30 zone rejected. All original Source authority and reducer checks retained. 11 directed suites154PASS; after final bare-offset guard, 3affected suites40PASS; new P2 caller/Focus 2PASS. Four embedded-build tests separately PASS. TypeScript/UI guard/scoped ESLint/diff PASS. Three existing homeWidgets P3 tests still assert the older generic preview instead of the existing P3 route; no full-suite PASS claimed.
+
+Physical independent Forms QA R3: normal authenticated synthetic Trip, Add itinerary→Flight; selected local catalog AKL/Auckland and NSN/Nelson, their IANA zones carried without a prompt. Explicit Done chose 12:00 for both local clocks, Next-day arrival chose Oct27 after Oct26 departure. Header Save succeeded and real Day showed full airports/clocks/arrival date/pending dot. Focus→read-only detail→Edit retained full fields. Changed number NZ5069→NZ5060, Save returned to Day with new number. Exact app terminate+launch→MyTrips→same Trip→Day restored edited number/airports/clocks/dates. No simulator container or Session copied; existing phone Trip/P1/P3 preserved. R4 rebuild additionally fixes pending-dot wrapping, actual Flight Edit caption, and IANA boundary guard. Device screenshots: native-day-fidelity/p2-save-20261026/real-p2-after-edit-cold.png under this task's visualization output.
+
+NATIVE_SINGLE_FLIGHT_CREATE_EDIT_READY / CLOUD_PENDING. This supports real user-created P2 fidelity testing; it does not certify all nine real-data states, commercial qualification, DST instant resolution, actual airport-keyboard occlusion (Mirror used hardware input), Journey multi-flight grouping, or Backend E2E. Multi-flight Save remains explicitly closed until an owning Journey contract exists. DayFeed generic pending/Floating/sort/currency/Calendar keyboard repairs from Owner's preceding list remain a separate follow-up; they are not claimed complete by this P2 receipt.

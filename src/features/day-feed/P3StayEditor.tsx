@@ -36,11 +36,13 @@ type Opened = { repository: ManualStayRepository; draft: ManualStayDraft };
 function TimeField({
   label,
   value,
+  defaultTime,
   disabled,
   onChange,
 }: {
   label: string;
   value: string | null;
+  defaultTime: string;
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
@@ -58,7 +60,8 @@ function TimeField({
         onPress={() => {
           Keyboard.dismiss();
           const date = new Date();
-          if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
+          const clock = value ?? defaultTime;
+          date.setHours(+clock.slice(0, 2), +clock.slice(3, 5), 0, 0);
           setSelected(date);
           setOpen(true);
         }}
@@ -425,12 +428,14 @@ export function P3StayEditor({
                 <View style={styles.times}>
                   <TimeField
                     label={t("tripCreate.stayCheckinTime")}
+                    defaultTime="17:00"
                     value={fields.startTime}
                     disabled={saving || frozen}
                     onChange={(startTime) => change({ startTime })}
                   />
                   <TimeField
                     label={t("tripCreate.stayCheckoutTime")}
+                    defaultTime="10:00"
                     value={fields.endTime}
                     disabled={saving || frozen || !fields.endDate}
                     onChange={(endTime) => change({ endTime })}

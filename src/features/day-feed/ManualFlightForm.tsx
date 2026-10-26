@@ -124,6 +124,12 @@ export function ManualFlightForm({
           if (!active()) return;
           fields.current = [flightSegmentFromRead(read)];
           setSegments(fields.current);
+          draft.current = await repo.createDraft(
+            tripId,
+            itemId,
+            Number(read.itemRevision),
+          );
+          if (!active()) return;
         } else {
           const identity = await repo.createDraft(tripId);
           if (!active()) return;
@@ -359,6 +365,7 @@ export function ManualFlightForm({
 }
 export function ManualFlightEditor({
   tripId,
+  embedded = true,
   initialDate,
   tripStartDate,
   itemId,
@@ -368,6 +375,7 @@ export function ManualFlightEditor({
   registerDismissHandler,
 }: {
   tripId: string;
+  embedded?: boolean;
   initialDate: string | null;
   tripStartDate?: string | null;
   itemId?: string;
@@ -419,7 +427,7 @@ export function ManualFlightEditor({
   };
   return (
     <ManualEditorPresentation
-      embedded
+      embedded={embedded}
       onClose={close}
       registerDismissHandler={registerDismissHandler}
     >

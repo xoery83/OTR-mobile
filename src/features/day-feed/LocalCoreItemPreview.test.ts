@@ -9,6 +9,7 @@ import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
 import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
 
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("react-native", () => ({
   Modal: (p: any) => createElement("div", null, p.children),
   ScrollView: (p: any) => createElement("div", null, p.children),

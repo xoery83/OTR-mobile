@@ -1,4 +1,8 @@
-import { flightSegmentFromRead } from "../../features/day-feed/manualFlightFormFields";
+import {
+  emptyFlightSegment,
+  sparseFlightSavePlan,
+  flightSegmentFromRead,
+} from "../../features/day-feed/manualFlightFormFields";
 import { runMigrations } from "../db/migrationRunner";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
@@ -106,6 +110,7 @@ function fixture(
     repo,
     trips,
     accountId,
+    account,
     close() {
       sql.close();
       opened.delete(sql);
@@ -179,7 +184,7 @@ it("queue failure rolls back, retains exact attempt IDs and input, and retry com
   expect(result.receipt.operationId).toBe(d.operationId);
   expect((await f.repo.recover(d))?.receipt).toEqual(result.receipt);
 });
-it("invalid date, closed intent, wrong Account, and conservative second-flight claims never claim save", async () => {
+it("rejects invalid/closed/foreign intents and permits a second explicitly Manual sparse flight", async () => {
   const f = fixture(),
     d = await draft(f);
   await expect(
@@ -190,12 +195,12 @@ it("invalid date, closed intent, wrong Account, and conservative second-flight c
   const second = await f.repo.createDraft(d.tripId);
   await expect(
     f.repo.save(second, { ...fields, flightNumberLiteral: "NZ5070" }, () => true),
-  ).rejects.toThrow("LOCAL_CLAIM_COVERAGE_UNKNOWN");
+  ).resolves.toMatchObject({ status: "LOCAL_COMMITTED", itemId: second.itemId });
   f.switchAccount();
   await expect(f.repo.recover(d)).rejects.toThrow("ACCOUNT_CHANGED");
   expect(
     f.sql.prepare("SELECT count(*) AS n FROM local_core_authority_slots").get()?.n,
-  ).toBe(1);
+  ).toBe(2);
 });
 it("rechecks the captured intent and Account generation after owning preparation and before mutation", async () => {
   const f = fixture(),
@@ -325,6 +330,7 @@ it("fills the real 68+70 registry gap transactionally, preserving photos and fou
   const read = createTripLocalManualReader(f.db, identity, f.core);
   expect((await read(d.tripId))?.items.map((i) => i.family).sort()).toEqual([
     "P1",
+    "P2",
     "P3",
     "P4",
     "P5",
@@ -339,7 +345,7 @@ it("fills the real 68+70 registry gap transactionally, preserving photos and fou
   expect(await cold.repo.recover(d)).toEqual(saved);
   expect(
     (await createTripLocalManualReader(cold.db, identity, cold.core)(d.tripId))?.items,
-  ).toHaveLength(4);
+  ).toHaveLength(5);
   expect(
     (await createCoreP6DayFeedReader(cold.core)(d.tripId))?.projection.items[0].itemId,
   ).toBe(d.itemId);
@@ -495,4 +501,141 @@ it("rejects participants outside the existing actor roster without creating a fl
   expect(
     f.sql.prepare("SELECT count(*) AS n FROM local_core_authority_slots").get()?.n,
   ).toBe(0);
+});
+
+function fullFields() {
+  const plan = sparseFlightSavePlan([
+    {
+      ...emptyFlightSegment("one", "2026-11-01"),
+      flightNumberLiteral: "NZ99",
+      originCode: "AKL",
+      originName: "Auckland International Airport",
+      originTerminal: "I",
+      destinationCode: "JFK",
+      destinationName: "John F. Kennedy International Airport",
+      destinationTerminal: "4",
+      departureTime: "23:30",
+      departureZone: "Pacific/Auckland",
+      arrivalDate: "2026-11-01",
+      arrivalTime: "01:30",
+      arrivalZone: "America/New_York",
+    },
+  ]);
+  if (plan.kind !== "READY") throw Error("Expected full lawful plan");
+  return plan.fields;
+}
+it("persists full authored airports, unresolved DST clocks, same-ID Edit, another flight and cold recovery", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-full-manual-flight-"));
+  directories.push(folder);
+  const path = join(folder, "local.sqlite"),
+    f = fixture(path),
+    d = await draft(f);
+  const value = fullFields();
+  const saved = await f.repo.save(d, value, () => true);
+  expect(await f.repo.save(d, value, () => true)).toEqual(saved);
+  const read = await f.repo.readForForm(d.tripId, d.itemId);
+  expect(flightSegmentFromRead(read)).toMatchObject({
+    flightNumberLiteral: "NZ99",
+    originCode: "AKL",
+    destinationCode: "JFK",
+    originTerminal: "I",
+    destinationTerminal: "4",
+    departureTime: "23:30",
+    arrivalTime: "01:30",
+    arrivalZone: "America/New_York",
+  });
+  const edit = await f.repo.createDraft(d.tripId, d.itemId, Number(read.itemRevision));
+  const edited = {
+    ...value,
+    flightNumberLiteral: "NZ101",
+    destination: { ...value.destination!, terminal: "8" },
+  };
+  const result = await f.repo.save(edit, edited, () => true);
+  expect(result.itemId).toBe(d.itemId);
+  expect(result.receipt.localRevision).toBe(2);
+  const second = await f.repo.createDraft(d.tripId);
+  await f.repo.save(second, value, () => true);
+  const account = f.accountId;
+  f.close();
+  const cold = fixture(path, false, account);
+  expect(await cold.repo.recover(JSON.parse(JSON.stringify(edit)))).toEqual(result);
+  const reread = await cold.repo.readForForm(d.tripId, d.itemId);
+  expect(flightSegmentFromRead(reread)).toMatchObject({
+    flightNumberLiteral: "NZ101",
+    destinationTerminal: "8",
+  });
+  const snapshot = await cold.core.combinedSnapshot(
+    await cold.core.captureContext(d.tripId),
+  );
+  expect(snapshot?.graph.itinerary_events).toHaveLength(2);
+  expect(snapshot?.graph.itinerary_transport_endpoints).toHaveLength(4);
+  expect(snapshot?.graph.itinerary_transport_services).toHaveLength(0);
+  expect(
+    snapshot?.graph.trip_flight_intents.every((x) => x.qualification === "SPARSE"),
+  ).toBe(true);
+  expect(
+    snapshot?.graph.itinerary_transport_endpoints.every(
+      (x) =>
+        x.instant === null &&
+        x.source_instant === null &&
+        x.civil_resolution === "PENDING",
+    ),
+  ).toBe(true);
+  const local = await createTripLocalManualReader(
+    cold.db,
+    cold.account,
+    cold.core,
+  )(d.tripId);
+  expect(local?.rows("2026-11-01").some((r) => r.itemRef === d.itemId)).toBe(true);
+});
+it("rejects stale full edits, a foreign Account and malformed authored temporal authority", async () => {
+  const f = fixture(),
+    d = await draft(f),
+    value = fullFields();
+  await f.repo.save(d, value, () => true);
+  const first = await f.repo.createDraft(d.tripId, d.itemId, 1);
+  const stale = await f.repo.createDraft(d.tripId, d.itemId, 1);
+  await f.repo.save(first, { ...value, flightNumberLiteral: "NZ100" }, () => true);
+  await expect(
+    f.repo.save(stale, { ...value, flightNumberLiteral: "NZ101" }, () => true),
+  ).rejects.toThrow("REVISION_CONFLICT");
+  const next = await f.repo.createDraft(d.tripId);
+  await expect(
+    f.repo.save(
+      next,
+      {
+        ...value,
+        origin: {
+          ...value.origin!,
+          time: { ...value.origin!.time, instant: "2026-11-01T01:00:00Z" },
+        },
+      },
+      () => true,
+    ),
+  ).rejects.toThrow();
+  await expect(
+    f.repo.save(
+      next,
+      {
+        ...value,
+        origin: {
+          ...value.origin!,
+          time: { ...value.origin!.time, zone_id: "Not/AZone" },
+        },
+      },
+      () => true,
+    ),
+  ).rejects.toThrow();
+  await expect(
+    f.repo.save(
+      next,
+      {
+        ...value,
+        origin: { ...value.origin!, time: { ...value.origin!.time, zone_id: "+05:30" } },
+      },
+      () => true,
+    ),
+  ).rejects.toThrow();
+  f.switchAccount();
+  await expect(f.repo.save(next, value, () => true)).rejects.toThrow();
 });

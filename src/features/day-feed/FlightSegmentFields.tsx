@@ -204,6 +204,7 @@ export function FlightSegmentFields({
         <>
           <FlightAirportField
             label={t("manualFlight.originAirport")}
+            onEditingChange={(open) => onPickerChange("originAirport", open)}
             code={value.originCode}
             name={value.originName}
             disabled={disabled}
@@ -213,6 +214,7 @@ export function FlightSegmentFields({
           />
           <FlightAirportField
             label={t("manualFlight.destinationAirport")}
+            onEditingChange={(open) => onPickerChange("destinationAirport", open)}
             code={value.destinationCode}
             name={value.destinationName}
             disabled={disabled}
