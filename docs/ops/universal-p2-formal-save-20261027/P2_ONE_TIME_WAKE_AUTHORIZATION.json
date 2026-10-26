@@ -13,5 +13,6 @@
   "observedAt": "2026-10-26T21:10:23.326738+00:00",
   "newObjectsCreatedThisTurn": 0,
   "providerCallsThisTurn": 0,
-  "noAuthorityOrBudgetExpansion": true
+  "noAuthorityOrBudgetExpansion": true,
+  "latestOwnerUpdate": "13:00 wait cancelled; automation PAUSED to prevent duplicate run. No rescheduling required."
 }

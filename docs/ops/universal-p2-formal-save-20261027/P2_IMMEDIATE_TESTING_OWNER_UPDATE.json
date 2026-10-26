@@ -1,0 +1,11 @@
+{
+  "status": "OWNER_REMOVED_DAILY_TWO_CALL_WAIT",
+  "ownerInstruction": "不需要有这个限制，目前deepseek调用的预算充足，随时可以继续测试",
+  "recordedAt": "2026-10-26T21:33:40.057137+00:00",
+  "supersedes": "13:00 not-before and artificial UTC2 operational testing wait",
+  "automationId": "universal-p2",
+  "automationStatus": "PAUSED_TO_PREVENT_DUPLICATE",
+  "scope": "same DEV QA Account/Trip/registered DeepSeek and synthetic Universal testing; prior UNKNOWN/cost retained",
+  "doesNotAuthorize": "Production/real users, new Source/Admission/Core authority, new RLS/GRANT/schema without exact protected Gate",
+  "liveBlocker": "Old UNKNOWN occupies concurrent_account=1 indefinitely. Scoped immutable admission lease expiry candidate prepared/tested, NOT installed. No artificial UTC wait; protected SQL/finite admin renewal still requires exact Gate."
+}

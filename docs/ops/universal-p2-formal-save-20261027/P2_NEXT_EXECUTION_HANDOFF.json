@@ -28,5 +28,6 @@
   },
   "smoke": "actual main33 PASS",
   "push": false,
-  "observerStatus": "HANDOFF_VERIFIED; recheck at execution"
+  "observerStatus": "HANDOFF_VERIFIED; recheck at execution",
+  "supersededScheduling": "Owner removed13:00 and daily2 wait; universal-p2 PAUSED. See P2_IMMEDIATE_TESTING_OWNER_UPDATE.json and P2_RESOURCE_LEASE_AND_SCOPE_GATE.md; Batch9 accepted but Run/Task not started."
 }

@@ -1,0 +1,16 @@
+{
+  "status": "PREPARED_NOT_INSTALLED",
+  "preimageMD5": "3cef15114775a5334a6f68332c38b044",
+  "postimageMD5": "d7d6c6285b9752b89d516f8b2aaee554",
+  "newBatch": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+  "expectedNewTask": "7338329a-46eb-8050-9bec-96376f08b296",
+  "owningBindingNotYetPersisted": true,
+  "resourceSemantics": "scoped admission concurrency lease expiry; no remote-stop or free-cost claim",
+  "files": {
+    "P2_RESOURCE_LEASE_DEV_ROLLBACK.sql": "0c6e04d993fa1536cd0f341f2bcdbd61be3b6ae7c222172c0d7265faf4cc714b",
+    "P2_RESOURCE_LEASE_FUNCTION_POSTIMAGE.sql": "7556afa0d964fbe2c6f671afea2462b1d9e126065359a42ff5e81e37ca91234a",
+    "P2_RESOURCE_LEASE_FUNCTION_PREIMAGE.sql": "996f26a4e52c26dbbd306bd4c26dbf4d8df670fe1c56dfc468b78b4d8aa72315",
+    "P2_RESOURCE_LEASE_EXCEPTION_PREDICATE.sql": "ff48406fca82de773fd47a5c930eeebddc2ef572c0aa18c1c68ff2c258051839",
+    "P2_RESOURCE_LEASE_DEV_INSTALL.sql": "b4038634e52f0a3cfbba0ceb7c140819821d01d20606880935eab0d61b5abb49"
+  }
+}

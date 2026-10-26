@@ -1,0 +1,9 @@
+{
+  "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "batchId": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+  "expectedTaskId": "7338329a-46eb-8050-9bec-96376f08b296",
+  "expectedRunId": "8af82103-55f2-84ea-8e6f-445a15321cf6",
+  "authority": "Backend command proposal only; owning SQL must subsequently validate and persist binding",
+  "taskStarted": false
+}
