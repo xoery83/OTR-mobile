@@ -452,7 +452,9 @@ export async function prepareCoreSourcePlanV2(
       catalog.sourceRevision !== request.sourceRevision
     )
       throw new Error("INPUT_STALE");
-    const claims: FlightOutputClaimV2[] = catalog.candidates.every((c) => c.kind === "P1")
+    const claims: FlightOutputClaimV2[] = catalog.candidates.every((c) =>
+      ["P1", "P3"].includes(c.kind),
+    )
       ? []
       : await tx.readClaims();
     const remaining = new Set(
@@ -479,7 +481,8 @@ export async function prepareCoreSourcePlanV2(
           if (proposed.command === "CREATE_ITEM") {
             if (
               !candidate ||
-              candidate.kind !== "P1" ||
+              !["P1", "P3"].includes(candidate.kind) ||
+              (proposed.payload as { family?: string }).family !== candidate.kind ||
               !tx.verifyP1Evidence ||
               proposed.dependsOn.length ||
               !proposed.baseVector
@@ -515,7 +518,7 @@ export async function prepareCoreSourcePlanV2(
               targetKind: "ITEM",
               targetId: proposed.target.id,
               operationId: proposed.operationId,
-              purposeKind: "P1_ITEM",
+              purposeKind: candidate.kind === "P3" ? "P3_ITEM" : "P1_ITEM",
             };
             const verification: P1PurposeVerification = {
               binding,

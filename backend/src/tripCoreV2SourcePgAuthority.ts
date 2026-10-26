@@ -564,12 +564,17 @@ async function putPlan(
   if (firstP1) {
     if (plan.slots.length !== 1 || !plan.slots.every((s) => s.p1))
       throw Error("CONTRACT_UNSUPPORTED");
-    await assertUniversalP1Capability(lease, scope);
+    await assertUniversalP1Capability(
+      lease,
+      scope,
+      (firstP1.proposed.payload as { family: "P1" | "P3" }).family,
+    );
     await setUniversalP1WriteContext(
       lease,
       firstP1.proposed.target.id,
       firstP1.proposed.operationId,
       firstP1.proposed.slotId,
+      (firstP1.proposed.payload as { family: "P1" | "P3" }).family,
     );
   }
   await lease.query(
@@ -750,9 +755,13 @@ export function createCoreSourcePgAuthority(
           assertCommandAdmission: async (command) => {
             if (
               command.command === "CREATE_ITEM" &&
-              (command.payload as { family?: string }).family === "P1"
+              ["P1", "P3"].includes((command.payload as { family: string }).family)
             ) {
-              await assertUniversalP1Capability(lease, own);
+              await assertUniversalP1Capability(
+                lease,
+                own,
+                (command.payload as { family: "P1" | "P3" }).family,
+              );
               if (!options.readUniversalP1) throw Error("CONTRACT_UNSUPPORTED");
               const verified = verifiedP1.get(command.operationId);
               if (verified) {
@@ -903,12 +912,17 @@ export function createCoreSourcePgAuthority(
             )
               throw new Error("RECEIPT_TARGET_MISMATCH");
             if (slot.p1) {
-              await assertUniversalP1Capability(lease, own);
+              await assertUniversalP1Capability(
+                lease,
+                own,
+                (slot.proposed.payload as { family: "P1" | "P3" }).family,
+              );
               await setUniversalP1WriteContext(
                 lease,
                 slot.proposed.target.id,
                 slot.proposed.operationId,
                 slot.proposed.slotId,
+                (slot.proposed.payload as { family: "P1" | "P3" }).family,
               );
             }
             const id = randomUUID();
@@ -1222,7 +1236,7 @@ export function createCoreSourcePgAuthority(
     if (
       !options.readUniversalP1 ||
       command.command !== "CREATE_ITEM" ||
-      (command.payload as { family?: string }).family !== "P1" ||
+      !["P1", "P3"].includes((command.payload as { family: string }).family) ||
       command.admission.mode !== "REVIEWED_SOURCE"
     )
       throw Error("OWNING_CAPABILITY_REQUIRED");
@@ -1240,7 +1254,11 @@ export function createCoreSourcePgAuthority(
       planId: row.plan_id as string,
     };
     await lockSource(lease, scope);
-    await assertUniversalP1Capability(lease, scope);
+    await assertUniversalP1Capability(
+      lease,
+      scope,
+      (command.payload as { family: "P1" | "P3" }).family,
+    );
     const plan = row.prepared_json as CoreSourceStoredPlanV2,
       slot = plan.slots.find(
         (s) => s.proposed.slotId === command.admission.sourceIntentId,
@@ -1362,7 +1380,7 @@ export function createCoreSourcePgAuthority(
     sourceReader(lease, async () => {
       if (
         command.command === "CREATE_ITEM" &&
-        (command.payload as { family?: string }).family === "P1"
+        ["P1", "P3"].includes((command.payload as { family: string }).family)
       ) {
         const value = await p1SlotAuthority(lease, actor, command, intentSha256, true, {
           actor,
@@ -1434,7 +1452,7 @@ export function createCoreSourcePgAuthority(
     sourceReader(lease, async () => {
       if (
         command.command === "CREATE_ITEM" &&
-        (command.payload as { family?: string }).family === "P1"
+        ["P1", "P3"].includes((command.payload as { family: string }).family)
       ) {
         const known = p1Commands.get(lease)?.get(command.operationId);
         if (known && (known.command !== json(command) || known.intent !== intentSha256))
@@ -1448,7 +1466,11 @@ export function createCoreSourcePgAuthority(
             c.scope.tripId !== actor.tripId
           )
             throw Error("IMPORT_SCOPE_MISMATCH");
-          await assertUniversalP1Capability(lease, c.scope);
+          await assertUniversalP1Capability(
+            lease,
+            c.scope,
+            (command.payload as { family: "P1" | "P3" }).family,
+          );
           await assertPublication(lease, actor, c.candidate);
         }
         return {
@@ -1719,7 +1741,7 @@ export function createCoreSourcePgAuthority(
         );
         const row = (
           await lease.query(
-            "SELECT plan_id FROM public.trip_source_core_v2_slots WHERE account_id=$1::uuid AND trip_id=$2::uuid AND output_slot_id=$3::uuid AND operation_id=$4::uuid AND intent_sha256=$5 AND output_purpose->>'purposeKind'='P1_ITEM'",
+            "SELECT plan_id FROM public.trip_source_core_v2_slots WHERE account_id=$1::uuid AND trip_id=$2::uuid AND output_slot_id=$3::uuid AND operation_id=$4::uuid AND intent_sha256=$5 AND output_purpose->>'purposeKind' IN ('P1_ITEM','P3_ITEM')",
             [actor, trip, input.slotId, input.operationId, input.intentSha256],
           )
         ).rows[0];

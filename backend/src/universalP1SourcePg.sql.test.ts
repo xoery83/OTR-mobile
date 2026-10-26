@@ -11,9 +11,20 @@ import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { prepareCoreSourcePlanV2, finalizeCoreSourceSlotV2 } from "./tripCoreV2Source";
 const container = process.env.OTR_UNIVERSAL_P1_OWNED_SQL_FIXTURE;
 // Actual protected PG transactions; model publication and identities are explicit disposable fixtures.
-it.skipIf(!container).each([false, true])(
+it.skipIf(!container).each(
+  process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
+    ? [
+        { reviewed: false, family: "P1" as const },
+        { reviewed: true, family: "P1" as const },
+        { reviewed: true, family: "P3" as const },
+      ]
+    : [
+        { reviewed: false, family: "P1" as const },
+        { reviewed: true, family: "P1" as const },
+      ],
+)(
   "qualifies original Source bytes through existing Source Plan/Core/receipt and recovers once (explicit review: %s)",
-  async (reviewed) => {
+  async ({ reviewed, family }) => {
     if (!/^otr-trip-sustained-[a-f0-9]{12}$/.test(container!))
       throw Error("OWNED_FIXTURE_REQUIRED");
     const actor = process.env.OTR_UNIVERSAL_P1_FIXTURE_ACTOR!,
@@ -21,7 +32,8 @@ it.skipIf(!container).each([false, true])(
       f = await universalP1SourceFixture(
         actor,
         trip,
-        reviewed ? "Nov 1, 2026" : "2026-11-03",
+        family === "P3" ? "2026-11-03" : reviewed ? "Nov 1, 2026" : "2026-11-03",
+        family,
       ),
       admin = session(container!);
     if (reviewed) {
@@ -29,11 +41,15 @@ it.skipIf(!container).each([false, true])(
     }
     const sourceReview = reviewed
       ? {
-          version: "otr.universal.p1-source-review/1",
+          version:
+            family === "P3"
+              ? "otr.universal.p3-source-review/1"
+              : "otr.universal.p1-source-review/1",
           decision: "NEW",
           sourceRevision: 1,
-          title: "海滨散步",
-          localDate: "2026-11-01",
+          title: family === "P3" ? "海滨住宿" : "海滨散步",
+          localDate: family === "P3" ? "2026-11-03" : "2026-11-01",
+          ...(family === "P3" ? { endLocalDate: "2026-11-05" } : {}),
           originalReviewed: true,
           tripReviewed: true,
         }
@@ -148,6 +164,7 @@ it.skipIf(!container).each([false, true])(
     });
     const request = {
       captureVersion: 2,
+      ...(family === "P3" ? { family } : {}),
       sourceId,
       batchId: published.result.batchId,
       taskId: published.result.taskId,
@@ -223,7 +240,7 @@ it.skipIf(!container).each([false, true])(
         [actor],
       );
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
-        "CORE_CAPABILITY_CLOSED",
+        family === "P3" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
       );
       await admin.lease.query(
         "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
@@ -231,6 +248,14 @@ it.skipIf(!container).each([false, true])(
           actor,
           JSON.stringify({
             tripId: trip,
+            ...(family === "P3"
+              ? {
+                  family,
+                  title: "海滨住宿",
+                  localDate: "2026-11-03",
+                  endLocalDate: "2026-11-05",
+                }
+              : {}),
             sourceId,
             batchId: request.batchId,
             taskId: request.taskId,

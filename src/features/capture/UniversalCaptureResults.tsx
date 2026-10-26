@@ -159,13 +159,21 @@ export function UniversalResultView({
               {admission?.enabled &&
               result.providerOutcome === "SETTLED" &&
               result.status === "CANDIDATES_READY" &&
-              candidate.kind === "P1" &&
+              (admission.enabledFamilies ?? ["P1"]).some(
+                (family) => family === candidate.kind,
+              ) &&
               ["HIGH_CONFIDENCE", "REVIEWABLE"].includes(
                 result.quality?.decisions.find((d) => d.token === candidate.token)
                   ?.tier ?? "",
               ) ? (
                 <>
-                  <UiText style={s.meta}>{t("capture.ai.p1Details")}</UiText>
+                  <UiText style={s.meta}>
+                    {t(
+                      candidate.kind === "P3"
+                        ? "capture.ai.p3Details"
+                        : "capture.ai.p1Details",
+                    )}
+                  </UiText>
                   {admission.statuses[candidate.token] ? (
                     <UiText style={s.meta}>
                       {t(

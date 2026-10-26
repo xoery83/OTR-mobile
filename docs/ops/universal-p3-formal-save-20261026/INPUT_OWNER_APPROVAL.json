@@ -1,1 +1,23 @@
-{"status":"OWNER_APPROVED_NOT_YET_EXECUTED","gateCommit":"3c888057","questionItemId":"call_84d2af433a0a4e1d95bde10aa656553c/0","answer":"批准该精确 P3 输入资格 Gate","batchCap":{"before":5,"after":6},"sourceCap":{"before":6,"after":7},"runTaskCap":{"before":3,"after":4},"additionalProviderCallsMax":1,"formalP3SaveAuthority":false}
+{
+  "status": "OWNER_APPROVED_EXECUTED_ONE_ATTEMPT",
+  "gateCommit": "3c888057",
+  "questionItemId": "call_84d2af433a0a4e1d95bde10aa656553c/0",
+  "answer": "\u6279\u51c6\u8be5\u7cbe\u786e P3 \u8f93\u5165\u8d44\u683c Gate",
+  "batchCap": {
+    "before": 5,
+    "after": 6
+  },
+  "sourceCap": {
+    "before": 6,
+    "after": 7
+  },
+  "runTaskCap": {
+    "before": 3,
+    "after": 4
+  },
+  "additionalProviderCallsMax": 1,
+  "formalP3SaveAuthority": false,
+  "executionStatus": "CONSUMED_ONE_BATCH_ONE_SOURCE_ONE_RUN_TASK_ONE_PROVIDER_ATTEMPT",
+  "providerOutcome": "SETTLED",
+  "taskId": "46945250-bfd8-8fcf-af74-f2e56bf85f7d"
+}

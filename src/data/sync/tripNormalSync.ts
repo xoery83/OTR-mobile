@@ -48,7 +48,7 @@ export function cloudSourceP1Command(operation: Row): CoreCommand | null {
       command.target.id !== operation.entity_id ||
       command.target.kind !== "ITEM" ||
       command.command !== "CREATE_ITEM" ||
-      (command.payload as { family?: string }).family !== "P1" ||
+      !["P1", "P3"].includes((command.payload as { family: string }).family) ||
       command.admission.mode !== "REVIEWED_SOURCE" ||
       command.admission.sourceIntentId === null ||
       command.admission.policyVersion !== null
@@ -211,7 +211,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               (command.admission.mode !== "MANUAL" &&
                 !(
                   command.command === "CREATE_ITEM" &&
-                  (command.payload as { family?: string }).family === "P1" &&
+                  ["P1", "P3"].includes((command.payload as { family: string }).family) &&
                   command.admission.mode === "REVIEWED_SOURCE" &&
                   command.admission.sourceIntentId !== null &&
                   command.admission.policyVersion === null
@@ -220,7 +220,9 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               continue;
             const p1 =
               command.command === "CREATE_ITEM"
-                ? (command.payload as { family: string }).family === "P1"
+                ? (command.payload as { family: string }).family === "P1" ||
+                  (command.admission.mode === "REVIEWED_SOURCE" &&
+                    (command.payload as { family: string }).family === "P3")
                 : [
                     "SET_ITEM_TEXT",
                     "SET_ITEM_SCHEDULE",

@@ -8,8 +8,8 @@ import { universalP1SourceFixture } from "../../../backend/src/__fixtures__/univ
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import type { UniversalImportResult } from "../api/universalImportContracts";
-async function fixture() {
-  const f = await universalP1SourceFixture(),
+async function fixture(family: "P1" | "P3" = "P1") {
+  const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", family),
     p = await f.run(),
     plan = p.body.plan,
     slot = plan.slots[0],
@@ -235,4 +235,16 @@ it("reads only retained account-scoped original bytes and rejects changed pins o
     }),
   ).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
   expect(readCapture).not.toHaveBeenCalled();
+});
+
+it("queues only the selected P3 using its exact owning published Plan and operation", async () => {
+  const f = await fixture("P3");
+  const result = await f.consumer.confirm(f.model, f.result, "walk");
+  expect(result.status).toBe("SYNC_PENDING");
+  expect(f.transport.publishUniversalP1).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ family: "P3" }),
+  );
+  expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
+  expect(f.command.payload).toMatchObject({ family: "P3" });
 });

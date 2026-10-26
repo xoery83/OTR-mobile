@@ -17,6 +17,7 @@ export async function universalP1SourceFixture(
   accountId: string = randomUUID(),
   tripId: string = randomUUID(),
   dateRaw = "2026-11-03",
+  family: "P1" | "P3" = "P1",
 ) {
   const batchId = randomUUID(),
     taskId = randomUUID(),
@@ -24,7 +25,10 @@ export async function universalP1SourceFixture(
     inputId = randomUUID(),
     representationId = randomUUID(),
     runId = randomUUID();
-  const text = `Synthetic QA only\nActivity: 海滨散步\nActivity date: ${dateRaw}\nMeeting place: West gate\n`;
+  const text =
+    family === "P1"
+      ? `Synthetic QA only\nActivity: 海滨散步\nActivity date: ${dateRaw}\nMeeting place: West gate\n`
+      : `Synthetic QA only\nProperty: 海滨住宿\nCheck in: ${dateRaw}\nCheck out: 2026-11-05\nObserved address: West gate\n`;
   const bytes = Buffer.from(text),
     sha256 = await hash(bytes),
     stamp = "2026-10-25T00:00:00.000000Z";
@@ -116,12 +120,19 @@ export async function universalP1SourceFixture(
       items: [
         {
           id: "walk",
-          kind: "P1",
-          subtype: "ACTIVITY",
-          f: [
-            [0, "activity.name", "海滨散步"],
-            [0, "activity.date", dateRaw],
-          ],
+          kind: family,
+          subtype: family === "P1" ? "ACTIVITY" : "ACCOMMODATION",
+          f:
+            family === "P1"
+              ? [
+                  [0, "activity.name", "海滨散步"],
+                  [0, "activity.date", dateRaw],
+                ]
+              : [
+                  [0, "property.name", "海滨住宿"],
+                  [0, "check_in.date", dateRaw],
+                  [0, "check_out.date", "2026-11-05"],
+                ],
         },
       ],
       bookings: [],
@@ -157,7 +168,11 @@ export async function universalP1SourceFixture(
     runId,
     result,
     resultSha256: "b".repeat(64),
-    selection: { action: "CONFIRM_NEW_P1", token: "walk", resultSha256: "b".repeat(64) },
+    selection: {
+      action: family === "P1" ? "CONFIRM_NEW_P1" : "CONFIRM_NEW_P3",
+      token: "walk",
+      resultSha256: "b".repeat(64),
+    },
     // Explicit synthetic owning-relationship assumption; not a real runtime issuer.
     owningLifecycleRelationships: [
       {
@@ -165,6 +180,14 @@ export async function universalP1SourceFixture(
         kind: "NEW" as const,
         candidateIds: [universalP1Identity(result.taskId, "walk", "candidate")],
         evidenceRefs: [
+          ...(family === "P3"
+            ? [
+                fieldRef(
+                  universalP1Identity(result.taskId, "walk", "candidate"),
+                  "END.local_date.0",
+                ),
+              ]
+            : []),
           fieldRef(
             universalP1Identity(result.taskId, "walk", "candidate"),
             "ROOT.title.0",

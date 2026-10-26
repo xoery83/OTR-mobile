@@ -1,4 +1,4 @@
-import { universalP1SourceReviewSchema } from "./universalP1SourceReview";
+import { universalItemSourceReviewSchema } from "./universalP1SourceReview";
 import { p1OutputPurposeV2Schema } from "./p1OutputPurposeV2";
 import { z } from "zod";
 import { flightOutputPurposeV2Schema } from "./flightOutputPurposeV2";
@@ -157,7 +157,8 @@ export const coreUniversalP1PublishRequestSchema = z.strictObject({
   taskId: uuid,
   token: z.string().min(1).max(128),
   requestSha256: hash,
-  sourceReview: universalP1SourceReviewSchema.optional(),
+  family: z.enum(["P1", "P3"]).optional(),
+  sourceReview: universalItemSourceReviewSchema.optional(),
 });
 export const coreUniversalP1PublishResultSchema = z.strictObject({
   captureVersion: z.literal(2),

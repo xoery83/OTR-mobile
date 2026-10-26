@@ -2,25 +2,35 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import type { UniversalP1SourceReview } from "@/domain/trip/universalP1SourceReview";
+import type { UniversalItemSourceReview } from "@/domain/trip/universalP1SourceReview";
 export type P1AdmissionStatus =
   "SYNC_PENDING" | "SERVER_ACCEPTED" | "OWNING_ADMISSION_PENDING" | "UNAVAILABLE";
 export type P1AdmissionActions = {
   enabled: boolean;
+  enabledFamilies?: readonly ("P1" | "P3")[];
   readOriginal(result: UniversalImportResult, token: string): Promise<string>;
   busyToken: string | null;
   statuses: Record<string, P1AdmissionStatus>;
   confirm(
     result: UniversalImportResult,
     token: string,
-    review?: UniversalP1SourceReview,
+    review?: UniversalItemSourceReview,
   ): Promise<void>;
 };
 export function useUniversalP1Admission(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
 ): P1AdmissionActions {
-  const enabled = process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED === "true";
+  const enabledFamilies: ("P1" | "P3")[] = [];
+  if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED === "true")
+    enabledFamilies.push("P1");
+  if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P3_ADMISSION_ENABLED === "true")
+    enabledFamilies.push("P3");
+  const enabled = enabledFamilies.length > 0;
+  const permits = (result: UniversalImportResult, token: string) =>
+    result.candidates.some(
+      (c) => c.token === token && enabledFamilies.some((family) => family === c.kind),
+    );
   const [statuses, setStatuses] = useState<Record<string, P1AdmissionStatus>>({}),
     [busyToken, setBusyToken] = useState<string | null>(null);
   const alive = useRef(true),
@@ -46,10 +56,11 @@ export function useUniversalP1Admission(
   }, []);
   return {
     enabled,
+    enabledFamilies,
     busyToken,
     statuses,
     async readOriginal(result, token) {
-      if (!enabled || !current()) throw Error("OWNING_REVIEW_REQUIRED");
+      if (!current() || !permits(result, token)) throw Error("OWNING_REVIEW_REQUIRED");
       const [
         { getDefaultLocalCaptureInboxRepository, captureStorageDependencies },
         { requireAdoptedUserId },
@@ -68,7 +79,7 @@ export function useUniversalP1Admission(
       });
     },
     async confirm(result, token, review) {
-      if (!enabled || !current() || running.current) return;
+      if (!current() || !permits(result, token) || running.current) return;
       running.current = true;
       setBusyToken(token);
       try {

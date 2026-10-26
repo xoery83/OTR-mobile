@@ -69,13 +69,13 @@ export function createCoreV2SyncWorker(
           (await coreHashValue("otr-trip-core-intent-v2", command, hash))
       )
         throw new Error("CORE_QUEUE_BINDING_MISMATCH");
-      const sourceP1 =
+      const sourceItem =
         command.command === "CREATE_ITEM" &&
-        (command.payload as { family?: string }).family === "P1" &&
+        ["P1", "P3"].includes((command.payload as { family: string }).family) &&
         command.admission.mode === "REVIEWED_SOURCE";
       let result = await transport.receipt(context, operation.id);
       await assertAccountRequestContext(context, getAccountId);
-      if (!result && sourceP1 && intent.state === "APPLIED")
+      if (!result && sourceItem && intent.state === "APPLIED")
         throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
@@ -107,7 +107,7 @@ export function createCoreV2SyncWorker(
         throw new SyncDependencyError("CORE_CURRENT_AUTHORIZATION_REQUIRED");
       await repository.applyReceipt(context, result.receipt);
       // Same queue recovers the exact accepted operation before finishing its Source relation.
-      if (sourceP1 && ["APPLIED", "NO_CHANGE"].includes(result.receipt.outcome)) {
+      if (sourceItem && ["APPLIED", "NO_CHANGE"].includes(result.receipt.outcome)) {
         if (!transport.finalizeSourceOperation)
           throw new Error("CORE_SOURCE_FINALIZER_CLOSED");
         const final = await transport.finalizeSourceOperation(context, {

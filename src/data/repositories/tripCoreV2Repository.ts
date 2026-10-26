@@ -995,7 +995,7 @@ export function createTripCoreV2Repository(
           const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
           if (
             command.command !== "CREATE_ITEM" ||
-            (command.payload as { family?: string }).family !== "P1" ||
+            !["P1", "P3"].includes((command.payload as { family: string }).family) ||
             command.admission.mode !== "REVIEWED_SOURCE" ||
             !row.receipt_body ||
             !row.receipt_sha256

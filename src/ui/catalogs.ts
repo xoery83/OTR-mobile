@@ -4,6 +4,12 @@ export const en = {
     "AI processing is queued. Check results to continue. No itinerary items have been saved.",
   "capture.ai.suggestionsStatus":
     "Suggestions are separate from saved items. Only confirmed items are saved.",
+  "capture.ai.p3ReviewValues":
+    "Stay: {title}. Original check-in: {raw}; civil date: {date}. Original check-out: {endRaw}; civil date: {endDate}.",
+  "capture.ai.p3SelectNew": "Choose NEW: create a separate stay",
+  "capture.ai.p3Confirm": "Confirm name and stay dates and add item",
+  "capture.ai.p3Details":
+    "Only the evidenced name and check-in/check-out dates will be saved privately for you. Times remain unknown. Other details stay with the source.",
   "capture.ai.p1OpenOriginal": "Read retained original",
   "capture.ai.p1ReviewTrip": "Review Journey: {name}",
   "capture.ai.p1ReviewValues":
@@ -2610,6 +2616,12 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.queued": "AI 处理已进入队列。请检查结果以继续，尚未保存任何行程项目。",
   "capture.ai.suggestionsStatus":
     "候选与已保存的行程项目分别显示。只有你明确确认的项目才会保存。",
+  "capture.ai.p3ReviewValues":
+    "住宿：{title}。原文入住日期：{raw}；民用日期：{date}。原文退房日期：{endRaw}；民用日期：{endDate}。",
+  "capture.ai.p3SelectNew": "选择新建：创建独立住宿",
+  "capture.ai.p3Confirm": "确认名称、入住及退房日期并添加行程项目",
+  "capture.ai.p3Details":
+    "仅为你私密保存有证据支持的名称、入住及退房日期，时间保持未知。其他信息继续保留在来源中。",
   "capture.ai.p1OpenOriginal": "阅读留存原件",
   "capture.ai.p1ReviewTrip": "审核行程：{name}",
   "capture.ai.p1ReviewValues":

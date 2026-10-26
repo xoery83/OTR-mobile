@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
 import {
   sourceReviewCivilDate,
-  type UniversalP1SourceReview,
+  type UniversalItemSourceReview,
 } from "@/domain/trip/universalP1SourceReview";
 import { UiButton, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -23,7 +23,7 @@ export function UniversalP1SourceReviewForm({
   disabled: boolean;
   isCurrent(): boolean;
   readOriginal(): Promise<string>;
-  onConfirm(review: UniversalP1SourceReview): void;
+  onConfirm(review: UniversalItemSourceReview): void;
 }) {
   useUiLocale();
   const [original, setOriginal] = useState<string | null>(null),
@@ -46,25 +46,37 @@ export function UniversalP1SourceReviewForm({
       active = false;
     };
   }, [readTripTargets, result.tripId, isCurrent]);
+  const stay = candidate.kind === "P3";
   const names = candidate.fields.filter((f) =>
-      ["activity.name", "title"].includes(f.path),
+      (stay ? ["property.name", "title"] : ["activity.name", "title"]).includes(f.path),
     ),
     dates = candidate.fields.filter((f) =>
-      ["activity.date", "schedule.start.local_date"].includes(f.path),
+      (stay
+        ? ["check_in.date", "schedule.start.local_date"]
+        : ["activity.date", "schedule.start.local_date"]
+      ).includes(f.path),
     ),
+    endDates = stay
+      ? candidate.fields.filter((f) =>
+          ["check_out.date", "schedule.end.local_date"].includes(f.path),
+        )
+      : [],
     sources = result.sourceBindings.filter((b) =>
-      [...names, ...dates].some((f) => f.sourceId === b.alias),
+      [...names, ...dates, ...endDates].some((f) => f.sourceId === b.alias),
     );
-  let localDate: string | null = null;
+  let localDate: string | null = null,
+    endLocalDate: string | null = null;
   try {
     localDate = sourceReviewCivilDate(dates[0]?.raw ?? "");
+    if (stay) endLocalDate = sourceReviewCivilDate(endDates[0]?.raw ?? "");
   } catch {
     /* Evidence stays visible; no Save without supported date. */
   }
   if (
-    candidate.subtype !== "ACTIVITY" ||
-    candidate.bookingTokens.length ||
-    candidate.ticketTokens.length ||
+    candidate.subtype !== (stay ? "ACCOMMODATION" : "ACTIVITY") ||
+    (!stay &&
+      (candidate.bookingTokens.length > 0 || candidate.ticketTokens.length > 0)) ||
+    (stay && (!endLocalDate || !localDate || endLocalDate <= localDate)) ||
     !names.length ||
     !dates.length ||
     !localDate ||
@@ -76,10 +88,11 @@ export function UniversalP1SourceReviewForm({
     <>
       <UiText>{t("capture.ai.p1ReviewTrip", { name: tripName ?? result.tripId })}</UiText>
       <UiText>
-        {t("capture.ai.p1ReviewValues", {
+        {t(stay ? "capture.ai.p3ReviewValues" : "capture.ai.p1ReviewValues", {
           title: names[0].raw,
           raw: dates[0].raw,
           date: localDate,
+          ...(stay ? { endRaw: endDates[0].raw, endDate: endLocalDate! } : {}),
         })}
       </UiText>
       <UiButton
@@ -116,7 +129,13 @@ export function UniversalP1SourceReviewForm({
       <UiButton
         variant="secondary"
         disabled={disabled || !originalReviewed}
-        label={t(newSelected ? "capture.ai.p1NewSelected" : "capture.ai.p1SelectNew")}
+        label={t(
+          newSelected
+            ? "capture.ai.p1NewSelected"
+            : stay
+              ? "capture.ai.p3SelectNew"
+              : "capture.ai.p1SelectNew",
+        )}
         onPress={() => setNewSelected((v) => !v)}
       />
       <UiButton
@@ -128,7 +147,7 @@ export function UniversalP1SourceReviewForm({
           !originalReviewed ||
           !newSelected
         }
-        label={t("capture.ai.p1Confirm")}
+        label={t(stay ? "capture.ai.p3Confirm" : "capture.ai.p1Confirm")}
         onPress={() => {
           if (
             !isCurrent() ||
@@ -139,7 +158,12 @@ export function UniversalP1SourceReviewForm({
           )
             return;
           onConfirm({
-            version: "otr.universal.p1-source-review/1",
+            ...(stay
+              ? {
+                  version: "otr.universal.p3-source-review/1" as const,
+                  endLocalDate: endLocalDate!,
+                }
+              : { version: "otr.universal.p1-source-review/1" as const }),
             decision: "NEW",
             sourceRevision: sources[0].revision,
             title: names[0].raw,

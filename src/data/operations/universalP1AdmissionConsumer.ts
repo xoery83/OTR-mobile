@@ -11,8 +11,8 @@ import {
 } from "../auth/accountRequestContext";
 import { assertUniversalCaptureResult } from "./universalCaptureConsumer";
 import {
-  universalP1SourceReviewSchema,
-  type UniversalP1SourceReview,
+  universalItemSourceReviewSchema,
+  type UniversalItemSourceReview,
 } from "../../domain/trip/universalP1SourceReview";
 type Core = ReturnType<typeof createTripCoreV2Repository>;
 const json = (v: unknown) => canonicalCoreJson(v as Json);
@@ -31,7 +31,7 @@ export function createUniversalP1AdmissionConsumer(deps: {
       model: CaptureJobReadModel,
       result: UniversalImportResult,
       token: string,
-      sourceReview?: UniversalP1SourceReview,
+      sourceReview?: UniversalItemSourceReview,
     ) {
       current();
       assertUniversalCaptureResult(model, result);
@@ -43,7 +43,9 @@ export function createUniversalP1AdmissionConsumer(deps: {
       if (
         context.accountId !== result.accountId ||
         candidates.length !== 1 ||
-        candidates[0].kind !== "P1" ||
+        !["P1", "P3"].includes(candidates[0].kind) ||
+        candidates[0].subtype !==
+          (candidates[0].kind === "P3" ? "ACCOMMODATION" : "ACTIVITY") ||
         result.providerOutcome !== "SETTLED" ||
         !deps.transport.publishUniversalP1
       )
@@ -55,6 +57,10 @@ export function createUniversalP1AdmissionConsumer(deps: {
               "activity.name",
               "title",
               "activity.date",
+              "property.name",
+              "check_in.date",
+              "check_out.date",
+              "schedule.end.local_date",
               "schedule.start.local_date",
             ].includes(f.path),
           )
@@ -71,8 +77,9 @@ export function createUniversalP1AdmissionConsumer(deps: {
           taskId: result.taskId,
           token,
           requestSha256: result.requestSha256,
+          ...(candidates[0].kind === "P3" ? { family: "P3" as const } : {}),
           ...(sourceReview
-            ? { sourceReview: universalP1SourceReviewSchema.parse(sourceReview) }
+            ? { sourceReview: universalItemSourceReviewSchema.parse(sourceReview) }
             : {}),
         }),
       );
@@ -88,7 +95,7 @@ export function createUniversalP1AdmissionConsumer(deps: {
         plan.sourceId !== sources[0].sourceId ||
         slot.command !== "CREATE_ITEM" ||
         slot.targetKind !== "ITEM" ||
-        (slot.payload as { family?: string }).family !== "P1"
+        (slot.payload as { family?: string }).family !== candidates[0].kind
       )
         throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
       const expected = validateCoreCommand({
@@ -197,7 +204,7 @@ export async function readUniversalP1ReviewOriginal(
   await current();
   assertUniversalCaptureResult(model, result);
   const candidates = result.candidates.filter(
-    (c) => c.token === token && c.kind === "P1",
+    (c) => c.token === token && ["P1", "P3"].includes(c.kind),
   );
   if (candidates.length !== 1) throw Error("OWNING_REVIEW_REQUIRED");
   const aliases = new Set(candidates[0].fields.map((f) => f.sourceId));

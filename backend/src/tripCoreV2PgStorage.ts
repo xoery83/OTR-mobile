@@ -373,17 +373,19 @@ export function createCorePgStorage(
               const activation = sourceP1
                 ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
                 : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
-              const reviewed = sourceP1 && isReviewedP1Gate(activation);
               const normal = isNormalP1Gate(activation);
               const finiteFamily =
                 command.command === "CREATE_ITEM"
                   ? (command.payload as { family?: string }).family
                   : graph.itinerary_events.find((item) => item.id === command.target.id)
                       ?.experience_family;
+              const reviewed =
+                sourceP1 &&
+                isReviewedP1Gate(activation, finiteFamily === "P3" ? "P3" : "P1");
               if (
                 reviewed
                   ? command.command !== "CREATE_ITEM" ||
-                    finiteFamily !== "P1" ||
+                    !["P1", "P3"].includes(String(finiteFamily)) ||
                     !command.admission.sourceIntentId ||
                     command.admission.policyVersion !== null
                   : normal

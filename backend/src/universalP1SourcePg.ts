@@ -1,7 +1,8 @@
+import { universalResultSchema } from "../../src/data/api/universalImportContracts";
 import { z } from "zod";
 import {
-  universalP1SourceReviewSchema,
-  type UniversalP1SourceReview,
+  universalItemSourceReviewSchema,
+  type UniversalItemSourceReview,
 } from "../../src/domain/trip/universalP1SourceReview";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
@@ -43,8 +44,12 @@ export type PublishedUniversalP1Reader = (
   owningLifecycleRelationships?: ImportLifecycleRequest["relationships"];
 } | null>;
 const header = z.object({
-  schemaId: z.enum(["otr.core.universal-p1-source/1", "otr.core.universal-p1-source/2"]),
-  sourceReview: universalP1SourceReviewSchema.optional(),
+  schemaId: z.enum([
+    "otr.core.universal-p1-source/1",
+    "otr.core.universal-p1-source/2",
+    "otr.core.universal-p3-source/1",
+  ]),
+  sourceReview: universalItemSourceReviewSchema.optional(),
   reviewedBy: z.uuid().optional(),
   accountId: z.uuid(),
   tripId: z.uuid(),
@@ -85,6 +90,7 @@ export const isUniversalP1Body = (raw: unknown) => header.safeParse(raw).success
 export async function assertUniversalP1Capability(
   lease: CorePgLease,
   scope: Pick<Scope, "actorAccountId" | "tripId">,
+  family: "P1" | "P3" = "P1",
 ) {
   const c = (
     await lease.query(
@@ -95,7 +101,7 @@ export async function assertUniversalP1Capability(
   if (
     c?.runtime_enabled !== true ||
     json(c.enabled_commands) !== '["CREATE_ITEM"]' ||
-    json(c.enabled_families) !== '["P1"]' ||
+    json(c.enabled_families) !== json([family]) ||
     json(c.enabled_admission_modes) !== '["REVIEWED_SOURCE"]'
   )
     throw Error("CORE_CAPABILITY_CLOSED");
@@ -105,9 +111,11 @@ export async function setUniversalP1WriteContext(
   target: string,
   operation: string,
   slot: string,
+  family: "P1" | "P3" = "P1",
 ) {
+  z.enum(["P1", "P3"]).parse(family);
   await lease.query(
-    "SELECT set_config('otr.core.command','CREATE_ITEM',true),set_config('otr.core.family','P1',true),set_config('otr.core.admission','REVIEWED_SOURCE',true),set_config('otr.core.target_item',$1,true),set_config('otr.core.operation',$2,true),set_config('otr.core.source_intent',$3,true)",
+    `SELECT set_config('otr.core.command','CREATE_ITEM',true),set_config('otr.core.family','${family}',true),set_config('otr.core.admission','REVIEWED_SOURCE',true),set_config('otr.core.target_item',$1,true),set_config('otr.core.operation',$2,true),set_config('otr.core.source_intent',$3,true)`,
     [z.uuid().parse(target), z.uuid().parse(operation), z.uuid().parse(slot)],
   );
 }
@@ -168,7 +176,7 @@ async function project(
   token: string,
   hash: ImportHash,
   qualify: boolean,
-  sourceReview?: UniversalP1SourceReview,
+  sourceReview?: UniversalItemSourceReview,
   current?: UniversalP1QualificationContext,
 ) {
   const key = json([
@@ -213,7 +221,7 @@ async function project(
     snapshot: await readP1SourceSnapshot(lease, catalog, hash),
     ...published,
     selection: {
-      action: "CONFIRM_NEW_P1",
+      action: `CONFIRM_NEW_${universalResultSchema.parse(published.result).candidates.find((c) => c.token === token)?.kind}`,
       token,
       resultSha256: published.resultSha256,
       ...(sourceReview ? { sourceReview } : {}),
@@ -265,7 +273,9 @@ export async function readUniversalP1Catalog(
   if (!row) throw Error("INVALID_PROVENANCE");
   const h = header.parse(row.candidate_json);
   if (
-    h.schemaId === "otr.core.universal-p1-source/2" &&
+    (h.schemaId === "otr.core.universal-p1-source/2" ||
+      h.schemaId === "otr.core.universal-p3-source/1" ||
+      h.sourceReview) &&
     (!h.sourceReview || h.reviewedBy !== scope.actorAccountId)
   )
     throw Error("INVALID_PROVENANCE");
@@ -316,7 +326,7 @@ export async function readUniversalP1Catalog(
     {
       candidateId: h.candidateId,
       runId: h.runId,
-      kind: "P1",
+      kind: (checked.body.plan.slots[0].payload as { family: string }).family,
       candidateSha256: checked.candidateSha256,
       snapshot: checked.body,
       identityFacts: null,
@@ -333,12 +343,19 @@ export async function publishUniversalP1Candidate(
     taskId: string;
     token: string;
     requestSha256: string;
-    sourceReview?: UniversalP1SourceReview;
+    family?: "P1" | "P3";
+    sourceReview?: UniversalItemSourceReview;
   },
   read: PublishedUniversalP1Reader,
   hash: ImportHash,
 ) {
-  await assertUniversalP1Capability(lease, scope);
+  const family = input.family ?? "P1";
+  if (
+    family === "P3" &&
+    input.sourceReview?.version !== "otr.universal.p3-source-review/1"
+  )
+    throw Error("OWNING_REVIEW_REQUIRED");
+  await assertUniversalP1Capability(lease, scope, family);
   const published = await read(
     {
       actorAccountId: scope.actorAccountId,
@@ -352,7 +369,10 @@ export async function publishUniversalP1Candidate(
     !published ||
     published.result.requestSha256 !== input.requestSha256 ||
     published.result.batchId !== input.batchId ||
-    published.result.taskId !== input.taskId
+    published.result.taskId !== input.taskId ||
+    universalResultSchema
+      .parse(published.result)
+      .candidates.filter((c) => c.token === input.token && c.kind === family).length !== 1
   )
     throw Error("UNIVERSAL_SELECTION_UNAVAILABLE");
   const candidateId = universalP1Identity(input.taskId, input.token, "candidate"),
@@ -392,7 +412,13 @@ export async function publishUniversalP1Candidate(
       input.sourceReview,
     ),
     slot = checked.body.plan.slots[0];
-  await setUniversalP1WriteContext(lease, slot.target.id, slot.operationId, slot.slotId);
+  await setUniversalP1WriteContext(
+    lease,
+    slot.target.id,
+    slot.operationId,
+    slot.slotId,
+    family,
+  );
   await lease.query(
     "INSERT INTO public.trip_source_core_v2_candidates(candidate_id,account_id,trip_id,source_id,source_revision,run_id,input_catalog_sha256,candidate_sha256,candidate_json,sealed_at) VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6::uuid,$7,$8,$9::jsonb,clock_timestamp())",
     [

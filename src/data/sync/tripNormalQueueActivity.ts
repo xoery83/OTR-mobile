@@ -150,7 +150,7 @@ export async function getNormalTripQueueActivity(
               (c.admission.mode !== "MANUAL" &&
                 !(
                   c.command === "CREATE_ITEM" &&
-                  (c.payload as { family?: string }).family === "P1" &&
+                  ["P1", "P3"].includes((c.payload as { family: string }).family) &&
                   c.admission.mode === "REVIEWED_SOURCE" &&
                   c.admission.sourceIntentId !== null &&
                   c.admission.policyVersion === null
@@ -165,7 +165,9 @@ export async function getNormalTripQueueActivity(
             );
             const p1 =
               c.command === "CREATE_ITEM"
-                ? (c.payload as { family: string }).family === "P1"
+                ? (c.payload as { family: string }).family === "P1" ||
+                  (c.admission.mode === "REVIEWED_SOURCE" &&
+                    (c.payload as { family: string }).family === "P3")
                 : item?.experience_family === "P1" &&
                   [
                     "SET_ITEM_TEXT",

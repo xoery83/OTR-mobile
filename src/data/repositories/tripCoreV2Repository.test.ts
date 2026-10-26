@@ -1,3 +1,4 @@
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import {
   ordinaryFixture,
   ordinaryTime,
@@ -857,7 +858,7 @@ it("Core publication denies a queued Account transition and wrong Trip without t
   expect(a.sql.prepare("PRAGMA table_info(ttr_selections)").all()).toHaveLength(9);
   a.selection();
 });
-async function lostP1RecoveryFixture(reviewed = false) {
+async function lostP1RecoveryFixture(reviewed = false, family: "P1" | "P3" = "P1") {
   const f = fixture();
   const ctx = await f.repo.captureContext(trip);
   const command = {
@@ -869,9 +870,12 @@ async function lostP1RecoveryFixture(reviewed = false) {
     },
     command: "CREATE_ITEM",
     payload: {
-      family: "P1",
+      family,
       core: { title: "Lost P1 response" },
-      schedule: { start: ordinaryTime() },
+      schedule:
+        family === "P3"
+          ? { start: coreDateBoundary("2026-11-02"), end: coreDateBoundary("2026-11-03") }
+          : { start: ordinaryTime() },
       place: ordinaryPlace(),
       ...coreDefaults("member"),
     },
@@ -1056,10 +1060,15 @@ it("auth-paused and never-dispatched P1 commands are excluded from automatic rea
     ).toEqual({ recovered: 0 });
   }
 });
-it.each([false, true])(
-  "resumes only accepted Source finalization after EVIDENCE_PENDING (reconciled: %s)",
-  async (reconciled) => {
-    const f = await lostP1RecoveryFixture(true);
+it.each([
+  [false, "P1"],
+  [true, "P1"],
+  [false, "P3"],
+  [true, "P3"],
+] as const)(
+  "resumes only accepted Source finalization after EVIDENCE_PENDING (reconciled: %s, family:%s)",
+  async (reconciled, family) => {
+    const f = await lostP1RecoveryFixture(true, family);
     f.sql.exec(
       "UPDATE sync_operations SET status='DEPENDENCY_BLOCKED',next_attempt_at=NULL,attempt_count=0",
     );
@@ -1071,7 +1080,7 @@ it.each([false, true])(
         ...coreClosedCapabilities,
         activationState: "ENABLED",
         enabledCommands: ["CREATE_ITEM"],
-        enabledFamilies: ["P1"],
+        enabledFamilies: [family],
         enabledAdmissionModes: ["REVIEWED_SOURCE"],
         sourceEvidenceAvailable: true,
       }),

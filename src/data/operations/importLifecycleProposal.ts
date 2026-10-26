@@ -263,9 +263,15 @@ export async function qualifyImportLifecycleProposals(
               (e.normalization
                 ? (() => {
                     if (
-                      field !== "START.local_date" ||
                       s.slot.command !== "CREATE_ITEM" ||
-                      (s.slot.payload as { family?: string }).family !== "P1"
+                      !(
+                        (field === "START.local_date" &&
+                          ["P1", "P3"].includes(
+                            (s.slot.payload as { family: string }).family,
+                          )) ||
+                        (field === "END.local_date" &&
+                          (s.slot.payload as { family: string }).family === "P3")
+                      )
                     )
                       return undefined;
                     try {

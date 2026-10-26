@@ -199,20 +199,28 @@ export function createCorePgReader(
             ? await readCoreGate(lease, actorAccountId, tripId, gateMode)
             : undefined;
           const normal = isNormalP1Gate(gate);
+          const reviewedGate =
+            enabled && gateMode?.sustainedDev && gateMode.reviewedP1
+              ? await readReviewedP1Gate(lease, actorAccountId, tripId)
+              : undefined;
+          const reviewedP3 = isReviewedP1Gate(reviewedGate, "P3");
           const reviewed =
             enabled &&
             gateMode?.sustainedDev &&
             gateMode.reviewedP1 &&
-            isReviewedP1Gate(await readReviewedP1Gate(lease, actorAccountId, tripId));
+            (isReviewedP1Gate(reviewedGate) || reviewedP3);
           const result = enabled
             ? coreCapabilitiesSchema.parse({
                 ...coreClosedCapabilities,
                 activationState: "ENABLED",
-                enabledCommands: normal ? [...normalP1Commands] : ["CREATE_ITEM"],
-                enabledFamilies: normal ? ["P1"] : ["P1", "P3"],
-                enabledAdmissionModes: reviewed
-                  ? ["MANUAL", "REVIEWED_SOURCE"]
-                  : ["MANUAL"],
+                enabledCommands:
+                  normal && !reviewedP3 ? [...normalP1Commands] : ["CREATE_ITEM"],
+                enabledFamilies: reviewedP3 ? ["P3"] : normal ? ["P1"] : ["P1", "P3"],
+                enabledAdmissionModes: reviewedP3
+                  ? ["REVIEWED_SOURCE"]
+                  : reviewed
+                    ? ["MANUAL", "REVIEWED_SOURCE"]
+                    : ["MANUAL"],
                 sourceEvidenceAvailable: !!reviewed,
               })
             : coreClosedCapabilities;

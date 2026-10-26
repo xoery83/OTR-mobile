@@ -11,6 +11,16 @@ export const universalP1SourceReviewSchema = z.strictObject({
   tripReviewed: z.literal(true),
 });
 export type UniversalP1SourceReview = z.infer<typeof universalP1SourceReviewSchema>;
+export const universalP3SourceReviewSchema = universalP1SourceReviewSchema.extend({
+  version: z.literal("otr.universal.p3-source-review/1"),
+  endLocalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+export const universalItemSourceReviewSchema = z.discriminatedUnion("version", [
+  universalP1SourceReviewSchema,
+  universalP3SourceReviewSchema,
+]);
+export type UniversalItemSourceReview = z.infer<typeof universalItemSourceReviewSchema>;
+
 // shortcut: ISO or English abbreviated month only; add formats only with source fixtures.
 export function sourceReviewCivilDate(raw: string): string {
   const match =

@@ -15,7 +15,7 @@ export function p1SharedParticipantsReady(
   const acl = payload.acl as { visibility?: string; people?: unknown[] } | undefined;
   if (
     command.command === "CREATE_ITEM" &&
-    payload.family === "P1" &&
+    ["P1", "P3"].includes(String(payload.family)) &&
     command.admission.mode === "REVIEWED_SOURCE" &&
     command.admission.sourceIntentId !== null &&
     command.admission.policyVersion === null &&

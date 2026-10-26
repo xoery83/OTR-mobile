@@ -142,11 +142,11 @@ it("exact Core target wakes and executes only that operation, retaining other sa
   expect(queue.markCompleted).toHaveBeenCalledExactlyOnceWith(f.operation.id);
 });
 
-async function sourceFixture() {
+async function sourceFixture(family: "P1" | "P3" = "P1") {
   const f = await fixture(),
     { universalP1SourceFixture } =
       await import("../../../backend/src/__fixtures__/universalP1Source"),
-    source = await universalP1SourceFixture(actor, trip),
+    source = await universalP1SourceFixture(actor, trip, "2026-11-03", family),
     proposal = await source.run(),
     slot = proposal.body.plan.slots[0];
   const command = {
@@ -186,44 +186,53 @@ async function sourceFixture() {
   }));
   return { ...f, operation, slot, receipt, domainReceiptId };
 }
-it("recovers the same accepted Core operation and finishes its Source relation without redispatch", async () => {
-  const f = await sourceFixture();
-  await f.worker.push(f.operation);
-  expect(f.transport.submit).not.toHaveBeenCalled();
-  expect(f.repo.pending).toHaveBeenCalledWith(expect.anything(), op);
-  expect(f.transport.finalizeSourceOperation).toHaveBeenCalledExactlyOnceWith(
-    expect.objectContaining({ accountId: actor, tripId: trip }),
-    {
-      captureVersion: 2,
-      slotId: f.slot.slotId,
-      operationId: op,
-      intentSha256: f.receipt.intentSha256,
-      domainReceiptId: f.domainReceiptId,
-      receiptSha256: f.receipt.receiptSha256,
-    },
-  );
-});
-it("retains accepted Core intent through Source finalization failure and retries only the relation", async () => {
-  const f = await sourceFixture();
-  vi.mocked(f.transport.finalizeSourceOperation!).mockRejectedValueOnce(
-    Error("network lost"),
-  );
-  await expect(f.worker.push(f.operation)).rejects.toThrow("network lost");
-  await f.worker.push(f.operation);
-  expect(f.transport.submit).not.toHaveBeenCalled();
-  expect(f.transport.finalizeSourceOperation).toHaveBeenCalledTimes(2);
-});
+it.each(["P1", "P3"] as const)(
+  "recovers the same accepted %s operation and finishes its Source relation without redispatch",
+  async (family) => {
+    const f = await sourceFixture(family);
+    await f.worker.push(f.operation);
+    expect(f.transport.submit).not.toHaveBeenCalled();
+    expect(f.repo.pending).toHaveBeenCalledWith(expect.anything(), op);
+    expect(f.transport.finalizeSourceOperation).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ accountId: actor, tripId: trip }),
+      {
+        captureVersion: 2,
+        slotId: f.slot.slotId,
+        operationId: op,
+        intentSha256: f.receipt.intentSha256,
+        domainReceiptId: f.domainReceiptId,
+        receiptSha256: f.receipt.receiptSha256,
+      },
+    );
+  },
+);
+it.each(["P1", "P3"] as const)(
+  "retains accepted %s intent through Source finalization failure and retries only the relation",
+  async (family) => {
+    const f = await sourceFixture(family);
+    vi.mocked(f.transport.finalizeSourceOperation!).mockRejectedValueOnce(
+      Error("network lost"),
+    );
+    await expect(f.worker.push(f.operation)).rejects.toThrow("network lost");
+    await f.worker.push(f.operation);
+    expect(f.transport.submit).not.toHaveBeenCalled();
+    expect(f.transport.finalizeSourceOperation).toHaveBeenCalledTimes(2);
+  },
+);
 
-it("never resubmits an APPLIED Source P1 when its owning receipt cannot be read", async () => {
-  const f = await sourceFixture();
-  vi.mocked(f.repo.pending).mockResolvedValue([
-    { command: JSON.parse(f.operation.payloadJson), state: "APPLIED" },
-  ] as never);
-  vi.mocked(f.transport.receipt).mockResolvedValue(null);
-  await expect(f.worker.push(f.operation)).rejects.toThrow(
-    "CORE_ACCEPTED_RECEIPT_UNAVAILABLE",
-  );
-  expect(f.transport.submit).not.toHaveBeenCalled();
-  expect(f.transport.capabilities).not.toHaveBeenCalled();
-  expect(f.transport.finalizeSourceOperation).not.toHaveBeenCalled();
-});
+it.each(["P1", "P3"] as const)(
+  "never resubmits an APPLIED Source %s when its owning receipt cannot be read",
+  async (family) => {
+    const f = await sourceFixture(family);
+    vi.mocked(f.repo.pending).mockResolvedValue([
+      { command: JSON.parse(f.operation.payloadJson), state: "APPLIED" },
+    ] as never);
+    vi.mocked(f.transport.receipt).mockResolvedValue(null);
+    await expect(f.worker.push(f.operation)).rejects.toThrow(
+      "CORE_ACCEPTED_RECEIPT_UNAVAILABLE",
+    );
+    expect(f.transport.submit).not.toHaveBeenCalled();
+    expect(f.transport.capabilities).not.toHaveBeenCalled();
+    expect(f.transport.finalizeSourceOperation).not.toHaveBeenCalled();
+  },
+);

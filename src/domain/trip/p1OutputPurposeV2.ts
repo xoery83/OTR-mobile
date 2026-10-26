@@ -33,7 +33,7 @@ export const p1PurposeBindingV2Schema = z.strictObject({
   targetKind: z.literal("ITEM"),
   targetId: uuid,
   operationId: uuid,
-  purposeKind: z.literal("P1_ITEM"),
+  purposeKind: z.enum(["P1_ITEM", "P3_ITEM"]),
 });
 const selected = z
   .array(p1SourceFieldSchema)
@@ -66,7 +66,8 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     b = v.binding;
   if (
     c.command !== "CREATE_ITEM" ||
-    (c.payload as { family?: string }).family !== "P1" ||
+    (c.payload as { family?: string }).family !==
+      (b.purposeKind === "P3_ITEM" ? "P3" : "P1") ||
     c.admission.mode !== "REVIEWED_SOURCE" ||
     c.admission.policyVersion !== null ||
     c.admission.sourceIntentId !== b.slotId ||
@@ -82,13 +83,18 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     throw Error("INVALID_PROVENANCE");
   const p = c.payload as {
     core?: { title?: string };
-    schedule?: { start?: { local_date?: string | null } };
+    schedule?: {
+      start?: { local_date?: string | null };
+      end?: { local_date?: string | null };
+    };
   };
   if (
     !p.core?.title?.trim() ||
     !p.schedule?.start?.local_date ||
     !v.selectedFields.includes("ROOT.title") ||
     !v.selectedFields.includes("START.local_date") ||
+    (b.purposeKind === "P3_ITEM" &&
+      (!p.schedule?.end?.local_date || !v.selectedFields.includes("END.local_date"))) ||
     Object.keys(v.evidenceRefs).sort().join("|") !== v.selectedFields.join("|")
   )
     throw Error("INCOMPLETE_SOURCE_EVIDENCE");
@@ -105,10 +111,11 @@ export async function mintP1OutputPurposeV2(
 ): Promise<CertifiedP1PurposeV2> {
   const v = checked(input);
   await verify(structuredClone(v));
+  const family = v.binding.purposeKind === "P3_ITEM" ? "p3" : "p1";
   const unsigned = {
     ...v.binding,
     payloadSha256: await importDigest(
-      "otr-core-p1-source-payload-v2",
+      `otr-core-${family}-source-payload-v2`,
       v.command.payload as Json,
       sha256,
     ),
@@ -120,13 +127,13 @@ export async function mintP1OutputPurposeV2(
     purpose: {
       ...unsigned,
       purposeSha256: await importDigest(
-        "otr-core-p1-output-purpose-v2",
+        `otr-core-${family}-output-purpose-v2`,
         unsigned as Json,
         sha256,
       ),
     },
     identitySha256: await importDigest(
-      "otr-core-p1-source-claim-v2",
+      `otr-core-${family}-source-claim-v2`,
       { accountId, tripId, sourceId, sourceRevision, runId, candidateId },
       sha256,
     ),

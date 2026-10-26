@@ -300,3 +300,38 @@ it("keeps Source sync pending separate from accepted and disables a stale view",
   );
   expect(confirm).not.toHaveBeenCalled();
 });
+it("shows the P3 three-field review only with its own family opt-in and keeps confirmation explicit", () => {
+  const f = fixture(),
+    stay = f.result.candidates.find((c) => c.kind === "P3")!;
+  stay.fields.push(
+    f.evidence("S0", "check_in.date", "2026-11-02"),
+    f.evidence("S0", "check_out.date", "2026-11-03"),
+  );
+  f.result.quality!.decisions.push({
+    token: stay.token,
+    kind: "P3",
+    tier: "REVIEWABLE",
+    reasons: [],
+    sourceIds: ["S0"],
+    fieldCount: 3,
+  });
+  const confirm = vi.fn(async () => {});
+  const admission = {
+    enabled: true,
+    enabledFamilies: ["P3"] as const,
+    statuses: {},
+    busyToken: null,
+    confirm,
+    readOriginal: vi.fn(async () => "original"),
+  };
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, { ...f.props, admission }),
+  );
+  expect(html).toContain("2026-11-02");
+  expect(html).toContain("2026-11-03");
+  const button = state.buttons.find((b) => b.label === t("capture.ai.p3Confirm"));
+  expect(button?.disabled).toBe(true);
+  button!.onPress();
+  expect(confirm).not.toHaveBeenCalled();
+  expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
+});
