@@ -1,0 +1,9 @@
+{
+  "status": "LOCAL_IMAGE_NOT_DEPLOYED",
+  "sourceHead": "98251fcc8a1a3e6afab6be74da10d76a2d34cb9b",
+  "imageId": "sha256:29f6db22c6c92d461ddffb65bf8190165cf14e525ce8d077fa19839b9764e425",
+  "baseImageId": "sha256:4979d4450ab6bf3eedb6faf18663e34e12d77e1dcc632cad96959f780d145597",
+  "captureBundleSHA256": "7d20ed5bc218041d6a1d91887fb07e69d393c20a07a1e7807ffd97e0caca3537",
+  "dockerfileSHA256": "2e0df62190183edb5aa3b40caf63b3ae6643a3873fc44498bc09b9ed29cc94c8",
+  "businessActivation": "CLOSED_REQUIRES_SEPARATE_P3_OWNER_GATE"
+}

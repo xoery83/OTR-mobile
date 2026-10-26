@@ -228,3 +228,34 @@ it("expired read scope rejects before graph access and leaves cached data untouc
     false,
   );
 });
+
+it("advertises the exact P3 reviewed window without granting Manual P3 or P1 edits", async () => {
+  const f = fixture();
+  f.actor.personId = randomUUID();
+  const base = f.lease.query.getMockImplementation()!;
+  f.lease.query.mockImplementation(async (sql) => {
+    if (sql.includes("trip_sustained_import_p1_capabilities"))
+      return {
+        rows: [
+          {
+            runtime_enabled: true,
+            enabled_commands: ["CREATE_ITEM"],
+            enabled_families: ["P3"],
+            enabled_admission_modes: ["REVIEWED_SOURCE"],
+          },
+        ],
+      } as any;
+    return base(sql);
+  });
+  const reader = createCorePgReader(
+    f.connection,
+    async (value) => createHash("sha256").update(value).digest("hex"),
+    undefined,
+    { sustainedDev: true, reviewedP1: true },
+  );
+  const c = await reader.capabilities(f.actor.accountId, f.actor.tripId);
+  expect(c.enabledCommands).toEqual(["CREATE_ITEM"]);
+  expect(c.enabledFamilies).toEqual(["P3"]);
+  expect(c.enabledAdmissionModes).toEqual(["REVIEWED_SOURCE"]);
+  expect(c.sourceEvidenceAvailable).toBe(true);
+});

@@ -1,0 +1,12 @@
+BEGIN; SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(714024,3);
+DO $activate$ DECLARE deadline timestamptz:='__P3_FIXED_WINDOW_DEADLINE__'::timestamptz; scope jsonb:='{"family":"P3","tripId":"825f79b2-4a9d-4535-a62e-43000ca50c4a","sourceId":"97e9a866-6c28-456d-a385-ed2b236d059d","batchId":"b290fa7f-44a4-431a-8aa2-2adf63fe938e","taskId":"46945250-bfd8-8fcf-af74-f2e56bf85f7d","token":"i1","resultSha256":"f762ec135e7a96216463917d1a77b06e8c59b8901216b7d5d5f8e52c0e5e5a88","candidateId":"ebee124d-9a68-8fcd-919c-46d5157cffda","targetId":"1397477b-db1f-8d5e-9ffe-3c6c037d78a9","operationId":"a98856b8-209a-8bc0-9e2b-e0919bb73181","slotId":"f7d1d2e0-ab82-80e3-97bc-d6686a63e845","title":"Harbour QA Hotel","localDate":"2026-11-02","endLocalDate":"2026-11-03"}'::jsonb; BEGIN
+ IF deadline<=clock_timestamp() OR deadline>clock_timestamp()+interval '900 seconds' THEN RAISE EXCEPTION 'P3_INVALID_DEADLINE';END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND enabled AND revoked_at IS NULL AND NOT universal_p1_import_enabled AND universal_p1_review_scope IS NULL) THEN RAISE EXCEPTION 'P3_POLICY_DRIFT';END IF;
+ IF EXISTS(SELECT 1 FROM public.trip_source_core_v2_candidates WHERE candidate_id=(scope->>'candidateId')::uuid)
+ OR EXISTS(SELECT 1 FROM public.itinerary_events WHERE id=(scope->>'targetId')::uuid)
+ OR EXISTS(SELECT 1 FROM public.trip_core_command_receipts WHERE operation_id=(scope->>'operationId')::uuid) THEN RAISE EXCEPTION 'P3_ALREADY_STARTED_RECONCILE_ONLY';END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.trip_sources WHERE id=(scope->>'sourceId')::uuid AND trip_id=(scope->>'tripId')::uuid AND acquired_by='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND lifecycle='ACTIVE' AND retention_state='RETAINED' AND current_material_revision=1)
+ OR NOT EXISTS(SELECT 1 FROM public.trip_source_runs WHERE id='5015f4ad-99bb-8878-8926-2561d19710c8' AND actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND trip_id=(scope->>'tripId')::uuid AND capture_batch_id=(scope->>'batchId')::uuid AND interpretation_task_id=(scope->>'taskId')::uuid AND state='PENDING' AND retention_state='RETAINED' AND superseded_by IS NULL) THEN RAISE EXCEPTION 'P3_SOURCE_STALE';END IF;
+ UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=scope||jsonb_build_object('expiresAt',deadline) WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid;
+END $activate$;
+COMMIT;

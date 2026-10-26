@@ -8,7 +8,7 @@ Directed failures reproduced before repairs: missing P3 projection/END proof, P3
 
 Latest focused validation: 10files105assertions PASS (projection/purpose, exact family capability, real SQLite cloud-only wake, Worker/Repository/recovery, admission consumer and UI); prior broader checkpoint18files238PASS. TypeScript, capture Backend build and UI guard PASS (117files, unchanged473legacy baseline). Native V2 JS33PASS/Swift policy+slot+43fixturesPASS; context transport34PASS. Scoped lint zero errors, two existing duplicate imports.
 
-Independent review found publication/read Review mismatch; fixed with zero-query negative. Follow-up protected SQL review requested. One isolated real PG P3 full Source→Plan→Core/FULL APPLIED receipt→association→replay passed; packaged installer/rollback and P1 compatibility extended rehearsal in progress. These are isolated tests, not hosted DEV Save.
+Independent review found publication/read Review mismatch; fixed with zero-query negative. Follow-up protected SQL review requested. One isolated real PG P3 full Source→Plan→Core/FULL APPLIED receipt→association→replay passed; exact packaged installer/rollback, saved function restoration, drift rejection and unchanged owner/ACL PASS. Three real PG cases cover both P1 paths and P3,119.36s. These are isolated tests, not hosted DEV Save.
 
 P3 authority is NOT installed or opened. Exact Gate package requests three existing function replacements plus one scope/window; no new tables/columns/RLS/GRANT/role. Ordinary image deployment may proceed default closed under standing authorization after fixed commit/build/digest/preflight.
 

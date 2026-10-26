@@ -1,0 +1,6 @@
+BEGIN; SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(714024,3);
+DO $close$ BEGIN
+ IF EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND universal_p1_review_scope IS NOT NULL AND (universal_p1_review_scope-'expiresAt') IS DISTINCT FROM '{"family":"P3","tripId":"825f79b2-4a9d-4535-a62e-43000ca50c4a","sourceId":"97e9a866-6c28-456d-a385-ed2b236d059d","batchId":"b290fa7f-44a4-431a-8aa2-2adf63fe938e","taskId":"46945250-bfd8-8fcf-af74-f2e56bf85f7d","token":"i1","resultSha256":"f762ec135e7a96216463917d1a77b06e8c59b8901216b7d5d5f8e52c0e5e5a88","candidateId":"ebee124d-9a68-8fcd-919c-46d5157cffda","targetId":"1397477b-db1f-8d5e-9ffe-3c6c037d78a9","operationId":"a98856b8-209a-8bc0-9e2b-e0919bb73181","slotId":"f7d1d2e0-ab82-80e3-97bc-d6686a63e845","title":"Harbour QA Hotel","localDate":"2026-11-02","endLocalDate":"2026-11-03"}'::jsonb) THEN RAISE EXCEPTION 'P3_CLOSE_SCOPE_DRIFT';END IF;
+ UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=false,universal_p1_review_scope=NULL WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid;
+END $close$;
+COMMIT;
