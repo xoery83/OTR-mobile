@@ -54,7 +54,7 @@ def main():
                    "universal-prepare.mjs": "backend/src/universalPreparationMain.ts",
                    "universal-settled-recovery.mjs": "backend/src/universalSettledRecoveryMain.ts"}
         for name, entry in entries.items():
-            bundle_args = ["npx", "--no-install", "esbuild", entry, "--bundle", "--platform=node", "--target=node24", "--format=esm", "--alias:@=./src",
+            bundle_args = ["npx", "--no-install", "esbuild", entry, "--bundle", "--platform=node", "--target=node24", "--format=esm", "--alias:@=./src", "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
                     "--outfile=" + str(output / name), '--banner:js=import { createRequire } from "node:module"; const require = createRequire(import.meta.url);']
             if name != "server.mjs": bundle_args += ["--external:react-native", "--external:expo-*"]
             subprocess.run(bundle_args, cwd=root, check=True)

@@ -1,0 +1,18 @@
+{
+  "batch": {
+    "batch_id": "f450a69c-08ff-4075-8d03-f5f7f6182417",
+    "job_id": "cc317924-ca0c-4b29-98e8-efbb174c2c48",
+    "created_at": "2026-10-26T19:06:15.892Z",
+    "context_json": "{\"id\":\"12894f9a-9ea6-488c-b31d-206537a5567a\",\"version\":1,\"accountId\":\"f4b059c5-8241-4ffb-aa15-37fa25474543\",\"batchId\":\"f450a69c-08ff-4075-8d03-f5f7f6182417\",\"observedAt\":\"2026-10-26T19:06:15.892Z\",\"clock\":\"DEVICE_WALL\",\"entrySurface\":\"CAPTURE\",\"tripPrior\":{\"id\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\",\"origin\":\"PRIOR\",\"observedAt\":\"2026-10-26T19:06:15.892Z\"}}"
+  },
+  "inputs": [
+    {
+      "input_id": "f7e92945-b2bc-4048-8fca-f36f0f03546d",
+      "kind": "FILE",
+      "original_filename": "P2_MINIMUM_SYNTHETIC_QA.txt",
+      "content_sha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+      "content_byte_count": 27,
+      "acceptance_state": "ACCEPTED"
+    }
+  ]
+}
