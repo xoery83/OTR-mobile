@@ -117,7 +117,7 @@ it("keeps endpoint-local clocks across the date line and uses only qualified dur
   const html = render(full());
   expect(html).toContain("20:00");
   expect(html).toContain("11:00");
-  expect(html).toContain("12h 0m");
+  expect(html).toContain("12h");
   expect(html).not.toMatch(/Booking|Seat|Private read title/);
 });
 it("puts both Terminal values in the same row even with long airport names", () => {

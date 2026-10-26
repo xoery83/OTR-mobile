@@ -56,10 +56,14 @@ export function FlightFidelityGrid({
       : null;
   const terminal = (value: string | null) =>
     value ? t("flight.terminal", { terminal: value }) : null;
-  const names = (facts: typeof origin) => (
+  const names = (facts: typeof origin, arrival = false) => (
     <>
-      {facts.code ? <UiText style={styles.code}>{facts.code}</UiText> : null}
-      {facts.name ? <UiText style={styles.name}>{facts.name}</UiText> : null}
+      {facts.code ? (
+        <UiText style={[styles.code, arrival && styles.arrival]}>{facts.code}</UiText>
+      ) : null}
+      {facts.name ? (
+        <UiText style={[styles.name, arrival && styles.arrival]}>{facts.name}</UiText>
+      ) : null}
     </>
   );
   return (
@@ -94,14 +98,14 @@ export function FlightFidelityGrid({
                 </View>
                 {duration !== null ? (
                   <UiText style={styles.duration}>
-                    {t("flight.duration", {
+                    {t(duration % 60 === 0 ? "bookingRead.hours" : "flight.duration", {
                       hours: Math.floor(duration / 60),
                       minutes: duration % 60,
                     })}
                   </UiText>
                 ) : null}
               </View>
-              <View style={styles.airport}>{names(destination)}</View>
+              <View style={styles.airport}>{names(destination, true)}</View>
             </View>
             {origin.terminal || destination.terminal ? (
               <View
@@ -112,7 +116,7 @@ export function FlightFidelityGrid({
                   {terminal(origin.terminal)}
                 </UiText>
                 {!stacked ? <View style={{ width: middleWidth }} /> : null}
-                <UiText style={[styles.name, styles.airport]}>
+                <UiText style={[styles.name, styles.airport, styles.arrival]}>
                   {terminal(destination.terminal)}
                 </UiText>
               </View>
@@ -131,10 +135,14 @@ export function FlightFidelityGrid({
                 {!stacked ? <View style={{ width: middleWidth }} /> : null}
                 <View style={styles.airport}>
                   {arrival?.local_date ? (
-                    <UiText style={styles.context}>{date(arrival.local_date)}</UiText>
+                    <UiText style={[styles.context, styles.arrival]}>
+                      {date(arrival.local_date)}
+                    </UiText>
                   ) : null}
                   {immersive && arrival?.zone_id ? (
-                    <UiText style={styles.context}>{arrival.zone_id}</UiText>
+                    <UiText style={[styles.context, styles.arrival]}>
+                      {arrival.zone_id}
+                    </UiText>
                   ) : null}
                 </View>
               </View>
@@ -151,10 +159,12 @@ export function FlightFidelityGrid({
             ) : null}
             {arrival?.local_date &&
             (immersive || arrival.local_date !== departure?.local_date) ? (
-              <UiText style={styles.context}>{date(arrival.local_date)}</UiText>
+              <UiText style={[styles.context, styles.arrival]}>
+                {date(arrival.local_date)}
+              </UiText>
             ) : null}
             {immersive && arrival?.zone_id ? (
-              <UiText style={styles.context}>{arrival.zone_id}</UiText>
+              <UiText style={[styles.context, styles.arrival]}>{arrival.zone_id}</UiText>
             ) : null}
           </View>
         )}
@@ -168,12 +178,13 @@ const createStyles = (c: UiColors) =>
     grid: { flexDirection: "row", alignItems: "flex-start" },
     stacked: { flexDirection: "column" },
     route: { flex: 1, minWidth: 0, gap: 4 },
+    arrival: { textAlign: "right" },
     airport: { flex: 1, minWidth: 0, gap: 3 },
     middle: { alignItems: "center", gap: 4, flexShrink: 0 },
     planeLine: { flexDirection: "row", alignItems: "center", gap: 3, width: "100%" },
     line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.separator },
     sparsePlane: { alignItems: "center", minHeight: 22 },
-    start: { ...visual.type.feedClock, color: c.textPrimary },
+    start: { ...visual.type.feedClock, color: c.textSecondary },
     end: { ...visual.type.feedEndClock, color: c.textSecondary, marginTop: 3 },
     code: { ...visual.type.feedTitle, color: c.textPrimary },
     name: { ...visual.type.feedNote, lineHeight: 16.8, color: c.textSecondary },

@@ -47,7 +47,6 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { P1Row, type P1MoveInteraction } from "./P1Row";
 import { TransitionRow, type ComposedTransition } from "./TransitionRow";
-import { FlightRows } from "./FlightRows";
 import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
@@ -81,6 +80,12 @@ function ImmersiveHeaderSlot({
 
 export type DayFeedPresentation = {
   p1Move?: P1MoveInteraction;
+  onLocalInsert?(
+    itemId: string,
+    role: string,
+    date: string,
+    side: "BEFORE" | "AFTER",
+  ): void;
   scrollEnabled?: boolean;
   // Optional presentation-only integration seams; composition and Reader authority stay unchanged.
   renderDayHeading?: (date: string, empty: boolean) => ReactNode;
@@ -115,6 +120,7 @@ type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & 
   onOpenLocalItem?: (
     itemId: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
   ) => void;
 };
 export function DayFeed(props: DayFeedProps) {
@@ -166,6 +172,7 @@ function AcceptedDayFeed({
   onOpenLocalItem?: (
     itemId: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
   ) => void;
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
@@ -307,12 +314,12 @@ function AcceptedDayFeed({
           ?.rows(section.date)
           .some(
             (row) =>
-              row.family === "P1" &&
+              (row.family === "P1" || row.family === "P3") &&
               JSON.stringify(row.rowKey) === focus &&
               localManual.items.some(
                 (item) =>
                   item.itemId === row.itemRef &&
-                  item.family === "P1" &&
+                  (item.family === "P1" || item.family === "P3") &&
                   !item.hidden &&
                   !["cancelled", "skipped"].includes(String(item.status)),
               ),
@@ -469,21 +476,12 @@ function AcceptedDayFeed({
           }
           onPress={() => change(row.focusKey, mode === "F" ? "I" : "F")}
         >
-          {flight.qualification === "SPARSE" ? (
-            <FlightFidelityGrid
-              flight={flight}
-              focused={mode === "F"}
-              immersive={mode === "I"}
-              withinMarker={withinMarker}
-            />
-          ) : (
-            <FlightRows
-              fixture={flight}
-              focused={mode === "F"}
-              immersive={mode === "I"}
-              withinMarker={withinMarker}
-            />
-          )}
+          <FlightFidelityGrid
+            flight={flight}
+            focused={mode === "F"}
+            immersive={mode === "I"}
+            withinMarker={withinMarker}
+          />
         </Pressable>
         {projection.version === 2 &&
         projection.source.localTargetIds?.includes(event.id) ? (
@@ -634,11 +632,13 @@ function AcceptedDayFeed({
         value: () => (
           <LocalManualDayRows
             read={localManual!}
+            context={section.stream.context}
             date={section.date}
             onlyRow={row}
             p1Focus={focus}
             onP1Focus={setFocus}
             move={presentation?.p1Move}
+            onInsert={presentation?.onLocalInsert}
             onOpenItem={onOpenLocalItem}
           />
         ),

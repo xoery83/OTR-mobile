@@ -1,51 +1,112 @@
+import { useState } from "react";
+import { Alert, Linking, View } from "react-native";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
-import { bindRenderer } from "./rendererContribution";
-import { StayRow, type StayFacts } from "./StayRow";
-
-// Read-only presentation. Original files, guests, photos, Ledger and mutations need
-// their owning capability before their optional StayRow actions can be supplied.
-export function createCoreStayRenderer(projection: CoreFlightDayProjection) {
-  const facts: Record<string, StayFacts> = {};
+import { t } from "@/ui/locale";
+import { bindRenderer, type DayRowRendererProps } from "./rendererContribution";
+import { StayReadRow, StayReadView, type StayRole } from "./StayReadView";
+import { localStayPresentation, localStayMapTargets } from "./localStayPresentation";
+import type { StayRead } from "./bookingReadPresentation";
+export type CoreStayPresentationActions = {
+  onOpenStay?(itemId: string, role: StayRole, date: string): void;
+  onInsertStay?(
+    itemId: string,
+    role: StayRole,
+    date: string,
+    side: "BEFORE" | "AFTER",
+  ): void;
+};
+type Facts = { stay: StayRead; actions?: CoreStayPresentationActions };
+function CoreStayRow({
+  row,
+  depth,
+  onDepth,
+  context = "UNKNOWN",
+  nextFocused,
+  facts,
+}: DayRowRendererProps & { facts: Facts }) {
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const keys = row.coreRowKeys;
+  const role = (value: string): StayRole =>
+    value === "CHECKIN" ? "CHECKIN" : value === "CHECKOUT" ? "CHECKOUT" : "BASE";
+  if (depth === "I")
+    return (
+      <StayReadView
+        stay={facts.stay}
+        role={role(selectedRole ?? keys[0]?.projectionRole ?? "BASE")}
+        context={context}
+      />
+    );
+  return (
+    <View>
+      {keys.map((key, index) => {
+        const occurrence = role(key.projectionRole),
+          focused =
+            depth === "F" &&
+            (selectedRole ?? keys[0]?.projectionRole) === key.projectionRole;
+        return (
+          <StayReadRow
+            key={key.projectionRole}
+            stay={facts.stay}
+            role={occurrence}
+            focused={focused}
+            context={context}
+            hideDivider={nextFocused || (index < keys.length - 1 && depth === "F")}
+            onFocus={() => {
+              setSelectedRole(key.projectionRole);
+              onDepth(focused ? "B" : "F");
+            }}
+            onOpen={() =>
+              facts.actions?.onOpenStay
+                ? facts.actions.onOpenStay(facts.stay.id, occurrence, key.localDate)
+                : onDepth("I")
+            }
+            onInsert={
+              facts.actions?.onInsertStay
+                ? (side) =>
+                    facts.actions!.onInsertStay!(
+                      facts.stay.id,
+                      occurrence,
+                      key.localDate,
+                      side,
+                    )
+                : undefined
+            }
+          />
+        );
+      })}
+    </View>
+  );
+}
+// Existing actor-filtered Core read only. Missing original-body/association ports grant no actions.
+export function createCoreStayRenderer(
+  projection: CoreFlightDayProjection,
+  actions?: CoreStayPresentationActions,
+) {
+  const facts: Record<string, Facts> = {};
   for (const item of projection.items) {
-    if (item.family !== "P3" || item.hidden) continue;
-    const event = projection.events.find((entry) => entry.id === item.itemId);
-    const schedule = item.schedule as {
-      start?: { localDate?: string };
-      end?: { localDate?: string };
-    };
-    const start = schedule.start?.localDate,
-      end = schedule.end?.localDate,
-      nights = item.details.nights;
+    const event = projection.events.find((event) => event.id === item.itemId);
     if (
+      item.tripId !== projection.tripId ||
       !event ||
-      event.temporal_shape !== "STAY" ||
-      !start ||
-      !end ||
-      typeof nights !== "number" ||
-      !Number.isSafeInteger(nights) ||
-      nights < 1
+      event.semantic_revision !== item.itemRevision
     )
       continue;
-    facts[item.itemId] = {
-      family: "P3",
-      checkin: start,
-      checkout: end,
-      nights,
-      ...(typeof item.details.propertyName === "string"
-        ? { propertyName: item.details.propertyName }
-        : {}),
-      ...(typeof item.details.permittedCheckoutBy === "string"
-        ? { checkoutBy: item.details.permittedCheckoutBy }
-        : {}),
-      ...(event.accepted_address_locality || event.authored_address_locality
-        ? { area: event.accepted_address_locality ?? event.authored_address_locality! }
-        : {}),
+    const stay = localStayPresentation(item);
+    if (!stay) continue;
+    const targets = localStayMapTargets(item);
+    const open = (url: string) => {
+      void Linking.openURL(url).catch(() => Alert.alert(t("p3.mapUnavailable")));
     };
+    if (targets) {
+      stay.map = () => open(targets.map);
+      if (targets.navigate) stay.navigate = () => open(targets.navigate!);
+    }
+    facts[item.itemId] = { stay, actions };
   }
   return bindRenderer({
     version: "day-feed-renderer/1",
     family: "P3",
     facts,
-    render: StayRow,
+    render: CoreStayRow,
   });
 }

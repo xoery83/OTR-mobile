@@ -33,10 +33,12 @@ import {
   moveDayAtY,
   moveDayHeightTime,
   moveCardPosition,
+  moveDayLineY,
   type PlacementRow,
   type MoveStep,
 } from "./p1MoveCursor";
 import type { MoveItem, MoveProposal } from "./p1MoveTypes";
+import { moveProposalInScope } from "./p1MoveTypes";
 export type MovePoint = { x: number; y: number };
 export type FixtureMovePreview = {
   date: string;
@@ -58,6 +60,7 @@ type Region = {
 type Drag = {
   item: MoveItem & { id: string; title: string };
   point: MovePoint;
+  lineY: number;
   start: MovePoint;
   geometryReady: boolean;
   verticalMoved: boolean;
@@ -168,6 +171,11 @@ export function useP1Move(
       const d = drag.current;
       if (!d || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
       d.point = point;
+      const fingerY = moveFingerLineY(point.y, topInset, height, labelBand, bottomInset);
+      d.lineY =
+        d.item.dateScope === "SAME_DAY"
+          ? moveDayLineY([...regions.current.values()], d.item.date, fingerY)
+          : fingerY;
       d.moved ||= Math.hypot(point.x - d.start.x, point.y - d.start.y) > 6;
       const step = movePrecision(point.x, width, d.step);
       d.step = step;
@@ -178,11 +186,12 @@ export function useP1Move(
         d.geometryReady
       ) {
         d.lastPlacementY = point.y;
-        const lineY = moveFingerLineY(point.y, topInset, height, labelBand, bottomInset);
+        const lineY = d.lineY;
         const boxes = [...regions.current.values()].filter(
           (r) => r.minute === undefined && r.bottom > r.top,
         );
-        const date = moveDayAtY(boxes, lineY);
+        const date =
+          d.item.dateScope === "SAME_DAY" ? d.item.date : moveDayAtY(boxes, lineY);
         if (date) {
           const clocks = [...regions.current.values()].filter(
             (r) => r.date === date && r.minute !== undefined && r.bottom > r.top,
@@ -220,10 +229,21 @@ export function useP1Move(
           d.ntc = false;
         }
       }
-      d.proposal = portsRef.current.propose(d.item, d.date, d.minutes, d.ntc, d.duration);
+      const proposal = portsRef.current.propose(
+        d.item,
+        d.date,
+        d.minutes,
+        d.ntc,
+        d.duration,
+      );
+      d.proposal =
+        proposal.status === "READY" && !moveProposalInScope(d.item, proposal)
+          ? { status: "UNAVAILABLE", unavailableReason: "DAY_LOCK" }
+          : proposal;
       const signature = JSON.stringify([
         point.x,
         point.y,
+        d.lineY,
         d.date,
         d.minutes,
         d.step,
@@ -256,6 +276,7 @@ export function useP1Move(
       const d: Drag = {
         item,
         point,
+        lineY: moveFingerLineY(point.y, topInset, height, labelBand, bottomInset),
         start: point,
         geometryReady: false,
         lastPlacementY: point.y,
@@ -283,7 +304,7 @@ export function useP1Move(
       setActive({ ...d });
       console.info(JSON.stringify({ event: "p1_move_arm", itemId: id }));
     },
-    [previews, width, measure],
+    [previews, width, measure, topInset, height, labelBand, bottomInset],
   );
   const end = useCallback(() => {
     const d = drag.current;
@@ -361,10 +382,27 @@ export function useP1Move(
       if (!d) return;
       const seconds = last ? Math.min(0.032, (now - last) / 1000) : 0;
       last = now;
-      const targetVelocity =
+      let targetVelocity =
         d.verticalMoved && d.geometryReady
           ? moveEdgeVelocity(d.point.y, topInset + 8, height - bottomInset - 8, height)
           : 0;
+      if (d.item.dateScope === "SAME_DAY") {
+        const day = [...regions.current.values()].filter(
+          (r) => r.date === d.item.date && r.bottom > r.top,
+        );
+        const start = Math.min(...day.map((r) => r.top));
+        const next = [...regions.current.values()]
+          .filter(
+            (r) => r.key.startsWith("day:") && r.date > d.item.date && r.bottom > r.top,
+          )
+          .sort((a, b) => a.top - b.top)[0];
+        const end = next?.top ?? Math.max(...day.map((r) => r.bottom));
+        if (
+          (targetVelocity < 0 && start >= topInset) ||
+          (targetVelocity > 0 && end <= height - bottomInset)
+        )
+          targetVelocity = 0;
+      }
       d.edgeScrolling = targetVelocity !== 0;
       if (!targetVelocity) velocity = 0;
       else velocity += (targetVelocity - velocity) * (1 - Math.exp(-12 * seconds));
@@ -408,7 +446,8 @@ export function useP1Move(
       commitBusy.current ||
       !d ||
       d !== confirmation ||
-      p?.status !== "READY" ||
+      !p ||
+      !moveProposalInScope(d.item, p) ||
       !p.date
     )
       return;
@@ -504,13 +543,7 @@ export function useP1Move(
     ),
     overlay: active
       ? (() => {
-          const y = moveFingerLineY(
-              active.point.y,
-              topInset,
-              height,
-              labelBand,
-              bottomInset,
-            ),
+          const y = active.lineY,
             top = Math.max(topInset, y - labelBand + 16),
             bottom = Math.min(height, y + 24);
           const visible = true;
@@ -603,7 +636,11 @@ export function useP1Move(
           <View style={styles.confirm}>
             <SheetHeader
               category="picker"
-              title={t("fidelity.moveTitle")}
+              title={t(
+                confirmation?.item.clockRole
+                  ? "bookingRead.moveStay"
+                  : "fidelity.moveTitle",
+              )}
               onLeft={dismissConfirmation}
               rightLabel={t("fidelity.moveConfirm")}
               rightDisabled={saving || confirmation?.proposal.status !== "READY"}
@@ -628,26 +665,34 @@ export function useP1Move(
                       : ""}
                   </UiText>
                   <UiText style={styles.meta}>
-                    {t("fidelity.moveStartTime", {
-                      time: value?.time ?? t("fidelity.moveNoTime"),
-                    })}
+                    {confirmation?.item.clockRole
+                      ? `${t(confirmation.item.clockRole === "CHECKIN" ? "p3.role.checkin" : "p3.role.checkout")} · ${value?.time ?? t("fidelity.moveNoTime")}`
+                      : t("fidelity.moveStartTime", {
+                          time: value?.time ?? t("fidelity.moveNoTime"),
+                        })}
                   </UiText>
-                  <UiText style={styles.meta}>
-                    {t("fidelity.moveEndTime", {
-                      time: value?.endTime
-                        ? `${value.endDate && value.endDate !== value.date ? formatUiDate(new Date(`${value.endDate}T12:00:00Z`), { month: "short", day: "numeric", timeZone: "UTC" }) + " · " : ""}${value.endTime}`
-                        : t("fidelity.moveNoTime"),
-                    })}
-                  </UiText>
+                  {!confirmation?.item.clockRole ? (
+                    <UiText style={styles.meta}>
+                      {t("fidelity.moveEndTime", {
+                        time: value?.endTime
+                          ? `${value.endDate && value.endDate !== value.date ? formatUiDate(new Date(`${value.endDate}T12:00:00Z`), { month: "short", day: "numeric", timeZone: "UTC" }) + " · " : ""}${value.endTime}`
+                          : t("fidelity.moveNoTime"),
+                      })}
+                    </UiText>
+                  ) : null}
                 </View>
               ))}
             </View>
             {confirmation?.proposal.status !== "READY" ? (
               <UiText style={styles.meta}>
                 {t(
-                  confirmation?.item.zone
-                    ? "fidelity.moveUnqualified"
-                    : "fidelity.moveMissingZone",
+                  confirmation?.proposal.unavailableReason === "STAY_ORDER"
+                    ? "bookingRead.moveStayOrder"
+                    : confirmation?.proposal.unavailableReason === "DAY_LOCK"
+                      ? "bookingRead.moveStayDay"
+                      : confirmation?.item.zone
+                        ? "fidelity.moveUnqualified"
+                        : "fidelity.moveMissingZone",
                 )}
               </UiText>
             ) : null}

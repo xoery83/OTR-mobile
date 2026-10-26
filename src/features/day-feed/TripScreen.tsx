@@ -1,3 +1,4 @@
+import { localInsertionTime } from "./localInsertionTime";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
@@ -567,6 +568,7 @@ function TripContent({
   const openLocalItem = async (
     id: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
   ) => {
     const ticket = request.current;
     const resolved = await (
@@ -578,6 +580,23 @@ function TripContent({
     setTrip(current);
     if (resolved.item.family === "P1") {
       router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId: id } });
+      return;
+    }
+    if (resolved.item.family === "P3") {
+      router.push({
+        pathname: "/p3-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence:
+            occurrence?.role === "CHECKOUT"
+              ? "CHECKOUT"
+              : occurrence?.role === "CHECKIN"
+                ? "CHECKIN"
+                : "BASE",
+          ...(occurrence?.date ? { date: occurrence.date } : {}),
+        },
+      });
       return;
     }
     setLocalItem(resolved);
@@ -1301,6 +1320,20 @@ function TripContent({
             presentation={{
               scrollEnabled: !move.active,
               p1Move: moveInteraction,
+              onLocalInsert: (itemId, role, date, side) => {
+                if (!visibleTrip.localManual) return;
+                const suggestion = localInsertionTime(
+                  visibleTrip.localManual,
+                  itemId,
+                  role,
+                  date,
+                  side,
+                );
+                setInsertion({
+                  date: suggestion.startDate,
+                  startTime: suggestion.startTime,
+                });
+              },
               listStyle: { backgroundColor: colors.tripIntroduction },
               listContentStyle: {
                 backgroundColor: calendarDates?.length
@@ -1440,8 +1473,8 @@ function TripContent({
             }
             projection={visibleTrip.observed?.projection}
             localManual={visibleTrip.localManual}
-            onOpenLocalItem={(id, expected) => {
-              void openLocalItem(id, expected).catch(() => {
+            onOpenLocalItem={(id, expected, occurrence) => {
+              void openLocalItem(id, expected, occurrence).catch(() => {
                 setLocalItem(null);
                 void load();
               });
@@ -1460,6 +1493,29 @@ function TripContent({
               visibleTrip.observed?.projection.version === 2
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
+                    onOpenStay: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p3-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertStay: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
                     onInsert: (itemId, side, date) => {
                       const projection = visibleTrip.observed!.projection;
                       if (projection.version !== 2) return;

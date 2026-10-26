@@ -1,3 +1,6 @@
+import { StayReadRow } from "./StayReadView";
+import { localStayPresentation, localStayMapTargets } from "./localStayPresentation";
+import type { BookingContext } from "./bookingReadPresentation";
 import { P1Row, type P1MoveInteraction } from "./P1Row";
 import { localP1Presentation } from "./localP1Presentation";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -5,7 +8,7 @@ import type { DayFeedPresentation } from "./DayFeed";
 import type { DayEntry, DayReading } from "./TripViewContext";
 import { WindowedDayList, type DayListHandle } from "./WindowedDayList";
 import { summarizeDay, type DayWindowRow } from "./dayFeedWindow";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { UiSection, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
@@ -36,7 +39,11 @@ export function LocalManualDayFeed({
   read: LocalManualRead;
   date: string;
   dates?: readonly string[];
-  onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
+  onOpenItem?: (
+    id: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
+  ) => void;
   emptyMessage?: string;
   bottomInset?: number;
   presentation?: DayFeedPresentation;
@@ -165,20 +172,28 @@ export function LocalManualDayFeed({
 // Row-only contribution for the existing Day scroll; it never renders accepted Items.
 export function LocalManualDayRows({
   onlyRow,
+  context = "UNKNOWN",
   p1Focus,
   onP1Focus,
   move,
   read,
   date,
   onOpenItem,
+  onInsert,
 }: {
   read: LocalManualRead;
+  onInsert?: DayFeedPresentation["onLocalInsert"];
+  context?: BookingContext;
   move?: P1MoveInteraction;
   p1Focus?: string | null;
   onP1Focus?(key: string | null): void;
   onlyRow?: ReturnType<LocalManualRead["rows"]>[number];
   date: string;
-  onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
+  onOpenItem?: (
+    id: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
+  ) => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -197,6 +212,32 @@ export function LocalManualDayRows({
               : row.family === "P3"
                 ? t("tripHome.today.tonight")
                 : null;
+        if (item && row.family === "P3")
+          return (
+            <LocalStayRow
+              key={JSON.stringify(row.rowKey)}
+              item={item}
+              rowKey={`local:${JSON.stringify(row.rowKey)}`}
+              date={date}
+              role={
+                role === "CHECKIN" ? "CHECKIN" : role === "CHECKOUT" ? "CHECKOUT" : "BASE"
+              }
+              focused={p1Focus === JSON.stringify(row.rowKey)}
+              onFocus={() =>
+                onP1Focus?.(
+                  p1Focus === JSON.stringify(row.rowKey)
+                    ? null
+                    : JSON.stringify(row.rowKey),
+                )
+              }
+              move={move}
+              context={context}
+              onInsert={
+                onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
+              }
+              onOpen={() => onOpenItem?.(row.itemRef, read, { role, date })}
+            />
+          );
         if (item && row.family === "P1")
           return (
             <LocalP1Row
@@ -251,6 +292,73 @@ export function LocalManualDayRows({
       })}
     </>
   );
+}
+function LocalStayRow({
+  item,
+  rowKey,
+  date,
+  role,
+  focused,
+  onFocus,
+  onOpen,
+  move,
+  context,
+  onInsert,
+}: {
+  onInsert?(side: "BEFORE" | "AFTER"): void;
+  item: LocalManualRead["items"][number];
+  rowKey: string;
+  date: string;
+  role: "CHECKIN" | "CHECKOUT" | "BASE";
+  focused: boolean;
+  onFocus(): void;
+  onOpen(): void;
+  move?: P1MoveInteraction;
+  context: BookingContext;
+}) {
+  const stay = localStayPresentation(item);
+  if (!stay) return null;
+  const targets = localStayMapTargets(item);
+  const openMap = (url: string) => {
+    void Linking.openURL(url).catch(() => Alert.alert(t("p3.mapUnavailable")));
+  };
+  if (targets) {
+    stay.map = () => openMap(targets.map);
+    if (targets.navigate) stay.navigate = () => openMap(targets.navigate!);
+  }
+  const moveId = `${item.itemId}:${role}`;
+  const content = (
+    <StayReadRow
+      stay={stay}
+      role={role}
+      focused={focused}
+      context={context}
+      onInsert={onInsert}
+      onFocus={onFocus}
+      onOpen={onOpen}
+      onMove={
+        move?.canMove(moveId)
+          ? (event) =>
+              move.start(moveId, {
+                x: event.nativeEvent.pageX,
+                y: event.nativeEvent.pageY,
+              })
+          : undefined
+      }
+      renderTime={
+        move
+          ? (time, content) =>
+              move.wrapClock(
+                `${rowKey}:PRIMARY`,
+                date,
+                Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)),
+                content,
+              )
+          : undefined
+      }
+    />
+  );
+  return move ? move.wrapRow(rowKey, date, content) : content;
 }
 function LocalP1Row({
   item,

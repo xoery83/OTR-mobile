@@ -1,0 +1,18 @@
+{
+  "authority": "SYNTHETIC_WEBLAB_ONLY_NOT_SOURCE_PROOF_OR_ADMISSION",
+  "sourceCommit": "77057801d1792d80b890e20f008172b2e170efa9",
+  "derivedFrom": "reference/p3-app.js:11",
+  "stay": {
+    "id": "syn-stay-next",
+    "title": "Garden guesthouse",
+    "start": "2027-01-17",
+    "end": "2027-01-20",
+    "checkinTime": "15:00",
+    "bookings": [],
+    "documents": [],
+    "photos": [],
+    "expenses": [],
+    "ledger": null,
+    "note": null
+  }
+}

@@ -105,6 +105,12 @@ vi.mock("./flexibleSnapshot", () => ({
   useFlexibleSnapshot: () => ({ snapshot: null }),
 }));
 vi.mock("./FlexibleBlockRow", () => ({ FlexibleBlockRow: () => null }));
+vi.mock("./StayReadView", () => ({
+  StayReadRow: (p: any) => {
+    state.nodes.push(p);
+    return createElement("span", {}, `STAY ${p.stay.id}:${p.focused ? "F" : "B"}`);
+  },
+}));
 vi.mock("./P1Row", () => ({
   P1Row: (p: any) => {
     state.nodes.push(p);
@@ -613,4 +619,40 @@ it("real local Reader P1 forwards the native pickup point to the owning move con
   expect(row.moveGesture).toBeDefined();
   row.moveGesture.start({ x: 200, y: 450 });
   expect(start).toHaveBeenCalledWith("local-p1", { x: 200, y: 450 });
+});
+
+it("accepted plus local retains P3 occurrence Focus and forwards its original role/date", () => {
+  const local = localManual("local-stay"),
+    item = local.items[0];
+  item.family = "P3";
+  item.details = {};
+  item.schedule.end = { localDate: syntheticDate, localTime: "18:00", comparable: false };
+  const rowKey = {
+    itemId: item.itemId,
+    projectionRole: "CHECKIN",
+    localDate: syntheticDate,
+  };
+  local.rows = (date: string) =>
+    date === syntheticDate
+      ? [
+          {
+            itemRef: item.itemId,
+            rowKey,
+            family: "P3",
+            position: "TNS",
+            title: item.title,
+          },
+        ]
+      : [];
+  const open = vi.fn(),
+    props = { localManual: local, onOpenLocalItem: open };
+  render(props);
+  state.nodes.find((p) => p.stay?.id === item.itemId).onFocus();
+  expect(render(props)).toContain(`STAY ${item.itemId}:F`);
+  expect(render(props)).toContain(`STAY ${item.itemId}:F`);
+  state.nodes.find((p) => p.stay?.id === item.itemId).onOpen();
+  expect(open).toHaveBeenCalledWith(item.itemId, local, {
+    role: "CHECKIN",
+    date: syntheticDate,
+  });
 });

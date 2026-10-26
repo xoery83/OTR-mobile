@@ -2,9 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "re
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   createDefaultManualPlanRepository,
-  type ManualPlanDraft,
-  type ManualPlanRepository,
+  type ManualPlanFields,
 } from "@/data/repositories/manualPlanRepository";
+import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
+import { localStayMoveItem } from "./localStayPresentation";
+import { stayMoveProposal } from "./bookingReadPresentation";
 import type { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import type { DayListHandle } from "./WindowedDayList";
 import { useP1Move } from "./useP1Move";
@@ -34,7 +36,7 @@ export function useP1CivilMove(
     read.localManual.scope.generation === generation
       ? read.localManual.items
       : []
-  ).filter((item) => item.family === "P1");
+  ).filter((item) => item.family === "P1" || item.family === "P3");
   const key = JSON.stringify([
     tripId,
     generation,
@@ -49,7 +51,16 @@ export function useP1CivilMove(
   const [preparationRevision, setPreparationRevision] = useState(0);
   const [prepared, setPrepared] = useState<{
     key: string;
-    drafts: Map<string, { repository: ManualPlanRepository; draft: ManualPlanDraft }>;
+    drafts: Map<
+      string,
+      {
+        save(
+          changes: Partial<
+            Pick<ManualPlanFields, "startDate" | "startTime" | "endDate" | "endTime">
+          >,
+        ): Promise<unknown>;
+      }
+    >;
   } | null>(null);
   useEffect(() => {
     let active = true;
@@ -57,18 +68,57 @@ export function useP1CivilMove(
       const repository = await createDefaultManualPlanRepository();
       const entries = await Promise.all(
         items
-          .filter((item) => p1CivilMoveItem(item))
+          .filter((item) =>
+            item.family === "P3"
+              ? !!localStayMoveItem(item, "CHECKIN") ||
+                !!localStayMoveItem(item, "CHECKOUT")
+              : !!p1CivilMoveItem(item),
+          )
           .map(async (item) => {
             try {
+              if (item.family === "P3") {
+                const repository = await createDefaultManualStayRepository();
+                const draft = await repository.read(
+                  tripId,
+                  item.itemId,
+                  item.itemRevision as number,
+                );
+                return [
+                  item.itemId,
+                  {
+                    save: (
+                      changes: Partial<
+                        Pick<
+                          ManualPlanFields,
+                          "startDate" | "startTime" | "endDate" | "endTime"
+                        >
+                      >,
+                    ) =>
+                      repository.save(draft, {
+                        ...draft.fields,
+                        ...changes,
+                        startDate: draft.fields.startDate,
+                        endDate: draft.fields.endDate,
+                      }),
+                  },
+                ] as const;
+              }
+              const draft = await repository.read(
+                tripId,
+                item.itemId,
+                item.itemRevision as number,
+              );
               return [
                 item.itemId,
                 {
-                  repository,
-                  draft: await repository.read(
-                    tripId,
-                    item.itemId,
-                    item.itemRevision as number,
-                  ),
+                  save: (
+                    changes: Partial<
+                      Pick<
+                        ManualPlanFields,
+                        "startDate" | "startTime" | "endDate" | "endTime"
+                      >
+                    >,
+                  ) => repository.save(draft, { ...draft.fields, ...changes }),
                 },
               ] as const;
             } catch (error) {
@@ -115,23 +165,39 @@ export function useP1CivilMove(
     ...(read?.localManual?.rows(date) ?? []).map((row) => ({
       key: `local:${JSON.stringify(row.rowKey)}`,
       date,
-      itemId: row.itemRef,
+      itemId:
+        row.family === "P3" ? `${row.itemRef}:${row.rowKey.projectionRole}` : row.itemRef,
       minute: null,
     })),
   ]);
+  const sourceFor = (id: string) =>
+    items.find((item) =>
+      item.family === "P1"
+        ? item.itemId === id
+        : `${item.itemId}:CHECKIN` === id || `${item.itemId}:CHECKOUT` === id,
+    );
+  const candidateFor = (id: string) => {
+    const item = sourceFor(id);
+    if (!item || !current() || !prepared?.drafts.has(item.itemId)) return undefined;
+    if (item.family === "P1") return p1CivilMoveItem(item);
+    return localStayMoveItem(
+      item,
+      id === `${item.itemId}:CHECKOUT` ? "CHECKOUT" : "CHECKIN",
+    );
+  };
   const move = useP1Move(
     list,
     key,
     top,
     bottom,
     {
-      item: (id) =>
-        current() && prepared?.drafts.has(id)
-          ? p1CivilMoveItem(items.find((item) => item.itemId === id)!)
-          : undefined,
+      item: candidateFor,
       rows: () => rows,
-      duration: p1CivilDuration,
-      propose: (item, date, minute) => p1CivilProposal(item, date, minute),
+      duration: (item) => (item.dateScope === "SAME_DAY" ? null : p1CivilDuration(item)),
+      propose: (item, date, minute) =>
+        item.dateScope === "SAME_DAY"
+          ? stayMoveProposal(item, date, minute)
+          : p1CivilProposal(item, date, minute),
       same: (item, p) =>
         p.status === "READY" && item.date === p.date && item.time === p.time,
       onDismiss: () => {
@@ -141,7 +207,8 @@ export function useP1CivilMove(
         onSaved();
       },
       commit: async (item, proposal) => {
-        const opened = prepared?.drafts.get(item.id);
+        const source = sourceFor(item.id);
+        const opened = source && prepared?.drafts.get(source.itemId);
         if (
           !current() ||
           !opened ||
@@ -150,13 +217,21 @@ export function useP1CivilMove(
           !proposal.time
         )
           throw new Error("P1_MOVE_SCOPE_CHANGED");
-        await opened.repository.save(opened.draft, {
-          ...opened.draft.fields,
-          startDate: proposal.date,
-          startTime: proposal.time,
-          endDate: proposal.endDate ?? null,
-          endTime: proposal.endTime ?? null,
-        });
+        if (item.dateScope === "SAME_DAY") {
+          if (proposal.date !== item.date || proposal.endDate)
+            throw new Error("P3_MOVE_DATE_CHANGED");
+          await opened.save(
+            item.id === `${source!.itemId}:CHECKOUT`
+              ? { endTime: proposal.time }
+              : { startTime: proposal.time },
+          );
+        } else
+          await opened.save({
+            startDate: proposal.date,
+            startTime: proposal.time,
+            endDate: proposal.endDate ?? null,
+            endTime: proposal.endTime ?? null,
+          });
         if (current()) onSaved();
       },
     },
@@ -164,10 +239,6 @@ export function useP1CivilMove(
   );
   return {
     ...move,
-    canMove: (id: string) =>
-      prepared?.key === key &&
-      generation === getAccountGeneration() &&
-      prepared!.drafts.has(id) &&
-      !!p1CivilMoveItem(items.find((item) => item.itemId === id)!),
+    canMove: (id: string) => !!candidateFor(id),
   };
 }

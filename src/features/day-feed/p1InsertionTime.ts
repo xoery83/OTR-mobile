@@ -1,4 +1,13 @@
-import { validateCalendarDate, type DayEvent } from "@/domain/trip/dayReadModel";
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+export type InsertionTimeRow = {
+  id: string;
+  boundaries: readonly {
+    role: string;
+    local_date: string | null;
+    local_time: string | null;
+    zone_id: string | null;
+  }[];
+};
 export type InsertionTimeSuggestion = {
   startDate: string;
   startTime: string | null;
@@ -15,7 +24,7 @@ export type InsertionTimeSuggestion = {
 };
 // Form defaults only. Never infers a duration, free capacity, timezone proof or instant.
 export function p1InsertionTime(
-  rows: readonly DayEvent[],
+  rows: readonly InsertionTimeRow[],
   referenceId: string,
   side: "BEFORE" | "AFTER",
   date: string,
@@ -37,7 +46,7 @@ export function p1InsertionTime(
     return result;
   }
   if (index < 0) return result;
-  const endpoint = (event: DayEvent | undefined, roles: string[]) =>
+  const endpoint = (event: InsertionTimeRow | undefined, roles: string[]) =>
     event?.boundaries.find((b) => roles.includes(b.role));
   const end = endpoint(previous, ["END", "DESTINATION"]),
     start = endpoint(next, ["START", "ORIGIN"]);

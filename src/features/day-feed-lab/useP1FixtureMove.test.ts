@@ -83,6 +83,9 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/manualPlanRepository", () => ({
   createDefaultManualPlanRepository: async () => ({ read: real.read, save: real.save }),
 }));
+vi.mock("@/data/repositories/manualStayRepository", () => ({
+  createDefaultManualStayRepository: async () => ({ read: real.read, save: real.save }),
+}));
 const list = {
   current: {
     saveAnchor: vi.fn(() => null),
@@ -593,5 +596,95 @@ it.each(["RETRY", "CANCEL_NEW"])(
     expect(real.save.mock.calls[1][1].startTime).not.toBe("10:30");
     expect(move.previews).toEqual({});
     expect((move.confirmation as any).props.visible).toBe(false);
+  },
+);
+it.each(["CHECKIN", "CHECKOUT"])(
+  "real Stay %s move saves only that clock and retains both dates",
+  async (role) => {
+    const itemId = "real-stay",
+      start = "2026-10-25",
+      end = "2026-10-28";
+    const fields = {
+      title: "Hotel",
+      startDate: start,
+      endDate: end,
+      startTime: "16:00",
+      endTime: "10:00",
+      location: "Hotel address",
+      description: null,
+      participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+      stayDetails: {
+        propertyName: "Hotel",
+        permittedCheckinFrom: null,
+        permittedCheckinUntil: null,
+        permittedCheckoutBy: null,
+      },
+    };
+    const draft = { mode: "EDIT", itemId, fields, participantOptions: [] };
+    real.generation = 5;
+    real.read.mockReset().mockResolvedValue(draft);
+    real.save.mockReset().mockResolvedValue({ itemId });
+    const item = {
+      itemId,
+      itemRevision: 1,
+      family: "P3",
+      title: "Hotel",
+      status: "planned",
+      hidden: false,
+      details: {},
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+      schedule: {
+        start: { localDate: start, localTime: "16:00", comparable: false },
+        end: { localDate: end, localTime: "10:00", comparable: false },
+      },
+    };
+    const read = {
+      scope: { accountId: "account", generation: 5 },
+      observed: null,
+      localManual: {
+        scope: { accountId: "account", tripId: "trip", generation: 5 },
+        source: { fingerprint: "stay-one" },
+        items: [item, { ...item, itemId: "flight", family: "P2" }],
+        rows: () => [],
+      },
+    } as any;
+    const saved = vi.fn();
+    const renderReal = () => {
+      hooks.cursor = 0;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const value = useP1CivilMove(
+        list,
+        read,
+        "trip",
+        5,
+        [start, end],
+        62,
+        34,
+        saved,
+        vi.fn(),
+      );
+      hooks.effects.splice(0).forEach((effect) => effect());
+      return value;
+    };
+    let move = renderReal();
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    move = renderReal();
+    expect(move.canMove(`${itemId}:${role}`)).toBe(true);
+    expect(move.canMove(`${itemId}:BASE`)).toBe(false);
+    expect(move.canMove("flight")).toBe(false);
+    expect(move.canMove(itemId)).toBe(false);
+    move.showConfirmationPreview(`${itemId}:${role}`);
+    move = renderReal();
+    const header = (move.confirmation as any).props.children.props.children.props
+      .children[0];
+    await header.props.onRight();
+    expect(real.save).toHaveBeenCalledOnce();
+    expect(real.save.mock.calls[0][0]).toBe(draft);
+    expect(real.save.mock.calls[0][1]).toEqual({
+      ...fields,
+      ...(role === "CHECKIN" ? { startTime: "16:30" } : { endTime: "10:30" }),
+    });
+    expect(saved).toHaveBeenCalledOnce();
   },
 );

@@ -112,3 +112,20 @@ export function moveDayHeightTime(
     minute: Math.max(0, Math.min(1439, Math.round((fraction * 1440) / step) * step)),
   };
 }
+
+export function moveDayLineY(
+  regions: readonly { key: string; date: string; top: number; bottom: number }[],
+  date: string,
+  y: number,
+) {
+  const own = regions.filter((r) => r.date === date && r.bottom > r.top);
+  if (!own.length) return y;
+  const start =
+    own.find((r) => r.key === `day:${date}`)?.bottom ??
+    Math.min(...own.map((r) => r.top));
+  const next = regions
+    .filter((r) => r.key.startsWith("day:") && r.date > date && r.bottom > r.top)
+    .sort((a, b) => a.top - b.top)[0];
+  const end = next?.top ?? Math.max(...own.map((r) => r.bottom));
+  return Math.max(start, Math.min(Math.max(start, end - 1), y));
+}
