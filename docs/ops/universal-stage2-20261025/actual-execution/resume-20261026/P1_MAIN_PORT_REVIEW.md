@@ -7,3 +7,5 @@ Existing RemoteProcessing route/port and 524288-byte POST limit preserved; Unive
 Remaining conditions: final targeted checks, fresh main HEAD/serial integration and smoke. This review does not certify all copied Source files or imply P2–P6/main L3 PASS.
 
 Final delta independent review: NO BLOCKER. Scope/view refs update in layout effect after commit; retained actions reject Batch changes and invalid views. Speech module remains unregistered and no microphone permission added. Reviewer read-only, no execution. Two focused hook negative cases added.
+
+Native-smoke final repair reviewed independently: NO BLOCKER. Existing fresh Account/Trip/generation/epoch/itemRevision checks precede P1 civil-date DayChooser fallback. Viewing zone remains explicit and no Item facts change; other types/no civil date retain rejection. Removed two nonexistent optional Stack targets. Actual AD5 same Item Day display then observed; no new business mutation/provider.

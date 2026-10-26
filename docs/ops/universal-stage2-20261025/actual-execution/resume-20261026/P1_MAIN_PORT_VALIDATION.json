@@ -21,5 +21,7 @@
   "remoteMain": "0c271171 unchanged; local integration not pushed",
   "postMergeTests": "5 files/66 PASS +3 files/60 PASS on actual main",
   "postMergeUiGuard": "PASS 117 files; baseline unchanged",
-  "nativeMainSmoke": "PENDING_SHORT_GUI_HANDOFF; Metro8097 main-port/P1false"
+  "nativeMainSmoke": "PASS; normal Restart/main bundle/same P1/explicit Day view zone; P1 opt-in false",
+  "postMergeDefaultClosed": "3 files/15 PASS",
+  "dateOnlyNavigationRepair": "failing test first;25 PASS/typecheck/lint; independent NO_BLOCKER; AD5 actual PASS"
 }

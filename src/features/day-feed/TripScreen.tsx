@@ -1,3 +1,4 @@
+import { snapshotItemDate } from "@/domain/trip/journeySnapshot";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
@@ -361,7 +362,16 @@ function TripContent({ today = false }: { today?: boolean }) {
       current.itemId,
       reviewZone ?? undefined,
     );
-    if (!header) throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
+    if (!header) {
+      const civilDate = current.family === "P1" ? snapshotItemDate(current) : null;
+      if (!civilDate) throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
+      // A viewing zone is explicit UI context, never a missing Item fact.
+      setTrip(result);
+      setDate(civilDate);
+      setZone("");
+      setDayChooser(true);
+      return;
+    }
     setTrip(result);
     setHomeItem({
       read: result,

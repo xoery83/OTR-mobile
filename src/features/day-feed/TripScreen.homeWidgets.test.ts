@@ -610,3 +610,18 @@ it("keeps status information readable after the measured Hero scrolls away and o
   expect(state.select).not.toHaveBeenCalled();
   expect(state.saveReading).not.toHaveBeenCalled();
 });
+it("asks for an explicit Day view zone for an accepted date-only P1 without changing its facts", async () => {
+  const event = { id: "activity", status: "planned", boundaries: [{ zone_id: null, local_date: "2026-11-01" }] };
+  const item = { itemId: "activity", itemRevision: 1, family: "P1", schedule: { start: { localDate: "2026-11-01", localTime: null, zoneId: null } } };
+  state.result.observed.projection.events = [event];
+  state.result.observed.projection.items = [item];
+  const p = page(await loaded());
+  await p.content.props.onOpenItem({ scope: state.snapshot.scope, certificate: { epoch: "epoch" }, item });
+  const node = render();
+  expect(find(node, "Modal")?.visible).toBe(true);
+  expect(find(node, "Input")?.value).toBe("2026-11-01");
+  expect(find(node, DayFeed)).toBeNull();
+  expect(state.select).not.toHaveBeenCalled();
+  expect(state.saveReading).not.toHaveBeenCalled();
+  expect(item.schedule.start).toEqual({ localDate: "2026-11-01", localTime: null, zoneId: null });
+});

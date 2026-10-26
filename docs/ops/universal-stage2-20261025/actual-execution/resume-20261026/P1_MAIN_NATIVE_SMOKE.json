@@ -1,0 +1,36 @@
+{
+  "status": "PASS_MAIN_NATIVE_READ_SMOKE",
+  "observedUtc": "2026-10-26T08:19:05.417686+00:00",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "metroRoot": "universal-main-port/otr-mobile-canonical",
+  "metroPort": 8097,
+  "admissionOptIn": false,
+  "coldStart": "DeviceHub normal Restart; existing App/session/Trip retained; no reset/install/credential copying",
+  "firstFailure": "HOME_ITEM_DATE_UNAVAILABLE after tapping accepted civil-only P1 without view zone",
+  "focusedFailureTest": "date-only-fail.log / HOME_ITEM_DATE_UNAVAILABLE",
+  "repair": "P1 with validated existing civil date opens existing DayChooser; explicit user view zone; no Item mutation",
+  "focusedRepairTests": "3 files/25 PASS; typecheck/scoped lint/UI guard PASS; independent NO BLOCKER",
+  "nativeObserved": [
+    "same QA Trip/Preparation one P1",
+    "tap P1 opens DayChooser with 2026-11-01 and empty zone",
+    "explicit viewing zone Pacific/Auckland",
+    "Day shows Walk in Auckland Domain / 2026-11-01 / Time details incomplete",
+    "Nov2/Nov3 no accepted Events"
+  ],
+  "localAcceptedReadback": [
+    {
+      "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "title": "Walk in Auckland Domain",
+      "start_local_date": "2026-11-01",
+      "start_local_time": null,
+      "start_zone_id": null,
+      "semantic_revision": 1
+    }
+  ],
+  "providerCalls": 0,
+  "hostedMutations": 0,
+  "protectedAuthorityChanges": 0,
+  "mainDeployment": "NOT_DEPLOYED; source DEV business E2E remains separate",
+  "gui": "Returned to Native Feature owner"
+}
