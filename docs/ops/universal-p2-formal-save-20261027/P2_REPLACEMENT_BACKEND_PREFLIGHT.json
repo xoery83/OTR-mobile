@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-10-26T19:50:51.918328+00:00",
+  "oldTaskId": "f258d505-cea1-8b7c-836a-b177ed029386",
+  "taskCount": 0,
+  "attemptCount": 0,
+  "databaseMode": "readOnly",
+  "sameQAScope": true,
+  "sourceReviewEnabled": false,
+  "nativeResourceCoordination": "confirmed Native uses real-device Mirror; Universal AD5 only",
+  "newInput": "NOT_CREATED_AT_PREFLIGHT"
+}

@@ -1,0 +1,10 @@
+{
+  "sourceHead": "258302e70e04a60f8173171120a62498c327e959",
+  "imageId": "sha256:ac188662bcac8a020fcaec4d87576d5c0bf1cdbbc24c7e894e214faff3af1886",
+  "baseImageId": "sha256:025010435515fd3451920ec1c62cca16df1e3c29093b8cff0fb0256f838235b9",
+  "deploymentScope": "capture bundle only; existing other runtime bundles retained",
+  "bundles": {
+    "server-capture.mjs": "49feda790c63d2809a6565a86d8a08f0374046712781baae8131c0fb5398c4c9"
+  },
+  "dockerfileSHA256": "ec85809b7a20e93e7ebc681c29bb2f162e0eb334cfb08d582d60c9ba1282d9dd"
+}

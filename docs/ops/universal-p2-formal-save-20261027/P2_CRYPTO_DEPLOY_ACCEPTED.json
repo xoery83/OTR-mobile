@@ -1,0 +1,20 @@
+{
+  "status": "DEPLOY_HEALTH_AND_BOUNDARIES_PASS",
+  "containerId": "66ea7dce67873fd5714671e762e5f73fd4a51d34b4d9f645f0ffae0fea3139a7",
+  "imageId": "sha256:ac188662bcac8a020fcaec4d87576d5c0bf1cdbbc24c7e894e214faff3af1886",
+  "configSHA256": "68db0adf421f8e8a8d22149ca83d3932e436ae4e375523807b0c128cf7b89188",
+  "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+  "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "routes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+    "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": 401
+  },
+  "siblingCount": 21,
+  "rollbackImageRetained": "sha256:025010435515fd3451920ec1c62cca16df1e3c29093b8cff0fb0256f838235b9",
+  "restartCount": 0
+}
