@@ -1,0 +1,10 @@
+{
+  "status": "OWNER_APPROVED_EXACT_GATE_NOT_YET_ACTIVATED",
+  "ownerReply": "同意",
+  "approvedCommit": "02a061e1",
+  "gate": "P2_RESOURCE_LEASE_AND_SCOPE_GATE.md",
+  "gateSHA256": "cb3d9de0c915f484fe5994effff0822d625e3443e6dbeacc77729954a4bd50d4",
+  "recordedAt": "2026-10-26T22:59:27.620200+00:00",
+  "budgetStandingAuthorizationRetained": true,
+  "businessP2SaveAuthority": false
+}

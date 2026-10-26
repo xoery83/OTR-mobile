@@ -1,0 +1,15 @@
+{
+  "status": "INDEPENDENT_EXECUTOR_REVIEW_NO_BLOCKER",
+  "reviewer": "/root/p1_source_review_independent",
+  "resolved": "Crash after committed Admin closure before marker independently recovers exact audited scope6/function/ACL/two closed grants via two reads; never renews closed rights. Partial marker not success.",
+  "selftestChecks": 11,
+  "actualPGAdminChecks": 5,
+  "providerCalls": 0,
+  "hostedWrites": 0,
+  "activationStillRequires": "fresh sealed plan, operator hash and actual-image scope check, two independent watcher heartbeats",
+  "files": {
+    "p2_resource_window.py": "baefeb6990f3f4ba1780ecf7ed7a4e4df95f9aae7b0c206ef7902f0073f2f204",
+    "P2_RESOURCE_WINDOW_OBSERVE.sql": "fb4521df350b3dc2110349075a7b6e8702560eac61fdf2818fb69b2316560945",
+    "build_resource_operator.mjs": "e132810271a723617575eb236e994e2db88d30507c949ac4c9b8af44114c2bb1"
+  }
+}

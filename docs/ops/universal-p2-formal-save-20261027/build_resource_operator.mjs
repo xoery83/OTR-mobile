@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { build } from 'esbuild';
+const root=process.cwd();
+let source=fs.readFileSync('scripts/import/universal_continuous_operator.ts','utf8');
+const before='const directory = "/opt/otr/dev-backend/private/universal-stage2-continuous";';
+if(source.split(before).length!==2)throw Error('OPERATOR_PREIMAGE_DRIFT');
+source=source.replace(before,'const directory = "/opt/otr/dev-backend/private/universal-p2-resource-lease-02a061e1";');
+source=source.replace('`${directory}/credentials.json`','"/opt/otr/dev-backend/private/universal-stage2-continuous/credentials.json"');
+source=source.replace('const kinds = new Set(["external_integration_price_append", "external_integration_set_kill", "flight_activation_select", "flight_activation_account_grant"]);','const kinds = new Set(["flight_activation_select"]);');
+source=source.replace('  return value;','  if (index !== 0 || JSON.stringify(value.command.row) !== JSON.stringify(plan[phase === "activationCommands" ? "scope6" : "scope7"]) || value.command.expected_version !== (phase === "activationCommands" ? 5 : 6)) throw Error("OPERATOR_EXACT_SCOPE_REQUIRED");\n  return value;');
+if(source.includes('`${directory}/credentials.json`') || !source.includes('OPERATOR_EXACT_SCOPE_REQUIRED'))throw Error('OPERATOR_BOUNDARY_PATCH_FAILED');
+const out='/private/tmp/otr-p2-resource-universal-continuous-operator.mjs';
+await build({stdin:{contents:source,sourcefile:'universal-p2-resource-operator.ts',resolveDir:path.join(root,'scripts/import'),loader:'ts'},bundle:true,platform:'node',format:'esm',external:['pg-native'],banner:{js:'import { createRequire as __otrCreateRequire } from "node:module"; const require = __otrCreateRequire(import.meta.url);'},outfile:out});
+console.log(JSON.stringify({path:out,sha256:crypto.createHash('sha256').update(fs.readFileSync(out)).digest('hex'),bytes:fs.statSync(out).size}));

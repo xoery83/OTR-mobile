@@ -1,0 +1,14 @@
+{
+  "status": "ADMIN_WINDOW_ACTUAL_PG_PASS_NOT_DEV",
+  "checks": [
+    "actual root finite grant renewal permits existing gateway only until sealed deadline",
+    "only exact existing two grant IDs advance8\u21929/10\u219211",
+    "second activation rejects stale grant preimage without extension",
+    "actual guarded revoke closes grants and sets NOLOGIN independently",
+    "repeated closure is idempotent and never reopens or advances revision again"
+  ],
+  "count": 5,
+  "network": "none",
+  "providerCalls": 0,
+  "hostedWrites": 0
+}

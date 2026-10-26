@@ -1,0 +1,18 @@
+{
+  "status": "EXECUTOR_SELFTEST_PASS_NOT_DEV",
+  "checks": [
+    "only existing CONFIG8\u21929 SECURITY10\u219211 renewal identities",
+    "rollback scope7 must be inactive exact original financial/pin/expiry row",
+    "window/old recovery/existing Task/admin revision drift rejected",
+    "existing finite root grant renderer has CAS time role and own-session bounds",
+    "success only after independent scope/function/ACL readback and admin closure",
+    "repeat activation never dispatches or opens again",
+    "verified success keeps approved scope6 and prevents failure rollback",
+    "partial marker cannot suppress exact scope7\u2192function rollback; repeat close sends no second command",
+    "crash after committed admin closure recovers exact audit-backed terminal success without reopening or append7",
+    "recovered success is sealed and idempotent",
+    "matching scope/function with absent own request audit cannot fabricate success"
+  ],
+  "count": 11,
+  "limits": "Injected transport lifecycle checks; SQL lease behavior has separate97 actual PG checks. Fresh authority/runtime window still required."
+}

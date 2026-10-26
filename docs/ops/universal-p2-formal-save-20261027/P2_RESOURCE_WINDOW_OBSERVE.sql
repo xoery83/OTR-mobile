@@ -1,0 +1,15 @@
+BEGIN READ ONLY;SELECT jsonb_build_object(
+'function',(SELECT jsonb_build_object('md5',md5(pg_get_functiondef(oid)),'oid',oid,'owner',proowner,'acl',proacl) FROM pg_proc WHERE oid='public.flight_activation_reserve_call(jsonb,jsonb)'::regprocedure),
+'create',has_schema_privilege('otr_external_integration_meter_writer','public','CREATE'),
+'edges',(SELECT coalesce(jsonb_agg(to_jsonb(m) ORDER BY grantor),'[]') FROM pg_auth_members m WHERE roleid='otr_external_integration_meter_writer'::regrole AND member='postgres'::regrole),
+'scope',(SELECT to_jsonb(s) FROM public.flight_activation_scopes s WHERE scope_id='baac2ca8-f769-4ace-8bd4-d394a36312d6' ORDER BY revision DESC LIMIT 1),
+'grant',(SELECT to_jsonb(g) FROM public.flight_activation_account_grants g WHERE scope_id='baac2ca8-f769-4ace-8bd4-d394a36312d6' AND account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'),
+'adminRole',(SELECT jsonb_build_object('name',rolname,'canLogin',rolcanlogin,'validUntil',rolvaliduntil,'super',rolsuper,'createRole',rolcreaterole,'createDB',rolcreatedb,'bypassRLS',rolbypassrls,'inherit',rolinherit) FROM pg_roles WHERE rolname='otr_external_integration_admin_gateway'),
+'adminGrants',(SELECT jsonb_agg(to_jsonb(g) ORDER BY permission) FROM public.external_integration_admin_grants g WHERE actor_id='f4b059c5-8241-4ffb-aa15-37fa25474543' AND environment='DEV' AND permission IN('CONFIG_ADMIN','SECURITY_ADMIN')),
+'adminSessions',(SELECT count(*) FROM pg_stat_activity WHERE usename='otr_external_integration_admin_gateway'),
+'integration',(SELECT jsonb_build_object('version',config_version,'hash',config_sha256,'enabled',enabled,'kill',kill_switch) FROM public.external_integrations WHERE integration_id='otr-universal-qa-1624499c-18d7-4026-b3fe-7346ab1f825d'),
+'oldCall',(SELECT to_jsonb(c) FROM public.external_integration_calls c WHERE call_id='66567570-5375-89ac-a14b-6146f7f24b9d'),
+'oldHold',(SELECT to_jsonb(h) FROM public.flight_call_resource_holds h WHERE call_id='66567570-5375-89ac-a14b-6146f7f24b9d'),
+'newBatchRuns',(SELECT count(*) FROM public.trip_source_runs WHERE capture_batch_id='a9be165b-5a90-4244-add7-d4977c9e7ba5'),
+'qaCostExposure',(SELECT coalesce(sum(worst_cost_nanos),0) FROM public.flight_call_resource_holds WHERE account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'),
+'policy',(SELECT jsonb_build_object('enabled',universal_import_enabled,'p1Review',universal_p1_import_enabled,'reviewScope',universal_p1_review_scope) FROM public.trip_sustained_dev_policy WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543')) AS proof;ROLLBACK;
