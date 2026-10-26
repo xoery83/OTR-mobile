@@ -20,7 +20,7 @@ For a P2 already present in the same current account/Trip/fingerprint read, the 
 
 Final directed set:6 suites149 tests PASS (P2Detail, FlightFidelityGrid, TripScreen.homeWidgets, dayFeedWindow, WindowedDayList, frozen flightFidelityFixture). TS/UIguard/scopedlint/diff PASS. Independent reviews closed stale hidden status-bar events; P2 review found no blocker and independently ran92 checks. No sum of overlapping test totals.
 
-R27 exact-source dedicated C0 simulator build/install PASS; generic iOS Forms QA R27 exact-source build PASS after physical paired destination became unavailable. Physical Mirror reports iPhone in Use; update authorization/release requested, no install over the owner's phone. DeviceHub was returned to Universal for AD5 input registration before Native regression began, then re-leased for C0 after its explicit return. Native observations are recorded below; physical iPhone timing remains pending. No AD5/8097/main/Backend operation by this lane.
+R27 exact-source dedicated C0 simulator build/install PASS; generic iOS Forms QA R27 exact-source build PASS after physical paired destination became unavailable. Owner authorized the update; the exact R27 build was subsequently installed on the independent physical Forms QA app, retaining the normal Session and existing Nelson summer trip. DeviceHub was returned to Universal for AD5 input registration before Native regression began, then re-leased for C0 after its explicit return. Native observations are recorded below; physical iPhone timing remains pending. No AD5/8097/main/Backend operation by this lane.
 
 ## R27 Native observations
 
@@ -34,4 +34,4 @@ Dedicated C0 / English / Light, normal local account and existing synthetic Trip
 - Independent Vision compared `p2-real-immersive-final-layout.png` with frozen `full-future-immersive.png`; prior title/container/common-module findings closed for this real single leg. Missing services/seat/documents/relations are not invented; empty cards follow Owner's later hide-empty rule. Confirmed multi-leg Journey and physical performance were not newly accepted.
 
 Evidence: `/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-r27-20261027/`.
-GUI returned to Universal, CaptureKeyboard off, no open Draft. Physical build is prepared separately; Owner's iPhone remains unavailable/in use, no overwrite installation performed this turn.
+DeviceHub GUI returned to Universal, CaptureKeyboard off, no open Draft. After Owner release, R27 physical install and launch PASS; the existing normal Session, Trip Home, Today27Oct Widget, real Day and rectangular Day Calendar were observed. Mirror then disconnected with iPhone in Use during Calendar scrolling. Physical P2 layout/latency and history/status-bar regression remain pending reconnection; simulator observations above are not substituted as physical PASS. No physical Item was created, edited or saved in this regression.
