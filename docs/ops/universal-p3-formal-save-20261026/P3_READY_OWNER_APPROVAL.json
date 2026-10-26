@@ -1,0 +1,11 @@
+{
+  "ownerApproved": true,
+  "gateName": "P3_READY_OPERATION_SAVE_GATE/1",
+  "gateCommit": "382f0320b4b0dcd6df8478db17bc9efb4c84966b",
+  "questionItemId": "call_41768cc44dd448629ba83de86478aa5b/0",
+  "answer": "批准该精确 P3 READY 操作续窗 Gate",
+  "scopeSha256": "96ac804bce4d0e628a69bd4485fe6182b36b9e0450c314c0d8ec34f8ad2f9231",
+  "providerCallsAdded": 0,
+  "newInputObjects": 0,
+  "recordedAt": "2026-10-26T17:03:10.004129+00:00"
+}
