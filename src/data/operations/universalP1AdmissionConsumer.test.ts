@@ -8,7 +8,10 @@ import { universalP1SourceFixture } from "../../../backend/src/__fixtures__/univ
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import type { UniversalImportResult } from "../api/universalImportContracts";
-async function fixture(family: "P1" | "P3" = "P1") {
+async function fixture(
+  family: "P1" | "P3" = "P1",
+  sync?: (context: unknown, operationId: string) => Promise<unknown>,
+) {
   const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", family),
     p = await f.run(),
     plan = p.body.plan,
@@ -70,6 +73,7 @@ async function fixture(family: "P1" | "P3" = "P1") {
     isCurrent: () => current,
     core: core as never,
     transport: transport as never,
+    sync,
   });
   return {
     f,
@@ -248,3 +252,33 @@ it("queues only the selected P3 using its exact owning published Plan and operat
   expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
   expect(f.command.payload).toMatchObject({ family: "P3" });
 });
+
+it.each(["P1", "P3"] as const)(
+  "wakes only the confirmed %s operation after owning preparation and waits for its real receipt",
+  async (family) => {
+    const sync = vi.fn(async () => {}),
+      f = await fixture(family, sync);
+    f.transport.receipt.mockResolvedValue({
+      projection: "FULL",
+      domainReceiptId: randomUUID(),
+      receipt: {
+        operationId: f.slot.operationId,
+        tripId: f.result.tripId,
+        actorAccountId: f.result.accountId,
+        outcome: "APPLIED",
+        intentSha256: "a".repeat(64),
+        receiptSha256: "b".repeat(64),
+        targetVector: [{ kind: "ITEM", id: f.slot.target.id, committedRevision: 1 }],
+      },
+    });
+    expect((await f.consumer.confirm(f.model, f.result, "walk")).status).toBe(
+      "SERVER_ACCEPTED",
+    );
+    expect(sync).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ accountId: f.result.accountId, tripId: f.result.tripId }),
+      f.slot.operationId,
+    );
+    expect(f.core.applyReceipt).toHaveBeenCalledOnce();
+    expect(f.core.refresh).toHaveBeenCalledOnce();
+  },
+);

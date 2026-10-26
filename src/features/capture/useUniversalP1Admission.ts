@@ -90,6 +90,7 @@ export function useUniversalP1Admission(
           { tripCoreSha256Hex },
           { createCoreV2Transport },
           { createUniversalP1AdmissionConsumer },
+          { createReviewedSourceOperationSync },
         ] = await Promise.all([
           import("@/data/db/database"),
           import("@/data/auth/authRepository"),
@@ -97,20 +98,30 @@ export function useUniversalP1Admission(
           import("@/data/repositories/tripCoreSha256"),
           import("@/data/api/tripCoreV2Transport"),
           import("@/data/operations/universalP1AdmissionConsumer"),
+          import("@/data/sync/tripCoreV2SyncWorker"),
         ]);
         const database = await readInitializedDatabase();
         if (!current()) return;
+        const core = createTripCoreV2Repository(
+          database,
+          requireAdoptedUserId,
+          tripCoreSha256Hex,
+        );
+        const transport = createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+          timeoutMs: 60000,
+        });
         const consumer = createUniversalP1AdmissionConsumer({
           getAccountId: requireAdoptedUserId,
           isCurrent: current,
-          core: createTripCoreV2Repository(
+          core,
+          transport,
+          sync: createReviewedSourceOperationSync(
             database,
+            core,
+            transport,
             requireAdoptedUserId,
             tripCoreSha256Hex,
           ),
-          transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
-            timeoutMs: 60000,
-          }),
         });
         const outcome = await consumer.confirm(model, result, token, review);
         if (current()) setStatuses((s) => ({ ...s, [token]: outcome.status }));

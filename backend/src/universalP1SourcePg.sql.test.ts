@@ -322,7 +322,7 @@ it.skipIf(!container).each(
         const fixed = JSON.parse(
           readFileSync(new URL("P3_REVIEW_SCOPE.json", packet), "utf8"),
         );
-        const fixtureScope = { ...savedScope };
+        const fixtureScope = { ...(savedScope as Record<string, unknown>) };
         delete fixtureScope.expiresAt;
         const scopeLiteral = "scope jsonb:='" + JSON.stringify(fixed) + "'::jsonb";
         const template = readFileSync(new URL("P3_RETRY_ACTIVATE.sql", packet), "utf8");

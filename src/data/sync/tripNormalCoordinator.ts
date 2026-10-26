@@ -201,7 +201,7 @@ export function createNativeNormalTripSyncRunner(
               const command = intent.command;
               if (
                 command.command !== "CREATE_ITEM" ||
-                (command.payload as { family?: string }).family !== "P1" ||
+                !["P1", "P3"].includes((command.payload as { family: string }).family) ||
                 command.admission.mode !== "REVIEWED_SOURCE"
               )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");

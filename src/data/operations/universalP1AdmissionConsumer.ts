@@ -22,6 +22,10 @@ export function createUniversalP1AdmissionConsumer(deps: {
   isCurrent(): boolean;
   core: Pick<Core, "enqueue" | "resume" | "applyReceipt" | "refresh">;
   transport: ReturnType<typeof createCoreV2Transport>;
+  sync?(
+    context: import("../auth/accountRequestContext").AccountRequestContext,
+    operationId: string,
+  ): Promise<unknown>;
 }) {
   const current = () => {
     if (!deps.isCurrent()) throw Error("UNIVERSAL_CAPTURE_STALE");
@@ -125,16 +129,21 @@ export function createUniversalP1AdmissionConsumer(deps: {
         current();
         await assertAccountRequestContext(context, deps.getAccountId);
         await deps.core.resume(context, expected.operationId);
-        return {
-          status: "SYNC_PENDING" as const,
-          itemId: slot.target.id,
-          operationId: slot.operationId,
-        };
+        if (!deps.sync)
+          return {
+            status: "SYNC_PENDING" as const,
+            itemId: slot.target.id,
+            operationId: slot.operationId,
+          };
+        await deps.sync(context, slot.operationId);
+        current();
+        await assertAccountRequestContext(context, deps.getAccountId);
       }
       const own = prepared.plan.slots.find((s) => s.slotId === slot.slotId);
       if (
-        !own ||
-        !["DOMAIN_SUCCEEDED", "EVIDENCE_PENDING", "COMPLETE"].includes(own.state)
+        prepared.readyCommands.length === 0 &&
+        (!own ||
+          !["DOMAIN_SUCCEEDED", "EVIDENCE_PENDING", "COMPLETE"].includes(own.state))
       )
         return {
           status: "OWNING_ADMISSION_PENDING" as const,
@@ -143,6 +152,12 @@ export function createUniversalP1AdmissionConsumer(deps: {
       const receipt = await deps.transport.receipt(context, slot.operationId);
       current();
       await assertAccountRequestContext(context, deps.getAccountId);
+      if (!receipt && prepared.readyCommands.length === 1)
+        return {
+          status: "SYNC_PENDING" as const,
+          itemId: slot.target.id,
+          operationId: slot.operationId,
+        };
       if (
         receipt?.projection !== "FULL" ||
         !["APPLIED", "NO_CHANGE"].includes(receipt.receipt.outcome) ||

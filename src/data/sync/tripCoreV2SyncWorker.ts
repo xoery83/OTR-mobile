@@ -1,4 +1,8 @@
 import {
+  createSyncOperationRepository,
+  type SyncQueueDatabase,
+} from "./syncOperationRepository";
+import {
   coreCapabilitiesSchema,
   validateCoreCommand,
 } from "../../domain/trip/tripCoreV2Commands";
@@ -152,5 +156,47 @@ export function createCoreV2SyncCoordinator(
       }
       return engine.run(authState);
     },
+  };
+}
+
+// A prepared Source action wakes its exact durable operation without enabling Manual QA dispatch.
+export function createReviewedSourceOperationSync(
+  database: SyncQueueDatabase,
+  repository: Repository,
+  transport: CoreSyncTransport,
+  getAccountId: () => Promise<string>,
+  hash: ImportHash,
+) {
+  return async (context: AccountRequestContext, operationId: string) => {
+    await assertAccountRequestContext(context, getAccountId);
+    const intent = (await repository.pending(context, operationId)).find(
+      (i) => i.command.operationId === operationId,
+    );
+    const command = intent && validateCoreCommand(intent.command);
+    if (
+      !command ||
+      command.tripId !== context.tripId ||
+      command.command !== "CREATE_ITEM" ||
+      command.target.kind !== "ITEM" ||
+      !["P1", "P3"].includes((command.payload as { family: string }).family) ||
+      command.admission.mode !== "REVIEWED_SOURCE" ||
+      !command.admission.sourceIntentId ||
+      command.admission.policyVersion !== null
+    )
+      throw Error("OWNING_ADMISSION_UNAVAILABLE");
+    const queue = createSyncOperationRepository(database, getAccountId, undefined, {
+      accountId: context.accountId,
+      tripId: context.tripId,
+      operationId,
+    });
+    const result = await createCoreV2SyncCoordinator(
+      queue,
+      createCoreV2SyncWorker(repository, transport, getAccountId, hash),
+      repository,
+      context.tripId,
+      operationId,
+    ).run("AUTHENTICATED_ONLINE");
+    await assertAccountRequestContext(context, getAccountId);
+    return result;
   };
 }

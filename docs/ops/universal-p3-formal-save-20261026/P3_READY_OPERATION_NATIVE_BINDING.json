@@ -1,0 +1,9 @@
+{
+  "id": "a98856b8-209a-8bc0-9e2b-e0919bb73181",
+  "owner_user_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "status": "PENDING",
+  "attempt_count": 0,
+  "intentSha256": "ab17d1ab6179c624ab4300974b473de7764b6b4ec54fd16ba7b50716df1650ae",
+  "matchesReadyServerSlot": true
+}

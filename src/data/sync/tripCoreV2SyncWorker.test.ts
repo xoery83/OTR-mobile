@@ -1,8 +1,10 @@
+import * as queueModule from "./syncOperationRepository";
 import { randomUUID, createHash } from "node:crypto";
 import { it, expect, vi } from "vitest";
 import {
   createCoreV2SyncCoordinator,
   createCoreV2SyncWorker,
+  createReviewedSourceOperationSync,
 } from "./tripCoreV2SyncWorker";
 import { coreClosedCapabilities } from "../../domain/trip/tripCoreV2Commands";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
@@ -234,5 +236,89 @@ it.each(["P1", "P3"] as const)(
     expect(f.transport.submit).not.toHaveBeenCalled();
     expect(f.transport.capabilities).not.toHaveBeenCalled();
     expect(f.transport.finalizeSourceOperation).not.toHaveBeenCalled();
+  },
+);
+
+it.each(["P1", "P3"] as const)(
+  "dispatches only the prepared %s Source operation with Manual QA scope closed",
+  async (family) => {
+    const f = await sourceFixture(family),
+      context = await f.repo.captureContext(trip);
+    f.repo.resume = vi.fn();
+    vi.mocked(f.transport.receipt).mockResolvedValue(null);
+    vi.mocked(f.transport.capabilities).mockResolvedValue({
+      ...coreClosedCapabilities,
+      activationState: "ENABLED",
+      enabledCommands: ["CREATE_ITEM"],
+      enabledFamilies: [family],
+      enabledAdmissionModes: ["REVIEWED_SOURCE"],
+      sourceEvidenceAvailable: true,
+    });
+    vi.mocked(f.transport.submit).mockResolvedValue({
+      projection: "FULL",
+      domainReceiptId: f.domainReceiptId,
+      receipt: f.receipt,
+    } as never);
+    const queue = {
+      listPending: vi.fn(async () => [f.operation, { ...f.operation, id: randomUUID() }]),
+      markProcessing: vi.fn(),
+      markCompleted: vi.fn(),
+    };
+    const factory = vi
+      .spyOn(queueModule, "createSyncOperationRepository")
+      .mockReturnValue(queue as never);
+    vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_TRIP_QA_SCOPE", "malformed");
+    try {
+      await createReviewedSourceOperationSync(
+        {} as never,
+        f.repo,
+        f.transport,
+        async () => actor,
+        hash,
+      )(context, op);
+      expect(factory).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        expect.any(Function),
+        undefined,
+        { accountId: actor, tripId: trip, operationId: op },
+      );
+      expect(f.transport.submit).toHaveBeenCalledOnce();
+      expect(f.transport.finalizeSourceOperation).toHaveBeenCalledOnce();
+      expect(queue.markCompleted).toHaveBeenCalledExactlyOnceWith(op);
+      expect(process.env.EXPO_PUBLIC_OTR_NATIVE_TRIP_QA_SCOPE).toBe("malformed");
+    } finally {
+      factory.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  },
+);
+it.each(["manual", "operation", "trip", "account", "target"])(
+  "refuses %s mismatch before selecting a Source queue",
+  async (reason) => {
+    const f = reason === "manual" ? await fixture() : await sourceFixture("P3");
+    if (reason === "target") {
+      const pending = await f.repo.pending(await f.repo.captureContext(trip));
+      (pending[0].command.target as { kind: string }).kind = "PERSON";
+    }
+    const context = await f.repo.captureContext(trip),
+      factory = vi.spyOn(queueModule, "createSyncOperationRepository");
+    try {
+      await expect(
+        createReviewedSourceOperationSync(
+          {} as never,
+          f.repo,
+          f.transport,
+          async () => (reason === "account" ? randomUUID() : actor),
+          hash,
+        )(
+          reason === "trip" ? { ...context, tripId: randomUUID() } : context,
+          reason === "operation" ? randomUUID() : op,
+        ),
+      ).rejects.toThrow();
+      expect(factory).not.toHaveBeenCalled();
+      expect(f.transport.submit).not.toHaveBeenCalled();
+    } finally {
+      factory.mockRestore();
+    }
   },
 );
