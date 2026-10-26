@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -27,10 +27,12 @@ export function useUniversalP1Admission(
     running = useRef(false),
     generation = useRef(getAccountGeneration()),
     initialScope = useRef(`${model.batch.accountId}:${model.batch.batchId}`),
-    scope = useRef(initialScope.current),
+    scope = useRef(`${model.batch.accountId}:${model.batch.batchId}`),
     view = useRef(isCurrent);
-  scope.current = `${model.batch.accountId}:${model.batch.batchId}`;
-  view.current = isCurrent;
+  useLayoutEffect(() => {
+    scope.current = `${model.batch.accountId}:${model.batch.batchId}`;
+    view.current = isCurrent;
+  }, [model.batch.accountId, model.batch.batchId, isCurrent]);
   const current = () =>
     alive.current &&
     initialScope.current === scope.current &&

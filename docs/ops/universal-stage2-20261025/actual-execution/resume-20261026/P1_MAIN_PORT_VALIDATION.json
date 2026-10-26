@@ -14,5 +14,8 @@
   "hostedMutations": 0,
   "protectedAuthorityChanges": 0,
   "nativeWorktreeChanged": false,
-  "speechRegistration": "CLOSED; only retained-file/image-paste modules registered; no microphone permission added"
+  "speechRegistration": "CLOSED; only retained-file/image-paste modules registered; no microphone permission added",
+  "scopedLint": "PASS 0 errors /27 existing copied warnings; final hook test name repaired",
+  "admissionHookRegression": "25 PASS incl 2 retained-action invalidation tests; typecheck PASS",
+  "finalDeltaIndependentReview": "NO_BLOCKER; layout-effect current-scope guards and closed speech registration"
 }
