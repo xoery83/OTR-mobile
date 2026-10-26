@@ -152,6 +152,14 @@ it("provides an untruncated stacked layout for large text", () => {
       .filter((n) => n.children === "Auckland International Airport")
       .every((n) => n.numberOfLines === undefined),
   ).toBe(true);
+  expect(
+    state.nodes.some(
+      (n) =>
+        Array.isArray(n.style) &&
+        n.style.some((s: any) => s?.alignItems === "center") &&
+        n.style.some((s: any) => s?.width >= 120),
+    ),
+  ).toBe(true);
 });
 
 it("does not drop known sparse arrival dates/zones when airport identity is absent", () => {

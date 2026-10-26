@@ -39,7 +39,7 @@ export function FlightFidelityGrid({
     destination = flight.supplemental.endpoints.DESTINATION;
   const number = flightNumber(flight) ?? numberLiteral;
   const duration = durationMinutes(flight);
-  const middleWidth = focused || immersive ? 52 : 68;
+  const middleWidth = (focused || immersive ? 52 : 68) * (stacked ? fontScale : 1);
   const gap = focused || immersive ? 8 : 12;
   const hasAirport = !!(
     origin.code ||
