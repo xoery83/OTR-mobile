@@ -1,3 +1,4 @@
+import { rentalFidelityFixture, rentalScenarios } from "./rentalFidelityFixture";
 import { useEffect, useRef, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -90,7 +91,8 @@ function FlightScene({
     if (qaLocale === "en" || qaLocale === "zh-Hans") setUiLocale(qaLocale);
   }, [qaLocale]);
   const key = JSON.stringify(sceneParams),
-    isStay = params.fidelity === "p3";
+    isStay = params.fidelity === "p3",
+    isRental = params.fidelity === "p4";
   const role: StayRole =
     params.role === "CHECKOUT" ? "CHECKOUT" : params.role === "BASE" ? "BASE" : "CHECKIN";
   const shell = useDayFeedShellState(key);
@@ -108,15 +110,16 @@ function FlightScene({
     setAction({ title, text, choices });
   const open = (leg: string) =>
     router.push({ pathname: "/flight-fidelity-detail", params: { ...params, leg } });
-  const flight = isStay
-    ? null
-    : flightFidelityFixture(
-        params.scenario ?? "syn-p2-full",
-        params.clock ?? "today",
-        preview,
-        open,
-        (legId, date, side) => setAdd({ legId, date, side }),
-      );
+  const flight =
+    isStay || isRental
+      ? null
+      : flightFidelityFixture(
+          params.scenario ?? "syn-p2-full",
+          params.clock ?? "today",
+          preview,
+          open,
+          (legId, date, side) => setAdd({ legId, date, side }),
+        );
   const stay = isStay
     ? stayFidelityFixture(
         params.scenario ?? "syn-stay-full",
@@ -138,28 +141,60 @@ function FlightScene({
         (role, focused) => router.setParams({ role, depth: focused ? "F" : "B" }),
       )
     : null;
-  const fixture = stay ?? flight!;
+  const rentalRole = params.role === "RETURN" ? "RETURN" : "PICKUP";
+  const rental = isRental
+    ? rentalFidelityFixture(
+        params.scenario ?? "full",
+        params.clock ?? "today",
+        preview,
+        (role, date, item) =>
+          router.push({
+            pathname: "/rental-fidelity-detail",
+            params: { ...params, role, date, item },
+          }),
+        (role, date, side) => setAdd({ legId: role, date, side }),
+        rentalRole,
+        params.item,
+      )
+    : null;
+  const fixture = rental ?? stay ?? flight!;
   const selectedStay = stay?.stays.find((s) => s.id === params.item) ?? stay?.stay;
   const target =
     flight?.journey.legs.find((l) => l.id === params.leg) ?? flight?.journey.legs[0];
-  const targetDate = stay
-    ? role === "CHECKOUT"
-      ? selectedStay!.end
-      : role === "BASE"
-        ? (stay.dates.find((d) => d > selectedStay!.start && d < selectedStay!.end) ??
-          selectedStay!.start)
-        : selectedStay!.start
-    : (target?.flight.canonical.boundaries[0].local_date ?? fixture.selectedDate);
-  const focusKey = stay
-    ? composeDayStream(stay.query!(targetDate, stay.zone), stay.instant, {
+  const targetDate = rental
+    ? rental.selectedDate
+    : stay
+      ? role === "CHECKOUT"
+        ? selectedStay!.end
+        : role === "BASE"
+          ? (stay.dates.find((d) => d > selectedStay!.start && d < selectedStay!.end) ??
+            selectedStay!.start)
+          : selectedStay!.start
+      : (target?.flight.canonical.boundaries[0].local_date ?? fixture.selectedDate);
+  const focusKey = rental
+    ? composeDayStream(rental.query!(targetDate, rental.zone), rental.instant, {
         occurrenceFocus: true,
-      }).rows.find((row) => row.item.event.id === selectedStay?.id)?.focusKey
-    : flightFidelityFocusKey(flight!, target!.id);
+      }).rows.find((row) => row.item.event.id === rental.rental.id)?.focusKey
+    : stay
+      ? composeDayStream(stay.query!(targetDate, stay.zone), stay.instant, {
+          occurrenceFocus: true,
+        }).rows.find((row) => row.item.event.id === selectedStay?.id)?.focusKey
+      : flightFidelityFocusKey(flight!, target!.id);
   const directDetail = useRef<string | null>(null);
   useEffect(() => {
     if (params.depth === "I" && directDetail.current !== key) {
       directDetail.current = key;
-      if (isStay)
+      if (isRental)
+        router.push({
+          pathname: "/rental-fidelity-detail",
+          params: {
+            ...params,
+            role: rentalRole,
+            date: targetDate,
+            item: rental!.rental.id,
+          },
+        });
+      else if (isStay)
         router.push({
           pathname: "/stay-fidelity-detail",
           params: { ...params, role, date: targetDate, item: selectedStay!.id },
@@ -416,7 +451,12 @@ function FlightScene({
                   }}
                 />
               </View>
-              {(isStay ? staySamples : flightSamples).map((item) => (
+              {(isRental
+                ? rentalScenarios.map((item) => ({ ...item, title: item.label }))
+                : isStay
+                  ? staySamples
+                  : flightSamples
+              ).map((item) => (
                 <UiButton
                   key={item.id}
                   variant="text"
@@ -427,6 +467,22 @@ function FlightScene({
                   }}
                 />
               ))}
+              {isRental ? (
+                <View style={s.row}>
+                  {(["PICKUP", "RETURN"] as const).map((role) => (
+                    <UiButton
+                      key={role}
+                      variant="text"
+                      label={t(role === "PICKUP" ? "p4.pickup" : "p4.return")}
+                      disabled={role === "RETURN" && !rental?.rental.return}
+                      onPress={() => {
+                        setControls(false);
+                        router.setParams({ role, depth: "F" });
+                      }}
+                    />
+                  ))}
+                </View>
+              ) : null}
               {isStay ? (
                 <View style={s.row}>
                   {(["CHECKIN", "BASE", "CHECKOUT"] as const).map((role) => (

@@ -28,6 +28,8 @@ type Endpoint = Readonly<{
   zone?: string | null;
   time?: string;
   plannedUnresolved?: boolean;
+  onMap?: () => void;
+  onNavigate?: () => void;
   place?: CorePlaceView;
 }>;
 type MoneyAmount = Readonly<{ minor: number; currency: string; scale: number }>;
@@ -54,7 +56,7 @@ export type RentalFacts = Readonly<{
   }>[];
   photos?: Readonly<{
     count: number;
-    previews: readonly Readonly<{ id: string; uri: string }>[];
+    previews: readonly Readonly<{ id: string; uri?: string; syntheticLabel?: string }>[];
     onViewAll?: () => void;
   }>;
   expenseCount?: number;
@@ -238,6 +240,10 @@ export function RentalContent({
     const canMap = active && (context === "FUTURE" || value === current);
     const directions = canMap && context === "TODAY" ? rentalMapUrl(value, true) : null;
     const map = canMap ? (directions ?? rentalMapUrl(value, false)) : null;
+    const navigate = canMap && context === "TODAY" ? value.onNavigate : undefined;
+    const mapAction = canMap
+      ? (navigate ?? value.onMap ?? (map ? () => open(map) : undefined))
+      : undefined;
     const place = value.place;
     const address =
       place?.acceptedAddress ?? place?.authoredAddress ?? place?.authoredText;
@@ -257,10 +263,10 @@ export function RentalContent({
               <Text style={styles.meta}>{address}</Text>
             ) : null}
           </View>
-          {map ? (
+          {mapAction ? (
             <BookingGlyph
-              kind={directions ? "navigate" : "map"}
-              onPress={() => open(map)}
+              kind={navigate || directions ? "navigate" : "map"}
+              onPress={mapAction}
             />
           ) : null}
         </View>
@@ -325,9 +331,19 @@ export function RentalContent({
         {context === "PAST" && facts.photos?.count && facts.photos.previews.length ? (
           <BookingCard title={t("fidelity.photosTitle")}>
             <View style={styles.photos}>
-              {facts.photos.previews.slice(0, 3).map((photo) => (
-                <Image key={photo.id} source={{ uri: photo.uri }} style={styles.photo} />
-              ))}
+              {facts.photos.previews.slice(0, 3).map((photo) =>
+                photo.uri ? (
+                  <Image
+                    key={photo.id}
+                    source={{ uri: photo.uri }}
+                    style={styles.photo}
+                  />
+                ) : photo.syntheticLabel ? (
+                  <View key={photo.id} style={styles.syntheticPhoto}>
+                    <Text style={styles.roleLabel}>{photo.syntheticLabel}</Text>
+                  </View>
+                ) : null,
+              )}
             </View>
             {facts.photos.onViewAll ? (
               <UiButton
@@ -541,5 +557,13 @@ const createStyles = (c: UiColors) =>
     detailAction: { flexDirection: "row", justifyContent: "flex-end" },
     actions: { flexDirection: "row", justifyContent: "space-between" },
     photos: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+    syntheticPhoto: {
+      width: 92,
+      minHeight: 92,
+      padding: 9,
+      borderRadius: visual.radius.control,
+      backgroundColor: c.selected,
+      justifyContent: "center",
+    },
     photo: { width: 92, height: 92, borderRadius: visual.radius.control },
   });
