@@ -202,7 +202,7 @@ it("keeps Past Browse sparse and reveals only supplied linked content deeper", (
   expect(browse).not.toContain(t("p4.expenseCount", { count: 2 }));
   expect(browse).not.toContain("20000 NZD");
   const focus = render("PAST", "F");
-  expect(focus).toContain(t("p4.expenseCount", { count: 2 }));
+  expect(focus).toContain(t("fidelity.expenses", { count: 2 }));
   expect(focus).not.toContain("20000 NZD");
   const immersive = render("PAST", "I");
   expect(immersive).toContain("20000 NZD");
@@ -263,4 +263,26 @@ it("keeps Link existing ahead of Add expense in Immersive", () => {
   expect(html.indexOf(t("fidelity.linkExpense"))).toBeLessThan(
     html.indexOf(t("fidelity.addExpense")),
   );
+});
+
+it("retains endpoint name and address in active Browse and supplied contact text in its own Immersive group", () => {
+  const value: RentalFacts = {
+    ...facts,
+    contactText: "Synthetic rental desk +64 00 000",
+    call: vi.fn(),
+    pickup: {
+      ...facts.pickup,
+      place: {
+        qualification: "TEXT_ONLY",
+        authoredLabel: "Pickup depot",
+        authoredAddress: "18 Synthetic Road",
+      },
+    },
+  };
+  const browse = render("FUTURE", "B", undefined, value);
+  expect(browse).toContain("Pickup depot · 18 Synthetic Road");
+  const detail = render("TODAY", "I", undefined, value);
+  expect(detail).toContain(value.contactText);
+  expect(detail).toContain(t("p4.bookedClass", { value: value.bookedClass }));
+  expect(render("PAST", "I", undefined, value)).not.toContain(value.contactText);
 });

@@ -33,7 +33,9 @@ export function BookingCard({
 export function BookingGlyph({
   kind,
   onPress,
+  label,
 }: {
+  label?: string;
   kind: "detail" | "map" | "navigate" | "contact";
   onPress: () => void;
 }) {
@@ -42,15 +44,18 @@ export function BookingGlyph({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t(
-        kind === "detail"
-          ? "p1r.richerDetails"
-          : kind === "contact"
-            ? "p3.contact"
-            : kind === "map"
-              ? "fidelity.map"
-              : "fidelity.navigate",
-      )}
+      accessibilityLabel={
+        label ??
+        t(
+          kind === "detail"
+            ? "p1r.richerDetails"
+            : kind === "contact"
+              ? "p3.contact"
+              : kind === "map"
+                ? "fidelity.map"
+                : "fidelity.navigate",
+        )
+      }
       onPress={onPress}
       style={s.glyphTarget}
     >

@@ -139,7 +139,9 @@ export function rentalFidelityRead(
     bookingOriginals: documents("confirmation"),
     pickupInstructions: documents("pickup"),
     returnInstructions: documents("return"),
-    ...(sample.contact ? { call: () => action(t("p4.call"), sample.contact!) } : {}),
+    ...(sample.contact
+      ? { contactText: sample.contact, call: () => action(t("p4.call"), sample.contact!) }
+      : {}),
     ...(photos.length
       ? {
           photos: {

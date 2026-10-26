@@ -1,5 +1,11 @@
 import { AppIcon } from "@/components/AppIcon";
-import { BookingCard, BookingGlyph, BookingInsert } from "./BookingReadUi";
+import {
+  BookingCard,
+  BookingGlyph,
+  BookingInsert,
+  bookingReadStyles,
+} from "./BookingReadUi";
+import { ReadFactTag } from "./P1Row";
 import { formatDayFeedVisibleDates } from "./DayFeedShell";
 import { PendingSyncDot } from "./PendingSyncDot";
 import { ImmersiveActions } from "./ImmersiveActions";
@@ -49,6 +55,7 @@ export type RentalFacts = Readonly<{
   pickupInstructions?: readonly Original[];
   returnInstructions?: readonly Original[];
   call?: () => void;
+  contactText?: string;
   associatedVehicles?: readonly Readonly<{
     id: string;
     label: string;
@@ -114,16 +121,20 @@ export function rentalMapUrl(endpoint: Endpoint, directions: boolean): string | 
 
 function Originals({ label, entries }: { label: string; entries?: readonly Original[] }) {
   const [choosing, setChoosing] = useState(false);
+  const styles = useThemedStyles(bookingReadStyles);
   if (!entries?.length) return null;
   return (
     <View>
-      <UiButton
-        label={label}
-        variant="text"
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        style={styles.documentTarget}
         onPress={() =>
           entries.length === 1 ? entries[0].onOpen() : setChoosing(!choosing)
         }
-      />
+      >
+        <Text style={styles.documentLabel}>{label}</Text>
+      </Pressable>
       {choosing
         ? entries.map((entry) => (
             <UiButton
@@ -228,11 +239,19 @@ export function RentalContent({
         <Text style={styles.meta}>{title}</Text>
       ) : null}
       {(focused || immersive) && facts.bookedClass ? (
-        <Text style={styles.meta}>{facts.bookedClass}</Text>
+        <Text style={styles.meta}>
+          {immersive
+            ? t("p4.bookedClass", { value: facts.bookedClass })
+            : facts.bookedClass}
+        </Text>
       ) : null}
       {focused || immersive ? <Text style={styles.meta}>{range}</Text> : null}
       {!focused && !immersive && context !== "PAST" && endpointLabel(current) ? (
-        <Text style={styles.meta}>{endpointLabel(current)}</Text>
+        <Text style={styles.meta}>
+          {[current.place?.authoredLabel, endpointLabel(current)]
+            .filter((value, index, all) => value && all.indexOf(value) === index)
+            .join(" · ")}
+        </Text>
       ) : null}
     </View>
   );
@@ -292,7 +311,9 @@ export function RentalContent({
     <Originals label={t("p4.booking")} entries={facts.bookingOriginals} />
   );
   const contact =
-    active && facts.call ? <BookingGlyph kind="contact" onPress={facts.call} /> : null;
+    active && facts.call ? (
+      <BookingGlyph kind="contact" label={t("p4.call")} onPress={facts.call} />
+    ) : null;
   const instructions = (
     <>
       {pickup ? (
@@ -357,8 +378,15 @@ export function RentalContent({
         <BookingCard title={t("p4.both")}>
           {endpoints}
           {instructions}
-          {contact}
         </BookingCard>
+        {active && (facts.contactText || facts.call) ? (
+          <BookingCard title={t("p4.call")}>
+            {facts.contactText ? (
+              <Text style={styles.body}>{facts.contactText}</Text>
+            ) : null}
+            {contact}
+          </BookingCard>
+        ) : null}
         {facts.holder || facts.drivers?.length ? (
           <BookingCard>
             {facts.holder ? (
@@ -494,18 +522,36 @@ export function RentalContent({
               {endpoints}
               {context === "TODAY" ? instructions : null}
               {originals}
-              {context === "PAST" && facts.photos?.count ? (
-                <Text style={styles.meta}>
-                  {t("p4.photoCount", { count: facts.photos.count })}
-                </Text>
-              ) : null}
-              {context === "PAST" && facts.expenseCount ? (
-                <Text style={styles.meta}>
-                  {t("p4.expenseCount", { count: facts.expenseCount })}
-                </Text>
+              {context === "PAST" && (facts.photos?.count || facts.expenseCount) ? (
+                <View style={styles.counts}>
+                  {facts.photos?.count ? (
+                    <ReadFactTag
+                      label={t(
+                        facts.photos.count === 1
+                          ? "fidelity.photos.one"
+                          : "fidelity.photos",
+                        { count: facts.photos.count },
+                      )}
+                    />
+                  ) : null}
+                  {facts.expenseCount ? (
+                    <ReadFactTag
+                      label={t(
+                        facts.expenseCount === 1
+                          ? "fidelity.expenses.one"
+                          : "fidelity.expenses",
+                        { count: facts.expenseCount },
+                      )}
+                    />
+                  ) : null}
+                </View>
               ) : null}
               <View style={styles.detailAction}>
-                <BookingGlyph kind="detail" onPress={() => onDepth("I")} />
+                <BookingGlyph
+                  kind="detail"
+                  label={t("p4.details")}
+                  onPress={() => onDepth("I")}
+                />
                 {contact}
               </View>
               {mapUnavailable ? (
@@ -556,6 +602,7 @@ const createStyles = (c: UiColors) =>
     endpointText: { flex: 1, gap: 5 },
     detailAction: { flexDirection: "row", justifyContent: "flex-end" },
     actions: { flexDirection: "row", justifyContent: "space-between" },
+    counts: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
     photos: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
     syntheticPhoto: {
       width: 92,
