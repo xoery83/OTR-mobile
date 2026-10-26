@@ -1,0 +1,5 @@
+# P2 minimal Native read slice — independent NO_BLOCKER
+
+Original Native uniqueWriter741c4fd7; Universal cherry48268900, mainff48268900. Independent reviewer `/root/p1_source_review_independent` checked six source/test files read-only. Only explicit owning SPARSE facts bypass transport geometry; display known flight literal/date, no invented airport/time/duration. Qualified/legacy paths preserve service preference; same canonical Item ID remains stable across read upgrade. Hooks precede conditional return; theme and formatUiDate remain canonical, UTC civil-date display avoids device-zone day shift. P2 Home uses existing date/view-zone chooser with original Actor/Trip/generation/epoch/revision fences, no mutation. No new DB/Repository/Reader/Form/Manual edit/Authority/P4 chain.
+
+Delivery Owner independently ran107 assertions in4suites on integrated branch and actualmain, typecheck/UIguard/scopedESLint/diffPASS. Native also reported107/type/guard/lintPASS. Review did not execute DEV or device; actual P2 Universal/HostedSave/GUI/cold recovery remain pending, and inputGate e6e27c87 remains unapproved. Main original dirty status and filehashes preserved, noPush.

@@ -1,0 +1,21 @@
+{
+  "from": "c7d129c773c3253255a5701cc46ac5f3648db586",
+  "to": "4826890076e51e84a771c5bb0bdff1a2a2839956",
+  "mainRoot": "/Users/xoery/Project/otr-mobile",
+  "strategy": "ff-only",
+  "freshHeadMatched": true,
+  "unrelatedDirtyStatusAndHashesPreserved": true,
+  "nativeOriginal": "741c4fd7db8b768538bce68f6b130d6a30c48baa",
+  "guiUsed": false,
+  "devChanges": false,
+  "push": false,
+  "universalFocusedTests": 107,
+  "actualMainFocusedTests": 107,
+  "typecheck": "PASS",
+  "uiGuard": "PASS",
+  "scopedEslint": "PASS",
+  "diffCheck": "PASS",
+  "independentReview": "NO_BLOCKER",
+  "actualP2CloudSave": "NOT_RUN",
+  "inputGate": "PENDING_OWNER_APPROVAL"
+}
