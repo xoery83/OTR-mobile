@@ -5,17 +5,22 @@ import {
   createCoreStayRenderer,
   type CoreStayPresentationActions,
 } from "./coreStayRenderer";
-import { createCoreRentalRenderer } from "./coreRentalRenderer";
+import {
+  createCoreRentalRenderer,
+  type CoreRentalPresentationActions,
+} from "./coreRentalRenderer";
 import { createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
 import { createCoreTicketedActivityRenderer } from "./coreTicketedActivityRenderer";
 
 export function createCoreExperienceRenderer(
   projection: CoreFlightDayProjection,
-  actions?: CoreP1PresentationActions & CoreStayPresentationActions,
+  actions?: CoreP1PresentationActions &
+    CoreStayPresentationActions &
+    CoreRentalPresentationActions,
 ): DayRowRenderer {
   const p1 = createCoreP1Renderer(projection, actions);
   const stay = createCoreStayRenderer(projection, actions);
-  const rental = createCoreRentalRenderer(projection);
+  const rental = createCoreRentalRenderer(projection, actions);
   const transport = createCoreScheduledTransportRenderer(projection);
   const activity = createCoreTicketedActivityRenderer(projection);
   return (props) =>

@@ -1,3 +1,6 @@
+import { RentalContent } from "./RentalRow";
+import { calendarDate } from "./TripCalendarField";
+import { rentalFactsFromItem, rentalTemporalContext } from "./rentalReadPresentation";
 import { FlightLegRow } from "./FlightJourneyView";
 import { localDayDisplayOrder } from "./localDayDisplayOrder";
 import { PendingSyncDot } from "./PendingSyncDot";
@@ -235,6 +238,41 @@ export function LocalManualDayRows({
               }
               onFocus={() => onP1Focus?.(p1Focus === focusKey ? null : focusKey)}
               onOpen={() => onOpenItem?.(row.itemRef, read)}
+            />
+          );
+        }
+        if (item && row.family === "P4") {
+          const facts = rentalFactsFromItem(item);
+          if (!facts) return null;
+          const focusKey = JSON.stringify(row.rowKey);
+          const instant = new Date().toISOString();
+          const rentalContext =
+            context === "UNKNOWN"
+              ? rentalTemporalContext(
+                  facts,
+                  role === "RETURN" ? "RETURN" : "PICKUP",
+                  instant,
+                  calendarDate(new Date(instant)),
+                )
+              : context;
+          return (
+            <RentalContent
+              key={focusKey}
+              title={String(item.title)}
+              pickup={role === "PICKUP"}
+              back={role === "RETURN"}
+              facts={facts}
+              depth={p1Focus === focusKey ? "F" : "B"}
+              context={rentalContext}
+              pending={item.localState === "PENDING"}
+              onInsert={
+                onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
+              }
+              onDepth={(depth) =>
+                depth === "I"
+                  ? onOpenItem?.(row.itemRef, read, { role, date })
+                  : onP1Focus?.(depth === "F" ? focusKey : null)
+              }
             />
           );
         }

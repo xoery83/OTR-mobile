@@ -9,36 +9,39 @@ import { visual } from "@/ui/visual";
 type Action = "addPhoto" | "addAttachment" | "addExpense" | "linkExpense";
 export function ImmersiveActions({
   actions = {},
+  linkExpenseFirst = false,
 }: {
   actions?: Partial<Record<Action, () => void>>;
+  linkExpenseFirst?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   return (
     <View style={styles.actions}>
-      {(["addPhoto", "addAttachment", "addExpense", "linkExpense"] as const).map(
-        (kind) => (
-          <View key={kind} style={styles.cell}>
-            <UiButton
-              label={t(`fidelity.${kind}`)}
-              variant="secondary"
-              size="tile"
-              disabled={!actions[kind]}
-              onPress={actions[kind] ?? (() => {})}
-              icon={
-                <View style={styles.icon}>
-                  <AppIcon
-                    name={kind === "linkExpense" ? "arrow.up.right" : "plus"}
-                    size={18}
-                    color={actions[kind] ? colors.accent : colors.textSecondary}
-                  />
-                </View>
-              }
-            />
-          </View>
-        ),
-      )}
+      {(linkExpenseFirst
+        ? (["linkExpense", "addExpense", "addPhoto", "addAttachment"] as const)
+        : (["addPhoto", "addAttachment", "addExpense", "linkExpense"] as const)
+      ).map((kind) => (
+        <View key={kind} style={styles.cell}>
+          <UiButton
+            label={t(`fidelity.${kind}`)}
+            variant="secondary"
+            size="tile"
+            disabled={!actions[kind]}
+            onPress={actions[kind] ?? (() => {})}
+            icon={
+              <View style={styles.icon}>
+                <AppIcon
+                  name={kind === "linkExpense" ? "arrow.up.right" : "plus"}
+                  size={18}
+                  color={actions[kind] ? colors.accent : colors.textSecondary}
+                />
+              </View>
+            }
+          />
+        </View>
+      ))}
     </View>
   );
 }

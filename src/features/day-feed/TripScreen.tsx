@@ -600,6 +600,17 @@ function TripContent({
       });
       return;
     }
+    if (resolved.item.family === "P4") {
+      router.push({
+        pathname: "/p4-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+        },
+      });
+      return;
+    }
     setLocalItem(resolved);
     setPlanEditError(false);
   };
@@ -1502,6 +1513,29 @@ function TripContent({
               visibleTrip.observed?.projection.version === 2
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
+                    onOpenRental: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p4-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertRental: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
                     onOpenStay: (itemId, occurrence, date) =>
                       router.push({
                         pathname: "/p3-detail",
