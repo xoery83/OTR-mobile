@@ -1,0 +1,12 @@
+{
+  "status": "LOCAL_IMAGE_NOT_DEPLOYED",
+  "sourceHead": "5882798a2b41cc8488150511046ac41473799a0d",
+  "imageId": "sha256:c2d4cda080d7aee64b88b3f5f712188e355cd67f77182a626974237959e83b69",
+  "baseImageId": "sha256:4979d4450ab6bf3eedb6faf18663e34e12d77e1dcc632cad96959f780d145597",
+  "captureBundleSHA256": "c8a1940f5c2e6331333e8ed75223cc5b1d18bcad01accf3f767e90d8d0248202",
+  "dockerfileSHA256": "c5bfd0f33c38163bc3a1d99100e66d42a0ab2b44b15971ef499dc0c6186d9c70",
+  "businessActivation": "CLOSED_REQUIRES_SEPARATE_P3_OWNER_GATE",
+  "bundles": {
+    "server-capture.mjs": "c8a1940f5c2e6331333e8ed75223cc5b1d18bcad01accf3f767e90d8d0248202"
+  }
+}

@@ -333,7 +333,7 @@ describe.each([true, false])("CP14 SQLite FK=%s", (fk) => {
   it("fresh and 49→50 preserve historical schema and queue", async () => {
     const f = await fixture(fk);
     expect(migrations.map((x) => x.id)).toEqual(
-      Array.from({ length: 57 }, (_, i) => i + 1),
+      Array.from({ length: 74 }, (_, i) => i + 1),
     );
     expect(
       f.sql
@@ -4539,7 +4539,7 @@ it.each([
     expect(responsibility.response_material_sha256).toBe(responseSha);
     expect(responsibility.execution_observation).toBe("TERMINAL");
     expect(reopened.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
-    expect(migrations.at(-1)?.id).toBe(57);
+    expect(migrations.at(-1)?.id).toBe(74);
     return;
   }
   expect((await factory.recover(fresh, a.attempt_id)).interpretation).toEqual(response);
@@ -4563,7 +4563,7 @@ it.each([
   expect(installed.publication_id).toBe(bundle.run_id);
   expect(installed.result_sha256).toBe(await digest(response));
   expect(reopened.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
-  expect(migrations.at(-1)?.id).toBe(57);
+  expect(migrations.at(-1)?.id).toBe(74);
 });
 
 it("P4a F4 terminal FAILED is visible during interruption before task reevaluation, with SELECT-only readback", async () => {

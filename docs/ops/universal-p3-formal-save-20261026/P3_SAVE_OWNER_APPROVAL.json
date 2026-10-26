@@ -1,0 +1,12 @@
+{
+  "ownerApproved": true,
+  "gateCommit": "200ef78c",
+  "questionItemId": "call_9e3d7b1fe2ee43e8bbb0efb94e8dea46/0",
+  "answer": "批准该精确 P3 Save Gate",
+  "scope": "P3_REVIEW_SCOPE.json",
+  "additionalProviderCalls": 0,
+  "windowSecondsMax": 900,
+  "localCloseAtSeconds": 660,
+  "authorityPackage": "P3_GATE_PACKAGE_SHA256.json",
+  "softwarePrerequisiteAddendum": "P3_SOFTWARE_IMAGE_ADDENDUM.md"
+}

@@ -1,0 +1,7 @@
+# Software prerequisite addendum to Gate200ef78c
+
+Business scope and all three protected SQL package hashes remain unchanged. Initial default-off29f6 image failed startup and automatically rolled back to healthy4979; never use it for activation. Ordinary Standing Deployment Authorization covers the minimal known Headless prerequisite repair5882798a and replacement image sha256:c2d4cda080d7aee64b88b3f5f712188e355cd67f77182a626974237959e83b69.
+
+Repaired image passed network-none/no mounts/synthetic-invalid-config startup health200/protected401. Hosted same DEV default-off container f838b2917ad42eff1a1c2e734049d058d4e1cb176de59440777749040e333157 passed health/protected401, exact Config/HostConfig/mount/bundle checks and original QA same-task Results200/SETTLED. Retained4979 is the ordinary software rollback. Business activation will instead retain this new healthy default-offc2d4 container as its primary rollback, with4979 still preserved.
+
+P3 three-function SQL is NOT installed. Policy remains disabled/scope null; no business window or Save. Gate200ef78c is still pending Owner approval. Prepared P3 controllers self-check and independent Review NO_BLOCKER; no remote activation candidate was created or armed. Exact actual default-off plan/manifest and observer handoff must be verified before any business timing. This addendum changes software prerequisites only; it grants no new authority and makes no DEV formal Save claim.

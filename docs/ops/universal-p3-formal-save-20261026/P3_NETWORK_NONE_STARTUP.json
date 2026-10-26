@@ -1,0 +1,16 @@
+{
+  "status": "NETWORK_NONE_CLOSED_STARTUP_PASS",
+  "imageId": "sha256:c2d4cda080d7aee64b88b3f5f712188e355cd67f77182a626974237959e83b69",
+  "result": {
+    "health": {
+      "status": "ok",
+      "environment": "development"
+    },
+    "protectedStatus": 401
+  },
+  "noNetwork": true,
+  "noHostPorts": true,
+  "noMounts": true,
+  "credentials": "SYNTHETIC_INVALID_ONLY",
+  "formalAuthority": "CLOSED"
+}
