@@ -1,0 +1,9 @@
+{
+  "status": "NO_BLOCKER",
+  "reviewer": "p1_source_review_independent",
+  "gate": "P2_POST_REPAIR_INPUT_GATE.md",
+  "scope": "one replacement Batch/Source/RunTask; same27byteSHA/account/trip; old Task never reset/dispatched; unused one-call allowance reassigned only if old Attempt/reservation/call0 and unambiguous; paid ceiling4 unchanged",
+  "authorityChange": false,
+  "businessSaveAuthorized": false,
+  "execution": "NOT_EXECUTED_REQUIRES_OWNER_APPROVAL"
+}
