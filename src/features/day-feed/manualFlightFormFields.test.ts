@@ -3,10 +3,21 @@ import {
   emptyFlightSegment,
   flightSegmentDraftSchema,
   sparseFlightSavePlan,
+  flightNextDate,
+  suggestedFlightArrivalDate,
 } from "./manualFlightFormFields";
 const valid = () => ({
   ...emptyFlightSegment("one", "2027-01-16"),
   flightNumberLiteral: "NZ5069",
+});
+it("suggests an editable next local day across month/year/leap boundaries without deriving an instant", () => {
+  expect(suggestedFlightArrivalDate("2026-12-31", "23:00", "01:00")).toBe("2027-01-01");
+  expect(suggestedFlightArrivalDate("2028-02-28", "23:00", "01:00")).toBe("2028-02-29");
+  expect(suggestedFlightArrivalDate("2026-11-01", "09:00", "10:00")).toBe("2026-11-01");
+  expect(suggestedFlightArrivalDate("2026-11-01", "09:00", "09:00")).toBe("2026-11-01");
+  expect(suggestedFlightArrivalDate("", "23:00", "01:00")).toBe("");
+  expect(flightNextDate("2026-11-01")).toBe("2026-11-02");
+  expect(() => flightNextDate("2026-02-30")).toThrow();
 });
 it("requires explicitly entered number/date and does not prefill a Home date", () => {
   expect(emptyFlightSegment("one").departureDate).toBe("");

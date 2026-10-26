@@ -55,6 +55,21 @@ export const flightSegmentDraftSchema = z
       });
   });
 export type FlightSegmentDraft = z.infer<typeof flightSegmentDraftSchema>;
+export function flightNextDate(date: string) {
+  validateCalendarDate(date);
+  const next = new Date(date + "T12:00:00Z");
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10);
+}
+// Clock comparison is an editable form suggestion, never an instant/DST qualification.
+export function suggestedFlightArrivalDate(
+  date: string,
+  departure: string,
+  arrival: string,
+) {
+  if (!date) return "";
+  return departure && arrival && arrival < departure ? flightNextDate(date) : date;
+}
 export function emptyFlightSegment(key: string, departureDate = ""): FlightSegmentDraft {
   return {
     key,

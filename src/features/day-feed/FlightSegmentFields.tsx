@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import {
+  Keyboard,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
-import { t } from "@/ui/locale";
+import { t, formatUiDate } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -11,79 +20,107 @@ import { CalendarField } from "./TripCalendarField";
 import { selectedAirportZone } from "./airportSuggestions";
 import { FlightAirportField } from "./FlightAirportField";
 import { PlanParticipantsField } from "./PlanParticipantsField";
-import type { FlightSegmentDraft } from "./manualFlightFormFields";
+import {
+  flightNextDate,
+  suggestedFlightArrivalDate,
+  type FlightSegmentDraft,
+} from "./manualFlightFormFields";
 function FlightTimeField({
   label,
   value,
+  date,
   disabled,
   onChange,
   onEditingChange,
 }: {
   label: string;
   value: string;
+  date: string;
   disabled: boolean;
-  onChange(value: string): void;
+  onChange(date: string, time: string): void;
   onEditingChange(open: boolean): void;
 }) {
+  const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false),
     [selected, setSelected] = useState(new Date());
+  const close = () => {
+    setOpen(false);
+    onEditingChange(false);
+  };
   return (
-    <View>
+    <View style={styles.cell}>
       <UiFormRow
         variant="field"
         label={label}
         value={value || t("tripCreate.notSet")}
         disabled={disabled}
         onPress={() => {
-          const initial = new Date();
-          if (value)
-            initial.setHours(Number(value.slice(0, 2)), Number(value.slice(3, 5)), 0, 0);
+          Keyboard.dismiss();
+          const initial = new Date(
+            `${date || new Date().toISOString().slice(0, 10)}T${value || "12:00"}:00Z`,
+          );
           setSelected(initial);
           onEditingChange(true);
           setOpen(true);
         }}
       />
-      {open ? (
-        <View>
-          <UiDatePicker
-            mode="time"
-            display="spinner"
-            value={selected}
-            accessibilityLabel={label}
-            onChange={(_, next) => {
-              if (next) setSelected(next);
-            }}
-          />
-          <UiButton
-            variant="text"
-            label={t("common.done")}
-            onPress={() => {
-              onChange(
-                `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-              );
-              setOpen(false);
-              onEditingChange(false);
-            }}
-          />
-          <UiButton
-            variant="text"
-            label={t("common.cancel")}
-            onPress={() => {
-              setOpen(false);
-              onEditingChange(false);
-            }}
-          />
-          <UiButton
-            variant="text"
-            label={t("tripCreate.clearTime")}
-            onPress={() => {
-              onChange("");
-              setOpen(false);
-              onEditingChange(false);
-            }}
-          />
-        </View>
+      {date ? (
+        <UiText style={styles.meta}>
+          {formatUiDate(new Date(date + "T12:00:00Z"), {
+            dateStyle: "medium",
+            timeZone: "UTC",
+          })}
+        </UiText>
       ) : null}
+      <Modal
+        transparent
+        visible={open}
+        animationType="slide"
+        presentationStyle="overFullScreen"
+        onRequestClose={close}
+      >
+        <SafeAreaProvider style={styles.host}>
+          <View style={styles.backdrop}>
+            <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
+              <SheetHeader
+                category="picker"
+                safeTop={false}
+                title={label}
+                onLeft={close}
+                onRight={() => {
+                  onChange(
+                    selected.toISOString().slice(0, 10),
+                    selected.toISOString().slice(11, 16),
+                  );
+                  close();
+                }}
+                rightDisabled={disabled}
+              />
+              <ScrollView keyboardShouldPersistTaps="handled">
+                <UiDatePicker
+                  mode="datetime"
+                  display="spinner"
+                  timeZoneName="UTC"
+                  value={selected}
+                  accessibilityLabel={label}
+                  onChange={(_, next) => {
+                    if (next) setSelected(next);
+                  }}
+                />
+                <UiButton
+                  variant="text"
+                  label={t("tripCreate.clearTime")}
+                  disabled={disabled}
+                  onPress={() => {
+                    onChange(date, "");
+                    close();
+                  }}
+                />
+              </ScrollView>
+            </SafeAreaView>
+          </View>
+        </SafeAreaProvider>
+      </Modal>
     </View>
   );
 }
@@ -106,6 +143,25 @@ export function FlightSegmentFields({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const { fontScale } = useWindowDimensions();
+  const [automaticArrival, setAutomaticArrival] = useState(!value.arrivalDate);
+  const arrivalDate = value.arrivalDate || value.departureDate;
+  const nextDay =
+    !!value.departureDate && arrivalDate === flightNextDate(value.departureDate);
+  const changeDeparture = (departureDate: string, departureTime = value.departureTime) =>
+    onChange({
+      departureDate,
+      departureTime,
+      ...(automaticArrival && value.arrivalTime
+        ? {
+            arrivalDate: suggestedFlightArrivalDate(
+              departureDate,
+              departureTime,
+              value.arrivalTime,
+            ),
+          }
+        : {}),
+    });
   const text = (
     field:
       | "flightNumberLiteral"
@@ -142,11 +198,10 @@ export function FlightSegmentFields({
         value={value.departureDate}
         initialNavigationDate={initialNavigationDate}
         disabled={disabled}
-        onChange={(departureDate) => onChange({ departureDate })}
+        onChange={(departureDate) => changeDeparture(departureDate)}
       />
       {full ? (
         <>
-          <UiText style={styles.section}>{t("manualFlight.departure")}</UiText>
           <FlightAirportField
             label={t("manualFlight.originAirport")}
             code={value.originCode}
@@ -156,23 +211,6 @@ export function FlightSegmentFields({
               onChange({ originCode: code, originName: name, departureZone: zone ?? "" })
             }
           />
-          <FlightTimeField
-            label={t("manualFlight.departureTime")}
-            onEditingChange={(open) => onPickerChange("departureTime", open)}
-            value={value.departureTime}
-            disabled={disabled}
-            onChange={(departureTime) => onChange({ departureTime })}
-          />
-          {value.departureZone &&
-          selectedAirportZone(value.originCode, value.originName) ===
-            value.departureZone ? (
-            <UiText style={styles.meta}>
-              {t("manualFlight.airportZone", { zone: value.departureZone })}
-            </UiText>
-          ) : (
-            text("departureZone", t("manualFlight.departureZone"))
-          )}
-          <UiText style={styles.section}>{t("manualFlight.arrival")}</UiText>
           <FlightAirportField
             label={t("manualFlight.destinationAirport")}
             code={value.destinationCode}
@@ -186,32 +224,64 @@ export function FlightSegmentFields({
               })
             }
           />
-          <CalendarField
-            variant="field"
-            label={t("manualFlight.arrivalDate")}
-            onEditingChange={(open) => onPickerChange("arrivalDate", open)}
-            value={value.arrivalDate}
-            initialNavigationDate={value.departureDate || initialNavigationDate}
-            disabled={disabled}
-            onChange={(arrivalDate) => onChange({ arrivalDate })}
-          />
-          <FlightTimeField
-            label={t("manualFlight.arrivalTime")}
-            onEditingChange={(open) => onPickerChange("arrivalTime", open)}
-            value={value.arrivalTime}
-            disabled={disabled}
-            onChange={(arrivalTime) => onChange({ arrivalTime })}
-          />
-          {value.arrivalZone &&
-          selectedAirportZone(value.destinationCode, value.destinationName) ===
-            value.arrivalZone ? (
-            <UiText style={styles.meta}>
-              {t("manualFlight.airportZone", { zone: value.arrivalZone })}
-            </UiText>
-          ) : (
-            text("arrivalZone", t("manualFlight.arrivalZone"))
-          )}
-          <UiText style={styles.meta}>{t("manualFlight.unknownHint")}</UiText>
+          {(value.originCode || value.originName) &&
+          !selectedAirportZone(value.originCode, value.originName)
+            ? text("departureZone", t("manualFlight.departureZone"))
+            : null}
+          {(value.destinationCode || value.destinationName) &&
+          !selectedAirportZone(value.destinationCode, value.destinationName)
+            ? text("arrivalZone", t("manualFlight.arrivalZone"))
+            : null}
+          <View style={[styles.times, fontScale > 1.5 && styles.stacked]}>
+            <FlightTimeField
+              label={t("manualFlight.departureLocal")}
+              date={value.departureDate}
+              value={value.departureTime}
+              disabled={disabled}
+              onEditingChange={(open) => onPickerChange("departureTime", open)}
+              onChange={changeDeparture}
+            />
+            <View style={styles.cell}>
+              <FlightTimeField
+                label={t("manualFlight.arrivalLocal")}
+                date={arrivalDate}
+                value={value.arrivalTime}
+                disabled={disabled}
+                onEditingChange={(open) => onPickerChange("arrivalTime", open)}
+                onChange={(date, arrivalTime) => {
+                  const automatic = automaticArrival && date === arrivalDate;
+                  if (!automatic) setAutomaticArrival(false);
+                  onChange({
+                    arrivalTime,
+                    arrivalDate: automatic
+                      ? arrivalTime
+                        ? suggestedFlightArrivalDate(
+                            value.departureDate,
+                            value.departureTime,
+                            arrivalTime,
+                          )
+                        : ""
+                      : date,
+                  });
+                }}
+              />
+              <UiButton
+                variant={nextDay ? "secondary" : "text"}
+                label={t(
+                  nextDay ? "manualFlight.nextDaySelected" : "manualFlight.nextDay",
+                )}
+                disabled={disabled || !value.departureDate}
+                onPress={() => {
+                  setAutomaticArrival(false);
+                  onChange({
+                    arrivalDate: nextDay
+                      ? value.departureDate
+                      : flightNextDate(value.departureDate),
+                  });
+                }}
+              />
+            </View>
+          </View>
         </>
       ) : null}
       <PlanParticipantsField
@@ -228,10 +298,16 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     fields: { gap: visual.space.row },
     caption: { ...visual.type.action, color: colors.textPrimary },
-    section: {
-      ...visual.type.section,
-      color: colors.textPrimary,
-      marginTop: visual.space.heading,
-    },
     meta: { ...visual.type.meta, color: colors.textSecondary },
+    times: { flexDirection: "row", gap: visual.space.row, alignItems: "flex-start" },
+    stacked: { flexDirection: "column" },
+    cell: { flex: 1, minWidth: 0, gap: visual.space.heading },
+    host: { flex: 1 },
+    backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay },
+    sheet: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      maxHeight: "70%",
+    },
   });
