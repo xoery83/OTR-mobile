@@ -1,4 +1,4 @@
-import { appendFileSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import { universalP1Identity } from "./universalP1Source";
 import { randomUUID } from "node:crypto";
@@ -12,16 +12,18 @@ import { prepareCoreSourcePlanV2, finalizeCoreSourceSlotV2 } from "./tripCoreV2S
 const container = process.env.OTR_UNIVERSAL_P1_OWNED_SQL_FIXTURE;
 // Actual protected PG transactions; model publication and identities are explicit disposable fixtures.
 it.skipIf(!container).each(
-  process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
-    ? [
-        { reviewed: false, family: "P1" as const },
-        { reviewed: true, family: "P1" as const },
-        { reviewed: true, family: "P3" as const },
-      ]
-    : [
-        { reviewed: false, family: "P1" as const },
-        { reviewed: true, family: "P1" as const },
-      ],
+  process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE
+    ? [{ reviewed: true, family: "P3" as const }]
+    : process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
+      ? [
+          { reviewed: false, family: "P1" as const },
+          { reviewed: true, family: "P1" as const },
+          { reviewed: true, family: "P3" as const },
+        ]
+      : [
+          { reviewed: false, family: "P1" as const },
+          { reviewed: true, family: "P1" as const },
+        ],
 )(
   "qualifies original Source bytes through existing Source Plan/Core/receipt and recovers once (explicit review: %s)",
   async ({ reviewed, family }) => {
@@ -312,6 +314,62 @@ it.skipIf(!container).each(
           [actor],
         )
       ).rows[0].scope;
+      if (family === "P3" && process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE) {
+        const packet = new URL(
+          "../../docs/ops/universal-p3-formal-save-20261026/",
+          import.meta.url,
+        );
+        const fixed = JSON.parse(
+          readFileSync(new URL("P3_REVIEW_SCOPE.json", packet), "utf8"),
+        );
+        const fixtureScope = { ...savedScope };
+        delete fixtureScope.expiresAt;
+        const scopeLiteral = "scope jsonb:='" + JSON.stringify(fixed) + "'::jsonb";
+        const template = readFileSync(new URL("P3_RETRY_ACTIVATE.sql", packet), "utf8");
+        expect(template).toContain(scopeLiteral);
+        const retry = template
+          .replace(
+            scopeLiteral,
+            "scope jsonb:='" +
+              JSON.stringify(fixtureScope).replaceAll("'", "''") +
+              "'::jsonb",
+          )
+          .replaceAll("f4b059c5-8241-4ffb-aa15-37fa25474543", actor)
+          .replaceAll("5015f4ad-99bb-8878-8926-2561d19710c8", f.input.runId)
+          .replaceAll(
+            "75db2d2c1daefb75c437c159255dd9b97de502c6e7d48c449d2b3f819a3b3349",
+            publication.candidateSha256,
+          )
+          .replaceAll(
+            "__P3_FIXED_WINDOW_DEADLINE__",
+            new Date(Date.now() + 800000).toISOString(),
+          );
+        const control = async (text: string) => {
+          const session2 = session(container!);
+          try {
+            await session2.lease.query(text);
+          } finally {
+            session2.close();
+          }
+        };
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=false,universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
+          [actor],
+        );
+        await expect(
+          control(retry.replaceAll(publication.candidateSha256, "0".repeat(64))),
+        ).rejects.toThrow("P3_SEALED_CANDIDATE_DRIFT");
+        await control(retry);
+        await expect(control(retry)).rejects.toThrow("P3_POLICY_DRIFT");
+        expect(
+          (
+            await admin.lease.query(
+              "SELECT count(*)::int AS n FROM public.trip_source_core_v2_candidates WHERE candidate_id=$1::uuid",
+              [publication.proposedPlan.candidateIds[0]],
+            )
+          ).rows[0].n,
+        ).toBe(1);
+      }
       await admin.lease.query(
         "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=jsonb_set(universal_p1_review_scope,'{expiresAt}',to_jsonb((clock_timestamp()-interval '1 second')::text)) WHERE actor_account_id=$1::uuid",
         [actor],
