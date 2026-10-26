@@ -1,0 +1,32 @@
+{
+  "at": "20261026T172114Z",
+  "counts": {
+    "candidate": 1,
+    "item": 1,
+    "stay": 1,
+    "receipt": 1,
+    "slot": 1,
+    "association": 1
+  },
+  "item": {
+    "id": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
+    "title": "Harbour QA Hotel",
+    "experience_family": "P3",
+    "start_local_date": "2026-11-02",
+    "end_local_date": "2026-11-03",
+    "visibility": "PRIVATE",
+    "participation_mode": "SELF",
+    "revision": null
+  },
+  "receipt": {
+    "id": "110e6eae-d0e2-4da3-86d1-f0893686e545",
+    "operation_id": "a98856b8-209a-8bc0-9e2b-e0919bb73181",
+    "outcome": "APPLIED",
+    "receipt_sha256": "0625fac88a19c84e81a341051802fe3576c7b8ca872a28650c77bd78c7625169"
+  },
+  "slot": {
+    "state": "COMPLETE",
+    "target_id": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
+    "operation_id": "a98856b8-209a-8bc0-9e2b-e0919bb73181"
+  }
+}

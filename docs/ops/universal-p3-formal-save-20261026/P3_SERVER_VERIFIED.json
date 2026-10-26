@@ -1,0 +1,12 @@
+{
+  "status": "P3_SERVER_VERIFIED",
+  "itemId": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
+  "semanticRevision": 1,
+  "receiptId": "110e6eae-d0e2-4da3-86d1-f0893686e545",
+  "receiptSha256": "0625fac88a19c84e81a341051802fe3576c7b8ca872a28650c77bd78c7625169",
+  "intentSha256": "ab17d1ab6179c624ab4300974b473de7764b6b4ec54fd16ba7b50716df1650ae",
+  "itemSha256": "055a5d7d1054554e0bed9d38bfe88d28df490ec288a7f3a20344d3127b297e89",
+  "unknownClocksZonesPreserved": true,
+  "noPlaceBookingInference": true,
+  "sourceAssociationComplete": true
+}

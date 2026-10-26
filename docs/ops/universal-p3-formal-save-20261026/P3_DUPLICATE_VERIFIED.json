@@ -1,0 +1,22 @@
+{
+  "status": "P3_DUPLICATE_CONFIRM_NO_DUPLICATE_PASS",
+  "counts": {
+    "candidate": 1,
+    "item": 1,
+    "stay": 1,
+    "receipt": 1,
+    "slot": 1,
+    "association": 1
+  },
+  "unchanged": [
+    "candidate",
+    "item",
+    "stay",
+    "receipt",
+    "association"
+  ],
+  "sameItemId": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
+  "sameOperationId": "a98856b8-209a-8bc0-9e2b-e0919bb73181",
+  "sameReceiptId": "110e6eae-d0e2-4da3-86d1-f0893686e545",
+  "semanticRevision": 1
+}

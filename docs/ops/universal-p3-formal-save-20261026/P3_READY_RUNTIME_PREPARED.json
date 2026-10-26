@@ -1,0 +1,15 @@
+{
+  "status": "READY_RUNTIME_PREPARED_NO_WINDOW",
+  "manifest": {
+    "status": "LOCAL_IMAGE_NOT_DEPLOYED",
+    "sourceHead": "3f57ddf9005388f16ef5bdc4507c2e7f49d05f15",
+    "imageId": "sha256:025010435515fd3451920ec1c62cca16df1e3c29093b8cff0fb0256f838235b9",
+    "baseImageId": "sha256:c2d4cda080d7aee64b88b3f5f712188e355cd67f77182a626974237959e83b69",
+    "captureBundleSHA256": "fd0a57191b84a799be8e08c77ee6a132401cb0fe61e995d32ed3b020e7bd8a8c",
+    "dockerfileSHA256": "d9d4c5cf260598bb1052b27d02fc7a37140d2d7623050f3d4a3f2586dad94dd7",
+    "businessActivation": "CLOSED_REQUIRES_SEPARATE_P3_RETRY_GATE",
+    "bundles": {
+      "server-capture.mjs": "fd0a57191b84a799be8e08c77ee6a132401cb0fe61e995d32ed3b020e7bd8a8c"
+    }
+  }
+}
