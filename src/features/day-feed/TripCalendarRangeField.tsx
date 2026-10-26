@@ -24,7 +24,7 @@ export type TripDateRange = { start: string; end: string };
 export function selectTripRange(range: TripDateRange, date: string): TripDateRange {
   if (!range.start || range.end) return { start: date, end: "" };
   return date < range.start
-    ? { start: date, end: range.start }
+    ? { start: date, end: "" }
     : { start: range.start, end: date };
 }
 const monthNumber = (month: string) =>
@@ -263,12 +263,14 @@ export function TripCalendarRangeField({
                                     date === today && !chosen && styles.todayDay,
                                   ]}
                                   onPress={() => {
-                                    setDraft(
+                                    const next =
                                       startWithCheckin && !choosingEnd
                                         ? { start: date, end: "" }
-                                        : selectTripRange(draft, date),
+                                        : selectTripRange(draft, date);
+                                    setDraft(next);
+                                    setChoosingEnd(
+                                      startWithCheckin && !!next.start && !next.end,
                                     );
-                                    setChoosingEnd(startWithCheckin && !choosingEnd);
                                   }}
                                 >
                                   {date === today && chosen ? (

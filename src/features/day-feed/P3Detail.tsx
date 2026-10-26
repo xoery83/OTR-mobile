@@ -1,6 +1,6 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { Alert, Linking, ScrollView, StyleSheet } from "react-native";
-import { Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { NavigationContentFrame } from "@/components/navigationChrome";
 import {
   getAccountGeneration,
@@ -119,6 +119,16 @@ export function P3Detail() {
   const presentation = visible
     ? {
         ...visible.presentation,
+        addExpense: () =>
+          router.push({
+            pathname: "/expenses/new",
+            params: {
+              journeyId: tripId,
+              suggestedTitle: visible.presentation.title,
+              suggestedDate: date ?? visible.presentation.start,
+              mode: "manual",
+            },
+          }),
         ...(targets
           ? {
               map: () => openMap(targets.map),

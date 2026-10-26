@@ -103,6 +103,20 @@ export function P1Detail() {
           {visible ? (
             <P1Row
               {...visible.presentation}
+              actions={{
+                addExpense: () =>
+                  router.push({
+                    pathname: "/expenses/new",
+                    params: {
+                      journeyId: tripId,
+                      suggestedTitle: visible.presentation.display.title,
+                      suggestedDate:
+                        visible.presentation.display.clocks.start?.local_date ??
+                        undefined,
+                      mode: "manual",
+                    },
+                  }),
+              }}
               depth="I"
               showHeader={false}
               onDepth={() => router.back()}

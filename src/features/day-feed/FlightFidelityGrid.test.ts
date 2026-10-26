@@ -166,7 +166,8 @@ it("does not drop known sparse arrival dates/zones when airport identity is abse
   const flight = full();
   flight.supplemental.endpoints = { ORIGIN: empty(), DESTINATION: empty() };
   flight.canonical.boundaries[1].local_date = "2027-01-17";
-  expect(render(flight)).toContain("Jan 17, 2027");
+  expect(render(flight)).toContain("⁺1");
+  expect(render(flight)).not.toContain("Jan 17, 2027");
   const html = render(flight, { immersive: true });
   expect(html).toContain("Pacific/Auckland");
   expect(html).toContain("America/Los_Angeles");

@@ -1,3 +1,4 @@
+import { PendingSyncDot } from "./PendingSyncDot";
 import type { ReactNode } from "react";
 import {
   Pressable,
@@ -114,7 +115,10 @@ export function StayReadRow({
             ) : null}
           </View>
           <View style={s.text}>
-            <UiText style={s.rowTitle}>{stay.title}</UiText>
+            <UiText style={s.rowTitle}>
+              {stay.title}
+              {stay.pending ? <PendingSyncDot /> : null}
+            </UiText>
             <View style={s.role}>
               <AppIcon name="bed.double" size={16} color={c.accent} />
               <UiText style={s.roleLabel}>
@@ -131,9 +135,6 @@ export function StayReadRow({
               <UiText style={s.address}>{stay.address}</UiText>
             ) : null}
             {focused ? <UiText style={s.meta}>{dateLabel}</UiText> : null}
-            {stay.pending ? (
-              <UiText style={s.meta}>{t("tripCreate.itemPending")}</UiText>
-            ) : null}
           </View>
         </Pressable>
         {focused ? (

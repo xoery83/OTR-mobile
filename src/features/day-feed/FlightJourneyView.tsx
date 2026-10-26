@@ -5,6 +5,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+import type { FlightSegmentDraft } from "./manualFlightFormFields";
 import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import {
   BookingCommonFooter,
@@ -17,6 +18,7 @@ import {
   readableDocuments,
   flightConnectionMinutes,
   type BookingContext,
+  type BookingAssociations,
   type FlightJourneyRead,
   type FlightLegRead,
 } from "./bookingReadPresentation";
@@ -29,8 +31,12 @@ export function FlightLegRow({
   onOpen,
   onInsert,
   hideDivider = false,
+  associations,
+  pending,
 }: {
-  leg: FlightLegRead;
+  leg: Omit<FlightLegRead, "flight"> & {
+    flight: FlightLegRead["flight"] | { authored: FlightSegmentDraft };
+  };
   journey?: FlightJourneyRead;
   focused: boolean;
   context: BookingContext;
@@ -38,10 +44,16 @@ export function FlightLegRow({
   onOpen(): void;
   onInsert?(side: "BEFORE" | "AFTER"): void;
   hideDivider?: boolean;
+  associations?: BookingAssociations;
+  pending?: boolean;
 }) {
   useUiLocale();
   const s = useThemedStyles(styles);
   const active = context === "FUTURE" || context === "TODAY";
+  const flightLabel =
+    "authored" in leg.flight
+      ? leg.flight.authored.flightNumberLiteral
+      : (leg.flight.numberLiteral ?? leg.id);
   const insert = (side: "BEFORE" | "AFTER") => (
     <BookingInsert
       side={side}
@@ -56,10 +68,10 @@ export function FlightLegRow({
       <View style={[s.row, hideDivider && s.noDivider, focused && s.focus]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={leg.flight.numberLiteral ?? leg.id}
+          accessibilityLabel={flightLabel}
           onPress={onFocus}
         >
-          <FlightFidelityGrid flight={leg.flight} focused={focused} />
+          <FlightFidelityGrid flight={leg.flight} focused={focused} pending={pending} />
         </Pressable>
         {focused ? (
           <>
@@ -84,7 +96,9 @@ export function FlightLegRow({
                   onChoose={leg.onDocuments}
                 />
               ) : null}
-              {journey ? <BookingTags facts={journey} /> : null}
+              {journey || associations ? (
+                <BookingTags facts={journey ?? associations!} />
+              ) : null}
             </View>
             <View style={s.icons}>
               <BookingGlyph kind="detail" onPress={onOpen} />

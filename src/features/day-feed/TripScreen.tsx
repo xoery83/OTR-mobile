@@ -1,4 +1,3 @@
-import { ManualFlightEditor } from "./ManualFlightForm";
 import { localInsertionTime } from "./localInsertionTime";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
@@ -242,12 +241,6 @@ function TripContent({
   const [dayPastIntroduction, setDayPastIntroduction] = useState(false);
   const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
-  const [flightEdit, setFlightEdit] = useState<{
-    tripId: string;
-    itemId: string;
-    revision: number;
-    generation: number;
-  } | null>(null);
   const [localItem, setLocalItem] = useState<LocalItem | null>(null);
   const [planEditError, setPlanEditError] = useState(false);
   const [planEdit, setPlanEdit] = useState<{
@@ -584,6 +577,10 @@ function TripContent({
     setTrip(current);
     if (resolved.item.family === "P1") {
       router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId: id } });
+      return;
+    }
+    if (resolved.item.family === "P2") {
+      router.push({ pathname: "/p2-detail", params: { tripId: requested, itemId: id } });
       return;
     }
     if (resolved.item.family === "P3") {
@@ -976,12 +973,7 @@ function TripContent({
       ? localItem
       : null;
   const localPreview =
-    visibleLocalItem &&
-    !flightEdit &&
-    !planEdit &&
-    !stayEdit &&
-    !rentalEdit &&
-    !transportEdit ? (
+    visibleLocalItem && !planEdit && !stayEdit && !rentalEdit && !transportEdit ? (
       <LocalCoreItemPreview
         item={visibleLocalItem.item}
         onClose={() => setLocalItem(null)}
@@ -999,15 +991,7 @@ function TripContent({
                       ticket === request.current &&
                       generation === getAccountGeneration() &&
                       draftId === itemId;
-                    if (visibleLocalItem.item.family === "P2") {
-                      if (!current(itemId)) return;
-                      setFlightEdit({
-                        tripId: requested,
-                        itemId,
-                        revision: Number(visibleLocalItem.item.itemRevision),
-                        generation,
-                      });
-                    } else if (visibleLocalItem.item.family === "P5") {
+                    if (visibleLocalItem.item.family === "P5") {
                       const repository = await createDefaultManualTransportRepository();
                       const draft = await repository.read(requested, itemId);
                       if (!current(draft.itemId)) return;
@@ -1059,25 +1043,6 @@ function TripContent({
               }
             : undefined
         }
-      />
-    ) : null;
-  const flightEditor =
-    flightEdit?.tripId === requested && flightEdit.generation === generation ? (
-      <ManualFlightEditor
-        key={`${flightEdit.tripId}:${flightEdit.itemId}:${generation}`}
-        embedded={false}
-        tripId={flightEdit.tripId}
-        itemId={flightEdit.itemId}
-        expectedRevision={flightEdit.revision}
-        initialDate={null}
-        onClose={() => setFlightEdit(null)}
-        onSaved={() => {
-          if (generation !== getAccountGeneration()) return;
-          setFlightEdit(null);
-          setLocalItem(null);
-          setRevision((value) => value + 1);
-          void load();
-        }}
       />
     ) : null;
   const planEditor =
@@ -1356,6 +1321,14 @@ function TripContent({
             presentation={{
               scrollEnabled: !move.active,
               p1Move: moveInteraction,
+              localContextForDate: (date) =>
+                !appearanceToday
+                  ? "UNKNOWN"
+                  : date === appearanceToday
+                    ? "TODAY"
+                    : date < appearanceToday
+                      ? "PAST"
+                      : "FUTURE",
               onLocalInsert: (itemId, role, date, side) => {
                 if (!visibleTrip.localManual) return;
                 const suggestion = localInsertionTime(
@@ -1587,6 +1560,7 @@ function TripContent({
         </View>
         {move.confirmation}
         <DayFeedCalendarSheet
+          today={appearanceToday}
           visible={calendarVisible}
           tripName={dayName}
           rangeLabel={dayRangeLabel ?? undefined}
@@ -1644,7 +1618,6 @@ function TripContent({
           </SafeAreaProvider>
         </Modal>
         {localPreview}
-        {flightEditor}
         {planEditor}
         {stayEditor}
         {rentalEditor}
@@ -1804,7 +1777,6 @@ function TripContent({
         )}
       </ScrollView>
       {localPreview}
-      {flightEditor}
       {planEditor}
       {stayEditor}
       {rentalEditor}

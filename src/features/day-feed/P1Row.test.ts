@@ -89,7 +89,7 @@ it("stale supplemental facts and actions never disclose Note, linked IDs or navi
   expect(html).not.toContain("Everyone");
   expect(node("Directions")).toBeUndefined();
 });
-it("Browse and Immersive show the authored clock with an unconfirmed-zone warning", () => {
+it("Browse and Immersive show the authored clock without a timezone warning", () => {
   const e = event();
   e.boundaries = [
     {
@@ -105,7 +105,7 @@ it("Browse and Immersive show the authored clock with an unconfirmed-zone warnin
   );
   const html = renderToStaticMarkup(createElement(P1Row, { ...props, depth: "I" }));
   expect(html).toContain("15:00");
-  expect(html).toContain("Timezone not confirmed");
+  expect(html).not.toContain("Timezone not confirmed");
 });
 it("cross-day accessible labels include end clock/offset and identify the independent END projection", () => {
   const e = event();
@@ -165,7 +165,7 @@ it("uses singular linked-record counts in Focus and accessible Immersive actions
     expect(node(label)).toBeDefined();
 });
 
-it("marks an unqualified END even when START is qualified and both clocks are displayed", () => {
+it("retains both civil clocks without a timezone prompt when END is unqualified", () => {
   const value = event();
   value.boundaries[1] = {
     ...value.boundaries[1],
@@ -179,7 +179,7 @@ it("marks an unqualified END even when START is qualified and both clocks are di
   );
   expect(html).toContain("10:30");
   expect(html).toContain("12:00");
-  expect(html).toContain("Timezone not confirmed");
+  expect(html).not.toContain("Timezone not confirmed");
 });
 it("native long press forwards the pickup point and suppresses its following normal tap", () => {
   const start = vi.fn(),
@@ -193,4 +193,26 @@ it("native long press forwards the pickup point and suppresses its following nor
   target.onPress();
   expect(start).toHaveBeenCalledWith({ x: 200, y: 450 });
   expect(onDepth).not.toHaveBeenCalled();
+});
+it("Immersive keeps four common actions, disables missing capabilities and hides empty association cards", () => {
+  const addExpense = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(P1Row, {
+      event: event(),
+      depth: "I",
+      onDepth: vi.fn(),
+      context: "TODAY",
+      facts: { ...facts(), photoIds: [], documentIds: [], expenseIds: [], note: "   " },
+      actions: { addExpense },
+    }),
+  );
+  expect(html).not.toContain("Original full note");
+  expect(html).not.toContain("Photos</span>");
+  expect(html).not.toContain("Attachments</span>");
+  expect(html).not.toContain("Expenses</span>");
+  for (const label of ["Add photo", "Add attachment", "Link existing expense"])
+    expect(node(label)?.disabled).toBe(true);
+  expect(node("Add expense")?.disabled).toBe(false);
+  node("Add expense").onPress();
+  expect(addExpense).toHaveBeenCalledOnce();
 });

@@ -1,3 +1,4 @@
+import { localDayDisplayOrder } from "./localDayDisplayOrder";
 import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -40,7 +41,7 @@ import {
   type FlexibleBlockRendererProps,
 } from "./FlexibleBlockRow";
 import type { FlightService } from "@/domain/trip/flightAdmission";
-import { UiButton, UiText } from "@/ui/controls";
+import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -80,6 +81,9 @@ function ImmersiveHeaderSlot({
 
 export type DayFeedPresentation = {
   p1Move?: P1MoveInteraction;
+  localContextForDate?: (
+    date: string,
+  ) => import("./bookingReadPresentation").BookingContext;
   onLocalInsert?(
     itemId: string,
     role: string,
@@ -383,7 +387,10 @@ function AcceptedDayFeed({
       });
   };
   const summaries = sections.map((section) =>
-    summarizeDay(section.query, localManual?.rows(section.date)),
+    summarizeDay(
+      section.query,
+      localDayDisplayOrder(localManual?.rows(section.date) ?? []),
+    ),
   );
   const summariesKey = JSON.stringify(summaries);
   const reportSummaries = presentation?.onSummaries;
@@ -481,12 +488,12 @@ function AcceptedDayFeed({
             focused={mode === "F"}
             immersive={mode === "I"}
             withinMarker={withinMarker}
+            pending={
+              projection.version === 2 &&
+              !!projection.source.localTargetIds?.includes(event.id)
+            }
           />
         </Pressable>
-        {projection.version === 2 &&
-        projection.source.localTargetIds?.includes(event.id) ? (
-          <UiText style={styles.meta}>{t("tripCreate.itemPending")}</UiText>
-        ) : null}
         {mode === "F" ? (
           <UiButton
             label={t("feed.collapse")}
@@ -582,7 +589,8 @@ function AcceptedDayFeed({
         presentation?.renderDayHeading ? (
           presentation.renderDayHeading(
             section.date,
-            !section.stream.entries.length && !localManual?.rows(section.date).length,
+            !section.stream.entries.length &&
+              !localDayDisplayOrder(localManual?.rows(section.date) ?? []).length,
           )
         ) : (
           <View>
@@ -591,7 +599,8 @@ function AcceptedDayFeed({
                 {presentation?.formatDayHeading?.(section.date) ?? section.date}
               </Text>
             ) : null}
-            {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
+            {!section.stream.entries.length &&
+            !localDayDisplayOrder(localManual?.rows(section.date) ?? []).length ? (
               <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
             ) : null}
           </View>
@@ -625,7 +634,7 @@ function AcceptedDayFeed({
             />
           ),
       });
-    for (const row of localManual?.rows(section.date) ?? [])
+    for (const row of localDayDisplayOrder(localManual?.rows(section.date) ?? []))
       windowRows.push({
         key: `local:${JSON.stringify(row.rowKey)}`,
         date: section.date,

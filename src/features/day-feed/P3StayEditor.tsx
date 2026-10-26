@@ -96,7 +96,12 @@ function TimeField({
                 }}
                 rightDisabled={disabled}
               />
-              <ScrollView keyboardShouldPersistTaps="handled" style={styles.timeScroll}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets
+                keyboardDismissMode="interactive"
+                style={styles.timeScroll}
+              >
                 <UiDatePicker
                   mode="time"
                   display="spinner"

@@ -380,6 +380,8 @@ export function P1PlanEditor({
         />
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="interactive"
           style={styles.body}
           contentContainerStyle={styles.content}
         >

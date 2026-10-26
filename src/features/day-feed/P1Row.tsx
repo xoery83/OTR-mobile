@@ -1,6 +1,8 @@
+import { ImmersiveActions } from "./ImmersiveActions";
+import { PendingSyncDot } from "./PendingSyncDot";
 import { useRef, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import { acceptedBoundaryAnchor, type DayEvent } from "@/domain/trip/dayReadModel";
+import { type DayEvent } from "@/domain/trip/dayReadModel";
 import { AppIcon } from "@/components/AppIcon";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText as Text } from "@/ui/controls";
@@ -132,13 +134,6 @@ export function P1Row({
       event.authored_address ||
       event.accepted_address_line1 ||
       event.authored_address_line1;
-  const clockQualified = (boundary: typeof clocks.start | typeof clocks.end) =>
-    !!boundary &&
-    ("qualified" in boundary ? boundary.qualified : !!acceptedBoundaryAnchor(boundary));
-  const unconfirmedClock =
-    (clocks.primary &&
-      !clockQualified(occurrence === "END" ? clocks.end : clocks.start)) ||
-    (clocks.secondary && !clockQualified(clocks.end));
   const primaryLabel =
     clocks.primary && occurrence === "END"
       ? t("fidelity.endAtTime", { time: clocks.primary })
@@ -277,10 +272,8 @@ export function P1Row({
             <Text style={styles.kicker}>{t("fidelity.activity")}</Text>
             <Text accessibilityRole="header" style={styles.immersiveTitle}>
               {event.title}
+              {facts?.pending ? <PendingSyncDot /> : null}
             </Text>
-            {facts?.pending ? (
-              <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>
-            ) : null}
             {event.status !== "planned" ? (
               <Text style={styles.meta}>{t(`dayFeed.status.${event.status}`)}</Text>
             ) : null}
@@ -305,10 +298,6 @@ export function P1Row({
                   ) : null}
                   {b!.local_time ? (
                     <Text style={styles.largeClock}>{b!.local_time.slice(0, 5)}</Text>
-                  ) : null}
-                  {b!.local_time &&
-                  !("qualified" in b! ? b!.qualified : acceptedBoundaryAnchor(b!)) ? (
-                    <Text style={styles.meta}>{t("tripHome.today.timezoneUnknown")}</Text>
                   ) : null}
                 </View>
               ))}
@@ -344,14 +333,14 @@ export function P1Row({
               <ReadFactTag label={people} onPress={activeActions?.participants} />
             </View>
           ) : null}
-          {facts?.note ? (
+          {facts?.note?.trim() ? (
             <View style={styles.card}>
               <Text style={styles.section}>{t("fidelity.note")}</Text>
               <Text style={styles.noteFull}>{facts.note}</Text>
             </View>
           ) : null}
           {(["photos", "attachments", "expenses"] as const).map((kind) =>
-            count[kind] !== null ? (
+            count[kind] !== null && count[kind]! > 0 ? (
               <View key={kind} style={styles.card}>
                 <View style={styles.cardHead}>
                   <Text style={styles.section}>{t(`fidelity.${kind}Title`)}</Text>
@@ -371,30 +360,7 @@ export function P1Row({
               </View>
             ) : null,
           )}
-          <View style={styles.actions}>
-            {(["addPhoto", "addAttachment", "addExpense", "linkExpense"] as const).map(
-              (kind) =>
-                activeActions?.[kind] ? (
-                  <View key={kind} style={styles.actionCell}>
-                    <UiButton
-                      label={t(`fidelity.${kind}`)}
-                      variant="secondary"
-                      size="tile"
-                      icon={
-                        <View style={styles.actionIcon}>
-                          <AppIcon
-                            name={kind === "linkExpense" ? "arrow.up.right" : "plus"}
-                            size={18}
-                            color={colors.accent}
-                          />
-                        </View>
-                      }
-                      onPress={activeActions[kind]!}
-                    />
-                  </View>
-                ) : null,
-            )}
-          </View>
+          <ImmersiveActions actions={activeActions} />
           {children}
         </View>
       </View>
@@ -464,6 +430,7 @@ export function P1Row({
               numberOfLines={focused || fontScale > 1.5 ? undefined : 2}
             >
               {event.title}
+              {facts?.pending ? <PendingSyncDot /> : null}
             </Text>
             {location ? (
               <Text
@@ -473,19 +440,13 @@ export function P1Row({
                 {location}
               </Text>
             ) : null}
-            {facts?.pending ? (
-              <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>
-            ) : null}
-            {unconfirmedClock ? (
-              <Text style={styles.meta}>{t("tripHome.today.timezoneUnknown")}</Text>
-            ) : null}
             {focused ? (
               <>
                 {event.status !== "planned" ? (
                   <Text style={styles.meta}>{t(`dayFeed.status.${event.status}`)}</Text>
                 ) : null}
                 {tags}
-                {context !== "PAST" && facts?.note ? (
+                {context !== "PAST" && facts?.note?.trim() ? (
                   <Text style={styles.note}>{p1NoteExcerpt(facts.note)}</Text>
                 ) : null}
                 {children}
@@ -606,16 +567,8 @@ const createStyles = (c: UiColors) =>
       alignItems: "flex-end",
       justifyContent: "center",
     },
-    actionIcon: {
-      width: 28,
-      height: 28,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: c.selected,
-      borderRadius: 9,
-    },
-    section: { ...visual.type.meta, fontWeight: "700", color: c.textSecondary },
-    body: { ...visual.type.row, color: c.textPrimary },
+    section: { ...visual.type.eyebrow, letterSpacing: 0, color: c.textSecondary },
+    body: { fontSize: 15, lineHeight: 22.5, color: c.textPrimary },
     placeActions: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
     noteFull: {
       ...visual.type.feedTitle,
@@ -623,6 +576,4 @@ const createStyles = (c: UiColors) =>
       lineHeight: 22.5,
       color: c.textPrimary,
     },
-    actions: { flexDirection: "row", flexWrap: "wrap", gap: 9, marginVertical: 17 },
-    actionCell: { flexBasis: "47%", flexGrow: 1 },
   });

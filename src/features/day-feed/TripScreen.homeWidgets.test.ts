@@ -6,7 +6,6 @@ import { DayFeed } from "./DayFeed";
 import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
-import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
 import { createDefaultManualRentalRepository } from "@/data/repositories/manualRentalRepository";
 import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
 vi.mock("./useMinuteClock", () => ({
@@ -961,7 +960,7 @@ it("Today reuses only same Trip/generation saved zone and rejects stale local so
   ).rejects.toThrow("LOCAL_NAV_UNAVAILABLE");
   expect(state.navigate).not.toHaveBeenCalled();
 });
-it("local Day Item opens actual readonly Core Item preview after owning reread, and refresh removes a stale preview", async () => {
+it("local Day Stay opens native detail after owning reread and leaves no stale inline preview", async () => {
   state.result.observed = null;
   state.result.localManual = localRead();
   state.routeMode = "day";
@@ -976,7 +975,11 @@ it("local Day Item opens actual readonly Core Item preview after owning reread, 
     "manual-hotel",
     expect.objectContaining({ scope: localRead().scope, source: localRead().source }),
   );
-  expect(find(render(), "LocalItemPreview").item.title).toBe("Actual saved hotel");
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p3-detail",
+    params: { tripId: reference, itemId: "manual-hotel", occurrence: "BASE" },
+  });
+  expect(find(render(), "LocalItemPreview")).toBeNull();
   state.result = {
     ...state.result,
     localManual: {
@@ -1233,26 +1236,23 @@ it("enables the existing native right-swipe only on immersive Home, preserving D
   expect(state.setOptions.mock.lastCall![0].fullScreenGestureEnabled).toBe(false);
 });
 
-it("Preparation local Recent reuses the existing current local detail and Close returns to Home", async () => {
+it("Preparation local Recent opens the native Stay detail and preserves Home", async () => {
   state.result.observed = null;
   state.result.localManual = localRead();
-  const resolved = { ...localRead(), item: localRead().items[0] };
-  state.resolveLocalItem.mockResolvedValue(resolved);
+  state.resolveLocalItem.mockResolvedValue({
+    ...localRead(),
+    item: localRead().items[0],
+  });
   const workspace = find(await loaded(), LocalTripWorkspace);
   await workspace.onOpenLocalHomeItem(reference, "manual-hotel", localRead());
-  expect(state.resolveLocalItem).toHaveBeenCalledWith(
-    reference,
-    "manual-hotel",
-    expect.objectContaining({ scope: localRead().scope, source: localRead().source }),
-  );
-  const preview = find(render(), "LocalItemPreview");
-  expect(preview.item.title).toBe("Actual saved hotel");
-  expect(preview.onEdit).toBeTypeOf("function");
-  preview.onClose();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p3-detail",
+    params: { tripId: reference, itemId: "manual-hotel", occurrence: "BASE" },
+  });
   expect(find(render(), "LocalItemPreview")).toBeNull();
   expect(find(render(), LocalTripWorkspace)).not.toBeNull();
-  expect(state.push).not.toHaveBeenCalled();
 });
+
 it("routes a current local P1 to the native detail without inventing Edit authority", async () => {
   state.result.observed = null;
   const plan = {
@@ -1280,35 +1280,21 @@ it("routes a current local P1 to the native detail without inventing Edit author
   expect(find(render(), "LocalItemPreview")).toBeNull();
   expect(find(render(), "PlanEditor")).toBeNull();
 });
-it("opens same-ID P3 edit only after the owning stay repository returns an editable draft", async () => {
+it("routes P3 Edit through native Stay detail rather than granting editor authority in Home", async () => {
   state.result.observed = null;
   const stay = localRead().items[0];
   state.result.localManual = localRead();
   state.resolveLocalItem.mockResolvedValue({ ...localRead(), item: stay });
-  const draft = {
-    mode: "EDIT",
-    itemId: stay.itemId,
-    fields: {},
-    participantOptions: [],
-  };
-  const repository = { read: vi.fn(async () => draft) };
-  vi.mocked(createDefaultManualStayRepository).mockResolvedValue(repository as any);
   const workspace = find(await loaded(), LocalTripWorkspace);
   await workspace.onOpenLocalHomeItem(reference, stay.itemId, localRead());
-  const preview = find(render(), "LocalItemPreview");
-  preview.onEdit();
-  for (let i = 0; i < 12; i++) await Promise.resolve();
-  expect(repository.read).toHaveBeenCalledWith(reference, stay.itemId);
-  expect(find(render(), "LocalItemPreview")).toBeNull();
-  const editor = find(render(), "StayEditor");
-  expect(editor).toMatchObject({
-    tripId: reference,
-    itemId: stay.itemId,
-    opened: { draft, repository },
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p3-detail",
+    params: { tripId: reference, itemId: stay.itemId, occurrence: "BASE" },
   });
-  editor.onClose();
-  expect(find(render(), "LocalItemPreview").item.itemId).toBe(stay.itemId);
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+  expect(find(render(), "StayEditor")).toBeNull();
 });
+
 it("opens same-ID P4 edit only after the owning rental repository returns an editable draft", async () => {
   state.result.observed = null;
   const rental = { ...localRead().items[0], family: "P4", itemId: "manual-rental" };
@@ -1650,7 +1636,7 @@ it.each(["25.0", "27.0"])(
   },
 );
 
-it("opens the same real local P2 through its editable Flight form", async () => {
+it("opens real P2 through the native detail route with the originating Item", async () => {
   const local = localRead();
   local.items[0] = { ...local.items[0], family: "P2", title: "NZ99" };
   state.result.observed = null;
@@ -1660,12 +1646,8 @@ it("opens the same real local P2 through its editable Flight form", async () => 
   state.resolveLocalItem.mockResolvedValue({ ...local, item: local.items[0] });
   find(await loaded(), DayFeed).onOpenLocalItem("manual-hotel", local);
   for (let i = 0; i < 24; i++) await Promise.resolve();
-  find(render(), "LocalItemPreview").onEdit();
-  const editor = find(render(), (await import("./ManualFlightForm")).ManualFlightEditor);
-  expect(editor).toMatchObject({
-    tripId: reference,
-    itemId: "manual-hotel",
-    expectedRevision: 1,
-    embedded: false,
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p2-detail",
+    params: { tripId: reference, itemId: "manual-hotel" },
   });
 });

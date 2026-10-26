@@ -1,4 +1,6 @@
-import { FlightFidelityGrid } from "./FlightFidelityGrid";
+import { FlightLegRow } from "./FlightJourneyView";
+import { localDayDisplayOrder } from "./localDayDisplayOrder";
+import { PendingSyncDot } from "./PendingSyncDot";
 import { flightSegmentFromRead } from "./manualFlightFormFields";
 import { StayReadRow } from "./StayReadView";
 import { localStayPresentation, localStayMapTargets } from "./localStayPresentation";
@@ -58,7 +60,10 @@ export function LocalManualDayFeed({
   const [p1Focus, setP1Focus] = useState<string | null>(null);
   const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
   const summaries = calendar.map((day) =>
-    summarizeDay({ date: day, timed: [], nonComparable: [] }, read.rows(day)),
+    summarizeDay(
+      { date: day, timed: [], nonComparable: [] },
+      localDayDisplayOrder(read.rows(day)),
+    ),
   );
   const summariesKey = JSON.stringify(summaries);
   const reportSummaries = presentation?.onSummaries;
@@ -84,7 +89,7 @@ export function LocalManualDayFeed({
   }, [initialKey, initialDate, initialWithin, entry?.revision]);
   const rows: DayWindowRow<() => React.ReactNode>[] = [];
   for (const day of calendar) {
-    const items = read.rows(day);
+    const items = localDayDisplayOrder(read.rows(day));
     rows.push({
       key: `day:${day}`,
       isDayHeader: true,
@@ -109,6 +114,8 @@ export function LocalManualDayFeed({
             read={read}
             date={day}
             onlyRow={row}
+            context={presentation?.localContextForDate?.(day)}
+            onInsert={presentation?.onLocalInsert}
             p1Focus={p1Focus}
             onP1Focus={setP1Focus}
             move={presentation?.p1Move}
@@ -201,7 +208,7 @@ export function LocalManualDayRows({
   const styles = useThemedStyles(createStyles);
   return (
     <>
-      {(onlyRow ? [onlyRow] : read.rows(date)).map((row) => {
+      {(onlyRow ? [onlyRow] : localDayDisplayOrder(read.rows(date))).map((row) => {
         const item = read.items.find((item) => item.itemId === row.itemRef);
         const schedule = item?.schedule as
           { start?: { localDate?: string }; end?: { localDate?: string } } | undefined;
@@ -216,24 +223,19 @@ export function LocalManualDayRows({
                 : null;
         if (item && row.family === "P2") {
           const focusKey = JSON.stringify(row.rowKey);
-          const focused = p1Focus === focusKey;
           return (
-            <Pressable
+            <FlightLegRow
               key={focusKey}
-              accessibilityRole="button"
-              accessibilityLabel={row.title}
-              style={styles.row}
-              onPress={() => {
-                if (focused || !onP1Focus) onOpenItem?.(row.itemRef, read);
-                else onP1Focus(focusKey);
-              }}
-            >
-              <FlightFidelityGrid
-                flight={{ authored: flightSegmentFromRead(item) }}
-                focused={focused}
-                pending={item.localState === "PENDING"}
-              />
-            </Pressable>
+              leg={{ id: item.itemId, flight: { authored: flightSegmentFromRead(item) } }}
+              focused={p1Focus === focusKey}
+              pending={item.localState === "PENDING"}
+              context={context}
+              onInsert={
+                onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
+              }
+              onFocus={() => onP1Focus?.(p1Focus === focusKey ? null : focusKey)}
+              onOpen={() => onOpenItem?.(row.itemRef, read)}
+            />
           );
         }
         if (item && row.family === "P3")
@@ -293,7 +295,10 @@ export function LocalManualDayRows({
             style={styles.row}
             onPress={() => onOpenItem?.(row.itemRef, read)}
           >
-            <Text style={styles.title}>{row.title}</Text>
+            <Text style={styles.title}>
+              {row.title}
+              <PendingSyncDot />
+            </Text>
             {roleLabel ? <Text style={styles.meta}>{roleLabel}</Text> : null}
             {row.family === "P3" &&
             schedule?.start?.localDate &&
@@ -310,7 +315,6 @@ export function LocalManualDayRows({
             {row.displayTime?.localTime ? (
               <Text style={styles.meta}>{row.displayTime.localTime}</Text>
             ) : null}
-            <Text style={styles.pending}>{t("tripCreate.itemPending")}</Text>
           </Pressable>
         );
       })}

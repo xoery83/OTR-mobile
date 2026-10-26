@@ -111,6 +111,7 @@ export function DayFeedCalendarSheet({
   tripStart,
   tripEnd,
   selectedDate,
+  today,
   dates = [],
   summaries,
   copy,
@@ -123,6 +124,7 @@ export function DayFeedCalendarSheet({
   tripStart?: string | null;
   tripEnd?: string | null;
   selectedDate?: string | null;
+  today?: string | null;
   dates?: readonly string[];
   summaries: readonly DayFeedCalendarSummary[];
   copy: DayFeedCalendarCopy;
@@ -242,6 +244,7 @@ export function DayFeedCalendarSheet({
                           styles.cell,
                           inCoreRange && styles.inRange,
                           selected && styles.selected,
+                          date === today && styles.today,
                         ]}
                         accessibilityRole="button"
                         accessibilityState={{ selected, disabled: !allowed }}
@@ -259,6 +262,9 @@ export function DayFeedCalendarSheet({
                           onSelect(date);
                         }}
                       >
+                        {date === today ? (
+                          <View pointerEvents="none" style={styles.todayTint} />
+                        ) : null}
                         <UiText
                           style={[
                             styles.day,
@@ -334,6 +340,21 @@ const createStyles = (colors: UiColors) =>
     },
     inRange: { backgroundColor: colors.accentSurface },
     selected: { backgroundColor: colors.accent, borderRadius: visual.radius.control },
+    today: {
+      borderRadius: visual.radius.control,
+      borderWidth: 1,
+      borderColor: colors.separator,
+    },
+    todayTint: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors.textPrimary,
+      opacity: 0.08,
+      borderRadius: visual.radius.control,
+    },
     day: { ...visual.type.tripRowTitle, color: colors.textPrimary, textAlign: "center" },
     muted: { color: colors.disabled },
     place: { ...visual.type.navigation, color: colors.textSecondary, maxWidth: "100%" },

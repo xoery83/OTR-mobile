@@ -1,0 +1,25 @@
+# Physical Forms QA — UI repair candidate, 26 October
+
+Owning surface: Native Day display adapters, P1/P2/P3 forms/detail routes, shared local calendar and detail action UI. No Backend, migration, accepted Core mutation, Auth, queue or main merge. Preserve the cumulative Native lane candidates including P2 local Save `c5392b2a` and embedded QA build `5e7ff2af`.
+
+## Changes and acceptance boundaries
+
+- Pending local writes use an accessible warning-colored dot after the title. Error/conflict status remains available; normal P1 no longer shows timezone qualification warnings. Authored civil clocks remain visible without manufacturing a qualified instant.
+- Only noncomparable TNS P1/P3 rows sort by local civil clock; untimed order, Base, P2 and qualified timeline slots are preserved. P2 only contributes its departure-day row. Summaries/empty states use the same display filter; Reader authority is unchanged.
+- Real authored P2 uses the frozen Flight row/grid for Browse/Focus, native Details/Back/Edit, same-ID revision-bound Save and reread. No long-press move. Missing Journey membership/order is a remaining owning-interface gap; a single Item is not presented as a confirmed multi-leg Journey.
+- P1/P3 Notes scrolling accounts for the iOS keyboard. P2 full-screen airport search and compact common-month/year ranges are retained from `c5392b2a`.
+- Day calendar Today uses a background-only darkening, no text. Trip/P1/P3 share the date-range calendar: an earlier second tap restarts the start date with no end. Single-day and forward ranges remain supported.
+- P2 arrival rail uses a civil-date offset (`⁺1`, or the actual signed number of local dates), without a lower-right arrival date in Browse/Focus. Immersive retains full endpoint dates/zones. This is a calendar offset, never elapsed duration or DST/instant qualification.
+- P1/P2/P3 share the same four Immersive buttons/icons. Empty association and whitespace Note modules are hidden. Missing photo/attachment/link capabilities are disabled. Add expense routes through the existing Ledger entry using `journeyId = TripId`, `suggestedDate = Item civil date`, `suggestedTitle = Item name`, `mode = manual`. Ledger owns context/role validation and persistence; no TripItem association is claimed or written. Search has no supported Item-link mutation, so Link existing expense stays disabled pending the unique Writer's interface.
+
+## Checks
+
+12 directed UI/component suites: 200 PASS. Minimal Ledger title seam fixed as `347ba9aa` and handed back to the unique Writer. TypeScript, UI guard and scoped ESLint PASS. Three stale Home tests updated to assert the existing native P3 route rather than the superseded inline preview. P2 Detail tests cover account change/cancelled read, edit-capability denial, same Item/revision and Save-triggered reread. Independent review closed timeline sorting and arrival-only summary findings.
+
+Physical R5: Mirror control recovered after refreshing the app state. Normal authenticated real Trip shows P3 17:19 before P1 20:30, title dots and no timezone-warning line; Today/Tomorrow different headers; mouse-wheel scroll leaves top/bottom controls hidden with only the native date capsule. Real P2 Focus → detail → native Edit → number NZ5060 to NZ5061 → Save returned to refreshed same detail. Screenshots stored in task visualization output under `native-day-fidelity/p2-save-20261026/`.
+
+R8 Native: real P2 Immersive shows arrival rail ⁺1 and four shared buttons (three unsupported actions disabled); Add expense opens the existing New Expense screen with Oct26 date. Cancel created no expense. R10 build additionally carries the Item name as a weak editable title default; existing/source/receipt titles take precedence. Physical R10 P2 Add expense displayed NZ5061 and Oct26 together in New Expense; cancelled without creating an expense. P1 Immersive shows the same four buttons and no empty Photos/Attachments/Expenses cards. P1 calendar 28→25 produces only From Oct25/Choose an end date; Today26 is gray without a text caption. Calendar cancelled without changing the saved P1. Independent review found the P3 10→5→8 date-selection state flag; repaired to 5–8 and covered by a component regression. Do not infer soft-keyboard, cold recovery or every nine-state real Reader PASS from component/fixture tests.
+
+## Remaining gates
+
+Forms QA physical app has no OTR Backend API configured. Manual P1 server acceptance and Trip currency Preview/Commit are not proven for its independent QA actor/Trip; unique Writer confirmed its Actor has zero matching DEV policy rows. Local Trip is not ServerAccepted; currency cannot treat it as a cloud Trip. A later finite actor/Trip/operation-scoped DEV package is needed before any expansion. P2/P3 Cloud remains CLOSED. No new permission or background replay is enabled. Source P1 server PASS in Universal's separate window is not Manual P1 PASS. No Production/AD5 data touched.

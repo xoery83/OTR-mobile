@@ -1,3 +1,4 @@
+import { ImmersiveActions } from "./ImmersiveActions";
 import type { ReactNode } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
@@ -239,24 +240,7 @@ export function BookingCommonFooter({
           />
         </BookingCard>
       ) : null}
-      {(["addPhoto", "addAttachment", "addExpense", "linkExpense"] as const).some(
-        (k) => facts[k],
-      ) ? (
-        <View style={s.actions}>
-          {(["addPhoto", "addAttachment", "addExpense", "linkExpense"] as const).map(
-            (k) =>
-              facts[k] ? (
-                <View style={s.actionCell} key={k}>
-                  <UiButton
-                    variant="secondary"
-                    label={t(`fidelity.${k}`)}
-                    onPress={facts[k]!}
-                  />
-                </View>
-              ) : null,
-          )}
-        </View>
-      ) : null}
+      <ImmersiveActions actions={facts} />
     </>
   );
 }
@@ -281,8 +265,6 @@ export const bookingReadStyles = (c: UiColors) =>
     body: { fontSize: 15, lineHeight: 22.5, color: c.textPrimary },
     meta: { ...visual.type.feedNote, lineHeight: 16.8, color: c.textSecondary },
     tags: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
-    actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-    actionCell: { flexBasis: "47%", flexGrow: 1 },
     documentTarget: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
     documentEnd: { justifyContent: "flex-end", paddingBottom: 6 },
     documentStart: { justifyContent: "flex-start", paddingTop: 6 },

@@ -122,6 +122,20 @@ vi.mock("./P1Row", () => ({
   },
 }));
 vi.mock("./FlightRows", () => ({ FlightRows: () => null }));
+vi.mock("./FlightJourneyView", () => ({
+  FlightLegRow: (p: any) => {
+    state.nodes.push({
+      ...p,
+      accessibilityLabel: p.leg.flight.authored.flightNumberLiteral,
+      onPress: p.onFocus,
+    });
+    return createElement(
+      "span",
+      {},
+      `FLIGHT ${p.leg.flight.authored.flightNumberLiteral}:${p.focused ? "F" : "B"}`,
+    );
+  },
+}));
 vi.mock("./FlightFidelityGrid", () => ({
   FlightFidelityGrid: (p: any) => {
     state.nodes.push(p);
@@ -666,7 +680,7 @@ it("accepted plus local retains P3 occurrence Focus and forwards its original ro
   });
 });
 
-it("accepted plus local keeps P2 Focus stable and a second tap opens the real Item", () => {
+it("accepted plus local keeps P2 Focus stable and detail action opens the real Item", () => {
   const local = localManual("local-flight"),
     item = local.items[0];
   item.family = "P2";
@@ -687,6 +701,6 @@ it("accepted plus local keeps P2 Focus stable and a second tap opens the real It
   state.nodes.find((n) => n.accessibilityLabel === "NZ99").onPress();
   expect(render(props)).toContain("FLIGHT NZ99:F");
   expect(render(props)).toContain("FLIGHT NZ99:F");
-  state.nodes.find((n) => n.accessibilityLabel === "NZ99").onPress();
+  state.nodes.find((n) => n.accessibilityLabel === "NZ99").onOpen();
   expect(open).toHaveBeenCalledWith(item.itemId, local);
 });

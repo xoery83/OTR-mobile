@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiText } from "@/ui/controls";
-import { formatUiDate, t } from "@/ui/locale";
+import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -73,6 +73,14 @@ export function FlightFidelityGrid({
     "authored" in flight
       ? authored?.flightNumberLiteral
       : (flightNumber(flight) ?? numberLiteral);
+  const dayOffset =
+    departure?.local_date && arrival?.local_date
+      ? Math.round(
+          (Date.parse(arrival.local_date + "T12:00:00Z") -
+            Date.parse(departure.local_date + "T12:00:00Z")) /
+            86400000,
+        )
+      : 0;
   const duration = "authored" in flight ? null : durationMinutes(flight);
   const middleWidth =
     (focused || immersive ? (pending ? 68 : 52) : 68) * (stacked ? fontScale : 1);
@@ -126,7 +134,18 @@ export function FlightFidelityGrid({
             <UiText style={styles.start}>{departure.local_time.slice(0, 5)}</UiText>
           ) : null}
           {arrival?.local_time ? (
-            <UiText style={styles.end}>{arrival.local_time.slice(0, 5)}</UiText>
+            <UiText style={styles.end}>
+              {arrival.local_time.slice(0, 5)}
+              {Number.isSafeInteger(dayOffset) && dayOffset !== 0 ? (
+                <UiText
+                  testID="flight-arrival-day-offset"
+                  style={{ color: colors.accent, fontWeight: "700" }}
+                >
+                  {dayOffset > 0 ? "⁺" : "⁻"}
+                  {formatUiNumber(Math.abs(dayOffset))}
+                </UiText>
+              ) : null}
+            </UiText>
           ) : null}
           {withinMarker}
         </View>
@@ -171,8 +190,7 @@ export function FlightFidelityGrid({
                 </UiText>
               </View>
             ) : null}
-            {immersive ||
-            (arrival?.local_date && departure?.local_date !== arrival.local_date) ? (
+            {immersive ? (
               <View style={[styles.grid, { gap }, stacked && styles.stacked]}>
                 <View style={styles.airport}>
                   {immersive && departure?.local_date ? (
@@ -212,8 +230,7 @@ export function FlightFidelityGrid({
             {immersive && departure?.zone_id ? (
               <UiText style={styles.context}>{departure.zone_id}</UiText>
             ) : null}
-            {arrival?.local_date &&
-            (immersive || arrival.local_date !== departure?.local_date) ? (
+            {arrival?.local_date && immersive ? (
               <UiText style={[styles.context, styles.arrival]}>
                 {date(arrival.local_date)}
               </UiText>

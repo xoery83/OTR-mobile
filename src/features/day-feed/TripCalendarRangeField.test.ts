@@ -115,10 +115,10 @@ it("selects an interval across year boundaries with one explicit Done; Cancel an
     .props.onRight();
   expect(onChange).toHaveBeenCalledExactlyOnceWith({ start: "", end: "" });
 });
-it("supports reversed taps, single-day intervals and restarting an existing interval without inventing a zone", () => {
+it("restarts the start date on an earlier tap, supports single-day intervals and restarting an existing interval without inventing a zone", () => {
   expect(selectTripRange({ start: "2027-01-03", end: "" }, "2026-12-30")).toEqual({
     start: "2026-12-30",
-    end: "2027-01-03",
+    end: "",
   });
   expect(selectTripRange({ start: "2027-01-03", end: "" }, "2027-01-03")).toEqual({
     start: "2027-01-03",
@@ -357,4 +357,31 @@ it("shared Trip and Stay calendars mark Today without optional text in the Trip 
   expect(nodes(today).some((n) => n.props.testID === "calendar-today-selected")).toBe(
     true,
   );
+});
+it("P3 keeps choosing checkout after an earlier tap resets check-in", () => {
+  const onChange = vi.fn();
+  const render = () => {
+    state.cursor = 0;
+    return nodes(
+      TripCalendarRangeField({
+        value: { start: "2026-11-01", end: "" },
+        onChange,
+        startWithCheckin: true,
+      }),
+    );
+  };
+  render()
+    .find((n) => n.type === UiFormRow)!
+    .props.onPress();
+  for (const date of ["2026-11-10", "2026-11-05", "2026-11-08"])
+    render()
+      .find((n) => n.type === "Pressable" && n.props.accessibilityLabel === date)!
+      .props.onPress();
+  render()
+    .find((n) => n.type === SheetHeader)!
+    .props.onRight();
+  expect(onChange).toHaveBeenCalledExactlyOnceWith({
+    start: "2026-11-05",
+    end: "2026-11-08",
+  });
 });

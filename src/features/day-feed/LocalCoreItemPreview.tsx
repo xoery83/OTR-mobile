@@ -1,3 +1,4 @@
+import { PendingSyncDot } from "./PendingSyncDot";
 import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import { flightSegmentFromRead } from "./manualFlightFormFields";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
@@ -64,11 +65,11 @@ export function LocalCoreItemPreview({
               pending={item.localState === "PENDING"}
             />
           ) : (
-            <Text style={styles.title}>{item.title as string}</Text>
+            <Text style={styles.title}>
+              {item.title as string}
+              {item.localState === "PENDING" ? <PendingSyncDot /> : null}
+            </Text>
           )}
-          {item.localState === "PENDING" && item.family !== "P2" ? (
-            <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text>
-          ) : null}
           {item.family === "P3" ? (
             <Text style={styles.meta}>{t("tripCreate.stay")}</Text>
           ) : item.family === "P4" ? (
