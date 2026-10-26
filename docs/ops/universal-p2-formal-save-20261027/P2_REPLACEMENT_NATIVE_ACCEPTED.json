@@ -1,0 +1,24 @@
+{
+  "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "batch_id": "f5240f74-e346-49f4-8808-8405e64f0742",
+  "job_id": "1ef7921d-8061-4b5d-b384-8231c8cd2a1d",
+  "submission_key": "7b64b145-7748-4c1d-b0bd-58cc0abd09d0",
+  "context_id": "a44f4747-0344-4186-91c2-02809809a560",
+  "format_version": 1,
+  "manifest_version": 1,
+  "request_sha256": "ddd618771f25bd3a91993692dfeda8ea2504c88db931ddfcc2b09e303ceded04",
+  "manifest_sha256": "b246a484c71c58712fc3772a8c9061f14c652f493ff3b0ee85d1396337dec544",
+  "created_at": "2026-10-26T19:58:08.836Z",
+  "context_json": "{\"id\":\"a44f4747-0344-4186-91c2-02809809a560\",\"version\":1,\"accountId\":\"f4b059c5-8241-4ffb-aa15-37fa25474543\",\"batchId\":\"f5240f74-e346-49f4-8808-8405e64f0742\",\"observedAt\":\"2026-10-26T19:58:08.836Z\",\"clock\":\"DEVICE_WALL\",\"entrySurface\":\"CAPTURE\",\"tripPrior\":{\"id\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\",\"origin\":\"PRIOR\",\"observedAt\":\"2026-10-26T19:58:08.836Z\"}}",
+  "manifest_json": "[{\"id\":\"e757ca33-fa02-4f6f-8071-637f2274d424\",\"itemKey\":\"0a30960a-00fb-4a8b-ad5b-343bf5d57aa4\",\"ordinal\":0,\"acquisitionSource\":\"files\",\"kind\":\"FILE\",\"originalFilename\":\"P2_MINIMUM_SYNTHETIC_QA.txt\",\"declaredContentType\":\"text/plain\",\"continuesFromInputId\":null}]",
+  "acceptedInputs": [
+    {
+      "input_id": "e757ca33-fa02-4f6f-8071-637f2274d424",
+      "kind": "FILE",
+      "original_filename": "P2_MINIMUM_SYNTHETIC_QA.txt",
+      "content_sha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+      "content_byte_count": 27,
+      "acceptance_state": "ACCEPTED"
+    }
+  ]
+}

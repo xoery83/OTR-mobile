@@ -174,3 +174,25 @@ it("retains but does not settle an unexpected Provider model", async () => {
   expect(x.custody.retainResponse).toHaveBeenCalledOnce();
   expect(x.custody.settle).not.toHaveBeenCalled();
 });
+
+it("records only a fixed send-timeout code and never retries or settles", async () => {
+  const x = provider();
+  x.send.mockRejectedValueOnce(
+    new DOMException("fixture sensitive detail", "TimeoutError"),
+  );
+  await expect(x.instance.interpret(input)).rejects.toMatchObject({
+    code: "UNIVERSAL_PROVIDER_SEND_TIMEOUT",
+  });
+  expect(x.send).toHaveBeenCalledOnce();
+  expect(x.custody.retainResponse).not.toHaveBeenCalled();
+  expect(x.custody.settle).not.toHaveBeenCalled();
+});
+it("distinguishes custody retention failure without pretending settlement or sending again", async () => {
+  const x = provider();
+  x.custody.retainResponse.mockRejectedValueOnce(new Error("fixture private detail"));
+  await expect(x.instance.interpret(input)).rejects.toMatchObject({
+    code: "UNIVERSAL_PROVIDER_RETAIN_FAILED",
+  });
+  expect(x.send).toHaveBeenCalledOnce();
+  expect(x.custody.settle).not.toHaveBeenCalled();
+});

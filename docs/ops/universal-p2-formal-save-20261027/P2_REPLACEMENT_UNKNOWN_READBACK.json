@@ -1,0 +1,74 @@
+{
+  "contextStatus": 200,
+  "context": {
+    "version": "otr.backend.universal-context/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "f5240f74-e346-49f4-8808-8405e64f0742",
+    "taskId": "a8f92ed3-5806-8572-bfb2-37777c47b72e"
+  },
+  "resultStatus": 200,
+  "result": {
+    "version": "otr.backend.universal-interpretation/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "f5240f74-e346-49f4-8808-8405e64f0742",
+    "taskId": "a8f92ed3-5806-8572-bfb2-37777c47b72e",
+    "requestSha256": "a7028f5717edcd3b98e5e327e92601b9bfa8686c357dd4849e828d1829af4d24",
+    "promptVersion": "real-llm-01-compact/5",
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "e757ca33-fa02-4f6f-8071-637f2274d424",
+        "sourceId": "0ab02c17-b28a-4cbf-9c86-1ab09e8ec962",
+        "representationId": "29e444f6-b43d-4728-a839-a0c73cf1b51a",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+        "submittedSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+        "status": "READY"
+      }
+    ],
+    "formalReview": "NOT_RUN",
+    "admission": "NOT_RUN",
+    "canonicalWrites": false,
+    "status": "EXECUTION_OUTCOME_UNKNOWN",
+    "providerOutcome": "UNKNOWN",
+    "providerReceipt": null,
+    "candidates": [],
+    "bookingObservations": [],
+    "ticketObservations": [],
+    "quality": null,
+    "minimumFacts": [],
+    "sourceObservations": [],
+    "advisoryStatus": "ABSENT",
+    "advisoryIssues": [],
+    "outputCoverage": "PARTIAL_COVERAGE",
+    "coverageGaps": [
+      {
+        "field": "P3-P6.image_advisory",
+        "reason": "INDEPENDENT_OCR_RECEIPT_UNAVAILABLE"
+      },
+      {
+        "field": "P5.dynamic_provider_label_value",
+        "reason": "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P5.dynamic_boarding_or_meeting_labels",
+        "reason": "FINITE_ROLE_LABELS_ONLY; PROVIDER-SPECIFIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P4.actual_vehicle_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; VEHICLE_PROOF_UNAVAILABLE"
+      },
+      {
+        "field": "P2.passenger_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; TRIP_PERSON_QUALIFIER_UNAVAILABLE"
+      }
+    ],
+    "unresolved": []
+  },
+  "checkedAt": "2026-10-26T20:09:43.313460+00:00"
+}

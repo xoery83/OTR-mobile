@@ -38,7 +38,8 @@ export function createFlightHttpsSend(
             const next = await reader.read();
             if (next.done) break;
             bytes += next.value.byteLength;
-            if (bytes > 131072 || signal.aborted) throw new Error("LIVE_RESPONSE_BOUND");
+            signal.throwIfAborted();
+            if (bytes > 131072) throw new Error("LIVE_RESPONSE_BOUND");
             yield next.value;
           }
         } finally {

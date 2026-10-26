@@ -87,3 +87,29 @@ describe("fixed HTTPS transport unit, injected boundary only", () => {
     expect(http).toHaveBeenCalledTimes(1);
   });
 });
+
+it("preserves a body abort as timeout rather than a size-bound failure", async () => {
+  const abort = new AbortController();
+  const http = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            abort.abort(new DOMException("fixture timeout", "TimeoutError"));
+            controller.enqueue(new Uint8Array([1]));
+            controller.close();
+          },
+        }),
+      ),
+  );
+  const result = await createFlightHttpsSend(http)({
+    ...request(),
+    signal: abort.signal,
+  });
+  await expect(
+    (async () => {
+      for await (const bytes of result.body) void bytes;
+    })(),
+  ).rejects.toMatchObject({ name: "TimeoutError" });
+  expect(http).toHaveBeenCalledOnce();
+});
