@@ -1,0 +1,16 @@
+{
+  "status": "NATIVE_RESULTS_RESTORED_NOT_BUSINESS_SAVE",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "batchId": "b290fa7f-44a4-431a-8aa2-2adf63fe938e",
+  "taskId": "46945250-bfd8-8fcf-af74-f2e56bf85f7d",
+  "action": "Check processing status GET-only",
+  "visible": [
+    "Harbour QA Hotel",
+    "2026-11-02",
+    "2026-11-03",
+    "P3_MINIMUM_SYNTHETIC_QA.txt"
+  ],
+  "newProviderCalls": 0,
+  "formalSavePerformed": false,
+  "guiReturnedToNative": true
+}

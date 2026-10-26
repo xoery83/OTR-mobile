@@ -65,7 +65,8 @@ import {
 } from "@/domain/intelligence/outboundRouting";
 const central = vi.hoisted(() => ({ db: null as ContinuationDatabase | null }));
 vi.mock("@/data/db/database", () => ({ openDatabase: async () => central.db! }));
-vi.mock("@/data/auth/authRepository", () => ({
+vi.mock("@/data/auth/authRepository", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/data/auth/authRepository")>()),
   requireActiveUserId: async () => account,
 }));
 vi.mock("@/data/operations/ledgerMaintenance", () => ({

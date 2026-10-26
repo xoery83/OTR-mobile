@@ -1,0 +1,19 @@
+{
+  "status": "FAILED_AUTOMATIC_ROLLBACK_VERIFIED",
+  "candidateImage": "sha256:29f6db22c6c92d461ddffb65bf8190165cf14e525ce8d077fa19839b9764e425",
+  "rollbackImage": "sha256:4979d4450ab6bf3eedb6faf18663e34e12d77e1dcc632cad96959f780d145597",
+  "rollbackContainer": "481bd4f930cb1caa173660f5b4d2d42c3cd94bcce2ad8d0e9de2ef66819c741c",
+  "failure": "ERR_MODULE_NOT_FOUND: expo-secure-store",
+  "reproduced": "local network-none container",
+  "root": "shared Ledger bootstrap dynamic Auth import eagerly bundled static Native dependency",
+  "repair": "existing d83ec6b3 SecureStore literal require adapter, no Auth/session/interface change",
+  "independentReview": "NO_BLOCKER",
+  "focusedTests": {
+    "files": 4,
+    "assertions": 9,
+    "status": "PASS"
+  },
+  "businessGateEverOpened": false,
+  "protectedSQLApplied": false,
+  "normalQaResultsAfterRollback": 200
+}
