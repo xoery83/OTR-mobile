@@ -1,8 +1,8 @@
 {
-  "status": "INTEGRATION_CANDIDATE_CHECKS_PASS",
+  "status": "SCOPED_P1_DELIVERY_COMPLETE_LOCAL_MAIN",
   "sourceBusinessE2E": "SCOPED_P1_PASS_SOURCE_IMAGE_d83ec6b3_4979d445",
   "mainDeployment": "NOT_DEPLOYED",
-  "mainIntegration": "FAST_FORWARD_COMPLETED_fe9f3ca78cfb79efd27b7f79be50db465d05d214",
+  "mainIntegration": "FAST_FORWARD_FINAL_CODE_dac54e5fdff1aaea47e4412eb52f3d57e8fccabb",
   "typecheck": "PASS",
   "uiGuard": "PASS 117 representative UI files; baseline not changed",
   "backendBuild": "PASS 3.7MB",
@@ -23,5 +23,7 @@
   "postMergeUiGuard": "PASS 117 files; baseline unchanged",
   "nativeMainSmoke": "PASS; normal Restart/main bundle/same P1/explicit Day view zone; P1 opt-in false",
   "postMergeDefaultClosed": "3 files/15 PASS",
-  "dateOnlyNavigationRepair": "failing test first;25 PASS/typecheck/lint; independent NO_BLOCKER; AD5 actual PASS"
+  "dateOnlyNavigationRepair": "failing test first;25 PASS/typecheck/lint; independent NO_BLOCKER; AD5 actual PASS",
+  "postFinalMergeTests": "3 files/25 PASS on actual main",
+  "remaining": "P2-P6 formal Source/Review/Admission authority not authorized by consumed P1 Gate; no type Save PASS"
 }
