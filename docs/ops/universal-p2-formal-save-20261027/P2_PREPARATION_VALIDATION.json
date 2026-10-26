@@ -1,0 +1,19 @@
+{
+  "classification": "LOCAL_EXISTING_FLIGHT_PATH_ONLY",
+  "testFiles": [
+    "src/data/interpretation/captureFlightCoreV2.test.ts",
+    "backend/src/tripCoreV2CandidatePublication.test.ts",
+    "backend/src/tripCoreV2Source.test.ts",
+    "src/domain/trip/tripCoreV2FlightAcceptance.test.ts",
+    "src/domain/trip/flightOutputPurposeV2.test.ts"
+  ],
+  "testsPassed": 80,
+  "scopedEslint": "PASS",
+  "diffCheck": "PASS",
+  "hostedP2Save": false,
+  "universalP2WiringComplete": false,
+  "airportResolver": "synthetic fixture only; hosted owning date-bound resolver still required",
+  "providerCallsAdded": 0,
+  "devChanges": 0,
+  "scope": "date-only one-leg source; sparse/qualify same target with receipt dependency; no Journey/Booking/Entitlement inference"
+}

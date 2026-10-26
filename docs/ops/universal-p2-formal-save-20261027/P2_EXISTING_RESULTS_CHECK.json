@@ -1,0 +1,346 @@
+{
+  "classification": "NO_P2_IN_APPROVED_RETAINED_RESULTS",
+  "batch5": {
+    "httpStatus": 200,
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "bd0d6ea6-7870-48a9-b74b-779a46783609",
+    "taskId": "861a9d47-a35b-87a6-99f1-98422493d76b",
+    "providerOutcome": "SETTLED",
+    "candidates": [
+      {
+        "id": "dcbc4d7c4397cd38a7f15a70",
+        "token": "i1",
+        "kind": "P1",
+        "subtype": "ACTIVITY",
+        "fields": [
+          {
+            "sourceId": "S1",
+            "path": "activity.name",
+            "raw": "Walk in Auckland Domain",
+            "start": 143,
+            "end": 166
+          },
+          {
+            "sourceId": "S1",
+            "path": "activity.date",
+            "raw": "Nov 1, 2026",
+            "start": 130,
+            "end": 141
+          },
+          {
+            "sourceId": "S1",
+            "path": "activity.location",
+            "raw": "Auckland Museum entrance",
+            "start": 208,
+            "end": 232
+          },
+          {
+            "sourceId": "S1",
+            "path": "activity.description",
+            "raw": "Walk in Auckland Domain at 10:00 local time until 11:00. Meet at Auckland Museum entrance.",
+            "start": 143,
+            "end": 233
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i1",
+          "kind": "P1",
+          "minimumFacts": "INCOMPLETE",
+          "missing": [
+            "START_DATE"
+          ],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "INCOMPLETE"
+      },
+      {
+        "id": "4b64a74b1d743193d2407437",
+        "token": "i2",
+        "kind": "P3",
+        "subtype": "ACCOMMODATION",
+        "fields": [
+          {
+            "sourceId": "S1",
+            "path": "property.name",
+            "raw": "Harbour QA Hotel",
+            "start": 257,
+            "end": 273
+          },
+          {
+            "sourceId": "S1",
+            "path": "property.address",
+            "raw": "10 Quay Street, Auckland",
+            "start": 275,
+            "end": 299
+          },
+          {
+            "sourceId": "S1",
+            "path": "check_in.time",
+            "raw": "15:00",
+            "start": 324,
+            "end": 329
+          },
+          {
+            "sourceId": "S1",
+            "path": "check_out.date",
+            "raw": "November 3",
+            "start": 340,
+            "end": 350
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i2",
+          "kind": "P3",
+          "minimumFacts": "INCOMPLETE",
+          "missing": [
+            "CHECK_IN_DATE",
+            "CHECK_OUT_DATE"
+          ],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "INCOMPLETE"
+      },
+      {
+        "id": "8eac3fbba0481fd4db783107",
+        "token": "i3",
+        "kind": "P6",
+        "subtype": "ACTIVITY",
+        "fields": [
+          {
+            "sourceId": "S1",
+            "path": "activity.name",
+            "raw": "Dinner at Test Kitchen",
+            "start": 400,
+            "end": 422
+          },
+          {
+            "sourceId": "S1",
+            "path": "activity.date",
+            "raw": "Nov 2, 2026",
+            "start": 387,
+            "end": 398
+          },
+          {
+            "sourceId": "S1",
+            "path": "activity.time",
+            "raw": "18:30",
+            "start": 451,
+            "end": 456
+          },
+          {
+            "sourceId": "S1",
+            "path": "activity.description",
+            "raw": "Dinner at Test Kitchen, 20 Queen Street, Auckland, 18:30 local time, party of one.",
+            "start": 400,
+            "end": 482
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i3",
+          "kind": "P6",
+          "minimumFacts": "INCOMPLETE",
+          "missing": [
+            "START_DATE"
+          ],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "INCOMPLETE"
+      }
+    ],
+    "quality": {
+      "decisions": [
+        {
+          "token": "i1",
+          "kind": "P1",
+          "tier": "REVIEWABLE",
+          "reasons": [
+            "FIELD_EVIDENCE_PARTIAL"
+          ],
+          "sourceIds": [
+            "S1"
+          ],
+          "fieldCount": 4
+        },
+        {
+          "token": "i2",
+          "kind": "P3",
+          "tier": "REVIEWABLE",
+          "reasons": [
+            "FIELD_EVIDENCE_PARTIAL"
+          ],
+          "sourceIds": [
+            "S1"
+          ],
+          "fieldCount": 4
+        },
+        {
+          "token": "i3",
+          "kind": "P6",
+          "tier": "REVIEWABLE",
+          "reasons": [
+            "FIELD_EVIDENCE_PARTIAL"
+          ],
+          "sourceIds": [
+            "S1"
+          ],
+          "fieldCount": 4
+        }
+      ],
+      "acceptedTokens": [],
+      "reviewableTokens": [
+        "i1",
+        "i2",
+        "i3"
+      ],
+      "abstainedTokens": [],
+      "formalQualification": "NOT_SCORABLE"
+    },
+    "unresolved": [
+      {
+        "sourceId": "S0",
+        "reason": "Instructional request text; no itinerary facts to extract."
+      },
+      {
+        "sourceId": "S1",
+        "reason": "Synthetic QA material; no real ticket, payment, or entitlement issued."
+      },
+      {
+        "sourceId": "S1",
+        "reason": "TEXT_MISSING_OR_AMBIGUOUS:activity.time"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "TEXT_MISSING_OR_AMBIGUOUS:check_in.date"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "TEXT_MISSING_OR_AMBIGUOUS:check_out.time"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:activity.venue"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.supplier"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.reference"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BOOKING_EVIDENCE_UNVERIFIED"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.supplier"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.reference"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BOOKING_EVIDENCE_UNVERIFIED"
+      },
+      {
+        "sourceId": "S0",
+        "reason": "Instructional request text; no itinerary facts to extract."
+      },
+      {
+        "sourceId": "S1",
+        "reason": "Synthetic QA material; no real ticket, payment, or entitlement issued."
+      },
+      {
+        "sourceId": "S1",
+        "reason": "TEXT_MISSING_OR_AMBIGUOUS:activity.time"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "TEXT_MISSING_OR_AMBIGUOUS:check_in.date"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "TEXT_MISSING_OR_AMBIGUOUS:check_out.time"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:activity.venue"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.supplier"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.reference"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BOOKING_EVIDENCE_UNVERIFIED"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.supplier"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BUSINESS_ROLE_UNVERIFIED:booking.reference"
+      },
+      {
+        "sourceId": "S1",
+        "reason": "BOOKING_EVIDENCE_UNVERIFIED"
+      }
+    ],
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "ad9f8431-9946-4b12-af10-443db1979c96",
+        "sourceId": "48ce9770-342d-42e4-87c4-34f1b18f6107",
+        "representationId": "73a340d6-9d4d-42ec-9eb1-bb585147e7f5",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "6d3020bfe6c6d179ae6d03a221d8f1e8c8f74b45f861474e281a114e24c7fd05",
+        "submittedSha256": "6d3020bfe6c6d179ae6d03a221d8f1e8c8f74b45f861474e281a114e24c7fd05",
+        "status": "READY"
+      },
+      {
+        "alias": "S1",
+        "inputId": "e076a950-2ba0-4936-8bf1-6c97cb25048f",
+        "sourceId": "0c71927f-3f3b-4612-a49e-333761e90441",
+        "representationId": "e16061db-8f9e-48b4-857e-8deef236c773",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "4a4563cfb910da2e5dd9df1fe79d45f3809cd7d05ea49fe1a66e28cff8211b7f",
+        "submittedSha256": "4a4563cfb910da2e5dd9df1fe79d45f3809cd7d05ea49fe1a66e28cff8211b7f",
+        "status": "READY"
+      }
+    ]
+  },
+  "batch6Evidence": "../universal-p3-formal-save-20261026/P3_INPUT_RESULTS.json",
+  "providerCallsAdded": 0,
+  "businessWritesAdded": 0
+}

@@ -1,0 +1,11 @@
+{
+  "from": "3f067720016f74f1d2977d910fb3a00b9d883c44",
+  "to": "c7d129c773c3253255a5701cc46ac5f3648db586",
+  "strategy": "ff-only",
+  "mainRoot": "/Users/xoery/Project/otr-mobile",
+  "serializedLock": "/private/tmp/otr-universal-main-serial.lock",
+  "freshHeadMatched": true,
+  "unrelatedDirtyStatusAndHashesPreserved": true,
+  "productCodeChanged": false,
+  "push": false
+}

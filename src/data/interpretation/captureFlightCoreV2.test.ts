@@ -176,3 +176,58 @@ it("preserves a known Canonical target hint instead of presenting it as a fresh 
   );
   expect(checked.sealed[0].status).toBe("REVIEW");
 });
+
+it("qualifies the minimal date-only P2 input without inventing clocks, places or commercial authority", async () => {
+  const f = await captureFlightFixture("NZ501 AKL→CHC 2026-11-02\n");
+  const p = f.built.publication;
+  const result = await extractCoreFlightPublication(
+    p,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    publicationTestAirport,
+  );
+  expect(result.sealed).toHaveLength(1);
+  expect(result.sealed[0].status).toBe("QUALIFIED");
+  expect(result.sealed[0].identityFacts).toMatchObject({
+    operator: "NZ",
+    serviceNumber: "501",
+    originDate: "2026-11-02",
+    originAirportId: "IATA_AIRPORT:AKL",
+    destinationAirportId: "IATA_AIRPORT:CHC",
+  });
+  const facts = result.sealed[0].candidate.facts;
+  expect(facts.origin?.time).toMatchObject({
+    local_date: "2026-11-02",
+    local_time: null,
+    zone_id: null,
+    source_instant: null,
+  });
+  expect(facts.destination?.time).toMatchObject({
+    local_date: null,
+    local_time: null,
+    zone_id: null,
+    source_instant: null,
+  });
+  expect(facts.origin?.location.accepted_place_id).toBeNull();
+  expect(facts.destination?.location.accepted_place_id).toBeNull();
+  const identities = [
+    {
+      candidateId: p.candidates[0].candidateId,
+      itemId: randomUUID(),
+      createSlotId: randomUUID(),
+      createOperationId: randomUUID(),
+      qualifySlotId: randomUUID(),
+      qualifyOperationId: randomUUID(),
+    },
+  ];
+  const plan = buildCaptureFlightSourcePlanV2(p, randomUUID(), identities);
+  expect(plan.slots.map((s) => s.command)).toEqual([
+    "CREATE_SPARSE_FLIGHT",
+    "QUALIFY_FLIGHT",
+  ]);
+  expect(plan.slots[1].dependsOn).toEqual([identities[0].createSlotId]);
+  expect(plan.slots[1].baseVector).toBeNull();
+  expect(new Set(plan.slots.map((s) => s.target.id)).size).toBe(1);
+});
