@@ -192,3 +192,17 @@ export function initialExpenseDraftDate(
   if (sourceDate) return sourceDate.slice(0, 10);
   return suggestedManualExpenseDate(suggestedDate, eligibleManual) ?? fallback;
 }
+
+// Day suggestions never overwrite an existing Expense or a source/receipt title.
+export function initialExpenseDraftTitle(
+  existingTitle: string | undefined,
+  sourceTitle: string | null | undefined,
+  suggestedTitle: unknown,
+  eligibleManual: boolean,
+): string {
+  return (
+    existingTitle ??
+    sourceTitle ??
+    (eligibleManual && typeof suggestedTitle === "string" ? suggestedTitle.trim() : "")
+  );
+}
