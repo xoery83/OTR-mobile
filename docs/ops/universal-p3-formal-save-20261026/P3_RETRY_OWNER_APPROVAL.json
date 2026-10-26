@@ -1,0 +1,10 @@
+{
+  "ownerApproved": true,
+  "gateName": "P3_SOURCE_REVIEW_RETRY_GATE/1",
+  "gateCommit": "10a9ef07",
+  "questionItemId": "call_0ac7b128c73747359e43ccadd194d66f/0",
+  "answer": "批准该精确 P3 续窗 Gate",
+  "scopeSha256": "96ac804bce4d0e628a69bd4485fe6182b36b9e0450c314c0d8ec34f8ad2f9231",
+  "providerCallsAdded": 0,
+  "newInputObjects": 0
+}
