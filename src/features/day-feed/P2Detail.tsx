@@ -1,6 +1,5 @@
-import { ImmersiveActions } from "./ImmersiveActions";
 import { useCallback, useState, useSyncExternalStore } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { NavigationContentFrame } from "@/components/navigationChrome";
 import {
@@ -17,7 +16,8 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { FlightFidelityGrid } from "./FlightFidelityGrid";
+import { FlightJourneyView } from "./FlightJourneyView";
+import type { ReadParticipation } from "./bookingReadPresentation";
 
 import { flightSegmentFromRead } from "./manualFlightFormFields";
 import { ManualFlightEditor } from "./ManualFlightForm";
@@ -45,13 +45,15 @@ export function P2Detail() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      setState(null);
+      setState((previous) => (previous ? { ...previous, editable: false } : null));
       setFailed(false);
       setEditing(false);
       void (async () => {
         try {
           const repository = await readLocalManualFlightRepository();
           const item = await repository.readForForm(tripId, itemId);
+          if (!active || generation !== getAccountGeneration()) return;
+          setState({ item, editable: false, generation });
           let editable = false;
           try {
             await repository.createDraft(tripId, itemId, Number(item.itemRevision));
@@ -62,7 +64,10 @@ export function P2Detail() {
           if (active && generation === getAccountGeneration())
             setState({ item, editable, generation });
         } catch {
-          if (active && generation === getAccountGeneration()) setFailed(true);
+          if (active && generation === getAccountGeneration()) {
+            setState(null);
+            setFailed(true);
+          }
         }
       })();
       return () => {
@@ -79,6 +84,16 @@ export function P2Detail() {
       ? state
       : null;
   const segment = visible ? flightSegmentFromRead(visible.item) : null;
+  const mode = visible?.item.participation.mode;
+  const participation: ReadParticipation | undefined =
+    visible && (mode === "WHOLE_GROUP" || mode === "SELF" || mode === "SELECTED_MEMBERS")
+      ? {
+          mode,
+          personIds: visible.item.participation.personIds.filter(
+            (id): id is string => typeof id === "string",
+          ),
+        }
+      : undefined;
   return (
     <>
       <Stack.Screen
@@ -105,40 +120,32 @@ export function P2Detail() {
       <NavigationContentFrame>
         <ScrollView style={styles.root} contentContainerStyle={styles.content}>
           {visible && segment ? (
-            <>
-              <View style={styles.heading}>
-                <UiText style={styles.route}>
-                  {[segment.originCode, segment.destinationCode]
-                    .filter(Boolean)
-                    .join(" → ")}
-                </UiText>
-                <UiText accessibilityRole="header" style={styles.title}>
-                  {segment.flightNumberLiteral}
-                </UiText>
-              </View>
-              <FlightFidelityGrid
-                flight={{ authored: segment }}
-                immersive
-                pending={visible.item.localState === "PENDING"}
-              />
-              <ImmersiveActions
-                actions={{
-                  addExpense: () =>
-                    router.push({
-                      pathname: "/expenses/new",
-                      params: {
-                        journeyId: tripId,
-                        suggestedTitle:
-                          typeof visible.item.title === "string"
-                            ? visible.item.title
-                            : segment.flightNumberLiteral,
-                        suggestedDate: segment.departureDate,
-                        mode: "manual",
-                      },
-                    }),
-                }}
-              />
-            </>
+            <FlightJourneyView
+              single={{
+                id: visible.item.itemId,
+                flight: { authored: segment },
+                pending: visible.item.localState === "PENDING",
+              }}
+              facts={{
+                participation,
+                ...(typeof visible.item.description === "string"
+                  ? { note: visible.item.description }
+                  : {}),
+                addExpense: () =>
+                  router.push({
+                    pathname: "/expenses/new",
+                    params: {
+                      journeyId: tripId,
+                      suggestedTitle:
+                        typeof visible.item.title === "string"
+                          ? visible.item.title
+                          : segment.flightNumberLiteral,
+                      suggestedDate: segment.departureDate,
+                      mode: "manual",
+                    },
+                  }),
+              }}
+            />
           ) : (
             <UiText style={styles.meta}>
               {t(failed ? "dayFeed.unavailable" : "dayFeed.loading")}
@@ -172,8 +179,5 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: visual.space.feedGutter,
       paddingBottom: visual.space.section,
     },
-    heading: { paddingVertical: visual.space.section, gap: visual.space.heading },
-    route: { ...visual.type.meta, color: colors.textSecondary },
-    title: { ...visual.type.section, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
   });

@@ -600,6 +600,22 @@ function TripContent({
     expected: Pick<LocalManualRead, "scope" | "source">,
     occurrence?: { role: string; date: string },
   ) => {
+    const local = visibleTrip?.localManual;
+    if (
+      generation === getAccountGeneration() &&
+      local &&
+      expected.scope.tripId === requested &&
+      expected.scope.generation === generation &&
+      expected.scope.accountId === local.scope.accountId &&
+      expected.source.fingerprint === local.source.fingerprint &&
+      local.items.some(
+        (item) => item.itemId === id && item.family === "P2" && !item.hidden,
+      )
+    ) {
+      // The destination validates the owning read; route IDs grant no read or edit authority.
+      router.push({ pathname: "/p2-detail", params: { tripId: requested, itemId: id } });
+      return;
+    }
     const ticket = request.current;
     const resolved = await (
       await readTripTodaysJourney()
@@ -1353,6 +1369,7 @@ function TripContent({
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const homeContent = (
     <ScrollView
+      scrollsToTop={!dayActive}
       keyboardShouldPersistTaps="handled"
       contentInsetAdjustmentBehavior="never"
       style={styles.root}
@@ -1508,7 +1525,7 @@ function TripContent({
           <DayFeed
             bottomInset={bottomBarHeight}
             presentation={{
-              scrollEnabled: !move.active,
+              scrollEnabled: dayActive && !move.active,
               p1Move: moveInteraction,
               localContextForDate: (date) =>
                 !appearanceToday

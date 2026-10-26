@@ -29,6 +29,7 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   View: (p: any) => p.children,
+  Pressable: (p: any) => p.children,
   ScrollView: (p: any) => p.children,
   StyleSheet: { create: (s: any) => s },
 }));
@@ -71,6 +72,9 @@ vi.mock("@/data/repositories/localManualFlightRepository", () => ({
     readForForm: state.read,
     createDraft: state.draft,
   }),
+}));
+vi.mock("./P1Row", () => ({
+  ReadFactTag: (p: any) => createElement("span", null, p.label),
 }));
 vi.mock("./TripViewContext", () => ({
   useTripView: () => ({ reportManualOutcome: state.outcome }),
@@ -173,4 +177,49 @@ it("Add expense carries the real Trip and departure date while unsupported actio
       mode: "manual",
     },
   });
+});
+
+it("renders the approved flight container and common footer before a slow edit qualification finishes", async () => {
+  state.read.mockResolvedValue({ ...item(), description: "Known note" });
+  let qualify: any;
+  state.draft.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        qualify = resolve;
+      }),
+  );
+  render();
+  state.effects.shift()();
+  await settle();
+  const html = render();
+  expect(html).toContain("Flight journey");
+  expect(html).toContain("NZ99");
+  expect(html).toContain("Participants");
+  expect(html).toContain("Everyone");
+  expect(html).toContain("Known note");
+  expect(html).not.toContain("Reading local data");
+  expect(state.nodes[0].disabled).toBe(true);
+  qualify({});
+  await settle();
+  render();
+  expect(state.nodes[0].disabled).toBe(false);
+});
+it("keeps the validated detail visible during a focus refresh and clears it on denial", async () => {
+  render();
+  state.effects.shift()();
+  await settle();
+  render();
+  let reject: any;
+  state.read.mockImplementation(
+    () =>
+      new Promise((_resolve, fail) => {
+        reject = fail;
+      }),
+  );
+  state.effects.at(-1)();
+  await settle();
+  expect(render()).toContain("NZ99");
+  reject(Error("READ_DENIED"));
+  await settle();
+  expect(render()).not.toContain("NZ99");
 });

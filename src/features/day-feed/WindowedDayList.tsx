@@ -109,6 +109,7 @@ export function WindowedDayList<T>({
     epoch: renderedEpoch,
     scopeKey,
     topInset,
+    scrollEnabled,
     onAnchorChange,
     onVisibleDates,
     onOffsetChange,
@@ -119,12 +120,15 @@ export function WindowedDayList<T>({
     onViewportChange,
   });
   useLayoutEffect(() => {
+    if (!scrollEnabled || live.current.scopeKey !== scopeKey)
+      statusBarOrigin.current = null;
     live.current = {
       rows,
       origin,
       epoch: renderedEpoch,
       scopeKey,
       topInset,
+      scrollEnabled,
       onAnchorChange,
       onVisibleDates,
       onOffsetChange,
@@ -156,6 +160,7 @@ export function WindowedDayList<T>({
   const nativeLayoutChanged = useRef(false);
   const prepending = useRef(false);
   const followPrependOrigin = useRef<number | null>(null);
+  const statusBarOrigin = useRef<number | null>(null);
   const contentHeight = useRef(0);
   const viewportHeight = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
@@ -359,6 +364,7 @@ export function WindowedDayList<T>({
   }, [attempt]);
   const restore = useCallback(
     (anchor: DayScrollAnchor, preserveWindow = false, tripHeader = false) => {
+      statusBarOrigin.current = null;
       const target = resolveDayAnchor(live.current.rows, anchor);
       if (!target) return false;
       finish();
@@ -579,19 +585,24 @@ export function WindowedDayList<T>({
     });
   }, []);
   const prependPrevious = useCallback(
-    (position: number, trigger: "drag-begin" | "scroll" | "follow") => {
+    (position: number, trigger: "drag-begin" | "scroll" | "follow" | "status-bar") => {
       const current = live.current;
       if (
         current.epoch !== listEpoch.current ||
         pending.current ||
-        (trigger !== "follow" && !dragging.current) ||
+        ((trigger === "drag-begin" || trigger === "scroll") && !dragging.current) ||
         prepending.current ||
         position > 200 ||
         current.origin <= 0
       )
         return;
-      const previous = previousDayOrigin(current.rows, current.origin);
+      const previous = previousDayOrigin(
+        current.rows,
+        current.origin,
+        dayListWindow.maxToRenderPerBatch,
+      );
       const row = current.rows[previous];
+      if (trigger === "status-bar") statusBarOrigin.current = previous;
       prepending.current = true;
       if (trigger === "follow") followPrependOrigin.current = current.origin;
       trace("PREPEND", {
@@ -644,6 +655,7 @@ export function WindowedDayList<T>({
   return (
     <FlatList
       scrollEnabled={scrollEnabled}
+      scrollsToTop={scrollEnabled}
       keyboardShouldPersistTaps="handled"
       key={`${scopeKey}:${windowStart.scopeKey === scopeKey ? windowStart.revision : 0}`}
       initialScrollIndex={0}
@@ -753,8 +765,20 @@ export function WindowedDayList<T>({
         });
         retry();
       }}
+      onScrollToTop={() => {
+        if (
+          renderedEpoch !== listEpoch.current ||
+          pending.current ||
+          !live.current.scrollEnabled
+        )
+          return;
+        prepending.current = false;
+        followPrependOrigin.current = null;
+        prependPrevious(0, "status-bar");
+      }}
       onScrollBeginDrag={() => {
         if (renderedEpoch !== listEpoch.current) return;
+        statusBarOrigin.current = null;
         dragging.current = true;
         // Trackpad/wheel scrolling has a native drag but no single-finger stream.
         nativeReading.current = readingTouch.current === null;
@@ -846,6 +870,14 @@ export function WindowedDayList<T>({
           nativeLayoutChanged.current = true;
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
+        if (
+          live.current.scrollEnabled &&
+          statusBarOrigin.current === live.current.origin
+        ) {
+          statusBarOrigin.current = null;
+          offset.current = 0;
+          list.current?.scrollToOffset({ offset: 0, animated: true });
+        }
         retry();
       }}
       debug={false}

@@ -151,3 +151,24 @@ it("restores one preceding date/header without inventing heights or duplicate ro
     expect(previousDayOrigin(rows, item)).toBe(target);
   expect(previousDayOrigin(rows, 0)).toBe(0);
 });
+
+it("batches sparse previous dates by rows while preserving whole dense days", () => {
+  const sparse = Array.from({ length: 20 }, (_, index) => ({
+    key: `day:${index}`,
+    date: `2026-10-${String(index + 1).padStart(2, "0")}`,
+    value: "HEADER",
+  }));
+  expect(previousDayOrigin(sparse, 15, 8)).toBe(7);
+  expect(previousDayOrigin(sparse, 3, 8)).toBe(0);
+  expect(previousDayOrigin(sparse, 0, 8)).toBe(0);
+  const dense = sparse.flatMap((header) => [
+    header,
+    ...Array.from({ length: 12 }, (_, index) => ({
+      ...header,
+      key: `${header.key}:item:${index}`,
+      value: "ITEM",
+    })),
+  ]);
+  expect(previousDayOrigin(dense, 13 * 15, 8)).toBe(13 * 14);
+  expect(dense.slice(previousDayOrigin(dense, 13 * 15, 8), 13 * 15)).toHaveLength(13);
+});

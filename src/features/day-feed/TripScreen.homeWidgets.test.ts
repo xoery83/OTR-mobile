@@ -1668,8 +1668,12 @@ it("opens real P2 through the native detail route with the originating Item", as
   state.routeMode = "day";
   state.view.zone = "";
   state.resolveLocalItem.mockResolvedValue({ ...local, item: local.items[0] });
-  find(await loaded(), DayFeed).onOpenLocalItem("manual-hotel", local);
+  const node = await loaded();
+  state.read.mockClear();
+  find(node, DayFeed).onOpenLocalItem("manual-hotel", local);
   for (let i = 0; i < 24; i++) await Promise.resolve();
+  expect(state.resolveLocalItem).not.toHaveBeenCalled();
+  expect(state.read).not.toHaveBeenCalled();
   expect(state.push).toHaveBeenCalledWith({
     pathname: "/p2-detail",
     params: { tripId: reference, itemId: "manual-hotel" },

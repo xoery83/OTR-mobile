@@ -179,6 +179,7 @@ function setup(
     layoutRevision?: string,
     initialAnchor = coldAnchor,
     scopeKey = "account/trip",
+    scrollEnabled = true,
   ) => {
     state.effects = [];
     state.cellLayouts = [];
@@ -189,6 +190,7 @@ function setup(
     renderToStaticMarkup(
       createElement(WindowedDayList, {
         rows: nextRows,
+        scrollEnabled,
         layoutRevision,
         renderRow: render,
         listRef: ref,
@@ -795,8 +797,8 @@ it("only prepends previous lawful date rows after a real upward gesture, retaini
   state.props.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
   state.props.onScroll({ nativeEvent: { contentOffset: { y: -12 } } });
   rerender();
-  expect(state.props.data[0]).toBe(rows[73]);
-  expect(state.props.data[1]).toBe(rows[74]);
+  expect(state.props.data[0]).toBe(rows[66]);
+  expect(state.props.data[8]).toBe(rows[74]);
   expect(state.props.key).toBe(listKey);
   expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
 });
@@ -810,7 +812,7 @@ it("keeps missing zone/date-only rows and changes no business descriptor while r
   expect(render.mock.calls.slice(-1)[0][0]).toBe(rows[89]);
 });
 
-it("prepends at most one previous date per drag despite a content-layout/overscroll storm", () => {
+it("prepends at most one eight-row batch per drag despite a content-layout/overscroll storm", () => {
   const { rows, ref, rerender } = setup();
   ref.current!.jumpToDayHeader(rows[74].date);
   reach(rows[74], 0);
@@ -820,26 +822,26 @@ it("prepends at most one previous date per drag despite a content-layout/overscr
   state.props.onScrollBeginDrag();
   scroll(-12);
   rerender();
-  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.data[0]).toBe(rows[66]);
   // A held drag can emit many native content-size/negative-offset cycles.
   for (let frame = 1; frame <= 12; frame++) {
     state.props.onContentSizeChange(390, 10000 + frame * 100);
     scroll(-12 - frame * 3);
     rerender();
   }
-  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.data[0]).toBe(rows[66]);
   expect(state.props.key).toBe(listKey);
   expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
-  // A new deliberate gesture can continue into the next preceding date.
+  // A new deliberate gesture can continue into the next preceding batch.
   state.props.onScrollEndDrag();
   state.props.onScrollBeginDrag();
   scroll(-60);
   rerender();
-  expect(state.props.data[0]).toBe(rows[72]);
+  expect(state.props.data[0]).toBe(rows[58]);
   expect(state.scrollToIndex).not.toHaveBeenCalled();
 });
 
-it("prefetches one preceding date on a real top drag even when a short final window emits no scroll", () => {
+it("prefetches eight sparse dates on a real top drag even when a short final window emits no scroll", () => {
   const { rows, ref, rerender } = setup(100);
   state.nativeHeight = 874;
   ref.current!.jumpToDayHeader(rows[89].date);
@@ -853,8 +855,8 @@ it("prefetches one preceding date on a real top drag even when a short final win
   state.props.onScrollBeginDrag();
   state.props.onScrollEndDrag();
   rerender();
-  expect(state.props.data[0]).toBe(rows[88]);
-  expect(state.props.data[1]).toBe(rows[89]);
+  expect(state.props.data[0]).toBe(rows[81]);
+  expect(state.props.data[8]).toBe(rows[89]);
   expect(state.props.key).toBe(listKey);
   expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
   expect(state.scrollToOffset).not.toHaveBeenCalled();
@@ -871,11 +873,11 @@ it("waits until scrolling reaches the top threshold when a gesture begins farthe
   expect(state.props.data[0]).toBe(rows[74]);
   scroll(190);
   rerender();
-  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.data[0]).toBe(rows[66]);
   state.props.onContentSizeChange(390, 12000);
   scroll(100);
   rerender();
-  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.data[0]).toBe(rows[66]);
 });
 it("ignores retired list drag-begin events after a new jump epoch or account/Trip scope", () => {
   const { rows, ref, rerender } = setup();
@@ -986,11 +988,64 @@ it("continuous follow can prepend again after native position compensation witho
   scroll(0);
   ref.current!.scrollBy!(-8);
   rerender();
-  expect(state.props.data[0]).toBe(rows[73]);
+  expect(state.props.data[0]).toBe(rows[66]);
   // Layout is committed; native maintains the old visible Item at a positive compensated offset.
   scroll(100);
   ref.current!.scrollBy!(-8);
   rerender();
-  expect(state.props.data[0]).toBe(rows[72]);
+  expect(state.props.data[0]).toBe(rows[58]);
   expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+});
+
+it("native status-bar scroll-to-top prepends a sparse batch without a drag or list replacement", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  const listKey = state.props.key;
+  state.props.onScrollToTop();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[66]);
+  expect(state.props.data[8]).toBe(rows[74]);
+  expect(state.props.key).toBe(listKey);
+  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+  state.props.onContentSizeChange(390, 4000);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 0, animated: true });
+  state.props.onScrollToTop();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[58]);
+});
+
+it("ignores a retired status-bar completion after the retained Day becomes inactive", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  const retired = state.props;
+  rerender(rows, undefined, undefined, "account/trip", false);
+  retired.onScrollToTop();
+  rerender(rows, undefined, undefined, "account/trip", false);
+  expect(state.props.data[0]).toBe(rows[74]);
+  rerender();
+  state.props.onScrollToTop();
+  rerender();
+  expect(state.props.data[0]).toBe(rows[66]);
+  rerender(rows, undefined, undefined, "account/trip", false);
+  state.scrollToOffset.mockClear();
+  state.props.onContentSizeChange(390, 4000);
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+});
+
+it("a deliberate new drag cancels a pending status-bar reposition", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  state.props.onScrollToTop();
+  rerender();
+  state.props.onScrollBeginDrag();
+  rerender();
+  state.scrollToOffset.mockClear();
+  state.props.onContentSizeChange(390, 4000);
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
 });

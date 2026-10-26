@@ -116,14 +116,30 @@ export function FlightLegRow({
     </View>
   );
 }
-export function FlightJourneyView({ journey }: { journey: FlightJourneyRead }) {
+type SingleFlightLeg = Omit<FlightLegRead, "flight"> & {
+  flight: { authored: FlightSegmentDraft };
+  pending?: boolean;
+};
+export function FlightJourneyView(
+  props:
+    | { journey: FlightJourneyRead }
+    | { single: SingleFlightLeg; facts: BookingAssociations },
+) {
+  const journey = "journey" in props ? props.journey : null;
+  const facts = "facts" in props ? props.facts : props.journey;
   useUiLocale();
   const s = useThemedStyles(styles),
-    legs = journey.legs;
+    legs = "single" in props ? [props.single] : props.journey.legs;
   const route = legs.length
     ? [
-        legs[0].flight.supplemental.endpoints.ORIGIN.code,
-        ...legs.map((leg) => leg.flight.supplemental.endpoints.DESTINATION.code),
+        "authored" in legs[0].flight
+          ? legs[0].flight.authored.originCode
+          : legs[0].flight.supplemental.endpoints.ORIGIN.code,
+        ...legs.map((leg) =>
+          "authored" in leg.flight
+            ? leg.flight.authored.destinationCode
+            : leg.flight.supplemental.endpoints.DESTINATION.code,
+        ),
       ]
         .filter(Boolean)
         .join(" → ")
@@ -131,7 +147,7 @@ export function FlightJourneyView({ journey }: { journey: FlightJourneyRead }) {
   return (
     <View>
       <View style={s.heading}>
-        {route ? <UiText style={s.meta}>{route}</UiText> : null}
+        {route ? <UiText style={s.route}>{route}</UiText> : null}
         <UiText accessibilityRole="header" style={s.title}>
           {t("bookingRead.flightJourney")}
         </UiText>
@@ -146,9 +162,13 @@ export function FlightJourneyView({ journey }: { journey: FlightJourneyRead }) {
         {legs.map((leg, index) => (
           <View key={leg.id}>
             {index ? <View style={s.divider} /> : null}
-            <FlightFidelityGrid flight={leg.flight} immersive />
+            <FlightFidelityGrid
+              flight={leg.flight}
+              immersive
+              pending={"pending" in leg && leg.pending}
+            />
             <View style={s.services}>
-              {leg.flight.services.map((service, i) => (
+              {("authored" in leg.flight ? [] : leg.flight.services).map((service, i) => (
                 <UiText key={i} style={s.service}>
                   {t(
                     service.attribution === "MARKETING"
@@ -165,10 +185,15 @@ export function FlightJourneyView({ journey }: { journey: FlightJourneyRead }) {
                 </UiText>
               ) : null}
             </View>
-            {legs[index + 1] && flightConnectionMinutes(leg, legs[index + 1]) !== null ? (
+            {journey?.legs[index + 1] &&
+            flightConnectionMinutes(journey.legs[index], journey.legs[index + 1]) !==
+              null ? (
               <UiText style={s.connection}>
                 {t("bookingRead.connection", {
-                  minutes: flightConnectionMinutes(leg, legs[index + 1])!,
+                  minutes: flightConnectionMinutes(
+                    journey.legs[index],
+                    journey.legs[index + 1],
+                  )!,
                 })}
               </UiText>
             ) : null}
@@ -177,9 +202,9 @@ export function FlightJourneyView({ journey }: { journey: FlightJourneyRead }) {
       </View>
       <BookingCommonFooter
         facts={{
-          ...journey,
+          ...facts,
           documents: readableDocuments([
-            journey.documents,
+            facts.documents,
             ...legs.map((l) => l.documents),
           ]),
         }}
@@ -204,6 +229,7 @@ const styles = (c: UiColors) =>
     meta: { fontSize: 12, lineHeight: 16.8, color: c.textSecondary },
     value: { color: c.textPrimary },
     icons: { flexDirection: "row", justifyContent: "flex-end", marginTop: 4 },
+    route: { ...visual.type.meta, color: c.accent },
     heading: { paddingVertical: 20, gap: 8 },
     title: { ...visual.type.immersiveTitle, color: c.textPrimary },
     legs: {
