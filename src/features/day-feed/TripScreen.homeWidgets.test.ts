@@ -131,13 +131,17 @@ function render() {
   state.mount = false;
   return node;
 }
-function find(node: ReactNode, type: any): any {
+function find(
+  node: ReactNode,
+  type: any,
+  match: (props: any) => boolean = () => true,
+): any {
   if (!isValidElement(node)) return null;
-  if (node.type === type) return node.props;
+  if (node.type === type && match(node.props)) return node.props;
   for (const child of Children.toArray(
     (node.props as { children?: ReactNode }).children,
   )) {
-    const found = find(child, type);
+    const found = find(child, type, match);
     if (found) return found;
   }
   return null;
@@ -611,17 +615,156 @@ it("keeps status information readable after the measured Hero scrolls away and o
   expect(state.saveReading).not.toHaveBeenCalled();
 });
 it("asks for an explicit Day view zone for an accepted date-only P1 without changing its facts", async () => {
-  const event = { id: "activity", status: "planned", boundaries: [{ zone_id: null, local_date: "2026-11-01" }] };
-  const item = { itemId: "activity", itemRevision: 1, family: "P1", schedule: { start: { localDate: "2026-11-01", localTime: null, zoneId: null } } };
+  const event = {
+    id: "activity",
+    status: "planned",
+    boundaries: [{ zone_id: null, local_date: "2026-11-01" }],
+  };
+  const item = {
+    itemId: "activity",
+    itemRevision: 1,
+    family: "P1",
+    schedule: { start: { localDate: "2026-11-01", localTime: null, zoneId: null } },
+  };
   state.result.observed.projection.events = [event];
   state.result.observed.projection.items = [item];
   const p = page(await loaded());
-  await p.content.props.onOpenItem({ scope: state.snapshot.scope, certificate: { epoch: "epoch" }, item });
+  await p.content.props.onOpenItem({
+    scope: state.snapshot.scope,
+    certificate: { epoch: "epoch" },
+    item,
+  });
   const node = render();
   expect(find(node, "Modal")?.visible).toBe(true);
   expect(find(node, "Input")?.value).toBe("2026-11-01");
   expect(find(node, DayFeed)).toBeNull();
   expect(state.select).not.toHaveBeenCalled();
   expect(state.saveReading).not.toHaveBeenCalled();
-  expect(item.schedule.start).toEqual({ localDate: "2026-11-01", localTime: null, zoneId: null });
+  expect(item.schedule.start).toEqual({
+    localDate: "2026-11-01",
+    localTime: null,
+    zoneId: null,
+  });
 });
+
+function acceptedCivilStay() {
+  const event = {
+    id: "accepted-stay",
+    status: "planned",
+    boundaries: [
+      {
+        role: "START",
+        local_date: "2026-11-02",
+        local_time: null,
+        zone_id: null,
+        instant: null,
+      },
+      {
+        role: "END",
+        local_date: "2026-11-03",
+        local_time: null,
+        zone_id: null,
+        instant: null,
+      },
+    ],
+  };
+  const item = {
+    itemId: event.id,
+    itemRevision: 1,
+    family: "P3",
+    hidden: false,
+    status: "planned",
+    schedule: {
+      start: { localDate: "2026-11-02", localTime: null, zoneId: null, instant: null },
+      end: { localDate: "2026-11-03", localTime: null, zoneId: null, instant: null },
+    },
+  };
+  state.result.observed.projection.events = [event];
+  state.result.observed.projection.items = [item];
+  state.result.observed.projection.query = (date: string, zone: string) => ({
+    date,
+    zone,
+    timed: [],
+    nonComparable:
+      date === "2026-11-02" && zone === "Pacific/Auckland" ? [{ event }] : [],
+    unresolved: [],
+  });
+  return {
+    event,
+    item,
+    target: { scope: state.snapshot.scope, certificate: { epoch: "epoch" }, item },
+  };
+}
+it("date-only accepted P3 opens explicit viewing context instead of failing Home, without filling Item clocks/zones", async () => {
+  const { event, item, target } = acceptedCivilStay();
+  const before = JSON.stringify({ event, item });
+  const p = page(await loaded());
+  await p.content.props.onOpenItem(target);
+  const dialog = find(render(), "Modal");
+  expect(dialog.visible).toBe(true);
+  expect(
+    find(dialog.children, "Input", (p) => p.accessibilityLabel === "dayFeed.date").value,
+  ).toBe("2026-11-02");
+  const zone = find(
+    dialog.children,
+    "Input",
+    (p) => p.accessibilityLabel === "dayFeed.zone",
+  );
+  expect(zone.value).toBe("");
+  expect(state.select).not.toHaveBeenCalled();
+  zone.onChangeText("not/a-zone");
+  find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
+  expect(state.select).not.toHaveBeenCalled();
+  zone.onChangeText("Pacific/Auckland");
+  find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
+  expect(state.select).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2026-11-02",
+    zone: "Pacific/Auckland",
+    generation: 5,
+  });
+  expect(state.params).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2026-11-02",
+    zone: "Pacific/Auckland",
+    view: "day",
+  });
+  expect(JSON.stringify({ event, item })).toBe(before);
+});
+it("accepted date-only P3 uses a legitimate saved viewing zone for the same Item's existing Details", async () => {
+  const { event, item, target } = acceptedCivilStay();
+  state.resume = { tripId: reference, zone: "Pacific/Auckland", generation: 5 };
+  const p = page(await loaded());
+  await p.content.props.onOpenItem(target);
+  const detail = find(render(), DayFeed);
+  expect(detail).toMatchObject({
+    date: "2026-11-02",
+    zone: "Pacific/Auckland",
+    directItem: { itemId: item.itemId },
+  });
+  expect(
+    event.boundaries.every(
+      (b) => b.zone_id === null && b.local_time === null && b.instant === null,
+    ),
+  ).toBe(true);
+  detail.directItem.onClose();
+  expect(find(render(), DayFeed)).toBeNull();
+  expect(state.select).not.toHaveBeenCalled();
+});
+it.each(["account", "trip", "generation", "epoch", "revision"])(
+  "accepted P3 still rejects stale/foreign %s before offering navigation",
+  async (kind) => {
+    const { target } = acceptedCivilStay();
+    const p = page(await loaded());
+    if (kind === "account") target.scope = { ...target.scope, accountId: "other" };
+    if (kind === "trip") target.scope = { ...target.scope, tripId: "other" };
+    if (kind === "generation") target.scope = { ...target.scope, generation: 4 };
+    if (kind === "epoch") target.certificate.epoch = "old";
+    if (kind === "revision") target.item = { ...target.item, itemRevision: 2 };
+    await expect(p.content.props.onOpenItem(target)).rejects.toThrow();
+    expect(find(render(), "Modal").visible).toBe(false);
+    expect(find(render(), DayFeed)).toBeNull();
+    expect(state.select).not.toHaveBeenCalled();
+    expect(state.params).not.toHaveBeenCalled();
+  },
+);
