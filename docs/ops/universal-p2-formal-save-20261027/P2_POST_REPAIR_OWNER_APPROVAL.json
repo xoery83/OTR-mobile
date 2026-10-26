@@ -1,0 +1,10 @@
+{
+  "status": "OWNER_APPROVED_PREFLIGHT_PENDING",
+  "gateCommit": "5e0c4563",
+  "questionItemId": "call_baff6b88b07346d990489002919d21ff/0",
+  "answer": "\u6279\u51c6\u8be5\u7cbe\u786e P2 \u66ff\u4ee3\u8f93\u5165 Gate",
+  "approvedAtRecorded": "2026-10-26T19:49:03.635269+00:00",
+  "paidCallCeiling": 4,
+  "maxActualCalls": 1,
+  "businessSaveAuthorized": false
+}
