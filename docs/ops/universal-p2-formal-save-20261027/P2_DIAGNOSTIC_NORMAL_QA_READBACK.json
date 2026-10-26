@@ -1,0 +1,18 @@
+{
+  "catalog": {
+    "httpStatus": 200
+  },
+  "ledger": {
+    "httpStatus": 200
+  },
+  "retainedP3Results": {
+    "httpStatus": 200
+  },
+  "retainedP2Unknown": {
+    "httpStatus": 200,
+    "status": "EXECUTION_OUTCOME_UNKNOWN",
+    "candidateCount": 0,
+    "taskId": "a8f92ed3-5806-8572-bfb2-37777c47b72e"
+  },
+  "checkedAt": "2026-10-26T20:36:25.098205+00:00"
+}

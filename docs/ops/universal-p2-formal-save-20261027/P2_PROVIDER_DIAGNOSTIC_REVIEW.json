@@ -7,5 +7,5 @@
   "scopedLint": "PASS",
   "change": "fixed stage error codes and body abort identity; no new logs/material/credentials; same send once, same30s/60s/131072 bounds; UNKNOWN/receipt/permissions unchanged",
   "actualFailureCause": "UNRESOLVED: old queue stored only SYNC_FAILED; no raw or material retained. Cannot infer timeout from absent raw.",
-  "deployment": "PENDING"
+  "deployment": "image0d50d567 healthy accepted; normal QA four reads200; independent900second observer armed"
 }

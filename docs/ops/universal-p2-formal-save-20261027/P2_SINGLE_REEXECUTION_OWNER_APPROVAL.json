@@ -1,0 +1,18 @@
+{
+  "status": "OWNER_APPROVED_NOT_BEFORE_NEW_UTC_DAY",
+  "gateCommit": "8b9ee0ca",
+  "questionItemId": "call_b3dfc6674fdc4382b1bc37e3f32a9e17/0",
+  "answer": "\u6279\u51c6\u8be5\u7cbe\u786e P2 \u5355\u6b21\u65b0\u65e5\u6267\u884c Gate",
+  "notBefore": "2026-10-27T00:00:00Z",
+  "localNotBefore": "2026-10-27T13:00:00+13:00",
+  "newPaidCallsMax": 1,
+  "paidCallCeiling": 5,
+  "batchCap": 9,
+  "sourceCap": 10,
+  "runTaskCap": 7,
+  "dailyCallsCap": 2,
+  "businessSaveAuthorized": false,
+  "objectsCreatedUnderThisGate": 0,
+  "providerCallsUnderThisGate": 0,
+  "precondition": "fresh old-call/raw/settlement and day-budget reconciliation; healthy handoff; AD5 coordination"
+}
