@@ -408,6 +408,87 @@ it.skipIf(!container).each(
       expect(prepareQueries).toBeLessThanOrEqual(70);
       expect(prepared.reviewSlots).toEqual([]);
       expect(prepared.readyCommands).toHaveLength(1);
+      if (family === "P3" && process.env.OTR_UNIVERSAL_P3_READY_OWNED_SQL_FIXTURE) {
+        const packet = new URL(
+          "../../docs/ops/universal-p3-formal-save-20261026/",
+          import.meta.url,
+        );
+        const fixed = JSON.parse(
+          readFileSync(new URL("P3_REVIEW_SCOPE.json", packet), "utf8"),
+        );
+        const fixtureScope = { ...(savedScope as Record<string, unknown>) };
+        delete fixtureScope.expiresAt;
+        const ready = (
+          await admin.lease.query(
+            "SELECT * FROM public.trip_source_core_v2_slots WHERE output_slot_id=$1::uuid",
+            [publication.proposedPlan.slots[0].slotId],
+          )
+        ).rows[0];
+        const template = readFileSync(new URL("P3_READY_ACTIVATE.sql", packet), "utf8"),
+          scopeLiteral = "scope jsonb:='" + JSON.stringify(fixed) + "'::jsonb";
+        expect(template).toContain(scopeLiteral);
+        let activate = template
+          .replace(
+            scopeLiteral,
+            "scope jsonb:='" +
+              JSON.stringify(fixtureScope).replaceAll("'", "''") +
+              "'::jsonb",
+          )
+          .replaceAll("f4b059c5-8241-4ffb-aa15-37fa25474543", actor)
+          .replaceAll("5015f4ad-99bb-8878-8926-2561d19710c8", f.input.runId)
+          .replaceAll(
+            "75db2d2c1daefb75c437c159255dd9b97de502c6e7d48c449d2b3f819a3b3349",
+            publication.candidateSha256,
+          )
+          .replaceAll(
+            "54a5e914-d4e0-8581-9169-699a1fde9780",
+            publication.proposedPlan.planId,
+          )
+          .replaceAll(
+            "__P3_FIXED_WINDOW_DEADLINE__",
+            new Date(Date.now() + 800000).toISOString(),
+          );
+        for (const [field, pin] of [
+          [
+            "identity_sha256",
+            "f1e2daacb68536d7cecad18cf43ff88ff86bb287df7087879a568c8b212ba655",
+          ],
+          [
+            "intent_sha256",
+            "ab17d1ab6179c624ab4300974b473de7764b6b4ec54fd16ba7b50716df1650ae",
+          ],
+          [
+            "purpose_sha256",
+            "8bf58c9e5eb63cc9948cdf87521fb7c1367af1503abfc1d0170b62d574a80402",
+          ],
+        ])
+          activate = activate.replaceAll(pin, String(ready[field]));
+        const control = async (text: string) => {
+          const session2 = session(container!);
+          try {
+            await session2.lease.query(text);
+          } finally {
+            session2.close();
+          }
+        };
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=false,universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
+          [actor],
+        );
+        await expect(
+          control(activate.replaceAll(String(ready.intent_sha256), "0".repeat(64))),
+        ).rejects.toThrow("P3_READY_SLOT_DRIFT");
+        await control(activate);
+        await expect(control(activate)).rejects.toThrow("P3_POLICY_DRIFT");
+        expect(
+          (
+            await admin.lease.query(
+              "SELECT count(*)::int AS n FROM public.trip_source_core_v2_slots WHERE output_slot_id=$1::uuid",
+              [ready.output_slot_id],
+            )
+          ).rows[0].n,
+        ).toBe(1);
+      }
       const command = prepared.readyCommands[0],
         commands = createCorePgStorage(
           connection,
