@@ -69,7 +69,10 @@ vi.mock("react-native", () => ({
   Keyboard: { dismiss: vi.fn(), addListener: vi.fn(() => ({ remove: vi.fn() })) },
   Platform: { OS: "ios" },
   KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
-  Pressable: (p: any) => createElement("div", null, p.children),
+  Pressable: (p: any) => {
+    state.nodes.push(p);
+    return createElement("div", null, p.children);
+  },
   Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
   ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => createElement("div", null, p.children),
@@ -122,7 +125,11 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/data/repositories/tripRepository", () => ({
+  readLocalTripRepository: async () => ({ getTrip: async () => null }),
+}));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -149,6 +156,7 @@ const fields = (): ManualRentalFields => ({
 const props = () => ({
   tripId: "00000000-0000-4000-8000-000000000001",
   tripStartDate: "2027-12-30",
+  tripEndDate: "2028-01-05",
   onClose: vi.fn(),
   onSaved: vi.fn(),
 });
@@ -428,4 +436,36 @@ it("ignores a pending place selection after the editor changes Trip", async () =
   confirm({ kind: "MANUAL", text: "Old Trip address" });
   render(p);
   expect(node("tripCreate.rentalPickupPlace").value).toBe("");
+});
+
+it("reuses Trip reference dates and keeps an opted-in return address aligned with pickup", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "rental",
+      fields: fields(),
+    })),
+  });
+  expect(node("tripCreate.rentalDates").referenceRange).toEqual({
+    start: p.tripStartDate,
+    end: p.tripEndDate,
+  });
+  node("tripCreate.rentalPickupPlace").onChangeText("Depot A");
+  render(p);
+  node("tripCreate.rentalSameLocation").onPress();
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("Depot A");
+  expect(node("tripCreate.rentalReturnPlace").editable).toBe(false);
+  node("tripCreate.rentalPickupPlace").onChangeText("Depot B");
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("Depot B");
+  node("tripCreate.rentalSameLocation").onPress();
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").editable).toBe(true);
+  node("tripCreate.rentalReturnPlace").onChangeText("Custom depot");
+  render(p);
+  node("tripCreate.rentalPickupPlace").onChangeText("Depot C");
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("Custom depot");
 });

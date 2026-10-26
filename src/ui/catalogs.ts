@@ -716,7 +716,7 @@ export const en = {
   "tripCreate.addNote": "Add a note…",
   "tripCreate.tripDateReference": "Trip date range",
   "tripCreate.activityDateReferenceHint":
-    "Trip dates are highlighted for reference. You can select any activity dates.",
+    "Trip dates are highlighted for reference. You can select any dates.",
   "tripCreate.searchParticipants": "Search people in this trip",
   "tripCreate.participantCount": "{count} selected",
   "tripCreate.participantDone": "Done ({count})",
@@ -771,6 +771,7 @@ export const en = {
   "tripCreate.rentalReturnDate": "Return date",
   "tripCreate.rentalReturnTime": "Return time",
   "tripCreate.rentalReturnPlace": "Return location",
+  "tripCreate.rentalSameLocation": "Same as pickup location",
   "tripCreate.rentalFieldsRequired":
     "Enter a name and both pickup and return dates, times and locations.",
   "tripCreate.rentalNotes": "Notes (optional)",
@@ -3501,7 +3502,7 @@ export const zhHans: Record<MessageKey, string> = {
   "tripCreate.clearLocation": "清除地点",
   "tripCreate.addNote": "添加备注…",
   "tripCreate.tripDateReference": "旅行日期范围",
-  "tripCreate.activityDateReferenceHint": "旅行日期已高亮供参考，活动可以选择任意日期。",
+  "tripCreate.activityDateReferenceHint": "旅行日期已高亮供参考，可以选择任意日期。",
   "tripCreate.searchParticipants": "搜索此旅行中的参与者",
   "tripCreate.participantCount": "已选择 {count} 人",
   "tripCreate.participantDone": "完成（{count}）",
@@ -3549,6 +3550,7 @@ export const zhHans: Record<MessageKey, string> = {
   "tripCreate.rentalReturnDate": "还车日期",
   "tripCreate.rentalReturnTime": "还车时间",
   "tripCreate.rentalReturnPlace": "还车地点",
+  "tripCreate.rentalSameLocation": "与取车地点相同",
   "tripCreate.rentalFieldsRequired": "请输入名称及取车、还车的日期、时间和地点。",
   "tripCreate.rentalNotes": "备注（可选）",
   "tripCreate.rentalSupplier": "租车公司（可选）",

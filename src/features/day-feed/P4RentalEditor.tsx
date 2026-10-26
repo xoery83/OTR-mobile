@@ -1,3 +1,5 @@
+import { AppIcon } from "@/components/AppIcon";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
@@ -31,7 +33,7 @@ import { UiButton, UiText as Text } from "@/ui/controls";
 import { UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { TripCalendarRangeField } from "./TripCalendarRangeField";
@@ -129,6 +131,7 @@ export function P4RentalEditor({
   itemId,
   initialDate,
   tripStartDate,
+  tripEndDate,
   opened,
   onClose,
   onSaved,
@@ -141,6 +144,7 @@ export function P4RentalEditor({
   itemId?: string;
   initialDate?: string | null;
   tripStartDate?: string | null;
+  tripEndDate?: string | null;
   opened?: Opened;
   onClose(): void;
   onSaved(itemId: string): void;
@@ -149,6 +153,9 @@ export function P4RentalEditor({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  const [sameReturnLocation, setSameReturnLocation] = useState(false);
+  const sameReturnRef = useRef(false);
   const generation = getAccountGeneration();
   const identity = useRef({ tripId, itemId, opened });
   useLayoutEffect(() => {
@@ -168,6 +175,28 @@ export function P4RentalEditor({
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
+  const [tripRange, setTripRange] = useState({
+    start: tripStartDate ?? "",
+    end: tripEndDate ?? "",
+  });
+  useEffect(() => {
+    let active = true;
+    if (tripStartDate === undefined || tripEndDate === undefined) {
+      void readLocalTripRepository()
+        .then((repository) => repository.getTrip(tripId))
+        .then((trip) => {
+          if (active && generation === getAccountGeneration())
+            setTripRange({
+              start: tripStartDate ?? trip?.startDate ?? "",
+              end: tripEndDate ?? trip?.endDate ?? "",
+            });
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [tripId, tripStartDate, tripEndDate, generation]);
   const [saving, setSaving] = useState(false);
   const [frozen, setFrozen] = useState(false);
   useEffect(() => {
@@ -207,6 +236,8 @@ export function P4RentalEditor({
   const change = (next: Partial<ManualRentalFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
     const value = { ...fieldsRef.current, ...next };
+    if (sameReturnRef.current && next.pickupLocation !== undefined)
+      value.returnLocation = next.pickupLocation;
     fieldsRef.current = value;
     setFields(value);
   };
@@ -441,7 +472,11 @@ export function P4RentalEditor({
                       label={t("tripCreate.rentalDates")}
                       presentation="field"
                       value={{ start: fields.startDate, end: fields.endDate ?? "" }}
-                      initialNavigationDate={tripStartDate}
+                      initialNavigationDate={tripStartDate ?? tripRange.start}
+                      referenceRange={{
+                        start: tripStartDate ?? tripRange.start,
+                        end: tripEndDate ?? tripRange.end,
+                      }}
                       markToday
                       disabled={saving || frozen}
                       onChange={({ start, end }) =>
@@ -479,13 +514,44 @@ export function P4RentalEditor({
                     <Text style={styles.caption}>
                       {t("tripCreate.rentalReturnPlace")}
                     </Text>
+                    <Pressable
+                      accessibilityRole="checkbox"
+                      accessibilityLabel={t("tripCreate.rentalSameLocation")}
+                      accessibilityState={{
+                        checked: sameReturnLocation,
+                        disabled: saving || frozen,
+                      }}
+                      disabled={saving || frozen}
+                      style={styles.sameLocation}
+                      onPress={() => {
+                        if (!current() || busyRef.current || frozenRef.current) return;
+                        sameReturnRef.current = !sameReturnRef.current;
+                        setSameReturnLocation(sameReturnRef.current);
+                        if (sameReturnRef.current)
+                          change({
+                            returnLocation: fieldsRef.current?.pickupLocation ?? "",
+                          });
+                      }}
+                    >
+                      <AppIcon
+                        name={sameReturnLocation ? "checkmark.square.fill" : "square"}
+                        size={20}
+                        color={colors.accent}
+                      />
+                      <Text style={styles.meta}>
+                        {t("tripCreate.rentalSameLocation")}
+                      </Text>
+                    </Pressable>
                     <UiTextInput
                       accessibilityLabel={t("tripCreate.rentalReturnPlace")}
                       placeholder={t("tripCreate.rentalReturnPlace")}
-                      onFocus={() => void openPlaceSearch("returnLocation")}
+                      onFocus={() => {
+                        if (!sameReturnRef.current)
+                          void openPlaceSearch("returnLocation");
+                      }}
                       value={fields.returnLocation}
                       maxLength={500}
-                      editable={!saving && !frozen}
+                      editable={!saving && !frozen && !sameReturnLocation}
                       onChangeText={(returnLocation) => change({ returnLocation })}
                     />
                   </View>
@@ -567,6 +633,12 @@ export function P4RentalEditor({
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    sameLocation: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.heading,
+      minHeight: 44,
+    },
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
     form: { gap: visual.space.section },

@@ -278,3 +278,21 @@ it("marks Today by background only and preserves the selected day styling", () =
   expect(tint.props.style).toMatchObject({ opacity: 0.08 });
   expect(html).not.toContain("Today");
 });
+
+it("keeps Today and selected backgrounds rectangular with the trip range", () => {
+  render({ today: "2027-02-03" });
+  const selected = state.nodes.find(
+    (node) => node.kind === "Pressable" && node.accessibilityState?.selected,
+  );
+  expect(selected).toBeTruthy();
+  for (const style of selected.style.filter(Boolean))
+    expect(style.borderRadius ?? 0).toBe(0);
+  const tint = state.nodes.find(
+    (node) =>
+      node.kind === "View" &&
+      node.pointerEvents === "none" &&
+      node.style?.opacity === 0.08,
+  );
+  expect(tint).toBeTruthy();
+  expect(tint.style.borderRadius ?? 0).toBe(0);
+});

@@ -339,9 +339,8 @@ const createStyles = (colors: UiColors) =>
       gap: 3,
     },
     inRange: { backgroundColor: colors.accentSurface },
-    selected: { backgroundColor: colors.accent, borderRadius: visual.radius.control },
+    selected: { backgroundColor: colors.accent },
     today: {
-      borderRadius: visual.radius.control,
       borderWidth: 1,
       borderColor: colors.separator,
     },
@@ -353,7 +352,6 @@ const createStyles = (colors: UiColors) =>
       right: 0,
       backgroundColor: colors.textPrimary,
       opacity: 0.08,
-      borderRadius: visual.radius.control,
     },
     day: { ...visual.type.tripRowTitle, color: colors.textPrimary, textAlign: "center" },
     muted: { color: colors.disabled },

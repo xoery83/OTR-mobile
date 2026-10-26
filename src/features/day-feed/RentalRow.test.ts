@@ -283,6 +283,6 @@ it("retains endpoint name and address in active Browse and supplied contact text
   expect(browse).toContain("Pickup depot · 18 Synthetic Road");
   const detail = render("TODAY", "I", undefined, value);
   expect(detail).toContain(value.contactText);
-  expect(detail).toContain(t("p4.bookedClass", { value: value.bookedClass }));
+  expect(detail).toContain(t("p4.bookedClass", { value: value.bookedClass! }));
   expect(render("PAST", "I", undefined, value)).not.toContain(value.contactText);
 });

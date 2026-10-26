@@ -9,7 +9,6 @@ import { TripScreen } from "@/features/day-feed/TripScreen";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { TripSearchEntry } from "@/features/trip-search/TripSearchEntry";
 import { NavigationContentFrame } from "@/components/navigationChrome";
-import { View } from "react-native";
 export default function TripRoute() {
   const params = useLocalSearchParams<{ tripId?: string; view?: string }>();
   const selectedTrip =
@@ -38,15 +37,9 @@ export default function TripRoute() {
           showUnavailableTripEdit={home}
         />
       ) : null}
-      {home ? (
-        <View style={{ flex: 1 }}>
-          <TripScreen />
-        </View>
-      ) : (
-        <NavigationContentFrame underlapHeader={day}>
-          <TripScreen contentFrameManaged={!day} />
-        </NavigationContentFrame>
-      )}
+      <NavigationContentFrame underlapHeader={home || day}>
+        <TripScreen contentFrameManaged={!home && !day} />
+      </NavigationContentFrame>
     </>
   );
 }

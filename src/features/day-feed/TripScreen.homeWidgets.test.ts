@@ -6,7 +6,6 @@ import { DayFeed } from "./DayFeed";
 import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
-import { createDefaultManualRentalRepository } from "@/data/repositories/manualRentalRepository";
 import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
 vi.mock("./useMinuteClock", () => ({
   useMinuteClock: () => ({
@@ -19,7 +18,7 @@ vi.mock("./useP1CivilMove", () => ({
     active: false,
     canMove: () => false,
     handlers: {},
-    touchHandlers: {},
+    touchHandlers: { onMoveShouldSetResponderCapture: () => state.moveCapture },
     wrapRow: (_k: string, _d: string, c: any) => c,
     wrapClock: (_k: string, _d: string, _m: number, c: any) => c,
   }),
@@ -44,6 +43,10 @@ vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
 const reference = "b61a0000-0061-4000-8000-000000000001";
 const actor = "3a44420f-ec2b-4d7e-9770-410a5ed5e77e";
 const state = vi.hoisted(() => ({
+  moveCapture: false,
+  preventRemove: null as null | ((event: any) => void),
+  focusEffect: null as unknown,
+  dispatch: vi.fn(),
   platform: "ios",
   platformVersion: "25.0",
   hooks: [] as unknown[],
@@ -177,12 +180,16 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("expo-router/react-navigation", () => ({
   useHeaderHeight: () => state.headerHeight,
+  usePreventRemove: (enabled: boolean, callback: (event: any) => void) => {
+    state.preventRemove = enabled ? callback : null;
+  },
 }));
 vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
   usePathname: () => "/trip-home",
   useNavigation: () => state.navigation,
   useFocusEffect: (callback: () => void) => {
+    state.focusEffect = callback;
     if (state.mount && state.focused) state.effects.push(callback);
   },
   useLocalSearchParams: () => ({
@@ -286,6 +293,10 @@ function render(contentFrameManaged = false) {
 }
 function find(node: ReactNode, type: any): any {
   if (!isValidElement(node)) return null;
+  if (
+    (node.props as { accessibilityElementsHidden?: boolean }).accessibilityElementsHidden
+  )
+    return null;
   if (node.type === type) return node.props;
   for (const child of Children.toArray(
     (node.props as { children?: ReactNode }).children,
@@ -310,7 +321,11 @@ beforeEach(() => {
   state.discovery = [];
   state.quickActions = null;
   state.focused = true;
-  state.navigation = { setOptions: state.setOptions, isFocused: () => state.focused };
+  state.navigation = {
+    setOptions: state.setOptions,
+    isFocused: () => state.focused,
+    dispatch: state.dispatch,
+  };
   state.routeMode = "home";
   state.headerHeight = 103;
   state.shellVisibleDates = null;
@@ -406,7 +421,13 @@ it("marks the Today destination explicitly so the ordinary root stays My Trips",
   workspace.onOpenToday(reference, { date: "2027-02-06", zone: "Asia/Tokyo" });
   expect(state.navigate).toHaveBeenCalledWith({
     pathname: "/trip-home",
-    params: { view: "day", tripId: reference, date: "2027-02-06", zone: "Asia/Tokyo" },
+    params: {
+      view: "day",
+      tripId: reference,
+      date: "2027-02-06",
+      zone: "Asia/Tokyo",
+      viewMode: "NAMED_ZONE",
+    },
   });
   expect(state.saveReading).not.toHaveBeenCalled();
 });
@@ -1026,7 +1047,7 @@ it("Today saved-zone fallback accepts only same Trip/current generation and neve
   ).toBeNull();
 });
 
-it("opens an explicitly planned local Day without inventing a timezone-bearing context", async () => {
+it("defaults the local Home widget to device Today instead of the previous reading date without inventing an Item timezone", async () => {
   state.result.observed = null;
   state.result.localManual = localRead();
   state.view.zone = "";
@@ -1035,15 +1056,29 @@ it("opens an explicitly planned local Day without inventing a timezone-bearing c
   const today = workspace.widgetsForHome(reference, "Active", "2026-10-01")[0].content
     .props;
   expect(today.zone).toBeNull();
-  expect(today.planningDate).toBe("2026-10-16");
+  expect(today.planningDate).toBe("2026-10-26");
   await today.onOpenLocalToday({
     ...localRead(),
     today: { date: "2026-10-16", zone: null },
   });
   expect(state.navigate).toHaveBeenCalledWith(
     expect.objectContaining({
-      params: expect.objectContaining({ date: "2026-10-16", zone: "", view: "day" }),
+      params: expect.objectContaining({
+        date: "2026-10-16",
+        zone: "",
+        view: "day",
+        viewMode: "FLOATING",
+      }),
     }),
+  );
+  expect(state.enterHeader).toHaveBeenCalledWith(
+    expect.objectContaining({
+      tripId: reference,
+      date: "2026-10-16",
+      zone: null,
+      viewMode: "FLOATING",
+    }),
+    "EXPLICIT_TODAY_HEADER",
   );
 });
 
@@ -1227,7 +1262,7 @@ it("keeps the native toolbar transparent with a single measured Day boundary", a
   expect(find(node, DayFeed).presentation.topInset).toBe(103);
 });
 
-it("enables the existing native right-swipe only on immersive Home, preserving Day gesture ownership", async () => {
+it("enables native right-swipe on Home and Day with Day removal intercepted", async () => {
   await loaded();
   expect(state.setOptions.mock.lastCall![0].fullScreenGestureEnabled).toBe(true);
   state.routeMode = "day";
@@ -1295,29 +1330,18 @@ it("routes P3 Edit through native Stay detail rather than granting editor author
   expect(find(render(), "StayEditor")).toBeNull();
 });
 
-it("opens same-ID P4 edit only after the owning rental repository returns an editable draft", async () => {
+it("routes P4 through native Rental detail without granting editor authority in Home", async () => {
   state.result.observed = null;
   const rental = { ...localRead().items[0], family: "P4", itemId: "manual-rental" };
   state.result.localManual = { ...localRead(), items: [rental] };
   state.resolveLocalItem.mockResolvedValue({ ...localRead(), item: rental });
-  const draft = { mode: "EDIT", itemId: rental.itemId, fields: {} };
-  const repository = { read: vi.fn(async () => draft) };
-  vi.mocked(createDefaultManualRentalRepository).mockResolvedValue(repository as any);
   const workspace = find(await loaded(), LocalTripWorkspace);
   await workspace.onOpenLocalHomeItem(reference, rental.itemId, state.result.localManual);
-  const preview = find(render(), "LocalItemPreview");
-  preview.onEdit();
-  for (let i = 0; i < 12; i++) await Promise.resolve();
-  expect(repository.read).toHaveBeenCalledWith(reference, rental.itemId);
-  expect(find(render(), "LocalItemPreview")).toBeNull();
-  const editor = find(render(), "RentalEditor");
-  expect(editor).toMatchObject({
-    tripId: reference,
-    itemId: rental.itemId,
-    opened: { draft, repository },
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p4-detail",
+    params: { tripId: reference, itemId: rental.itemId, occurrence: "PICKUP" },
   });
-  editor.onClose();
-  expect(find(render(), "LocalItemPreview").item.itemId).toBe(rental.itemId);
+  expect(find(render(), "LocalItemPreview")).toBeNull();
 });
 it("opens same-ID P5 edit only after the owning transport repository returns an editable draft", async () => {
   state.result.observed = null;
@@ -1650,4 +1674,97 @@ it("opens real P2 through the native detail route with the originating Item", as
     pathname: "/p2-detail",
     params: { tripId: reference, itemId: "manual-hotel" },
   });
+});
+
+it("returns a Day back gesture to the same Trip Home before allowing My Trips", async () => {
+  state.routeMode = "day";
+  render();
+  expect(state.preventRemove).toBeTypeOf("function");
+  state.preventRemove!({ data: { action: { type: "POP" } } });
+  expect(state.params).toHaveBeenCalledWith({ view: "home" });
+  expect(state.back).not.toHaveBeenCalled();
+  state.routeMode = "home";
+  render();
+  expect(state.preventRemove).toBeNull();
+});
+
+it("keeps Home and Day in stable mounted slots across same-Trip switches", async () => {
+  const home = await loaded();
+  const slots = (node: ReactElement) =>
+    Children.toArray((node.props as any).children).slice(0, 2) as ReactElement<any>[];
+  const before = slots(home);
+  expect(before[0].props.accessibilityElementsHidden).toBe(false);
+  expect(before[1].props.accessibilityElementsHidden).toBe(true);
+  state.routeMode = "day";
+  const during = slots(render());
+  expect(during.map((slot) => [slot.type, slot.key])).toEqual(
+    before.map((slot) => [slot.type, slot.key]),
+  );
+  expect(during[0].props.children.type).toBe(before[0].props.children.type);
+  expect(during[0].props.accessibilityElementsHidden).toBe(true);
+  expect(during[1].props.accessibilityElementsHidden).toBe(false);
+  state.routeMode = "home";
+  const after = slots(render());
+  expect(after[1].props.children.type).toBe(during[1].props.children.type);
+});
+
+it("does not restart the focused Reader when only the reading bookmark changes", async () => {
+  await loaded();
+  render();
+  const before = state.focusEffect;
+  state.view = { ...state.view, reading: { offset: 450 } } as typeof state.view;
+  render();
+  expect(state.focusEffect).toBe(before);
+});
+it("lets explicit My Trips and route replacement exit Day", async () => {
+  state.routeMode = "day";
+  const node = await loaded();
+  const homeSlot = Children.toArray((node.props as any).children)[0] as ReactElement;
+  const walk = (node: ReactNode): any => {
+    if (!isValidElement(node)) return null;
+    if (node.type === LocalTripWorkspace) return node.props;
+    for (const child of Children.toArray((node.props as any).children)) {
+      const found = walk(child);
+      if (found) return found;
+    }
+    return null;
+  };
+  walk(homeSlot).onBackToTrips();
+  const action = { type: "POP" };
+  state.preventRemove!({ data: { action } });
+  expect(state.dispatch).toHaveBeenCalledWith(action);
+  const replacement = { type: "REPLACE" };
+  state.preventRemove!({ data: { action: replacement } });
+  expect(state.dispatch).toHaveBeenCalledWith(replacement);
+});
+
+it("recognizes a horizontal Day swipe without taking a vertical scroll", async () => {
+  state.routeMode = "day";
+  const root = await loaded();
+  const search = (node: ReactNode): any => {
+    if (!isValidElement(node)) return null;
+    const props = node.props as any;
+    if (props.onStartShouldSetResponderCapture) return props;
+    for (const child of Children.toArray(props.children)) {
+      const found = search(child);
+      if (found) return found;
+    }
+    return null;
+  };
+  const host = search(root);
+  const event = (x: number, y: number) => ({
+    nativeEvent: { pageX: x, pageY: y, touches: [{}] },
+  });
+  host.onStartShouldSetResponderCapture(event(20, 300));
+  expect(host.onMoveShouldSetResponderCapture(event(25, 400))).toBe(false);
+  expect(host.onMoveShouldSetResponderCapture(event(90, 310))).toBe(true);
+  host.onResponderRelease(event(180, 315));
+  expect(state.params).toHaveBeenCalledWith({ view: "home" });
+  state.params.mockClear();
+  host.onStartShouldSetResponderCapture(event(20, 300));
+  state.moveCapture = true;
+  expect(host.onMoveShouldSetResponderCapture(event(90, 310))).toBe(true);
+  state.moveCapture = false;
+  host.onResponderRelease(event(180, 315));
+  expect(state.params).not.toHaveBeenCalled();
 });
