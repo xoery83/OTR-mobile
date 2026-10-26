@@ -598,9 +598,14 @@ it.each(["RETRY", "CANCEL_NEW"])(
     expect((move.confirmation as any).props.visible).toBe(false);
   },
 );
-it.each(["CHECKIN", "CHECKOUT"])(
-  "real Stay %s move saves only that clock and retains both dates",
-  async (role) => {
+it.each([
+  ["CHECKIN", "16:00"],
+  ["CHECKOUT", "10:00"],
+  ["CHECKIN", null],
+  ["CHECKOUT", null],
+])(
+  "real Stay %s move from %s saves only that clock and retains both dates",
+  async (role, clock) => {
     const itemId = "real-stay",
       start = "2026-10-25",
       end = "2026-10-28";
@@ -608,8 +613,8 @@ it.each(["CHECKIN", "CHECKOUT"])(
       title: "Hotel",
       startDate: start,
       endDate: end,
-      startTime: "16:00",
-      endTime: "10:00",
+      startTime: role === "CHECKIN" ? clock : "16:00",
+      endTime: role === "CHECKOUT" ? clock : "10:00",
       location: "Hotel address",
       description: null,
       participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
@@ -635,8 +640,8 @@ it.each(["CHECKIN", "CHECKOUT"])(
       participation: { mode: "WHOLE_GROUP", personIds: [] },
       documentSummaries: [],
       schedule: {
-        start: { localDate: start, localTime: "16:00", comparable: false },
-        end: { localDate: end, localTime: "10:00", comparable: false },
+        start: { localDate: start, localTime: fields.startTime, comparable: false },
+        end: { localDate: end, localTime: fields.endTime, comparable: false },
       },
     };
     const read = {
@@ -683,7 +688,9 @@ it.each(["CHECKIN", "CHECKOUT"])(
     expect(real.save.mock.calls[0][0]).toBe(draft);
     expect(real.save.mock.calls[0][1]).toEqual({
       ...fields,
-      ...(role === "CHECKIN" ? { startTime: "16:30" } : { endTime: "10:30" }),
+      ...(role === "CHECKIN"
+        ? { startTime: clock ? "16:30" : "12:00" }
+        : { endTime: clock ? "10:30" : "12:00" }),
     });
     expect(saved).toHaveBeenCalledOnce();
   },

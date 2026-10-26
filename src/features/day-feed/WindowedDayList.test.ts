@@ -268,6 +268,21 @@ it("uses actual reading gestures rather than native offset compensation or momen
   scroll(1300);
   expect(readingMotion).toHaveBeenCalledTimes(2);
 });
+it("uses native-only trackpad drags without treating layout compensation or momentum as reading", () => {
+  const { readingMotion } = setup();
+  scroll(100);
+  state.props.onScrollBeginDrag();
+  scroll(140);
+  expect(readingMotion.mock.calls).toEqual([[40]]);
+  state.props.onContentSizeChange(400, 4000);
+  scroll(900);
+  expect(readingMotion).toHaveBeenCalledOnce();
+  scroll(880);
+  expect(readingMotion.mock.calls).toEqual([[40], [-20]]);
+  state.props.onScrollEndDrag();
+  scroll(1200);
+  expect(readingMotion).toHaveBeenCalledTimes(2);
+});
 
 it("retains the sole real touch move delivered before native drag begins", () => {
   const { readingMotion } = setup();

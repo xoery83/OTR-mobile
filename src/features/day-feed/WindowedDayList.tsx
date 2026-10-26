@@ -152,6 +152,8 @@ export function WindowedDayList<T>({
     ended: boolean;
   } | null>(null);
   const lastNativeOffset = useRef(0);
+  const nativeReading = useRef(false);
+  const nativeLayoutChanged = useRef(false);
   const prepending = useRef(false);
   const followPrependOrigin = useRef<number | null>(null);
   const contentHeight = useRef(0);
@@ -754,6 +756,9 @@ export function WindowedDayList<T>({
       onScrollBeginDrag={() => {
         if (renderedEpoch !== listEpoch.current) return;
         dragging.current = true;
+        // Trackpad/wheel scrolling has a native drag but no single-finger stream.
+        nativeReading.current = readingTouch.current === null;
+        nativeLayoutChanged.current = false;
         // Layout/overscroll from this gesture must not unlock another previous-date prepend.
         prepending.current = false;
         followPrependOrigin.current = null;
@@ -795,6 +800,19 @@ export function WindowedDayList<T>({
           prepending.current = false;
           followPrependOrigin.current = null;
         }
+        const nativeDelta = rawOffset - lastNativeOffset.current;
+        if (
+          dragging.current &&
+          nativeReading.current &&
+          !readingTouch.current &&
+          !nativeLayoutChanged.current &&
+          !pending.current &&
+          !prepending.current &&
+          Number.isFinite(nativeDelta) &&
+          nativeDelta
+        )
+          live.current.onReadingMotion?.(nativeDelta);
+        nativeLayoutChanged.current = false;
         const movingUp = dragging.current && rawOffset < lastNativeOffset.current - 1;
         lastNativeOffset.current = rawOffset;
         if (movingUp) prependPrevious(rawOffset, "scroll");
@@ -824,6 +842,8 @@ export function WindowedDayList<T>({
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
       onContentSizeChange={(_width, height) => {
         if (renderedEpoch !== listEpoch.current) return;
+        if (contentHeight.current !== height && dragging.current)
+          nativeLayoutChanged.current = true;
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
         retry();

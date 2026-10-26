@@ -100,7 +100,7 @@ export function StayReadRow({
           accessibilityRole="button"
           accessibilityLabel={stay.title}
           onPress={onFocus}
-          onLongPress={stayPlannedClock(stay, role) && onMove ? onMove : undefined}
+          onLongPress={role !== "BASE" ? onMove : undefined}
           delayLongPress={450}
           style={s.main}
         >

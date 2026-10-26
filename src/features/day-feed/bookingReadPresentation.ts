@@ -141,8 +141,10 @@ export function stayPlannedClock(stay: StayRead, role: string) {
 }
 
 export function stayMoveItem(stay: StayRead, role: string) {
+  if (role !== "CHECKIN" && role !== "CHECKOUT") return undefined;
   const time = stayPlannedClock(stay, role);
-  if (!time) return undefined;
+  const authored = role === "CHECKIN" ? stay.checkinTime : stay.checkoutTime;
+  if (authored && !time) return undefined;
   const other = stayPlannedClock(stay, role === "CHECKIN" ? "CHECKOUT" : "CHECKIN");
   const otherMinute = other
     ? Number(other.slice(0, 2)) * 60 + Number(other.slice(3, 5))

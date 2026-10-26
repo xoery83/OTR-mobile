@@ -33,14 +33,14 @@ it("moves each planned Stay boundary independently within its own date", () => {
     }),
   ).toBe(false);
 });
-it("never arms Daily Base, policy-only or invalid clock boundaries", () => {
+it("arms a missing planned clock without using hotel policy, but never Base or invalid clocks", () => {
   expect(stayMoveItem(stay, "BASE")).toBeUndefined();
   expect(
     stayMoveItem(
       { ...stay, checkinTime: null, permittedCheckin: "15:00–21:00" },
       "CHECKIN",
     ),
-  ).toBeUndefined();
+  ).toMatchObject({ date: stay.start, time: null, dateScope: "SAME_DAY" });
   expect(stayMoveItem({ ...stay, checkoutTime: "25:00" }, "CHECKOUT")).toBeUndefined();
   expect(stayMoveProposal(stayMoveItem(stay, "CHECKIN")!, stay.start, 1440).status).toBe(
     "UNAVAILABLE",
