@@ -1,0 +1,28 @@
+{
+  "status": "P3_NATIVE_COLD_SAME_IDENTITY_VERIFIED",
+  "at": "2026-10-26T17:52:43.119636+00:00",
+  "readOnly": true,
+  "item": {
+    "id": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
+    "title": "Harbour QA Hotel",
+    "experience_family": "P3",
+    "semantic_revision": 1,
+    "start_local_date": "2026-11-02",
+    "end_local_date": "2026-11-03",
+    "start_local_time": null,
+    "end_local_time": null,
+    "start_zone_id": null,
+    "end_zone_id": null
+  },
+  "receipt": {
+    "operation_id": "a98856b8-209a-8bc0-9e2b-e0919bb73181",
+    "intent_sha256": "ab17d1ab6179c624ab4300974b473de7764b6b4ec54fd16ba7b50716df1650ae",
+    "receipt_sha256": "0625fac88a19c84e81a341051802fe3576c7b8ca872a28650c77bd78c7625169"
+  },
+  "queue": {
+    "id": "a98856b8-209a-8bc0-9e2b-e0919bb73181",
+    "status": "COMPLETED",
+    "attempt_count": 0,
+    "last_error_code": null
+  }
+}
