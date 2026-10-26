@@ -1,0 +1,16 @@
+{
+  "at": "20261026T131206Z",
+  "counts": {
+    "candidate": 1,
+    "item": 0,
+    "stay": 0,
+    "receipt": 0,
+    "slot": 1,
+    "association": 0
+  },
+  "slot": {
+    "state": "READY",
+    "target_id": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
+    "operation_id": "a98856b8-209a-8bc0-9e2b-e0919bb73181"
+  }
+}
