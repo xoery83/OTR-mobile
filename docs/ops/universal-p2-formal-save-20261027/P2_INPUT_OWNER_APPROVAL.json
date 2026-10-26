@@ -1,0 +1,28 @@
+{
+  "status": "OWNER_APPROVED_NOT_EXECUTED",
+  "gate": "P2_INPUT_QUALIFICATION_GATE",
+  "gateCommit": "e6e27c87",
+  "reviewCommit": "9e51fe0c",
+  "questionItemId": "call_8f01a734a1184e919d26e9f78025a879/0",
+  "answer": "批准该精确 P2 输入资格 Gate",
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "batchCap": [
+    6,
+    7
+  ],
+  "sourceCap": [
+    7,
+    8
+  ],
+  "runTaskCap": [
+    4,
+    5
+  ],
+  "paidCallCap": [
+    3,
+    4
+  ],
+  "additionalCallsMax": 1,
+  "businessSaveAuthority": false
+}
