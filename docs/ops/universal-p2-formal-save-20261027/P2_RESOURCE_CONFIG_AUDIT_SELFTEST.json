@@ -1,0 +1,7 @@
+{
+  "status": "EXACT_EXISTING_CP14_CONFIG_AUDIT_READER_SELFTEST_PASS",
+  "checks": 8,
+  "auditRecordCount": 1,
+  "extraRequestBindingRequired": false,
+  "databaseWrites": 0
+}
