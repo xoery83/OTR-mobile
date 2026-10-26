@@ -35,3 +35,12 @@ Dedicated C0 / English / Light, normal local account and existing synthetic Trip
 
 Evidence: `/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-r27-20261027/`.
 DeviceHub GUI returned to Universal, CaptureKeyboard off, no open Draft. After Owner release, R27 physical install and launch PASS; the existing normal Session, Trip Home, Today27Oct Widget, real Day and rectangular Day Calendar were observed. Mirror then disconnected with iPhone in Use during Calendar scrolling. Physical P2 layout/latency and history/status-bar regression remain pending reconnection; simulator observations above are not substituted as physical PASS. No physical Item was created, edited or saved in this regression.
+
+
+## Physical follow-up after Owner lock
+
+Mirror reconnected after Owner locked the phone. Normal Calendar navigation selected14Dec; the existing real `Nz5609`09:00→10:30 AKL→NSN opened Browse→Focus→Immersive. Final Flight journey heading/count, shared flight surface, both date/zone facts, Everyone and four capability-gated actions were visible. Native Back preserved expanded Focus and the reading position. Screenshot: `phone/p2-real-final-immersive.png` under the evidence directory above. No Save or Item mutation.
+
+The first click+observation763ms still showed the outgoing Focus; the subsequent screenshot showed complete detail. This is not a physical latency measurement or proof of a subsecond load. Do not report the intermediate observation as completed content.
+
+Calendar jump to final empty22Dec succeeded. Mirror drag/wheel attempts did not visibly expose prior dates; global GUI input/observation lag was also occurring, and Universal requested exclusive input for AD5. All Native GUI input was immediately yielded. Physical sparse/history/status-bar acceptance remains pending exclusive Mirror regression; no code change is justified from this ambiguous input observation alone. No simulator result is substituted as physical PASS.
