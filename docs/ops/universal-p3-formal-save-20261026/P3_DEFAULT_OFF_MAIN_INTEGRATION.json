@@ -1,0 +1,22 @@
+{
+  "status": "DEFAULT_OFF_INCREMENTAL_MAIN_FAST_FORWARD_VERIFIED",
+  "before": "1d7d2b9ea58d46dbdd0845a5eb7d74400754a9ab",
+  "after": "10a9ef075e17c24cc81dab5bf46669a194b7e490",
+  "method": "ff-only with fresh HEAD/CAS and serialized lock",
+  "originalDirtyStatusPreserved": true,
+  "originalDirtyTrackedBytesPreserved": true,
+  "nativeFeatureWorktreeChanged": false,
+  "pushed": false,
+  "formalP3SavePass": false,
+  "businessRetryApproval": "PENDING",
+  "postMergeSmoke": {
+    "files": 4,
+    "assertions": 20,
+    "status": "PASS"
+  },
+  "preMergeFocused": {
+    "files": 16,
+    "assertions": 159,
+    "status": "PASS"
+  }
+}
