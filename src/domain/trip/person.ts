@@ -15,6 +15,8 @@ export type TripPerson = {
   tripId: TripId;
   personId: TripPersonId;
   displayName: string;
+  /** Explicit local Person intent observation, never Account linkage or access. */
+  localState?: "LOCAL_PENDING";
   /** null describes unavailable lifecycle observation, not a business state. */
   participation: { isParticipating: boolean; revision: number } | null;
 };

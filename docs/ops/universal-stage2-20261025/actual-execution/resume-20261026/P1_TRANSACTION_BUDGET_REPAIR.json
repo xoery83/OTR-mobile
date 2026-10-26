@@ -1,0 +1,67 @@
+{
+  "status": "SYNC_CONTRACT_PASS_DEV_READ_ONLY_CALIBRATION_PASS_CORE_CLOUD_PENDING",
+  "recordedAt": "2026-10-26T04:53:45.651285+00:00",
+  "firstFailures": {
+    "window1": "cross-connection Source Actor/Trip scope lock self-block",
+    "window2": "full Source Prepare 91 SQL at ~290ms hit unchanged 30s lease"
+  },
+  "repair": [
+    "Reuse owning Core lease and canonical Source Actor/Trip locks",
+    "Retain pin ordering/validity/hash, exact representations, redaction, double snapshots and current publication fences",
+    "Scope metadata/real locked Actor cache cloned only within one lease; no bytes/result/Graph cache",
+    "One SourcePlan certification witness exact command, fresh capability/publication and latest Actor/Graph",
+    "One Core exact-operation witness for audit only after full qualification; fresh Gate/publication and current per-ref RLS/hash/material checks; no witness preserves full reads",
+    "Reuse CoreStorage already locked Actor/Graph for the same qualification; wrong Actor/Trip/inactive reject",
+    "Batch equivalent locks and readonly Run/pin/hash and material metadata queries; no grants/schema/provider changes"
+  ],
+  "regressions": {
+    "prepareBeforeQueries": 90,
+    "prepareFinalQueries": 59,
+    "coreBeforeQueries": 132,
+    "coreFinalQueries": 83,
+    "finalizeQueries": 41,
+    "focusedFiles": 12,
+    "focusedTests": 96,
+    "focused": "PASS",
+    "typescript": "PASS",
+    "diffCheck": "PASS",
+    "independentReadOnlyReview": "NO_P0_P1_P2_BLOCKER"
+  },
+  "isolatedPg": {
+    "network": "none",
+    "p1Paths": 2,
+    "setupRollbackAclChecks": 42,
+    "sqlDelayMs": 290,
+    "connectionReserveMs": 1000,
+    "productionLeaseDeadlineMs": 30000,
+    "prepareMs": 18438,
+    "coreCreateMs": 25424,
+    "finalizeMs": 13064,
+    "latePublicationChange": "REJECTED_AND_RECEIPT_COUNT_0",
+    "result": "PASS_NOT_DEV_L3"
+  },
+  "devReadOnly": {
+    "ninetyRoundTripsMs": 29469,
+    "finalRoundTrips": 83,
+    "finalMs": 27362,
+    "sameCandidateSha256": "8e00c75508b15f8efc72446d09579db6803f962b80973e560136f86e0a1a7494",
+    "sameResultSha256": "596f244c81110efb459524c4d5eff78fe5a1bee135fc97b1fa49e31605672198",
+    "publicationReads": 3,
+    "coreGraphReads": 2,
+    "businessWrites": 0,
+    "providerCalls": 0,
+    "p1Active": false,
+    "scope": "readonly calibration, not actual Core mutation"
+  },
+  "authorityDiff": {
+    "schema": 0,
+    "rls": 0,
+    "grant": 0,
+    "roles": 0,
+    "secretScope": 0,
+    "businessGate": 0,
+    "providerBudget": 0
+  },
+  "remaining": "Default-off image deployment, separate exact finite business window, actual same Candidate SourcePlan/Admission/Core write and independent readback, Native Day/cold recovery, scoped serial main integration",
+  "risk": "83 RTT readonly DEV calibration has 2638ms margin under 30s; actual DEV write and network jitter remain unverified."
+}

@@ -1,11 +1,11 @@
+import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
+import { getAccountGeneration } from "../auth/accountGeneration";
 import {
   captureAccountScope,
+  assertAccountRequestGeneration,
   assertAccountRequestContext,
 } from "../auth/accountRequestContext";
-import {
-  tripCreateRequestSchema,
-  type TripCreateTarget,
-} from "@/domain/trip/tripCreateContract";
+import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "@/domain/trip/tripCreateWireContract";
 import type { TripRepository } from "../repositories/tripRepository";
 import {
   createSyncEngine,
@@ -18,9 +18,11 @@ export function createTripCreateSyncWorker(
   repository: Pick<TripRepository, "acceptCreate">,
   transport: TripCreateTransport,
   account: () => Promise<string>,
+  dispatchGuard: () => void = () => {},
 ): SyncWorker {
   return {
     async push(operation) {
+      dispatchGuard();
       if (
         operation.operationType !== "CREATE_TRIP" ||
         operation.entityType !== "TRIP" ||
@@ -38,8 +40,12 @@ export function createTripCreateSyncWorker(
       });
       if (request.tripId !== operation.tripId)
         throw new Error("TRIP_CREATE_QUEUE_MISMATCH");
-      let receipt = await transport.receipt(scope, operation.id);
+      let receipt =
+        "formatVersion" in request
+          ? await transport.receipt(scope, operation.id, 2)
+          : await transport.receipt(scope, operation.id);
       await assertAccountRequestContext(scope, account);
+      dispatchGuard();
       if (!receipt) receipt = await transport.create(scope, request);
       await assertAccountRequestContext(scope, account);
       if (
@@ -49,9 +55,15 @@ export function createTripCreateSyncWorker(
         receipt.name !== request.name ||
         receipt.destination !== request.destination ||
         receipt.startDate !== request.startDate ||
-        receipt.endDate !== request.endDate
+        receipt.endDate !== request.endDate ||
+        ("formatVersion" in receipt ? 2 : 1) !== ("formatVersion" in request ? 2 : 1) ||
+        ("destinations" in request &&
+          (!("destinations" in receipt) ||
+            JSON.stringify(receipt.destinations) !==
+              JSON.stringify(request.destinations)))
       )
         throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
+      dispatchGuard();
       await repository.acceptCreate(receipt, scope);
     },
   };
@@ -65,6 +77,7 @@ export function createTripCreateSyncCoordinator(
   portEnabled: () => boolean = () => false,
   target?: TripCreateTarget,
 ) {
+  const selected = target && Object.freeze({ ...target });
   const engine = createSyncEngine(
     queue,
     worker,
@@ -72,16 +85,22 @@ export function createTripCreateSyncCoordinator(
     (operation) =>
       operation.operationType === "CREATE_TRIP" &&
       operation.entityType === "TRIP" &&
-      (!target ||
-        (operation.id === target.operationId &&
-          operation.tripId === target.tripId &&
-          operation.ownerUserId === target.accountId)),
+      (!selected ||
+        (operation.id === selected.operationId &&
+          operation.tripId === selected.tripId &&
+          operation.ownerUserId === selected.accountId)),
   );
   return {
     async run(authState: Parameters<typeof engine.run>[0]) {
       if (!portEnabled()) return { status: "closed" as const, processedCount: 0 };
+      const scope = selected && {
+        accountId: selected.accountId,
+        generation: getAccountGeneration(),
+      };
+      if (scope) assertAccountRequestGeneration(scope);
       if (authState === "AUTHENTICATED_ONLINE")
-        await repository.resumeCreateTrips(target);
+        await repository.resumeCreateTrips(selected);
+      if (scope) assertAccountRequestGeneration(scope);
       return engine.run(authState);
     },
   };

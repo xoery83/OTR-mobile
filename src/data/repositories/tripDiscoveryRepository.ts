@@ -142,3 +142,14 @@ export async function readLocalTripDiscoveryRepository() {
     requireActiveUserId,
   );
 }
+
+// Explicit authenticated refresh of the existing read projection; no queue or Trip writes.
+export async function refreshTripDiscoveryCache() {
+  const { createTripDiscoveryTransport, refreshTripDiscovery } =
+    await import("../sync/tripDiscoveryTransport");
+  return refreshTripDiscovery(
+    requireActiveUserId,
+    createTripDiscoveryTransport(requireActiveUserId),
+    await readLocalTripDiscoveryRepository(),
+  );
+}

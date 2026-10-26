@@ -326,3 +326,15 @@ export const tripImportSnapshotSchema = z.strictObject({
     ]),
   ),
 });
+
+// Versioned initial interpretation view. V1 final-import consumers remain unchanged.
+export const universalImportSnapshotSchema = tripImportSnapshotSchema.extend({
+  version: z.literal(2),
+  trip_source_runs: z
+    .array(
+      tripImportCatalogSchemas.trip_source_runs.extend({
+        state: z.enum(["PENDING", "RUNNING", "READY", "FAILED"]),
+      }),
+    )
+    .max(64),
+});

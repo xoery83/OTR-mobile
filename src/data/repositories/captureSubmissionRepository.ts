@@ -128,12 +128,14 @@ export function createCaptureSubmissionRepository(
             throw new LocalCaptureError("STALE_REVISION");
         }
       await database.runAsync(
-        `INSERT INTO capture_submission_batches(account_id,batch_id,job_id,submission_key,context_id,format_version,manifest_version,created_at,context_json,manifest_json,request_sha256,manifest_sha256) VALUES(?,?,?,?,?,1,1,?,?,?,?,?)`,
+        `INSERT INTO capture_submission_batches(account_id,batch_id,job_id,submission_key,context_id,format_version,manifest_version,created_at,context_json,manifest_json,request_sha256,manifest_sha256) VALUES(?,?,?,?,?,CAST(? AS INTEGER),CAST(? AS INTEGER),?,?,?,?,?)`,
         c.accountId,
         request.batchId,
         request.jobId,
         request.submissionKey,
         request.context.id,
+        request.formatVersion,
+        request.manifestVersion,
         request.createdAt,
         contextJson,
         manifestJson,

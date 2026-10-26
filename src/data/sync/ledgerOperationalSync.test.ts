@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  qaConfigured: false,
+  qaRun: vi.fn(),
+  qaActivity: vi.fn(),
   openDatabase: vi.fn(),
   reactivateOperations: vi.fn(),
   reactivateAssets: vi.fn(),
@@ -12,6 +15,12 @@ const mocks = vi.hoisted(() => ({
   metadataRun: vi.fn(),
   queueListeners: new Set<() => void>(),
   generation: 7,
+}));
+
+vi.mock("./nativeTripQaScope", () => ({
+  hasNativeTripQaScope: () => mocks.qaConfigured,
+  runNativeTripQaSync: mocks.qaRun,
+  getNativeTripQaQueueActivity: mocks.qaActivity,
 }));
 
 vi.mock("./tripMetadataCoordinator", () => ({
@@ -84,6 +93,9 @@ describe("Ledger mutation sync kick", () => {
   beforeEach(() => {
     setTripCreateSyncRunner(null);
     vi.clearAllMocks();
+    mocks.qaConfigured = false;
+    mocks.qaRun.mockResolvedValue(null);
+    mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
     mocks.metadataEnabled.mockResolvedValue(false);
     mocks.metadataRun.mockResolvedValue({ status: "closed", processedCount: 0 });
     mocks.getMetadataActivity.mockResolvedValue({
@@ -107,6 +119,24 @@ describe("Ledger mutation sync kick", () => {
     mocks.generation = 7;
   });
 
+  it.each(["expired", "malformed", "active"])(
+    "never drains historical queues when a %s QA configuration is present",
+    async () => {
+      mocks.qaConfigured = true;
+      const oldCreate = vi.fn();
+      setTripCreateSyncRunner(oldCreate);
+      await runLedgerOperationalSync();
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+      expect(oldCreate).not.toHaveBeenCalled();
+      expect(mocks.metadataRun).not.toHaveBeenCalled();
+      expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+      expect(runLedgerReceiptSync).not.toHaveBeenCalled();
+      expect(runLedgerPersonalPaymentSync).not.toHaveBeenCalled();
+      expect(mocks.getAllAsync).not.toHaveBeenCalled();
+      expect(mocks.getQueueActivity).not.toHaveBeenCalled();
+    },
+  );
+
   it("awaits the explicitly installed Trip receipt/mapping runner before selecting Expenses", async () => {
     let finish!: () => void;
     const trip = vi.fn(
@@ -125,6 +155,76 @@ describe("Ledger mutation sync kick", () => {
     setTripCreateSyncRunner(null);
   });
 
+  it("retries normal Trip work on the existing timer without waking historical Ledger queues", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.qaConfigured = true;
+      mocks.qaActivity.mockResolvedValue({
+        actionableNow: 0,
+        nextActionableAt: Date.now() + 4000,
+      });
+      await runLedgerOperationalSync();
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(1);
+      await vi.advanceTimersByTimeAsync(3999);
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+      mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mocks.qaRun).toHaveBeenCalledTimes(2);
+      expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+      expect(mocks.getQueueActivity).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      await pauseLedgerOperationalSync();
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not lose a deferred successor queued during normal Trip dispatch", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.qaConfigured = true;
+      let release!: () => void;
+      mocks.qaRun.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            release = resolve;
+          }),
+      );
+      const first = runLedgerOperationalSync();
+      await vi.advanceTimersByTimeAsync(0);
+      mocks.qaActivity.mockResolvedValue({ actionableNow: 1, nextActionableAt: null });
+      for (const listener of mocks.queueListeners) listener();
+      release();
+      await first;
+      mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mocks.qaRun).toHaveBeenCalledTimes(2);
+      expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+    } finally {
+      await pauseLedgerOperationalSync();
+      vi.useRealTimers();
+    }
+  });
+
+  it("drops a scheduled normal Trip retry after Account generation changes", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.qaConfigured = true;
+      mocks.qaActivity.mockResolvedValue({
+        actionableNow: 0,
+        nextActionableAt: Date.now() + 4000,
+      });
+      await runLedgerOperationalSync();
+      mocks.generation += 2;
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(mocks.qaRun).toHaveBeenCalledOnce();
+    } finally {
+      await pauseLedgerOperationalSync();
+      vi.useRealTimers();
+    }
+  });
+
   it("a closed/failing Trip runner leaves unrelated Ledger work available", async () => {
     setTripCreateSyncRunner(
       vi.fn(async () => {
@@ -134,6 +234,14 @@ describe("Ledger mutation sync kick", () => {
     await runLedgerOperationalSync();
     expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
     setTripCreateSyncRunner(null);
+  });
+
+  it("does not change historical failure statuses in a finite QA preview", async () => {
+    mocks.qaConfigured = true;
+    await reactivateLongLivedLedgerFailures();
+    expect(mocks.reactivateOperations).not.toHaveBeenCalled();
+    expect(mocks.reactivateAssets).not.toHaveBeenCalled();
+    expect(mocks.openDatabase).not.toHaveBeenCalled();
   });
 
   it("reactivates sparse user and asset mutations on a recovery event", async () => {

@@ -1,0 +1,588 @@
+{
+  "status": "SERVER_ACCEPTED_AND_INDEPENDENT_SERVER_VERIFIED",
+  "sourceCodeCommit": "d83ec6b3bf841cd9c9365f6363a0d5d682371db8",
+  "gateCommit": "264f89e599f6ad3612dfaf3061a89d553aa451e9",
+  "ownerApprovalCommit": "27620ce5",
+  "normalNativeConfirmationCountAtFirstRead": 1,
+  "summary": {
+    "observedAt": "2026-10-26T05:29:15.534307+00:00",
+    "counts": {
+      "candidate": 1,
+      "item": 1,
+      "receipt": 1,
+      "plan": 1,
+      "slot": 1,
+      "association": 1
+    },
+    "policy": {
+      "enabled": true,
+      "scope": {
+        "batchId": "bd0d6ea6-7870-48a9-b74b-779a46783609",
+        "candidateId": "44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67",
+        "expiresAt": "2026-10-26T05:41:20.285247+00:00",
+        "operationId": "b1406697-47aa-8780-846c-37f4796cb52b",
+        "resultSha256": "596f244c81110efb459524c4d5eff78fe5a1bee135fc97b1fa49e31605672198",
+        "slotId": "1952c59b-114e-8636-8799-fe90e2f38d36",
+        "sourceId": "0c71927f-3f3b-4612-a49e-333761e90441",
+        "targetId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+        "taskId": "861a9d47-a35b-87a6-99f1-98422493d76b",
+        "token": "i1",
+        "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    },
+    "status": "SERVER_VERIFIED_CORE_PASS",
+    "itemId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+    "semanticRevision": 1,
+    "domainReceiptId": "c7b5aeae-ff1f-4305-a5fa-ed53273340f8",
+    "receiptSha256": "b7c815ed0530008d2e2eb176ffc18d7d8f8921c8b1426659a9f09262dda7f46c",
+    "title": "Walk in Auckland Domain",
+    "localDate": "2026-11-01",
+    "outcome": "APPLIED",
+    "sourceFinalization": "VERIFIED"
+  },
+  "readbackSHA256": "f42e6181ec097f3ef7a0ca46a19e36f32d72395896b574a86ca967e6fc5ce1d4",
+  "records": {
+    "item": [
+      {
+        "accepted_address": null,
+        "accepted_address_country": null,
+        "accepted_address_line1": null,
+        "accepted_address_line2": null,
+        "accepted_address_locality": null,
+        "accepted_address_postal_code": null,
+        "accepted_address_region": null,
+        "accepted_latitude": null,
+        "accepted_longitude": null,
+        "accepted_place_id": null,
+        "activity_category": null,
+        "authored_address": null,
+        "authored_address_country": null,
+        "authored_address_line1": null,
+        "authored_address_line2": null,
+        "authored_address_locality": null,
+        "authored_address_postal_code": null,
+        "authored_address_region": null,
+        "authored_label": null,
+        "authored_text": null,
+        "booking_reference": null,
+        "business_contract_version": 2,
+        "candidate_address": null,
+        "candidate_confidence": null,
+        "candidate_error_code": null,
+        "candidate_input_revision": null,
+        "candidate_label": null,
+        "candidate_latitude": null,
+        "candidate_longitude": null,
+        "candidate_observed_at": null,
+        "candidate_place_id": null,
+        "candidate_provider": null,
+        "candidate_provider_place_id": null,
+        "candidate_state": null,
+        "confidence": null,
+        "created_at": "2026-10-26T05:28:11.427498+00:00",
+        "created_by": null,
+        "date_confidence": null,
+        "description": null,
+        "end_basis": null,
+        "end_civil_resolution": null,
+        "end_clock_precision": null,
+        "end_interpretation_input_sha256": null,
+        "end_interpretation_key": null,
+        "end_local_date": null,
+        "end_local_time": null,
+        "end_provenance_refs": null,
+        "end_quality": null,
+        "end_resolution_offset_seconds": null,
+        "end_source_instant": null,
+        "end_source_instant_precision": null,
+        "end_supplied_offset_seconds": null,
+        "end_zone_id": null,
+        "event_type": "activity",
+        "experience_family": "P1",
+        "field_state": {
+          "itinerary_events.start_basis": {
+            "changed_revision": 1,
+            "evidence_ref": null,
+            "origin": "SOURCE",
+            "protected": false,
+            "state": "KNOWN"
+          },
+          "itinerary_events.start_civil_resolution": {
+            "changed_revision": 1,
+            "evidence_ref": null,
+            "origin": "SOURCE",
+            "protected": false,
+            "state": "KNOWN"
+          },
+          "itinerary_events.start_local_date": {
+            "changed_revision": 1,
+            "evidence_ref": null,
+            "origin": "SOURCE",
+            "protected": false,
+            "state": "KNOWN"
+          },
+          "itinerary_events.start_quality": {
+            "changed_revision": 1,
+            "evidence_ref": null,
+            "origin": "SOURCE",
+            "protected": false,
+            "state": "KNOWN"
+          },
+          "itinerary_events.title": {
+            "changed_revision": 1,
+            "evidence_ref": null,
+            "origin": "SOURCE",
+            "protected": false,
+            "state": "KNOWN"
+          }
+        },
+        "geocode_attempts": 0,
+        "geocode_error": null,
+        "geocoded_at": null,
+        "hidden_at": null,
+        "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+        "is_estimated_time": false,
+        "legacy_is_estimated_time": null,
+        "legacy_planned_end": null,
+        "legacy_planned_start": null,
+        "legacy_snapshot_at": null,
+        "location_confidence": null,
+        "location_input_revision": null,
+        "location_lat": null,
+        "location_lng": null,
+        "location_name": null,
+        "location_provider": null,
+        "location_provider_place_id": null,
+        "location_status": "none",
+        "location_text": null,
+        "manual_location": false,
+        "needs_review": false,
+        "order_index": null,
+        "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "participant_scope": "ASSIGNED",
+        "participants_confidence": null,
+        "participation_mode": "SELF",
+        "place_id": null,
+        "planned_end": null,
+        "planned_start": null,
+        "reservation_id": null,
+        "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+        "semantic_revision": 1,
+        "source_text": null,
+        "spatial_provenance_refs": null,
+        "start_basis": "DERIVED_CIVIL",
+        "start_civil_resolution": "PENDING",
+        "start_clock_precision": null,
+        "start_interpretation_input_sha256": null,
+        "start_interpretation_key": null,
+        "start_local_date": "2026-11-01",
+        "start_local_time": null,
+        "start_provenance_refs": null,
+        "start_quality": "UNKNOWN",
+        "start_resolution_offset_seconds": null,
+        "start_source_instant": null,
+        "start_source_instant_precision": null,
+        "start_supplied_offset_seconds": null,
+        "start_zone_id": null,
+        "status": "planned",
+        "temporal_contract_version": 1,
+        "temporal_shape": "CALENDAR",
+        "time_confidence": null,
+        "timing_label": null,
+        "timing_provenance_ref": null,
+        "title": "Walk in Auckland Domain",
+        "trip_day_id": null,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+        "updated_at": "2026-10-26T05:28:11.427498+00:00",
+        "url": null,
+        "visibility": "PRIVATE"
+      }
+    ],
+    "receipt": [
+      {
+        "actor_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "body": {
+          "actorAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "audit": {
+            "after": [
+              {
+                "facts": {
+                  "accepted_address": null,
+                  "accepted_address_country": null,
+                  "accepted_address_line1": null,
+                  "accepted_address_line2": null,
+                  "accepted_address_locality": null,
+                  "accepted_address_postal_code": null,
+                  "accepted_address_region": null,
+                  "accepted_latitude": null,
+                  "accepted_longitude": null,
+                  "accepted_place_id": null,
+                  "activity_category": null,
+                  "authored_address": null,
+                  "authored_address_country": null,
+                  "authored_address_line1": null,
+                  "authored_address_line2": null,
+                  "authored_address_locality": null,
+                  "authored_address_postal_code": null,
+                  "authored_address_region": null,
+                  "authored_label": null,
+                  "authored_text": null,
+                  "business_contract_version": 2,
+                  "created_at": "2026-10-26T05:28:11.427498Z",
+                  "description": null,
+                  "end_basis": null,
+                  "end_civil_resolution": null,
+                  "end_clock_precision": null,
+                  "end_interpretation_input_sha256": null,
+                  "end_interpretation_key": null,
+                  "end_local_date": null,
+                  "end_local_time": null,
+                  "end_provenance_refs": null,
+                  "end_quality": null,
+                  "end_resolution_offset_seconds": null,
+                  "end_source_instant": null,
+                  "end_source_instant_precision": null,
+                  "end_supplied_offset_seconds": null,
+                  "end_zone_id": null,
+                  "event_type": "activity",
+                  "experience_family": "P1",
+                  "field_state": {
+                    "itinerary_events.start_basis": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_civil_resolution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_local_date": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_quality": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.title": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    }
+                  },
+                  "hidden_at": null,
+                  "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+                  "location_input_revision": null,
+                  "order_index": null,
+                  "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+                  "participant_scope": "ASSIGNED",
+                  "participation_mode": "SELF",
+                  "planned_end": null,
+                  "planned_start": null,
+                  "reservation_id": null,
+                  "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+                  "semantic_revision": 1,
+                  "spatial_provenance_refs": null,
+                  "start_basis": "DERIVED_CIVIL",
+                  "start_civil_resolution": "PENDING",
+                  "start_clock_precision": null,
+                  "start_interpretation_input_sha256": null,
+                  "start_interpretation_key": null,
+                  "start_local_date": "2026-11-01",
+                  "start_local_time": null,
+                  "start_provenance_refs": null,
+                  "start_quality": "UNKNOWN",
+                  "start_resolution_offset_seconds": null,
+                  "start_source_instant": null,
+                  "start_source_instant_precision": null,
+                  "start_supplied_offset_seconds": null,
+                  "start_zone_id": null,
+                  "status": "planned",
+                  "temporal_contract_version": 1,
+                  "temporal_shape": "CALENDAR",
+                  "timing_label": null,
+                  "title": "Walk in Auckland Domain",
+                  "trip_day_id": null,
+                  "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+                  "updated_at": "2026-10-26T05:28:11.427498Z",
+                  "visibility": "PRIVATE"
+                },
+                "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+                "kind": "ITEM",
+                "revision": 1
+              }
+            ],
+            "authorizationRefs": [
+              "otr-core/source-candidate/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/8e00c75508b15f8efc72446d09579db6803f962b80973e560136f86e0a1a7494"
+            ],
+            "before": [],
+            "evidenceRefs": [
+              "track-c/field-evidence/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/ROOT.title.0",
+              "track-c/field-evidence/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/START.local_date.0"
+            ]
+          },
+          "command": "CREATE_ITEM",
+          "commandVersion": 2,
+          "committedAt": "2026-10-26T05:28:11.427498Z",
+          "errorCode": null,
+          "intentSha256": "2507a68264af441db8418303fb0dbf385c0c6855d9b615b01a689ae9410ade97",
+          "intentVersion": 2,
+          "operationId": "b1406697-47aa-8780-846c-37f4796cb52b",
+          "outcome": "APPLIED",
+          "receiptSha256": "b7c815ed0530008d2e2eb176ffc18d7d8f8921c8b1426659a9f09262dda7f46c",
+          "receiptVersion": 2,
+          "result": {
+            "changed": [],
+            "created": [
+              {
+                "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+                "kind": "ITEM"
+              }
+            ],
+            "custodyGrantId": null,
+            "replacement": null,
+            "retiredEdges": []
+          },
+          "targetVector": [
+            {
+              "baseRevision": null,
+              "committedRevision": 1,
+              "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+              "kind": "ITEM"
+            }
+          ],
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"1952c59b-114e-8636-8799-fe90e2f38d36\"},\"baseVector\":[{\"id\":\"34dece59-61ae-8716-a976-7d3da49b51d0\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"b1406697-47aa-8780-846c-37f4796cb52b\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"Walk in Auckland Domain\"},\"family\":\"P1\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"schedule\":{\"start\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-01\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"target\":{\"id\":\"34dece59-61ae-8716-a976-7d3da49b51d0\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command_version": 2,
+        "committed_at": "2026-10-26T05:28:11.427498+00:00",
+        "id": "c7b5aeae-ff1f-4305-a5fa-ed53273340f8",
+        "intent_sha256": "2507a68264af441db8418303fb0dbf385c0c6855d9b615b01a689ae9410ade97",
+        "intent_version": 2,
+        "operation_id": "b1406697-47aa-8780-846c-37f4796cb52b",
+        "outcome": "APPLIED",
+        "receipt_sha256": "b7c815ed0530008d2e2eb176ffc18d7d8f8921c8b1426659a9f09262dda7f46c",
+        "receipt_version": 2,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "association": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67",
+        "created_at": "2026-10-26T05:28:54.046449+00:00",
+        "domain_receipt_id": "c7b5aeae-ff1f-4305-a5fa-ed53273340f8",
+        "field_evidence": {
+          "ROOT.title.0": {
+            "inputId": "e076a950-2ba0-4936-8bf1-6c97cb25048f",
+            "locator": {
+              "end": 166,
+              "excerpt": "Walk in Auckland Domain",
+              "input_id": "e076a950-2ba0-4936-8bf1-6c97cb25048f",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 143
+            },
+            "payloadSha256": "4a4563cfb910da2e5dd9df1fe79d45f3809cd7d05ea49fe1a66e28cff8211b7f",
+            "raw": "Walk in Auckland Domain",
+            "ref": "track-c/field-evidence/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/ROOT.title.0",
+            "representationId": "e16061db-8f9e-48b4-857e-8deef236c773",
+            "sourceId": "0c71927f-3f3b-4612-a49e-333761e90441",
+            "sourceRevision": 1,
+            "value": "Walk in Auckland Domain"
+          },
+          "START.local_date.0": {
+            "inputId": "e076a950-2ba0-4936-8bf1-6c97cb25048f",
+            "locator": {
+              "end": 141,
+              "excerpt": "Nov 1, 2026",
+              "input_id": "e076a950-2ba0-4936-8bf1-6c97cb25048f",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 130
+            },
+            "normalization": {
+              "rule": "ENGLISH_MONTH_CIVIL_DATE",
+              "value": "2026-11-01"
+            },
+            "payloadSha256": "4a4563cfb910da2e5dd9df1fe79d45f3809cd7d05ea49fe1a66e28cff8211b7f",
+            "raw": "Nov 1, 2026",
+            "ref": "track-c/field-evidence/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/START.local_date.0",
+            "representationId": "e16061db-8f9e-48b4-857e-8deef236c773",
+            "sourceId": "0c71927f-3f3b-4612-a49e-333761e90441",
+            "sourceRevision": 1,
+            "value": "2026-11-01"
+          }
+        },
+        "id": "724cc49d-d4f0-40a6-9ae9-4f282c643f10",
+        "identity_sha256": "12fd3f9e8b43c0473a8fc0f57b082ffff1a9cdf9435e8bce5515b738edc20075",
+        "output_slot_id": "1952c59b-114e-8636-8799-fe90e2f38d36",
+        "receipt_sha256": "b7c815ed0530008d2e2eb176ffc18d7d8f8921c8b1426659a9f09262dda7f46c",
+        "run_id": "fd0237f2-c545-8c29-86f9-f68a108e40b4",
+        "source_id": "0c71927f-3f3b-4612-a49e-333761e90441",
+        "source_revision": 1,
+        "target_id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+        "target_kind": "ITEM",
+        "target_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "slot": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67",
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"1952c59b-114e-8636-8799-fe90e2f38d36\"},\"baseVector\":[{\"id\":\"34dece59-61ae-8716-a976-7d3da49b51d0\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"b1406697-47aa-8780-846c-37f4796cb52b\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"Walk in Auckland Domain\"},\"family\":\"P1\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"schedule\":{\"start\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-01\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"target\":{\"id\":\"34dece59-61ae-8716-a976-7d3da49b51d0\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command": "CREATE_ITEM",
+        "dependency_ids": [],
+        "domain_receipt_id": "c7b5aeae-ff1f-4305-a5fa-ed53273340f8",
+        "identity_sha256": "12fd3f9e8b43c0473a8fc0f57b082ffff1a9cdf9435e8bce5515b738edc20075",
+        "intent_sha256": "2507a68264af441db8418303fb0dbf385c0c6855d9b615b01a689ae9410ade97",
+        "operation_id": "b1406697-47aa-8780-846c-37f4796cb52b",
+        "output_purpose": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "candidateId": "44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67",
+          "candidateSha256": "8e00c75508b15f8efc72446d09579db6803f962b80973e560136f86e0a1a7494",
+          "evidenceRefs": {
+            "ROOT.title": [
+              "track-c/field-evidence/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/ROOT.title.0"
+            ],
+            "START.local_date": [
+              "track-c/field-evidence/44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67/START.local_date.0"
+            ]
+          },
+          "inputCatalogSha256": "f3dd5f911218a600a2e782cbb1c02024dd7b642bb8628bc83fac273cb921be22",
+          "operationId": "b1406697-47aa-8780-846c-37f4796cb52b",
+          "payloadSha256": "d7c807557bf5f2e0335ec988f6f3f7de53f140b97e8de41ad6c483fdf5b79b8b",
+          "planId": "628753a7-26a1-8aa6-810c-ed812f18701f",
+          "purposeKind": "P1_ITEM",
+          "purposeSha256": "aa2b5626fa2c8433367406c5cba216309a18fd7047fa43e451ccb21f1f0ae77a",
+          "runId": "fd0237f2-c545-8c29-86f9-f68a108e40b4",
+          "selectedFields": [
+            "ROOT.title",
+            "START.local_date"
+          ],
+          "slotId": "1952c59b-114e-8636-8799-fe90e2f38d36",
+          "sourceId": "0c71927f-3f3b-4612-a49e-333761e90441",
+          "sourceRevision": 1,
+          "targetId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+          "targetKind": "ITEM",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+          "version": 2
+        },
+        "output_slot_id": "1952c59b-114e-8636-8799-fe90e2f38d36",
+        "plan_id": "628753a7-26a1-8aa6-810c-ed812f18701f",
+        "purpose_sha256": "aa2b5626fa2c8433367406c5cba216309a18fd7047fa43e451ccb21f1f0ae77a",
+        "slot_key": "p1",
+        "source_id": "0c71927f-3f3b-4612-a49e-333761e90441",
+        "source_lineage_id": "724cc49d-d4f0-40a6-9ae9-4f282c643f10",
+        "state": "COMPLETE",
+        "target_id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+        "target_kind": "ITEM",
+        "target_vector": [
+          {
+            "id": "34dece59-61ae-8716-a976-7d3da49b51d0",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ]
+  },
+  "nativeDayAndCold": "PASS_SAME_ITEM_ID_REVISION_AFTER_FULL_RESTART",
+  "repeatConfirmation": {
+    "status": "PASS_SAME_ITEM_RECEIPT_HASH_REVISION",
+    "normalNativeConfirmationCount": 2,
+    "independentReadback": {
+      "observedAt": "2026-10-26T05:31:20.209773+00:00",
+      "counts": {
+        "candidate": 1,
+        "item": 1,
+        "receipt": 1,
+        "plan": 1,
+        "slot": 1,
+        "association": 1
+      },
+      "policy": {
+        "enabled": true,
+        "scope": {
+          "batchId": "bd0d6ea6-7870-48a9-b74b-779a46783609",
+          "candidateId": "44e7b9b4-c46d-83f4-8ad1-2c5fd08f4a67",
+          "expiresAt": "2026-10-26T05:41:20.285247+00:00",
+          "operationId": "b1406697-47aa-8780-846c-37f4796cb52b",
+          "resultSha256": "596f244c81110efb459524c4d5eff78fe5a1bee135fc97b1fa49e31605672198",
+          "slotId": "1952c59b-114e-8636-8799-fe90e2f38d36",
+          "sourceId": "0c71927f-3f3b-4612-a49e-333761e90441",
+          "targetId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+          "taskId": "861a9d47-a35b-87a6-99f1-98422493d76b",
+          "token": "i1",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        }
+      },
+      "status": "SERVER_VERIFIED_CORE_PASS",
+      "itemId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+      "semanticRevision": 1,
+      "domainReceiptId": "c7b5aeae-ff1f-4305-a5fa-ed53273340f8",
+      "receiptSha256": "b7c815ed0530008d2e2eb176ffc18d7d8f8921c8b1426659a9f09262dda7f46c",
+      "title": "Walk in Auckland Domain",
+      "localDate": "2026-11-01",
+      "outcome": "APPLIED",
+      "sourceFinalization": "VERIFIED"
+    }
+  },
+  "gateClosure": {
+    "status": "P1_SCOPE_CLOSED_RUNTIME_DEFAULT_RESTORED",
+    "at": "2026-10-26T05:31:52.070008Z",
+    "policy": {
+      "enabled": false,
+      "scope": null
+    },
+    "runtime": {
+      "status": "ROLLBACK_VERIFIED",
+      "containerId": "481bd4f930cb1caa173660f5b4d2d42c3cd94bcce2ad8d0e9de2ef66819c741c",
+      "imageId": "sha256:4979d4450ab6bf3eedb6faf18663e34e12d77e1dcc632cad96959f780d145597"
+    },
+    "businessRecordsDeleted": 0
+  },
+  "providerCalls": 0,
+  "receiptCanonicalSchemaAndHash": "PASS_USING_EXISTING_validateCoreReceipt",
+  "nativePendingState": "APPLIED",
+  "nativeReconciledRevision": 2,
+  "nativeDay": "PASS_EXISTING_DAY_READER_2026_11_01",
+  "nativeColdReceipt": "P1_NATIVE_DAY_COLD_RECEIPT.json",
+  "closedNormalCoreReader": {
+    "status": "NORMAL_QA_CLOSED_GATE_CORE_READER_PASS",
+    "observedAt": "2026-10-26T05:40:39.605806+00:00",
+    "collectionStatus": 200,
+    "itemId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+    "revision": 1,
+    "title": "Walk in Auckland Domain",
+    "localDate": "2026-11-01",
+    "coreCapabilitiesStatus": 200,
+    "sourceEvidenceAvailable": false,
+    "providerCalls": 0,
+    "businessWrites": 0,
+    "normalAuthVerified": true
+  },
+  "runtimeWatchdogFinal": {
+    "status": "ROLLBACK_VERIFIED",
+    "containerId": "481bd4f930cb1caa173660f5b4d2d42c3cd94bcce2ad8d0e9de2ef66819c741c",
+    "imageId": "sha256:4979d4450ab6bf3eedb6faf18663e34e12d77e1dcc632cad96959f780d145597"
+  },
+  "mainIntegration": "PENDING"
+}

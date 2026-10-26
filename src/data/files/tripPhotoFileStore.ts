@@ -93,6 +93,40 @@ function photoFile(
   return { trip, file: new File(trip, `${input.assetId}${extension(input.mimeType)}`) };
 }
 
+// iOS can move an app's Documents without changing the retained relative identity.
+function containerIndependentPhotoUri(uri: string): string | null {
+  if (
+    !uri.startsWith("file:///") ||
+    /[?#]/.test(uri) ||
+    /(?:^|\/)\.{1,2}(?:\/|$)/.test(uri)
+  )
+    return null;
+  const marker = "/Containers/Data/Application/";
+  const position = uri.indexOf(marker);
+  if (position < 0 || position !== uri.lastIndexOf(marker)) return null;
+  const start = position + marker.length;
+  const end = uri.indexOf("/", start);
+  if (end < 0 || !UUID.test(uri.slice(start, end))) return null;
+  return `${uri.slice(0, start)}<container>${uri.slice(end)}`;
+}
+function sameRetainedPhotoLocation(storedUri: string, currentUri: string): boolean {
+  if (storedUri === currentUri) return true;
+  const prior = containerIndependentPhotoUri(storedUri);
+  return prior !== null && prior === containerIndependentPhotoUri(currentUri);
+}
+/** Accept only the current identity's canonical file, with an unchanged relative path. */
+export function isRetainedTripPhotoLocation(
+  photo: RetainedTripPhoto,
+  uri: string,
+): boolean {
+  try {
+    const currentUri = photoFile(photo).file.uri;
+    return uri === currentUri && sameRetainedPhotoLocation(photo.localUri, currentUri);
+  } catch {
+    return false;
+  }
+}
+
 /** Copy a picker file into app documents before recording any durable association. */
 export async function retainTripPhoto(input: {
   accountId: string;
@@ -150,11 +184,49 @@ export async function retainTripPhoto(input: {
   }
 }
 
+export type RetainedTripPhotoIdentity = Readonly<{
+  uri: string;
+  sizeBytes: number;
+  modificationTime: number;
+  creationTime: number;
+}>;
+
+/** A presentation-cache invalidation signal, never a replacement for full verification. */
+export function probeRetainedTripPhotoIdentity(
+  photo: RetainedTripPhoto,
+): RetainedTripPhotoIdentity | null {
+  try {
+    const { file } = photoFile(photo);
+    if (!sameRetainedPhotoLocation(photo.localUri, file.uri)) return null;
+    const info = file.info();
+    if (
+      !info.exists ||
+      info.size !== photo.sizeBytes ||
+      !Number.isSafeInteger(info.size) ||
+      photo.sizeBytes < 1 ||
+      photo.sizeBytes > MAX_PHOTO_BYTES ||
+      typeof info.modificationTime !== "number" ||
+      !Number.isFinite(info.modificationTime) ||
+      typeof info.creationTime !== "number" ||
+      !Number.isFinite(info.creationTime)
+    )
+      return null;
+    return Object.freeze({
+      uri: file.uri,
+      sizeBytes: photo.sizeBytes,
+      modificationTime: info.modificationTime,
+      creationTime: info.creationTime,
+    });
+  } catch {
+    return null;
+  }
+}
+
 /** Missing or changed local bytes return null so a repository can show an honest fallback. */
 export function resolveRetainedTripPhoto(photo: RetainedTripPhoto): string | null {
   try {
     const { file } = photoFile(photo);
-    if (!file.exists) return null;
+    if (!sameRetainedPhotoLocation(photo.localUri, file.uri) || !file.exists) return null;
     const evidence = readEvidence(file);
     return evidence.mimeType === photo.mimeType &&
       evidence.sizeBytes === photo.sizeBytes &&

@@ -24,15 +24,29 @@ export async function runMigrations(database: MigrationDatabase) {
 
     if (existing) continue;
 
-    await database.withTransactionAsync(async () => {
-      await database.execAsync(migration.sql);
-      await database.runAsync(
-        "INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)",
-        migration.id,
-        migration.name,
-        new Date().toISOString(),
-      );
-    });
+    const rebuild = migration.id === 73;
+    const priorForeignKeys = rebuild
+      ? await database.getFirstAsync<{ foreign_keys: number }>("PRAGMA foreign_keys")
+      : null;
+    if (rebuild) await database.execAsync("PRAGMA foreign_keys=OFF");
+    try {
+      await database.withTransactionAsync(async () => {
+        await database.execAsync(migration.sql);
+        if (rebuild && (await database.getFirstAsync("PRAGMA foreign_key_check")))
+          throw new Error("CAPTURE_MIXED_MIGRATION_INTEGRITY");
+        await database.runAsync(
+          "INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)",
+          migration.id,
+          migration.name,
+          new Date().toISOString(),
+        );
+      });
+    } finally {
+      if (rebuild)
+        await database.execAsync(
+          `PRAGMA foreign_keys=${priorForeignKeys?.foreign_keys === 1 ? "ON" : "OFF"}`,
+        );
+    }
   }
 }
 

@@ -1,5 +1,8 @@
-import { readCaptureTripPrior } from "@/features/capture/captureTripPrior";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import {
+  listCaptureTripPriors,
+  readCaptureTripPrior,
+} from "@/features/capture/captureTripPrior";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
@@ -31,7 +34,22 @@ type Admission = {
   tripName?: string;
   current: () => boolean;
 };
-export default function CaptureRoute() {
+// Only overlay invocations outlive their route. Purge on every account-generation change.
+type RetainedDrafts = {
+  current: {
+    accountId: string;
+    drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
+  } | null;
+};
+const overlayRetained: RetainedDrafts = { current: null };
+const tabRetained: RetainedDrafts = { current: null };
+subscribeAccountGeneration(() => {
+  for (const retained of [overlayRetained, tabRetained]) {
+    retained.current?.drafts.forEach((draft) => draft.cancel());
+    retained.current = null;
+  }
+});
+export default function CaptureRoute({ overlay = false }: { overlay?: boolean } = {}) {
   const { jobId, origin, originGeneration, tripId } = useLocalSearchParams<{
     tripId?: string;
     jobId?: string;
@@ -54,10 +72,7 @@ export default function CaptureRoute() {
     getAccountGeneration,
     getAccountGeneration,
   );
-  const retained = useRef<{
-    accountId: string;
-    drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
-  } | null>(null);
+  const retained = overlay ? overlayRetained : tabRetained;
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
   useFocusEffect(
@@ -88,8 +103,10 @@ export default function CaptureRoute() {
                 return false;
               }
             };
-            if (retained.current?.accountId !== accountId)
+            if (retained.current?.accountId !== accountId) {
+              retained.current?.drafts.forEach((draft) => draft.cancel());
               retained.current = { accountId, drafts: new Map() };
+            }
             let staging = retained.current.drafts.get(owner.tripPrior);
             if (staging) staging.resume(owner, lease);
             else {
@@ -115,7 +132,7 @@ export default function CaptureRoute() {
         visibleStaging?.hide();
         setAdmission(null);
         // Dependency cleanup must not erase a newer focused invocation.
-        if (!navigation.isFocused())
+        if (!overlay && !navigation.isFocused())
           navigation.setParams({
             tripId: undefined,
             jobId: undefined,
@@ -123,7 +140,7 @@ export default function CaptureRoute() {
             originGeneration: undefined,
           });
       };
-    }, [generation, navigation, tripId]),
+    }, [generation, navigation, tripId, retained, overlay]),
   );
   const isCurrent = () => {
     if (
@@ -140,7 +157,10 @@ export default function CaptureRoute() {
     }
   };
   return (
-    <SafeAreaView edges={["bottom", "left", "right"]} style={styles.body}>
+    <SafeAreaView
+      edges={["bottom", "left", "right"]}
+      style={[styles.body, overlay && styles.overlay]}
+    >
       {admission?.generation === generation ? (
         <CaptureContent
           key={`${generation}:${jobId ?? ""}${admission.tripPrior ? `:${admission.tripPrior}` : ""}`}
@@ -150,12 +170,15 @@ export default function CaptureRoute() {
           accountId={admission.accountId}
           tripName={admission.tripName}
           tripPrior={admission.tripPrior}
-          validateTripPrior={async () => {
-            if (!isCurrent() || !admission.tripPrior) return false;
-            return (
-              Boolean(await readCaptureTripPrior(admission.tripPrior, admission)) &&
-              isCurrent()
-            );
+          readTripTargets={async () => {
+            if (!isCurrent()) throw new Error("CAPTURE_CONTEXT_STALE");
+            const trips = await listCaptureTripPriors(admission);
+            if (!isCurrent()) throw new Error("CAPTURE_CONTEXT_STALE");
+            return trips;
+          }}
+          validateTripPrior={async (id) => {
+            if (!isCurrent()) return false;
+            return Boolean(await readCaptureTripPrior(id, admission)) && isCurrent();
           }}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
           onCancel={() => {
@@ -165,7 +188,8 @@ export default function CaptureRoute() {
               getAccountGeneration(),
             );
             if (!isCurrent()) return;
-            if (target) router.navigate(target as never);
+            if (overlay && router.canGoBack()) router.back();
+            else if (target) router.navigate(target as never);
             else if (admission.tripPrior)
               router.navigate({
                 pathname: "/trip",
@@ -200,6 +224,7 @@ export default function CaptureRoute() {
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
+    overlay: { backgroundColor: colors.transparent },
     message: {
       padding: visual.space.page,
       color: colors.textSecondary,

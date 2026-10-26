@@ -1,3 +1,5 @@
+import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
+import type { CoreGateMode } from "./tripSustainedGate";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DocumentOriginalReader } from "./tripDocumentOriginalHttp";
 import { createTripDocumentPrivateReferenceCustody } from "./tripDocumentPrivateReferenceCustody";
@@ -18,9 +20,11 @@ export function createCorePgHttpConnection(
   connection: CorePgConnection,
   hash: ImportHash,
   documentStorage?: SupabaseClient["storage"],
+  gateMode?: CoreGateMode,
+  readUniversalP1?: PublishedUniversalP1Reader,
 ): CoreHttpConnection & { documentOriginalReader?: DocumentOriginalReader } {
-  const authority = createCoreSourcePgAuthority(connection, hash);
-  const baseReader = createCorePgReader(connection, hash);
+  const authority = createCoreSourcePgAuthority(connection, hash, { readUniversalP1 });
+  const baseReader = createCorePgReader(connection, hash, undefined, gateMode);
   const custody = documentStorage
     ? createTripDocumentPrivateReferenceCustody(
         connection,
@@ -29,15 +33,20 @@ export function createCorePgHttpConnection(
       )
     : undefined;
   const read = custody
-    ? createCorePgReader(connection, hash, {
-        authorize: async (lease, actor, graph) => {
-          const originalDocumentIds: string[] = [];
-          for (const row of graph.trip_operational_documents)
-            if (await custody.canReadDocument(lease, actor, graph, row))
-              originalDocumentIds.push(row.id as string);
-          return { originalDocumentIds, ledgerExpenseIds: [] };
+    ? createCorePgReader(
+        connection,
+        hash,
+        {
+          authorize: async (lease, actor, graph) => {
+            const originalDocumentIds: string[] = [];
+            for (const row of graph.trip_operational_documents)
+              if (await custody.canReadDocument(lease, actor, graph, row))
+                originalDocumentIds.push(row.id as string);
+            return { originalDocumentIds, ledgerExpenseIds: [] };
+          },
         },
-      })
+        gateMode,
+      )
     : baseReader;
   async function documentGraph(lease: CorePgLease, tripId: string) {
     const role = (await lease.query("SELECT current_user AS role")).rows[0]?.role;
@@ -52,53 +61,65 @@ export function createCorePgHttpConnection(
         await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
     }
   }
-  const commands = createCorePgStorage(connection, hash, {
-    verify: async (lease, actor, command, intent, graph) => {
-      if (command.command === "CREATE_DOCUMENT") {
-        if (!custody) throw new Error("OWNING_CAPABILITY_REQUIRED");
-        return await custody.verifyCreateDocument(lease, actor, command);
-      }
-      await authority.verifySourceIntent(lease, actor, command, intent, graph);
-    },
-    canReadSourceReceipt: authority.canReadSourceReceipt,
-    canReadAudit: async (lease, actor, receipt) => {
-      if (receipt.command !== "CREATE_DOCUMENT")
-        return authority.canReadAudit(lease, actor, receipt);
-      if (!custody) return false;
-      const graph = await documentGraph(lease, actor.tripId);
-      for (const target of receipt.targetVector) {
-        const row = graph.trip_operational_documents.find((r) => r.id === target.id);
-        if (
-          target.kind !== "DOCUMENT" ||
-          !row ||
-          !(await custody.canReadDocument(lease, actor, graph, row))
-        )
-          return false;
-      }
-      return true;
-    },
-    audit: async (lease, actor, command, intent) =>
-      command.command === "CREATE_DOCUMENT"
-        ? {
-            evidenceRefs: [
-              "custody:" + (command.payload as { custodyProofId: string }).custodyProofId,
-            ],
-            authorizationRefs: [],
-          }
-        : authority.audit(lease, actor, command, intent),
-    canReadOriginal: async (lease, actor, row) =>
-      custody
-        ? custody.canReadDocument(
-            lease,
-            actor,
-            await documentGraph(lease, actor.tripId),
-            row,
+  const commands = createCorePgStorage(
+    connection,
+    hash,
+    {
+      verify: async (lease, actor, command, intent, graph) => {
+        if (command.command === "CREATE_DOCUMENT") {
+          if (!custody) throw new Error("OWNING_CAPABILITY_REQUIRED");
+          return await custody.verifyCreateDocument(lease, actor, command);
+        }
+        await authority.verifySourceIntent(lease, actor, command, intent, graph);
+      },
+      canReadSourceReceipt: authority.canReadSourceReceipt,
+      canReadAudit: async (lease, actor, receipt) => {
+        if (receipt.command !== "CREATE_DOCUMENT")
+          return authority.canReadAudit(lease, actor, receipt);
+        if (!custody) return false;
+        const graph = await documentGraph(lease, actor.tripId);
+        for (const target of receipt.targetVector) {
+          const row = graph.trip_operational_documents.find((r) => r.id === target.id);
+          if (
+            target.kind !== "DOCUMENT" ||
+            !row ||
+            !(await custody.canReadDocument(lease, actor, graph, row))
           )
-        : false,
-  });
+            return false;
+        }
+        return true;
+      },
+      audit: async (lease, actor, command, intent) =>
+        command.command === "CREATE_DOCUMENT"
+          ? {
+              evidenceRefs: [
+                "custody:" +
+                  (command.payload as { custodyProofId: string }).custodyProofId,
+              ],
+              authorizationRefs: [],
+            }
+          : authority.audit(lease, actor, command, intent),
+      canReadOriginal: async (lease, actor, row) =>
+        custody
+          ? custody.canReadDocument(
+              lease,
+              actor,
+              await documentGraph(lease, actor.tripId),
+              row,
+            )
+          : false,
+    },
+    gateMode,
+  );
   return {
     commands,
     source: authority.source,
+    ...(readUniversalP1
+      ? {
+          publishUniversalP1: authority.publishUniversalP1,
+          finalizeUniversalP1Operation: authority.finalizeUniversalP1Operation,
+        }
+      : {}),
     publishSourceCandidates: authority.publish,
     read,
     ...(custody ? { documentOriginalReader: custody.original } : {}),

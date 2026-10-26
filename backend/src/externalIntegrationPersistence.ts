@@ -45,6 +45,7 @@ export const protectedCommands = [
   "flight_activation_select",
   "flight_activation_account_grant",
   "flight_activation_reserve_call",
+  "universal_activation_reserve_call",
   "external_integration_configure",
   "external_integration_set_kill",
   "intelligence_provider_config_append",

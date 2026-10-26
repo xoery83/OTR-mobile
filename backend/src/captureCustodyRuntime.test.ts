@@ -145,24 +145,51 @@ it("invalid custody permissions/scope/expiry fail before storage or secret use",
     { isFile: () => false },
   ]) {
     file(metadata(), stat);
-    await expect(loadDevCaptureCustody(env)).rejects.toThrow(
-      "RUNTIME_UNAVAILABLE",
-    );
+    await expect(loadDevCaptureCustody(env)).rejects.toThrow("RUNTIME_UNAVAILABLE");
   }
   const body = metadata();
   body.batch.inputs[1] = { ...second, accountId: randomUUID() };
   file(body);
-  await expect(loadDevCaptureCustody(env)).rejects.toThrow(
-    "RUNTIME_UNAVAILABLE",
-  );
+  await expect(loadDevCaptureCustody(env)).rejects.toThrow("RUNTIME_UNAVAILABLE");
   file({ ...metadata(), expiresAt: new Date(Date.now() - 1).toISOString() });
-  await expect(loadDevCaptureCustody(env)).rejects.toThrow(
-    "RUNTIME_UNAVAILABLE",
-  );
+  await expect(loadDevCaptureCustody(env)).rejects.toThrow("RUNTIME_UNAVAILABLE");
   file();
   await expect(
     loadDevCaptureCustody({ ...env, OTR_DEV_BACKEND_NETWORK_MODE: "bridge" }),
   ).rejects.toThrow("RUNTIME_UNAVAILABLE");
   expect(createFlightPrivateCustody).not.toHaveBeenCalled();
   expect(createCaptureStorageMaterial).not.toHaveBeenCalled();
+});
+
+it("Universal custody v2 admits only its bounded exact N pins and expires within900 seconds; legacy does not imply v2", async () => {
+  const pin = {
+    ...one,
+    version: 2 as const,
+    acquisitionSource: "files" as const,
+    originalFilename: "synthetic.pdf",
+    kind: "FILE" as const,
+  };
+  const body = {
+    ...metadata(),
+    version: 2,
+    batch: { version: 2, batchId: one.batchId, jobId: one.jobId, inputs: [pin] },
+  };
+  file(body as unknown as ReturnType<typeof metadata>);
+  const runtime = await loadDevCaptureCustody(env);
+  await runtime!.captureMaterialCustody.put(pin, bytes);
+  await expect(
+    runtime!.captureMaterialCustody.read({ ...pin, inputId: randomUUID() }),
+  ).rejects.toThrow("BINDING_CONFLICT");
+  await runtime!.close();
+  file({
+    ...body,
+    expiresAt: new Date(Date.now() + 901000).toISOString(),
+  } as unknown as ReturnType<typeof metadata>);
+  await expect(loadDevCaptureCustody(env)).rejects.toThrow("RUNTIME_UNAVAILABLE");
+  file(metadata());
+  const old = await loadDevCaptureCustody(env);
+  await expect(old!.captureMaterialCustody.put(pin, bytes)).rejects.toThrow(
+    "BINDING_CONFLICT",
+  );
+  await old!.close();
 });

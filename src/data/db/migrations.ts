@@ -1,3 +1,9 @@
+import { tripPersonCloudCreateMigration } from "./tripPersonCloudCreateMigration";
+import { captureMixedInputsMigration } from "./migrations/captureMixedInputs";
+import { tripMetadataConfirmationsMigration } from "./migrations/tripMetadataConfirmations";
+import { localTripDestinationsMigration } from "./migrations/localTripDestinations";
+import { localCoreAuthorityMigration } from "./migrations/localCoreAuthority";
+import { personalTripCoverPreferencesMigration } from "./migrations/personalTripCoverPreferences";
 import { requiredDateDecisionsMigration } from "./migrations/requiredDateDecisions";
 import { localTripLedgerMigration } from "./migrations/localTripLedger";
 import { captureProcessingMigration } from "./migrations/captureProcessing";
@@ -1719,4 +1725,10 @@ export const migrations: Migration[] = [
   captureProcessingMigration,
   captureLocalInterpretationMigration,
   localTripLedgerMigration,
+  localCoreAuthorityMigration,
+  personalTripCoverPreferencesMigration,
+  localTripDestinationsMigration,
+  tripMetadataConfirmationsMigration,
+  captureMixedInputsMigration,
+  tripPersonCloudCreateMigration,
 ];

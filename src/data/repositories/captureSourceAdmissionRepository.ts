@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  UTF8_TEXT_FILE_PROFILE,
+  verifyUtf8TextFile,
+} from "@/domain/capture/utf8TextFile";
+import {
   captureAccountRequestContext,
   assertAccountRequestContext,
   withAccountApplyGate,
@@ -61,6 +65,8 @@ export type CaptureSourceDependencies = {
     sourceId: string,
     representationId: string,
   ): Promise<Uint8Array | null>;
+  // Explicit candidate capability only. Omission keeps the original v1 path closed.
+  utf8FileProfile?: typeof UTF8_TEXT_FILE_PROFILE;
   // Existing actual-format/profile verifier, never filename/declared MIME. This
   // dependency is deliberately unwired while Capture/Source runtime gates close.
   verifyBinary?(bytes: Uint8Array): Promise<{
@@ -272,15 +278,17 @@ export function createCaptureSourceAdmissionRepository(
     bytes: Uint8Array,
     materialHash: string,
     mimeType: string | null,
+    fileText: string | null,
   ) {
     const text =
       capture.kind === "TEXT"
         ? new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes)
-        : null;
+        : fileText;
     const d = {
       id: p.representation_id,
       material_kind: text === null ? "BINARY" : "TEXT",
-      original_filename: text === null ? capture.originalFilename : null,
+      original_filename:
+        text === null || fileText !== null ? capture.originalFilename : null,
       part_key: null,
       mime_type: mimeType,
       encoding: text === null ? null : "UTF-8",
@@ -320,8 +328,14 @@ export function createCaptureSourceAdmissionRepository(
     const cap = { completeness: "AS_SUPPLIED", capture_sha256: captureHash };
     const input = {
       source_kind:
-        text !== null ? "TEXT" : mimeType === "application/pdf" ? "FILE" : "IMAGE",
-      acquisition_channel: text !== null ? "PASTE" : "FILES",
+        fileText !== null
+          ? "FILE"
+          : text !== null
+            ? "TEXT"
+            : mimeType === "application/pdf"
+              ? "FILE"
+              : "IMAGE",
+      acquisition_channel: fileText === null && text !== null ? "PASTE" : "FILES",
       captured_at: null,
       capture_time_basis: "UNKNOWN",
     };
@@ -429,8 +443,20 @@ export function createCaptureSourceAdmissionRepository(
         validateCaptureUtf8(bytes);
         if (bytes.byteLength > 262144) fail("CAPTURE_SOURCE_TEXT_TOO_LARGE");
       }
+      let fileText: string | null = null;
+      if (
+        capture.kind === "FILE" &&
+        capture.declaredContentType === "text/plain" &&
+        dependencies.utf8FileProfile === UTF8_TEXT_FILE_PROFILE &&
+        plan.intent_kind === "NEW"
+      )
+        fileText = verifyUtf8TextFile(
+          bytes,
+          capture.originalFilename,
+          capture.declaredContentType,
+        ).text;
       let mimeType: string | null = null;
-      if (capture.kind !== "TEXT" && plan.intent_kind !== "REUSE") {
+      if (capture.kind !== "TEXT" && fileText === null && plan.intent_kind !== "REUSE") {
         if (!dependencies.verifyBinary) fail("CAPTURE_SOURCE_FORMAT_UNAVAILABLE");
         const proof = await dependencies.verifyBinary(new Uint8Array(bytes));
         if (
@@ -453,7 +479,7 @@ export function createCaptureSourceAdmissionRepository(
       const prepared =
         plan.intent_kind === "REUSE"
           ? null
-          : await command(c, plan, capture, bytes, materialHash, mimeType);
+          : await command(c, plan, capture, bytes, materialHash, mimeType, fileText);
       await assertAccountRequestContext(c, getAccountId);
       return scoped(c, async () => {
         const current = await database.getFirstAsync<Row>(
@@ -821,6 +847,79 @@ export function createCaptureSourceAdmissionRepository(
         return { state, source_receipt_sha256: r.result_sha256 };
       });
     },
+    async readAdmittedInputPin(
+      c: AccountRequestContext,
+      bindingId: string,
+      inputId: string,
+    ) {
+      uuid.parse(bindingId);
+      uuid.parse(inputId);
+      return scoped(c, async () => {
+        const b = await database.getFirstAsync<Row>(
+          "SELECT * FROM local_capture_source_bindings WHERE account_id=? AND trip_id=? AND id=?",
+          c.accountId,
+          c.tripId,
+          bindingId,
+        );
+        if (
+          !b ||
+          b.state !== "ADMITTED" ||
+          b.intent_kind !== "NEW" ||
+          !b.source_receipt_sha256
+        )
+          fail("SOURCE_NOT_ADMITTED");
+        const source = await database.getFirstAsync<Row>(
+          "SELECT * FROM trip_sources WHERE cache_account_id=? AND trip_id=? AND id=?",
+          c.accountId,
+          c.tripId,
+          b.source_id as string,
+        );
+        const rep = await database.getFirstAsync<Row>(
+          "SELECT * FROM trip_source_representations WHERE cache_account_id=? AND source_id=? AND id=?",
+          c.accountId,
+          b.source_id as string,
+          b.representation_id as string,
+        );
+        if (
+          source?.registration_state !== "REGISTERED" ||
+          rep?.registration_state !== "REGISTERED" ||
+          source.acquired_by !== c.accountId ||
+          source.lifecycle !== "ACTIVE" ||
+          source.retention_state !== "RETAINED" ||
+          source.current_material_revision !== b.material_revision ||
+          rep.introduced_revision !== b.material_revision ||
+          rep.retention_state !== "RETAINED" ||
+          rep.role !== "ORIGINAL" ||
+          rep.payload_sha256 !== b.material_sha256 ||
+          rep.byte_count !== b.byte_count
+        )
+          fail("SOURCE_PIN_STALE");
+        return {
+          id: inputId,
+          source_id: uuid.parse(b.source_id),
+          material_revision: revision.parse(b.material_revision),
+          representation_id: uuid.parse(b.representation_id),
+          payload_sha256: z
+            .string()
+            .regex(/^[a-f0-9]{64}$/)
+            .parse(rep.payload_sha256),
+          byte_count: revision.parse(rep.byte_count),
+          observed_source_row_revision: revision.parse(source.row_revision),
+          historical_selection: false as const,
+        };
+      });
+    },
+    async readAdmissionByKey(c: AccountRequestContext, admissionKey: string) {
+      key.parse(admissionKey);
+      return scoped(c, () =>
+        database.getFirstAsync<Row>(
+          "SELECT * FROM local_capture_source_bindings WHERE account_id=? AND trip_id=? AND admission_key=?",
+          c.accountId,
+          c.tripId,
+          admissionKey,
+        ),
+      );
+    },
     async recovery(c: AccountRequestContext, bindingId: string) {
       return scoped(c, async () => {
         const binding = await database.getFirstAsync<Row>(
@@ -839,6 +938,7 @@ export function createCaptureSourceAdmissionRepository(
         if (binding.intent_kind !== "REUSE" && !queue) fail();
         return {
           binding,
+          operationId: queue ? (queue.id as string) : null,
           command: queue ? parseEventJson(queue.payload_json as string, 2097152) : null,
         };
       });

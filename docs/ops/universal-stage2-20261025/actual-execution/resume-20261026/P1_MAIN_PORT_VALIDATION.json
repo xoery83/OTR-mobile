@@ -1,0 +1,18 @@
+{
+  "status": "INTEGRATION_CANDIDATE_CHECKS_PASS",
+  "sourceBusinessE2E": "SCOPED_P1_PASS_SOURCE_IMAGE_d83ec6b3_4979d445",
+  "mainDeployment": "NOT_DEPLOYED",
+  "mainIntegration": "PENDING_SERIAL_HEAD_CONFIRMATION",
+  "typecheck": "PASS",
+  "uiGuard": "PASS 117 representative UI files; baseline not changed",
+  "backendBuild": "PASS 3.7MB",
+  "p1Focused": "11 files /131 PASS",
+  "persistenceAndBackendFocused": "8 files /185 PASS",
+  "sharedPrerequisites": "14 files /104 PASS",
+  "independentMergeResolutionReview": "NO_BLOCKER",
+  "providerCalls": 0,
+  "hostedMutations": 0,
+  "protectedAuthorityChanges": 0,
+  "nativeWorktreeChanged": false,
+  "speechRegistration": "CLOSED; only retained-file/image-paste modules registered; no microphone permission added"
+}

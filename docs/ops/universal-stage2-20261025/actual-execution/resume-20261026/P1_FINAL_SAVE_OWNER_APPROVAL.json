@@ -1,0 +1,17 @@
+{
+  "gate": "P1_SOURCE_REVIEW_FINAL_SAVE_GATE",
+  "gateCommit": "264f89e599f6ad3612dfaf3061a89d553aa451e9",
+  "reviewCommit": "7b7a8dda",
+  "approvedAtRecorded": "2026-10-26T05:22:15.275195+00:00",
+  "source": "Direct Owner question reply call_284e448fc3be4f83aab3d9bbcfdf93ec",
+  "answer": "批准该精确 P1 最终续窗 Gate",
+  "oneWindowSeconds": 900,
+  "localCloseAtSeconds": 660,
+  "sameIdentitiesOnly": true,
+  "newDDL": false,
+  "newProviderCalls": 0,
+  "newObjects": false,
+  "status": "CONSUMED_WINDOW_CLOSED_DO_NOT_REARM",
+  "initialStatus": "APPROVED_NOT_ARMED",
+  "executionReceipt": "P1_REVIEW_WINDOW3_RECEIPT.json"
+}

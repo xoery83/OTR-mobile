@@ -7,6 +7,7 @@ import { createSupabaseDevGateway } from "./supabaseGateway";
 import { createReceiptOcrProvider } from "./receiptOcrProvider";
 import { initializeDevFlightLiveHost } from "./flightLiveHost";
 import { loadDevPublicationCatalog } from "./tripPublicationCatalogRuntime";
+import type { PublicationCatalogConnection } from "./tripPublicationCatalogRead";
 import { createRateDemandScanner } from "./rateDemandScanner";
 
 const environmentSchema = z
@@ -45,12 +46,21 @@ export function startDevBackend(
   startOptions: Pick<
     BackendDependencies,
     | "tripCreatePort"
+    | "tripPersonCloudCreatePort"
     | "tripMetadataPort"
+    | "tripMetadataV2Port"
     | "coreConnection"
     | "documentOriginalReader"
     | "captureMaterialCustody"
     | "captureRemoteProcessing"
-  > = {},
+    | "universalImportPort"
+    | "universalRuntimeForRequest"
+    | "universalOriginalSourcePort"
+  > & {
+    publicationCatalogConnection?: PublicationCatalogConnection & {
+      close(): Promise<void>;
+    };
+  } = {},
 ) {
   const environment = environmentSchema.parse(process.env);
   // Backend-private, unprovisioned and CLOSED. No HTTP route, polling or provider call.
@@ -60,10 +70,12 @@ export function startDevBackend(
     );
   });
   let scanner: ReturnType<typeof createRateDemandScanner> | null = null;
-  const publicationCatalogConnection = loadDevPublicationCatalog(
-    environment.OTR_DEV_BACKEND_NETWORK_MODE,
-    environment.OTR_DEV_SUPABASE_URL,
-  );
+  const publicationCatalogConnection =
+    startOptions.publicationCatalogConnection ??
+    loadDevPublicationCatalog(
+      environment.OTR_DEV_BACKEND_NETWORK_MODE,
+      environment.OTR_DEV_SUPABASE_URL,
+    );
   const gateway = createSupabaseDevGateway({
     publicationCatalogConnection,
     url: environment.OTR_DEV_SUPABASE_URL,
@@ -94,9 +106,14 @@ export function startDevBackend(
     captureMaterialCustody: startOptions.captureMaterialCustody,
     captureRemoteProcessing: startOptions.captureRemoteProcessing,
     tripCreatePort: startOptions.tripCreatePort,
+    tripPersonCloudCreatePort: startOptions.tripPersonCloudCreatePort,
     tripMetadataPort: startOptions.tripMetadataPort,
+    tripMetadataV2Port: startOptions.tripMetadataV2Port,
     coreConnection: startOptions.coreConnection,
     documentOriginalReader: startOptions.documentOriginalReader,
+    universalImportPort: startOptions.universalImportPort,
+    universalRuntimeForRequest: startOptions.universalRuntimeForRequest,
+    universalOriginalSourcePort: startOptions.universalOriginalSourcePort,
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
     },
@@ -111,7 +128,7 @@ export function startDevBackend(
     try {
       const chunks: Buffer[] = [];
       const textSourceRoute =
-        /^\/v2\/trips\/[^/]+\/sources\/(?:acquire|runs\/publish)(?:\?|$)/.test(
+        /^\/v2\/trips\/[^/]+\/(?:sources\/(?:acquire|runs\/publish)|universal-source-originals\/(?:acquire|result))(?:\?|$)/.test(
           incoming.url ?? "",
         );
       const originalRoute =
@@ -122,12 +139,23 @@ export function startDevBackend(
         /^\/v2\/capture-jobs\/[^/]+\/inputs\/[^/]+\/processing\/[^/]+(?:\?|$)/.test(
           incoming.url ?? "",
         );
+      const personCreateRoute =
+        /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)(?:\?|$)/.test(
+          incoming.url ?? "",
+        );
       const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
         incoming.url ?? "",
       );
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
+        if (personCreateRoute && (byteCount > 8192 || incoming.method !== "POST")) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "PERSON_CREATE_INVALID" } }));
+          return;
+        }
         if (originalRoute && byteCount > 0) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");

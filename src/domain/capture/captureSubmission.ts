@@ -31,7 +31,7 @@ export const inputDeclarationSchema = z
     id: submissionId,
     itemKey: submissionId,
     ordinal: z.number().int().nonnegative(),
-    acquisitionSource: z.enum(["files", "photos", "camera"]),
+    acquisitionSource: z.enum(["files", "photos", "camera", "magic_input", "clipboard"]),
     kind: captureKindSchema,
     originalFilename: z.string().max(1024).nullable(),
     declaredContentType: z.string().max(255).nullable(),
@@ -40,11 +40,17 @@ export const inputDeclarationSchema = z
   .strict()
   .refine((input) => input.acquisitionSource !== "camera" || input.kind === "IMAGE", {
     message: "Camera input must retain IMAGE kind",
+  })
+  .refine((i) => i.acquisitionSource !== "magic_input" || i.kind === "TEXT", {
+    message: "Typed text retains TEXT kind",
+  })
+  .refine((i) => i.acquisitionSource !== "clipboard" || i.kind === "IMAGE", {
+    message: "Clipboard image retains IMAGE kind",
   });
 export const submissionRequestSchema = z
   .object({
-    formatVersion: z.literal(1),
-    manifestVersion: z.literal(1),
+    formatVersion: z.union([z.literal(1), z.literal(2)]),
+    manifestVersion: z.union([z.literal(1), z.literal(2)]),
     accountId: captureIdSchema,
     batchId: submissionId,
     jobId: submissionId,
@@ -55,6 +61,18 @@ export const submissionRequestSchema = z
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (
+      v.formatVersion !== v.manifestVersion ||
+      (v.formatVersion === 1 &&
+        v.inputs.some(
+          (i) =>
+            i.acquisitionSource === "magic_input" || i.acquisitionSource === "clipboard",
+        ))
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Mixed input requires versioned C3 provenance",
+      });
     const ids = [
       v.batchId,
       v.jobId,

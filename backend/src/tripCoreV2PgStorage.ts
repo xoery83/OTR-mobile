@@ -1,3 +1,5 @@
+import { readReviewedP1Gate, readCoreGate, type CoreGateMode } from "./tripSustainedGate";
+import { isReviewedP1Gate, isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
 import { randomUUID } from "node:crypto";
 import {
   coreUuid,
@@ -138,21 +140,27 @@ export async function readCorePgGraph(
   trip: string,
 ): Promise<CoreGraph> {
   const graph = emptyCoreGraph();
-  let count = 0;
-  for (const table of Object.keys(coreTableSchemas) as CoreTable[]) {
-    if (table === "expense_links") continue; // Ledger owner supplies associations after its independent access check.
+  const tables = (Object.keys(coreTableSchemas) as CoreTable[]).filter(
+    (table) => table !== "expense_links",
+  );
+  const reads = tables.map((table) => {
     const legacy = table === "itinerary_events" || table === "itinerary_reservations";
-    const rows = (
-      await lease.query(
-        `SELECT to_jsonb(facts) AS fact FROM (SELECT ${projection(table)} FROM public.${quoted(table)} WHERE trip_id=$1::uuid${legacy ? " AND business_contract_version=2" : ""} LIMIT 20001) facts`,
-        [trip],
-      )
-    ).rows;
-    count += rows.length;
-    if (count > 20000) throw new Error("CORE_READ_RESOURCE_LIMIT");
-    graph[table] = rows.map((r) =>
-      coreTableSchemas[table].parse(normalized(r.fact as CoreRow)),
-    ) as CoreRow[];
+    return `SELECT '${table}'::text AS core_table,to_jsonb(facts) AS fact FROM (SELECT ${projection(table)} FROM public.${quoted(table)} WHERE trip_id=$1::uuid${legacy ? " AND business_contract_version=2" : ""} LIMIT 20001) facts`;
+  });
+  // One bounded SQL snapshot keeps repeated Source projection inside the owning lease deadline.
+  const rows = (
+    await lease.query(
+      `SELECT * FROM (${reads.join(" UNION ALL ")}) core_graph LIMIT 20001`,
+      [trip],
+    )
+  ).rows;
+  if (rows.length > 20000) throw new Error("CORE_READ_RESOURCE_LIMIT");
+  for (const row of rows) {
+    const table = row.core_table as (typeof tables)[number];
+    if (!tables.includes(table)) throw new Error("CORE_READ_TABLE_MISMATCH");
+    graph[table].push(
+      coreTableSchemas[table].parse(normalized(row.fact as CoreRow)) as CoreRow,
+    );
   }
   return validateCoreGraph(graph, trip);
 }
@@ -234,6 +242,7 @@ export function createCorePgStorage(
   connection: CorePgConnection,
   hash: ImportHash,
   admission?: CorePgAdmission,
+  gateMode?: CoreGateMode,
 ): CoreCommandStorage {
   return {
     async withLockedCommand(scope, work) {
@@ -316,11 +325,13 @@ export function createCorePgStorage(
               );
             },
             async enabledCommands() {
-              const r = (
-                await lease.query(
-                  "SELECT runtime_enabled,enabled_commands FROM public.trip_core_activation_gate WHERE singleton",
-                )
-              ).rows[0];
+              const r = await readCoreGate(
+                lease,
+                actor.accountId,
+                actor.tripId,
+                gateMode,
+                "runtime_enabled,enabled_commands",
+              );
               return r?.runtime_enabled ? (r.enabled_commands as CoreCommandName[]) : [];
             },
             async readLockedGraph(command) {
@@ -355,16 +366,52 @@ export function createCorePgStorage(
               return locked;
             },
             async verifyAdmission(command, intent, graph) {
-              const finiteFamily = (command.payload as { family?: string }).family;
+              const sourceP1 =
+                gateMode?.sustainedDev &&
+                gateMode.reviewedP1 &&
+                command.admission.mode === "REVIEWED_SOURCE";
+              const activation = sourceP1
+                ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
+                : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
+              const reviewed = sourceP1 && isReviewedP1Gate(activation);
+              const normal = isNormalP1Gate(activation);
+              const finiteFamily =
+                command.command === "CREATE_ITEM"
+                  ? (command.payload as { family?: string }).family
+                  : graph.itinerary_events.find((item) => item.id === command.target.id)
+                      ?.experience_family;
               if (
-                String(command.command) !== "CREATE_ITEM" ||
-                String(command.admission.mode) !== "MANUAL" ||
-                (finiteFamily !== "P1" && finiteFamily !== "P3")
+                reviewed
+                  ? command.command !== "CREATE_ITEM" ||
+                    finiteFamily !== "P1" ||
+                    !command.admission.sourceIntentId ||
+                    command.admission.policyVersion !== null
+                  : normal
+                    ? command.admission.mode !== "MANUAL" ||
+                      finiteFamily !== "P1" ||
+                      !(normalP1Commands as readonly string[]).includes(command.command)
+                    : command.command !== "CREATE_ITEM" ||
+                      command.admission.mode !== "MANUAL" ||
+                      (finiteFamily !== "P1" && finiteFamily !== "P3")
               )
                 throw new Error("CORE_CAPABILITY_CLOSED");
+              if (
+                normal &&
+                command.command !== "CREATE_ITEM" &&
+                graph.itinerary_events.find((item) => item.id === command.target.id)
+                  ?.owner_account_id !== actor.accountId
+              )
+                throw new Error("CORE_CREATOR_REQUIRED");
               await lease.query(
-                "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true)",
-                [command.command, finiteFamily, command.admission.mode],
+                "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true),set_config('otr.core.target_item',$4,true),set_config('otr.core.operation',$5,true),set_config('otr.core.source_intent',$6,true)",
+                [
+                  command.command,
+                  finiteFamily,
+                  command.admission.mode,
+                  command.target.id,
+                  command.operationId,
+                  command.admission.sourceIntentId ?? "",
+                ],
               );
               if (collision) throw new Error("REVISION_CONFLICT");
               if (command.command === "SET_ORDINARY_ORDER") {
@@ -391,11 +438,15 @@ export function createCorePgStorage(
                   throw new Error("INVALID_SELF_PERSON");
               }
 
-              const gate = (
-                await lease.query(
-                  "SELECT enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
-                )
-              ).rows[0];
+              const gate = sourceP1
+                ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
+                : await readCoreGate(
+                    lease,
+                    actor.accountId,
+                    actor.tripId,
+                    gateMode,
+                    "enabled_families,enabled_admission_modes",
+                  );
               const family =
                 command.command === "CREATE_SPARSE_FLIGHT"
                   ? "P2"

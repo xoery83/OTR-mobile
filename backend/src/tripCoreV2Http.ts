@@ -1,3 +1,9 @@
+import {
+  coreUniversalP1PublishRequestSchema,
+  coreUniversalP1PublishResultSchema,
+  coreSourceFinalizeV2Schema,
+  coreSourceFinalizeResultV2Schema,
+} from "../../src/domain/trip/tripCoreV2SourceContract";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import {
@@ -34,6 +40,12 @@ import {
 import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
 import type { createCorePgReader } from "./tripCoreV2PgRead";
 export type CoreHttpConnection = {
+  publishUniversalP1?(actor: string, trip: string, input: unknown): Promise<unknown>;
+  finalizeUniversalP1Operation?(
+    actor: string,
+    trip: string,
+    input: unknown,
+  ): Promise<unknown>;
   publishSourceCandidates?(
     actorAccountId: string,
     tripId: string,
@@ -213,6 +225,39 @@ export async function coreHttpBoundary(
         throw new Error("CORE_PUBLICATION_SCOPE_MISMATCH");
       return reply(200, result);
     }
+    if (path === "universal-p1-candidates" && request.method === "POST") {
+      const raw = await body(request);
+      if (unsupportedVersion(raw, "captureVersion"))
+        return failure(426, "UNSUPPORTED_CLIENT");
+      const input = coreUniversalP1PublishRequestSchema.parse(raw);
+      if (!connection?.publishUniversalP1) return failure(503, "CORE_CAPABILITY_CLOSED");
+      const result = coreUniversalP1PublishResultSchema.parse(
+        await connection.publishUniversalP1(actor, trip, input),
+      );
+      if (
+        result.proposedPlan.sourceId !== input.sourceId ||
+        result.proposedPlan.candidateIds.length !== 1 ||
+        result.proposedPlan.slots.length !== 1 ||
+        result.proposedPlan.mode !== "REVIEWED_SOURCE" ||
+        result.proposedPlan.slots[0].command !== "CREATE_ITEM" ||
+        (result.proposedPlan.slots[0].payload as { family?: string }).family !== "P1"
+      )
+        throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
+      return reply(200, result);
+    }
+    if (path === "universal-p1-source/finalize" && request.method === "POST") {
+      const raw = await body(request);
+      if (unsupportedVersion(raw, "captureVersion"))
+        return failure(426, "UNSUPPORTED_CLIENT");
+      const input = coreSourceFinalizeV2Schema.parse(raw);
+      if (!connection?.finalizeUniversalP1Operation)
+        return failure(503, "CORE_CAPABILITY_CLOSED");
+      const result = coreSourceFinalizeResultV2Schema.parse(
+        await connection.finalizeUniversalP1Operation(actor, trip, input),
+      );
+      if (result.slotId !== input.slotId) throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+      return reply(200, result);
+    }
     const plan = /^source-plans\/([0-9a-f-]{36})(\/finalize)?$/.exec(path);
     if (path === "source-plans/prepare" && request.method === "POST") {
       const input = await body(request);
@@ -299,6 +344,21 @@ export async function coreHttpBoundary(
         "INVALID_PAYLOAD",
       );
     const code = error instanceof Error ? error.message : "INTERNAL_ERROR";
+    if (
+      path === "universal-p1-candidates" &&
+      [
+        "OWNING_REVIEW_REQUIRED",
+        "SOURCE_REVIEW_MISMATCH",
+        "SOURCE_REVIEW_REPLAY_CONFLICT",
+        "LIFECYCLE_QUALIFICATION_REQUIRED",
+        "SOURCE_RELATION_QUALIFICATION_REQUIRED",
+        "OWNING_RELATION_QUALIFICATION_REQUIRED",
+        "OWNING_MATERIAL_QUALIFICATION_REQUIRED",
+        "INCOMPLETE_SOURCE_EVIDENCE",
+        "CONTRACT_UNSUPPORTED",
+      ].includes(code)
+    )
+      return failure(409, "OWNING_ADMISSION_PENDING");
     if (["CORE_CAPABILITY_CLOSED", "CAPABILITY_CLOSED"].includes(code))
       return failure(503, "CORE_CAPABILITY_CLOSED");
     if (["NOT_VISIBLE", "TRIP_NOT_AUTHORIZED"].includes(code))

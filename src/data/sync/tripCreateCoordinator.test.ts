@@ -1,3 +1,4 @@
+import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { beforeEach, expect, it, vi } from "vitest";
 import { createNativeTripCreateSyncRunner } from "./tripCreateCoordinator";
 const mocks = vi.hoisted(() => ({
@@ -59,6 +60,7 @@ it("explicit composition reuses the existing queue, worker, formal transport and
     mocks.repository,
     mocks.transport,
     expect.any(Function),
+    expect.any(Function),
   );
   expect(mocks.coordinator).toHaveBeenCalledWith(
     mocks.queue,
@@ -69,3 +71,41 @@ it("explicit composition reuses the existing queue, worker, formal transport and
   );
   expect(mocks.run).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
 });
+
+it("an explicit newer Trip target cannot bypass a closed runtime gate", async () => {
+  const target = {
+    accountId: "10000000-0000-4000-8000-000000000001",
+    tripId: "10000000-0000-4000-8000-000000000002",
+    operationId: "10000000-0000-4000-8000-000000000003",
+  };
+  expect(await createNativeTripCreateSyncRunner(target, () => false)()).toEqual({
+    status: "closed",
+    processedCount: 0,
+  });
+  expect(mocks.readDatabase).not.toHaveBeenCalled();
+  expect(mocks.readRepository).not.toHaveBeenCalled();
+  expect(mocks.createWorker).not.toHaveBeenCalled();
+  expect(mocks.run).not.toHaveBeenCalled();
+});
+
+it.each(["readDatabase", "readRepository"] as const)(
+  "rejects Account ABA while awaiting %s before constructing the worker",
+  async (read) => {
+    mocks[read].mockImplementationOnce(async () => {
+      advanceAccountGeneration();
+      advanceAccountGeneration();
+      return read === "readDatabase" ? mocks.database : mocks.repository;
+    });
+    const target = {
+      accountId: "10000000-0000-4000-8000-000000000001",
+      tripId: "10000000-0000-4000-8000-000000000002",
+      operationId: "10000000-0000-4000-8000-000000000003",
+    };
+    await expect(createNativeTripCreateSyncRunner(target, () => true)()).rejects.toThrow(
+      "Account changed",
+    );
+    expect(mocks.createWorker).not.toHaveBeenCalled();
+    expect(mocks.coordinator).not.toHaveBeenCalled();
+    expect(mocks.run).not.toHaveBeenCalled();
+  },
+);

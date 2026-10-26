@@ -1,0 +1,14 @@
+{
+  "status": "NORMAL_QA_CLOSED_GATE_CORE_READER_PASS",
+  "observedAt": "2026-10-26T05:40:39.605806+00:00",
+  "collectionStatus": 200,
+  "itemId": "34dece59-61ae-8716-a976-7d3da49b51d0",
+  "revision": 1,
+  "title": "Walk in Auckland Domain",
+  "localDate": "2026-11-01",
+  "coreCapabilitiesStatus": 200,
+  "sourceEvidenceAvailable": false,
+  "providerCalls": 0,
+  "businessWrites": 0,
+  "normalAuthVerified": true
+}

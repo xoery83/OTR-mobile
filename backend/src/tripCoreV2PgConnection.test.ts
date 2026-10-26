@@ -3,6 +3,7 @@ import {
   createCorePgConnection,
   createSourcePgConnection,
   createTripPgConnection,
+  createPersonPgConnection,
 } from "./tripCoreV2PgConnection";
 const f = vi.hoisted(() => ({
   config: {} as Record<string, unknown>,
@@ -99,5 +100,19 @@ it("Trip create uses only its own fixed principal on a verified primary", async 
   f.principal = "otr_trip_core_v2_gateway";
   await expect(
     createTripPgConnection(config).withLease(async () => undefined),
+  ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
+});
+
+it("Person uses only its reserved principal through the verified TLS primary driver", async () => {
+  f.principal = "otr_trip_person_command_gateway";
+  await createPersonPgConnection(config).withLease(async (lease) => {
+    await lease.query("BEGIN");
+    await lease.query("COMMIT");
+  });
+  expect(f.config.user).toBe("otr_trip_person_command_gateway");
+  expect(f.config.ssl).toMatchObject({ rejectUnauthorized: true });
+  f.principal = "service_role";
+  await expect(
+    createPersonPgConnection(config).withLease(async () => undefined),
   ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
 });

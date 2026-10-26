@@ -1,3 +1,5 @@
+> 2026-10-26: isolated Universal main-port candidate in progress, based on local main e81eeb9f (remote0c271171 is its ancestor). Source branch formal P1 DEV E2E passed and Gate consumed/closed: Item34dece59, receiptc7b5aeae, independent readback, duplicate identity, AD5 Day/fullRestart and closed normalReader. Main-port tsc/UIguard/backend build pass; targeted tests and final serial merge/smoke still in progress. No main or protected DEV authority updated. P2–P6 remain unqualified. See docs/ops/universal-stage2-20261025/actual-execution/resume-20261026/P1_MAIN_PORT_SCOPE.json.
+
 # C4-RB / Flight Partial integration checkpoint — 2026-10-17
 
 - Main/origin0c27117 includes the three explicitly approved commits; current

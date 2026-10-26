@@ -39,3 +39,167 @@ it("uses the existing authenticated client and exact idempotency identity for me
   expect(await transport.update(scope, request)).toEqual(result);
   expect(fetchImplementation).toHaveBeenCalledTimes(2);
 });
+
+it("uses explicit V2 snapshot and version-pinned receipt/update without upgrading V1", async () => {
+  const actor = randomUUID(),
+    operationId = randomUUID(),
+    tripId = randomUUID();
+  const before = { name: "Before", destination: null, startDate: null, endDate: null };
+  const request = {
+    formatVersion: 2 as const,
+    operationId,
+    tripId,
+    before,
+    after: { ...before, name: "After" },
+    expectedMetadataRevision: 5,
+  };
+  const result = { ...request, actorAccountId: actor, resultMetadataRevision: 6 };
+  const fetchImplementation = vi.fn(async (url: string, options: RequestInit) => {
+    expect(options.headers).toMatchObject({ "OTR-Trip-Metadata-Version": "2" });
+    if (url.includes("trip-metadata-operations"))
+      return new Response(JSON.stringify(result));
+    if (options.method === "GET") {
+      expect(options.headers).toMatchObject({ "OTR-Metadata-Operation-Id": operationId });
+      return new Response(
+        JSON.stringify({
+          formatVersion: 2,
+          actorAccountId: actor,
+          tripId,
+          metadataRevision: 5,
+          metadata: before,
+        }),
+      );
+    }
+    expect(JSON.parse(options.body as string)).toEqual(request);
+    return new Response(JSON.stringify(result));
+  });
+  const scope = await captureAccountScope(async () => actor);
+  const transport = createTripMetadataTransport(
+    async () => actor,
+    {
+      baseUrl: "https://api.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "test-only", userId: actor }),
+  );
+  expect(await transport.snapshot(scope, tripId, operationId)).toMatchObject({
+    metadataRevision: 5,
+  });
+  expect(await transport.receipt(scope, operationId, 2)).toEqual(result);
+  expect(await transport.update(scope, request)).toEqual(result);
+});
+it("rejects a V2 result on V1 read and an altered V2 request baseline", async () => {
+  const actor = randomUUID(),
+    operationId = randomUUID(),
+    tripId = randomUUID();
+  const before = { name: "Before", destination: null, startDate: null, endDate: null };
+  const request = {
+    formatVersion: 2 as const,
+    operationId,
+    tripId,
+    before,
+    after: { ...before, name: "After" },
+    expectedMetadataRevision: 2,
+  };
+  const result = { ...request, actorAccountId: actor, resultMetadataRevision: 3 };
+  const fetchImplementation = vi.fn(async () => new Response(JSON.stringify(result)));
+  const scope = await captureAccountScope(async () => actor);
+  const transport = createTripMetadataTransport(
+    async () => actor,
+    {
+      baseUrl: "https://api.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "test-only", userId: actor }),
+  );
+  await expect(transport.receipt(scope, operationId)).rejects.toThrow(
+    "TRIP_METADATA_RECEIPT_MISMATCH",
+  );
+  await expect(
+    transport.update(scope, { ...request, expectedMetadataRevision: 1 }),
+  ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+});
+
+it("does not disclose a V2 snapshot across an Account generation ABA", async () => {
+  const actor = randomUUID(),
+    tripId = randomUUID(),
+    operationId = randomUUID();
+  const { advanceAccountGeneration } = await import("../auth/accountGeneration");
+  const scope = await captureAccountScope(async () => actor);
+  const transport = createTripMetadataTransport(
+    async () => actor,
+    {
+      baseUrl: "https://api.example.test",
+      fetchImplementation: vi.fn(async () => {
+        advanceAccountGeneration();
+        advanceAccountGeneration();
+        return new Response(
+          JSON.stringify({
+            formatVersion: 2,
+            actorAccountId: actor,
+            tripId,
+            metadataRevision: 0,
+            metadata: {
+              name: "Fixture",
+              destination: null,
+              startDate: null,
+              endDate: null,
+            },
+          }),
+        );
+      }) as typeof fetch,
+    },
+    async () => ({ token: "test-only", userId: actor }),
+  );
+  await expect(transport.snapshot(scope, tripId, operationId)).rejects.toThrow(
+    "Account changed",
+  );
+});
+
+it("does not return a snapshot whose body finishes after the finite dispatch window", async () => {
+  const actor = randomUUID(),
+    tripId = randomUUID(),
+    op = randomUUID();
+  let open = true;
+  let release!: () => void;
+  const snapshot = {
+    formatVersion: 3,
+    actorAccountId: actor,
+    tripId,
+    metadataRevision: 0,
+    metadata: {
+      name: "QA",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [],
+    },
+  };
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      release = () => {
+        open = false;
+        controller.enqueue(new TextEncoder().encode(JSON.stringify(snapshot)));
+        controller.close();
+      };
+    },
+  });
+  const fetchImplementation = vi.fn(async () => new Response(body, { status: 200 }));
+  const scope = await captureAccountScope(async () => actor);
+  const transport = createTripMetadataTransport(
+    async () => actor,
+    {
+      baseUrl: "https://api.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "test-only", userId: actor }),
+    () => {
+      if (!open) throw Error("CLOSED");
+    },
+  );
+  const pending = transport.snapshot(scope, tripId, op, 3);
+  await new Promise((r) => setTimeout(r, 0));
+  expect(fetchImplementation).toHaveBeenCalledOnce();
+  release();
+  await expect(pending).rejects.toThrow("CLOSED");
+});

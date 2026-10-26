@@ -18,12 +18,14 @@ import { CaptureComposer } from "./CaptureComposer";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
 import { subscribeCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
 
+let pasteInvocation = 0;
 // Hosts remount on invocation-context change. Context is a prior, never assignment.
 export function CaptureContent({
   isCurrent,
   tripName,
   tripPrior = null,
   validateTripPrior,
+  readTripTargets,
   onCancel,
   jobId,
   draftStaging,
@@ -33,7 +35,8 @@ export function CaptureContent({
   isCurrent: () => boolean;
   tripName?: string;
   tripPrior?: string | null;
-  validateTripPrior?: () => Promise<boolean>;
+  validateTripPrior?: (id: string) => Promise<boolean>;
+  readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onCancel: () => void;
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
@@ -55,6 +58,19 @@ export function CaptureContent({
     staging.getDraftSnapshot,
     staging.getDraftSnapshot,
   );
+  const selectedTripPrior =
+    draft.tripTarget === undefined ? invocationTripPrior : (draft.tripTarget?.id ?? null);
+  const selectedTripName =
+    draft.tripTarget === undefined ? invocationTripName : draft.tripTarget?.name;
+  const submittedTripPrior = useRef<string | null>(null);
+  const [pasteSession] = useState(
+    () => `import-paste:${Date.now()}:${++pasteInvocation}`,
+  );
+  const pasteRevision = draft.targetRevision ?? 0;
+  const pasteRequestId = `${pasteSession}:${pasteRevision}`;
+  const [pasteFailure, setPasteFailure] = useState<
+    "PASTE_UNSUPPORTED" | "PASTE_LIMIT" | "PASTE_FAILED" | null
+  >(null);
   const [duplicate, setDuplicate] = useState(false);
   const [model, setModel] = useState<CaptureJobReadModel | null>(null);
   const modelRef = useRef<CaptureJobReadModel | null>(null);
@@ -65,7 +81,7 @@ export function CaptureContent({
   const [submitError, setSubmitError] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [submittedSelections, setSubmittedSelections] = useState<
-    readonly import("./captureStaging").StagedCaptureItem[] | null
+    readonly import("./captureStaging").CaptureDraftItem[] | null
   >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
@@ -166,28 +182,20 @@ export function CaptureContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staging]);
   const submit = async () => {
-    if (
-      !current() ||
-      running.current ||
-      snapshot.selecting ||
-      !(submittedSelections ?? snapshot.items).length
-    )
-      return;
+    if (!current() || running.current || snapshot.selecting) return;
     const roster =
       submittedSelections ?? (draftStaging ? staging.prepareSubmit() : snapshot.items);
-    if (!roster?.length || roster.some((item) => item.source === "magic_input")) return;
-    const selected = roster
-      .filter(
-        (item): item is import("./captureStaging").StagedCaptureItem =>
-          item.source !== "magic_input",
-      )
-      .map((item) => ({ ...item }));
+    if (!roster?.length) return;
+    const selected = roster.map((item) => ({ ...item }));
+    const submitPrior = submittedSelections
+      ? submittedTripPrior.current
+      : selectedTripPrior;
     running.current = true;
     setBusy(true);
     setSubmitError(false);
     try {
-      if (!submittedSelections && invocationTripPrior) {
-        if (!validateTripPrior || !(await validateTripPrior()))
+      if (!submittedSelections && submitPrior) {
+        if (!validateTripPrior || !(await validateTripPrior(submitPrior)))
           throw new Error("CAPTURE_PRIOR_UNAVAILABLE");
         if (!current()) return;
       }
@@ -201,13 +209,14 @@ export function CaptureContent({
       const owner = await session.current;
       if (!current()) return;
       if (draftStaging && !submittedSelections) {
-        // The existing C3 invocation now owns this frozen roster, not the pre-submit draft.
+        // Keep transient paste leases until C3 has actually retained every original.
+        submittedTripPrior.current = submitPrior;
         setSubmittedSelections(selected);
-        staging.cancel();
       }
-      if (invocationTripPrior)
-        await owner.submit(selected, progress, invocationTripPrior);
-      else await owner.submit(selected, progress);
+      const retained = submitPrior
+        ? await owner.submit(selected, progress, submitPrior)
+        : await owner.submit(selected, progress);
+      if (draftStaging && current() && retained.allInputsAccepted) staging.cancel();
     } catch {
       if (current()) {
         setSubmitError(true);
@@ -272,6 +281,21 @@ export function CaptureContent({
       if (current()) setBusy(false);
     }
   };
+  const canRetryRetained =
+    !!submittedSelections &&
+    (!model ||
+      model.inputs.some((input, index) => {
+        const selection = submittedSelections[index];
+        return (
+          input.state === "FAILED" &&
+          input.failureCode === "READER_FAILURE" &&
+          selection &&
+          selection.source !== "magic_input" &&
+          selection.source !== "clipboard" &&
+          !!selection.temporaryUri &&
+          !selection.temporaryUri.startsWith("otr-capture-file://")
+        );
+      }));
   if (activity && !accountId)
     return (
       <CaptureActivity
@@ -282,7 +306,7 @@ export function CaptureContent({
       />
     );
   if (accountId || (draftStaging && !attempted && !reopening && !model)) {
-    const pick = async (source: "files" | "photos") => {
+    const pick = async (source: "files" | "photos" | "camera") => {
       if (!current() || running.current) return;
       setDuplicate(false);
       const result = await staging.pick(source);
@@ -292,11 +316,96 @@ export function CaptureContent({
       <CaptureComposer
         snapshot={draft}
         count={staging.prepareSubmit()?.length ?? 0}
-        tripName={invocationTripName}
-        errorMessage={
-          !attempted && submitError && invocationTripPrior
-            ? t("actionIsland.tripCaptureUnavailable")
+        tripName={selectedTripName}
+        readTripTargets={readTripTargets}
+        renderImagePaste={
+          accountId
+            ? (enabled, input) => {
+                // Attach native Paste handling only to this composer input.
+                const { ImagePasteInput, releaseImagePaste } =
+                  require("@/native/imagePaste") as typeof import("@/native/imagePaste");
+                return (
+                  <ImagePasteInput
+                    requestId={pasteRequestId}
+                    enabled={
+                      enabled &&
+                      current() &&
+                      !running.current &&
+                      !attempted &&
+                      !reopening &&
+                      !model
+                    }
+                    onTouchStart={() => setPasteFailure(null)}
+                    onImages={(payload) => {
+                      if (
+                        !current() ||
+                        payload.requestId !== pasteRequestId ||
+                        (staging.getDraftSnapshot().targetRevision ?? 0) !==
+                          pasteRevision ||
+                        running.current ||
+                        attempted ||
+                        reopening ||
+                        model
+                      ) {
+                        releaseImagePaste(payload.items.map((item) => item.token));
+                        return;
+                      }
+                      setPasteFailure(
+                        staging.stagePastedImages(payload.items, releaseImagePaste)
+                          ? null
+                          : "PASTE_LIMIT",
+                      );
+                    }}
+                    onFailure={(payload) => {
+                      // Only the validated failure enum; never clipboard content or provider URLs.
+                      if (__DEV__) console.warn(`OTR image paste: ${payload.code}`);
+                      if (
+                        current() &&
+                        payload.requestId === pasteRequestId &&
+                        (staging.getDraftSnapshot().targetRevision ?? 0) === pasteRevision
+                      )
+                        setPasteFailure(
+                          payload.code === "unsupported"
+                            ? "PASTE_UNSUPPORTED"
+                            : payload.code === "limit"
+                              ? "PASTE_LIMIT"
+                              : "PASTE_FAILED",
+                        );
+                    }}
+                  >
+                    {input}
+                  </ImagePasteInput>
+                );
+              }
             : undefined
+        }
+        onTripTarget={async (target, targetCurrent) => {
+          if (!current() || running.current || attempted || reopening || model)
+            return false;
+          if (target && (!validateTripPrior || !(await validateTripPrior(target.id))))
+            return false;
+          return (
+            targetCurrent() &&
+            current() &&
+            !running.current &&
+            !attempted &&
+            !reopening &&
+            !model &&
+            staging.setTripTarget(target)
+          );
+        }}
+        errorMessage={
+          !attempted && submitError && selectedTripPrior
+            ? t("actionIsland.tripCaptureUnavailable")
+            : pasteFailure
+              ? t(
+                  pasteFailure === "PASTE_UNSUPPORTED"
+                    ? "capture.composer.paste.unsupported"
+                    : pasteFailure === "PASTE_LIMIT"
+                      ? "capture.composer.paste.limit"
+                      : "capture.composer.paste.failed",
+                )
+              : undefined
         }
         duplicate={duplicate}
         title={
@@ -321,12 +430,14 @@ export function CaptureContent({
               />
             ) : attempted || reopening || model ? (
               <CaptureProgress
+                readTripTargets={readTripTargets}
+                isCurrent={current}
                 model={model}
                 accountId={accountId}
                 busy={busy}
                 reading={reading}
                 error={readError || submitError}
-                canRetry={!!submittedSelections && !model}
+                canRetry={canRetryRetained}
                 onRetry={() => void submit()}
                 onRecover={(id) => void recover(id)}
                 onOpenJob={(id) => void openJob(id)}
@@ -353,6 +464,7 @@ export function CaptureContent({
         onClose={hide}
         onFiles={() => void pick("files")}
         onPhotos={() => void pick("photos")}
+        onCamera={() => void pick("camera")}
         onRemove={(id) => {
           if (current()) staging.remove(id);
         }}
@@ -449,7 +561,9 @@ export function CaptureTray({
   reading = false,
   readError = false,
 }: {
-  snapshot: CaptureStagingSnapshot;
+  snapshot: Omit<CaptureStagingSnapshot, "items"> & {
+    items: readonly import("./captureStaging").CaptureDraftItem[];
+  };
   tripName?: string;
   onFiles: () => void;
   onPhotos: () => void;
@@ -471,7 +585,11 @@ export function CaptureTray({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   return (
-    <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.body}
+      contentContainerStyle={styles.content}
+    >
       {onActivity ? (
         <UiButton
           label={t("capture.activity")}
@@ -630,20 +748,29 @@ export function CaptureTray({
             <Text style={styles.secondary}>{t("capture.empty")}</Text>
           ) : null}
           {snapshot.items.map((item) => {
-            const name = item.name ?? t("capture.unnamed");
+            const name =
+              item.source === "magic_input"
+                ? item.text
+                : (item.name ?? t("capture.unnamed"));
             return (
               <View key={item.stagingId} style={styles.item}>
                 <Text style={styles.name}>{name}</Text>
                 <Text style={styles.secondary}>
                   {t(
-                    item.source === "files"
-                      ? "capture.sourceFiles"
-                      : "capture.sourcePhotos",
+                    item.source === "magic_input"
+                      ? "capture.sourceText"
+                      : item.source === "clipboard"
+                        ? "capture.sourceClipboard"
+                        : item.source === "camera"
+                          ? "capture.sourceCamera"
+                          : item.source === "files"
+                            ? "capture.sourceFiles"
+                            : "capture.sourcePhotos",
                   )}
                 </Text>
                 <Text style={styles.secondary}>
                   {t(
-                    item.availability === "unavailable"
+                    item.source !== "magic_input" && item.availability === "unavailable"
                       ? "capture.unavailable"
                       : "capture.unverified",
                   )}

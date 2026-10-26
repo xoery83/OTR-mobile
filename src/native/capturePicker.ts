@@ -1,3 +1,4 @@
+import { hasCaptureFileLease, pickLeasedCaptureFiles } from "./captureFileLease";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import type { CapturePicker, CaptureSelection } from "@/features/capture/captureStaging";
@@ -9,6 +10,7 @@ export const pickCaptureMaterial: CapturePicker = async (
 ) => {
   if (!isCurrent()) return [];
   if (source === "files") {
+    if (hasCaptureFileLease()) return (await pickLeasedCaptureFiles(isCurrent)) ?? [];
     const result = await DocumentPicker.getDocumentAsync({
       multiple: true,
       copyToCacheDirectory: false,

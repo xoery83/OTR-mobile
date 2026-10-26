@@ -17,6 +17,13 @@ import {
   type SyncOperationRepository,
 } from "./syncEngine";
 export type CoreSyncTransport = {
+  finalizeSourceOperation?(
+    context: AccountRequestContext,
+    input: import("../../domain/trip/tripCoreV2SourceContract").CoreSourceFinalizeV2,
+  ): Promise<
+    import("../../domain/trip/tripCoreV2SourceContract").CoreSourceFinalizeResultV2
+  >;
+
   capabilities(context: AccountRequestContext): Promise<unknown>;
   receipt(
     context: AccountRequestContext,
@@ -53,7 +60,7 @@ export function createCoreV2SyncWorker(
         command.target.id !== operation.entityId
       )
         throw new Error("CORE_QUEUE_BINDING_MISMATCH");
-      const intent = (await repository.pending(context)).find(
+      const intent = (await repository.pending(context, operation.id)).find(
         (i) => i.command.operationId === operation.id,
       );
       if (
@@ -62,8 +69,14 @@ export function createCoreV2SyncWorker(
           (await coreHashValue("otr-trip-core-intent-v2", command, hash))
       )
         throw new Error("CORE_QUEUE_BINDING_MISMATCH");
+      const sourceP1 =
+        command.command === "CREATE_ITEM" &&
+        (command.payload as { family?: string }).family === "P1" &&
+        command.admission.mode === "REVIEWED_SOURCE";
       let result = await transport.receipt(context, operation.id);
       await assertAccountRequestContext(context, getAccountId);
+      if (!result && sourceP1 && intent.state === "APPLIED")
+        throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
           await transport.capabilities(context),
@@ -93,6 +106,23 @@ export function createCoreV2SyncWorker(
       if (result.projection !== "FULL")
         throw new SyncDependencyError("CORE_CURRENT_AUTHORIZATION_REQUIRED");
       await repository.applyReceipt(context, result.receipt);
+      // Same queue recovers the exact accepted operation before finishing its Source relation.
+      if (sourceP1 && ["APPLIED", "NO_CHANGE"].includes(result.receipt.outcome)) {
+        if (!transport.finalizeSourceOperation)
+          throw new Error("CORE_SOURCE_FINALIZER_CLOSED");
+        const final = await transport.finalizeSourceOperation(context, {
+          captureVersion: 2,
+          slotId: command.admission.sourceIntentId!,
+          operationId: command.operationId,
+          intentSha256: result.receipt.intentSha256,
+          domainReceiptId: result.domainReceiptId,
+          receiptSha256: result.receipt.receiptSha256,
+        });
+        await assertAccountRequestContext(context, getAccountId);
+        if (final.slotId !== command.admission.sourceIntentId)
+          throw Error("CORE_SOURCE_FINALIZER_SCOPE_MISMATCH");
+        if (final.state !== "COMPLETE") throw new Error("CORE_SOURCE_EVIDENCE_PENDING");
+      }
     },
   };
 }
@@ -102,18 +132,24 @@ export function createCoreV2SyncCoordinator(
   worker: SyncWorker,
   repository: Repository,
   tripId: string,
+  operationId?: string,
 ) {
   const engine = createSyncEngine(
     queue,
     worker,
     undefined,
     (operation) =>
-      operation.operationType === "CORE_V2_COMMAND" && operation.tripId === tripId,
+      operation.operationType === "CORE_V2_COMMAND" &&
+      operation.tripId === tripId &&
+      (!operationId || operation.id === operationId),
   );
   return {
     async run(authState: Parameters<typeof engine.run>[0]) {
-      if (authState === "AUTHENTICATED_ONLINE")
-        await repository.resume(await repository.captureContext(tripId));
+      if (authState === "AUTHENTICATED_ONLINE") {
+        const context = await repository.captureContext(tripId);
+        if (operationId) await repository.resume(context, operationId);
+        else await repository.resume(context);
+      }
       return engine.run(authState);
     },
   };

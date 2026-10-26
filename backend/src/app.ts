@@ -2,6 +2,17 @@ import {
   captureRemoteProcessingBoundary,
   type CaptureRemoteProcessingPort,
 } from "./captureRemoteProcessingHttp";
+import { universalPrepareBoundary } from "./universalPrepareHttp";
+import {
+  tripPersonCloudCreateBoundary,
+  type TripPersonCloudCreatePort,
+} from "./tripPersonCloudCreateHttp";
+import {
+  universalOriginalSourceBoundary,
+  createUniversalOriginalSourceConnection,
+} from "./universalOriginalSource";
+import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
+import { universalBoundary, type UniversalPort } from "./universalImport";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
 import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCustody";
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
@@ -191,6 +202,7 @@ export type DevBackendGateway = {
     actor: string,
     trip: string,
     signal: AbortSignal,
+    version?: 1 | 2,
   ): Promise<string>;
 
   observeCanonicalEventCollection?(userId: string, tripId: string): Promise<unknown>;
@@ -616,9 +628,25 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
+  tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
+  universalImportPort?: UniversalPort;
+  universalRuntimeForRequest?(
+    request: Request,
+    actorId: string,
+  ): Promise<{
+    universalImportPort?: UniversalPort;
+    universalOriginalSourcePort?: ReturnType<
+      typeof createUniversalOriginalSourceConnection
+    >;
+    prepare?(tripId: string, input: unknown): Promise<unknown>;
+  }>;
+  universalOriginalSourcePort?: ReturnType<
+    typeof createUniversalOriginalSourceConnection
+  >;
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
+  tripMetadataV2Port?: TripMetadataV2Port;
   documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
   flightTextSourceConnection?: FlightTextSourceConnection;
@@ -974,11 +1002,14 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
       "INVALID_PUBLICATION_READ",
       "A body and query are not supported.",
     );
-  if (request.headers.get("X-OTR-Publication-Catalog-Version") !== "1")
+  const requestedCatalogVersion = request.headers.get(
+    "X-OTR-Publication-Catalog-Version",
+  );
+  if (requestedCatalogVersion !== "1" && requestedCatalogVersion !== "2")
     throw new HttpError(
       426,
       "UNSUPPORTED_PUBLICATION_CATALOG_VERSION",
-      "Catalog version1 is required.",
+      "Catalog version1 or version2 is required.",
     );
   const token = getBearerToken(request);
   if (!gateway.validatePublicationAccessToken || !gateway.readPublicationImportCatalogs)
@@ -1008,7 +1039,9 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
     if (!(await phase(() => gateway.canReadTrip(auth.user.id, match[1]))))
       throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
     const body = await phase((signal) =>
-      gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
+      requestedCatalogVersion === "2"
+        ? gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal, 2)
+        : gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
     );
     // The gateway returns canonical bounded text, never arbitrary HTTP error details.
     if (Buffer.byteLength(body, "utf8") > 4194304)
@@ -1019,7 +1052,12 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
     } catch {
       throw new PublicationCatalogError(503, "PUBLICATION_MEMBERSHIP_INTEGRITY");
     }
-    const checked = publicationCatalogBody(original, auth.user.id, match[1]);
+    const checked = publicationCatalogBody(
+      original,
+      auth.user.id,
+      match[1],
+      requestedCatalogVersion === "2" ? 2 : 1,
+    );
     boundary.assertCurrent();
     return new Response(checked, {
       status: 200,
@@ -2362,9 +2400,14 @@ function reportingFilters(url: URL): ReportingFilters {
 
 export function createDevBackendHandler({
   captureRemoteProcessing,
+  tripPersonCloudCreatePort,
+  universalImportPort,
+  universalRuntimeForRequest,
+  universalOriginalSourcePort,
   captureMaterialCustody,
   tripCreatePort,
   tripMetadataPort,
+  tripMetadataV2Port,
   documentOriginalReader,
   flightTextSourceConnection,
   coreConnection,
@@ -2462,6 +2505,52 @@ export function createDevBackendHandler({
           actor.id,
           captureRemoteProcessing,
         );
+      } else if (
+        /^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)
+      ) {
+        route = "/v2/import-batches/:batchId/interpretations";
+        const actor = await authenticate(request, gateway);
+        const runtime = await universalRuntimeForRequest?.(request, actor.id);
+        response = url.pathname.endsWith("/prepare")
+          ? await universalPrepareBoundary(
+              request,
+              actor.id,
+              (a, t) => gateway.canReadTrip(a, t),
+              runtime?.prepare,
+            )
+          : await universalBoundary(
+              request,
+              actor.id,
+              (a, t) => gateway.canReadTrip(a, t),
+              runtime?.universalImportPort ?? universalImportPort,
+            );
+      } else if (
+        /^\/v2\/trips\/[^/]+\/universal-source-originals\/(?:acquire|result)$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/universal-source-originals/:resource";
+        const actor = await authenticate(request, gateway);
+        const runtime = await universalRuntimeForRequest?.(request, actor.id);
+        response = await universalOriginalSourceBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          runtime?.universalOriginalSourcePort ?? universalOriginalSourcePort,
+        );
+      } else if (
+        /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/people/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await tripPersonCloudCreateBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          tripPersonCloudCreatePort,
+        );
       } else if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
         route = "/v2/capture-inputs/:inputId/material";
         const actor = await authenticate(request, gateway);
@@ -2486,7 +2575,11 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/metadata";
         const actor = await authenticate(request, gateway);
-        response = await tripMetadataBoundary(request, actor.id, tripMetadataPort);
+        response = ["2", "3"].includes(
+          request.headers.get("OTR-Trip-Metadata-Version") ?? "",
+        )
+          ? await tripMetadataV2Boundary(request, actor.id, tripMetadataV2Port)
+          : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
       } else if (
         url.pathname === "/v2/trips" ||
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)

@@ -64,7 +64,10 @@ function fixture() {
       if (sql.includes("FROM public.trip_core_read_state")) return { rows: [state] };
       if (sql.includes('FROM public."trip_operational_documents"'))
         return {
-          rows: graph.trip_operational_documents.map((fact) => ({ fact })),
+          rows: graph.trip_operational_documents.map((fact) => ({
+            core_table: "trip_operational_documents",
+            fact,
+          })),
         };
       if (sql.includes("trip_core_read_person_bindings"))
         return { rows: [{ bindings: [] }] };

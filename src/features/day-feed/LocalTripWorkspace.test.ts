@@ -171,6 +171,11 @@ const trip = (id: string, name: string): Trip => ({
   deletedAt: null,
 });
 const repository = (list: Trip[] = []): TripRepository => ({
+  readMetadataEditBase: vi.fn(),
+  retainMetadataSnapshot: vi.fn(),
+  readDeferredMetadataEditBase: vi.fn(),
+  deferMetadataUpdate: vi.fn(),
+  materializeDeferredMetadata: vi.fn(),
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
   canUpdateMetadata: vi.fn(async () => true),

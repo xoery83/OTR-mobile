@@ -14,6 +14,8 @@ import {
   subscribeOperationalSyncLifecycle,
 } from "@/data/bootstrap/defaultBootstrapDependencies";
 
+export const unstable_settings = { initialRouteName: "(tabs)" };
+
 export default function RootLayout() {
   useEffect(() => {
     if (!__DEV__ || process.env.EXPO_PUBLIC_OTR_IMPORT_WORKBENCH !== "1") return;
@@ -86,12 +88,30 @@ export default function RootLayout() {
               orientation: "portrait",
             }}
           >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="import-plans"
+              options={{
+                presentation: "transparentModal",
+                animation: "fade",
+                contentStyle: { backgroundColor: colors.transparent },
+                gestureEnabled: false,
+              }}
+            />
             {__DEV__ ? (
               <Stack.Screen
                 name="day-feed-lab"
                 options={{ headerShown: true, headerTitle: t("dayLab.title") }}
               />
             ) : null}
+            <Stack.Screen
+              name="trip-expense/[id]"
+              options={{ headerShown: true, headerTitle: t("common.expense") }}
+            />
+            <Stack.Screen
+              name="trip-currency"
+              options={{ headerShown: true, headerTitle: t("navigation.currency") }}
+            />
             <Stack.Screen
               name="trip-validation"
               options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}

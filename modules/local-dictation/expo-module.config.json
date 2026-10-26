@@ -1,0 +1,11 @@
+{
+  "platforms": [
+    "ios"
+  ],
+  "apple": {
+    "modules": [
+      "ImagePasteModule",
+      "CaptureFileModule"
+    ]
+  }
+}

@@ -1,3 +1,7 @@
+import {
+  coreUniversalP1PublishRequestSchema,
+  coreUniversalP1PublishResultSchema,
+} from "../../domain/trip/tripCoreV2SourceContract";
 import { z } from "zod";
 import { createAuthenticatedApiClient } from "./authenticatedClient";
 import { ApiClientError, type ApiClientOptions } from "./client";
@@ -66,6 +70,11 @@ export type CoreCandidatePublicationTransport = {
   ): Promise<CoreCandidatePublicationResult>;
 };
 export type CoreSourcePlanTransport = {
+  publishUniversalP1?(
+    ctx: AccountRequestContext,
+    input: import("zod").infer<typeof coreUniversalP1PublishRequestSchema>,
+  ): Promise<import("zod").infer<typeof coreUniversalP1PublishResultSchema>>;
+
   prepareSourcePlan(
     ctx: AccountRequestContext,
     input: CoreSourcePrepareV2,
@@ -122,6 +131,34 @@ export function createCoreV2Transport(
     return { projection: "FULL", domainReceiptId: output.domainReceiptId, receipt: r };
   }
   return {
+    async publishUniversalP1(ctx, input) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const wire = coreUniversalP1PublishRequestSchema.parse(input),
+        result = await api(ctx).post(
+          path(ctx) + "/universal-p1-candidates",
+          wire,
+          coreUniversalP1PublishResultSchema,
+          headers,
+        );
+      await assertAccountRequestContext(ctx, getAccountId);
+      if (result.proposedPlan.sourceId !== wire.sourceId)
+        throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
+      return result;
+    },
+    async finalizeSourceOperation(ctx, input) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const wire = coreSourceFinalizeV2Schema.parse(input),
+        result = await api(ctx).post(
+          path(ctx) + "/universal-p1-source/finalize",
+          wire,
+          coreSourceFinalizeResultV2Schema,
+          headers,
+        );
+      await assertAccountRequestContext(ctx, getAccountId);
+      if (result.slotId !== wire.slotId)
+        throw Error("CORE_SOURCE_FINALIZER_SCOPE_MISMATCH");
+      return result;
+    },
     async prepareSourcePlan(ctx, input) {
       await assertAccountRequestContext(ctx, getAccountId);
       const proposed = coreSourcePrepareV2Schema.parse(input);

@@ -4,13 +4,20 @@ import {
   assertAccountRequestGeneration,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
-import type { CaptureSelection } from "@/features/capture/captureStaging";
+import type {
+  CaptureSelection,
+  StagedCaptureText,
+  StagedCapturePaste,
+} from "@/features/capture/captureStaging";
 import type { CapturePayloadInput } from "@/data/files/capturePayloadReader";
 import type {
   CaptureJobReadModel,
   SubmissionRequest,
 } from "@/domain/capture/captureSubmission";
 import type { createCaptureSubmissionRepository } from "@/data/repositories/captureSubmissionRepository";
+
+export type CaptureSubmissionMaterial =
+  CaptureSelection | StagedCaptureText | StagedCapturePaste;
 
 // A session owns only this explicit Add request, never a scheduler or byte store.
 export function createCaptureSubmissionSession(dependencies: {
@@ -21,6 +28,7 @@ export function createCaptureSubmissionSession(dependencies: {
   context?: AccountRequestContext;
   lineageRevisions?: Readonly<Record<string, number>>;
   open(selection: CaptureSelection): Promise<CapturePayloadInput>;
+  openClipboard?(selection: StagedCapturePaste): Promise<CapturePayloadInput>;
 }) {
   let frozen: Promise<{
     context: AccountRequestContext;
@@ -31,7 +39,7 @@ export function createCaptureSubmissionSession(dependencies: {
   let registeredJobId: string | null = null;
   return {
     submit(
-      selections: readonly CaptureSelection[],
+      selections: readonly CaptureSubmissionMaterial[],
       onProgress: (model: CaptureJobReadModel) => void,
       tripPrior: string | null = null,
       continuesFromInputId: string | null = null,
@@ -50,9 +58,15 @@ export function createCaptureSubmissionSession(dependencies: {
           itemKey: dependencies.newId(),
           ordinal,
           acquisitionSource: selection.source,
-          kind: selection.source === "files" ? ("FILE" as const) : ("IMAGE" as const),
-          originalFilename: selection.name,
-          declaredContentType: selection.typeHint,
+          kind:
+            selection.source === "files"
+              ? ("FILE" as const)
+              : selection.source === "magic_input"
+                ? ("TEXT" as const)
+                : ("IMAGE" as const),
+          originalFilename: selection.source === "magic_input" ? null : selection.name,
+          declaredContentType:
+            selection.source === "magic_input" ? "text/plain" : selection.typeHint,
           continuesFromInputId: ordinal === 0 ? continuesFromInputId : null,
         }));
         frozen = (
@@ -64,8 +78,16 @@ export function createCaptureSubmissionSession(dependencies: {
           return {
             context,
             request: {
-              formatVersion: 1,
-              manifestVersion: 1,
+              formatVersion: roster.some(
+                (i) => i.source === "magic_input" || i.source === "clipboard",
+              )
+                ? 2
+                : 1,
+              manifestVersion: roster.some(
+                (i) => i.source === "magic_input" || i.source === "clipboard",
+              )
+                ? 2
+                : 1,
               accountId: context.accountId,
               batchId,
               jobId,
@@ -88,7 +110,16 @@ export function createCaptureSubmissionSession(dependencies: {
             sources: new Map(
               declarations.map((item, n) => [
                 item.id,
-                () => dependencies.open(roster[n]),
+                async () => {
+                  const selection = roster[n];
+                  if (selection.source === "magic_input") return { text: selection.text };
+                  if (selection.source === "clipboard") {
+                    if (!dependencies.openClipboard)
+                      throw Error("CAPTURE_CLIPBOARD_READER_UNAVAILABLE");
+                    return dependencies.openClipboard(selection);
+                  }
+                  return dependencies.open(selection);
+                },
               ]),
             ),
           };
@@ -140,6 +171,7 @@ export function createCaptureRecoveryAction(
     : captureAccountRequestContext("", dependencies.getActiveUserId);
   let session: ReturnType<typeof createCaptureSubmissionSession> | null = null;
   let retainedSelections: readonly CaptureSelection[] = [];
+  let retainedTripPrior: string | null = null;
   let running: Promise<CaptureJobReadModel> | null = null;
   return {
     run(
@@ -152,12 +184,17 @@ export function createCaptureRecoveryAction(
         if (!acquisitionCurrent()) throw new Error("Capture recovery acquisition closed");
         await assertAccountRequestContext(context, dependencies.getActiveUserId);
         // A recovery submission keeps its original request even when no ACK was received.
-        if (session) return session.submit(retainedSelections, onProgress, null, inputId);
+        if (session) return session.submit(retainedSelections, onProgress, retainedTripPrior, inputId);
         const job = await dependencies.repository.reopen(jobId, context);
         const item = job.inputs.find((i) => i.id === inputId);
         if (!item) throw new Error("Stale recovery action");
         if (item.state === "ACCEPTED") return job;
         if (item.revision !== expectedRevision) throw new Error("Stale recovery action");
+        if (
+          item.acquisitionSource === "magic_input" ||
+          item.acquisitionSource === "clipboard"
+        )
+          throw Error("CAPTURE_COMPOSER_REACQUISITION_REQUIRED");
         const selections = await dependencies.pick(item.acquisitionSource, () => {
           try {
             assertAccountRequestGeneration(context);
@@ -190,13 +227,15 @@ export function createCaptureRecoveryAction(
             () => dependencies.open(selections[0]),
             context,
           );
+        // Retain the original passive context, never the currently open route's Trip.
+        retainedTripPrior = job.batch.context.tripPrior?.id ?? null;
         retainedSelections = selections.map((selection) => ({ ...selection }));
         session = createCaptureSubmissionSession({
           ...dependencies,
           context,
           lineageRevisions: { [inputId]: expectedRevision },
         });
-        return session.submit(retainedSelections, onProgress, null, inputId);
+        return session.submit(retainedSelections, onProgress, retainedTripPrior, inputId);
       })();
       running
         .finally(() => {

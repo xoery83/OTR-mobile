@@ -10,12 +10,13 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
-import { coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
+import { coreUuid, coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import {
   coreHashValue,
   validateCoreReadCollection,
 } from "../../domain/trip/tripCoreV2Read";
+import type { CoreReceiptProjection } from "../../domain/trip/tripCoreV2Receipt";
 import { validateCoreReceipt } from "../../domain/trip/tripCoreV2Receipt";
 import {
   emptyCoreGraph,
@@ -29,6 +30,7 @@ import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 export type CoreDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
@@ -491,13 +493,15 @@ export function createTripCoreV2Repository(
         await assertContext(ctx);
       });
     });
+    announceLedgerQueueWorkAvailable();
     return {
       localStatus: "PENDING" as const,
       itemId: command.target.id,
       operationId: command.operationId,
     };
   }
-  async function pending(ctx: AccountRequestContext) {
+  async function pending(ctx: AccountRequestContext, retainedOperationId?: string) {
+    if (retainedOperationId !== undefined) coreUuid.parse(retainedOperationId);
     await assertContext(ctx);
     await scope(ctx);
     const rows = await database.getAllAsync<{
@@ -506,9 +510,10 @@ export function createTripCoreV2Repository(
       created_at: string;
       reconciled_revision: number | null;
     }>(
-      "SELECT canonical_intent_text,state,created_at,reconciled_revision FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND reconciled_revision IS NULL ORDER BY created_at,operation_id",
+      "SELECT canonical_intent_text,state,created_at,reconciled_revision FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND (reconciled_revision IS NULL OR operation_id=?) ORDER BY created_at,operation_id",
       ctx.accountId,
       ctx.tripId,
+      retainedOperationId ?? null,
     );
     await assertContext(ctx);
     return rows.map((r) => ({
@@ -719,6 +724,133 @@ export function createTripCoreV2Repository(
     });
     return receipt;
   }
+  // Lost-response recovery is read-only remotely. A future write retry is never made due early.
+  async function recoverP1Receipts(
+    ctx: AccountRequestContext,
+    transport: CoreReadTransport & {
+      receipt(
+        context: AccountRequestContext,
+        operationId: string,
+      ): Promise<CoreReceiptProjection | null>;
+    },
+  ) {
+    await assertContext(ctx);
+    await scope(ctx);
+    const rows = await database.getAllAsync<{
+      operation_id: string;
+      canonical_intent_text: string;
+      intent_sha256: string;
+      queue_id: string;
+      entity_id: string;
+      idempotency_key: string;
+      payload_json: string;
+    }>(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,op.id AS queue_id,op.entity_id,op.idempotency_key,op.payload_json
+       FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
+       WHERE i.account_id=? AND i.trip_id=? AND i.state IN ('BLOCKED','PENDING','IN_FLIGHT','APPLIED')
+       AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND' AND op.status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED')
+       AND op.claim_owner IS NULL AND op.attempt_count>0 AND op.failure_category IS NOT 'AUTH' ORDER BY i.created_at,i.operation_id`,
+      ctx.accountId,
+      ctx.tripId,
+    );
+    await assertContext(ctx);
+    const graph = await readGraph(ctx);
+    const accepted: typeof rows = [];
+    for (const row of rows) {
+      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      if (
+        command.tripId !== ctx.tripId ||
+        command.operationId !== row.operation_id ||
+        row.queue_id !== row.operation_id ||
+        row.idempotency_key !== row.operation_id ||
+        command.target.kind !== "ITEM" ||
+        command.target.id !== row.entity_id ||
+        row.payload_json !== row.canonical_intent_text ||
+        (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !==
+          row.intent_sha256
+      )
+        throw Error("CORE_RECOVERY_QUEUE_PIN");
+      const p1 =
+        command.command === "CREATE_ITEM"
+          ? (command.payload as { family: string }).family === "P1"
+          : [
+              "SET_ITEM_TEXT",
+              "SET_ITEM_SCHEDULE",
+              "SET_ITEM_PLACE",
+              "SET_ITEM_PARTICIPATION",
+            ].includes(command.command) &&
+            graph.itinerary_events.some(
+              (item) => item.id === command.target.id && item.experience_family === "P1",
+            );
+      if (!p1 || command.admission.mode !== "MANUAL") continue;
+      const result = await transport.receipt(ctx, command.operationId);
+      await assertContext(ctx);
+      if (
+        !result ||
+        result.projection !== "FULL" ||
+        !["APPLIED", "NO_CHANGE"].includes(result.receipt.outcome)
+      )
+        continue;
+      if (result.receipt.operationId !== command.operationId)
+        throw Error("CORE_RECOVERY_RECEIPT_PIN");
+      await applyReceipt(ctx, result.receipt);
+      accepted.push(row);
+    }
+    if (!accepted.length) return { recovered: 0 };
+    // Only a fully hashed authorized collection may prove canonical target revisions and remove optimistic intent.
+    await refresh(ctx, transport);
+    let recovered = 0;
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        for (const row of accepted) {
+          const current = await database.getFirstAsync<{
+            reconciled_revision: number | null;
+            body_json: string;
+            intent_sha256: string;
+          }>(
+            `SELECT i.reconciled_revision,i.intent_sha256,r.body_json FROM trip_core_pending_intents i
+             JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
+             WHERE i.account_id=? AND i.trip_id=? AND i.operation_id=? AND i.state='APPLIED'`,
+            ctx.accountId,
+            ctx.tripId,
+            row.operation_id,
+          );
+          if (
+            !current ||
+            current.reconciled_revision === null ||
+            current.intent_sha256 !== row.intent_sha256
+          )
+            continue;
+          const receipt = await validateCoreReceipt(JSON.parse(current.body_json), hash);
+          if (
+            receipt.actorAccountId !== ctx.accountId ||
+            receipt.tripId !== ctx.tripId ||
+            receipt.operationId !== row.operation_id ||
+            receipt.intentSha256 !== row.intent_sha256 ||
+            !["APPLIED", "NO_CHANGE"].includes(receipt.outcome)
+          )
+            throw Error("CORE_RECOVERY_RECEIPT_PIN");
+          const update = await database.runAsync(
+            `UPDATE sync_operations SET status='COMPLETED',next_attempt_at=NULL,failure_category=NULL,last_error_code=NULL,last_error_message=NULL,last_request_id=NULL,lease_expires_at=NULL,updated_at=?
+            WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND'
+            AND entity_id=? AND idempotency_key=? AND payload_json=? AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND claim_owner IS NULL AND failure_category IS NOT 'AUTH'`,
+            clock(),
+            row.operation_id,
+            ctx.accountId,
+            ctx.tripId,
+            row.entity_id,
+            row.operation_id,
+            row.canonical_intent_text,
+          );
+          recovered += update.changes;
+        }
+        await assertContext(ctx);
+      });
+    });
+    return { recovered };
+  }
   async function revoke(ctx: AccountRequestContext, accessRevision: number) {
     if (!Number.isSafeInteger(accessRevision) || accessRevision < 1)
       throw new Error("INVALID_ACCESS_REVISION");
@@ -831,18 +963,68 @@ export function createTripCoreV2Repository(
       result.pages,
     );
   }
-  async function resume(ctx: AccountRequestContext) {
+  async function resume(ctx: AccountRequestContext, operationId?: string) {
+    if (operationId) coreUuid.parse(operationId);
     await withAccountApplyGate(async () => {
       await assertContext(ctx);
       await scope(ctx);
       await database.withTransactionAsync(async () => {
         await database.runAsync(
-          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT'))",
+          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT')) AND (? IS NULL OR id=?)",
           ctx.accountId,
           ctx.tripId,
           ctx.accountId,
           ctx.tripId,
+          operationId ?? null,
+          operationId ?? null,
         );
+        const accepted = await database.getAllAsync<{
+          operation_id: string;
+          canonical_intent_text: string;
+          intent_sha256: string;
+          receipt_body: string | null;
+          receipt_sha256: string | null;
+        }>(
+          "SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,r.body_json AS receipt_body,r.receipt_sha256 FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256 WHERE i.account_id=? AND i.trip_id=? AND i.state='APPLIED' AND op.status='DEPENDENCY_BLOCKED' AND op.operation_type='CORE_V2_COMMAND' AND op.entity_type='TRIP_CORE_V2' AND op.id=i.operation_id AND (? IS NULL OR i.operation_id=?)",
+          ctx.accountId,
+          ctx.tripId,
+          operationId ?? null,
+          operationId ?? null,
+        );
+        for (const row of accepted) {
+          const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+          if (
+            command.command !== "CREATE_ITEM" ||
+            (command.payload as { family?: string }).family !== "P1" ||
+            command.admission.mode !== "REVIEWED_SOURCE" ||
+            !row.receipt_body ||
+            !row.receipt_sha256
+          )
+            continue;
+          const receipt = await validateCoreReceipt(JSON.parse(row.receipt_body), hash);
+          const digest = await coreHashValue("otr-trip-core-intent-v2", command, hash);
+          if (
+            command.operationId !== row.operation_id ||
+            command.tripId !== ctx.tripId ||
+            receipt.operationId !== row.operation_id ||
+            receipt.actorAccountId !== ctx.accountId ||
+            receipt.tripId !== ctx.tripId ||
+            receipt.command !== command.command ||
+            receipt.intentSha256 !== digest ||
+            row.intent_sha256 !== digest ||
+            receipt.receiptSha256 !== row.receipt_sha256 ||
+            !["APPLIED", "NO_CHANGE"].includes(receipt.outcome)
+          )
+            continue;
+          await assertContext(ctx);
+          // This accepted Source operation can retry finalization only; the worker must never resubmit it.
+          await database.runAsync(
+            "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND id=? AND status='DEPENDENCY_BLOCKED'",
+            ctx.accountId,
+            ctx.tripId,
+            row.operation_id,
+          );
+        }
         await assertContext(ctx);
       });
     });
@@ -867,6 +1049,8 @@ export function createTripCoreV2Repository(
     captureContext,
     readGraph,
     acceptedSnapshot,
+    // Caller already owns the Account apply gate and serialized transaction.
+    readAcceptedSnapshotWithinTransaction: acceptedWithinTransaction,
     readTtr,
     guardTtrPublication,
     ttrWithinTransaction,
@@ -880,6 +1064,7 @@ export function createTripCoreV2Repository(
     beginRefresh,
     install,
     applyReceipt,
+    recoverP1Receipts,
     revoke,
     day,
   };

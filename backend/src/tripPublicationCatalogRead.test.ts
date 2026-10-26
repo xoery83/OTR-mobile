@@ -504,3 +504,41 @@ describe("F1 Backend original catalog text admission", () => {
     expect(await response.text()).toBe(raw());
   });
 });
+
+describe("explicit V2 Source-only owning projection", () => {
+  function pending() {
+    const value = structuredClone(fixture);
+    value.trip_source_runs[0].state = "PENDING" as never;
+    value.trip_source_runs[0].completed_at = null as never;
+    return value;
+  }
+  it("keeps old PENDING Run and new Source; V1 still rejects the exact same catalog", async () => {
+    const raw = pending();
+    expect(() => publicationCatalogBody(raw, actor, trip)).toThrow(expect.objectContaining({ code: "PUBLICATION_MEMBERSHIP_INTEGRITY" }));
+    const projected = JSON.parse(publicationCatalogBody(raw, actor, trip, 2));
+    expect(projected.version).toBe(2);
+    expect(projected.trip_source_runs).toEqual(raw.trip_source_runs);
+    expect(projected.trip_sources).toEqual(raw.trip_sources);
+    const { c, query } = connection(undefined, raw);
+    const real = createSupabaseDevGateway({ url: "https://tuqigdxrvrerfewsxqgm.supabase.co", publishableKey: "fixture-nonsecret", secretKey: "fixture-nonsecret", publicationCatalogConnection: c } as never);
+    const body = await real.readPublicationImportCatalogs!(actor, trip, new AbortController().signal, 2);
+    expect(JSON.parse(body)).toEqual(projected);
+    expect(query).toHaveBeenCalledWith(expect.stringContaining("trip_source_read_import_catalogs"), [actor, trip], expect.any(AbortSignal));
+    const {readUniversalCatalog} = await import("./universalCatalog");
+    const task = {account_id:actor,trip_id:trip,run_id:raw.trip_source_runs[0].id,expected_run_generation:raw.trip_source_runs[0].generation};
+    expect(JSON.parse(await readUniversalCatalog(c,task as never,new AbortController().signal))).toEqual(projected);
+
+  });
+  it("requires explicit header2 and normal verified actor/Trip, without any Task", async () => {
+    const g = gateway({readPublicationImportCatalogs: vi.fn(async (_a,_t,_s,version) => publicationCatalogBody(pending(), actor, trip, version))});
+    const handler = createDevBackendHandler({gateway:g});
+    const req = () => request({headers:{Authorization:"Bearer valid","X-OTR-Publication-Catalog-Version":"2"}});
+    const response = await handler(req());
+    expect(response.status).toBe(200);expect((await response.json()).version).toBe(2);
+    expect(g.readPublicationImportCatalogs).toHaveBeenCalledWith(actor,trip,expect.any(AbortSignal),2);
+    const denied=createDevBackendHandler({gateway:gateway({canReadTrip:vi.fn(async()=>false)})});
+    expect((await denied(req())).status).toBe(403);
+    const unauth=createDevBackendHandler({gateway:gateway()});
+    expect((await unauth(request({headers:{Authorization:"Bearer invalid","X-OTR-Publication-Catalog-Version":"2"}}))).status).toBe(401);
+  });
+});

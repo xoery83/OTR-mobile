@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, View } from "react-native";
+import { lazy, Suspense } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import { UiButton, UiText } from "@/ui/controls";
@@ -8,9 +9,15 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { captureActivityTime } from "./CaptureActivity";
+const UniversalResults = lazy(() =>
+  import("./UniversalCaptureResults").then((module) => ({
+    default: module.UniversalCaptureResults,
+  })),
+);
 
 export function CaptureProgress({
   model,
+  readTripTargets,
   accountId,
   busy,
   reading,
@@ -21,8 +28,10 @@ export function CaptureProgress({
   onOpenJob,
   onActivity,
   onNewImport,
+  isCurrent,
 }: {
   model: CaptureJobReadModel | null;
+  readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   accountId: string;
   busy: boolean;
   reading: boolean;
@@ -33,6 +42,7 @@ export function CaptureProgress({
   onOpenJob: (id: string) => void;
   onActivity: () => void;
   onNewImport: () => void;
+  isCurrent?: () => boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -43,7 +53,11 @@ export function CaptureProgress({
     error = true;
   }
   return (
-    <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.body}
+      contentContainerStyle={styles.content}
+    >
       <UiText style={styles.secondary}>{t("capture.progress.closeHint")}</UiText>
       {reading || busy ? (
         <UiText accessibilityLiveRegion="polite" style={styles.copy}>
@@ -88,12 +102,30 @@ export function CaptureProgress({
           ) &&
           !model.localInterpretationEvents?.length ? (
             <UiText style={styles.secondary}>
-              {t("capture.processing.waitingInterpreter")}
+              {t(
+                isCurrent
+                  ? "capture.processing.localValidation"
+                  : "capture.processing.waitingInterpreter",
+              )}
             </UiText>
           ) : null}
           <UiText style={styles.secondary}>
             {t("capture.progress.outcomesUnavailable")}
           </UiText>
+          {isCurrent && model?.allInputsAccepted ? (
+            <Suspense
+              fallback={
+                <UiText style={styles.secondary}>{t("capture.jobLoading")}</UiText>
+              }
+            >
+              <UniversalResults
+                readTripTargets={readTripTargets}
+                key={model.batch.batchId}
+                model={model}
+                isCurrent={isCurrent}
+              />
+            </Suspense>
+          ) : null}
           <UiText accessibilityRole="header" style={styles.copy}>
             {t("capture.progress.history")}
           </UiText>
@@ -176,7 +208,11 @@ export function CaptureProgress({
           ))}
         </>
       ) : null}
-      {error && canRetry ? (
+      {canRetry &&
+      (error ||
+        model?.inputs.some(
+          (input) => input.state === "FAILED" && input.failureCode === "READER_FAILURE",
+        )) ? (
         <UiButton
           label={t("capture.progress.retryIntake")}
           disabled={busy || reading}

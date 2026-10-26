@@ -34,12 +34,25 @@ export function createSourcePgConnection(input: CorePgConfig): CorePgConnection 
 export function createTripPgConnection(input: CorePgConfig): CorePgConnection {
   return createOwningPgConnection(input, "otr_trip_create_gateway");
 }
+// Explicit isolated V2 composition only; this cannot open SQL/credential gates.
+export function createTripMetadataPgConnection(input: CorePgConfig): CorePgConnection {
+  return createOwningPgConnection(input, "otr_trip_metadata_gateway");
+}
+export function createPersonPgConnection(input: CorePgConfig): CorePgConnection {
+  return createOwningPgConnection(input, "otr_trip_person_command_gateway");
+}
+export function createModelTaskPgConnection(input: CorePgConfig): CorePgConnection {
+  return createOwningPgConnection(input, "otr_external_integration_call_gateway");
+}
 function createOwningPgConnection(
   input: CorePgConfig,
   principal:
     | "otr_trip_core_v2_gateway"
+    | "otr_trip_person_command_gateway"
     | "otr_trip_source_command_gateway"
-    | "otr_trip_create_gateway",
+    | "otr_trip_create_gateway"
+    | "otr_trip_metadata_gateway"
+    | "otr_external_integration_call_gateway",
 ): CorePgConnection {
   const config = configSchema.parse(input);
   let occupied = false;

@@ -1,0 +1,349 @@
+import { createHash } from "node:crypto";
+import { z } from "zod";
+import {
+  assertAccountRequestContext,
+  type AccountRequestContext,
+} from "../../src/data/auth/accountRequestContext";
+import { universalResultSchema } from "../../src/data/api/universalImportContracts";
+import {
+  qualifyImportLifecycleProposals,
+  type ImportLifecycleSnapshot,
+  type ImportLifecycleRequest,
+} from "../../src/data/operations/importLifecycleProposal";
+import { coreSourcePrepareV2Schema } from "../../src/domain/trip/tripCoreV2SourceContract";
+import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
+import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
+import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
+import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
+import type { CoreActor, CoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
+import { fieldRef } from "../../src/domain/trip/tripCoreV2CandidatePublication";
+import type { ImportHash } from "../../src/domain/trip/flightImportReview";
+import type { CoreSourceCatalogV2 } from "./tripCoreV2Source";
+import type { UniversalResult } from "./universalImport";
+import {
+  universalP1SourceReviewSchema,
+  sourceReviewCivilDate,
+} from "../../src/domain/trip/universalP1SourceReview";
+const digest = z.string().regex(/^[a-f0-9]{64}$/);
+const selectionSchema = z.strictObject({
+  action: z.literal("CONFIRM_NEW_P1"),
+  token: z.string().min(1).max(128),
+  resultSha256: digest,
+  sourceReview: universalP1SourceReviewSchema.optional(),
+});
+export function universalP1Identity(task: string, token: string, purpose: string) {
+  z.uuid().parse(task);
+  const bytes = createHash("sha256")
+    .update(JSON.stringify(["otr.universal.p1-source/1", task, token, purpose]))
+    .digest()
+    .subarray(0, 16);
+  bytes[6] = (bytes[6] & 15) | 128;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const h = bytes.toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+// Typed adapter only. Callers supply owning current Source/Task/custody/Actor reads.
+export async function projectUniversalP1Selection(
+  input: {
+    context: AccountRequestContext;
+    snapshot: ImportLifecycleSnapshot;
+    catalog: CoreSourceCatalogV2;
+    runId: string;
+    result: UniversalResult;
+    resultSha256: string;
+    selection: unknown;
+    // Trusted owning lifecycle read only. Interpreter fields/user selection are not this qualification.
+    // No runtime reader currently supplies it; omission must keep formal Source Save closed.
+    owningLifecycleRelationships?: ImportLifecycleRequest["relationships"];
+  },
+  deps: { hash: ImportHash; getAccountId(): Promise<string> },
+) {
+  const { context, snapshot, catalog } = input;
+  await assertAccountRequestContext(context, deps.getAccountId);
+  const result = universalResultSchema.parse(input.result),
+    selection = selectionSchema.parse(input.selection);
+  if (
+    selection.resultSha256 !== digest.parse(input.resultSha256) ||
+    result.accountId !== context.accountId ||
+    result.actorId !== context.accountId ||
+    result.tripId !== context.tripId ||
+    catalog.actorAccountId !== context.accountId ||
+    catalog.tripId !== context.tripId ||
+    result.providerOutcome !== "SETTLED" ||
+    result.status !== "CANDIDATES_READY"
+  )
+    throw Error("UNIVERSAL_SELECTION_UNAVAILABLE");
+  const candidates = result.candidates.filter((c) => c.token === selection.token),
+    quality = result.quality?.decisions.filter((d) => d.token === selection.token);
+  if (
+    candidates.length !== 1 ||
+    candidates[0].kind !== "P1" ||
+    candidates[0].subtype !== "ACTIVITY" ||
+    quality?.length !== 1 ||
+    (!selection.sourceReview
+      ? quality[0].tier !== "HIGH_CONFIDENCE"
+      : !["HIGH_CONFIDENCE", "REVIEWABLE"].includes(quality[0].tier))
+  )
+    throw Error("OWNING_REVIEW_REQUIRED");
+  const candidate = candidates[0];
+  if (candidate.bookingTokens.length || candidate.ticketTokens.length)
+    throw Error("OWNING_RELATION_QUALIFICATION_REQUIRED");
+  const facts = (paths: string[]) => {
+    const fields = candidate.fields.filter((f) => paths.includes(f.path));
+    if (
+      !fields.length ||
+      fields.some((f) => f.uncertainty) ||
+      new Set(fields.map((f) => f.raw)).size !== 1
+    )
+      throw Error("INCOMPLETE_SOURCE_EVIDENCE");
+    return fields;
+  };
+  const names = facts(["activity.name", "title"]),
+    dates = facts(["activity.date", "schedule.start.local_date"]);
+  if (!names[0].raw.trim()) throw Error("INCOMPLETE_SOURCE_EVIDENCE");
+  const review = selection.sourceReview;
+  if (review && input.owningLifecycleRelationships?.some((r) => r.kind !== "NEW"))
+    throw Error("LIFECYCLE_QUALIFICATION_REQUIRED");
+  if (
+    review &&
+    snapshot.associations.some(
+      (a) =>
+        a.source_id === catalog.sourceId &&
+        a.state === "ACTIVE" &&
+        a.purpose === "CONFIRMED_SUPPORT",
+    )
+  )
+    throw Error("LIFECYCLE_QUALIFICATION_REQUIRED");
+  if (
+    review &&
+    (review.sourceRevision !== catalog.sourceRevision ||
+      review.title !== names[0].raw ||
+      review.localDate !== sourceReviewCivilDate(dates[0].raw))
+  )
+    throw Error("SOURCE_REVIEW_MISMATCH");
+  const start = coreDateBoundary(review?.localDate ?? dates[0].raw),
+    candidateId = universalP1Identity(result.taskId, candidate.token, "candidate"),
+    slotId = universalP1Identity(result.taskId, candidate.token, "slot"),
+    operationId = universalP1Identity(result.taskId, candidate.token, "operation"),
+    targetId = universalP1Identity(result.taskId, candidate.token, "item");
+  const evidence: ImportLifecycleRequest["evidence"] = [];
+  for (const [fieldKey, fields] of [
+    ["ROOT.title", names],
+    ["START.local_date", dates],
+  ] as const) {
+    for (const [index, field] of fields.entries()) {
+      if (!("start" in field)) throw Error("OWNING_REVIEW_REQUIRED");
+      const bindings = result.sourceBindings.filter(
+        (b) =>
+          b.alias === field.sourceId &&
+          b.sourceId === catalog.sourceId &&
+          b.status === "READY",
+      );
+      if (bindings.length !== 1) throw Error("SOURCE_RELATION_QUALIFICATION_REQUIRED");
+      const b = bindings[0],
+        materials = snapshot.materials.filter(
+          (m) =>
+            m.pin.id === b.inputId &&
+            m.pin.source_id === b.sourceId &&
+            m.pin.material_revision === b.revision &&
+            m.pin.representation_id === b.representationId &&
+            m.pin.payload_sha256 === b.originalSha256,
+        );
+      if (materials.length !== 1 || b.submittedSha256 !== b.originalSha256)
+        throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+      const bytes = Buffer.from(materials[0].text);
+      if (
+        field.end <= field.start ||
+        field.end > bytes.length ||
+        new TextDecoder("utf-8", { fatal: true }).decode(
+          bytes.subarray(field.start, field.end),
+        ) !== field.raw
+      )
+        throw Error("IMPORT_EVIDENCE_INVALID");
+      evidence.push({
+        ref: fieldRef(candidateId, `${fieldKey}.${index}`),
+        candidateId,
+        fieldKey,
+        raw: field.raw,
+        ...(review && fieldKey === "START.local_date" && field.raw !== review.localDate
+          ? {
+              normalization: {
+                rule: "ENGLISH_MONTH_CIVIL_DATE" as const,
+                value: review.localDate,
+              },
+            }
+          : {}),
+        locator: {
+          input_id: b.inputId,
+          kind: "TEXT_SPAN",
+          page: null,
+          start: field.start,
+          end: field.end,
+          region: null,
+          excerpt: field.raw,
+        },
+      });
+    }
+  }
+  const plan = coreSourcePrepareV2Schema.parse({
+    captureVersion: 2,
+    planId: universalP1Identity(result.taskId, candidate.token, "plan"),
+    sourceId: catalog.sourceId,
+    sourceRevision: catalog.sourceRevision,
+    mode: "REVIEWED_SOURCE",
+    policyVersion: null,
+    candidateIds: [candidateId],
+    slots: [
+      {
+        slotId,
+        slotKey: "p1",
+        candidateId,
+        targetKind: "ITEM",
+        target: { kind: "ITEM", id: targetId },
+        command: "CREATE_ITEM",
+        operationId,
+        dependsOn: [],
+        selectedFields: ["ROOT.title", "START.local_date"],
+        evidenceRefs: Object.fromEntries(
+          ["ROOT.title", "START.local_date"].map((k) => [
+            k,
+            evidence.filter((e) => e.fieldKey === k).map((e) => e.ref),
+          ]),
+        ),
+        baseVector: [{ kind: "ITEM", id: targetId, revision: null }],
+        payload: {
+          family: "P1",
+          core: { title: names[0].raw },
+          schedule: { start },
+          ...coreDefaults("member"),
+        },
+      },
+    ],
+  });
+  const aliases = new Set(candidate.fields.map((f) => f.sourceId));
+  const request: ImportLifecycleRequest = {
+    version: "otr.import.lifecycle-proposal/1",
+    plans: [plan],
+    evidence,
+    relationships: review
+      ? [
+          {
+            id: `source-review:${candidateId}`,
+            kind: "NEW",
+            candidateIds: [candidateId],
+            evidenceRefs: evidence.map((e) => e.ref),
+          },
+        ]
+      : (input.owningLifecycleRelationships ?? []),
+    rawIssues: result.unresolved
+      .filter((u) => aliases.has(u.sourceId))
+      .filter((u) => !review || !p1UnselectedAdvisory(u.reason))
+      .map((u, i) => ({ id: `issue:${i}`, text: u.reason })),
+    conflicts: [],
+    commercialReviewRequests: [],
+  };
+  if (
+    request.relationships.length !== 1 ||
+    request.relationships[0].kind !== "NEW" ||
+    request.relationships[0].candidateIds.length !== 1 ||
+    request.relationships[0].candidateIds[0] !== candidateId ||
+    request.rawIssues.length ||
+    result.advisoryStatus === "INVALID" ||
+    result.sourceObservations.some((o) =>
+      canonicalCoreJson(o as Json).includes("AMENDMENT_NOTICE"),
+    )
+  )
+    throw Error("LIFECYCLE_QUALIFICATION_REQUIRED");
+  const body = {
+    schemaId: review
+      ? ("otr.core.universal-p1-source/2" as const)
+      : ("otr.core.universal-p1-source/1" as const),
+    ...(review ? { sourceReview: review, reviewedBy: context.accountId } : {}),
+    accountId: context.accountId,
+    tripId: context.tripId,
+    sourceId: catalog.sourceId,
+    sourceRevision: catalog.sourceRevision,
+    taskId: result.taskId,
+    batchId: result.batchId,
+    resultSha256: input.resultSha256,
+    token: candidate.token,
+    candidateId,
+    runId: z.uuid().parse(input.runId),
+    inputCatalogSha256: catalog.inputCatalogSha256,
+    plan,
+    evidence,
+    lifecycleRelationships: request.relationships,
+    fieldEvidence: Object.fromEntries(
+      evidence.map((e) => {
+        const p = snapshot.materials.find((m) => m.pin.id === e.locator.input_id)!.pin;
+        return [
+          e.ref.slice(e.ref.lastIndexOf("/") + 1),
+          {
+            ref: e.ref,
+            value: e.normalization?.value ?? e.raw,
+            ...(review ? { raw: e.raw } : {}),
+            ...(e.normalization ? { normalization: e.normalization } : {}),
+            locator: e.locator,
+            sourceId: p.source_id,
+            sourceRevision: p.material_revision,
+            representationId: p.representation_id,
+            inputId: p.id,
+            payloadSha256: p.payload_sha256,
+          },
+        ];
+      }),
+    ),
+    ...(review
+      ? {
+          reviewedAdvisories: result.unresolved.filter(
+            (u) => aliases.has(u.sourceId) && p1UnselectedAdvisory(u.reason),
+          ),
+        }
+      : {}),
+    sourceObservations: candidate.fields.filter(
+      (f) => !names.includes(f) && !dates.includes(f),
+    ),
+  };
+  await assertAccountRequestContext(context, deps.getAccountId);
+  return {
+    body,
+    request,
+    candidateSha256: await coreHashValue(
+      "otr-trip-core-source-candidate-v2",
+      body as Json,
+      deps.hash,
+    ),
+    grantsAdmission: false as const,
+  };
+}
+export async function qualifyUniversalP1Selection(
+  input: Parameters<typeof projectUniversalP1Selection>[0] & {
+    actor: CoreActor;
+    graph: CoreGraph;
+  },
+  deps: Parameters<typeof projectUniversalP1Selection>[1],
+) {
+  const proposal = await projectUniversalP1Selection(input, deps);
+  const qualification = await qualifyImportLifecycleProposals(
+    input.context,
+    proposal.request,
+    { actor: input.actor, graph: input.graph, snapshot: input.snapshot },
+    deps,
+  );
+  if (
+    qualification.eligibleNewRecords.length !== 1 ||
+    qualification.eligibleNewRecords[0].slotId !== proposal.body.plan.slots[0].slotId
+  )
+    throw Error("OWNING_REVIEW_REQUIRED");
+  return { ...proposal, qualification };
+}
+
+// These exact advisories concern unselected fields or absent commercial rights, never lifecycle.
+function p1UnselectedAdvisory(reason: string) {
+  return (
+    /^(?:TEXT_MISSING_OR_AMBIGUOUS:(?:activity.time|check_in.date|check_out.time)|BUSINESS_ROLE_UNVERIFIED:(?:activity.venue|booking.supplier|booking.reference)|BOOKING_EVIDENCE_UNVERIFIED)$/.test(
+      reason,
+    ) ||
+    reason === "Synthetic QA material; no real ticket, payment, or entitlement issued."
+  );
+}

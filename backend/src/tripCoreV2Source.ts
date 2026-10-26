@@ -1,3 +1,10 @@
+import {
+  mintP1OutputPurposeV2,
+  assertP1OutputPurposeV2,
+  type CertifiedP1PurposeV2,
+  type P1PurposeBindingV2,
+  type P1PurposeVerification,
+} from "../../src/domain/trip/p1OutputPurposeV2";
 import { z } from "zod";
 import {
   canonicalCoreJson,
@@ -66,6 +73,7 @@ export type CoreSourceStoredSlotV2 = {
   command: CoreCommand | null;
   intentSha256: string | null;
   certified: CertifiedFlightPurposeV2 | null;
+  p1?: { binding: P1PurposeBindingV2; certified: CertifiedP1PurposeV2 };
   binding: FlightPurposeBindingV2 | null;
   receipt: CoreSourceReceiptV2 | null;
   domainReceiptId: string | null;
@@ -81,6 +89,12 @@ export type CoreSourcePlanTransactionV2 = {
   readPlan(): Promise<CoreSourceStoredPlanV2 | null>;
   readSealedCatalog(): Promise<CoreSourceCatalogV2>;
   readClaims(): Promise<FlightOutputClaimV2[]>;
+  verifyP1Evidence?(input: {
+    catalog: CoreSourceCatalogV2;
+    candidate: CoreSourceCandidateV2;
+    slot: CoreSourceProposedSlotV2;
+    verification: P1PurposeVerification;
+  }): Promise<void>;
   verifyFlightEvidence(input: {
     catalog: CoreSourceCatalogV2;
     candidate: CoreSourceCandidateV2;
@@ -108,6 +122,7 @@ export type CoreSourcePlanStorageV2 = {
 };
 const json = (v: unknown) => canonicalCoreJson(v as Json);
 const supported = new Set([
+  "CREATE_ITEM",
   "CREATE_SPARSE_FLIGHT",
   "QUALIFY_FLIGHT",
   "UPDATE_FLIGHT_FACTS",
@@ -232,11 +247,55 @@ async function assertStoredPlan(
       p = request.slots[i];
     if (json(s.proposed) !== json(p)) throw new Error("INVALID_STORED_PLAN");
     if (!s.command) {
-      if (s.intentSha256 || s.certified || s.binding || s.receipt || s.domainReceiptId)
+      if (
+        s.intentSha256 ||
+        s.certified ||
+        s.binding ||
+        s.p1 ||
+        s.receipt ||
+        s.domainReceiptId
+      )
         throw new Error("INVALID_STORED_PLAN");
       continue;
     }
     const c = validateCoreCommand(s.command);
+    if (s.p1) {
+      const b = s.p1.binding;
+      if (
+        s.certified ||
+        s.binding ||
+        c.tripId !== scope.tripId ||
+        c.operationId !== p.operationId ||
+        c.command !== p.command ||
+        json(c.target) !== json(p.target) ||
+        json(c.payload) !== json(p.payload) ||
+        c.admission.mode !== request.mode ||
+        c.admission.policyVersion !== request.policyVersion ||
+        (p.baseVector && json(c.baseVector) !== json(p.baseVector)) ||
+        s.intentSha256 !==
+          (await importDigest("otr-trip-core-intent-v2", c as Json, sha256)) ||
+        b.accountId !== scope.actorAccountId ||
+        b.tripId !== scope.tripId ||
+        b.planId !== request.planId ||
+        b.sourceId !== request.sourceId ||
+        b.sourceRevision !== request.sourceRevision ||
+        b.slotId !== p.slotId ||
+        b.candidateId !== p.candidateId ||
+        b.targetId !== p.target.id
+      )
+        throw Error("INVALID_STORED_PLAN");
+      await assertP1OutputPurposeV2(
+        s.p1.certified,
+        {
+          binding: b,
+          command: c,
+          selectedFields: p.selectedFields as P1PurposeVerification["selectedFields"],
+          evidenceRefs: p.evidenceRefs,
+        },
+        sha256,
+      );
+      continue;
+    }
     if (
       c.tripId !== scope.tripId ||
       c.operationId !== p.operationId ||
@@ -277,7 +336,7 @@ async function assertStoredPlan(
 }
 function publicPlan(plan: CoreSourceStoredPlanV2) {
   const slots = plan.slots
-    .filter((s) => s.certified !== null)
+    .filter((s) => s.certified !== null || !!s.p1)
     .map((s) => ({
       slotId: s.proposed.slotId,
       slotKey: s.proposed.slotKey,
@@ -296,7 +355,7 @@ function publicPlan(plan: CoreSourceStoredPlanV2) {
       selectedFields: s.proposed.selectedFields,
       evidenceRefs: s.proposed.evidenceRefs,
       baseVector: s.command?.baseVector ?? s.proposed.baseVector,
-      outputPurpose: s.certified!.purpose,
+      outputPurpose: s.p1?.certified.purpose ?? s.certified!.purpose,
       state: s.state,
     }));
   const request = plan.request;
@@ -393,7 +452,9 @@ export async function prepareCoreSourcePlanV2(
       catalog.sourceRevision !== request.sourceRevision
     )
       throw new Error("INPUT_STALE");
-    const claims = await tx.readClaims();
+    const claims: FlightOutputClaimV2[] = catalog.candidates.every((c) => c.kind === "P1")
+      ? []
+      : await tx.readClaims();
     const remaining = new Set(
       plan.slots.filter((s) => s.state === "BLOCKED").map((s) => s.proposed.slotId),
     );
@@ -415,6 +476,77 @@ export async function prepareCoreSourcePlanV2(
           const candidate = catalog.candidates.find(
             (c) => c.candidateId === proposed.candidateId,
           );
+          if (proposed.command === "CREATE_ITEM") {
+            if (
+              !candidate ||
+              candidate.kind !== "P1" ||
+              !tx.verifyP1Evidence ||
+              proposed.dependsOn.length ||
+              !proposed.baseVector
+            )
+              throw Error("CONTRACT_UNSUPPORTED");
+            const command = validateCoreCommand({
+              contractVersion: 2,
+              intentVersion: 2,
+              operationId: proposed.operationId,
+              tripId,
+              command: proposed.command,
+              target: proposed.target,
+              baseVector: proposed.baseVector,
+              admission: {
+                mode: request.mode,
+                sourceIntentId: proposed.slotId,
+                policyVersion: request.policyVersion,
+              },
+              payload: proposed.payload,
+            });
+            const binding: P1PurposeBindingV2 = {
+              version: 2,
+              accountId: actorAccountId,
+              tripId,
+              sourceId: request.sourceId,
+              sourceRevision: request.sourceRevision,
+              runId: candidate.runId,
+              candidateId: candidate.candidateId,
+              inputCatalogSha256: catalog.inputCatalogSha256,
+              candidateSha256: candidate.candidateSha256,
+              planId: request.planId,
+              slotId: proposed.slotId,
+              targetKind: "ITEM",
+              targetId: proposed.target.id,
+              operationId: proposed.operationId,
+              purposeKind: "P1_ITEM",
+            };
+            const verification: P1PurposeVerification = {
+              binding,
+              command,
+              selectedFields:
+                proposed.selectedFields as P1PurposeVerification["selectedFields"],
+              evidenceRefs: proposed.evidenceRefs,
+            };
+            const certified = await mintP1OutputPurposeV2(
+              verification,
+              async (v) =>
+                tx.verifyP1Evidence!({
+                  catalog,
+                  candidate,
+                  slot: proposed,
+                  verification: v,
+                }),
+              sha256,
+            );
+            await tx.assertCommandAdmission(structuredClone(command));
+            slot.command = command;
+            slot.p1 = { binding, certified };
+            slot.intentSha256 = await importDigest(
+              "otr-trip-core-intent-v2",
+              command as Json,
+              sha256,
+            );
+            slot.state = "READY";
+            slot.errorCode = null;
+            continue;
+          }
           if (
             !candidate ||
             candidate.kind !== "P2" ||

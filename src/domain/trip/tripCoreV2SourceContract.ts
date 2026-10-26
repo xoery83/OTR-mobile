@@ -1,3 +1,5 @@
+import { universalP1SourceReviewSchema } from "./universalP1SourceReview";
+import { p1OutputPurposeV2Schema } from "./p1OutputPurposeV2";
 import { z } from "zod";
 import { flightOutputPurposeV2Schema } from "./flightOutputPurposeV2";
 import { coreCommandSchema, coreVectorEntrySchema } from "./tripCoreV2Commands";
@@ -116,7 +118,10 @@ export const coreSourcePreparationResultV2Schema = z.strictObject({
               existingId: uuid,
             }),
             intentSha256: hash.nullable(),
-            outputPurpose: flightOutputPurposeV2Schema,
+            outputPurpose: z.union([
+              flightOutputPurposeV2Schema,
+              p1OutputPurposeV2Schema,
+            ]),
             state: z.enum([
               "READY",
               "BLOCKED",
@@ -144,3 +149,22 @@ export const coreSourceFinalizeResultV2Schema = z.strictObject({
   state: z.enum(["COMPLETE", "EVIDENCE_PENDING"]),
   errorCode: z.string().max(128).nullable(),
 });
+
+export const coreUniversalP1PublishRequestSchema = z.strictObject({
+  captureVersion: z.literal(2),
+  sourceId: uuid,
+  batchId: uuid,
+  taskId: uuid,
+  token: z.string().min(1).max(128),
+  requestSha256: hash,
+  sourceReview: universalP1SourceReviewSchema.optional(),
+});
+export const coreUniversalP1PublishResultSchema = z.strictObject({
+  captureVersion: z.literal(2),
+  status: z.literal("CANDIDATE_SEALED"),
+  proposedPlan: coreSourcePrepareV2Schema,
+  candidateSha256: hash,
+  grantsAdmission: z.literal(false),
+});
+
+export type CoreSourceFinalizeResultV2 = z.infer<typeof coreSourceFinalizeResultV2Schema>;

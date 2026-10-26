@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   discardRetainedTripPhoto,
+  probeRetainedTripPhotoIdentity,
   resolveRetainedTripPhoto,
   retainTripPhoto,
+  isRetainedTripPhotoLocation,
 } from "./tripPhotoFileStore";
 
+const currentDocuments = vi.hoisted(
+  () =>
+    "file:///Users/qa/Library/Developer/CoreSimulator/Devices/11111111-1111-4111-8111-111111111111/data/Containers/Data/Application/22222222-2222-4222-8222-222222222222/Documents",
+);
 const stored = vi.hoisted(() => new Map<string, Uint8Array>());
+const opened = vi.hoisted(() => vi.fn());
+const stat = vi.hoisted(() => ({
+  modified: 100 as number | undefined,
+  created: 50 as number | undefined,
+}));
 const copy = vi.hoisted(() => ({ corrupt: false, fail: false, moveConflict: false }));
 
 vi.mock("expo-file-system", () => {
@@ -31,7 +42,17 @@ vi.mock("expo-file-system", () => {
     get size() {
       return stored.get(this.uri)?.byteLength ?? 0;
     }
+    info() {
+      return {
+        exists: this.exists,
+        uri: this.uri,
+        size: this.size,
+        modificationTime: stat.modified,
+        creationTime: stat.created,
+      };
+    }
     open() {
+      opened();
       let offset = 0;
       return {
         readBytes: (count: number) => {
@@ -66,7 +87,7 @@ vi.mock("expo-file-system", () => {
     Directory,
     File,
     FileMode: { ReadOnly: "r" },
-    Paths: { document: "file:///documents" },
+    Paths: { document: currentDocuments },
   };
 });
 
@@ -79,6 +100,9 @@ const input = { accountId, tripId, assetId, temporaryUri };
 
 beforeEach(() => {
   stored.clear();
+  opened.mockClear();
+  stat.modified = 100;
+  stat.created = 50;
   stored.set(temporaryUri, jpeg);
   copy.corrupt = false;
   copy.fail = false;
@@ -91,7 +115,7 @@ describe("retained Trip photo file store", () => {
     const photo = retained.photo;
     expect(retained.createdNew).toBe(true);
     expect(photo.localUri).toBe(
-      `file:///documents/trip-photos/${accountId}/${tripId}/${assetId}.jpg`,
+      `${currentDocuments}/trip-photos/${accountId}/${tripId}/${assetId}.jpg`,
     );
     expect(photo.mimeType).toBe("image/jpeg");
     expect(photo.sizeBytes).toBe(jpeg.byteLength);
@@ -182,4 +206,75 @@ describe("retained Trip photo file store", () => {
     expect(stored.has(fresh.photo.localUri)).toBe(false);
     expect(stored.get(temporaryUri)).toEqual(jpeg);
   });
+});
+
+it("probes only canonical file identity without opening/hash-reading bytes", async () => {
+  const photo = (await retainTripPhoto(input)).photo;
+  opened.mockClear();
+  expect(probeRetainedTripPhotoIdentity(photo)).toEqual({
+    uri: photo.localUri,
+    sizeBytes: jpeg.length,
+    modificationTime: 100,
+    creationTime: 50,
+  });
+  stat.modified = 101;
+  expect(probeRetainedTripPhotoIdentity(photo)?.modificationTime).toBe(101);
+  expect(probeRetainedTripPhotoIdentity({ ...photo, localUri: temporaryUri })).toBeNull();
+  expect(
+    probeRetainedTripPhotoIdentity({ ...photo, accountId: "../outside" }),
+  ).toBeNull();
+  stat.modified = undefined;
+  expect(probeRetainedTripPhotoIdentity(photo)).toBeNull();
+  stat.modified = Infinity;
+  expect(probeRetainedTripPhotoIdentity(photo)).toBeNull();
+  stat.modified = 100;
+  stat.created = undefined;
+  expect(probeRetainedTripPhotoIdentity(photo)).toBeNull();
+  stat.created = 50;
+  expect(
+    probeRetainedTripPhotoIdentity({ ...photo, sizeBytes: jpeg.length + 1 }),
+  ).toBeNull();
+  stored.delete(photo.localUri);
+  expect(probeRetainedTripPhotoIdentity(photo)).toBeNull();
+  expect(opened).not.toHaveBeenCalled();
+});
+
+it("recovers only a container UUID relocation after full byte verification", async () => {
+  const photo = (await retainTripPhoto(input)).photo;
+  const oldUri = photo.localUri.replace(
+    "22222222-2222-4222-8222-222222222222",
+    "33333333-3333-4333-8333-333333333333",
+  );
+  const prior = { ...photo, localUri: oldUri };
+  opened.mockClear();
+  expect(probeRetainedTripPhotoIdentity(prior)?.uri).toBe(photo.localUri);
+  expect(opened).not.toHaveBeenCalled();
+  expect(isRetainedTripPhotoLocation(prior, photo.localUri)).toBe(true);
+  expect(resolveRetainedTripPhoto(prior)).toBe(photo.localUri);
+  expect(opened).toHaveBeenCalledOnce();
+  expect(stored.has(oldUri)).toBe(false);
+  expect(discardRetainedTripPhoto({ photo: prior, createdNew: true })).toBe(false);
+  for (const uri of [
+    oldUri.replace(accountId, tripId),
+    oldUri.replace(tripId, accountId),
+    oldUri.replace(assetId, accountId),
+    oldUri.replace("11111111-1111-4111-8111-111111111111", accountId),
+    oldUri + "?x=1",
+    oldUri + "#fragment",
+    oldUri.replace("Documents/", "Documents/../Documents/"),
+    temporaryUri,
+  ]) {
+    const wrong = { ...photo, localUri: uri };
+    expect(probeRetainedTripPhotoIdentity(wrong)).toBeNull();
+    expect(resolveRetainedTripPhoto(wrong)).toBeNull();
+    expect(isRetainedTripPhotoLocation(wrong, photo.localUri)).toBe(false);
+  }
+  expect(isRetainedTripPhotoLocation(prior, oldUri)).toBe(false);
+  expect(resolveRetainedTripPhoto({ ...prior, sha256: "0".repeat(64) })).toBeNull();
+  expect(
+    resolveRetainedTripPhoto({ ...prior, sizeBytes: photo.sizeBytes + 1 }),
+  ).toBeNull();
+  expect(resolveRetainedTripPhoto({ ...prior, mimeType: "image/png" })).toBeNull();
+  stored.set(photo.localUri, new Uint8Array([255, 216, 255, 9, 9, 9, 9, 9]));
+  expect(resolveRetainedTripPhoto(prior)).toBeNull();
 });

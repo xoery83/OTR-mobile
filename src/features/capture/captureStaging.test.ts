@@ -1,3 +1,4 @@
+vi.mock("expo", () => ({ requireOptionalNativeModule: () => null }));
 import { afterEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { createCaptureStaging, emptyCaptureStaging } from "./captureStaging";
@@ -418,4 +419,135 @@ it("Camera permission denial keeps previously selected Files intact and never la
     error: "picker",
   });
   expect(native.camera).not.toHaveBeenCalled();
+});
+
+it("target changes are draft-local and retain the roster; stale/account-switched changes fail", async () => {
+  let active = true;
+  const s = createCaptureStaging(
+    async () => [
+      { source: "files", temporaryUri: "temp://one", name: "one", typeHint: null },
+    ],
+    () => active,
+    { accountId: "A", tripPrior: null },
+  );
+  await s.pick("files");
+  s.setEditorText("keep");
+  expect(s.setTripTarget({ id: "B", name: "B" })).toBe(true);
+  expect(s.getDraftSnapshot()).toMatchObject({
+    editorText: "keep",
+    tripTarget: { id: "B", name: "B" },
+    items: [{ source: "files" }],
+  });
+  s.hide();
+  expect(s.resume({ accountId: "A", tripPrior: null }, () => active)).toBe(true);
+  expect(s.getDraftSnapshot().tripTarget).toEqual({ id: "B", name: "B" });
+  active = false;
+  expect(s.setTripTarget(null)).toBe(false);
+  expect(s.getDraftSnapshot().items).toEqual([]);
+});
+
+it("clipboard images retain distinct provenance through hide/resume and release only on explicit removal/clear", () => {
+  const release = vi.fn();
+  const s = createCaptureStaging(
+    async () => [],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  const image = {
+    source: "clipboard" as const,
+    representation: "item-provider" as const,
+    token: "own-token",
+    uri: "file:///tmp/paste.png",
+    byteSize: 4,
+    mimeType: "image/png",
+  };
+  expect(s.stagePastedImages([image], release)).toBe(true);
+  s.setEditorText("note");
+  s.hide();
+  expect(release).not.toHaveBeenCalled();
+  expect(s.resume({ accountId: "A", tripPrior: null }, () => true)).toBe(true);
+  expect(s.prepareSubmit()?.[0].source).toBe("clipboard");
+  expect(s.getSnapshot().items).toEqual([]);
+  expect(s.stagePastedImages([image], release)).toBe(true);
+  expect(s.getDraftSnapshot().items).toHaveLength(1);
+  expect(release).not.toHaveBeenCalled();
+  s.remove(s.getDraftSnapshot().items[0].stagingId);
+  expect(release).toHaveBeenCalledExactlyOnceWith(["own-token"]);
+  expect(s.getDraftSnapshot().editorText).toBe("note");
+  expect(s.stagePastedImages([{ ...image, token: "next" }], release)).toBe(true);
+  s.cancel();
+  expect(release).toHaveBeenLastCalledWith(["next"]);
+});
+it("stale/oversized/nonimage clipboard batches release owned temporary tokens without changing the draft", () => {
+  let active = true;
+  const release = vi.fn();
+  const s = createCaptureStaging(
+    async () => [],
+    () => active,
+    { accountId: "A", tripPrior: null },
+  );
+  s.setEditorText("keep");
+  const image = {
+    source: "clipboard" as const,
+    representation: "item-provider" as const,
+    token: "one",
+    uri: "file:///tmp/one",
+    byteSize: 4,
+    mimeType: "image/png",
+  };
+  expect(
+    s.stagePastedImages([{ ...image, byteSize: 20 * 1024 * 1024 + 1 }], release),
+  ).toBe(false);
+  expect(s.stagePastedImages([{ ...image, mimeType: "text/plain" }], release)).toBe(
+    false,
+  );
+  expect(s.getDraftSnapshot().editorText).toBe("keep");
+  expect(s.getDraftSnapshot().items).toHaveLength(0);
+  active = false;
+  expect(s.stagePastedImages([image], release)).toBe(false);
+  expect(release).toHaveBeenCalledTimes(3);
+});
+it("releases native metadata leases on removal, cancel and stale picker completion", async () => {
+  const release = vi.fn();
+  let current = true;
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files",
+        temporaryUri: "otr-capture-file://opaque",
+        name: "QA",
+        typeHint: "text/plain",
+        release,
+      },
+    ],
+    () => current,
+  );
+  await staging.pick("files");
+  staging.remove(1);
+  expect(release).toHaveBeenCalledTimes(1);
+  await staging.pick("files");
+  staging.cancel();
+  expect(release).toHaveBeenCalledTimes(2);
+  let resolve!: (values: any[]) => void;
+  const late = createCaptureStaging(
+    () =>
+      new Promise((r) => {
+        resolve = r;
+      }),
+    () => current,
+  );
+  const pending = late.pick("files");
+  current = false;
+  resolve([
+    {
+      source: "files",
+      temporaryUri: "otr-capture-file://opaque",
+      name: "QA",
+      typeHint: null,
+      release,
+    },
+  ]);
+  await pending;
+  expect(release).toHaveBeenCalledTimes(3);
+  expect(late.getSnapshot().items).toEqual([]);
 });

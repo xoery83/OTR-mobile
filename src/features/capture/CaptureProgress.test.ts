@@ -280,3 +280,41 @@ it.each([
     }
   },
 );
+it("offers exact-session local retry only when its owning host retains a retryable reader", async () => {
+  const f = fixture();
+  const request = f.request();
+  const { LocalCaptureError } = await import("@/domain/capture/localCapture");
+  await f.submissions.submit(
+    request,
+    new Map(
+      request.inputs.map((i) => [
+        i.id,
+        async () => {
+          throw new LocalCaptureError("READER_FAILURE");
+        },
+      ]),
+    ),
+  );
+  const model = await f.submissions.reopen(request.jobId);
+  for (const canRetry of [false, true]) {
+    state.buttons = [];
+    renderToStaticMarkup(
+      createElement(CaptureProgress, {
+        model,
+        accountId: await f.getAccount(),
+        busy: false,
+        reading: false,
+        error: false,
+        canRetry,
+        onRetry: vi.fn(),
+        onRecover: vi.fn(),
+        onOpenJob: vi.fn(),
+        onActivity: vi.fn(),
+        onNewImport: vi.fn(),
+      }),
+    );
+    expect(state.buttons.some((b) => b.label === t("capture.progress.retryIntake"))).toBe(
+      canRetry,
+    );
+  }
+});

@@ -16,6 +16,12 @@ export async function readOwningLegacySourceCatalog(
   scope: CoreSourceScopeV2 & { sourceId: string },
   runId?: string,
   historicalRevision?: number,
+  publishedUniversalRun?: {
+    runId: string;
+    taskId: string;
+    batchId: string;
+    resultSha256: string;
+  },
 ): Promise<CoreSourceCatalogV2> {
   const sourceId = scope.sourceId;
   const source = (
@@ -47,7 +53,19 @@ export async function readOwningLegacySourceCatalog(
   // Multiple independent scopes require the future owning complete-catalog selector.
   if (runs.length !== 1) throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
   const run = runs[0].run as Record<string, Json>;
-  if (run.state !== "READY" || run.retention_state !== "RETAINED")
+  const qualifiedUniversal =
+    publishedUniversalRun &&
+    /^[a-f0-9]{64}$/.test(publishedUniversalRun.resultSha256) &&
+    publishedUniversalRun.runId === runId &&
+    run.id === publishedUniversalRun.runId &&
+    run.extractor_key === "otr-universal-interpretation-v1" &&
+    run.capture_batch_id === publishedUniversalRun.batchId &&
+    run.interpretation_task_id === publishedUniversalRun.taskId &&
+    ["PENDING", "READY"].includes(run.state as string);
+  if (
+    (!qualifiedUniversal && run.state !== "READY") ||
+    run.retention_state !== "RETAINED"
+  )
     throw new Error("INPUT_STALE");
   const pins = (
     await lease.query(

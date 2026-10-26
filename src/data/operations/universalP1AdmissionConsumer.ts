@@ -1,0 +1,233 @@
+import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
+import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
+import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
+import { coreUniversalP1PublishResultSchema } from "../../domain/trip/tripCoreV2SourceContract";
+import type { UniversalImportResult } from "../api/universalImportContracts";
+import type { createCoreV2Transport } from "../api/tripCoreV2Transport";
+import type { createTripCoreV2Repository } from "../repositories/tripCoreV2Repository";
+import {
+  assertAccountRequestContext,
+  captureAccountRequestContext,
+} from "../auth/accountRequestContext";
+import { assertUniversalCaptureResult } from "./universalCaptureConsumer";
+import {
+  universalP1SourceReviewSchema,
+  type UniversalP1SourceReview,
+} from "../../domain/trip/universalP1SourceReview";
+type Core = ReturnType<typeof createTripCoreV2Repository>;
+const json = (v: unknown) => canonicalCoreJson(v as Json);
+// Explicit confirmation only. Existing owning Repository/Queue/worker control mutation and recovery.
+export function createUniversalP1AdmissionConsumer(deps: {
+  getAccountId(): Promise<string>;
+  isCurrent(): boolean;
+  core: Pick<Core, "enqueue" | "resume" | "applyReceipt" | "refresh">;
+  transport: ReturnType<typeof createCoreV2Transport>;
+}) {
+  const current = () => {
+    if (!deps.isCurrent()) throw Error("UNIVERSAL_CAPTURE_STALE");
+  };
+  return {
+    async confirm(
+      model: CaptureJobReadModel,
+      result: UniversalImportResult,
+      token: string,
+      sourceReview?: UniversalP1SourceReview,
+    ) {
+      current();
+      assertUniversalCaptureResult(model, result);
+      const context = await captureAccountRequestContext(
+          result.tripId,
+          deps.getAccountId,
+        ),
+        candidates = result.candidates.filter((c) => c.token === token);
+      if (
+        context.accountId !== result.accountId ||
+        candidates.length !== 1 ||
+        candidates[0].kind !== "P1" ||
+        result.providerOutcome !== "SETTLED" ||
+        !deps.transport.publishUniversalP1
+      )
+        throw Error("OWNING_ADMISSION_UNAVAILABLE");
+      const aliases = new Set(
+        candidates[0].fields
+          .filter((f) =>
+            [
+              "activity.name",
+              "title",
+              "activity.date",
+              "schedule.start.local_date",
+            ].includes(f.path),
+          )
+          .map((f) => f.sourceId),
+      );
+      const sources = result.sourceBindings.filter((b) => aliases.has(b.alias));
+      if (!sources.length || new Set(sources.map((s) => s.sourceId)).size !== 1)
+        throw Error("SOURCE_RELATION_QUALIFICATION_REQUIRED");
+      const publication = coreUniversalP1PublishResultSchema.parse(
+        await deps.transport.publishUniversalP1(context, {
+          captureVersion: 2,
+          sourceId: sources[0].sourceId,
+          batchId: result.batchId,
+          taskId: result.taskId,
+          token,
+          requestSha256: result.requestSha256,
+          ...(sourceReview
+            ? { sourceReview: universalP1SourceReviewSchema.parse(sourceReview) }
+            : {}),
+        }),
+      );
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+      const plan = publication.proposedPlan,
+        slot = plan.slots[0];
+      if (
+        plan.mode !== "REVIEWED_SOURCE" ||
+        plan.policyVersion !== null ||
+        plan.slots.length !== 1 ||
+        plan.candidateIds.length !== 1 ||
+        plan.sourceId !== sources[0].sourceId ||
+        slot.command !== "CREATE_ITEM" ||
+        slot.targetKind !== "ITEM" ||
+        (slot.payload as { family?: string }).family !== "P1"
+      )
+        throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
+      const expected = validateCoreCommand({
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: slot.operationId,
+        tripId: context.tripId,
+        command: slot.command,
+        target: slot.target,
+        baseVector: slot.baseVector,
+        admission: {
+          mode: "REVIEWED_SOURCE",
+          sourceIntentId: slot.slotId,
+          policyVersion: null,
+        },
+        payload: slot.payload,
+      });
+      const prepared = await deps.transport.prepareSourcePlan(context, plan);
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+      if (prepared.readyCommands.length > 1)
+        throw Error("CORE_PREPARATION_SCOPE_MISMATCH");
+      if (prepared.readyCommands.length === 1) {
+        if (json(validateCoreCommand(prepared.readyCommands[0])) !== json(expected))
+          throw Error("CORE_PREPARATION_SCOPE_MISMATCH");
+        await deps.core.enqueue(context, expected);
+        current();
+        await assertAccountRequestContext(context, deps.getAccountId);
+        await deps.core.resume(context, expected.operationId);
+        return {
+          status: "SYNC_PENDING" as const,
+          itemId: slot.target.id,
+          operationId: slot.operationId,
+        };
+      }
+      const own = prepared.plan.slots.find((s) => s.slotId === slot.slotId);
+      if (
+        !own ||
+        !["DOMAIN_SUCCEEDED", "EVIDENCE_PENDING", "COMPLETE"].includes(own.state)
+      )
+        return {
+          status: "OWNING_ADMISSION_PENDING" as const,
+          reasons: prepared.reviewSlots,
+        };
+      const receipt = await deps.transport.receipt(context, slot.operationId);
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+      if (
+        receipt?.projection !== "FULL" ||
+        !["APPLIED", "NO_CHANGE"].includes(receipt.receipt.outcome) ||
+        receipt.receipt.operationId !== slot.operationId ||
+        receipt.receipt.tripId !== context.tripId ||
+        receipt.receipt.actorAccountId !== context.accountId ||
+        !receipt.receipt.targetVector.some(
+          (v) => v.kind === "ITEM" && v.id === slot.target.id,
+        )
+      )
+        throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+      await deps.core.enqueue(context, expected);
+      await deps.core.applyReceipt(context, receipt.receipt);
+      const finalized = await deps.transport.finalizeSourceSlot(context, plan.planId, {
+        captureVersion: 2,
+        slotId: slot.slotId,
+        operationId: slot.operationId,
+        intentSha256: receipt.receipt.intentSha256,
+        domainReceiptId: receipt.domainReceiptId,
+        receiptSha256: receipt.receipt.receiptSha256,
+      });
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+      if (finalized.state !== "COMPLETE")
+        return {
+          status: "OWNING_ADMISSION_PENDING" as const,
+          reasons: [finalized.errorCode],
+        };
+      await deps.core.refresh(context, deps.transport);
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+      return {
+        status: "SERVER_ACCEPTED" as const,
+        itemId: slot.target.id,
+        operationId: slot.operationId,
+      };
+    },
+  };
+}
+
+// Read retained bytes through the existing account-scoped inbox, never via UI filesystem access.
+export async function readUniversalP1ReviewOriginal(
+  model: CaptureJobReadModel,
+  result: UniversalImportResult,
+  token: string,
+  deps: {
+    getAccountId(): Promise<string>;
+    isCurrent(): boolean;
+    hash(bytes: Uint8Array): Promise<string>;
+    readCapture(
+      id: string,
+    ): Promise<{ capture: { accountId: string; payloadId: string }; bytes: Uint8Array }>;
+  },
+) {
+  const current = async () => {
+    if (!deps.isCurrent() || (await deps.getAccountId()) !== result.accountId)
+      throw Error("UNIVERSAL_CAPTURE_STALE");
+  };
+  await current();
+  assertUniversalCaptureResult(model, result);
+  const candidates = result.candidates.filter(
+    (c) => c.token === token && c.kind === "P1",
+  );
+  if (candidates.length !== 1) throw Error("OWNING_REVIEW_REQUIRED");
+  const aliases = new Set(candidates[0].fields.map((f) => f.sourceId));
+  const sources = result.sourceBindings.filter((s) => aliases.has(s.alias));
+  if (sources.length !== 1) throw Error("SOURCE_RELATION_QUALIFICATION_REQUIRED");
+  const source = sources[0],
+    input = model.inputs.find((i) => i.id === source.inputId);
+  if (
+    !input?.captureId ||
+    !input.payloadId ||
+    input.state !== "ACCEPTED" ||
+    input.contentByteCount === null ||
+    input.contentByteCount > 65536
+  )
+    throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+  const retained = await deps.readCapture(input.captureId);
+  await current();
+  if (
+    retained.capture.accountId !== result.accountId ||
+    retained.capture.payloadId !== input.payloadId ||
+    retained.bytes.length !== input.contentByteCount ||
+    retained.bytes.length > 65536 ||
+    (await deps.hash(retained.bytes)) !== source.originalSha256 ||
+    source.originalSha256 !== input.contentSha256 ||
+    source.submittedSha256 !== source.originalSha256
+  )
+    throw Error("IMPORT_EVIDENCE_INVALID");
+  const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
+    retained.bytes,
+  );
+  await current();
+  return text;
+}

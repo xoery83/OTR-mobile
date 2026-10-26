@@ -1162,3 +1162,14 @@ Startup accepts an optional owning port. The default is503 CLOSED: real protecte
 issuer, profile/cost policy, persisted task/call/raw/metering and material authority
 must be installed separately before Runtime verification. The port interface and
 fixture tests do not establish that deployment or grant dispatch permission.
+
+
+## Universal Import — bounded Source P1 integration (2026-10-26)
+
+Universal intake/results use authenticated `/v2/import-batches/{batchId}/interpretations` Context/Result/prepare routes and existing owning Source/Task repositories. Candidates and observations do not grant admission. Original text material is acquired/read only through the account/Trip-scoped original-source interface.
+
+Formal P1 uses `/v2/trips/{tripId}/core/universal-p1-candidates`, existing Source Plan prepare and Core commands with `REVIEWED_SOURCE`, followed by `/core/universal-p1-source/finalize`. The normal user explicitly reviews retained original/current Trip, selects NEW and confirms evidenced title/civil date. No clock/place/Booking/entitlement is inferred. Immutable candidate, exact Source pins, current owning Actor/Trip/Graph, plan-slot-purpose/intent and receipt checks remain mandatory. Same-operation replay retains one item/receipt; UNKNOWN is reconciled before retry. APPLIED recovery finalizes Source only.
+
+Frontend P1 opt-in and backend P1 runtime are default-off. Protected DEV rollout/Admission remains separately scoped; code integration grants none. Local schemas69–74 are existing qualified prerequisites; the schema73 mixed-input rebuild preserves old records/FKs and rolls back atomically. No hosted DDL/RLS/GRANT is installed by this integration. Native manual-editor/asset additions remain excluded.
+
+Actual source-branch DEV evidence: [P1 formal receipt](ops/universal-stage2-20261025/actual-execution/resume-20261026/P1_FORMAL_SAVE_SERVER_RECEIPT.json). Scoped one-item E2E/Day/full-restart/duplicate/closure passed; this is not generic P2–P6 Save or main deployment qualification.

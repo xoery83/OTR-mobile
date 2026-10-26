@@ -275,3 +275,18 @@ it("A→B→A during strict original-text parsing cannot return a CLOSED handle"
     spy.mockRestore();
   }
 });
+it("explicit Universal source-only V2 retains old PENDING Run, while V1 remains rejecting", async () => {
+  const raw = structuredClone(fixture);
+  raw.trip_source_runs[0].state = "PENDING" as never;
+  raw.trip_source_runs[0].completed_at = null as never;
+  const value = { ...raw, version: 2 };
+  const send = vi.fn(async () => Response.json(value));
+  const transport = createTripPublicationCatalogTransport(async () => actor, {baseUrl:"https://api.test",fetchImplementation:send}, token);
+  const context = await transport.captureContext(trip);
+  const body = JSON.parse(await transport.readUniversal(context));
+  expect(body.trip_source_runs).toEqual(raw.trip_source_runs);
+  expect(body.trip_sources).toEqual(raw.trip_sources);
+  expect(send).toHaveBeenLastCalledWith(expect.any(String),expect.objectContaining({headers:expect.objectContaining({"X-OTR-Publication-Catalog-Version":"2"})}));
+  await expect(transport.read(context)).rejects.toBeDefined();
+  expect(send).toHaveBeenLastCalledWith(expect.any(String),expect.objectContaining({headers:expect.objectContaining({"X-OTR-Publication-Catalog-Version":"1"})}));
+});

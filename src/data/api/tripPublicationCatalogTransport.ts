@@ -7,7 +7,7 @@ import {
 import { createAuthenticatedApiClient } from "./authenticatedClient";
 import { ApiClientError, type ApiClientOptions } from "./client";
 import { createRequestBoundary, RequestBoundaryError } from "./requestBoundary";
-import { tripImportSnapshotSchema } from "./tripImportCatalogContracts";
+import { tripImportSnapshotSchema, universalImportSnapshotSchema } from "./tripImportCatalogContracts";
 import {
   assertAccountRequestContext,
   assertAccountRequestGeneration,
@@ -33,12 +33,7 @@ export function createTripPublicationCatalogTransport(
   > = {},
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
 ) {
-  return {
-    captureContext: (tripId: string) => {
-      z.uuid().parse(tripId);
-      return captureAccountRequestContext(tripId, getAccountId);
-    },
-    async read(original: AccountRequestContext, signal?: AbortSignal) {
+  async function read(original: AccountRequestContext, signal?: AbortSignal, version: 1 | 2 = 1) {
       const context = Object.freeze({ ...original });
       z.uuid().parse(context.accountId);
       z.uuid().parse(context.tripId);
@@ -100,10 +95,10 @@ export function createTripPublicationCatalogTransport(
           context,
         );
         const snapshot = await boundary.run(() =>
-          api.get(
+          api.get<z.infer<typeof tripImportSnapshotSchema> | z.infer<typeof universalImportSnapshotSchema>>(
             `/v2/trips/${context.tripId}/source-import-catalogs`,
-            tripImportSnapshotSchema,
-            { "X-OTR-Publication-Catalog-Version": "1" },
+            version === 2 ? universalImportSnapshotSchema : tripImportSnapshotSchema,
+            { "X-OTR-Publication-Catalog-Version": String(version) },
           ),
         );
         await boundary.run(() => assertAccountRequestContext(context, getAccountId));
@@ -147,6 +142,13 @@ export function createTripPublicationCatalogTransport(
       } finally {
         boundary.close();
       }
+  }
+  return {
+    captureContext: (tripId: string) => {
+      z.uuid().parse(tripId);
+      return captureAccountRequestContext(tripId, getAccountId);
     },
+    read: (context: AccountRequestContext, signal?: AbortSignal) => read(context, signal),
+    readUniversal: (context: AccountRequestContext, signal?: AbortSignal) => read(context, signal, 2),
   };
 }

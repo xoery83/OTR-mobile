@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { tripImportSnapshotSchema } from "../../src/data/api/tripImportCatalogContracts";
+import { tripImportSnapshotSchema, universalImportSnapshotSchema } from "../../src/data/api/tripImportCatalogContracts";
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 
@@ -36,6 +36,7 @@ export function publicationCatalogBody(
   raw: unknown,
   actor: string,
   trip: string,
+  version: 1 | 2 = 1,
 ): string {
   if (
     raw &&
@@ -43,7 +44,9 @@ export function publicationCatalogBody(
     Object.values(raw).some((v) => Array.isArray(v) && v.length > 64)
   )
     throw new PublicationCatalogError(503, "IMPORT_READ_RESOURCE_LIMIT");
-  const parsed = tripImportSnapshotSchema.safeParse(raw);
+  const parsed = version === 2 && raw && typeof raw === "object" && "version" in raw && (raw.version === 1 || raw.version === 2)
+    ? universalImportSnapshotSchema.safeParse({ ...raw, version: 2 })
+    : tripImportSnapshotSchema.safeParse(raw);
   if (
     !parsed.success ||
     parsed.data.actor_account_id !== actor ||
@@ -60,6 +63,7 @@ export async function readPublicationCatalog(
   actor: string,
   trip: string,
   signal: AbortSignal,
+  project: typeof publicationCatalogBody = publicationCatalogBody,
 ) {
   if (
     !connection ||
@@ -103,7 +107,7 @@ export async function readPublicationCatalog(
             ),
           );
           if (result.rows.length !== 1) throw unavailable();
-          const body = publicationCatalogBody(result.rows[0].catalog, actor, trip);
+          const body = project(result.rows[0].catalog, actor, trip);
           await boundary.run(() => lease.query("COMMIT", [], boundary.signal));
           began = false;
           return body;

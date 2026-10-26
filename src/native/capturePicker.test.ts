@@ -1,3 +1,4 @@
+vi.mock("expo", () => ({ requireOptionalNativeModule: () => null }));
 import { beforeEach, expect, it, vi } from "vitest";
 import { pickCaptureMaterial } from "./capturePicker";
 const sdk = vi.hoisted(() => ({

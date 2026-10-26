@@ -28,7 +28,7 @@ const operation: SyncOperation = {
 };
 
 describe("sync engine", () => {
-  it.each(["CORE_V2_COMMAND", "CREATE_TRIP", "UPDATE_TRIP_METADATA"])(
+  it.each(["CORE_V2_COMMAND", "CREATE_TRIP", "UPDATE_TRIP_METADATA", "TRIP_PERSON_CLOUD_CREATE"])(
     "leaves %s to its explicitly scoped coordinator",
     async (kind) => {
       const push = vi.fn(),
@@ -210,6 +210,10 @@ describe("sync engine", () => {
 });
 
 it.each([
+  "TRIP_NORMAL_READBACK",
+  "TRIP_METADATA_DEFERRED",
+  "TRIP_COVER_LOCAL_SAVE",
+  "TRIP_DESTINATIONS_LOCAL_SAVE",
   "C_PREPARE_CONFIRMATION",
   "C_EXECUTE_EVENT_SLOT",
   "C_FINALIZE_EVENT_SLOT",

@@ -857,3 +857,302 @@ it("Core publication denies a queued Account transition and wrong Trip without t
   expect(a.sql.prepare("PRAGMA table_info(ttr_selections)").all()).toHaveLength(9);
   a.selection();
 });
+async function lostP1RecoveryFixture(reviewed = false) {
+  const f = fixture();
+  const ctx = await f.repo.captureContext(trip);
+  const command = {
+    ...sparse(),
+    admission: {
+      mode: reviewed ? "REVIEWED_SOURCE" : "MANUAL",
+      sourceIntentId: reviewed ? randomUUID() : null,
+      policyVersion: null,
+    },
+    command: "CREATE_ITEM",
+    payload: {
+      family: "P1",
+      core: { title: "Lost P1 response" },
+      schedule: { start: ordinaryTime() },
+      place: ordinaryPlace(),
+      ...coreDefaults("member"),
+    },
+  };
+  await f.repo.enqueue(ctx, command);
+  let graph = emptyCoreGraph();
+  let stored: { domainReceiptId: string; receiptText: string } | null = null;
+  const storage: CoreCommandStorage = {
+    async withLockedCommand(_scope, work) {
+      return work({
+        actor,
+        readReceipt: async () => stored,
+        hasLegacyOperation: async () => false,
+        canReadReceipt: async () => true,
+        enabledCommands: async () => ["CREATE_ITEM"],
+        readLockedGraph: async () => graph,
+        verifyAdmission: async () => {},
+        lifecycleGraphHash: async () => undefined,
+        async commit(mutation, receipt) {
+          if (mutation) graph = mutation.graph;
+          stored = {
+            domainReceiptId: randomUUID(),
+            receiptText: JSON.stringify(receipt),
+          };
+          return stored.domainReceiptId;
+        },
+      });
+    },
+  };
+  const receipt = await executeCoreCommandV2(
+    storage,
+    account,
+    trip,
+    command,
+    hash,
+    () => stamp,
+  );
+  const due = "2099-01-01T00:00:00Z";
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET status='RETRYABLE',attempt_count=7,next_attempt_at=?,failure_category='NETWORK' WHERE id=?",
+    )
+    .run(due, command.operationId);
+  const transport = {
+    receipt: async () => receipt,
+    collection: async () => collection(true, graph),
+  };
+  return { ...f, ctx, command, receipt, due, transport };
+}
+it("recovers accepted P1 through readonly same-operation receipt and verified collection before future retry", async () => {
+  const f = await lostP1RecoveryFixture();
+  expect(await f.repo.recoverP1Receipts(f.ctx, f.transport)).toEqual({ recovered: 1 });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT status,next_attempt_at,attempt_count FROM sync_operations WHERE id=?",
+      )
+      .get(f.command.operationId),
+  ).toMatchObject({ status: "COMPLETED", next_attempt_at: null, attempt_count: 7 });
+  expect(await f.repo.pending(f.ctx)).toEqual([]);
+  expect((await f.repo.readGraph(f.ctx)).itinerary_events[0].experience_family).toBe(
+    "P1",
+  );
+  expect(
+    await f.repo.recoverP1Receipts(f.ctx, {
+      receipt: async () => {
+        throw Error("no repeated read");
+      },
+      collection: async () => {
+        throw Error("no repeated read");
+      },
+    }),
+  ).toEqual({ recovered: 0 });
+});
+it("missing or status-only P1 receipt never changes future business retry or submits", async () => {
+  for (const projection of [
+    null,
+    {
+      projection: "STATUS_ONLY",
+      domainReceiptId: randomUUID(),
+      receiptSha256: "a".repeat(64),
+      operationId: randomUUID(),
+      outcome: "APPLIED",
+      targetRevision: null,
+    },
+  ] as const) {
+    const f = await lostP1RecoveryFixture();
+    expect(
+      await f.repo.recoverP1Receipts(f.ctx, {
+        ...f.transport,
+        receipt: async () => projection,
+        collection: async () => {
+          throw Error("must not collect");
+        },
+      }),
+    ).toEqual({ recovered: 0 });
+    expect(
+      f.sql
+        .prepare("SELECT status,next_attempt_at FROM sync_operations WHERE id=?")
+        .get(f.command.operationId),
+    ).toMatchObject({ status: "RETRYABLE", next_attempt_at: f.due });
+  }
+});
+it("failed collection preserves future retry despite durable accepted receipt", async () => {
+  const f = await lostP1RecoveryFixture();
+  await expect(
+    f.repo.recoverP1Receipts(f.ctx, {
+      ...f.transport,
+      collection: async () => {
+        throw Error("read unavailable");
+      },
+    }),
+  ).rejects.toThrow("read unavailable");
+  expect(
+    f.sql
+      .prepare("SELECT status,next_attempt_at FROM sync_operations WHERE id=?")
+      .get(f.command.operationId),
+  ).toMatchObject({ status: "RETRYABLE", next_attempt_at: f.due });
+  expect((await f.repo.pending(f.ctx))[0].state).toBe("APPLIED");
+});
+it("readonly recovery cannot ACK over a newer live queue claim", async () => {
+  const f = await lostP1RecoveryFixture();
+  expect(
+    await f.repo.recoverP1Receipts(f.ctx, {
+      ...f.transport,
+      collection: async () => {
+        f.sql
+          .prepare(
+            "UPDATE sync_operations SET status='PROCESSING',claim_owner='new-owner' WHERE id=?",
+          )
+          .run(f.command.operationId);
+        return f.transport.collection();
+      },
+    }),
+  ).toEqual({ recovered: 0 });
+  expect(
+    f.sql
+      .prepare("SELECT status,claim_owner FROM sync_operations WHERE id=?")
+      .get(f.command.operationId),
+  ).toMatchObject({ status: "PROCESSING", claim_owner: "new-owner" });
+});
+it("readonly recovery fences Account changes and altered queue pins", async () => {
+  const f = await lostP1RecoveryFixture();
+  await expect(
+    f.repo.recoverP1Receipts(f.ctx, {
+      ...f.transport,
+      receipt: async () => {
+        f.switchTo(randomUUID());
+        return f.receipt;
+      },
+    }),
+  ).rejects.toThrow();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(f.command.operationId)?.status,
+  ).toBe("RETRYABLE");
+  const tampered = await lostP1RecoveryFixture();
+  tampered.sql
+    .prepare("UPDATE sync_operations SET payload_json='{}' WHERE id=?")
+    .run(tampered.command.operationId);
+  await expect(
+    tampered.repo.recoverP1Receipts(tampered.ctx, {
+      ...tampered.transport,
+      receipt: async () => {
+        throw Error("network must not start");
+      },
+    }),
+  ).rejects.toThrow("CORE_RECOVERY_QUEUE_PIN");
+});
+it("auth-paused and never-dispatched P1 commands are excluded from automatic readonly recovery", async () => {
+  for (const change of ["attempt_count=0", "failure_category='AUTH'"]) {
+    const f = await lostP1RecoveryFixture();
+    f.sql.exec("UPDATE sync_operations SET " + change);
+    expect(
+      await f.repo.recoverP1Receipts(f.ctx, {
+        ...f.transport,
+        receipt: async () => {
+          throw Error("must not request");
+        },
+      }),
+    ).toEqual({ recovered: 0 });
+  }
+});
+it.each([false, true])(
+  "resumes only accepted Source finalization after EVIDENCE_PENDING (reconciled: %s)",
+  async (reconciled) => {
+    const f = await lostP1RecoveryFixture(true);
+    f.sql.exec(
+      "UPDATE sync_operations SET status='DEPENDENCY_BLOCKED',next_attempt_at=NULL,attempt_count=0",
+    );
+    let submits = 0,
+      reads = 0,
+      finalizations = 0;
+    const transport = {
+      capabilities: async () => ({
+        ...coreClosedCapabilities,
+        activationState: "ENABLED",
+        enabledCommands: ["CREATE_ITEM"],
+        enabledFamilies: ["P1"],
+        enabledAdmissionModes: ["REVIEWED_SOURCE"],
+        sourceEvidenceAvailable: true,
+      }),
+      receipt: async () => (++reads === 1 ? null : f.receipt),
+      submit: async () => {
+        submits++;
+        return f.receipt;
+      },
+      finalizeSourceOperation: async () => ({
+        captureVersion: 2,
+        slotId: f.command.admission.sourceIntentId!,
+        state: ++finalizations === 1 ? "EVIDENCE_PENDING" : "COMPLETE",
+        errorCode: null,
+      }),
+    };
+    let queueTime = Date.now();
+    const queue = createSyncOperationRepository(
+      f.database,
+      async () => account,
+      () => new Date(queueTime).toISOString(),
+    );
+    const run = () =>
+      createCoreV2SyncCoordinator(
+        queue,
+        createCoreV2SyncWorker(f.repo, transport as never, async () => account, hash),
+        f.repo,
+        trip,
+        f.command.operationId,
+      ).run("AUTHENTICATED_ONLINE");
+    await run();
+    expect((await f.repo.pending(f.ctx, f.command.operationId))[0].state).toBe("APPLIED");
+    if (reconciled) {
+      await f.repo.refresh(f.ctx, f.transport);
+      f.sql
+        .prepare(
+          "UPDATE sync_operations SET status='DEPENDENCY_BLOCKED',next_attempt_at=NULL WHERE id=?",
+        )
+        .run(f.command.operationId);
+    }
+    queueTime += 120000;
+    await run();
+    expect(finalizations).toBe(2);
+    expect(submits).toBe(1);
+    expect(
+      f.sql
+        .prepare("SELECT status FROM sync_operations WHERE id=?")
+        .get(f.command.operationId)!.status,
+    ).toBe("COMPLETED");
+  },
+);
+
+it.each(["MANUAL", "missingReceipt", "changedReceipt"])(
+  "does not unblock unrelated or unverified APPLIED %s for Source recovery",
+  async (kind) => {
+    const f = await lostP1RecoveryFixture(kind !== "MANUAL");
+    if (f.receipt.projection !== "FULL") throw Error("FULL_REQUIRED");
+    await f.repo.applyReceipt(f.ctx, f.receipt.receipt);
+    f.sql
+      .prepare(
+        "UPDATE sync_operations SET status='DEPENDENCY_BLOCKED',next_attempt_at=NULL WHERE id=?",
+      )
+      .run(f.command.operationId);
+    if (kind === "missingReceipt")
+      f.sql
+        .prepare(
+          "DELETE FROM trip_core_trip_core_command_receipts WHERE account_id=? AND operation_id=?",
+        )
+        .run(account, f.command.operationId);
+    if (kind === "changedReceipt") {
+      expect(() =>
+        f.sql
+          .prepare(
+            "UPDATE trip_core_trip_core_command_receipts SET body_json=json_set(body_json,'$.actorAccountId',?) WHERE account_id=? AND operation_id=?",
+          )
+          .run(randomUUID(), account, f.command.operationId),
+      ).toThrow("CORE_RECEIPT_IMMUTABLE");
+    } else await f.repo.resume(f.ctx, f.command.operationId);
+    expect(
+      f.sql
+        .prepare("SELECT status FROM sync_operations WHERE id=?")
+        .get(f.command.operationId)!.status,
+    ).toBe("DEPENDENCY_BLOCKED");
+  },
+);
