@@ -1,0 +1,23 @@
+{
+  "status": "SERIAL_FF_PASS",
+  "before": "d834987968babc311be911e73843c5432ac67d5c",
+  "after": "b1bbbc930cc7815741fc090dc7eca27337a6cc62",
+  "checkedAt": "2026-10-26T20:39:23.475512+00:00",
+  "unrelatedDirtyStatusAndBytesPreserved": true,
+  "dirtyFiles": [
+    "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+    "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+    "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+    "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+    "docs/beta/visual-acceptance/assets.zip",
+    "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+  ],
+  "push": false,
+  "postMergeSmoke": {
+    "checkout": "/Users/xoery/Project/otr-mobile",
+    "files": 8,
+    "tests": 33,
+    "status": "PASS"
+  },
+  "nativeLaneUntouched": true
+}

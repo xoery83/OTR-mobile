@@ -1,0 +1,25 @@
+{
+  "status": "APPROVED_GATE_TIME_BLOCKED",
+  "approvedGate": "8b9ee0ca",
+  "notBefore": "2026-10-27T00:00:00Z",
+  "localNotBefore": "2026-10-27 13:00 NZDT",
+  "newObjectsCreated": 0,
+  "newCallsUnderGate": 0,
+  "softwareSource": "96ceae4c52e95afde665f5aa5171544df17abbf2",
+  "healthyImage": "sha256:0d50d567cbd9f35022b626b2f45b05a9fe7aa2137fbfbe443c48e3329ca157cb",
+  "containerId": "abf93c7dde311870a79dd401e138b48edbfa00f44215ca104527a532cdec0599",
+  "rollbackImage": "sha256:ac188662bcac8a020fcaec4d87576d5c0bf1cdbbc24c7e894e214faff3af1886",
+  "rollbackContainer": "66ea7dce67873fd5714671e762e5f73fd4a51d34b4d9f645f0ffae0fea3139a7",
+  "observerFile": "/opt/otr/dev-backend/private/universal-p2-diag-96ceae4c/watchdog-final.json",
+  "observerDeadlineUTC": "2026-10-26T20:47:35.803238Z",
+  "nextSteps": [
+    "read observer HANDOFF_VERIFIED and fresh healthy identity/config",
+    "reconcile old call/attempt/raw/settlement; trustworthy recoverable result stops new creation",
+    "fresh normal QA/UTC-day budget/AD5 resource preflight",
+    "only approved next-day one-input/one-call chain; preserve UNKNOWN and no Save authority"
+  ],
+  "GUI": "returned CaptureKeyboard off",
+  "scheduling": "NO_AUTOMATION_CREATED: automatic approval review rejected scheduling future consequential paid/object action because explicit scheduling authorization is missing. Do not work around; request exact one-time wake authorization.",
+  "smoke": "actual main33 PASS",
+  "push": false
+}
