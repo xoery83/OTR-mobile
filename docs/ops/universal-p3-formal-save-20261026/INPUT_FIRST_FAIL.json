@@ -1,0 +1,13 @@
+{
+  "batchId": "b290fa7f-44a4-431a-8aa2-2adf63fe938e",
+  "normalContextGET": {
+    "httpStatus": 503,
+    "code": "UNIVERSAL_CONTEXT_UNAVAILABLE"
+  },
+  "scopedIndependentSourceRuns": [],
+  "cause": "Main Native Publication receiver remained V1-only while existing Universal transport requests V2; fixed via incremental compatibility patch preserving V1.",
+  "firstFailingTest": "33rd PublicationNativeReceiver test rejected contract2 factory",
+  "validation": "JS33 PASS; Swift policy/slot/43 fixtures PASS; independent review NO BLOCKER",
+  "newProviderCallsConfirmed": 0,
+  "formalP3Authority": false
+}

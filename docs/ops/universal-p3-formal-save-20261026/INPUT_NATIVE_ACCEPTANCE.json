@@ -1,0 +1,18 @@
+{
+  "batch": {
+    "batch_id": "b290fa7f-44a4-431a-8aa2-2adf63fe938e",
+    "job_id": "5265b6b1-4b8f-46ad-811b-25bca4fd7485",
+    "created_at": "2026-10-26T09:17:17.847Z",
+    "context_json": "{\"id\":\"71b5ac9b-62e3-4204-a5d3-869f7396e042\",\"version\":1,\"accountId\":\"f4b059c5-8241-4ffb-aa15-37fa25474543\",\"batchId\":\"b290fa7f-44a4-431a-8aa2-2adf63fe938e\",\"observedAt\":\"2026-10-26T09:17:17.847Z\",\"clock\":\"DEVICE_WALL\",\"entrySurface\":\"CAPTURE\",\"tripPrior\":{\"id\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\",\"origin\":\"PRIOR\",\"observedAt\":\"2026-10-26T09:17:17.847Z\"}}"
+  },
+  "inputs": [
+    {
+      "input_id": "42883590-cdd9-4881-8427-b52bf8089c4c",
+      "kind": "FILE",
+      "original_filename": "P3_MINIMUM_SYNTHETIC_QA.txt",
+      "content_sha256": "9c5d31bd56d3961726f5be39362b059694bcad9b7ed8b555c9554cce9bf878e7",
+      "content_byte_count": 336,
+      "acceptance_state": "ACCEPTED"
+    }
+  ]
+}

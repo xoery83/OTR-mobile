@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   native: {
     contractVersion: vi.fn(() => 1),
     receive: vi.fn(),
+    receiveUniversal: vi.fn(),
     cancel: vi.fn(),
     release: vi.fn(),
   },
@@ -42,6 +43,7 @@ beforeEach(() => {
   mocks.require.mockImplementation(() => mocks.native);
   mocks.native.contractVersion.mockReturnValue(1);
   mocks.native.receive.mockResolvedValue(success());
+  mocks.native.receiveUniversal.mockResolvedValue(success());
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -98,7 +100,7 @@ describe("trusted iOS Publication adapter", () => {
         mocks.require.mockImplementation(() => {
           throw new Error("missing");
         });
-      if (failure === "version") mocks.native.contractVersion.mockReturnValue(2);
+      if (failure === "version") mocks.native.contractVersion.mockReturnValue(3);
       await expect(t.read(context)).rejects.toMatchObject({
         code: "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
       });
@@ -324,4 +326,26 @@ describe("trusted iOS Publication adapter", () => {
     expect(mocks.native.cancel).toHaveBeenCalledTimes(1);
     expect(mocks.native.release).toHaveBeenCalledTimes(1);
   });
+});
+
+it("retains V1 and dispatches Universal V2 only through the existing V2 native receiver", async () => {
+  mocks.native.contractVersion.mockReturnValue(2);
+  const fetcher = await createPublicationCatalogNativeFetch();
+  const response = await fetcher(
+    `${PUBLICATION_CATALOG_DEV_ORIGIN}/v2/trips/${trip}/source-import-catalogs`,
+    {
+      method: "GET",
+      redirect: "error",
+      headers: {
+        Authorization: "Bearer synthetic-token",
+        "X-OTR-Publication-Catalog-Version": "2",
+      },
+    },
+  );
+  expect(response.status).toBe(200);
+  const reader = response.body!.getReader();
+  expect(new TextDecoder().decode((await reader.read()).value)).toBe(raw);
+  expect((await reader.read()).done).toBe(true);
+  expect(mocks.native.receiveUniversal).toHaveBeenCalledOnce();
+  expect(mocks.native.receive).not.toHaveBeenCalled();
 });
