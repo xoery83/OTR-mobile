@@ -18,5 +18,27 @@
   "sameItemId": "1397477b-db1f-8d5e-9ffe-3c6c037d78a9",
   "sameOperationId": "a98856b8-209a-8bc0-9e2b-e0919bb73181",
   "sameReceiptId": "110e6eae-d0e2-4da3-86d1-f0893686e545",
-  "semanticRevision": 1
+  "semanticRevision": 1,
+  "canonicalBodyHashes": {
+    "candidate": {
+      "beforeSha256": "03381db24c9ee1526831586b286bfe2b823b1b5f0582e1c63a35f4e96c589eeb",
+      "afterSha256": "03381db24c9ee1526831586b286bfe2b823b1b5f0582e1c63a35f4e96c589eeb"
+    },
+    "item": {
+      "beforeSha256": "055a5d7d1054554e0bed9d38bfe88d28df490ec288a7f3a20344d3127b297e89",
+      "afterSha256": "055a5d7d1054554e0bed9d38bfe88d28df490ec288a7f3a20344d3127b297e89"
+    },
+    "stay": {
+      "beforeSha256": "912298257b2471f85e3e79d4d096e101f682ac9ae22898e3c2c0c56c2dd27c33",
+      "afterSha256": "912298257b2471f85e3e79d4d096e101f682ac9ae22898e3c2c0c56c2dd27c33"
+    },
+    "receipt": {
+      "beforeSha256": "b3f13d8db20e814d4bf121e5ea05ffd851500b404191e8ca3b9c21baa1da4237",
+      "afterSha256": "b3f13d8db20e814d4bf121e5ea05ffd851500b404191e8ca3b9c21baa1da4237"
+    },
+    "association": {
+      "beforeSha256": "71672cfe5f72c7759592fb483ae37df49e02a23facead75dc166c2b4435e2f17",
+      "afterSha256": "71672cfe5f72c7759592fb483ae37df49e02a23facead75dc166c2b4435e2f17"
+    }
+  }
 }
