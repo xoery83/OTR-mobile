@@ -240,7 +240,8 @@ export async function coreHttpBoundary(
         result.proposedPlan.slots.length !== 1 ||
         result.proposedPlan.mode !== "REVIEWED_SOURCE" ||
         result.proposedPlan.slots[0].command !== "CREATE_ITEM" ||
-        (result.proposedPlan.slots[0].payload as { family?: string }).family !== "P1"
+        (result.proposedPlan.slots[0].payload as { family?: string }).family !==
+          (input.family ?? "P1")
       )
         throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
       return reply(200, result);

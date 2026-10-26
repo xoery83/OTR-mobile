@@ -1,0 +1,25 @@
+{
+  "status": "SOURCE_CANDIDATE_SEALED_CORE_NOT_REACHED",
+  "firstFailure": "HTTP_PUBLISH_RESPONSE_FAMILY_HARDCODED_P1",
+  "candidateId": "ebee124d-9a68-8fcd-919c-46d5157cffda",
+  "candidateSha256": "75db2d2c1daefb75c437c159255dd9b97de502c6e7d48c449d2b3f819a3b3349",
+  "counts": {
+    "candidate": 1,
+    "item": 0,
+    "receipt": 0,
+    "slot": 0,
+    "association": 0
+  },
+  "providerResends": 0,
+  "oldWindowStatus": "CONSUMED_CLOSED_NOT_REARMABLE",
+  "newWindowNeedsOwnerApproval": true,
+  "httpRegressionBefore": {
+    "pass": 3,
+    "fail": 2
+  },
+  "focusedAfter": {
+    "files": 4,
+    "pass": 18
+  },
+  "independentReview": "NO_BLOCKER"
+}

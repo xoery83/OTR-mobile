@@ -1,0 +1,1 @@
+{"status": "P3_SCOPE_CLOSED_RUNTIME_DEFAULT_RESTORED", "at": "2026-10-26T10:59:50.174736Z", "policy": {"enabled": false, "scope": null}, "runtime": {"status": "ROLLBACK_VERIFIED", "containerId": "f838b2917ad42eff1a1c2e734049d058d4e1cb176de59440777749040e333157", "imageId": "sha256:c2d4cda080d7aee64b88b3f5f712188e355cd67f77182a626974237959e83b69"}, "businessRecordsDeleted": 0}

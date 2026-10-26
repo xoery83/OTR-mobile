@@ -1,0 +1,26 @@
+{
+  "status": "EXACT_THREE_FUNCTION_INSTALL_VERIFIED_DEFAULT_CLOSED",
+  "at": "2026-10-26T10:40:34.407378+00:00",
+  "gateCommit": "200ef78c",
+  "writeDisposition": "ACKNOWLEDGED",
+  "functionHashes": [
+    {
+      "digest": "83af86dcd7df97d3360b1c29207a780e",
+      "kind": "capabilities"
+    },
+    {
+      "digest": "6c836f8e5cd04b73805c1fc1dd880e1d",
+      "kind": "guard"
+    },
+    {
+      "digest": "172f102496928a1e9e4b95ff39b3ca92",
+      "kind": "association"
+    }
+  ],
+  "policy": {
+    "enabled": false,
+    "scope": null
+  },
+  "rlsGrantRoleChanges": 0,
+  "businessWindowArmed": false
+}
