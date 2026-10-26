@@ -1,0 +1,8 @@
+DEVELOPMENT SYNTHETIC QA ONLY
+No real booking, payment, ticket, entitlement or real guest is represented.
+Property name: Harbour QA Hotel
+Check-in date: 2026-11-02
+Check-out date: 2026-11-03
+Check-in time: unknown
+Check-out time: unknown
+These are date-only stay facts. Do not infer a place, trip person, booking or journey membership.

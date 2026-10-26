@@ -1,0 +1,71 @@
+{
+  "status": "EXISTING_P3_NOT_ELIGIBLE",
+  "httpStatus": 200,
+  "normalAuth": true,
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "batchId": "bd0d6ea6-7870-48a9-b74b-779a46783609",
+  "taskId": "861a9d47-a35b-87a6-99f1-98422493d76b",
+  "candidate": {
+    "id": "4b64a74b1d743193d2407437",
+    "token": "i2",
+    "kind": "P3",
+    "subtype": "ACCOMMODATION",
+    "fields": [
+      {
+        "sourceId": "S1",
+        "path": "property.name",
+        "raw": "Harbour QA Hotel",
+        "start": 257,
+        "end": 273
+      },
+      {
+        "sourceId": "S1",
+        "path": "property.address",
+        "raw": "10 Quay Street, Auckland",
+        "start": 275,
+        "end": 299
+      },
+      {
+        "sourceId": "S1",
+        "path": "check_in.time",
+        "raw": "15:00",
+        "start": 324,
+        "end": 329
+      },
+      {
+        "sourceId": "S1",
+        "path": "check_out.date",
+        "raw": "November 3",
+        "start": 340,
+        "end": 350
+      }
+    ],
+    "bookingTokens": [],
+    "ticketTokens": [],
+    "validation": "CANDIDATE_VALIDATED",
+    "admission": "NOT_RUN",
+    "closure": "POLICY_PENDING",
+    "visualReviewRequired": false,
+    "readiness": {
+      "token": "i2",
+      "kind": "P3",
+      "minimumFacts": "INCOMPLETE",
+      "missing": [
+        "CHECK_IN_DATE",
+        "CHECK_OUT_DATE"
+      ],
+      "createReady": false,
+      "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+    },
+    "presentationTier": "INCOMPLETE"
+  },
+  "reason": "Missing check_in.date and no full ISO check_out.date; do not fill values or mutate sealed Candidate.",
+  "providerCalls": 0,
+  "businessMutations": 0,
+  "replacementInput": {
+    "path": "docs/ops/universal-p3-formal-save-20261026/P3_MINIMUM_SYNTHETIC_QA.txt",
+    "byteCount": 336,
+    "sha256": "9c5d31bd56d3961726f5be39362b059694bcad9b7ed8b555c9554cce9bf878e7"
+  }
+}
