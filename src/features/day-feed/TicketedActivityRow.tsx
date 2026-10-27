@@ -18,7 +18,7 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { DayRowRendererProps } from "./rendererContribution";
 import { timeRailWidth } from "./visualTokens";
-import { transportMapUrl } from "./ScheduledTransportRow";
+import { transportMapUrl } from "./transportReadPresentation";
 
 type Clock = Readonly<{ date: string; time?: string; plannedUnresolved?: boolean }>;
 type Openable = Readonly<{

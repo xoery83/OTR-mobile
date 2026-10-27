@@ -9,19 +9,23 @@ import {
   createCoreRentalRenderer,
   type CoreRentalPresentationActions,
 } from "./coreRentalRenderer";
-import { createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
+import {
+  type CoreScheduledTransportPresentationActions,
+  createCoreScheduledTransportRenderer,
+} from "./coreScheduledTransportRenderer";
 import { createCoreTicketedActivityRenderer } from "./coreTicketedActivityRenderer";
 
 export function createCoreExperienceRenderer(
   projection: CoreFlightDayProjection,
   actions?: CoreP1PresentationActions &
     CoreStayPresentationActions &
-    CoreRentalPresentationActions,
+    CoreRentalPresentationActions &
+    CoreScheduledTransportPresentationActions,
 ): DayRowRenderer {
   const p1 = createCoreP1Renderer(projection, actions);
   const stay = createCoreStayRenderer(projection, actions);
   const rental = createCoreRentalRenderer(projection, actions);
-  const transport = createCoreScheduledTransportRenderer(projection);
+  const transport = createCoreScheduledTransportRenderer(projection, actions);
   const activity = createCoreTicketedActivityRenderer(projection);
   return (props) =>
     p1(props) ?? stay(props) ?? rental(props) ?? transport(props) ?? activity(props);

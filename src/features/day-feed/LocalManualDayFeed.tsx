@@ -1,3 +1,5 @@
+import { ScheduledTransportContent } from "./ScheduledTransportRow";
+import { transportFactsFromItem } from "./transportReadPresentation";
 import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
 import { RentalContent } from "./RentalRow";
 import { calendarDate } from "./TripCalendarField";
@@ -277,6 +279,28 @@ export function LocalManualDayRows({
               depth={p1Focus === focusKey ? "F" : "B"}
               context={rentalContext}
               pending={item.localState === "PENDING"}
+              onInsert={
+                onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
+              }
+              onDepth={(depth) =>
+                depth === "I"
+                  ? onOpenItem?.(row.itemRef, read, { role, date })
+                  : onP1Focus?.(depth === "F" ? focusKey : null)
+              }
+            />
+          );
+        }
+        if (item && row.family === "P5") {
+          const facts = transportFactsFromItem(item);
+          if (!facts) return null;
+          const focusKey = JSON.stringify(row.rowKey);
+          return (
+            <ScheduledTransportContent
+              key={focusKey}
+              facts={facts}
+              depth={p1Focus === focusKey ? "F" : "B"}
+              context={context}
+              arrival={role === "DESTINATION"}
               onInsert={
                 onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
               }

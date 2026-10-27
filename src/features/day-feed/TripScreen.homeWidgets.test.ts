@@ -1340,7 +1340,7 @@ it("routes P4 through native Rental detail without granting editor authority in 
   });
   expect(find(render(), "LocalItemPreview")).toBeNull();
 });
-it("opens same-ID P5 edit only after the owning transport repository returns an editable draft", async () => {
+it("routes same-ID P5 through native Transport detail without granting editor authority in Home", async () => {
   state.result.observed = null;
   const transport = { ...localRead().items[0], family: "P5", itemId: "manual-transport" };
   state.result.localManual = { ...localRead(), items: [transport] };
@@ -1354,15 +1354,13 @@ it("opens same-ID P5 edit only after the owning transport repository returns an 
     transport.itemId,
     state.result.localManual,
   );
-  find(render(), "LocalItemPreview").onEdit();
-  for (let i = 0; i < 12; i++) await Promise.resolve();
-  expect(repository.read).toHaveBeenCalledWith(reference, transport.itemId);
-  expect(find(render(), "LocalItemPreview")).toBeNull();
-  expect(find(render(), "TransportEditor")).toMatchObject({
-    tripId: reference,
-    itemId: transport.itemId,
-    opened: { draft, repository },
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p5-detail",
+    params: { tripId: reference, itemId: transport.itemId, occurrence: "ORIGIN" },
   });
+  expect(repository.read).not.toHaveBeenCalled();
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+  expect(find(render(), "TransportEditor")).toBeNull();
 });
 it("Preparation local Recent rejects a foreign Trip or late account before invoking local details", async () => {
   const workspace = find(await loaded(), LocalTripWorkspace);

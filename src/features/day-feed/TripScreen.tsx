@@ -617,7 +617,7 @@ function TripContent({
       local.items.some(
         (item) =>
           item.itemId === id &&
-          ["P1", "P2", "P3", "P4"].includes(item.family) &&
+          ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
           !item.hidden,
       )
     ) {
@@ -641,6 +641,15 @@ function TripContent({
                 : occurrence?.role === "CHECKIN"
                   ? "CHECKIN"
                   : "BASE",
+            ...(occurrence?.date ? { date: occurrence.date } : {}),
+          },
+        });
+      else if (item.family === "P5")
+        router.push({
+          pathname: "/p5-detail",
+          params: {
+            ...params,
+            occurrence: occurrence?.role ?? "ORIGIN",
             ...(occurrence?.date ? { date: occurrence.date } : {}),
           },
         });
@@ -694,6 +703,18 @@ function TripContent({
           tripId: requested,
           itemId: id,
           occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+        },
+      });
+      return;
+    }
+    if (resolved.item.family === "P5") {
+      router.push({
+        pathname: "/p5-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence: occurrence?.role ?? "ORIGIN",
+          ...(occurrence?.date ? { date: occurrence.date } : {}),
         },
       });
       return;
@@ -1748,6 +1769,29 @@ function TripContent({
               visibleTrip.observed?.projection.version === 2
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
+                    onOpenTransport: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p5-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertTransport: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
                     onOpenRental: (itemId, occurrence, date) =>
                       router.push({
                         pathname: "/p4-detail",

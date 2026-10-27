@@ -1,5 +1,15 @@
 # P5 Native fidelity candidate — 27 October 2026
 
+Parent serial intake: isolated commits `d1ae57cb` and `202d9f31` are now included
+in the Native feature branch as `e7cd4e2a` and `e7510461`. The reviewed host patch
+has been applied there, including both mixed local/accepted Focus qualifications.
+Parent seven-suite317 assertions, TypeScript, UI guard and scoped ESLint PASS.
+The previous Home inline-editor regression now checks the real `/p5-detail`
+handoff and verifies that Home itself never grants Editor authority. This is
+`LOCAL_HOST_INTEGRATED / NATIVE_VISION_PENDING / CLOUD_PENDING`; no main merge or
+device acceptance is implied. Historical candidate-only statements below describe
+the isolated delivery before this serial intake.
+
 Status: **LOCAL_CONTENT_CANDIDATE / HOST_INTEGRATION_PENDING / NATIVE_VISION_NOT_TESTED / CLOUD_PENDING**.
 
 Base `7a546aff9cf60cd800243201a693b256c43fcc35`; isolated branch `codex/native-p5-transport`.
