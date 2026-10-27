@@ -14,5 +14,9 @@
   "hostedInstalled": false,
   "schemaGrantsRolesAdded": 0,
   "firstFailure": "JSONB subtraction precedence, repaired before any hosted change",
-  "testDurationSeconds": 58.12
+  "testDurationSeconds": 57.82,
+  "finalBusinessReadback": "Exact P6 CALENDAR title/date and null optional fields; one Activity details row with session_label/admission_note NULL",
+  "finalRunAt": "2026-10-27T22:25:52.206226+00:00",
+  "fixedImplementation": "69220ac8",
+  "independentReview": "NO_BLOCKER, fixed Diff69220ac8, no Hosted/GUI/main change"
 }
