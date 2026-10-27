@@ -128,9 +128,10 @@ export function P3Detail() {
         ...visible.presentation,
         addExpense: () =>
           router.push({
-            pathname: "/expenses/new",
+            pathname: "/trip-item-expense",
             params: {
               journeyId: tripId,
+              returnTo: "source",
               suggestedTitle: visible.presentation.title,
               suggestedDate: date ?? visible.presentation.start,
               mode: "manual",

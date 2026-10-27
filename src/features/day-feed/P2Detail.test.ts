@@ -175,9 +175,10 @@ it("Add expense carries the real Trip and departure date while unsupported actio
   expect(actions.filter((n) => n.disabled)).toHaveLength(3);
   actions.find((n) => !n.disabled).onPress();
   expect(state.push).toHaveBeenCalledWith({
-    pathname: "/expenses/new",
+    pathname: "/trip-item-expense",
     params: {
       journeyId: "trip",
+      returnTo: "source",
       suggestedTitle: "NZ99",
       suggestedDate: "2026-10-26",
       mode: "manual",

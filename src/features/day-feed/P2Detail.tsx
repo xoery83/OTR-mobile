@@ -147,9 +147,10 @@ export function P2Detail() {
                   : {}),
                 addExpense: () =>
                   router.push({
-                    pathname: "/expenses/new",
+                    pathname: "/trip-item-expense",
                     params: {
                       journeyId: tripId,
+                      returnTo: "source",
                       suggestedTitle:
                         typeof visible.item.title === "string"
                           ? visible.item.title

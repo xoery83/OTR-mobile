@@ -102,9 +102,10 @@ export function P4Detail() {
         ...visible.presentation.facts,
         onAddExpense: () =>
           router.push({
-            pathname: "/expenses/new",
+            pathname: "/trip-item-expense",
             params: {
               journeyId: tripId,
+              returnTo: "source",
               suggestedTitle: visible.presentation.title,
               suggestedDate: date ?? visible.presentation.facts.pickup.date,
               mode: "manual",

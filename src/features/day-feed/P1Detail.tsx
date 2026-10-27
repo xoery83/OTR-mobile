@@ -113,9 +113,10 @@ export function P1Detail() {
               actions={{
                 addExpense: () =>
                   router.push({
-                    pathname: "/expenses/new",
+                    pathname: "/trip-item-expense",
                     params: {
                       journeyId: tripId,
+                      returnTo: "source",
                       suggestedTitle: visible.presentation.display.title,
                       suggestedDate:
                         visible.presentation.display.clocks.start?.local_date ??
