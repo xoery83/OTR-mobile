@@ -21,6 +21,22 @@ const automatic = (name: string, destination: string | null) => ({
   destination,
   selectedCoverAssetIdRaw: null,
 });
+it("uses selected destination labels for automatic covers without changing manual priority", () => {
+  for (const displayLabel of ["Tokyo", "Iceland"]) {
+    const trip = {
+      ...automatic("My holiday", "Legacy location"),
+      destinations: [{ displayLabel }],
+    };
+    expect(rankedTripCovers(trip, 6)).toEqual(
+      rankedTripCovers({ ...trip, destination: displayLabel, destinations: [] }, 6),
+    );
+    expect(resolveTripCover({ ...trip, selectedCoverAssetIdRaw: "city" })).toEqual({
+      assetId: "city",
+      mode: "manual",
+    });
+    expect(trip.destination).toBe("Legacy location");
+  }
+});
 it("keeps 48 frozen images byte exact and all74 literal resource mappings finite", () => {
   const allow = JSON.parse(readFileSync("vendor/otr-cover-core/allowlist.json", "utf8"));
   const map = readFileSync("src/features/trip-cover/tripCoverSources.ts", "utf8");
@@ -146,4 +162,31 @@ it("keeps the authorized Owner22 supplement finite, byte-exact and geographicall
       .filter((item: any) => item.cropQA.mobileFit === "contain")
       .map((item: any) => item.id),
   ).toEqual(origin.cropContainIds);
+});
+
+it("multi-destination UI shortening does not change full geography or its ranking cache", () => {
+  const trip = {
+    ...automatic("Holiday", "Legacy"),
+    id: "cover-full-multidest-regression",
+    destinations: [
+      { displayLabel: "Cambridge, United Kingdom" },
+      { displayLabel: "Cambridge, Massachusetts, United States" },
+    ],
+  };
+  const ranked = rankedTripCovers(trip, 6);
+  expect(
+    rankedTripCovers(
+      {
+        ...trip,
+        destinations: [],
+        destination:
+          "Cambridge, United Kingdom · Cambridge, Massachusetts, United States",
+      },
+      6,
+    ),
+  ).toBe(ranked);
+  expect(trip.destinations.map((place) => place.displayLabel)).toEqual([
+    "Cambridge, United Kingdom",
+    "Cambridge, Massachusetts, United States",
+  ]);
 });

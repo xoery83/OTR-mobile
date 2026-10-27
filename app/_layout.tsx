@@ -90,6 +90,15 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(tabs)" />
             <Stack.Screen
+              name="import-plans"
+              options={{
+                presentation: "transparentModal",
+                animation: "fade",
+                contentStyle: { backgroundColor: colors.transparent },
+                gestureEnabled: false,
+              }}
+            />
+            <Stack.Screen
               name="trip-home"
               options={{
                 headerShown: true,

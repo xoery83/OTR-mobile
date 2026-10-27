@@ -1,3 +1,29 @@
+vi.mock("./TripCalendarRangeField", () => ({
+  TripCalendarRangeField: (p: any) => {
+    state.nodes.push(p);
+    return null;
+  },
+}));
+vi.mock("./PlanParticipantsField", () => ({
+  PlanParticipantsField: (p: any) => {
+    state.nodes.push({ participantField: p });
+    return null;
+  },
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("@/features/place-search/PlaceSearchSheet", () => ({
+  PlaceSearchSheet: (props: any) => {
+    state.nodes.push({ placeSearch: props });
+    return null;
+  },
+}));
+vi.mock("@/data/auth/accountRequestContext", () => ({
+  captureAccountScope: async () => ({
+    accountId: "00000000-0000-4000-8000-000000000099",
+    generation: state.generation,
+  }),
+}));
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -44,18 +70,37 @@ vi.mock("@/data/repositories/manualPlanRepository", () => ({
   createDefaultManualPlanRepository: () => state.repository(),
 }));
 vi.mock("react-native", () => ({
+  Keyboard: { dismiss: vi.fn() },
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
   Modal: (p: any) => createElement("div", null, p.children),
-  ScrollView: (p: any) => createElement("div", null, p.children),
+  ScrollView: (p: any) => {
+    state.nodes.push({ scrollView: p });
+    return createElement("div", null, p.children);
+  },
+  Pressable: (p: any) => {
+    state.nodes.push(p);
+    return createElement("button", null, p.children);
+  },
   View: (p: any) => createElement("div", null, p.children),
   StyleSheet: { create: (value: unknown) => value },
 }));
 vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaView: (p: any) => createElement("div", null, p.children),
   SafeAreaProvider: (p: any) => createElement("div", null, p.children),
 }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
-    state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
+    state.nodes.push({
+      header: p,
+      label: p.leftLabel ?? "common.cancel",
+      onPress: p.onLeft,
+    });
+    if (p.onRight)
+      state.nodes.push({
+        label: p.rightLabel ?? "common.done",
+        onPress: p.onRight,
+        disabled: p.rightDisabled,
+      });
     return null;
   },
 }));
@@ -90,7 +135,7 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}), useThemedStyles: () => ({}) }));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -195,28 +240,13 @@ it("navigates Home picker to Trip Start without selecting it, then saves authore
   await open(p, repo);
   node("tripCreate.planName").onChangeText("Visit the museum");
   expect(render(p)).toContain("tripCreate.planStartRequired");
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
-  node("tripCreate.itemDate").onPress();
+  expect(node("tripCreate.createPlan").disabled).toBe(true);
+  expect(node("tripCreate.itemDate").initialNavigationDate).toBe("2027-12-30");
+  expect(node("tripCreate.itemDate").value).toEqual({ start: "", end: "" });
+  node("tripCreate.itemDate").onChange({ start: "2027-12-29", end: "" });
   render(p);
-  const picker = state.nodes.find((entry) => entry.mode === "date")!;
-  expect([
-    picker.value.getFullYear(),
-    picker.value.getMonth(),
-    picker.value.getDate(),
-  ]).toEqual([2027, 11, 30]);
-  node("common.cancel").onPress();
-  render(p);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
-  node("tripCreate.itemDate").onPress();
-  render(p);
-  state.nodes
-    .find((entry) => entry.mode === "date")!
-    .onChange(undefined, new Date(2027, 11, 29, 12));
-  render(p);
-  node("common.done").onPress();
-  render(p);
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node("tripCreate.createPlan").disabled).toBe(false);
+  node("tripCreate.createPlan").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
@@ -247,25 +277,19 @@ it("keeps the same draft and fields after an unknown save result; conflict disab
   await open(p, repo);
   node("tripCreate.planName").onChangeText("Walk");
   render(p);
-  node("tripCreate.itemDate").onPress();
+  node("tripCreate.itemDate").onChange({ start: "2027-12-29", end: "" });
   render(p);
-  state.nodes
-    .find((entry) => entry.mode === "date")!
-    .onChange(undefined, new Date(2027, 11, 29, 12));
-  render(p);
-  node("common.done").onPress();
-  render(p);
-  node("tripCreate.saveItem").onPress();
+  node("tripCreate.createPlan").onPress();
   await Promise.resolve();
   render(p);
   expect(node("tripCreate.planName").editable).toBe(false);
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node("tripCreate.createPlan").disabled).toBe(false);
+  node("tripCreate.createPlan").onPress();
   await Promise.resolve();
   render(p);
   expect(repo.save).toHaveBeenCalledTimes(2);
   expect(repo.save.mock.calls[1]).toEqual(repo.save.mock.calls[0]);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("tripCreate.createPlan").disabled).toBe(true);
   expect(p.onSaved).not.toHaveBeenCalled();
   node("common.cancel").onPress();
   expect(p.onClose).not.toHaveBeenCalled();
@@ -295,16 +319,10 @@ it("blocks old same-turn handlers and retries only the first submitted fields", 
   };
   await open(p, repo);
   node("tripCreate.planName").onChangeText("First title");
-  node("tripCreate.itemDate").onPress();
-  render(p);
-  state.nodes
-    .find((entry) => entry.mode === "date")!
-    .onChange(undefined, new Date(2027, 11, 29, 12));
-  render(p);
-  node("common.done").onPress();
+  node("tripCreate.itemDate").onChange({ start: "2027-12-29", end: "" });
   render(p);
   const oldNameChange = node("tripCreate.planName").onChangeText;
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("tripCreate.createPlan").onPress;
   const oldCancel = node("common.cancel").onPress;
   oldSave();
   oldNameChange("Changed after Save");
@@ -379,7 +397,7 @@ it("ignores a queued Discard confirmation after P1 Save starts", async () => {
   node("tripCreate.planName").onChangeText("Changed plan");
   render(p);
   const oldCancel = node("common.cancel").onPress;
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("tripCreate.createPlan").onPress;
   oldCancel();
   const discard = state.alert.mock.lastCall![2][1].onPress;
   oldSave();
@@ -434,7 +452,7 @@ it("rejects an old P1 Save after Discard closes a dirty draft", async () => {
   });
   node("tripCreate.planName").onChangeText("Changed plan");
   render(p);
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("tripCreate.createPlan").onPress;
   const oldChange = node("tripCreate.planName").onChangeText;
   node("common.cancel").onPress();
   state.alert.mock.lastCall![2][1].onPress();
@@ -459,9 +477,200 @@ it("rejects an old P1 Save after a clean sibling transition", async () => {
     })),
     save,
   });
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("tripCreate.createPlan").onPress;
   node("tripCreate.rental").onPress();
   oldSave();
   expect(p.onChooseRental).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
+});
+
+async function withPlace(title = "Dinner with Friends", location: string | null = null) {
+  const p = props(),
+    value = { ...fields(), title, startDate: "2027-02-08", location };
+  const repo = {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "00000000-0000-4000-8000-000000000011",
+      fields: value,
+      participantOptions: [],
+    })),
+    save: vi.fn(async () => ({
+      localStatus: "PENDING",
+      itemId: "00000000-0000-4000-8000-000000000011",
+    })),
+  };
+  await open(p, repo);
+  return { p, repo };
+}
+const placeResult = (usePlaceName = false) => ({
+  kind: "SELECTED",
+  place: {
+    provider: "apple",
+    title: "Sky Tower",
+    address: "Victoria Street West, Auckland",
+    handle: "opaque",
+    kind: "mapItem",
+    sessionId: "session",
+    generation: 1,
+  },
+  usePlaceName,
+});
+async function search(p: ReturnType<typeof props>, label = "tripCreate.findPlace") {
+  if (label === "placeSearch.searchLocation") node("tripCreate.planLocation").onFocus();
+  else node(label).onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+  render(p);
+  return state.nodes.find((n) => n.placeSearch)!.placeSearch;
+}
+it("P1 searches authored Name but always fills only Location using immediate selection", async () => {
+  const { p, repo } = await withPlace();
+  const sheet = await search(p);
+  expect(sheet.initialQuery).toBe("Dinner with Friends");
+  expect(sheet.nameChoice).toBe(false);
+  expect(sheet.selectionMode).toBe("immediate");
+  sheet.onConfirm(placeResult());
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Dinner with Friends");
+  expect(node("tripCreate.planLocation").value).toBe("Victoria Street West, Auckland");
+  node("tripCreate.createPlan").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      title: "Dinner with Friends",
+      location: "Victoria Street West, Auckland",
+    }),
+  );
+});
+it("P1 location search and cancel preserve Name and all existing fields", async () => {
+  const { p } = await withPlace("Original activity", "Original address");
+  const sheet = await search(p, "placeSearch.searchLocation");
+  expect(sheet.initialQuery).toBe("Original address");
+  expect(sheet.nameChoice).toBe(false);
+  sheet.onCancel();
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Original activity");
+  expect(node("tripCreate.planLocation").value).toBe("Original address");
+  sheet.onConfirm(placeResult(true));
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Original address");
+});
+it("P1 replaces Location on explicit candidate selection, never Name, and rejects stale callbacks", async () => {
+  const { p } = await withPlace("Original activity", "Existing confirmed address");
+  const sheet = await search(p);
+  sheet.onConfirm(placeResult(true));
+  render(p);
+  expect(state.alert).not.toHaveBeenCalled();
+  expect(node("tripCreate.planName").value).toBe("Original activity");
+  expect(node("tripCreate.planLocation").value).toBe("Victoria Street West, Auckland");
+  sheet.onConfirm({ kind: "MANUAL", text: "stale address" });
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Victoria Street West, Auckland");
+});
+
+it("manual Find a Place preserves existing Name; manual Location remains a real save value", async () => {
+  const { p } = await withPlace();
+  let sheet = await search(p);
+  sheet.onConfirm({ kind: "MANUAL", text: "Changed search only" });
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("Dinner with Friends");
+  sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onConfirm({ kind: "MANUAL", text: "42 Offline Road" });
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("42 Offline Road");
+});
+
+it("selected P1 location saves through the existing same-ID Edit writer without changing dates or participants", async () => {
+  const p0 = props(),
+    value = { ...fields(), title: "Existing activity", startDate: "2027-02-08" };
+  const draft = {
+    mode: "EDIT",
+    itemId: "00000000-0000-4000-8000-000000000011",
+    fields: value,
+    participantOptions: [],
+  };
+  const repo = {
+    save: vi.fn(async () => ({ localStatus: "PENDING", itemId: draft.itemId })),
+  };
+  const p = { ...p0, itemId: draft.itemId, opened: { repository: repo, draft } };
+  await open(p, repo);
+  const sheet = await search(p, "placeSearch.searchLocation");
+  sheet.onConfirm(placeResult());
+  render(p);
+  node("tripCreate.saveChanges").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({
+      title: value.title,
+      startDate: value.startDate,
+      participation: value.participation,
+      location: "Victoria Street West, Auckland",
+    }),
+  );
+  expect(p.onSaved).toHaveBeenCalledWith(draft.itemId);
+});
+
+it("keeps button taps handled while the P1 Name keyboard is open", async () => {
+  const { p } = await withPlace();
+  expect(
+    state.nodes.find((entry) => entry.scrollView)?.scrollView.keyboardShouldPersistTaps,
+  ).toBe("handled");
+  const sheet = await search(p);
+  expect(sheet.initialQuery).toBe("Dinner with Friends");
+});
+
+it("prefills a new P1 date and advisory start time and saves the authored value", async () => {
+  const p = { ...props(), initialDate: "2027-01-16", initialStartTime: "12:30" };
+  const draft = {
+    mode: "CREATE",
+    itemId: "new-plan",
+    fields: fields(),
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn(async () => ({
+      itemId: "new-plan",
+      localStatus: "PENDING",
+      operationIds: [],
+    })),
+  };
+  await open(p, repo);
+  expect(node("tripCreate.itemDate").value.start).toBe("2027-01-16");
+  node("tripCreate.planName").onChangeText("Lunch");
+  render(p);
+  node("tripCreate.createPlan").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({ startTime: "12:30", startDate: "2027-01-16" }),
+  );
+  expect(draft.fields.startTime).toBeNull();
+});
+
+it("never applies insertion defaults over an existing P1 edit", async () => {
+  const p = {
+    ...props(),
+    itemId: "existing",
+    initialDate: "2027-01-16",
+    initialStartTime: "12:30",
+  };
+  const original = {
+    ...fields(),
+    title: "Existing",
+    startDate: "2027-02-08",
+    startTime: "09:15",
+  };
+  await open(p, {
+    read: vi.fn(async () => ({
+      mode: "EDIT",
+      itemId: "existing",
+      fields: original,
+      participantOptions: [],
+    })),
+  });
+  expect(node("tripCreate.itemDate").value.start).toBe("2027-02-08");
+  expect(state.hooks.some((value: any) => value?.startTime === "09:15")).toBe(true);
 });

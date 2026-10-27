@@ -1,3 +1,4 @@
+import { localDayDisplayOrder } from "./localDayDisplayOrder";
 import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -16,6 +17,8 @@ import {
   StyleSheet,
   Text,
   View,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 import type { DayProjection, DayViewContext } from "@/domain/trip/dayReadModel";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
@@ -43,9 +46,9 @@ import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { P1Row } from "./P1Row";
+import { P1Row, type P1MoveInteraction } from "./P1Row";
 import { TransitionRow, type ComposedTransition } from "./TransitionRow";
-import { FlightRows } from "./FlightRows";
+import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
 import { flightPresentation, type Depth } from "./presentation";
@@ -66,7 +69,36 @@ function BlockSlot({
   return <Renderer {...props} />;
 }
 
+function ImmersiveHeaderSlot({
+  renderHeader,
+  onClose,
+}: {
+  renderHeader: (onClose: () => void) => ReactNode;
+  onClose: () => void;
+}) {
+  return renderHeader(onClose);
+}
+
 export type DayFeedPresentation = {
+  p1Move?: P1MoveInteraction;
+  localContextForDate?: (
+    date: string,
+  ) => import("./bookingReadPresentation").BookingContext;
+  onLocalInsert?(
+    itemId: string,
+    role: string,
+    date: string,
+    side: "BEFORE" | "AFTER",
+  ): void;
+  scrollEnabled?: boolean;
+  // Optional presentation-only integration seams; composition and Reader authority stay unchanged.
+  renderDayHeading?: (date: string, empty: boolean) => ReactNode;
+  wrapDayRow?: (date: string, content: ReactNode) => ReactNode;
+  listStyle?: StyleProp<ViewStyle>;
+  listContentStyle?: StyleProp<ViewStyle>;
+  showTimeUnspecified?: boolean;
+  immersiveContentStyle?: StyleProp<ViewStyle>;
+  renderImmersiveHeader?: (onClose: () => void) => ReactNode;
   listRef?: (value: DayListHandle | null) => void;
   header?: ReactNode;
   formatDayHeading?: (date: string) => string;
@@ -88,9 +120,11 @@ export type DayFeedPresentation = {
 type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & {
   projection?: DayProjection | CoreFlightDayProjection;
   localManual?: LocalManualRead | null;
+  onOpenAcceptedP1?: (itemId: string, revision: number) => void;
   onOpenLocalItem?: (
     itemId: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
   ) => void;
 };
 export function DayFeed(props: DayFeedProps) {
@@ -135,11 +169,14 @@ function AcceptedDayFeed({
   directItem,
   localManual,
   onOpenLocalItem,
+  onOpenAcceptedP1,
 }: {
   localManual?: LocalManualRead | null;
+  onOpenAcceptedP1?: (itemId: string, revision: number) => void;
   onOpenLocalItem?: (
     itemId: string,
     expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
   ) => void;
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
@@ -275,6 +312,22 @@ function AcceptedDayFeed({
       focus &&
       !sections.some(
         ({ stream }) => focus === stream.focus || focus === stream.suspendedFocus,
+      ) &&
+      !sections.some((section) =>
+        localManual
+          ?.rows(section.date)
+          .some(
+            (row) =>
+              ["P1", "P2", "P3", "P4", "P5", "P6"].includes(row.family) &&
+              JSON.stringify(row.rowKey) === focus &&
+              localManual.items.some(
+                (item) =>
+                  item.itemId === row.itemRef &&
+                  ["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) &&
+                  !item.hidden &&
+                  !["cancelled", "skipped"].includes(String(item.status)),
+              ),
+          ),
       )
     )
       setFocus(null);
@@ -334,7 +387,10 @@ function AcceptedDayFeed({
       });
   };
   const summaries = sections.map((section) =>
-    summarizeDay(section.query, localManual?.rows(section.date)),
+    summarizeDay(
+      section.query,
+      localDayDisplayOrder(localManual?.rows(section.date) ?? []),
+    ),
   );
   const summariesKey = JSON.stringify(summaries);
   const reportSummaries = presentation?.onSummaries;
@@ -349,6 +405,21 @@ function AcceptedDayFeed({
         : "B";
   const change = (id: string, next: Depth) => {
     interactedContext.current = viewContext;
+    if (next === "I" && projection.version === 2 && onOpenAcceptedP1) {
+      const eventId = rows.find((row) => row.focusKey === id)?.item.event.id;
+      const item = projection.items.find(
+        (item) => item.itemId === eventId && item.family === "P1",
+      );
+      if (
+        item &&
+        typeof item.itemRevision === "number" &&
+        Number.isSafeInteger(item.itemRevision) &&
+        item.itemRevision > 0
+      ) {
+        onOpenAcceptedP1(item.itemId, item.itemRevision);
+        return;
+      }
+    }
     if (next === "I") {
       returnAnchor.current = scroll.current?.saveAnchor() ?? null;
       setImmersive(id);
@@ -373,6 +444,11 @@ function AcceptedDayFeed({
     withinMarker?: React.ReactNode,
   ) => {
     const ownerStream = rowSections.get(row.key)!.stream;
+    const entryIndex = ownerStream.entries.findIndex(
+      (entry) => entry.kind === "ITEM" && entry.row.key === row.key,
+    );
+    const nextEntry = entryIndex >= 0 ? ownerStream.entries[entryIndex + 1] : undefined;
+    const nextFocused = nextEntry?.kind === "ITEM" && nextEntry.row.focused;
     const event = row.item.event;
     const flight = flightPresentation(
       event,
@@ -385,6 +461,13 @@ function AcceptedDayFeed({
         depth={mode}
         onDepth={(next) => (mode === "I" ? close() : change(row.focusKey, next))}
         withinMarker={withinMarker}
+        hideDivider={nextFocused}
+        occurrence={
+          row.item.roles.includes("END") && !row.item.roles.includes("START")
+            ? "END"
+            : "START"
+        }
+        context={ownerStream.context}
       />
     ) : (
       <View style={styles.flight}>
@@ -396,15 +479,19 @@ function AcceptedDayFeed({
           accessibilityHint={
             mode === "I"
               ? undefined
-              : t(mode === "F" ? "p1r.immersiveHint" : "p1r.focusHint")
+              : t(mode === "F" ? "flight.immersiveHint" : "flight.focusHint")
           }
           onPress={() => change(row.focusKey, mode === "F" ? "I" : "F")}
         >
-          <FlightRows
-            fixture={flight}
+          <FlightFidelityGrid
+            flight={flight}
             focused={mode === "F"}
             immersive={mode === "I"}
             withinMarker={withinMarker}
+            pending={
+              projection.version === 2 &&
+              !!projection.source.localTargetIds?.includes(event.id)
+            }
           />
         </Pressable>
         {mode === "F" ? (
@@ -424,6 +511,7 @@ function AcceptedDayFeed({
         renderer={renderer}
         fallback={fallback}
         row={row}
+        nextFocused={nextFocused}
         container={ownerStream.containers.find((entry) => entry.id === row.containerId)}
         context={ownerStream.context}
         depth={mode}
@@ -497,18 +585,26 @@ function AcceptedDayFeed({
       key: `day:${section.date}`,
       isDayHeader: true,
       date: section.date,
-      value: () => (
-        <View>
-          {dates ? (
-            <Text accessibilityRole="header" style={styles.dateHeading}>
-              {presentation?.formatDayHeading?.(section.date) ?? section.date}
-            </Text>
-          ) : null}
-          {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
-            <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
-          ) : null}
-        </View>
-      ),
+      value: () =>
+        presentation?.renderDayHeading ? (
+          presentation.renderDayHeading(
+            section.date,
+            !section.stream.entries.length &&
+              !localDayDisplayOrder(localManual?.rows(section.date) ?? []).length,
+          )
+        ) : (
+          <View>
+            {dates ? (
+              <Text accessibilityRole="header" style={styles.dateHeading}>
+                {presentation?.formatDayHeading?.(section.date) ?? section.date}
+              </Text>
+            ) : null}
+            {!section.stream.entries.length &&
+            !localDayDisplayOrder(localManual?.rows(section.date) ?? []).length ? (
+              <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+            ) : null}
+          </View>
+        ),
     });
     for (const entry of section.stream.entries)
       windowRows.push({
@@ -538,22 +634,28 @@ function AcceptedDayFeed({
             />
           ),
       });
-    for (const row of localManual?.rows(section.date) ?? [])
+    for (const row of localDayDisplayOrder(localManual?.rows(section.date) ?? []))
       windowRows.push({
         key: `local:${JSON.stringify(row.rowKey)}`,
         date: section.date,
         value: () => (
           <LocalManualDayRows
             read={localManual!}
+            context={section.stream.context}
             date={section.date}
             onlyRow={row}
+            p1Focus={focus}
+            onP1Focus={setFocus}
+            move={presentation?.p1Move}
+            onInsert={presentation?.onLocalInsert}
             onOpenItem={onOpenLocalItem}
           />
         ),
       });
     if (
       section.stream.nowAfter ||
-      section.stream.rows.some((row) => row.position === "TNS")
+      (presentation?.showTimeUnspecified !== false &&
+        section.stream.rows.some((row) => row.position === "TNS"))
     )
       windowRows.push({
         key: `footer:${section.date}`,
@@ -563,7 +665,8 @@ function AcceptedDayFeed({
             {section.stream.nowAfter ? (
               <NowMarker placement={section.stream.now} />
             ) : null}
-            {section.stream.rows.some((row) => row.position === "TNS") ? (
+            {presentation?.showTimeUnspecified !== false &&
+            section.stream.rows.some((row) => row.position === "TNS") ? (
               <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
             ) : null}
           </View>
@@ -582,13 +685,16 @@ function AcceptedDayFeed({
           }
         >
           <WindowedDayList
+            scrollEnabled={presentation?.scrollEnabled}
             listRef={(value) => {
               scroll.current = value;
               presentation?.listRef?.(value);
             }}
             rows={windowRows}
-            renderRow={({ value }) =>
-              presentation?.header ? (
+            renderRow={({ value, date: rowDate }) =>
+              presentation?.wrapDayRow ? (
+                presentation.wrapDayRow(rowDate, value())
+              ) : presentation?.header ? (
                 <View style={styles.rowInset}>{value()}</View>
               ) : (
                 value()
@@ -606,10 +712,11 @@ function AcceptedDayFeed({
             topInset={presentation?.topInset ?? 0}
             bottomInset={visual.space.section + bottomInset}
             header={presentation?.header}
-            style={styles.root}
+            style={[styles.root, presentation?.listStyle]}
             contentContainerStyle={[
               styles.content,
               presentation?.header ? styles.withIntroduction : undefined,
+              presentation?.listContentStyle,
             ]}
             onViewportChange={presentation?.onViewportChange}
             onReadingMotion={presentation?.onReadingMotion}
@@ -640,33 +747,42 @@ function AcceptedDayFeed({
         }
         animationType="slide"
       >
-        <ScrollView
-          style={styles.root}
-          contentContainerStyle={styles.content}
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          {selected ? render(selected, "I") : null}
-          {selectedBlock ? (
-            <BlockSlot
-              renderer={flexibleRenderer}
-              block={selectedBlock}
-              immersive
-              nestedItems={
-                <>
-                  {rows
-                    .filter((row) => row.containerId === selectedBlock.id)
-                    .map(renderItem)}
-                </>
-              }
-              onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
-              onChoiceFocusIntent={() => {}}
-              onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
+        <View style={styles.root}>
+          {presentation?.renderImmersiveHeader ? (
+            <ImmersiveHeaderSlot
+              renderHeader={presentation.renderImmersiveHeader}
               onClose={close}
-              flexibleSnapshot={publication.snapshot}
-              onReplaceFlexibleSnapshot={publication.replace}
             />
           ) : null}
-        </ScrollView>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            style={styles.root}
+            contentContainerStyle={[styles.content, presentation?.immersiveContentStyle]}
+            contentInsetAdjustmentBehavior="automatic"
+          >
+            {selected ? render(selected, "I") : null}
+            {selectedBlock ? (
+              <BlockSlot
+                renderer={flexibleRenderer}
+                block={selectedBlock}
+                immersive
+                nestedItems={
+                  <>
+                    {rows
+                      .filter((row) => row.containerId === selectedBlock.id)
+                      .map(renderItem)}
+                  </>
+                }
+                onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
+                onChoiceFocusIntent={() => {}}
+                onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
+                onClose={close}
+                flexibleSnapshot={publication.snapshot}
+                onReplaceFlexibleSnapshot={publication.replace}
+              />
+            ) : null}
+          </ScrollView>
+        </View>
       </Modal>
     </>
   );

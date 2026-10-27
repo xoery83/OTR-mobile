@@ -1,0 +1,9 @@
+{
+  "ownerAuthorized": true,
+  "source": "Owner direct agreement to final cold-read application",
+  "gateSHA256": "0b3c5b2fd9cf2111afaa26ed16a6a1e9f430ccbbe8f40e31870f6f4dbd2736a0",
+  "newPaidCalls": 0,
+  "newObjects": 0,
+  "newReadAllowance": 0,
+  "recoveryCLIAllowed": false
+}

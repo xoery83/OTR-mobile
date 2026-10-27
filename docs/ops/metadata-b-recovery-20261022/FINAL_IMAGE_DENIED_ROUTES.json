@@ -1,0 +1,67 @@
+{
+  "case": "denied",
+  "state": "HEALTH_RESPONSE",
+  "status": 200,
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "routes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "d433d7b6-eedc-4a95-8ad9-e49995662862"
+        }
+      }
+    },
+    "/v2/trip-metadata-operations/11111111-1111-4111-8111-111111111111": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "7cf90df6-e1ff-45a2-a570-a1de8a2f957a"
+        }
+      }
+    },
+    "/v2/trip-create-operations/11111111-1111-4111-8111-111111111111": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "7589a681-4b93-408e-b24b-5e21d5b34252"
+        }
+      }
+    },
+    "/v2/trips/11111111-1111-4111-8111-111111111111/source-import-catalogs": {
+      "status": 426,
+      "body": {
+        "error": {
+          "code": "UNSUPPORTED_PUBLICATION_CATALOG_VERSION",
+          "message": "Catalog version1 is required.",
+          "requestId": "d0ff3720-ebf7-4fb8-9582-2a8d0f732283"
+        }
+      }
+    },
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "Authentication is required.",
+          "requestId": "e18d6591-88e0-4591-b820-68d6eb7c3ab0"
+        }
+      }
+    }
+  },
+  "stdout": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"error\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":99,\"usefulWork\":false,\"claimedRateDemands\":null,\"personalPaymentFxWork\":null,\"autoReferenceDemands\":null,\"autoReferenceWork\":null,\"nextIntervalMs\":60000,\"failureCount\":1,\"failureClass\":\"Error\",\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f503b29a-4c26-4cf5-8e38-51888a1f254f\",\"route\":\"health\",\"status\":200,\"durationMs\":12}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"ffecdb79-eed1-4e93-9b06-5d2e4d025ca6\",\"route\":\"health\",\"status\":200,\"durationMs\":3}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"d433d7b6-eedc-4a95-8ad9-e49995662862\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":2}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"7cf90df6-e1ff-45a2-a570-a1de8a2f957a\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"7589a681-4b93-408e-b24b-5e21d5b34252\",\"route\":\"/v2/trips:create\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"d0ff3720-ebf7-4fb8-9582-2a8d0f732283\",\"route\":\"/v2/trips/:tripId/source-import-catalogs\",\"status\":426,\"durationMs\":14}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"e18d6591-88e0-4591-b820-68d6eb7c3ab0\",\"route\":\"/v2/trips/:id/ledger/bootstrap\",\"status\":401,\"durationMs\":36}\n",
+  "stderr": "",
+  "image": "sha256:8c71e1b1802e8ea32a8e69870bd2ce63874a3951b12346105d8adf5f6b7106db",
+  "network": "none",
+  "syntheticOnly": true,
+  "actualDEVConfigCopied": false
+}

@@ -1,3 +1,4 @@
+import { p1CivilMoveItem, p1CivilProposal } from "@/features/day-feed/p1CivilMove";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it, vi } from "vitest";
@@ -6,6 +7,8 @@ import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
+import { createLocalTripPersonRepository } from "./localTripPersonRepository";
+import { createTripPersonRepository } from "./tripPersonRepository";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
 import {
@@ -22,7 +25,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
 }));
 const opened: DatabaseSync[] = [];
 afterEach(() => opened.splice(0).forEach((s) => s.close()));
-async function fixture() {
+async function fixture(structured = false) {
   const sql = new DatabaseSync(":memory:");
   opened.push(sql);
   sql.exec("PRAGMA foreign_keys=ON");
@@ -75,6 +78,7 @@ async function fixture() {
     tripId,
     operationId: randomUUID(),
     name: "Winter trip",
+    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
     destination: null,
     startDate: "2026-12-30",
     endDate: "2027-04-28",
@@ -470,4 +474,453 @@ it("changing only a date retains an unchanged authored seconds tuple while clear
     startDate: "2026-10-21",
     startTime: "10:00",
   });
+});
+
+async function namedPeople(f: Awaited<ReturnType<typeof fixture>>) {
+  const people = ["Other named traveller", "第三位旅客"].map((displayName) => ({
+    personId: randomUUID(),
+    operationId: randomUUID(),
+    displayName,
+  }));
+  await createLocalTripPersonRepository(f.coreDatabase, f.identity).initialize(
+    f.tripId,
+    people,
+  );
+  return people;
+}
+it("uses qualified retained local Person intents for multi-person P1 Save/reopen without inventing accepted membership", async () => {
+  const f = await fixture(),
+    people = await namedPeople(f);
+  const roster = await createTripPersonRepository(
+    f.coreDatabase,
+    f.identity,
+  ).listTripPersons(f.tripId);
+  expect(roster).toHaveLength(3);
+  expect(roster.filter((p) => p.localState === "LOCAL_PENDING")).toHaveLength(2);
+  const repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  expect(draft.participantOptions).toHaveLength(3);
+  const participation = {
+    mode: "SELECTED_MEMBERS" as const,
+    people: people.map((p) => p.personId).sort(),
+    selfPersonId: null,
+  };
+  await repo.save(draft, { ...values(draft.fields), participation });
+  const reopened = await f.repo().read(f.tripId, draft.itemId);
+  expect(reopened.fields.participation).toEqual(participation);
+  expect(reopened.participantOptions).toHaveLength(3);
+  expect((await f.read(f.tripId))?.items).toHaveLength(1);
+  const operations = f.sql
+    .prepare(
+      "SELECT status,last_error_code FROM sync_operations WHERE entity_type='TRIP_PERSON'",
+    )
+    .all();
+  expect(operations).toEqual(
+    Array(2).fill({
+      status: "DEPENDENCY_BLOCKED",
+      last_error_code: "PERSON_CREATE_HOSTED_UNAVAILABLE",
+    }),
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) n FROM trip_core_read_certificates").get()!.n,
+  ).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM trip_core_person_bindings").get()!.n).toBe(
+    0,
+  );
+  expect(
+    f.sql
+      .prepare("SELECT role,status FROM ledger_members WHERE id=?")
+      .get(people[0].personId),
+  ).toEqual({ role: null, status: "local" });
+});
+
+it.each([
+  ["failed intent", "UPDATE sync_operations SET status='FAILED' WHERE id=?", "operation"],
+  ["deleted name", "DELETE FROM ledger_members WHERE id=?", "person"],
+  ["inactive name", "UPDATE ledger_members SET status='inactive' WHERE id=?", "person"],
+  [
+    "observed revoked participation",
+    "UPDATE ledger_members SET participation_active=0,participation_revision=1 WHERE id=?",
+    "person",
+  ],
+  [
+    "foreign Account",
+    "UPDATE sync_operations SET owner_user_id='10000000-0000-4000-8000-000000000099' WHERE id=?",
+    "operation",
+  ],
+  [
+    "foreign Trip",
+    "UPDATE sync_operations SET trip_id='10000000-0000-4000-8000-000000000099' WHERE id=?",
+    "operation",
+  ],
+  [
+    "changed idempotency key",
+    "UPDATE sync_operations SET idempotency_key='10000000-0000-4000-8000-000000000099' WHERE id=?",
+    "operation",
+  ],
+] as const)(
+  "rejects a stale selected local participant after %s",
+  async (_label, query, target) => {
+    const f = await fixture(),
+      people = await namedPeople(f),
+      repo = f.repo(),
+      draft = await repo.createDraft(f.tripId);
+    f.sql
+      .prepare(query)
+      .run(target === "person" ? people[0].personId : people[0].operationId);
+    await expect(
+      repo.save(draft, {
+        ...values(draft.fields),
+        participation: {
+          mode: "SELECTED_MEMBERS",
+          people: [people[0].personId],
+          selfPersonId: null,
+        },
+      }),
+    ).rejects.toThrow();
+    expect(count(f.sql)).toBe(0);
+    const next = await f.repo().createDraft(f.tripId);
+    expect(next.participantOptions.some((p) => p.personId === people[0].personId)).toBe(
+      false,
+    );
+  },
+);
+
+it("pins the full retained Person intent, including same-ID changed name, during an open draft", async () => {
+  const f = await fixture(),
+    people = await namedPeople(f),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const row = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(people[0].operationId)!;
+  const changed = {
+    ...JSON.parse(row.payload_json as string),
+    displayName: "Replaced name",
+  };
+  f.sql
+    .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+    .run(JSON.stringify(changed), people[0].operationId);
+  f.sql
+    .prepare("UPDATE ledger_members SET display_name=? WHERE id=?")
+    .run(changed.displayName, people[0].personId);
+  await expect(
+    repo.save(draft, {
+      ...values(draft.fields),
+      participation: {
+        mode: "SELECTED_MEMBERS",
+        people: [people[0].personId],
+        selfPersonId: null,
+      },
+    }),
+  ).rejects.toThrow("MANUAL_PLAN_CONFLICT");
+  expect(count(f.sql)).toBe(0);
+});
+
+it("rejects mismatched retained Person payload rather than trusting a cached display row", async () => {
+  const f = await fixture(),
+    people = await namedPeople(f);
+  const row = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(people[0].operationId)!;
+  f.sql.prepare("UPDATE sync_operations SET payload_json=? WHERE id=?").run(
+    JSON.stringify({
+      ...JSON.parse(row.payload_json as string),
+      tripCreateOperationId: randomUUID(),
+    }),
+    people[0].operationId,
+  );
+  await expect(f.repo().createDraft(f.tripId)).rejects.toThrow(
+    "TRIP_PERSON_INTENT_REUSE_MISMATCH",
+  );
+  expect(count(f.sql)).toBe(0);
+});
+
+it("retains Account/generation/creator fences with a qualified local Person roster", async () => {
+  const f = await fixture();
+  await namedPeople(f);
+  const repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  f.switchAccount();
+  await expect(repo.save(draft, values(draft.fields))).rejects.toThrow();
+  expect(count(f.sql)).toBe(0);
+  const g = await fixture();
+  await namedPeople(g);
+  g.aba();
+  await expect(g.repo().createDraft(g.tripId)).rejects.toThrow();
+  expect(count(g.sql)).toBe(0);
+  const h = await fixture();
+  await namedPeople(h);
+  h.sql
+    .prepare("UPDATE ledger_actor_context SET role='member' WHERE journey_id=?")
+    .run(h.tripId);
+  await expect(h.repo().createDraft(h.tripId)).rejects.toThrow();
+  expect(count(h.sql)).toBe(0);
+});
+
+async function acceptedPlanFixture(foreignOwner = false, withPerson = false) {
+  const f = await fixture(true);
+  const repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const saved = await repo.save(draft, values(draft.fields));
+  const context = await f.core.captureContext(f.tripId);
+  const { readLocalManualSnapshotWithinTransaction } =
+    await import("./tripLocalManualReadRepository");
+  const snapshot = (await readLocalManualSnapshotWithinTransaction(
+    f.coreDatabase,
+    f.identity,
+    f.core,
+    context,
+    null,
+  ))!;
+  const command = (await f.core.pending(context))[0].command;
+  const { executeCoreCommandV2 } =
+    await import("../../../backend/src/tripCoreV2Commands");
+  const { emptyCoreGraph } = await import("@/domain/trip/tripCoreV2Mutation");
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  let graph = emptyCoreGraph();
+  const result = await executeCoreCommandV2(
+    {
+      withLockedCommand: async (_scope, work) =>
+        work({
+          actor: snapshot.actor,
+          readReceipt: async () => null,
+          hasLegacyOperation: async () => false,
+          canReadReceipt: async () => true,
+          enabledCommands: async () => ["CREATE_ITEM"],
+          readLockedGraph: async () => graph,
+          verifyAdmission: async () => {},
+          lifecycleGraphHash: async () => undefined,
+          commit: async (mutation) => {
+            if (mutation) graph = mutation.graph;
+            return randomUUID();
+          },
+        }),
+    },
+    f.originalAccount,
+    f.tripId,
+    command,
+    hash,
+    () => "2026-10-20T00:00:00.000Z",
+  );
+  if (result.projection !== "FULL") throw new Error("TEST_RECEIPT");
+  await f.core.applyReceipt(context, result.receipt);
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(saved.operationIds[0]);
+  if (foreignOwner) graph.itinerary_events[0].owner_account_id = randomUUID();
+  let personId: string | undefined;
+  if (withPerson) {
+    const { createTripPersonCloudCreateRepository } =
+      await import("./tripPersonCloudCreateRepository");
+    const repo = createTripPersonCloudCreateRepository(f.coreDatabase, f.identity);
+    const request = await repo.createAuthored({
+      tripId: f.tripId,
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName: "Accepted traveller",
+      dataOwnership: "CLOUD_SHARED_AUTHORED",
+    });
+    await repo.accept(
+      {
+        receiptVersion: 1,
+        actorAccountId: f.originalAccount,
+        request,
+        person: {
+          personId: request.personId,
+          tripId: f.tripId,
+          displayName: request.displayName,
+          status: "unlinked",
+          userId: null,
+          participationActive: true,
+          participationRevision: 0,
+        },
+        acceptedAt: "2026-10-20T00:00:00.000Z",
+      },
+      context,
+    );
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(request.operationId);
+    personId = request.personId;
+  }
+  const bundle = await buildCoreActorCollection(
+    graph,
+    snapshot.actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-20T00:00:00.000Z",
+    },
+    [
+      {
+        person_id: snapshot.actor.personId!,
+        account_id: f.originalAccount,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+      ...(personId
+        ? [
+            {
+              person_id: personId,
+              account_id: null,
+              active: true,
+              participating: true,
+              revision: 0,
+            },
+          ]
+        : []),
+    ],
+    hash,
+  );
+  await f.core.refresh(context, { collection: async () => bundle });
+  return {
+    ...f,
+    itemId: draft.itemId,
+    personId,
+    revision: Number(graph.itinerary_events[0].semantic_revision),
+  };
+}
+it("reopens reconciled accepted self-Creator P1 at its actual revision and saves a normal edit", async () => {
+  const f = await acceptedPlanFixture(),
+    repo = f.repo();
+  expect(await f.core.pending(await f.core.captureContext(f.tripId))).toEqual([]);
+  const draft = await repo.read(f.tripId, f.itemId, f.revision);
+  expect(draft.mode).toBe("EDIT");
+  await repo.save(draft, { ...draft.fields, title: "Accepted plan edited" });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending).toHaveLength(1);
+  expect(pending[0].command).toMatchObject({
+    command: "SET_ITEM_TEXT",
+    baseVector: [{ id: f.itemId, revision: f.revision }],
+  });
+});
+it("rejects accepted P1 stale revision and missing immutable manual Create provenance", async () => {
+  const f = await acceptedPlanFixture(),
+    repo = f.repo();
+  await expect(repo.read(f.tripId, f.itemId, f.revision + 1)).rejects.toThrow(
+    "MANUAL_PLAN_CONFLICT",
+  );
+  f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+  f.sql
+    .prepare(
+      "UPDATE trip_core_pending_intents SET canonical_intent_text='{}' WHERE reconciled_revision IS NOT NULL",
+    )
+    .run();
+  await expect(repo.read(f.tripId, f.itemId, f.revision)).rejects.toThrow();
+});
+it("accepted P1 cannot be opened under another Account", async () => {
+  const f = await acceptedPlanFixture();
+  f.switchAccount();
+  await expect(f.repo().read(f.tripId, f.itemId, f.revision)).rejects.toThrow();
+});
+
+it("does not edit an accepted P1 owned by another Creator even with local Create history", async () => {
+  const f = await acceptedPlanFixture(true);
+  await expect(f.repo().read(f.tripId, f.itemId, f.revision)).rejects.toThrow(
+    "MANUAL_PLAN_UNAVAILABLE",
+  );
+});
+
+it("accepted P1 picker includes exact receipted unlinked Person without claiming an Account", async () => {
+  const f = await acceptedPlanFixture(false, true),
+    repo = f.repo();
+  const draft = await repo.read(f.tripId, f.itemId, f.revision);
+  expect(draft.participantOptions).toContainEqual({
+    personId: f.personId,
+    displayName: "Accepted traveller",
+  });
+  await repo.save(draft, {
+    ...draft.fields,
+    participation: {
+      mode: "SELECTED_MEMBERS",
+      people: [f.personId!],
+      selfPersonId: null,
+    },
+  });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending[0].command).toMatchObject({
+    command: "SET_ITEM_PARTICIPATION",
+    payload: { participation: { people: [f.personId] } },
+  });
+  expect(
+    f.sql.prepare("SELECT status FROM ledger_members WHERE id=?").get(f.personId!),
+  ).toEqual({ status: "unlinked" });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT linked_account_id FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? AND person_id=?",
+      )
+      .get(f.originalAccount, f.tripId, f.personId!),
+  ).toEqual({ linked_account_id: null });
+});
+it("does not expose an inactive receipted Person as a P1 participant", async () => {
+  const f = await acceptedPlanFixture(false, true);
+  f.sql
+    .prepare("UPDATE ledger_members SET participation_active=0 WHERE id=?")
+    .run(f.personId!);
+  expect(
+    (await f.repo().read(f.tripId, f.itemId, f.revision)).participantOptions.some(
+      (p) => p.personId === f.personId,
+    ),
+  ).toBe(false);
+});
+
+it("does not use an unlinked name without its completed owning Person receipt operation", async () => {
+  const f = await acceptedPlanFixture(false, true);
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_PERSON'",
+    )
+    .run();
+  expect(
+    (await f.repo().read(f.tripId, f.itemId, f.revision)).participantOptions.some(
+      (p) => p.personId === f.personId,
+    ),
+  ).toBe(false);
+});
+
+it("real civil move persists the same local P1 and a cancelled frozen attempt can re-read a fresh draft", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    created = await repo.createDraft(f.tripId);
+  await repo.save(created, {
+    ...values(created.fields),
+    startTime: "23:30",
+    endDate: "2026-10-21",
+    endTime: "01:00",
+  });
+  const local = (await f.read(f.tripId))!,
+    item = p1CivilMoveItem(local.items[0])!;
+  const proposal = p1CivilProposal(item, "2026-10-25", 1410);
+  const opened = await repo.read(f.tripId, created.itemId);
+  const fields = {
+    ...opened.fields,
+    startDate: proposal.date!,
+    startTime: proposal.time!,
+    endDate: proposal.endDate!,
+    endTime: proposal.endTime!,
+  };
+  f.failNext(1);
+  await expect(repo.save(opened, fields)).rejects.toThrow("TEST_WRITE_FAILURE");
+  await expect(repo.save(opened, { ...fields, startTime: "23:35" })).rejects.toThrow(
+    "MANUAL_PLAN_DRAFT_FROZEN",
+  );
+  const fresh = await repo.read(f.tripId, created.itemId);
+  f.failNext(0);
+  const result = await repo.save(fresh, { ...fields, startTime: "23:35" });
+  expect(result.itemId).toBe(created.itemId);
+  const restored = (await f.read(f.tripId))!;
+  expect(restored.items).toHaveLength(1);
+  expect(restored.items[0].schedule).toMatchObject({
+    start: { localDate: "2026-10-25", localTime: "23:35:00", comparable: false },
+    end: { localDate: "2026-10-26", localTime: "01:00:00", comparable: false },
+  });
+  expect(restored.items[0].place?.authoredLabel).toBe("Nelson gardens");
+  expect(count(f.sql)).toBe(2);
 });

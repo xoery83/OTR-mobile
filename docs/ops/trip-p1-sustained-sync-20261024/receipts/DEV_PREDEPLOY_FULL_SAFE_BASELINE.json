@@ -1,0 +1,188 @@
+{
+  "observedAt": "2026-10-24T00:47:40.902368+00:00",
+  "image": "sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30",
+  "user": "otr",
+  "cmd": [
+    "node",
+    "server-capture.mjs"
+  ],
+  "environmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "hostConfig": {
+    "Binds": null,
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "json-file",
+      "Config": {
+        "max-file": "3",
+        "max-size": "10m"
+      }
+    },
+    "NetworkMode": "host",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "unless-stopped",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": true,
+    "SecurityOpt": [
+      "no-new-privileges:true"
+    ],
+    "Tmpfs": {
+      "/tmp": "size=16m,mode=1777"
+    },
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 402653184,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 805306368,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": [
+      {
+        "Name": "core",
+        "Hard": 0,
+        "Soft": 0
+      }
+    ],
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "Mounts": [
+      {
+        "Type": "bind",
+        "Source": "/opt/otr/dev-backend/private/capture-custody",
+        "Target": "/var/lib/otr/capture-custody",
+        "BindOptions": {}
+      },
+      {
+        "Type": "bind",
+        "Source": "/opt/otr/dev-backend/env/capture-custody.json",
+        "Target": "/run/otr/capture-custody.json",
+        "ReadOnly": true,
+        "BindOptions": {}
+      },
+      {
+        "Type": "bind",
+        "Source": "/run/otr-r3a5-catalog/catalog-reader.json",
+        "Target": "/run/otr/catalog-reader.json",
+        "ReadOnly": true,
+        "BindOptions": {}
+      }
+    ],
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ]
+  },
+  "mounts": [
+    [
+      "/opt/otr/dev-backend/env/capture-custody.json",
+      "/run/otr/capture-custody.json",
+      false
+    ],
+    [
+      "/opt/otr/dev-backend/private/capture-custody",
+      "/var/lib/otr/capture-custody",
+      true
+    ],
+    [
+      "/run/otr-r3a5-catalog/catalog-reader.json",
+      "/run/otr/catalog-reader.json",
+      false
+    ]
+  ],
+  "files": [
+    "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml",
+    "/opt/otr/dev-backend/env/backend-api-key.cutover.yml",
+    "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml",
+    "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml",
+    "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml",
+    "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml",
+    "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml",
+    "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml",
+    "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml",
+    "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml"
+  ],
+  "fileHashes": {
+    "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml": "ee1867ae8fe5a378e7d747068bca729f195f289084c6ad345e59aca69d972d47",
+    "/opt/otr/dev-backend/env/backend-api-key.cutover.yml": "b849fcbf2680f7349da4fba6e4a6e7e030bc9577d0ddcb2978f025477698b465",
+    "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml": "813b731b2eba440d4b8ba5aaa6fbaa7135bb83d529ccaf175a44a07f3abfec49",
+    "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml": "1834d961bc616dceea905a449f68cb965f9f549339f0df9e0a901bae2fdd0e76",
+    "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml": "89e8cc6afccb157f9e96196b6ffc2ddf00d616b81c6553e5e4ddaeefa0d77a24",
+    "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml": "fbd5b1e05573335e9f68f2d37539de277299121c79fd826f83b0dc14ef752bba",
+    "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml": "41026f94c644e3e1ba69e86df7d8c49bb43eef5a58ef76140f601923be9d1736",
+    "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml": "6cc4bf28b90c7c36bd0812e2098f513fb509dd9cd47fd07f0a6eb69d4aec2873",
+    "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml": "ff48b999cb9f3474a07bfdf0264204b05103699e5ed25c60ca427ac21b8914c7",
+    "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc"
+  },
+  "custodySHA256": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+  "custodyExpired": true,
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  }
+}

@@ -1,0 +1,103 @@
+import { requireNativeView, requireOptionalNativeModule } from "expo";
+import { useLayoutEffect, useRef, type ComponentType } from "react";
+import { Platform, type NativeSyntheticEvent, type ViewProps } from "react-native";
+import {
+  createImagePasteDeliveryGate,
+  type ImagePasteFailure,
+  type ImagePastePayload,
+} from "./imagePasteContract";
+export type {
+  ImagePasteItem,
+  ImagePastePayload,
+  ImagePasteFailure,
+} from "./imagePasteContract";
+
+type NativePaste = {
+  supportsInputPaste?(): boolean;
+  claim(requestId: string, tokens: string[]): boolean;
+  releaseUnclaimed(tokens: string[]): Promise<void>;
+  release(tokens: string[]): Promise<void>;
+};
+function module(): NativePaste | null {
+  if (Platform.OS !== "ios") return null;
+  try {
+    return requireOptionalNativeModule<NativePaste>("OTRImagePaste");
+  } catch {
+    return null;
+  }
+}
+export function isImagePasteAvailable(): boolean {
+  const native = module();
+  return (
+    typeof native?.release === "function" &&
+    typeof native.claim === "function" &&
+    typeof native.releaseUnclaimed === "function" &&
+    native.supportsInputPaste?.() === true
+  );
+}
+export async function releaseImagePasteTokens(tokens: readonly string[]): Promise<void> {
+  const native = module();
+  for (let i = 0; i < tokens.length; i += 10)
+    await native?.release(tokens.slice(i, i + 10));
+}
+// Staging cleanup is synchronous; native cleanup is best-effort and never blocks removal.
+export function releaseImagePaste(tokens: readonly string[]): void {
+  void releaseImagePasteTokens(tokens).catch(() => {});
+}
+export type ImagePasteInputProps = ViewProps & {
+  requestId: string;
+  enabled: boolean;
+  onImages(payload: ImagePastePayload): void;
+  onFailure(payload: ImagePasteFailure): void;
+};
+type NativeProps = ViewProps & {
+  requestId: string;
+  enabled: boolean;
+  onImages(event: NativeSyntheticEvent<unknown>): void;
+  onFailure(event: NativeSyntheticEvent<unknown>): void;
+};
+let NativeControl: ComponentType<NativeProps> | null = null;
+export function ImagePasteInput(props: ImagePasteInputProps) {
+  const current = useRef({ props, mounted: true });
+  useLayoutEffect(() => {
+    current.current = { props, mounted: true };
+  });
+  const gate = useRef<ReturnType<typeof createImagePasteDeliveryGate> | null>(null);
+  useLayoutEffect(() => {
+    gate.current = createImagePasteDeliveryGate({
+      current: (id) =>
+        current.current.mounted &&
+        current.current.props.enabled &&
+        current.current.props.requestId === id,
+      claim: (id, tokens) => module()?.claim(id, tokens) === true,
+      release: (tokens) => {
+        void module()
+          ?.releaseUnclaimed(tokens)
+          .catch(() => {});
+      },
+      images: (payload) => current.current.props.onImages(payload),
+      failure: (payload) => current.current.props.onFailure(payload),
+    });
+    return () => {
+      current.current.mounted = false;
+    };
+  }, []);
+  if (!isImagePasteAvailable()) return <>{props.children}</>;
+  NativeControl ??= requireNativeView<NativeProps>("OTRImagePaste");
+  const {
+    requestId,
+    enabled,
+    onImages: _images,
+    onFailure: _failure,
+    ...viewProps
+  } = props;
+  return (
+    <NativeControl
+      {...viewProps}
+      requestId={requestId}
+      enabled={enabled}
+      onImages={(event) => gate.current?.images(event.nativeEvent)}
+      onFailure={(event) => gate.current?.failure(event.nativeEvent)}
+    />
+  );
+}

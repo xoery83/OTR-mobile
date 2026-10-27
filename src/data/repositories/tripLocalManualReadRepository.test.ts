@@ -31,7 +31,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
 }));
 const connections: DatabaseSync[] = [];
 afterEach(() => connections.splice(0).forEach((sql) => sql.close()));
-async function fixture(includeItem = true) {
+async function fixture(includeItem = true, structured = false) {
   const sql = new DatabaseSync(":memory:");
   connections.push(sql);
   for (const migration of migrations) sql.exec(migration.sql);
@@ -77,6 +77,7 @@ async function fixture(includeItem = true) {
     operationId: randomUUID(),
     tripId,
     name: "Local Trip",
+    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
     destination: null,
     startDate: "2026-10-16",
     endDate: "2026-10-18",
@@ -548,4 +549,15 @@ it("does not treat absent provisional markers as new rights for pending or unrea
   const receipt = await acceptTripBeforeFirstCertificate(denied);
   await bootstrapAcceptedLedger(denied, receipt.ownerPersonId, false);
   await expect(denied.read(denied.tripId)).rejects.toThrow("LOCAL_MANUAL_TRIP_PIN");
+});
+
+it("reads a structured V2 creator Trip without inventing a server certificate", async () => {
+  const f = await fixture(true, true);
+  const result = await f.read(f.tripId);
+  expect(result?.source.kind).toBe("LOCAL_MANUAL_COMMITTED");
+  expect(result?.items).toHaveLength(1);
+  expect(result?.rows("2026-10-16")).toHaveLength(1);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM trip_core_read_certificates").get(),
+  ).toEqual({ n: 0 });
 });

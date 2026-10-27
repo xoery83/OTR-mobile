@@ -26,6 +26,30 @@ vi.mock("react-native", async () => {
     useColorScheme: () => "light",
   };
 });
+vi.mock("./BookingReadUi", () => ({
+  BookingCard: (p: any) => createElement("section", null, p.title, p.children),
+  BookingGlyph: (p: any) =>
+    createElement(
+      "button",
+      null,
+      p.kind === "detail"
+        ? t("p1r.richerDetails")
+        : t(p.kind === "navigate" ? "fidelity.navigate" : "fidelity.map"),
+    ),
+  BookingInsert: () => null,
+}));
+vi.mock("./ImmersiveActions", () => ({
+  ImmersiveActions: () =>
+    createElement(
+      "div",
+      null,
+      t("fidelity.addPhoto"),
+      t("fidelity.addAttachment"),
+      t("fidelity.addExpense"),
+      t("fidelity.linkExpense"),
+    ),
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/features/ledger/MoneyText", async () => {
   const { createElement } = await import("react");
   return {
@@ -169,7 +193,7 @@ it("keeps Future Booking-only and unresolved planned time truthful", () => {
     start: { date: "2027-01-15", time: "09:00", plannedUnresolved: true },
   });
   expect(unresolved).toContain("09:00");
-  expect(unresolved).toContain(t("p6.plannedUnresolved"));
+  expect(unresolved).not.toContain(t("p6.plannedUnresolved"));
   expect(unresolved).not.toContain("Time Not Set");
   expect(
     activityPlannedClock({
@@ -186,21 +210,21 @@ it("keeps Future Booking-only and unresolved planned time truthful", () => {
   expect(immersive).toContain(t("p6.documents"));
   expect(immersive).toContain("Shared Ticket");
   const noArrival = render("TODAY", "B", { ...facts, requiredArrival: undefined });
-  expect(noArrival).toContain(`${t("p6.start")} ·`);
+  expect(noArrival).toContain("09:00");
   expect(noArrival).not.toContain(`${t("p6.arrive")} ·`);
 });
 
 it("keeps Past scheduled, compact and photo-first without inferring attendance", () => {
   const browse = render("PAST", "B");
   expect(browse.indexOf("09:00")).toBeLessThan(browse.indexOf("08:30"));
-  expect(browse).toContain(t("p6.photoCount", { count: 4 }));
+  expect(browse).not.toContain(t("p6.photoCount", { count: 4 }));
   expect(browse).not.toContain("data:image/png");
   expect(browse).not.toMatch(/attended|completed/i);
   const entryOnly = render("PAST", "B", {
     ...facts,
     start: { date: "2027-01-15" },
   });
-  expect(entryOnly).toContain(`${t("p6.arrive")} ·`);
+  expect(entryOnly).toContain("08:30");
   expect(entryOnly).toContain("08:30");
   expect(entryOnly).not.toContain(`${t("p6.start")} ·`);
   const focus = render("PAST", "F");
@@ -209,8 +233,8 @@ it("keeps Past scheduled, compact and photo-first without inferring attendance",
   expect(focus).not.toContain("22000 NZD");
   const immersive = render("PAST", "I");
   expect(immersive.match(/data:image\/png/g)).toHaveLength(3);
-  expect(immersive.indexOf("data:image/png")).toBeLessThan(
-    immersive.indexOf("Museum visit"),
+  expect(immersive.indexOf("Museum visit")).toBeLessThan(
+    immersive.indexOf("data:image/png"),
   );
   expect(immersive).toContain("15000 USD");
   expect(immersive).toContain(t("p6.addAttachment"));

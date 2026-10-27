@@ -1,0 +1,39 @@
+{
+  "status": "NATIVE_CONTEXT_HTTP503_OBSERVED_SOURCE_PREPARATION_BLOCKED",
+  "at": "2026-10-24T09:03:25.792Z",
+  "batchId": "3665f191-1605-4365-92ca-30403d90b191",
+  "jobId": "e8085c43-fb11-46e6-aaed-7d14c3c806be",
+  "contextReadsUsed": 1,
+  "contextReadsMaximum": 2,
+  "closedSourceResultReadsUsed": 0,
+  "closedSourceResultReadsMaximum": 1,
+  "explicitStartUsed": 1,
+  "explicitStartMaximum": 1,
+  "actualClientDiagnostic": {
+    "event": "api_request_failed",
+    "method": "GET",
+    "route": "/v2/import-batches/:id/interpretations",
+    "kind": "http",
+    "status": 503,
+    "stage": "READ",
+    "errorName": "Error"
+  },
+  "bodyCodeCaptured": false,
+  "firstFailingBoundary": "Shared createApiClient.get whitelist discarded Universal closed codes; Source preparation branch never entered.",
+  "patchScope": "Preserve only two existing safe closed-context codes; no authority or retries added.",
+  "localTests": "2 suites25 tests PASS; real transport preserves code and no Provider call.",
+  "actualSourcePreparationPass": false,
+  "sourceAcquireCalls": 0,
+  "runTaskMutations": 0,
+  "providerCalls": 0,
+  "appState": "STOPPED_AFTER_WINDOW_PRESERVING_DATA",
+  "additionalReadLedger": {
+    "native": 59,
+    "nativeMaximum": 72,
+    "operator": 6,
+    "operatorMaximum": 24,
+    "used": 65,
+    "maximum": 96,
+    "original192NotReset": true
+  }
+}

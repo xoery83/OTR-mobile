@@ -15,6 +15,12 @@ import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutati
 import { coreDefaults } from "@/domain/trip/tripCoreV2";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
+vi.mock("../files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  probeRetainedTripPhotoIdentity: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 it("normal reader requires installed certificates, counts whole Trip, and rechecks cold/stale/revoked/Account authority at tap", async () => {

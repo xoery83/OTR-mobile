@@ -1,0 +1,168 @@
+{
+  "windowId": "56ccd73ea63732349312ccbe0dadf80d8b3355c252a91de33a71a419b3b831b5",
+  "action": "activate",
+  "verified": true,
+  "beforeDiagnosticCaptured": true,
+  "beforeDiagnosticPersisted": true,
+  "beforeDiagnostic": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Error": "",
+      "StartedAt": "2026-10-24T00:54:25.305149955Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "health": {
+      "status": "healthy",
+      "failingStreak": 0,
+      "log": [
+        {
+          "Start": "2026-10-24T01:22:09.246162989Z",
+          "End": "2026-10-24T01:22:09.380355576Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T01:22:39.381405765Z",
+          "End": "2026-10-24T01:22:39.532955737Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T01:23:09.53422758Z",
+          "End": "2026-10-24T01:23:09.689987276Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T01:23:39.691397692Z",
+          "End": "2026-10-24T01:23:39.849487541Z",
+          "ExitCode": 0,
+          "Output": ""
+        },
+        {
+          "Start": "2026-10-24T01:24:09.850302762Z",
+          "End": "2026-10-24T01:24:09.993435791Z",
+          "ExitCode": 0,
+          "Output": ""
+        }
+      ]
+    },
+    "logs": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":3209,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":30000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"6259b888-58b4-48b1-be1f-1c6c4b3b5c1f\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"aa5177d8-4ce7-4f9a-876a-b7eb312e2c01\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"ca85b8b3-61bc-449e-94df-5e00d6480ea2\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f4faf87b-bcaf-4060-bb16-e413ed662cd5\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"60876cf3-ce14-4e85-aea7-0058d8a2fed9\",\"route\":\"/v2/trips:create\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f1319064-64b7-48ae-82f8-16cbe6c1f690\",\"route\":\"/v2/trips/:tripId/source-import-catalogs\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"e8400a90-f8df-471f-99ea-2f258a51a978\",\"route\":\"/v2/trips/:id/ledger/bootstrap\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"8e7a7924-4c81-4a71-9804-5a7410214c3d\",\"route\":\"/v2/trips/:tripId/people/:resource\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"ec156d34-80da-47a4-84bb-673083799114\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":2,\"durationMs\":3068,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":60000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f25c44ff-3daf-4faa-8d32-099756d43260\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"67b4143e-7952-4885-9177-de7d95275310\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":3,\"durationMs\":3121,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":120000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"1ef7397a-c3d6-44bc-ab05-7f3384ebc9d5\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"77b3e988-dd63-4709-a979-8affa9e2ea53\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"31ab15e0-3b9c-4d3f-88c6-3e488445f001\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"15492c5e-0d9d-492f-a598-2f4f2be37028\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":4,\"durationMs\":3102,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"40b5aab8-f059-4da5-a00b-a99b50943e7d\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"69790617-8175-496a-9021-6a411b327c28\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"dda4d3eb-20ee-4a74-b745-c673f6c9a140\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f5591660-ebd6-4d3a-aebe-3843c7a4ccb0\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"fe174a96-81c3-40a6-8dac-bfbcbced850d\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"3c008a4e-4d8e-4ced-8066-830f116bad30\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"1cff3a3d-12fb-461c-8ab9-7941d82c58ab\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"63f4d050-cab4-45db-b1cc-d0098da0ac62\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"3970f408-a2eb-4dbe-8203-bfd19be80b2d\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"b5f72bff-44f8-4a0e-8a1b-dbe5c580c0d3\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":5,\"durationMs\":3165,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"e3e1982e-a90c-4404-aa69-b6f716c3e2cf\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"813339d1-2823-48fc-bcb2-6bb63ece7273\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"ed4b9b6d-7410-4c52-978e-194d5c2d780a\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"292299ee-a6ce-4e8d-bf27-c1dbbdb82d07\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"8a6e7e5d-c854-4df8-b991-31eee3fc4263\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"c6909e77-2b6c-48b1-a3b7-7f0a3bc4fc56\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"980c3ec6-27eb-4516-ba12-08dd1f674226\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"85a93292-ff68-482c-b31f-ceca974ebe77\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"d1dabd1a-ee8d-4c9a-b593-547130df86de\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"a5557319-9ce3-432d-8fec-b00661c71058\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":6,\"durationMs\":2977,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"df972f44-8d3a-40c8-b768-f641f7b3e138\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"151c1543-51cb-418f-8227-698a5e9525a2\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"4b9e2ecf-dbea-4d61-8199-9e40545a3050\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"e337f1a0-c3b0-4c02-a610-9a811a116825\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"934c3010-ad87-4dd4-80ee-13781d1cbada\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f016cc56-a3ba-4437-8c91-5545ba02d61c\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"0813d96c-cbf2-4997-833c-bad24ebc2653\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"4c74634d-19a8-48a4-987a-de32bf57056c\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"557ed0cd-cc19-49d7-b827-b03e61f8e0cd\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"c255af19-a56d-4cca-b33d-179c7e8e8ef5\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":7,\"durationMs\":3934,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"892cf0ae-2b00-490f-9741-3b9549cc2739\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"39832cda-36e7-4a89-bc8c-1c7527766180\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"5ff0d771-6091-41fe-a86f-acd9b7797d8c\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"263d95b1-4ccb-4de9-a85e-f33a88942a96\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"be14dd46-e1ad-40a8-9445-0540902727a4\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"d66ece3f-7f64-43b8-8989-cbea4fa68a50\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"1942e319-8a98-42d4-a5dc-a4002fa53378\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"863959c8-b059-4ff2-898b-8ebbeaaafd67\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"06c05998-f349-4bcc-a36f-267db4c3104d\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"4e0e3c80-494e-478b-963c-78811c07a877\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":8,\"durationMs\":2538,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"78c70491-4651-4d0e-93c2-8e46dc9df33b\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"4f8d7ce0-32a2-4a5d-b20c-7363629831a0\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"d0536c4b-e210-4a6c-bd44-121204ec8d25\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"9c19d299-84a1-42df-83ab-37b265abbc91\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f413a19e-766b-4045-bbfe-4a29999f04a5\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"2660ffe4-de06-4850-baff-32fdd3d2972e\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"301aedf0-cb83-4786-bb5a-447d2f54c89c\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"c633ea75-f7d5-443c-8aa0-1bf09e5899e8\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"94fab7fc-ec4b-4613-8ed0-7f406b7ba92f\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"d547dec9-158a-4474-83fa-ca6513bc5f30\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":9,\"durationMs\":3063,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":300000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"5c3faab4-fb6e-4d40-830a-93457ae67cb8\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"821ef16f-cc65-4aac-a497-2e52c0428aa5\",\"route\":\"health\",\"status\":200,\"durationMs\":0}\n",
+    "environment": {
+      "equal": true,
+      "changedKeys": [],
+      "beforeCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterKeyedHashes": {
+        "NODE_ENV": "b9bef5cc5b567e7aeb351300086bba1680ff2be05f244192cf9ef48e6e43c7c1",
+        "NODE_VERSION": "28e33ed853e12b37c4ebef094ba22b3c95aab1789fb88555515848927c4fea86",
+        "OTR_DEV_BACKEND_BIND_ADDRESS": "038730b6721902a1a3beb6770c13c9a1225ac263003abfb71ae370e997237c0c",
+        "OTR_DEV_BACKEND_NETWORK_MODE": "bd328af7a555e929d716159708c5bcce8945b297f24c7cef05518f38aa70a681",
+        "OTR_DEV_BACKEND_PORT": "287298e2687ae63999cdc18ab7051177b92403e2bcf0b39899d84228aeaf89c1",
+        "OTR_DEV_FLIGHT_ONE_SHOT": "13bb5cf4bf7fc08c3b3c1a09f1c83cadd8137b75280d01853a3d55b97c1834d9",
+        "OTR_DEV_FLIGHT_REMOTE_TRANSPORT": "13bb5cf4bf7fc08c3b3c1a09f1c83cadd8137b75280d01853a3d55b97c1834d9",
+        "OTR_DEV_SOURCE_PDF2_TRANSPORT": "c706a56bcc7b4803d644c833ff62f3ede5e197c3f0d9d801278b0cd6dec18b67",
+        "OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "645d4f2ab875d885cb44ef6823fca10c47b191bf2518a218b3f2e22a7112df03",
+        "OTR_DEV_SUPABASE_SECRET_KEY": "e5e1240385faeb6e73964ff39685f4f6648846bedcbf7d7366a219993676593b",
+        "OTR_DEV_SUPABASE_URL": "38db54532375cc21b0506ef2ea335c39dcffc7b3145cf6ea424703a18871b5d9",
+        "PATH": "54a58a94b77ada2f12a1d4afb34e87f8d76ca86a1a6027c528fae5e5cd2a90ca",
+        "YARN_VERSION": "df8441bc1799f5446fbcb8dde8891041bcd35cfa4fc65377f97f16c5e9696d42"
+      }
+    }
+  },
+  "beforeDiagnosticPath": "/opt/otr/dev-backend/env/c-finite-56ccd73ea63732349312ccbe0dadf80d8b3355c252a91de33a71a419b3b831b5/before-activate-1792805067408147430.json",
+  "bundleSHA256": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9",
+  "runtimeSHA256": {
+    "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5"
+  },
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "environmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "mountsMatch": true,
+  "mounts": [
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/c-finite-56ccd73ea63732349312ccbe0dadf80d8b3355c252a91de33a71a419b3b831b5/create.json",
+      "destination": "/run/otr/trip-create-runtime.json",
+      "rw": false
+    },
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/capture-custody",
+      "destination": "/var/lib/otr/capture-custody",
+      "rw": true
+    }
+  ],
+  "normalizedHostConfigSHA256": "f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0",
+  "hostConfigSHA256": "0170f6dfcfe87c3ca55f2d5634b05d4b7465994f7f5a8e938fee1a513182abd1",
+  "hostConfigSemanticallyEqual": false,
+  "rawHostConfigEqual": false,
+  "user": "otr",
+  "entry": [
+    "node",
+    "server-capture.mjs"
+  ],
+  "diagnostic": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Error": "",
+      "StartedAt": "2026-10-24T01:24:28.17781676Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "health": {
+      "status": "healthy",
+      "failingStreak": 0,
+      "log": [
+        {
+          "Start": "2026-10-24T01:24:33.280784637Z",
+          "End": "2026-10-24T01:24:33.426315348Z",
+          "ExitCode": 0,
+          "Output": ""
+        }
+      ]
+    },
+    "logs": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":2502,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":30000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"2930d75b-df28-4c09-a4dd-69c57fd33375\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"81f8970f-9c03-451a-979d-75bec745c2ff\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n",
+    "environment": {
+      "equal": true,
+      "changedKeys": [],
+      "beforeCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterKeyedHashes": {
+        "NODE_ENV": "b4242925adeb308e00e02dc5743ab3e36e100042ccaff052245d80fc4f8c6766",
+        "NODE_VERSION": "b3e23c5dc6c17171d8edb3191f4d849eeb877744a002c91648cdbcc0a217d3f4",
+        "OTR_DEV_BACKEND_BIND_ADDRESS": "38a4d62063366bcc5aa31eae1df3448dc7dfbee30e395111faede67f1fc94cc2",
+        "OTR_DEV_BACKEND_NETWORK_MODE": "4a40e3a6f2ca96ba42becf7a3dd574e6787a975a9ddbcc4907bf6b2bfe426257",
+        "OTR_DEV_BACKEND_PORT": "c496ba59d6c9e899f8ee201c63191f0b15c3be6c71d08c55004c3ce768102571",
+        "OTR_DEV_FLIGHT_ONE_SHOT": "7c034a5ec687103c12ff40322fc12cf761f8a7066006205390288b285f014d7d",
+        "OTR_DEV_FLIGHT_REMOTE_TRANSPORT": "7c034a5ec687103c12ff40322fc12cf761f8a7066006205390288b285f014d7d",
+        "OTR_DEV_SOURCE_PDF2_TRANSPORT": "5f9845d8292305f0f16b41fbac795834db5fc809ca95c647d84ee6317126c365",
+        "OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "343d2927a0097262e07df12856fb92fdc3d3975b23e38371293431776d1262d0",
+        "OTR_DEV_SUPABASE_SECRET_KEY": "fe811f54c24827ece7cde8d231a10f999282f7e55247f49d3e22d05416261a0b",
+        "OTR_DEV_SUPABASE_URL": "d1df4e1eaf49f9caca8226a146094b7eed437998c8430a3e48962dd12c7db6f2",
+        "PATH": "9d336c44dce7a5841627b54e3d24506c3e980d73c7063beeef184293108d8e0f",
+        "YARN_VERSION": "930081d7c0cf08e4d76d9ee1d03722a953527f2977ecba7ca797335829c96a52"
+      }
+    }
+  },
+  "diagnosticCaptured": true,
+  "restorationVerified": false
+}

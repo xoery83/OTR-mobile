@@ -83,3 +83,28 @@ it("does not create an action when the owning handler is unavailable", () => {
   );
   expect(view.some((n) => n.type === "Pressable")).toBe(false);
 });
+
+it("shows independent Ledger setup without claiming an available itinerary", () => {
+  const setup = {
+    context: { accountId: "actor", tripId: "trip", generation: 1 },
+    currency: {
+      state: "AVAILABLE",
+      code: "NZD",
+      scale: 2,
+      permission: "OWNER",
+      lock: "NOT_OBSERVED",
+    },
+    members: { state: "UNKNOWN" },
+    invitations: "UNKNOWN",
+    connections: "UNKNOWN",
+  } as const;
+  const onCurrency = vi.fn();
+  const view = nodes(
+    TripPreparationWidget({ value: null, state: "UNAVAILABLE", copy, setup, onCurrency }),
+  );
+  const rows = view.find((node) => node.type === "TripSetupRows");
+  expect(rows?.props.setup).toBe(setup);
+  expect(rows?.props.onCurrency).toBe(onCurrency);
+  expect(rows?.props.onEdit).toBeUndefined();
+  expect(view.some((node) => node.type === "Pressable")).toBe(false);
+});

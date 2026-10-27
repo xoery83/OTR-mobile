@@ -1,0 +1,1 @@
+{"status": "READ_ONLY_NATIVE_RUNTIME_DIAGNOSTIC", "exitCode": 1, "bundleSHA256": "296c6b968dfa59d4b9ac3f322ca9da386decac794bc17590f841d1598f1e7789", "beginInvocations": 0, "providerCalls": 0, "diagnostic": {"status": "UNIVERSAL_PREPARATION_UNCONFIRMED", "diagnostic": {"begin": "NOT_ATTEMPTED", "read": "UNIVERSAL_SOURCE_RUN_UNAVAILABLE"}}}

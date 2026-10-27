@@ -1,0 +1,28 @@
+{
+  "maximum": 72,
+  "totalReservations": 52,
+  "startupGuardPolicyCount": 9,
+  "startupGuardPolicyCap": 16,
+  "priorUnknownNotRefunded": {
+    "startupProcessCount": 12,
+    "businessReads": "UNKNOWN",
+    "refundedReads": 0,
+    "historicalAllowanceRestored": false
+  },
+  "thisWindowReservations": [
+    {
+      "ordinal": 51,
+      "purpose": "SOURCE_CATALOG",
+      "at": "2026-10-25T01:02:15.705511+00:00",
+      "freshBatchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+      "policy": "UNIVERSAL_STARTUP_GUARD_RECOVERY"
+    },
+    {
+      "ordinal": 52,
+      "purpose": "TASK_RESULT",
+      "at": "2026-10-25T01:03:44.745861+00:00",
+      "freshBatchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+      "policy": "UNIVERSAL_STARTUP_GUARD_RECOVERY"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Additional QA GET allocation
+
+Enable only with `EXPO_PUBLIC_OTR_QA_READ_BUDGET={"version":1,"runId":"afdf5785-670b-44c1-951d-9864dc1307f6","maximum":72}`. Both identity and72 are fixed; invalid env fails closed. No env loads no Native File module and changes no request behavior. Operator24 is separately Root-owned.
+
+Dedicated private App document file: `otr-native-qa-read-budget-v1.json`. Existing expo-file-system synchronous File create/write/textSync reserves and verifies an ordinal **before** every actual API GET fetch, including401replays; no await between read/reserve/write. Cold launches reuse the same file. Bad/mismatched/exhausted ledger cannot be overwritten/reset. Missing file after an in-process observation fails closed. No SQLite/Keychain/Session/business data changes, POST accounting or permission expansion. GET failure codes QA_READ_BUDGET_CLOSED/EXHAUSTED preserve pending sync via existing transient error mapping.
+
+Only run identity/max and ordinal/GET/redacted-route/time are retained; route segments use a fixed vocabulary, all IDs/unknown segments and query data are removed. Failed/partial write/readback prevents HTTP.25 tests across budget/client/Native-safe diagnostics PASS; Typecheck/scoped lint PASS. Unit tests use synchronous store fixtures; actual Native File persistence/request counting remains Root acceptance, not claimed here.
+
+Focused Repair timing: observed validation end2026-10-24 05:01:06UTC; earlier diagnostic/coding start times were not recorded, so remain UNKNOWN. Latest test log records start17:59:52NZDT/duration187ms. Budget increment has3 code/test files and2 short receipt/handoff artifacts. Two local rework fixes observed (CommonJS Native mock isolation; lint directive placement); no production behavior changed for those fixes. Environment wait and Root independent Review timings must be recorded by their actual operator, not inferred. No remote/GUI action performed by Writer.

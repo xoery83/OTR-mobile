@@ -66,6 +66,7 @@ export function ExpenseAttachmentViewer({
           >
             {selected ? (
               <ScrollView
+                keyboardShouldPersistTaps="handled"
                 key={selected.id}
                 minimumZoomScale={1}
                 maximumZoomScale={5}

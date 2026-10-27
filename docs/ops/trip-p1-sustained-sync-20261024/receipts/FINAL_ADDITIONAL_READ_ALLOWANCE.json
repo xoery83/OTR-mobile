@@ -1,0 +1,300 @@
+{
+  "at": "2026-10-24T07:14:42.320527+00:00",
+  "Native": {
+    "version": 1,
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 72,
+    "entries": [
+      {
+        "ordinal": 1,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:03.444Z"
+      },
+      {
+        "ordinal": 2,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:09.589Z"
+      },
+      {
+        "ordinal": 3,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:24.666Z"
+      },
+      {
+        "ordinal": 4,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:30.033Z"
+      },
+      {
+        "ordinal": 5,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:20:45.137Z"
+      },
+      {
+        "ordinal": 6,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:20:51.195Z"
+      },
+      {
+        "ordinal": 7,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T05:21:07.936Z"
+      },
+      {
+        "ordinal": 8,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:21:25.797Z"
+      },
+      {
+        "ordinal": 9,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:21:31.158Z"
+      },
+      {
+        "ordinal": 10,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:21:36.415Z"
+      },
+      {
+        "ordinal": 11,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T05:21:52.848Z"
+      },
+      {
+        "ordinal": 12,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:22:11.384Z"
+      },
+      {
+        "ordinal": 13,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:56:39.334Z"
+      },
+      {
+        "ordinal": 14,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:56:45.135Z"
+      },
+      {
+        "ordinal": 15,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:11:20.767Z"
+      },
+      {
+        "ordinal": 16,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:11:26.930Z"
+      },
+      {
+        "ordinal": 17,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:22:27.394Z"
+      },
+      {
+        "ordinal": 18,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:22:33.329Z"
+      },
+      {
+        "ordinal": 19,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:22:38.629Z"
+      },
+      {
+        "ordinal": 20,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:22:46.219Z"
+      },
+      {
+        "ordinal": 21,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:23:17.085Z"
+      },
+      {
+        "ordinal": 22,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:23:21.982Z"
+      },
+      {
+        "ordinal": 23,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:23:40.382Z"
+      },
+      {
+        "ordinal": 24,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:23:47.321Z"
+      },
+      {
+        "ordinal": 25,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:24:16.698Z"
+      },
+      {
+        "ordinal": 26,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:24:21.283Z"
+      },
+      {
+        "ordinal": 27,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:24:39.818Z"
+      },
+      {
+        "ordinal": 28,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:24:47.366Z"
+      },
+      {
+        "ordinal": 29,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:25:16.198Z"
+      },
+      {
+        "ordinal": 30,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:25:21.660Z"
+      },
+      {
+        "ordinal": 31,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:33:30.915Z"
+      },
+      {
+        "ordinal": 32,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:33:39.156Z"
+      },
+      {
+        "ordinal": 33,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:34:08.508Z"
+      },
+      {
+        "ordinal": 34,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:34:13.740Z"
+      },
+      {
+        "ordinal": 35,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:42:06.664Z"
+      },
+      {
+        "ordinal": 36,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:42:12.742Z"
+      },
+      {
+        "ordinal": 37,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:49:11.007Z"
+      },
+      {
+        "ordinal": 38,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:49:19.540Z"
+      },
+      {
+        "ordinal": 39,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:49:49.280Z"
+      },
+      {
+        "ordinal": 40,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:49:54.508Z"
+      },
+      {
+        "ordinal": 41,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T07:05:55.240Z"
+      },
+      {
+        "ordinal": 42,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T07:06:01.126Z"
+      }
+    ]
+  },
+  "operator": {
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 24,
+    "reservations": [
+      {
+        "ordinal": 1,
+        "purpose": "CORE_RESULT",
+        "at": "2026-10-24T05:11:12.966644+00:00"
+      },
+      {
+        "ordinal": 2,
+        "purpose": "SUPABASE_READBACK",
+        "at": "2026-10-24T06:35:36.888232+00:00"
+      },
+      {
+        "ordinal": 3,
+        "purpose": "SUPABASE_READBACK",
+        "at": "2026-10-24T06:52:31.984728+00:00"
+      },
+      {
+        "ordinal": 4,
+        "purpose": "CORE_COLLECTION",
+        "at": "2026-10-24T06:55:09.045668+00:00"
+      },
+      {
+        "ordinal": 5,
+        "purpose": "SUPABASE_READBACK",
+        "at": "2026-10-24T07:01:04.560982+00:00"
+      },
+      {
+        "ordinal": 6,
+        "purpose": "BACKEND_HEALTH",
+        "at": "2026-10-24T07:01:36.477560+00:00"
+      }
+    ]
+  },
+  "totalAdditional": 48,
+  "limit": 96
+}

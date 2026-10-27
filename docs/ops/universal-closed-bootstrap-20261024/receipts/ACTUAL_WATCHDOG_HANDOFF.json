@@ -1,0 +1,1 @@
+{"watchResult": {"status": "CLOSED_DEPLOYMENT_PASS", "gateSHA256": "3b10319a4fb0425f957625e7e06d3300f0e6c0da94788afcc12a17e9281353c4", "image": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4", "acceptedAt": "2026-10-24T08:52:09.832147+00:00", "elapsedSeconds": 7.941985985264182}, "restoreClaimExists": false, "acceptedExists": true}

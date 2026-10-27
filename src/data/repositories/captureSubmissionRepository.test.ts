@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { migrations } from "@/data/db/migrations";
+import { runMigrations } from "@/data/db/migrationRunner";
 import { captureCameraInputsMigration } from "@/data/db/migrations/captureCameraInputs";
 import { serializeDatabaseTransactions } from "@/data/db/databaseConnection";
 import {
@@ -16,7 +17,10 @@ import {
   createCaptureRecoveryAction,
 } from "@/data/operations/captureSubmission";
 import type { CapturePayloadInput } from "@/data/files/capturePayloadReader";
-import type { SubmissionRequest } from "@/domain/capture/captureSubmission";
+import {
+  submissionRequestSchema,
+  type SubmissionRequest,
+} from "@/domain/capture/captureSubmission";
 import { LocalCaptureError } from "@/domain/capture/localCapture";
 import { createCaptureSubmissionRepository } from "./captureSubmissionRepository";
 import {
@@ -1317,4 +1321,181 @@ it("Camera recovery passes the captured host acquisition lease before a late per
   );
   expect(open).not.toHaveBeenCalled();
   expect(f.count("capture_submission_batches")).toBe(1);
+});
+
+it("C3 v2 retains typed text plus file and clipboard image in one immutable Batch across cold reopen", async () => {
+  const f = fixture(true, true, 73);
+  const open = vi.fn(async () => ({ bytes: Buffer.from("synthetic file") }));
+  const clipboard = vi.fn(async () => ({ bytes: Buffer.from("synthetic image") }));
+  const session = createCaptureSubmissionSession({
+    repository: f.repo,
+    getActiveUserId: f.getUser,
+    ...deps,
+    open,
+    openClipboard: clipboard,
+  });
+  const text = "周一去博物馆\nKeep my original wording.";
+  const model = await session.submit(
+    [
+      {
+        source: "files",
+        temporaryUri: "file:///test",
+        name: "trip.pdf",
+        typeHint: "application/pdf",
+      },
+      { source: "magic_input", stagingId: 2, text },
+      {
+        source: "clipboard",
+        stagingId: 3,
+        token: randomUUID(),
+        temporaryUri: "file:///owned/image.png",
+        name: null,
+        typeHint: "image/png",
+        size: 15,
+        availability: "unverified",
+      },
+    ],
+    () => {},
+  );
+  expect(model.batch.formatVersion).toBe(2);
+  expect(model.batch.manifestVersion).toBe(2);
+  expect(model.inputs.map((i) => [i.acquisitionSource, i.kind])).toEqual([
+    ["files", "FILE"],
+    ["magic_input", "TEXT"],
+    ["clipboard", "IMAGE"],
+  ]);
+  expect(model.counts).toEqual({ selected: 3, accepted: 3, failed: 0, pending: 0 });
+  const textInput = model.inputs[1];
+  const bytes = f.sql
+    .prepare("SELECT bytes FROM local_capture_payloads WHERE account_id=? AND id=?")
+    .get(a, textInput.payloadId!)!.bytes as Uint8Array;
+  expect(Buffer.from(bytes).toString("utf8")).toBe(text);
+  expect(open).toHaveBeenCalledOnce();
+  expect(clipboard).toHaveBeenCalledOnce();
+  f.reopen();
+  const cold = await f.repo.reopen(model.batch.jobId);
+  expect(cold.batch).toEqual(model.batch);
+  expect(cold.inputs).toEqual(model.inputs);
+});
+
+it.each([false, true])(
+  "SQLite73 preserves old v1 Sources, pending Queue, immutable payloads, rowids and cold read (rollback=%s)",
+  async (rollback) => {
+    const f = fixture(true, true, 72),
+      request = f.request(1);
+    const old = await f.repo.submit(request, f.sources(request), () => {}),
+      input = old.inputs[0];
+    const source = randomUUID(),
+      trip = randomUUID(),
+      binding = randomUUID(),
+      operation = randomUUID();
+    f.sql.exec("BEGIN");
+    f.sql
+      .prepare(
+        "INSERT INTO trip_sources(cache_account_id,id,trip_id,acquired_by,acquisition_key,source_kind,acquisition_channel,capture_time_basis,acquisition_sha256,current_material_revision,row_revision) VALUES(?,?,?,?,?,'FILE','FILES','UNKNOWN',?,1,1)",
+      )
+      .run(a, source, trip, a, source, input.contentSha256!);
+    f.sql
+      .prepare(
+        "INSERT INTO trip_source_revisions(cache_account_id,source_id,material_revision,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES(?,?,1,?,?,?,?,'AS_SUPPLIED','ACQUISITION')",
+      )
+      .run(a, source, a, source, input.contentSha256!, JSON.stringify([randomUUID()]));
+    f.sql.exec("COMMIT");
+    f.sql
+      .prepare(
+        "INSERT INTO local_capture_source_bindings(account_id,id,admission_key,capture_id,capture_revision,capture_payload_id,material_sha256,byte_count,trip_id,intent_kind,source_id,representation_id,material_revision,expected_source_revision,created_at) VALUES(?,?,?,?,CAST(? AS INTEGER),?,?,CAST(? AS INTEGER),?,'REUSE',?,?,1,1,?)",
+      )
+      .run(
+        a,
+        binding,
+        binding,
+        input.captureId!,
+        input.captureRevision!,
+        input.payloadId!,
+        input.contentSha256!,
+        input.contentByteCount!,
+        trip,
+        source,
+        randomUUID(),
+        deps.now(),
+      );
+    f.sql
+      .prepare(
+        "INSERT INTO sync_operations(id,owner_user_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,status,attempt_count,created_at,updated_at) VALUES(?,?,'CAPTURE_SUBMISSION_INPUT',?,'CAPTURE_PROCESSING_VALIDATE',?,'{}','PENDING',0,?,?)",
+      )
+      .run(operation, a, input.id, operation, deps.now(), deps.now());
+    f.sql.exec(
+      "CREATE TABLE schema_migrations(id INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL)",
+    );
+    for (const m of migrations.filter((m) => m.id <= 72))
+      f.sql
+        .prepare("INSERT INTO schema_migrations VALUES(?,?,?)")
+        .run(m.id, m.name, deps.now());
+    const tables = [
+      "capture_submission_batches",
+      "capture_submission_inputs",
+      "local_capture_inbox",
+      "local_capture_payloads",
+      "trip_sources",
+      "local_capture_source_bindings",
+      "sync_operations",
+      "capture_processing_events",
+    ];
+    const snapshot = () =>
+      tables.map((t) => f.sql.prepare(`SELECT rowid,* FROM ${t} ORDER BY rowid`).all());
+    const before = snapshot();
+    const adapter = {
+      ...f.db,
+      async execAsync(q: string) {
+        f.sql.exec(q);
+        if (rollback && q === migrations.at(-1)!.sql)
+          throw Error("INJECTED_MIGRATION_FAILURE");
+      },
+    };
+    if (rollback)
+      await expect(runMigrations(adapter)).rejects.toThrow("INJECTED_MIGRATION_FAILURE");
+    else await runMigrations(adapter);
+    expect(snapshot()).toEqual(before);
+    expect(f.sql.prepare("PRAGMA foreign_keys").get()!.foreign_keys).toBe(1);
+    expect(f.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(f.sql.prepare("SELECT MAX(id) AS id FROM schema_migrations").get()!.id).toBe(
+      rollback ? 72 : 73,
+    );
+    f.reopen();
+    expect((await f.repo.reopen(request.jobId)).batch).toEqual(request);
+    expect(
+      f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(operation)!
+        .status,
+    ).toBe("PENDING");
+  },
+);
+
+it("mixed provenance requires explicit C3v2; old v1 and mixed header versions reject before writes", async () => {
+  const f = fixture(true, true, 73),
+    base = f.request(1);
+  const input = {
+    ...base.inputs[0],
+    acquisitionSource: "magic_input" as const,
+    kind: "TEXT" as const,
+    originalFilename: null,
+    declaredContentType: "text/plain",
+  };
+  expect(submissionRequestSchema.safeParse({ ...base, inputs: [input] }).success).toBe(
+    false,
+  );
+  expect(
+    submissionRequestSchema.safeParse({ ...base, formatVersion: 2, inputs: [input] })
+      .success,
+  ).toBe(false);
+  expect(
+    submissionRequestSchema.safeParse({
+      ...base,
+      formatVersion: 2,
+      manifestVersion: 2,
+      inputs: [{ ...input, kind: "IMAGE" }],
+    }).success,
+  ).toBe(false);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM capture_submission_batches").get()!.n,
+  ).toBe(0);
 });

@@ -40,11 +40,15 @@ export function CalendarField({
   onChange,
   disabled = false,
   initialNavigationDate,
+  variant,
+  onEditingChange,
 }: {
   label: string;
   value: string;
   disabled?: boolean;
   initialNavigationDate?: string | null;
+  variant?: "field";
+  onEditingChange?(open: boolean): void;
   onChange(value: string): void;
 }) {
   const [open, setOpen] = useState(false),
@@ -54,10 +58,12 @@ export function CalendarField({
       <UiFormRow
         label={label}
         value={value ? displayDate(value) : t("tripCreate.notSet")}
-        stacked
+        stacked={variant !== "field"}
+        variant={variant}
         disabled={disabled}
         onPress={() => {
           setSelected(pickerDate(value, initialNavigationDate));
+          onEditingChange?.(true);
           setOpen(true);
         }}
       />
@@ -77,6 +83,7 @@ export function CalendarField({
             onPress={() => {
               onChange(calendarDate(selected));
               setOpen(false);
+              onEditingChange?.(false);
             }}
           />
           <UiButton
@@ -85,12 +92,16 @@ export function CalendarField({
             onPress={() => {
               onChange("");
               setOpen(false);
+              onEditingChange?.(false);
             }}
           />
           <UiButton
             label={t("common.cancel")}
             variant="text"
-            onPress={() => setOpen(false)}
+            onPress={() => {
+              setOpen(false);
+              onEditingChange?.(false);
+            }}
           />
         </View>
       ) : null}

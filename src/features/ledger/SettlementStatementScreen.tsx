@@ -73,6 +73,7 @@ export function SettlementStatementScreen() {
     const entries = selectedHistory ? [selectedHistory] : [...history].reverse();
     return (
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.viewport}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
@@ -177,6 +178,7 @@ export function SettlementStatementScreen() {
 
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       style={styles.viewport}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"

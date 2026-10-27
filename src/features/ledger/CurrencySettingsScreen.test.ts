@@ -5,7 +5,9 @@ const state = vi.hoisted(() => ({
   values: [] as any[],
   cursor: 0,
   mount: true,
+  cleanups: [] as (() => void)[],
   reporting: vi.fn(),
+  trips: vi.fn(),
   settlement: vi.fn(),
   preview: vi.fn(),
   commit: vi.fn(),
@@ -25,7 +27,10 @@ vi.mock("react", async (original) => ({
   },
   useRef: (v: any) => ({ current: v }),
   useEffect: (fn: any) => {
-    if (state.mount) fn();
+    if (state.mount) {
+      const cleanup = fn();
+      if (typeof cleanup === "function") state.cleanups.push(cleanup);
+    }
   },
 }));
 vi.mock("react-native", () => ({
@@ -49,6 +54,9 @@ vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./CurrencyPicker", () => ({ CurrencyPicker: "CurrencyPicker" }));
 vi.mock("./ExchangeRateLookup", () => ({ ExchangeRateLookup: "ExchangeRateLookup" }));
+vi.mock("@/data/repositories/tripRepository", () => ({
+  readLocalTripRepository: async () => ({ listTrips: state.trips }),
+}));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: () => state.reporting(),
 }));
@@ -86,6 +94,8 @@ const flush = async () => {
   for (let i = 0; i < 15; i++) await Promise.resolve();
 };
 beforeEach(() => {
+  state.cleanups = [];
+  state.trips.mockReset().mockResolvedValue([]);
   state.values = [];
   state.cursor = 0;
   state.mount = true;
@@ -166,3 +176,44 @@ it.each(failures)(
     expect(state.values[2].settlementCurrency).toBe("NZD");
   },
 );
+
+it("uses the same local Trip's current name without changing Ledger identity/currency", async () => {
+  state.trips.mockResolvedValue([{ id: "a", name: "Wrong account Trip" }, { id: "b", name: "Renamed Trip" }]);
+  render("b");
+  await flush();
+  const v = render("b");
+  expect(v.some((n) => n.props.children === "Renamed Trip")).toBe(true);
+  expect(v.some((n) => n.props.children === "Wrong account Trip")).toBe(false);
+  expect(state.values[2]).toMatchObject({ journeyId: "b", settlementCurrency: "NZD" });
+  expect(actor).toHaveBeenCalledExactlyOnceWith("b");
+});
+it("retains Ledger caption when the lawful local Trip reader is unavailable", async () => {
+  state.trips.mockRejectedValue(new Error("TRIP_LOCAL_UNAVAILABLE"));
+  render("b");
+  await flush();
+  expect(render("b").some((n) => n.props.children === "Other Trip")).toBe(true);
+  expect(actor).toHaveBeenCalledExactlyOnceWith("b");
+});
+
+it("ignores an old Trip name read completing after another Journey has loaded", async () => {
+  let finishOld!: (trips: { id: string; name: string }[]) => void;
+  const oldRead = new Promise<{ id: string; name: string }[]>((resolve) => { finishOld = resolve; });
+  state.reporting.mockResolvedValue({
+    getSelectedJourneyId: async () => "b",
+    listJourneys: async () => [{ ...b, journeyId: "a", title: "Old A" }, b],
+    getActorContext: actor,
+  });
+  state.trips.mockReturnValueOnce(oldRead).mockResolvedValueOnce([{ id: "b", name: "Current B" }]);
+  render("a");
+  await flush();
+  expect(state.trips).toHaveBeenCalledTimes(1);
+  state.cleanups[0]();
+  state.mount = true;
+  render("b");
+  await flush();
+  expect(state.values[2]).toMatchObject({ journeyId: "b", title: "Current B" });
+  finishOld([{ id: "a", name: "Late A" }]);
+  await flush();
+  expect(state.values[2]).toMatchObject({ journeyId: "b", title: "Current B" });
+  expect(render("b").some((n) => n.props.children === "Current B")).toBe(true);
+});

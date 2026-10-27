@@ -131,3 +131,21 @@ it("keeps unmet setup reachable after real Preparation counts are populated", ()
   });
   expect(containsSetup(widget)).toBe(true);
 });
+
+it("does not show missing destination setup when the ordered destination list is populated and scalar is empty", () => {
+  const metadata = {
+    startDate: "2026-10-23",
+    endDate: "2026-10-25",
+    destination: null,
+    destinations: [
+      { displayLabel: "Nelson, New Zealand" },
+      { displayLabel: "Auckland, New Zealand" },
+    ],
+  };
+  const before = JSON.stringify(metadata);
+  const rows = JSON.stringify(TripSetupRows({ setup, metadata, onEdit: vi.fn() }));
+  expect(rows).not.toContain("tripCreate.destination");
+  expect(rows).not.toContain("tripCreate.notSet");
+  expect(rows).not.toContain("tripForm.setup");
+  expect(JSON.stringify(metadata)).toBe(before);
+});

@@ -1,0 +1,18 @@
+{
+  "status": "IN_PLACE_AUTH_STOP_RECONCILE_IF_UNKNOWN_NO_AUTO_RETRY",
+  "label": "A",
+  "attemptOrdinal": 1,
+  "attempts": 1,
+  "diagnostics": [
+    {
+      "attempt": 1,
+      "outcome": "HTTP_RESPONSE",
+      "httpStatus": 200,
+      "category": "HTTP_SUCCESS",
+      "providerRequestId": "01a16b7e-9d4a-768c-ba86-d630ab8265e0",
+      "sdkCode": null
+    }
+  ],
+  "stage": "IDENTITY_VALIDATION",
+  "receipt": null
+}

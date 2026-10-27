@@ -102,18 +102,24 @@ export function createCoreV2SyncCoordinator(
   worker: SyncWorker,
   repository: Repository,
   tripId: string,
+  operationId?: string,
 ) {
   const engine = createSyncEngine(
     queue,
     worker,
     undefined,
     (operation) =>
-      operation.operationType === "CORE_V2_COMMAND" && operation.tripId === tripId,
+      operation.operationType === "CORE_V2_COMMAND" &&
+      operation.tripId === tripId &&
+      (!operationId || operation.id === operationId),
   );
   return {
     async run(authState: Parameters<typeof engine.run>[0]) {
-      if (authState === "AUTHENTICATED_ONLINE")
-        await repository.resume(await repository.captureContext(tripId));
+      if (authState === "AUTHENTICATED_ONLINE") {
+        const context = await repository.captureContext(tripId);
+        if (operationId) await repository.resume(context, operationId);
+        else await repository.resume(context);
+      }
       return engine.run(authState);
     },
   };

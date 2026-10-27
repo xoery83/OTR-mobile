@@ -11,8 +11,8 @@ final class PublicationCatalogReceiver: NSObject, URLSessionDataDelegate, @unche
     case failed(String)
   }
 
-  static func request(tripId: String, token: String) -> URLRequest? {
-    guard UUID(uuidString: tripId)?.uuidString.lowercased() == tripId,
+  static func request(tripId: String, token: String, version: Int = 1) -> URLRequest? {
+    guard (1...2).contains(version), UUID(uuidString: tripId)?.uuidString.lowercased() == tripId,
       !token.isEmpty, token.utf8.count <= 8192,
       token.utf8.allSatisfy({ (33...126).contains($0) })
     else { return nil }
@@ -23,7 +23,7 @@ final class PublicationCatalogReceiver: NSObject, URLSessionDataDelegate, @unche
     request.httpMethod = "GET"
     request.httpShouldHandleCookies = false
     request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-    request.setValue("1", forHTTPHeaderField: "X-OTR-Publication-Catalog-Version")
+    request.setValue(String(version), forHTTPHeaderField: "X-OTR-Publication-Catalog-Version")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
     return request

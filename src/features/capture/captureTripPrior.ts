@@ -12,3 +12,10 @@ export async function readCaptureTripPrior(tripId: string, scope: AccountScope) 
   await assertAccountRequestContext(scope, requireActiveUserId);
   return trip?.id === tripId ? { id: trip.id, name: trip.name } : null;
 }
+
+export async function listCaptureTripPriors(scope: AccountScope) {
+  await assertAccountRequestContext(scope, requireActiveUserId);
+  const trips = await (await readLocalTripRepository()).listTrips();
+  await assertAccountRequestContext(scope, requireActiveUserId);
+  return trips.map(({ id, name }) => ({ id, name }));
+}

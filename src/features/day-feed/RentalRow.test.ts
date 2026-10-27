@@ -10,6 +10,12 @@ import { t } from "@/ui/locale";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
 };
+vi.mock("./DayFeedShell", () => ({
+  formatDayFeedVisibleDates: (r: { first: string; last: string }) =>
+    `${r.first}–${r.last}`,
+}));
+vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("react-native", async () => {
   const { createElement } = await import("react");
   const primitive = ({ children }: { children?: ReactNode }) =>
@@ -96,18 +102,14 @@ const render = (
     }),
   );
 
-it("keeps pickup and return date-specific and shows known Future return context", () => {
+it("uses final Future Browse: actual identity, independent role and current endpoint only", () => {
   const future = render("FUTURE", "B");
-  expect(future).toContain("Booked SUV class");
-  expect(future).toContain(
-    t("p4.returnSummaryTimePlace", {
-      date: "Jan 18, 2027",
-      time: "11:00",
-      place: "Return depot",
-    }),
-  );
-  expect(future).not.toContain("PLATE-1");
-  expect(render("FUTURE", "F")).toContain(t("p4.viewMap"));
+  expect(future).toContain("Actual model · PLATE-1");
+  expect(future).toContain("Pickup depot");
+  expect(future).not.toContain("Booked SUV class");
+  expect(future).not.toContain("Authorized holder");
+  expect(future).not.toContain("Return depot");
+  expect(render("FUTURE", "F")).toContain("Pickup depot");
   expect(rentalContribution("FUTURE").query!("2027-01-16", "UTC").coreRows).toEqual([]);
   expect(row("FUTURE", "2027-01-18").coreRowKeys[0].projectionRole).toBe("RETURN");
 });
@@ -142,7 +144,7 @@ it("preserves authored estimated clocks while rejecting unknown clocks", () => {
 it("shows only supplied operational facts and exact-location Directions on Today", () => {
   const today = render("TODAY", "F", "2027-01-18");
   expect(today).toContain(t("p4.holder", { name: "Authorized holder" }));
-  expect(today).toContain(t("p4.plate", { value: "PLATE-1" }));
+  expect(today).toContain("PLATE-1");
   expect(today).toContain(t("p4.reference", { value: "REF-1" }));
   expect(rentalMapUrl(facts.return!, true)).toBeNull();
   expect(
@@ -186,16 +188,21 @@ it("keeps the dated Today return distinct from pickup", () => {
     },
   };
   const focus = render("TODAY_RETURN", "F", "2027-01-18", withAddresses);
-  expect(focus.match(/Directions/g)).toHaveLength(1);
+  expect(focus).toContain("Return address");
+  expect(focus).not.toContain("Pickup address");
 });
 
 it("keeps Past Browse sparse and reveals only supplied linked content deeper", () => {
   const browse = render("PAST", "B");
-  expect(browse).toContain(t("p4.photoCount", { count: 4 }));
+  expect(browse).not.toContain(t("p4.photoCount", { count: 4 }));
+  expect(browse).not.toContain("Pickup depot");
+  expect(browse).not.toContain("Return depot");
+  expect(browse).not.toContain("Authorized holder");
+  expect(browse).not.toContain("Booked SUV class");
   expect(browse).not.toContain(t("p4.expenseCount", { count: 2 }));
   expect(browse).not.toContain("20000 NZD");
   const focus = render("PAST", "F");
-  expect(focus).toContain(t("p4.expenseCount", { count: 2 }));
+  expect(focus).toContain(t("fidelity.expenses", { count: 2 }));
   expect(focus).not.toContain("20000 NZD");
   const immersive = render("PAST", "I");
   expect(immersive).toContain("20000 NZD");
@@ -220,19 +227,62 @@ it("does not show an unpaired My Share per-day amount", () => {
   expect(immersive).not.toContain("2500 NZD");
 });
 
-it("shows planned-unresolved rental minutes without firm time-rail qualification", () => {
+it("preserves authored floating minutes without a timezone warning", () => {
   const value = {
     ...facts,
     pickup: { ...facts.pickup, time: "09:15", plannedUnresolved: true },
   };
   const html = render("FUTURE", "B", undefined, value);
   expect(html).toContain("09:15");
-  expect(html).toContain(t("p6.plannedUnresolved"));
+  expect(html).not.toContain(t("p6.plannedUnresolved"));
 });
 
-it("reviewer: unresolved Return is labelled even when current Pickup is comparable", () => {
+it("preserves authored Return minutes without inventing temporal qualification", () => {
   const value = { ...facts, return: { ...facts.return!, plannedUnresolved: true } };
   const html = render("FUTURE", "I", undefined, value);
   expect(html).toContain("11:00");
-  expect(html).toContain(t("p6.plannedUnresolved"));
+  expect(html).not.toContain(t("p6.plannedUnresolved"));
+});
+
+it.each(["FUTURE", "TODAY", "PAST"] as const)(
+  "renders all three %s depths without inventing missing modules",
+  (context) => {
+    for (const depth of ["B", "F", "I"] as const) {
+      const html = render(context, depth, undefined, {
+        family: "P4",
+        pickup: facts.pickup,
+      });
+      expect(html).not.toContain("undefined");
+      expect(html).not.toContain("20000 NZD");
+      expect(html).not.toContain("Authorized holder");
+    }
+  },
+);
+it("keeps Link existing ahead of Add expense in Immersive", () => {
+  const html = render("TODAY", "I");
+  expect(html.indexOf(t("fidelity.linkExpense"))).toBeLessThan(
+    html.indexOf(t("fidelity.addExpense")),
+  );
+});
+
+it("retains endpoint name and address in active Browse and supplied contact text in its own Immersive group", () => {
+  const value: RentalFacts = {
+    ...facts,
+    contactText: "Synthetic rental desk +64 00 000",
+    call: vi.fn(),
+    pickup: {
+      ...facts.pickup,
+      place: {
+        qualification: "TEXT_ONLY",
+        authoredLabel: "Pickup depot",
+        authoredAddress: "18 Synthetic Road",
+      },
+    },
+  };
+  const browse = render("FUTURE", "B", undefined, value);
+  expect(browse).toContain("Pickup depot · 18 Synthetic Road");
+  const detail = render("TODAY", "I", undefined, value);
+  expect(detail).toContain(value.contactText);
+  expect(detail).toContain(t("p4.bookedClass", { value: value.bookedClass! }));
+  expect(render("PAST", "I", undefined, value)).not.toContain(value.contactText);
 });

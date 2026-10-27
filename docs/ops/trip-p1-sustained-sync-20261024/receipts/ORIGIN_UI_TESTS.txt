@@ -1,0 +1,8 @@
+
+ RUN  v4.1.11 /private/tmp/otr-trip-p1-origin-ui-patch-20261024
+
+
+ Test Files  1 passed (1)
+      Tests  36 passed (36)
+   Start at  13:01:21
+   Duration  972ms (transform 403ms, setup 0ms, import 573ms, tests 319ms, environment 0ms)

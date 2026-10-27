@@ -1,7 +1,7 @@
 import {
-  captureCustodyBindingSchema,
+  captureMaterialBindingSchema,
   assertCaptureCustodyBytes,
-  type CaptureCustodyBinding,
+  type CaptureMaterialBinding,
   type CaptureMaterialCustody,
 } from "../../src/domain/capture/captureCustody";
 import {
@@ -34,9 +34,9 @@ export function createCaptureStorageMaterial(
   )
     throw new Error("CAPTURE_STORAGE_CONFIG_INVALID");
   const prefix = config.localFixture ? "" : "/storage/v1";
-  const object = (b: CaptureCustodyBinding) =>
+  const object = (b: CaptureMaterialBinding) =>
     `trip-source-material/capture/${b.accountId}/${b.inputId}`;
-  async function read(b: CaptureCustodyBinding, boundary: RequestBoundary) {
+  async function read(b: CaptureMaterialBinding, boundary: RequestBoundary) {
     const response = await boundary.run(() =>
       fetcher(`${origin.origin}${prefix}/object/authenticated/${object(b)}`, {
         method: "GET",
@@ -88,7 +88,7 @@ export function createCaptureStorageMaterial(
   }
   return {
     async read(raw) {
-      const b = captureCustodyBindingSchema.parse(raw),
+      const b = captureMaterialBindingSchema.parse(raw),
         boundary = createRequestBoundary(config.timeoutMs);
       try {
         return await read(b, boundary);
@@ -97,7 +97,7 @@ export function createCaptureStorageMaterial(
       }
     },
     async put(raw, input) {
-      const b = captureCustodyBindingSchema.parse(raw);
+      const b = captureMaterialBindingSchema.parse(raw);
       assertCaptureCustodyBytes(b, input);
       const bytes = Uint8Array.from(input);
       const boundary = createRequestBoundary(config.timeoutMs);

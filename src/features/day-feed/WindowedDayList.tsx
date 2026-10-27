@@ -27,6 +27,7 @@ import {
 } from "./dayFeedWindow";
 
 export type DayListHandle = {
+  scrollBy?(delta: number): boolean;
   jumpToDayHeader(date: string, includeTripHeader?: boolean): boolean;
   restoreAnchor(anchor: DayScrollAnchor): boolean;
   saveAnchor(): DayScrollAnchor | null;
@@ -46,6 +47,7 @@ export function WindowedDayList<T>({
   topInset = 0,
   bottomInset = 0,
   rowSpacing = 0,
+  scrollEnabled = true,
   style,
   contentContainerStyle,
   header,
@@ -68,6 +70,7 @@ export function WindowedDayList<T>({
   topInset?: number;
   bottomInset?: number;
   rowSpacing?: number;
+  scrollEnabled?: boolean;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   header?: ReactNode;
@@ -106,6 +109,7 @@ export function WindowedDayList<T>({
     epoch: renderedEpoch,
     scopeKey,
     topInset,
+    scrollEnabled,
     onAnchorChange,
     onVisibleDates,
     onOffsetChange,
@@ -116,12 +120,15 @@ export function WindowedDayList<T>({
     onViewportChange,
   });
   useLayoutEffect(() => {
+    if (!scrollEnabled || live.current.scopeKey !== scopeKey)
+      statusBarOrigin.current = null;
     live.current = {
       rows,
       origin,
       epoch: renderedEpoch,
       scopeKey,
       topInset,
+      scrollEnabled,
       onAnchorChange,
       onVisibleDates,
       onOffsetChange,
@@ -149,8 +156,14 @@ export function WindowedDayList<T>({
     ended: boolean;
   } | null>(null);
   const lastNativeOffset = useRef(0);
+  const nativeReading = useRef(false);
+  const nativeLayoutChanged = useRef(false);
   const prepending = useRef(false);
+  const followPrependOrigin = useRef<number | null>(null);
+  const statusBarOrigin = useRef<number | null>(null);
+  const statusBarFrame = useRef<number | null>(null);
   const contentHeight = useRef(0);
+  const viewportHeight = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
   const pending = useRef<{
     anchor: DayScrollAnchor;
@@ -352,6 +365,7 @@ export function WindowedDayList<T>({
   }, [attempt]);
   const restore = useCallback(
     (anchor: DayScrollAnchor, preserveWindow = false, tripHeader = false) => {
+      statusBarOrigin.current = null;
       const target = resolveDayAnchor(live.current.rows, anchor);
       if (!target) return false;
       finish();
@@ -378,7 +392,15 @@ export function WindowedDayList<T>({
         contentHeight.current = 0;
         dragging.current = false;
         prepending.current = false;
-        const row = live.current.rows[target.index];
+        followPrependOrigin.current = null;
+        // Keep a full tail batch so a final-day jump can clamp naturally at the list end.
+        const tailOrigin = Math.min(
+          target.index,
+          Math.max(0, live.current.rows.length - dayListWindow.initialNumToRender),
+        );
+        const firstDate = live.current.rows[tailOrigin].date;
+        const row =
+          live.current.rows[indexDayRows(live.current.rows).dates.get(firstDate)!];
         setWindowStart({
           scopeKey: live.current.scopeKey,
           key: row.key,
@@ -485,6 +507,21 @@ export function WindowedDayList<T>({
         includeTripHeader && header != null,
       );
     },
+    scrollBy(delta) {
+      if (!Number.isFinite(delta) || pending.current || !list.current) return false;
+      const next = Math.max(
+        0,
+        Math.min(
+          Math.max(0, contentHeight.current - viewportHeight.current),
+          offset.current + delta,
+        ),
+      );
+      if (delta < 0) prependPrevious(next, "follow");
+      if (Math.abs(next - offset.current) < 0.1) return false;
+      offset.current = next;
+      list.current.scrollToOffset({ offset: next, animated: false });
+      return true;
+    },
     restoreAnchor: restore,
     saveAnchor: () => saved.current,
   }));
@@ -507,6 +544,7 @@ export function WindowedDayList<T>({
       lastNativeOffset.current = 0;
       dragging.current = false;
       prepending.current = false;
+      followPrependOrigin.current = null;
       setWindowStart({ scopeKey, key: "", date: "", revision: epoch });
     }
     return () => {
@@ -555,20 +593,26 @@ export function WindowedDayList<T>({
     });
   }, []);
   const prependPrevious = useCallback(
-    (position: number, trigger: "drag-begin" | "scroll") => {
+    (position: number, trigger: "drag-begin" | "scroll" | "follow" | "status-bar") => {
       const current = live.current;
       if (
         current.epoch !== listEpoch.current ||
         pending.current ||
-        !dragging.current ||
+        ((trigger === "drag-begin" || trigger === "scroll") && !dragging.current) ||
         prepending.current ||
         position > 200 ||
         current.origin <= 0
       )
         return;
-      const previous = previousDayOrigin(current.rows, current.origin);
+      const previous = previousDayOrigin(
+        current.rows,
+        current.origin,
+        dayListWindow.maxToRenderPerBatch,
+      );
       const row = current.rows[previous];
+      if (trigger === "status-bar") statusBarOrigin.current = previous;
       prepending.current = true;
+      if (trigger === "follow") followPrependOrigin.current = current.origin;
       trace("PREPEND", {
         fromOrigin: current.origin,
         origin: previous,
@@ -618,6 +662,9 @@ export function WindowedDayList<T>({
   );
   return (
     <FlatList
+      scrollEnabled={scrollEnabled}
+      scrollsToTop={scrollEnabled}
+      keyboardShouldPersistTaps="handled"
       key={`${scopeKey}:${windowStart.scopeKey === scopeKey ? windowStart.revision : 0}`}
       initialScrollIndex={0}
       ref={list}
@@ -639,8 +686,13 @@ export function WindowedDayList<T>({
         )
       }
       {...dayListWindow}
+      updateCellsBatchingPeriod={statusBarOrigin.current !== null ? 0 : 50}
       removeClippedSubviews={false}
-      maintainVisibleContentPosition={jumping ? undefined : { minIndexForVisible: 0 }}
+      maintainVisibleContentPosition={
+        jumping || statusBarOrigin.current !== null
+          ? undefined
+          : { minIndexForVisible: 0 }
+      }
       style={style}
       contentContainerStyle={[
         contentContainerStyle,
@@ -718,6 +770,7 @@ export function WindowedDayList<T>({
         }
       }}
       onLayout={({ nativeEvent }) => {
+        viewportHeight.current = nativeEvent.layout.height;
         if (renderedEpoch !== listEpoch.current) return;
         trace("VIEWPORT_LAYOUT", {
           height: nativeEvent.layout.height,
@@ -725,11 +778,27 @@ export function WindowedDayList<T>({
         });
         retry();
       }}
+      onScrollToTop={() => {
+        if (
+          renderedEpoch !== listEpoch.current ||
+          pending.current ||
+          !live.current.scrollEnabled
+        )
+          return;
+        prepending.current = false;
+        followPrependOrigin.current = null;
+        prependPrevious(0, "status-bar");
+      }}
       onScrollBeginDrag={() => {
         if (renderedEpoch !== listEpoch.current) return;
+        statusBarOrigin.current = null;
         dragging.current = true;
+        // Trackpad/wheel scrolling has a native drag but no single-finger stream.
+        nativeReading.current = readingTouch.current === null;
+        nativeLayoutChanged.current = false;
         // Layout/overscroll from this gesture must not unlock another previous-date prepend.
         prepending.current = false;
+        followPrependOrigin.current = null;
         diagnostic.current.count = 0;
         diagnostic.current.until = Date.now() + 10000;
         trace("DRAG_BEGIN", { origin, listEpoch: renderedEpoch });
@@ -759,6 +828,28 @@ export function WindowedDayList<T>({
       onScroll={(event) => {
         if (renderedEpoch !== listEpoch.current) return;
         const rawOffset = event.nativeEvent.contentOffset.y;
+        if (
+          followPrependOrigin.current !== null &&
+          live.current.origin < followPrependOrigin.current &&
+          rawOffset > 0
+        ) {
+          // Native maintainVisibleContentPosition has compensated the committed prepend.
+          prepending.current = false;
+          followPrependOrigin.current = null;
+        }
+        const nativeDelta = rawOffset - lastNativeOffset.current;
+        if (
+          dragging.current &&
+          nativeReading.current &&
+          !readingTouch.current &&
+          !nativeLayoutChanged.current &&
+          !pending.current &&
+          !prepending.current &&
+          Number.isFinite(nativeDelta) &&
+          nativeDelta
+        )
+          live.current.onReadingMotion?.(nativeDelta);
+        nativeLayoutChanged.current = false;
         const movingUp = dragging.current && rawOffset < lastNativeOffset.current - 1;
         lastNativeOffset.current = rawOffset;
         if (movingUp) prependPrevious(rawOffset, "scroll");
@@ -788,8 +879,37 @@ export function WindowedDayList<T>({
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
       onContentSizeChange={(_width, height) => {
         if (renderedEpoch !== listEpoch.current) return;
+        if (contentHeight.current !== height && dragging.current)
+          nativeLayoutChanged.current = true;
+        const previousHeight = contentHeight.current;
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
+        if (
+          live.current.scrollEnabled &&
+          statusBarOrigin.current === live.current.origin &&
+          statusBarFrame.current === null
+        ) {
+          const expectedOrigin = live.current.origin;
+          // UIKit must commit the prefix before animating; MVCP must not undo that animation.
+          list.current?.scrollToOffset({
+            offset: Math.max(0, height - previousHeight),
+            animated: false,
+          });
+          statusBarFrame.current = requestAnimationFrame(() => {
+            statusBarFrame.current = null;
+            if (
+              renderedEpoch !== listEpoch.current ||
+              !live.current.scrollEnabled ||
+              statusBarOrigin.current !== expectedOrigin ||
+              live.current.origin !== expectedOrigin
+            )
+              return;
+            statusBarOrigin.current = null;
+            offset.current = 0;
+            list.current?.scrollToOffset({ offset: 0, animated: true });
+            list.current?.recordInteraction?.();
+          });
+        }
         retry();
       }}
       debug={false}

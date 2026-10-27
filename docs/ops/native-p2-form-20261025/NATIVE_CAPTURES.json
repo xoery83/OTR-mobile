@@ -1,0 +1,45 @@
+{
+  "formSourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "nativeStatus": "BOUNDED_LOCAL_SPARSE_CREATE_COLD_READ_EDIT_DRAFT_CANCEL_OBSERVED",
+  "cloudStatus": "NOT_RUN_GATE_CLOSED",
+  "screenshots": [
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/edit-bottom-participants.png",
+      "sha256": "76bbd5243a0cc9b1ba4999b272f4f58a3353f68d53dc39b86689cc57d648bcd8",
+      "sourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/manual-endpoint-keyboard.png",
+      "sha256": "47dc6dd7d533bb39a8a969333c281a68ee911fad2a221c9bc1dfd28ac161da1b",
+      "sourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/real-edit-readback.png",
+      "sha256": "1f5a4b116de6a240e3a9e77c8bddc6e0616000e58d0307788b0835050965f525",
+      "sourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/real-sparse-browse.png",
+      "sha256": "fea1d601821561500f7c77a3b3d11ee1510b9d771fdce9b468a4f454d3b56c58",
+      "sourceSHA": "3090cc8e"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/real-sparse-focus.png",
+      "sha256": "a7fb444c491ece2ce9d6de7fb856acecde2068d3cff7ce17b10626d8136c026a",
+      "sourceSHA": "3090cc8e"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/real-sparse-immersive.png",
+      "sha256": "24c6a456c400fe2d9530b98fa13568e67ea5b31b0c3ac6e9f7cd7f5dd61397cb",
+      "sourceSHA": "3090cc8e"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/zh-dark-edit.png",
+      "sha256": "cd10664d6cf05d9aa131cd62a2c02ec2f2609b6aa2c6c526b9ae3910810a5a20",
+      "sourceSHA": "3dbdce116ffb8b5d20c7d5edc73f859adf6695bb"
+    }
+  ],
+  "sparseDisplaySourceSHA": "3090cc8e",
+  "realReaderStatus": "LOCAL_SPARSE_BROWSE_FOCUS_IMMERSIVE_RETURN_OBSERVED_NOT_FULL_P2_FIDELITY_PASS"
+}

@@ -31,7 +31,11 @@ export function TripMembersSheet({
     >
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
         <SheetHeader title={t("tripHome.members")} safeTop={false} onLeft={onClose} />
-        <ScrollView style={styles.sheet} contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.sheet}
+          contentContainerStyle={styles.content}
+        >
           {roster ? (
             <>
               <UiText style={styles.meta}>

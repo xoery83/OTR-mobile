@@ -1,0 +1,13 @@
+# Place Search and local Trip/Finance status
+
+Search More previously replaced five completer suggestions with separate MKLocalSearch output. It now keeps quick suggestions and merges distinct display rows up to20. Retained completions resolve in their original provider session; no invented identifiers or names. Region selection uses existing destinationArea qualification and resolved coordinate bias, preserves the original query. Worldwide is explicitly selected by default and clears bias. Small canonical choice chips replace tall text buttons; manual text fallback is a persistent secondary SafeArea button with iOS keyboard avoidance.
+
+Actual AD5: Beijing forbidden city quick5→More6 retaining all5, real Beijing city selected and original query restored, Worldwide restored, real software keyboard with manual button above it, manual address fills Location. Provider returns one irrelevant extra Beijin Village; no relevance improvement is claimed.
+
+Plan waiting to sync: ManualPlan saves durable local Core command intents and returns PENDING. Default syncEngine excludes CORE_V2_COMMAND/CREATE_TRIP/UPDATE_TRIP_METADATA. Dedicated Core worker additionally requires ENABLED capabilities. Current preview public environment contains only DEV Supabase public configuration, no Backend API base; therefore this particular local path is not uploading. This does not imply all Ledger/Backend infrastructure is absent. No sync gate changed here.
+
+Trip→Ledger: current tripRepository.createTrip atomically calls initializeLedger, creating local_trip_ledger_bindings, ledger_journeys, local owner/member and actor context; default NZD. Four TCL01 regression tests pass, including cold reopen/rollback/repair. Read-only QA currency screen resolves that exact Trip and NZD. Therefore new Trip missing all local Ledger binding is not the general current behavior. Older/imported or differently originated Trips may require separate qualification; no repair or permission widening was performed.
+
+Journey currency changes still call Backend POST /v2/trips/:id/ledger/journey-currency/preview then /commit, using authoritative revision/digest/settlement checks. A local Ledger row alone does not establish remote accepted Trip/permissions/settings. Current preview lacks that service wiring; local-only default-currency editing is not yet a separate supported path. No financial bypass, direct SQLite currency edit or extra LedgerTrip was added.
+
+Validation: targeted4suites50, TS, UIguard473/139 and independentReview PASS. Scoped lint no errors (existing test import-order warnings). TCL01 fourPASS. Expanded unchanged TripRepo Reference fixtures have two timestamp assertion failures; no complete suite PASS. Actual limits in NATIVE_RECEIPT.json.

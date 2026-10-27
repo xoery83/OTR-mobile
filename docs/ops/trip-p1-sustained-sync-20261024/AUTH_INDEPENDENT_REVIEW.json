@@ -1,0 +1,27 @@
+{
+  "fixed_sha": "b34caecb9ce8516c77ee9ac2f1296ca58a2e2917",
+  "scope": "Fixed sustained profile wrapper and unchanged-default legacy provisioning boundary",
+  "conclusion": "PASS_LOCAL_READY_WITHIN_EXISTING_OWNER_GATE",
+  "findings": [],
+  "validation": {
+    "baseline": "13tests PASS (8sustained+5legacy synthetic SDK/loopback)",
+    "independent": "14tests PASS; reviewer changedGate bytes/futureabsence/wrongquerydigest guard negatives",
+    "binding": "Exact DEV project/newA/B email, approvedGate0f6c.../Owner52d1..., <=900UTC window, exactquery digest/freshabsence<=60s/no unresolved prior assertion, ordinal1..2",
+    "transport": "Exactly one ordinary SDK POST fixed origin/admin path/email/body; attempted guard before send stops repeat dispatch; key stays process.env",
+    "receipt": "Actual201 diagnostic and real returned UUID/email/created_at only; no normalAuth verified claim; no password/key/rawbody/session output",
+    "unknown": "HTTP/transport/malformed201/non201 stop with safe diagnostic and no automatic retry"
+  },
+  "operator_obligations": [
+    "Run actual exact absence query and independently reconcile earlier UNKNOWN before setting noUnresolvedPriorAttempt true",
+    "Maintain total per-identity attempt ledger<=2 across invocations; wrapper enforces one send per invocation, not a durable global attempt authority",
+    "Independently read returned realAuth row/UUID before normal login/profile; no existing/foreign identity adoption"
+  ],
+  "not_run": [
+    "Real DEV Auth",
+    "Remote",
+    "SQL",
+    "Native GUI",
+    "Business writes"
+  ],
+  "authorization": "No new authority granted by reviewer. Fixed wrapper is acceptable only within Owner-approved Gate5265f6d and its caps."
+}

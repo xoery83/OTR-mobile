@@ -1,0 +1,14 @@
+# Explicit NEW V2 operation — existing queue consumer
+
+This is isolated integration preparation, not an activated Native UI or DEV runtime. Existing V1 UI/pending payloads stay V1; old operations are never promoted or filled with today's revision. No SQLite DDL or second queue is required.
+
+1. Use only the Owner-approved dedicated synthetic normal Auth context and an isolated adopted Account/SQLite. The Trip must have a legitimately accepted Create receipt. Retain local destination lists/cover; V2 only updates scalar Backend metadata.
+2. For bootstrap, obtain original metadata from the genuine Create receipt and revision from the explicitly authorized owning server readback. Bind that exact new operation, actor, Trip, before/after and revision to the finite SQL gate/private runtime mount. A proposed DTO is not a snapshot. Metadata credentials remain exclusively in the trusted fixed Backend.
+3. Capture the existing Account generation scope. Call the existing transport's `snapshot(scope, tripId, newOperationId)`; this uses the version2 header and exact operation header. Compare the authenticated snapshot to the authorized baseline. Any drift stops/closes the attempt and requires a new explicit authorization; never rebase silently.
+4. Build a NEW request `{formatVersion:2, operationId, tripId, expectedMetadataRevision:snapshot.metadataRevision, before:snapshot.metadata, after:approvedAfter}`. Call the SAME repository `updateMetadata(request)` without cover or destination-list side parameters. Those V2 parameters fail closed. An unaccepted local Trip also fails closed.
+5. Use the existing targeted coordinator/worker with exact `{accountId,tripId,operationId}` and explicit approved enabled callback. It dispatches only this operation. The existing worker selects V2 receipt-first recovery, then V2 POST only if no receipt exists; validates wire version and original stored request before repository acceptance. Do not enable the global Preview runner/other queues.
+6. Offline retains the same JSON/op. Unknown outcome uses the same receipt lookup/op and ordinary retry. Actor generation changes abort before acceptance. Server receipt does not overwrite local destination lists/cover.
+
+The repository tests exercise real SQLite persistence, offline/targeted dispatch, HTTP boundary fixture, receipt-first recovery after DB reopen, old V1 operation collision, Account fences and version rejection. The HTTP authority in these tests is explicitly synthetic. SQL tests separately use actual isolated PG fixtures. Neither is actual authenticated DEV acceptance or Native E2E.
+
+Final local checks: 143 PASS / 4 unrelated Reference tests excluded across 11 suites; TS, scoped lint, UI guard and Backend Capture bundle compile PASS. SQL 27 checks include the documented arbitrary-SQL expiry limitation. Independent combined Review and Owner deployment/activation authorization remain separate gates.

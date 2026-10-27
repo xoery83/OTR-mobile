@@ -1,8 +1,8 @@
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
 import {
-  tripCreateResultSchema,
-  type TripCreateRequest,
-} from "../../src/domain/trip/tripCreateContract";
+  tripCreateWireResultSchema as tripCreateResultSchema,
+  type TripCreateWireRequest as TripCreateRequest,
+} from "../../src/domain/trip/tripCreateWireContract";
 import { TripCreateError, type TripCreatePort } from "./tripCreate";
 
 type PgFailure = Error & { code?: string };
@@ -11,7 +11,7 @@ function classify(error: unknown): never {
   if (pg.code === "55000") throw new TripCreateError(503, "TRIP_CREATE_CLOSED");
   if (pg.code === "23505") throw new TripCreateError(409, "TRIP_CREATE_COLLISION");
   if (pg.code === "42501") throw new TripCreateError(403, "TRIP_CREATE_FORBIDDEN");
-  if (pg.code === "22023" || pg.code === "22P02")
+  if (["22023", "22P02", "22007", "22008"].includes(pg.code ?? ""))
     throw new TripCreateError(400, "TRIP_CREATE_INVALID");
   throw new TripCreateError(503, "TRIP_CREATE_UNAVAILABLE");
 }
@@ -21,6 +21,8 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
     parameters: readonly unknown[],
     actorAccountId: string,
     tripId: string | null,
+    operationId: string,
+    request?: TripCreateRequest,
   ) {
     try {
       return await connection.withLease(async (lease) => {
@@ -29,8 +31,8 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
           const finiteScope = async () => {
             const allowed = (
               await lease.query(
-                "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
-                [actorAccountId, tripId],
+                "SELECT public.trip_create_finite_scope_allowed($1::uuid,$2::uuid,$3::uuid) AS allowed",
+                [actorAccountId, tripId, operationId],
               )
             ).rows[0]?.allowed;
             if (allowed !== true) throw new TripCreateError(503, "TRIP_CREATE_CLOSED");
@@ -39,6 +41,26 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
           const rows = (await lease.query(sql, parameters)).rows;
           const result = rows[0]?.result;
           const checked = result === null ? null : tripCreateResultSchema.parse(result);
+          if (
+            checked &&
+            (checked.actorAccountId !== actorAccountId ||
+              checked.operationId !== operationId ||
+              (tripId !== null && checked.tripId !== tripId) ||
+              (request &&
+                (checked.name !== request.name ||
+                  checked.destination !== request.destination ||
+                  checked.startDate !== request.startDate ||
+                  checked.endDate !== request.endDate ||
+                  ("formatVersion" in checked ? 2 : 1) !==
+                    ("formatVersion" in request ? 2 : 1) ||
+                  ("destinations" in request &&
+                    (!("destinations" in checked) ||
+                      JSON.stringify(checked.destinations) !==
+                        JSON.stringify(request.destinations))))))
+          )
+            throw new TripCreateError(503, "TRIP_CREATE_RESULT_MISMATCH");
+          if (request && !checked)
+            throw new TripCreateError(503, "TRIP_CREATE_RESULT_INVALID");
           await finiteScope();
           await lease.query("COMMIT");
           return checked;
@@ -55,18 +77,24 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
   return {
     async create(actorAccountId, input: TripCreateRequest) {
       const result = await query(
-        "SELECT public.trip_create_command($1::uuid,$2::uuid,$3::uuid,$4::text,$5::text,$6::date,$7::date) AS result",
-        [
-          input.operationId,
-          actorAccountId,
-          input.tripId,
-          input.name,
-          input.destination,
-          input.startDate,
-          input.endDate,
-        ],
+        "formatVersion" in input
+          ? "SELECT public.trip_create_command($1::uuid,$2::uuid,$3::uuid,$4::jsonb) AS result"
+          : "SELECT public.trip_create_command($1::uuid,$2::uuid,$3::uuid,$4::text,$5::text,$6::date,$7::date) AS result",
+        "formatVersion" in input
+          ? [input.operationId, actorAccountId, input.tripId, JSON.stringify(input)]
+          : [
+              input.operationId,
+              actorAccountId,
+              input.tripId,
+              input.name,
+              input.destination,
+              input.startDate,
+              input.endDate,
+            ],
         actorAccountId,
         input.tripId,
+        input.operationId,
+        input,
       );
       if (!result) throw new TripCreateError(503, "TRIP_CREATE_RESULT_INVALID");
       return result;
@@ -77,6 +105,7 @@ export function createTripPgStorage(connection: CorePgConnection): TripCreatePor
         [operationId, actorAccountId],
         actorAccountId,
         null,
+        operationId,
       );
     },
   };

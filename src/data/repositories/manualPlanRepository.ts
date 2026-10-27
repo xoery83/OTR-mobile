@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { createUuid } from "@/domain/localId";
 import {
+  appleSelectedPlaceDraftSchema,
+  type AppleSelectedPlaceDraft,
+} from "../places/appleSelectedPlaceDraft";
+import {
   coreDefaults,
   coreParticipationSchema,
   corePlaceSchema,
@@ -13,6 +17,8 @@ import {
 } from "@/domain/trip/tripCoreV2Temporal";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import { validateCoreReceipt } from "@/domain/trip/tripCoreV2Receipt";
+import { coreHashValue } from "@/domain/trip/tripCoreV2Read";
 import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { applyCoreCommand, coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import {
@@ -24,6 +30,7 @@ import { requireActiveUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
+import { readLocalTripPersonRosterWithinTransaction } from "./localTripPersonRepository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 
 const json = (value: unknown) => canonicalCoreJson(value as Json);
@@ -92,7 +99,17 @@ const rentalReadFieldsSchema = manualRentalFieldsSchema.safeExtend({
   pickupLocation: z.string().trim().max(500),
   returnLocation: z.string().trim().max(500),
 });
+export const manualActivityDetailsSchema = z.strictObject({
+  sessionLabel: z.string().max(500).nullable(),
+  admissionNote: z.string().max(2000).nullable(),
+  entryLocation: z.string().trim().max(500).nullable(),
+});
+export const manualActivityFieldsSchema = manualPlanFieldsSchema.safeExtend({
+  activityDetails: manualActivityDetailsSchema,
+});
+export type ManualActivityFields = z.infer<typeof manualActivityFieldsSchema>;
 type ManualItemFields = ManualPlanFields & {
+  activityDetails?: ManualActivityFields["activityDetails"];
   stayDetails?: ManualStayFields["stayDetails"];
   pickupLocation?: string;
   returnLocation?: string;
@@ -120,10 +137,26 @@ type ManualItemDraft<F extends ManualPlanFields = ManualItemFields> = Omit<
   "fields"
 > &
   Readonly<{ fields: F }>;
+export type ManualPlaceAcceptance = Readonly<{
+  intent: "ACCEPT_SELECTED_APPLE_PLACE_V1";
+  draft: AppleSelectedPlaceDraft;
+}>;
+const manualPlaceAcceptanceSchema = z.strictObject({
+  intent: z.literal("ACCEPT_SELECTED_APPLE_PLACE_V1"),
+  draft: appleSelectedPlaceDraftSchema,
+});
 type ManualItemRepository<F extends ManualPlanFields> = {
   createDraft(tripId: string): Promise<ManualItemDraft<F>>;
-  read(tripId: string, itemId: string): Promise<ManualItemDraft<F>>;
-  save(draft: ManualItemDraft<F>, fields: F): Promise<ManualPlanSaveResult>;
+  read(
+    tripId: string,
+    itemId: string,
+    expectedRevision?: number,
+  ): Promise<ManualItemDraft<F>>;
+  save(
+    draft: ManualItemDraft<F>,
+    fields: F,
+    placeDraft?: AppleSelectedPlaceDraft | ManualPlaceAcceptance,
+  ): Promise<ManualPlanSaveResult>;
 };
 type DraftState = {
   context: AccountRequestContext;
@@ -132,15 +165,28 @@ type DraftState = {
   revision: number | null;
   original: ManualItemFields;
   ids: string[];
-  attempt?: { fields: string; commands: Command[] };
+  attempt?: {
+    fields: string;
+    placeDraft: string;
+    place: z.infer<typeof corePlaceSchema>;
+    commands: Command[];
+  };
 };
 function fieldsFor(
   row: Record<string, unknown>,
   snapshot: Snapshot,
-  family: "P1" | "P3" | "P4",
+  family: "P1" | "P3" | "P4" | "P6",
 ): ManualItemFields {
   const stay = snapshot.graph.trip_stay_details.find((r) => r.event_id === row.id);
   const clockLabel = (v: unknown) => (typeof v === "string" ? v.slice(0, 5) : null);
+  const activity =
+    family === "P6"
+      ? snapshot.graph.trip_activity_details.find((r) => r.event_id === row.id)
+      : undefined;
+  const entry =
+    family === "P6"
+      ? snapshot.graph.trip_activity_entry_places.find((r) => r.event_id === row.id)
+      : undefined;
   const rental = snapshot.graph.trip_rental_details.find((r) => r.event_id === row.id);
   const rentalLabel = (role: "PICKUP" | "RETURN") => {
     const place = snapshot.graph.trip_rental_places.find(
@@ -159,9 +205,25 @@ function fieldsFor(
       ? rentalReadFieldsSchema
       : family === "P3"
         ? manualStayFieldsSchema
-        : manualPlanFieldsSchema
+        : family === "P6"
+          ? manualActivityFieldsSchema
+          : manualPlanFieldsSchema
   ).parse({
     title: row.title,
+    ...(family === "P6"
+      ? {
+          activityDetails: {
+            sessionLabel: activity?.session_label ?? null,
+            admissionNote: activity?.admission_note ?? null,
+            entryLocation:
+              entry?.authored_label ??
+              entry?.authored_text ??
+              entry?.authored_address ??
+              entry?.accepted_address ??
+              null,
+          },
+        }
+      : {}),
     ...(family === "P3"
       ? {
           stayDetails: {
@@ -208,12 +270,12 @@ function editable(
   snapshot: Snapshot,
   itemId: string,
   accountId: string,
-  family: "P1" | "P3" | "P4",
+  family: "P1" | "P3" | "P4" | "P6",
 ) {
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
     !row ||
-    !snapshot.predictedIds.has(itemId) ||
+    (!snapshot.predictedIds.has(itemId) && !(family === "P1" && snapshot.cert)) ||
     row.experience_family !== family ||
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
@@ -236,7 +298,7 @@ const authoredBoundary = (
   zone_id: zone,
 });
 
-// Three finite Forms share the already-qualified transaction and opaque retry boundary.
+// Finite Forms share the already-qualified transaction and opaque retry boundary.
 export function createManualItemRepository(
   family: "P1",
   database: CoreDatabase,
@@ -262,7 +324,15 @@ export function createManualItemRepository(
   newId?: () => string,
 ): ManualItemRepository<ManualRentalFields>;
 export function createManualItemRepository(
-  family: "P1" | "P3" | "P4",
+  family: "P6",
+  database: CoreDatabase,
+  account: () => Promise<string>,
+  core: Core,
+  clock?: () => string,
+  newId?: () => string,
+): ManualItemRepository<ManualActivityFields>;
+export function createManualItemRepository(
+  family: "P1" | "P3" | "P4" | "P6",
   database: CoreDatabase,
   account: () => Promise<string>,
   core: Core,
@@ -282,7 +352,63 @@ export function createManualItemRepository(
     if (!snapshot) throw new Error("MANUAL_PLAN_UNAVAILABLE");
     return snapshot;
   }
-  async function open(tripId: string, itemId?: string): Promise<ManualItemDraft> {
+  async function acceptedManualCreate(context: AccountRequestContext, itemId: string) {
+    const rows = await database.getAllAsync<{
+      operation_id: string;
+      canonical_intent_text: string;
+      intent_sha256: string;
+      payload_json: string;
+      body_json: string;
+      receipt_sha256: string;
+    }>(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,op.payload_json,r.body_json,r.receipt_sha256
+       FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id
+       AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id AND op.entity_id=?
+       AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND'
+       AND op.idempotency_key=i.operation_id AND op.id=i.operation_id AND op.status='COMPLETED'
+       JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id AND r.trip_id=i.trip_id
+       AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
+       WHERE i.account_id=? AND i.trip_id=? AND i.state='APPLIED' AND i.reconciled_revision IS NOT NULL`,
+      itemId,
+      context.accountId,
+      context.tripId,
+    );
+    for (const row of rows) {
+      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      if (
+        command.command !== "CREATE_ITEM" ||
+        command.admission.mode !== "MANUAL" ||
+        command.target.id !== itemId ||
+        command.tripId !== context.tripId ||
+        (command.payload as { family?: string }).family !== "P1"
+      )
+        continue;
+      const receipt = await validateCoreReceipt(
+        JSON.parse(row.body_json),
+        tripCoreSha256Hex,
+      );
+      if (
+        command.operationId === row.operation_id &&
+        row.payload_json === row.canonical_intent_text &&
+        (await coreHashValue("otr-trip-core-intent-v2", command, tripCoreSha256Hex)) ===
+          row.intent_sha256 &&
+        receipt.actorAccountId === context.accountId &&
+        receipt.tripId === context.tripId &&
+        receipt.operationId === command.operationId &&
+        receipt.command === "CREATE_ITEM" &&
+        receipt.intentSha256 === row.intent_sha256 &&
+        receipt.receiptSha256 === row.receipt_sha256 &&
+        receipt.outcome === "APPLIED"
+      )
+        return true;
+    }
+    return false;
+  }
+  async function open(
+    tripId: string,
+    itemId?: string,
+    expectedRevision?: number,
+  ): Promise<ManualItemDraft> {
     coreUuid.parse(tripId);
     if (itemId) coreUuid.parse(itemId);
     const context = await core.captureContext(tripId);
@@ -294,12 +420,23 @@ export function createManualItemRepository(
         // Exact MANUAL CREATE provenance is retained independently from accepted facts.
         if (
           row &&
+          expectedRevision !== undefined &&
+          row.semantic_revision !== expectedRevision
+        )
+          throw new Error("MANUAL_PLAN_CONFLICT");
+        if (
+          row &&
           !(await core.pending(context)).some(
             (p) =>
               snapshot.operations.some((o) => o.operationId === p.command.operationId) &&
               p.command.target.id === itemId &&
               p.command.command === "CREATE_ITEM" &&
               p.command.admission.mode === "MANUAL",
+          ) &&
+          !(
+            family === "P1" &&
+            snapshot.cert &&
+            (await acceptedManualCreate(context, itemId!))
           )
         )
           throw new Error("MANUAL_PLAN_UNAVAILABLE");
@@ -309,7 +446,16 @@ export function createManualItemRepository(
               title: "",
               startDate: "",
               startTime: family === "P4" ? "" : null,
-              endDate: family !== "P1" ? "" : null,
+              endDate: family === "P3" || family === "P4" ? "" : null,
+              ...(family === "P6"
+                ? {
+                    activityDetails: {
+                      sessionLabel: null,
+                      admissionNote: null,
+                      entryLocation: null,
+                    },
+                  }
+                : {}),
               ...(family === "P3"
                 ? {
                     stayDetails: {
@@ -338,8 +484,32 @@ export function createManualItemRepository(
               description: null,
               participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
             };
-        const members = await database.getAllAsync<{ id: string; display_name: string }>(
-          "SELECT id,display_name FROM ledger_members WHERE journey_id=? AND status IN ('local','linked') ORDER BY id",
+        const creator =
+          family === "P1"
+            ? await database.getFirstAsync<{ create_operation_id: string }>(
+                "SELECT create_operation_id FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=? AND authority='LOCAL_CREATOR'",
+                context.accountId,
+                tripId,
+              )
+            : null;
+        const authoredPersons = creator
+          ? await readLocalTripPersonRosterWithinTransaction(
+              database,
+              context,
+              account,
+              creator.create_operation_id,
+            )
+          : [];
+        const authoredPersonIds = new Set(
+          authoredPersons.map((person) => person.personId),
+        );
+        const members = await database.getAllAsync<{
+          id: string;
+          display_name: string;
+          status: string;
+          participation_active: number | null;
+        }>(
+          "SELECT id,display_name,status,participation_active FROM ledger_members WHERE journey_id=? AND status IN ('local','linked','unlinked') ORDER BY id",
           tripId,
         );
         draft = Object.freeze({
@@ -347,7 +517,14 @@ export function createManualItemRepository(
           itemId: itemId ?? newId(),
           fields: structuredClone(fields),
           participantOptions: (family === "P4" ? [] : members)
-            .filter((m) => snapshot.actor.personIds.includes(m.id))
+            .filter(
+              (m) =>
+                snapshot.actor.personIds.includes(m.id) &&
+                (m.status !== "unlinked" ||
+                  (family === "P1" &&
+                    m.participation_active === 1 &&
+                    authoredPersonIds.has(m.id))),
+            )
             .map((m) => ({ personId: m.id, displayName: m.display_name })),
         });
         drafts.set(draft, {
@@ -356,7 +533,9 @@ export function createManualItemRepository(
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
           original: structuredClone(fields),
-          ids: Array.from({ length: family === "P3" ? 5 : 4 }, () => newId()),
+          ids: Array.from({ length: family === "P3" || family === "P6" ? 5 : 4 }, () =>
+            newId(),
+          ),
         });
         await assertAccountRequestContext(context, account);
       });
@@ -366,10 +545,12 @@ export function createManualItemRepository(
   }
   return {
     createDraft: (tripId: string) => open(tripId),
-    read: (tripId: string, itemId: string) => open(tripId, itemId),
+    read: (tripId: string, itemId: string, expectedRevision?: number) =>
+      open(tripId, itemId, expectedRevision),
     async save(
       draft: ManualItemDraft,
       input: ManualItemFields,
+      selectedPlaceDraft?: AppleSelectedPlaceDraft | ManualPlaceAcceptance,
     ): Promise<ManualPlanSaveResult> {
       const state = drafts.get(draft);
       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
@@ -378,7 +559,9 @@ export function createManualItemRepository(
           ? manualRentalFieldsSchema
           : family === "P3"
             ? manualStayFieldsSchema
-            : manualPlanFieldsSchema
+            : family === "P6"
+              ? manualActivityFieldsSchema
+              : manualPlanFieldsSchema
       ).parse(input);
       if (
         family === "P4" &&
@@ -387,6 +570,28 @@ export function createManualItemRepository(
         throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
       fields.participation.people.sort();
       fields.location = fields.location || null;
+      const review =
+        selectedPlaceDraft && "intent" in selectedPlaceDraft
+          ? manualPlaceAcceptanceSchema.parse(selectedPlaceDraft)
+          : null;
+      const placeDraft =
+        selectedPlaceDraft === undefined
+          ? null
+          : appleSelectedPlaceDraftSchema.parse(
+              review ? review.draft : selectedPlaceDraft,
+            );
+      if (
+        placeDraft &&
+        (family !== "P3" ||
+          placeDraft.binding.tripId !== state.context.tripId ||
+          placeDraft.binding.itemId !== draft.itemId ||
+          placeDraft.binding.accountGeneration !== state.context.generation ||
+          placeDraft.binding.location !== fields.location)
+      )
+        throw new Error("MANUAL_PLACE_DRAFT_BINDING");
+      const placeDraftText = json({ draft: placeDraft, reviewed: review !== null });
+      if (state.attempt && state.attempt.placeDraft !== placeDraftText)
+        throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
       const fieldsText = json(fields);
       if (state.attempt && state.attempt.fields !== fieldsText)
         throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
@@ -451,9 +656,47 @@ export function createManualItemRepository(
           ),
         };
         const place = corePlaceSchema.parse(
-          Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+          state.attempt?.place ??
+            Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
         );
         place.authored_label = fields.location || null;
+        if (placeDraft && !state.attempt?.place) {
+          const parts = placeDraft.addressComponents;
+          place.authored_address = placeDraft.binding.location;
+          place.authored_address_locality = parts?.locality ?? null;
+          place.authored_address_region = parts?.administrativeArea ?? null;
+          place.authored_address_country = parts?.country ?? null;
+          const priorInput = row?.location_input_revision;
+          place.location_input_revision =
+            typeof priorInput === "number" ? priorInput + 1 : 1;
+          place.spatial_provenance_refs = {
+            source: "APPLE_USER_SELECTED_DRAFT",
+            acceptance: "UNACCEPTED_PROVIDER_DRAFT",
+            provider: "apple",
+            input_revision: String(place.location_input_revision),
+            ...(placeDraft.providerPlaceId
+              ? { provider_place_id: placeDraft.providerPlaceId }
+              : {}),
+            ...(parts?.countryCode ? { provider_country_code: parts.countryCode } : {}),
+          };
+          if (review) {
+            // Explicit reviewed Save at the owning mutation boundary; not provider auto-copy.
+            place.accepted_address = placeDraft.binding.location;
+            place.accepted_address_locality = parts?.locality ?? null;
+            place.accepted_address_region = parts?.administrativeArea ?? null;
+            place.accepted_address_country = parts?.country ?? null;
+            place.accepted_latitude = placeDraft.point?.latitude ?? null;
+            place.accepted_longitude = placeDraft.point?.longitude ?? null;
+            place.spatial_provenance_refs = {
+              ...place.spatial_provenance_refs,
+              source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
+              acceptance: "USER_CONFIRMED_SAVE",
+              reviewed_at: clock(),
+            };
+          }
+          // accepted_place_id stays null: Apple references are not internal places.id UUIDs.
+          // No timezone, schedule, participation or visibility is inferred from a Place.
+        }
         const storedStay = snapshot.graph.trip_stay_details.find(
           (r) => r.event_id === draft.itemId,
         );
@@ -489,6 +732,36 @@ export function createManualItemRepository(
               verified_plate: fields.rentalDetails.verifiedPlate,
             }
           : undefined;
+        const activityDetails = fields.activityDetails
+          ? {
+              session_label: fields.activityDetails.sessionLabel,
+              admission_note: fields.activityDetails.admissionNote,
+            }
+          : undefined;
+        const storedEntry = snapshot.graph.trip_activity_entry_places.find(
+          (r) => r.event_id === draft.itemId,
+        );
+        const entryPlace =
+          draft.mode === "EDIT" &&
+          fields.activityDetails?.entryLocation ===
+            state.original.activityDetails?.entryLocation &&
+          storedEntry
+            ? corePlaceSchema.parse(
+                Object.fromEntries(
+                  Object.keys(corePlaceSchema.shape).map((key) => [
+                    key,
+                    storedEntry[key] ?? null,
+                  ]),
+                ),
+              )
+            : fields.activityDetails?.entryLocation
+              ? corePlaceSchema.parse({
+                  ...Object.fromEntries(
+                    Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+                  ),
+                  authored_label: fields.activityDetails.entryLocation,
+                })
+              : null;
         const rentalPlaces: {
           pickup?: z.infer<typeof corePlaceSchema>;
           return?: z.infer<typeof corePlaceSchema>;
@@ -510,6 +783,7 @@ export function createManualItemRepository(
                 ? { details: rentalDetails, places: rentalPlaces }
                 : {
                     ...(stayDetails ? { details: stayDetails, rooms: [] } : {}),
+                    ...(activityDetails ? { details: activityDetails, entryPlace } : {}),
                     place,
                   }),
               core: { title: fields.title, description: fields.description },
@@ -558,7 +832,7 @@ export function createManualItemRepository(
               schedule.end = coreStoredBoundary(row!, "end");
             payloads.push({ command: "SET_ITEM_SCHEDULE", payload: { schedule } });
           }
-          if (fields.location !== state.original.location)
+          if (fields.location !== state.original.location || placeDraft)
             payloads.push({ command: "SET_ITEM_PLACE", payload: { place } });
           if (json(fields.participation) !== json(state.original.participation))
             payloads.push({
@@ -596,6 +870,15 @@ export function createManualItemRepository(
             command: "SET_RENTAL_DETAILS",
             payload: { details: rentalDetails, places: rentalPlaces },
           });
+        if (
+          draft.mode === "EDIT" &&
+          family === "P6" &&
+          json(fields.activityDetails) !== json(state.original.activityDetails)
+        )
+          payloads.push({
+            command: "SET_ACTIVITY_DETAILS",
+            payload: { details: activityDetails, entryPlace },
+          });
         let graph = snapshot.graph;
         const commands = payloads.map((p, i) => {
           const revision =
@@ -625,7 +908,13 @@ export function createManualItemRepository(
         });
         if (state.attempt && json(state.attempt.commands) !== json(commands))
           throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
-        state.attempt = { fields: fieldsText, commands };
+        state.attempt = {
+          fields: fieldsText,
+          placeDraft: placeDraftText,
+          // Exact Place/provenance is intent data; rollback retries must not regenerate its clock.
+          place: structuredClone(place),
+          commands,
+        };
         return {
           commands,
           result: async () => {

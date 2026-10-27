@@ -21,8 +21,29 @@ export type StagedCaptureText = Readonly<{
   stagingId: number;
   text: string;
 }>;
-export type CaptureDraftItem = StagedCaptureItem | StagedCaptureText;
+export type CapturePastedImage = Readonly<{
+  token: string;
+  uri: string;
+  byteSize: number;
+  mimeType: string;
+  source: "clipboard";
+  representation: "item-provider";
+}>;
+export type StagedCapturePaste = Readonly<{
+  source: "clipboard";
+  stagingId: number;
+  token: string;
+  temporaryUri: string;
+  name: null;
+  typeHint: string;
+  size: number;
+  availability: "unverified";
+}>;
+export type CaptureDraftItem = StagedCaptureItem | StagedCaptureText | StagedCapturePaste;
+export type CaptureTripTarget = Readonly<{ id: string; name: string }> | null;
 export type CaptureDraftSnapshot = Readonly<{
+  tripTarget?: CaptureTripTarget;
+  targetRevision?: number;
   items: readonly CaptureDraftItem[];
   editorText: string;
   selecting: boolean;
@@ -67,7 +88,18 @@ export function createCaptureStaging(
   let hidden = false;
   let invocation = 0;
   let editorText = "";
+  let tripTarget: CaptureTripTarget | undefined;
+  let targetRevision = 0;
   let texts: readonly StagedCaptureText[] = [];
+  let pasted: readonly StagedCapturePaste[] = [];
+  const pasteReleases = new Map<string, (tokens: readonly string[]) => void>();
+  const releasePaste = (items: readonly StagedCapturePaste[]) => {
+    for (const item of items) {
+      const release = pasteReleases.get(item.token);
+      pasteReleases.delete(item.token);
+      release?.([item.token]);
+    }
+  };
   let draftSnapshot = emptyCaptureDraft;
   let snapshot = emptyCaptureStaging;
   let disposed = false;
@@ -79,9 +111,13 @@ export function createCaptureStaging(
     snapshot = next;
     draftSnapshot = Object.freeze({
       items: Object.freeze(
-        [...snapshot.items, ...texts].sort((a, b) => a.stagingId - b.stagingId),
+        [...snapshot.items, ...texts, ...pasted].sort(
+          (a, b) => a.stagingId - b.stagingId,
+        ),
       ),
       editorText,
+      ...(tripTarget !== undefined ? { tripTarget } : {}),
+      ...(targetRevision ? { targetRevision } : {}),
       selecting: snapshot.selecting,
       error: snapshot.error,
     });
@@ -94,8 +130,11 @@ export function createCaptureStaging(
   }
   function clear() {
     epoch += 1;
+    targetRevision += 1;
     editorText = "";
     texts = [];
+    releasePaste(pasted);
+    pasted = [];
     publish(emptyCaptureStaging);
   }
   return {
@@ -114,6 +153,71 @@ export function createCaptureStaging(
       disposed = false;
       hidden = false;
       publish({ ...snapshot, selecting: false, error: null });
+      return true;
+    },
+    // The immutable owner keys the launching draft. This is only its chosen prior.
+    setTripTarget(target: CaptureTripTarget) {
+      if (!draftOwner || !current() || snapshot.selecting) return false;
+      if (target && (!target.id || !target.name)) return false;
+      epoch += 1;
+      targetRevision += 1;
+      tripTarget = target ? Object.freeze({ ...target }) : null;
+      publish({ ...snapshot });
+      return true;
+    },
+    stagePastedImages(
+      images: readonly CapturePastedImage[],
+      release: (tokens: readonly string[]) => void,
+    ) {
+      const fresh = images.filter((item) => !pasteReleases.has(item.token));
+      const reject = () => {
+        release(fresh.map((item) => item.token));
+        return false;
+      };
+      if (!draftOwner || !current() || snapshot.selecting) return reject();
+      const supported = new Set([
+        "image/png",
+        "image/jpeg",
+        "image/heic",
+        "image/heif",
+        "image/webp",
+      ]);
+      if (
+        fresh.length > 10 ||
+        pasted.length + fresh.length > 10 ||
+        new Set(fresh.map((i) => i.token)).size !== fresh.length ||
+        fresh.some(
+          (i) =>
+            !i.token ||
+            i.source !== "clipboard" ||
+            i.representation !== "item-provider" ||
+            !i.uri.startsWith("file://") ||
+            !Number.isSafeInteger(i.byteSize) ||
+            i.byteSize <= 0 ||
+            !supported.has(i.mimeType),
+        ) ||
+        pasted.reduce((sum, i) => sum + i.size, 0) +
+          fresh.reduce((sum, i) => sum + i.byteSize, 0) >
+          20 * 1024 * 1024
+      )
+        return reject();
+      pasted = [
+        ...pasted,
+        ...fresh.map((item) => {
+          pasteReleases.set(item.token, release);
+          return Object.freeze({
+            source: "clipboard" as const,
+            stagingId: ++sequence,
+            token: item.token,
+            temporaryUri: item.uri,
+            name: null,
+            typeHint: item.mimeType,
+            size: item.byteSize,
+            availability: "unverified" as const,
+          });
+        }),
+      ];
+      publish({ ...snapshot });
       return true;
     },
     setEditorText(text: string) {
@@ -147,7 +251,9 @@ export function createCaptureStaging(
         roster.map((item) =>
           Object.freeze({
             ...item,
-            ...(item.source !== "magic_input" && item.identity
+            ...(item.source !== "magic_input" &&
+            item.source !== "clipboard" &&
+            item.identity
               ? { identity: Object.freeze({ ...item.identity }) }
               : {}),
           }),
@@ -211,6 +317,8 @@ export function createCaptureStaging(
     },
     remove(stagingId: number) {
       if (current()) {
+        releasePaste(pasted.filter((item) => item.stagingId === stagingId));
+        pasted = pasted.filter((item) => item.stagingId !== stagingId);
         texts = texts.filter((item) => item.stagingId !== stagingId);
         publish({
           ...snapshot,

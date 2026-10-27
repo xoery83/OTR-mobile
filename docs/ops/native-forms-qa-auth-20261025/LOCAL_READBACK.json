@@ -1,0 +1,205 @@
+{
+  "utc": "2026-10-25T04:19:01.268161+00:00",
+  "scope": "FORMS_QA_AUTH_AND_NORMAL_LOCAL_P3",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "034beec1-74ac-4358-b4b9-728651c03db3",
+  "itemId": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+  "simulatorId": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "metroPort": 8096,
+  "databaseRead": "READ_ONLY on dedicated Forms QA normal database; elevated read includes live WAL",
+  "trips": [
+    {
+      "account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "create_operation_id": "ba79c0e3-f6a9-4692-8016-06b575e2709d",
+      "name": "Forms QA P3 20261025",
+      "destination": null,
+      "start_date": null,
+      "end_date": null,
+      "created_at": "2026-10-25T04:15:57.287Z",
+      "updated_at": "2026-10-25T04:15:57.287Z",
+      "owner_person_id": null,
+      "accepted_at": null,
+      "selected_cover_asset_id": null
+    }
+  ],
+  "queue": [
+    {
+      "id": "ba79c0e3-f6a9-4692-8016-06b575e2709d",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "entity_type": "TRIP",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0,
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec"
+    },
+    {
+      "id": "a0d2842d-e8f9-47ba-bfa6-bde1b396cd74",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0,
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec"
+    },
+    {
+      "id": "55922aff-d66a-4592-be13-90806f75367f",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0,
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec"
+    }
+  ],
+  "pendingIntents": [
+    {
+      "account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "operation_id": "a0d2842d-e8f9-47ba-bfa6-bde1b396cd74",
+      "state": "BLOCKED",
+      "intent": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "command": "CREATE_ITEM",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "a0d2842d-e8f9-47ba-bfa6-bde1b396cd74",
+        "payload": {
+          "acl": {
+            "people": [],
+            "visibility": "GROUP"
+          },
+          "core": {
+            "description": null,
+            "title": "Forms QA Independent Stay"
+          },
+          "details": {
+            "permitted_checkin_from": null,
+            "permitted_checkin_until": null,
+            "permitted_checkout_by": null,
+            "property_name": null
+          },
+          "family": "P3",
+          "participation": {
+            "mode": "WHOLE_GROUP",
+            "people": [],
+            "selfPersonId": null
+          },
+          "place": {
+            "accepted_address": null,
+            "accepted_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_region": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "authored_address": null,
+            "authored_address_country": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_postal_code": null,
+            "authored_address_region": null,
+            "authored_label": "Synthetic Forms QA, Auckland",
+            "authored_text": null,
+            "location_input_revision": null,
+            "spatial_provenance_refs": null
+          },
+          "rooms": [],
+          "schedule": {
+            "end": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-10-30",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            },
+            "start": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-10-25",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            }
+          }
+        },
+        "target": {
+          "id": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+          "kind": "ITEM"
+        },
+        "tripId": "034beec1-74ac-4358-b4b9-728651c03db3"
+      }
+    },
+    {
+      "account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "operation_id": "55922aff-d66a-4592-be13-90806f75367f",
+      "state": "BLOCKED",
+      "intent": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+            "kind": "ITEM",
+            "revision": 1
+          }
+        ],
+        "command": "SET_ITEM_TEXT",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "55922aff-d66a-4592-be13-90806f75367f",
+        "payload": {
+          "description": null,
+          "title": "Forms QA Independent Stay \u00b7 Edited"
+        },
+        "target": {
+          "id": "5a18728b-ab6e-4020-bdd8-a0bdcee73f93",
+          "kind": "ITEM"
+        },
+        "tripId": "034beec1-74ac-4358-b4b9-728651c03db3"
+      }
+    }
+  ],
+  "canonicalItemCount": 0,
+  "cloudStatus": "CLOSED / NO_ATTEMPTS / NOT_SERVER_ACCEPTED",
+  "coldRestartPid": 33351,
+  "assertions": "PASS: one account/Trip, same P3 Item CREATE then SET, no queue attempt"
+}

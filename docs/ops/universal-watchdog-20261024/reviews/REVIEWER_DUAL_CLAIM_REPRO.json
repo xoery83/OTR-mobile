@@ -1,0 +1,10 @@
+{
+  "manualClaimPresent": true,
+  "watchAlsoClaimed": true,
+  "secondClosureInvocations": 1,
+  "result": {
+    "status": "CLOSED_VERIFIED",
+    "windowId": "78348fcce8b5d6cfa8be8607fd8e806d72e30426998f48f5a91613a88648ddf3"
+  },
+  "remoteOperations": 0
+}

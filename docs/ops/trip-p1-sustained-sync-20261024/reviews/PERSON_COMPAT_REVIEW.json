@@ -1,0 +1,26 @@
+{
+  "sha": "2f4a9264fb3089d284391016d942aac2b05ddeb0",
+  "parent": "3090db64a6a6a897ddce924b723af5b43f7cead1",
+  "status": "PASS_READY_FOR_EXACT_SQL_OWNER_AUTHORIZATION",
+  "findings": [],
+  "evidence": {
+    "actualIsolatedPgChecks": 49,
+    "actualTypedPgCoreChecks": 8,
+    "network": "none",
+    "DEV": "NOT_RUN",
+    "dependency": "Exact previously reviewed Root 69897aada204cb436888774935d4253ff3b025b1 backend/src/tripPersonCloudCreateHttp.ts (fixed Writer archive omits Root-only dependency)",
+    "dependencySha256": "b10264a6a7333ab9c12dfcb99ff3a11c7b7542181deb66af7bfcb7dfd71a0fd6",
+    "originalArchiveFirstRun": "Stopped only at missing Root-only module; raw error retained unchanged"
+  },
+  "migrationSha256": "45e21bc8988887b90b7bacc0a110f532f0f827bedebd8d924ed2b14e4c012094",
+  "rollbackSha256": "2cf85e61601e12fcdc14e8bed46e319348a41ab5f863687dfd2b25772f881a8d",
+  "helperPreimageMD5": "54d94b8e00ee7228cfe2d38085475089",
+  "helperPostimageMD5": "5c8c33ec3d6b9547451c64f67f769d4d",
+  "newAuthority": "Only PERSON helper may recognize exact existing redundant postgres-grantor non-admin/non-inherit/non-set row paired with supabase_admin admin/non-inherit/non-set row. No role membership, GRANT, owner, RLS or policy identity changes.",
+  "remaining": [
+    "Explicit Owner authorization for this new exact SQL delta.",
+    "DEV exact closed-state preflight/install/postimage/ACL verification not performed.",
+    "Refresh only helper postimage and artifact hashes in existing activation/closure/watchdog packet; preserve Actor/cutoff and other checks.",
+    "Actual Person and P1 Native/Backend readback remains unverified by this isolated review."
+  ]
+}

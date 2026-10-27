@@ -1,3 +1,9 @@
+import {
+  createLocalCoreCommitRepository,
+  type LocalCoreAuthorityDependencies,
+  type LocalCoreBaseline,
+  type LocalCoreSnapshot,
+} from "./localCoreCommitRepository";
 import { qualifyCoreTtr, type CoreTtrResult } from "../../domain/trip/tripCoreTtr";
 import type { TtrInput } from "../../domain/trip/ttr";
 import type * as SQLite from "expo-sqlite";
@@ -10,12 +16,13 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
-import { coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
+import { coreUuid, coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import {
   coreHashValue,
   validateCoreReadCollection,
 } from "../../domain/trip/tripCoreV2Read";
+import type { CoreReceiptProjection } from "../../domain/trip/tripCoreV2Receipt";
 import { validateCoreReceipt } from "../../domain/trip/tripCoreV2Receipt";
 import {
   emptyCoreGraph,
@@ -29,6 +36,7 @@ import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
 export type CoreDatabase = Pick<
   SQLite.SQLiteDatabase,
@@ -136,6 +144,10 @@ export function createTripCoreV2Repository(
   getAccountId: () => Promise<string>,
   hash: ImportHash,
   clock = () => new Date().toISOString(),
+  localAuthority: Omit<
+    LocalCoreAuthorityDependencies,
+    "readBaselineWithinTransaction"
+  > = {},
 ) {
   const captureContext = (tripId: string) =>
     captureAccountRequestContext(tripId, getAccountId);
@@ -187,6 +199,72 @@ export function createTripCoreV2Repository(
     }
     await assertContext(ctx);
     return graph;
+  }
+  async function localBaselineWithinTransaction(
+    ctx: AccountRequestContext,
+  ): Promise<LocalCoreBaseline | null> {
+    await assertContext(ctx);
+    await scope(ctx);
+    const accepted = await acceptedWithinTransaction(ctx);
+    const manual = await readLocalManualSnapshotWithinTransaction(
+      database,
+      getAccountId,
+      { manualReadSnapshot },
+      ctx,
+      accepted,
+    );
+    if (!manual) return null;
+    return {
+      graph: accepted?.graph ?? emptyCoreGraph(),
+      actor: manual.actor,
+      participatingPersonIds: manual.participatingPersonIds.length
+        ? manual.participatingPersonIds
+        : [...manual.actor.personIds],
+      certificate: accepted?.certificate ?? null,
+    };
+  }
+  const localCommits = createLocalCoreCommitRepository(
+    database,
+    getAccountId,
+    hash,
+    {
+      ...localAuthority,
+      readBaselineWithinTransaction: localBaselineWithinTransaction,
+    },
+    () => clock().replace(/\.(\d{3})Z$/, ".$1000Z"),
+  );
+  async function readLocalCombinedWithinTransaction(ctx: AccountRequestContext) {
+    if (
+      !("isInTransactionAsync" in database) ||
+      typeof database.isInTransactionAsync !== "function" ||
+      !(await database.isInTransactionAsync())
+    )
+      throw new Error("LOCAL_SOURCE_TRANSACTION_CAPABILITY_UNAVAILABLE");
+    await assertContext(ctx);
+    const baseline = await localBaselineWithinTransaction(ctx);
+    if (!baseline) return null;
+    const snapshot = await localCommits.readCommittedWithinTransaction(ctx, baseline);
+    await assertContext(ctx);
+    return snapshot;
+  }
+  async function combinedSnapshot(
+    ctx: AccountRequestContext,
+  ): Promise<LocalCoreSnapshot | null> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result: Awaited<
+        ReturnType<typeof localCommits.readCommittedWithinTransaction>
+      > | null = null;
+      await database.withTransactionAsync(async () => {
+        const baseline = await localBaselineWithinTransaction(ctx);
+        if (!baseline) return;
+        const snapshot = await localCommits.readCommittedWithinTransaction(ctx, baseline);
+        if (snapshot.certificate || snapshot.localRevision) result = snapshot;
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
   }
   async function acceptedTripIds() {
     return withAccountApplyGate(async () => {
@@ -529,6 +607,7 @@ export function createTripCoreV2Repository(
     return withAccountApplyGate(async () => {
       await assertContext(ctx);
       let result!: T;
+      let queued = false;
       await database.withTransactionAsync(async () => {
         await scope(ctx);
         const prepared = await prepare();
@@ -549,9 +628,10 @@ export function createTripCoreV2Repository(
                 "SET_STAY_DETAILS",
                 "SET_RENTAL_DETAILS",
                 "SET_TRANSPORT_DETAILS",
+                "SET_ACTIVITY_DETAILS",
               ].includes(c.command) ||
               (c.command === "CREATE_ITEM" &&
-                !["P1", "P3", "P4", "P5"].includes(
+                !["P1", "P3", "P4", "P5", "P6"].includes(
                   (c.payload as { family: string }).family,
                 )),
           ) ||
@@ -581,12 +661,14 @@ export function createTripCoreV2Repository(
             )?.experience_family;
           }
           if (
-            !["P1", "P3", "P4", "P5"].includes(String(family)) ||
+            !["P1", "P3", "P4", "P5", "P6"].includes(String(family)) ||
             (family !== "P3" && commands.some((c) => c.command === "SET_STAY_DETAILS")) ||
             (family !== "P4" &&
               commands.some((c) => c.command === "SET_RENTAL_DETAILS")) ||
             (family !== "P5" &&
               commands.some((c) => c.command === "SET_TRANSPORT_DETAILS")) ||
+            (family !== "P6" &&
+              commands.some((c) => c.command === "SET_ACTIVITY_DETAILS")) ||
             (family === "P5" &&
               commands.some((c) =>
                 ["SET_ITEM_SCHEDULE", "SET_ITEM_PLACE"].includes(c.command),
@@ -595,10 +677,12 @@ export function createTripCoreV2Repository(
             throw new Error("MANUAL_BATCH_INVALID");
         }
         for (const command of commands) await enqueueWithinTransaction(ctx, command);
+        queued = commands.length > 0;
         result = await prepared.result();
         await assertContext(ctx);
       });
       await assertContext(ctx);
+      if (queued) announceLedgerQueueWorkAvailable();
       return result;
     });
   }
@@ -824,6 +908,133 @@ export function createTripCoreV2Repository(
     });
     return receipt;
   }
+  // Lost-response recovery is read-only remotely. A future write retry is never made due early.
+  async function recoverP1Receipts(
+    ctx: AccountRequestContext,
+    transport: CoreReadTransport & {
+      receipt(
+        context: AccountRequestContext,
+        operationId: string,
+      ): Promise<CoreReceiptProjection | null>;
+    },
+  ) {
+    await assertContext(ctx);
+    await scope(ctx);
+    const rows = await database.getAllAsync<{
+      operation_id: string;
+      canonical_intent_text: string;
+      intent_sha256: string;
+      queue_id: string;
+      entity_id: string;
+      idempotency_key: string;
+      payload_json: string;
+    }>(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,op.id AS queue_id,op.entity_id,op.idempotency_key,op.payload_json
+       FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
+       WHERE i.account_id=? AND i.trip_id=? AND i.state IN ('BLOCKED','PENDING','IN_FLIGHT','APPLIED')
+       AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND' AND op.status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED')
+       AND op.claim_owner IS NULL AND op.attempt_count>0 AND op.failure_category IS NOT 'AUTH' ORDER BY i.created_at,i.operation_id`,
+      ctx.accountId,
+      ctx.tripId,
+    );
+    await assertContext(ctx);
+    const graph = await readGraph(ctx);
+    const accepted: typeof rows = [];
+    for (const row of rows) {
+      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      if (
+        command.tripId !== ctx.tripId ||
+        command.operationId !== row.operation_id ||
+        row.queue_id !== row.operation_id ||
+        row.idempotency_key !== row.operation_id ||
+        command.target.kind !== "ITEM" ||
+        command.target.id !== row.entity_id ||
+        row.payload_json !== row.canonical_intent_text ||
+        (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !==
+          row.intent_sha256
+      )
+        throw Error("CORE_RECOVERY_QUEUE_PIN");
+      const p1 =
+        command.command === "CREATE_ITEM"
+          ? (command.payload as { family: string }).family === "P1"
+          : [
+              "SET_ITEM_TEXT",
+              "SET_ITEM_SCHEDULE",
+              "SET_ITEM_PLACE",
+              "SET_ITEM_PARTICIPATION",
+            ].includes(command.command) &&
+            graph.itinerary_events.some(
+              (item) => item.id === command.target.id && item.experience_family === "P1",
+            );
+      if (!p1 || command.admission.mode !== "MANUAL") continue;
+      const result = await transport.receipt(ctx, command.operationId);
+      await assertContext(ctx);
+      if (
+        !result ||
+        result.projection !== "FULL" ||
+        !["APPLIED", "NO_CHANGE"].includes(result.receipt.outcome)
+      )
+        continue;
+      if (result.receipt.operationId !== command.operationId)
+        throw Error("CORE_RECOVERY_RECEIPT_PIN");
+      await applyReceipt(ctx, result.receipt);
+      accepted.push(row);
+    }
+    if (!accepted.length) return { recovered: 0 };
+    // Only a fully hashed authorized collection may prove canonical target revisions and remove optimistic intent.
+    await refresh(ctx, transport);
+    let recovered = 0;
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        for (const row of accepted) {
+          const current = await database.getFirstAsync<{
+            reconciled_revision: number | null;
+            body_json: string;
+            intent_sha256: string;
+          }>(
+            `SELECT i.reconciled_revision,i.intent_sha256,r.body_json FROM trip_core_pending_intents i
+             JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
+             WHERE i.account_id=? AND i.trip_id=? AND i.operation_id=? AND i.state='APPLIED'`,
+            ctx.accountId,
+            ctx.tripId,
+            row.operation_id,
+          );
+          if (
+            !current ||
+            current.reconciled_revision === null ||
+            current.intent_sha256 !== row.intent_sha256
+          )
+            continue;
+          const receipt = await validateCoreReceipt(JSON.parse(current.body_json), hash);
+          if (
+            receipt.actorAccountId !== ctx.accountId ||
+            receipt.tripId !== ctx.tripId ||
+            receipt.operationId !== row.operation_id ||
+            receipt.intentSha256 !== row.intent_sha256 ||
+            !["APPLIED", "NO_CHANGE"].includes(receipt.outcome)
+          )
+            throw Error("CORE_RECOVERY_RECEIPT_PIN");
+          const update = await database.runAsync(
+            `UPDATE sync_operations SET status='COMPLETED',next_attempt_at=NULL,failure_category=NULL,last_error_code=NULL,last_error_message=NULL,last_request_id=NULL,lease_expires_at=NULL,updated_at=?
+            WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND'
+            AND entity_id=? AND idempotency_key=? AND payload_json=? AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND claim_owner IS NULL AND failure_category IS NOT 'AUTH'`,
+            clock(),
+            row.operation_id,
+            ctx.accountId,
+            ctx.tripId,
+            row.entity_id,
+            row.operation_id,
+            row.canonical_intent_text,
+          );
+          recovered += update.changes;
+        }
+        await assertContext(ctx);
+      });
+    });
+    return { recovered };
+  }
   async function revoke(ctx: AccountRequestContext, accessRevision: number) {
     if (!Number.isSafeInteger(accessRevision) || accessRevision < 1)
       throw new Error("INVALID_ACCESS_REVISION");
@@ -1006,6 +1217,47 @@ export function createTripCoreV2Repository(
       new Set(operations.map((o) => o.operationId)),
       certifiedBase,
     );
+    // Reuse the verified local journal for P2; only Manual-owned targets join this reader.
+    const journalAvailable = await database.getFirstAsync(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='local_core_authority_commits'",
+    );
+    if (
+      journalAvailable &&
+      (await database.getFirstAsync(
+        "SELECT 1 FROM local_core_authority_commits WHERE account_id=? AND trip_id=? AND authority_kind='LOCAL_MANUAL' LIMIT 1",
+        ctx.accountId,
+        ctx.tripId,
+      ))
+    ) {
+      const local = await localCommits.readCommittedWithinTransaction(ctx, {
+        graph: projected.graph,
+        actor,
+        participatingPersonIds: projected.participatingPersonIds.length
+          ? projected.participatingPersonIds
+          : [...actor.personIds],
+        certificate: projected.cert,
+      });
+      const localFlights = local.graph.trip_flight_intents.filter(
+        (r) =>
+          local.perTargetAuthority[`ITEM:${r.event_id}`]?.authority === "LOCAL_MANUAL",
+      );
+      if (localFlights.length) {
+        Object.assign(projected.graph, local.graph);
+        for (const flight of localFlights)
+          projected.predictedIds.add(String(flight.event_id));
+        for (const receipt of local.receipts.filter(
+          (r) =>
+            r.authority === "LOCAL_MANUAL" &&
+            localFlights.some((f) => f.event_id === r.target.id),
+        ))
+          operations.push({
+            operationId: receipt.operationId,
+            sha256: receipt.intentSha256,
+            state: "LOCAL_COMMITTED",
+            receiptSha256: receipt.receiptSha256,
+          });
+      }
+    }
     const fingerprint = await coreHashValue(
       "otr-local-manual-read-v1",
       {
@@ -1042,17 +1294,20 @@ export function createTripCoreV2Repository(
       result.pages,
     );
   }
-  async function resume(ctx: AccountRequestContext) {
+  async function resume(ctx: AccountRequestContext, operationId?: string) {
+    if (operationId) coreUuid.parse(operationId);
     await withAccountApplyGate(async () => {
       await assertContext(ctx);
       await scope(ctx);
       await database.withTransactionAsync(async () => {
         await database.runAsync(
-          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT'))",
+          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT')) AND (? IS NULL OR id=?)",
           ctx.accountId,
           ctx.tripId,
           ctx.accountId,
           ctx.tripId,
+          operationId ?? null,
+          operationId ?? null,
         );
         await assertContext(ctx);
       });
@@ -1079,6 +1334,10 @@ export function createTripCoreV2Repository(
     readGraph,
     manualReadSnapshot,
     acceptedSnapshot,
+    combinedSnapshot,
+    readLocalCombinedWithinTransaction,
+    commitLocal: localCommits.commit,
+    prepareLocalManualSparse: localCommits.prepareManualSparse,
     // Caller must hold the Account apply gate and the database transaction.
     readAcceptedSnapshotWithinTransaction: acceptedWithinTransaction,
     readTtr,
@@ -1095,6 +1354,7 @@ export function createTripCoreV2Repository(
     beginRefresh,
     install,
     applyReceipt,
+    recoverP1Receipts,
     revoke,
     day,
   };

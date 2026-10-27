@@ -17,6 +17,7 @@ type NativeReceiver = {
     timeoutMs: number,
     expiresMs: number,
   ): Promise<unknown>;
+  receiveUniversal?: NativeReceiver["receive"];
   cancel(id: string): void;
   release(id: string): void;
 };
@@ -43,10 +44,7 @@ export function bindPublicationCatalogNativeDeadline(
 
 // Explicit dormant factory; no global fetch, application caller or caller-supplied capability flag.
 export async function createPublicationCatalogNativeFetch(): Promise<typeof fetch> {
-  const [{ requireNativeModule }, { Platform }] = await Promise.all([
-    import("expo"),
-    import("./publicationCatalogPlatform"),
-  ]);
+  const { requireNativeModule, Platform } = await import("./publicationCatalogPlatform");
   if (Platform.OS !== "ios") unavailable();
   let native: NativeReceiver;
   try {
@@ -59,7 +57,7 @@ export async function createPublicationCatalogNativeFetch(): Promise<typeof fetc
       return (
         Platform.OS === "ios" &&
         requireNativeModule("PublicationCatalogReceive") === native &&
-        native.contractVersion() === 1 &&
+        [1, 2].includes(native.contractVersion()) &&
         typeof native.receive === "function" &&
         typeof native.cancel === "function" &&
         typeof native.release === "function"
@@ -92,7 +90,9 @@ export async function createPublicationCatalogNativeFetch(): Promise<typeof fetc
         unavailable();
       const fields = headers as Record<string, string>;
       const bearer = /^Bearer ([\x21-\x7e]{1,8192})$/.exec(fields.Authorization ?? "");
-      if (!bearer || fields["X-OTR-Publication-Catalog-Version"] !== "1") unavailable();
+      const version = fields["X-OTR-Publication-Catalog-Version"];
+      if (!bearer || (version !== "1" && version !== "2")) unavailable();
+      if (version === "2" && (native.contractVersion() !== 2 || typeof native.receiveUniversal !== "function")) unavailable();
       const deadlineMs = expires ?? Date.now() + 30_000;
       const remaining = Math.min(30_000, deadlineMs - Date.now());
       if (remaining <= 0) throw new RequestBoundaryError("REQUEST_TIMEOUT");
@@ -102,7 +102,7 @@ export async function createPublicationCatalogNativeFetch(): Promise<typeof fetc
       boundary.signal.addEventListener("abort", cancel, { once: true });
       try {
         const result = await boundary.run(() =>
-          native.receive(
+          (version === "2" ? native.receiveUniversal!.bind(native) : native.receive.bind(native))(
             id,
             match[1],
             bearer[1],

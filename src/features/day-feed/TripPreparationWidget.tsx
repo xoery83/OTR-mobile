@@ -1,3 +1,4 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText as Text } from "@/ui/controls";
@@ -78,9 +79,13 @@ export function TripPreparationWidget({
         {copy.title}
       </Text>
       {!ready ? (
-        <Text style={styles.meta}>
-          {state === "LOADING" ? copy.loading : copy.unavailable}
-        </Text>
+        state === "LOADING" ? (
+          <DayReadSkeleton compact />
+        ) : (
+          <Text accessibilityRole="alert" style={styles.meta}>
+            {copy.unavailable}
+          </Text>
+        )
       ) : value.itemCount === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.meta}>{copy.empty}</Text>
@@ -184,7 +189,7 @@ export function TripPreparationWidget({
           </View>
         </>
       )}
-      {ready ? (
+      {ready || setup ? (
         <TripSetupRows
           setup={setup}
           metadata={metadata}

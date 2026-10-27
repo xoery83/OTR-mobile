@@ -1,0 +1,22 @@
+{
+  "fixed_sha": "0cbf2f873a69e9dae6280e09cbf2091bb3b43b95",
+  "scope": "Pure SQL preparation renderer/test/runbook; no re-review of fixed migrations",
+  "conclusion": "PASS_LOCAL_PREPARATION",
+  "findings": [],
+  "validation": {
+    "unit": "9 local tests PASS",
+    "independent": "13 exact unique postimage signatures/expected hashes sourced byte-identically from independently PG-verified9c093e4 rollback; pure rendering boundary checks PASS",
+    "authority": "Only approvedActor/cutoff policy and four existing service logins/limit1/permanent validity; no grants, password provisioning, network or execution mode",
+    "closure": "Same advisory lock; exact policy scope; NOLOGIN/session termination/disable; no business deletion; independent closed_verified required",
+    "lifecycle": "900s deployment safety separate from successful persistent normal Account service; close only setup/error",
+    "files": "New0700 directory/0600 SQL+manifest; Gate/SQLhash binding; refuse overwrite"
+  },
+  "not_run": [
+    "DEV",
+    "GUI",
+    "Provider",
+    "SQL execution from this renderer",
+    "Deployment"
+  ],
+  "prior_sql_evidence": "Reuse37+8 isolated PG checks from9c093e4; no new SQL implementation changes"
+}

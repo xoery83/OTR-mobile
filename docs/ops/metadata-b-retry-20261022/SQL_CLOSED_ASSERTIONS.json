@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "gateFlags": {
+    "core": false,
+    "metadata": false,
+    "source": false,
+    "sourcePdf": false,
+    "trip": false
+  },
+  "rolesNOLOGIN": true,
+  "metadataReceiptCount": 0,
+  "functionAndTableCatalogEqualsApprovedInstalled": true
+}

@@ -1,4 +1,9 @@
 import {
+  personCloudCreateKind,
+  personCloudCreateSchema,
+  personCloudCreateReceiptSchema,
+} from "@/domain/trip/tripPersonCloudCreate";
+import {
   assertAccountRequestContext,
   captureAccountRequestContext,
   withAccountApplyGate,
@@ -12,28 +17,14 @@ import {
   type LocalPersonNameSlot,
 } from "@/domain/trip/localTripPerson";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
-import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
+import { tripCreateWireRequestSchema as tripCreateRequestSchema } from "@/domain/trip/tripCreateWireContract";
 import type { LedgerReadDatabase } from "./ledgerReadRepository";
 
-// Called inside the existing Trip create transaction; never starts or commits one.
-export async function initializeLocalTripPersons(
+export async function requireLocalTripPersonCreator(
   database: LedgerReadDatabase,
   context: AccountRequestContext,
   account: () => Promise<string>,
-  input: readonly LocalPersonNameSlot[],
-  clock = () => new Date().toISOString(),
 ) {
-  const tripId = coreUuid.parse(context.tripId);
-  const slots = input
-    .map((slot) => localPersonNameSlotSchema.parse(slot))
-    .map((slot) => ({ ...slot, displayName: slot.displayName.trim() }))
-    .filter((slot) => slot.displayName.length > 0);
-  if (
-    new Set(slots.map((slot) => slot.operationId)).size !== slots.length ||
-    new Set(slots.map((slot) => slot.personId)).size !== slots.length
-  )
-    throw new Error("TRIP_PERSON_DUPLICATE_INTENT");
-  const saved: LocalPersonCreate[] = [];
   await assertAccountRequestContext(context, account);
   const creator = await database.getFirstAsync<{
     operationId: string;
@@ -59,15 +50,158 @@ export async function initializeLocalTripPersons(
      AND op.operation_type='CREATE_TRIP' AND op.id=op.idempotency_key
      AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE','COMPLETED')`,
     context.accountId,
-    tripId,
+    context.tripId,
   );
   if (!creator) throw new Error("TRIP_PERSON_LOCAL_CREATOR_REQUIRED");
   const create = tripCreateRequestSchema.parse({
     operationId: creator.operationId,
     ...JSON.parse(creator.payload),
   });
-  if (create.tripId !== tripId || create.operationId !== creator.operationId)
+  if (create.tripId !== context.tripId || create.operationId !== creator.operationId)
     throw new Error("TRIP_PERSON_CREATE_BINDING_INVALID");
+  await assertAccountRequestContext(context, account);
+  return creator;
+}
+
+/** Caller holds the Account gate/transaction and the existing local creator proof. */
+export async function readLocalTripPersonRosterWithinTransaction(
+  database: LedgerReadDatabase,
+  context: AccountRequestContext,
+  account: () => Promise<string>,
+  expectedTripCreateOperationId: string,
+) {
+  const creator = await requireLocalTripPersonCreator(database, context, account);
+  if (creator.operationId !== expectedTripCreateOperationId)
+    throw new Error("TRIP_PERSON_CREATE_BINDING_INVALID");
+  const rows = await database.getAllAsync<{
+    operationId: string;
+    personId: string;
+    displayName: string;
+    payload: string;
+    kind: string;
+  }>(
+    `SELECT op.id AS operationId,m.id AS personId,m.display_name AS displayName,
+       op.payload_json AS payload,op.operation_type AS kind
+     FROM sync_operations op JOIN ledger_members m
+       ON m.id=op.entity_id AND m.journey_id=op.trip_id
+     WHERE op.owner_user_id=? AND op.trip_id=? AND op.entity_type='TRIP_PERSON'
+       AND op.operation_type IN (?,?) AND op.id=op.idempotency_key
+       AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')
+       AND m.status='local' AND m.role IS NULL
+       AND m.participation_revision IS NULL AND m.participation_active IS NULL
+     ORDER BY m.id,op.id`,
+    context.accountId,
+    context.tripId,
+    localPersonCreateKind,
+    personCloudCreateKind,
+  );
+  const roster: LocalPersonCreate[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const authored =
+      row.kind === personCloudCreateKind
+        ? personCloudCreateSchema.parse(JSON.parse(row.payload))
+        : null;
+    const parsed = localPersonCreateSchema.safeParse(
+      authored
+        ? {
+            version: 1,
+            operationId: authored.operationId,
+            personId: authored.personId,
+            tripId: authored.tripId,
+            accountId: context.accountId,
+            tripCreateOperationId: authored.tripCreateOperationId,
+            displayName: authored.displayName,
+          }
+        : JSON.parse(row.payload),
+    );
+    if (!parsed.success) throw new Error("TRIP_PERSON_INTENT_REUSE_MISMATCH");
+    const command = parsed.data;
+    if (
+      command.operationId !== row.operationId ||
+      command.personId !== row.personId ||
+      command.tripId !== context.tripId ||
+      command.accountId !== context.accountId ||
+      command.tripCreateOperationId !== creator.operationId ||
+      command.displayName !== row.displayName ||
+      seen.has(command.personId)
+    )
+      throw new Error("TRIP_PERSON_INTENT_REUSE_MISMATCH");
+    if (command.personId === creator.personId)
+      throw new Error("TRIP_PERSON_CREATOR_ID_RESERVED");
+    seen.add(command.personId);
+    roster.push(command);
+  }
+  // Newer clients may use an immutable owning Person create/readback receipt for local manual drafts.
+  // This is not an Account link or a Core/Admission certificate. Old private intents are unchanged.
+  if (
+    await database.getFirstAsync(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='trip_person_cloud_create_receipts'",
+    )
+  ) {
+    const accepted = await database.getAllAsync<{
+      receipt_json: string;
+      operation_id: string;
+      person_id: string;
+      display_name: string;
+      payload_json: string;
+    }>(
+      "SELECT receipt.receipt_json,receipt.operation_id,receipt.person_id,m.display_name,op.payload_json FROM trip_person_cloud_create_receipts receipt JOIN ledger_members m ON m.id=receipt.person_id AND m.journey_id=receipt.trip_id JOIN sync_operations op ON op.id=receipt.operation_id AND op.owner_user_id=receipt.account_id WHERE receipt.account_id=? AND receipt.trip_id=? AND op.operation_type=? AND op.status='COMPLETED' AND m.status='unlinked'",
+      context.accountId,
+      context.tripId,
+      personCloudCreateKind,
+    );
+    for (const row of accepted) {
+      const receipt = personCloudCreateReceiptSchema.parse(JSON.parse(row.receipt_json));
+      const request = personCloudCreateSchema.parse(JSON.parse(row.payload_json));
+      if (
+        receipt.actorAccountId !== context.accountId ||
+        receipt.request.operationId !== row.operation_id ||
+        receipt.request.tripCreateOperationId !== creator.operationId ||
+        receipt.person.personId !== row.person_id ||
+        receipt.person.tripId !== context.tripId ||
+        receipt.person.displayName !== row.display_name ||
+        JSON.stringify(receipt.request) !== JSON.stringify(request)
+      )
+        throw Error("PERSON_CLOUD_PROOF_MISMATCH");
+      if (!seen.has(row.person_id)) {
+        seen.add(row.person_id);
+        roster.push({
+          version: 1,
+          operationId: row.operation_id,
+          personId: row.person_id,
+          tripId: context.tripId!,
+          accountId: context.accountId,
+          tripCreateOperationId: creator.operationId,
+          displayName: row.display_name,
+        });
+      }
+    }
+  }
+  await assertAccountRequestContext(context, account);
+  return roster;
+}
+
+// Called inside the existing Trip create transaction; never starts or commits one.
+export async function initializeLocalTripPersons(
+  database: LedgerReadDatabase,
+  context: AccountRequestContext,
+  account: () => Promise<string>,
+  input: readonly LocalPersonNameSlot[],
+  clock = () => new Date().toISOString(),
+) {
+  const tripId = coreUuid.parse(context.tripId);
+  const slots = input
+    .map((slot) => localPersonNameSlotSchema.parse(slot))
+    .map((slot) => ({ ...slot, displayName: slot.displayName.trim() }))
+    .filter((slot) => slot.displayName.length > 0);
+  if (
+    new Set(slots.map((slot) => slot.operationId)).size !== slots.length ||
+    new Set(slots.map((slot) => slot.personId)).size !== slots.length
+  )
+    throw new Error("TRIP_PERSON_DUPLICATE_INTENT");
+  const saved: LocalPersonCreate[] = [];
+  const creator = await requireLocalTripPersonCreator(database, context, account);
   for (const slot of slots) {
     if (slot.personId === creator.personId)
       throw new Error("TRIP_PERSON_CREATOR_ID_RESERVED");

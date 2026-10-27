@@ -1,0 +1,20 @@
+{
+  "sourceSHA": "397c5dd3",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "status": "NATIVE_AIRPORT_DRAFT_SELECTION_AND_ZONE_FALLBACK_OBSERVED",
+  "dst": "FORWARD_FORMATTING_AND_EXISTING_PENDING_GAP_FOLD_REJECTION_TESTED; NATIVE_REVERSE_RESOLUTION_NOT_IMPLEMENTED",
+  "screenshots": [
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/airport-auto-zones-dark.png",
+      "sha256": "e25abdc5fe98b2afe55148b118a0f0cff082e9aed6eb12b60ab125fb730237a7"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/airport-auto-zones-en.png",
+      "sha256": "ff73815db4daf2e350e3327a67e813a862e11a31572ca07625e73b8f76dc5cd3"
+    },
+    {
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-p2-form/airport-zone-fallback.png",
+      "sha256": "49bd2874f1b16c83b7c8400af7e50edf114a1b52cd480072a4fd32c53e9e5cab"
+    }
+  ]
+}

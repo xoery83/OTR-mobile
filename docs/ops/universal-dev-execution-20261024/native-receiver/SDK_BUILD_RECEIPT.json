@@ -1,0 +1,70 @@
+{
+  "utc": "2026-10-24T10:12:37.366350+00:00",
+  "sdkCompile": "PASS",
+  "registrationPresent": true,
+  "infoComparison": {
+    "CFBundleIdentifier": {
+      "equal": true,
+      "before": "com.xoery.otrmobile",
+      "candidate": "com.xoery.otrmobile"
+    },
+    "CFBundleExecutable": {
+      "equal": true,
+      "before": "OTRMobile",
+      "candidate": "OTRMobile"
+    },
+    "CFBundleVersion": {
+      "equal": true,
+      "before": "1",
+      "candidate": "1"
+    },
+    "CFBundleShortVersionString": {
+      "equal": true,
+      "before": "0.1.0",
+      "candidate": "0.1.0"
+    },
+    "CFBundleURLTypes": {
+      "equal": true,
+      "before": [
+        {
+          "CFBundleURLSchemes": [
+            "otrmobile",
+            "com.xoery.otrmobile"
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "CFBundleURLSchemes": [
+            "otrmobile",
+            "com.xoery.otrmobile"
+          ]
+        }
+      ]
+    },
+    "NSMicrophoneUsageDescription": {
+      "equal": true,
+      "before": "Use the microphone only when you choose voice input to transcribe travel plans on this device.",
+      "candidate": "Use the microphone only when you choose voice input to transcribe travel plans on this device."
+    },
+    "NSSpeechRecognitionUsageDescription": {
+      "equal": true,
+      "before": "Convert your spoken travel plans into editable text using on-device speech recognition.",
+      "candidate": "Convert your spoken travel plans into editable text using on-device speech recognition."
+    }
+  },
+  "candidateBinarySHA256": "2744b0ca7ab1bef6be5159a486ecd0de1bb438fbcb4b10149ce61a78c76963d3",
+  "candidateModuleSymbols": {
+    "ReceiptOcrModule": true,
+    "LocalDictationModule": true,
+    "ImagePasteModule": true,
+    "PlaceSearchModule": true,
+    "PublicationCatalogReceiveModule": true
+  },
+  "dataBeforeInstall": {
+    "Documents/SQLite/otr-mobile.db": "825e1cba193c6f3decc26992703d530d9592e7d38775cfdd0d0cc714635f71fb",
+    "Documents/SQLite/otr-mobile.db-wal": null,
+    "Documents/otr-native-qa-read-budget-v1.json": "d1316736afb8dbc813ba51a1ac25200621f1a01ba91fc05f15b4996f3f74f367"
+  },
+  "candidateInstalled": false
+}

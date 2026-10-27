@@ -5,13 +5,19 @@ import type { UiColors } from "@/ui/palette";
 import { UiTextInput as TextInput } from "@/ui/forms";
 import { LocalOperationsDiagnostics } from "./LocalOperationsDiagnostics";
 import { UiFoundationFixture } from "@/ui/UiFoundationFixture";
-import { useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { readDiagnosticsDebugMode } from "@/data/repositories/defaultLedgerReportingRepository";
 import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useFoundationDiagnostics } from "@/hooks/useFoundationDiagnostics";
+
+const NativeTripQaDiagnostics = lazy(() =>
+  import("./NativeTripQaDiagnostics").then((module) => ({
+    default: module.NativeTripQaDiagnostics,
+  })),
+);
 
 export function FoundationDiagnosticsScreen() {
   useUiLocale();
@@ -96,7 +102,14 @@ export function FoundationDiagnosticsScreen() {
         )}
 
         {__DEV__ && transportMode === "dev" && debugMode ? (
-          <LocalOperationsDiagnostics />
+          <>
+            {process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE ? (
+              <Suspense fallback={null}>
+                <NativeTripQaDiagnostics />
+              </Suspense>
+            ) : null}
+            <LocalOperationsDiagnostics />
+          </>
         ) : null}
         {__DEV__ && transportMode === "dev" ? (
           <View style={styles.authHarness}>

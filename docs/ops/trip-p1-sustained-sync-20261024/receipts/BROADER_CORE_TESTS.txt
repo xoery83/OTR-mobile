@@ -1,0 +1,32 @@
+
+ RUN  v4.1.11 /private/tmp/otr-trip-p1-sustained-sync-20261024
+
+ ❯ src/data/repositories/tripLocalManualReadRepository.test.ts (17 tests | 1 failed) 1838ms
+   × committed pending hotel and floating 09:00 survive a fresh local reader with no travel timezone 101ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/repositories/tripLocalManualReadRepository.test.ts > committed pending hotel and floating 09:00 survive a fresh local reader with no travel timezone
+Error: DAY_ZONE_INVALID
+ ❯ dayViewContext src/domain/trip/dayReadModel.ts:104:11
+    102|   const zone = typeof input === "string" ? input : input.zone;
+    103|   if (typeof zone !== "string" || !zone || zone !== zone.trim() || /^[…
+    104|     throw new Error("DAY_ZONE_INVALID");
+       |           ^
+    105|   localCalendarDate("2000-01-01T00:00:00Z", zone);
+    106|   return { zone };
+ ❯ Object.query src/domain/trip/tripCoreV2DayFeed.ts:226:23
+ ❯ Object.query src/domain/trip/tripCoreV2P1P3DayFeed.ts:89:28
+ ❯ Object.query src/domain/trip/tripCoreV2P4DayFeed.ts:84:26
+ ❯ Object.query src/domain/trip/tripCoreV2P5DayFeed.ts:89:26
+ ❯ Object.query src/domain/trip/tripCoreV2P6DayFeed.ts:98:26
+ ❯ Module.selectTodaysJourney src/domain/trip/todaysJourney.ts:43:28
+ ❯ src/data/repositories/tripLocalManualReadRepository.test.ts:439:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 62 passed (63)
+   Start at  13:02:25
+   Duration  5.83s (transform 1.33s, setup 0ms, import 2.13s, tests 9.59s, environment 1ms)

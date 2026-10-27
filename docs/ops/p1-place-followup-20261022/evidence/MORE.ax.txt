@@ -1,0 +1,7 @@
+The following is a diff from the previous accessibility tree for Window: "OTR MT Correction 01 QA" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~					102 button Description: Beijing Hotel NUO Forbidden City, 33 East Chang An Avenue, Dongcheng District, Beijing 100004, China, Secondary Actions: Cancel
++					103 button Description: UrCove by HYATT Beijing Forbidden City, Nanheyan Avenue, Beijing, China, Secondary Actions: Cancel
++					104 button Description: Grand Hotel Beijing Forbidden City, 中国北京市东城区东长安街35号, Secondary Actions: Cancel
++					105 button Secondary Actions: Cancel, Description: Happy Dragon Imperial Garden Courtyard Beijing Forbidden City Newly renovated Fluent English speaking, Beijing, China
++					106 button Secondary Actions: Cancel, Description: Jingshan Garden Courtyard Hotel Beijing Forbidden City Newly renovated Tianmen Wangfujing Gardenhutong BejjingCourtyard, Donghuangchengenbei Street, Beijing, China
++					107 button Description: Beijin Village, Beijin Village, Yilan City, Yilan County 260, Taiwan, Secondary Actions: Cancel

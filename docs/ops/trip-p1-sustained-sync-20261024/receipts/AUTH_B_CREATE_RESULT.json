@@ -1,0 +1,23 @@
+{
+  "status": "NEW_SYNTHETIC_IDENTITY_RETURNED_NOT_NORMAL_AUTH_VERIFIED",
+  "label": "B",
+  "attemptOrdinal": 1,
+  "attempts": 1,
+  "diagnostics": [
+    {
+      "attempt": 1,
+      "outcome": "HTTP_RESPONSE",
+      "httpStatus": 200,
+      "category": "HTTP_SUCCESS",
+      "providerRequestId": "01a16b83-8e1a-70fc-8c4d-d6909ba989e2",
+      "sdkCode": null
+    }
+  ],
+  "receipt": {
+    "id": "ec5bd6e9-13ee-4789-95fa-98be6678f7e6",
+    "email": "otr.ad5.sustained.20261024.b@example.invalid",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "newlyCreated": true,
+    "createdAt": "2026-10-24T01:25:47.14728Z"
+  }
+}

@@ -24,7 +24,7 @@ afterEach(() => {
   token.mockReset();
 });
 
-it.each(["", "not a URL"])(
+it.each([undefined, "", "not a URL"])(
   "classifies a missing or invalid public API base before auth or fetch (%s)",
   async (baseUrl) => {
     vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", baseUrl);

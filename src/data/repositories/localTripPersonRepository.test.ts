@@ -43,7 +43,7 @@ const slot = (displayName: string): LocalPersonNameSlot => ({
   personId: randomUUID(),
 });
 
-async function fixture() {
+async function fixture(structured = false) {
   const folder = mkdtempSync(join(tmpdir(), "otr-local-person-"));
   folders.push(folder);
   const path = join(folder, "owned.db");
@@ -85,7 +85,12 @@ async function fixture() {
   const trips = createTripRepository(database, getAccount, core, () => now);
   const tripId = randomUUID();
   const createOperationId = randomUUID();
-  await trips.createTrip({ tripId, operationId: createOperationId, name: "Name only" });
+  await trips.createTrip({
+    tripId,
+    operationId: createOperationId,
+    name: "Name only",
+    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
+  });
   const owner = sql
     .prepare("SELECT person_id AS id FROM local_trip_ledger_bindings")
     .get() as { id: string };
@@ -359,4 +364,32 @@ it("keeps pending names through certified bootstrap without adding them to the c
   expect((await f.read()).find((p) => p.personId === pending.personId)?.displayName).toBe(
     "Tina",
   );
+});
+
+it("preserves V2 structured CREATE proof while initializing and reading named travelers", async () => {
+  const f = await fixture(true);
+  const names = [
+    slot("Softer"),
+    slot("Maggie"),
+    slot("Celine"),
+    slot("Judy"),
+    slot("Eyan"),
+    slot("George"),
+  ];
+  await f.initialize(names);
+  expect((await f.read()).filter((p) => p.localState === "LOCAL_PENDING")).toHaveLength(
+    6,
+  );
+  f.reopen();
+  expect((await f.read()).filter((p) => p.localState === "LOCAL_PENDING")).toHaveLength(
+    6,
+  );
+  const row = f
+    .sql()
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(f.createOperationId) as { payload_json: string };
+  expect(JSON.parse(row.payload_json)).toMatchObject({
+    formatVersion: 2,
+    destinations: [],
+  });
 });

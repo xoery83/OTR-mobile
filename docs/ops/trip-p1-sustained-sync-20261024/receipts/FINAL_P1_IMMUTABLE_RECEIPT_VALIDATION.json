@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-24T07:06:34.726Z",
+  "actualIndependentSqlReadback": true,
+  "immutableReceiptsVerified": [
+    {
+      "operationId": "ec17119e-14cd-42d8-b40c-a394052e5a01",
+      "receiptSha256": "655702759627d2d14300b2abad21066483f6831aec3f00e8d0c1af0dda6e34d4",
+      "command": "CREATE_ITEM"
+    },
+    {
+      "operationId": "1a9d006e-6554-4780-824c-09cf3b37ef7b",
+      "receiptSha256": "4b0b85bae9340156b6c1d2d60ca947c1c0d5f918f60b4be17883577fbcb1daa5",
+      "command": "CREATE_ITEM"
+    },
+    {
+      "operationId": "f941cc8f-dbcb-4f0a-bcbd-b0aff55337e6",
+      "receiptSha256": "7cde8e7ddf343ae22a7926e3dea2695023459ac3beea97065f714cc50bc0552e",
+      "command": "SET_ITEM_TEXT"
+    },
+    {
+      "operationId": "7d00f8dd-0d6d-448d-9025-67bad5a5931d",
+      "receiptSha256": "26ce28b892ec7dd8f6557f735086e3e636bdf86365255f2c13d29d3da9efdaf1",
+      "command": "SET_ITEM_SCHEDULE"
+    },
+    {
+      "operationId": "720b1c0e-5694-46ab-9854-5948c111df5f",
+      "receiptSha256": "721dfd566616e5ad81de4a15311a0081192eddabd2743ca32cc48696f173accd",
+      "command": "SET_ITEM_PLACE"
+    },
+    {
+      "operationId": "733ceb22-034e-44f9-a024-ff0d8ad61c60",
+      "receiptSha256": "e51584389226af0f4702c179c0d58ede77ba41dc948509cc4bc8751071fe626e",
+      "command": "SET_ITEM_PARTICIPATION"
+    },
+    {
+      "operationId": "3334e39a-7f3b-4045-81e4-38e469c50dbf",
+      "receiptSha256": "c28d157a5194cc11ae06612f97d5c35c0f39a47f3fcba408261aac97e581eb37",
+      "command": "SET_ITEM_TEXT"
+    }
+  ],
+  "finalItemRevision": 6,
+  "fieldsAndParticipantsMatch": true,
+  "completeDestinationListsPreserved": true,
+  "ledgerCurrency": "USD",
+  "remoteReads": 0
+}

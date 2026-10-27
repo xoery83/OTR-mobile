@@ -1,16 +1,36 @@
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import type { DayRowRenderer } from "./rendererContribution";
-import { createCoreStayRenderer } from "./coreStayRenderer";
-import { createCoreRentalRenderer } from "./coreRentalRenderer";
-import { createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
-import { createCoreTicketedActivityRenderer } from "./coreTicketedActivityRenderer";
+import { createCoreP1Renderer, type CoreP1PresentationActions } from "./coreP1Renderer";
+import {
+  createCoreStayRenderer,
+  type CoreStayPresentationActions,
+} from "./coreStayRenderer";
+import {
+  createCoreRentalRenderer,
+  type CoreRentalPresentationActions,
+} from "./coreRentalRenderer";
+import {
+  type CoreScheduledTransportPresentationActions,
+  createCoreScheduledTransportRenderer,
+} from "./coreScheduledTransportRenderer";
+import {
+  createCoreTicketedActivityRenderer,
+  type CoreActivityPresentationActions,
+} from "./coreTicketedActivityRenderer";
 
 export function createCoreExperienceRenderer(
   projection: CoreFlightDayProjection,
+  actions?: CoreP1PresentationActions &
+    CoreStayPresentationActions &
+    CoreRentalPresentationActions &
+    CoreScheduledTransportPresentationActions &
+    CoreActivityPresentationActions,
 ): DayRowRenderer {
-  const stay = createCoreStayRenderer(projection);
-  const rental = createCoreRentalRenderer(projection);
-  const transport = createCoreScheduledTransportRenderer(projection);
-  const activity = createCoreTicketedActivityRenderer(projection);
-  return (props) => stay(props) ?? rental(props) ?? transport(props) ?? activity(props);
+  const p1 = createCoreP1Renderer(projection, actions);
+  const stay = createCoreStayRenderer(projection, actions);
+  const rental = createCoreRentalRenderer(projection, actions);
+  const transport = createCoreScheduledTransportRenderer(projection, actions);
+  const activity = createCoreTicketedActivityRenderer(projection, actions);
+  return (props) =>
+    p1(props) ?? stay(props) ?? rental(props) ?? transport(props) ?? activity(props);
 }

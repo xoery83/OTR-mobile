@@ -1,0 +1,39 @@
+{
+  "status": "ISOLATED_PG_CATALOG_SQLITE_HOST_PASS",
+  "pgSource": {
+    "status": "ISOLATED_OWNING_SOURCE_ORIGINAL_PASS",
+    "schemaSha256": "53cf71671c8e69ed509f534c6c4d81dce0361f93713b6df62157aaf5e671df53",
+    "checks": [
+      "legacy codec/owner edge preserved and global Source gate CLOSED",
+      "input commands are exact actual Native C3/SQLite Repository/Queue outputs, no fabricated Source snapshot",
+      "unprovisioned new owning entry CLOSED",
+      "real existing Source command/journal/action/receipt creation and exact replay/result lookup for FILE and PASTE",
+      "independent owning catalog readback preserves filename, FILE/FILES vs TEXT/PASTE, BOM/CRLF/Unicode/hash/bytes",
+      "actual registered Sources feed initial PENDING Run and retained Universal read without a model result",
+      "old entry cannot silently acquire FILE UTF8 through its V1 codec",
+      "cross-account denied",
+      "unpinned operation denied despite same allowed Actor/Trip",
+      "PDF masquerade/wrong filename/oversize reject; no new profile permissiveness",
+      "exact size/filename boundary, NUL/null filename, direct app-role denial and no UPDATE grants",
+      "expiry stops wrapper; exactly2 immutable operations; no Candidate/Admission/global activation"
+    ],
+    "providerCalls": 0,
+    "hostedWrites": 0
+  },
+  "sqliteCustodyHttp": {
+    "status": "LOCAL_CONTINUATION_CUSTODY_PASS",
+    "provider": "SYNTHETIC_LOCAL_FIXTURE",
+    "realProviderCalls": 0,
+    "checks": [
+      "actual PostgreSQL owning PENDING catalog -> existing repository validated SQLite cache (no manual Source inserts)",
+      "finite bootstrap reuses actual Task Repository + signalIntelligenceWake + claim (no manual Task/Queue rows)",
+      "real SQLite continuation + anchored private custody + HTTP mixed-candidate publication",
+      "cold SQLite/custody reopen replays exact result without Provider redispatch",
+      "revoked current Source admission withholds retained result",
+      "HTTP authentication enforced"
+    ]
+  },
+  "realAuth": "NOT_RUN_SYNTHETIC_LOCAL_CONTEXT",
+  "realProviderCalls": 0,
+  "hostedWrites": 0
+}

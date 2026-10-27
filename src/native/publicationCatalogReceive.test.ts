@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   native: {
     contractVersion: vi.fn(() => 1),
     receive: vi.fn(),
+    receiveUniversal: vi.fn(),
     cancel: vi.fn(),
     release: vi.fn(),
   },
@@ -98,7 +99,7 @@ describe("trusted iOS Publication adapter", () => {
         mocks.require.mockImplementation(() => {
           throw new Error("missing");
         });
-      if (failure === "version") mocks.native.contractVersion.mockReturnValue(2);
+      if (failure === "version") mocks.native.contractVersion.mockReturnValue(3);
       await expect(t.read(context)).rejects.toMatchObject({
         code: "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
       });
@@ -324,4 +325,29 @@ describe("trusted iOS Publication adapter", () => {
     expect(mocks.native.cancel).toHaveBeenCalledTimes(1);
     expect(mocks.native.release).toHaveBeenCalledTimes(1);
   });
+});
+it("old module1 cannot receive V2 and never falls back to legacy receive", async () => {
+  const {t,context}=await transport();
+  await expect(t.readUniversal(context)).rejects.toMatchObject({code:"PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE"});
+  expect(mocks.native.receive).not.toHaveBeenCalled();expect(mocks.native.receiveUniversal).not.toHaveBeenCalled();
+});
+it("module2 dispatches V1 and V2 through explicit separate methods", async () => {
+  mocks.native.contractVersion.mockReturnValue(2);
+  const v2=canonicalEventJson({...fixture,version:2} as Json);
+  mocks.native.receiveUniversal.mockResolvedValue({status:200,bytes:encoded(v2)});
+  const {t,context}=await transport();
+  await expect(t.read(context)).resolves.toBe(raw);
+  expect(mocks.native.receive).toHaveBeenCalledOnce();expect(mocks.native.receiveUniversal).not.toHaveBeenCalled();
+  await expect(t.readUniversal(context)).resolves.toBe(v2);
+  expect(mocks.native.receiveUniversal).toHaveBeenCalledWith(expect.any(String),trip,"synthetic-token",expect.any(Number),expect.any(Number));
+  expect(mocks.native.receive).toHaveBeenCalledOnce();
+});
+it("module2 without explicit V2 method remains V1-only and fails V2 closed", async () => {
+  mocks.native.contractVersion.mockReturnValue(2);
+  const oldShape={...mocks.native,receiveUniversal:undefined};
+  mocks.require.mockImplementation(()=>oldShape);
+  const {t,context}=await transport();
+  await expect(t.read(context)).resolves.toBe(raw);
+  await expect(t.readUniversal(context)).rejects.toMatchObject({code:"PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE"});
+  expect(mocks.native.receive).toHaveBeenCalledOnce();
 });

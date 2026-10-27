@@ -1,3 +1,5 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
+import { PendingSyncDot } from "./PendingSyncDot";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
@@ -285,9 +287,11 @@ export function TodaysJourneyWidget({
             <Text style={styles.meta}>{copy.multipleStays}</Text>
           ) : null}
         </>
+      ) : status === "LOADING" ? (
+        <DayReadSkeleton compact />
       ) : (
-        <Text style={styles.meta}>
-          {status === "LOADING" ? copy.loading : copy.unavailable}
+        <Text accessibilityRole="alert" style={styles.meta}>
+          {copy.unavailable}
         </Text>
       )}
       <View style={styles.actions}>
@@ -328,8 +332,8 @@ function TodayRow({
       <View style={styles.rowCopy}>
         <Text style={styles.item} numberOfLines={2}>
           {item.title}
+          {pending ? <PendingSyncDot /> : null}
         </Text>
-        {pending ? <Text style={styles.meta}>{t("tripCreate.itemPending")}</Text> : null}
         {item.displayTime?.localTime ? (
           <Text style={styles.meta}>{item.displayTime.localTime}</Text>
         ) : item.displayTime?.instant &&

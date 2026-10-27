@@ -643,6 +643,7 @@ function ReceiptImage({ uri }: { uri: string }) {
       style={styles.imageFrame}
     >
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         minimumZoomScale={1}
         maximumZoomScale={5}
         bouncesZoom

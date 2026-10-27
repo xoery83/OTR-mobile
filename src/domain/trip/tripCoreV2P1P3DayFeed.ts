@@ -3,7 +3,7 @@ import {
   itinerary_transport_endpointsSchema,
 } from "./tripCoreV2";
 import { coreBoundarySchema, coreStoredBoundary } from "./tripCoreV2Temporal";
-import { projectCoreDay } from "./tripCoreV2Day";
+import { projectCoreDisplayDay } from "./tripCoreV2DayFeed";
 import { projectCoreItem } from "./tripCoreV2Views";
 import { projectCoreFlightFeed, type CoreFlightDayProjection } from "./tripCoreV2DayFeed";
 import type { CoreActor, CoreGraph, CoreRow } from "./tripCoreV2Mutation";
@@ -87,7 +87,7 @@ export function projectCoreP1P3Feed(
     events: [...flight.events, ...events],
     query(date, zone) {
       const query = flight.query(date, zone);
-      const day = projectCoreDay(graph, actor, date, certificate.generation).filter((r) =>
+      const day = projectCoreDisplayDay(graph, actor, date, certificate).filter((r) =>
         ["P1", "P2", "P3"].includes(r.family),
       );
       const timed = [...query.timed],

@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useLayoutEffect: (callback: () => void) => callback(),
   useEffect: (callback: () => void | (() => void)) => {
     if (state.mount) state.effects.push(callback);
   },
@@ -38,6 +39,25 @@ vi.mock("react", async (original) => ({
   },
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
+vi.mock("./TripCalendarRangeField", () => ({
+  TripCalendarRangeField: (p: any) => {
+    state.nodes.push({ ...p, label: p.label });
+    return null;
+  },
+}));
+vi.mock("@/features/place-search/PlaceSearchSheet", () => ({
+  PlaceSearchSheet: (p: any) => {
+    state.nodes.push({ ...p, label: "place-search" });
+    return null;
+  },
+}));
+vi.mock("@/data/auth/accountRequestContext", () => ({
+  captureAccountScope: vi.fn(async () => ({
+    accountId: "qa-account",
+    generation: state.generation,
+  })),
+}));
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
 }));
@@ -46,17 +66,31 @@ vi.mock("@/data/repositories/manualRentalRepository", () => ({
 }));
 vi.mock("react-native", () => ({
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
-  Modal: (p: any) => createElement("div", null, p.children),
+  Keyboard: { dismiss: vi.fn(), addListener: vi.fn(() => ({ remove: vi.fn() })) },
+  Platform: { OS: "ios" },
+  KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
+  Pressable: (p: any) => {
+    state.nodes.push(p);
+    return createElement("div", null, p.children);
+  },
+  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
   ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => createElement("div", null, p.children),
   StyleSheet: { create: (value: unknown) => value },
 }));
 vi.mock("react-native-safe-area-context", () => ({
   SafeAreaProvider: (p: any) => createElement("div", null, p.children),
+  SafeAreaView: (p: any) => createElement("div", null, p.children),
 }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
-    state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
+    state.nodes.push({ label: p.leftLabel ?? "common.cancel", onPress: p.onLeft });
+    if (p.onRight)
+      state.nodes.push({
+        label: p.rightLabel ?? "common.done",
+        onPress: p.onRight,
+        disabled: p.rightDisabled,
+      });
     return null;
   },
 }));
@@ -91,7 +125,11 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/data/repositories/tripRepository", () => ({
+  readLocalTripRepository: async () => ({ getTrip: async () => null }),
+}));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -118,6 +156,7 @@ const fields = (): ManualRentalFields => ({
 const props = () => ({
   tripId: "00000000-0000-4000-8000-000000000001",
   tripStartDate: "2027-12-30",
+  tripEndDate: "2028-01-05",
   onClose: vi.fn(),
   onSaved: vi.fn(),
 });
@@ -145,11 +184,16 @@ async function open(p: ReturnType<typeof props>, repo: any) {
   return () => cleanups.forEach((cleanup) => cleanup());
 }
 function chooseDate(p: ReturnType<typeof props>, label: string, date: Date) {
-  node(label).onPress();
-  render(p);
-  state.nodes.find((entry) => entry.mode === "date")!.onChange(undefined, date);
-  render(p);
-  node("common.done").onPress();
+  const field = node("tripCreate.rentalDates");
+  const value = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+  field.onChange({
+    ...field.value,
+    [label === "tripCreate.rentalPickupDate" ? "start" : "end"]: value,
+  });
   render(p);
 }
 function chooseTime(p: ReturnType<typeof props>, label: string, hour: number) {
@@ -200,7 +244,7 @@ it("requires both authored pickup/return dates, times and places before local Sa
     })),
   };
   await open(p, repo);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("ui.save").disabled).toBe(true);
   expect(render(p)).not.toContain("tripCreate.planParticipants");
   node("tripCreate.rentalName").onChangeText("Airport car");
   chooseDate(p, "tripCreate.rentalPickupDate", new Date(2027, 11, 29, 12));
@@ -209,11 +253,11 @@ it("requires both authored pickup/return dates, times and places before local Sa
   render(p);
   chooseDate(p, "tripCreate.rentalReturnDate", new Date(2028, 0, 2, 12));
   chooseTime(p, "tripCreate.rentalReturnTime", 11);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("ui.save").disabled).toBe(true);
   node("tripCreate.rentalReturnPlace").onChangeText("Downtown desk");
   render(p);
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node("ui.save").disabled).toBe(false);
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
@@ -266,7 +310,7 @@ it("edits the original Rental ID while preserving independent booked and actual 
   node("tripCreate.rentalName").onChangeText("Renamed rental");
   node("tripCreate.rentalReturnPlace").onChangeText("City return desk");
   render(p);
-  node("tripCreate.saveChanges").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repository.save).toHaveBeenCalledWith(
     draft,
@@ -303,7 +347,7 @@ it("locks the first P4 Save and ignores a queued Discard confirmation", async ()
   node("tripCreate.rentalName").onChangeText("Changed rental");
   render(p);
   const oldCancel = node("common.cancel").onPress;
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("ui.save").onPress;
   oldCancel();
   const discard = state.alert.mock.lastCall![2][1].onPress;
   oldSave();
@@ -335,7 +379,7 @@ it("rejects an old P4 Save after Discard closes the dirty Rental draft", async (
   });
   node("tripCreate.rentalName").onChangeText("Changed rental");
   render(p);
-  const oldSave = node("tripCreate.saveItem").onPress;
+  const oldSave = node("ui.save").onPress;
   const oldChange = node("tripCreate.rentalName").onChangeText;
   node("common.cancel").onPress();
   state.alert.mock.lastCall![2][1].onPress();
@@ -343,4 +387,85 @@ it("rejects an old P4 Save after Discard closes the dirty Rental draft", async (
   oldSave();
   expect(p.onClose).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
+});
+
+it("opens independent full-screen endpoint searches without renaming the rental", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "rental-search",
+      fields: fields(),
+    })),
+  });
+  node("tripCreate.rentalName").onChangeText("My rental");
+  render(p);
+  node("tripCreate.rentalPickupPlace").onFocus();
+  await Promise.resolve();
+  render(p);
+  expect(node("place-search").binding.editorId).toBe("rental-search");
+  node("place-search").onConfirm({ kind: "MANUAL", text: "Airport desk" });
+  render(p);
+  expect(node("tripCreate.rentalPickupPlace").value).toBe("Airport desk");
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("");
+  expect(node("tripCreate.rentalName").value).toBe("My rental");
+  node("tripCreate.rentalReturnPlace").onFocus();
+  await Promise.resolve();
+  render(p);
+  const oldSelection = node("place-search").onConfirm;
+  state.generation++;
+  oldSelection({ kind: "MANUAL", text: "Wrong account address" });
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("");
+});
+
+it("ignores a pending place selection after the editor changes Trip", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "rental-search",
+      fields: fields(),
+    })),
+  });
+  node("tripCreate.rentalPickupPlace").onFocus();
+  await Promise.resolve();
+  render(p);
+  const confirm = node("place-search").onConfirm;
+  render({ ...p, tripId: "00000000-0000-4000-8000-000000000099" });
+  confirm({ kind: "MANUAL", text: "Old Trip address" });
+  render(p);
+  expect(node("tripCreate.rentalPickupPlace").value).toBe("");
+});
+
+it("reuses Trip reference dates and keeps an opted-in return address aligned with pickup", async () => {
+  const p = props();
+  await open(p, {
+    createDraft: vi.fn(async () => ({
+      mode: "CREATE",
+      itemId: "rental",
+      fields: fields(),
+    })),
+  });
+  expect(node("tripCreate.rentalDates").referenceRange).toEqual({
+    start: p.tripStartDate,
+    end: p.tripEndDate,
+  });
+  node("tripCreate.rentalPickupPlace").onChangeText("Depot A");
+  render(p);
+  node("tripCreate.rentalSameLocation").onPress();
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("Depot A");
+  expect(node("tripCreate.rentalReturnPlace").editable).toBe(false);
+  node("tripCreate.rentalPickupPlace").onChangeText("Depot B");
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("Depot B");
+  node("tripCreate.rentalSameLocation").onPress();
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").editable).toBe(true);
+  node("tripCreate.rentalReturnPlace").onChangeText("Custom depot");
+  render(p);
+  node("tripCreate.rentalPickupPlace").onChangeText("Depot C");
+  render(p);
+  expect(node("tripCreate.rentalReturnPlace").value).toBe("Custom depot");
 });

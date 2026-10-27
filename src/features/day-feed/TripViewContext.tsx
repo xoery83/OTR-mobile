@@ -220,6 +220,8 @@ export type DayShellChrome = {
 const Context = createContext<{
   dayShellChrome: DayShellChrome | null;
   publishDayShellChrome: (value: DayShellChrome | null, owner: symbol) => void;
+  manualOutcome: { tripId: string; generation: number; itemId: string } | null;
+  reportManualOutcome: (tripId: string, generation: number, itemId: string) => void;
   localOutcome: { tripId: string; generation: number; id: string } | null;
   reportLocalOutcome: (tripId: string, generation: number, id: string) => void;
   quickActions: TripQuickActions | null;
@@ -241,6 +243,8 @@ const Context = createContext<{
 }>({
   dayShellChrome: null,
   publishDayShellChrome: () => {},
+  manualOutcome: null,
+  reportManualOutcome: () => {},
   localOutcome: null,
   reportLocalOutcome: () => {},
   quickActions: null,
@@ -329,6 +333,18 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     }, 350);
   }, [generation, hintJson, flushHint]);
   useEffect(() => () => flushHint(), [generation, flushHint]);
+  const [manualOutcome, setManualOutcome] = useState<{
+    tripId: string;
+    generation: number;
+    itemId: string;
+  } | null>(null);
+  const reportManualOutcome = useCallback(
+    (tripId: string, generation: number, itemId: string) => {
+      if (generation === getAccountGeneration())
+        setManualOutcome({ tripId, generation, itemId });
+    },
+    [],
+  );
   const [localOutcome, setLocalOutcome] = useState<{
     tripId: string;
     generation: number;
@@ -401,6 +417,8 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
       value={{
         dayShellChrome: dayShellChrome?.generation === generation ? dayShellChrome : null,
         publishDayShellChrome,
+        manualOutcome: manualOutcome?.generation === generation ? manualOutcome : null,
+        reportManualOutcome,
         localOutcome: localOutcome?.generation === generation ? localOutcome : null,
         reportLocalOutcome,
         quickActions: quickActions?.generation === generation ? quickActions : null,

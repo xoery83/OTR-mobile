@@ -6,16 +6,10 @@ import {
   journeyCurrencyPreviewSchema,
   type JourneyCurrencyPreview,
 } from "@/data/api/ledgerCurrencyContracts";
-import {
-  refreshJourneyLedger,
-  revalidateJourneyLedger,
-} from "@/data/sync/ledgerReportingCoordinator";
 import type {
   LedgerRateLookupRequest,
   LedgerRateLookupResponse,
 } from "@/data/api/ledgerFxContracts";
-import { getDefaultLedgerExpenseRepository } from "./defaultLedgerExpenseRepository";
-import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
 import { cachedRateLookup, identityRateLookup } from "./ledgerRateLookup";
 
 export type { JourneyCurrencyPreview } from "@/data/api/ledgerCurrencyContracts";
@@ -111,7 +105,9 @@ async function client() {
 export const ledgerCurrencyRepository = {
   async cachedRateLookup(journeyId: string, input: LedgerRateLookupRequest) {
     if (input.quoteCurrency === input.baseCurrency) return identityRateLookup(input);
-    const repository = await getDefaultLedgerExpenseRepository();
+    const repository = await (
+      await import("./defaultLedgerExpenseRepository")
+    ).getDefaultLedgerExpenseRepository();
     return cachedRateLookup(
       input,
       await repository.listRateQuotes(journeyId, input.quoteCurrency, input.baseCurrency),
@@ -120,11 +116,14 @@ export const ledgerCurrencyRepository = {
 
   async refreshRateLookup(journeyId: string, input: LedgerRateLookupRequest) {
     if (input.quoteCurrency === input.baseCurrency) return identityRateLookup(input);
+    const { createLedgerReadTransport } = await import("@/data/sync/ledgerReadTransport");
     const transport = createLedgerReadTransport();
     const response = await transport.rateLookup(journeyId, input);
     if (response.decimalRate) {
       try {
-        const repository = await getDefaultLedgerExpenseRepository();
+        const repository = await (
+          await import("./defaultLedgerExpenseRepository")
+        ).getDefaultLedgerExpenseRepository();
         const quotes = await transport.rateQuotes(
           journeyId,
           input.quoteCurrency,
@@ -141,29 +140,46 @@ export const ledgerCurrencyRepository = {
     return response;
   },
 
-  async preview(journeyId: string, proposedCurrency: string) {
-    return (await client()).post(
-      `/v2/trips/${journeyId}/ledger/journey-currency/preview`,
-      { proposedCurrency },
-      journeyCurrencyPreviewSchema,
-    );
-  },
+  ...createLedgerCurrencyCommands(),
+};
 
-  async commit(journeyId: string, preview: JourneyCurrencyPreview, operationId: string) {
-    const response = await (
-      await client()
-    ).post(
-      `/v2/trips/${journeyId}/ledger/journey-currency/commit`,
-      {
-        proposedCurrency: preview.proposedCurrency,
-        baseSettingsRevision: preview.settingsRevision,
-        previewDigest: preview.previewDigest,
-      },
-      journeyCurrencyCommitSchema,
-      { "Idempotency-Key": operationId },
-    );
+export function createLedgerCurrencyCommands(
+  api: typeof client = client,
+  afterCommit = async (journeyId: string) => {
+    const { refreshJourneyLedger, revalidateJourneyLedger } =
+      await import("@/data/sync/ledgerReportingCoordinator");
     await refreshJourneyLedger(journeyId);
     await revalidateJourneyLedger(journeyId);
-    return response;
   },
-};
+) {
+  return {
+    async preview(journeyId: string, proposedCurrency: string) {
+      return (await api()).post(
+        `/v2/trips/${journeyId}/ledger/journey-currency/preview`,
+        { proposedCurrency },
+        journeyCurrencyPreviewSchema,
+      );
+    },
+
+    async commit(
+      journeyId: string,
+      preview: JourneyCurrencyPreview,
+      operationId: string,
+    ) {
+      const response = await (
+        await api()
+      ).post(
+        `/v2/trips/${journeyId}/ledger/journey-currency/commit`,
+        {
+          proposedCurrency: preview.proposedCurrency,
+          baseSettingsRevision: preview.settingsRevision,
+          previewDigest: preview.previewDigest,
+        },
+        journeyCurrencyCommitSchema,
+        { "Idempotency-Key": operationId },
+      );
+      await afterCommit(journeyId);
+      return response;
+    },
+  };
+}

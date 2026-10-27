@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "lane": "Independent Native Feature Delivery",
+  "worktree": "/Users/xoery/.codex/worktrees/native-forms-p3/otr-mobile-canonical",
+  "baseline": "cdd9d2717ef4c5ddd682beeb26f7115e66faff59",
+  "simulator": {
+    "name": "OTR Forms QA",
+    "udid": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+    "deviceType": "com.apple.CoreSimulator.SimDeviceType.iPhone-18-Pro",
+    "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-0",
+    "reused": false
+  },
+  "metroPort": 8096,
+  "derivedData": "RETIRED_INTERRUPTED_FRESH_BUILD_NOT_CLAIMED",
+  "buildLog": "TEMPORARY_LOG_REMOVED_BY_ENVIRONMENT_INTERRUPTION",
+  "metroLog": "/Users/xoery/.codex/worktrees/native-forms-p3/otr-mobile-canonical/.forms-qa/logs/metro.log",
+  "bundleIdentifier": "com.xoery.otrmobile",
+  "account": "NORMAL_LOGIN_BLOCKED_MISSING_EXISTING_QA_CREDENTIAL_ARTIFACT",
+  "trip": "PENDING_NORMAL_CREATE_AFTER_LOGIN",
+  "forbiddenDevice": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "productSha": "5a6176dbb019bef878854e96e1c004a65d1b6bb8",
+  "localFixtureTrip": "f3c02500-0000-4000-8000-000000000002",
+  "localFixtureDatabase": "otr-forms-p3-fixture.db"
+}

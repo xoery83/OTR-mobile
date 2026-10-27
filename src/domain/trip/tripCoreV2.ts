@@ -231,6 +231,19 @@ export const trip_flight_intentsSchema = z.strictObject({
   flight_number_literal: coreText(255),
   qualification: z.enum(["SPARSE", "QUALIFIED"]),
 });
+// Local journal graph only; accepted collections keep trip_flight_intentsSchema strict.
+export const localFlightIntentSchema = z.union([
+  trip_flight_intentsSchema,
+  z.strictObject({
+    event_id: coreUuid,
+    trip_id: coreUuid,
+    flight_number_literal: coreText(255)
+      .refine((v) => !!v.trim())
+      .nullable(),
+    qualification: z.literal("BOOKING_EVIDENCED_ROUTE_TIME"),
+    qualification_basis: z.literal("BOOKING_EVIDENCED_ROUTE_TIME_LOCAL/1"),
+  }),
+]);
 export const itinerary_transport_servicesSchema = z.strictObject({
   event_id: coreUuid,
   trip_id: coreUuid,

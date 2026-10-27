@@ -38,6 +38,7 @@ import {
 } from "@/domain/trip/flightAdmission";
 import {
   tripImportSnapshotSchema,
+  universalImportSnapshotSchema,
   type TripImportCatalogName,
 } from "@/data/api/tripImportCatalogContracts";
 import {
@@ -754,10 +755,10 @@ export function createTripImportAdmissionRepository(
   async function applyCatalogsInTransaction(
     c: AccountRequestContext,
     raw: string,
+    universal = false,
   ) {
-    const snapshot = tripImportSnapshotSchema.parse(
-      parseEventJson(raw, 4194304),
-    );
+    const schema = universal ? universalImportSnapshotSchema : tripImportSnapshotSchema;
+    const snapshot = schema.parse(parseEventJson(raw, 4194304));
     if (
       snapshot.trip_id !== c.tripId ||
       snapshot.actor_account_id !== c.accountId
@@ -974,6 +975,10 @@ export function createTripImportAdmissionRepository(
     }),
     async applyCatalogs(c: AccountRequestContext, raw: string) {
       return scoped(c, () => applyCatalogsInTransaction(c, raw));
+    },
+    // Same owning cache transaction; no Source mutation or business admission.
+    async applyUniversalCatalogs(c: AccountRequestContext, raw: string) {
+      return scoped(c, () => applyCatalogsInTransaction(c, raw, true));
     },
     async readRequiredDate(c: AccountRequestContext, raw: RequiredDateTarget) {
       const target = requiredDateTargetSchema.parse(raw);

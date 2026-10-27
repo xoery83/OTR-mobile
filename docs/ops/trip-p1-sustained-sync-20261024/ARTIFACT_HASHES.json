@@ -1,0 +1,11 @@
+{
+  "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.sql": "bdac8861e65a73af72ff27c39161be40e21dadd10fb9c269c79289d5f12a5f09",
+  "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.rollback.sql": "9e07538a8daa4dc970557cf3f7079d3a671cd4aae2f4552c03fb19cffc9e825b",
+  "supabase/dev-forward/trip-sustained-sync/20261024000300_trip_person_cloud_create.rollback.sql": "dc580ff40047d8bd2579ef0f63e9ecb782636e43ac14ded0f2c4435d80ed7521",
+  "supabase/dev-forward/trip-sustained-sync/20261024000200_trip_sustained_dev.sql": "c9215ce88face89967cb5d3e32b6609498168cfb45112e7d53697442304f3009",
+  "scripts/trip/trip-sustained-sync-acceptance.py": "470d40c5ee2314d17e1651ed255cd984a3f1afd18bbece6af634ad007eb3c794",
+  "scripts/trip/sustained-p1-owned-fixture.mts": "2e01100ded11ee8ac620385c0900e3ad354277a7161b68cd0b766088bbd8ef65",
+  "docs/ops/trip-p1-sustained-sync-20261024/ROOT_ONLY_CLOUD_TRAVELER_ORIGIN.patch": "c7e231c8bd00571b05d91df81872607f24d8d5122b343434b0275ef54815558c",
+  "docs/ops/trip-p1-sustained-sync-20261024/DEV_CORE_GUARD_PREIMAGE.sql": "0b4acc6dcf7f21e9001f0ad35348eb8439b3e97933ea10982cc6204bde0c4ca1",
+  "docs/ops/trip-p1-sustained-sync-20261024/DEV_SOURCE_ROW_HELPER_PREIMAGE.sql": "659861c0895a41958934cdf95303de467150f904125c980347de4f7e4153bd61"
+}

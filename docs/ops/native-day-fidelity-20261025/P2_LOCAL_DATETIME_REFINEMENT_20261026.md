@@ -1,0 +1,14 @@
+# Owner local date/time refinement — 26 October 2026
+
+Owner's latest instruction supersedes the earlier vertically separated P2 endpoint fields. Scope is existing Flight Create/Edit form presentation; no new writer, backend route or qualification authority.
+
+- Keep the top departure date and flight number. Both airport completion inputs come before the two local-time controls. An airport's known IANA zone stays in the draft without a redundant prompt; only an unknown airport zone offers manual input.
+- Departure and arrival clocks share one row at ordinary text sizes and stack at large text sizes. Dates are weak secondary text. Opening either clock uses one canonical Native date/time picker sheet, preserving Save's picker-open guard, Done/Cancel/Clear behavior.
+- The picker uses a neutral UTC representation of civil components, not device-zone conversion or a claimed UTC flight instant. The actual endpoint zone fields remain unchanged and continue through the existing qualification pipeline.
+- Arrival displays the departure date by default. If both local clocks are known and arrival's clock is earlier, suggest the following civil date. Month/year/leap boundaries are calculated in UTC civil calendar arithmetic. This is an editable form suggestion, never proof of chronology, UTC elapsed time, DST resolution or a date-line crossing.
+- The Next-day arrival button toggles between departure day and departure+1. A user override or explicitly selected picker date remains authoritative; subsequent clock edits do not silently undo it. The combined picker can still choose earlier dates or dates beyond +1 for actual international travel.
+- Clearing an automatically suggested arrival clock removes its automatic populated date; explicit date choices remain. Sparse/endpoint/Journey/Edit mutation gates are unchanged; full manual endpoint Save remains pending the legal owning interface.
+
+Directed validation: 28 P2 field/form tests PASS, including actual component callbacks for ordering, known-zone prompt omission, combined panel, next-day selection/override, Cancel and clear recovery. TypeScript/UI guard/scoped lint checked; independent four-file 63/63 PASS. Native evidence and final fixed SHA follow after the serialized Forms QA GUI window.
+
+Related `9501718d`: P3 missing planned clocks can arm the existing same-day move engine (Base/invalid clocks excluded, named-zone qualification gate retained); native-only drag scrolls can drive reading chrome without a finger touch stream, excluding programmatic/layout compensation and momentum. Directed wheel/Stay suites pass. A normal real P3 Edit → time picker Done → Save → same Immersive showed the newly persisted 16:01 clock, followed by the same clock in DayFeed; the reported stale result was not reproduced and no speculative read-authority change was made.

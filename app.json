@@ -23,7 +23,9 @@
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
-        ]
+        ],
+        "NSMicrophoneUsageDescription": "Use the microphone only when you choose voice input to transcribe travel plans on this device.",
+        "NSSpeechRecognitionUsageDescription": "Convert your spoken travel plans into editable text using on-device speech recognition."
       }
     },
     "android": {
@@ -34,7 +36,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -55,11 +58,12 @@
         {
           "photosPermission": "Choose a receipt to attach to a trip expense.",
           "cameraPermission": "Take a photo of a receipt to attach to a trip expense.",
-          "microphonePermission": false
+          "microphonePermission": "Use the microphone only when you choose voice input to transcribe travel plans on this device."
         }
       ],
       "expo-document-picker",
       "./plugins/withUserScriptSandboxing",
+      "./plugins/withFormsQaEmbeddedBundle",
       [
         "expo-splash-screen",
         {
@@ -73,6 +77,20 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "locales": {
+      "en": {
+        "ios": {
+          "NSMicrophoneUsageDescription": "Use the microphone only when you choose voice input to transcribe travel plans on this device.",
+          "NSSpeechRecognitionUsageDescription": "Convert your spoken travel plans into editable text using on-device speech recognition."
+        }
+      },
+      "zh-Hans": {
+        "ios": {
+          "NSMicrophoneUsageDescription": "仅在你选择语音输入时使用麦克风，在本机将旅行计划转写为文字。",
+          "NSSpeechRecognitionUsageDescription": "使用本机语音识别，将你说出的旅行计划转换为可编辑文字。"
+        }
+      }
     }
   }
 }

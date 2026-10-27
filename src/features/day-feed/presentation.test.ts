@@ -7,6 +7,8 @@ import {
   flightPresentation,
   eventClock,
   eventLocation,
+  flightNumber,
+  durationMinutes,
 } from "./presentation";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
 import { event, projection } from "./faroeNegative.test.fixtures";
@@ -89,4 +91,37 @@ it("retains authored minute plans and named places without qualifying an instant
   expect(eventClock(e)).toBeNull();
   e.authored_address_line1 = "Authorized street";
   expect(eventLocation(e)).toBe("Authorized street");
+});
+
+it("renders only authoritative sparse flight facts without inventing route or comparable time", () => {
+  const e = event("sparse", "POINT", null, null);
+  e.event_type = "flight";
+  e.boundaries = [
+    {
+      ...e.boundaries[0],
+      role: "ORIGIN",
+      local_date: "2026-10-25",
+      local_time: null,
+      instant: null,
+      source_instant: null,
+      zone_id: null,
+    },
+  ];
+  expect(flightPresentation(e, [])).toBeNull();
+  const facts = {
+    qualification: "SPARSE" as const,
+    flightNumberLiteral: "ZZ2501",
+    services: [],
+    endpoints: {
+      ORIGIN: { code: null, name: null, terminal: null },
+      DESTINATION: { code: null, name: null, terminal: null },
+    },
+  };
+  const before = JSON.stringify([e, facts]);
+  const flight = flightPresentation(e, [], facts)!;
+  expect(flightNumber(flight)).toBe("ZZ2501");
+  expect(flight.canonical).toBe(e);
+  expect(durationMinutes(flight)).toBeNull();
+  expect(flight.supplemental.endpoints).toEqual(facts.endpoints);
+  expect(JSON.stringify([e, facts])).toBe(before);
 });

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /private/tmp/otr-c-execution-prep-20261023
+
+
+ Test Files  5 passed (5)
+      Tests  82 passed | 2 skipped (84)
+   Start at  08:21:08
+   Duration  7.28s (transform 904ms, setup 0ms, import 1.29s, tests 6.60s, environment 0ms)
+

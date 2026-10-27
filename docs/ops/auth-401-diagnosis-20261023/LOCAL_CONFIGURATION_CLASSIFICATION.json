@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-22T23:19:14.569371+00:00",
+  "source": "canonical existing .env.backend",
+  "operatorOwned": true,
+  "mode0600": true,
+  "notSymlink": true,
+  "devURLMatches": true,
+  "adminKeyPresent": true,
+  "type": "OPAQUE_SECRET",
+  "containsWhitespace": false,
+  "looksLikePublicOrAnon": false,
+  "expiryClaimAvailable": false,
+  "projectBindingClaimAvailable": false,
+  "opaqueKeyActualValidity": "NOT_ESTABLISHED",
+  "rawKeyOrFingerprintRetained": false
+}

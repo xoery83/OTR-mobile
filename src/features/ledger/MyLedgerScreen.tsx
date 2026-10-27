@@ -155,7 +155,10 @@ export function MyLedgerScreen() {
   const maxMonth = Math.max(1, ...(spending?.months.map(([, amount]) => amount) ?? []));
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.content}
+    >
       <View accessibilityRole="tablist" style={styles.segment}>
         {(["SPENDING", "SETTLEMENTS"] as const).map((item) => (
           <Pressable

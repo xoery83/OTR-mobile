@@ -30,7 +30,7 @@ it("uses one owning lease and explicit transaction for create and receipt lookup
         query: async (query) => {
           sql.push(query);
           return {
-            rows: query.includes("trip_core_finite_scope_allowed")
+            rows: query.includes("trip_create_finite_scope_allowed")
               ? [{ allowed: true }]
               : query.startsWith("SELECT")
                 ? [{ result }]
@@ -44,14 +44,14 @@ it("uses one owning lease and explicit transaction for create and receipt lookup
   expect(await storage.receipt(actor, create.operationId)).toEqual(result);
   expect(sql).toEqual([
     "BEGIN",
-    expect.stringContaining("trip_core_finite_scope_allowed"),
+    expect.stringContaining("trip_create_finite_scope_allowed"),
     expect.stringContaining("trip_create_command"),
-    expect.stringContaining("trip_core_finite_scope_allowed"),
+    expect.stringContaining("trip_create_finite_scope_allowed"),
     "COMMIT",
     "BEGIN",
-    expect.stringContaining("trip_core_finite_scope_allowed"),
+    expect.stringContaining("trip_create_finite_scope_allowed"),
     expect.stringContaining("trip_create_result"),
-    expect.stringContaining("trip_core_finite_scope_allowed"),
+    expect.stringContaining("trip_create_finite_scope_allowed"),
     "COMMIT",
   ]);
 });
@@ -63,7 +63,7 @@ it("rolls back SQL collision and maps it to a bounded response", async () => {
         retire: vi.fn(),
         query: async (query) => {
           sql.push(query);
-          if (query.includes("trip_core_finite_scope_allowed"))
+          if (query.includes("trip_create_finite_scope_allowed"))
             return { rows: [{ allowed: true }] };
           if (query.startsWith("SELECT"))
             throw Object.assign(new Error("private"), { code: "23505" });
@@ -79,7 +79,7 @@ it("rolls back SQL collision and maps it to a bounded response", async () => {
   });
   expect(sql).toEqual([
     "BEGIN",
-    expect.stringContaining("trip_core_finite_scope_allowed"),
+    expect.stringContaining("trip_create_finite_scope_allowed"),
     expect.stringContaining("trip_create_command"),
     "ROLLBACK",
   ]);
@@ -126,7 +126,7 @@ it("expiry during bootstrap rolls back rather than returning an accepted result"
         query: async (q) => {
           sql.push(q);
           return {
-            rows: q.includes("trip_core_finite_scope_allowed")
+            rows: q.includes("trip_create_finite_scope_allowed")
               ? [{ allowed: ++checks === 1 }]
               : q.includes("trip_create_command")
                 ? [{ result }]
@@ -138,6 +138,121 @@ it("expiry during bootstrap rolls back rather than returning an accepted result"
   await expect(
     createTripPgStorage(connection).create(actor, request),
   ).rejects.toMatchObject({ status: 503, code: "TRIP_CREATE_CLOSED" });
+  expect(sql.at(-1)).toBe("ROLLBACK");
+  expect(sql).not.toContain("COMMIT");
+});
+
+it.each([
+  "actorAccountId",
+  "operationId",
+  "tripId",
+  "name",
+  "destination",
+  "startDate",
+  "endDate",
+])(
+  "rejects mismatched %s inside the create transaction, before COMMIT",
+  async (field) => {
+    const request = input(),
+      actor = randomUUID(),
+      sql: string[] = [];
+    const result = {
+      ...request,
+      actorAccountId: actor,
+      ownerPersonId: randomUUID(),
+      coreEpoch: randomUUID(),
+      coreRevision: 1,
+      coreAccessRevision: 1,
+      [field]: field.endsWith("Id")
+        ? randomUUID()
+        : field.endsWith("Date")
+          ? "2027-01-01"
+          : "changed",
+    };
+    const connection: CorePgConnection = {
+      withLease: (work) =>
+        work({
+          retire: vi.fn(),
+          query: async (q) => {
+            sql.push(q);
+            return {
+              rows: q.includes("trip_create_finite_scope_allowed")
+                ? [{ allowed: true }]
+                : q.startsWith("SELECT")
+                  ? [{ result }]
+                  : [],
+            };
+          },
+        }),
+    };
+    await expect(
+      createTripPgStorage(connection).create(actor, request),
+    ).rejects.toMatchObject({ code: "TRIP_CREATE_RESULT_MISMATCH" });
+    expect(sql.at(-1)).toBe("ROLLBACK");
+    expect(sql).not.toContain("COMMIT");
+  },
+);
+
+it.each(["actorAccountId", "operationId"])(
+  "rejects mismatched receipt %s before COMMIT",
+  async (field) => {
+    const request = input(),
+      actor = randomUUID(),
+      sql: string[] = [];
+    const result = {
+      ...request,
+      actorAccountId: actor,
+      ownerPersonId: randomUUID(),
+      coreEpoch: randomUUID(),
+      coreRevision: 1,
+      coreAccessRevision: 1,
+      [field]: randomUUID(),
+    };
+    const connection: CorePgConnection = {
+      withLease: (work) =>
+        work({
+          retire: vi.fn(),
+          query: async (q) => {
+            sql.push(q);
+            return {
+              rows: q.includes("trip_create_finite_scope_allowed")
+                ? [{ allowed: true }]
+                : q.startsWith("SELECT")
+                  ? [{ result }]
+                  : [],
+            };
+          },
+        }),
+    };
+    await expect(
+      createTripPgStorage(connection).receipt(actor, request.operationId),
+    ).rejects.toMatchObject({ code: "TRIP_CREATE_RESULT_MISMATCH" });
+    expect(sql.at(-1)).toBe("ROLLBACK");
+    expect(sql).not.toContain("COMMIT");
+  },
+);
+
+it("does not commit a missing create result", async () => {
+  const sql: string[] = [];
+  const connection: CorePgConnection = {
+    withLease: (work) =>
+      work({
+        retire: vi.fn(),
+        query: async (q) => {
+          sql.push(q);
+          return {
+            rows: q.includes("trip_create_finite_scope_allowed")
+              ? [{ allowed: true }]
+              : q.startsWith("SELECT")
+                ? [{ result: null }]
+                : [],
+          };
+        },
+      }),
+  };
+  await expect(
+    createTripPgStorage(connection).create(randomUUID(), input()),
+  ).rejects.toMatchObject({ code: "TRIP_CREATE_RESULT_INVALID" });
   expect(sql.at(-1)).toBe("ROLLBACK");
   expect(sql).not.toContain("COMMIT");
 });

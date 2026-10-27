@@ -1,0 +1,11 @@
+{
+  "scope": "Only accepted baseline image/capture bundle and fixed reviewed candidate image/bundle constants updated; deployment/watch/ACL/rollback logic unchanged",
+  "sourceHead": "04a3197dcf0a86771858f24399ef00fe05d0620e",
+  "candidateImage": "sha256:40e998c31815a77452dd52dbbd6d8789ea8a815a6d1afba068029e97e919bbaa",
+  "candidateBundles": {
+    "server.mjs": "b45e3cb990d38b9e307ee23bb496257f5bf1047fbac8e77af131f8bcc425ab17",
+    "server-capture.mjs": "5cd029886934ba9b799e09654f85425b03d612ec91d34ca269500a9f1443b394",
+    "universal-prepare.mjs": "93af3b8b4bffaf0b7eb146ed2579d77f4c8d63b14cf74d41051157ab73ad40c0"
+  },
+  "operatorSHA256": "74868ae2d27a507e8427669c6f2557233506f6e996f0560d0d92376ffd543402"
+}

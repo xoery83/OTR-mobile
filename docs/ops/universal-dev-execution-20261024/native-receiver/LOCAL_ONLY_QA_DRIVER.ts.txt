@@ -1,0 +1,37 @@
+// Temporary, exact synthetic local-only qualification driver. No transport is constructed.
+import { readLocalSession } from "@/data/auth/authRepository";
+import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
+import { openDatabase } from "@/data/db/database";
+import { captureStorageDependencies, getDefaultLocalCaptureInboxRepository } from "@/data/repositories/defaultLocalCaptureInboxRepository";
+import { getDefaultCaptureSubmissionRepository } from "@/data/operations/defaultCaptureSubmission";
+import { createCaptureSourceAdmissionRepository } from "@/data/repositories/captureSourceAdmissionRepository";
+import { recoverUniversalOriginalPlans, prepareUniversalOriginalBatch } from "@/data/operations/universalOriginalBatch";
+import { createPublicationCatalogNativeFetch } from "./publicationCatalogReceive";
+import { UTF8_TEXT_FILE_PROFILE } from "@/domain/capture/utf8TextFile";
+export async function runLocalSourceQualification() {
+  if (!__DEV__ || !process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE) throw Error("QA_CLOSED");
+  const actor = "1f65e932-b6d8-4ea4-9cc9-fe9da331b424";
+  const getAccountId = async () => {
+    const id = (await readLocalSession())?.identity?.userId;
+    if (id !== actor) throw Error("QA_ACCOUNT_CHANGED");
+    return id;
+  };
+  const context = await captureAccountRequestContext("9a5b7ef6-db4c-4b33-be42-406cdfd292ab", getAccountId);
+  await createPublicationCatalogNativeFetch();
+  const database = await openDatabase();
+  const captures = await getDefaultLocalCaptureInboxRepository();
+  const submissions = await getDefaultCaptureSubmissionRepository();
+  const jobId = "e8085c43-fb11-46e6-aaed-7d14c3c806be";
+  const job = await submissions.reopen(jobId, context);
+  if (job.batch.batchId !== "3665f191-1605-4365-92ca-30403d90b191" || job.inputs.length !== 3 || !job.allInputsAccepted)
+    throw Error("QA_BATCH_CHANGED");
+  const {sha256: hash, now, newId} = captureStorageDependencies;
+  const sources = createCaptureSourceAdmissionRepository(database, getAccountId, {
+    sha256: hash, now, newId, handoff: captures.getForSourceHandoff,
+    readSelectedMaterial: async () => null, utf8FileProfile: UTF8_TEXT_FILE_PROFILE,
+  });
+  const deps = {getAccountId, hash, newId, submissions, captures, sources};
+  const plans = await recoverUniversalOriginalPlans(context, jobId, deps);
+  const result = await prepareUniversalOriginalBatch(context, jobId, plans, deps);
+  console.info(JSON.stringify({event:"universal_local_source_qualification", prepared:result.inputs.length, unhandled:result.unhandledInputIds.length, networkCalls:0, sourceProof:false}));
+}

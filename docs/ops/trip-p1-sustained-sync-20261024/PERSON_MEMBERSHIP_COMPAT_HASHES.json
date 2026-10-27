@@ -1,0 +1,10 @@
+{
+  "status": "CANDIDATE_NOT_DEPLOYED",
+  "preimageFunctionMD5": "54d94b8e00ee7228cfe2d38085475089",
+  "postimageFunctionMD5": "5c8c33ec3d6b9547451c64f67f769d4d",
+  "artifacts": {
+    "supabase/dev-forward/trip-sustained-sync/20261024000400_person_redundant_owner_membership.sql": "45e21bc8988887b90b7bacc0a110f532f0f827bedebd8d924ed2b14e4c012094",
+    "supabase/dev-forward/trip-sustained-sync/20261024000400_person_redundant_owner_membership.rollback.sql": "2cf85e61601e12fcdc14e8bed46e319348a41ab5f863687dfd2b25772f881a8d",
+    "scripts/trip/trip-sustained-sync-acceptance.py": "a54ffd1c1f1688e66cff6feec06ac83c74062cfec5647c03516d78f082c47f30"
+  }
+}

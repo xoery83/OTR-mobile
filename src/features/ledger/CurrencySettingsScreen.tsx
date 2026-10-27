@@ -17,6 +17,7 @@ import {
 import { useNetworkState } from "expo-network";
 
 import { AppIcon } from "@/components/AppIcon";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import {
@@ -73,12 +74,14 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
   const locale = useUiLocale();
 
   useEffect(() => {
+    let active = true;
     void getDefaultLedgerReportingRepository()
       .then(async (repository) => {
         const [selectedId, journeys] = await Promise.all([
           repository.getSelectedJourneyId(),
           repository.listJourneys(),
         ]);
+        if (!active) return;
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
         const entry = chooseJourneyEntry(journeys, today, selectedId);
@@ -97,12 +100,29 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
             repository.getActorContext(selected.journeyId),
             getDefaultLedgerSettlementRepository(),
           ]);
+          if (!active) return;
           setCanChange(actor?.role === "owner");
-          setLocked(await settlement.hasFinalized(selected.journeyId));
+          const finalized = await settlement.hasFinalized(selected.journeyId);
+          if (!active) return;
+          setLocked(finalized);
+          // The local Trip owns its authored name; Ledger identity/authority stay unchanged.
+          try {
+            const trips = await (await readLocalTripRepository()).listTrips();
+            if (!active) return;
+            const name = trips.find((trip) => trip.id === selected.journeyId)?.name;
+            if (name) setJourney({ ...selected, title: name });
+          } catch {
+            // A Ledger without a local Trip retains its existing caption.
+          }
         }
       })
-      .catch(() => setMessage(t("currencySettings.loadFailed")))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (active) setMessage(t("currencySettings.loadFailed"));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, [journeyId]);
 
   const selectCurrency = async (currency: string) => {
@@ -177,7 +197,10 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.headingRow}>
           <Text
             accessibilityRole="header"

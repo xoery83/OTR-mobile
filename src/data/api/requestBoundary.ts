@@ -18,17 +18,22 @@ export function createRequestBoundary(
 ) {
   const controller = new AbortController();
   const expires = Date.now() + timeoutMs;
-  const cancel = () => controller.abort(new RequestBoundaryError("REQUEST_CANCELED"));
+  // Native AbortController implementations may discard reason or reject fetch with undefined.
+  // The boundary, not the platform signal, owns the first terminal cause.
+  let terminalReason: RequestBoundaryError | undefined;
+  const stop = (code: "REQUEST_CANCELED" | "REQUEST_TIMEOUT") => {
+    if (terminalReason) return;
+    terminalReason = new RequestBoundaryError(code);
+    controller.abort(terminalReason);
+  };
+  const cancel = () => stop("REQUEST_CANCELED");
   parent?.addEventListener("abort", cancel, { once: true });
   if (parent?.aborted) cancel();
-  const timer = setTimeout(
-    () => controller.abort(new RequestBoundaryError("REQUEST_TIMEOUT")),
-    timeoutMs,
-  );
+  const timer = setTimeout(() => stop("REQUEST_TIMEOUT"), timeoutMs);
   function assertCurrent() {
-    if (Date.now() >= expires && !controller.signal.aborted)
-      controller.abort(new RequestBoundaryError("REQUEST_TIMEOUT"));
-    if (controller.signal.aborted) throw controller.signal.reason;
+    if (Date.now() >= expires && !terminalReason) stop("REQUEST_TIMEOUT");
+    if (terminalReason) throw terminalReason;
+    if (controller.signal.aborted) throw new RequestBoundaryError("REQUEST_CANCELED");
     check?.();
   }
   return {
@@ -39,12 +44,17 @@ export function createRequestBoundary(
       let abort!: () => void;
       try {
         const stopped = new Promise<never>((_, reject) => {
-          abort = () => reject(controller.signal.reason);
+          abort = () =>
+            reject(terminalReason ?? new RequestBoundaryError("REQUEST_CANCELED"));
           controller.signal.addEventListener("abort", abort, { once: true });
         });
         const value = await Promise.race([work(), stopped]);
         assertCurrent();
         return value;
+      } catch (error) {
+        // A Native fetch rejection can win the race with an undefined platform reason.
+        assertCurrent();
+        throw error;
       } finally {
         controller.signal.removeEventListener("abort", abort);
       }

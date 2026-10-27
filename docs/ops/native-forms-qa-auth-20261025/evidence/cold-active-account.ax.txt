@@ -1,0 +1,98 @@
+Window: "OTR Forms QA", App: Device Hub.
+0 standard window OTR Forms QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-2, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-2, SidebarNavigationSplitView
+			3 scroll area
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selected) Description: iphone.gen3, Value: OTR Forms QA
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR MT Correction 01 QA
+27.0
+Simulator
+					8 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					9 row (selectable) Description: iphone.gen3, Value: Leon's iPhone16pro
+27.0.1
+iPhone 16 Pro
+					10 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					11 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					12 row (selectable) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					13 row (selectable) Description: iphone.gen3, Value: OTR Apple Local Model Probe 26.5
+26.5
+Simulator
+			14 search text field (settable) Search
+				15 button Search
+			16 splitter (disabled, settable, float) 248
+			17 container
+				18 container
+					19 back button Description: Back, ID: BackButton
+					20 heading Description: Account, Secondary Actions: Cancel
+					21 heading Description: Accounts, Secondary Actions: Cancel
+					22 heading Description: Active account, Secondary Actions: Cancel
+					23 text (selected) Description: Active account OTR Forms QA, o•••@example.invalid, Secondary Actions: Cancel
+					24 heading Description: Remembered accounts, Secondary Actions: Cancel
+					25 text Description: No other accounts are remembered on this device., Secondary Actions: Cancel
+					26 button Description: Person with a plus badge, Add / Login another account, Forward, Secondary Actions: Cancel
+					27 button Description: Right, Sign out, Forward, Secondary Actions: Cancel
+				28 button Description: Home, ID: app.grid.3x3
+				29 button Description: Screenshot, ID: camera.viewfinder
+				30 button Description: Record, ID: record.circle
+				31 button Rotate Left
+		32 splitter (disabled, settable, float) 820
+		33 container
+			34 scroll area Description: Appearance, ID: Inspector.com.apple.devicekit.inspector.appearance
+				35 container
+					36 pop up button Appearance, Value: Dark
+					37 slider Liquid Glass, Value: 0.5, Secondary Actions: Increment, Decrement
+						38 value indicator 0.5
+					39 pop up button Color Filter, Value: None
+					40 slider Text Size, Value: 3, Secondary Actions: Increment, Decrement
+						41 value indicator 3
+					42 switch Reduce Motion, Value: off
+					43 switch Increase Contrast, Value: off
+					44 switch Show Borders, Value: off
+					45 switch Reduce Transparency, Value: off
+					46 switch VoiceOver, Value: off
+				47 pop up button Location, Value: None
+				48 container
+					49 slider Sound, Value: 0.6, Secondary Actions: Increment, Decrement
+						50 value indicator 0.6
+					51 pop up button Output, Value: System
+					52 pop up button Input, Value: System
+	53 toolbar
+		54 menu button Add, Help: Add Device, ID: plus
+		55 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		56 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		57 toggle button Description: Capture Keyboard, Value: off
+		58 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		59 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+		60 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 1
+		61 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 0, ID: 1.magnifyingglass
+		62 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		63 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		64 menu button More, Help: More Actions, ID: ellipsis
+		65 radio button Description: Edit, Help: Settings, Value: 1, ID: slider.horizontal.3
+		66 radio button Description: text.document, Help: Reports, Value: 0
+		67 radio button Description: Info, Value: 0, ID: info
+	68 close button
+	69 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	70 minimize button
+	71 text OTR Forms QA iOS 27.0
+72 menu bar
+	73 Device Hub
+	74 File
+	75 Edit
+	76 View
+	77 Device
+	78 Controls
+	79 Window
+	80 Help

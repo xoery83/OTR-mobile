@@ -1,5 +1,5 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { UiButton } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -115,10 +115,10 @@ it("selects an interval across year boundaries with one explicit Done; Cancel an
     .props.onRight();
   expect(onChange).toHaveBeenCalledExactlyOnceWith({ start: "", end: "" });
 });
-it("supports reversed taps, single-day intervals and restarting an existing interval without inventing a zone", () => {
+it("restarts the start date on an earlier tap, supports single-day intervals and restarting an existing interval without inventing a zone", () => {
   expect(selectTripRange({ start: "2027-01-03", end: "" }, "2026-12-30")).toEqual({
     start: "2026-12-30",
-    end: "2027-01-03",
+    end: "",
   });
   expect(selectTripRange({ start: "2027-01-03", end: "" }, "2027-01-03")).toEqual({
     start: "2027-01-03",
@@ -273,4 +273,115 @@ it("aligns the dates caption with the form fields without changing canonical def
     TripCalendarRangeField({ value: { start: "", end: "" }, onChange: vi.fn() }),
   );
   expect(rows.find((n) => n.type === UiFormRow)!.props.horizontalInset).toBe(0);
+});
+
+it("P3 starts each opened selection with check-in even when a start is prefilled, and marks Today within Trip dates", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 10, 2, 12));
+  try {
+    const onChange = vi.fn();
+    const value = { start: "2026-11-01", end: "" };
+    const render = () => {
+      state.cursor = 0;
+      return nodes(
+        TripCalendarRangeField({
+          value,
+          onChange,
+          startWithCheckin: true,
+          markToday: true,
+          referenceRange: { start: "2026-11-01", end: "2026-11-07" },
+        }),
+      );
+    };
+    render()
+      .find((n) => n.type === UiFormRow)!
+      .props.onPress();
+    let view = render();
+    const today = view.find(
+      (n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-02",
+    )!;
+    expect(today.props.accessibilityHint).toBe("search.today");
+    expect(nodes(today).some((n) => n.props.children === "search.today")).toBe(false);
+    expect(today.props.style).toContainEqual({ backgroundColor: lightPalette.selected });
+    today.props.onPress();
+    view = render();
+    expect(
+      view.find(
+        (n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-02",
+      )!.props.accessibilityState.selected,
+    ).toBe(true);
+    view
+      .find((n) => n.type === "Pressable" && n.props.accessibilityLabel === "2026-11-05")!
+      .props.onPress();
+    render()
+      .find((n) => n.type === SheetHeader)!
+      .props.onRight();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({
+      start: "2026-11-02",
+      end: "2026-11-05",
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+afterEach(() => vi.useRealTimers());
+it("shared Trip and Stay calendars mark Today without optional text in the Trip modal title", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 9, 26, 12));
+  const onChange = vi.fn(),
+    value = { start: "2026-10-25", end: "2026-10-30" };
+  const render = (referenceRange?: typeof value) => {
+    state.cursor = 0;
+    return nodes(TripCalendarRangeField({ value, onChange, referenceRange }));
+  };
+  let view = render();
+  view.find((n) => n.type === UiFormRow)!.props.onPress();
+  view = render();
+  expect(view.find((n) => n.type === SheetHeader)!.props.title).toBe(
+    "tripForm.dateTitle",
+  );
+  let today = view.find(
+    (n) => n.type === "Pressable" && n.props.accessibilityHint === "search.today",
+  )!;
+  expect(nodes(today).some((n) => n.props.testID === "calendar-today-selected")).toBe(
+    true,
+  );
+  state.values = [];
+  view = render({ start: "2026-10-20", end: "2026-11-01" });
+  view.find((n) => n.type === UiFormRow)!.props.onPress();
+  view = render({ start: "2026-10-20", end: "2026-11-01" });
+  today = view.find(
+    (n) => n.type === "Pressable" && n.props.accessibilityHint === "search.today",
+  )!;
+  expect(nodes(today).some((n) => n.props.testID === "calendar-today-selected")).toBe(
+    true,
+  );
+});
+it("P3 keeps choosing checkout after an earlier tap resets check-in", () => {
+  const onChange = vi.fn();
+  const render = () => {
+    state.cursor = 0;
+    return nodes(
+      TripCalendarRangeField({
+        value: { start: "2026-11-01", end: "" },
+        onChange,
+        startWithCheckin: true,
+      }),
+    );
+  };
+  render()
+    .find((n) => n.type === UiFormRow)!
+    .props.onPress();
+  for (const date of ["2026-11-10", "2026-11-05", "2026-11-08"])
+    render()
+      .find((n) => n.type === "Pressable" && n.props.accessibilityLabel === date)!
+      .props.onPress();
+  render()
+    .find((n) => n.type === SheetHeader)!
+    .props.onRight();
+  expect(onChange).toHaveBeenCalledExactlyOnceWith({
+    start: "2026-11-05",
+    end: "2026-11-08",
+  });
 });

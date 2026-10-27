@@ -1,0 +1,35 @@
+{
+  "fixed_sha": "3c38fca233fbba81162be59d76fce3454416ae13",
+  "scope": "Finite transition watchdog template/test/runbook only",
+  "conclusion": "PASS_LOCAL_PRE_ACTIVATION_TEMPLATE_AND_EXACT_CLOSURE",
+  "findings": [
+    {
+      "id": "P2-WATCH-01",
+      "file": "scripts/trip/sustained_transition_watchdog.py",
+      "lines": [
+        127,
+        130
+      ],
+      "title": "Deadline crossing during marker poll incorrectly retains service",
+      "repro": "Prepared valid marker; injected clock returns deadline-0.001 at while test then deadline+0.001 at start check. Watch returns SUSTAINED_HANDOFF_VERIFIED and closureAttempts0. Independent 10th regression fails. Marker read can itself cross expiry too.",
+      "fix": "Recheck current clock strictly before deadline after marker validation and before accepting handoff; otherwise execute one closure. Add crossing-during-poll/read negative.",
+      "status": "FIXED_VERIFIED_3090db6"
+    }
+  ],
+  "validation": {
+    "watchdog": "10 fixed tests PASS; 11 with reviewer actual marker-read reaching exactdeadline negative PASS",
+    "closure": "7 tests PASS, SQL/SSH injected local mocks only",
+    "actual_packet": "Read-only validate Root actual template (testtransitionUUID only): exactGate/Actor/cutoff/renderer/SQLpacket bytes+manifest/ATTEMPT2 runtime183b.../reviewedservice04350.../threebaselinemount binding PASS; no execute",
+    "order": "Exact close.sql once\u2192independent rowsclosed_verified true\u2192fixedreviewedrestore strictverified/restorationVerified/secretclear/noRemainingRuntimeMount",
+    "safe_failure": "UNKNOWN/drift/falseverify/restorefailure/persistencefailure\u2192RECONCILE_REQUIRED; no automatic retry or business deletion"
+  },
+  "remaining": "Before actual role activation Root must prepare realtransition/closePlan and pin closeEntry SHA, launch independent watcher and prove exclusive claim+livePID. Successful handoff only beforedeadline; persistentservice retained. Reviewer did not arm or execute closure.",
+  "not_run": [
+    "DEV",
+    "Remote",
+    "Native",
+    "SQL",
+    "Deployment"
+  ],
+  "fixed_followup_sha": "3090db64a6a6a897ddce924b723af5b43f7cead1"
+}

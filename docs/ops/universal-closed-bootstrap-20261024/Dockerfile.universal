@@ -1,0 +1,4 @@
+FROM sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30
+COPY --chown=otr:otr server.mjs /app/server.mjs
+COPY --chown=otr:otr server-capture.mjs /app/server-capture.mjs
+COPY --chown=otr:otr universal-prepare.mjs /app/universal-prepare.mjs

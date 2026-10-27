@@ -1,0 +1,203 @@
+import { createHash, randomUUID } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
+import { afterEach, expect, it, vi } from "vitest";
+import { migrations } from "../db/migrations";
+import { serializeDatabaseTransactions } from "../db/databaseConnection";
+import { advanceAccountGeneration } from "../auth/accountGeneration";
+import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
+import { createTripRepository } from "./tripRepository";
+import { createLocalTripPersonRepository } from "./localTripPersonRepository";
+import { createTripPersonRepository } from "./tripPersonRepository";
+import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
+import { createTripDayFeedReader } from "./tripDayFeedRepository";
+import {
+  createManualActivityRepository,
+  type ManualActivityFields,
+} from "./manualActivityRepository";
+vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
+vi.mock("../files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  probeRetainedTripPhotoIdentity: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
+const opened: DatabaseSync[] = [];
+afterEach(() => opened.splice(0).forEach((s) => s.close()));
+async function fixture(structured = false) {
+  const sql = new DatabaseSync(":memory:");
+  opened.push(sql);
+  sql.exec("PRAGMA foreign_keys=ON");
+  for (const m of migrations) sql.exec(m.sql);
+  let accountId = randomUUID(),
+    failAt = 0,
+    inserts = 0,
+    aba = false;
+  const originalAccount = accountId;
+  const database: CoreDatabase = serializeDatabaseTransactions({
+    async getFirstAsync<T>(q: string, ...args: unknown[]) {
+      const result = sql.prepare(q).get(...(args as never[])) ?? null;
+      if (aba && q.includes("FROM local_trip_containers")) {
+        aba = false;
+        advanceAccountGeneration();
+        advanceAccountGeneration();
+      }
+      return result as T | null;
+    },
+    async getAllAsync<T>(q: string, ...args: unknown[]) {
+      return sql.prepare(q).all(...(args as never[])) as T[];
+    },
+    async runAsync(q: string, ...args: unknown[]) {
+      if (q.startsWith("INSERT INTO trip_core_pending_intents") && ++inserts === failAt)
+        throw new Error("TEST_WRITE_FAILURE");
+      return sql.prepare(q).run(...(args as never[])) as never;
+    },
+    async withTransactionAsync(work: () => Promise<void>) {
+      sql.exec("BEGIN");
+      try {
+        await work();
+        sql.exec("COMMIT");
+      } catch (e) {
+        sql.exec("ROLLBACK");
+        throw e;
+      }
+    },
+  });
+  const identity = async () => accountId;
+  const clock = () => "2026-10-20T00:00:00.000Z";
+  const core = createTripCoreV2Repository(
+    database,
+    identity,
+    async (b) => createHash("sha256").update(b).digest("hex"),
+    clock,
+  );
+  const trips = createTripRepository(database, identity, core, clock);
+  const tripId = randomUUID();
+  await trips.createTrip({
+    tripId,
+    operationId: randomUUID(),
+    name: "Winter trip",
+    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
+    destination: null,
+    startDate: "2026-12-30",
+    endDate: "2027-04-28",
+  });
+  const repo = () => createManualActivityRepository(database, identity, core, clock);
+  const read = createTripLocalManualReader(database, identity, core);
+  const days = createTripDayFeedReader({
+    account: identity,
+    localManual: read,
+    projection: async () => null,
+    candidates: async () => [],
+    services: async () => ({}),
+  });
+  return {
+    sql,
+    coreDatabase: database,
+    identity,
+    core,
+    trips,
+    tripId,
+    repo,
+    read,
+    days,
+    originalAccount,
+    failNext(n: number) {
+      inserts = 0;
+      failAt = n;
+    },
+    switchAccount() {
+      accountId = randomUUID();
+      advanceAccountGeneration();
+    },
+    aba() {
+      aba = true;
+    },
+  };
+}
+
+const values = (fields: ManualActivityFields): ManualActivityFields => ({
+  ...fields,
+  title: "Museum",
+  startDate: "2026-12-30",
+});
+it("minimum name/date Create and same-ID Edit use the existing Core journal/Reader", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = values(draft.fields);
+  const created = await repo.save(draft, input);
+  expect(created.itemId).toBe(draft.itemId);
+  expect(created.operationIds).toHaveLength(1);
+  expect((await f.read(f.tripId))!.items[0]).toMatchObject({
+    family: "P6",
+    itemId: draft.itemId,
+    title: "Museum",
+    localState: "PENDING",
+  });
+  const reopened = await f.repo().read(f.tripId, draft.itemId);
+  expect(reopened.fields).toEqual(input);
+  expect(reopened.fields.startTime).toBeNull();
+  const editRepo = f.repo(),
+    edit = await editRepo.read(f.tripId, draft.itemId);
+  await editRepo.save(edit, {
+    ...edit.fields,
+    title: "Gallery",
+    startTime: "10:00",
+    endDate: "2026-12-31",
+    endTime: "11:00",
+    activityDetails: {
+      sessionLabel: "Morning",
+      admissionNote: "North entrance",
+      entryLocation: "North gate",
+    },
+  });
+  const restore = await f.repo().read(f.tripId, draft.itemId);
+  expect(restore.itemId).toBe(draft.itemId);
+  expect(restore.fields.activityDetails).toEqual({
+    sessionLabel: "Morning",
+    admissionNote: "North entrance",
+    entryLocation: "North gate",
+  });
+  const read = (await f.read(f.tripId))!;
+  expect(
+    read
+      .rows("2026-12-31")
+      .some((r) => r.itemRef === draft.itemId && r.rowKey.projectionRole === "END"),
+  ).toBe(true);
+});
+it("rollback keeps opaque retry idempotent and a changed frozen retry is rejected", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId),
+    input = values(draft.fields);
+  f.failNext(1);
+  await expect(repo.save(draft, input)).rejects.toThrow("TEST_WRITE_FAILURE");
+  await expect(repo.save(draft, { ...input, title: "Different" })).rejects.toThrow(
+    "MANUAL_PLAN_DRAFT_FROZEN",
+  );
+  f.failNext(0);
+  const result = await repo.save(draft, input);
+  const again = await repo.save(draft, input);
+  expect(again.operationIds).toEqual(result.operationIds);
+});
+it("no Draft write and account switch cannot Save a stale activity", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    0,
+  );
+  f.switchAccount();
+  await expect(repo.save(draft, values(draft.fields))).rejects.toThrow();
+});
+
+it("proposed manual gate still rejects Activity detail commands on another family", async () => {
+  const f = await fixture(), itemId = randomUUID();
+  await f.trips.addItem(f.tripId, { itemId, operationId: randomUUID(), family: "P1", title: "Walk", startDate: "2026-12-30" });
+  const original = JSON.parse(String(f.sql.prepare("SELECT canonical_intent_text FROM trip_core_pending_intents").get()!.canonical_intent_text));
+  const command = { ...original, operationId: randomUUID(), command: "SET_ACTIVITY_DETAILS", baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }], payload: { details: { session_label: null, admission_note: null }, entryPlace: null } };
+  const before = f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n;
+  await expect(f.core.commitManualBatch(await f.core.captureContext(f.tripId), async () => ({ commands: [command], result: async () => true }))).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(before);
+});

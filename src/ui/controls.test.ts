@@ -7,6 +7,7 @@ import { UiFoundationFixture } from "./UiFoundationFixture";
 import { UiButton, UiText } from "./controls";
 import { getUiLocale, getFormatLocale, setUiLocale, t } from "./locale";
 import { uiPalette } from "./palette";
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 const state = vi.hoisted(() => ({
   scheme: "light" as "light" | "dark",
   fontScale: 1,
@@ -235,4 +236,39 @@ it("keeps default form-row inset while allowing captions to align with sibling f
   expect(regular).toContain("padding-horizontal:14px");
   expect(aligned).toContain("padding-horizontal:0");
   expect(aligned).toContain("min-height:52px");
+});
+
+it("keeps ordinary action cards unchanged while compact Participants cards fit their content", () => {
+  const props = {
+    variant: "action" as const,
+    label: "Participants",
+    value: "QA",
+    onPress: vi.fn(),
+  };
+  const regular = renderToStaticMarkup(createElement(UiFormRow, props));
+  const compact = renderToStaticMarkup(
+    createElement(UiFormRow, { ...props, compact: true }),
+  );
+  expect(regular).toContain("min-height:100px");
+  expect(regular).toContain("flex-grow:1");
+  expect(compact).toContain("min-height:64px");
+  expect(compact).toContain("flex-grow:0");
+});
+
+it("renders a field accessory without losing the canonical value or disabled state", () => {
+  const markup = renderToStaticMarkup(
+    createElement(UiFormRow, {
+      variant: "field",
+      label: "Transport type",
+      value: "Train",
+      disabled: true,
+      onPress: () => undefined,
+      trailing: createElement("span", null, "chevron"),
+    }),
+  );
+  expect(markup).toContain("Transport type");
+  expect(markup).toContain("Train");
+  expect(markup).toContain("chevron");
+  expect(markup).toContain('aria-disabled="true"');
+  expect(markup).toContain("flex-direction:row");
 });

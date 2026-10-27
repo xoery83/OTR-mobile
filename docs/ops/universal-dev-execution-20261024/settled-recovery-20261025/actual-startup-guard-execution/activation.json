@@ -1,0 +1,8 @@
+{
+  "activationId": "bce5559c-0831-4a15-970b-4b5f2bd3f570",
+  "startsAt": "2026-10-25T00:26:03Z",
+  "innerExpiresAt": "2026-10-25T00:34:03Z",
+  "outerExpiresAt": "2026-10-25T00:36:03Z",
+  "operator": "Unified Coordinator",
+  "purpose": "same-settled-task-no-provider-recovery-startup-guard"
+}

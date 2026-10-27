@@ -5,8 +5,6 @@
 !backend/**
 !src/
 !src/data/
-!src/data/api/
-!src/data/api/**
+!src/data/**
 !src/domain/
-!src/domain/ledger/
-!src/domain/ledger/**
+!src/domain/**

@@ -1,0 +1,17 @@
+{
+  "status": "PASS_FOCUSED_COLD_GET_ENTRY",
+  "commit": "28befd6899800d43c2b78be91bbc5ef509cfe365",
+  "files": [
+    "src/features/capture/UniversalCaptureResults.tsx",
+    "src/features/capture/UniversalCaptureResults.test.ts"
+  ],
+  "findings": [],
+  "checks": [
+    "Existing canonical/localized Check control always rendered; unchanged busy/not-ready disable and recover callback.",
+    "Cold Batch result=null/attempted=false can select read-only recovery without start/Provider dispatch. Analyze/start behavior unchanged.",
+    "No Backend, Source, Auth, permission or allowance change."
+  ],
+  "independentTests": "7 UI tests PASS including cold recover once/start0.",
+  "rootReported": "24 UI/consumer tests PASS, UIguard PASS, TypeScript exit0; actual cold App button visible but unclicked while Reader closed.",
+  "boundary": "Entry UI readiness only; actual Cold Results GET still requires authorized finite reader window. No Reviewer DEV/GUI/network/read consumption."
+}

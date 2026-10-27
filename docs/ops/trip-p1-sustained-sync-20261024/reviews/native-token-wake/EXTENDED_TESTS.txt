@@ -1,0 +1,13 @@
+
+> otr-mobile@0.1.0 test
+> vitest run --configLoader runner src/data/sync/nativeTripQaScope.test.ts src/data/auth/sessionAccessToken.test.ts src/data/sync/ledgerOperationalSync.test.ts
+
+
+ RUN  v4.1.11 /private/tmp/otr-native-token-wake-review-20261024/snapshot
+
+
+ Test Files  3 passed (3)
+      Tests  71 passed (71)
+   Start at  16:37:14
+   Duration  322ms (transform 181ms, setup 0ms, import 317ms, tests 234ms, environment 0ms)
+

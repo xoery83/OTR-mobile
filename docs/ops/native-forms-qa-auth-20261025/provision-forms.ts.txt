@@ -1,0 +1,61 @@
+// QA-only operator. Existing SDK/diagnostics; no product Auth, business or permission writes.
+import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'node:crypto';
+import { readFileSync, writeFileSync, existsSync, chmodSync, lstatSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+import { fetchProvisionWithReceipt, reserveProvisionDispatch, type ProvisionDiagnostic } from '../../scripts/trip/c-execution/provisionDiagnostics';
+const project='tuqigdxrvrerfewsxqgm', origin=`https://${project}.supabase.co`;
+const email='otr.forms.qa.20261025@example.invalid', displayName='OTR Forms QA';
+const credentialPath='.env.forms-qa-credentials.json', journalPath='.forms-qa/auth/provision-journal.json';
+async function assertRequest(request: Request, password: string) {
+ const u=new URL(request.url), body=await request.clone().json();
+ assert.equal(u.origin,origin); assert.equal(u.pathname,'/auth/v1/admin/users'); assert.equal(u.search,''); assert.equal(request.method,'POST');
+ assert.equal(body.email,email); assert.equal(body.email_confirm,true); assert.equal(body.password,password);
+ assert.deepEqual(Object.keys(body).sort(),['email','email_confirm','password','user_metadata']);
+ assert.deepEqual(body.user_metadata,{display_name:displayName});
+}
+async function main() {
+ if(process.argv.includes('--self-check')) {
+  const body={email,email_confirm:true,password:'SYNTHETIC_ONLY_12345678901234567890',user_metadata:{display_name:displayName}};
+  const request=(b=body, url=origin+'/auth/v1/admin/users')=>new Request(url,{method:'POST',body:JSON.stringify(b)});
+  await assertRequest(request(),body.password);
+  await assert.rejects(()=>assertRequest(request({...body,email:'wrong@example.invalid'}),body.password));
+  await assert.rejects(()=>assertRequest(request(body,'https://example.invalid/auth/v1/admin/users'),body.password));
+  await assert.rejects(()=>assertRequest(request({...body,app_metadata:{role:'admin'}} as typeof body),body.password));
+  const attempts=new Set<string>(),diagnostics: ProvisionDiagnostic[]=[];reserveProvisionDispatch(attempts,email,diagnostics);
+  assert.throws(()=>reserveProvisionDispatch(attempts,email,diagnostics));
+  console.log('Forms QA exact identity/body/origin/one-dispatch self-check PASS'); return;
+ }
+ assert(process.argv.includes('--execute')); assert.equal(process.env.OTR_DEV_SUPABASE_URL?.replace(/\/$/,''),origin);
+ assert(process.env.OTR_DEV_SUPABASE_SECRET_KEY?.startsWith('sb_secret_'));
+ assert(!existsSync(journalPath),'PRIOR_ATTEMPT_MUST_BE_RECONCILED_NO_RETRY');
+ if(existsSync(credentialPath)) assert(!lstatSync(credentialPath).isSymbolicLink(),'PRIVATE_CREDENTIAL_SYMLINK_REFUSED');
+ if(!existsSync(credentialPath)) writeFileSync(credentialPath,JSON.stringify({project,email,password:randomBytes(32).toString('base64url'),createdLocallyAt:new Date().toISOString()},null,2)+'\n',{mode:0o600,flag:'wx'});
+ chmodSync(credentialPath,0o600);const credential=JSON.parse(readFileSync(credentialPath,'utf8'));
+ assert.equal(credential.project,project);assert.equal(credential.email,email);assert(credential.password.length>=32);assert(!credential.accountId);
+ const sqlPath='.forms-qa/auth/forms-exact-absence.sql';
+ writeFileSync(sqlPath,`BEGIN READ ONLY;\nSELECT id,email,created_at FROM auth.users WHERE email = '${email}';\nROLLBACK;\n`);
+ const raw=execFileSync('/Users/xoery/Project/otr-mobile/node_modules/.bin/supabase',['db','query','--linked','--project-ref',project,'--file',process.cwd()+'/'+sqlPath,'--output','json'],{cwd:'/Users/xoery/Project/otr-mobile-canonical',env:{...process.env,SUPABASE_DB_PASSWORD:'DOCUMENTED_NONSECRET_MANAGEMENT_API_PLACEHOLDER'},encoding:'utf8',timeout:45000,stdio:['ignore','pipe','pipe']});
+ const absence=JSON.parse(raw);assert.deepEqual(absence.rows,[]);
+ writeFileSync('.forms-qa/auth/forms-absence.json',JSON.stringify({project,email,utc:new Date().toISOString(),rows:[]},null,2)+'\n');
+ const deadline=Date.now()+60000, diagnostics: ProvisionDiagnostic[]=[],attempted=new Set<string>();
+ const save=(value:unknown)=>writeFileSync(journalPath,JSON.stringify(value,null,2)+'\n',{mode:0o600});
+ const journal={scope:'FORMS_QA_AUTH_ONLY_OWNER_20261025',project,email,maximumCreates:1,normalLoginRequired:true,authorityExpansion:false,utc:new Date().toISOString(),status:'RESERVED_OUTCOME_UNKNOWN',diagnostics};
+ save(journal);
+ const client=createClient(origin,process.env.OTR_DEV_SUPABASE_SECRET_KEY!,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:async(url,options)=>{
+  assert(Date.now()<deadline);const request=new Request(url,options);await assertRequest(request,credential.password);
+  const diagnostic=reserveProvisionDispatch(attempted,email,diagnostics);save(journal);
+  const response=await fetchProvisionWithReceipt(new Request(request,{redirect:'error',signal:AbortSignal.timeout(10000)}),diagnostic);save(journal);return response;
+ }}});
+ try {
+  const {data,error}=await client.auth.admin.createUser({email,password:credential.password,email_confirm:true,user_metadata:{display_name:displayName}});
+  assert(!error);assert([200,201].includes(diagnostics.at(-1)?.httpStatus??0));assert.equal(data.user.email,email);
+  assert(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(data.user.id));assert(Number.isFinite(Date.parse(data.user.created_at)));
+  writeFileSync(credentialPath,JSON.stringify({...credential,accountId:data.user.id,serverCreatedAt:data.user.created_at},null,2)+'\n',{mode:0o600});
+  const receipt={...journal,status:'CREATED_NORMAL_LOGIN_PENDING',id:data.user.id,createdAt:data.user.created_at};save(receipt);console.log(JSON.stringify(receipt));
+ } catch {
+  save({...journal,status:'STOP_RECONCILE_BEFORE_ANY_RETRY'});console.log(JSON.stringify({scope:journal.scope,status:'STOP_RECONCILE_BEFORE_ANY_RETRY',diagnostics}));process.exitCode=2;
+ }
+}
+main().catch(()=>{console.log(JSON.stringify({status:'PREFLIGHT_STOP_NO_IMPLIED_CREATION'}));process.exitCode=2;});

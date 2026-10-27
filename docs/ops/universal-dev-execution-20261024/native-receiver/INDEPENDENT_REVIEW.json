@@ -1,0 +1,29 @@
+{
+  "status": "PACKAGING_REVIEW_PASS_READY_FOR_SAME_BUNDLE_AD5_REPLACEMENT",
+  "findings": [],
+  "candidateDebugSHA256": "2744b0ca7ab1bef6be5159a486ecd0de1bb438fbcb4b10149ce61a78c76963d3",
+  "baselineDebugSHA256": "62d92e7acf351395ab25d418543af8931189c6a979afae77a091c721cf193c3d",
+  "independentChecks": [
+    "Final generated ExpoModulesProvider differs only by extra PublicationCatalogReceiveModule.self, original four modules retained.",
+    "Two added Swift sources identical to canonical owning Source hashes.",
+    "Normalized Pods pbxproject delta only two fileRefs/buildRefs/group entries/ReceiptOcr source entries.",
+    "App Xcode project, Info.plist, entitlements, Podfile.lock and Pods Manifest.lock byte-identical to baseline.",
+    "Dependency and devDependency maps unchanged; package.json unrelated accepted Backend esbuild script flag differs, no dependency effect.",
+    "Actual built debug dylib hash matches SDK receipt; built bundle ID com.xoery.otrmobile."
+  ],
+  "manifestClarification": "BUILD_INPUT_MANIFEST records pre-overlay receipt-ocr config hash; BOUNDED_REGISTRATION_MANIFEST binds deliberate config overlay. Other existing module source hashes unchanged.",
+  "sdkEvidence": "Root recorded actual SDK build exit0; reviewer did not rerun build.",
+  "remainingAcceptance": [
+    "Before first launch after in-place install, compare SQLite db/WAL and persistent read-budget hashes to recorded preinstall baseline; no uninstall/reset.",
+    "Actual sealed receiver factory READY and genuine Source command prep remain to be observed by Coordinator. SDK compile/registry/symbol presence do not prove Runtime Source success."
+  ],
+  "boundaries": "Reviewer performed only local read comparisons; no simulator/DEV/Provider/network/Keychain/data operations.",
+  "sha256": {
+    "BOUNDED_REGISTRATION_MANIFEST.json": "a60d18c23e9de77d9051a1be7df7e3dd972c873930ac9c7627b5eae00378f308",
+    "BUILD_INPUT_MANIFEST.json": "cca2b58dae1b18188c68172f65345e95c89fb5f0fc57190e92896a5d13f8608d",
+    "SDK_BUILD_RECEIPT.json": "50d751e59868fcbb85a502df23319ff20157898249331c3143737cbde46b0a0b",
+    "ios/Pods/Target Support Files/Pods-OTRMobile/ExpoModulesProvider.swift": "2d0a51b973a2f650602dc315e331eebd1552c6b04e01b7ece372f57618164dcd",
+    "ios/Pods/Pods.xcodeproj/project.pbxproj": "f5667d4809ec9fe18b55f43b22496fcadfa24cd8239449db4f4ab2ff9ed0c42e",
+    "modules/receipt-ocr/expo-module.config.json": "52616c20bd12f0ad64e7529736d27ec21f7cf77d0396f857d07dcf7aba7cea97"
+  }
+}

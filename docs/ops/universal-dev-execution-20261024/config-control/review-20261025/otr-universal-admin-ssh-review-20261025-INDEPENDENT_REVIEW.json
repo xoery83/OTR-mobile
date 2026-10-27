@@ -1,0 +1,26 @@
+{
+  "status": "BOUNDED_TRANSPORT_AND_OPERATOR_POLICY_REVIEW_PASS",
+  "transportCandidate": "74158588460eb102adf2a71f869d0498beb6e727",
+  "findings": [],
+  "independentTests": {
+    "transport": "35 tests PASS using temp Unix socket and mocked SSH/psql only; initial sandbox socket denial resolved with local-only escalation, no remote commands",
+    "operatorPolicy": "Temporary directory:32 cap, exhausted ledger unchanged, cross-policy identity refusal, forbidden purpose refusal and old default24/run identity preserved"
+  },
+  "confirmed": [
+    "Optional SSH route keeps exact logical DEV db host and verify-full with fixed canonical CA digest; only network address changes to loopback finite port.",
+    "Sealed SSH binary, private socket, exact launch receipt/argv, PID/start/process hash/master ownership rechecked before every SQL; helper never creates or mutates tunnel.",
+    "Private hashed service remains credential source; no password/token argv/output, no postgres impersonation. Existing expiry/UNKNOWN/CAS semantics unchanged.",
+    "UNIVERSAL_20261025 Operator policy is distinct same-fixed-batch32 allowance; default Trip/P1 policy24 unchanged; identity mismatches refuse existing ledger reuse."
+  ],
+  "limits": [
+    "Does not prove real SSH/TLS/DB connectivity or actual normal admin authority; no reviewer DEV/GUI/network/secret read performed.",
+    "Root must keep the exact approved live tunnel and private service valid through restoration tail, then explicitly close/clean up; no permission beyond sealed Gate.",
+    "Operator reservation directory and ledger are fixed execution resources; deleting/changing their path is not an authorized reset.",
+    "Root budget delta is currently pinned by file hash rather than code commit; this review does not itself allocate or consume actual reads."
+  ],
+  "sha256": {
+    "scripts/import/universal_config_control.py": "fb80759ca8e7091be26cebd17b6bf94fe35fe449efd25d0fae2fcfcecad77417",
+    "scripts/import/universal_config_control_test.py": "af6f05e9baed4ef4fa6a756b888ba49f653236e9e0695fecad0f78f07cdb6593",
+    "Root/scripts/trip/read_recovery_allowance.py": "f6ec41b3067099108ccf198dd6c75170f5034603b90ba4307e1a4e85d6d483ff"
+  }
+}

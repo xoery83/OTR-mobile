@@ -1,8 +1,8 @@
 import {
-  captureCustodyBindingSchema,
+  captureMaterialBindingSchema,
   captureCustodyBindingJson,
   assertCaptureCustodyBytes,
-  type CaptureCustodyBinding,
+  type CaptureMaterialBinding,
   type CaptureMaterialCustody,
 } from "../../src/domain/capture/captureCustody";
 import { constants } from "node:fs";
@@ -261,10 +261,10 @@ export async function createFlightPrivateCustody(
         throw new Error("CUSTODY_RELEASE_CLOSED");
       },
     };
-    async function captureAssociation(binding: CaptureCustodyBinding) {
+    async function captureAssociation(binding: CaptureMaterialBinding) {
       try {
         const raw = z
-          .strictObject({ version: z.literal(1), binding: captureCustodyBindingSchema })
+          .strictObject({ version: z.literal(1), binding: captureMaterialBindingSchema })
           .parse(await read(name("capture-input", binding.accountId, binding.inputId)));
         if (captureCustodyBindingJson(raw.binding) !== captureCustodyBindingJson(binding))
           throw new Error("CAPTURE_CUSTODY_BINDING_CONFLICT");
@@ -276,7 +276,7 @@ export async function createFlightPrivateCustody(
     }
     const captureMaterial: CaptureMaterialCustody = {
       async put(raw, bytes) {
-        const binding = captureCustodyBindingSchema.parse(raw);
+        const binding = captureMaterialBindingSchema.parse(raw);
         assertCaptureCustodyBytes(binding, bytes);
         await captureAssociation(binding);
         if (!captureStorage) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
@@ -295,7 +295,7 @@ export async function createFlightPrivateCustody(
         }
       },
       async read(raw) {
-        const binding = captureCustodyBindingSchema.parse(raw);
+        const binding = captureMaterialBindingSchema.parse(raw);
         if (!(await captureAssociation(binding))) return null;
         if (!captureStorage) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
         const bytes = await captureStorage.read(binding);
@@ -335,6 +335,67 @@ export async function createFlightPrivateCustody(
     };
     return {
       close: () => root.close(),
+      // Transient read-execution evidence; never a business Source proof.
+      async claimReadStartup(input: {
+        kind: "HOST" | "OPERATOR";
+        configSHA256: string;
+        startsAt: string;
+        expiresAt: string;
+      }) {
+        const claim = z
+          .strictObject({
+            kind: z.enum(["HOST", "OPERATOR"]),
+            configSHA256: z.string().regex(/^[a-f0-9]{64}$/),
+            startsAt: z.iso.datetime({ offset: true }),
+            expiresAt: z.iso.datetime({ offset: true }),
+          })
+          .parse(input);
+        const start = Date.parse(claim.startsAt),
+          end = Date.parse(claim.expiresAt);
+        if (
+          end <= start ||
+          end - start > 600000 ||
+          Date.now() < start ||
+          Date.now() >= end
+        )
+          throw Error("CUSTODY_STARTUP_WINDOW_CLOSED");
+        const window = {
+          startsAt: new Date(start).toISOString(),
+          expiresAt: new Date(end).toISOString(),
+        };
+        // Config hash is bound in the payload, not the key: changing config cannot
+        // create a second read allowance for this kind/window.
+        const path = leaf(
+          `startup-${claim.kind.toLowerCase()}-${persistenceDigest(window)}.json`,
+        );
+        await checkRoot();
+        let handle;
+        try {
+          handle = await open(
+            path,
+            constants.O_WRONLY |
+              constants.O_CREAT |
+              constants.O_EXCL |
+              constants.O_NOFOLLOW,
+            0o600,
+          );
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "EEXIST")
+            throw Error("CUSTODY_STARTUP_ALREADY_CLAIMED");
+          throw error;
+        }
+        try {
+          await handle.writeFile(
+            JSON.stringify({ version: 1, ...claim, ...window }),
+          );
+          await handle.sync();
+          await root.sync();
+          await checkRoot();
+        } finally {
+          // Even a partial write burns the claim. Never unlink/retry it.
+          await handle.close();
+        }
+      },
       custody,
       captureMaterial,
       retained,

@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   generation: 1,
   repository: vi.fn(),
   alert: vi.fn(),
+  actionSheet: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -43,19 +44,52 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/manualTransportRepository", () => ({
   createDefaultManualTransportRepository: () => state.repository(),
 }));
+vi.mock("./PlanParticipantsField", () => ({
+  PlanParticipantsField: (p: any) => {
+    state.nodes.push({ ...p, label: "participants" });
+    return null;
+  },
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("@/features/place-search/PlaceSearchSheet", () => ({
+  PlaceSearchSheet: (p: any) => {
+    state.nodes.push({ ...p, label: "place-search" });
+    return null;
+  },
+}));
+vi.mock("@/data/auth/accountRequestContext", () => ({
+  captureAccountScope: vi.fn(async () => ({
+    accountId: "qa-account",
+    generation: state.generation,
+  })),
+}));
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("react-native", () => ({
+  ActionSheetIOS: { showActionSheetWithOptions: state.actionSheet },
+  Keyboard: { dismiss: vi.fn(), addListener: vi.fn(() => ({ remove: vi.fn() })) },
+  KeyboardAvoidingView: (p: any) => createElement("div", null, p.children),
+  Pressable: (p: any) => createElement("div", null, p.children),
+  Platform: { OS: "ios" },
   Alert: { alert: (...args: unknown[]) => state.alert(...args) },
-  Modal: (p: any) => createElement("div", null, p.children),
+  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
   ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => createElement("div", null, p.children),
   StyleSheet: { create: (value: unknown) => value },
 }));
 vi.mock("react-native-safe-area-context", () => ({
   SafeAreaProvider: (p: any) => createElement("div", null, p.children),
+  SafeAreaView: (p: any) => createElement("div", null, p.children),
 }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
     state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
+    if (p.onRight)
+      state.nodes.push({
+        label: p.rightLabel,
+        onPress: p.onRight,
+        disabled: p.rightDisabled,
+        category: p.category,
+      });
     return null;
   },
 }));
@@ -90,7 +124,7 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -145,6 +179,7 @@ beforeEach(() => {
   state.generation = 1;
   state.repository.mockReset();
   state.alert.mockReset();
+  state.actionSheet.mockReset();
 });
 it("saves an authored Train with NTC departure and unknown arrival", async () => {
   const p = props();
@@ -163,7 +198,7 @@ it("saves an authored Train with NTC departure and unknown arrival", async () =>
     })),
   };
   await open(p, repo);
-  expect(node("tripCreate.saveItem").disabled).toBe(true);
+  expect(node("ui.save").disabled).toBe(true);
   node("tripCreate.transportName").onChangeText("Train to town");
   render(p);
   node("tripCreate.departurePlace").onChangeText("Central Station");
@@ -176,8 +211,8 @@ it("saves an authored Train with NTC departure and unknown arrival", async () =>
   render(p);
   node("common.done").onPress();
   render(p);
-  expect(node("tripCreate.saveItem").disabled).toBe(false);
-  node("tripCreate.saveItem").onPress();
+  expect(node("ui.save").disabled).toBe(false);
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
@@ -210,7 +245,7 @@ it("late discard cannot save after terminal close", async () => {
   node("tripCreate.transportName").onChangeText("Draft");
   render(p);
   node("common.cancel").onPress();
-  const staleSave = node("tripCreate.saveItem").onPress;
+  const staleSave = node("ui.save").onPress;
   state.alert.mock.lastCall![2][1].onPress();
   staleSave();
   expect(p.onClose).toHaveBeenCalledOnce();
@@ -242,13 +277,13 @@ it("retries an unknown result with the same opaque draft and first fields", asyn
   await open(p, repo);
   node("tripCreate.transportName").onChangeText("Train to town");
   render(p);
-  node("tripCreate.saveItem").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   render(p);
   expect(node("tripCreate.transportName").editable).toBe(false);
   node("tripCreate.transportName").onChangeText("Changed after attempt");
   render(p);
-  node("tripCreate.saveItem").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledTimes(2);
   expect(repo.save.mock.calls[1]).toEqual(repo.save.mock.calls[0]);
@@ -280,10 +315,83 @@ it("keeps an authored arrival time without inventing its date", async () => {
   await open(p, repo);
   node("tripCreate.transportName").onChangeText("Ferry to town");
   render(p);
-  node("tripCreate.saveItem").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
     expect.objectContaining({ arrivalDate: null, arrivalTime: "18:30" }),
   );
+});
+
+it("uses one type selector and commits its native selection through the existing fields", async () => {
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "item-p5",
+    fields: {
+      ...fields(),
+      title: "Bus",
+      departureDate: "2027-12-29",
+      departureLocation: "Station",
+    },
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn(async () => ({ itemId: "item-p5" })),
+  };
+  await open(p, repo);
+  expect(node("ui.save").category).toBe("form");
+  node("tripCreate.transportType").onPress();
+  const [options, selected] = state.actionSheet.mock.lastCall!;
+  expect(options.options).toEqual([
+    "tripCreate.transportType.TRAIN",
+    "tripCreate.transportType.BUS",
+    "tripCreate.transportType.FERRY",
+    "tripCreate.transportType.WATER_TAXI",
+    "tripCreate.transportType.SHUTTLE",
+    "tripCreate.transportType.TRANSFER",
+    "common.cancel",
+  ]);
+  selected(1);
+  render(p);
+  node("ui.save").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    draft,
+    expect.objectContaining({ transportType: "BUS" }),
+  );
+});
+it("keeps place search actor-bound and stale results cannot overwrite the form", async () => {
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "item-p5",
+    fields: {
+      ...fields(),
+      title: "Train",
+      departureDate: "2027-12-29",
+      departureLocation: "Station",
+    },
+    participantOptions: [],
+  };
+  const repo = { createDraft: vi.fn(async () => draft), save: vi.fn() };
+  await open(p, repo);
+  await node("tripCreate.departurePlace").onFocus();
+  render(p);
+  const search = node("place-search");
+  expect(search.binding).toMatchObject({
+    accountId: "qa-account",
+    tripId: p.tripId,
+    editorId: "item-p5",
+  });
+  node("tripCreate.transportName").onChangeText("New title");
+  search.onConfirm({ kind: "MANUAL", text: "Stale address" });
+  render(p);
+  expect(node("tripCreate.departurePlace").value).toBe("Station");
+  await node("tripCreate.departurePlace").onFocus();
+  render(p);
+  node("place-search").onConfirm({ kind: "MANUAL", text: "Updated station" });
+  render(p);
+  expect(node("tripCreate.departurePlace").value).toBe("Updated station");
 });

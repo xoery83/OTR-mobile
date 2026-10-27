@@ -1,0 +1,25 @@
+{
+  "sha": "aea8ce37f5496d5ade8b79019e95e25cbc8c5a5f",
+  "parent": "fdd3f747e3835ac0616c15d5a4664f7079c626ac",
+  "status": "PASS_FOCUSED_LOCAL_EXECUTOR_PREPARATION",
+  "closedFindings": [
+    "P1_CLOSED_IMAGE_01",
+    "P2_CLOSED_IMAGE_02"
+  ],
+  "openFindings": [],
+  "tests": 21,
+  "verified": [
+    "Exact established4 Source/Destination/RW/bind tuples preserved, including1RWcustody directory and3ROfiles; only exact/run catalog source permitted.",
+    "Custody directory opened with O_DIRECTORY/NOFOLLOW and fstat metadata only; no list/read/content mutation. Three regular files retain SHA/owner/mode checks.",
+    "RawHostConfig fingerprint remains exact and captured, no normalization relaxation or live config change.",
+    "UTC+monotonic deadline after diagnostics and at publication; postpublish expiry removes accepted marker and restores baseline. Watcher refuses late saved acceptedAt and restores.",
+    "Default noSSH,0SQL/role/Universalruntime mutation and prior once claims/rollback boundaries unchanged."
+  ],
+  "remaining": [
+    "Root must capture and seal exact current baseline/private file/directory metadata, code and remote hashes, actual window/Operator, then obtain exact Owner image-only deployment approval.",
+    "No actual DEV image replacement, runtime compatibility/readback or real rollback is performed by this local review."
+  ],
+  "remoteOperations": 0,
+  "NativeGUI": false,
+  "ProviderCalls": 0
+}

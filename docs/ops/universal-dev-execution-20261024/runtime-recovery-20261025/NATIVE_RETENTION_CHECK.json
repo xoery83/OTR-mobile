@@ -1,0 +1,20 @@
+{
+  "evidence": "Actual AD5 accessibility observation after normal app navigation",
+  "batchId": "3665f191-1605-4365-92ca-30403d90b191",
+  "screen": "Activity Progress",
+  "savedOnDevice": 3,
+  "notSaved": 0,
+  "pendingLocalIntake": 0,
+  "visibleOriginals": [
+    "universal-mixed-bookings-utf8.txt",
+    "lodging-supplement.txt",
+    "Unnamed item"
+  ],
+  "visibleStatus": [
+    "Local intake does not confirm cloud sync.",
+    "Canonical results are not available."
+  ],
+  "analyzeInvoked": false,
+  "newRemoteWrites": 0,
+  "scope": "Original local input retention only; not AI/Admission/Cloud E2E PASS"
+}

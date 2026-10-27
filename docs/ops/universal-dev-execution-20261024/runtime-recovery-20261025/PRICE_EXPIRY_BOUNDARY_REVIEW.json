@@ -1,0 +1,22 @@
+{
+  "status": "PRICE_EXPIRY_BOUNDARY_NARROW_REVIEW_PASS",
+  "findings": [],
+  "independentTests": {
+    "existingTargeted": 33,
+    "additional": "Before/equal/after expiry boundary with reversed supersedes negatives PASS"
+  },
+  "confirmed": [
+    "priceBaselineUntil required actual old expiry ornull; newfrom before oldexpiry or indefiniteold requires exact oldID supersession.",
+    "At equal or later newfrom, supersedes must beNone; oldversion CAS still exact.",
+    "No oldrowbackdating, directpriceupdate, SQL/permission change or CP14 overlap/CAS bypass."
+  ],
+  "formatPrecondition": "Normalize actual +00:00 database expiry to equivalentUTC Z at binder boundary while keeping rawreceipt; existing instant intentionally refuses nonZ and would failclosed.",
+  "scope": "Reviewer local only, no DEV/Provider/GUI or secrets. Future Run guard patch separate.",
+  "diffSHA256": "3f1546fb7aa9a691f6df1aa1e5e7ec2131aadc223d8cfbeb5679631a382933c4",
+  "sha256": {
+    "scripts/import/universal_config_control.py": "39c848f34ffa6f7bad4836446b2f264d66da5cf79b91557759e9df738786729e",
+    "scripts/import/build_universal_admin_plan.py": "f4b9ddb4c2df43cc03149030efd5f91156d160b9adcdeeac85036e933fa7497b",
+    "scripts/import/universal_config_control_test.py": "08a6dab2735286495453133e3433499cc1fe36f6a3e45c751461904b63355723",
+    "scripts/import/build_universal_admin_plan_test.py": "c021669778d5f29a8985530df395e682613f83ccaa64dda50c91781e38619c9e"
+  }
+}

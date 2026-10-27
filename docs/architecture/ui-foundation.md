@@ -44,6 +44,12 @@ least 44pt. Do not wrap every View in a new primitive. Existing Ledger layouts c
 retain geometry during migration; new modules use canonical roles rather than
 inventing a card radius, divider, font hierarchy or spacing rhythm.
 
+`UiFormRow variant="field"` presents its caption above a bordered value button,
+sharing `UiTextInput` field geometry and typography. Use it for date selectors
+within input forms; the default row presentation remains available for grouped settings.
+`UiFormRow compact` fits an action card to its content with a 64pt minimum; use it
+for the P3 Participants summary. Ordinary action cards retain their existing geometry.
+
 ## Segmented selection
 
 Use `segmentedControlTokens` from `src/ui/segmented.ts` for segmented controls,
@@ -103,9 +109,14 @@ Journey workspaces with floating/collapsing content chrome use the shared
 `NavigationContentFrame` with `navigationContentFrameOptions`: native header
 is explicitly overlaid, the frame reserves its measured height (including safe
 area) once, and its content viewport clips collapsing chrome below that boundary.
-Inner scroll views disable automatic top inset for that managed frame. Native
-title/toolbar owns the top bar; chooser context remains content, never a second
-native header. Do not add screen-specific header offsets.
+Inner scroll views disable automatic top inset for that managed frame. Day may
+explicitly opt into `underlapHeader` for a native blurred navigation bar: the
+Frame removes its outer inset and the existing Day list reserves that same
+measured header height inside its scrolling header/topInset, once. This lets
+real content pass behind UIKit material while preserving the physical reading
+boundary. Other Frame callers retain the default measured/clipped viewport.
+Native title/toolbar owns the top bar; chooser context remains content, never a
+second native header. Do not add screen-specific header offsets.
 
 Root areas keep their existing Menu/title/context actions/tabs. Journey primary
 screens may show Journey context; detail/task screens use native Back and minimal
@@ -117,6 +128,8 @@ large-text behavior. `OverlayDismissAction` owns lightweight Close. Back moves
 through hierarchy; Cancel abandons a task/selection; Close dismisses a preview or
 overlay. Preserve each caller's handlers and dismissal semantics. Destructive
 actions belong in the appropriate editing/task context with safe confirmation.
+
+`UiGlassSurface` provides existing installed iOS glass for compact composer/popover surfaces, with semantic translucent fallback and opaque Reduce Transparency support. Do not put an opaque page/input fill over the material. The Import composer uses one shared input/action surface; its replacement connection sheets preserve draft and launching page. Native system paste is a separate explicit intake control, never a passive clipboard read.
 
 ## Forms, state and accessibility
 
@@ -137,6 +150,13 @@ Every native Modal/sheet body must theme its entire viewport, including unused
 space below short content. A themed parent outside Modal or a ScrollView
 contentContainerStyle does not theme the native modal host; apply semantic
 background to its flex body/ScrollView style as well as its children.
+
+Every production `ScrollView`, `FlatList` and `SectionList`, including nested
+parents around forms, uses `keyboardShouldPersistTaps="handled"`: a handled
+control receives the first tap while the keyboard is open; unhandled blank-space
+taps dismiss it. Do not install a parent capture responder or blanket keyboard
+dismiss wrapper that consumes the intended control tap. Preserve explicit
+keyboard handling needed by a specific native interaction.
 
 Reuse established form labels, values, placeholders, helper text, validation,
 picker/navigation rows, disabled state and destructive sections. Do not change
@@ -211,3 +231,16 @@ preview, Changes/update, confirmed-expense correction, and settlement history/st
 with their direct children. This authorizes presentation-only theme/localization
 remediation, preserving all review decisions, confirmation gates and financial payloads.
 These accepted B–C surfaces remain part of the full-Ledger Phase D device gate.
+
+## Bottom sheet header standard v1 (Owner, 2026-10-22)
+
+Current Create/Edit Trip, Capture and Action Island flows opt into the existing
+SheetHeader categories action/composer/form/picker. They share a36×5 semantic
+grabber, centered17pt semibold title, equal action slots,20pt horizontal inset,
+44pt targets and text-only confirmations. Action/composer has only a neutral ×;
+forms/pickers use Cancel plus their owning confirmation. The canonical sheet
+radius is26pt. Legacy callers retain behavior until their owning flows migrate.
+All dismissal paths reuse the owning close/draft guard. Quick Add replaces its
+content for manual creation and closes before navigation; it grants no new access.
+Native supplied sheets may retain native presentation constraints. Existing P2
+embedded submit ownership is recorded for follow-up rather than duplicated.

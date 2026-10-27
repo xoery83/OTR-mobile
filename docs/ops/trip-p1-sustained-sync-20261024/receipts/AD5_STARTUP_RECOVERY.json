@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-10-24T02:11:47.593459+00:00",
+  "status": "NATIVE_STARTUP_RECOVERED",
+  "rootCause": "Metro dynamic import of expo-secure-store resolves out-of-worktree shared node_modules chunk as invalid project-relative path before Keychain read",
+  "fix": "literal synchronous lazy require; unchanged storage keys/session format",
+  "evidence": {
+    "sqliteVersion": 74,
+    "myTripsOriginalAccountVisible": true,
+    "existingCoverImagesVisible": true,
+    "originalIdentityPreserved": true,
+    "reset": false,
+    "logout": false
+  },
+  "cloudE2E": "NOT_YET_RUN"
+}

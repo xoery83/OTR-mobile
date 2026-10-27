@@ -1,9 +1,16 @@
+import {
+  dayHeaderDestinationRead,
+  resolveDayHeaderDestination,
+} from "@/features/day-feed/dayHeaderDestinationRead";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
-import { advanceAccountGeneration } from "../auth/accountGeneration";
+import {
+  advanceAccountGeneration,
+  getAccountGeneration,
+} from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
@@ -62,7 +69,8 @@ async function fixture() {
     },
   });
   const identity = async () => accountId;
-  const clock = () => "2026-10-20T00:00:00.000Z";
+  let currentClock = "2026-10-20T00:00:00.000Z";
+  const clock = () => currentClock;
   const core = createTripCoreV2Repository(
     database,
     identity,
@@ -99,6 +107,9 @@ async function fixture() {
     read,
     days,
     originalAccount,
+    setClock(value: string) {
+      currentClock = value;
+    },
     failNext(n: number) {
       inserts = 0;
       failAt = n;
@@ -392,7 +403,7 @@ it("keeps lawful same-date zero-night Stay explicit, without inventing a checkou
   expect(local.rows("2026-10-21")).toEqual([]);
   expect((await f.repo().read(f.tripId, d.itemId)).fields.endDate).toBe("2026-10-20");
 });
-it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6 command without writing", async () => {
+it("P3 editor still rejects a Plan while the owning batch now accepts a lawful P6 create", async () => {
   const f = await fixture();
   const plan = randomUUID();
   await f.trips.addItem(f.tripId, {
@@ -410,7 +421,7 @@ it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6
     ),
   );
   const other = randomUUID();
-  const rental = {
+  const activity = {
     ...original,
     operationId: randomUUID(),
     target: { kind: "ITEM", id: other },
@@ -420,14 +431,14 @@ it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6
   const n = count(f.sql);
   await expect(
     f.core.commitManualBatch(await f.core.captureContext(f.tripId), async () => ({
-      commands: [rental],
+      commands: [activity],
       result: async () => true,
     })),
-  ).rejects.toThrow("MANUAL_BATCH_INVALID");
-  expect(count(f.sql)).toBe(n);
+  ).resolves.toBe(true);
+  expect(count(f.sql)).toBe(Number(n) + 1);
 });
 
-it("finite batch rejects SET on an existing P6 target while the original generic enqueue remains unchanged", async () => {
+it("finite batch accepts SET on an existing P6 target and generic replay does not duplicate its queue", async () => {
   const f = await fixture(),
     id = randomUUID(),
     ctx = await f.core.captureContext(f.tripId);
@@ -482,10 +493,10 @@ it("finite batch rejects SET on an existing P6 target while the original generic
       commands: [command],
       result: async () => true,
     })),
-  ).rejects.toThrow("MANUAL_BATCH_INVALID");
-  expect(count(f.sql)).toBe(1);
-  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
-    before,
+  ).resolves.toBe(true);
+  expect(count(f.sql)).toBe(2);
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toHaveLength(
+    before.length + 1,
   );
   expect((await f.core.enqueue(ctx, command)).localStatus).toBe("PENDING");
   expect(count(f.sql)).toBe(2);
@@ -592,4 +603,119 @@ it("reviewer: title-only legacy rename followed by independent property match ne
   expect((await f.repo().read(f.tripId, d.itemId)).fields.stayDetails.propertyName).toBe(
     "Legacy renamed title",
   );
+});
+
+const appleSelectionFor = (tripId: string, itemId: string, location: string) => ({
+  authority: "UNACCEPTED_PROVIDER_DRAFT" as const,
+  binding: {
+    tripId,
+    itemId,
+    location,
+    accountGeneration: getAccountGeneration(),
+    inputRevision: 1,
+  },
+  provider: "apple" as const,
+  selectionSessionId: randomUUID(),
+  selectionGeneration: 1,
+  providerPlaceId: "opaque-apple-poi-not-an-internal-uuid",
+  addressComponents: {
+    locality: "Nelson",
+    administrativeArea: "Nelson",
+    country: "New Zealand",
+    countryCode: "NZ",
+  },
+  point: { latitude: -41.27, longitude: 173.28 },
+});
+it("owning candidate retains an unaccepted provider draft without automatically promoting geography", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = inputFor(draft.fields),
+    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
+  await repo.save(draft, input, selection);
+  const item = (await f.read(f.tripId))!.items[0];
+  expect(item.place).toMatchObject({
+    authoredAddressLocality: "Nelson",
+    spatialProvenanceRefs: { acceptance: "UNACCEPTED_PROVIDER_DRAFT" },
+  });
+  expect(item.place).not.toHaveProperty("acceptedAddressLocality");
+  expect(item.place).not.toHaveProperty("latitude");
+  expect(
+    resolveDayHeaderDestination(
+      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
+      "2026-10-21",
+    ).kind,
+  ).toBe("unresolved");
+});
+it("only an explicit reviewed Save commits accepted geography through the existing same-ID Core and Queue", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = inputFor(draft.fields),
+    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
+  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
+  const result = await repo.save(draft, input, request);
+  const item = (await f.read(f.tripId))!.items[0];
+  expect(item.itemId).toBe(draft.itemId);
+  expect(item.place).toMatchObject({
+    acceptedAddressLocality: "Nelson",
+    acceptedAddressRegion: "Nelson",
+    acceptedAddressCountry: "New Zealand",
+    latitude: -41.27,
+    longitude: 173.28,
+    spatialProvenanceRefs: {
+      source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
+      acceptance: "USER_CONFIRMED_SAVE",
+    },
+  });
+  expect(item.place).not.toHaveProperty("placeId");
+  expect(
+    resolveDayHeaderDestination(
+      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
+      "2026-10-21",
+    ),
+  ).toEqual({ kind: "single", source: "stay", label: "Nelson" });
+  expect(item.schedule).toMatchObject({
+    start: { localDate: input.startDate },
+    end: { localDate: input.endDate },
+  });
+  expect(count(f.sql)).toBe(1);
+  expect(await repo.save(draft, input, request)).toEqual(result);
+  await expect(
+    repo.save(draft, input, {
+      ...request,
+      draft: { ...selection, binding: { ...selection.binding, inputRevision: 2 } },
+    }),
+  ).rejects.toThrow("MANUAL_PLAN_DRAFT_FROZEN");
+  const other = await repo.createDraft(f.tripId);
+  await expect(repo.save(other, input, request)).rejects.toThrow(
+    "MANUAL_PLACE_DRAFT_BINDING",
+  );
+  expect(count(f.sql)).toBe(1);
+});
+
+it("reuses the exact reviewed Place after first SQLite insert rollback and a changed retry clock", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = inputFor(draft.fields),
+    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
+  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
+  f.failNext(1);
+  await expect(repo.save(draft, input, request)).rejects.toThrow("TEST_WRITE_FAILURE");
+  expect(count(f.sql)).toBe(0);
+  f.setClock("2026-10-21T12:34:56.000Z");
+  f.failNext(0);
+  const saved = await repo.save(draft, input, request);
+  expect(saved.itemId).toBe(draft.itemId);
+  expect(count(f.sql)).toBe(1);
+  const item = (await f.read(f.tripId))!.items[0];
+  expect(item.place).toMatchObject({
+    acceptedAddressLocality: "Nelson",
+    spatialProvenanceRefs: {
+      reviewed_at: "2026-10-20T00:00:00.000Z",
+      acceptance: "USER_CONFIRMED_SAVE",
+    },
+  });
+  expect(await repo.save(draft, input, request)).toEqual(saved);
 });

@@ -1,0 +1,41 @@
+{
+  "nativeMetadataCommit": "7a546aff9cf60cd800243201a693b256c43fcc35",
+  "patch": "FORMAL_P3_PLACE_SAVE_AND_HEADER.patch",
+  "patchSha256": "3691f90ad4614662473f35bac9799c0187db8589a41aa08fb0fe35052fe8a88f",
+  "status": "PATCH_ONLY_NOT_INSTALLED",
+  "validation": {
+    "nativePrimary": {
+      "suites": 6,
+      "assertions": 59,
+      "swiftZeroQueryAssertions": 4,
+      "typecheck": "PASS",
+      "uiGuard": "PASS",
+      "scopedLint": "PASS"
+    },
+    "isolatedCombinedCandidate": {
+      "suites": 8,
+      "assertions": 181,
+      "typecheck": "PASS",
+      "uiGuard": "PASS",
+      "scopedLint": "PASS",
+      "format": "PASS",
+      "applyCheck": "PASS",
+      "queueAndReader": "LOCAL_SQLITE_SYNTHETIC_PASS"
+    }
+  },
+  "nativeVision": "NOT_RUN",
+  "hostedCloud": "NOT_RUN",
+  "publicAuthorityFilesInPrimary": "UNCHANGED",
+  "limits": [
+    "unique Writer must review explicit Save acceptance policy and install serially",
+    "selector supports qualified manual P3 group Stays only",
+    "old address-only records require normal reselect plus Save; no text inference"
+  ],
+  "reviewRepair": {
+    "finding": "reviewed_at was regenerated after a first-write rollback",
+    "fix": "freeze and reuse complete first-attempt Place",
+    "sqliteRegression": "first INSERT rollback → advance clock → exact retry succeeds; reviewed_at unchanged",
+    "directedAssertions": 15,
+    "independentRecheck": "PENDING"
+  }
+}

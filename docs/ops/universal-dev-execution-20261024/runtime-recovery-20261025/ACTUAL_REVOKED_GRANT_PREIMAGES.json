@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-24T17:41:11.677199+00:00",
+  "status": "EXACT_SYNTHETIC_REVOKED_GRANT_PREIMAGES",
+  "grants": [
+    {
+      "actor_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "admin_grant_id": "c9dc16ce-2ccd-4bc2-9b3f-100839ef8a08",
+      "created_at": "2026-10-24T17:08:09+00:00",
+      "created_by": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "environment": "DEV",
+      "expires_at": "2026-10-24T17:23:09+00:00",
+      "grant_revision": 2,
+      "permission": "CONFIG_ADMIN",
+      "revoked_at": "2026-10-24T17:09:35.322869+00:00"
+    },
+    {
+      "actor_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "admin_grant_id": "1e8a72aa-3832-4031-bdab-5bd2c471b73f",
+      "created_at": "2026-10-24T17:08:09+00:00",
+      "created_by": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "environment": "DEV",
+      "expires_at": "2026-10-24T17:23:09+00:00",
+      "grant_revision": 2,
+      "permission": "SECURITY_ADMIN",
+      "revoked_at": "2026-10-24T17:09:35.326605+00:00"
+    }
+  ]
+}

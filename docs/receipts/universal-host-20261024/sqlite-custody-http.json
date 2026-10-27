@@ -1,0 +1,11 @@
+{
+  "status": "LOCAL_CONTINUATION_CUSTODY_PASS",
+  "provider": "SYNTHETIC_LOCAL_FIXTURE",
+  "realProviderCalls": 0,
+  "checks": [
+    "real SQLite continuation + anchored private custody + HTTP mixed-candidate publication",
+    "cold SQLite/custody reopen replays exact result without Provider redispatch",
+    "revoked current Source admission withholds retained result",
+    "HTTP authentication enforced"
+  ]
+}

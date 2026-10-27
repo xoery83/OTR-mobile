@@ -1,0 +1,49 @@
+{
+  "sha": "9ac1e3ae447f0a1c288f674ae59d28d2221f3eff",
+  "parent": "92acdd12b0d2502e6148e91eed24d2e57caab093",
+  "status": "HOLD_TWO_P2_BOUNDARY_GAPS",
+  "findings": [
+    {
+      "id": "P2_NATIVE_PINS_01",
+      "priority": "P2",
+      "file": "scripts/import/read-native-capture-pins.ts",
+      "lines": [
+        39,
+        54
+      ],
+      "title": "Expected-input file is caller-defined, not a fixed QA allowlist",
+      "repro": "The actual bundled CLI test successfully exports Original0.txt/Original1.txt and arbitrary typed text after writing their tuples into --expected-inputs. None matches the three approved QA originals. CLI validates only shape/count, so replacing that file expands selection to any matching local batch.",
+      "impact": "Tool cannot guarantee MATCHED_LOCAL_QA_JOBS_ONLY or fixed synthetic dataset scope; unrelated batch identities/filenames/pins can be exported. It remains read-only and does not export raw content.",
+      "fix": "Pin the CLI to the approved three kind/filename/byteCount/hash tuples or bind the exact expected-file content hash. Keep general owning repository function reusable; reject altered/additional tuples before opening DB."
+    },
+    {
+      "id": "P2_NATIVE_PINS_02",
+      "priority": "P2",
+      "file": "scripts/import/serve-fixed-qa-originals.py",
+      "lines": [
+        37,
+        41
+      ],
+      "title": "Idle connection prevents finite server shutdown",
+      "repro": "Start --seconds1, open loopback socket without sending request bytes, wait2s: process remains alive. Closing idle client then lets it exit. Independent actual loopback receipt retained.",
+      "impact": "Single-threaded HTTPServer blocks in request parsing; Timer.shutdown cannot enforce <=900s lifetime and handler may continue after deadline. Only fixed synthetic files are exposed, but finite cleanup guarantee is false.",
+      "fix": "Enforce wall-clock shutdown independently of client activity, close active sockets at deadline or use bounded threaded handlers with a hard deadline; reject response after expiry and test idle/partial request sockets."
+    }
+  ],
+  "tests": {
+    "independentScopedTests": 6,
+    "files": 2,
+    "actualBundledReadonlyCli": true,
+    "actualSqliteFileHashUnchanged": true,
+    "actualLoopbackExpiryNegative": "FAIL_REPRODUCED_AND_CLEANED"
+  },
+  "confirmed": [
+    "SQLite readOnly/query_only and throwing runAsync/newId prevent product writes; owning list/reopen/recovery methods do not dispatch or schedule.",
+    "Repository Account/Trip and retained bytes/hash correlation tested; explicit CLI account argument is a local operator read pin, not Auth proof.",
+    "No raw text/bytes/session/token in exported pins; missing Source binding stays null NOT_SOURCE_PROOF.",
+    "Optional loopback server binds127.0.0.1 and only serves exact hash-checked synthetic file bytes; no upload/listing."
+  ],
+  "DEVOperations": 0,
+  "NativeGUI": false,
+  "ProviderCalls": 0
+}

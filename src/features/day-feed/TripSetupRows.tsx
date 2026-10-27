@@ -10,11 +10,13 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { tripRangeLabel } from "./TripCalendarRangeField";
 import { TripMembersSheet } from "./TripMembersSheet";
+import { tripDestinationDisplay } from "./tripDestinationDisplay";
 
 export type TripSetupMetadata = {
   startDate: string | null;
   endDate: string | null;
   destination: string | null;
+  destinations?: readonly { displayLabel: string }[];
 };
 
 export function TripCurrencyRow({
@@ -71,10 +73,10 @@ export function TripSetupRows({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const destination = metadata ? tripDestinationDisplay(metadata)?.trim() : null;
   return (
     <View style={styles.setupRows}>
-      {metadata &&
-      ((!metadata.startDate && !metadata.endDate) || !metadata.destination?.trim()) ? (
+      {metadata && ((!metadata.startDate && !metadata.endDate) || !destination) ? (
         <UiText accessibilityRole="header" style={styles.title}>
           {t("tripForm.setup")}
         </UiText>
@@ -90,7 +92,7 @@ export function TripSetupRows({
           />
         </View>
       ) : null}
-      {metadata && !metadata.destination?.trim() ? (
+      {metadata && !destination ? (
         <View style={styles.setupRow}>
           <UiFormRow
             label={t("tripCreate.destination")}

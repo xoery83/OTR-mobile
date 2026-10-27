@@ -1,0 +1,8 @@
+{
+  "observedAt": "2026-10-24T17:36:47.031247+00:00",
+  "approvedAdditionalMaximum": 32,
+  "executedBusinessReads": 0,
+  "ledgerPath": "/private/tmp/otr-universal-authorized-execution-20261025/universal-read-allowance/operator-read-ledger.json",
+  "ledgerExists": false,
+  "reason": "Prior window closed before Source acquisition/Run preparation; business read reservation actions never invoked. Historical Operator6/Native72 counters are separate and retained."
+}

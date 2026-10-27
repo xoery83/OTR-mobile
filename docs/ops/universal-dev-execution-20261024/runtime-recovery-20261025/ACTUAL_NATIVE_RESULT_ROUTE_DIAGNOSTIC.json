@@ -1,0 +1,10 @@
+{
+  "status": "EXACT_RESULT_ROUTE_READ_ONLY_DIAGNOSIS",
+  "utc": "2026-10-24T20:16:01.695829+00:00",
+  "httpStatus": 404,
+  "errorCode": "TASK_NOT_FOUND",
+  "contentType": "application/json",
+  "contentEncoding": null,
+  "bodyStatus": null,
+  "providerCallsIssued": 0
+}

@@ -1,6 +1,9 @@
 import { randomUUID, createHash } from "node:crypto";
 import { it, expect, vi } from "vitest";
-import { createCoreV2SyncWorker } from "./tripCoreV2SyncWorker";
+import {
+  createCoreV2SyncCoordinator,
+  createCoreV2SyncWorker,
+} from "./tripCoreV2SyncWorker";
 import { coreClosedCapabilities } from "../../domain/trip/tripCoreV2Commands";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
 import type { createTripCoreV2Repository } from "../repositories/tripCoreV2Repository";
@@ -113,4 +116,28 @@ it("rejects another account's operation and old Capture operation types", async 
     f.worker.push({ ...f.operation, operationType: "C_EXECUTE_EVENT_SLOT" }),
   ).rejects.toThrow("CORE_UNSUPPORTED_QUEUE_OPERATION");
   expect(f.transport.receipt).not.toHaveBeenCalled();
+});
+
+it("exact Core target wakes and executes only that operation, retaining other same-Trip commands", async () => {
+  const f = await fixture(),
+    other = { ...f.operation, id: randomUUID() };
+  const context = await f.repo.captureContext(trip);
+  const resume = vi.fn();
+  f.repo.resume = resume;
+  const queue = {
+    listPending: vi.fn().mockResolvedValue([f.operation, other]),
+    markProcessing: vi.fn(),
+    markCompleted: vi.fn(),
+  };
+  const push = vi.fn();
+  await createCoreV2SyncCoordinator(
+    queue as never,
+    { push },
+    f.repo,
+    trip,
+    f.operation.id,
+  ).run("AUTHENTICATED_ONLINE");
+  expect(resume).toHaveBeenCalledExactlyOnceWith(context, f.operation.id);
+  expect(push).toHaveBeenCalledExactlyOnceWith(f.operation);
+  expect(queue.markCompleted).toHaveBeenCalledExactlyOnceWith(f.operation.id);
 });

@@ -1,0 +1,30 @@
+{
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "bundlePath": "/Users/xoery/Library/Developer/CoreSimulator/Devices/AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A/data/Containers/Bundle/Application/691E3F69-5B56-45BE-9469-EBB863DA9D3A/OTRMobile.app",
+  "bundleId": "com.xoery.otrmobile",
+  "executable": "OTRMobile",
+  "version": "0.1.0",
+  "build": "1",
+  "urlSchemes": ["otrmobile", "com.xoery.otrmobile"],
+  "artifacts": {
+    "Info.plist": {
+      "sha256": "2492755dfa31397ac03515e14520eb950243e182c3a9ae47f4a315f28052bd36",
+      "bytes": 2731
+    },
+    "OTRMobile": {
+      "sha256": "c3445bb51a2de92c1436fc16b3ca0f97a1edece80a2c786ea0b78fe10b0dbc1f",
+      "bytes": 58480
+    },
+    "__preview.dylib": {
+      "sha256": "3c7b877aac0418019fe9da3dbbd48f7b5e31b1540bafaf3793c3b09636c7c52e",
+      "bytes": 34800
+    },
+    "OTRMobile.debug.dylib": {
+      "sha256": "62d92e7acf351395ab25d418543af8931189c6a979afae77a091c721cf193c3d",
+      "bytes": 49789008
+    }
+  },
+  "source": "e54c2f5a5a66b73a8ced8c56a22970c094d5191a",
+  "changeScope": "JS-only preview, existing Native bundle preserved",
+  "privateDataRead": false
+}

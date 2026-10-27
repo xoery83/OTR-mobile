@@ -1,3 +1,28 @@
+## Independent Native Forms Lane — Owner authorization 25 October 2026
+
+P3 only, independent Worktree and one reusable Forms QA. Code6242fe71+5a6176db;26tests and independentReview PASS. [Native receipt/scope and exact shared deltas](../ops/native-forms-p3-20261025/README.md). No main integration, AD5 or Universal modification. LOCAL_PASS is scoped synthetic fixture only; fullP3 CLOUD_PENDING/BLOCKED_BY_OWNING_INTERFACE.
+
+Data Path Checklist: (1) saved Stay fields Cloud-shared; editing Draft transient, not uploaded; (2) existing Repository/Core SQLite/Reader reused, no migration; (3) exact existing MANUAL queue, zeroCloudattempts; (4) CAS/account/same-op behavior preserved, invalid/conflict-stale Save guarded; (5)26L2 tests + actual synthetic NativeCreate/Edit/Day/Details/cold/error/EN/ZH/appearance evidence, normalAuth/L3 unverified; (6) Core Contact/Instructions port, Backend P3 gate, lawful existing QA login, optional durable-Draft restore and directModal appearance remain owning deltas. Existing later DeltaTracker is in separate contract tree; this fixed-source record carries the checklist for serial integration. No parallel management system.
+
+
+## Current execution override — 25 October 2026
+
+Universal is the sole active Coding line. Trip/P1 specified normal DEV scenarios are accepted at7253c12/e9afb98; retain only the independent Person first-failure backoff and physical-disconnection qualifications. Earlier pending/parallel entries below are historical, not current work authorization. People/Fidelity/new Trip optimizations remain queued.
+
+Universal owner: existing sole Writer; Coordinator integrates shared runtime and AD5, existing independent Reviewer handles R3 changes. Native receiver/session restored at2d16a7b; real three-input Batch has local Source command pins, not server Source proof. Dormant dependency preservation c37212e is reviewed/local PG PASS, not DEV installed. Actual AI preview and normal-button full path remain NOT_RUN. Closing condition: authorized actual Source/Run/Task/Provider receipts + mixed evidence-backed Native Results + read-only cold recovery and verified finite closure. [Single consolidated protected activation/configuration request](../ops/universal-dev-execution-20261024/OWNER_ACTIVATION_GATE.md); no new DEV activation is implied by local implementation.
+
+## Trip/P1 normal Cloud closure — IMPLEMENTED_REVIEWED / DEV_AUTHORITY_PENDING / 2026-10-24
+
+Sync owning9c093e4 +Root1d0c979, final independent Local/L2 review PASS. Actual sustained L1/L3 still NOT_RUN; do not close Beta. Delta Owner: Sync Writer owns SQL/Person/Repo, Coordinator owns private runtime/bootstrap/deploy/AD5. Closing condition: new normal App Create/Edit/pending-Create edits/full destinations, authored Person and P1 Create/Edit automatic acceptance/independent readback/recovery under revocable non-expiring Account policy. One [exact pending authorization](../ops/trip-p1-sustained-sync-20261024/OWNER_EXECUTION_GATE.md); no migration/role activation yet. Old V1/private names/pending retained. Universal main continues its own approved Native Source/task coupling work without touching this slice.
+
+# People / Identity V1 — DESIGN_REGISTERED / IMPLEMENTATION_QUEUED / 2026-10-24
+
+Source identity and gaps: [intake](../people/design-v1-20261024/INTAKE_AND_GAPS.md). Queue PEOPLE-01 Home/Detail/Nickname → PEOPLE-02 Add Traveler/Cloud Person → PEOPLE-03 Invite/Claim/connection → PEOPLE-04 Organizer/Creator, Switch/Reset, private AKA. Assign one Writer and exact L1/L2/L3 slice only when implementation is authorized. Current Universal main + Trip/P1 auxiliary continue unchanged; no new agent, GUI, schema, permission, Provider or Hosted action. Blocked owning interfaces remain explicit; no mock identity authority.
+
+## Universal main + Trip/P1 Sync auxiliary / IN_PROGRESS / 2026-10-24
+
+Owner permits one Universal Writer plus exactly one bounded Trip/P1 Sync Writer. Universal retains Source/Task/Provider/N→M ownership. Trip/P1 owns isolated Repository/Queue/adapters and minimal existing Core Mutation qualification; no shared Bootstrap/Worker/Native operations. Coordinator integrates common files, deployment and AD5 serially. Closure requires actual normal new-Trip full destinations and P1 Create/Edit SERVER_ACCEPTED, independent SERVER_VERIFIED and cold recovery; earlier finite QA receipts are scoped references only. New SQL/ACL/authority/deployment remains gated. Local-private Person names are neither promoted nor silently omitted. [Current integration receipt](../ops/universal-coordinator-integration-20261024/INTEGRATION_RECEIPT.json).
+
 ## EXPERIENCE-REVIEW-02 / IN_PROGRESS / 2026-10-18
 
 Isolated f87e119 baseline; A Day and B Home builders active, C Edit queued for finite builder slot. P0 first; shared root integration serial. Import P0 resources remain exclusive. Native Gate waits for independent simulator coordination; no AD5 installation/operation.
@@ -323,3 +348,13 @@ Runtimeauth prerequisite is now a C-owned bounded DEVTestIdentityRecovery packet
 P3 next approved packet (Owner directDelta10-13, BD42): Experience P3 renderer preflight follows current Trip fixes and independent observed QA; reuse edcbd accepted Stay/Day identities plus existing shared Focus/NOW/Immersive shell. One finite renderer contract declares owned paths and traces Delta§7 cases1–14 as function / Visual / conditional owning capability; do not wait for P4–P6. First basic real Trip/P1/P3 slice has priority; full nine-state visual polish is Beta1, richer Photos/Ledger/Documents conditional on actual owning ports. No new viewer/ledger/media framework, AI Access Facts, embedded map or default settlement policy. Protected runtime gates unchanged.
 
 Current postrecords snapshot main3889c1a: ActiveWP3; WaitingCoordinator0; WaitingOwner0 ready scopes; WaitingIntegration0 qualified UI; CompletedIntegrated6 technical; CoordinatorDirectImplCount0 product code/admin separate/historyUNKNOWN; OwnerInterventionCount3 required responses received, no current authenticated App. Reviewer1 WP05-C bounded Account-lifetime / local-return FIX with author repair; Visual1 existing full-held UI plus Trip candidate anonymous QA pending. Known historicalqualifiedwait27m23s/totalhistoryUNKNOWN. RealJ1–J5=0, SourceCLOSED mechanical1. P3 is approved queued work, not a new passed slice.
+
+
+## 24 October — Day Feed / P1 final UX approval
+
+Queued after AD5 startup recovery + normal Trip/P1 Cloud E2E: Native Fidelity Golden Slice, then staged migration. Current Universal main and Trip/P1 auxiliary Writers continue; no new Writer/GUI allocation. Archive identity/original Handoff file location remains unverified. [Intake and remaining file qualification](../ops/day-feed-p1-native-fidelity-v1-20261024/HANDOFF.md).
+
+
+## 25 October — Independent Forms QA normal Auth and P3 route
+
+Owner-authorized dedicated DEV Synthetic account3f7e964e normally logged in on FormsQA C0C23E00; independent serverlast_sign_in readback PASS. Cold Account shows only FormsQA, no copied session. Own Trip034beec1/P3Item5a18728b normalCreate/Edit→Day/Details→processcold recovery PASS, three queueoperations attempt0. No Auth/Shell/shared authority change, no P3Cloud/DEVbusinesswindow. Credential ignored0600 retained in lane worktree; Owner manualsteps0. FullP3 Contact/Instructions owningport and Cloudgaps remain. [Actual bounded receipt](../ops/native-forms-qa-auth-20261025/README.md).

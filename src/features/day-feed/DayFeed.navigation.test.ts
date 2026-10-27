@@ -105,13 +105,47 @@ vi.mock("./flexibleSnapshot", () => ({
   useFlexibleSnapshot: () => ({ snapshot: null }),
 }));
 vi.mock("./FlexibleBlockRow", () => ({ FlexibleBlockRow: () => null }));
+vi.mock("./StayReadView", () => ({
+  StayReadRow: (p: any) => {
+    state.nodes.push(p);
+    return createElement("span", {}, `STAY ${p.stay.id}:${p.focused ? "F" : "B"}`);
+  },
+}));
 vi.mock("./P1Row", () => ({
   P1Row: (p: any) => {
     state.nodes.push(p);
-    return createElement("div", {}, `${p.event.id}:${p.depth}`);
+    return createElement(
+      "div",
+      {},
+      `${p.event?.id ?? p.display?.id}:${p.depth} ${p.display?.title ?? ""}`,
+    );
   },
 }));
 vi.mock("./FlightRows", () => ({ FlightRows: () => null }));
+vi.mock("./FlightJourneyView", () => ({
+  FlightLegRow: (p: any) => {
+    state.nodes.push({
+      ...p,
+      accessibilityLabel: p.leg.flight.authored.flightNumberLiteral,
+      onPress: p.onFocus,
+    });
+    return createElement(
+      "span",
+      {},
+      `FLIGHT ${p.leg.flight.authored.flightNumberLiteral}:${p.focused ? "F" : "B"}`,
+    );
+  },
+}));
+vi.mock("./FlightFidelityGrid", () => ({
+  FlightFidelityGrid: (p: any) => {
+    state.nodes.push(p);
+    return createElement(
+      "span",
+      {},
+      `FLIGHT ${p.flight?.authored?.flightNumberLiteral}:${p.focused ? "F" : "B"}`,
+    );
+  },
+}));
 vi.mock("./NowMarker", () => ({ NowMarker: () => null }));
 vi.mock("./TransitionRow", () => ({ TransitionRow: () => null }));
 const fixture = faroeNegativeFixtures();
@@ -323,7 +357,19 @@ function localManual(changedId = fixture.before.id) {
   return {
     scope: { accountId: "account", tripId: "trip", generation: 0 },
     source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "local-read-pin" },
-    items: [{ itemId: changedId }, { itemId: "new-local" }],
+    items: [changedId, "new-local"].map((itemId) => ({
+      itemId,
+      itemRevision: 1,
+      tripId: "trip",
+      family: "P1",
+      title: `LOCAL ${itemId}`,
+      status: "planned",
+      hidden: false,
+      localState: "PENDING",
+      schedule: { start: { localDate: syntheticDate, comparable: false } },
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+    })),
     rows: (date: string) =>
       date === syntheticDate ? [row(changedId), row("new-local")] : [],
   } as any;
@@ -343,9 +389,7 @@ it("accepted plus local keeps the normal renderer, Focus/Immersive and a single 
   expect(html).toContain("LOCAL new-local");
   expect(state.nodes.some((p) => p.event?.id === fixture.before.id)).toBe(false);
   expect(state.nodes.filter((p) => p.isOwningList)).toHaveLength(1);
-  state.nodes
-    .find((p) => p.accessibilityLabel === `LOCAL ${fixture.before.id}`)
-    .onPress();
+  state.nodes.find((p) => p.display?.id === fixture.before.id).onDepth("I");
   expect(openLocal).toHaveBeenLastCalledWith(fixture.before.id, local);
   state.nodes
     .find((p) => p.event?.id === fixture.after.id && p.depth === "B")
@@ -504,4 +548,159 @@ it("rejects explicit Floating on legacy accepted projection without dropping it 
   expect(() =>
     render({ zone: null, viewMode: "FLOATING", localManual: localManual() }),
   ).toThrow("DAY_ZONE_INVALID");
+});
+
+it("accepted Core P1 richer detail delegates to the owning preview without losing Day focus", () => {
+  const open = vi.fn();
+  const props = {
+    projection: {
+      ...fixture.day,
+      version: 2,
+      items: [{ itemId: fixture.before.id, itemRevision: 4, family: "P1" }],
+      flightFacts: {},
+      query: (date: string, zone: string) => itemsForLocalDate(fixture.day, date, zone),
+    },
+    onOpenAcceptedP1: open,
+  };
+  render(props);
+  state.nodes
+    .find((p) => p.event?.id === fixture.before.id && p.depth === "B")
+    .onDepth("F");
+  render(props);
+  state.nodes
+    .find((p) => p.event?.id === fixture.before.id && p.depth === "F")
+    .onDepth("I");
+  expect(open).toHaveBeenCalledWith(fixture.before.id, 4);
+  expect(render(props)).toContain(`${fixture.before.id}:F`);
+  expect(state.nodes.some((p) => p.depth === "I")).toBe(false);
+});
+
+it("omits a disabled TNS footer instead of leaving a zero-height viewability row", () => {
+  const props = {
+    instant: "2030-01-01T00:00:00Z",
+    projection: {
+      ...fixture.day,
+      events: [
+        {
+          ...fixture.before,
+          boundaries: fixture.before.boundaries.map((b) => ({
+            ...b,
+            instant: null,
+            source_instant: null,
+            zone_id: null,
+          })),
+        },
+      ],
+    },
+  };
+  render(props);
+  expect(state.window.rows.some((row: any) => row.key.startsWith("footer:"))).toBe(true);
+  render({ ...props, presentation: { showTimeUnspecified: false } });
+  expect(state.window.rows.some((row: any) => row.key.startsWith("footer:"))).toBe(false);
+});
+
+it("mixed Reader keeps exactly one Focus across local and accepted P1 rows", () => {
+  const local = localManual("local-p1");
+  local.items = [
+    {
+      itemId: "local-p1",
+      itemRevision: 1,
+      tripId: "trip",
+      family: "P1",
+      title: "Pending plan",
+      status: "planned",
+      hidden: false,
+      localState: "PENDING",
+      schedule: { start: { localDate: syntheticDate, comparable: false } },
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+    },
+  ];
+  const props = { localManual: local };
+  render(props);
+  state.nodes.find((p) => p.display?.id === "local-p1").onDepth("F");
+  expect(render(props)).toContain("local-p1:F");
+  expect(render(props)).toContain("local-p1:F");
+  state.nodes.find((p) => p.event?.id === fixture.before.id).onDepth("F");
+  const html = render(props);
+  expect(html).toContain(`${fixture.before.id}:F`);
+  expect(html).toContain("local-p1:B");
+});
+it("real local Reader P1 forwards the native pickup point to the owning move controller", () => {
+  const local = localManual("local-p1"),
+    start = vi.fn();
+  const presentation = {
+    p1Move: {
+      canMove: () => true,
+      start,
+      wrapRow: (_key: string, _date: string, content: any) => content,
+      wrapClock: (_key: string, _date: string, _minute: number, content: any) => content,
+    },
+  };
+  render({ projection: undefined, localManual: local, zone: "", presentation });
+  const row = state.nodes.find((p) => p.display?.id === "local-p1");
+  expect(row.moveGesture).toBeDefined();
+  row.moveGesture.start({ x: 200, y: 450 });
+  expect(start).toHaveBeenCalledWith("local-p1", { x: 200, y: 450 });
+});
+
+it("accepted plus local retains P3 occurrence Focus and forwards its original role/date", () => {
+  const local = localManual("local-stay"),
+    item = local.items[0];
+  item.family = "P3";
+  item.details = {};
+  item.schedule.end = { localDate: syntheticDate, localTime: "18:00", comparable: false };
+  const rowKey = {
+    itemId: item.itemId,
+    projectionRole: "CHECKIN",
+    localDate: syntheticDate,
+  };
+  local.rows = (date: string) =>
+    date === syntheticDate
+      ? [
+          {
+            itemRef: item.itemId,
+            rowKey,
+            family: "P3",
+            position: "TNS",
+            title: item.title,
+          },
+        ]
+      : [];
+  const open = vi.fn(),
+    props = { localManual: local, onOpenLocalItem: open };
+  render(props);
+  state.nodes.find((p) => p.stay?.id === item.itemId).onFocus();
+  expect(render(props)).toContain(`STAY ${item.itemId}:F`);
+  expect(render(props)).toContain(`STAY ${item.itemId}:F`);
+  state.nodes.find((p) => p.stay?.id === item.itemId).onOpen();
+  expect(open).toHaveBeenCalledWith(item.itemId, local, {
+    role: "CHECKIN",
+    date: syntheticDate,
+  });
+});
+
+it("accepted plus local keeps P2 Focus stable and detail action opens the real Item", () => {
+  const local = localManual("local-flight"),
+    item = local.items[0];
+  item.family = "P2";
+  item.details = { flightNumberLiteral: "NZ99" };
+  item.participation = { mode: "WHOLE_GROUP", personIds: [] };
+  const rowKey = {
+    itemId: item.itemId,
+    projectionRole: "ORIGIN",
+    localDate: syntheticDate,
+  };
+  local.rows = (date: string) =>
+    date === syntheticDate
+      ? [{ itemRef: item.itemId, rowKey, family: "P2", position: "TNS", title: "NZ99" }]
+      : [];
+  const open = vi.fn(),
+    props = { localManual: local, onOpenLocalItem: open };
+  render(props);
+  state.nodes.find((n) => n.accessibilityLabel === "NZ99").onPress();
+  expect(render(props)).toContain("FLIGHT NZ99:F");
+  expect(render(props)).toContain("FLIGHT NZ99:F");
+  state.nodes.find((n) => n.accessibilityLabel === "NZ99").onOpen();
+  expect(open).toHaveBeenCalledWith(item.itemId, local);
 });

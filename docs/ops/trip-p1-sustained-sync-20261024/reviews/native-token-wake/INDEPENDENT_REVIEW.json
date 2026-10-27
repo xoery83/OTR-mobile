@@ -1,0 +1,30 @@
+{
+  "fixedSha": "1e079389da1a62e6cdf3074b1bbacb3fd5a87ea6",
+  "base": "ce3a44b",
+  "status": "PASS_BOUNDED_LOCAL_L2",
+  "findings": [],
+  "tests": {
+    "baseline": 69,
+    "extended": 71,
+    "files": 3,
+    "scope": [
+      "nativeTripQaScope",
+      "existing sessionAccessToken",
+      "ledgerOperationalSync timer"
+    ],
+    "reviewerNegatives": [
+      "Timer same-Account generation change during refresh prevents queue read",
+      "Network refresh failure cannot swallow Account-generation fencing"
+    ]
+  },
+  "conclusions": [
+    "Both normal dispatch and timer use existing owning token refresh provider before cached expiry gating, then reread persisted session and verify exact Account.",
+    "Account generation and enabled scope checked around awaits; finite old path remains unchanged.",
+    "Ordinary network refresh failure pauses before normal factory/queue activity, does not sign out or mutate queue.",
+    "Explicit auth-required/context errors remain rejected, not treated as ordinary offline expiry.",
+    "No new token storage, Auth authority, queue or field contract."
+  ],
+  "DEV": "NOT_RUN",
+  "Native": "NOT_RUN",
+  "remaining": "Actual AD5 token-expiry recovery and Backend/Supabase receipt verification remain Root acceptance work."
+}

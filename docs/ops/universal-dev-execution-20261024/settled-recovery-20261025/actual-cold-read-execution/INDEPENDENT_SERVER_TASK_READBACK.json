@@ -1,0 +1,23 @@
+{
+  "status": "INDEPENDENT_RETAINED_SERVER_DB_READBACK",
+  "task": {
+    "task_id": "cd36d6f4-a09b-41ef-977e-bb4127920d7f",
+    "account_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+    "trip_id": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+    "import_id": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+    "work_disposition": "PUBLISHED",
+    "row_revision": 5,
+    "result_sha256": "b7c072ed5b5a7aeb1556928ad983c15c9d1b837c8ce32758eec39e4cd67159d3",
+    "current_attempt_id": "b8e1e9a0-0b36-4df7-8a95-5de7cb35fb8a"
+  },
+  "attempts": [
+    {
+      "attempt_id": "b8e1e9a0-0b36-4df7-8a95-5de7cb35fb8a",
+      "usage_correlation_id": "43678b0c-05c4-4dbb-8478-13716c55964d",
+      "execution_observation": "TERMINAL",
+      "metering_disposition": "COMPLETE",
+      "result_install_disposition": "INSTALLED"
+    }
+  ],
+  "readonly": true
+}

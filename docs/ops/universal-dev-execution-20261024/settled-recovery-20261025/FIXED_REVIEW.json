@@ -1,0 +1,38 @@
+{
+  "status": "PASS_FOCUSED_CODE_READY_FOR_EXACT_RECOVERY_GATE",
+  "fixedCandidate": "02f874a2cc33d8fa48444a3a1a6e07d526ce1975",
+  "imageReportedByRoot": "sha256:33272c2a5a820a1cc6469b7cbf10b9ec2a26e3a8164587052ee76f9e566fb051",
+  "fixPatchSHA256": "7e3954527775a3376e6afd896e33c2da599ef6087ef6d09dcfcbb895b3113725",
+  "findings": [
+    {
+      "id": "SETTLED_SOURCE_READER_01",
+      "priority": "P1",
+      "status": "FIXED",
+      "evidence": "Entire retainedRecoveryManifest duplicate qualifier removed. Existing createSourcePgConnection(config.sourcePg) and createUniversalSourceReader are used without fallback. Owning trip_source_read_universal_inputs retains exact Batch/Task/submission, FAILED rejection, current registration/revision/ancestry qualification, pins and byte hash with double-read. Generic catalog only startup owning cache refresh."
+    }
+  ],
+  "confirmedBoundaries": [
+    "Recovery core exposes no Provider/send/reserve/newTask API; existing durable completion and response SHA/cost checked before existing Core observe/install CAS.",
+    "Existing Task and immutable policy/deadline unchanged; independent finite recovery window controls present Auth/Source disclosure and local publication, not new execution.",
+    "Settled GET requires PUBLISHED+INSTALLED exact attempt, current Auth/Trip/Source and receipt qualification; execute/POST throws dispatch forbidden.",
+    "Recovery env presence suppresses paid loader even if invalid; REMOTE enabled conflicts fail closed.",
+    "No new SQL/ACL or Source command HTTP port introduced."
+  ],
+  "independentTests": {
+    "recoveryProviderImport": "20 PASS / 1 Linux skip",
+    "SourceReaderAndBootstrap": "9 PASS",
+    "scope": "Local deterministic suites only; rejection-propagation tests do not claim new actual PG permission PASS."
+  },
+  "rootReportedValidation": {
+    "targeted": "40 PASS / 1 Linux skip",
+    "typecheck": "PASS",
+    "imageSmoke": "In progress at review artifact creation; not asserted here."
+  },
+  "executionGateRequirements": [
+    "Explicit finite authorization for existing SourceRole and exact same accepted three-pin SourceScope, reader-only usage.",
+    "No ProviderScope or CP14 activation, no new Provider call, no attempt/Task identity replacement.",
+    "Exact existing call-role completion read permission and bounded business-read allowance, normal Auth and readback/closure receipts.",
+    "Preserve original raw response and all original failure/UNKNOWN records; no automatic retries."
+  ],
+  "limitations": "No Reviewer DEV/Provider/GUI/network, secret reads, business writes or extra read quota consumption. This is code Review PASS, not actual recovered Result/Native preview/Admission PASS."
+}

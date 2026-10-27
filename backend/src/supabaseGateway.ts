@@ -1,5 +1,6 @@
 import {
   readPublicationCatalog,
+  publicationCatalogBody,
   type PublicationCatalogConnection,
 } from "./tripPublicationCatalogRead";
 import {
@@ -783,12 +784,13 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return raw === null ? null : projectEventReceipt(raw, userId, tripId, operationKey);
     },
 
-    async readPublicationImportCatalogs(actor, trip, signal) {
+    async readPublicationImportCatalogs(actor, trip, signal, version = 1) {
       return readPublicationCatalog(
         config.publicationCatalogConnection,
         actor,
         trip,
         signal,
+        (raw, a, t) => publicationCatalogBody(raw, a, t, version),
       );
     },
     async validatePublicationAccessToken(token, signal) {

@@ -1,3 +1,4 @@
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
@@ -21,6 +22,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { TripPreparationWidget } from "./TripPreparationWidget";
 
 export function useTripPreparationWidget({
+  refreshKey = 0,
   tripId,
   undated,
   onImport,
@@ -33,6 +35,7 @@ export function useTripPreparationWidget({
   onCover,
   onSetup,
 }: {
+  refreshKey?: number;
   tripId: string | null;
   undated: boolean;
   onImport?: () => void;
@@ -65,7 +68,9 @@ export function useTripPreparationWidget({
     setState((previous) => (previous === "READY" ? previous : "LOADING"));
     try {
       const [value, facts] = await Promise.all([
-        readTripPreparation().then((reader) => reader.read(tripId)),
+        readTripPreparation()
+          .then((reader) => reader.read(tripId))
+          .catch(() => null),
         readTripPreparationSetupRepository()
           .then((reader) => reader.read(tripId))
           .catch(() => null),
@@ -74,9 +79,8 @@ export function useTripPreparationWidget({
       setRead(value);
       const scopedFacts =
         facts &&
-        value &&
-        facts.context.tripId === value.scope.tripId &&
-        facts.context.accountId === value.scope.accountId &&
+        facts.context.tripId === tripId &&
+        (!value || facts.context.accountId === value.scope.accountId) &&
         facts.context.generation === generation
           ? facts
           : null;
@@ -91,7 +95,9 @@ export function useTripPreparationWidget({
         setState("UNAVAILABLE");
       }
     }
-  }, [tripId, generation, onSetup]);
+    // A committed manual mutation invalidates this retained projection even while Home stays mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId, generation, onSetup, refreshKey]);
   const cancelPending = useCallback(() => {
     request.current++;
   }, []);
@@ -104,22 +110,55 @@ export function useTripPreparationWidget({
       const sub = AppState.addEventListener("change", (value) => {
         if (value === "active") void load();
       });
+      const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+        if (
+          active &&
+          event.generation === generation &&
+          generation === getAccountGeneration() &&
+          event.accountId === read?.scope.accountId &&
+          tripId &&
+          event.journeyIds.includes(tripId)
+        )
+          void load();
+      });
       return () => {
+        stopSync();
         active = false;
         cancelPending();
         sub.remove();
       };
-    }, [load, cancelPending]),
+    }, [load, cancelPending, generation, read?.scope.accountId, tripId]),
   );
   const visible =
     read?.scope.tripId === tripId && read.scope.generation === generation ? read : null;
   const visibleSetup =
-    visible &&
     setup?.context.tripId === tripId &&
-    setup.context.accountId === visible.scope.accountId &&
+    (!visible || setup.context.accountId === visible.scope.accountId) &&
     setup.context.generation === generation
       ? setup
       : null;
+  const openCurrency = async () => {
+    if (!tripId || !visibleSetup || generation !== getAccountGeneration()) return;
+    const ticket = request.current;
+    try {
+      const reader = await readTripPreparationSetupRepository();
+      const facts = await reader.read(tripId);
+      if (
+        request.current !== ticket ||
+        generation !== getAccountGeneration() ||
+        facts.context.tripId !== tripId ||
+        facts.context.accountId !== visibleSetup.context.accountId ||
+        facts.context.generation !== generation ||
+        facts.currency.state !== "AVAILABLE" ||
+        facts.currency.permission !== "OWNER" ||
+        facts.currency.lock !== "NOT_OBSERVED"
+      )
+        return;
+      router.push({ pathname: "/trip-currency", params: { journeyId: tripId } });
+    } catch {
+      // An unavailable Ledger authority cannot authorize a currency action.
+    }
+  };
   const act = async (callback: () => void, needsPlan = false, itemId?: string) => {
     if (!tripId || generation !== getAccountGeneration()) return;
     const ticket = request.current;
@@ -204,14 +243,9 @@ export function useTripPreparationWidget({
             : undefined
         }
         onCurrency={
-          visible && visibleSetup
+          visibleSetup
             ? () => {
-                void act(() =>
-                  router.push({
-                    pathname: "/trip-currency",
-                    params: { journeyId: tripId },
-                  }),
-                );
+                void openCurrency();
               }
             : undefined
         }

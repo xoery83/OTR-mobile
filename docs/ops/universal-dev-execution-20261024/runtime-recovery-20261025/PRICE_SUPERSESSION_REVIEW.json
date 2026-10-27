@@ -1,0 +1,26 @@
+{
+  "status": "PRICE_BASELINE_SUPERSESSION_BINDING_NARROW_REVIEW_PASS",
+  "findings": [],
+  "independentTests": {
+    "configAndBinder": 29,
+    "renewalCompatibility": 4,
+    "total": 33
+  },
+  "confirmed": [
+    "Existing mode requires valid explicit immutable old priceBaselineId and exact equality row.supersedes_schedule_id; mismatched oldID/row rejects.",
+    "Expected price version still exact observed prior scheduleVersion; existing integration/environment killCAS derivation remains independent, no literal revision relaxation.",
+    "NEW mode remains no supersedes/no prior baseline. No SQL/Schema/permission/priceAuthority change."
+  ],
+  "limitations": [
+    "Actual old price identity/version/source, effective period and legal supersession must be bound from real owning receipts; existing CP14 command performs definitive validation, this binder does not replace it.",
+    "Private execution-script ProviderScope literal2 correction must derive both environment/integration baseline+1 and be bound to final packet; not reviewed as executed here.",
+    "No newRun attempt, paid call, DEV/GUI/network/secret read performed by reviewer."
+  ],
+  "diffSHA256": "8178356460ee510cf412bd1c24ae6b4e7599da6d7930ea21038b0b915fad4f64",
+  "sha256": {
+    "scripts/import/universal_config_control.py": "3c656a4d1bb807d7429a573a01d6a92b9ac7c565067a6745faaf1f094d92c729",
+    "scripts/import/build_universal_admin_plan.py": "81cab01d959a1246842a0e10c93cc76b6728d9d13744041c0d9da3ab26add2bf",
+    "scripts/import/universal_config_control_test.py": "844c91a640e0d33ab9c1d2925af8e0467e341ca36282c89fbad7ff16dba72658",
+    "scripts/import/build_universal_admin_plan_test.py": "36c7351af8e7ca6448f2f351d2674c16f35a064920a4c9bf62cd9afef0700f65"
+  }
+}

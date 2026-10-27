@@ -1,6 +1,6 @@
 import {
-  captureCustodyBindingSchema,
-  captureCustodyBindingJson,
+  captureMaterialBindingSchema,
+  captureCustodyBindingHeader,
   assertCaptureCustodyBytes,
   type CaptureMaterialCustody,
 } from "../../src/domain/capture/captureCustody";
@@ -31,7 +31,7 @@ export async function captureCustodyBoundary(
       !match ||
       url.search ||
       !header ||
-      header.length > 2048 ||
+      header.length > 4096 ||
       request.headers.has("Range") ||
       request.headers.has("Content-Encoding") ||
       (request.method === "GET" && request.body !== null)
@@ -43,7 +43,9 @@ export async function captureCustodyBoundary(
     } catch {
       return failure(422, "CAPTURE_CUSTODY_REQUEST_INVALID");
     }
-    const binding = captureCustodyBindingSchema.parse(raw);
+    const binding = captureMaterialBindingSchema.parse(raw);
+    if (binding.version === 1 && header.length > 2048)
+      return failure(422, "CAPTURE_CUSTODY_REQUEST_INVALID");
     if (binding.inputId !== match[1])
       return failure(422, "CAPTURE_CUSTODY_REQUEST_INVALID");
     if (binding.accountId !== actor) return failure(403, "CAPTURE_CUSTODY_FORBIDDEN");
@@ -68,7 +70,7 @@ export async function captureCustodyBoundary(
         "Content-Type": binding.mediaType,
         "Content-Length": String(binding.byteCount),
         ETag: `"${binding.sha256}"`,
-        "X-OTR-Capture-Binding": captureCustodyBindingJson(binding),
+        "X-OTR-Capture-Binding": captureCustodyBindingHeader(binding),
       },
     });
   } catch (error) {

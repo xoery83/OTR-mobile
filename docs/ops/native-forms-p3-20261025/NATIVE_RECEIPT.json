@@ -1,0 +1,49 @@
+{
+  "recordedAtUtc": "2026-10-25T03:53:37.895787+00:00",
+  "productSha": "5a6176dbb019bef878854e96e1c004a65d1b6bb8",
+  "priorP3Fix": "6242fe71",
+  "baseline": "cdd9d2717ef4c5ddd682beeb26f7115e66faff59",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "scope": "SYNTHETIC_LOCAL_SQLITE_FIXTURE_NO_AUTH_NO_CLOUD",
+  "actor": "f3c02500-0000-4000-8000-000000000001",
+  "trip": "f3c02500-0000-4000-8000-000000000002",
+  "item": "c589ec18-ead0-4895-9939-9ccef2323361",
+  "sqliteVersion": 74,
+  "nativeColdProcessPids": [10572, 15933, 18100],
+  "local": {
+    "create": "PASS: name, Nov1-Nov4, manual location, Notes, SELECTED_MEMBERS; dates required; clock Cancel retains unknown",
+    "draftCancel": "PASS: Stay retains fields; Discard yields zero Items/commands before first Save",
+    "edit": "PASS: same Item; planned16:35 and separate permitted15:35; no invented checkout clock",
+    "dayDetails": "PASS: existing LocalManualDayFeed and LocalCoreItemPreview with real Repository read; CHECKIN/BASE/BASE/CHECKOUT same ID",
+    "cold": "PASS: fresh app process + same SQLite file restores same Item/revision/fields",
+    "error": "PASS synthetic pre-write failure injection only; real P3 freezes attempted values; same Draft retry adds exactly one SET_ITEM_TEXT",
+    "locale": "PASS EN/ZH controls and saved values",
+    "appearance": "PASS static Light/Dark; embedded=true hot Light↔Dark preserves fields. Direct embedded=false Modal hot change deferred until dismissal; retained separate failure",
+    "keyboardSafeArea": "PASS after Native-found fixes: short header Save, date/time dismiss keyboard, native Done visible, scrolled footer accessible"
+  },
+  "finalBusinessCounts": {
+    "items": 1,
+    "createItemCommands": 1,
+    "editCommands": 4,
+    "cloudAttempts": 0
+  },
+  "validation": {
+    "targetedTests": "26/26 PASS",
+    "independentReview": "PASS final two-file incremental diff; reviewer independently reran26tests",
+    "typecheck": "PASS",
+    "uiGuard": "PASS139 strict roots",
+    "scopedLint": "PASS"
+  },
+  "notClaimed": [
+    "normal authenticated App Create/Edit journey",
+    "full P3 Product Delta",
+    "Cloud E2E",
+    "pre-submit draft process restoration",
+    "physical network-off",
+    "full large-text/VoiceOver/landscape matrix",
+    "exact HTTP bytes of consumed JS bundle"
+  ],
+  "authBlocker": "Normal Email/Password UI exists. Earlier QA A/B credential artifact no longer exists after interruption; no login, reset, new identity or fabricated Session attempted.",
+  "protectedWrites": "No shared Core/Authority/Registry/Auth/Shell/Backend/Schema/DEV/Production changes; no AD5 operation",
+  "qaOverlay": "archived as inert .txt; app/forms-qa.tsx removed before final static checks"
+}

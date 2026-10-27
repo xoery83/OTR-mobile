@@ -1,0 +1,70 @@
+{
+  "at": "2026-10-24T02:37:29.305062+00:00",
+  "purpose": "approved original-image restoration after incomplete sustained transition",
+  "receipt": {
+    "phase": "B_ONLY",
+    "phaseCExecuted": false,
+    "diagnosticsCapturedBeforeRollback": true,
+    "healthDeadlineSeconds": 40,
+    "httpHealth": {
+      "status": "ok",
+      "environment": "development"
+    },
+    "bundleSHA256": "95b9c8018b8bc516cf5fc27b5d6c857836d15ee3d44a4a3f092da8dc22ad3aec",
+    "protectedRoutes": {
+      "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+      "/v2/trip-metadata-operations/11111111-1111-4111-8111-111111111111": 401,
+      "/v2/trip-create-operations/11111111-1111-4111-8111-111111111111": 401,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/source-import-catalogs": 401,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401
+    },
+    "candidate": {
+      "image": "sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "ExitCode": 0,
+        "OOMKilled": false,
+        "Error": "",
+        "StartedAt": "2026-10-24T02:37:22.896316884Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "health": {
+        "status": "healthy",
+        "failingStreak": 0,
+        "log": [
+          {
+            "Start": "2026-10-24T02:37:27.998647633Z",
+            "End": "2026-10-24T02:37:28.135378506Z",
+            "ExitCode": 0,
+            "Output": ""
+          }
+        ]
+      },
+      "logs": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":2526,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":30000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"6972c017-0412-40cd-bf99-98368103daee\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"b2c4de71-7f46-4051-b5b0-0ff8a23b32df\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"54037bc8-2a2c-4db5-b7a0-f1bd4dc209b5\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"b443f7fd-e24e-411d-b113-b4235fa9ef4d\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"a0521ba2-b8d6-4c45-adb5-5ec597ff674d\",\"route\":\"/v2/trips:create\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f6583fa3-f8ee-4a55-88cb-18f6e3d1b99e\",\"route\":\"/v2/trips/:tripId/source-import-catalogs\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"f488da63-7602-49ef-91dc-d94158529adb\",\"route\":\"/v2/trips/:id/ledger/bootstrap\",\"status\":401,\"durationMs\":1}\n",
+      "environment": {
+        "equal": true,
+        "changedKeys": [],
+        "beforeCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+        "afterCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+        "afterKeyedHashes": {
+          "NODE_ENV": "7382af1575d330d6a75428dec76de689a9183a8a7f7838d7d81a4d221ce84130",
+          "NODE_VERSION": "d09509d5d9e0493fa1f8f98a55442a38f789456ccf9aa93306f3a840a296f92f",
+          "OTR_DEV_BACKEND_BIND_ADDRESS": "c2aee0c6fc81aea41581e71071a96bdf95192cb062785bc4fd7eb23ccc3f1420",
+          "OTR_DEV_BACKEND_NETWORK_MODE": "b6d850b44dacd143a8eea753feaabd9e302d90c5a596abe710b1de590e295a81",
+          "OTR_DEV_BACKEND_PORT": "281166dcdaba173748fb653f56791c9da4897bf28c57ee4881c4be391ecc9ded",
+          "OTR_DEV_FLIGHT_ONE_SHOT": "977ecadd28f6945f10c0ac99226cffaf3e24e247372db57345e9bde25177ab13",
+          "OTR_DEV_FLIGHT_REMOTE_TRANSPORT": "977ecadd28f6945f10c0ac99226cffaf3e24e247372db57345e9bde25177ab13",
+          "OTR_DEV_SOURCE_PDF2_TRANSPORT": "0751eda16712c27626964675a554c66e0643cdc41f67de0dccea24e5633fde98",
+          "OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "00f64cbabecab508ce291c90ef082c1e800cac0be7823b7d585365a0e6238122",
+          "OTR_DEV_SUPABASE_SECRET_KEY": "a7508241112612b7a4ab21d6de89e84e65aa5a9043efde8ca4a76f702c03764a",
+          "OTR_DEV_SUPABASE_URL": "e801b3e250348cc308ff1a9490cea7d31f8d8bbd94f0efc5267c4346346f0624",
+          "PATH": "98cd648a503baef02b024528d3bef9a2f1f50cf29fd7583e5d3755f5921e7ac4",
+          "YARN_VERSION": "b039d5c7ff9cebc019d7abe8de7ef401808e4648ba6d21378dddbab56168404a"
+        }
+      }
+    },
+    "logReadExit": 0,
+    "status": "CLOSED_DEPLOY_PASS"
+  }
+}

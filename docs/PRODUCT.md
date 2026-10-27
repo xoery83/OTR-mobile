@@ -1,5 +1,13 @@
 # OTR Mobile 2.0 Product Scope
 
+## Authorized DayHeader presentation (2026-10-27)
+
+Owner approved four tap-to-cycle DayHeader styles with one device-local preference
+per Trip, including Guest/offline use. This changes presentation only. A retains
+the existing format; B/C/D use exact date/day fallbacks when the authorized Reader
+cannot prove a shared city/region destination. No inferred travel or new Reader
+authority is introduced. See `ops/native-day-fidelity-20261025/DAY_HEADER_STYLES_20261027.md`.
+
 ## Positioning
 
 OTR Mobile 2.0 is a Group Travel Operations App. It helps a travel group answer practical, repeated questions during a real trip:
@@ -134,7 +142,7 @@ Travel Documents / Tickets:
 Capture:
 
 - A unified quick input entry point, not a separate heavy module.
-- Future inputs include text, voice, camera, photo, and document.
+- Inputs include text, camera, photo, and document; Owner approved short on-device voice-to-text on 21 October 2026. Voice edits the existing draft only: explicit start/stop/cancel, no audio file retention or upload, no automatic itinerary submission. Unsupported local recognition retains manual input.
 - Parser routes captured content to Itinerary, Expense, or Travel Document.
 
 Data & Sync:

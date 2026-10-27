@@ -1,0 +1,78 @@
+{
+  "version": "otr.native.universal-pin-proposal/1",
+  "qualification": "LOCAL_C3_AND_EXISTING_COMMANDS_ONLY_NOT_SOURCE_PROOF",
+  "accountId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+  "batchId": "3665f191-1605-4365-92ca-30403d90b191",
+  "jobId": "e8085c43-fb11-46e6-aaed-7d14c3c806be",
+  "createdAt": "2026-10-24T08:37:09.370Z",
+  "submissionSha256": "37ba0e4c8b235d14a1729dc041b41f51252576b0c97692a5e8733197e774e4be",
+  "inputs": [
+    {
+      "inputId": "9c3d39c3-1ac7-4e2c-b554-2c568c0dd46b",
+      "ordinal": 0,
+      "kind": "FILE",
+      "acquisitionSource": "files",
+      "originalFilename": "universal-mixed-bookings-utf8.txt",
+      "byteCount": 1598,
+      "sha256": "5db86cb62b681cc69eeee224f4af940cf10de5df6daa165102b3a37454a35592",
+      "bindingId": "0de870da-5ad0-45e5-902e-fc2c7b9b1de3",
+      "sourceState": "PREPARED",
+      "queueOperationId": "60ea15c4-5409-47cd-a4da-152ccd3f3aae",
+      "sourceCommandPin": {
+        "profile": "OTR_UTF8_TEXT_FILE_V1",
+        "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+        "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+        "sourceId": "b17adf6c-d7b6-4cfa-9af2-0201025d7849",
+        "representationId": "934f9157-7702-44b0-aa6d-65081c4d837c",
+        "operationId": "14b1f067-40bd-492c-973a-4d126d378faf",
+        "operationKey": "d3ac907a-8b79-4677-939c-9e351ee6c90b",
+        "operationSha256": "93021303a1d92e4770314eb5af82cf3cea77f6deb0adc1344b8f8811094758dd"
+      }
+    },
+    {
+      "inputId": "24dd338b-9568-4136-9b45-143540a794ac",
+      "ordinal": 1,
+      "kind": "FILE",
+      "acquisitionSource": "files",
+      "originalFilename": "lodging-supplement.txt",
+      "byteCount": 433,
+      "sha256": "6a1ee8c1d59b603926523315563174f49cefc066ea96a45c8e028fc21e0a6af2",
+      "bindingId": "a09f16ed-adf4-417b-953c-e5a4ab378d05",
+      "sourceState": "PREPARED",
+      "queueOperationId": "eb2197a3-a418-4366-9497-40016dcd9eb7",
+      "sourceCommandPin": {
+        "profile": "OTR_UTF8_TEXT_FILE_V1",
+        "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+        "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+        "sourceId": "56d7c073-8235-47c9-a3c3-81c7d2c6ad99",
+        "representationId": "63beacf3-0c63-4ed8-a2ce-639dafa73d71",
+        "operationId": "c06d4bcf-0372-47a4-b3b8-490a49c5f958",
+        "operationKey": "3f273d29-7f1d-4c0a-9bb3-e5a8b7c191e7",
+        "operationSha256": "f782c6e7b5c950af7f4efa02d00035a151dae99b5b03a897536d7b0d67bcaff7"
+      }
+    },
+    {
+      "inputId": "47a8cd86-c74a-43de-89eb-6bda99f32885",
+      "ordinal": 2,
+      "kind": "TEXT",
+      "acquisitionSource": "magic_input",
+      "originalFilename": null,
+      "byteCount": 172,
+      "sha256": "e2fc3cf6fae139733cd7cf00fb1b058385870e33c6612b21b9ab1762bfe0e071",
+      "bindingId": "9bea5ea0-1ed8-46a7-928d-e1251774e7c2",
+      "sourceState": "PREPARED",
+      "queueOperationId": "cf4315b4-fc42-4894-80c2-9705d85022b1",
+      "sourceCommandPin": {
+        "profile": "OTR_SUBMITTED_TEXT_V1",
+        "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+        "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+        "sourceId": "0562c0b1-83af-4945-8ce9-9df2c66ebb27",
+        "representationId": "b6469013-35df-4b95-b2dc-e8a57d6da2f7",
+        "operationId": "2f0bb9b8-f38d-4d3b-b14c-ea5a88e26184",
+        "operationKey": "f2d73815-55f6-4be2-875c-ec267948cd33",
+        "operationSha256": "27f50931ea158269e76a907f74658642097cb9e1be0a294ec45c9698fdf0f324"
+      }
+    }
+  ]
+}

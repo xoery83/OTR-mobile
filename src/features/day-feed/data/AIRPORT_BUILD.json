@@ -1,0 +1,20 @@
+{
+  "sourceCatalogSha256": "83a4d98c345a9ffc00712acfd2f3ed802db37d1d1622884fc0fd858156672073",
+  "referenceVersion": "airport-ref-01-20261021-b529623d2a0b",
+  "geoTzVersion": "8.1.10",
+  "expectedNpmArchiveIntegrity": "sha512-o7P79JIc9it6V0Nl1h3DlPJ12LMCnpuR0ePmJ+TqNggmGF+7snk6+7Q714te8XAGGvOiY2cJGxRiN/cA5xwFVw==",
+  "boundaryFiles": {
+    "timezones.geojson.index.json": "21e347d90dc388e8028eb461c34af61ce8f65d75216fc0bb8f2b98fe0079aad9",
+    "timezones.geojson.geo.dat": "f6ee7fb72fe804998c0b0542c2c0e6a36397c26ba26a485765c22c1cd175ea74"
+  },
+  "description": "Explicit user-selected airport. Unique coordinate polygon IANA zone only; conflicting retained airport zone, overlap, ocean or invalid coordinates remain null. No civil-to-instant resolver, current UTC offset, Source proof or navigation identity.",
+  "attribution": "OurAirports contributors (Unlicense); timezone-boundary-builder / OpenStreetMap contributors (ODbL 1.0); geo-tz (MIT). Airport-zone derivative is distributed under ODbL 1.0.",
+  "outputSha256": "f3510067d956d14911f5b4c68700a87e981fa2a6b43498f0aa71dd5caed8dc33",
+  "outputBytes": 944981,
+  "stats": {
+    "records": 9298,
+    "automatic": 9241,
+    "unresolved": 57,
+    "conflicts": 25
+  }
+}

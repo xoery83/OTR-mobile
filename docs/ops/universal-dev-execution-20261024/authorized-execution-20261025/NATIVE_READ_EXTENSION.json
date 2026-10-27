@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-24T15:30:32.571063+00:00",
+  "ownerAuthorized": true,
+  "policy": "Additional Native64 only; old72 retained exactly",
+  "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+  "beforeMaximum": 72,
+  "afterMaximum": 136,
+  "consumedBefore": 72,
+  "consumedAfter": 72,
+  "beforeSHA256": "233fad34fe107314f95b6d1ccf37008f700a53913fd1fa400a15744176631d49",
+  "afterSHA256": "efd729894f53610c5de98f6bd2c12d966259b7907826bb6c3d09fdde8874a5be",
+  "oldEntryPrefixSHA256": "e99e677e092f88a66ff1e053a9f5df82b225cb1a0c5754c878532cc25353088f",
+  "prefixExactEqual": true,
+  "businessDataChanged": false,
+  "oldOperatorAllowanceUntouched": true
+}

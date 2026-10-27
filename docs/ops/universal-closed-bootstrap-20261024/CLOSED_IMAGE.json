@@ -1,0 +1,29 @@
+{
+  "health": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "status": "LOCAL_CLOSED_IMAGE_PASS",
+  "routes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/universal-source-originals/acquire": 401,
+    "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": 401
+  },
+  "uid": 10001,
+  "sourceHead": "e9afb98a5cf78d03a048ff12510d96cfcdf363a9",
+  "imageId": "sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+  "bundles": {
+    "server.mjs": "90015fb2a1f87b5604419f4be24b75e579e53029282ecbec56a36244c0b6b058",
+    "server-capture.mjs": "08dbb04259de5372e667c1f2da7ab69a3179c84d1d5eb1276ddb9590b3968b27",
+    "universal-prepare.mjs": "2f8c65bb7b68a0e5b66aebddd5e79a9dea0f8da322697386ee1b690e62d67eeb"
+  },
+  "network": "none",
+  "rootFilesystem": "read-only",
+  "runtimeMounts": 0,
+  "operator": {
+    "status": "CLOSED"
+  },
+  "hostedWrites": 0,
+  "providerCalls": 0
+}

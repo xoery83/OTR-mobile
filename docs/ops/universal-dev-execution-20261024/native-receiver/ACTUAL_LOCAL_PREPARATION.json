@@ -1,0 +1,13 @@
+{
+  "normalAuthActorConfirmed": true,
+  "sameRealBatch": "3665f191-1605-4365-92ca-30403d90b191",
+  "sourceBindings": 3,
+  "sourceCommands": 3,
+  "unhandledInputs": 0,
+  "repeatOwningPreparationSamePins": true,
+  "networkCallsByDriver": 0,
+  "formalSourceProof": false,
+  "nativeUserButtonFullPath": "NOT_PASSED_READER_ALLOWANCE_EXHAUSTED",
+  "testMethod": "temporary exact-synthetic Native QA driver calling unchanged owning preparation repositories; driver removed after qualification",
+  "driverSHA256": "2f68467277c2f277b91bf18d613f7049255913d6adacf18eb6653d5bddc19739"
+}

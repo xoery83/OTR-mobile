@@ -1,0 +1,31 @@
+{
+  "status": "LOCAL_STARTUP_GUARD_AMENDMENT_APPLIED",
+  "amendment": {
+    "version": 1,
+    "freshBatchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+    "policy": "UNIVERSAL_STARTUP_GUARD_RECOVERY",
+    "ownerGateSHA256": "33b6ea7f4594bbba5d1c5870f2bf885268b22cc44dbc1ec98e9f339fa84c04c7",
+    "previousLedgerSHA256": "35b88af8ac4365513857a103c695855fc445e812fcdd1d82c3494c6d670cac6e",
+    "prefixCount": 43,
+    "prefixSHA256": "8fefebec8caed86b466415f6e20a62374ddd2191af41fcb2edcf5e2a243c3f9b",
+    "previousMetadataSHA256": "8cd506321b547c5a407b370025d25fbb361aacea5badb8eedd7cbcb1e83b6ffb",
+    "startsAtOrdinal": 44,
+    "additionalApprovedReads": 16,
+    "hardPolicyCap": 16,
+    "finalReservationOrdinal": 59,
+    "previousMaximum": 56,
+    "maximum": 72,
+    "purposes": [
+      "BACKEND_HEALTH",
+      "SOURCE_CATALOG",
+      "SUPABASE_READBACK",
+      "TASK_RESULT"
+    ],
+    "historicalStartupReadUncertainty": {
+      "startupProcessCount": 12,
+      "businessReads": "UNKNOWN",
+      "refundedReads": 0,
+      "historicalAllowanceRestored": false
+    }
+  }
+}

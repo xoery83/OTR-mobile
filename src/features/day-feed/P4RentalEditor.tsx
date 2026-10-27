@@ -1,7 +1,27 @@
-import { useEffect, useRef, useState } from "react";
-import { Alert, Modal, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AppIcon } from "@/components/AppIcon";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { ManualEditorPresentation } from "./ManualEditorPresentation";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
+import {
+  PlaceSearchSheet,
+  type PlaceSearchResult,
+} from "@/features/place-search/PlaceSearchSheet";
+import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   createDefaultManualRentalRepository,
@@ -9,14 +29,14 @@ import {
   type ManualRentalFields,
   type ManualRentalRepository,
 } from "@/data/repositories/manualRentalRepository";
-import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
+import { UiButton, UiText as Text } from "@/ui/controls";
 import { UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { CalendarField } from "./TripCalendarField";
+import { TripCalendarRangeField } from "./TripCalendarRangeField";
 
 type Opened = { repository: ManualRentalRepository; draft: ManualRentalDraft };
 
@@ -31,65 +51,87 @@ function TimeField({
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
+  const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
   return (
     <View>
       <UiFormRow
+        variant="field"
         label={label}
-        value={value ?? t("tripCreate.notSet")}
+        value={value || t("tripCreate.notSet")}
         disabled={disabled}
         onPress={() => {
+          Keyboard.dismiss();
           const date = new Date();
           if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
           setSelected(date);
           setOpen(true);
         }}
       />
-      {open ? (
-        <View>
-          <UiDatePicker
-            mode="time"
-            display="spinner"
-            value={selected}
-            accessibilityLabel={label}
-            onChange={(_, date) => {
-              if (date) setSelected(date);
-            }}
-          />
-          <UiButton
-            label={t("common.done")}
-            onPress={() => {
-              onChange(
-                `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-              );
-              setOpen(false);
-            }}
-          />
-          <UiButton
-            label={t("tripCreate.clearTime")}
-            variant="text"
-            onPress={() => {
-              onChange(null);
-              setOpen(false);
-            }}
-          />
-          <UiButton
-            label={t("common.cancel")}
-            variant="text"
-            onPress={() => setOpen(false)}
-          />
-        </View>
-      ) : null}
+      <Modal
+        visible={open && !disabled}
+        transparent
+        animationType="slide"
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setOpen(false)}
+      >
+        <SafeAreaProvider style={styles.timeHost}>
+          <View style={styles.timeBackdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              accessibilityRole="button"
+              accessibilityLabel={t("common.cancel")}
+              onPress={() => setOpen(false)}
+            />
+            <SafeAreaView edges={["bottom", "left", "right"]} style={styles.timeSheet}>
+              <SheetHeader
+                category="picker"
+                safeTop={false}
+                title={label}
+                onLeft={() => setOpen(false)}
+                onRight={() => {
+                  if (!disabled)
+                    onChange(
+                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                    );
+                  setOpen(false);
+                }}
+                rightDisabled={disabled}
+              />
+              <UiDatePicker
+                mode="time"
+                display="spinner"
+                value={selected}
+                accessibilityLabel={label}
+                onChange={(_, date) => {
+                  if (date) setSelected(date);
+                }}
+              />
+              <UiButton
+                label={t("tripCreate.clearTime")}
+                variant="text"
+                onPress={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+              />
+            </SafeAreaView>
+          </View>
+        </SafeAreaProvider>
+      </Modal>
     </View>
   );
 }
 
 export function P4RentalEditor({
   tripId,
+  embedded = false,
+  registerDismissHandler,
   itemId,
   initialDate,
   tripStartDate,
+  tripEndDate,
   opened,
   onClose,
   onSaved,
@@ -97,9 +139,12 @@ export function P4RentalEditor({
   onChooseTransport,
 }: {
   tripId: string;
+  embedded?: boolean;
+  registerDismissHandler?: (handler: () => void) => () => void;
   itemId?: string;
   initialDate?: string | null;
   tripStartDate?: string | null;
+  tripEndDate?: string | null;
   opened?: Opened;
   onClose(): void;
   onSaved(itemId: string): void;
@@ -108,7 +153,14 @@ export function P4RentalEditor({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  const [sameReturnLocation, setSameReturnLocation] = useState(false);
+  const sameReturnRef = useRef(false);
   const generation = getAccountGeneration();
+  const identity = useRef({ tripId, itemId, opened });
+  useLayoutEffect(() => {
+    identity.current = { tripId, itemId, opened };
+  }, [tripId, itemId, opened]);
   const alive = useRef(true);
   const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
@@ -123,6 +175,28 @@ export function P4RentalEditor({
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
   );
+  const [tripRange, setTripRange] = useState({
+    start: tripStartDate ?? "",
+    end: tripEndDate ?? "",
+  });
+  useEffect(() => {
+    let active = true;
+    if (tripStartDate === undefined || tripEndDate === undefined) {
+      void readLocalTripRepository()
+        .then((repository) => repository.getTrip(tripId))
+        .then((trip) => {
+          if (active && generation === getAccountGeneration())
+            setTripRange({
+              start: tripStartDate ?? trip?.startDate ?? "",
+              end: tripEndDate ?? trip?.endDate ?? "",
+            });
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [tripId, tripStartDate, tripEndDate, generation]);
   const [saving, setSaving] = useState(false);
   const [frozen, setFrozen] = useState(false);
   useEffect(() => {
@@ -153,10 +227,17 @@ export function P4RentalEditor({
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
-    alive.current && !closedRef.current && generation === getAccountGeneration();
+    alive.current &&
+    !closedRef.current &&
+    generation === getAccountGeneration() &&
+    identity.current.tripId === tripId &&
+    identity.current.itemId === itemId &&
+    identity.current.opened === opened;
   const change = (next: Partial<ManualRentalFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
     const value = { ...fieldsRef.current, ...next };
+    if (sameReturnRef.current && next.pickupLocation !== undefined)
+      value.returnLocation = next.pickupLocation;
     fieldsRef.current = value;
     setFields(value);
   };
@@ -171,6 +252,64 @@ export function P4RentalEditor({
         [key]: value || null,
       },
     });
+  };
+  const placeRequest = useRef(0);
+  const [placeError, setPlaceError] = useState(false);
+  const [placeSearch, setPlaceSearch] = useState<{
+    binding: PlaceSearchBinding;
+    target: "pickupLocation" | "returnLocation";
+    query: string;
+  } | null>(null);
+  const closePlaceSearch = () => {
+    placeRequest.current++;
+    setPlaceSearch(null);
+  };
+  const openPlaceSearch = async (target: "pickupLocation" | "returnLocation") => {
+    const snapshot = fieldsRef.current;
+    if (!snapshot || !source || !current() || busyRef.current || frozenRef.current)
+      return;
+    Keyboard.dismiss();
+    const ticket = ++placeRequest.current;
+    setPlaceError(false);
+    try {
+      const account = await captureAccountScope(requireActiveUserId);
+      const isCurrent = () =>
+        current() &&
+        account.generation === getAccountGeneration() &&
+        ticket === placeRequest.current &&
+        fieldsRef.current === snapshot &&
+        !busyRef.current &&
+        !frozenRef.current;
+      if (!isCurrent()) return;
+      setPlaceSearch({
+        target,
+        query: snapshot[target],
+        binding: {
+          accountId: account.accountId,
+          tripId,
+          editorId: source.draft.itemId,
+          accountGeneration: account.generation,
+          isCurrent,
+        },
+      });
+    } catch {
+      if (current() && ticket === placeRequest.current) setPlaceError(true);
+    }
+  };
+  const confirmPlace = (result: PlaceSearchResult) => {
+    if (!placeSearch?.binding.isCurrent()) return;
+    const text = result.kind === "MANUAL" ? result.text : result.place.address;
+    if (
+      text === undefined ||
+      text === null ||
+      text.length > 500 ||
+      (result.kind !== "MANUAL" && !text.trim())
+    )
+      return;
+    const target = placeSearch.target;
+    closePlaceSearch();
+    // A selection supplies authored address text, never a qualified Core Place proof.
+    change({ [target]: text });
   };
   const close = (then = onClose) => {
     if (!current() || busyRef.current) return;
@@ -233,6 +372,14 @@ export function P4RentalEditor({
       if (current()) setSaving(false);
     }
   };
+  const formScroll = useRef<ScrollView>(null);
+  const notesFocused = useRef(false);
+  useEffect(() => {
+    const subscription = Keyboard.addListener("keyboardDidShow", () => {
+      if (notesFocused.current) formScroll.current?.scrollToEnd({ animated: true });
+    });
+    return () => subscription.remove();
+  }, []);
   const valid =
     !!fields?.title.trim() &&
     !!fields.startDate &&
@@ -244,153 +391,271 @@ export function P4RentalEditor({
     fields.endDate >= fields.startDate &&
     !(fields.endDate === fields.startDate && fields.endTime < fields.startTime);
   return (
-    <Modal visible animationType="slide" onRequestClose={() => close()}>
+    <ManualEditorPresentation
+      embedded={embedded}
+      registerDismissHandler={registerDismissHandler}
+      onClose={() => close()}
+    >
       <SafeAreaProvider style={styles.body}>
         <SheetHeader
           title={t(itemId ? "tripCreate.editRental" : "tripCreate.newRental")}
+          category="form"
+          rightLabel={t("ui.save")}
+          rightDisabled={
+            !valid || saving || status === "UNAVAILABLE" || (frozen && status !== "ERROR")
+          }
+          onRight={() => void save()}
           leftLabel={t("common.cancel")}
           leftDisabled={saving}
           onLeft={() => close()}
         />
-        <ScrollView style={styles.body} contentContainerStyle={styles.content}>
-          {status === "LOADING" ? (
-            <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
-          ) : null}
-          {status === "UNAVAILABLE" ? (
-            <Text accessibilityRole="alert" style={styles.meta}>
-              {t("tripCreate.rentalUnavailable")}
-            </Text>
-          ) : null}
-          {status === "ERROR" ? (
-            <Text accessibilityRole="alert" style={styles.meta}>
-              {t("tripCreate.rentalRetrySame")}
-            </Text>
-          ) : null}
-          {fields && source ? (
-            <>
-              {onChoosePlan ? (
-                <UiButton
-                  label={t("tripCreate.activity")}
-                  variant="text"
-                  disabled={saving}
-                  onPress={() => close(onChoosePlan)}
-                />
-              ) : null}
-              {onChooseTransport ? (
-                <UiButton
-                  label={t("tripCreate.transport")}
-                  variant="text"
-                  disabled={saving}
-                  onPress={() => close(onChooseTransport)}
-                />
-              ) : null}
-              <UiSection
-                title={t(itemId ? "tripCreate.editRental" : "tripCreate.newRental")}
-              >
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.rentalName")}
-                  placeholder={t("tripCreate.rentalName")}
-                  value={fields.title}
-                  maxLength={200}
-                  editable={!saving && !frozen}
-                  onChangeText={(title) => change({ title })}
-                />
-                <CalendarField
-                  label={t("tripCreate.rentalPickupDate")}
-                  value={fields.startDate}
-                  initialNavigationDate={tripStartDate}
-                  disabled={saving || frozen}
-                  onChange={(startDate) => change({ startDate })}
-                />
-                <TimeField
-                  label={t("tripCreate.rentalPickupTime")}
-                  value={fields.startTime}
-                  disabled={saving || frozen}
-                  onChange={(startTime) => change({ startTime: startTime ?? "" })}
-                />
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.rentalPickupPlace")}
-                  placeholder={t("tripCreate.rentalPickupPlace")}
-                  value={fields.pickupLocation}
-                  maxLength={500}
-                  editable={!saving && !frozen}
-                  onChangeText={(pickupLocation) => change({ pickupLocation })}
-                />
-                <CalendarField
-                  label={t("tripCreate.rentalReturnDate")}
-                  value={fields.endDate ?? ""}
-                  initialNavigationDate={fields.startDate || tripStartDate}
-                  disabled={saving || frozen}
-                  onChange={(endDate) => change({ endDate })}
-                />
-                <TimeField
-                  label={t("tripCreate.rentalReturnTime")}
-                  value={fields.endTime}
-                  disabled={saving || frozen}
-                  onChange={(endTime) => change({ endTime: endTime ?? "" })}
-                />
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.rentalReturnPlace")}
-                  placeholder={t("tripCreate.rentalReturnPlace")}
-                  value={fields.returnLocation}
-                  maxLength={500}
-                  editable={!saving && !frozen}
-                  onChangeText={(returnLocation) => change({ returnLocation })}
-                />
-                {!valid ? (
-                  <Text style={styles.meta}>{t("tripCreate.rentalFieldsRequired")}</Text>
+        <KeyboardAvoidingView
+          style={styles.body}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <ScrollView
+            ref={formScroll}
+            onLayout={() => {
+              if (notesFocused.current)
+                formScroll.current?.scrollToEnd({ animated: true });
+            }}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
+            style={styles.body}
+            contentContainerStyle={styles.content}
+          >
+            {status === "LOADING" ? (
+              <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
+            ) : null}
+            {status === "UNAVAILABLE" ? (
+              <Text accessibilityRole="alert" style={styles.meta}>
+                {t("tripCreate.rentalUnavailable")}
+              </Text>
+            ) : null}
+            {status === "ERROR" ? (
+              <Text accessibilityRole="alert" style={styles.meta}>
+                {t("tripCreate.rentalRetrySame")}
+              </Text>
+            ) : null}
+            {fields && source ? (
+              <>
+                {onChoosePlan ? (
+                  <UiButton
+                    label={t("tripCreate.activity")}
+                    variant="text"
+                    disabled={saving}
+                    onPress={() => close(onChoosePlan)}
+                  />
                 ) : null}
-                <Text style={styles.meta}>{t("tripCreate.planManualPlace")}</Text>
-                <UiTextInput
-                  accessibilityLabel={t("tripCreate.rentalNotes")}
-                  placeholder={t("tripCreate.rentalNotes")}
-                  value={fields.description ?? ""}
-                  maxLength={5000}
-                  multiline
-                  editable={!saving && !frozen}
-                  onChangeText={(description) =>
-                    change({ description: description || null })
-                  }
-                />
-                {itemId ? (
-                  <>
-                    {(
-                      [
-                        ["supplier", "rentalSupplier"],
-                        ["reservedCategory", "rentalReservedCategory"],
-                        ["actualVehicleModel", "rentalActualModel"],
-                        ["verifiedPlate", "rentalVerifiedPlate"],
-                      ] as const
-                    ).map(([field, label]) => (
-                      <UiTextInput
-                        key={field}
-                        accessibilityLabel={t(`tripCreate.${label}`)}
-                        placeholder={t(`tripCreate.${label}`)}
-                        value={fields.rentalDetails[field] ?? ""}
-                        maxLength={200}
-                        editable={!saving && !frozen}
-                        onChangeText={(value) => changeRentalDetail(field, value)}
+                {onChooseTransport ? (
+                  <UiButton
+                    label={t("tripCreate.transport")}
+                    variant="text"
+                    disabled={saving}
+                    onPress={() => close(onChooseTransport)}
+                  />
+                ) : null}
+                <View style={styles.form}>
+                  <View style={styles.field}>
+                    <Text style={styles.caption}>{t("tripCreate.rentalName")}</Text>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.rentalName")}
+                      placeholder={t("tripCreate.rentalName")}
+                      value={fields.title}
+                      maxLength={200}
+                      editable={!saving && !frozen}
+                      onChangeText={(title) => change({ title })}
+                    />
+                  </View>
+                  <View onTouchEnd={Keyboard.dismiss}>
+                    <TripCalendarRangeField
+                      label={t("tripCreate.rentalDates")}
+                      presentation="field"
+                      value={{ start: fields.startDate, end: fields.endDate ?? "" }}
+                      initialNavigationDate={tripStartDate ?? tripRange.start}
+                      referenceRange={{
+                        start: tripStartDate ?? tripRange.start,
+                        end: tripEndDate ?? tripRange.end,
+                      }}
+                      markToday
+                      disabled={saving || frozen}
+                      onChange={({ start, end }) =>
+                        change({ startDate: start, endDate: end })
+                      }
+                    />
+                  </View>
+                  <TimeField
+                    label={t("tripCreate.rentalPickupTime")}
+                    value={fields.startTime}
+                    disabled={saving || frozen}
+                    onChange={(startTime) => change({ startTime: startTime ?? "" })}
+                  />
+                  <View style={styles.field}>
+                    <Text style={styles.caption}>
+                      {t("tripCreate.rentalPickupPlace")}
+                    </Text>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.rentalPickupPlace")}
+                      placeholder={t("tripCreate.rentalPickupPlace")}
+                      onFocus={() => void openPlaceSearch("pickupLocation")}
+                      value={fields.pickupLocation}
+                      maxLength={500}
+                      editable={!saving && !frozen}
+                      onChangeText={(pickupLocation) => change({ pickupLocation })}
+                    />
+                  </View>
+                  <TimeField
+                    label={t("tripCreate.rentalReturnTime")}
+                    value={fields.endTime}
+                    disabled={saving || frozen}
+                    onChange={(endTime) => change({ endTime: endTime ?? "" })}
+                  />
+                  <View style={styles.field}>
+                    <Text style={styles.caption}>
+                      {t("tripCreate.rentalReturnPlace")}
+                    </Text>
+                    <Pressable
+                      accessibilityRole="checkbox"
+                      accessibilityLabel={t("tripCreate.rentalSameLocation")}
+                      accessibilityState={{
+                        checked: sameReturnLocation,
+                        disabled: saving || frozen,
+                      }}
+                      disabled={saving || frozen}
+                      style={styles.sameLocation}
+                      onPress={() => {
+                        if (!current() || busyRef.current || frozenRef.current) return;
+                        sameReturnRef.current = !sameReturnRef.current;
+                        setSameReturnLocation(sameReturnRef.current);
+                        if (sameReturnRef.current)
+                          change({
+                            returnLocation: fieldsRef.current?.pickupLocation ?? "",
+                          });
+                      }}
+                    >
+                      <AppIcon
+                        name={sameReturnLocation ? "checkmark.square.fill" : "square"}
+                        size={20}
+                        color={colors.accent}
                       />
-                    ))}
-                  </>
-                ) : null}
-              </UiSection>
-              <UiButton
-                label={t(itemId ? "tripCreate.saveChanges" : "tripCreate.saveItem")}
-                disabled={!valid || saving || (frozen && status !== "ERROR")}
-                onPress={() => void save()}
-              />
-            </>
-          ) : null}
-        </ScrollView>
+                      <Text style={styles.meta}>
+                        {t("tripCreate.rentalSameLocation")}
+                      </Text>
+                    </Pressable>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.rentalReturnPlace")}
+                      placeholder={t("tripCreate.rentalReturnPlace")}
+                      onFocus={() => {
+                        if (!sameReturnRef.current)
+                          void openPlaceSearch("returnLocation");
+                      }}
+                      value={fields.returnLocation}
+                      maxLength={500}
+                      editable={!saving && !frozen && !sameReturnLocation}
+                      onChangeText={(returnLocation) => change({ returnLocation })}
+                    />
+                  </View>
+                  {placeError ? (
+                    <Text accessibilityRole="alert" style={styles.meta}>
+                      {t("placeSearch.contextUnavailable")}
+                    </Text>
+                  ) : null}
+                  {!valid ? (
+                    <Text style={styles.meta}>
+                      {t("tripCreate.rentalFieldsRequired")}
+                    </Text>
+                  ) : null}
+                  {itemId ? (
+                    <>
+                      {(
+                        [
+                          ["supplier", "rentalSupplier"],
+                          ["reservedCategory", "rentalReservedCategory"],
+                          ["actualVehicleModel", "rentalActualModel"],
+                          ["verifiedPlate", "rentalVerifiedPlate"],
+                        ] as const
+                      ).map(([field, label]) => (
+                        <View key={field} style={styles.field}>
+                          <Text style={styles.caption}>{t(`tripCreate.${label}`)}</Text>
+                          <UiTextInput
+                            accessibilityLabel={t(`tripCreate.${label}`)}
+                            placeholder={t(`tripCreate.${label}`)}
+                            value={fields.rentalDetails[field] ?? ""}
+                            maxLength={field === "verifiedPlate" ? 64 : 500}
+                            editable={!saving && !frozen}
+                            onChangeText={(value) => changeRentalDetail(field, value)}
+                          />
+                        </View>
+                      ))}
+                    </>
+                  ) : null}
+                  <View style={styles.field}>
+                    <Text style={styles.caption}>{t("tripCreate.rentalNotes")}</Text>
+                    <UiTextInput
+                      accessibilityLabel={t("tripCreate.rentalNotes")}
+                      placeholder={t("tripCreate.rentalNotes")}
+                      value={fields.description ?? ""}
+                      maxLength={5000}
+                      multiline
+                      style={styles.notes}
+                      onFocus={() => {
+                        notesFocused.current = true;
+                        formScroll.current?.scrollToEnd({ animated: true });
+                      }}
+                      onBlur={() => {
+                        notesFocused.current = false;
+                      }}
+                      editable={!saving && !frozen}
+                      onChangeText={(description) =>
+                        change({ description: description || null })
+                      }
+                    />
+                  </View>
+                </View>
+              </>
+            ) : null}
+          </ScrollView>
+        </KeyboardAvoidingView>
+        {placeSearch ? (
+          <PlaceSearchSheet
+            binding={placeSearch.binding}
+            initialQuery={placeSearch.query}
+            onCancel={closePlaceSearch}
+            onConfirm={confirmPlace}
+            nameChoice={false}
+            selectionMode="immediate"
+          />
+        ) : null}
       </SafeAreaProvider>
-    </Modal>
+    </ManualEditorPresentation>
   );
 }
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    sameLocation: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.heading,
+      minHeight: 44,
+    },
     body: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
+    form: { gap: visual.space.section },
+    field: { gap: visual.space.heading },
+    caption: { ...visual.type.action, color: colors.textPrimary },
+    notes: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },
+    timeHost: { flex: 1 },
+    timeBackdrop: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: colors.overlay,
+    },
+    timeSheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      overflow: "hidden",
+    },
     meta: { ...visual.type.meta, color: colors.textSecondary },
   });

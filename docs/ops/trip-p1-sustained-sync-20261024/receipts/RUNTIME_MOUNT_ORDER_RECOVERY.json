@@ -1,0 +1,9 @@
+{
+  "state": "PREMUTATION_NO_CHANGE_VERIFIED",
+  "cause": "HostConfig Mounts order-only difference incorrectly entered extra-mount branch",
+  "fix": "Compare canonical sorted mount projections; preserve exact mount values and one-extra validation",
+  "tests": "16 local service fixtures PASS, includes actual-order regression",
+  "authorityActivated": false,
+  "authCreated": 0,
+  "businessMutations": 0
+}

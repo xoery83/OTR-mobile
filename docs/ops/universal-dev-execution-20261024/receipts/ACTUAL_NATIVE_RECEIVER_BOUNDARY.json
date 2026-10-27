@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-24T10:02:50.883412+00:00",
+  "newAuthorization": "Owner Universal Import Execution Priority 2026-10-24 Evening; local-only repair verification, not expired prior Gate",
+  "explicitLocalStarts": 2,
+  "contextResponse": "503 UNIVERSAL_IMPORT_CLOSED",
+  "nativeReceiver": "UNAVAILABLE",
+  "sourceCommandPins": "ABSENT_RECHECKED",
+  "remoteSourceAcquire": 0,
+  "remoteRunTaskWrites": 0,
+  "providerCalls": 0,
+  "nativeReadCount": 65,
+  "operatorReadCount": 6,
+  "readMaximum": 96,
+  "appStopped": true,
+  "installedDebugBinarySHA256": "62d92e7acf351395ab25d418543af8931189c6a979afae77a091c721cf193c3d",
+  "installedBinaryModuleSymbol": "PublicationCatalogReceiveModule ABSENT",
+  "matchingBaselineHost": "/private/tmp/otr-local-dictation-host-20261021/derived-dictation/Build/Products/Debug-iphonesimulator/OTRMobile.app",
+  "diagnosticMetadataOnly": true
+}

@@ -1,0 +1,12 @@
+{
+  "src/features/day-feed/LocalTripWorkspace.test.ts": "63a4f260095c071797a731cfd57b0d0b3ec4f159b0286875e8d69cc3e86d6924",
+  "src/features/day-feed/LocalTripWorkspace.tsx": "30867a37f4dc14a8071050cb628ff0f81edc8f10b540f8b191e4ffb858152d9b",
+  "src/features/day-feed/ManualItineraryContent.tsx": "699930ffbe18a21c558589533d85147d2090a7c87c6244047b0dbf9a8d41e78c",
+  "src/features/day-feed/P1PlanEditor.test.ts": "e364709abbfb1ade66d5410e819f335619295631a213db8f06ad31e100acd7e5",
+  "src/features/day-feed/P1PlanEditor.tsx": "b4b836aaf5170d0fce8e39f0866d625ffff1aa3e04e90e76f0d1faf679984563",
+  "src/features/day-feed/TripCalendarRangeField.tsx": "511a2702c0e977ce867bbe1bf757b495e929b43a3bfd6d2c697812a0625d5198",
+  "src/features/place-search/PlaceSearchSheet.tsx": "957af046ce2bcf26e7caf6362968a00a46fb3d61e878fe2499dc116aa2a7bf88",
+  "src/ui/catalogs.ts": "e9ff300831d6d4a2fbbc5be03e13690de7c04790fa9f47278f8db8180665dec9",
+  "src/features/day-feed/PlanParticipantsField.tsx": "f8fab63ba727b80b8e7dac48a64da1477df7080835b292a88cb6413d10561f64",
+  "src/features/day-feed/PlanParticipantsField.test.ts": "33cb5befaf1e7014235dbac9c8ae22a758d01ca10c8299f9cf7a67fec173dd52"
+}

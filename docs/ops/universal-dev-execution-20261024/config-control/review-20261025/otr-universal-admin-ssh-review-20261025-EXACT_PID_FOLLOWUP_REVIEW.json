@@ -1,0 +1,9 @@
+{
+  "candidate": "c822e36eb54f3272746fcdcdb1ec1a8aa289dbe4",
+  "parent": "74158588460eb102adf2a71f869d0498beb6e727",
+  "status": "EXACT_PID_FOLLOWUP_REVIEW_PASS",
+  "findings": [],
+  "scope": "One regex line and prefix-denial regression only; earlier parent review retained",
+  "validation": "Independent pure-regex standard success plus four prefix/suffix/foreign token negatives PASS. No historical tests, subprocess, network or DEV reexecution.",
+  "reason": "Integer PID exact digits now require token boundary and closing parenthesis; prior12345-vs123456 prefix acceptance removed. Existing ps/start/hash/socket/launch checks unchanged."
+}

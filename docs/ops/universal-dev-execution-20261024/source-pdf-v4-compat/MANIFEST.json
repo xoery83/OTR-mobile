@@ -1,0 +1,16 @@
+{
+  "status": "LOCAL_ISOLATED_SOURCE_COMPAT_PASS_NOT_DEV_READY",
+  "sql": "backend/sql/universal_original_source_candidate.sql",
+  "sqlSha256": "b93a6648f2831597c43e07e8c89bebd9f3c8d3832bf158d13752f95f1263ecf4",
+  "foundationChecks": 13,
+  "observedV4RootChecks": 17,
+  "unknownRootPreimageDenials": 4,
+  "actualRegisterDiff": "Only added perform public.trip_source_pdf_upload_v4_command(j); after assert_gate. All other original body bytes match foundation.",
+  "observedRootFixture": "scripts/import-workbench/fixtures/universal-pdf-v4-observed-roots.json",
+  "PDFscopeDependency": "CLOSED test sentinels; negative path preservation only, no positive PDF authorization/E2E claim",
+  "preservation": "PDF command validator body unchanged; finite hooks removed reconstruct original PDF assert/operation/mutation bodies byte-for-byte",
+  "remaining": "Model-task admission missing in real DEV, config/integration/price empty, environment kill=true, Backend Provider key absent; current Gate NOT_EXECUTABLE",
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "NativeGUI": false
+}

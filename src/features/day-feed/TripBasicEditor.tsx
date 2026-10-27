@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Modal, ScrollView, StyleSheet, View } from "react-native";
+import { CreateTripDestinations } from "./CreateTripDestinations";
+import { destinationDraft, destinationInputs } from "./tripDestinationDraft";
+import type { LocalTripDestinationsChange } from "@/domain/trip/localTripDestinationUpdate";
+import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
+import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Alert, Modal, ScrollView, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import {
   tripMetadataSchema,
@@ -42,12 +47,15 @@ export function TripBasicEditor({
   setup = null,
   currencyAvailable = false,
   onSavingChange,
+  registerDismiss,
+  onDirtyChange,
   onClose,
 }: {
   trip: Pick<
     Trip,
     | "id"
     | "name"
+    | "destinations"
     | "destination"
     | "startDate"
     | "endDate"
@@ -61,10 +69,13 @@ export function TripBasicEditor({
     after: TripMetadata,
     cover: TripCoverUpdate | undefined,
     operationId: string,
+    destinations?: LocalTripDestinationsChange,
   ): Promise<void>;
   setup?: TripPreparationSetup | null;
   currencyAvailable?: boolean;
   onSavingChange?(saving: boolean): void;
+  registerDismiss?(handler: (() => void) | null): void;
+  onDirtyChange?(dirty: boolean): void;
   onClose?(): void;
 }) {
   useUiLocale();
@@ -86,7 +97,38 @@ export function TripBasicEditor({
         : null,
   );
   const alive = useRef(true);
-  const generation = getAccountGeneration();
+  const [generation] = useState(() => getAccountGeneration());
+  const [openedTripId] = useState(trip.id);
+  const latestTripId = useRef(trip.id);
+  useLayoutEffect(() => {
+    latestTripId.current = trip.id;
+  }, [trip.id]);
+  const current = useCallback(
+    () =>
+      alive.current &&
+      generation === getAccountGeneration() &&
+      latestTripId.current === openedTripId,
+    [generation, openedTripId],
+  );
+  const [editorId] = useState(() => createUuid());
+  const [initialDestinations, setInitialDestinations] = useState<
+    readonly TripDestinationDraftSelection[]
+  >(() =>
+    trip.destinations?.length
+      ? destinationDraft(trip.destinations)
+      : trip.destination
+        ? [{ localId: createUuid(), text: trip.destination, source: "MANUAL" }]
+        : [],
+  );
+  const [destinationItems, setDestinationItems] =
+    useState<readonly TripDestinationDraftSelection[]>(initialDestinations);
+  const [destinationsBefore, setDestinationsBefore] = useState<
+    readonly LocalTripDestinationInput[]
+  >(trip.destinations?.map(({ ordinal: _ordinal, ...item }) => item) ?? []);
+  const [destinationBusy, setDestinationBusy] = useState(false);
+  const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
+  const destinationChanged =
+    JSON.stringify(destinationItems) !== JSON.stringify(initialDestinations);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -95,7 +137,11 @@ export function TripBasicEditor({
   }, []);
   const [coverChanged, setCoverChanged] = useState(false);
   const busy = useRef(false);
-  const saveIntent = useRef<{ fingerprint: string; operationId: string } | null>(null);
+  const saveIntent = useRef<{
+    fingerprint: string;
+    operationId: string;
+    destinationsOperationId: string;
+  } | null>(null);
   const [name, setName] = useState(trip.name),
     [destination, setDestination] = useState(trip.destination ?? ""),
     [start, setStart] = useState(trip.startDate ?? ""),
@@ -105,17 +151,42 @@ export function TripBasicEditor({
     [saved, setSaved] = useState(false);
   const after = {
     name: name.trim(),
-    destination: destination.trim() || null,
+    destination: destinationChanged ? null : destination.trim() || null,
     startDate: start || null,
     endDate: end || null,
   };
   const valid = tripMetadataSchema.safeParse(after).success;
   const dirty =
+    destinationChanged ||
     after.name !== before.name ||
     after.destination !== before.destination ||
     after.startDate !== before.startDate ||
     after.endDate !== before.endDate ||
     (metadataEditable && coverChanged && draftCover !== beforeCover);
+  const requestClose = useCallback(() => {
+    if (!current() || busy.current) return;
+    if (!dirty && !destinationQueryDirty) {
+      onClose?.();
+      return;
+    }
+    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
+      { text: t("actionIsland.stay"), style: "cancel" },
+      {
+        text: t("actionIsland.discard"),
+        style: "destructive",
+        onPress: () => {
+          if (current() && !busy.current) onClose?.();
+        },
+      },
+    ]);
+  }, [current, dirty, destinationQueryDirty, onClose]);
+  useEffect(() => {
+    registerDismiss?.(requestClose);
+    return () => registerDismiss?.(null);
+  }, [registerDismiss, requestClose]);
+  useEffect(() => {
+    onDirtyChange?.(dirty || destinationQueryDirty);
+  }, [onDirtyChange, dirty, destinationQueryDirty]);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySetup, setCurrencySetup] = useState<TripPreparationSetup | null>(null);
   const closeCurrency = () => {
@@ -138,7 +209,24 @@ export function TripBasicEditor({
     })();
   };
   const save = () => {
-    if (busy.current || !valid || !dirty) return;
+    if (
+      !current() ||
+      !metadataEditable ||
+      busy.current ||
+      destinationBusy ||
+      !valid ||
+      !dirty
+    )
+      return;
+    let destinationAfter: readonly LocalTripDestinationInput[] | undefined;
+    try {
+      destinationAfter = destinationChanged
+        ? destinationInputs(destinationItems)
+        : undefined;
+    } catch {
+      setError(true);
+      return;
+    }
     busy.current = true;
     onSavingChange?.(true);
     setSaving(true);
@@ -148,35 +236,57 @@ export function TripBasicEditor({
       coverChanged && beforeCover !== undefined && draftCover !== beforeCover
         ? { before: beforeCover, after: draftCover }
         : undefined;
-    const fingerprint = JSON.stringify({ before, after, cover });
+    const fingerprint = JSON.stringify({ before, after, cover, destinationAfter });
     if (saveIntent.current?.fingerprint !== fingerprint)
-      saveIntent.current = { fingerprint, operationId: createUuid() };
-    void onSaveMetadata(before, after, cover, saveIntent.current.operationId)
+      saveIntent.current = {
+        fingerprint,
+        operationId: createUuid(),
+        destinationsOperationId: createUuid(),
+      };
+    const change = destinationAfter
+      ? {
+          operationId: saveIntent.current.destinationsOperationId,
+          before: destinationsBefore,
+          after: destinationAfter,
+        }
+      : undefined;
+    void (
+      change
+        ? onSaveMetadata(before, after, cover, saveIntent.current.operationId, change)
+        : onSaveMetadata(before, after, cover, saveIntent.current.operationId)
+    )
       .then(() => {
+        if (!current()) return;
+        if (destinationAfter) {
+          setDestinationsBefore(destinationAfter);
+          setInitialDestinations(destinationItems);
+        }
         setBefore(after);
+        setDestination(after.destination ?? "");
         if (cover) setBeforeCover(cover.after);
         setCoverChanged(false);
         saveIntent.current = null;
         setSaved(true);
       })
-      .catch(() => setError(true))
+      .catch(() => {
+        if (current()) setError(true);
+      })
       .finally(() => {
         busy.current = false;
         onSavingChange?.(false);
-        setSaving(false);
+        if (current()) setSaving(false);
       });
   };
   return (
     <View style={styles.container}>
       <SheetHeader
+        category="form"
         title={t("tripHome.edit")}
         leftLabel={t("common.cancel")}
-        onLeft={() => {
-          if (!busy.current) onClose?.();
-        }}
+        onLeft={requestClose}
         rightLabel={t("ui.save")}
         onRight={metadataEditable ? save : undefined}
-        rightDisabled={saving || !valid || !dirty}
+        rightDisabled={saving || destinationBusy || !valid || !dirty}
       />
       <ScrollView
         style={styles.container}
@@ -196,6 +306,19 @@ export function TripBasicEditor({
             disabled={!metadataEditable || saving}
             onName={setName}
             onDestination={setDestination}
+            destinationEntry={
+              <CreateTripDestinations
+                name={name}
+                tripId={trip.id}
+                editorId={editorId}
+                generation={generation}
+                items={destinationItems}
+                onChange={setDestinationItems}
+                onQueryDirty={setDestinationQueryDirty}
+                onBusy={setDestinationBusy}
+                disabled={!metadataEditable || saving}
+              />
+            }
             onRange={(range) => {
               setStart(range.start);
               setEnd(range.end);
@@ -204,7 +327,14 @@ export function TripBasicEditor({
         </UiSection>
         <UiSection title={t("tripHome.coverTools")}>
           <TripCoverPicker
-            trip={{ ...trip, name: after.name, destination: after.destination }}
+            trip={{
+              ...trip,
+              name: after.name,
+              destinations: destinationItems.map((item) => ({ displayLabel: item.text })),
+              destination: destinationItems.length
+                ? destinationItems.map((item) => item.text).join(" · ")
+                : after.destination,
+            }}
             selectedRaw={
               metadataEditable
                 ? coverChanged
@@ -262,16 +392,18 @@ export function TripBasicEditor({
           setup={currencySetup ?? setup}
           onOpen={saving || !currencyAvailable ? undefined : () => setCurrencyOpen(true)}
         />
-        <UiSection>
-          {saved ? (
-            <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
-          ) : null}
-          {error ? (
-            <UiText accessibilityRole="alert" style={styles.error}>
-              {t("tripCreate.saveFailed")}
-            </UiText>
-          ) : null}
-        </UiSection>
+        {saved || error ? (
+          <UiSection>
+            {saved ? (
+              <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
+            ) : null}
+            {error ? (
+              <UiText accessibilityRole="alert" style={styles.error}>
+                {t("tripCreate.saveFailed")}
+              </UiText>
+            ) : null}
+          </UiSection>
+        ) : null}
       </ScrollView>
       <Modal
         visible={currencyOpen}
@@ -282,6 +414,7 @@ export function TripBasicEditor({
       >
         <SafeAreaView edges={["bottom"]} style={styles.container}>
           <SheetHeader
+            category="form"
             title={t("currencySettings.heading")}
             leftLabel={t("common.back")}
             safeTop={false}

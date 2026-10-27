@@ -1,0 +1,43 @@
+{
+  "fixedSha": "168a0a5e85e708fe7dafdb4eaa969d9e57c6d472",
+  "parent": "bf080ba7939cba0082557801f1b6e36537fa51e0",
+  "status": "HOLD_P2_ONCE_CLOSE_RACE",
+  "findings": [
+    {
+      "id": "P2_UNIVERSAL_CLOSE_01",
+      "priority": "P2",
+      "file": "scripts/import/universal_watchdog.py",
+      "lines": [
+        49,
+        57,
+        83,
+        95
+      ],
+      "title": "Manual close and watcher use separate execution claims",
+      "repro": "Create manual-close-claimed.json as CLI standalone close does, then call watch on the same prepared plan at expiry: watch-claimed.json is also created and closer runs once again. Concurrent manual close and arm/watch can therefore both invoke SQL/runtime closure.",
+      "impact": "Violates promised single close attempt and can repeat management mutation/restore after an uncertain first outcome; underlying exact SQL and runtime lock/idempotency limit damage but do not enforce no retry.",
+      "fix": "Use one shared exclusive execution claim immediately before any non-recovery closer, across manual and watcher. Registration/heartbeat can remain separate. Loser must not invoke closure; read-only reconciliation remains explicit. Add both interleaving regressions."
+    }
+  ],
+  "tests": {
+    "existingUnit": 13,
+    "actualIsolatedPg": 7,
+    "independentDualClaimReproduction": "CONFIRMED",
+    "network": "none",
+    "runtimeRestore": "SIMULATED_UNIT_TESTED",
+    "hostedWrites": 0,
+    "providerCalls": 0
+  },
+  "confirmed": [
+    "Exact complete Source/Provider scope + role/window guards precede mutation. Foreign scopes/role expiry stop and independent SQL readback is required.",
+    "SQL UNKNOWN is read back without SQL retry; runtime restore is withheld until SQL closure is independently verified.",
+    "Same-image runtime baseline fingerprints preserve supplied Trip/P1 env/mounts and other gates; Compose UNKNOWN is inspected without up retry.",
+    "Private run/plan/helper hashes and exact finite runtime paths checked; defaults prepare only.",
+    "Detached process survives parent termination and closes actual isolated PG at expiry; no remote runtime evidence claimed."
+  ],
+  "remaining": [
+    "Close race must be fixed before single-attempt watchdog qualification.",
+    "Actual C3/Actor/Reader/Provider scope and live service/mount preimages still must be populated under approved Gate.",
+    "No DEV/Provider/Native or actual remote restoration was executed."
+  ]
+}

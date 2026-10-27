@@ -1,0 +1,214 @@
+{
+  "utc": "2026-10-25T04:42:31.410451+00:00",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "scope": "P3_FORM_PARITY_LOCAL_ONLY",
+  "itemId": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+  "intents": [
+    {
+      "account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "operation_id": "84d6f57a-d705-4660-b51e-8993ef422aae",
+      "state": "BLOCKED",
+      "intent": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "command": "CREATE_ITEM",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "84d6f57a-d705-4660-b51e-8993ef422aae",
+        "payload": {
+          "acl": {
+            "people": [],
+            "visibility": "GROUP"
+          },
+          "core": {
+            "description": null,
+            "title": "Park Hyatt Auckland"
+          },
+          "details": {
+            "permitted_checkin_from": null,
+            "permitted_checkin_until": null,
+            "permitted_checkout_by": null,
+            "property_name": null
+          },
+          "family": "P3",
+          "participation": {
+            "mode": "SELECTED_MEMBERS",
+            "people": [
+              "c0fe6c9b-3990-4e67-8904-01410a5c893b"
+            ],
+            "selfPersonId": null
+          },
+          "place": {
+            "accepted_address": null,
+            "accepted_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_region": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "authored_address": null,
+            "authored_address_country": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_postal_code": null,
+            "authored_address_region": null,
+            "authored_label": "99 Halsey St, Auckland CBD, Auckland 1010, New Zealand",
+            "authored_text": null,
+            "location_input_revision": null,
+            "spatial_provenance_refs": null
+          },
+          "rooms": [],
+          "schedule": {
+            "end": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-04",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            },
+            "start": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-01",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            }
+          }
+        },
+        "target": {
+          "id": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+          "kind": "ITEM"
+        },
+        "tripId": "034beec1-74ac-4358-b4b9-728651c03db3"
+      }
+    },
+    {
+      "account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "trip_id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "operation_id": "e60be17b-574c-4833-ab96-5e2b78d3c552",
+      "state": "BLOCKED",
+      "intent": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+            "kind": "ITEM",
+            "revision": 1
+          }
+        ],
+        "command": "SET_ITEM_PLACE",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "e60be17b-574c-4833-ab96-5e2b78d3c552",
+        "payload": {
+          "place": {
+            "accepted_address": null,
+            "accepted_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_region": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "authored_address": null,
+            "authored_address_country": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_postal_code": null,
+            "authored_address_region": null,
+            "authored_label": "99 Halsey Street, Auckland, New Zealand",
+            "authored_text": null,
+            "location_input_revision": null,
+            "spatial_provenance_refs": null
+          }
+        },
+        "target": {
+          "id": "f475becb-ea44-4f3d-8d26-4d8f2dee5399",
+          "kind": "ITEM"
+        },
+        "tripId": "034beec1-74ac-4358-b4b9-728651c03db3"
+      }
+    }
+  ],
+  "allQueue": [
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    }
+  ],
+  "cloud": "PENDING / NO_ATTEMPTS",
+  "newProcessPid": 39158
+}

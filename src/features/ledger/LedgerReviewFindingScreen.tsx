@@ -52,6 +52,7 @@ export function LedgerReviewFindingScreen() {
     <>
       <Stack.Screen options={{ title: t("navigation.finding") }} />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.viewport}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"

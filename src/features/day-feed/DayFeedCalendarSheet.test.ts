@@ -132,7 +132,10 @@ it("uses only supplied transition labels and deduplicated markers; unknown core 
     (p) => p.kind === "Pressable" && p.accessibilityState.selected,
   );
   expect(selected.accessibilityLabel).toContain("Sapporo, Plans, Stay, Transport");
-  expect(selected.children[2].props.children).toHaveLength(3);
+  expect(
+    selected.children.find((child: any) => Array.isArray(child?.props?.children)).props
+      .children,
+  ).toHaveLength(3);
   state.nodes = [];
   html = render({
     tripStart: null,
@@ -262,4 +265,34 @@ it("unscoped summary dates cannot expand the selectable coverage", () => {
   );
   expect(coverage.months).toEqual(["2027-01", "2027-02"]);
   expect(coverage.dates.has("2027-05-09")).toBe(false);
+});
+
+it("marks Today by background only and preserves the selected day styling", () => {
+  const html = render({ today: "2027-02-03" });
+  const selected = state.nodes.find(
+    (n) => n.kind === "Pressable" && n.accessibilityState?.selected,
+  );
+  const tint = selected.children.find(
+    (child: any) => child?.props?.pointerEvents === "none",
+  );
+  expect(tint.props.style).toMatchObject({ opacity: 0.08 });
+  expect(html).not.toContain("Today");
+});
+
+it("keeps Today and selected backgrounds rectangular with the trip range", () => {
+  render({ today: "2027-02-03" });
+  const selected = state.nodes.find(
+    (node) => node.kind === "Pressable" && node.accessibilityState?.selected,
+  );
+  expect(selected).toBeTruthy();
+  for (const style of selected.style.filter(Boolean))
+    expect(style.borderRadius ?? 0).toBe(0);
+  const tint = state.nodes.find(
+    (node) =>
+      node.kind === "View" &&
+      node.pointerEvents === "none" &&
+      node.style?.opacity === 0.08,
+  );
+  expect(tint).toBeTruthy();
+  expect(tint.style.borderRadius ?? 0).toBe(0);
 });

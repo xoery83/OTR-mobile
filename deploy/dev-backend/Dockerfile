@@ -5,9 +5,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 COPY backend ./backend
-COPY src/data/api ./src/data/api
+COPY src/data ./src/data
 COPY src/domain ./src/domain
-COPY src/data/auth/accountGeneration.ts src/data/auth/accountRequestContext.ts ./src/data/auth/
 RUN npm run backend:build && npm run backend:build:capture
 
 FROM node:24-bookworm-slim

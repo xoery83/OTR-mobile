@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-24T05:14:16.438631+00:00",
+  "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+  "allocations": {
+    "native": 72,
+    "operator": 24
+  },
+  "actualConsumed": {
+    "native": 4,
+    "operator": 1
+  },
+  "nativeLedgerSurvivesColdStart": "next restart must retain prior4; not yet claimed",
+  "operatorLedgerDirectory": "/private/tmp/otr-sustained-native-execution-20261024/read-allowance-afdf5785",
+  "operatorLedger": {
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 24,
+    "reservations": [
+      {
+        "ordinal": 1,
+        "purpose": "CORE_RESULT",
+        "at": "2026-10-24T05:11:12.966644+00:00"
+      }
+    ]
+  },
+  "appState": "STOPPED_AFTER_TWO_FETCH_REPRODUCTIONS",
+  "serverService": "unchanged authorized sustained service; not closed or redeployed"
+}

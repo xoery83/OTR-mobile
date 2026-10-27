@@ -1,0 +1,21 @@
+{
+  "status": "RETAINED_ORIGINAL_RECOVERY_BOUNDED_REVIEW_PASS",
+  "candidate": "9c6ac2e",
+  "findings": [],
+  "independentTests": 8,
+  "confirmed": [
+    "Optional fields bind exact originalContainerId/backupName and baseline+active full Config hashes; raw HostConfig including null OomKillDisable, image/env/mounts/labels remain exact.",
+    "Original container is never deleted/recreated. Only exact inspected active candidate ID with complete configuration and activation/original markers is stopped/removed; no force or volume-removal flags.",
+    "Stop/remove/rename/start UNKNOWN inspected by exact ID with no resend. Running/foreign/missing/drifted original or candidate fails before destructive progression.",
+    "Partial restoration and healthy original no-op supported; read-only path never mutates. After original ID rename/start, baseline/full Config/raw HostConfig/mounts and Docker health rechecked before finite-file cleanup."
+  ],
+  "limits": [
+    "Pure mocked Docker/state-machine validation only; no actual DEV or GUI actions by reviewer.",
+    "Actual activation must retain the original container and pin final active metadata; exact independent live restoration/readback still required.",
+    "Runtime restoration branch does not activate Source/Provider or expand permissions. Existing closure claims and service lock remain."
+  ],
+  "sha256": {
+    "scripts/import/universal_runtime_close.py": "45146faff622c46b3cfa201cc5ebf983a6761ad1f8bf07e4a76974ba1826a3e3",
+    "scripts/import/universal_retained_runtime_test.py": "c4c60399bddc92dd71d8575b61bba495980b3a6547cccaac1b87b819c5643e69"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "status": "UNIVERSAL_CLOSE_WATCHDOG_LOCAL_PASS",
+  "unitTests": {
+    "scopeWatchdog": 11,
+    "runtime": 4
+  },
+  "isolatedPostgresAndProcess": {
+    "status": "ISOLATED_PG_AND_DETACHED_WATCH_PASS",
+    "checks": [
+      "actual owning scope tables closed; exact finite role NOLOGIN and window session terminated",
+      "repeated exact close idempotent, no business row touched",
+      "stale scope mismatch leaves newer window/service unchanged",
+      "foreign role expiry refuses NOLOGIN/session/service changes",
+      "lost COMMIT response reconciles by independent readback without write retry",
+      "detached watchdog survives killed parent and closes actual PG at expiry",
+      "existing global Source gate unchanged; Trip/P1 global policies never referenced"
+    ]
+  },
+  "runtimeRecoveryEvidence": "SIMULATED_SUBPROCESS_FILESYSTEM_UNIT_TESTS_NOT_REAL_SSH_DOCKER_RESTORE",
+  "sourceProof": "NONE_TEST_SCOPE_METADATA_ONLY",
+  "realAuth": false,
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "helperSha256": {
+    "universal_scope_close.py": "0c08a8bf519953a167f4a85b9bc5642622d09000f638cd8f473dd53b5f163d02",
+    "universal_runtime_close.py": "d4f7104a0e6d5b78054f06d34dac523082e186433555acbd91b1b5fa41bd8436",
+    "universal_watchdog.py": "e4d737cda2d51d96f666a7632897b28ac89e44bd1cee8d634a71acbe7ae54bf3"
+  },
+  "reviewCorrection": "168a P2 dual manual/watch claim fixed with one O_EXCL execution claim; threaded both-direction interleavings PASS"
+}

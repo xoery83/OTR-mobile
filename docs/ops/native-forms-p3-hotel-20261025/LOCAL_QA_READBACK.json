@@ -1,0 +1,66 @@
+{
+  "utc": "2026-10-25T05:00:56.023842+00:00",
+  "scope": "P3_HOTEL_UI_NATIVE_LOCAL",
+  "deviceId": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "coldProcessPid": 44628,
+  "tripDateReference": {
+    "account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+    "id": "034beec1-74ac-4358-b4b9-728651c03db3",
+    "name": "Forms QA P3 20261025",
+    "start_date": "2026-10-20",
+    "end_date": "2026-11-07"
+  },
+  "allQueue": [
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_CORE_V2",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "owner_user_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+      "entity_type": "TRIP_LOCAL_ACTION",
+      "operation_type": "TRIP_METADATA_DEFERRED",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    }
+  ],
+  "cloud": "CLOSED / NO_ATTEMPTS",
+  "businessMutationThisIncrement": "Only normal local QA Trip Edit to establish date-reference range. New hotel verification draft discarded. Existing Owner Sky city and other Items retained; no P3 Save in this increment."
+}

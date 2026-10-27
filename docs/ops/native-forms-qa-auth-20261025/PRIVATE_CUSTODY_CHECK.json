@@ -1,0 +1,7 @@
+{
+  "credentialFile": ".env.forms-qa-credentials.json",
+  "mode": "0600",
+  "gitIgnored": true,
+  "passwordPrintedOrArchived": false,
+  "otherSimulatorCredentialsRead": false
+}

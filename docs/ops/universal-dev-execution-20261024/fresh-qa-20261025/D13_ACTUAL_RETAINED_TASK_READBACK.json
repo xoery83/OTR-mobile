@@ -1,0 +1,31 @@
+{
+  "ordinal": 40,
+  "result": {
+    "taskTables": [
+      "intelligence_continuations",
+      "intelligence_continuation_attempts"
+    ],
+    "rawPresent": true,
+    "resultPinPresent": false,
+    "intelligence_continuations": [
+      {
+        "task_id": "cd36d6f4-a09b-41ef-977e-bb4127920d7f",
+        "work_disposition": "RUNNING",
+        "result_sha256": null,
+        "row_revision": 3
+      }
+    ],
+    "intelligence_continuation_attempts": [
+      {
+        "task_id": "cd36d6f4-a09b-41ef-977e-bb4127920d7f",
+        "attempt_id": "b8e1e9a0-0b36-4df7-8a95-5de7cb35fb8a",
+        "execution_observation": "RUNNING",
+        "execution_outcome": null,
+        "metering_disposition": "START_DURABLE",
+        "result_install_disposition": "NONE",
+        "response_sha256": null,
+        "row_revision": 3
+      }
+    ]
+  }
+}

@@ -296,6 +296,7 @@ export function projectCoreItem(
       : {}),
     status: item.status,
     hidden: item.hidden_at !== null,
+    visibility: item.visibility,
     localState,
     participation: {
       mode: item.participation_mode,

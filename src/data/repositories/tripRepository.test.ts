@@ -35,6 +35,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
   discardRetainedTripPhoto: vi.fn(),
 }));
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const connections: DatabaseSync[] = [],
   folders: string[] = [];
@@ -2391,4 +2392,1128 @@ it("rolls photo cover and metadata back on queue failure or Account ABA during v
     ...before,
     selectedCoverAssetIdRaw: null,
   });
+});
+
+it("local creator nickname preserves independent identity, strict proof and cold exact replay", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-creator-nickname-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const command = { ...input(), creatorDisplayName: "  Kiwi  " };
+  await f.repo.createTrip(command);
+  const before = f.sql.prepare("SELECT * FROM ledger_members").get();
+  expect(before).toMatchObject({ display_name: "Kiwi", role: "owner", status: "local" });
+  expect(before?.id).not.toBe(accountA);
+  expect(
+    f.sql.prepare("SELECT user_id,member_id FROM ledger_actor_context").get(),
+  ).toEqual({ user_id: accountA, member_id: before?.id });
+  const proof = JSON.parse(
+    String(
+      f.sql
+        .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+        .get(command.operationId)?.payload_json,
+    ),
+  );
+  expect(proof).not.toHaveProperty("creatorDisplayName");
+  f.sql.close();
+  f = local(path, false);
+  await f.repo.createTrip(command);
+  await f.repo.createTrip({ ...command, creatorDisplayName: undefined });
+  expect(f.sql.prepare("SELECT * FROM ledger_members").get()).toEqual(before);
+  await expect(
+    f.repo.createTrip({ ...command, creatorDisplayName: "Changed" }),
+  ).rejects.toThrow("TRIP_CREATOR_NAME_REPLAY_MISMATCH");
+  expect(f.sql.prepare("SELECT * FROM ledger_members").get()).toEqual(before);
+});
+it("blank nickname uses the existing known name, invalid names and queue errors leave no partial creator", async () => {
+  const f = local();
+  const repo = createTripRepository(
+    f.database,
+    async () => accountA,
+    f.core,
+    () => stamp,
+    async () => "Known profile name",
+  );
+  await repo.createTrip({ ...input(), creatorDisplayName: "  " });
+  expect(f.sql.prepare("SELECT display_name FROM ledger_members").get()).toEqual({
+    display_name: "Known profile name",
+  });
+  const bad = local();
+  await expect(
+    bad.repo.createTrip({ ...input(), creatorDisplayName: "x".repeat(257) }),
+  ).rejects.toThrow("TRIP_CREATOR_NAME_INVALID");
+  bad.failNextQueue();
+  await expect(
+    bad.repo.createTrip({ ...input(), creatorDisplayName: "Kiwi" }),
+  ).rejects.toThrow();
+  for (const table of [
+    "local_trip_containers",
+    "local_trip_ledger_bindings",
+    "ledger_members",
+    "ledger_actor_context",
+    "sync_operations",
+  ])
+    expect(bad.sql.prepare(`SELECT count(*) n FROM ${table}`).get()?.n).toBe(0);
+  const missing = local();
+  const unknown = createTripRepository(
+    missing.database,
+    async () => accountA,
+    missing.core,
+    () => stamp,
+    async () => "",
+  );
+  const anonymous = await unknown.createTrip(input());
+  expect(anonymous.id).toBeTruthy();
+  expect(missing.sql.prepare("SELECT display_name FROM ledger_members").get()).toEqual({
+    display_name: "",
+  });
+  expect(missing.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+});
+it("a late profile result after Account change cannot create even an explicitly nicknamed creator", async () => {
+  const f = local();
+  let active = accountA;
+  const repo = createTripRepository(
+    f.database,
+    async () => active,
+    f.core,
+    () => stamp,
+    async () => {
+      active = accountB;
+      advanceAccountGeneration();
+      return "Known";
+    },
+  );
+  await expect(
+    repo.createTrip({ ...input(), creatorDisplayName: "Kiwi" }),
+  ).rejects.toThrow("Account changed");
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(0);
+});
+
+it("ordered destinations save atomically, cold read and exact replay without Hosted claims", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-destinations-"));
+  folders.push(folder);
+  const path = join(folder, "trip.sqlite"),
+    f = local(path),
+    request = {
+      ...input(),
+      destinations: [
+        {
+          destinationId: randomUUID(),
+          displayLabel: "Tokyo",
+          source: "APPLE_PLACE_ID" as const,
+          provider: "apple" as const,
+          providerPlaceId: "apple.real.tokyo",
+        },
+        {
+          destinationId: randomUUID(),
+          displayLabel: "  ".trim() + "Kyoto custom",
+          source: "MANUAL" as const,
+        },
+      ],
+    };
+  const created = await f.repo.createTrip(request);
+  expect(created.destinations?.map((x) => x.ordinal)).toEqual([0, 1]);
+  expect(created.destinations?.map((x) => x.destinationId)).toEqual(
+    request.destinations.map((x) => x.destinationId),
+  );
+  expect(
+    JSON.parse(
+      String(
+        f.sql
+          .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+          .get(request.operationId)!.payload_json,
+      ),
+    ),
+  ).not.toHaveProperty("destinations");
+  const cold = local(path, false);
+  expect((await cold.repo.getTrip(request.tripId))?.destinations).toEqual(
+    created.destinations,
+  );
+  expect((await cold.repo.listTrips())[0].destinations).toEqual(created.destinations);
+  await expect(cold.repo.createTrip(request)).resolves.toMatchObject({
+    destinations: created.destinations,
+  });
+  const { destinations: _destinations, ...omitted } = request;
+  await expect(cold.repo.createTrip(omitted)).resolves.toMatchObject({
+    destinations: created.destinations,
+  });
+  await expect(
+    cold.repo.createTrip({
+      ...request,
+      destinations: [...request.destinations].reverse(),
+    }),
+  ).rejects.toThrow("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+  await expect(cold.repo.createTrip({ ...request, destinations: [] })).rejects.toThrow(
+    "TRIP_DESTINATIONS_REPLAY_MISMATCH",
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_destinations").get()!.n,
+  ).toBe(2);
+  cold.switchTo(accountB);
+  expect(await cold.repo.getTrip(request.tripId)).toBeNull();
+  expect(await cold.repo.listTrips()).toEqual([]);
+});
+
+it("destinations reject false identity, duplicates and unapproved MapData before writes", async () => {
+  const f = local(),
+    manual = {
+      destinationId: randomUUID(),
+      displayLabel: "Kyoto",
+      source: "MANUAL" as const,
+    };
+  for (const destinations of [
+    [manual, { ...manual, destinationId: randomUUID(), displayLabel: "ＫＹＯＴＯ" }],
+    [manual, { ...manual, displayLabel: "Tokyo" }],
+    Array.from({ length: 21 }, (_, n) => ({
+      ...manual,
+      destinationId: randomUUID(),
+      displayLabel: String(n),
+    })),
+    [{ ...manual, address: "provider snapshot" }],
+    [
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Tokyo",
+        source: "APPLE_PLACE_ID",
+        provider: "apple",
+        providerPlaceId: "",
+      },
+    ],
+  ])
+    await expect(
+      f.repo.createTrip({ ...input(), destinations } as never),
+    ).rejects.toThrow();
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get()!.n).toBe(
+    0,
+  );
+  const request = {
+    ...input(),
+    destinations: [
+      manual,
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Kyoto",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "real-1",
+      },
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Kyoto",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "real-2",
+      },
+    ],
+  };
+  await expect(f.repo.createTrip(request)).resolves.toMatchObject({
+    destinations: expect.any(Array),
+  });
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_destinations").get()!.n,
+  ).toBe(3);
+});
+
+it("destination failure rolls back Trip, creator, persons and queue without changing existing data", async () => {
+  const f = local(),
+    existing = await f.repo.createTrip(input());
+  const before = f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()!.n;
+  f.sql.exec(
+    "CREATE TRIGGER destination_fault BEFORE INSERT ON local_trip_destinations BEGIN SELECT RAISE(ABORT,'DESTINATION_FAULT'); END",
+  );
+  await expect(
+    f.repo.createTrip({
+      ...input(),
+      creatorDisplayName: "Me",
+      destinations: [
+        { destinationId: randomUUID(), displayLabel: "Tokyo", source: "MANUAL" },
+      ],
+    }),
+  ).rejects.toThrow("DESTINATION_FAULT");
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_trip_containers").get()!.n).toBe(
+    1,
+  );
+  expect(f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()!.n).toBe(before);
+  expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()!.n).toBe(1);
+  expect(await f.repo.getTrip(existing.id)).toMatchObject({
+    id: existing.id,
+    destinations: [],
+  });
+});
+
+it("destinations reject create replay retrofit and malformed stored claims", async () => {
+  const f = local(),
+    request = input();
+  await f.repo.createTrip(request);
+  await expect(
+    f.repo.createTrip({
+      ...request,
+      destinations: [
+        { destinationId: randomUUID(), displayLabel: "Tokyo", source: "MANUAL" },
+      ],
+    }),
+  ).rejects.toThrow("TRIP_DESTINATIONS_REPLAY_MISMATCH");
+  const other = {
+    ...input(),
+    destinations: [
+      { destinationId: randomUUID(), displayLabel: "Kyoto", source: "MANUAL" as const },
+    ],
+  };
+  await f.repo.createTrip(other);
+  f.sql
+    .prepare(
+      "UPDATE local_trip_destinations SET manual_claim='incorrect' WHERE trip_id=?",
+    )
+    .run(other.tripId);
+  await expect(f.repo.getTrip(other.tripId)).rejects.toThrow(
+    "TRIP_DESTINATIONS_STORED_INVALID",
+  );
+  await expect(f.repo.listTrips()).rejects.toThrow("TRIP_DESTINATIONS_STORED_INVALID");
+});
+
+const manualDestination = (label: string) => ({
+  destinationId: randomUUID(),
+  displayLabel: label,
+  source: "MANUAL" as const,
+});
+const metadataOf = (trip: {
+  name: string;
+  destination: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}) => ({
+  name: trip.name,
+  destination: trip.destination,
+  startDate: trip.startDate,
+  endDate: trip.endDate,
+});
+it("local destination edits preserve ordered identity/timestamps, cold reads and original Create replay", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-destination-edit-"));
+  folders.push(folder);
+  const path = join(folder, "trip.sqlite");
+  let f = local(path);
+  const original = {
+    ...input(),
+    destinations: [
+      manualDestination("Tokyo"),
+      {
+        destinationId: randomUUID(),
+        displayLabel: "Sydney",
+        source: "APPLE_PLACE_ID" as const,
+        provider: "apple" as const,
+        providerPlaceId: "real-sydney",
+      },
+    ],
+  };
+  const saved = await f.repo.createTrip(original),
+    before = metadataOf(saved);
+  const initialTimestamp = f.sql
+    .prepare("SELECT created_at FROM local_trip_destinations WHERE destination_id=?")
+    .get(original.destinations[1].destinationId)!.created_at;
+  const change = {
+    operationId: randomUUID(),
+    before: original.destinations,
+    after: [original.destinations[1], manualDestination("Kyoto")],
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Edited", destination: null },
+  };
+  await f.repo.updateMetadata(request, { before: null, after: "city" }, change);
+  const edited = await f.repo.getTrip(saved.id);
+  expect(edited).toMatchObject({
+    name: "Edited",
+    destination: null,
+    selectedCoverAssetId: "city",
+    destinations: change.after.map((item, ordinal) => ({ ...item, ordinal })),
+  });
+  expect(
+    f.sql
+      .prepare("SELECT created_at FROM local_trip_destinations WHERE destination_id=?")
+      .get(original.destinations[1].destinationId)!.created_at,
+  ).toBe(initialTimestamp);
+  const hosted = JSON.parse(
+    f.sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.payload_json as string,
+  );
+  expect(hosted).toEqual(request);
+  expect(hosted).not.toHaveProperty("destinations");
+  const receipt = f.sql
+    .prepare("SELECT * FROM sync_operations WHERE id=?")
+    .get(change.operationId)!;
+  expect(receipt).toMatchObject({
+    status: "COMPLETED",
+    entity_type: "TRIP_LOCAL_PREFERENCE",
+    operation_type: "TRIP_DESTINATIONS_LOCAL_SAVE",
+  });
+  f.sql.close();
+  connections.splice(connections.indexOf(f.sql), 1);
+  f = local(path, false);
+  await f.repo.updateMetadata(request, { before: null, after: "city" }, change);
+  expect(await f.repo.getTrip(saved.id)).toEqual(edited);
+  expect(await f.repo.createTrip(original)).toMatchObject({
+    destinations: edited!.destinations,
+  });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE operation_type='TRIP_DESTINATIONS_LOCAL_SAVE'",
+      )
+      .get()!.n,
+  ).toBe(1);
+  await expect(
+    f.repo.updateMetadata(request, undefined, { ...change, after: [] }),
+  ).rejects.toThrow("REUSE_MISMATCH");
+});
+it("destination CAS, identity, permissions and queue errors roll back metadata, cover, tags and receipt", async () => {
+  const f = local(),
+    original = { ...input(), destinations: [manualDestination("Tokyo")] };
+  const saved = await f.repo.createTrip(original),
+    before = metadataOf(saved);
+  const req = () => ({
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Should rollback", destination: null },
+  });
+  const change = () => ({
+    operationId: randomUUID(),
+    before: original.destinations,
+    after: [manualDestination("Kyoto")],
+  });
+  await expect(
+    f.repo.updateMetadata(req(), undefined, { ...change(), before: [] }),
+  ).rejects.toThrow("LOCAL_CONFLICT");
+  await expect(
+    f.repo.updateMetadata(req(), undefined, {
+      ...change(),
+      after: [
+        {
+          destinationId: original.destinations[0].destinationId,
+          displayLabel: "Tokyo",
+          source: "APPLE_PLACE_ID",
+          provider: "apple",
+          providerPlaceId: "real",
+        },
+      ],
+    }),
+  ).rejects.toThrow("IDENTITY_MISMATCH");
+  f.failNextQueue();
+  await expect(
+    f.repo.updateMetadata(req(), { before: null, after: "city" }, change()),
+  ).rejects.toThrow("QUEUE_WRITE_FAILED");
+  expect(await f.repo.getTrip(saved.id)).toEqual(saved);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE operation_type='TRIP_DESTINATIONS_LOCAL_SAVE'",
+      )
+      .get()!.n,
+  ).toBe(0);
+  f.switchTo(accountB);
+  await expect(f.repo.updateMetadata(req(), undefined, change())).rejects.toThrow(
+    "LOCAL_CREATOR_REQUIRED",
+  );
+});
+it("destination-only receipts survive requeue and original Create replay rejects broken/tampered history", async () => {
+  const f = local(),
+    original = {
+      ...input(),
+      destination: null,
+      destinations: [manualDestination("Tokyo")],
+    };
+  const saved = await f.repo.createTrip(original),
+    before = metadataOf(saved);
+  const first = {
+    operationId: randomUUID(),
+    before: original.destinations,
+    after: [manualDestination("Kyoto")],
+  };
+  await f.repo.updateMetadata(
+    { operationId: randomUUID(), tripId: saved.id, before, after: before },
+    undefined,
+    first,
+  );
+  const second = {
+    operationId: randomUUID(),
+    before: first.after,
+    after: [manualDestination("Nelson")],
+  };
+  await f.repo.updateMetadata(
+    { operationId: randomUUID(), tripId: saved.id, before, after: before },
+    undefined,
+    second,
+  );
+  expect(await f.repo.createTrip(original)).toMatchObject({
+    destinations: second.after.map((item, ordinal) => ({ ...item, ordinal })),
+  });
+  await f.queue.markPending(second.operationId);
+  await f.queue.markRetryable(second.operationId, new Error("network"), stamp);
+  await f.queue.markFailed(second.operationId, new Error("bad"));
+  await f.queue.markProcessing(second.operationId);
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(second.operationId)!.status,
+  ).toBe("COMPLETED");
+  f.sql
+    .prepare("UPDATE sync_operations SET status='PENDING' WHERE id=?")
+    .run(second.operationId);
+  expect((await f.queue.listPending()).some((x) => x.id === second.operationId)).toBe(
+    false,
+  );
+  expect(await f.queue.claim(second.operationId)).toBe(false);
+  await expect(f.repo.createTrip(original)).rejects.toThrow("REPLAY_MISMATCH");
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(second.operationId);
+  f.sql.prepare("DELETE FROM sync_operations WHERE id=?").run(first.operationId);
+  await expect(f.repo.createTrip(original)).rejects.toThrow("REPLAY_MISMATCH");
+});
+it("destination edits fail closed after receipt tampering and rollback later metadata/cover failures", async () => {
+  const f = local(),
+    original = { ...input(), destinations: [manualDestination("Tokyo")] };
+  const saved = await f.repo.createTrip(original),
+    before = metadataOf(saved);
+  const change = {
+    operationId: randomUUID(),
+    before: original.destinations,
+    after: [manualDestination("Kyoto")],
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Changed", destination: null },
+  };
+  // Failure after all three draft fields have entered the transaction must preserve all old objects.
+  f.sql.exec(
+    "CREATE TRIGGER edit_failure BEFORE UPDATE OF name ON local_trip_containers BEGIN SELECT RAISE(ABORT,'EDIT_FAILED'); END",
+  );
+  await expect(
+    f.repo.updateMetadata(request, { before: null, after: "city" }, change),
+  ).rejects.toThrow("EDIT_FAILED");
+  expect(await f.repo.getTrip(saved.id)).toEqual(saved);
+  expect(
+    f.sql
+      .prepare("SELECT count(*) AS n FROM sync_operations WHERE id=? OR id=?")
+      .get(request.operationId, change.operationId)!.n,
+  ).toBe(0);
+  f.sql.exec("DROP TRIGGER edit_failure");
+  await f.repo.updateMetadata(request, { before: null, after: "city" }, change);
+  const row = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(change.operationId)!;
+  const payload = JSON.parse(row.payload_json as string);
+  payload.destinations.after[0].displayLabel = "Tampered";
+  f.sql
+    .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+    .run(JSON.stringify(payload), change.operationId);
+  await expect(f.repo.createTrip(original)).rejects.toThrow("REPLAY_MISMATCH");
+  const current = metadataOf((await f.repo.getTrip(saved.id))!);
+  await expect(
+    f.repo.updateMetadata(
+      { operationId: randomUUID(), tripId: saved.id, before: current, after: current },
+      undefined,
+      { operationId: randomUUID(), before: change.after, after: [] },
+    ),
+  ).rejects.toThrow("REPLAY_MISMATCH");
+});
+it("removing all Tags clears legacy fallback only when explicitly submitted, and rejects stale concurrent lists", async () => {
+  const f = local(),
+    original = { ...input(), destination: "Legacy Nelson" };
+  const saved = await f.repo.createTrip(original),
+    before = metadataOf(saved);
+  await f.repo.updateMetadata({
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Name only" },
+  });
+  let current = (await f.repo.getTrip(saved.id))!;
+  expect(current.destination).toBe("Legacy Nelson");
+  expect(current.destinations).toEqual([]);
+  const metadata = metadataOf(current),
+    first = {
+      operationId: randomUUID(),
+      before: [],
+      after: [manualDestination("Sydney")],
+    };
+  await f.repo.updateMetadata(
+    {
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before: metadata,
+      after: { ...metadata, destination: null },
+    },
+    undefined,
+    first,
+  );
+  current = (await f.repo.getTrip(saved.id))!;
+  const next = metadataOf(current);
+  await expect(
+    f.repo.updateMetadata(
+      { operationId: randomUUID(), tripId: saved.id, before: next, after: next },
+      undefined,
+      {
+        operationId: randomUUID(),
+        before: [],
+        after: [manualDestination("Wrong stale")],
+      },
+    ),
+  ).rejects.toThrow("LOCAL_CONFLICT");
+  await f.repo.updateMetadata(
+    { operationId: randomUUID(), tripId: saved.id, before: next, after: next },
+    undefined,
+    { operationId: randomUUID(), before: first.after, after: [] },
+  );
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    destination: null,
+    destinations: [],
+  });
+  expect(await f.repo.createTrip(original)).toMatchObject({
+    destination: null,
+    destinations: [],
+  });
+});
+
+it("explicit removal of the only legacy scalar Tag persists an empty list and cannot resurrect on Create replay", async () => {
+  const f = local(),
+    original = { ...input(), destination: "Nelson" };
+  const saved = await f.repo.createTrip(original),
+    before = metadataOf(saved);
+  await f.repo.updateMetadata(
+    {
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before,
+      after: { ...before, destination: null },
+    },
+    undefined,
+    { operationId: randomUUID(), before: [], after: [] },
+  );
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    destination: null,
+    destinations: [],
+  });
+  expect(await f.repo.createTrip(original)).toMatchObject({
+    destination: null,
+    destinations: [],
+  });
+});
+
+it("dispatches only the selected metadata operation and preserves dependencies and unrelated Trip edits", async () => {
+  const f = local();
+  const edits = [];
+  for (const name of ["Target trip", "Other trip"]) {
+    const create = { ...input(), name };
+    const saved = await f.repo.createTrip(create);
+    const before = {
+      name: saved.name,
+      destination: saved.destination,
+      startDate: saved.startDate,
+      endDate: saved.endDate,
+    };
+    const first = {
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before,
+      after: { ...before, name: `${name} first` },
+    };
+    const second = {
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before: first.after,
+      after: { ...before, name: `${name} second` },
+    };
+    await f.repo.updateMetadata(first);
+    await f.repo.updateMetadata(second);
+    await f.repo.acceptCreate({
+      ...create,
+      actorAccountId: accountA,
+      ownerPersonId: randomUUID(),
+      coreEpoch: randomUUID(),
+      coreRevision: 1,
+      coreAccessRevision: 1,
+    });
+    edits.push({ first, second });
+  }
+  const [target, other] = edits;
+  const scope = (edit: typeof target.first) => ({
+    accountId: accountA,
+    tripId: edit.tripId,
+    operationId: edit.operationId,
+  });
+  const status = (id: string) =>
+    f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(id)?.status;
+  await expect(
+    f.repo.resumeMetadataUpdates({ ...scope(target.first), accountId: accountB }),
+  ).rejects.toThrow("TRIP_METADATA_ACCOUNT_MISMATCH");
+  await expect(
+    f.repo.resumeMetadataUpdates({ ...scope(target.first), operationId: "invalid" }),
+  ).rejects.toThrow();
+  await f.repo.resumeMetadataUpdates(scope(target.second));
+  expect(status(target.second.operationId)).toBe("DEPENDENCY_BLOCKED");
+  expect(status(target.first.operationId)).toBe("DEPENDENCY_BLOCKED");
+  const { createTripMetadataSyncCoordinator, createTripMetadataSyncWorker } =
+    await import("../sync/tripMetadataSyncWorker");
+  const transport = {
+    receipt: vi.fn(async () => null),
+    update: vi.fn(async (_: unknown, request: typeof target.first) => ({
+      ...request,
+      actorAccountId: accountA,
+    })),
+  };
+  // An unrelated eligible operation must remain undispatched even if already PENDING.
+  await f.repo.resumeMetadataUpdates(scope(other.first));
+  const run = (edit: typeof target.first) =>
+    createTripMetadataSyncCoordinator(
+      f.queue,
+      createTripMetadataSyncWorker(f.repo, transport, async () => accountA),
+      f.repo,
+      () => true,
+      scope(edit),
+    ).run("AUTHENTICATED_ONLINE");
+  expect((await run(target.first)).processedCount).toBe(1);
+  expect(status(target.first.operationId)).toBe("COMPLETED");
+  expect(status(target.second.operationId)).toBe("PENDING");
+  expect(status(other.first.operationId)).toBe("PENDING");
+  expect(status(other.second.operationId)).toBe("DEPENDENCY_BLOCKED");
+  expect((await run(target.second)).processedCount).toBe(1);
+  expect(transport.update.mock.calls.map((call) => call[1].operationId)).toEqual([
+    target.first.operationId,
+    target.second.operationId,
+  ]);
+  expect((await run(target.second)).processedCount).toBe(0);
+});
+
+it("does not dispatch a scoped metadata operation after an Account ABA while resuming", async () => {
+  const { createTripMetadataSyncCoordinator } =
+    await import("../sync/tripMetadataSyncWorker");
+  const worker = { push: vi.fn() };
+  const f = local();
+  const runner = createTripMetadataSyncCoordinator(
+    f.queue,
+    worker,
+    {
+      resumeMetadataUpdates: async () => {
+        advanceAccountGeneration();
+        advanceAccountGeneration();
+      },
+    },
+    () => true,
+    { accountId: accountA, tripId: randomUUID(), operationId: randomUUID() },
+  );
+  await expect(runner.run("AUTHENTICATED_ONLINE")).rejects.toThrow("Account changed");
+  expect(worker.push).not.toHaveBeenCalled();
+});
+
+it("uses a fixture-qualified V2 snapshot to persist a new exact operation in the existing queue and preserves local destinations", async () => {
+  const f = local(),
+    create = {
+      ...input(),
+      destination: null,
+      destinations: [manualDestination("Tokyo"), manualDestination("Kyoto")],
+    };
+  const saved = await f.repo.createTrip(create);
+  await f.repo.acceptCreate({
+    operationId: create.operationId,
+    tripId: saved.id,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const operationId = randomUUID(),
+    scope = await captureAccountScope(async () => accountA);
+  const { createTripMetadataTransport } = await import("../sync/tripMetadataTransport");
+  const { tripMetadataV2Boundary } = await import("../../../backend/src/tripMetadataV2");
+  const { createTripMetadataSyncCoordinator, createTripMetadataSyncWorker } =
+    await import("../sync/tripMetadataSyncWorker");
+  const receipts = new Map<
+    string,
+    import("@/domain/trip/tripMetadataV2Contract").TripMetadataV2Receipt
+  >();
+  const update = vi.fn(
+    async (
+      _actor: string,
+      request: import("@/domain/trip/tripMetadataV2Contract").TripMetadataV2Update,
+    ) => {
+      const receipt = {
+        ...request,
+        actorAccountId: accountA,
+        resultMetadataRevision: request.expectedMetadataRevision + 1,
+      };
+      receipts.set(request.operationId, receipt);
+      return receipt;
+    },
+  );
+  const fetchImplementation = vi.fn(async (url: string, options: RequestInit) =>
+    tripMetadataV2Boundary(new Request(url, options), accountA, {
+      update,
+      receipt: async (_actor, id) => receipts.get(id) ?? null,
+      snapshot: async () => ({
+        formatVersion: 2,
+        actorAccountId: accountA,
+        tripId: saved.id,
+        metadataRevision: 4,
+        metadata: before,
+      }),
+    }),
+  );
+  const transport = createTripMetadataTransport(
+    async () => accountA,
+    {
+      baseUrl: "https://fixture.example.test",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    },
+    async () => ({ token: "synthetic-fixture-only", userId: accountA }),
+  );
+  const snapshot = await transport.snapshot(scope, saved.id, operationId);
+  const request = {
+    formatVersion: 2 as const,
+    operationId,
+    tripId: snapshot.tripId,
+    expectedMetadataRevision: snapshot.metadataRevision,
+    before: snapshot.metadata,
+    after: { ...snapshot.metadata, name: "Explicit V2 edit" },
+  };
+  await f.repo.updateMetadata(request);
+  const row = f.sql
+    .prepare("SELECT payload_json,status FROM sync_operations WHERE id=?")
+    .get(operationId)!;
+  expect(JSON.parse(String(row.payload_json))).toEqual(request);
+  expect(row.status).toBe("DEPENDENCY_BLOCKED");
+  const runner = createTripMetadataSyncCoordinator(
+    f.queue,
+    createTripMetadataSyncWorker(f.repo, transport, async () => accountA),
+    f.repo,
+    () => true,
+    { accountId: accountA, tripId: saved.id, operationId },
+  );
+  expect((await runner.run("AUTHENTICATED_OFFLINE")).processedCount).toBe(0);
+  expect(update).not.toHaveBeenCalled();
+  expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(1);
+  expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
+  expect(update).toHaveBeenCalledOnce();
+  expect((await f.repo.getTrip(saved.id))?.destinations).toEqual(saved.destinations);
+  expect((await f.repo.getTrip(saved.id))?.syncStatus).toBe("SYNCED");
+  // This is isolated HTTP/SQLite fixture composition, not an actual Hosted Reader/Authority.
+});
+it("never upgrades a pending V1 operation or accepts a version-mismatched V2 receipt", async () => {
+  const f = local(),
+    create = input(),
+    saved = await f.repo.createTrip(create);
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const old = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Legacy pending" },
+  };
+  await f.repo.updateMetadata(old);
+  const pending = String(
+    f.sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(old.operationId)!.payload_json,
+  );
+  await expect(
+    f.repo.updateMetadata({ ...old, formatVersion: 2, expectedMetadataRevision: 0 }),
+  ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
+  expect(
+    String(
+      f.sql
+        .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+        .get(old.operationId)!.payload_json,
+    ),
+  ).toBe(pending);
+  expect(JSON.parse(pending)).not.toHaveProperty("formatVersion");
+  await f.repo.acceptCreate({
+    ...create,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  const fresh = {
+    formatVersion: 2 as const,
+    expectedMetadataRevision: 2,
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: old.after,
+    after: { ...old.after, name: "New V2" },
+  };
+  await f.repo.updateMetadata(fresh);
+  await expect(
+    f.repo.acceptMetadataUpdate({
+      operationId: fresh.operationId,
+      tripId: fresh.tripId,
+      before: fresh.before,
+      after: fresh.after,
+      actorAccountId: accountA,
+    }),
+  ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+  await expect(
+    f.repo.acceptMetadataUpdate({
+      ...fresh,
+      expectedMetadataRevision: 1,
+      resultMetadataRevision: 2,
+      actorAccountId: accountA,
+    }),
+  ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+  await expect(
+    f.repo.updateMetadata(
+      { ...fresh, operationId: randomUUID() },
+      { before: null, after: null },
+    ),
+  ).rejects.toThrow("TRIP_METADATA_V2_LOCAL_PREFERENCE_UNSUPPORTED");
+  await expect(
+    f.repo.updateMetadata({ ...fresh, operationId: randomUUID() }, undefined, {
+      operationId: randomUUID(),
+      before: [],
+      after: [],
+    }),
+  ).rejects.toThrow("TRIP_METADATA_V2_LOCAL_PREFERENCE_UNSUPPORTED");
+});
+it("rejects V2 before Create acceptance instead of inventing a revision", async () => {
+  const f = local(),
+    saved = await f.repo.createTrip(input());
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  await expect(
+    f.repo.updateMetadata({
+      formatVersion: 2,
+      expectedMetadataRevision: 0,
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before,
+      after: { ...before, name: "Not admitted" },
+    }),
+  ).rejects.toThrow("TRIP_METADATA_V2_ACCEPTED_TRIP_REQUIRED");
+});
+
+it("recovers a V2 unknown response from the exact receipt after SQLite reopen without a new operation", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-metadata-v2-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const create = input(),
+    saved = await f.repo.createTrip(create);
+  await f.repo.acceptCreate({
+    ...create,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    formatVersion: 2 as const,
+    expectedMetadataRevision: 6,
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Recovered V2" },
+  };
+  await f.repo.updateMetadata(request);
+  await f.repo.resumeMetadataUpdates({
+    accountId: accountA,
+    tripId: saved.id,
+    operationId: request.operationId,
+  });
+  const operation = (await f.queue.listPending()).find(
+    (row) => row.id === request.operationId,
+  )!;
+  let committed:
+    import("@/domain/trip/tripMetadataV2Contract").TripMetadataV2Receipt | null = null;
+  const transport = {
+    receipt: vi.fn(async () => committed),
+    update: vi.fn(async () => {
+      committed = { ...request, actorAccountId: accountA, resultMetadataRevision: 7 };
+      throw new Error("response lost");
+    }),
+  };
+  const { createTripMetadataSyncWorker } = await import("../sync/tripMetadataSyncWorker");
+  await expect(
+    createTripMetadataSyncWorker(f.repo, transport, async () => accountA).push(operation),
+  ).rejects.toThrow("response lost");
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)?.status,
+  ).toBe("PENDING");
+  f.sql.close();
+  f = local(path, false);
+  await createTripMetadataSyncWorker(f.repo, transport, async () => accountA).push(
+    operation,
+  );
+  expect(transport.receipt).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accountId: accountA }),
+    request.operationId,
+    2,
+  );
+  expect(transport.update).toHaveBeenCalledOnce();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)?.status,
+  ).toBe("COMPLETED");
+  expect(
+    JSON.parse(
+      String(
+        f.sql
+          .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+          .get(request.operationId)?.payload_json,
+      ),
+    ),
+  ).toEqual(request);
+});
+
+it("atomically creates structured V2 Trip with six named travelers and an unchanged cloud proof", async () => {
+  const f = local();
+  const command = {
+    ...input(),
+    syncFormatVersion: 2 as const,
+    destination: null,
+    destinations: [manualDestination("Auckland"), manualDestination("Wellington")],
+    travelers: ["Softer", "Maggie", "Celine", "Judy", "Eyan", "George"].map(
+      (displayName) => ({
+        operationId: randomUUID(),
+        personId: randomUUID(),
+        displayName,
+      }),
+    ),
+  };
+  const result = await f.repo.createTrip(command);
+  expect(result.destinations).toHaveLength(2);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(7);
+  await f.repo.createTrip(command);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(7);
+  const proof = JSON.parse(
+    String(
+      f.sql
+        .prepare("SELECT payload_json p FROM sync_operations WHERE id=?")
+        .get(command.operationId)?.p,
+    ),
+  );
+  expect(proof).toMatchObject({ formatVersion: 2, destinations: command.destinations });
+  expect(proof).not.toHaveProperty("travelers");
+});
+
+it("keeps structured Trip pending until current independent readback and authored Persons finish", async () => {
+  const f = local();
+  const operationId = randomUUID(),
+    tripId = randomUUID();
+  const slot = {
+    operationId: randomUUID(),
+    personId: randomUUID(),
+    displayName: "New traveler",
+  };
+  const saved = await f.repo.createTrip({
+    operationId,
+    tripId,
+    name: "Verified only",
+    syncFormatVersion: 2,
+    destinations: [],
+    cloudTravelers: { dataOwnership: "CLOUD_SHARED_AUTHORED", slots: [slot] },
+  });
+  const metadata = {
+    name: saved.name,
+    destination: null,
+    startDate: null,
+    endDate: null,
+    destinations: [],
+  };
+  const receipt = {
+    ...metadata,
+    operationId,
+    tripId,
+    formatVersion: 2 as const,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    metadataRevision: 0 as const,
+  };
+  expect((await f.repo.acceptCreate(receipt)).syncStatus).toBe("PENDING_UPDATE");
+  expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("PENDING_UPDATE");
+  await f.repo.retainMetadataSnapshot(
+    { formatVersion: 3, actorAccountId: accountA, tripId, metadataRevision: 0, metadata },
+    randomUUID(),
+  );
+  // An actual snapshot alone cannot hide an unresolved authored Person operation.
+  for (const status of ["DEPENDENCY_BLOCKED", "RETRYABLE", "FAILED", "CONFLICT"]) {
+    f.sql
+      .prepare("UPDATE sync_operations SET status=? WHERE id=?")
+      .run(status, slot.operationId);
+    expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("PENDING_UPDATE");
+  }
+  // Isolated queue-state projection: worker qualification itself is tested in Person tests.
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(slot.operationId);
+  expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("SYNCED");
+  const update = {
+    formatVersion: 3 as const,
+    operationId: randomUUID(),
+    tripId,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Newer edit" },
+  };
+  await f.repo.updateMetadata(update);
+  await f.repo.acceptMetadataUpdate({
+    ...update,
+    actorAccountId: accountA,
+    resultMetadataRevision: 1,
+  });
+  // Old successful snapshot cannot qualify a newer accepted revision.
+  expect((await f.repo.getTrip(tripId))?.syncStatus).toBe("PENDING_UPDATE");
+  await f.repo.retainMetadataSnapshot(
+    {
+      formatVersion: 3,
+      actorAccountId: accountA,
+      tripId,
+      metadataRevision: 1,
+      metadata: update.after,
+    },
+    randomUUID(),
+  );
+  expect((await f.repo.listTrips()).find((t) => t.id === tripId)?.syncStatus).toBe(
+    "SYNCED",
+  );
 });

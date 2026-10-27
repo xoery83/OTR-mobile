@@ -1,0 +1,22 @@
+{
+  "status": "SAME_ID_ONE_RECORDED_RECOVERY_ATTEMPT_NO_REMAINING_DATA_RISK_BLOCKER",
+  "basis": "Coordinator-reported independently established runtime/DB facts; reviewer did not perform DEV actions",
+  "quiescenceFacts": [
+    "Original process exited over30minutes ago; original candidate removed and original service restored.",
+    "Original gateway rolesNOLOGIN and corresponding DBsessions0; no transaction capable of latecommit.",
+    "D6 exact independent management Run/Input read empty; D7 normalAuth owning reader Run unavailable; source/functions/request/module metadata confirmed stable."
+  ],
+  "authorityInterpretation": "Owner subsequent three-hour continuous DEV recovery authorization covers one deterministic same-identity recovery of the still-absent Run, without resetting original receipts or creating another business Run/Task. This is not paid retry or scope expansion.",
+  "mandatoryConditions": [
+    "Fresh exact sameActor/Trip/Run read immediately before command: if present recover-only, never prepare again.",
+    "If confirmed absent and prior process/sessions remain quiescent, permit one explicitly recorded sameRunID/TaskID/input/hash owning recoveryattempt2.",
+    "Preserve firstUNKNOWN receipt and actual invocation history; do not relabel it as priorPASS or pretend first invocation never occurred.",
+    "No newSource acquire, no newRun/Task/Attempt/Call IDs, no extraProvider call or enlarged cost/readcaps.",
+    "Any newUNKNOWN triggers safeclose+exactreadback; no automatic thirdbegin."
+  ],
+  "limitations": [
+    "Judgment concerns identity/idempotency/data-risk and existing recovery authority only; no Run/Task/Provider success inferred.",
+    "Exact server acceptance/readback and safeclosure still required after actual execution."
+  ],
+  "reviewerActions": "No DEV/network/GUI/secret reads; narrow reported-state safety assessment only."
+}

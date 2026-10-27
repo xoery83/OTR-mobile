@@ -13,11 +13,12 @@ export type DayRowRendererProps = {
   depth: Depth;
   onDepth: (depth: Depth) => void;
   withinMarker?: ReactNode;
+  nextFocused?: boolean;
 };
 export type DayRowRenderer = (props: DayRowRendererProps) => ReactNode | null;
 export type RendererContribution<T> = Readonly<{
   version: "day-feed-renderer/1";
-  family: "P3" | "P4" | "P5" | "P6";
+  family: "P1" | "P3" | "P4" | "P5" | "P6";
   facts: Readonly<Record<string, T>>;
   render: (props: DayRowRendererProps & { facts: T }) => ReactNode | null;
 }>;

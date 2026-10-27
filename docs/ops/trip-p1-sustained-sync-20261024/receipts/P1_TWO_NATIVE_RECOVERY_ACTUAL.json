@@ -1,0 +1,110 @@
+{
+  "intents": [
+    {
+      "operation_id": "ec17119e-14cd-42d8-b40c-a394052e5a01",
+      "state": "APPLIED",
+      "reconciled_revision": 2
+    },
+    {
+      "operation_id": "1a9d006e-6554-4780-824c-09cf3b37ef7b",
+      "state": "APPLIED",
+      "reconciled_revision": 4
+    }
+  ],
+  "queue": [
+    {
+      "id": "1a9d006e-6554-4780-824c-09cf3b37ef7b",
+      "status": "COMPLETED",
+      "attempt_count": 7,
+      "last_error_code": null
+    },
+    {
+      "id": "ec17119e-14cd-42d8-b40c-a394052e5a01",
+      "status": "COMPLETED",
+      "attempt_count": 7,
+      "last_error_code": null
+    }
+  ],
+  "nativeReadLedger": {
+    "version": 1,
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 72,
+    "entries": [
+      {
+        "ordinal": 1,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:03.444Z"
+      },
+      {
+        "ordinal": 2,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:09.589Z"
+      },
+      {
+        "ordinal": 3,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:24.666Z"
+      },
+      {
+        "ordinal": 4,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:30.033Z"
+      },
+      {
+        "ordinal": 5,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:20:45.137Z"
+      },
+      {
+        "ordinal": 6,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:20:51.195Z"
+      },
+      {
+        "ordinal": 7,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T05:21:07.936Z"
+      },
+      {
+        "ordinal": 8,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:21:25.797Z"
+      },
+      {
+        "ordinal": 9,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:21:31.158Z"
+      },
+      {
+        "ordinal": 10,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:21:36.415Z"
+      },
+      {
+        "ordinal": 11,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T05:21:52.848Z"
+      },
+      {
+        "ordinal": 12,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:22:11.384Z"
+      }
+    ]
+  },
+  "observedAt": "2026-10-24T05:22:11Z",
+  "code": "92dd508",
+  "scope": "Actual Native authenticated GET receipt and collection recovery; no business POST replay"
+}

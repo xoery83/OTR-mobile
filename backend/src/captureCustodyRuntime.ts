@@ -3,6 +3,7 @@ import { open } from "node:fs/promises";
 import { z } from "zod";
 import {
   captureCustodyBatchSchema,
+  captureUniversalCustodyBatchSchema,
   captureCustodyBindingJson,
   type CaptureMaterialCustody,
 } from "../../src/domain/capture/captureCustody";
@@ -10,7 +11,7 @@ import { createCaptureStorageMaterial } from "./captureStorageMaterial";
 import { createFlightPrivateCustody } from "./flightPrivateCustody";
 
 export const captureCustodyRuntimePath = "/run/otr/capture-custody.json";
-const schema = z.strictObject({
+const legacySchema = z.strictObject({
   version: z.literal(1),
   directory: z.literal("/var/lib/otr/capture-custody"),
   identity: z.strictObject({
@@ -21,6 +22,14 @@ const schema = z.strictObject({
   expiresAt: z.iso.datetime({ offset: true }),
   batch: captureCustodyBatchSchema,
 });
+const schema = z.union([
+  legacySchema,
+  z.strictObject({
+    ...legacySchema.shape,
+    version: z.literal(2),
+    batch: captureUniversalCustodyBatchSchema,
+  }),
+]);
 // Explicit deployment entry only; same private-file checks as Catalog, no new secret.
 export async function loadDevCaptureCustody(
   environment: Record<string, string | undefined>,
@@ -44,19 +53,20 @@ export async function loadDevCaptureCustody(
       stat.gid !== 999 ||
       (stat.mode & 0o777) !== 0o440 ||
       stat.nlink !== 1 ||
-      stat.size > 8192
+      stat.size > 65536
     )
       throw 0;
     const body = await file.readFile("utf8");
-    if (Buffer.byteLength(body) > 8192) throw 0;
+    if (Buffer.byteLength(body) > 65536) throw 0;
     config = schema.parse(JSON.parse(body));
+    if (config.version === 1 && (stat.size > 8192 || Buffer.byteLength(body) > 8192))
+      throw 0;
     const remaining = Date.parse(config.expiresAt) - Date.now();
     if (
       remaining <= 0 ||
-      remaining > 86400000 ||
+      remaining > (config.version === 2 ? 900000 : 86400000) ||
       environment.OTR_DEV_BACKEND_NETWORK_MODE !== "host" ||
-      environment.OTR_DEV_SUPABASE_URL !==
-        "https://tuqigdxrvrerfewsxqgm.supabase.co"
+      environment.OTR_DEV_SUPABASE_URL !== "https://tuqigdxrvrerfewsxqgm.supabase.co"
     )
       throw 0;
   } catch {
@@ -80,14 +90,11 @@ export async function loadDevCaptureCustody(
     if (Date.now() >= Date.parse(config.expiresAt))
       throw new Error("CAPTURE_RUNTIME_UNAVAILABLE");
   };
-  const assertBinding = (
-    binding: Parameters<CaptureMaterialCustody["read"]>[0],
-  ) => {
+  const assertBinding = (binding: Parameters<CaptureMaterialCustody["read"]>[0]) => {
     assertCurrent();
     if (
       !config.batch.inputs.some(
-        (b) =>
-          captureCustodyBindingJson(b) === captureCustodyBindingJson(binding),
+        (b) => captureCustodyBindingJson(b) === captureCustodyBindingJson(binding),
       )
     )
       throw new Error("CAPTURE_CUSTODY_BINDING_CONFLICT");

@@ -6,6 +6,7 @@ import {
   retainTripPhoto,
   resolveRetainedTripPhoto,
   probeRetainedTripPhotoIdentity,
+  isRetainedTripPhotoLocation,
   discardRetainedTripPhoto,
   type RetainedTripPhoto,
   type RetainTripPhotoResult,
@@ -234,7 +235,11 @@ function decode(
     sizeBytes: row.size_bytes,
     sha256: row.sha256,
     createdAt: row.created_at,
-    localUri: uri === row.local_uri ? uri : null,
+    localUri:
+      uri !== null &&
+      (uri === row.local_uri || isRetainedTripPhotoLocation(retainedPhoto(row), uri))
+        ? uri
+        : null,
   };
 }
 

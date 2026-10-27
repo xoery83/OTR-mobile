@@ -42,6 +42,7 @@ export function PersonalSettlementReviewScreen() {
 
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       style={styles.viewport}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"

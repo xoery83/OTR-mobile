@@ -1,0 +1,33 @@
+{
+  "status": "BOUNDED_FINITE_UNIVERSAL_RUN_ONLY_GUARD_REVIEW_PASS",
+  "findings": [],
+  "candidateSHA256": "511825eea1c1d601d49e243e68edab5bae07dcf8100cf64ea499e3a55d0838f5",
+  "expectedPreimageMD5": "116a2da66b315366c59dc56649ed4686",
+  "expectedPostimageMD5": "bbee177305b76f119becaf150af8e5cd",
+  "catalogWriteGuardMD5": "f8d041b3f82024d9d3f5472cb0ffe363",
+  "independentValidation": [
+    "Actual six candidates plus observed PDFV4 roots and actual catalog/private guard chain first reproduces PDF-scope denial with Run absent.",
+    "Fixed finite branch then actual same-three-Source owning begin/read/replay PASS; owning inputSHA35a252f6b372b33d741f6ba429c490f23f90518ebd07bb192094c768bf7b244d.",
+    "Actor/Trip/Batch/Task/currentSource/representation/hash/revision/lifecycle/op/NULL/extra-field/expiredscope/role negatives PASS; UPDATE and trip_source_candidates deny.",
+    "Original PDF function remainder reconstructed byte-for-byte after removing finite prefix; owner/ACL/security-invoker/searchpath and existing catalog guard unchanged.",
+    "Additional independent in-memory test asserts every grantor/member/admin/inherit/set tuple preserved and schemaCREATE absent after candidate installation.",
+    "Reapply refuses exact preimage mismatch; transaction abort retains state."
+  ],
+  "boundary": "Only INSERT of exact scoped PENDING/RETAINED Universal Run and legal current original Inputs; no candidate/Review/Admission/update permission introduced. No table or lasting role/ACL change.",
+  "rollbackNotes": [
+    "Before any rollback keep Source/Provider gates closed and sessions quiescent; save authoritative original definition/metadata and actual postimage.",
+    "Restore only original function definition in one transaction when current prosrcMD5 exactly bbee177305b76f119becaf150af8e5cd and owner/ACL/invoker/searchpath match expected. Unexpected state stops; do not blind overwrite.",
+    "Preserve all existing Sources/Run/Input/receipt rows and role edges; do not drop/delete/migrate data. Rolling back original PDF guard can block further Universal mutations, which must be reported rather than repaired by new Authority."
+  ],
+  "limits": [
+    "All reviewer execution was disposable network-none local PG with safe synthetic metadata; no DEV/Provider/GUI/Auth operation.",
+    "PDF private dependencies intentionally CLOSED sentinels: negative/preservation evidence only, no PDF Runtime E2E claim.",
+    "Actual DEV install/postimage and real Run acceptance/readback still required; this report itself does not claim runtime success."
+  ],
+  "sha256": {
+    "/private/tmp/otr-universal-coordinator-integration-20261024/backend/sql/universal_run_only_guard_candidate.sql": "511825eea1c1d601d49e243e68edab5bae07dcf8100cf64ea499e3a55d0838f5",
+    "/private/tmp/otr-universal-coordinator-integration-20261024/scripts/import-workbench/universal-source-exact-fixture-repro.py": "5014fdac26a2ecb0e19d51484e3724ec5c26f46e9d0bc7511447ccb6307dc01e",
+    "/private/tmp/otr-universal-authorized-resume-20261025-09/ACTUAL_RUN_GUARD_PREIMAGE.json": "41bd3d0fb59582a49894608ab0a20553977231e15111269eb77ac9db3b7fd0a4",
+    "/private/tmp/otr-universal-authorized-resume-20261025-09/ACTUAL_RUN_TRIGGER_METADATA_WITH_PRIVATE_GUARD.json": "70aadf413b8d81a07f6d73a9c481dd6a12eb2a995a17222a259141d0cf305f3a"
+  }
+}

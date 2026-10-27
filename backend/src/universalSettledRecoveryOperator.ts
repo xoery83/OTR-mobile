@@ -1,0 +1,335 @@
+import { constants } from "node:fs";
+import { open, lstat } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
+import { universalFiniteConfigSchema } from "./universalFiniteConfig";
+import { createFlightPrivateCustody } from "./flightPrivateCustody";
+import { createPublicationCatalogPgConnection } from "./tripPublicationCatalogPgConnection";
+import {
+  createModelTaskPgConnection,
+  createSourcePgConnection,
+} from "./tripCoreV2PgConnection";
+import { createSupabaseDevGateway } from "./supabaseGateway";
+import { readUniversalCatalog } from "./universalCatalog";
+import { createUniversalSourceReader } from "./universalSourceRead";
+import { createTripImportAdmissionRepository } from "../../src/data/repositories/tripImportAdmissionRepository";
+import { createIntelligenceContinuationRepository } from "../../src/data/repositories/intelligenceContinuationRepository";
+import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
+import { universalTaskDatabase } from "./universalTaskBootstrap";
+import { createUniversalTaskReceiptChecks } from "./universalTaskReceipt";
+import {
+  recoverSettledUniversalTask,
+  createSettledUniversalReadPort,
+} from "./universalSettledRecovery";
+import type { Task } from "../../src/domain/intelligence/persistence";
+import {
+  prepareUniversalDispatch,
+  UNIVERSAL_IMPORT_VERSION,
+} from "./universalImport";
+import type { UniversalPriceSchedule } from "./universalDeepSeekProvider";
+import { createRequestBoundary } from "../../src/data/api/requestBoundary";
+
+const digest = (bytes: Uint8Array) =>
+  createHash("sha256").update(bytes).digest("hex");
+// Explicit Operator invocation only. Original config/task deadline is never renewed.
+// The independent recovery window authorizes only existing local publication and reads.
+export async function loadSettledUniversalReadRuntime(
+  args: {
+    startupKind: "HOST" | "OPERATOR";
+    configPath: string;
+    configSHA256: string;
+    startsAt: string;
+    expiresAt: string;
+    priceSchedule: UniversalPriceSchedule;
+  },
+  environment: Record<string, string | undefined>,
+) {
+  const start = Date.parse(args.startsAt),
+    end = Date.parse(args.expiresAt);
+  const current = () => {
+    if (
+      !Number.isFinite(start) ||
+      !Number.isFinite(end) ||
+      end <= start ||
+      end - start > 600000 ||
+      Date.now() < start ||
+      Date.now() >= end
+    )
+      throw Error("UNIVERSAL_RECOVERY_WINDOW_CLOSED");
+  };
+  current();
+  if (
+    args.configPath !== "/run/otr/universal-recovery.json" ||
+    environment.OTR_DEV_BACKEND_NETWORK_MODE !== "host" ||
+    environment.OTR_DEV_SUPABASE_URL !==
+      "https://tuqigdxrvrerfewsxqgm.supabase.co" ||
+    environment.OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT === "enabled"
+  )
+    throw Error("UNIVERSAL_RECOVERY_CLOSED");
+  const f = await open(
+    args.configPath,
+    constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+  );
+  let config;
+  try {
+    const st = await f.stat();
+    if (
+      !st.isFile() ||
+      st.uid !== 0 ||
+      st.gid !== 999 ||
+      (st.mode & 0o777) !== 0o440 ||
+      st.nlink !== 1 ||
+      st.size > 131072
+    )
+      throw Error("UNIVERSAL_RECOVERY_CONFIG");
+    const body = await f.readFile();
+    if (body.byteLength > 131072 || digest(body) !== args.configSHA256)
+      throw Error("UNIVERSAL_RECOVERY_CONFIG_HASH");
+    config = universalFiniteConfigSchema.parse(
+      JSON.parse(body.toString("utf8")),
+    );
+  } finally {
+    await f.close();
+  }
+  if (
+    config.actorId !== config.task.account_id ||
+    config.task.task_id !== config.attempt.task_id ||
+    config.task.account_id !== config.attempt.account_id ||
+    !config.task.trip_id
+  )
+    throw Error("UNIVERSAL_RECOVERY_CONFIG_SCOPE");
+  const stores = await createFlightPrivateCustody(
+    config.directory,
+    config.identity,
+  );
+  try {
+    await stores.claimReadStartup({
+      kind: args.startupKind,
+      configSHA256: args.configSHA256,
+      startsAt: args.startsAt,
+      expiresAt: args.expiresAt,
+    });
+  } catch (error) {
+    await stores.close();
+    throw error;
+  }
+  const gateway = createSupabaseDevGateway({
+    url: environment.OTR_DEV_SUPABASE_URL!,
+    publishableKey: environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "",
+    secretKey: environment.OTR_DEV_SUPABASE_SECRET_KEY ?? "",
+  });
+  const auth = async () => {
+    current();
+    const b = createRequestBoundary(Math.min(5000, end - Date.now()));
+    try {
+      const result = await b.run(() =>
+        gateway.validatePublicationAccessToken!(config.bearer, b.signal),
+      );
+      if (
+        result.disposition !== "VERIFIED" ||
+        result.user.id !== config.actorId ||
+        !(await b.run(() =>
+          gateway.canReadTrip(config.actorId, config.task.trip_id!),
+        ))
+      )
+        throw Error("UNIVERSAL_RECOVERY_AUTH_REJECTED");
+      b.assertCurrent();
+      current();
+    } finally {
+      b.close();
+    }
+  };
+  try {
+    await auth();
+  } catch (error) {
+    await stores.close();
+    throw error;
+  }
+  const stat = await lstat(config.taskDatabase);
+  if (
+    !stat.isFile() ||
+    stat.isSymbolicLink() ||
+    stat.uid !== process.getuid!() ||
+    (stat.mode & 0o777) !== 0o600 ||
+    stat.nlink !== 1
+  ) {
+    await stores.close();
+    throw Error("UNIVERSAL_RECOVERY_DATABASE");
+  }
+  const sql = new DatabaseSync(config.taskDatabase);
+  const catalogConnection = createPublicationCatalogPgConnection(
+    config.catalogPg,
+  );
+  try {
+    const after = await lstat(config.taskDatabase);
+    if (after.ino !== stat.ino || after.dev !== stat.dev)
+      throw Error("UNIVERSAL_RECOVERY_DATABASE_CHANGED");
+    // No migrations/bootstrap/create/queue dispatch; this must already be the accepted Backend DB.
+    sql.exec("PRAGMA foreign_keys=ON");
+    const db = universalTaskDatabase(sql);
+    const context = await captureAccountRequestContext(
+      config.task.trip_id,
+      async () => {
+        current();
+        return config.actorId;
+      },
+    );
+    const imports = createTripImportAdmissionRepository(
+      db,
+      async () => config.actorId,
+      async (b) => digest(b),
+      () => new Date().toISOString(),
+      () => {
+        throw Error("UNIVERSAL_RECOVERY_NO_CREATE");
+      },
+    );
+    // Catalog is only the owning local cache projection, never Source qualification.
+    const raw = await readUniversalCatalog(
+      catalogConnection,
+      config.task,
+      AbortSignal.timeout(Math.min(5000, end - Date.now())),
+    );
+    current();
+    await imports.applyUniversalCatalogs(context, raw);
+    const readSources = createUniversalSourceReader({
+      connection: createSourcePgConnection(config.sourcePg),
+      readBinary: async (scope) =>
+        stores.custody.read({
+          accountId: scope.accountId,
+          reference: scope.representationId,
+          sha256: scope.sha256,
+          byteCount: scope.byteCount,
+        }),
+    });
+    const readSourceManifest = async (task: Readonly<Task>) => {
+      await auth();
+      const manifest = await readSources(task);
+      current();
+      return manifest;
+    };
+    const repository = createIntelligenceContinuationRepository(db, {
+      getAccountId: async () => {
+        current();
+        return config.actorId;
+      },
+      now: () => new Date().toISOString(),
+      sha256: async (b) => digest(b),
+      async validateAdmission(t) {
+        current();
+        if (
+          t.task_id !== config.task.task_id ||
+          t.account_id !== config.actorId ||
+          t.policy_sha256 !== config.task.policy_sha256 ||
+          t.input_sha256 !== config.task.input_sha256 ||
+          t.publication_fence !== config.task.publication_fence
+        )
+          throw Error("UNIVERSAL_RECOVERY_TASK_CHANGED");
+      },
+      async validateAttemptAdmission() {
+        throw Error("UNIVERSAL_RECOVERY_NO_ATTEMPT");
+      },
+      async eligibleWait() {
+        return false;
+      },
+      async verifyRecovery() {
+        throw Error("UNIVERSAL_RECOVERY_UNKNOWN_REQUIRES_PROOF");
+      },
+    });
+    const deps = {
+      context,
+      task: config.task,
+      attemptId: config.attempt.attempt_id,
+      callId: config.attempt.usage_correlation_id!,
+      requestMaterialByteCount: 1,
+      repository,
+      stores,
+      checks: createUniversalTaskReceiptChecks(
+        createModelTaskPgConnection(config.taskPg),
+      ),
+      priceSchedule: args.priceSchedule,
+      assertCurrentAuth: auth,
+      readSourceManifest,
+    };
+    let closed = false;
+    const close = async () => {
+      if (closed) return;
+      closed = true;
+      sql.close();
+      await stores.close();
+      await catalogConnection.close();
+    };
+    const timer = setTimeout(() => {
+      void close().catch(() => {});
+    }, end - Date.now());
+    timer.unref();
+    return {
+      catalogConnection,
+      universalImportPort: createSettledUniversalReadPort(deps),
+      async recoverOnce() {
+        current();
+        if (closed) throw Error("UNIVERSAL_RECOVERY_CLOSED");
+        const firstManifest = await readSourceManifest(config.task);
+        const dispatch = prepareUniversalDispatch(
+          config.actorId,
+          config.task.import_id!,
+          {
+            version: UNIVERSAL_IMPORT_VERSION,
+            tripId: config.task.trip_id!,
+            taskId: config.task.task_id,
+          },
+          firstManifest,
+        );
+        const marker = Buffer.from(JSON.stringify(dispatch.dispatchMarker));
+        if (digest(marker) !== config.attempt.request_material_sha256)
+          throw Error("UNIVERSAL_RECOVERY_REQUEST_MATERIAL_CHANGED");
+        let first = true;
+        const sources = async (t: Readonly<Task>) => {
+          if (first) {
+            first = false;
+            return firstManifest;
+          }
+          return readSourceManifest(t);
+        };
+        const result = await recoverSettledUniversalTask({
+          ...deps,
+          requestMaterialByteCount: marker.length,
+          readSourceManifest: sources,
+        });
+        return {
+          status: "SETTLED_EXISTING_TASK_PUBLISHED",
+          taskId: config.task.task_id,
+          resultStatus: result.status,
+          candidateCount: result.candidates.length,
+          providerCalls: 0,
+        };
+      },
+      async close() {
+        clearTimeout(timer);
+        await close();
+      },
+    };
+  } catch (error) {
+    sql.close();
+    await stores.close();
+    await catalogConnection.close();
+    throw error;
+  }
+}
+
+export async function runSettledUniversalRecoveryOperator(
+  args: Omit<
+    Parameters<typeof loadSettledUniversalReadRuntime>[0],
+    "startupKind"
+  >,
+  environment: Record<string, string | undefined>,
+) {
+  const runtime = await loadSettledUniversalReadRuntime(
+    { ...args, startupKind: "OPERATOR" },
+    environment,
+  );
+  try {
+    return await runtime.recoverOnce();
+  } finally {
+    await runtime.close();
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "candidate": "422f2af00b19dfcde72d196fbcbfaab6c362b693",
+  "status": "SOURCE_COMPATIBILITY_REVIEW_PASS_NOT_DEV_EXECUTABLE",
+  "findings": [],
+  "sqlSHA256": "b93a6648f2831597c43e07e8c89bebd9f3c8d3832bf158d13752f95f1263ecf4",
+  "independentTests": [
+    {
+      "entry": "OTR_UNIVERSAL_PDF_V4_FIXTURE=1 python3 scripts/import-workbench/universal-original-source-sql-acceptance.py",
+      "result": "17 checks PASS; actual network-none isolated PG17 owning Source command/receipt/catalog path"
+    },
+    {
+      "entry": "OTR_UNIVERSAL_PDF_V4_FIXTURE=1 OTR_UNIVERSAL_BAD_PDF_PREIMAGE=trip_source_register(text,uuid,text) ...same entry",
+      "result": "ISOLATED_PG_UNKNOWN_PREIMAGE_DENIED; newly-created helper rolled back and finite scope remains empty"
+    }
+  ],
+  "writerReceiptsNotIndependentlyRepeated": [
+    "foundation13 checks",
+    "remaining three unknown-root preimage rollback cases"
+  ],
+  "preservation": [
+    "Only foundation and exact observed PDF V4 MD5 roots accepted; unknown roots deny transaction.",
+    "PDF command validator unchanged. Removing finite-only hooks reconstructs legacy gate/operation/mutation bodies byte-for-byte.",
+    "Finite branch continues to require current writer + gateway session and exact scope Actor/Trip/time/profile/operation hash pin. NULL/foreign/hash-changed/expired settings retain closed legacy rejection.",
+    "No UPDATE/DELETE grants or PDF profile widening introduced by this delta."
+  ],
+  "limits": [
+    "PDF private dependencies intentionally CLOSED sentinels: negative/non-bypass coverage only, no positive PDF or real DEV E2E.",
+    "No DEV install, Provider call or GUI operation performed.",
+    "Current execution packet remains NOT_EXECUTABLE pending actual Model Task owning dependency, Universal config/prices, environment kill authority/restoration, legitimate Backend key and sealed runtime/pins/close package."
+  ],
+  "authority": "Independent implementation review does not authorize installation or activation."
+}

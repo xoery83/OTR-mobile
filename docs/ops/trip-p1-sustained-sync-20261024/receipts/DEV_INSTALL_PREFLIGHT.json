@@ -1,0 +1,62 @@
+{
+  "utc": "2026-10-24T00:45:38.380889+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "readOnly": true,
+  "qualification": {
+    "activeSessions": 0,
+    "closed": true,
+    "functions": {
+      "public.trip_core_finite_read_state_guard()": "680f19be480eb934301c8b5b920eb76a",
+      "public.trip_core_finite_scope_allowed(uuid,uuid)": "32f2b01d2fa890c87640485885565de2",
+      "public.trip_core_guard_write()": "c493b32972679e7aba510132103b0dd9",
+      "public.trip_create_command(uuid,uuid,uuid,jsonb)": "12e1d4a45e37e5cff9fb6a6385c82b45",
+      "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)": "b3d8d5717f3beee8953270578c0dbebb",
+      "public.trip_metadata_finite_scope_allowed(uuid,uuid,uuid)": "6c17d4ffcc038f744abe906c7ffc3582",
+      "public.trip_metadata_update_command(uuid,uuid,uuid,jsonb)": "5063f939eb660b54a57b30f58b84cc73"
+    },
+    "newObjectsAbsent": true,
+    "roles": [
+      {
+        "bypass": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "login": false,
+        "name": "otr_trip_person_command_gateway",
+        "replication": false,
+        "super": false
+      },
+      {
+        "bypass": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "login": false,
+        "name": "otr_trip_create_gateway",
+        "replication": false,
+        "super": false
+      },
+      {
+        "bypass": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "login": false,
+        "name": "otr_trip_metadata_gateway",
+        "replication": false,
+        "super": false
+      },
+      {
+        "bypass": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "login": false,
+        "name": "otr_trip_core_v2_gateway",
+        "replication": false,
+        "super": false
+      }
+    ],
+    "user": "postgres"
+  }
+}

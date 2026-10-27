@@ -101,9 +101,14 @@ export const dayListWindow = {
 } as const;
 
 // Presentation-only prefix restoration; dates and row membership remain owning Reader facts.
-export function previousDayOrigin<T>(rows: readonly DayWindowRow<T>[], origin: number) {
+export function previousDayOrigin<T>(
+  rows: readonly DayWindowRow<T>[],
+  origin: number,
+  minimumRows = 1,
+) {
   let previous = 0;
   for (const position of indexDayRows(rows).dates.values())
-    if (position < origin && position > previous) previous = position;
+    if (position < origin && origin - position >= minimumRows && position > previous)
+      previous = position;
   return previous;
 }

@@ -1,3 +1,29 @@
+import { readLocalSession } from "@/data/auth/authRepository";
+vi.mock("./CreateTripDestinations", () => ({
+  CreateTripDestinations: (props: any) => {
+    state.nodes.push({ destinations: props });
+    return null;
+  },
+}));
+vi.mock("./CreateTripV2Fields", () => ({
+  CreateTripV2Fields: (props: any) => {
+    state.nodes.push(
+      { createFields: props },
+      {
+        accessibilityLabel: "createTripV2.name",
+        value: props.name,
+        onChangeText: props.onName,
+      },
+    );
+    return props.destinationEntry;
+  },
+}));
+vi.mock("./ManualItineraryContent", () => ({
+  ManualItineraryContent: (props: any) => {
+    state.nodes.push({ manualEntry: props });
+    return null;
+  },
+}));
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
@@ -198,8 +224,13 @@ vi.mock("@/domain/localId", async (original) => ({
   createUuid: () =>
     `00000000-0000-4000-8000-${(++state.serial).toString(16).padStart(12, "0")}`,
 }));
+vi.mock("@/data/sync/ledgerOperationalSync", () => ({
+  kickLedgerOperationalSync: vi.fn(),
+}));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("@/data/auth/authRepository", () => ({
+  clearLocalSession: vi.fn(),
+  writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
   readLocalSession: vi.fn(),
 }));
@@ -262,6 +293,11 @@ const trip = (id: string, name: string): Trip => ({
 const repository = (list: Trip[] = []): TripRepository => ({
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
+  readDeferredMetadataEditBase: vi.fn(),
+  deferMetadataUpdate: vi.fn(),
+  materializeDeferredMetadata: vi.fn(),
+  readMetadataEditBase: vi.fn(async () => ({ confirmed: null, pendingOperationIds: [] })),
+  retainMetadataSnapshot: vi.fn(async () => {}),
   canUpdateMetadata: vi.fn(async () => true),
   updateMetadata: vi.fn(async () => {}),
   acceptMetadataUpdate: vi.fn(async () => {}),
@@ -328,6 +364,8 @@ function input(label: string, value: string) {
   state.nodes.find((node) => node.accessibilityLabel === label)!.onChangeText(value);
 }
 beforeEach(() => {
+  vi.unstubAllEnvs();
+  vi.mocked(readLocalSession).mockReset();
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   state.effects = [];
@@ -367,13 +405,13 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   props.mode = "CREATE";
   render();
   await flush();
-  input("tripCreate.name", "A private draft");
+  input("createTripV2.name", "A private draft");
   render();
   const old = deferred<TripRepository>();
   state.repo.mockImplementationOnce(() => old.promise);
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   render();
-  expect(button("tripCreate.newTrip").disabled).toBe(true);
+  expect(button("createTripV2.create").disabled).toBe(true);
   const oldKey = key;
   advanceAccountGeneration();
   state.repo.mockResolvedValue(b);
@@ -383,17 +421,17 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(immediate).not.toContain("A private draft");
   await flush();
   render();
-  input("tripCreate.name", "B own draft");
+  input("createTripV2.name", "B own draft");
   render();
   const bSave = deferred<TripRepository>();
   state.repo.mockImplementationOnce(() => bSave.promise);
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   render();
   old.resolve(b);
   await flush();
   render();
   expect(b.createTrip).not.toHaveBeenCalled();
-  expect(button("tripCreate.newTrip").disabled).toBe(true);
+  expect(button("createTripV2.create").disabled).toBe(true);
   bSave.resolve(b);
   await flush();
   render();
@@ -401,7 +439,7 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   expect(b.createTrip).toHaveBeenCalledWith(
     expect.objectContaining({ name: "B own draft" }),
   );
-  expect(button("tripCreate.newTrip").disabled).toBe(false);
+  expect(button("createTripV2.create").disabled).toBe(false);
   expect(props.onOpen).toHaveBeenCalledOnce();
 });
 
@@ -421,9 +459,7 @@ it("remounts when navigation leaves a trip and rejects a late typed Stay save", 
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary(null);
   render();
-  state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
-  render();
-  const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
+  const stayEditor = state.nodes.find((node) => node.manualEntry)?.manualEntry;
   expect(stayEditor).toMatchObject({ tripId: "local-a" });
   const generation = getAccountGeneration(),
     oldKey = key;
@@ -630,7 +666,7 @@ vi.mock("@/components/SheetHeader", () => ({
   },
 }));
 
-it("the mounted local Quick Add opens the typed P1 form with explicit Day context", async () => {
+it("the mounted local Quick Add opens the shared chooser with explicit Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -645,14 +681,14 @@ it("the mounted local Quick Add opens the typed P1 form with explicit Day contex
   expect(actions.photos).toBeUndefined();
   actions.itinerary("2027-01-02");
   render();
-  const editor = state.nodes.find((node) => node.planEditor)?.planEditor;
+  const editor = state.nodes.find((node) => node.manualEntry)?.manualEntry;
   expect(editor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   editor.onSaved("item-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });
 
-it("switches the local Quick Add to the typed Stay form with the same Day context", async () => {
+it("opens the shared chooser from local Quick Add with the same Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -666,16 +702,14 @@ it("switches the local Quick Add to the typed Stay form with the same Day contex
   )![0];
   actions.itinerary("2027-01-02");
   render();
-  state.nodes.find((node) => node.planEditor)?.planEditor.onChooseStay();
-  render();
-  const stayEditor = state.nodes.find((node) => node.stayEditor)?.stayEditor;
+  const stayEditor = state.nodes.find((node) => node.manualEntry)?.manualEntry;
   expect(stayEditor).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   stayEditor.onSaved("stay-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });
 
-it("switches local Quick Add to the typed Rental form and refreshes the same Trip", async () => {
+it("opens the shared chooser and refreshes the same Trip", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -689,16 +723,14 @@ it("switches local Quick Add to the typed Rental form and refreshes the same Tri
   )![0];
   actions.itinerary("2027-01-02");
   render();
-  state.nodes.find((entry) => entry.planEditor)?.planEditor.onChooseRental();
-  render();
-  const rental = state.nodes.find((entry) => entry.rentalEditor)?.rentalEditor;
+  const rental = state.nodes.find((entry) => entry.manualEntry)?.manualEntry;
   expect(rental).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   rental.onSaved("rental-a");
   expect(render()).toContain("actionIsland.savedLocally");
   expect(repo.addItem).not.toHaveBeenCalled();
 });
 
-it("switches local Quick Add to the typed Transport form with the same Day context", async () => {
+it("opens the shared chooser with the same Day context", async () => {
   const repo = repository([trip("local-a", "Local A")]);
   state.repo.mockResolvedValue(repo);
   props.tripId = "local-a";
@@ -712,9 +744,7 @@ it("switches local Quick Add to the typed Transport form with the same Day conte
   )![0];
   actions.itinerary("2027-01-02");
   render();
-  state.nodes.find((entry) => entry.planEditor)?.planEditor.onChooseTransport();
-  render();
-  const transport = state.nodes.find((entry) => entry.transportEditor)?.transportEditor;
+  const transport = state.nodes.find((entry) => entry.manualEntry)?.manualEntry;
   expect(transport).toMatchObject({ tripId: "local-a", initialDate: "2027-01-02" });
   transport.onSaved("transport-a");
   expect(render()).toContain("actionIsland.savedLocally");
@@ -789,7 +819,9 @@ it("normal Home Hero action opens the same Editor and saves through the owning m
       after: { name: "Updated", destination: null, startDate: null, endDate: null },
     }),
     undefined,
+    undefined,
   );
+  expect(repo.getTrip).toHaveBeenCalledWith(current.id);
 });
 
 it("an unfocused retained Workspace cannot publish actions over another Trip", async () => {
@@ -823,14 +855,14 @@ it("Create is one native sheet, Cancel writes nothing, and immediate double tap 
   expect(
     state.nodes.some((node) => node.accessibilityLabel === "tripCreate.baseCurrency"),
   ).toBe(false);
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
   expect(repo.createTrip).not.toHaveBeenCalled();
-  input("tripCreate.name", "Name only");
+  input("createTripV2.name", "Name only");
   render();
   const pending = deferred<Trip>();
   vi.mocked(repo.createTrip).mockImplementationOnce(() => pending.promise);
-  const create = button("tripCreate.newTrip");
+  const create = button("createTripV2.create");
   create.onPress();
   create.onPress();
   await flush();
@@ -840,7 +872,7 @@ it("Create is one native sheet, Cancel writes nothing, and immediate double tap 
   expect(payload).not.toHaveProperty("travelers");
   expect(payload).not.toHaveProperty("currency");
   expect(payload).not.toHaveProperty("cover");
-  button("common.close").onPress();
+  button("common.cancel").onPress();
   expect(props.onBackToTrips).toHaveBeenCalledTimes(1);
   pending.resolve(trip(payload.tripId, payload.name));
   await flush();
@@ -890,28 +922,19 @@ it("sends seven slots with three nonblank names through the real atomic Trip Rep
     render();
     await vi.waitFor(() => expect(props.onKnownTrip).toHaveBeenCalledWith("NONE"));
     render();
-    expect(
-      state.nodes.some((node) => node.accessibilityLabel === "tripForm.travelerName:1"),
-    ).toBe(false);
-    input("tripCreate.name", "Local Travelers");
-    button("tripForm.travelers").onPress();
-    render();
-    expect(
-      state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:1")!
-        .value,
-    ).toBe("");
-    input("tripForm.travelerCount", "7");
-    render();
-    input("tripForm.travelerName:1", " Tina ");
-    render();
-    input("tripForm.travelerName:3", "同行者");
-    render();
-    input("tripForm.travelerName:7", "Tina");
+    input("createTripV2.name", "Local Travelers");
+    const slots = Array.from({ length: 7 }, (_, index) => ({
+      personId: randomUUID(),
+      operationId: randomUUID(),
+      displayName:
+        index === 0 ? " Tina " : index === 2 ? "同行者" : index === 6 ? "Tina" : "",
+    }));
+    state.nodes.find((node) => node.createFields)!.createFields.onTravelers(slots);
     render();
     props.onOpen.mockImplementationOnce(() => {
       throw new Error("navigation");
     });
-    button("tripCreate.newTrip").onPress();
+    button("createTripV2.create").onPress();
     await vi.waitFor(() => expect(props.onOpen).toHaveBeenCalledOnce());
     const payload = create.mock.calls[0][0];
     expect(payload.travelers?.map((slot) => slot.displayName)).toEqual([
@@ -930,7 +953,7 @@ it("sends seven slots with three nonblank names through the real atomic Trip Rep
       people.filter((person) => person.displayName === "Account creator"),
     ).toHaveLength(1);
     render();
-    button("tripCreate.newTrip").onPress();
+    button("createTripV2.create").onPress();
     await vi.waitFor(() => expect(props.onOpen).toHaveBeenCalledTimes(2));
     expect(create.mock.calls[1][0]).toEqual(payload);
     expect(
@@ -951,7 +974,7 @@ it("sends seven slots with three nonblank names through the real atomic Trip Rep
   }
 });
 
-it("preserves names and stable intent IDs on retry and rejects a count that would discard names", async () => {
+it("preserves additional names and stable intent IDs on retry without a count stepper", async () => {
   const repo = repository();
   vi.mocked(repo.createTrip).mockRejectedValueOnce(new Error("disk"));
   state.repo.mockResolvedValue(repo);
@@ -959,66 +982,40 @@ it("preserves names and stable intent IDs on retry and rejects a count that woul
   render();
   await flush();
   render();
-  input("tripCreate.name", "Retry trip");
-  button("tripForm.travelers").onPress();
+  input("createTripV2.name", "Retry trip");
+  state.nodes
+    .find((node) => node.createFields)!
+    .createFields.onTravelers([
+      { personId: randomUUID(), operationId: randomUUID(), displayName: "Last traveler" },
+    ]);
   render();
-  input("tripForm.travelerCount", "7");
-  render();
-  input("tripForm.travelerName:7", "Last traveler");
-  render();
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   await flush();
   render();
   const first = vi.mocked(repo.createTrip).mock.calls[0][0];
-  input("tripForm.travelerCount", "3");
-  expect(render()).toContain("tripForm.travelerNamesRetained");
-  expect(
-    state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:7")!
-      .value,
-  ).toBe("Last traveler");
-  expect(button("tripCreate.newTrip").disabled).toBe(true);
-  button("tripCreate.newTrip").onPress();
-  await flush();
-  expect(repo.createTrip).toHaveBeenCalledTimes(1);
-  input("tripForm.travelerCount", "7");
-  render();
-  button("tripCreate.newTrip").onPress();
+  expect(first.travelers?.[0].displayName).toBe("Last traveler");
+  button("createTripV2.create").onPress();
   await flush();
   expect(vi.mocked(repo.createTrip).mock.calls[1][0]).toEqual(first);
 });
-
-it("rejects invalid counts without submitting old slots and supports more than ten fields", async () => {
+it("maps You nickname only to the lawful creator display field", async () => {
   const repo = repository();
   state.repo.mockResolvedValue(repo);
   props.mode = "CREATE";
   render();
   await flush();
   render();
-  input("tripCreate.name", "Large group");
-  button("tripForm.travelers").onPress();
+  input("createTripV2.name", "Name only");
+  state.nodes.find((node) => node.createFields)!.createFields.onSelfNickname("Trip AKA");
   render();
-  for (const count of ["101", "1000", "-1", "2.5", ""]) {
-    input("tripForm.travelerCount", count);
-    expect(render()).toContain("tripForm.travelerCountRange");
-    expect(
-      state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerCount")!
-        .value,
-    ).toBe(count);
-    button("tripCreate.newTrip").onPress();
-    await flush();
-  }
-  expect(repo.createTrip).not.toHaveBeenCalled();
-  input("tripForm.travelerCount", "11");
-  render();
-  expect(
-    state.nodes.filter((node) =>
-      node.accessibilityLabel?.startsWith("tripForm.travelerName:"),
-    ).length,
-  ).toBe(11);
-  expect(button("tripCreate.newTrip").disabled).toBe(false);
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledWith(
+    expect.objectContaining({ creatorDisplayName: "Trip AKA" }),
+  );
+  expect(vi.mocked(repo.createTrip).mock.calls[0][0].travelers).toBeUndefined();
 });
-
-it("clears private Traveler names and allocates a new intent after account generation changes", async () => {
+it("clears private Traveler names and allocates new intent after account generation changes", async () => {
   const a = repository(),
     b = repository();
   vi.mocked(a.createTrip).mockRejectedValueOnce(new Error("disk"));
@@ -1027,35 +1024,52 @@ it("clears private Traveler names and allocates a new intent after account gener
   render();
   await flush();
   render();
-  input("tripCreate.name", "A trip");
-  button("tripForm.travelers").onPress();
+  input("createTripV2.name", "A trip");
+  const oldPerson = {
+    personId: randomUUID(),
+    operationId: randomUUID(),
+    displayName: "A private name",
+  };
+  state.nodes.find((node) => node.createFields)!.createFields.onTravelers([oldPerson]);
   render();
-  input("tripForm.travelerName:1", "A private name");
-  render();
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   await flush();
   const old = vi.mocked(a.createTrip).mock.calls[0][0];
   advanceAccountGeneration();
   state.repo.mockResolvedValue(b);
-  expect(render()).not.toContain("A private name");
+  render();
   await flush();
   render();
-  button("tripForm.travelers").onPress();
+  expect(state.nodes.find((node) => node.createFields)!.createFields.travelers).toEqual(
+    [],
+  );
+  input("createTripV2.name", "B trip");
+  state.nodes
+    .find((node) => node.createFields)!
+    .createFields.onTravelers([
+      { personId: randomUUID(), operationId: randomUUID(), displayName: "B friend" },
+    ]);
   render();
-  expect(
-    state.nodes.find((node) => node.accessibilityLabel === "tripForm.travelerName:1")!
-      .value,
-  ).toBe("");
-  input("tripCreate.name", "B trip");
-  input("tripForm.travelerName:1", "B own name");
-  render();
-  button("tripCreate.newTrip").onPress();
+  button("createTripV2.create").onPress();
   await flush();
   const fresh = vi.mocked(b.createTrip).mock.calls[0][0];
-  expect(fresh.travelers?.[0].displayName).toBe("B own name");
   expect(fresh.tripId).not.toBe(old.tripId);
   expect(fresh.travelers?.[0].personId).not.toBe(old.travelers?.[0].personId);
-  expect(fresh.travelers?.[0].operationId).not.toBe(old.travelers?.[0].operationId);
+});
+it("Close confirms meaningful new Trip edits and never submits a create", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Unsaved trip");
+  render();
+  button("common.cancel").onPress();
+  expect(props.onBackToTrips).not.toHaveBeenCalled();
+  state.alert.mock.lastCall![2][1].onPress();
+  expect(props.onBackToTrips).toHaveBeenCalledOnce();
+  expect(repo.createTrip).not.toHaveBeenCalled();
 });
 
 it("Creator Close discards staged cover without an independent write and cannot dismiss an in-flight atomic save", async () => {
@@ -1069,9 +1083,19 @@ it("Creator Close discards staged cover without an independent write and cannot 
   button("tripHome.edit").onPress();
   render();
   await state.nodes.find((node) => node.coverPicker)!.coverPicker.onSelect("coast");
+  // This harness normally suppresses update effects; flush the new child guard registration.
+  state.forceEffects = true;
   render();
-  const close = button("common.cancel").onPress;
-  close();
+  state.forceEffects = false;
+  render();
+  const host = state.nodes.find(
+    (node) => node.modal?.presentationStyle === "pageSheet",
+  )!.modal;
+  expect(host.allowSwipeDismissal).toBe(false);
+  host.onRequestClose();
+  render();
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(true);
+  state.alert.mock.lastCall![2][1].onPress();
   render();
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
   expect(repo.updateMetadata).not.toHaveBeenCalled();
@@ -1259,7 +1283,7 @@ it("P1 Home passes Trip Start only as picker navigation, not selected date", asy
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary(null);
   render();
-  expect(state.nodes.find((node) => node.planEditor)?.planEditor).toMatchObject({
+  expect(state.nodes.find((node) => node.manualEntry)?.manualEntry).toMatchObject({
     tripId: "local-a",
     initialDate: null,
     tripStartDate: "2027-12-30",
@@ -1282,11 +1306,318 @@ it("P1 passes explicit Day context ahead of Trip Start without changing Trip dat
     .find((call) => call[0]?.tripId === "local-a")![0]
     .itinerary("2027-12-29");
   render();
-  expect(state.nodes.find((node) => node.planEditor)?.planEditor).toMatchObject({
+  expect(state.nodes.find((node) => node.manualEntry)?.manualEntry).toMatchObject({
     tripId: "local-a",
     initialDate: "2027-12-29",
     tripStartDate: "2027-12-30",
   });
   expect(repo.addItem).not.toHaveBeenCalled();
   expect(repo.updateMetadata).not.toHaveBeenCalled();
+});
+
+it("holds Create while a destination selection resolves and protects unselected query on Close", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "My trip");
+  render();
+  const search = state.nodes.find((node) => node.destinations)!.destinations;
+  search.onBusy(true);
+  search.onQueryDirty(true);
+  render();
+  expect(button("createTripV2.create").disabled).toBe(true);
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).not.toHaveBeenCalled();
+  button("common.cancel").onPress();
+  expect(state.alert).toHaveBeenCalled();
+  expect(props.onBackToTrips).not.toHaveBeenCalled();
+});
+
+it("submits ordered destination identities and creator nickname without flattening into legacy destination", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Japan trip");
+  render();
+  const destinations = [
+    { localId: randomUUID(), text: "Tokyo", source: "MANUAL" },
+    {
+      localId: randomUUID(),
+      text: "Kyoto",
+      source: "APPLE",
+      match: {
+        provider: "apple",
+        providerPlaceId: "real-kyoto-id",
+        title: "Kyoto",
+        secondary: "Japan",
+        point: { latitude: 35, longitude: 135 },
+      },
+    },
+  ];
+  state.nodes.find((node) => node.destinations)!.destinations.onChange(destinations);
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  const payload = vi.mocked(repo.createTrip).mock.calls[0][0];
+  expect(payload.destination).toBeUndefined();
+  expect(payload.destinations).toEqual([
+    { destinationId: destinations[0].localId, displayLabel: "Tokyo", source: "MANUAL" },
+    {
+      destinationId: destinations[1].localId,
+      displayLabel: "Kyoto",
+      source: "APPLE_PLACE_ID",
+      provider: "apple",
+      providerPlaceId: "real-kyoto-id",
+    },
+  ]);
+});
+
+const structuredFixture = () => {
+  const id = "10000000-0000-4000-8000-000000000002";
+  const destination = {
+    destinationId: "10000000-0000-4000-8000-000000000005",
+    displayLabel: "Tokyo",
+    source: "MANUAL" as const,
+  };
+  const current = {
+    ...trip(id, "Original"),
+    syncFormatVersion: 2 as const,
+    destinations: [{ ...destination, ordinal: 0 }],
+  };
+  const confirmed = {
+    formatVersion: 3 as const,
+    actorAccountId: "10000000-0000-4000-8000-000000000001",
+    tripId: id,
+    metadataRevision: 7,
+    metadata: {
+      name: "Original",
+      destination: null,
+      startDate: null,
+      endDate: null,
+      destinations: [destination],
+    },
+  };
+  return { current, confirmed };
+};
+
+it("captures the confirmed ordered-list baseline on opening, never rebases revision at Save", async () => {
+  const { current, confirmed } = structuredFixture();
+  const repo = repository([current]);
+  vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+    confirmed,
+    pendingOperationIds: [],
+  });
+  state.repo.mockResolvedValue(repo);
+  props.tripId = current.id;
+  render();
+  await flush();
+  render();
+  button("tripHome.edit").onPress();
+  await flush();
+  render();
+  vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+    confirmed: { ...confirmed, metadataRevision: 8 },
+    pendingOperationIds: [],
+  });
+  input("tripCreate.name", "Updated");
+  render();
+  button("ui.save").onPress();
+  await flush();
+  render();
+  expect(repo.readMetadataEditBase).toHaveBeenCalledTimes(1);
+  expect(repo.updateMetadata).toHaveBeenCalledWith(
+    expect.objectContaining({
+      formatVersion: 3,
+      tripId: current.id,
+      expectedMetadataRevision: 7,
+      before: confirmed.metadata,
+      after: { ...confirmed.metadata, name: "Updated" },
+    }),
+    undefined,
+  );
+});
+
+it.each(["missing", "pending", "different-local-list"])(
+  "never falls back to scalar edit for %s structured baseline",
+  async (kind) => {
+    const { current, confirmed } = structuredFixture();
+    const repo = repository([current]);
+    vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+      confirmed:
+        kind === "missing"
+          ? null
+          : kind === "different-local-list"
+            ? { ...confirmed, metadata: { ...confirmed.metadata, destinations: [] } }
+            : confirmed,
+      pendingOperationIds: kind === "pending" ? ["old-operation"] : [],
+    });
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await flush();
+    render();
+    button("tripHome.edit").onPress();
+    await flush();
+    const html = render();
+    expect(html).toContain("tripMetadata.confirmedBaseUnavailable");
+    expect(state.nodes.find((node) => node.label === "ui.save")).toBeUndefined();
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
+  },
+);
+
+it("opts new Native QA Create into the complete structured wire format without flattening", async () => {
+  const accountId = "10000000-0000-4000-8000-000000000001";
+  vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "dev");
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 1,
+      accountId,
+      startsAt: "2026-10-23T03:00:00Z",
+      expiresAt: "2026-10-23T03:15:00Z",
+      creates: [],
+      edits: [],
+    }),
+  );
+  vi.mocked(readLocalSession).mockResolvedValue({
+    identity: { userId: accountId, displayName: "QA" },
+  } as never);
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "QA cloud trip");
+  render();
+  state.nodes
+    .find((node) => node.destinations)!
+    .destinations.onChange([
+      {
+        localId: "10000000-0000-4000-8000-000000000005",
+        text: "Tokyo",
+        source: "MANUAL",
+      },
+    ]);
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledWith(
+    expect.objectContaining({
+      syncFormatVersion: 2,
+      destinations: [
+        {
+          destinationId: "10000000-0000-4000-8000-000000000005",
+          displayLabel: "Tokyo",
+          source: "MANUAL",
+        },
+      ],
+    }),
+  );
+  expect(vi.mocked(repo.createTrip).mock.calls[0][0].destination).toBeUndefined();
+});
+
+it.each(["missing", "pending"])(
+  "uses one deferred local Save for %s confirmation, preserving ordered destinations",
+  async (kind) => {
+    const { current, confirmed } = structuredFixture();
+    const repo = repository([current]);
+    vi.mocked(repo.readMetadataEditBase).mockResolvedValue({
+      confirmed: kind === "missing" ? null : confirmed,
+      pendingOperationIds: kind === "pending" ? ["old-op"] : [],
+    });
+    vi.mocked(repo.readDeferredMetadataEditBase).mockResolvedValue({
+      createOperationId: "create-parent",
+      metadata: confirmed.metadata,
+    });
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await flush();
+    render();
+    button("tripHome.edit").onPress();
+    await flush();
+    render();
+    input("tripCreate.name", "Offline newer");
+    render();
+    button("ui.save").onPress();
+    await flush();
+    render();
+    expect(repo.deferMetadataUpdate).toHaveBeenCalledTimes(1);
+    expect(repo.deferMetadataUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localActionVersion: 1,
+        tripId: current.id,
+        before: confirmed.metadata,
+        after: { ...confirmed.metadata, name: "Offline newer" },
+      }),
+    );
+    expect(repo.updateMetadata).not.toHaveBeenCalled();
+  },
+);
+
+it("authors current Add Traveler slots explicitly as shared only for sustained v2 scope", async () => {
+  const accountId = "10000000-0000-4000-8000-000000000001";
+  vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "dev");
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://api-dev.xoery.art");
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId,
+      normal: { newTripsFrom: "2026-10-24T00:00:00.000Z" },
+    }),
+  );
+  vi.mocked(readLocalSession).mockResolvedValue({
+    identity: { userId: accountId, displayName: "QA" },
+  } as never);
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Current authored");
+  render();
+  const slot = {
+    operationId: "10000000-0000-4000-8000-000000000006",
+    personId: "10000000-0000-4000-8000-000000000007",
+    displayName: "  New Traveler  ",
+  };
+  state.nodes.find((node) => node.createFields)!.createFields.onTravelers([slot]);
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  const inputValue = vi.mocked(repo.createTrip).mock.calls[0][0];
+  expect(inputValue).toMatchObject({
+    syncFormatVersion: 2,
+    cloudTravelers: {
+      dataOwnership: "CLOUD_SHARED_AUTHORED",
+      slots: [{ ...slot, displayName: "New Traveler" }],
+    },
+  });
+  expect(inputValue).not.toHaveProperty("travelers");
+});
+
+it("forwards the saved-item revision to Preparation without remounting the workspace", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  render();
+  expect(state.preparation.refreshKey).toBe(0);
+  const initial = state.refs;
+  (props as any).refreshKey = 1;
+  render();
+  expect(state.preparation.refreshKey).toBe(1);
+  expect(state.refs).toBe(initial);
+  delete (props as any).refreshKey;
 });
