@@ -235,6 +235,8 @@ export const en = {
     "Closing dismisses this view. Work may pause while the app is away.",
   "capture.progress.batchTitle": "Batch · Inputs: {count}",
   "capture.progress.title": "Activity Progress",
+  "capture.progress.pageUp": "Scroll up",
+  "capture.progress.pageDown": "Scroll down",
   "capture.progress.activeImports": "Active Imports",
   "capture.progress.accountScope":
     "Account-level intake. Trip attribution is not confirmed.",
@@ -2840,6 +2842,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.closeHint": "关闭仅收起此界面，离开应用后工作可能暂停。",
   "capture.progress.batchTitle": "批次 · {count}项材料",
   "capture.progress.title": "提交活动进度",
+  "capture.progress.pageUp": "向上翻页",
+  "capture.progress.pageDown": "向下翻页",
   "capture.progress.activeImports": "导入活动",
   "capture.progress.accountScope": "账户级材料接收，尚未确认旅行归属。",
   "capture.progress.saving": "正在本机保存所选材料…",

@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, View } from "react-native";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import { UiButton, UiText } from "@/ui/controls";
@@ -46,14 +46,35 @@ export function CaptureProgress({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const scroll = useRef<ScrollView>(null);
+  const position = useRef({ y: 0, height: 0, contentHeight: 0 });
+  const page = (direction: number) => {
+    const p = position.current;
+    p.y = Math.max(
+      0,
+      Math.min(Math.max(0, p.contentHeight - p.height), p.y + direction * p.height * 0.8),
+    );
+    scroll.current?.scrollTo({ y: p.y, animated: false });
+  };
   let activity: ReturnType<typeof projectCaptureActivity> | null = null;
   try {
     if (model) activity = projectCaptureActivity(model, accountId);
   } catch {
     error = true;
   }
-  return (
+  const body = (
     <ScrollView
+      ref={scroll}
+      onLayout={({ nativeEvent }) => {
+        position.current.height = nativeEvent.layout.height;
+      }}
+      onContentSizeChange={(_width, height) => {
+        position.current.contentHeight = height;
+      }}
+      onScroll={({ nativeEvent }) => {
+        position.current.y = nativeEvent.contentOffset.y;
+      }}
+      scrollEventThrottle={16}
       keyboardShouldPersistTaps="handled"
       style={styles.body}
       contentContainerStyle={styles.content}
@@ -232,10 +253,35 @@ export function CaptureProgress({
       />
     </ScrollView>
   );
+  return (
+    <>
+      {typeof __DEV__ !== "undefined" && __DEV__ ? (
+        <View style={styles.paging}>
+          <UiButton
+            variant="secondary"
+            label={t("capture.progress.pageUp")}
+            onPress={() => page(-1)}
+          />
+          <UiButton
+            variant="secondary"
+            label={t("capture.progress.pageDown")}
+            onPress={() => page(1)}
+          />
+        </View>
+      ) : null}
+      {body}
+    </>
+  );
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     body: { flexShrink: 1, flexGrow: 0, backgroundColor: c.surface },
+    paging: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: visual.space.page,
+      gap: visual.space.row,
+    },
     content: { padding: visual.space.page, gap: visual.space.row },
     copy: { ...visual.type.row, color: c.textPrimary },
     secondary: { ...visual.type.meta, color: c.textSecondary },
