@@ -132,7 +132,7 @@ const empty: CaptureDraftSnapshot = {
   selecting: false,
   error: null,
 };
-function render(snapshot = empty, count = 0) {
+function render(snapshot = empty, count = 0, onQaSample?: () => void) {
   state.cursor = 0;
   state.buttons = [];
   state.nodes = [];
@@ -146,6 +146,7 @@ function render(snapshot = empty, count = 0) {
     onCamera: vi.fn(),
     onRemove: vi.fn(),
     onText: vi.fn(),
+    onQaSample,
     onAddText: vi.fn(),
     onClear: vi.fn(),
     onSubmit: vi.fn(),
@@ -425,12 +426,37 @@ it("reopens retained batches from the existing attachment menu without submittin
   button("capture.composer.addAttachments").onPress();
   const { props, html } = render();
   expect(html).toContain(t("capture.activity"));
-  const activity = state.buttons.find((b) =>
-    Array.isArray(b.children) && b.children[1]?.props?.children === t("capture.activity"),
+  const activity = state.buttons.find(
+    (b) =>
+      Array.isArray(b.children) &&
+      b.children[1]?.props?.children === t("capture.activity"),
   );
   expect(activity).toBeDefined();
   activity.onPress();
   expect(props.onActivity).toHaveBeenCalledOnce();
   expect(props.onSubmit).not.toHaveBeenCalled();
   expect(render().html).not.toContain(t("capture.activity"));
+});
+
+it("DEV sample only fills the editor and never submits, remains absent in release and disabled while locked", () => {
+  const fill = vi.fn();
+  try {
+    vi.stubGlobal("__DEV__", true);
+    const f = render(empty, 0, fill);
+    state.buttons.find((b) => b.label === t("capture.composer.qaSample")).onPress();
+    expect(fill).toHaveBeenCalledOnce();
+    expect(f.props.onSubmit).not.toHaveBeenCalled();
+    render({ ...empty, selecting: true }, 0, fill);
+    const locked = state.buttons.find((b) => b.label === t("capture.composer.qaSample"));
+    expect(locked.disabled).toBe(true);
+    locked.onPress();
+    expect(fill).toHaveBeenCalledOnce();
+    vi.stubGlobal("__DEV__", false);
+    render(empty, 0, fill);
+    expect(state.buttons.some((b) => b.label === t("capture.composer.qaSample"))).toBe(
+      false,
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

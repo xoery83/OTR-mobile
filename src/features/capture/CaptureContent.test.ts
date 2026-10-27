@@ -15,6 +15,8 @@ const state = vi.hoisted(() => ({
   buttons: [] as Record<string, any>[],
 }));
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
+// Native file-lease bootstrap is outside the CaptureTray presentation suite.
+vi.mock("@/native/capturePicker", () => ({ pickCaptureMaterial: vi.fn() }));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: vi.fn() }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));
 vi.mock("react-native", async () => {
