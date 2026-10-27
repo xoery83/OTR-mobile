@@ -1,3 +1,7 @@
+## Owning port follow-through — supersedes the initial closed-Gate candidate below
+
+P6 Manual Batch is now implemented only in this independent branch after the explicit unique-Writer handoff. Actual11 suites361PASS, including P1–P6/shared Core Repository7 suites121PASS. See [local SQLite receipt](MANUAL_BATCH_PORT.md). Status: **LOCAL_REPOSITORY_PASS / HOST_INTEGRATION_PENDING / NATIVE_NOT_TESTED / CLOUD_PENDING**. UI entry and shared Reader handoff patch remain unapplied; do not reapply the historical Gate patch or replace current tests with the old proposal artifact.
+
 # P6 Native Activity — isolated candidate, 28 October 2026
 
 Status: **LOCAL_CONTENT_AND_FORM_CANDIDATE / MANUAL_BATCH_PORT_PENDING / HOST_INTEGRATION_PENDING / NATIVE_NOT_TESTED / CLOUD_PENDING**.

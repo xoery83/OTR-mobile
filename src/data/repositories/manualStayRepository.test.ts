@@ -403,7 +403,7 @@ it("keeps lawful same-date zero-night Stay explicit, without inventing a checkou
   expect(local.rows("2026-10-21")).toEqual([]);
   expect((await f.repo().read(f.tripId, d.itemId)).fields.endDate).toBe("2026-10-20");
 });
-it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6 command without writing", async () => {
+it("P3 editor still rejects a Plan while the owning batch now accepts a lawful P6 create", async () => {
   const f = await fixture();
   const plan = randomUUID();
   await f.trips.addItem(f.tripId, {
@@ -421,7 +421,7 @@ it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6
     ),
   );
   const other = randomUUID();
-  const rental = {
+  const activity = {
     ...original,
     operationId: randomUUID(),
     target: { kind: "ITEM", id: other },
@@ -431,14 +431,14 @@ it("P3 editor rejects an existing Plan and finite Forms batch rejects a valid P6
   const n = count(f.sql);
   await expect(
     f.core.commitManualBatch(await f.core.captureContext(f.tripId), async () => ({
-      commands: [rental],
+      commands: [activity],
       result: async () => true,
     })),
-  ).rejects.toThrow("MANUAL_BATCH_INVALID");
-  expect(count(f.sql)).toBe(n);
+  ).resolves.toBe(true);
+  expect(count(f.sql)).toBe(Number(n) + 1);
 });
 
-it("finite batch rejects SET on an existing P6 target while the original generic enqueue remains unchanged", async () => {
+it("finite batch accepts SET on an existing P6 target and generic replay does not duplicate its queue", async () => {
   const f = await fixture(),
     id = randomUUID(),
     ctx = await f.core.captureContext(f.tripId);
@@ -493,10 +493,10 @@ it("finite batch rejects SET on an existing P6 target while the original generic
       commands: [command],
       result: async () => true,
     })),
-  ).rejects.toThrow("MANUAL_BATCH_INVALID");
-  expect(count(f.sql)).toBe(1);
-  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
-    before,
+  ).resolves.toBe(true);
+  expect(count(f.sql)).toBe(2);
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toHaveLength(
+    before.length + 1,
   );
   expect((await f.core.enqueue(ctx, command)).localStatus).toBe("PENDING");
   expect(count(f.sql)).toBe(2);

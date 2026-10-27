@@ -872,7 +872,7 @@ it("Core publication denies a queued Account transition and wrong Trip without t
   a.selection();
 });
 
-it("finite Forms batch admits P4 Create and Rental details but rejects a P6 Create before durable writes", async () => {
+it("finite Forms batch admits P4/Rental and P6 Create while Activity details stay P6-only", async () => {
   const f = fixture(),
     ctx = await f.repo.captureContext(trip),
     id = randomUUID();
@@ -924,9 +924,25 @@ it("finite Forms batch admits P4 Create and Rental details but rejects a P6 Crea
       commands: [activity],
       result: async () => true,
     })),
+  ).resolves.toBe(true);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    3,
+  );
+  const wrongFamilyDetails = {
+    ...details,
+    operationId: randomUUID(),
+    command: "SET_ACTIVITY_DETAILS",
+    baseVector: [{ kind: "ITEM", id, revision: 2 }],
+    payload: { details: { admission_note: "Activity instruction" }, entryPlace: null },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [wrongFamilyDetails],
+      result: async () => true,
+    })),
   ).rejects.toThrow("MANUAL_BATCH_INVALID");
   expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
-    2,
+    3,
   );
 });
 it("finite Forms batch refuses Rental detail mutation on an actual P3 target", async () => {
