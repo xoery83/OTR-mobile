@@ -106,11 +106,12 @@ export async function setUniversalP1WriteContext(
   target: string,
   operation: string,
   slot: string,
-  family: "P1" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" = "P1",
 ) {
-  z.enum(["P1", "P3"]).parse(family);
+  z.enum(["P1", "P2", "P3"]).parse(family);
+  const command = family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM";
   await lease.query(
-    `SELECT set_config('otr.core.command','CREATE_ITEM',true),set_config('otr.core.family','${family}',true),set_config('otr.core.admission','REVIEWED_SOURCE',true),set_config('otr.core.target_item',$1,true),set_config('otr.core.operation',$2,true),set_config('otr.core.source_intent',$3,true)`,
+    `SELECT set_config('otr.core.command','${command}',true),set_config('otr.core.family','${family}',true),set_config('otr.core.admission','REVIEWED_SOURCE',true),set_config('otr.core.target_item',$1,true),set_config('otr.core.operation',$2,true),set_config('otr.core.source_intent',$3,true)`,
     [z.uuid().parse(target), z.uuid().parse(operation), z.uuid().parse(slot)],
   );
 }

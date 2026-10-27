@@ -1,3 +1,4 @@
+import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import { z } from "zod";
 import {
   assertAccountRequestContext,
@@ -218,18 +219,8 @@ export async function projectUniversalP2SourceProposal(
       locator: fragment.locator,
     });
   }
-  const binding = {
-    version: "otr.universal.p2-source-proposal/1" as const,
-    taskId: reviewed.taskId,
-    batchId: reviewed.batchId,
-    runId: input.runId,
-    resultSha256: reviewed.resultSha256,
-    token: reviewed.token,
-    sourceReview: reviewed.sourceReview,
-  };
-  const publication = coreCandidatePublicationV2Schema.parse({
+  const unbound = coreCandidatePublicationV2Schema.parse({
     publicationVersion: 2,
-    universalP2: binding,
     publicationId: identity("publication"),
     sourceId: material.pin.source_id,
     sourceRevision: material.pin.material_revision,
@@ -263,7 +254,7 @@ export async function projectUniversalP2SourceProposal(
     evidence,
   });
   const plan = buildCaptureFlightSourcePlanV2(
-    publication,
+    unbound,
     identity("plan"),
     [
       {
@@ -277,6 +268,24 @@ export async function projectUniversalP2SourceProposal(
     ],
     "SPARSE_ONLY",
   );
+  const binding = {
+    version: "otr.universal.p2-source-proposal/1" as const,
+    taskId: reviewed.taskId,
+    batchId: reviewed.batchId,
+    runId: input.runId,
+    resultSha256: reviewed.resultSha256,
+    token: reviewed.token,
+    sourceReview: reviewed.sourceReview,
+    proposedPlanSha256: await coreHashValue(
+      "otr-trip-core-source-plan-v2",
+      plan,
+      deps.hash,
+    ),
+  };
+  const publication = coreCandidatePublicationV2Schema.parse({
+    ...unbound,
+    universalP2: binding,
+  });
   await assertAccountRequestContext(input.context, deps.getAccountId);
   return {
     publication,

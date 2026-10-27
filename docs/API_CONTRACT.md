@@ -1199,3 +1199,5 @@ The existing date-bound airport identity and FLIGHT_OCCURRENCE proof remain requ
 even for this Sparse creation. Dormant QA registry rows confer no authority. All live
 P2 publication/Admission/Core write activation remains subject to its separate exact
 Owner Gate. Existing P1/P3 paths and their consumed windows are unchanged.
+
+Universal P2 publication metadata also pins `proposedPlanSha256` using the existing `otr-trip-core-source-plan-v2` digest. It binds the complete deterministic Sparse-only Source Plan before publication; the owning reader rebuilds both request and Plan. It is not an Admission grant.

@@ -26,5 +26,6 @@ export const universalP2PublicationBindingSchema = z.strictObject({
   runId: z.uuid(),
   token: z.string().min(1).max(128),
   resultSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  proposedPlanSha256: z.string().regex(/^[a-f0-9]{64}$/),
   sourceReview: universalP2SourceReviewSchema,
 });

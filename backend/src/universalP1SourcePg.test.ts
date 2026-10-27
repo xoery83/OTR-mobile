@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import {
+  setUniversalP1WriteContext,
   publishUniversalP1Candidate,
   readUniversalP1Catalog,
 } from "./universalP1SourcePg";
@@ -104,5 +105,24 @@ it.each(["actor", "trip", "inactive"])(
       ),
     ).rejects.toThrow("CORE_SCOPE_MISMATCH");
     expect(query).not.toHaveBeenCalled();
+  },
+);
+
+it.each(["P1", "P2", "P3"] as const)(
+  "sets the existing owning write context for exact %s command",
+  async (family) => {
+    const query = vi.fn(async (_sql: string, _params?: unknown[]) => ({ rows: [] }));
+    await setUniversalP1WriteContext(
+      { query, retire: vi.fn() } as never,
+      "1397477b-a424-8c73-a17e-a61d05857f56",
+      "a98856b8-321d-8b38-a7ba-efda7d4cd9e5",
+      "f7d19001-fc5d-8719-94b2-e10c74525193",
+      family,
+    );
+    expect(query.mock.calls[0][0]).toContain(
+      family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM",
+    );
+    expect(query.mock.calls[0][0]).toContain(`'${family}'`);
+    expect(query.mock.calls[0][0]).toContain("REVIEWED_SOURCE");
   },
 );

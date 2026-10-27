@@ -361,6 +361,7 @@ it.each([
   "after-hash",
   "catalog",
   "forged-fact",
+  "forged-plan-hash",
 ])("rejects %s without trusting client publication pins", async (kind) => {
   const f = await owningPublicationFixture();
   if (kind === "p1-window") {
@@ -372,6 +373,8 @@ it.each([
   if (kind === "source-bytes") f.state.text = "NX501 AKL→CHC 2026-11-02\n";
   if (kind === "after-hash") f.state.afterHash = "b".repeat(64);
   if (kind === "catalog") f.proposed.publication.inputCatalogSha256 = "b".repeat(64);
+  if (kind === "forged-plan-hash")
+    f.proposed.publication.universalP2!.proposedPlanSha256 = "b".repeat(64);
   if (kind === "forged-fact")
     f.proposed.publication.candidates[0].facts.flightNumberLiteral = "NZ502";
   await expect(
@@ -401,3 +404,29 @@ it("leaves legacy Flight publication binding behavior unchanged", async () => {
   expect(f.query).not.toHaveBeenCalled();
   expect(f.read).not.toHaveBeenCalled();
 });
+
+it("pins the complete deterministic Sparse Source Plan inside owning publication metadata", async () => {
+  const f = await owningPublicationFixture();
+  const { coreHashValue } = await import("../../src/domain/trip/tripCoreV2Read");
+  expect(f.proposed.binding.proposedPlanSha256).toBe(
+    await coreHashValue("otr-trip-core-source-plan-v2", f.proposed.plan, hash),
+  );
+});
+
+it.each(["changed-hash", "changed-plan-id"])(
+  "rejects %s at Source Plan admission despite a legitimate sealed publication",
+  async (kind) => {
+    const f = await owningPublicationFixture();
+    await expect(
+      assertUniversalP2Publication(
+        f.lease as never,
+        kind === "changed-plan-id" ? { ...f.scope, planId: f.f.runId } : f.scope,
+        f.proposed.publication,
+        hash,
+        f.read as never,
+        false,
+        kind === "changed-hash" ? "b".repeat(64) : f.proposed.binding.proposedPlanSha256,
+      ),
+    ).rejects.toThrow("INVALID_PROVENANCE");
+  },
+);

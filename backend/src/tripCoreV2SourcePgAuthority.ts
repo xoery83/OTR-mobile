@@ -258,6 +258,7 @@ export async function assertUniversalP2Publication(
   hash: ImportHash,
   readPublished?: PublishedUniversalP1Reader,
   historical = false,
+  proposalSha256?: string,
 ) {
   const binding = request.universalP2;
   if (!binding) return undefined;
@@ -319,7 +320,13 @@ export async function assertUniversalP2Publication(
     },
     { hash, getAccountId: async () => scope.actorAccountId },
   );
-  if (json(rebuilt.publication) !== json(request)) throw Error("INVALID_PROVENANCE");
+  if (
+    json(rebuilt.publication) !== json(request) ||
+    (proposalSha256 !== undefined &&
+      (proposalSha256 !== binding.proposedPlanSha256 ||
+        scope.planId !== rebuilt.plan.planId))
+  )
+    throw Error("INVALID_PROVENANCE");
   const after = await readPublished(key, lease);
   if (
     !after ||
@@ -327,7 +334,7 @@ export async function assertUniversalP2Publication(
     after.resultSha256 !== published.resultSha256
   )
     throw Error("UNIVERSAL_SELECTION_STALE");
-  return { catalog, run };
+  return { catalog, run, plan: rebuilt.plan };
 }
 async function catalogForCandidates(
   lease: CorePgLease,
@@ -738,6 +745,24 @@ export function createCoreSourcePgAuthority(
   hash: ImportHash,
   options: { readUniversalP1?: PublishedUniversalP1Reader } = {},
 ) {
+  async function checkedP2Plan(
+    lease: CorePgLease,
+    scope: CoreSourceScopeV2 & { sourceId: string },
+    candidate: SealedCoreFlightCandidate,
+    proposalSha256: string,
+    historical = false,
+  ) {
+    const pub = await publication(lease, scope, candidate.publicationId, hash);
+    return assertUniversalP2Publication(
+      lease,
+      scope,
+      pub.request,
+      hash,
+      options.readUniversalP1,
+      historical,
+      proposalSha256,
+    );
+  }
   const source: CoreSourcePlanStorageV2 = {
     withLockedSourcePlan: async (scope, work) =>
       withCoreSourcePgLease(connection, scope, async (lease, legacy) => {
@@ -748,6 +773,10 @@ export function createCoreSourcePgAuthority(
           ids = scope.candidateIds ?? plan?.request.candidateIds ?? [];
         let catalog: CoreSourceCatalogV2 | undefined;
         const verifiedBodies = new Map<string, SealedCoreFlightCandidate>();
+        const verifiedP2 = new Map<
+          string,
+          { command: string; body: SealedCoreFlightCandidate; proposalSha256: string }
+        >();
         const verifiedP1 = new Map<
           string,
           {
@@ -795,6 +824,7 @@ export function createCoreSourcePgAuthority(
             binding,
             slot,
             command,
+            proposalSha256,
           }) => {
             const current = await load(),
               known = current.candidates.find(
@@ -810,6 +840,15 @@ export function createCoreSourcePgAuthority(
               throw new Error("INVALID_PROVENANCE");
             const body = sealedCoreFlightCandidateSchema.parse(known.snapshot);
             verifyPayload(body, slot, command);
+            if (await checkedP2Plan(lease, own, body, proposalSha256)) {
+              if (command.command !== "CREATE_SPARSE_FLIGHT")
+                throw Error("CONTRACT_UNSUPPORTED");
+              verifiedP2.set(command.operationId, {
+                command: json(command),
+                body,
+                proposalSha256,
+              });
+            }
             verifiedBodies.set(command.operationId, body);
           },
           verifyP1Evidence: async ({
@@ -912,18 +951,27 @@ export function createCoreSourcePgAuthority(
               );
               return;
             }
-            const gate = (
-              await lease.query(
-                "SELECT runtime_enabled,enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
+            const p2 = verifiedP2.get(command.operationId);
+            if (p2) {
+              if (json(command) !== p2.command)
+                throw Error("CORE_PREPARATION_SCOPE_MISMATCH");
+              await checkedP2Plan(lease, own, p2.body, p2.proposalSha256);
+            } else {
+              const gate = (
+                await lease.query(
+                  "SELECT runtime_enabled,enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
+                )
+              ).rows[0];
+              if (
+                !gate?.runtime_enabled ||
+                !(gate.enabled_commands as string[]).includes(command.command) ||
+                !(gate.enabled_families as string[]).includes("P2") ||
+                !(gate.enabled_admission_modes as string[]).includes(
+                  command.admission.mode,
+                )
               )
-            ).rows[0];
-            if (
-              !gate?.runtime_enabled ||
-              !(gate.enabled_commands as string[]).includes(command.command) ||
-              !(gate.enabled_families as string[]).includes("P2") ||
-              !(gate.enabled_admission_modes as string[]).includes(command.admission.mode)
-            )
-              throw new Error("CORE_CAPABILITY_CLOSED");
+                throw new Error("CORE_CAPABILITY_CLOSED");
+            }
             await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
             let actor: CoreActor;
             try {
@@ -955,7 +1003,43 @@ export function createCoreSourcePgAuthority(
               checkKnownTarget(await tx.readClaims(), command.target.id, body);
             applyCoreCommand(graph, command, actor!, new Date().toISOString(), true);
           },
-          putPlan: (p) => putPlan(lease, own, p),
+          putPlan: async (p) => {
+            if (
+              p.slots.length === 1 &&
+              p.slots[0].proposed.command === "CREATE_SPARSE_FLIGHT"
+            ) {
+              const row = (
+                await lease.query(
+                  "SELECT candidate_json FROM public.trip_source_core_v2_candidates WHERE candidate_id=$1::uuid AND account_id=$2::uuid AND trip_id=$3::uuid AND source_id=$4::uuid",
+                  [
+                    p.slots[0].proposed.candidateId,
+                    own.actorAccountId,
+                    own.tripId,
+                    own.sourceId,
+                  ],
+                )
+              ).rows[0];
+              if (!row) throw Error("INVALID_PROVENANCE");
+              const checked = await checkedP2Plan(
+                lease,
+                own,
+                sealedCoreFlightCandidateSchema.parse(row.candidate_json),
+                p.proposalSha256,
+                true,
+              );
+              if (checked) {
+                const slot = checked.plan.slots[0];
+                await setUniversalP1WriteContext(
+                  lease,
+                  slot.target.id,
+                  slot.operationId,
+                  slot.slotId,
+                  "P2",
+                );
+              }
+            }
+            return putPlan(lease, own, p);
+          },
           finalizeEvidence: async (slot, receipt) => {
             const old = (
               await lease.query(
@@ -1091,6 +1175,16 @@ export function createCoreSourcePgAuthority(
         hash,
         options.readUniversalP1,
       );
+      if (universal) {
+        const slot = universal.plan.slots[0];
+        await setUniversalP1WriteContext(
+          lease,
+          slot.target.id,
+          slot.operationId,
+          slot.slotId,
+          "P2",
+        );
+      }
       const prior = (
         await lease.query(
           "SELECT request_sha256,response_json FROM public.trip_source_core_v2_publications WHERE publication_id=$1::uuid",
@@ -1338,6 +1432,12 @@ export function createCoreSourcePgAuthority(
         intentSha256
     )
       throw new Error("INVALID_PROVENANCE");
+    await checkedP2Plan(
+      lease,
+      scope,
+      sealedCoreFlightCandidateSchema.parse(candidate.snapshot),
+      plan.proposalSha256,
+    );
     verifyPayload(
       sealedCoreFlightCandidateSchema.parse(candidate.snapshot),
       slot.proposed,
@@ -1944,7 +2044,7 @@ export function createCoreSourcePgAuthority(
         );
         const row = (
           await lease.query(
-            "SELECT plan_id FROM public.trip_source_core_v2_slots WHERE account_id=$1::uuid AND trip_id=$2::uuid AND output_slot_id=$3::uuid AND operation_id=$4::uuid AND intent_sha256=$5 AND output_purpose->>'purposeKind' IN ('P1_ITEM','P3_ITEM')",
+            "SELECT s.plan_id FROM public.trip_source_core_v2_slots s WHERE s.account_id=$1::uuid AND s.trip_id=$2::uuid AND s.output_slot_id=$3::uuid AND s.operation_id=$4::uuid AND s.intent_sha256=$5 AND (s.output_purpose->>'purposeKind' IN ('P1_ITEM','P3_ITEM') OR (s.command='CREATE_SPARSE_FLIGHT' AND s.output_purpose->>'purposeKind'='FLIGHT_OCCURRENCE' AND EXISTS(SELECT 1 FROM public.trip_source_core_v2_candidates c JOIN public.trip_source_core_v2_publications p ON p.publication_id=(c.candidate_json->>'publicationId')::uuid WHERE c.candidate_id=s.candidate_id AND c.account_id=s.account_id AND c.trip_id=s.trip_id AND p.account_id=s.account_id AND p.trip_id=s.trip_id AND p.request_json->'universalP2'->>'version'='otr.universal.p2-source-proposal/1')))",
             [actor, trip, input.slotId, input.operationId, input.intentSha256],
           )
         ).rows[0];
