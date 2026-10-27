@@ -1,0 +1,4135 @@
+{
+  "version": "p6-activity-synthetic-v1",
+  "authority": "SYNTHETIC_NOT_SOURCE_PROOF_ADMISSION_OR_ACL",
+  "viewerPersonId": "alex",
+  "trip": {
+    "title": "Nelson arts weekend"
+  },
+  "scenarios": [
+    {
+      "id": "full",
+      "label": "Concert · entry 19:30 / start 20:00 / one shared Ticket",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "minimal",
+      "label": "Minimum · name + date only",
+      "activities": [
+        {
+          "id": "syn-minimal-activity",
+          "visible": true,
+          "name": "Museum visit",
+          "start": {
+            "date": "2027-01-16"
+          },
+          "end": {},
+          "projection": {
+            "position": "TNS",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "documents": [],
+          "facts": [],
+          "attendees": [],
+          "photos": [],
+          "expenses": [],
+          "capabilities": {
+            "edit": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "meeting",
+      "label": "Meet 08:30 / activity start 09:00",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Guided garden walk",
+          "start": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "11:00",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Botanical Garden",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "meeting",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "08:30",
+            "place": {
+              "name": "Garden meeting gate",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "09:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "meeting",
+              "visible": true,
+              "label": "Meeting point",
+              "value": "Garden meeting gate",
+              "language": "en",
+              "semantic": "meetingPoint",
+              "evidence": "synthetic-guided-walk-source"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Meet the guide at the garden gate.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Guided walk original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "start-only",
+      "label": "Start only · general opening hours do not replace start",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Reserved museum session",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example City Museum",
+            "qualification": "TEXT_ONLY"
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Museum booking.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Check in at the museum reception.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "openingHours": "08:00–22:00"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Museum original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "all-day-planned",
+      "label": "All-day-valid ticket / planned visit 10:00",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Planned museum visit",
+          "start": {
+            "date": "2027-01-16",
+            "time": "10:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "12:00",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example City Museum",
+            "qualification": "TEXT_ONLY"
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "10:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Museum booking.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Check in at the museum reception.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Museum original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission.",
+          "validity": "All-day admission"
+        }
+      ]
+    },
+    {
+      "id": "untimed",
+      "label": "All-day ticket / no fixed or planned clock",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Untimed museum visit",
+          "start": {
+            "date": "2027-01-16",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {},
+          "venue": {
+            "name": "Example City Museum",
+            "qualification": "TEXT_ONLY"
+          },
+          "projection": {
+            "position": "TNS",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Museum booking.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Check in at the museum reception.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Museum original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission.",
+          "validity": "All-day admission"
+        }
+      ]
+    },
+    {
+      "id": "booking-only",
+      "label": "Free reservation / Booking only",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Free gallery reservation",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Gallery",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "Gallery reception",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "reception",
+              "visible": true,
+              "label": "Check-in",
+              "value": "Gallery reception",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-free-gallery-booking"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-GALLERY-01"
+          },
+          "ticketIds": [],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Gallery reservation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Check in at reception using your reservation.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [],
+          "ledger": null,
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "voucher",
+      "label": "Voucher requires exchange / no Show Ticket",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Gallery workshop",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            },
+            {
+              "id": "syn-voucher",
+              "visible": true,
+              "kind": "voucher",
+              "title": "Workshop voucher.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC VOUCHER\nExchange this voucher at the desk before entry.",
+              "exchangeRequired": true
+            }
+          ],
+          "instructions": "Exchange the original voucher at reception before entry.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "unknown",
+      "label": "Unknown evidence remains Document",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            },
+            {
+              "id": "syn-unknown",
+              "visible": true,
+              "kind": "unknown",
+              "title": "Unclassified source.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC UNCERTAIN DOCUMENT — not classified as Ticket."
+            }
+          ],
+          "instructions": "Use the north entrance.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "no-document",
+      "label": "Free activity / no documents or Ticket",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Free outdoor performance",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Waterfront Park",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "Waterfront entrance",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": null,
+          "ticketIds": [],
+          "documents": [],
+          "instructions": "Use the waterfront entrance.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [],
+          "ledger": null,
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "multiple-tickets",
+      "label": "Two individual Tickets / one source file",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a",
+            "syn-activity-ticket-b"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Alex original",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        },
+        {
+          "id": "syn-activity-ticket-b",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Sam original",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "shared-selection",
+      "label": "One shared Ticket / explicit chooser",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission.",
+          "requiresSelection": true
+        }
+      ]
+    },
+    {
+      "id": "onlineRequired",
+      "label": "Ticket access · onlineRequired",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "onlineRequired",
+          "canOpenOriginal": true,
+          "providerUrl": "https://example.invalid/synthetic-activity-pass"
+        }
+      ]
+    },
+    {
+      "id": "notDownloaded",
+      "label": "Ticket access · notDownloaded",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "notDownloaded",
+          "canOpenOriginal": false,
+          "providerUrl": null
+        }
+      ]
+    },
+    {
+      "id": "unavailable",
+      "label": "Ticket access · unavailable",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "unavailable",
+          "canOpenOriginal": false,
+          "providerUrl": null
+        }
+      ]
+    },
+    {
+      "id": "unmatched",
+      "label": "Viewer has no confirmed attendee/seat match",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "other",
+              "visible": true,
+              "personId": "other",
+              "matched": true,
+              "name": "Other attendee",
+              "seat": "PRIVATE_TO_FOCUS_OTHER_SEAT",
+              "section": "B"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "many-attendees",
+      "label": "Eight authorized attendees / Past collapse",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "0",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "1",
+              "section": "A"
+            },
+            {
+              "id": "1",
+              "visible": true,
+              "personId": "1",
+              "matched": true,
+              "name": "Example attendee 1",
+              "seat": "2",
+              "section": "A"
+            },
+            {
+              "id": "2",
+              "visible": true,
+              "personId": "2",
+              "matched": true,
+              "name": "Example attendee 2",
+              "seat": "3",
+              "section": "A"
+            },
+            {
+              "id": "3",
+              "visible": true,
+              "personId": "3",
+              "matched": true,
+              "name": "Example attendee 3",
+              "seat": "4",
+              "section": "A"
+            },
+            {
+              "id": "4",
+              "visible": true,
+              "personId": "4",
+              "matched": true,
+              "name": "Example attendee 4",
+              "seat": "5",
+              "section": "A"
+            },
+            {
+              "id": "5",
+              "visible": true,
+              "personId": "5",
+              "matched": true,
+              "name": "Example attendee 5",
+              "seat": "6",
+              "section": "A"
+            },
+            {
+              "id": "6",
+              "visible": true,
+              "personId": "6",
+              "matched": true,
+              "name": "Example attendee 6",
+              "seat": "7",
+              "section": "A"
+            },
+            {
+              "id": "7",
+              "visible": true,
+              "personId": "7",
+              "matched": true,
+              "name": "Example attendee 7",
+              "seat": "8",
+              "section": "A"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "restricted",
+      "label": "Restricted independent objects / no leakage",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            },
+            {
+              "visible": false,
+              "label": "SECRET_LABEL",
+              "value": "SECRET_VALUE"
+            }
+          ],
+          "attendees": [
+            {
+              "visible": false,
+              "name": "SECRET_PERSON",
+              "seat": "SECRET_SEAT"
+            }
+          ],
+          "participants": {
+            "visible": false,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": false,
+            "ref": "SECRET_BOOKING"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": false,
+              "kind": "confirmation",
+              "title": "SECRET_DOCUMENT",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": false,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "other-activity"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "other-activity"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "other-activity"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "other-activity"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": false,
+              "title": "SECRET_EXPENSE",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": false,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": false,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "SECRET_TICKET",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "cross-date-meeting",
+      "label": "Meeting previous date / activity date preserved",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Midnight observatory session",
+          "start": {
+            "date": "2027-01-16",
+            "time": "00:30",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "02:00",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "meeting",
+            "required": true,
+            "date": "2027-01-15",
+            "time": "23:45",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "00:30",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "floating",
+      "label": "Unqualified original clock / explicit TNS projection",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Floating workshop",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": false,
+            "date": "2027-01-16",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TNS",
+            "basis": "SYNTHETIC_UNQUALIFIED_CORE_READ"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "overnight",
+      "label": "Cross-day end / one Activity identity",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-17",
+            "time": "00:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "qualified-entry",
+      "label": "Today directions to explicit north entrance",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "latitude": -41.27,
+              "longitude": 173.28
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "optional-entry",
+      "label": "Optional door opening does not displace activity start",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": false,
+            "date": "2027-01-16",
+            "time": "18:00",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Concert admission · two people",
+              "coverageActivityIds": [
+                "syn-activity-a"
+              ],
+              "scope": "ACTIVITY",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    },
+    {
+      "id": "multi-activity",
+      "label": "Two Activities / one shared Ticket / one Expense",
+      "activities": [
+        {
+          "id": "syn-activity-a",
+          "visible": true,
+          "name": "Harbour chamber concert",
+          "start": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-16",
+            "time": "21:30",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-16",
+            "time": "19:30",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "20:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-activity-photo-1",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-2",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-3",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-4",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            },
+            {
+              "id": "syn-activity-photo-5",
+              "visible": true,
+              "activityId": "syn-activity-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Booking admission package",
+              "coverageActivityIds": [
+                "syn-activity-a",
+                "syn-activity-b"
+              ],
+              "scope": "BOOKING",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        },
+        {
+          "id": "syn-activity-b",
+          "visible": true,
+          "name": "Next-day museum admission",
+          "start": {
+            "date": "2027-01-17",
+            "time": "10:00",
+            "zone": "Pacific/Auckland"
+          },
+          "end": {
+            "date": "2027-01-17",
+            "time": "12:00",
+            "zone": "Pacific/Auckland"
+          },
+          "venue": {
+            "name": "Example Harbour Concert Hall",
+            "address": "18 Example Quay, Nelson (synthetic)",
+            "qualification": "TEXT_ONLY"
+          },
+          "entry": {
+            "kind": "entry",
+            "required": true,
+            "date": "2027-01-17",
+            "time": "09:45",
+            "place": {
+              "name": "North entrance",
+              "address": "North entrance, Example Quay, Nelson (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "projection": {
+            "position": "TIMELINE",
+            "orderTime": "10:00",
+            "basis": "SYNTHETIC_CORE_READ_NOT_ADMISSION"
+          },
+          "facts": [
+            {
+              "id": "entrance",
+              "visible": true,
+              "label": "Entrance",
+              "value": "North entrance",
+              "language": "en",
+              "semantic": "entrance",
+              "evidence": "synthetic-activity-source-01"
+            }
+          ],
+          "attendees": [
+            {
+              "id": "alex",
+              "visible": true,
+              "personId": "alex",
+              "matched": true,
+              "name": "Alex Chen",
+              "seat": "18",
+              "section": "A",
+              "row": "12"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "personId": "sam",
+              "matched": true,
+              "name": "Sam Lee",
+              "seat": "19",
+              "section": "A",
+              "row": "12"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-activity-a",
+            "visible": true,
+            "ref": "SYN-CONCERT-01"
+          },
+          "ticketIds": [
+            "syn-activity-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-activity-confirm",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Concert booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING CONFIRMATION\nA booking reference is not an admission credential."
+            }
+          ],
+          "instructions": "Use the north entrance. Present the original ticket at the door.",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [
+            {
+              "id": "syn-activity-expense",
+              "visible": true,
+              "title": "Booking admission package",
+              "coverageActivityIds": [
+                "syn-activity-a",
+                "syn-activity-b"
+              ],
+              "scope": "BOOKING",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 18000,
+            "myShare": 9000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 15000,
+                "scale": 0,
+                "currency": "JPY"
+              }
+            ],
+            "scale": 2
+          },
+          "note": "Bring a light jacket for the waterfront walk.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-activity-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Concert original · Alex & Sam",
+          "activityIds": [
+            "syn-activity-a",
+            "syn-activity-b"
+          ],
+          "personIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne Ticket identity covers Alex and Sam for this activity.\nNo generated QR/barcode. Not valid for admission."
+        }
+      ]
+    }
+  ]
+}

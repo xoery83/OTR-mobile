@@ -1,62 +1,69 @@
+import { createElement } from "react";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
-import type { CoreBoundaryView, CorePlaceView } from "@/domain/trip/tripCoreV2Day";
 import { bindRenderer } from "./rendererContribution";
 import { TicketedActivityRow, type TicketedActivityFacts } from "./TicketedActivityRow";
-
-const optional = (value: unknown) =>
-  typeof value === "string" && value.trim() ? value.trim() : undefined;
-
-// Preserve authored local planned clocks even when the Core instant is not yet
-// comparable. The row labels that state; it never changes TNS placement.
-export function activityPlannedClock(boundary: CoreBoundaryView | undefined) {
-  return boundary?.localTime &&
-    typeof boundary.precision === "number" &&
-    boundary.precision >= -1 &&
-    ["EXACT", "ESTIMATED"].includes(boundary.quality ?? "")
-    ? { time: boundary.localTime.slice(0, 5), plannedUnresolved: !boundary.comparable }
-    : undefined;
-}
-
-// The accepted Core item has schedule, place, generic admission text and
-// Booking association. It has no typed required-arrival clock, authorized
-// original opener, per-person seat, Photo or Ledger capability to bind here.
+import { activityFactsFromItem } from "./activityReadPresentation";
+export { activityPlannedClock } from "./activityReadPresentation";
 export function coreTicketedActivityFacts(
   projection: CoreFlightDayProjection,
 ): Record<string, TicketedActivityFacts> {
   const facts: Record<string, TicketedActivityFacts> = {};
   for (const item of projection.items) {
-    if (item.family !== "P6" || item.hidden) continue;
-    const start = (item.schedule as { start?: CoreBoundaryView }).start;
-    if (!start?.localDate) continue;
-    const details = item.details;
-    const clock = activityPlannedClock(start);
-    facts[item.itemId] = {
-      family: "P6",
-      title: String(item.title),
-      start: {
-        date: start.localDate,
-        ...(clock
-          ? { time: clock.time, plannedUnresolved: clock.plannedUnresolved }
-          : {}),
-      },
-      ...(item.place ? { venue: item.place as CorePlaceView } : {}),
-      ...(details.entryPlace ? { entryPlace: details.entryPlace as CorePlaceView } : {}),
-      ...(optional(details.sessionLabel)
-        ? { session: optional(details.sessionLabel) }
-        : {}),
-      ...(optional(details.admissionNote)
-        ? { admissionLine: optional(details.admissionNote) }
-        : {}),
-    };
+    const event = projection.events.find((event) => event.id === item.itemId);
+    if (
+      item.tripId !== projection.tripId ||
+      !event ||
+      event.semantic_revision !== item.itemRevision
+    )
+      continue;
+    const value = activityFactsFromItem(item);
+    if (value)
+      facts[item.itemId] = {
+        ...value,
+        pending:
+          value.pending ||
+          projection.source.localTargetIds?.includes(item.itemId) === true,
+      };
   }
   return facts;
 }
-
-export function createCoreTicketedActivityRenderer(projection: CoreFlightDayProjection) {
+export type CoreActivityPresentationActions = {
+  onOpenActivity?(id: string, role: "START" | "END", date: string): void;
+  onInsertActivity?(
+    id: string,
+    role: "START" | "END",
+    date: string,
+    side: "BEFORE" | "AFTER",
+  ): void;
+};
+export function createCoreTicketedActivityRenderer(
+  projection: CoreFlightDayProjection,
+  actions?: CoreActivityPresentationActions,
+) {
   return bindRenderer({
     version: "day-feed-renderer/1",
     family: "P6",
     facts: coreTicketedActivityFacts(projection),
-    render: TicketedActivityRow,
+    render: (props) => {
+      const key = props.row.coreRowKeys[0];
+      const role = key?.projectionRole === "END" ? "END" : "START";
+      return createElement(TicketedActivityRow, {
+        ...props,
+        onDepth: (depth) =>
+          depth === "I" && actions?.onOpenActivity && key
+            ? actions.onOpenActivity(props.row.item.event.id, role, key.localDate)
+            : props.onDepth(depth),
+        onInsert:
+          actions?.onInsertActivity && key
+            ? (side) =>
+                actions.onInsertActivity!(
+                  props.row.item.event.id,
+                  role,
+                  key.localDate,
+                  side,
+                )
+            : undefined,
+      });
+    },
   });
 }
