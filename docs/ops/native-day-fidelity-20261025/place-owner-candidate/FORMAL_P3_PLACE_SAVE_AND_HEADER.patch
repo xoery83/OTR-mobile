@@ -38,16 +38,21 @@
  };
  type DraftState = {
    context: AccountRequestContext;
-@@ -139,7 +155,7 @@
+@@ -139,7 +155,12 @@
    revision: number | null;
    original: ManualItemFields;
    ids: string[];
 -  attempt?: { fields: string; commands: Command[] };
-+  attempt?: { fields: string; placeDraft: string; commands: Command[] };
++  attempt?: {
++    fields: string;
++    placeDraft: string;
++    place: z.infer<typeof corePlaceSchema>;
++    commands: Command[];
++  };
  };
  function fieldsFor(
    row: Record<string, unknown>,
-@@ -476,6 +492,7 @@
+@@ -476,6 +497,7 @@
      async save(
        draft: ManualItemDraft,
        input: ManualItemFields,
@@ -55,7 +60,7 @@
      ): Promise<ManualPlanSaveResult> {
        const state = drafts.get(draft);
        if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
-@@ -493,6 +510,28 @@
+@@ -493,6 +515,28 @@
          throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
        fields.participation.people.sort();
        fields.location = fields.location || null;
@@ -84,11 +89,16 @@
        const fieldsText = json(fields);
        if (state.attempt && state.attempt.fields !== fieldsText)
          throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
-@@ -560,6 +599,43 @@
-           Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+@@ -557,9 +601,47 @@
+           ),
+         };
+         const place = corePlaceSchema.parse(
+-          Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
++          state.attempt?.place ??
++            Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
          );
          place.authored_label = fields.location || null;
-+        if (placeDraft) {
++        if (placeDraft && !state.attempt?.place) {
 +          const parts = placeDraft.addressComponents;
 +          place.authored_address = placeDraft.binding.location;
 +          place.authored_address_locality = parts?.locality ?? null;
@@ -128,7 +138,7 @@
          const storedStay = snapshot.graph.trip_stay_details.find(
            (r) => r.event_id === draft.itemId,
          );
-@@ -664,7 +740,7 @@
+@@ -664,7 +746,7 @@
                schedule.end = coreStoredBoundary(row!, "end");
              payloads.push({ command: "SET_ITEM_SCHEDULE", payload: { schedule } });
            }
@@ -137,12 +147,18 @@
              payloads.push({ command: "SET_ITEM_PLACE", payload: { place } });
            if (json(fields.participation) !== json(state.original.participation))
              payloads.push({
-@@ -731,7 +807,7 @@
+@@ -731,7 +813,13 @@
          });
          if (state.attempt && json(state.attempt.commands) !== json(commands))
            throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
 -        state.attempt = { fields: fieldsText, commands };
-+        state.attempt = { fields: fieldsText, placeDraft: placeDraftText, commands };
++        state.attempt = {
++          fields: fieldsText,
++          placeDraft: placeDraftText,
++          // Exact Place/provenance is intent data; rollback retries must not regenerate its clock.
++          place: structuredClone(place),
++          commands,
++        };
          return {
            commands,
            result: async () => {
@@ -166,7 +182,27 @@
  import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
  import { createTripRepository } from "./tripRepository";
  import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
-@@ -593,3 +600,92 @@
+@@ -62,7 +69,8 @@
+     },
+   });
+   const identity = async () => accountId;
+-  const clock = () => "2026-10-20T00:00:00.000Z";
++  let currentClock = "2026-10-20T00:00:00.000Z";
++  const clock = () => currentClock;
+   const core = createTripCoreV2Repository(
+     database,
+     identity,
+@@ -99,6 +107,9 @@
+     read,
+     days,
+     originalAccount,
++    setClock(value: string) {
++      currentClock = value;
++    },
+     failNext(n: number) {
+       inserts = 0;
+       failAt = n;
+@@ -593,3 +604,118 @@
      "Legacy renamed title",
    );
  });
@@ -258,6 +294,32 @@
 +    "MANUAL_PLACE_DRAFT_BINDING",
 +  );
 +  expect(count(f.sql)).toBe(1);
++});
++
++it("reuses the exact reviewed Place after first SQLite insert rollback and a changed retry clock", async () => {
++  const f = await fixture(),
++    repo = f.repo(),
++    draft = await repo.createDraft(f.tripId);
++  const input = inputFor(draft.fields),
++    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
++  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
++  f.failNext(1);
++  await expect(repo.save(draft, input, request)).rejects.toThrow("TEST_WRITE_FAILURE");
++  expect(count(f.sql)).toBe(0);
++  f.setClock("2026-10-21T12:34:56.000Z");
++  f.failNext(0);
++  const saved = await repo.save(draft, input, request);
++  expect(saved.itemId).toBe(draft.itemId);
++  expect(count(f.sql)).toBe(1);
++  const item = (await f.read(f.tripId))!.items[0];
++  expect(item.place).toMatchObject({
++    acceptedAddressLocality: "Nelson",
++    spatialProvenanceRefs: {
++      reviewed_at: "2026-10-20T00:00:00.000Z",
++      acceptance: "USER_CONFIRMED_SAVE",
++    },
++  });
++  expect(await repo.save(draft, input, request)).toEqual(saved);
 +});
 --- a/src/domain/trip/tripCoreV2Day.ts
 +++ b/src/domain/trip/tripCoreV2Day.ts

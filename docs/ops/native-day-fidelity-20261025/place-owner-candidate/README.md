@@ -86,7 +86,8 @@ The combined patch supplies the remaining vertical path:
    latter commits selected address/components and paired coordinates into the
    existing accepted fields. It repeats exact Trip/Item/Account generation/address
    binding, then uses the unchanged Actor/CAS/manual-batch/queue boundary. The
-   first attempt pins the metadata and acceptance choice for exact retry.
+   first attempt pins metadata, acceptance choice and the complete Place snapshot
+   for exact retry, including its original reviewed_at after a transaction rollback.
 2. Native supplies that explicit intent only from the existing Save action after
    the user selected the resolved target. No provider callback, refresh or mere
    Draft presence promotes it. This is a proposed owning interpretation of
@@ -116,7 +117,7 @@ qualified; nothing is inferred from addresses, names or codes.
 ### Final isolated validation
 
 The combined patch is applied only in a disposable materialized source copy;
-active product authority files remain unchanged. **Eight suites / 180 assertions
+active product authority files remain unchanged. **Eight suites / 181 assertions
 PASS**, typecheck, UI guard, scoped ESLint and Prettier PASS. The set includes real
 in-memory SQLite Manual Save → the existing Core/queue → normal Day Feed Reader
 → Header selector: raw Draft stays unresolved; explicit reviewed Save reads back
@@ -128,3 +129,8 @@ same-city/cross-city transition and local-over-accepted identity overlay.
 This is **LOCAL candidate validation**, not installed Native acceptance, Hosted
 Backend E2E, Supabase readback or Cloud L3. Existing P3 write gates and the owning
 Backend contract remain in effect. No GUI/device/Metro/DEV operation was used.
+
+Independent-review repair: first SQLite intent INSERT failure rolls back all rows;
+retrying the same Draft after advancing the clock reuses the frozen full Place
+and original reviewed_at and successfully creates exactly one operation. A
+separate independent recheck of this fixed patch remains required before intake.
