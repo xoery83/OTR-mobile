@@ -1,0 +1,65 @@
+{
+  "remote": {
+    "at": "2026-10-27T22:39:33.238960+00:00",
+    "checks": {
+      "exactContainer": true,
+      "image": true,
+      "source": true,
+      "configPin": true,
+      "host": true,
+      "mounts": true,
+      "flagsClosed": true,
+      "healthy": true,
+      "retainedFallback": true,
+      "healthBody": true,
+      "server.mjs": true,
+      "server-capture.mjs": true,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": true,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": true,
+      "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": true
+    },
+    "configSHA": "b5cdffc5deff48e9372b873d53cfe2f8a39566e2be311424b5ed6d2a5f30687e",
+    "serviceMutations": 0
+  },
+  "sql": {
+    "checks": {
+      "closed": true,
+      "exactReceiptIdentity": true,
+      "postimages": true,
+      "ownerAcl": true
+    },
+    "observed": {
+      "at": "2026-10-27 22:40:35.880444+00",
+      "functions": {
+        "trip_core_guard_historical_source_association": {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "md5": "020142f091e49cb30ced7b6c392ffe17",
+          "oid": "65660",
+          "owner": "postgres"
+        },
+        "trip_sustained_import_p1_capabilities": {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "md5": "04641fb76fb01aa658c8260c8a77e4c9",
+          "oid": "66408",
+          "owner": "postgres"
+        },
+        "trip_sustained_import_p1_guard": {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "md5": "89e6e249f6b450ecb23a78bcd1a79c3c",
+          "oid": "66410",
+          "owner": "postgres"
+        }
+      },
+      "policy": {
+        "enabled": false,
+        "scope": null
+      }
+    }
+  },
+  "sourceProvenance": {
+    "imageRevision": "b25fc2bc14b2bdad21026b1e050595d9b395fb3d",
+    "containerRevision": "f40466a22b08124ced33a267937d7dccc2b55bb4",
+    "note": "Image-only replacement preserved prior container Config label; exact image revision and both bundle hashes match."
+  },
+  "status": "HANDOFF_VERIFIED"
+}

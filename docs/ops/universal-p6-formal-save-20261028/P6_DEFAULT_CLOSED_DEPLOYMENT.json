@@ -1,0 +1,43 @@
+{
+  "stage": {
+    "status": "P6_DEFAULT_CLOSED_CREATED_NOT_STARTED",
+    "sourceHead": "b25fc2bc14b2bdad21026b1e050595d9b395fb3d",
+    "candidateContainerId": "2fd9deeccc12fe44753f8ad780b270f087803018064f7327cc8005a05e178d47",
+    "imageId": "sha256:291156be981b215f420694c91c2471d83eca5b5206dc90ada287f8429f31795d",
+    "baselineContainerId": "f81ef12497a29432cd5846e74882aba78ac259b99c2950b71a10ee933312d7ae",
+    "baselineImageId": "sha256:fa5006e7defbdd3605e8312bdac3bbe7ea7692581792950f098646c0c1659604",
+    "baselineConfigSHA256": "23aaaee53aa794d3e4c0e7793ed565a9fb0529927f4caafd1a5f9cefbb44805a",
+    "candidateConfigSHA256": "b5cdffc5deff48e9372b873d53cfe2f8a39566e2be311424b5ed6d2a5f30687e",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "schemaRlsGrantRoleChanges": 0,
+    "businessGateChanged": false
+  },
+  "build": {
+    "status": "P6_IMAGE_BUILT_NOT_DEPLOYED",
+    "image": "sha256:291156be981b215f420694c91c2471d83eca5b5206dc90ada287f8429f31795d",
+    "source": "b25fc2bc14b2bdad21026b1e050595d9b395fb3d"
+  },
+  "manifest": {
+    "sourceHead": "b25fc2bc14b2bdad21026b1e050595d9b395fb3d",
+    "universalSourceCommit": "73c69e55",
+    "baseImageId": "sha256:fa5006e7defbdd3605e8312bdac3bbe7ea7692581792950f098646c0c1659604",
+    "independentReview": "NO_BLOCKER 69220ac8",
+    "bundles": {
+      "server.mjs": "1e6895654e817a4b2e70fdeb9f6095197bd267823f03c80e3d5b60845ad5824d",
+      "server-capture.mjs": "217d52f8c6d11122a41cbb752f6d52951fca6c8dfb0d2ba4d3d6c1e3b0b7dfdc"
+    },
+    "dockerfileSha256": "4e135119cddb268a6d73e7be0a9dc48e9ebc8ade5efee6ef27e43726256f0a53",
+    "schemaRlsGrantRoleChanges": 0,
+    "sourceReviewEnabled": false,
+    "providerBudgetIncrease": false,
+    "deployment": "NOT_STARTED_WAITING_NATIVE_DEV_HANDOFF"
+  },
+  "status": "DEFAULT_CLOSED_DEPLOYED_HANDOFF_VERIFIED",
+  "at": "2026-10-27T22:43:41.439855+00:00",
+  "health": 200,
+  "businessGate": "CLOSED",
+  "SQL": "OWNER_7d83bc93_APPROVED_DEFAULT_CLOSED_INSTALLED",
+  "normalQAP5Context": 200,
+  "normalQAP5Results": 200
+}
