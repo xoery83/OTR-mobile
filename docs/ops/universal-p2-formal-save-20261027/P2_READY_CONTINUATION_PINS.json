@@ -1,0 +1,109 @@
+{
+  "purpose": "Independent read-only exact P2 READY continuation pins; no authority granted",
+  "devBusinessWrites": 0,
+  "liveActorSet": false,
+  "candidates": [
+    {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "candidate_id": "a85c1ab1-8dc4-8ff2-b0b7-4887a394b465",
+      "candidate_sha256": "7a5a157948d4ddb1a6eeb31324dba8bd8583e276bb07592e40b748c878c0f2c6",
+      "input_catalog_sha256": "0a86a5dcb7c6b1ea138fa237b72782da9edcd0f2bb39fc5bb28f868dde218589",
+      "run_id": "8af82103-55f2-84ea-8e6f-445a15321cf6",
+      "source_id": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "source_revision": 1,
+      "status": "QUALIFIED",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ],
+  "item_count": 0,
+  "observed_at": "2026-10-27 07:23:43.838558+00",
+  "plans": [
+    {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "plan_id": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+      "prepared_slots": 1,
+      "proposal_sha256": "30ef32a53a14e3b80cb46b67a2ef8e451d134c55e6fd2950f5419d3511ce8d7f",
+      "request_sha256": "30ef32a53a14e3b80cb46b67a2ef8e451d134c55e6fd2950f5419d3511ce8d7f",
+      "source_id": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "source_revision": 1,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ],
+  "policies": [
+    {
+      "enabled": true,
+      "revoked_at": null,
+      "universal_p1_import_enabled": false,
+      "universal_p1_review_scope": null
+    }
+  ],
+  "publications": [
+    {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "input_catalog_sha256": "0a86a5dcb7c6b1ea138fa237b72782da9edcd0f2bb39fc5bb28f868dde218589",
+      "publication_id": "2d3ef30c-a3ee-81ba-8a8f-f6d2ecb4b57f",
+      "request_sha256": "42bcceccf523049b73d8120d18e9374dbb889ec5cd0a4c60202b3b231854eb40",
+      "run_id": "8af82103-55f2-84ea-8e6f-445a15321cf6",
+      "source_id": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "source_revision": 1,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ],
+  "receipt_count": 0,
+  "slots": [
+    {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "candidate_id": "a85c1ab1-8dc4-8ff2-b0b7-4887a394b465",
+      "command": "CREATE_SPARSE_FLIGHT",
+      "domain_receipt_id": null,
+      "identity_sha256": "6317078bf77b03d0ba0b515412f2c33b590e626eb7df6e4baac3e889059cdfdb",
+      "intent_sha256": "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+      "operation_id": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+      "output_purpose": {
+        "candidateSha256": "7a5a157948d4ddb1a6eeb31324dba8bd8583e276bb07592e40b748c878c0f2c6",
+        "identityEvidenceRefs": {
+          "destinationAirportId": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/DESTINATION.authored_label"
+          ],
+          "originAirportId": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.authored_label"
+          ],
+          "originDate": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.local_date"
+          ],
+          "service": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.service_number"
+          ]
+        },
+        "identityFacts": {
+          "destinationAirportId": "IATA_AIRPORT:CHC",
+          "issuer": "IATA",
+          "namespace": "IATA_AIRLINE",
+          "operator": "NZ",
+          "originAirportId": "IATA_AIRPORT:AKL",
+          "originDate": "2026-11-02",
+          "serviceNumber": "501"
+        },
+        "inputCatalogSha256": "0a86a5dcb7c6b1ea138fa237b72782da9edcd0f2bb39fc5bb28f868dde218589",
+        "planId": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+        "purposeKind": "FLIGHT_OCCURRENCE",
+        "purposeSha256": "673790917cb5f3895d05bc3066db5fccbee73307fe1d0d3645e2811d87f4f7fa",
+        "slotId": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+        "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+        "sourceRevision": 1,
+        "targetId": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+        "targetKind": "ITEM",
+        "version": 2
+      },
+      "output_slot_id": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+      "plan_id": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+      "purpose_sha256": "673790917cb5f3895d05bc3066db5fccbee73307fe1d0d3645e2811d87f4f7fa",
+      "source_id": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "source_lineage_id": null,
+      "state": "READY",
+      "target_id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "target_kind": "ITEM",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ]
+}

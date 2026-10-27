@@ -1,0 +1,18 @@
+{
+  "reviewedAt": "2026-10-27T07:40:50.024787+00:00",
+  "scope": "Read-only narrow READY continuation runtime rename collision fix and package review",
+  "status": "NO_BLOCKER",
+  "packageSHA256Matches": {
+    "P2_READY_ACTIVATE.sql": true,
+    "P2_REVIEW_CLOSE.sql": true,
+    "P2_REVIEW_SCOPE.json": true,
+    "P2_READY_CONTINUATION_PINS.json": true,
+    "p2_ready_execution.py": true,
+    "p2_ready_runtime.py": true,
+    "P2_READY_OPERATION_EXECUTION_GATE.md": true,
+    "test_p2_ready_runtime.py": true
+  },
+  "newApprovalPresent": false,
+  "devOperations": 0,
+  "testsRunByReviewer": false
+}

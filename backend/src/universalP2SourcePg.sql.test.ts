@@ -280,6 +280,29 @@ it.skipIf(!container)(
       );
       phase = "";
       expect(prepared.readyCommands).toHaveLength(1);
+      // Recover the exact retained READY operation after closure, never a replacement.
+      const readyCloseSql = readFileSync(new URL("P2_REVIEW_CLOSE.sql", packet), "utf8");
+      await packageSql(readyCloseSql);
+      const readyTemplate = readFileSync(
+        new URL("P2_READY_ACTIVATE.sql", packet),
+        "utf8",
+      );
+      const readyActivation = readyTemplate.replace(
+        "__P2_FIXED_WINDOW_DEADLINE__",
+        new Date(Date.now() + 3300000).toISOString(),
+      );
+      await expect(
+        packageSql(
+          readyActivation.replace(
+            "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+            "0".repeat(64),
+          ),
+        ),
+      ).rejects.toThrow("P2_READY_SLOTS_DRIFT");
+      await packageSql(readyActivation);
+      await expect(packageSql(readyActivation)).rejects.toThrow(
+        "P2_REQUIRES_CLOSED_POLICY",
+      );
       const command = prepared.readyCommands[0];
       expect(command.command).toBe("CREATE_SPARSE_FLIGHT");
       expect(command.target.id).toBe(pinned.targetId);

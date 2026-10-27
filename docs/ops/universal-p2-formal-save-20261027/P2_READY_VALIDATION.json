@@ -1,0 +1,25 @@
+{
+  "status": "READY_CONTINUATION_PREPARED_NOT_AUTHORIZED",
+  "isolatedPg": {
+    "status": "P2_SOURCE_ISOLATED_PG_PASS_NOT_DEV",
+    "network": "none",
+    "memory": "256m",
+    "count": 5,
+    "checks": [
+      "existing Source Review early branch preserved",
+      "candidate installs dormant with no active gate",
+      "exact five-function reverse-hash rollback restores actual DEV preimages",
+      "P2 candidate preserves all five OIDs owners and ACLs",
+      "actual owning P2 publication Source Plan Core receipt finalization replay"
+    ]
+  },
+  "controllerFaultTests": 12,
+  "retainedSiblingRollbackRegression": "RED_NAME_COLLISION_THEN_GREEN",
+  "newRuntimeRegressionTests": 1,
+  "controllerSelfTest": "PASS_NO_NETWORK",
+  "typecheck": "PASS",
+  "scopedLint": "PASS",
+  "hostedBusinessWrites": 0,
+  "newWindowArmed": false,
+  "scopeChanged": false
+}
