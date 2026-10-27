@@ -1,0 +1,56 @@
+{
+  "status": "HANDOFF_VERIFIED",
+  "observedAt": "2026-10-27T12:58:08.239480+00:00",
+  "checks": {
+    "container": true,
+    "image": true,
+    "sourceLabel": true,
+    "healthy": true,
+    "config": true,
+    "host": true,
+    "mounts": true,
+    "sixMounts": true,
+    "reviewClosed": true,
+    "enrichmentClosed": true,
+    "oldRetainedStopped": true,
+    "bundle_server.mjs": true,
+    "bundle_server-capture.mjs": true,
+    "tripCreateV3Enabled": true,
+    "healthBody": true,
+    "route_/health": true,
+    "route_/v2/trips/11111111-1111-4111-8111-111111111111/metadata": true,
+    "route_/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": true,
+    "route_/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": true,
+    "SQL_closed_noP4ItemReceipt": true
+  },
+  "containerId": "ad8e88a482921a9a01a51bd356f81332491598d0ac991da34e39e1ece8308f29",
+  "imageId": "sha256:8298d177a12d2939249834eeecf2c822f9d778a15a54544a7791936db2a641c9",
+  "sourceLabelKeys": [
+    "org.opencontainers.image.revision"
+  ],
+  "configSHA256": "8e6a8aae5e58dd2e9533f61455e851fe4ed4a81d112212be25ae8ee10a4ced07",
+  "hostSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+  "mountSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+  "mountCount": 6,
+  "routes": {
+    "/health": 200,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+    "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": 401
+  },
+  "rollbackContainerId": "309d248452d83758b01c2f94cf2f77be973cb02c23c8e8e785e4d0d60d6b7d56",
+  "serviceMutations": 0,
+  "sqlReadOnly": {
+    "item_count": 0,
+    "observed_at": "2026-10-27 12:58:13.16501+00",
+    "policies": [
+      {
+        "enabled": false,
+        "scope": null
+      }
+    ],
+    "receipt_count": 0
+  },
+  "devBusinessWrites": 0,
+  "liveActorSet": false
+}
