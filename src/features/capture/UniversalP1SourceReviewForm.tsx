@@ -49,21 +49,26 @@ export function UniversalP1SourceReviewForm({
   }, [readTripTargets, result.tripId, isCurrent]);
   const stay = candidate.kind === "P3",
     flight = candidate.kind === "P2",
-    rental = candidate.kind === "P4";
+    rental = candidate.kind === "P4",
+    transport = candidate.kind === "P5";
   const names = candidate.fields.filter((f) =>
-      (flight
-        ? ["service", "flight_number", "marketing_flight"]
-        : stay
-          ? ["property.name", "title"]
-          : rental
-            ? candidate.fields.some((f) => f.path === "title")
-              ? ["title"]
-              : ["rental.company", "agency.name"]
-            : ["activity.name", "title"]
+      (transport
+        ? candidate.fields.some((f) => f.path === "service")
+          ? ["service"]
+          : ["service.number"]
+        : flight
+          ? ["service", "flight_number", "marketing_flight"]
+          : stay
+            ? ["property.name", "title"]
+            : rental
+              ? candidate.fields.some((f) => f.path === "title")
+                ? ["title"]
+                : ["rental.company", "agency.name"]
+              : ["activity.name", "title"]
       ).includes(f.path),
     ),
     dates = candidate.fields.filter((f) =>
-      (flight
+      (flight || transport
         ? ["origin.local_date"]
         : stay
           ? ["check_in.date", "schedule.start.local_date"]
@@ -95,14 +100,35 @@ export function UniversalP1SourceReviewForm({
   }
   if (
     candidate.subtype !==
-      (flight ? "FLIGHT" : stay ? "ACCOMMODATION" : rental ? "RENTAL_CAR" : "ACTIVITY") ||
-    (flight &&
+      (transport
+        ? "TRAIN"
+        : flight
+          ? "FLIGHT"
+          : stay
+            ? "ACCOMMODATION"
+            : rental
+              ? "RENTAL_CAR"
+              : "ACTIVITY") ||
+    (transport &&
+      (candidate.fields.filter((f) => f.path === "transport_subtype").length !== 1 ||
+        candidate.fields.find((f) => f.path === "transport_subtype")?.raw !== "TRAIN" ||
+        !candidate.fields.some(
+          (f) =>
+            ["operator", "operator.name"].includes(f.path) &&
+            f.raw.trim() &&
+            !f.uncertainty,
+        ) ||
+        !candidate.fields.some(
+          (f) => f.path === "service.number" && f.raw.trim() && !f.uncertainty,
+        ))) ||
+    ((flight || transport) &&
       (dates[0]?.raw !== localDate ||
         new Set(names.map((f) => f.raw)).size !== 1 ||
         new Set(dates.map((f) => f.raw)).size !== 1 ||
         [...names, ...dates].some((f) => f.uncertainty))) ||
     (!stay &&
       !rental &&
+      !transport &&
       (candidate.bookingTokens.length > 0 || candidate.ticketTokens.length > 0)) ||
     (stay && (!endLocalDate || !localDate || endLocalDate <= localDate)) ||
     (rental &&
@@ -120,15 +146,17 @@ export function UniversalP1SourceReviewForm({
       <UiText>{t("capture.ai.p1ReviewTrip", { name: tripName ?? result.tripId })}</UiText>
       <UiText>
         {t(
-          flight
-            ? "capture.ai.p2ReviewValues"
-            : stay
-              ? "capture.ai.p3ReviewValues"
-              : rental
-                ? endLocalDate
-                  ? "capture.ai.p4ReviewReturnValues"
-                  : "capture.ai.p4ReviewValues"
-                : "capture.ai.p1ReviewValues",
+          transport
+            ? "capture.ai.p5ReviewValues"
+            : flight
+              ? "capture.ai.p2ReviewValues"
+              : stay
+                ? "capture.ai.p3ReviewValues"
+                : rental
+                  ? endLocalDate
+                    ? "capture.ai.p4ReviewReturnValues"
+                    : "capture.ai.p4ReviewValues"
+                  : "capture.ai.p1ReviewValues",
           {
             title: names[0].raw,
             raw: dates[0].raw,
@@ -176,13 +204,15 @@ export function UniversalP1SourceReviewForm({
         label={t(
           newSelected
             ? "capture.ai.p1NewSelected"
-            : flight
-              ? "capture.ai.p2SelectNew"
-              : stay
-                ? "capture.ai.p3SelectNew"
-                : rental
-                  ? "capture.ai.p4SelectNew"
-                  : "capture.ai.p1SelectNew",
+            : transport
+              ? "capture.ai.p5SelectNew"
+              : flight
+                ? "capture.ai.p2SelectNew"
+                : stay
+                  ? "capture.ai.p3SelectNew"
+                  : rental
+                    ? "capture.ai.p4SelectNew"
+                    : "capture.ai.p1SelectNew",
         )}
         onPress={() => setNewSelected((v) => !v)}
       />
@@ -196,13 +226,15 @@ export function UniversalP1SourceReviewForm({
           !newSelected
         }
         label={t(
-          flight
-            ? "capture.ai.p2Confirm"
-            : stay
-              ? "capture.ai.p3Confirm"
-              : rental
-                ? "capture.ai.p4Confirm"
-                : "capture.ai.p1Confirm",
+          transport
+            ? "capture.ai.p5Confirm"
+            : flight
+              ? "capture.ai.p2Confirm"
+              : stay
+                ? "capture.ai.p3Confirm"
+                : rental
+                  ? "capture.ai.p4Confirm"
+                  : "capture.ai.p1Confirm",
         )}
         onPress={() => {
           if (
@@ -236,7 +268,9 @@ export function UniversalP1SourceReviewForm({
                     version: "otr.universal.p4-source-review/1" as const,
                     ...(endLocalDate ? { endLocalDate } : {}),
                   }
-                : { version: "otr.universal.p1-source-review/1" as const }),
+                : transport
+                  ? { version: "otr.universal.p5-source-review/1" as const }
+                  : { version: "otr.universal.p1-source-review/1" as const }),
             decision: "NEW",
             sourceRevision: sources[0].revision,
             title: names[0].raw,

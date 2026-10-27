@@ -1,5 +1,6 @@
 export const en = {
   "capture.ai.title": "AI preview",
+  "capture.composer.qaSample": "Fill synthetic train sample",
   "capture.ai.queued":
     "AI processing is queued. Check results to continue. No itinerary items have been saved.",
   "capture.ai.suggestionsStatus":
@@ -9,6 +10,11 @@ export const en = {
   "capture.ai.p2Confirm": "Confirm flight number and departure date and add item",
   "capture.ai.p2Details":
     "Save the evidenced flight number and departure date as a private item for you. Other details stay with the source.",
+  "capture.ai.p5ReviewValues": "Train: {title}. Departure date: {raw} → {date}.",
+  "capture.ai.p5SelectNew": "Choose NEW: create a separate train item",
+  "capture.ai.p5Confirm": "Confirm train name and date and add item",
+  "capture.ai.p5Details":
+    "Review the original and current Journey before adding this train. Booking, ticket and passenger rights are not confirmed by this action.",
   "capture.ai.p4ReviewValues": "Rental: {title}. Pickup date: {raw} → {date}.",
   "capture.ai.p4ReviewReturnValues":
     "Rental: {title}. Pickup: {raw} → {date}. Return: {endRaw} → {endDate}.",
@@ -2635,6 +2641,12 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.p2Confirm": "确认航班号、出发日期并添加行程项目",
   "capture.ai.p2Details":
     "将有证据支持的航班号及出发日期保存为仅你可见的行程项目，其他信息继续保留在来源中。",
+  "capture.composer.qaSample": "填入合成火车测试原件",
+  "capture.ai.p5ReviewValues": "火车：{title}。出发日期：{raw} → {date}。",
+  "capture.ai.p5SelectNew": "选择新建：创建独立火车行程项目",
+  "capture.ai.p5Confirm": "确认火车名称及日期并添加行程项目",
+  "capture.ai.p5Details":
+    "添加火车前请审阅原件及当前行程。本次操作不确认预订、票权或乘客权益。",
   "capture.ai.p4ReviewValues": "租车：{title}。取车日期：{raw} → {date}。",
   "capture.ai.p4ReviewReturnValues":
     "租车：{title}。取车：{raw} → {date}。还车：{endRaw} → {endDate}。",

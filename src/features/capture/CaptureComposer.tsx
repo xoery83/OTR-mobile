@@ -48,6 +48,7 @@ type Props = {
   onCamera?(): void;
   onRemove(id: number): void;
   onText(text: string): void;
+  onQaSample?(): void;
   onAddText(): void;
   onClear(): void;
   onSubmit(): void;
@@ -72,6 +73,7 @@ export function CaptureComposer({
   onCamera,
   onRemove,
   onText,
+  onQaSample,
   onSubmit,
   onActivity,
 }: Props) {
@@ -197,11 +199,7 @@ export function CaptureComposer({
               },
             ]}
           >
-            <SheetHeader
-              safeTop={false}
-              title={header}
-              onLeft={close}
-            />
+            <SheetHeader safeTop={false} title={header} onLeft={close} />
             {content != null ? (
               <>
                 <UiText style={styles.context}>{context}</UiText>
@@ -273,6 +271,16 @@ export function CaptureComposer({
                   </UiText>
                   <AppIcon name="chevron.down" size={12} color={colors.textSecondary} />
                 </Pressable>
+                {typeof __DEV__ !== "undefined" && __DEV__ && onQaSample ? (
+                  <UiButton
+                    variant="secondary"
+                    label={t("capture.composer.qaSample")}
+                    disabled={locked}
+                    onPress={() => {
+                      if (!locked) onQaSample();
+                    }}
+                  />
+                ) : null}
                 <ScrollView
                   style={styles.body}
                   contentContainerStyle={styles.content}

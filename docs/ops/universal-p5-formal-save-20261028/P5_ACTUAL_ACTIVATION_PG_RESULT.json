@@ -1,0 +1,10 @@
+{
+  "status": "PASS_NOT_DEV",
+  "durationSeconds": 58.75,
+  "scopeCorrection": "operatorLiteral and serviceNumber from exact retained original",
+  "activation": "fixed SQL package executed with disposable fixture identity substitutions only",
+  "fullOwningSaveReadbackReplay": true,
+  "network": "none",
+  "memory": "256MiB",
+  "missingGucNegatives": true
+}

@@ -10,7 +10,7 @@ import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import type { UniversalImportResult } from "../api/universalImportContracts";
 async function fixture(
-  family: "P1" | "P2" | "P3" | "P4" = "P1",
+  family: "P1" | "P2" | "P3" | "P4" | "P5" = "P1",
   sync?: (context: unknown, operationId: string) => Promise<unknown>,
 ) {
   const f =
@@ -18,18 +18,28 @@ async function fixture(
         ? await universalP2SourceFixture()
         : await universalP1SourceFixture(undefined, undefined, "2026-11-03", family),
     review =
-      family === "P4"
+      family === "P5"
         ? {
-            version: "otr.universal.p4-source-review/1" as const,
+            version: "otr.universal.p5-source-review/1" as const,
             decision: "NEW" as const,
             sourceRevision: 1,
-            title: "海滨租车",
+            title: "Coastal QA Train",
             localDate: "2026-11-03",
-            endLocalDate: "2026-11-05",
             originalReviewed: true as const,
             tripReviewed: true as const,
           }
-        : undefined,
+        : family === "P4"
+          ? {
+              version: "otr.universal.p4-source-review/1" as const,
+              decision: "NEW" as const,
+              sourceRevision: 1,
+              title: "海滨租车",
+              localDate: "2026-11-03",
+              endLocalDate: "2026-11-05",
+              originalReviewed: true as const,
+              tripReviewed: true as const,
+            }
+          : undefined,
     p = await (review
       ? (Object.assign(f.input.selection, { sourceReview: review }), f.run())
       : f.run()),
@@ -363,5 +373,25 @@ it("requires explicit Rental Source Review and queues only the existing owning P
   );
   expect(f.command.payload).toMatchObject({ family: "P4" });
   expect(f.command.admission.mode).toBe("REVIEWED_SOURCE");
+  expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
+});
+
+it("uses the owning P5 plan and same durable operation only after explicit Train Review", async () => {
+  const f = await fixture("P5");
+  await expect(f.consumer.confirm(f.model, f.result, "walk")).rejects.toThrow(
+    "OWNING_REVIEW_REQUIRED",
+  );
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+  expect((await f.consumer.confirm(f.model, f.result, "walk", f.review)).status).toBe(
+    "SYNC_PENDING",
+  );
+  expect(f.transport.publishUniversalP1).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ family: "P5", sourceReview: f.review }),
+  );
+  expect(f.command.payload).toMatchObject({
+    family: "P5",
+    service: { transport_subtype: "TRAIN" },
+  });
   expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
 });

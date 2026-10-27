@@ -246,7 +246,19 @@ export async function qualifyImportLifecycleProposals(
     )
       return p[field];
     const match = /^(START|END)\.local_date$/.exec(field);
-    if (match) return p.schedule?.[match[1].toLowerCase()]?.local_date;
+    if (match)
+      return p.family === "P5"
+        ? p.endpoints?.[match[1] === "START" ? "origin" : "destination"]?.time?.local_date
+        : p.schedule?.[match[1].toLowerCase()]?.local_date;
+    if (
+      [
+        "SERVICE.main.transport_subtype",
+        "SERVICE.main.operator_literal",
+        "SERVICE.main.service_number",
+      ].includes(field) &&
+      p.family === "P5"
+    )
+      return p.service?.[field.slice("SERVICE.main.".length)];
     return undefined;
   };
   const validEvidence = (s: (typeof slots)[number]) =>
@@ -266,7 +278,7 @@ export async function qualifyImportLifecycleProposals(
                       s.slot.command !== "CREATE_ITEM" ||
                       !(
                         (field === "START.local_date" &&
-                          ["P1", "P3", "P4"].includes(
+                          ["P1", "P3", "P4", "P5"].includes(
                             (s.slot.payload as { family: string }).family,
                           )) ||
                         (field === "END.local_date" &&

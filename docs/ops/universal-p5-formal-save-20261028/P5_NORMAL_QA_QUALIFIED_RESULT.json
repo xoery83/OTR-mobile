@@ -1,0 +1,178 @@
+{
+  "contextHttp": 200,
+  "context": {
+    "version": "otr.backend.universal-context/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "6a8ee6be-88a3-4f91-8a1e-2881d5409b23",
+    "taskId": "43c79b67-519e-8828-8854-c076356c6a45"
+  },
+  "resultHttp": 200,
+  "result": {
+    "version": "otr.backend.universal-interpretation/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "6a8ee6be-88a3-4f91-8a1e-2881d5409b23",
+    "taskId": "43c79b67-519e-8828-8854-c076356c6a45",
+    "requestSha256": "598af8962c2e6e597c570ea0ea0771654a8df574dd49afd39dcfc2c8e6f21d35",
+    "promptVersion": "real-llm-01-compact/5",
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+        "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+        "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+        "submittedSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+        "status": "READY"
+      }
+    ],
+    "formalReview": "NOT_RUN",
+    "admission": "NOT_RUN",
+    "canonicalWrites": false,
+    "status": "CANDIDATES_READY",
+    "providerOutcome": "SETTLED",
+    "providerReceipt": {
+      "requestId": "85c97dab-0d2f-49bd-a5a0-f07d255834cf",
+      "requestSha256": "937ba95a9125eb74ead9b86c4e461c4f6dc66bc06f0d9e088f4c51376ed2d0ea",
+      "responseSha256": "2731b7ef9e0eb20acbd1da7c3556bf52bf9976fffffd9d73e839d609af99c0ee",
+      "usage": {
+        "input_tokens": 1537,
+        "output_tokens": 139,
+        "total_tokens": 1676,
+        "cached_input_tokens": 1280,
+        "reasoning_tokens": null,
+        "provider_extension": {
+          "prompt_cache_miss_tokens": 257
+        },
+        "usage_quality": "ACTUAL_REPORTED"
+      },
+      "costNanos": "251580"
+    },
+    "candidates": [
+      {
+        "id": "ae46ca8f83a93328179d14fc",
+        "token": "i1",
+        "kind": "P5",
+        "subtype": "TRAIN",
+        "fields": [
+          {
+            "sourceId": "S0",
+            "path": "service",
+            "raw": "Coastal QA Train",
+            "start": 27,
+            "end": 43
+          },
+          {
+            "sourceId": "S0",
+            "path": "operator.name",
+            "raw": "Coastal QA Rail",
+            "start": 54,
+            "end": 69
+          },
+          {
+            "sourceId": "S0",
+            "path": "service.number",
+            "raw": "CQ101",
+            "start": 86,
+            "end": 91
+          },
+          {
+            "sourceId": "S0",
+            "path": "transport_subtype",
+            "raw": "TRAIN",
+            "start": 111,
+            "end": 116
+          },
+          {
+            "sourceId": "S0",
+            "path": "origin.local_date",
+            "raw": "2026-11-03",
+            "start": 133,
+            "end": 143
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i1",
+          "kind": "P5",
+          "minimumFacts": "EVIDENCED_CANDIDATE_FACTS",
+          "missing": [],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "HIGH_CONFIDENCE"
+      }
+    ],
+    "bookingObservations": [],
+    "ticketObservations": [],
+    "quality": {
+      "decisions": [
+        {
+          "token": "i1",
+          "kind": "P5",
+          "tier": "HIGH_CONFIDENCE",
+          "reasons": [
+            "CORE_AND_FIELD_EVIDENCE_VERIFIED"
+          ],
+          "sourceIds": [
+            "S0"
+          ],
+          "fieldCount": 5
+        }
+      ],
+      "acceptedTokens": [
+        "i1"
+      ],
+      "reviewableTokens": [],
+      "abstainedTokens": [],
+      "formalQualification": "NOT_SCORABLE"
+    },
+    "minimumFacts": [
+      {
+        "token": "i1",
+        "kind": "P5",
+        "minimumFacts": "EVIDENCED_CANDIDATE_FACTS",
+        "missing": [],
+        "createReady": false,
+        "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+      }
+    ],
+    "sourceObservations": [],
+    "advisoryStatus": "VALID",
+    "advisoryIssues": [],
+    "outputCoverage": "PARTIAL_COVERAGE",
+    "coverageGaps": [
+      {
+        "field": "P3-P6.image_advisory",
+        "reason": "INDEPENDENT_OCR_RECEIPT_UNAVAILABLE"
+      },
+      {
+        "field": "P5.dynamic_provider_label_value",
+        "reason": "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P5.dynamic_boarding_or_meeting_labels",
+        "reason": "FINITE_ROLE_LABELS_ONLY; PROVIDER-SPECIFIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P4.actual_vehicle_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; VEHICLE_PROOF_UNAVAILABLE"
+      },
+      {
+        "field": "P2.passenger_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; TRIP_PERSON_QUALIFIER_UNAVAILABLE"
+      }
+    ],
+    "unresolved": []
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "status": "DEFAULT_CLOSED_DEPLOYED",
+  "source": "fbd31424b2d153a54e802cc732297c3ecd4ff8d4",
+  "image": "sha256:fa5006e7defbdd3605e8312bdac3bbe7ea7692581792950f098646c0c1659604",
+  "container": "f81ef12497a29432cd5846e74882aba78ac259b99c2950b71a10ee933312d7ae",
+  "configHash": "23aaaee53aa794d3e4c0e7793ed565a9fb0529927f4caafd1a5f9cefbb44805a",
+  "hostHash": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+  "mountHash": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+  "normalization": "unchanged",
+  "rollbackContainer": "ad8e88a482921a9a01a51bd356f81332491598d0ac991da34e39e1ece8308f29",
+  "rollbackName": "otr-dev-backend-retained-091dd63f90",
+  "health": 200,
+  "observedAt": "2026-10-27T20:59:25.103762+00:00",
+  "businessGate": "NOT_ACTIVATED",
+  "SQL": "DEFAULT_CLOSED_INSTALLED",
+  "fixtureSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+  "fixtureBytes": 143,
+  "independentObservation": {
+    "health": "healthy",
+    "httpHealth": 200,
+    "sourceReview": "CLOSED",
+    "enrichment": "CLOSED",
+    "sameP4Results": 200,
+    "sameP4Status": "CANDIDATES_READY",
+    "sameP4ProviderOutcome": "SETTLED",
+    "configHostMountHashes": "MATCH"
+  }
+}

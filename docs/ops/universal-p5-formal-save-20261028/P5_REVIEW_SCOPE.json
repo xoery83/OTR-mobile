@@ -1,0 +1,17 @@
+{
+  "family": "P5",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+  "batchId": "6a8ee6be-88a3-4f91-8a1e-2881d5409b23",
+  "taskId": "43c79b67-519e-8828-8854-c076356c6a45",
+  "token": "i1",
+  "resultSha256": "ecdb84fc4c5d830dec1f2d3a449808024a2192aaa7bacc0420d1aea89ca4c082",
+  "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+  "targetId": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+  "operationId": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
+  "slotId": "fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6",
+  "title": "Coastal QA Train",
+  "localDate": "2026-11-03",
+  "operatorLiteral": "Coastal QA Rail",
+  "serviceNumber": "CQ101"
+}

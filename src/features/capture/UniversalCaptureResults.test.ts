@@ -430,3 +430,42 @@ it.each([
     expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
   },
 );
+
+it.each(["TRAIN", "TAXI"])(
+  "offers only evidenced Train P5 review, never maps %s to another transport",
+  (subtype) => {
+    const f = fixture();
+    Object.assign(f.result.candidates[0], {
+      kind: "P5",
+      subtype,
+      fields: [
+        f.evidence("S0", "service", "Coastal QA Train"),
+        f.evidence("S0", "operator.name", "Coastal QA Rail"),
+        f.evidence("S0", "service.number", "CQ101"),
+        f.evidence("S0", "origin.local_date", "2026-11-04"),
+        f.evidence("S0", "transport_subtype", subtype),
+      ],
+    });
+    f.result.quality!.decisions[0].kind = "P5";
+    const confirm = vi.fn(async () => {});
+    renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        admission: {
+          enabled: true,
+          enabledFamilies: ["P5"],
+          statuses: {},
+          busyToken: null,
+          confirm,
+          readOriginal: vi.fn(async () => "original"),
+        },
+      }),
+    );
+    const button = state.buttons.find((b) => b.label === t("capture.ai.p5Confirm"));
+    if (subtype === "TRAIN") {
+      expect(button?.disabled).toBe(true);
+      button!.onPress();
+      expect(confirm).not.toHaveBeenCalled();
+    } else expect(button).toBeUndefined();
+  },
+);

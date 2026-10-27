@@ -13,6 +13,9 @@ export const p1SourceFieldSchema = z.enum([
   "END.local_time",
   "PLACE.authored_label",
   "PLACE.authored_text",
+  "SERVICE.main.transport_subtype",
+  "SERVICE.main.operator_literal",
+  "SERVICE.main.service_number",
 ]);
 const ref = z
   .string()
@@ -33,7 +36,7 @@ export const p1PurposeBindingV2Schema = z.strictObject({
   targetKind: z.literal("ITEM"),
   targetId: uuid,
   operationId: uuid,
-  purposeKind: z.enum(["P1_ITEM", "P3_ITEM", "P4_ITEM"]),
+  purposeKind: z.enum(["P1_ITEM", "P3_ITEM", "P4_ITEM", "P5_ITEM"]),
 });
 const selected = z
   .array(p1SourceFieldSchema)
@@ -82,6 +85,16 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     throw Error("INVALID_PROVENANCE");
   const p = c.payload as {
     core?: { title?: string };
+    endpoints?: { origin?: { time?: { local_date?: string | null } } };
+    service?: {
+      transport_subtype?: string;
+      service_literal?: string;
+      operator_literal?: string;
+      operator_value?: string;
+      operator_issuer?: string;
+      operator_namespace?: string;
+      service_number?: string;
+    };
     schedule?: {
       start?: { local_date?: string | null };
       end?: { local_date?: string | null };
@@ -89,7 +102,9 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
   };
   if (
     !p.core?.title?.trim() ||
-    !p.schedule?.start?.local_date ||
+    !(b.purposeKind === "P5_ITEM"
+      ? p.endpoints?.origin?.time?.local_date
+      : p.schedule?.start?.local_date) ||
     !v.selectedFields.includes("ROOT.title") ||
     !v.selectedFields.includes("START.local_date") ||
     (b.purposeKind === "P3_ITEM" &&
@@ -97,6 +112,21 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     (b.purposeKind === "P4_ITEM" &&
       p.schedule?.end?.local_date &&
       !v.selectedFields.includes("END.local_date")) ||
+    (b.purposeKind === "P5_ITEM" &&
+      (p.service?.transport_subtype !== "TRAIN" ||
+        p.service.service_literal !== p.core.title ||
+        !p.service.operator_literal?.trim() ||
+        !p.service.service_number?.trim() ||
+        p.service.operator_namespace !== "NAME" ||
+        p.service.operator_issuer !== "NAME" ||
+        p.service.operator_value !== p.service.operator_literal ||
+        ![
+          "SERVICE.main.transport_subtype",
+          "SERVICE.main.operator_literal",
+          "SERVICE.main.service_number",
+        ].every((k) =>
+          v.selectedFields.includes(k as P1OutputPurposeV2["selectedFields"][number]),
+        ))) ||
     Object.keys(v.evidenceRefs).sort().join("|") !== v.selectedFields.join("|")
   )
     throw Error("INCOMPLETE_SOURCE_EVIDENCE");

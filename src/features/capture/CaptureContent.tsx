@@ -1,3 +1,4 @@
+import { universalQaFixture } from "@/data/operations/universalQaFixture";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { UiButton, UiSection } from "@/ui/controls";
@@ -315,6 +316,24 @@ export function CaptureContent({
     return (
       <CaptureComposer
         snapshot={draft}
+        onQaSample={
+          universalQaFixture(
+            accountId,
+            selectedTripPrior,
+            typeof __DEV__ !== "undefined" && __DEV__,
+          ) !== undefined
+            ? () => {
+                if (!current() || running.current || attempted || reopening || model)
+                  return;
+                const sample = universalQaFixture(
+                  accountId,
+                  selectedTripPrior,
+                  typeof __DEV__ !== "undefined" && __DEV__,
+                );
+                if (sample !== undefined) staging.setEditorText(sample);
+              }
+            : undefined
+        }
         count={staging.prepareSubmit()?.length ?? 0}
         tripName={selectedTripName}
         readTripTargets={readTripTargets}

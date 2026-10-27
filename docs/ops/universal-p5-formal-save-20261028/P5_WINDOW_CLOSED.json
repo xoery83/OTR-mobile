@@ -1,0 +1,1 @@
+{"status": "P5_SCOPE_CLOSED_RUNTIME_DEFAULT_RESTORED", "at": "2026-10-27T21:42:11.777197Z", "policy": {"enabled": false, "scope": null}, "runtime": {"status": "ROLLBACK_VERIFIED", "containerId": "f81ef12497a29432cd5846e74882aba78ac259b99c2950b71a10ee933312d7ae", "imageId": "sha256:fa5006e7defbdd3605e8312bdac3bbe7ea7692581792950f098646c0c1659604"}, "businessRecordsDeleted": 0}
