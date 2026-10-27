@@ -229,6 +229,8 @@ vi.mock("@/data/sync/ledgerOperationalSync", () => ({
 }));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("@/data/auth/authRepository", () => ({
+  clearLocalSession: vi.fn(),
+  writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
   readLocalSession: vi.fn(),
 }));
@@ -1602,4 +1604,20 @@ it("authors current Add Traveler slots explicitly as shared only for sustained v
     },
   });
   expect(inputValue).not.toHaveProperty("travelers");
+});
+
+it("forwards the saved-item revision to Preparation without remounting the workspace", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  render();
+  expect(state.preparation.refreshKey).toBe(0);
+  const initial = state.refs;
+  (props as any).refreshKey = 1;
+  render();
+  expect(state.preparation.refreshKey).toBe(1);
+  expect(state.refs).toBe(initial);
+  delete (props as any).refreshKey;
 });

@@ -1,3 +1,7 @@
+## 28 October — retained Home Recent manual-save refresh
+
+Independent candidate on `9d7afbe5`: threads existing TripScreen manual-save revision through LocalTripWorkspace to Preparation read callback. P1–P6 Create/Edit now invalidate retained Recent names without remounting or adding a cache/authority; unchanged scope/revision rerenders retain callback/results. Existing AppState/Sync refresh and account/request fences unchanged. Preparation/Workspace/Home3 suites143PASS, types/UIguard/scopedlint PASS (existing Workspace test import-order warnings only). No device/DEV/backend operations; R38 actual-device return-to-Home verification remains parent task.
+
 ## 28 October — finite Enrichment safely reconciled / P5 simulator acceptance
 
 Latest: Owner explicitly approved one same-scope replacement window, with cumulative budgets retained and no P2–P6 Cloud/PublicCache permission expansion. Host fixes ddaf05ec/1bc50e1d/a6c65d31/c8e365ef (exact decimal prices, fixed-stage diagnostics, strict caller filtering, fresh-preimage runtime CAS) independently reviewed NO_BLOCKER; independent Python58/operator17 PASS. Normal QA Login refreshed without copying simulator credentials. No replacement T0/READY/remote token or Gate exists yet: Universal owns DEV during its default-closed P5 deployment and will return the latest healthy baseline; never restore old8298 over its new fa5006 image.

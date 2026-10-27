@@ -93,6 +93,7 @@ const knownDate = (value: string | null) => {
 };
 
 type Props = {
+  refreshKey?: number;
   widgetsForHome?: (
     tripId: string,
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
@@ -130,6 +131,7 @@ export function LocalTripWorkspace(props: Props) {
   );
 }
 function LocalTripContent({
+  refreshKey = 0,
   tripId,
   mode = "LIST",
   onOpen,
@@ -657,6 +659,7 @@ function LocalTripContent({
           ? "Undated"
           : null;
   const preparation = useTripPreparationWidget({
+    refreshKey,
     tripId: metadata?.id ?? null,
     metadata: metadata
       ? {

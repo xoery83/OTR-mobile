@@ -22,6 +22,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { TripPreparationWidget } from "./TripPreparationWidget";
 
 export function useTripPreparationWidget({
+  refreshKey = 0,
   tripId,
   undated,
   onImport,
@@ -34,6 +35,7 @@ export function useTripPreparationWidget({
   onCover,
   onSetup,
 }: {
+  refreshKey?: number;
   tripId: string | null;
   undated: boolean;
   onImport?: () => void;
@@ -93,7 +95,9 @@ export function useTripPreparationWidget({
         setState("UNAVAILABLE");
       }
     }
-  }, [tripId, generation, onSetup]);
+    // A committed manual mutation invalidates this retained projection even while Home stays mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId, generation, onSetup, refreshKey]);
   const cancelPending = useCallback(() => {
     request.current++;
   }, []);

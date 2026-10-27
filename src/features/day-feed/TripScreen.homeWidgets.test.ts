@@ -944,11 +944,13 @@ it("accepted Day passes pending increments into the original normal feed and sav
   const workspace = find(await loaded(), LocalTripWorkspace);
   const before = workspace.widgetsForHome(reference, "Active")[0].content.props;
   expect(before.refreshKey).toBe(0);
+  expect(workspace.refreshKey).toBe(0);
   workspace.onManualItemSaved(reference, 5);
   for (let i = 0; i < 16; i++) await Promise.resolve();
   const after = find(render(), LocalTripWorkspace).widgetsForHome(reference, "Active")[0]
     .content.props;
   expect(after.refreshKey).toBe(1);
+  expect(find(render(), LocalTripWorkspace).refreshKey).toBe(1);
   workspace.onManualItemSaved(reference, 4);
   expect(
     find(render(), LocalTripWorkspace).widgetsForHome(reference, "Active")[0].content

@@ -1520,6 +1520,7 @@ function TripContent({
       ) : null}
       {!today ? (
         <LocalTripWorkspace
+          refreshKey={revision}
           onHomeHeroHeight={onHomeHeroHeight}
           tripId={requested || null}
           mode={params.view === "create" ? "CREATE" : "LIST"}

@@ -3,6 +3,9 @@ import { useTripPreparationWidget } from "./useTripPreparationWidget";
 import { router } from "expo-router";
 const state = vi.hoisted(() => ({
   generation: 1,
+  memo: false,
+  callbackCursor: 0,
+  callbacks: [] as { deps: readonly unknown[]; fn: unknown }[],
   cursor: 0,
   values: [] as unknown[],
   read: vi.fn(),
@@ -26,6 +29,7 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {
     const i = state.cursor++;
+    if (i === 0) state.callbackCursor = 0;
     if (!(i in state.values)) state.values[i] = initial;
     return [
       state.values[i],
@@ -35,7 +39,14 @@ vi.mock("react", async (original) => ({
     ];
   },
   useRef: () => ({ current: 0 }),
-  useCallback: (fn: unknown) => fn,
+  useCallback: (fn: unknown, deps: readonly unknown[]) => {
+    if (!state.memo) return fn;
+    const i = state.callbackCursor++;
+    const previous = state.callbacks[i];
+    if (!previous || deps.some((value, index) => !Object.is(value, previous.deps[index])))
+      state.callbacks[i] = { deps, fn };
+    return state.callbacks[i].fn;
+  },
   useEffect: (fn: () => () => void) => {
     state.effects.push(fn);
   },
@@ -103,6 +114,8 @@ function PreparationHarness(canPlan: boolean, onSetup = vi.fn()) {
 }
 beforeEach(() => {
   state.generation = 1;
+  state.memo = false;
+  state.callbacks = [];
   state.read.mockReset();
   state.resolveSource.mockReset();
   state.setup.mockReset();
@@ -499,4 +512,71 @@ it("Pending→accepted completion makes the next Recent click use the fresh acce
   );
   expect(state.resolveSource).toHaveBeenLastCalledWith("trip", "item", token);
   expect(view.local).not.toHaveBeenCalled();
+});
+
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"])(
+  "saved %s name refreshes Recent in place while unchanged renders keep the same read effect",
+  async (family) => {
+    state.memo = true;
+    state.values = [null, "LOADING", null];
+    const scope = { tripId: "trip", accountId: "actor", generation: 1 };
+    const value = (title: string) => ({
+      scope,
+      epoch: null,
+      canPlan: true,
+      preparation: {
+        itemCount: 1,
+        counts: [{ family, count: 1 }],
+        recent: [{ itemId: "same-id", family, title }],
+      },
+    });
+    const onSetup = vi.fn();
+    const Render = (refreshKey: number) => {
+      state.cursor = 0;
+      const widget = useTripPreparationWidget({
+        tripId: "trip",
+        undated: true,
+        refreshKey,
+        onSetup,
+      });
+      return (widget!.content as import("react").ReactElement<any>).props;
+    };
+    state.values = [value("Original name"), "READY", null];
+    state.read.mockResolvedValue(value("Original name"));
+    Render(0);
+    const firstEffect = state.effects.at(-1)!;
+    const blur = firstEffect();
+    await vi.waitFor(() => expect(onSetup).toHaveBeenCalledOnce());
+    expect(Render(0).value.recent[0].title).toBe("Original name");
+    expect(state.effects.at(-1)).toBe(firstEffect);
+    expect(state.read).toHaveBeenCalledOnce();
+    state.read.mockResolvedValue(value("Edited name"));
+    Render(1);
+    const editedEffect = state.effects.at(-1)!;
+    expect(editedEffect).not.toBe(firstEffect);
+    blur();
+    editedEffect();
+    await vi.waitFor(() => expect(state.read).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(Render(1).value.recent[0].title).toBe("Edited name"));
+    expect(state.values[1]).toBe("READY");
+    expect(state.read).toHaveBeenCalledTimes(2);
+  },
+);
+it("drops an edited Recent read completing after the actor generation changes", async () => {
+  const view = PreparationHarness(true);
+  let done!: (value: unknown) => void;
+  state.read.mockReturnValue(
+    new Promise((resolve) => {
+      done = resolve;
+    }),
+  );
+  state.effects[0]();
+  await vi.waitFor(() => expect(done).toBeTypeOf("function"));
+  state.generation = 2;
+  done({
+    ...view.read,
+    preparation: { itemCount: 1, counts: [], recent: [{ title: "Other actor edit" }] },
+  });
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.values[0]).toBe(view.read);
 });
