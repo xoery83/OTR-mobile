@@ -1,0 +1,17 @@
+{
+  "status": "CONSUMED_CLOSED_OPERATIONAL_ALLOWANCE",
+  "batchId": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+  "taskId": "7338329a-46eb-8050-9bec-96376f08b296",
+  "callId": "c3beea62-f75b-892f-be87-461725d0a6cb",
+  "additionalObjectsPermittedByConsumedGate": 0,
+  "additionalPaidAttemptsPermittedByConsumedGate": 0,
+  "actualProviderOutcome": "SETTLED",
+  "actualCostNanos": "187680",
+  "actualTokens": 1601,
+  "quotaDatabaseDelta": false,
+  "scope6StandingConfigurationRetained": true,
+  "oldUnknownRetained": true,
+  "p1P3BusinessGateClosed": true,
+  "p2SaveAuthority": false,
+  "retainedAllObjectsAndReceipts": true
+}

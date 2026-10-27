@@ -231,3 +231,65 @@ it("qualifies the minimal date-only P2 input without inventing clocks, places or
   expect(plan.slots[1].baseVector).toBeNull();
   expect(new Set(plan.slots.map((s) => s.target.id)).size).toBe(1);
 });
+
+it("explicit Sparse-only planning never auto-qualifies or copies endpoint facts", async () => {
+  const f = await captureFlightFixture();
+  const ids = f.built.publication.candidates.map((c) => ({
+    candidateId: c.candidateId,
+    itemId: randomUUID(),
+    createSlotId: randomUUID(),
+    createOperationId: randomUUID(),
+    qualifySlotId: randomUUID(),
+    qualifyOperationId: randomUUID(),
+  }));
+  const planId = randomUUID();
+  const plan = buildCaptureFlightSourcePlanV2(
+    f.built.publication,
+    planId,
+    ids,
+    "SPARSE_ONLY",
+  );
+  expect(plan.slots).toHaveLength(ids.length);
+  for (const [index, slot] of plan.slots.entries()) {
+    expect(slot.command).toBe("CREATE_SPARSE_FLIGHT");
+    expect(slot.operationId).toBe(ids[index].createOperationId);
+    expect(slot.target.id).toBe(ids[index].itemId);
+    expect(slot.selectedFields).toEqual(["flightNumberLiteral", "departureDate"]);
+    expect(Object.keys(slot.payload as object).sort()).toEqual([
+      "acl",
+      "departureDate",
+      "flightNumberLiteral",
+      "participation",
+    ]);
+  }
+  expect(
+    buildCaptureFlightSourcePlanV2(f.built.publication, planId, ids, "SPARSE_ONLY"),
+  ).toEqual(plan);
+  expect(
+    buildCaptureFlightSourcePlanV2(f.built.publication, planId, ids).slots,
+  ).toHaveLength(ids.length * 2);
+});
+
+it("keeps the actual 27-byte P2 input unresolved without owning airport authority, even for Sparse-only", async () => {
+  const f = await captureFlightFixture("NZ501 AKL→CHC 2026-11-02\n");
+  expect(Buffer.byteLength(f.batch.request.materials[0].text)).toBe(27);
+  const checked = await extractCoreFlightPublication(
+    f.built.publication,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    async () => null,
+  );
+  expect(checked.sealed).toHaveLength(1);
+  expect(checked.sealed[0]).toMatchObject({
+    status: "REVIEW",
+    errorCode: "UNRESOLVED_IDENTITY",
+    identityFacts: null,
+    airportBindings: [],
+  });
+  expect(
+    f.built.publication.candidates[0].facts.origin?.location.accepted_place_id,
+  ).toBeNull();
+  expect(f.built.publication.candidates[0].facts.origin?.time.local_time).toBeNull();
+});

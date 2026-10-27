@@ -201,6 +201,7 @@ export function buildCaptureFlightSourcePlanV2(
   publication: CoreCandidatePublicationV2,
   planId: string,
   identities: readonly CaptureFlightCoreIds[],
+  output: "SPARSE_ONLY" | "CREATE_AND_QUALIFY" = "CREATE_AND_QUALIFY",
 ) {
   publication = coreCandidatePublicationV2Schema.parse(publication);
   if (
@@ -249,7 +250,10 @@ export function buildCaptureFlightSourcePlanV2(
           ...coreDefaults("member"),
         },
       },
-      ...(c.facts.origin && c.facts.destination && c.facts.services
+      ...(output === "CREATE_AND_QUALIFY" &&
+      c.facts.origin &&
+      c.facts.destination &&
+      c.facts.services
         ? [
             {
               slotId: ids.qualifySlotId,

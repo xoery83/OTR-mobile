@@ -1,0 +1,19 @@
+{
+  "status": "INDEPENDENT_READONLY_REVIEW_NO_BLOCKER_DEFAULT_CLOSED",
+  "reviewer": "/root/p1_source_review_independent",
+  "files": {
+    "src/domain/trip/universalP2SourceReview.ts": "146d336c606c95fcb327e573b27ea2acdb8ad2c5df4392966c89e3abd8b94d32",
+    "backend/src/universalP2SourceReview.ts": "06af76ce72226262b0dd9d5ba11fa888ed02f588f931883e96ae5951c06dbef6",
+    "backend/src/universalP2SourceReview.test.ts": "a2cfffa03ba412786d47d337e892173811eb84a7976513a128675e2406217420",
+    "src/data/interpretation/captureFlightCoreV2.ts": "71c7219237c6add990970f6ddeb0b9f47d2b8cc604e6a69bdf99c258dd168707",
+    "src/data/interpretation/captureFlightCoreV2.test.ts": "ca92b1c0da34984779504a55af288c4ee8d0d6245e144fd51aaf041493ffd34c"
+  },
+  "tests": {
+    "focused": 34,
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "runtimeWired": false,
+  "businessAuthorityOpened": false,
+  "limitation": "HTTP integration must supply owning Published Task/Batch/Run/fence/result hash. Client-provided matching hashes are not authority. Existing Source Plan still requires real owning airport identity proof; actual DEV AKL/CHC rows0."
+}
