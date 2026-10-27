@@ -990,9 +990,11 @@ it("native status-bar scroll-to-top prepends a sparse batch without a drag or li
   reach(rows[74], 0);
   rerender();
   const listKey = state.props.key;
+  expect(state.props.updateCellsBatchingPeriod).toBe(50);
   state.props.onScrollToTop();
   rerender();
   expect(state.props.data[0]).toBe(rows[66]);
+  expect(state.props.updateCellsBatchingPeriod).toBe(0);
   expect(state.props.data[8]).toBe(rows[74]);
   expect(state.props.key).toBe(listKey);
   expect(state.props.maintainVisibleContentPosition).toBeUndefined();

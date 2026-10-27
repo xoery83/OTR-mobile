@@ -1,3 +1,4 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
@@ -191,13 +192,13 @@ export function JourneySnapshotWidget({
           </Pressable>
         ))}
         {!visible?.snapshot.tags.length ? (
-          <Text style={styles.empty}>
-            {state === "LOADING"
-              ? copy.loading
-              : state === "UNAVAILABLE"
-                ? copy.unavailable
-                : copy.empty}
-          </Text>
+          state === "LOADING" && !visible ? (
+            <DayReadSkeleton compact />
+          ) : (
+            <Text style={styles.empty}>
+              {state === "UNAVAILABLE" ? copy.unavailable : copy.empty}
+            </Text>
+          )
         ) : null}
       </View>
       {state === "UNAVAILABLE" && visible?.snapshot.tags.length ? (

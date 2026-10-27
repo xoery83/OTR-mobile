@@ -686,6 +686,7 @@ export function WindowedDayList<T>({
         )
       }
       {...dayListWindow}
+      updateCellsBatchingPeriod={statusBarOrigin.current !== null ? 0 : 50}
       removeClippedSubviews={false}
       maintainVisibleContentPosition={
         jumping || statusBarOrigin.current !== null
@@ -906,6 +907,7 @@ export function WindowedDayList<T>({
             statusBarOrigin.current = null;
             offset.current = 0;
             list.current?.scrollToOffset({ offset: 0, animated: true });
+            list.current?.recordInteraction?.();
           });
         }
         retry();

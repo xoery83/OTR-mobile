@@ -1,3 +1,4 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { Alert, Linking, ScrollView, StyleSheet } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -170,10 +171,12 @@ export function P3Detail() {
         <ScrollView style={styles.root} contentContainerStyle={styles.content}>
           {visible ? (
             <StayReadView stay={presentation!} role={role} context={context} />
-          ) : (
-            <UiText style={styles.meta}>
-              {t(failed ? "dayFeed.unavailable" : "dayFeed.loading")}
+          ) : failed ? (
+            <UiText accessibilityRole="alert" style={styles.meta}>
+              {t("dayFeed.unavailable")}
             </UiText>
+          ) : (
+            <DayReadSkeleton />
           )}
         </ScrollView>
       </NavigationContentFrame>

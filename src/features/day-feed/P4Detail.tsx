@@ -1,3 +1,4 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -149,10 +150,12 @@ export function P4Detail() {
               context={context}
               onDepth={() => {}}
             />
-          ) : (
-            <UiText style={styles.meta}>
-              {t(failed ? "dayFeed.unavailable" : "dayFeed.loading")}
+          ) : failed ? (
+            <UiText accessibilityRole="alert" style={styles.meta}>
+              {t("dayFeed.unavailable")}
             </UiText>
+          ) : (
+            <DayReadSkeleton />
           )}
         </ScrollView>
       </NavigationContentFrame>

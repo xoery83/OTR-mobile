@@ -1,3 +1,4 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -159,10 +160,12 @@ export function P2Detail() {
                   }),
               }}
             />
-          ) : (
-            <UiText style={styles.meta}>
-              {t(failed ? "dayFeed.unavailable" : "dayFeed.loading")}
+          ) : failed ? (
+            <UiText accessibilityRole="alert" style={styles.meta}>
+              {t("dayFeed.unavailable")}
             </UiText>
+          ) : (
+            <DayReadSkeleton />
           )}
         </ScrollView>
       </NavigationContentFrame>

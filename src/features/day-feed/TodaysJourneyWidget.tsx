@@ -1,3 +1,4 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { PendingSyncDot } from "./PendingSyncDot";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
@@ -286,9 +287,11 @@ export function TodaysJourneyWidget({
             <Text style={styles.meta}>{copy.multipleStays}</Text>
           ) : null}
         </>
+      ) : status === "LOADING" ? (
+        <DayReadSkeleton compact />
       ) : (
-        <Text style={styles.meta}>
-          {status === "LOADING" ? copy.loading : copy.unavailable}
+        <Text accessibilityRole="alert" style={styles.meta}>
+          {copy.unavailable}
         </Text>
       )}
       <View style={styles.actions}>
