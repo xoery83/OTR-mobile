@@ -1,0 +1,23 @@
+{
+  "status": "HANDOFF_VERIFIED",
+  "result": {
+    "status": "DEPLOY_HEALTH_AND_BOUNDARIES_PASS",
+    "containerId": "c5072bea46ccae9d9ad4eccae19908d02d0c84366dbb98c3d8bb7e709f43481e",
+    "imageId": "sha256:77c7055e5dea1e89ac2e595e6890058ec7b14689105d692143a56e65d566dbef",
+    "configSHA256": "4dec518e49bb4b6cf45ea92de5fad9fe47b25619e71d3bdf885e9994d1210edb",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "health": {
+      "status": "ok",
+      "environment": "development"
+    },
+    "routes": {
+      "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+      "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+      "/v2/import-batches/11111111-1111-4111-8111-111111111111/interpretations?tripId=11111111-1111-4111-8111-111111111111": 401
+    },
+    "siblingCount": 23,
+    "rollbackImageRetained": "sha256:0d50d567cbd9f35022b626b2f45b05a9fe7aa2137fbfbe443c48e3329ca157cb",
+    "restartCount": 0
+  }
+}

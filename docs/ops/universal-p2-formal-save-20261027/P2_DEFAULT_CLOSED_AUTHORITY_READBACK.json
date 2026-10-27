@@ -1,0 +1,41 @@
+{
+  "airports": [
+    {
+      "airport_code": "AKL",
+      "enabled": false,
+      "identity_id": "IATA_AIRPORT:AKL",
+      "issuer": "IATA",
+      "namespace": "IATA_AIRPORT",
+      "registry_sha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+      "registry_version": "otr-dev-universal-p2-airports/20261027/1",
+      "valid_from": "2026-11-02",
+      "valid_until": "2026-11-02"
+    },
+    {
+      "airport_code": "CHC",
+      "enabled": false,
+      "identity_id": "IATA_AIRPORT:CHC",
+      "issuer": "IATA",
+      "namespace": "IATA_AIRPORT",
+      "registry_sha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+      "registry_version": "otr-dev-universal-p2-airports/20261027/1",
+      "valid_from": "2026-11-02",
+      "valid_until": "2026-11-02"
+    }
+  ],
+  "functions": {
+    "trip_core_finite_read_state_guard()": "fa773459d8159bb512f0177399373ba1",
+    "trip_core_guard_historical_source_association()": "172f102496928a1e9e4b95ff39b3ca92",
+    "trip_core_publication_guard()": "d06a99c5695e736bc68886efb2c6d9ca",
+    "trip_sustained_import_p1_capabilities(uuid,uuid)": "83af86dcd7df97d3360b1c29207a780e",
+    "trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)": "6c836f8e5cd04b73805c1fc1dd880e1d"
+  },
+  "p2CandidateCount": 0,
+  "p2ItemCount": 0,
+  "p2ReceiptCount": 0,
+  "policy": {
+    "enabled": true,
+    "reviewEnabled": false,
+    "reviewScope": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "status": "PASS_DEFAULT_CLOSED_NOT_P2_SAVE",
+  "mainHeadTested": "7129efe31f57a77e3b61f78bf5c8cf42b3368fa2",
+  "focusedTests": 175,
+  "typecheck": "PASS",
+  "uiGuard": "PASS:473 legacy /117 representative",
+  "unrelatedDirtyAndUntrackedPreserved": true,
+  "pushed": false,
+  "nativeReadiness": "Read-only Device Hub observation: AD5 OTR MT Correction01QA, same Oct27 10:41:12 original P2_MINIMUM_SYNTHETIC_QA.txt and NZ501/AKL/CHC; Capture Keyboard off. No input or Source Review flag activated.",
+  "remainingBlocker": "Owner approval for exact7129efe3 P2_SOURCE_REVIEW_SAVE_GATE"
+}
