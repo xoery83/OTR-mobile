@@ -1,0 +1,9 @@
+# P5 first Train owning integration — local only, default CLOSED
+
+Reuse existing Source Review/Plan/Admission/Core/receipt/queue. First slice accepts TRAIN only, exact original service (or service number as display name), origin civil date and transport_subtype raw=TRAIN; explicit original/current Journey/NEW review. Other P5 subtypes stay unavailable, with no mapping from Taxi/Cable Car/Custom. Unknown destination, clocks/zones/places/operator/number remain unknown (required Core text fields empty, not synthesized supplier identity). Optional observations remain with Source; no Booking/Ticket/person authority.
+
+First directed RED: Source selection/review schema rejected P5. Minimal existing path extended with own P5 header, purpose and exact subtype proof; START proof reads origin endpoint. Stable identities and same result/material/Actor/Trip checks reused. UI has own default-off opt-in and existing review controls/localized copy.
+
+Independent review found missing owning execution/recovery classifiers and Pg capability mapping. Real RED: seven P5 failures across existing Worker/SQLite/capability tests. Exact Reviewed Source allowlists repaired; all90 assertions in these three suites PASS, including receipt-first APPLIED/no-redispatch/finalize retries and operation-specific dispatch with Manual QA scope closed. Eight Source/consumer/UI suites108PASS, typecheck/UIguard/scoped lint PASS. Independent focused re-review NO_BLOCKER after closing the seven execution/recovery failures. No new Mutation/Reader/platform.
+
+Not installed/deployed, no P5 QA input, Provider call, Gate or accepted Item. SQL guard/capability/association precise default-off package and real isolated PG still required before deployment/window. Existing QA role/schema/ACL unchanged; do not infer Hosted acceptance from these local fixtures. P4 accepted records and all historical UNKNOWN retained. Native owns Manual Batch P6 change; Universal does not edit that gate.

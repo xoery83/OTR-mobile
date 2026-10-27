@@ -22,10 +22,14 @@ export const universalP4SourceReviewSchema = universalP1SourceReviewSchema.exten
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
 });
+export const universalP5SourceReviewSchema = universalP1SourceReviewSchema.extend({
+  version: z.literal("otr.universal.p5-source-review/1"),
+});
 export const universalItemSourceReviewSchema = z.discriminatedUnion("version", [
   universalP1SourceReviewSchema,
   universalP3SourceReviewSchema,
   universalP4SourceReviewSchema,
+  universalP5SourceReviewSchema,
 ]);
 export type UniversalItemSourceReview = z.infer<typeof universalItemSourceReviewSchema>;
 

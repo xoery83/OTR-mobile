@@ -17,7 +17,7 @@ export async function universalP1SourceFixture(
   accountId: string = randomUUID(),
   tripId: string = randomUUID(),
   dateRaw = "2026-11-03",
-  family: "P1" | "P3" | "P4" = "P1",
+  family: "P1" | "P3" | "P4" | "P5" = "P1",
 ) {
   const batchId = randomUUID(),
     taskId = randomUUID(),
@@ -30,7 +30,9 @@ export async function universalP1SourceFixture(
       ? `Synthetic QA only\nActivity: 海滨散步\nActivity date: ${dateRaw}\nMeeting place: West gate\n`
       : family === "P3"
         ? `Synthetic QA only\nProperty: 海滨住宿\nCheck in: ${dateRaw}\nCheck out: 2026-11-05\nObserved address: West gate\n`
-        : `Synthetic QA only\nRental: 海滨租车\nCompany: Harbour QA Rentals\nPickup date: ${dateRaw}\nReturn date: 2026-11-05\n`;
+        : family === "P5"
+          ? `Synthetic QA only\nService: Coastal QA Train\nTransport type: TRAIN\nDeparture date: ${dateRaw}\n`
+          : `Synthetic QA only\nRental: 海滨租车\nCompany: Harbour QA Rentals\nPickup date: ${dateRaw}\nReturn date: 2026-11-05\n`;
   const bytes = Buffer.from(text),
     sha256 = await hash(bytes),
     stamp = "2026-10-25T00:00:00.000000Z";
@@ -128,7 +130,9 @@ export async function universalP1SourceFixture(
               ? "ACTIVITY"
               : family === "P3"
                 ? "ACCOMMODATION"
-                : "RENTAL_CAR",
+                : family === "P5"
+                  ? "TRAIN"
+                  : "RENTAL_CAR",
           f:
             family === "P1"
               ? [
@@ -141,12 +145,18 @@ export async function universalP1SourceFixture(
                     [0, "check_in.date", dateRaw],
                     [0, "check_out.date", "2026-11-05"],
                   ]
-                : [
-                    [0, "title", "海滨租车"],
-                    [0, "rental.company", "Harbour QA Rentals"],
-                    [0, "pickup.date", dateRaw],
-                    [0, "return.date", "2026-11-05"],
-                  ],
+                : family === "P5"
+                  ? [
+                      [0, "service", "Coastal QA Train"],
+                      [0, "transport_subtype", "TRAIN"],
+                      [0, "origin.local_date", dateRaw],
+                    ]
+                  : [
+                      [0, "title", "海滨租车"],
+                      [0, "rental.company", "Harbour QA Rentals"],
+                      [0, "pickup.date", dateRaw],
+                      [0, "return.date", "2026-11-05"],
+                    ],
         },
       ],
       bookings: [],

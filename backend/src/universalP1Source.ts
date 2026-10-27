@@ -13,7 +13,7 @@ import {
 import { coreSourcePrepareV2Schema } from "../../src/domain/trip/tripCoreV2SourceContract";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
-import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "../../src/domain/trip/tripCoreV2";
 import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
 import type { CoreActor, CoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
 import { fieldRef } from "../../src/domain/trip/tripCoreV2CandidatePublication";
@@ -26,7 +26,12 @@ import {
 } from "../../src/domain/trip/universalP1SourceReview";
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const selectionSchema = z.strictObject({
-  action: z.enum(["CONFIRM_NEW_P1", "CONFIRM_NEW_P3", "CONFIRM_NEW_P4"]),
+  action: z.enum([
+    "CONFIRM_NEW_P1",
+    "CONFIRM_NEW_P3",
+    "CONFIRM_NEW_P4",
+    "CONFIRM_NEW_P5",
+  ]),
   token: z.string().min(1).max(128),
   resultSha256: digest,
   sourceReview: universalItemSourceReviewSchema.optional(),
@@ -77,14 +82,16 @@ export async function projectUniversalP1Selection(
     quality = result.quality?.decisions.filter((d) => d.token === selection.token);
   if (
     candidates.length !== 1 ||
-    !["P1", "P3", "P4"].includes(candidates[0].kind) ||
+    !["P1", "P3", "P4", "P5"].includes(candidates[0].kind) ||
     selection.action !== `CONFIRM_NEW_${candidates[0].kind}` ||
     candidates[0].subtype !==
       (candidates[0].kind === "P3"
         ? "ACCOMMODATION"
         : candidates[0].kind === "P4"
           ? "RENTAL_CAR"
-          : "ACTIVITY") ||
+          : candidates[0].kind === "P5"
+            ? "TRAIN"
+            : "ACTIVITY") ||
     quality?.length !== 1 ||
     (!selection.sourceReview && candidates[0].kind === "P1"
       ? quality[0].tier !== "HIGH_CONFIDENCE"
@@ -92,8 +99,9 @@ export async function projectUniversalP1Selection(
   )
     throw Error("OWNING_REVIEW_REQUIRED");
   const candidate = candidates[0];
-  const family = candidate.kind as "P1" | "P3" | "P4";
-  if (family === "P4" && !selection.sourceReview) throw Error("OWNING_REVIEW_REQUIRED");
+  const family = candidate.kind as "P1" | "P3" | "P4" | "P5";
+  if (["P4", "P5"].includes(family) && !selection.sourceReview)
+    throw Error("OWNING_REVIEW_REQUIRED");
   if (
     family === "P1" &&
     (candidate.bookingTokens.length || candidate.ticketTokens.length)
@@ -117,22 +125,28 @@ export async function projectUniversalP1Selection(
       "endLocalDate" in review &&
       review.endLocalDate !== undefined);
   const nameFacts = facts(
-      family === "P3"
-        ? ["property.name", "title"]
-        : family === "P4"
-          ? candidate.fields.some((f) => f.path === "title")
-            ? ["title"]
-            : ["rental.company", "agency.name"]
-          : ["activity.name", "title"],
+      family === "P5"
+        ? candidate.fields.some((f) => f.path === "service")
+          ? ["service"]
+          : ["service.number"]
+        : family === "P3"
+          ? ["property.name", "title"]
+          : family === "P4"
+            ? candidate.fields.some((f) => f.path === "title")
+              ? ["title"]
+              : ["rental.company", "agency.name"]
+            : ["activity.name", "title"],
     ),
     // The installed Rental guard expects one title proof after alias agreement.
     names = family === "P4" ? nameFacts.slice(0, 1) : nameFacts,
     dates = facts(
-      family === "P3"
-        ? ["check_in.date", "schedule.start.local_date"]
-        : family === "P4"
-          ? ["pickup.date", "schedule.start.local_date"]
-          : ["activity.date", "schedule.start.local_date"],
+      family === "P5"
+        ? ["origin.local_date"]
+        : family === "P3"
+          ? ["check_in.date", "schedule.start.local_date"]
+          : family === "P4"
+            ? ["pickup.date", "schedule.start.local_date"]
+            : ["activity.date", "schedule.start.local_date"],
     ),
     endDates = withEnd
       ? facts(
@@ -161,7 +175,9 @@ export async function projectUniversalP1Selection(
         ? "otr.universal.p3-source-review/1"
         : family === "P4"
           ? "otr.universal.p4-source-review/1"
-          : "otr.universal.p1-source-review/1") ||
+          : family === "P5"
+            ? "otr.universal.p5-source-review/1"
+            : "otr.universal.p1-source-review/1") ||
       review.sourceRevision !== catalog.sourceRevision ||
       review.title !== names[0].raw ||
       review.localDate !== sourceReviewCivilDate(dates[0].raw) ||
@@ -191,9 +207,15 @@ export async function projectUniversalP1Selection(
     throw Error(
       family === "P3" ? "INVALID_STAY_DATE_RANGE" : "INVALID_RENTAL_DATE_RANGE",
     );
+  const transportTypes = family === "P5" ? facts(["transport_subtype"]) : [];
+  if (transportTypes.length && transportTypes[0].raw !== candidate.subtype)
+    throw Error("SOURCE_REVIEW_MISMATCH");
   const selectedFacts = [
     ["ROOT.title", names],
     ["START.local_date", dates],
+    ...(family === "P5"
+      ? ([["SERVICE.main.transport_subtype", transportTypes]] as const)
+      : []),
     ...(withEnd ? ([["END.local_date", endDates]] as const) : []),
   ] as const;
   const evidence: ImportLifecycleRequest["evidence"] = [];
@@ -287,7 +309,36 @@ export async function projectUniversalP1Selection(
         payload: {
           family,
           core: { title: names[0].raw },
-          schedule: { start, ...(end ? { end } : {}) },
+          ...(family === "P5"
+            ? {
+                endpoints: {
+                  origin: {
+                    time: start,
+                    place: Object.fromEntries(
+                      Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+                    ),
+                  },
+                  destination: {
+                    time: { ...start, local_date: null },
+                    place: Object.fromEntries(
+                      Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+                    ),
+                  },
+                },
+                service: {
+                  service_key: "main",
+                  transport_subtype: candidate.subtype,
+                  attribution: "UNSPECIFIED",
+                  operator_namespace: "NAME",
+                  operator_issuer: "",
+                  operator_value: "",
+                  operator_literal: "",
+                  service_number: "",
+                  service_literal: names[0].raw,
+                  codeshare_operating_key: null,
+                },
+              }
+            : { schedule: { start, ...(end ? { end } : {}) } }),
           ...coreDefaults("member"),
         },
       },
@@ -335,9 +386,11 @@ export async function projectUniversalP1Selection(
         ? ("otr.core.universal-p3-source/1" as const)
         : family === "P4"
           ? ("otr.core.universal-p4-source/1" as const)
-          : review
-            ? ("otr.core.universal-p1-source/2" as const)
-            : ("otr.core.universal-p1-source/1" as const),
+          : family === "P5"
+            ? ("otr.core.universal-p5-source/1" as const)
+            : review
+              ? ("otr.core.universal-p1-source/2" as const)
+              : ("otr.core.universal-p1-source/1" as const),
     ...(review ? { sourceReview: review, reviewedBy: context.accountId } : {}),
     accountId: context.accountId,
     tripId: context.tripId,
@@ -419,7 +472,7 @@ export async function qualifyUniversalP1Selection(
 }
 
 // These exact advisories concern unselected fields or absent commercial rights, never lifecycle.
-function p1UnselectedAdvisory(reason: string, family: "P1" | "P3" | "P4") {
+function p1UnselectedAdvisory(reason: string, family: "P1" | "P3" | "P4" | "P5") {
   if (family === "P3") {
     if (
       reason ===

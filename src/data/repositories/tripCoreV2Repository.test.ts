@@ -860,10 +860,33 @@ it("Core publication denies a queued Account transition and wrong Trip without t
 });
 async function lostP1RecoveryFixture(
   reviewed = false,
-  family: "P1" | "P2" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" | "P5" = "P1",
 ) {
   const f = fixture();
   const ctx = await f.repo.captureContext(trip);
+  let p5Payload: unknown;
+  if (family === "P5") {
+    const { universalP1SourceFixture } =
+      await import("../../../backend/src/__fixtures__/universalP1Source");
+    const source = await universalP1SourceFixture(
+      undefined,
+      undefined,
+      "2026-11-03",
+      "P5",
+    );
+    Object.assign(source.input.selection, {
+      sourceReview: {
+        version: "otr.universal.p5-source-review/1",
+        decision: "NEW",
+        sourceRevision: 1,
+        title: "Coastal QA Train",
+        localDate: "2026-11-03",
+        originalReviewed: true,
+        tripReviewed: true,
+      },
+    });
+    p5Payload = (await source.run()).body.plan.slots[0].payload;
+  }
   const command = {
     ...sparse(),
     admission: {
@@ -876,19 +899,21 @@ async function lostP1RecoveryFixture(
     payload:
       family === "P2"
         ? sparse().payload
-        : {
-            family,
-            core: { title: "Lost P1 response" },
-            schedule:
-              family === "P3"
-                ? {
-                    start: coreDateBoundary("2026-11-02"),
-                    end: coreDateBoundary("2026-11-03"),
-                  }
-                : { start: ordinaryTime() },
-            place: ordinaryPlace(),
-            ...coreDefaults("member"),
-          },
+        : family === "P5"
+          ? p5Payload
+          : {
+              family,
+              core: { title: "Lost P1 response" },
+              schedule:
+                family === "P3"
+                  ? {
+                      start: coreDateBoundary("2026-11-02"),
+                      end: coreDateBoundary("2026-11-03"),
+                    }
+                  : { start: ordinaryTime() },
+              place: ordinaryPlace(),
+              ...coreDefaults("member"),
+            },
   };
   await f.repo.enqueue(ctx, command);
   let graph = emptyCoreGraph();
@@ -1077,6 +1102,8 @@ it.each([
   [true, "P3"],
   [false, "P2"],
   [true, "P2"],
+  [false, "P5"],
+  [true, "P5"],
 ] as const)(
   "resumes only accepted Source finalization after EVIDENCE_PENDING (reconciled: %s, family:%s)",
   async (reconciled, family) => {
