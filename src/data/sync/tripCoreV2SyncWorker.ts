@@ -39,6 +39,33 @@ export type CoreSyncTransport = {
   ): Promise<CoreReceiptProjection>;
 };
 type Repository = ReturnType<typeof createTripCoreV2Repository>;
+async function readCore<T>(phase: string, read: () => Promise<T>): Promise<T> {
+  try {
+    return await read();
+  } catch (error) {
+    try {
+      if (error instanceof Error && !Object.isFrozen(error)) {
+        const diagnostic = error as Error & { kind?: unknown; status?: unknown };
+        const kind = ["http", "network", "timeout", "validation"].includes(
+          String(diagnostic.kind),
+        )
+          ? String(diagnostic.kind)
+          : "unknown";
+        const status =
+          typeof diagnostic.status === "number" &&
+          diagnostic.status >= 100 &&
+          diagnostic.status <= 599
+            ? diagnostic.status
+            : "none";
+        error.message = phase + " [" + kind + "/" + status + "]: " + error.message;
+      }
+    } catch {
+      // Diagnostic metadata must never replace the original sync failure.
+    }
+    throw error;
+  }
+}
+
 export function createCoreV2SyncWorker(
   repository: Repository,
   transport: CoreSyncTransport,
@@ -78,13 +105,15 @@ export function createCoreV2SyncWorker(
           ["P1", "P3"].includes((command.payload as { family: string }).family)) ||
           command.command === "CREATE_SPARSE_FLIGHT") &&
         command.admission.mode === "REVIEWED_SOURCE";
-      let result = await transport.receipt(context, operation.id);
+      let result = await readCore("CORE_RECEIPT_READ", () =>
+        transport.receipt(context, operation.id),
+      );
       await assertAccountRequestContext(context, getAccountId);
       if (!result && sourceItem && intent.state === "APPLIED")
         throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
-          await transport.capabilities(context),
+          await readCore("CORE_CAPABILITIES_READ", () => transport.capabilities(context)),
         );
         await assertAccountRequestContext(context, getAccountId);
         if (

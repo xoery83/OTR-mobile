@@ -335,3 +335,37 @@ it.each(["manual", "operation", "trip", "account", "target"])(
     }
   },
 );
+
+it("retains a safe receipt-read phase without changing the error or sending a command", async () => {
+  const f = await fixture();
+  const error = Object.assign(new Error("OTR API read is unavailable."), {
+    kind: "http",
+    status: 503,
+  });
+  vi.mocked(f.transport.receipt).mockRejectedValue(error);
+  await expect(f.worker.push(f.operation)).rejects.toBe(error);
+  expect(error.message).toContain("CORE_RECEIPT_READ [http/503]");
+  expect(f.transport.capabilities).not.toHaveBeenCalled();
+  expect(f.transport.submit).not.toHaveBeenCalled();
+});
+
+it("distinguishes capability read failure after an absent receipt and never submits", async () => {
+  const f = await fixture();
+  const error = Object.assign(new Error("OTR API read is unavailable."), {
+    kind: "timeout",
+  });
+  vi.mocked(f.transport.capabilities).mockRejectedValue(error);
+  await expect(f.worker.push(f.operation)).rejects.toBe(error);
+  expect(error.message).toContain("CORE_CAPABILITIES_READ [timeout/none]");
+  expect(f.transport.submit).not.toHaveBeenCalled();
+});
+
+it("keeps a non-writable error message from replacing the original failure", async () => {
+  const f = await fixture();
+  const error = new Error("read unavailable");
+  Object.defineProperty(error, "message", { writable: false });
+  expect(Object.isFrozen(error)).toBe(false);
+  vi.mocked(f.transport.receipt).mockRejectedValue(error);
+  await expect(f.worker.push(f.operation)).rejects.toBe(error);
+  expect(f.transport.submit).not.toHaveBeenCalled();
+});
