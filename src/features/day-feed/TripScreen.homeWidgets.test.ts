@@ -695,7 +695,7 @@ function acceptedCivilStay() {
     target: { scope: state.snapshot.scope, certificate: { epoch: "epoch" }, item },
   };
 }
-it.each(["P3", "P4"])(
+it.each(["P3", "P4", "P6"])(
   "date-only accepted %s opens explicit viewing context instead of failing Home, without filling Item clocks/zones",
   async (family) => {
     const { event, item, target } = acceptedCivilStay();
@@ -736,7 +736,7 @@ it.each(["P3", "P4"])(
     expect(JSON.stringify({ event, item })).toBe(before);
   },
 );
-it.each(["P3", "P4"])(
+it.each(["P3", "P4", "P6"])(
   "accepted date-only %s uses a legitimate saved viewing zone for the same Item's existing Details",
   async (family) => {
     const { event, item, target } = acceptedCivilStay();
@@ -761,7 +761,7 @@ it.each(["P3", "P4"])(
   },
 );
 it.each(
-  ["P3", "P4"].flatMap((family) =>
+  ["P3", "P4", "P6"].flatMap((family) =>
     ["account", "trip", "generation", "epoch", "revision"].map((kind) => [family, kind]),
   ),
 )(
@@ -783,33 +783,37 @@ it.each(
   },
 );
 
-it("date-only accepted P2 opens the existing viewing chooser without creating or editing a Flight", async () => {
-  const { item, event, target } = acceptedCivilStay();
-  Object.assign(item, {
-    family: "P2",
-    schedule: { origin: { time: item.schedule.start } },
-  });
-  event.boundaries = [{ ...event.boundaries[0], role: "ORIGIN" }];
-  const before = JSON.stringify([event, item]);
-  const p = page(await loaded());
-  await p.content.props.onOpenItem(target);
-  const dialog = find(render(), "Modal");
-  expect(dialog.visible).toBe(true);
-  expect(
-    find(dialog.children, "Input", (p) => p.accessibilityLabel === "dayFeed.date").value,
-  ).toBe("2026-11-02");
-  find(
-    dialog.children,
-    "Input",
-    (p) => p.accessibilityLabel === "dayFeed.zone",
-  ).onChangeText("Pacific/Auckland");
-  find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
-  expect(state.select).toHaveBeenCalledWith({
-    tripId: reference,
-    date: "2026-11-02",
-    zone: "Pacific/Auckland",
-    generation: 5,
-  });
-  expect(find(render(), DayFeed)).toBeNull();
-  expect(JSON.stringify([event, item])).toBe(before);
-});
+it.each(["P2", "P5"])(
+  "date-only accepted %s opens the existing viewing chooser without creating or editing transport",
+  async (family) => {
+    const { item, event, target } = acceptedCivilStay();
+    Object.assign(item, {
+      family,
+      schedule: { origin: { time: item.schedule.start } },
+    });
+    event.boundaries = [{ ...event.boundaries[0], role: "ORIGIN" }];
+    const before = JSON.stringify([event, item]);
+    const p = page(await loaded());
+    await p.content.props.onOpenItem(target);
+    const dialog = find(render(), "Modal");
+    expect(dialog.visible).toBe(true);
+    expect(
+      find(dialog.children, "Input", (p) => p.accessibilityLabel === "dayFeed.date")
+        .value,
+    ).toBe("2026-11-02");
+    find(
+      dialog.children,
+      "Input",
+      (p) => p.accessibilityLabel === "dayFeed.zone",
+    ).onChangeText("Pacific/Auckland");
+    find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
+    expect(state.select).toHaveBeenCalledWith({
+      tripId: reference,
+      date: "2026-11-02",
+      zone: "Pacific/Auckland",
+      generation: 5,
+    });
+    expect(find(render(), DayFeed)).toBeNull();
+    expect(JSON.stringify([event, item])).toBe(before);
+  },
+);
