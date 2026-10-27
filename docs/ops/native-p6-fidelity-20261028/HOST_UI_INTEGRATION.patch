@@ -1,40 +1,25 @@
---- a/src/features/day-feed/ManualItineraryContent.tsx
-+++ b/src/features/day-feed/ManualItineraryContent.tsx
-@@ -19,9 +19,10 @@
- import { P3StayEditor } from "./P3StayEditor";
- import { P4RentalEditor } from "./P4RentalEditor";
- import { P5TransportEditor } from "./P5TransportEditor";
-+import { P6ActivityEditor } from "./P6ActivityEditor";
- 
- import { manualItineraryTypes } from "./manualItineraryTypes";
--type Family = "P2" | "P1" | "P3" | "P4" | "P5";
-+type Family = "P2" | "P1" | "P3" | "P4" | "P5" | "P6";
- export function ManualItineraryContent({
-   tripId,
-   generation,
-@@ -94,6 +95,8 @@
-       <P4RentalEditor {...props} />
-     ) : family === "P5" ? (
-       <P5TransportEditor {...props} />
-+    ) : family === "P6" ? (
-+      <P6ActivityEditor {...props} />
-     ) : null;
-   if (editor) return <View style={styles.body}>{editor}</View>;
-   return (
---- a/src/features/day-feed/manualItineraryTypes.ts
-+++ b/src/features/day-feed/manualItineraryTypes.ts
-@@ -28,7 +28,6 @@
-     id: "P6",
-     labelKey: "formEntry.activity",
-     icon: "ticket",
--    enabled: false,
--    reasonKey: "formEntry.activityUnavailable",
-+    enabled: true,
-   },
- ] as const;
+diff --git a/app/day-feed-lab.tsx b/app/day-feed-lab.tsx
+index 3421d440..67cc0e2b 100644
+--- a/app/day-feed-lab.tsx
++++ b/app/day-feed-lab.tsx
+@@ -3,6 +3,12 @@ import { Redirect, useLocalSearchParams } from "expo-router";
+ export default function DayFeedLabRoute() {
+   const { fidelity } = useLocalSearchParams<{ fidelity?: string }>();
+   if (!__DEV__) return <Redirect href="/trip" />;
++  if (fidelity === "p6") {
++    const { P6FidelityPreview } =
++      // eslint-disable-next-line @typescript-eslint/no-require-imports
++      require("@/features/day-feed-lab/P6FidelityPreview") as typeof import("@/features/day-feed-lab/P6FidelityPreview");
++    return <P6FidelityPreview />;
++  }
+   if (fidelity === "p5") {
+     const { P5FidelityPreview } =
+       // eslint-disable-next-line @typescript-eslint/no-require-imports
+diff --git a/src/features/day-feed/DayFeed.tsx b/src/features/day-feed/DayFeed.tsx
+index 94adb747..62159518 100644
 --- a/src/features/day-feed/DayFeed.tsx
 +++ b/src/features/day-feed/DayFeed.tsx
-@@ -318,12 +318,12 @@
+@@ -318,12 +318,12 @@ function AcceptedDayFeed({
            ?.rows(section.date)
            .some(
              (row) =>
@@ -49,6 +34,8 @@
                    !item.hidden &&
                    !["cancelled", "skipped"].includes(String(item.status)),
                ),
+diff --git a/src/features/day-feed/LocalManualDayFeed.tsx b/src/features/day-feed/LocalManualDayFeed.tsx
+index 8ed384a1..849787fc 100644
 --- a/src/features/day-feed/LocalManualDayFeed.tsx
 +++ b/src/features/day-feed/LocalManualDayFeed.tsx
 @@ -1,3 +1,5 @@
@@ -57,7 +44,7 @@
  import { ScheduledTransportContent } from "./ScheduledTransportRow";
  import { transportFactsFromItem } from "./transportReadPresentation";
  import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
-@@ -290,6 +292,15 @@
+@@ -290,6 +292,28 @@ export function LocalManualDayRows({
              />
            );
          }
@@ -65,22 +52,160 @@
 +          const facts = activityFactsFromItem(item);
 +          if (!facts) return null;
 +          const focusKey = JSON.stringify(row.rowKey);
-+          return <TicketedActivityContent key={focusKey} facts={facts}
-+            depth={p1Focus === focusKey ? "F" : "B"} context={context} ending={role === "END"}
-+            onInsert={onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined}
-+            onDepth={(depth) => depth === "I" ? onOpenItem?.(row.itemRef, read, { role, date }) : onP1Focus?.(depth === "F" ? focusKey : null)} />;
++          return (
++            <TicketedActivityContent
++              key={focusKey}
++              facts={facts}
++              depth={p1Focus === focusKey ? "F" : "B"}
++              context={context}
++              ending={role === "END"}
++              onInsert={
++                onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
++              }
++              onDepth={(depth) =>
++                depth === "I"
++                  ? onOpenItem?.(row.itemRef, read, { role, date })
++                  : onP1Focus?.(depth === "F" ? focusKey : null)
++              }
++            />
++          );
 +        }
          if (item && row.family === "P5") {
            const facts = transportFactsFromItem(item);
            if (!facts) return null;
+diff --git a/src/features/day-feed/ManualItineraryContent.tsx b/src/features/day-feed/ManualItineraryContent.tsx
+index 7c74082e..24ae8f91 100644
+--- a/src/features/day-feed/ManualItineraryContent.tsx
++++ b/src/features/day-feed/ManualItineraryContent.tsx
+@@ -19,9 +19,10 @@ import { P1PlanEditor } from "./P1PlanEditor";
+ import { P3StayEditor } from "./P3StayEditor";
+ import { P4RentalEditor } from "./P4RentalEditor";
+ import { P5TransportEditor } from "./P5TransportEditor";
++import { P6ActivityEditor } from "./P6ActivityEditor";
+ 
+ import { manualItineraryTypes } from "./manualItineraryTypes";
+-type Family = "P2" | "P1" | "P3" | "P4" | "P5";
++type Family = "P2" | "P1" | "P3" | "P4" | "P5" | "P6";
+ export function ManualItineraryContent({
+   tripId,
+   generation,
+@@ -94,6 +95,8 @@ export function ManualItineraryContent({
+       <P4RentalEditor {...props} />
+     ) : family === "P5" ? (
+       <P5TransportEditor {...props} />
++    ) : family === "P6" ? (
++      <P6ActivityEditor {...props} />
+     ) : null;
+   if (editor) return <View style={styles.body}>{editor}</View>;
+   return (
+diff --git a/src/features/day-feed/TripScreen.tsx b/src/features/day-feed/TripScreen.tsx
+index 5186f1a7..e08e303f 100644
+--- a/src/features/day-feed/TripScreen.tsx
++++ b/src/features/day-feed/TripScreen.tsx
+@@ -617,7 +617,7 @@ function TripContent({
+       local.items.some(
+         (item) =>
+           item.itemId === id &&
+-          ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
++          ["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) &&
+           !item.hidden,
+       )
+     ) {
+@@ -644,6 +644,15 @@ function TripContent({
+             ...(occurrence?.date ? { date: occurrence.date } : {}),
+           },
+         });
++      else if (item.family === "P6")
++        router.push({
++          pathname: "/p6-detail",
++          params: {
++            ...params,
++            occurrence: occurrence?.role === "END" ? "END" : "START",
++            ...(occurrence?.date ? { date: occurrence.date } : {}),
++          },
++        });
+       else if (item.family === "P5")
+         router.push({
+           pathname: "/p5-detail",
+@@ -707,6 +716,18 @@ function TripContent({
+       });
+       return;
+     }
++    if (resolved.item.family === "P6") {
++      router.push({
++        pathname: "/p6-detail",
++        params: {
++          tripId: requested,
++          itemId: id,
++          occurrence: occurrence?.role === "END" ? "END" : "START",
++          ...(occurrence?.date ? { date: occurrence.date } : {}),
++        },
++      });
++      return;
++    }
+     if (resolved.item.family === "P5") {
+       router.push({
+         pathname: "/p5-detail",
+@@ -863,6 +884,16 @@ function TripContent({
+     if (!current) throw new Error("HOME_RENDERER_UNAVAILABLE");
+     if (current.family === "P1")
+       return openAcceptedPlan(current.itemId, itemRevision, result);
++    if (current.family === "P6") {
++      if (current.hidden || ["cancelled", "skipped"].includes(String(current.status)))
++        throw new Error("HOME_ITEM_UNAVAILABLE");
++      setTrip(result);
++      router.push({
++        pathname: "/p6-detail",
++        params: { tripId: requested, itemId: current.itemId, occurrence: "START" },
++      });
++      return;
++    }
+     const header = acceptedHomeHeader(
+       projection.events,
+       (date, zone) => projection.query(date, zone),
+@@ -1769,6 +1800,29 @@ function TripContent({
+               visibleTrip.observed?.projection.version === 2
+                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
+                     instant: new Date().toISOString(),
++                    onOpenActivity: (itemId, occurrence, date) =>
++                      router.push({
++                        pathname: "/p6-detail",
++                        params: { tripId: requested, itemId, occurrence, date },
++                      }),
++                    onInsertActivity: (itemId, role, date, side) => {
++                      const projection = visibleTrip.observed!.projection;
++                      if (projection.version !== 2) return;
++                      const suggestion = localInsertionTime(
++                        {
++                          items: projection.items,
++                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
++                        },
++                        itemId,
++                        role,
++                        date,
++                        side,
++                      );
++                      setInsertion({
++                        date: suggestion.startDate,
++                        startTime: suggestion.startTime,
++                      });
++                    },
+                     onOpenTransport: (itemId, occurrence, date) =>
+                       router.push({
+                         pathname: "/p5-detail",
+diff --git a/src/features/day-feed/coreExperienceRenderer.ts b/src/features/day-feed/coreExperienceRenderer.ts
+index 36102d1b..573267d4 100644
 --- a/src/features/day-feed/coreExperienceRenderer.ts
 +++ b/src/features/day-feed/coreExperienceRenderer.ts
-@@ -13,20 +13,20 @@
+@@ -13,20 +13,24 @@ import {
    type CoreScheduledTransportPresentationActions,
    createCoreScheduledTransportRenderer,
  } from "./coreScheduledTransportRenderer";
 -import { createCoreTicketedActivityRenderer } from "./coreTicketedActivityRenderer";
-+import { createCoreTicketedActivityRenderer, type CoreActivityPresentationActions } from "./coreTicketedActivityRenderer";
++import {
++  createCoreTicketedActivityRenderer,
++  type CoreActivityPresentationActions,
++} from "./coreTicketedActivityRenderer";
  
  export function createCoreExperienceRenderer(
    projection: CoreFlightDayProjection,
@@ -88,7 +213,8 @@
      CoreStayPresentationActions &
      CoreRentalPresentationActions &
 -    CoreScheduledTransportPresentationActions,
-+    CoreScheduledTransportPresentationActions & CoreActivityPresentationActions,
++    CoreScheduledTransportPresentationActions &
++    CoreActivityPresentationActions,
  ): DayRowRenderer {
    const p1 = createCoreP1Renderer(projection, actions);
    const stay = createCoreStayRenderer(projection, actions);
@@ -99,70 +225,16 @@
    return (props) =>
      p1(props) ?? stay(props) ?? rental(props) ?? transport(props) ?? activity(props);
  }
---- a/src/features/day-feed/TripScreen.tsx
-+++ b/src/features/day-feed/TripScreen.tsx
-@@ -617,7 +617,7 @@
-       local.items.some(
-         (item) =>
-           item.itemId === id &&
--          ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
-+          ["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) &&
-           !item.hidden,
-       )
-     ) {
-@@ -644,6 +644,7 @@
-             ...(occurrence?.date ? { date: occurrence.date } : {}),
-           },
-         });
-+      else if (item.family === "P6") router.push({ pathname: "/p6-detail", params: { ...params, occurrence: occurrence?.role === "END" ? "END" : "START", ...(occurrence?.date ? { date: occurrence.date } : {}) } });
-       else if (item.family === "P5")
-         router.push({
-           pathname: "/p5-detail",
-@@ -705,6 +706,10 @@
-           occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
-         },
-       });
-+      return;
-+    }
-+    if (resolved.item.family === "P6") {
-+      router.push({ pathname: "/p6-detail", params: { tripId: requested, itemId: id, occurrence: occurrence?.role === "END" ? "END" : "START", ...(occurrence?.date ? { date: occurrence.date } : {}) } });
-       return;
-     }
-     if (resolved.item.family === "P5") {
-@@ -1092,7 +1097,7 @@
-         onClose={() => setLocalItem(null)}
-         editError={planEditError}
-         onEdit={
--          ["P1", "P2", "P3", "P4", "P5"].includes(visibleLocalItem.item.family) &&
-+          ["P1", "P2", "P3", "P4", "P5", "P6"].includes(visibleLocalItem.item.family) &&
-           visibleLocalItem.item.localState === "PENDING"
-             ? () => {
-                 setPlanEditError(false);
-@@ -1769,6 +1774,13 @@
-               visibleTrip.observed?.projection.version === 2
-                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
-                     instant: new Date().toISOString(),
-+                    onOpenActivity: (itemId, occurrence, date) => router.push({ pathname: "/p6-detail", params: { tripId: requested, itemId, occurrence, date } }),
-+                    onInsertActivity: (itemId, role, date, side) => {
-+                      const projection = visibleTrip.observed!.projection;
-+                      if (projection.version !== 2) return;
-+                      const suggestion = localInsertionTime({ items: projection.items, rows: (day) => projection.query(day, dayContext).coreRows ?? [] }, itemId, role, date, side);
-+                      setInsertion({ date: suggestion.startDate, startTime: suggestion.startTime });
-+                    },
-                     onOpenTransport: (itemId, occurrence, date) =>
-                       router.push({
-                         pathname: "/p5-detail",
---- a/app/day-feed-lab.tsx
-+++ b/app/day-feed-lab.tsx
-@@ -3,6 +3,11 @@
- export default function DayFeedLabRoute() {
-   const { fidelity } = useLocalSearchParams<{ fidelity?: string }>();
-   if (!__DEV__) return <Redirect href="/trip" />;
-+  if (fidelity === "p6") {
-+    // eslint-disable-next-line @typescript-eslint/no-require-imports
-+    const { P6FidelityPreview } = require("@/features/day-feed-lab/P6FidelityPreview") as typeof import("@/features/day-feed-lab/P6FidelityPreview");
-+    return <P6FidelityPreview />;
-+  }
-   if (fidelity === "p5") {
-     const { P5FidelityPreview } =
-       // eslint-disable-next-line @typescript-eslint/no-require-imports
+diff --git a/src/features/day-feed/manualItineraryTypes.ts b/src/features/day-feed/manualItineraryTypes.ts
+index 4b0572ce..1426bbf5 100644
+--- a/src/features/day-feed/manualItineraryTypes.ts
++++ b/src/features/day-feed/manualItineraryTypes.ts
+@@ -28,7 +28,6 @@ export const manualItineraryTypes = [
+     id: "P6",
+     labelKey: "formEntry.activity",
+     icon: "ticket",
+-    enabled: false,
+-    reasonKey: "formEntry.activityUnavailable",
++    enabled: true,
+   },
+ ] as const;

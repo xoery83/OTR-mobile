@@ -1,3 +1,7 @@
+## Serial intake candidate — supersedes historical pending status below
+
+P6 is now wired in isolated branch `codex/native-p6-activity-integration` based on Native `2253dc34`, including actual owning port `e1270e21` replayed as `5785d680`. Create/Edit/content replay commits are `557f5a8b` and `646bfe33`. See [host integration receipt](HOST_INTEGRATION.md). Actual18 suites488PASS; types/UIguard/scopedlint PASS. **LOCAL_CODE_AND_REPOSITORY_PASS / PARENT_INTAKE_PENDING / NATIVE_NOT_TESTED / CLOUD_PENDING**. `HOST_UI_INTEGRATION.patch` is an alternative to the final host commit, not an additional patch to apply afterwards.
+
 ## Owning port follow-through — supersedes the initial closed-Gate candidate below
 
 P6 Manual Batch is now implemented only in this independent branch after the explicit unique-Writer handoff. Actual11 suites361PASS, including P1–P6/shared Core Repository7 suites121PASS. See [local SQLite receipt](MANUAL_BATCH_PORT.md). Status: **LOCAL_REPOSITORY_PASS / HOST_INTEGRATION_PENDING / NATIVE_NOT_TESTED / CLOUD_PENDING**. UI entry and shared Reader handoff patch remain unapplied; do not reapply the historical Gate patch or replace current tests with the old proposal artifact.

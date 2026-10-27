@@ -3,6 +3,12 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 export default function DayFeedLabRoute() {
   const { fidelity } = useLocalSearchParams<{ fidelity?: string }>();
   if (!__DEV__) return <Redirect href="/trip" />;
+  if (fidelity === "p6") {
+    const { P6FidelityPreview } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("@/features/day-feed-lab/P6FidelityPreview") as typeof import("@/features/day-feed-lab/P6FidelityPreview");
+    return <P6FidelityPreview />;
+  }
   if (fidelity === "p5") {
     const { P5FidelityPreview } =
       // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -464,7 +464,7 @@ it("Review rechecks whole candidate graph and enters its first qualified header 
   expect(state.saveReading).not.toHaveBeenCalled();
   expect(state.select).not.toHaveBeenCalled();
 });
-it("direct current P6 Item uses the existing Immersive port and closes without changing Home or Day bookmark", async () => {
+it("direct current P5 Item uses the existing Immersive port and closes without changing Home or Day bookmark", async () => {
   const event = {
     id: "item",
     status: "planned",
@@ -472,7 +472,7 @@ it("direct current P6 Item uses the existing Immersive port and closes without c
   };
   state.result.observed.projection.events = [event];
   state.result.observed.projection.items = [
-    { itemId: "item", itemRevision: 1, family: "P6" },
+    { itemId: "item", itemRevision: 1, family: "P5" },
   ];
   state.result.observed.projection.query = () => ({
     timed: [{ event }],
@@ -517,7 +517,7 @@ it("reviewer: current same-epoch access/item removal closes the Home direct Imme
   };
   state.result.observed.projection.events = [event];
   state.result.observed.projection.items = [
-    { itemId: "item", itemRevision: 1, family: "P6" },
+    { itemId: "item", itemRevision: 1, family: "P5" },
   ];
   state.result.observed.projection.query = () => ({
     timed: [{ event }],
@@ -558,7 +558,7 @@ it.each(["revision", "hidden", "historical"])(
     };
     state.result.observed.projection.events = [event];
     state.result.observed.projection.items = [
-      { itemId: "item", itemRevision: 1, family: "P6" },
+      { itemId: "item", itemRevision: 1, family: "P5" },
     ];
     state.result.observed.projection.query = () => ({
       timed: [{ event }],
@@ -584,7 +584,7 @@ it.each(["revision", "hidden", "historical"])(
             {
               itemId: "item",
               itemRevision: kind === "revision" ? 2 : 1,
-              family: "P6",
+              family: "P5",
               hidden: kind === "hidden",
             },
           ],
@@ -605,7 +605,7 @@ it("same-epoch authorized overlay uses the refreshed owning projection and servi
   };
   state.result.observed.projection.events = [event];
   state.result.observed.projection.items = [
-    { itemId: "item", itemRevision: 1, family: "P6" },
+    { itemId: "item", itemRevision: 1, family: "P5" },
   ];
   state.result.observed.projection.query = () => ({
     timed: [{ event }],
@@ -632,7 +632,7 @@ it("same-epoch authorized overlay uses the refreshed owning projection and servi
   expect(overlay.services).toBe(state.result.services);
   expect(state.saveReading).not.toHaveBeenCalled();
 });
-it("opens a cross-date civil-only P6 using the same-Trip saved presentation zone, without changing its facts or bookmark", async () => {
+it("opens a cross-date civil-only P5 using the same-Trip saved presentation zone, without changing its facts or bookmark", async () => {
   state.resume = { tripId: reference, zone: "Asia/Tokyo", generation: 5 };
   const event = {
     id: "booking",
@@ -641,7 +641,7 @@ it("opens a cross-date civil-only P6 using the same-Trip saved presentation zone
   };
   state.result.observed.projection.events = [event];
   state.result.observed.projection.items = [
-    { itemId: "booking", itemRevision: 1, family: "P6" },
+    { itemId: "booking", itemRevision: 1, family: "P5" },
   ];
   state.result.observed.projection.query = (date: string, zone: string) => ({
     timed: [],
@@ -1766,4 +1766,72 @@ it("recognizes a horizontal Day swipe without taking a vertical scroll", async (
   state.moveCapture = false;
   host.onResponderRelease(event(180, 315));
   expect(state.params).not.toHaveBeenCalled();
+});
+
+it("routes current accepted P6 Home directly without requiring a comparable clock or changing bookmarks", async () => {
+  state.result.observed.projection.items = [
+    {
+      itemId: "activity",
+      itemRevision: 3,
+      family: "P6",
+      status: "planned",
+      hidden: false,
+    },
+  ];
+  const p = page(await loaded());
+  await p.content.props.onOpenItem({
+    scope: state.snapshot.scope,
+    certificate: { epoch: "epoch" },
+    item: { itemId: "activity", itemRevision: 3 },
+  });
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p6-detail",
+    params: { tripId: reference, itemId: "activity", occurrence: "START" },
+  });
+  expect(find(render(), DayFeed)).toBeNull();
+  expect(state.saveReading).not.toHaveBeenCalled();
+  expect(state.select).not.toHaveBeenCalled();
+});
+it.each([{ hidden: true }, { status: "cancelled" }, { status: "skipped" }])(
+  "does not route unavailable accepted P6: %j",
+  async (changes) => {
+    state.result.observed.projection.items = [
+      {
+        itemId: "activity",
+        itemRevision: 3,
+        family: "P6",
+        status: "planned",
+        ...changes,
+      },
+    ];
+    const p = page(await loaded());
+    await expect(
+      p.content.props.onOpenItem({
+        scope: state.snapshot.scope,
+        certificate: { epoch: "epoch" },
+        item: { itemId: "activity", itemRevision: 3 },
+      }),
+    ).rejects.toThrow("HOME_ITEM_UNAVAILABLE");
+    expect(state.push).not.toHaveBeenCalled();
+  },
+);
+it("routes pending P6 Home to the same native Activity detail", async () => {
+  state.result.observed = null;
+  const activity = { ...localRead().items[0], family: "P6", itemId: "manual-activity" };
+  state.result.localManual = { ...localRead(), items: [activity] };
+  state.resolveLocalItem.mockResolvedValue({
+    ...state.result.localManual,
+    item: activity,
+  });
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  await workspace.onOpenLocalHomeItem(
+    reference,
+    activity.itemId,
+    state.result.localManual,
+  );
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/p6-detail",
+    params: { tripId: reference, itemId: activity.itemId, occurrence: "START" },
+  });
+  expect(find(render(), "LocalItemPreview")).toBeNull();
 });

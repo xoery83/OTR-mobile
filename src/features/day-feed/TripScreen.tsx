@@ -617,7 +617,7 @@ function TripContent({
       local.items.some(
         (item) =>
           item.itemId === id &&
-          ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
+          ["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) &&
           !item.hidden,
       )
     ) {
@@ -641,6 +641,15 @@ function TripContent({
                 : occurrence?.role === "CHECKIN"
                   ? "CHECKIN"
                   : "BASE",
+            ...(occurrence?.date ? { date: occurrence.date } : {}),
+          },
+        });
+      else if (item.family === "P6")
+        router.push({
+          pathname: "/p6-detail",
+          params: {
+            ...params,
+            occurrence: occurrence?.role === "END" ? "END" : "START",
             ...(occurrence?.date ? { date: occurrence.date } : {}),
           },
         });
@@ -703,6 +712,18 @@ function TripContent({
           tripId: requested,
           itemId: id,
           occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+        },
+      });
+      return;
+    }
+    if (resolved.item.family === "P6") {
+      router.push({
+        pathname: "/p6-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence: occurrence?.role === "END" ? "END" : "START",
+          ...(occurrence?.date ? { date: occurrence.date } : {}),
         },
       });
       return;
@@ -863,6 +884,16 @@ function TripContent({
     if (!current) throw new Error("HOME_RENDERER_UNAVAILABLE");
     if (current.family === "P1")
       return openAcceptedPlan(current.itemId, itemRevision, result);
+    if (current.family === "P6") {
+      if (current.hidden || ["cancelled", "skipped"].includes(String(current.status)))
+        throw new Error("HOME_ITEM_UNAVAILABLE");
+      setTrip(result);
+      router.push({
+        pathname: "/p6-detail",
+        params: { tripId: requested, itemId: current.itemId, occurrence: "START" },
+      });
+      return;
+    }
     const header = acceptedHomeHeader(
       projection.events,
       (date, zone) => projection.query(date, zone),
@@ -1769,6 +1800,29 @@ function TripContent({
               visibleTrip.observed?.projection.version === 2
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
+                    onOpenActivity: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p6-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertActivity: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
                     onOpenTransport: (itemId, occurrence, date) =>
                       router.push({
                         pathname: "/p5-detail",

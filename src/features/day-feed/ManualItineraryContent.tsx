@@ -19,9 +19,10 @@ import { P1PlanEditor } from "./P1PlanEditor";
 import { P3StayEditor } from "./P3StayEditor";
 import { P4RentalEditor } from "./P4RentalEditor";
 import { P5TransportEditor } from "./P5TransportEditor";
+import { P6ActivityEditor } from "./P6ActivityEditor";
 
 import { manualItineraryTypes } from "./manualItineraryTypes";
-type Family = "P2" | "P1" | "P3" | "P4" | "P5";
+type Family = "P2" | "P1" | "P3" | "P4" | "P5" | "P6";
 export function ManualItineraryContent({
   tripId,
   generation,
@@ -94,6 +95,8 @@ export function ManualItineraryContent({
       <P4RentalEditor {...props} />
     ) : family === "P5" ? (
       <P5TransportEditor {...props} />
+    ) : family === "P6" ? (
+      <P6ActivityEditor {...props} />
     ) : null;
   if (editor) return <View style={styles.body}>{editor}</View>;
   return (

@@ -1,13 +1,13 @@
+import { createElement } from "react";
+import { createRequire } from "node:module";
+import { beforeEach, expect, it, vi } from "vitest";
+import { ManualItineraryContent } from "./ManualItineraryContent";
 vi.mock("./ManualFlightForm", () => ({
   ManualFlightEditor: (props: any) => {
     state.editor = { family: "P2", ...props };
     return null;
   },
 }));
-import { createElement } from "react";
-import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
-import { ManualItineraryContent } from "./ManualItineraryContent";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   hooks: [] as any[],
@@ -90,6 +90,12 @@ vi.mock("./P5TransportEditor", () => ({
     return null;
   },
 }));
+vi.mock("./P6ActivityEditor", () => ({
+  P6ActivityEditor: (props: any) => {
+    state.editor = { family: "P6", ...props };
+    return null;
+  },
+}));
 const props = {
   tripId: "trip-a",
   generation: 1,
@@ -139,6 +145,7 @@ it.each([
   ["stay", "P3"],
   ["rental", "P4"],
   ["transport", "P5"],
+  ["activity", "P6"],
 ])(
   "opens %s's existing lawful editor in the same sheet with exact context",
   (label, family) => {
@@ -158,7 +165,7 @@ it.each([
   },
 );
 it("unsupported types cannot route to P1 even if a stale handler is invoked", () => {
-  for (const label of ["flexible", "activity"]) {
+  for (const label of ["flexible"]) {
     render();
     const button = state.buttons.find(
       (p) => p.accessibilityLabel === `formEntry.${label}`,

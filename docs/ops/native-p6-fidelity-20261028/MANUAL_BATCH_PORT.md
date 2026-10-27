@@ -1,3 +1,5 @@
+> Serial intake update: the actual port is replayed as `5785d680` on Native `2253dc34`. P6 host entry/Reader wiring is applied in this isolated integration branch; [HOST_INTEGRATION.md](HOST_INTEGRATION.md) supersedes the historical final pending paragraph below. No Cloud or Native Vision PASS.
+
 # P6 Manual Batch owning port — local SQLite PASS
 
 28 October2026. Parent obtained the serial unique-Writer handoff for this Gate; Universal continues only its separate P5 ReviewedSource work. Applied in the independent P6 Worktree, not main or parent Native tree.

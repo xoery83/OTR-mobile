@@ -28,7 +28,6 @@ export const manualItineraryTypes = [
     id: "P6",
     labelKey: "formEntry.activity",
     icon: "ticket",
-    enabled: false,
-    reasonKey: "formEntry.activityUnavailable",
+    enabled: true,
   },
 ] as const;
