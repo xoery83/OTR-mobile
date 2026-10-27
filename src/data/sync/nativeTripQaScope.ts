@@ -43,6 +43,7 @@ const sustainedConfiguration = z.strictObject({
   accountId: coreUuid,
   normal: z.strictObject({ newTripsFrom: z.iso.datetime() }),
   viewIsolationStartedAt: z.iso.datetime().optional(),
+  preserveLocalTripViews: z.boolean().optional(),
 });
 const configuration = z.union([finiteConfiguration, sustainedConfiguration]);
 
@@ -140,6 +141,8 @@ export function filterNativeTripQaList<
 >(accountId: string | null, trips: readonly T[]): readonly T[] {
   const scope = readConfiguration();
   if (!scope || scope.accountId !== accountId) return trips;
+  // View-only retention never changes the normal runner's new-trip cutoff or queue eligibility.
+  if (scope.version === 2 && scope.preserveLocalTripViews) return trips;
   const ids = new Set(
     scope.version === 1
       ? [...scope.creates, ...scope.edits].map((item) => item.tripId)

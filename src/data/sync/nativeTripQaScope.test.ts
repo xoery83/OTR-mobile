@@ -121,6 +121,26 @@ it("rejects another API host and another Account", async () => {
   expect(await runNativeTripQaSync()).toBeNull();
   expect(state.createFactory).not.toHaveBeenCalled();
 });
+it("can retain existing local Trip views without admitting their historical queues", async () => {
+  const cutoff = "2026-10-23T03:00:00Z";
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: cutoff },
+      preserveLocalTripViews: true,
+    }),
+  );
+  const retained = [{ id: trip, createdAt: "2026-10-01T00:00:00Z" }];
+  expect(filterNativeTripQaList(a, retained)).toEqual(retained);
+  await runNativeTripQaSync();
+  expect(state.normalFactory).toHaveBeenCalledWith(
+    { accountId: a, newTripsFrom: cutoff },
+    expect.any(Function),
+  );
+  expect(state.createFactory).not.toHaveBeenCalled();
+});
 it("passes only exact approved targets to the existing coordinators, Create first", async () => {
   const result = await runNativeTripQaSync();
   expect(result).toMatchObject({ accountId: a, journeyIds: [trip] });
