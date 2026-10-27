@@ -1,3 +1,9 @@
+## R35 physical checkpoint — 28 October 2026
+
+Existing Forms QA phone bundle updated without reset. Normal Session and both existing Trips retained. FormsQA1027: normal Train Create with departure Oct28, Auckland, Everyone and omitted clocks → normal Save → actual Day Feed → Focus observed. Actual saved title `P5 Train Tay`; rapid Mirror typing dropped characters, so the requested longer title is not claimed. Screenshot: `.forms-qa/r35/p5-real-focus.png` (ignored local evidence). Build/install logs: `.forms-qa/logs/native-r35-device{,-install}.log`.
+
+Details/Edit, process cold restore and full nine-state Vision remain pending. After Focus, CUA repeatedly rejected input due to foreground changes; Universal paused DeviceHub input, then two Mirror reconnections timed out. No further clicks were forced. GUI returned to Universal; no DEV mutation, Provider query, Cloud PASS or main merge. Current status: **LOCAL_CREATE_SAVE_FOCUS_PHYSICAL_OBSERVED / NATIVE_VISION_PARTIAL / CLOUD_PENDING**.
+
 # P5 Native fidelity candidate — 27 October 2026
 
 Parent serial intake: isolated commits `d1ae57cb` and `202d9f31` are now included

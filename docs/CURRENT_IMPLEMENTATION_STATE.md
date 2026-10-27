@@ -1,3 +1,7 @@
+## 28 October — R35 physical local P5 checkpoint
+
+R35 signed embedded Debug build/install on the existing Forms QA iPhone bundle PASS; original normal Session, Nelson summer trip and FormsQA1027 retained. In FormsQA1027, normal Transport Create (Train, Oct28, manually entered Auckland, Everyone, clocks omitted) → Save → actual Day Feed → Focus observed. Saved title is `P5 Train Tay` (Mirror dropped characters during input; no fake corrected-value receipt). Screenshot: ignored `.forms-qa/r35/p5-real-focus.png`. Today widget correctly showed Wed28Oct; observed Oct29 had one Stay Daily base. P5 Details/Edit/cold recovery/nine-state Vision remain pending: repeated foreground-change guards then two CUA30s timeouts stopped touch acceptance. Universal paused competing DeviceHub input, then GUI was returned explicitly; no AD5 data or Backend/Gate changes. This is a partial local physical receipt, not Cloud or full Native Vision PASS.
+
 ## 28 October — R33 Native follow-through
 
 Latest deployment handoff: Universal P4 title fix source9b851a4d/image8298d177/containerad8e88a4 replaces e049. Native independently verified healthy, Config8e6a8aae/Hoste89fe490/sortedMounta1ebc180/six original mounts and Enrichment non-enabled. Old4468/6ef prepared candidates and309d restore plan were never activated and MUST NOT run against this new baseline. Mac remains locked; no finite window/role grant/watchdog/query began. Wait for GUI plus serial business-window coordination, then seal new exact baseline/T0; never restore old309d over this accepted P4 repair.
