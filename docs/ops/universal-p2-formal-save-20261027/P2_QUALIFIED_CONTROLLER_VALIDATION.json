@@ -1,0 +1,72 @@
+{
+  "status": "QUALIFIED_CONTROLLER_VALIDATED_BUSINESS_CLOSED",
+  "controllerCases": 12,
+  "controllerSelfTest": "PASS",
+  "isolatedPG": {
+    "status": "PASS_ISOLATED_ONLY_NOT_DEV_SAVE",
+    "cases": 1,
+    "packageChecks": 5,
+    "network": "none",
+    "memory": "256m",
+    "checks": [
+      "3600-second cap accepts bounded scope and rejects >3600",
+      "expired scope denies owning Source publication while airport rows remain enabled",
+      "owning Source Plan Admission Sparse Core receipt readback",
+      "close-before-finalize and same-operation replay",
+      "five OID-owner-ACL preserved and reverse hashes"
+    ]
+  },
+  "typecheck": "PASS",
+  "scopedEslint": "PASS",
+  "independentReview": "NO_BLOCKER",
+  "actualClosedReadback": {
+    "status": "ACTUAL_DEV_CLOSED_FIVE_POSTIMAGES_UNCHANGED",
+    "at": "2026-10-27T05:37:00.223215+00:00",
+    "readback": {
+      "airportsEnabled": 0,
+      "functions": [
+        {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "identity": "trip_core_finite_read_state_guard()",
+          "md5": "d07436a7f65eaa048ca9771bdc20bd9b",
+          "owner": "postgres"
+        },
+        {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "identity": "trip_core_guard_historical_source_association()",
+          "md5": "fbeeb65353a1c6f921f5b8e5d5fb5e20",
+          "owner": "postgres"
+        },
+        {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "identity": "trip_core_publication_guard()",
+          "md5": "bbd9cc3b2a59ff3e1740bbef4747a35b",
+          "owner": "postgres"
+        },
+        {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "identity": "trip_sustained_import_p1_capabilities(uuid,uuid)",
+          "md5": "a5097debd28ed0af06280ad45e433270",
+          "owner": "postgres"
+        },
+        {
+          "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+          "identity": "trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)",
+          "md5": "03e0ae6a090e941ed0b8803209027981",
+          "owner": "postgres"
+        }
+      ],
+      "policy": {
+        "enabled": false,
+        "scope": null
+      }
+    },
+    "businessMutations": 0
+  },
+  "newRuntimeSHA256": "f952fcb78a5442c40a2b125ed3f52c7a9280dd6dc2eb0e030c3772eb790974d6",
+  "qualificationTestSHA256": "e60213a8137e7fe00b1a30a92bec26e6ec6677d2f1ea312d9a2a831d615ce366",
+  "newBusinessWindowArmed": false,
+  "hostedP2Save": "NOT_RUN",
+  "providerCalls": 0,
+  "newContainers": 0
+}

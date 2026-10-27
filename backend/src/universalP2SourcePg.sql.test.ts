@@ -227,12 +227,12 @@ it.skipIf(!container)(
       );
       // Execute the exact candidate Gate only in this disposable fixture.
       const activateTemplate = readFileSync(
-        new URL("P2_REVIEW_ACTIVATE.sql", packet),
+        new URL("P2_REVIEW_QUALIFIED_ACTIVATE.sql", packet),
         "utf8",
       );
       const activation = activateTemplate.replace(
         "__P2_FIXED_WINDOW_DEADLINE__",
-        new Date(Date.now() + 600000).toISOString(),
+        new Date(Date.now() + 3300000).toISOString(),
       );
       async function packageSql(text: string) {
         const s = session(container!);
@@ -247,12 +247,26 @@ it.skipIf(!container)(
         packageSql(
           activateTemplate.replace(
             "__P2_FIXED_WINDOW_DEADLINE__",
-            new Date(Date.now() + 1000000).toISOString(),
+            new Date(Date.now() + 3700000).toISOString(),
           ),
         ),
       ).rejects.toThrow("P2_INVALID_DEADLINE");
       await packageSql(activation);
       await expect(packageSql(activation)).rejects.toThrow("P2_REQUIRES_CLOSED_POLICY");
+      // Expiry alone must deny new business writes even if a closer process is unavailable.
+      await packageSql(
+        "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=jsonb_set(universal_p1_review_scope,'{expiresAt}',to_jsonb((clock_timestamp()-interval '1 second')::text)) WHERE actor_account_id='" +
+          actor +
+          "'::uuid",
+      );
+      await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
+        "CORE_CAPABILITY_CLOSED",
+      );
+      await packageSql(
+        "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=jsonb_set(universal_p1_review_scope,'{expiresAt}',to_jsonb((clock_timestamp()+interval '55 minutes')::text)) WHERE actor_account_id='" +
+          actor +
+          "'::uuid",
+      );
       const publication = await authority.publishUniversalP1(actor, trip, request);
       expect(publication.status).toBe("CANDIDATE_SEALED");
       expect(publication.proposedPlan).toEqual(expected.plan);

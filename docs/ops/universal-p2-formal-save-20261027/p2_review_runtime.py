@@ -1,8 +1,8 @@
 import datetime,fcntl,hashlib,json,os,pathlib,subprocess,sys,time,urllib.request,urllib.error
-ROOT=pathlib.Path('/opt/otr/dev-backend/private/universal-p2-review-088b49e5')
+ROOT=pathlib.Path(__file__).resolve().parent
 canon=lambda v:json.dumps(v,sort_keys=True,separators=(',',':')).encode()
 sha=lambda v:hashlib.sha256(canon(v)).hexdigest()
-def call(*a):return subprocess.check_output(a,stderr=subprocess.PIPE,timeout=35)
+def call(*a):return subprocess.check_output(a,stderr=subprocess.PIPE,timeout=20)
 def snap(id):return json.loads(call('docker','inspect',id))[0]
 def save(name,value):
  fd=os.open(ROOT/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
@@ -23,7 +23,9 @@ def rollback(p):
  old=snap(old['Id'])
  if old['Name']!='/otr-dev-backend':call('docker','rename',old['Id'],'otr-dev-backend')
  if not old['State']['Running']:call('docker','start',old['Id'])
+ health_deadline=time.monotonic()+60
  for _ in range(40):
+  if time.monotonic()>=health_deadline:break
   old=snap(old['Id']);check(old,p,False)
   if old['State'].get('Health',{}).get('Status')=='healthy':break
   time.sleep(1)
@@ -44,19 +46,24 @@ def verify(p):
  siblings=[{'id':v['Id'],'image':v['Image'],'status':v['State']['Status']} for v in json.loads(call('docker','inspect',*[v['id'] for v in p['baselineSiblingContainers']]))]
  assert sorted(siblings,key=lambda x:x['id'])==sorted(p['baselineSiblingContainers'],key=lambda x:x['id'])
  return {'status':'DEPLOY_HEALTH_AND_BOUNDARIES_PASS','containerId':new['Id'],'imageId':new['Image'],'configSHA256':sha(new['Config']),'hostConfigSHA256':sha(new['HostConfig']),'mountsSHA256':p['mountsSHA256'],'health':health,'routes':routes,'siblingCount':len(siblings),'rollbackImageRetained':old['Image'],'restartCount':new['RestartCount']}
+def verify_closed(p):
+ old=snap(p['originalContainerId']);new=snap(p['candidateContainerId']);check(old,p,False);check(new,p,True,created=new['State']['Status']=='created')
+ assert old['Name']=='/otr-dev-backend' and old['State']['Running'] and old['State']['Health']['Status']=='healthy' and not new['State']['Running']
+ return {'status':'DEFAULT_CLOSED_VERIFIED','containerId':old['Id'],'imageId':old['Image']}
 def main():
  p=json.loads((ROOT/'plan.json').read_text());mode=sys.argv[1]
  if mode in ('arm','swap'):
-  approval=json.loads((ROOT/'owner-approval.json').read_text());assert approval.get('ownerApproved') is True and approval.get('gateName')=='P2_SOURCE_REVIEW_SAVE_GATE/1','P2_EXACT_APPROVAL_REQUIRED'
+  approval=json.loads((ROOT/'owner-approval.json').read_text());assert approval.get('ownerApproved') is True and approval.get('gateName')=='P2_QUALIFIED_EXECUTION_GATE/1','P2_EXACT_APPROVAL_REQUIRED'
+ if mode=='closed':print(json.dumps(verify_closed(p)));return
  if mode=='arm':
   assert not (ROOT/'window.json').exists()
-  t=time.time();save('window.json',{'startsAt':datetime.datetime.fromtimestamp(t,datetime.timezone.utc).isoformat(),'deadline':t+900,'swapDeadline':t+660})
+  t=time.time();save('window.json',{'startsAt':datetime.datetime.fromtimestamp(t,datetime.timezone.utc).isoformat(),'deadline':t+3600,'swapDeadline':t+3000})
   log=open(ROOT/'watch.log','xb');os.chmod(ROOT/'watch.log',0o600)
   child=subprocess.Popen(['python3',str(ROOT/'operator.py'),'watch'],stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-  save('watchdog.json',{'pid':child.pid});print(json.dumps({'status':'WATCHDOG_ARMED','pid':child.pid,'deadline':t+900}));return
+  save('watchdog.json',{'pid':child.pid});print(json.dumps({'status':'WATCHDOG_ARMED','pid':child.pid,'deadline':t+3600}));return
  w=json.loads((ROOT/'window.json').read_text())
  if mode=='deadline':print(json.dumps({'deadline':w['deadline']}));return
- if mode=='watch':time.sleep(max(0,w['deadline']-time.time()))
+ if mode=='watch':time.sleep(max(0,w['deadline']-600-time.time()))
  lock=os.open('/run/lock/otr-universal-finite-service.lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
  fcntl.flock(lock,fcntl.LOCK_EX)
  try:
@@ -72,7 +79,9 @@ def main():
     call('docker','stop','--time','10',old['Id']);assert not snap(old['Id'])['State']['Running']
     call('docker','rename',old['Id'],'otr-universal-p2-review-088b49e5-previous-d83ec6b3')
     call('docker','rename',new['Id'],'otr-dev-backend');call('docker','start',new['Id'])
+    health_deadline=time.monotonic()+60
     for _ in range(45):
+     if time.monotonic()>=health_deadline:break
      new=snap(new['Id'])
      if new['State'].get('Health',{}).get('Status')=='healthy':break
      time.sleep(1)
@@ -80,7 +89,12 @@ def main():
    except Exception:
     r=rollback(p);save('rollback.json',r);print(json.dumps(r));raise
   elif mode=='watch':
-   r=rollback(p);save('watchdog-final.json',r)
+   for attempt in range(3):
+    try:
+     r=rollback(p);save('watchdog-final.json',r);break
+    except Exception:
+     if attempt==2 or time.time()>=w['deadline']:raise
+     time.sleep(5)
   elif mode=='verify':print(json.dumps(verify(p)))
   elif mode=='rollback':print(json.dumps(rollback(p)))
   else:raise ValueError('MODE')
