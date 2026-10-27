@@ -369,3 +369,22 @@ it("keeps a non-writable error message from replacing the original failure", asy
   await expect(f.worker.push(f.operation)).rejects.toBe(error);
   expect(f.transport.submit).not.toHaveBeenCalled();
 });
+
+it("identifies command submission errors even when the client calls them read errors", async () => {
+  const f = await fixture();
+  vi.mocked(f.transport.capabilities).mockResolvedValue({
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["CREATE_SPARSE_FLIGHT"],
+    enabledAdmissionModes: ["MANUAL"],
+    enabledFamilies: ["P2"],
+  });
+  const error = Object.assign(new Error("OTR API read is unavailable."), {
+    kind: "http",
+    status: 400,
+  });
+  vi.mocked(f.transport.submit).mockRejectedValue(error);
+  await expect(f.worker.push(f.operation)).rejects.toBe(error);
+  expect(error.message).toContain("CORE_SUBMIT [http/400]");
+  expect(f.transport.submit).toHaveBeenCalledTimes(1);
+});

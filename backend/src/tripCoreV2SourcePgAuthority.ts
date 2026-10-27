@@ -2027,14 +2027,16 @@ export function createCoreSourcePgAuthority(
           ).rows;
           if (
             rows.length > 4096 ||
-            !rows.some((r) =>
-              sealedCoreFlightCandidateSchema
-                .parse(r.candidate_json)
-                .airportBindings.some(
-                  (a) =>
-                    encodeURIComponent(a.registryVersion) === reg[1] &&
-                    a.registrySha256 === reg[2],
-                ),
+            !rows.some(
+              (r) =>
+                !isUniversalP1Body(r.candidate_json) &&
+                sealedCoreFlightCandidateSchema
+                  .parse(r.candidate_json)
+                  .airportBindings.some(
+                    (a) =>
+                      encodeURIComponent(a.registryVersion) === reg[1] &&
+                      a.registrySha256 === reg[2],
+                  ),
             )
           )
             return false;

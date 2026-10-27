@@ -270,3 +270,100 @@ it("expired owning capability returns CLOSED without widening its available comm
   );
   expect(await result.json()).toEqual(coreClosedCapabilities);
 });
+
+it("logs only bounded schema codes and paths for a late Core validation failure", async () => {
+  const { z } = await import("zod");
+  const parsed = z.object({ receipt: z.object({ outcome: z.string() }) }).safeParse({
+    receipt: { outcome: 123 },
+  });
+  if (parsed.success) throw Error("EXPECTED_SCHEMA_FAILURE");
+  const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  try {
+    const connection = {
+      commands: {
+        withLockedCommand: async () => {
+          throw parsed.error;
+        },
+      },
+      hash,
+    } as unknown as CoreHttpConnection;
+    const response = await coreHttpBoundary(
+      request("commands", JSON.stringify(command())),
+      actor,
+      async () => true,
+      connection,
+    );
+    expect(response?.status).toBe(400);
+    expect(await response?.json()).toMatchObject({ error: { code: "INVALID_PAYLOAD" } });
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining('"event":"core_validation_failed"'),
+    );
+    const event = log.mock.calls
+      .map(([v]) => JSON.parse(String(v)))
+      .find((v) => v.event === "core_validation_failed");
+    expect(event).toMatchObject({
+      resource: "commands",
+      method: "POST",
+      cause: "SCHEMA",
+      issues: [{ code: "invalid_type", path: ["receipt", "outcome"] }],
+    });
+    expect(JSON.stringify(event)).not.toContain("Bearer");
+    expect(JSON.stringify(event)).not.toContain(actor);
+    expect(JSON.stringify(event)).not.toContain(trip);
+    expect(JSON.stringify(event)).not.toContain("123");
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it("keeps the original validation response if diagnostic logging fails", async () => {
+  const log = vi.spyOn(console, "info").mockImplementation(() => {
+    throw Error("logger unavailable");
+  });
+  try {
+    const response = await coreHttpBoundary(
+      request("commands", "{}"),
+      actor,
+      async () => true,
+    );
+    expect(response?.status).toBe(400);
+    expect(await response?.json()).toMatchObject({ error: { code: "INVALID_PAYLOAD" } });
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it("does not put arbitrary schema path keys or error messages into diagnostics", async () => {
+  const { z } = await import("zod");
+  const error = new z.ZodError([
+    {
+      code: "custom",
+      path: ["payload", "private@example.com", "PassportAB12345"],
+      message: "SENSITIVE_VALUE_NEVER_LOG",
+    },
+  ]);
+  const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  try {
+    const response = await coreHttpBoundary(
+      request("commands", JSON.stringify(command())),
+      actor,
+      async () => true,
+      {
+        hash,
+        commands: {
+          withLockedCommand: async () => {
+            throw error;
+          },
+        },
+      } as unknown as CoreHttpConnection,
+    );
+    expect(response?.status).toBe(400);
+    const text = JSON.stringify(log.mock.calls);
+    expect(text).toContain("[field]");
+    expect(text).not.toContain("private@example.com");
+    expect(text).not.toContain("PassportAB12345");
+    expect(text).not.toContain("SENSITIVE_VALUE_NEVER_LOG");
+  } finally {
+    log.mockRestore();
+  }
+});

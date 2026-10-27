@@ -5,7 +5,7 @@ import {
   coreSourceFinalizeResultV2Schema,
 } from "../../src/domain/trip/tripCoreV2SourceContract";
 import { z } from "zod";
-import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import { coreTableSchemas, coreUuid } from "../../src/domain/trip/tripCoreV2";
 import {
   corePayloadSchemas,
   coreClosedCapabilities,
@@ -40,6 +40,44 @@ import {
 } from "../../src/domain/trip/tripCoreV2CandidatePublication";
 import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
 import type { createCorePgReader } from "./tripCoreV2PgRead";
+const validationFields = new Set([
+  ...Object.values(coreTableSchemas).flatMap((schema) => Object.keys(schema.shape)),
+  "contractVersion",
+  "intentVersion",
+  "operationId",
+  "tripId",
+  "command",
+  "target",
+  "kind",
+  "id",
+  "baseVector",
+  "revision",
+  "admission",
+  "mode",
+  "sourceIntentId",
+  "policyVersion",
+  "payload",
+  "receipt",
+  "outcome",
+  "committedAt",
+  "intentSha256",
+  "receiptSha256",
+  "audit",
+  "before",
+  "after",
+  "core",
+  "family",
+  "schedule",
+  "flightNumberLiteral",
+  "departureDate",
+  "provenance_refs",
+  "field_state",
+  "sourceId",
+  "sourceRevision",
+  "captureVersion",
+  "planId",
+  "slotId",
+]);
 export type CoreHttpConnection = {
   publishUniversalP1?(actor: string, trip: string, input: unknown): Promise<unknown>;
   finalizeUniversalP1Operation?(
@@ -351,11 +389,47 @@ export async function coreHttpBoundary(
       return failure(503, "CORE_READ_UNAVAILABLE");
     return failure(405, "METHOD_NOT_ALLOWED");
   } catch (error) {
-    if (error instanceof z.ZodError || error instanceof RequestBoundaryError)
+    if (error instanceof z.ZodError || error instanceof RequestBoundaryError) {
+      try {
+        const resource = path.split("/")[0];
+        console.info(
+          JSON.stringify({
+            event: "core_validation_failed",
+            resource: [
+              "commands",
+              "source-plans",
+              "source-candidates",
+              "universal-p1-candidates",
+            ].includes(resource)
+              ? resource
+              : "core",
+            method: request.method,
+            cause: error instanceof RequestBoundaryError ? error.code : "SCHEMA",
+            issues:
+              error instanceof z.ZodError
+                ? error.issues.slice(0, 6).map((issue) => ({
+                    code: issue.code,
+                    path: issue.path
+                      .slice(0, 8)
+                      .map((part) =>
+                        typeof part === "number"
+                          ? part
+                          : typeof part === "string" && validationFields.has(part)
+                            ? part
+                            : "[field]",
+                      ),
+                  }))
+                : [],
+          }),
+        );
+      } catch {
+        // Diagnostics cannot change the validation response or expose request values.
+      }
       return failure(
         error instanceof RequestBoundaryError && error.code === "BODY_LIMIT" ? 413 : 400,
         "INVALID_PAYLOAD",
       );
+    }
     const code = error instanceof Error ? error.message : "INTERNAL_ERROR";
     if (
       path === "universal-p1-candidates" &&

@@ -1,0 +1,104 @@
+{
+  "recordedAt": "2026-10-27T07:20:34.383Z",
+  "scope": "Fixed authorized DEV QA Trip candidate SELECT only; local canReadAudit replay",
+  "candidateCount": 3,
+  "recognizedUniversalCount": 2,
+  "legacyRegistryScan": {
+    "rejected": true,
+    "name": "ZodError",
+    "issues": [
+      {
+        "code": "invalid_value",
+        "path": [
+          "version"
+        ]
+      },
+      {
+        "code": "invalid_type",
+        "path": [
+          "publicationId"
+        ]
+      },
+      {
+        "code": "invalid_type",
+        "path": [
+          "candidate"
+        ]
+      },
+      {
+        "code": "invalid_value",
+        "path": [
+          "status"
+        ]
+      },
+      {
+        "code": "invalid_type",
+        "path": [
+          "errorCode"
+        ]
+      },
+      {
+        "code": "invalid_type",
+        "path": [
+          "identityFacts"
+        ]
+      },
+      {
+        "code": "invalid_type",
+        "path": [
+          "identityEvidenceRefs"
+        ]
+      },
+      {
+        "code": "invalid_union",
+        "path": [
+          "values"
+        ]
+      },
+      {
+        "code": "invalid_key",
+        "path": [
+          "fieldEvidence",
+          "ROOT.title.0"
+        ]
+      },
+      {
+        "code": "invalid_key",
+        "path": [
+          "fieldEvidence",
+          "START.local_date.0"
+        ]
+      },
+      {
+        "code": "invalid_type",
+        "path": [
+          "airportBindings"
+        ]
+      },
+      {
+        "code": "unrecognized_keys",
+        "path": []
+      }
+    ]
+  },
+  "fixedExactRegistryResult": true,
+  "fixedMismatchedRegistryResult": false,
+  "fixedMalformedFlight": {
+    "rejected": true,
+    "name": "ZodError",
+    "issues": [
+      {
+        "code": "invalid_value",
+        "path": [
+          "version"
+        ]
+      }
+    ]
+  },
+  "sourceSHA256": "dfc60d7d4e1d098396332b57d269a273b8214df345bbf6fa049366ccf9a7183b",
+  "testSHA256": "21a9a25693a7ceb97c26e1997424f17800e76c381a9b441a9800a7e8d7079158",
+  "devBusinessWrites": 0,
+  "liveActorSet": false,
+  "liveAdmissionCalled": false,
+  "hostedSaveClaim": false
+}

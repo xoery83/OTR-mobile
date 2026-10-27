@@ -39,7 +39,7 @@ export type CoreSyncTransport = {
   ): Promise<CoreReceiptProjection>;
 };
 type Repository = ReturnType<typeof createTripCoreV2Repository>;
-async function readCore<T>(phase: string, read: () => Promise<T>): Promise<T> {
+async function corePhase<T>(phase: string, read: () => Promise<T>): Promise<T> {
   try {
     return await read();
   } catch (error) {
@@ -105,7 +105,7 @@ export function createCoreV2SyncWorker(
           ["P1", "P3"].includes((command.payload as { family: string }).family)) ||
           command.command === "CREATE_SPARSE_FLIGHT") &&
         command.admission.mode === "REVIEWED_SOURCE";
-      let result = await readCore("CORE_RECEIPT_READ", () =>
+      let result = await corePhase("CORE_RECEIPT_READ", () =>
         transport.receipt(context, operation.id),
       );
       await assertAccountRequestContext(context, getAccountId);
@@ -113,7 +113,9 @@ export function createCoreV2SyncWorker(
         throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
-          await readCore("CORE_CAPABILITIES_READ", () => transport.capabilities(context)),
+          await corePhase("CORE_CAPABILITIES_READ", () =>
+            transport.capabilities(context),
+          ),
         );
         await assertAccountRequestContext(context, getAccountId);
         if (
@@ -134,7 +136,7 @@ export function createCoreV2SyncWorker(
                 )?.experience_family;
         if (family && !capabilities.enabledFamilies.includes(family as never))
           throw new SyncDependencyError("CORE_FAMILY_CLOSED");
-        result = await transport.submit(context, command);
+        result = await corePhase("CORE_SUBMIT", () => transport.submit(context, command));
         await assertAccountRequestContext(context, getAccountId);
       }
       if (result.projection !== "FULL")

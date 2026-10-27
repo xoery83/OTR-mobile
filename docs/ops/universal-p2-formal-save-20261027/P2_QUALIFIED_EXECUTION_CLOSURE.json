@@ -1,0 +1,68 @@
+{
+  "gate": "P2_QUALIFIED_EXECUTION_GATE/1",
+  "ownerApprovalCommit": "87ea9ed9",
+  "window": {
+    "startsAt": "2026-10-27T05:48:41.675452Z",
+    "expiresAt": "2026-10-27T06:48:41.675452Z",
+    "closeAt": 1793082821.6754525,
+    "deadline": 1793083721.6754525,
+    "actor": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "scope": {
+      "family": "P2",
+      "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "batchId": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+      "taskId": "7338329a-46eb-8050-9bec-96376f08b296",
+      "runId": "8af82103-55f2-84ea-8e6f-445a15321cf6",
+      "token": "i1",
+      "resultSha256": "7300e350f5e93ec77b833a4f7d65c44b88fdee4208c7ed001d47375d7244bf94",
+      "candidateId": "a85c1ab1-8dc4-8ff2-b0b7-4887a394b465",
+      "targetId": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "operationId": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+      "slotId": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+      "planId": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+      "publicationId": "2d3ef30c-a3ee-81ba-8a8f-f6d2ecb4b57f",
+      "publicationSha256": "42bcceccf523049b73d8120d18e9374dbb889ec5cd0a4c60202b3b231854eb40",
+      "proposedPlanSha256": "30ef32a53a14e3b80cb46b67a2ef8e451d134c55e6fd2950f5419d3511ce8d7f",
+      "flightNumberLiteral": "NZ501",
+      "localDate": "2026-11-02"
+    }
+  },
+  "closure": {
+    "status": "P2_SCOPE_CLOSED_RUNTIME_DEFAULT_RESTORED",
+    "at": "2026-10-27T06:33:55.201519Z",
+    "policy": {
+      "airportsEnabled": 0,
+      "enabled": false,
+      "scope": null
+    },
+    "runtime": {
+      "status": "ROLLBACK_VERIFIED",
+      "containerId": "c5072bea46ccae9d9ad4eccae19908d02d0c84366dbb98c3d8bb7e709f43481e",
+      "imageId": "sha256:77c7055e5dea1e89ac2e595e6890058ec7b14689105d692143a56e65d566dbef"
+    },
+    "businessRecordsDeleted": 0
+  },
+  "remoteWatcherFinal": {
+    "status": "ROLLBACK_VERIFIED",
+    "observedAt": "2026-10-27T06:42:09Z"
+  },
+  "independentReadback": {
+    "at": "2026-10-27T06:45:20Z",
+    "publication": 1,
+    "candidate": 1,
+    "plan": 1,
+    "slot": 1,
+    "item": 0,
+    "receipt": 0,
+    "policyEnabled": false,
+    "scope": null,
+    "enabledAirports": 0
+  },
+  "nativeAttempts": 3,
+  "saveStatus": "NOT_ACCEPTED",
+  "businessRecordsDeleted": 0,
+  "newProviderCalls": 0,
+  "newInputObjects": 0,
+  "next": "Fix mixed P1/P3 Flight registry audit parse; preserve same READY Slot/Item/operation; do not rearm consumed window."
+}
