@@ -8,7 +8,7 @@ import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
-import { DayFeedFidelityHeading } from "./DayFeedFidelityHeading";
+import { TripDayHeading } from "./TripDayHeading";
 import { p1InsertionTime } from "./p1InsertionTime";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import {
@@ -1596,7 +1596,8 @@ function TripContent({
                       register={move.register}
                       unregister={move.unregister}
                     >
-                      <DayFeedFidelityHeading
+                      <TripDayHeading
+                        tripId={requested}
                         date={date}
                         start={dayFacts.startDate!}
                         today={appearanceToday ?? ""}

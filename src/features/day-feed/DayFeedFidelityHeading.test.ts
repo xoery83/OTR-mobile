@@ -2,9 +2,13 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { DayFeedFidelityHeading } from "./DayFeedFidelityHeading";
-import { lightPalette } from "@/ui/palette";
-const state = vi.hoisted(() => ({ nodes: [] as any[], scale: 1 }));
+import { darkPalette, lightPalette } from "@/ui/palette";
+const state = vi.hoisted(() => ({ nodes: [] as any[], scale: 1, dark: false }));
 vi.mock("react-native", () => ({
+  Pressable: (p: any) => {
+    state.nodes.push(p);
+    return createElement("button", null, p.children);
+  },
   View: (p: any) => {
     state.nodes.push(p);
     return createElement("div", null, p.children);
@@ -16,7 +20,9 @@ vi.mock("@/ui/controls", () => ({
   UiText: (p: any) => createElement("span", null, p.children),
   UiButton: (p: any) => createElement("button", null, p.label),
 }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: (fn: any) => fn(lightPalette) }));
+vi.mock("@/ui/theme", () => ({
+  useThemedStyles: (fn: any) => fn(state.dark ? darkPalette : lightPalette),
+}));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -32,6 +38,35 @@ const props = {
 beforeEach(() => {
   state.nodes = [];
   state.scale = 1;
+  state.dark = false;
+});
+it("makes the entire heading a44pt+ cycle target with current/next style labels", () => {
+  const onCycleStyle = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(DayFeedFidelityHeading, { ...props, styleMode: "B", onCycleStyle }),
+  );
+  expect(html).toContain("Today");
+  expect(html).toContain("Day 1");
+  const button = state.nodes.find((n) => n.accessibilityRole === "button");
+  expect(button.style[0].minHeight).toBeGreaterThanOrEqual(44);
+  expect(button.accessibilityLabel).toContain("Weekday and day");
+  expect(button.accessibilityHint).toContain("Destination and trip day");
+  button.onPress();
+  expect(onCycleStyle).toHaveBeenCalledOnce();
+  expect(button.onLongPress).toBeUndefined();
+  expect(button.onStartShouldSetResponder).toBeUndefined();
+});
+it("fits two-line badges at Dynamic Type and retains semantic Dark Mode colors", () => {
+  state.scale = 3;
+  state.dark = true;
+  renderToStaticMarkup(
+    createElement(DayFeedFidelityHeading, { ...props, styleMode: "D" }),
+  );
+  const badge = state.nodes.find((n) => n.accessibilityLabel === "Day 1");
+  expect(badge.style.at(-1)).toMatchObject({ width: 90, height: 132 });
+  expect(Object.assign({}, ...badge.style.filter(Boolean))).toMatchObject({
+    backgroundColor: darkPalette.accent,
+  });
 });
 it("uses a38pt native gradient strip with supported percentage stops", () => {
   const html = renderToStaticMarkup(createElement(DayFeedFidelityHeading, props));

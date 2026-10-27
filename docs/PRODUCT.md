@@ -1,5 +1,13 @@
 # OTR Mobile 2.0 Product Scope
 
+## Authorized DayHeader presentation (2026-10-27)
+
+Owner approved four tap-to-cycle DayHeader styles with one device-local preference
+per Trip, including Guest/offline use. This changes presentation only. A retains
+the existing format; B/C/D use exact date/day fallbacks when the authorized Reader
+cannot prove a shared city/region destination. No inferred travel or new Reader
+authority is introduced. See `ops/native-day-fidelity-20261025/DAY_HEADER_STYLES_20261027.md`.
+
 ## Positioning
 
 OTR Mobile 2.0 is a Group Travel Operations App. It helps a travel group answer practical, repeated questions during a real trip:

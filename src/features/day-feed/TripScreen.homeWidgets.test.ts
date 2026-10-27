@@ -33,7 +33,7 @@ vi.mock("./ManualFlightForm", () => ({
   ManualFlightEditor: (p: any) => ({ type: "ManualFlightEditor", props: p }),
 }));
 vi.mock("./ManualItineraryContent", () => ({ ManualItineraryContent: () => null }));
-vi.mock("./DayFeedFidelityHeading", () => ({ DayFeedFidelityHeading: () => null }));
+vi.mock("./TripDayHeading", () => ({ TripDayHeading: () => null }));
 vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
   dayNavigationBookmarkRepository: {
     list: vi.fn(async () => []),

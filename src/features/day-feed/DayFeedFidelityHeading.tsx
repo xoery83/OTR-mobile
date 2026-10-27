@@ -1,10 +1,15 @@
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { UiButton, UiText } from "@/ui/controls";
-import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
+import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+import { nextDayHeaderStyle, type DayHeaderStyle } from "@/domain/trip/dayHeaderStyle";
+import {
+  dayHeaderPresentation,
+  type DayHeaderDestination,
+} from "./dayHeaderPresentation";
 export function DayFeedFidelityHeading({
   date,
   start,
@@ -13,6 +18,9 @@ export function DayFeedFidelityHeading({
   onAdd,
   previousColor,
   dayColor,
+  styleMode = "A",
+  destination,
+  onCycleStyle,
 }: {
   date: string;
   start: string;
@@ -21,26 +29,19 @@ export function DayFeedFidelityHeading({
   onAdd?(): void;
   previousColor?: string;
   dayColor?: string;
+  styleMode?: DayHeaderStyle;
+  destination?: DayHeaderDestination;
+  onCycleStyle?(): void;
 }) {
   useUiLocale();
   const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles);
-  const ordinal =
-    Math.round(
-      (Date.parse(date + "T12:00:00Z") - Date.parse(start + "T12:00:00Z")) / 86400000,
-    ) + 1;
-  const delta = Math.round(
-    (Date.parse(date + "T12:00:00Z") - Date.parse(today + "T12:00:00Z")) / 86400000,
-  );
-  const at = new Date(date + "T12:00:00Z"),
-    isToday = delta === 0,
+  const { ordinal, delta, title, subtitle, badgeTop, badgeBottom } =
+    dayHeaderPresentation({ date, start, today, style: styleMode, destination });
+  const isToday = delta === 0,
     isTomorrow = delta === 1,
     past = delta < 0;
-  const title = isToday
-    ? t("search.today")
-    : isTomorrow
-      ? t("fidelity.tomorrow")
-      : formatUiDate(at, { weekday: "long", timeZone: "UTC" });
+  const Heading = onCycleStyle ? Pressable : View;
   return (
     <View style={[styles.root, { backgroundColor: dayColor }]}>
       {previousColor && dayColor ? (
@@ -64,9 +65,30 @@ export function DayFeedFidelityHeading({
           ]}
         />
       ) : null}
-      <View style={[styles.heading, isToday && styles.todayHeading]}>
+      <Heading
+        onPress={onCycleStyle}
+        accessibilityRole={onCycleStyle ? "button" : undefined}
+        accessibilityLabel={
+          onCycleStyle
+            ? t("dayHeader.accessibility", {
+                title,
+                subtitle,
+                day: t("fidelity.dayOrdinal", { day: ordinal }),
+                style: t(`dayHeader.style${styleMode}`),
+              })
+            : undefined
+        }
+        accessibilityHint={
+          onCycleStyle
+            ? t("dayHeader.nextStyle", {
+                style: t(`dayHeader.style${nextDayHeaderStyle(styleMode)}`),
+              })
+            : undefined
+        }
+        style={[styles.heading, isToday && styles.todayHeading]}
+      >
         <View
-          accessible
+          accessible={!onCycleStyle}
           accessibilityLabel={t("fidelity.dayOrdinal", { day: ordinal })}
           style={[
             styles.badge,
@@ -74,7 +96,7 @@ export function DayFeedFidelityHeading({
             isTomorrow && styles.tomorrowBadge,
             {
               width: Math.max(isToday ? 49 : 43, 30 * fontScale),
-              height: Math.max(isToday ? 55 : 49, 32 * fontScale),
+              height: Math.max(isToday ? 55 : 49, (badgeTop ? 44 : 32) * fontScale),
             },
           ]}
         >
@@ -94,6 +116,18 @@ export function DayFeedFidelityHeading({
               isTomorrow && styles.bindingTomorrow,
             ]}
           />
+          {badgeTop ? (
+            <UiText
+              numberOfLines={1}
+              style={[
+                styles.badgeTop,
+                isToday && styles.badgeOnAccent,
+                isTomorrow && styles.badgeTomorrow,
+              ]}
+            >
+              {badgeTop}
+            </UiText>
+          ) : null}
           <UiText
             style={[
               styles.badgeLabel,
@@ -101,12 +135,14 @@ export function DayFeedFidelityHeading({
               isTomorrow && styles.badgeTomorrow,
             ]}
           >
-            {formatUiNumber(ordinal)}
+            {badgeBottom}
           </UiText>
         </View>
         <View style={styles.copy}>
           <UiText
             accessibilityRole="header"
+            numberOfLines={1}
+            ellipsizeMode="tail"
             style={[
               styles.title,
               past && styles.past,
@@ -116,16 +152,11 @@ export function DayFeedFidelityHeading({
           >
             {title}
           </UiText>
-          <UiText style={styles.meta}>
-            {isToday || isTomorrow
-              ? t("fidelity.weekdayDate", {
-                  weekday: formatUiDate(at, { weekday: "long", timeZone: "UTC" }),
-                  date: formatUiDate(at, { dateStyle: "medium", timeZone: "UTC" }),
-                })
-              : formatUiDate(at, { dateStyle: "medium", timeZone: "UTC" })}
+          <UiText numberOfLines={1} ellipsizeMode="tail" style={styles.meta}>
+            {subtitle}
           </UiText>
         </View>
-      </View>
+      </Heading>
       {empty ? (
         past ? (
           <UiText style={styles.empty}>{t("fidelity.empty")}</UiText>
@@ -198,6 +229,12 @@ const createStyles = (c: UiColors) =>
     bindingOnAccent: { backgroundColor: c.onAccent },
     bindingTomorrow: { backgroundColor: c.accent },
     badgeLabel: { ...visual.type.section, fontSize: 22, color: c.textPrimary },
+    badgeTop: {
+      ...visual.type.meta,
+      fontSize: 11,
+      fontWeight: "600",
+      color: c.textSecondary,
+    },
     badgeOnAccent: { color: c.onAccent },
     badgeTomorrow: { color: c.accent },
     copy: { flex: 1, minWidth: 0, gap: 4 },
