@@ -1,0 +1,10 @@
+{
+  "ownerApproved": true,
+  "gateName": "P2_SOURCE_REVIEW_SAVE_GATE/1",
+  "gateCommit": "7129efe31f57a77e3b61f78bf5c8cf42b3368fa2",
+  "questionId": "call_3ece629c813f48c3993aa18df51d56b1",
+  "answer": "批准该精确 P2 Save Gate",
+  "recordedAt": "2026-10-27T03:50:19.858346+00:00",
+  "scopeSha256": "88ed5856a6ced6857f953c17c14c93aed5fdcdadb90eea4e995d97bbcdecb2b4",
+  "packageSha256": "1273265a09e3905ccc2fab0cacfed8577a9e58d675cd83f4fd9bc22adfad1d2e"
+}
