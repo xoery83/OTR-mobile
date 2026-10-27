@@ -99,7 +99,17 @@ const rentalReadFieldsSchema = manualRentalFieldsSchema.safeExtend({
   pickupLocation: z.string().trim().max(500),
   returnLocation: z.string().trim().max(500),
 });
+export const manualActivityDetailsSchema = z.strictObject({
+  sessionLabel: z.string().max(500).nullable(),
+  admissionNote: z.string().max(2000).nullable(),
+  entryLocation: z.string().trim().max(500).nullable(),
+});
+export const manualActivityFieldsSchema = manualPlanFieldsSchema.safeExtend({
+  activityDetails: manualActivityDetailsSchema,
+});
+export type ManualActivityFields = z.infer<typeof manualActivityFieldsSchema>;
 type ManualItemFields = ManualPlanFields & {
+  activityDetails?: ManualActivityFields["activityDetails"];
   stayDetails?: ManualStayFields["stayDetails"];
   pickupLocation?: string;
   returnLocation?: string;
@@ -165,10 +175,18 @@ type DraftState = {
 function fieldsFor(
   row: Record<string, unknown>,
   snapshot: Snapshot,
-  family: "P1" | "P3" | "P4",
+  family: "P1" | "P3" | "P4" | "P6",
 ): ManualItemFields {
   const stay = snapshot.graph.trip_stay_details.find((r) => r.event_id === row.id);
   const clockLabel = (v: unknown) => (typeof v === "string" ? v.slice(0, 5) : null);
+  const activity =
+    family === "P6"
+      ? snapshot.graph.trip_activity_details.find((r) => r.event_id === row.id)
+      : undefined;
+  const entry =
+    family === "P6"
+      ? snapshot.graph.trip_activity_entry_places.find((r) => r.event_id === row.id)
+      : undefined;
   const rental = snapshot.graph.trip_rental_details.find((r) => r.event_id === row.id);
   const rentalLabel = (role: "PICKUP" | "RETURN") => {
     const place = snapshot.graph.trip_rental_places.find(
@@ -187,9 +205,25 @@ function fieldsFor(
       ? rentalReadFieldsSchema
       : family === "P3"
         ? manualStayFieldsSchema
-        : manualPlanFieldsSchema
+        : family === "P6"
+          ? manualActivityFieldsSchema
+          : manualPlanFieldsSchema
   ).parse({
     title: row.title,
+    ...(family === "P6"
+      ? {
+          activityDetails: {
+            sessionLabel: activity?.session_label ?? null,
+            admissionNote: activity?.admission_note ?? null,
+            entryLocation:
+              entry?.authored_label ??
+              entry?.authored_text ??
+              entry?.authored_address ??
+              entry?.accepted_address ??
+              null,
+          },
+        }
+      : {}),
     ...(family === "P3"
       ? {
           stayDetails: {
@@ -236,7 +270,7 @@ function editable(
   snapshot: Snapshot,
   itemId: string,
   accountId: string,
-  family: "P1" | "P3" | "P4",
+  family: "P1" | "P3" | "P4" | "P6",
 ) {
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
@@ -264,7 +298,7 @@ const authoredBoundary = (
   zone_id: zone,
 });
 
-// Three finite Forms share the already-qualified transaction and opaque retry boundary.
+// Finite Forms share the already-qualified transaction and opaque retry boundary.
 export function createManualItemRepository(
   family: "P1",
   database: CoreDatabase,
@@ -290,7 +324,15 @@ export function createManualItemRepository(
   newId?: () => string,
 ): ManualItemRepository<ManualRentalFields>;
 export function createManualItemRepository(
-  family: "P1" | "P3" | "P4",
+  family: "P6",
+  database: CoreDatabase,
+  account: () => Promise<string>,
+  core: Core,
+  clock?: () => string,
+  newId?: () => string,
+): ManualItemRepository<ManualActivityFields>;
+export function createManualItemRepository(
+  family: "P1" | "P3" | "P4" | "P6",
   database: CoreDatabase,
   account: () => Promise<string>,
   core: Core,
@@ -404,7 +446,16 @@ export function createManualItemRepository(
               title: "",
               startDate: "",
               startTime: family === "P4" ? "" : null,
-              endDate: family !== "P1" ? "" : null,
+              endDate: family === "P3" || family === "P4" ? "" : null,
+              ...(family === "P6"
+                ? {
+                    activityDetails: {
+                      sessionLabel: null,
+                      admissionNote: null,
+                      entryLocation: null,
+                    },
+                  }
+                : {}),
               ...(family === "P3"
                 ? {
                     stayDetails: {
@@ -482,7 +533,9 @@ export function createManualItemRepository(
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
           original: structuredClone(fields),
-          ids: Array.from({ length: family === "P3" ? 5 : 4 }, () => newId()),
+          ids: Array.from({ length: family === "P3" || family === "P6" ? 5 : 4 }, () =>
+            newId(),
+          ),
         });
         await assertAccountRequestContext(context, account);
       });
@@ -506,7 +559,9 @@ export function createManualItemRepository(
           ? manualRentalFieldsSchema
           : family === "P3"
             ? manualStayFieldsSchema
-            : manualPlanFieldsSchema
+            : family === "P6"
+              ? manualActivityFieldsSchema
+              : manualPlanFieldsSchema
       ).parse(input);
       if (
         family === "P4" &&
@@ -677,6 +732,36 @@ export function createManualItemRepository(
               verified_plate: fields.rentalDetails.verifiedPlate,
             }
           : undefined;
+        const activityDetails = fields.activityDetails
+          ? {
+              session_label: fields.activityDetails.sessionLabel,
+              admission_note: fields.activityDetails.admissionNote,
+            }
+          : undefined;
+        const storedEntry = snapshot.graph.trip_activity_entry_places.find(
+          (r) => r.event_id === draft.itemId,
+        );
+        const entryPlace =
+          draft.mode === "EDIT" &&
+          fields.activityDetails?.entryLocation ===
+            state.original.activityDetails?.entryLocation &&
+          storedEntry
+            ? corePlaceSchema.parse(
+                Object.fromEntries(
+                  Object.keys(corePlaceSchema.shape).map((key) => [
+                    key,
+                    storedEntry[key] ?? null,
+                  ]),
+                ),
+              )
+            : fields.activityDetails?.entryLocation
+              ? corePlaceSchema.parse({
+                  ...Object.fromEntries(
+                    Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+                  ),
+                  authored_label: fields.activityDetails.entryLocation,
+                })
+              : null;
         const rentalPlaces: {
           pickup?: z.infer<typeof corePlaceSchema>;
           return?: z.infer<typeof corePlaceSchema>;
@@ -698,6 +783,7 @@ export function createManualItemRepository(
                 ? { details: rentalDetails, places: rentalPlaces }
                 : {
                     ...(stayDetails ? { details: stayDetails, rooms: [] } : {}),
+                    ...(activityDetails ? { details: activityDetails, entryPlace } : {}),
                     place,
                   }),
               core: { title: fields.title, description: fields.description },
@@ -783,6 +869,15 @@ export function createManualItemRepository(
           payloads.push({
             command: "SET_RENTAL_DETAILS",
             payload: { details: rentalDetails, places: rentalPlaces },
+          });
+        if (
+          draft.mode === "EDIT" &&
+          family === "P6" &&
+          json(fields.activityDetails) !== json(state.original.activityDetails)
+        )
+          payloads.push({
+            command: "SET_ACTIVITY_DETAILS",
+            payload: { details: activityDetails, entryPlace },
           });
         let graph = snapshot.graph;
         const commands = payloads.map((p, i) => {
