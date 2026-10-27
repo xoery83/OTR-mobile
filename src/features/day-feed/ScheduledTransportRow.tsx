@@ -14,7 +14,7 @@ import {
   transportMapUrl,
   transportPlaceLabel as endpointLabel,
 } from "./transportReadPresentation";
-import { BookingGlyph, BookingInsert } from "./BookingReadUi";
+import { BookingCard, BookingGlyph, BookingInsert } from "./BookingReadUi";
 import { ImmersiveActions } from "./ImmersiveActions";
 import type { CorePlaceView } from "@/domain/trip/tripCoreV2Day";
 import { MoneyText } from "@/features/ledger/MoneyText";
@@ -62,6 +62,7 @@ export type ScheduledTransportFacts = Readonly<{
   duration?: string;
   note?: string;
   participants?: readonly string[];
+  participationMode?: "WHOLE_GROUP";
   dynamicBoarding?: readonly Readonly<{
     label: string;
     value: string;
@@ -180,11 +181,13 @@ function Openables({
   label,
   chooseLabel,
   prominent = false,
+  showTitle = false,
 }: {
   entries?: readonly Openable[];
   label: string;
   chooseLabel: string;
   prominent?: boolean;
+  showTitle?: boolean;
 }) {
   const [choosing, setChoosing] = useState(false);
   const styles = useThemedStyles(createStyles);
@@ -201,6 +204,7 @@ function Openables({
         disabled={direct && !allowed(items[0])}
         onPress={() => (direct ? items[0].onOpen?.() : setChoosing(!choosing))}
       />
+      {direct && showTitle ? <Text style={styles.meta}>{items[0].title}</Text> : null}
       {direct && items[0].access ? (
         <Text style={styles.meta}>{t(`p5.access.${items[0].access}`)}</Text>
       ) : null}
@@ -281,32 +285,326 @@ export function ScheduledTransportContent({
     void Linking.openURL(url).catch(() => setMapUnavailable(true));
   };
   const endpoint = (label: string, value: Endpoint, directions: boolean) => {
-    if (!value.date && !value.time && !endpointLabel(value)) return null;
+    const place = endpointLabel(value);
+    const address =
+      value.place?.acceptedAddress?.trim() || value.place?.authoredAddress?.trim();
+    if (!value.date && !value.time && !place && !address) return null;
+    const exact = directions ? transportMapUrl(value, true) : null;
     const map =
-      context !== "TODAY" && context !== "FUTURE"
-        ? null
-        : transportMapUrl(value, directions);
+      context === "TODAY" || context === "FUTURE"
+        ? (exact ?? transportMapUrl(value, false))
+        : null;
     return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{label}</Text>
-        <Text style={styles.body}>{endpointTime(value)}</Text>
-        {value.zone ? <Text style={styles.meta}>{value.zone}</Text> : null}
-        {value.time && value.plannedUnresolved ? (
-          <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
-        ) : null}
-        {endpointLabel(value) ? (
-          <Text style={styles.meta}>{endpointLabel(value)}</Text>
-        ) : null}
+      <View style={styles.endpointDetail}>
+        <View style={styles.endpointFacts}>
+          <Text style={styles.meta}>{label}</Text>
+          {endpointTime(value) ? (
+            <Text style={styles.endpointDate}>{endpointTime(value)}</Text>
+          ) : null}
+          {place ? <Text style={styles.meta}>{place}</Text> : null}
+          {address && address !== place ? (
+            <Text style={styles.meta}>{address}</Text>
+          ) : null}
+          {value.zone ? <Text style={styles.meta}>{value.zone}</Text> : null}
+          {value.time && value.plannedUnresolved ? (
+            <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+          ) : null}
+        </View>
         {map ? (
-          <UiButton
-            label={t(directions ? "p5.directions" : "p5.viewMap")}
-            variant="text"
-            onPress={() => openMap(map)}
-          />
+          <BookingGlyph kind={exact ? "navigate" : "map"} onPress={() => openMap(map)} />
         ) : null}
       </View>
     );
   };
+  const compactSummary = (
+    <View style={styles.compact}>
+      <View style={[styles.rail, { width: timeRailWidth(fontScale) }]}>
+        {arrival ? (
+          <Text style={styles.arrivalClock}>
+            {t(current.time ? "fidelity.endAt" : "fidelity.end")}
+          </Text>
+        ) : null}
+        {current.time ? (
+          <Text style={styles.departureClock}>{current.time}</Text>
+        ) : !arrival ? (
+          <AppIcon name={mode.icon} color={colors.textSecondary} size={20} />
+        ) : null}
+        {!arrival && facts.destination.time ? (
+          <Text style={styles.arrivalClock}>
+            {facts.destination.time}
+            {offset ? (
+              <Text style={styles.offset}>
+                {offset > 0 ? `+${offset}` : String(offset)}
+              </Text>
+            ) : null}
+          </Text>
+        ) : null}
+        {withinMarker}
+      </View>
+      {sparse ? (
+        <View style={styles.sparse}>
+          <Text style={styles.title}>
+            {facts.title}
+            {facts.pending ? <PendingSyncDot /> : null}
+          </Text>
+          <Text style={styles.meta}>
+            {endpointLabel(facts.origin) ??
+              (facts.origin.date ? civil(facts.origin.date) : null)}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.route}>
+          <Text style={styles.endpoint}>{endpointLabel(facts.origin)}</Text>
+          <View style={styles.service}>
+            {facts.service ? (
+              <Text style={styles.serviceLabel}>
+                {facts.service}
+                {facts.pending ? <PendingSyncDot /> : null}
+              </Text>
+            ) : null}
+            <View style={styles.glyph} accessibilityLabel={t(mode.key)}>
+              <View style={styles.rule} />
+              <AppIcon name={mode.icon} color={colors.accent} size={16} />
+              <View style={styles.rule} />
+            </View>
+            {facts.duration ? (
+              <Text style={styles.arrivalClock}>{facts.duration}</Text>
+            ) : null}
+          </View>
+          <Text style={[styles.endpoint, styles.destination]}>
+            {endpointLabel(facts.destination)}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+  if (immersive) {
+    const participants =
+      facts.participants ??
+      (facts.participationMode === "WHOLE_GROUP" ? [t("tripCreate.planEveryone")] : []);
+    const start = facts.origin.date,
+      end = facts.destination.date;
+    const dateRange = [
+      start ? civil(start) : null,
+      end && end !== start ? civil(end) : null,
+    ]
+      .filter(Boolean)
+      .join(" – ");
+    const departure = endpoint(
+      t("p5.departureScheduled"),
+      facts.origin,
+      context === "TODAY",
+    );
+    const destination = endpoint(t("p5.arrivalScheduled"), facts.destination, false);
+    const photos = facts.photos;
+    const hasPhotos = !!photos?.count;
+    const photoCard = hasPhotos ? (
+      <BookingCard title={t("fidelity.photosTitle")}>
+        {context === "PAST" && photos!.previews.length ? (
+          <View style={styles.photos}>
+            {photos!.previews.slice(0, 3).map((photo) => (
+              <Image key={photo.id} source={{ uri: photo.uri }} style={styles.photo} />
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.meta}>{t("p5.photoCount", { count: photos!.count })}</Text>
+        )}
+        {photos!.onViewAll &&
+        (context !== "PAST" || photos!.count > 3 || !photos!.previews.length) ? (
+          <UiButton
+            label={t("p5.viewAllPhotos")}
+            variant="text"
+            onPress={photos!.onViewAll}
+          />
+        ) : null}
+      </BookingCard>
+    ) : null;
+    const ticketCard = unique(facts.tickets).length ? (
+      <BookingCard title={t("p5.tickets")}>
+        <Openables
+          entries={facts.tickets}
+          label={t(
+            context === "PAST"
+              ? "p5.ticketOriginal"
+              : context === "TODAY"
+                ? "p5.showTicket"
+                : "p5.ticket",
+          )}
+          chooseLabel={t("p5.chooseTicket")}
+          prominent={context === "TODAY"}
+          showTitle
+        />
+      </BookingCard>
+    ) : null;
+    const originals = unique(facts.documents),
+      bookings = unique(facts.bookings),
+      related = unique(facts.relatedSegments);
+    return (
+      <View style={styles.immersiveBody}>
+        <View style={styles.immersiveHeading}>
+          <View style={styles.modeHeading}>
+            <AppIcon name={mode.icon} color={colors.accent} size={18} />
+            <Text style={styles.modeLabel}>
+              {[t(mode.key), facts.operator].filter(Boolean).join(" · ")}
+            </Text>
+          </View>
+          <Text style={styles.bigTitle}>
+            {facts.title}
+            {facts.pending ? <PendingSyncDot /> : null}
+          </Text>
+          {dateRange ? <Text style={styles.meta}>{dateRange}</Text> : null}
+        </View>
+        {context === "PAST" ? photoCard : null}
+        <BookingCard>
+          {compactSummary}
+          {context !== "TODAY" ? (
+            <>
+              {departure}
+              {destination}
+            </>
+          ) : null}
+        </BookingCard>
+        {boardingParts.length || facts.instructions?.trim() ? (
+          <BookingCard title={t("p5.boarding")}>
+            {boardingParts.map((part, index) => (
+              <Text key={index} style={styles.meta}>
+                {part}
+              </Text>
+            ))}
+            {facts.instructions?.trim() ? (
+              <Text style={styles.note}>{facts.instructions}</Text>
+            ) : null}
+          </BookingCard>
+        ) : null}
+        {ticketCard}
+        {context === "TODAY" && (departure || destination) ? (
+          <BookingCard>
+            {departure}
+            {destination}
+          </BookingCard>
+        ) : null}
+        {facts.passengers?.length ? (
+          <BookingCard title={t("p5.passengers")}>
+            {facts.passengers.map((person) => (
+              <Text key={person.id} style={styles.meta}>
+                {passengerLabel(person)}
+              </Text>
+            ))}
+          </BookingCard>
+        ) : null}
+        {facts.bookingMarker || originals.length || bookings.length || related.length ? (
+          <BookingCard title={t("p5.bookingDocuments")}>
+            {facts.bookingMarker ? (
+              <Text style={styles.meta}>
+                {t("p5.bookingMarker", { name: facts.bookingMarker })}
+              </Text>
+            ) : null}
+            <Openables
+              entries={facts.documents}
+              label={t("p5.documents")}
+              chooseLabel={t("p5.chooseDocument")}
+            />
+            <Openables
+              entries={facts.bookings}
+              label={t("p5.booking")}
+              chooseLabel={t("p5.chooseBooking")}
+            />
+            {related.length ? (
+              <>
+                <Text style={styles.sectionTitle}>{t("p5.relatedSegments")}</Text>
+                {related.map((segment) => (
+                  <UiButton
+                    key={segment.id}
+                    label={segment.title}
+                    variant="text"
+                    disabled={!segment.onOpen}
+                    onPress={segment.onOpen ?? (() => {})}
+                  />
+                ))}
+              </>
+            ) : null}
+          </BookingCard>
+        ) : null}
+        {participants.length ? (
+          <BookingCard title={t("tripCreate.planParticipants")}>
+            <View style={styles.tags}>
+              {participants.map((name, index) => (
+                <Text key={index} style={styles.tag}>
+                  {name}
+                </Text>
+              ))}
+            </View>
+          </BookingCard>
+        ) : null}
+        {facts.note?.trim() ? (
+          <BookingCard title={t("fidelity.note")}>
+            <Text style={styles.note}>{facts.note}</Text>
+          </BookingCard>
+        ) : null}
+        {facts.onCall && context !== "PAST" ? (
+          <BookingCard title={t("p5.contact")}>
+            <BookingGlyph kind="contact" onPress={facts.onCall} />
+          </BookingCard>
+        ) : null}
+        {context !== "PAST" ? photoCard : null}
+        {facts.expenseSummary || facts.expenseCount ? (
+          <BookingCard title={t("fidelity.expensesTitle")}>
+            {facts.expenseSummary ? (
+              <>
+                <View style={styles.costGrid}>
+                  <View style={styles.costColumn}>
+                    <Text style={styles.meta}>{t("p5.total")}</Text>
+                    <MoneyText {...facts.expenseSummary.total} variant="standard" />
+                  </View>
+                  {facts.expenseSummary.myShare ? (
+                    <View style={styles.costColumn}>
+                      <Text style={styles.meta}>{t("p5.myShare")}</Text>
+                      <MoneyText {...facts.expenseSummary.myShare} variant="standard" />
+                    </View>
+                  ) : null}
+                </View>
+                {facts.expenseSummary.originals?.map((amount, index) => (
+                  <MoneyText key={index} {...amount} variant="compact" />
+                ))}
+                {facts.expenseSummary.coverage ? (
+                  <Text style={styles.meta}>{facts.expenseSummary.coverage}</Text>
+                ) : null}
+              </>
+            ) : (
+              <Text style={styles.meta}>
+                {t("p5.expenseCount", { count: facts.expenseCount! })}
+              </Text>
+            )}
+            {facts.onEditExpense ? (
+              <UiButton
+                label={t("p5.editExpense")}
+                variant="text"
+                onPress={facts.onEditExpense}
+              />
+            ) : null}
+          </BookingCard>
+        ) : null}
+        {mapUnavailable ? (
+          <Text style={styles.meta}>{t("p5.mapUnavailable")}</Text>
+        ) : null}
+        {facts.onUpdateFromDocument ? (
+          <UiButton
+            label={t("p5.updateFromDocument")}
+            variant="text"
+            onPress={facts.onUpdateFromDocument}
+          />
+        ) : null}
+        <ImmersiveActions
+          actions={{
+            addPhoto: facts.onAddPhoto,
+            addAttachment: facts.onAddAttachment,
+            addExpense: facts.onAddExpense,
+            linkExpense: facts.onLinkExpense,
+          }}
+        />
+      </View>
+    );
+  }
   const insert = focused && (context === "TODAY" || context === "FUTURE") && onInsert;
   return (
     <View>
@@ -314,20 +612,6 @@ export function ScheduledTransportContent({
       <View
         style={[styles.row, focused && styles.focused, immersive && styles.immersive]}
       >
-        {immersive && context === "PAST" && facts.photos?.previews.length ? (
-          <View style={styles.photos}>
-            {facts.photos.previews.slice(0, 3).map((photo) => (
-              <Image key={photo.id} source={{ uri: photo.uri }} style={styles.photo} />
-            ))}
-            {facts.photos.count > 3 && facts.photos.onViewAll ? (
-              <UiButton
-                label={t("p5.viewAllPhotos")}
-                variant="text"
-                onPress={facts.photos.onViewAll}
-              />
-            ) : null}
-          </View>
-        ) : null}
         <Pressable
           disabled={immersive}
           accessibilityRole={immersive ? "text" : "button"}
@@ -338,68 +622,9 @@ export function ScheduledTransportContent({
           style={styles.hit}
           onPress={() => onDepth(focused ? "B" : "F")}
         >
-          <View style={styles.compact}>
-            <View style={[styles.rail, { width: timeRailWidth(fontScale) }]}>
-              {arrival ? (
-                <Text style={styles.arrivalClock}>
-                  {t(current.time ? "fidelity.endAt" : "fidelity.end")}
-                </Text>
-              ) : null}
-              {current.time ? (
-                <Text style={styles.departureClock}>{current.time}</Text>
-              ) : !arrival ? (
-                <AppIcon name={mode.icon} color={colors.textSecondary} size={20} />
-              ) : null}
-              {!arrival && facts.destination.time ? (
-                <Text style={styles.arrivalClock}>
-                  {facts.destination.time}
-                  {offset ? (
-                    <Text style={styles.offset}>
-                      {offset > 0 ? `+${offset}` : String(offset)}
-                    </Text>
-                  ) : null}
-                </Text>
-              ) : null}
-              {withinMarker}
-            </View>
-            {sparse ? (
-              <View style={styles.sparse}>
-                <Text style={styles.title}>
-                  {facts.title}
-                  {facts.pending ? <PendingSyncDot /> : null}
-                </Text>
-                <Text style={styles.meta}>
-                  {endpointLabel(facts.origin) ??
-                    (facts.origin.date ? civil(facts.origin.date) : null)}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.route}>
-                <Text style={styles.endpoint}>{endpointLabel(facts.origin)}</Text>
-                <View style={styles.service}>
-                  {facts.service ? (
-                    <Text style={styles.serviceLabel}>
-                      {facts.service}
-                      {facts.pending ? <PendingSyncDot /> : null}
-                    </Text>
-                  ) : null}
-                  <View style={styles.glyph} accessibilityLabel={t(mode.key)}>
-                    <View style={styles.rule} />
-                    <AppIcon name={mode.icon} color={colors.accent} size={16} />
-                    <View style={styles.rule} />
-                  </View>
-                  {facts.duration ? (
-                    <Text style={styles.arrivalClock}>{facts.duration}</Text>
-                  ) : null}
-                </View>
-                <Text style={[styles.endpoint, styles.destination]}>
-                  {endpointLabel(facts.destination)}
-                </Text>
-              </View>
-            )}
-          </View>
+          {compactSummary}
         </Pressable>
-        {focused || immersive ? (
+        {focused ? (
           <View style={!immersive ? styles.expansion : styles.section}>
             {!sparse ? (
               <View style={styles.section}>
@@ -449,12 +674,6 @@ export function ScheduledTransportContent({
                 prominent
                 chooseLabel={t("p5.chooseTicket")}
               />
-            ) : null}
-            {immersive ? (
-              <>
-                {endpoint(t("p5.departure"), facts.origin, context === "TODAY")}
-                {endpoint(t("p5.arrival"), facts.destination, false)}
-              </>
             ) : null}
             {context === "FUTURE" || context === "PAST" ? (
               <>
@@ -513,86 +732,6 @@ export function ScheduledTransportContent({
             ) : null}
           </View>
         ) : null}
-        {immersive ? (
-          <>
-            {context === "PAST"
-              ? facts.passengers?.map((person) => (
-                  <Text key={person.id} style={styles.body}>
-                    {passengerLabel(person)}
-                  </Text>
-                ))
-              : null}
-            {unique(facts.relatedSegments).length ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t("p5.relatedSegments")}</Text>
-                {unique(facts.relatedSegments).map((segment) => (
-                  <UiButton
-                    key={segment.id}
-                    label={segment.title}
-                    variant="text"
-                    disabled={!segment.onOpen}
-                    onPress={segment.onOpen ?? (() => {})}
-                  />
-                ))}
-              </View>
-            ) : null}
-            <Openables
-              entries={facts.documents}
-              label={t("p5.documents")}
-              chooseLabel={t("p5.chooseDocument")}
-            />
-            <Openables
-              entries={facts.bookings}
-              label={t("p5.booking")}
-              chooseLabel={t("p5.chooseBooking")}
-            />
-            {facts.expenseSummary ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t("p5.total")}</Text>
-                <MoneyText {...facts.expenseSummary.total} variant="standard" />
-                {facts.expenseSummary.myShare ? (
-                  <>
-                    <Text style={styles.sectionTitle}>{t("p5.myShare")}</Text>
-                    <MoneyText {...facts.expenseSummary.myShare} variant="standard" />
-                  </>
-                ) : null}
-                {facts.expenseSummary.originals?.map((amount, index) => (
-                  <MoneyText key={index} {...amount} variant="compact" />
-                ))}
-                {facts.expenseSummary.coverage ? (
-                  <Text style={styles.meta}>{facts.expenseSummary.coverage}</Text>
-                ) : null}
-              </View>
-            ) : null}
-            {facts.onUpdateFromDocument ? (
-              <UiButton
-                label={t("p5.updateFromDocument")}
-                variant="text"
-                onPress={facts.onUpdateFromDocument}
-              />
-            ) : null}
-            {facts.onEditExpense ? (
-              <UiButton
-                label={t("p5.editExpense")}
-                variant="text"
-                onPress={facts.onEditExpense}
-              />
-            ) : null}
-            {facts.note?.trim() ? (
-              <View style={styles.section}>
-                <Text style={styles.body}>{facts.note}</Text>
-              </View>
-            ) : null}
-            <ImmersiveActions
-              actions={{
-                addPhoto: facts.onAddPhoto,
-                addAttachment: facts.onAddAttachment,
-                addExpense: facts.onAddExpense,
-                linkExpense: facts.onLinkExpense,
-              }}
-            />
-          </>
-        ) : null}
       </View>
       {insert ? <BookingInsert side="AFTER" onPress={() => insert("AFTER")} /> : null}
     </View>
@@ -616,6 +755,21 @@ const createStyles = (c: UiColors) =>
       padding: 11,
     },
     immersive: { flex: 1, borderBottomWidth: 0 },
+    immersiveBody: { gap: visual.space.row, paddingVertical: visual.space.row },
+    immersiveHeading: { gap: visual.space.heading, paddingVertical: visual.space.row },
+    modeHeading: { flexDirection: "row", gap: 8, alignItems: "center" },
+    modeLabel: { ...visual.type.action, color: c.accent },
+    endpointDetail: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingTop: visual.space.row,
+    },
+    endpointFacts: { flex: 1, gap: visual.space.heading },
+    endpointDate: { ...visual.type.row, color: c.textPrimary },
+    note: { ...visual.type.row, fontWeight: "400", color: c.textPrimary },
+    costGrid: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.row },
+    costColumn: { flexGrow: 1, gap: visual.space.heading },
     compact: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
     rail: { alignSelf: "flex-start", gap: 3 },
     departureClock: { ...visual.type.meta, fontWeight: "700", color: c.textSecondary },

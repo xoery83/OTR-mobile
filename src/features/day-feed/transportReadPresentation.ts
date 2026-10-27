@@ -63,6 +63,9 @@ export function transportFactsFromItem(
     },
     title: String(item.title),
     pending: item.localState === "PENDING",
+    ...(item.participation.mode === "WHOLE_GROUP"
+      ? { participationMode: "WHOLE_GROUP" as const }
+      : {}),
     ...(typeof item.description === "string" ? { note: item.description } : {}),
     ...(optional(service?.transportSubtype)
       ? { subtype: service!.transportSubtype as string }

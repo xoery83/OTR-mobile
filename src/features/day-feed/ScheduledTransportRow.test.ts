@@ -35,6 +35,13 @@ vi.mock("react-native", async () => {
 vi.mock("@/features/day-feed/BookingReadUi", async () => {
   const { createElement } = await import("react");
   return {
+    BookingCard: ({ title, children }: { title?: string; children?: ReactNode }) =>
+      createElement(
+        "section",
+        { "data-card": title },
+        title ? createElement("h3", null, title) : null,
+        children,
+      ),
     BookingGlyph: ({ kind }: { kind: string }) =>
       createElement("i", {
         "data-icon":
@@ -346,4 +353,92 @@ it("each displayed planned endpoint keeps a natural qualifier in both locales wi
   } finally {
     setUiLocale(originalLocale);
   }
+});
+
+it("final Today Immersive gives heading, route and ordered conditional detail cards", () => {
+  const html = render("TODAY", "I", {
+    ...facts,
+    participants: ["Everyone"],
+    note: "A real saved note",
+    instructions: "Use the supplied boarding point",
+  });
+  const positions = [
+    "Train segment A",
+    "Origin station",
+    t("p5.boarding"),
+    t("p5.tickets"),
+    t("p5.departureScheduled"),
+    t("p5.passengers"),
+    t("p5.bookingDocuments"),
+    t("tripCreate.planParticipants"),
+    t("fidelity.note"),
+    t("fidelity.expensesTitle"),
+    t("fidelity.addExpense"),
+  ].map((value) => html.replaceAll("&amp;", "&").indexOf(value));
+  expect(positions.every((value) => value >= 0)).toBe(true);
+  expect(positions).toEqual([...positions].sort((a, b) => a - b));
+  expect(html).toContain("A real saved note");
+});
+it("final Future Immersive keeps endpoints with route before boarding and Ticket", () => {
+  const html = render("FUTURE", "I");
+  expect(html.indexOf(t("p5.departureScheduled"))).toBeLessThan(
+    html.indexOf(t("p5.boarding")),
+  );
+  expect(html.indexOf(t("p5.boarding"))).toBeLessThan(html.indexOf(t("p5.tickets")));
+});
+it("final Past Immersive lists each passenger once and keeps current-segment photos first", () => {
+  const html = render("PAST", "I");
+  expect(html.match(/Own passenger/g)).toHaveLength(1);
+  expect(html.match(/Other authorized passenger/g)).toHaveLength(1);
+  expect(html.indexOf("data:image/png")).toBeLessThan(html.indexOf("Origin station"));
+  expect(html).not.toContain('data-icon="map"');
+});
+it("detail endpoints retain both known place name and address without duplicating equal labels", () => {
+  const html = render("TODAY", "I", {
+    ...facts,
+    origin: {
+      ...facts.origin,
+      zone: "Pacific/Auckland",
+      place: {
+        qualification: "TEXT_ONLY",
+        authoredLabel: "Origin station",
+        authoredAddress: "1 Real authored Road",
+      },
+    },
+  });
+  expect(html).toContain("Origin station");
+  expect(html).toContain("1 Real authored Road");
+  expect(html).toContain("Pacific/Auckland");
+});
+it("sparse real detail omits empty information cards and unknown arrival", () => {
+  const html = render("TODAY", "I", {
+    family: "P5",
+    title: "Saved sparse transport",
+    origin: {
+      date: "2027-01-15",
+      place: { qualification: "TEXT_ONLY", authoredLabel: "A saved station" },
+    },
+    destination: {},
+  });
+  for (const key of [
+    "p5.boarding",
+    "p5.tickets",
+    "p5.passengers",
+    "p5.bookingDocuments",
+    "tripCreate.planParticipants",
+    "fidelity.note",
+    "fidelity.expensesTitle",
+  ] as const)
+    expect(html).not.toContain(`data-card="${t(key)}"`);
+  expect(html).not.toContain(t("p5.arrivalScheduled"));
+  expect(html).not.toContain("00:00");
+});
+it("known whole-group participation is localized without manufacturing Person names", () => {
+  const html = render("TODAY", "I", {
+    ...facts,
+    participationMode: "WHOLE_GROUP",
+    participants: undefined,
+  });
+  expect(html).toContain(`data-card="${t("tripCreate.planParticipants")}"`);
+  expect(html).toContain(t("tripCreate.planEveryone"));
 });

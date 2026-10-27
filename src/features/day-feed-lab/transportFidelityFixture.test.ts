@@ -43,6 +43,13 @@ vi.mock("react-native", async () => {
 vi.mock("@/features/day-feed/BookingReadUi", async () => {
   const { createElement } = await import("react");
   return {
+    BookingCard: ({ title, children }: { title?: string; children?: ReactNode }) =>
+      createElement(
+        "section",
+        { "data-card": title },
+        title ? createElement("h3", null, title) : null,
+        children,
+      ),
     BookingGlyph: ({ kind }: { kind: string }) =>
       createElement("i", {
         "data-icon":
