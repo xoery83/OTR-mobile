@@ -14,6 +14,8 @@ export const p1SourceFieldSchema = z.enum([
   "PLACE.authored_label",
   "PLACE.authored_text",
   "SERVICE.main.transport_subtype",
+  "SERVICE.main.operator_literal",
+  "SERVICE.main.service_number",
 ]);
 const ref = z
   .string()
@@ -84,7 +86,15 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
   const p = c.payload as {
     core?: { title?: string };
     endpoints?: { origin?: { time?: { local_date?: string | null } } };
-    service?: { transport_subtype?: string; service_literal?: string };
+    service?: {
+      transport_subtype?: string;
+      service_literal?: string;
+      operator_literal?: string;
+      operator_value?: string;
+      operator_issuer?: string;
+      operator_namespace?: string;
+      service_number?: string;
+    };
     schedule?: {
       start?: { local_date?: string | null };
       end?: { local_date?: string | null };
@@ -105,7 +115,18 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     (b.purposeKind === "P5_ITEM" &&
       (p.service?.transport_subtype !== "TRAIN" ||
         p.service.service_literal !== p.core.title ||
-        !v.selectedFields.includes("SERVICE.main.transport_subtype"))) ||
+        !p.service.operator_literal?.trim() ||
+        !p.service.service_number?.trim() ||
+        p.service.operator_namespace !== "NAME" ||
+        p.service.operator_issuer !== "NAME" ||
+        p.service.operator_value !== p.service.operator_literal ||
+        ![
+          "SERVICE.main.transport_subtype",
+          "SERVICE.main.operator_literal",
+          "SERVICE.main.service_number",
+        ].every((k) =>
+          v.selectedFields.includes(k as P1OutputPurposeV2["selectedFields"][number]),
+        ))) ||
     Object.keys(v.evidenceRefs).sort().join("|") !== v.selectedFields.join("|")
   )
     throw Error("INCOMPLETE_SOURCE_EVIDENCE");

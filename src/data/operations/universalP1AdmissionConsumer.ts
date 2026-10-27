@@ -83,6 +83,8 @@ export function createUniversalP1AdmissionConsumer(deps: {
                   "service",
                   "service.number",
                   "transport_subtype",
+                  "operator",
+                  "operator.name",
                   "origin.local_date",
                   "activity.name",
                   "title",

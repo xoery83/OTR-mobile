@@ -208,13 +208,25 @@ export async function projectUniversalP1Selection(
       family === "P3" ? "INVALID_STAY_DATE_RANGE" : "INVALID_RENTAL_DATE_RANGE",
     );
   const transportTypes = family === "P5" ? facts(["transport_subtype"]) : [];
+  const transportOperators =
+    family === "P5" ? facts(["operator", "operator.name"]).slice(0, 1) : [];
+  const transportNumbers = family === "P5" ? facts(["service.number"]) : [];
+  if (
+    family === "P5" &&
+    (!transportOperators[0].raw.trim() || !transportNumbers[0].raw.trim())
+  )
+    throw Error("INCOMPLETE_SOURCE_EVIDENCE");
   if (transportTypes.length && transportTypes[0].raw !== candidate.subtype)
     throw Error("SOURCE_REVIEW_MISMATCH");
   const selectedFacts = [
     ["ROOT.title", names],
     ["START.local_date", dates],
     ...(family === "P5"
-      ? ([["SERVICE.main.transport_subtype", transportTypes]] as const)
+      ? ([
+          ["SERVICE.main.transport_subtype", transportTypes],
+          ["SERVICE.main.operator_literal", transportOperators],
+          ["SERVICE.main.service_number", transportNumbers],
+        ] as const)
       : []),
     ...(withEnd ? ([["END.local_date", endDates]] as const) : []),
   ] as const;
@@ -330,10 +342,10 @@ export async function projectUniversalP1Selection(
                   transport_subtype: candidate.subtype,
                   attribution: "UNSPECIFIED",
                   operator_namespace: "NAME",
-                  operator_issuer: "",
-                  operator_value: "",
-                  operator_literal: "",
-                  service_number: "",
+                  operator_issuer: "NAME",
+                  operator_value: transportOperators[0].raw,
+                  operator_literal: transportOperators[0].raw,
+                  service_number: transportNumbers[0].raw,
                   service_literal: names[0].raw,
                   codeshare_operating_key: null,
                 },
@@ -434,7 +446,8 @@ export async function projectUniversalP1Selection(
         }
       : {}),
     sourceObservations: candidate.fields.filter(
-      (f) => !names.includes(f) && !dates.includes(f) && !endDates.includes(f),
+      (f) =>
+        !selectedFacts.some(([, fields]) => fields.some((selected) => selected === f)),
     ),
   };
   await assertAccountRequestContext(context, deps.getAccountId);

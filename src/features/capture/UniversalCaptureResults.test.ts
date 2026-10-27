@@ -440,6 +440,8 @@ it.each(["TRAIN", "TAXI"])(
       subtype,
       fields: [
         f.evidence("S0", "service", "Coastal QA Train"),
+        f.evidence("S0", "operator.name", "Coastal QA Rail"),
+        f.evidence("S0", "service.number", "CQ101"),
         f.evidence("S0", "origin.local_date", "2026-11-04"),
         f.evidence("S0", "transport_subtype", subtype),
       ],

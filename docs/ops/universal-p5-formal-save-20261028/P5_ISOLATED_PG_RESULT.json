@@ -1,0 +1,29 @@
+{
+  "status": "P5_SOURCE_ISOLATED_PG_PASS_NOT_DEV",
+  "network": "none",
+  "memory": "256m",
+  "count": 5,
+  "checks": [
+    "existing Source Review early branch preserved",
+    "candidate installs dormant with no active gate",
+    "exact four-function reverse-hash rollback restores actual DEV preimages",
+    "P5 candidate preserves all four OIDs owners and ACLs",
+    "actual owning P5 publication Source Plan Core receipt finalization replay"
+  ],
+  "at": "2026-10-27T20:04:44.373122+00:00",
+  "hostedInstalled": false,
+  "schemaGrantsRolesAdded": 0,
+  "statementGuardNegatives": [
+    "Manual",
+    "foreign Actor",
+    "foreign Trip",
+    "P4 family",
+    "SET_TRANSPORT_DETAILS",
+    "UPDATE"
+  ],
+  "readback": [
+    "one exact service with literal operator/number",
+    "two endpoints with exact origin date and unknown clocks/zones/Places"
+  ],
+  "acceptedRecoveryRollbackProtected": true
+}

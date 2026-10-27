@@ -31,7 +31,7 @@ export async function universalP1SourceFixture(
       : family === "P3"
         ? `Synthetic QA only\nProperty: 海滨住宿\nCheck in: ${dateRaw}\nCheck out: 2026-11-05\nObserved address: West gate\n`
         : family === "P5"
-          ? `Synthetic QA only\nService: Coastal QA Train\nTransport type: TRAIN\nDeparture date: ${dateRaw}\n`
+          ? `Synthetic QA only\nService: Coastal QA Train\nOperator: Coastal QA Rail\nService number: CQ101\nTransport type: TRAIN\nDeparture date: ${dateRaw}\n`
           : `Synthetic QA only\nRental: 海滨租车\nCompany: Harbour QA Rentals\nPickup date: ${dateRaw}\nReturn date: 2026-11-05\n`;
   const bytes = Buffer.from(text),
     sha256 = await hash(bytes),
@@ -148,6 +148,8 @@ export async function universalP1SourceFixture(
                 : family === "P5"
                   ? [
                       [0, "service", "Coastal QA Train"],
+                      [0, "operator.name", "Coastal QA Rail"],
+                      [0, "service.number", "CQ101"],
                       [0, "transport_subtype", "TRAIN"],
                       [0, "origin.local_date", dateRaw],
                     ]

@@ -21,7 +21,7 @@ async function fixture() {
   });
   return f;
 }
-it("qualifies a reviewed evidenced Train through existing Source lifecycle without inventing endpoints or supplier", async () => {
+it("qualifies a reviewed evidenced Train through existing Source lifecycle without inventing endpoints or canonical supplier identity", async () => {
   const f = await fixture(),
     r = await f.run(),
     slot = r.body.plan.slots[0];
@@ -38,8 +38,8 @@ it("qualifies a reviewed evidenced Train through existing Source lifecycle witho
       service_key: "main",
       transport_subtype: "TRAIN",
       service_literal: "Coastal QA Train",
-      operator_literal: "",
-      service_number: "",
+      operator_literal: "Coastal QA Rail",
+      service_number: "CQ101",
     },
   });
   expect(
@@ -66,6 +66,8 @@ it("qualifies a reviewed evidenced Train through existing Source lifecycle witho
 it.each([
   "subtype",
   "no-subtype-evidence",
+  "no-operator-evidence",
+  "no-number-evidence",
   "source-bytes",
   "no-review",
   "wrong-family",
@@ -80,6 +82,10 @@ it.each([
     candidate.fields = candidate.fields.filter(
       (v: any) => v.path !== "transport_subtype",
     );
+  if (kind === "no-operator-evidence")
+    candidate.fields = candidate.fields.filter((v: any) => v.path !== "operator.name");
+  if (kind === "no-number-evidence")
+    candidate.fields = candidate.fields.filter((v: any) => v.path !== "service.number");
   if (kind === "source-bytes") f.input.snapshot.materials[0].text = "changed";
   if (kind === "no-review") delete (f.input.selection as any).sourceReview;
   if (kind === "wrong-family") review.version = "otr.universal.p4-source-review/1";
@@ -146,4 +152,14 @@ it("certifies only P5 purpose with exact Train subtype evidence and rejects cros
       f.deps.hash,
     ),
   ).rejects.toThrow("INVALID_PROVENANCE");
+});
+
+it("keeps one operator proof after alias agreement and rejects conflicting literal aliases", async () => {
+  const f = await fixture();
+  const candidate = f.input.result.candidates[0] as any;
+  const operator = candidate.fields.find((v: any) => v.path === "operator.name");
+  candidate.fields.push({ ...operator, path: "operator" });
+  expect((await f.run()).body.evidence).toHaveLength(5);
+  candidate.fields[candidate.fields.length - 1].raw = "Different operator";
+  await expect(f.run()).rejects.toThrow("INCOMPLETE_SOURCE_EVIDENCE");
 });

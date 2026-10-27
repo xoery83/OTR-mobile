@@ -250,8 +250,15 @@ export async function qualifyImportLifecycleProposals(
       return p.family === "P5"
         ? p.endpoints?.[match[1] === "START" ? "origin" : "destination"]?.time?.local_date
         : p.schedule?.[match[1].toLowerCase()]?.local_date;
-    if (field === "SERVICE.main.transport_subtype" && p.family === "P5")
-      return p.service?.transport_subtype;
+    if (
+      [
+        "SERVICE.main.transport_subtype",
+        "SERVICE.main.operator_literal",
+        "SERVICE.main.service_number",
+      ].includes(field) &&
+      p.family === "P5"
+    )
+      return p.service?.[field.slice("SERVICE.main.".length)];
     return undefined;
   };
   const validEvidence = (s: (typeof slots)[number]) =>

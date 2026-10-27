@@ -111,7 +111,16 @@ export function UniversalP1SourceReviewForm({
               : "ACTIVITY") ||
     (transport &&
       (candidate.fields.filter((f) => f.path === "transport_subtype").length !== 1 ||
-        candidate.fields.find((f) => f.path === "transport_subtype")?.raw !== "TRAIN")) ||
+        candidate.fields.find((f) => f.path === "transport_subtype")?.raw !== "TRAIN" ||
+        !candidate.fields.some(
+          (f) =>
+            ["operator", "operator.name"].includes(f.path) &&
+            f.raw.trim() &&
+            !f.uncertainty,
+        ) ||
+        !candidate.fields.some(
+          (f) => f.path === "service.number" && f.raw.trim() && !f.uncertainty,
+        ))) ||
     ((flight || transport) &&
       (dates[0]?.raw !== localDate ||
         new Set(names.map((f) => f.raw)).size !== 1 ||

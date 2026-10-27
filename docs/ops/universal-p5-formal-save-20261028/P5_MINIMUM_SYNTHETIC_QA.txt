@@ -1,0 +1,6 @@
+Synthetic QA only
+Service: Coastal QA Train
+Operator: Coastal QA Rail
+Service number: CQ101
+Transport subtype: TRAIN
+Departure date: 2026-11-04
