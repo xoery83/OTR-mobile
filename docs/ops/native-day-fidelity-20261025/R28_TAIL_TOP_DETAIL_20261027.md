@@ -24,3 +24,9 @@ R29 adds one shared semantic static skeleton for first-load P1–P4 Details and 
 R29 six directed suites71PASS, types/UIguard/scopedlint/diff/buildPASS. Static skeleton Light/Dark semantic roles/accessibility and existing error/reader tests pass. Physical R29 install/visual acceptance is recorded only after execution.
 
 R29 embedded physical build and data-preserving install completed successfully on the same Forms QA phone (bundle `com.xoery.otrmobile.formsqa`, source `33906c8f`). Install receipt is retained in ignored `.forms-qa/logs/native-r29-phone-install.log`; no session/container reset. Owner visual acceptance of skeleton transitions and remaining header latency is pending.
+
+## R30 physical follow-up — 27 October
+
+Owner reports P3 Notes software keyboard PASS. Mirror confirmed real Stay check-in/out, note/participants and Add expense prefilled hotel title/date, but twice reproduced Cancel returning to MyTrips via the Ledger tab stack. Fixed `f6d49e15`: P1–P4 use a root-local route wrapping the exact existing Ledger form, with existing `returnTo:source` Save behavior. No global Shell or Ledger repository/mutation edit. Independent route Review's loading-title finding closed with canonical localized title; existing route regression6PASS/types/UIguard/scopedlint/buildPASS.
+
+Same-bundle embedded R30 built and installed without data/session reset (`.forms-qa/logs/native-r30-final-device.log`, `native-r30-phone-install.log`, both ignored). Mirror normal launch retained original Nelson summer Trip; Home Widget showed Tue27Oct. Original SkyCity Stay→Add expense retained SkyCity Hotel/date26Oct→Cancel returned to that exact Stay Immersive. No Expense was saved, so Save-return/business linking are not physical PASS. Header latency/full P1–P4 skeleton transitions remain unmeasured; screenshots are conversation observations, not an exported timing trace. Enrichment remains undeployed/default-CLOSED despite its separate Host candidate progress.
