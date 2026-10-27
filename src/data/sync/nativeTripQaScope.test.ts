@@ -8,6 +8,7 @@ import {
   runNativeTripQaSync,
   getNativeTripQaQueueActivity,
   nativeTripAuthoredCloudTravelers,
+  readNativeTripQaDiagnostic,
 } from "./nativeTripQaScope";
 
 const a = "10000000-0000-4000-8000-000000000001";
@@ -25,7 +26,10 @@ const state = vi.hoisted(() => ({
   session: vi.fn(),
   token: vi.fn(),
   activity: vi.fn(),
-  database: {},
+  database: { getAllAsync: vi.fn() },
+}));
+vi.mock("./ledgerOperationalSync", () => ({
+  isLedgerOperationalSyncPaused: () => false,
 }));
 vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
@@ -63,6 +67,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-23T03:01:00Z"));
   state.account = a;
+  state.database.getAllAsync.mockResolvedValue([]);
   state.normalFactory.mockReturnValue(state.normal);
   state.activity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
   state.token.mockResolvedValue({ token: "synthetic", userId: a });
@@ -78,6 +83,96 @@ beforeEach(() => {
   vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "dev");
   vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://api-dev.xoery.art");
   vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(fixture()));
+});
+it("reports only gate and own fresh-Trip metadata without payload, token refresh or dispatch", async () => {
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+    }),
+  );
+  state.database.getAllAsync.mockResolvedValue([
+    {
+      trip_id: trip,
+      id: create,
+      created_at: "2026-10-23T03:01:00Z",
+      payload_json: JSON.stringify({
+        formatVersion: 2,
+        name: "PRIVATE_PAYLOAD_SENTINEL",
+      }),
+      status: "RETRYABLE",
+      attempt_count: 1,
+      failure_category: "NETWORK",
+      last_error_code: "NATIVE_SECRET_SENTINEL / token",
+    },
+  ]);
+  const result = await readNativeTripQaDiagnostic();
+  expect(result.gate).toMatchObject({
+    parsed: true,
+    version: 2,
+    accountMatches: true,
+    enabled: true,
+    sessionState: "AUTHENTICATED_ONLINE",
+    paused: false,
+  });
+  expect(result.creates).toEqual([
+    {
+      tripId: trip,
+      operationId: create,
+      createdAt: "2026-10-23T03:01:00Z",
+      formatVersion: 2,
+      status: "RETRYABLE",
+      attempts: 1,
+      failureCategory: "NETWORK",
+      errorCode: null,
+    },
+  ]);
+  expect(JSON.stringify(result)).not.toMatch(
+    /PRIVATE_PAYLOAD_SENTINEL|NATIVE_SECRET_SENTINEL/,
+  );
+  expect(state.database.getAllAsync.mock.calls[0]).toEqual([
+    expect.stringMatching(/^SELECT /),
+    a,
+    "2026-10-23T03:00:00Z",
+  ]);
+  expect(state.token).not.toHaveBeenCalled();
+  expect(state.normalFactory).not.toHaveBeenCalled();
+});
+it("does not inspect queues for an invalid scope or another active Account", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "{}");
+  expect((await readNativeTripQaDiagnostic()).gate.parsed).toBe(false);
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+    }),
+  );
+  state.session.mockResolvedValue({
+    accessToken: "SYNTHETIC",
+    expiresAt: "2026-10-24T03:00:00Z",
+    identity: { userId: trip },
+  });
+  expect((await readNativeTripQaDiagnostic()).gate.accountMatches).toBe(false);
+  expect(state.database.getAllAsync).not.toHaveBeenCalled();
+});
+it("discards a diagnostic queue read after an Account generation change", async () => {
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+    }),
+  );
+  state.database.getAllAsync.mockImplementationOnce(async () => {
+    advanceAccountGeneration();
+    return [];
+  });
+  await expect(readNativeTripQaDiagnostic()).rejects.toThrow("Account changed");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
