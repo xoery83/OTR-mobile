@@ -6,6 +6,7 @@ import { bindRenderer, type DayRowRendererProps } from "./rendererContribution";
 import { StayReadRow, StayReadView, type StayRole } from "./StayReadView";
 import { localStayPresentation, localStayMapTargets } from "./localStayPresentation";
 import type { StayRead } from "./bookingReadPresentation";
+import { stayBasePresentationRows } from "./stayBasePresentationRows";
 export type CoreStayPresentationActions = {
   onOpenStay?(itemId: string, role: StayRole, date: string): void;
   onInsertStay?(
@@ -25,14 +26,19 @@ function CoreStayRow({
   facts,
 }: DayRowRendererProps & { facts: Facts }) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const keys = row.coreRowKeys;
+  const keys = stayBasePresentationRows(
+    row.coreRowKeys.map((rowKey) => ({ family: "P3", rowKey })),
+  ).map(({ rowKey }) => rowKey);
+  const selectedOccurrence = keys.some((key) => key.projectionRole === selectedRole)
+    ? selectedRole
+    : keys[0]?.projectionRole;
   const role = (value: string): StayRole =>
     value === "CHECKIN" ? "CHECKIN" : value === "CHECKOUT" ? "CHECKOUT" : "BASE";
   if (depth === "I")
     return (
       <StayReadView
         stay={facts.stay}
-        role={role(selectedRole ?? keys[0]?.projectionRole ?? "BASE")}
+        role={role(selectedOccurrence ?? "BASE")}
         context={context}
       />
     );
@@ -40,9 +46,7 @@ function CoreStayRow({
     <View>
       {keys.map((key, index) => {
         const occurrence = role(key.projectionRole),
-          focused =
-            depth === "F" &&
-            (selectedRole ?? keys[0]?.projectionRole) === key.projectionRole;
+          focused = depth === "F" && selectedOccurrence === key.projectionRole;
         return (
           <StayReadRow
             key={key.projectionRole}

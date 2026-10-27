@@ -1,8 +1,9 @@
 import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
+import { stayBasePresentationRows } from "./stayBasePresentationRows";
 // Independent locally authored Items use visible civil clocks; qualified timelines stay Reader-owned.
 export function localDayDisplayOrder<T extends CoreDayRow>(rows: readonly T[]): T[] {
   const clock = (row: CoreDayRow) => row.displayTime?.localTime?.slice(0, 5);
-  const visible = rows.filter(
+  const visible = stayBasePresentationRows(rows).filter(
     (row) => row.family !== "P2" || row.rowKey.projectionRole !== "DESTINATION",
   );
   const sortable = (row: T) => row.position === "TNS" && !row.displayTime?.comparable;
