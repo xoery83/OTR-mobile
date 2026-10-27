@@ -13,13 +13,15 @@ Save → refreshed Stay Details → Day Feed. Accommodation title,25–30Oct dat
 19:00 check-in and Everyone remained. Header styles B/C now display **Auckland**
 for the covered25–30Oct dates; dates lacking qualified place still fall back.
 The observed26/27Oct dates each show one Daily base. Screenshot:
-`/.forms-qa/r33/day-header-after-normal-save.png` relative to this worktree.
+`.forms-qa/r33/day-header-after-normal-save.png` relative to this worktree.
 This is local Native acceptance, not Manual P3 Cloud L3 or a full generic resolver.
 
 The structured address exposed a duplicate identical name/address in Details;
 the shared pure Stay presentation mapper now suppresses only the duplicate label,
 retaining a distinct place name. Four directed suites27 assertions PASS. That
-small display follow-up needs the next bundle; R33 screenshot precedes it.
+small display follow-up is fixed14c3148c and included in R34 signed simulator
+build/same-bundle install PASS; post-fix GUI and physical-phone update remain
+unverified. R33 screenshot precedes that display follow-up.
 
 Historical candidate-only statements below describe the independent delivery
 before serial intake; do not reapply its patch on top of149b6eb5.
