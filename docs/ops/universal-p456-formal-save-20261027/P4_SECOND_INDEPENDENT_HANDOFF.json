@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-27T18:05:58.331950+00:00",
+  "checks": {
+    "candidateExactHealthy": true,
+    "image8298": true,
+    "onlyReviewEnv": true,
+    "hostPin": true,
+    "sixMounts": true,
+    "baselineStoppedRetained": true,
+    "remoteWatchExact": true,
+    "noEarlyClosed": true,
+    "health": true,
+    "localWatchExact": true,
+    "sameAbsoluteDeadline": true,
+    "localCloseAt45min": true
+  },
+  "deadline": 1793127892.0861275,
+  "remoteWatchPID": 1349710,
+  "serviceMutations": 0,
+  "status": "HANDOFF_VERIFIED"
+}

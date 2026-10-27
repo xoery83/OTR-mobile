@@ -1,3 +1,11 @@
+# P4 formal Save SERVER_VERIFIED / Native pending — 2026-10-28
+
+Same Batch11/Task28435c7a/i1, no new Provider calls: actual normal Native SourceReview→Plan→Admission→CREATE_ITEM(P4) completed. Item55a323db PRIVATE/SELF rev1 / COASTLINE QA MOTORS /2026-11-02→11-03; receipt6db144a2 APPLIED; SlotCOMPLETE/Sourceassociation1. Independentfirst18:08:54Z and postrepeat18:11:10Z six full row sets unchanged/unique. Earlyclose18:10:47Z; independent18:11:26Z/32Z policyfalse/scopenull/defaultad8/8298healthy, Reviewstopped andterminalmarker. All accepted/original/oldUNKNOWN retained; Provider scope6 separate authorization remains.
+
+TripHome showsRentals1/sameItem; enteringrow hitdate-onlyP4 fallback omission. Native uniqueWriter handed off onlythispoint; fixed1fe65e7f addsP4 toexisting explicitviewzonechooser,49tests/ReviewPASS, noItemzoneinference. Owner-required ActivityProgressDEV boundedpagingfixed30f9c51e,23tests/ReviewPASS. CombinedactualMetrosource72tests/types/lint/UIguardPASS. ActualAD5newcontrols+P4Day/coldpendingNativeMirror10minforegroundhandback; do notclaimfullNativeE2Eyet.
+
+Currentactualevidence P4_FORMAL_SAVE_RESULT.md+independentJSON insameopsfolder. WritableexecutionHostSHAe4dc4c68 containsreceipts/controller; nevermergewholeHostbranch(unacceptedEnrichment). Maincurrentlyc0176587(MyTripsrootfix,AD5Reload/fullRestartcoldPASS); P4accepted-sliceserialintegrationpendingNativeacceptance. ContinueP4thenP5/P6; noanotherSource/Reader/Authorityplatform.
+
 # My Trips root correction / P4 closed checkpoint — 2026-10-28
 
 Owner root regression fixed via Native470e2ffa minimal five-file subset: sourced28840c0, actualmainc0176587. AD5 Reload and full Device Hub Restart→OTR cold launch both show My Trips with existing QA Trip. Four focused tests/types/lint/UIguard and independentReviewPASS; postmerge4testsPASS and unrelated main dirty bytes/status preserved. No push.
