@@ -1,3 +1,4 @@
+import { sourceReviewCivilDate } from "../../src/domain/trip/universalP1SourceReview";
 import {
   mintP1OutputPurposeV2,
   type P1PurposeVerification,
@@ -5,8 +6,8 @@ import {
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { expect, it } from "vitest";
 import { universalP1SourceFixture } from "./__fixtures__/universalP1Source";
-async function fixture() {
-  const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", "P4");
+async function fixture(pickupDate = "2026-11-03") {
+  const f = await universalP1SourceFixture(undefined, undefined, pickupDate, "P4");
   f.input.result.quality!.decisions[0].tier = "REVIEWABLE";
   Object.assign(f.input, { owningLifecycleRelationships: undefined });
   Object.assign(f.input.selection, {
@@ -15,7 +16,7 @@ async function fixture() {
       decision: "NEW",
       sourceRevision: 1,
       title: "海滨租车",
-      localDate: "2026-11-03",
+      localDate: sourceReviewCivilDate(pickupDate),
       endLocalDate: "2026-11-05",
       originalReviewed: true,
       tripReviewed: true,
@@ -127,4 +128,11 @@ it("requires END proof when a Rental return is selected and rejects a cross-fami
       f.deps.hash,
     ),
   ).rejects.toThrow("INVALID_PROVENANCE");
+});
+
+it("allows a same-day Rental and rejects a return before the actual pinned pickup", async () => {
+  const same = await fixture("Nov 5, 2026");
+  expect((await same.run()).qualification.eligibleNewRecords).toHaveLength(1);
+  const reverse = await fixture("2026-11-06");
+  await expect(reverse.run()).rejects.toThrow("INVALID_RENTAL_DATE_RANGE");
 });

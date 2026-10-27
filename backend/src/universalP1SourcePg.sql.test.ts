@@ -12,18 +12,20 @@ import { prepareCoreSourcePlanV2, finalizeCoreSourceSlotV2 } from "./tripCoreV2S
 const container = process.env.OTR_UNIVERSAL_P1_OWNED_SQL_FIXTURE;
 // Actual protected PG transactions; model publication and identities are explicit disposable fixtures.
 it.skipIf(!container).each(
-  process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE
-    ? [{ reviewed: true, family: "P3" as const }]
-    : process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
-      ? [
-          { reviewed: false, family: "P1" as const },
-          { reviewed: true, family: "P1" as const },
-          { reviewed: true, family: "P3" as const },
-        ]
-      : [
-          { reviewed: false, family: "P1" as const },
-          { reviewed: true, family: "P1" as const },
-        ],
+  process.env.OTR_UNIVERSAL_P4_OWNED_SQL_FIXTURE
+    ? [{ reviewed: true, family: "P4" as const }]
+    : process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE
+      ? [{ reviewed: true, family: "P3" as const }]
+      : process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
+        ? [
+            { reviewed: false, family: "P1" as const },
+            { reviewed: true, family: "P1" as const },
+            { reviewed: true, family: "P3" as const },
+          ]
+        : [
+            { reviewed: false, family: "P1" as const },
+            { reviewed: true, family: "P1" as const },
+          ],
 )(
   "qualifies original Source bytes through existing Source Plan/Core/receipt and recovers once (explicit review: %s)",
   async ({ reviewed, family }) => {
@@ -34,7 +36,7 @@ it.skipIf(!container).each(
       f = await universalP1SourceFixture(
         actor,
         trip,
-        family === "P3" ? "2026-11-03" : reviewed ? "Nov 1, 2026" : "2026-11-03",
+        family !== "P1" ? "2026-11-03" : reviewed ? "Nov 1, 2026" : "2026-11-03",
         family,
       ),
       admin = session(container!);
@@ -46,12 +48,14 @@ it.skipIf(!container).each(
           version:
             family === "P3"
               ? "otr.universal.p3-source-review/1"
-              : "otr.universal.p1-source-review/1",
+              : family === "P4"
+                ? "otr.universal.p4-source-review/1"
+                : "otr.universal.p1-source-review/1",
           decision: "NEW",
           sourceRevision: 1,
-          title: family === "P3" ? "海滨住宿" : "海滨散步",
-          localDate: family === "P3" ? "2026-11-03" : "2026-11-01",
-          ...(family === "P3" ? { endLocalDate: "2026-11-05" } : {}),
+          title: family === "P3" ? "海滨住宿" : family === "P4" ? "海滨租车" : "海滨散步",
+          localDate: family !== "P1" ? "2026-11-03" : "2026-11-01",
+          ...(family !== "P1" ? { endLocalDate: "2026-11-05" } : {}),
           originalReviewed: true,
           tripReviewed: true,
         }
@@ -166,7 +170,7 @@ it.skipIf(!container).each(
     });
     const request = {
       captureVersion: 2,
-      ...(family === "P3" ? { family } : {}),
+      ...(family !== "P1" ? { family } : {}),
       sourceId,
       batchId: published.result.batchId,
       taskId: published.result.taskId,
@@ -242,7 +246,7 @@ it.skipIf(!container).each(
         [actor],
       );
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
-        family === "P3" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
+        family !== "P1" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
       );
       await admin.lease.query(
         "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
@@ -250,10 +254,10 @@ it.skipIf(!container).each(
           actor,
           JSON.stringify({
             tripId: trip,
-            ...(family === "P3"
+            ...(family !== "P1"
               ? {
                   family,
-                  title: "海滨住宿",
+                  title: family === "P3" ? "海滨住宿" : "海滨租车",
                   localDate: "2026-11-03",
                   endLocalDate: "2026-11-05",
                 }
@@ -533,6 +537,49 @@ it.skipIf(!container).each(
       expect(saved.projection).toBe("FULL");
       if (saved.projection !== "FULL") throw Error("EXPECTED_FULL_RECEIPT");
       expect(saved.receipt.outcome).toBe("APPLIED");
+      if (family === "P4") {
+        const rental = (
+          await admin.lease.query(
+            "SELECT to_jsonb(r) AS body FROM public.trip_rental_details r WHERE event_id=$1::uuid AND trip_id=$2::uuid",
+            [command.target.id, trip],
+          )
+        ).rows;
+        expect(rental).toHaveLength(1);
+        expect(rental[0].body).toEqual({
+          event_id: command.target.id,
+          trip_id: trip,
+          supplier: null,
+          reserved_category: null,
+          or_similar: null,
+          actual_vehicle_model: null,
+          verified_plate: null,
+        });
+      }
+      if (family === "P4") {
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=false,universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
+          [actor],
+        );
+        const rollback = readFileSync(
+            new URL(
+              "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+          isolatedControl = session(container!);
+        try {
+          await expect(isolatedControl.lease.query(rollback)).rejects.toThrow(
+            "P4_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
+          );
+        } finally {
+          isolatedControl.close();
+        }
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
+          [actor, JSON.stringify(savedScope)],
+        );
+      }
       const changed = structuredClone(command);
       (changed.payload as { core: { title: string } }).core.title = "Forged";
       await expect(
@@ -616,6 +663,29 @@ it.skipIf(!container).each(
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         "CORE_CAPABILITY_CLOSED",
       );
+      if (family === "P4") {
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
+          [actor],
+        );
+        await admin.lease.query(
+          readFileSync(
+            new URL(
+              "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        expect(
+          (
+            await admin.lease.query(
+              "SELECT count(*)::int AS n FROM public.trip_rental_details WHERE event_id=$1::uuid",
+              [command.target.id],
+            )
+          ).rows[0].n,
+        ).toBe(1);
+      }
       if (reviewed) {
         expect(phaseTimes.map((p) => p.phase)).toEqual([
           "prepare",

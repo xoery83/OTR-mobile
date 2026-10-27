@@ -1,0 +1,22 @@
+{
+  "status": "P4_SOURCE_ISOLATED_PG_PASS_NOT_DEV",
+  "network": "none",
+  "memory": "256m",
+  "count": 5,
+  "checks": [
+    "existing Source Review early branch preserved",
+    "candidate installs dormant with no active gate",
+    "exact three-function reverse-hash rollback restores actual DEV preimages",
+    "P4 candidate preserves all three OIDs owners and ACLs",
+    "actual owning P4 publication Source Plan Core receipt finalization replay"
+  ],
+  "sourceCommit": "a3ca05b06bf8d0b0c88d5bf112da8498436c2f89",
+  "recordedAt": "2026-10-27T09:46:21.863330+00:00",
+  "p4Case": {
+    "sourceReview": "explicit NEW/original/Trip/title/pickup/return",
+    "acceptedRentalDetails": "all optional fields NULL",
+    "acceptedBeforeFinalizeRollback": "REJECTED P4_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
+    "finalizedClosedRollback": "PASS; Item retained",
+    "hostedExecuted": false
+  }
+}
