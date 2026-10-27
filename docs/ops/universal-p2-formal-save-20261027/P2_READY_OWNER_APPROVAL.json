@@ -1,0 +1,12 @@
+{
+  "ownerApproved": true,
+  "gateName": "P2_READY_OPERATION_EXECUTION_GATE/1",
+  "gateCommit": "11a0de1d",
+  "questionId": "call_286eb94c74bd4cfe8713f5860553e824",
+  "ownerAnswer": "\u6279\u51c6\u8be5\u7cbe\u786e P2 READY \u7eed\u63a5 Gate",
+  "windowSeconds": 3600,
+  "sameReadyOperationOnly": true,
+  "newProviderCalls": 0,
+  "newObjects": 0,
+  "newWindowArmed": false
+}
