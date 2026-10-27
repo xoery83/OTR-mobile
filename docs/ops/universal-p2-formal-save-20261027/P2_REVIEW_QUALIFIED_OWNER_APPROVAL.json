@@ -1,0 +1,9 @@
+{
+  "ownerApproved": true,
+  "gateName": "P2_QUALIFIED_EXECUTION_GATE/1",
+  "gateCommit": "eaefb2185fd6f826e9d3a03f35f6d07f121a1e68",
+  "questionId": "call_8125cf9a286c431a888a6a6b1903db0e",
+  "ownerAnswer": "批准该精确60分钟 P2 验收 Gate",
+  "windowSeconds": 3600,
+  "scopeUnchanged": true
+}
