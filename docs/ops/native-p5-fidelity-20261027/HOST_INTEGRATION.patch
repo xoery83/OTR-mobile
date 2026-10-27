@@ -1,0 +1,122 @@
+--- a/src/features/day-feed/coreExperienceRenderer.ts
++++ b/src/features/day-feed/coreExperienceRenderer.ts
+@@ -9,19 +9,19 @@
+   createCoreRentalRenderer,
+   type CoreRentalPresentationActions,
+ } from "./coreRentalRenderer";
+-import { createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
++import { type CoreScheduledTransportPresentationActions, createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
+ import { createCoreTicketedActivityRenderer } from "./coreTicketedActivityRenderer";
+ 
+ export function createCoreExperienceRenderer(
+   projection: CoreFlightDayProjection,
+   actions?: CoreP1PresentationActions &
+     CoreStayPresentationActions &
+-    CoreRentalPresentationActions,
++    CoreRentalPresentationActions & CoreScheduledTransportPresentationActions,
+ ): DayRowRenderer {
+   const p1 = createCoreP1Renderer(projection, actions);
+   const stay = createCoreStayRenderer(projection, actions);
+   const rental = createCoreRentalRenderer(projection, actions);
+-  const transport = createCoreScheduledTransportRenderer(projection);
++  const transport = createCoreScheduledTransportRenderer(projection, actions);
+   const activity = createCoreTicketedActivityRenderer(projection);
+   return (props) =>
+     p1(props) ?? stay(props) ?? rental(props) ?? transport(props) ?? activity(props);
+--- a/src/features/day-feed/LocalManualDayFeed.tsx
++++ b/src/features/day-feed/LocalManualDayFeed.tsx
+@@ -1,3 +1,5 @@
++import {ScheduledTransportContent} from "./ScheduledTransportRow";
++import {transportFactsFromItem} from "./transportReadPresentation";
+ import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
+ import { RentalContent } from "./RentalRow";
+ import { calendarDate } from "./TripCalendarField";
+@@ -288,6 +290,14 @@
+             />
+           );
+         }
++        if (item && row.family === "P5") {
++          const facts = transportFactsFromItem(item);
++          if (!facts) return null;
++          const focusKey = JSON.stringify(row.rowKey);
++          return <ScheduledTransportContent key={focusKey} facts={facts} depth={p1Focus === focusKey ? "F" : "B"} context={context} arrival={role === "DESTINATION"}
++            onInsert={onInsert ? side => onInsert(row.itemRef, role, date, side) : undefined}
++            onDepth={depth => depth === "I" ? onOpenItem?.(row.itemRef, read, {role,date}) : onP1Focus?.(depth === "F" ? focusKey : null)}/>;
++        }
+         if (item && row.family === "P3")
+           return (
+             <LocalStayRow
+--- a/src/features/day-feed/TripScreen.tsx
++++ b/src/features/day-feed/TripScreen.tsx
+@@ -611,7 +611,7 @@
+       local.items.some(
+         (item) =>
+           item.itemId === id &&
+-          ["P1", "P2", "P3", "P4"].includes(item.family) &&
++          ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
+           !item.hidden,
+       )
+     ) {
+@@ -638,6 +638,7 @@
+             ...(occurrence?.date ? { date: occurrence.date } : {}),
+           },
+         });
++      else if (item.family === "P5") router.push({pathname:"/p5-detail", params:{...params, occurrence:occurrence?.role ?? "ORIGIN", ...(occurrence?.date ? {date:occurrence.date}: {})}});
+       else
+         router.push({
+           pathname: "/p4-detail",
+@@ -690,6 +691,10 @@
+           occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+         },
+       });
++      return;
++    }
++    if (resolved.item.family === "P5") {
++      router.push({pathname:"/p5-detail",params:{tripId:requested,itemId:id,occurrence:occurrence?.role ?? "ORIGIN",...(occurrence?.date ? {date:occurrence.date}: {})}});
+       return;
+     }
+     setLocalItem(resolved);
+@@ -1741,6 +1746,13 @@
+               visibleTrip.observed?.projection.version === 2
+                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
+                     instant: new Date().toISOString(),
++                    onOpenTransport: (itemId, occurrence, date) => router.push({pathname:"/p5-detail",params:{tripId:requested,itemId,occurrence,date}}),
++                    onInsertTransport: (itemId, role, date, side) => {
++                      const projection = visibleTrip.observed!.projection;
++                      if (projection.version !== 2) return;
++                      const suggestion = localInsertionTime({items:projection.items,rows:day=>projection.query(day,dayContext).coreRows ?? []},itemId,role,date,side);
++                      setInsertion({date:suggestion.startDate,startTime:suggestion.startTime});
++                    },
+                     onOpenRental: (itemId, occurrence, date) =>
+                       router.push({
+                         pathname: "/p4-detail",
+--- a/app/day-feed-lab.tsx
++++ b/app/day-feed-lab.tsx
+@@ -3,6 +3,12 @@
+ export default function DayFeedLabRoute() {
+   const { fidelity } = useLocalSearchParams<{ fidelity?: string }>();
+   if (!__DEV__) return <Redirect href="/trip" />;
++  if (fidelity === "p5") {
++    const {P5FidelityPreview} =
++      // eslint-disable-next-line @typescript-eslint/no-require-imports
++      require("@/features/day-feed-lab/P5FidelityPreview") as typeof import("@/features/day-feed-lab/P5FidelityPreview");
++    return <P5FidelityPreview/>;
++  }
+   if (fidelity === "p2" || fidelity === "p3" || fidelity === "p4") {
+     const { FlightFidelityPreview } =
+       // eslint-disable-next-line @typescript-eslint/no-require-imports
+--- /dev/null
++++ b/app/p5-detail.tsx
+@@ -0,0 +1 @@
++export {P5Detail as default} from "@/features/day-feed/P5Detail";
+--- a/src/features/day-feed/TicketedActivityRow.tsx
++++ b/src/features/day-feed/TicketedActivityRow.tsx
+@@ -18,7 +18,7 @@
+ import { visual } from "@/ui/visual";
+ import type { DayRowRendererProps } from "./rendererContribution";
+ import { timeRailWidth } from "./visualTokens";
+-import { transportMapUrl } from "./ScheduledTransportRow";
++import { transportMapUrl } from "./transportReadPresentation";
+ 
+ type Clock = Readonly<{ date: string; time?: string; plannedUnresolved?: boolean }>;
+ type Openable = Readonly<{

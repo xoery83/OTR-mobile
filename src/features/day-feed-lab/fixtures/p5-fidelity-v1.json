@@ -1,0 +1,3250 @@
+{
+  "version": "p5-transport-synthetic-v1",
+  "authority": "SYNTHETIC_NOT_SOURCE_PROOF_ADMISSION_OR_ACL",
+  "trip": {
+    "title": "Scheduled transport journey"
+  },
+  "scenarios": [
+    {
+      "id": "full",
+      "label": "Train · complete / one shared original",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "minimal",
+      "label": "Minimum · departure date + place / no clock",
+      "segments": [
+        {
+          "id": "syn-minimal",
+          "visible": true,
+          "name": "Harbour water taxi",
+          "mode": "waterTaxi",
+          "departure": {
+            "date": "2027-01-16",
+            "place": {
+              "name": "Example Wharf",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {},
+          "facts": [],
+          "passengers": [],
+          "photos": [],
+          "expenses": [],
+          "documents": [],
+          "capabilities": {
+            "edit": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "multi",
+      "label": "Two segments · one Booking / one Ticket / one Expense",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Regional train 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Shared booking fare",
+              "coverageSegmentIds": [
+                "syn-transport-a",
+                "syn-transport-b"
+              ],
+              "scope": "BOOKING",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 42000,
+            "myShare": 21000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 42000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "relatedSegmentIds": [
+            "syn-transport-b"
+          ],
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        },
+        {
+          "id": "syn-transport-b",
+          "visible": true,
+          "name": "Harbour ferry 42",
+          "mode": "ferry",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-17",
+            "time": "08:15",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Example Ferry Terminal",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-17",
+            "time": "11:45",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Bay Wharf",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "pier",
+              "visible": true,
+              "label": "Pier",
+              "value": "4",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-02"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Shared booking fare",
+              "coverageSegmentIds": [
+                "syn-transport-a",
+                "syn-transport-b"
+              ],
+              "scope": "BOOKING",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 42000,
+            "myShare": 21000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 42000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "relatedSegmentIds": [
+            "syn-transport-a"
+          ],
+          "serviceNumber": "42",
+          "duration": {
+            "minutes": 210,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Family original · two segments",
+          "segmentIds": [
+            "syn-transport-a",
+            "syn-transport-b"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "overnight",
+      "label": "Coach · overnight / independent arrival day",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Night coach 88",
+          "mode": "bus",
+          "operator": "Example Coach",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "22:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-17",
+            "time": "06:20",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Bay",
+              "value": "6",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "88",
+          "duration": {
+            "minutes": 470,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Coach original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "crosszone",
+      "label": "Cross-day / different endpoint zones",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Border service 21",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Europe/Paris",
+            "place": {
+              "name": "Paris Example Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-17",
+            "time": "07:30",
+            "zone": "Europe/London",
+            "place": {
+              "name": "London Example Terminal",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "21"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "floating",
+      "label": "Floating · original clocks / no instant qualification",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Floating shuttle",
+          "mode": "shuttle",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "multiple-tickets",
+      "label": "One PDF · two ticket identities / chooser",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a",
+            "syn-ticket-b"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Alex original",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        },
+        {
+          "id": "syn-ticket-b",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Sam original",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "dynamic",
+      "label": "Provider labels · language / provenance preserved",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Fähre EX-7",
+          "mode": "ferry",
+          "operator": "Example Ferries",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "berth",
+              "visible": true,
+              "label": "Liegeplatz",
+              "value": "West 3",
+              "language": "de",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-german-document"
+            },
+            {
+              "id": "deck",
+              "visible": true,
+              "label": "Deck",
+              "value": "B",
+              "language": "de",
+              "semantic": null,
+              "evidence": "synthetic-german-document"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "onlineRequired",
+      "label": "Ticket access · onlineRequired",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "onlineRequired",
+          "canOpenOriginal": true,
+          "providerUrl": "https://example.invalid/synthetic-ticket"
+        }
+      ]
+    },
+    {
+      "id": "notDownloaded",
+      "label": "Ticket access · notDownloaded",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "notDownloaded",
+          "canOpenOriginal": false,
+          "providerUrl": null
+        }
+      ]
+    },
+    {
+      "id": "unavailable",
+      "label": "Ticket access · unavailable",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "unavailable",
+          "canOpenOriginal": false,
+          "providerUrl": null
+        }
+      ]
+    },
+    {
+      "id": "booking-only",
+      "label": "Booking / voucher / unknown ≠ Ticket",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-booking-only",
+            "syn-voucher",
+            "syn-unknown"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            },
+            {
+              "id": "syn-booking-only-original",
+              "visible": true,
+              "kind": "attachment",
+              "title": "BOOKING_CONFIRMATION document",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC BOOKING_CONFIRMATION"
+            },
+            {
+              "id": "syn-voucher-original",
+              "visible": true,
+              "kind": "attachment",
+              "title": "VOUCHER document",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC VOUCHER"
+            },
+            {
+              "id": "syn-unknown-original",
+              "visible": true,
+              "kind": "attachment",
+              "title": "UNKNOWN document",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC UNKNOWN"
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-booking-only",
+          "visible": true,
+          "classification": "BOOKING_CONFIRMATION",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "BOOKING_CONFIRMATION document",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC BOOKING_CONFIRMATION"
+        },
+        {
+          "id": "syn-voucher",
+          "visible": true,
+          "classification": "VOUCHER",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "VOUCHER document",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC VOUCHER"
+        },
+        {
+          "id": "syn-unknown",
+          "visible": true,
+          "classification": "UNKNOWN",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "UNKNOWN document",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC UNKNOWN"
+        }
+      ]
+    },
+    {
+      "id": "restricted",
+      "label": "Restricted · omit unauthorized related objects",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Authorized shared segment",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "visible": false,
+              "label": "PRIVATE_LABEL",
+              "value": "PRIVATE_VALUE"
+            }
+          ],
+          "passengers": [
+            {
+              "visible": false,
+              "name": "PRIVATE_PASSENGER"
+            }
+          ],
+          "participants": {
+            "visible": false
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": false,
+            "ref": "PRIVATE_BOOKING"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": false,
+              "kind": "confirmation",
+              "title": "PRIVATE_DOCUMENT",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "visible": false,
+              "id": "PRIVATE_PHOTO",
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": false,
+              "title": "PRIVATE_EXPENSE",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": false,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": false,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "PRIVATE_TICKET",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "many-passengers",
+      "label": "Eight passengers · collapsible Past summary",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "1",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "2",
+              "coach": "C"
+            },
+            {
+              "id": "p2",
+              "visible": true,
+              "name": "Example passenger 2",
+              "seat": "3",
+              "coach": "C"
+            },
+            {
+              "id": "p3",
+              "visible": true,
+              "name": "Example passenger 3",
+              "seat": "4",
+              "coach": "C"
+            },
+            {
+              "id": "p4",
+              "visible": true,
+              "name": "Example passenger 4",
+              "seat": "5",
+              "coach": "C"
+            },
+            {
+              "id": "p5",
+              "visible": true,
+              "name": "Example passenger 5",
+              "seat": "6",
+              "coach": "C"
+            },
+            {
+              "id": "p6",
+              "visible": true,
+              "name": "Example passenger 6",
+              "seat": "7",
+              "coach": "C"
+            },
+            {
+              "id": "p7",
+              "visible": true,
+              "name": "Example passenger 7",
+              "seat": "8",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "qualified-map",
+      "label": "Qualified departure · Today directions",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "latitude": -41.29,
+              "longitude": 174.78
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel."
+        }
+      ]
+    },
+    {
+      "id": "shared-selection",
+      "label": "One shared Ticket · explicit selection required",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Coastal Explorer 701",
+          "mode": "train",
+          "operator": "Example Rail",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [
+            {
+              "id": "platform",
+              "visible": true,
+              "label": "Platform",
+              "value": "2",
+              "language": "en",
+              "semantic": "boardingPoint",
+              "evidence": "synthetic-source-01"
+            },
+            {
+              "id": "coach",
+              "visible": true,
+              "label": "Coach",
+              "value": "C",
+              "language": "en",
+              "semantic": "coach",
+              "evidence": "synthetic-source-01"
+            }
+          ],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen",
+              "seat": "12A",
+              "coach": "C"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee",
+              "seat": "12B",
+              "coach": "C"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": {
+            "id": "syn-booking-a",
+            "visible": true,
+            "ref": "SYN-RAIL-01"
+          },
+          "ticketIds": [
+            "syn-ticket-a"
+          ],
+          "documents": [
+            {
+              "id": "syn-confirm-a",
+              "visible": true,
+              "kind": "confirmation",
+              "title": "Rail booking confirmation.txt",
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC DOCUMENT — Booking confirmation only. No boarding credential is generated."
+            }
+          ],
+          "instructions": "Arrive 20 minutes before scheduled departure. Follow the boarding point shown on the original document.",
+          "contact": "+00 000 000",
+          "photos": [
+            {
+              "id": "syn-segment-photo-1",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-2",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-3",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-4",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            },
+            {
+              "id": "syn-segment-photo-5",
+              "visible": true,
+              "segmentId": "syn-transport-a"
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-expense-a",
+              "visible": true,
+              "title": "Rail fare · two passengers",
+              "coverageSegmentIds": [
+                "syn-transport-a"
+              ],
+              "scope": "SEGMENT",
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "basis": "SYNTHETIC_LEDGER_PROJECTION",
+            "total": 28000,
+            "myShare": 14000,
+            "currency": "NZD",
+            "originals": [
+              {
+                "amount": 28000,
+                "currency": "NZD"
+              }
+            ]
+          },
+          "note": "Keep the original booking and ticket together. All records in this case are synthetic.",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "serviceNumber": "701",
+          "duration": {
+            "minutes": 330,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": [
+        {
+          "id": "syn-ticket-a",
+          "visible": true,
+          "classification": "TICKET",
+          "identityBasis": "SYNTHETIC_ENTITLEMENT_EVIDENCE",
+          "title": "Rail original · Alex & Sam",
+          "segmentIds": [
+            "syn-transport-a"
+          ],
+          "passengerIds": [
+            "alex",
+            "sam"
+          ],
+          "access": "availableOffline",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC ORIGINAL TICKET PREVIEW\nOne ticket identity covers Alex and Sam on Segment A.\nNo real QR/barcode; not valid for travel.",
+          "requiresSelection": true
+        }
+      ]
+    },
+    {
+      "id": "mode-shuttle",
+      "label": "Mode / icon · shuttle",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Example Shuttle",
+          "mode": "shuttle",
+          "operator": "Example Transfers",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": null,
+          "ticketIds": [],
+          "documents": [],
+          "instructions": "",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "note": "",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "mode-privateTransfer",
+      "label": "Mode / icon · privateTransfer",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Example Private transfer",
+          "mode": "privateTransfer",
+          "operator": "Example Transfers",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": null,
+          "ticketIds": [],
+          "documents": [],
+          "instructions": "",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "note": "",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "mode-taxi",
+      "label": "Mode / icon · taxi",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Example Booked taxi",
+          "mode": "taxi",
+          "operator": "Example Transfers",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": null,
+          "ticketIds": [],
+          "documents": [],
+          "instructions": "",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "note": "",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "mode-cableCar",
+      "label": "Mode / icon · cableCar",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Example Cable car",
+          "mode": "cableCar",
+          "operator": "Example Mountain Transport",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Valley Terminal",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "09:15",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Summit Terminal",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": null,
+          "ticketIds": [],
+          "documents": [],
+          "instructions": "",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "note": "",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          },
+          "duration": {
+            "minutes": 15,
+            "basis": "SYNTHETIC_SOURCE_DURATION"
+          }
+        }
+      ],
+      "tickets": []
+    },
+    {
+      "id": "mode-custom",
+      "label": "Mode / icon · custom",
+      "segments": [
+        {
+          "id": "syn-transport-a",
+          "visible": true,
+          "name": "Example Other transport",
+          "mode": "custom",
+          "operator": "Example Transfers",
+          "departure": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Picton Station",
+              "address": "Example Railway Quay, Picton (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "arrival": {
+            "date": "2027-01-16",
+            "time": "14:30",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Christchurch Station",
+              "address": "Example Station Road, Christchurch (synthetic)",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "facts": [],
+          "passengers": [
+            {
+              "id": "alex",
+              "visible": true,
+              "name": "Alex Chen"
+            },
+            {
+              "id": "sam",
+              "visible": true,
+              "name": "Sam Lee"
+            }
+          ],
+          "participants": {
+            "visible": true,
+            "mode": "WHOLE_GROUP"
+          },
+          "booking": null,
+          "ticketIds": [],
+          "documents": [],
+          "instructions": "",
+          "contact": "+00 000 000",
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "note": "",
+          "capabilities": {
+            "edit": true,
+            "manageParticipation": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "addPhoto": true,
+            "addAttachment": true
+          }
+        }
+      ],
+      "tickets": []
+    }
+  ]
+}
