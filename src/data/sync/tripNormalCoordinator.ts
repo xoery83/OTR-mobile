@@ -1,3 +1,4 @@
+import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
 import {
   createPersonCloudSyncWorker,
@@ -199,11 +200,7 @@ export function createNativeNormalTripSyncRunner(
             if (row) await recoverReadback(target.tripId, row.create_operation_id);
             else {
               const command = intent.command;
-              if (
-                command.command !== "CREATE_ITEM" ||
-                !["P1", "P3"].includes((command.payload as { family: string }).family) ||
-                command.admission.mode !== "REVIEWED_SOURCE"
-              )
+              if (!isReviewedSourceCreate(command))
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
               await core.refresh(context, transport);

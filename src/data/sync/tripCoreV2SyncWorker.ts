@@ -74,8 +74,9 @@ export function createCoreV2SyncWorker(
       )
         throw new Error("CORE_QUEUE_BINDING_MISMATCH");
       const sourceItem =
-        command.command === "CREATE_ITEM" &&
-        ["P1", "P3"].includes((command.payload as { family: string }).family) &&
+        ((command.command === "CREATE_ITEM" &&
+          ["P1", "P3"].includes((command.payload as { family: string }).family)) ||
+          command.command === "CREATE_SPARSE_FLIGHT") &&
         command.admission.mode === "REVIEWED_SOURCE";
       let result = await transport.receipt(context, operation.id);
       await assertAccountRequestContext(context, getAccountId);
@@ -176,9 +177,12 @@ export function createReviewedSourceOperationSync(
     if (
       !command ||
       command.tripId !== context.tripId ||
-      command.command !== "CREATE_ITEM" ||
+      !(
+        (command.command === "CREATE_ITEM" &&
+          ["P1", "P3"].includes((command.payload as { family: string }).family)) ||
+        command.command === "CREATE_SPARSE_FLIGHT"
+      ) ||
       command.target.kind !== "ITEM" ||
-      !["P1", "P3"].includes((command.payload as { family: string }).family) ||
       command.admission.mode !== "REVIEWED_SOURCE" ||
       !command.admission.sourceIntentId ||
       command.admission.policyVersion !== null

@@ -224,3 +224,57 @@ it.each(["PRIVATE", "SELECTED_PERSONS", "GROUP"])(
     expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(false);
   },
 );
+
+it("accepts a reviewed Sparse P2 only through its exact source capability and owning admission", async () => {
+  const f = fixture(),
+    query = f.lease.query;
+  f.lease.query = async (sql, parameters) =>
+    sql.includes("trip_sustained_import_p1_capabilities")
+      ? {
+          rows: [
+            {
+              runtime_enabled: true,
+              enabled_commands: ["CREATE_SPARSE_FLIGHT"],
+              enabled_families: ["P2"],
+              enabled_admission_modes: ["REVIEWED_SOURCE"],
+            },
+          ],
+        }
+      : query(sql, parameters);
+  const verify = vi.fn(async () => {});
+  const storage = createCorePgStorage(
+    { withLease: async (work) => work(f.lease) },
+    hash,
+    {
+      verify,
+      canReadOriginal: async () => false,
+      canReadSourceReceipt: async () => false,
+    },
+    { sustainedDev: true, reviewedP1: true },
+  );
+  const c = validateCoreCommand({
+    ...command(),
+    admission: {
+      mode: "REVIEWED_SOURCE",
+      sourceIntentId: randomUUID(),
+      policyVersion: null,
+    },
+  });
+  await storage.withLockedCommand(
+    {
+      actorAccountId: actor,
+      tripId: trip,
+      operationId: operation,
+      baseVector: c.baseVector,
+    },
+    (tx) => tx.verifyAdmission(c, "a".repeat(64), emptyCoreGraph()),
+  );
+  expect(verify).toHaveBeenCalledExactlyOnceWith(
+    f.lease,
+    expect.objectContaining({ accountId: actor, tripId: trip }),
+    c,
+    "a".repeat(64),
+    expect.anything(),
+  );
+  expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(false);
+});

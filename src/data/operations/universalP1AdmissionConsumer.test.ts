@@ -1,3 +1,4 @@
+import { universalP2SourceFixture } from "../../../backend/src/__fixtures__/universalP2Source";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
@@ -9,10 +10,13 @@ import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import type { UniversalImportResult } from "../api/universalImportContracts";
 async function fixture(
-  family: "P1" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" = "P1",
   sync?: (context: unknown, operationId: string) => Promise<unknown>,
 ) {
-  const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", family),
+  const f =
+      family === "P2"
+        ? await universalP2SourceFixture()
+        : await universalP1SourceFixture(undefined, undefined, "2026-11-03", family),
     p = await f.run(),
     plan = p.body.plan,
     slot = plan.slots[0],
@@ -204,42 +208,56 @@ it.each(["P2", "P3", "P4", "P5", "P6"])(
   },
 );
 
-it("reads only retained account-scoped original bytes and rejects changed pins or stale views", async () => {
-  const f = await fixture(),
-    material = f.f.input.snapshot.materials[0],
-    input = f.model.inputs[0];
-  const payloadId = randomUUID();
-  Object.assign(input, {
-    captureId: randomUUID(),
-    payloadId,
-    contentByteCount: Buffer.byteLength(material.text),
-  });
-  const readCapture = vi.fn(async () => ({
-    capture: { accountId: f.result.accountId, payloadId },
-    bytes: Buffer.from(material.text),
-  }));
-  const deps = {
-    getAccountId: async () => f.result.accountId,
-    isCurrent: () => true,
-    hash: f.f.deps.hash,
-    readCapture,
-  };
-  expect(await readUniversalP1ReviewOriginal(f.model, f.result, "walk", deps)).toBe(
-    material.text,
-  );
-  Object.assign(input, { contentSha256: "0".repeat(64) });
-  await expect(
-    readUniversalP1ReviewOriginal(f.model, f.result, "walk", deps),
-  ).rejects.toThrow();
-  readCapture.mockClear();
-  await expect(
-    readUniversalP1ReviewOriginal(f.model, f.result, "walk", {
-      ...deps,
-      isCurrent: () => false,
-    }),
-  ).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
-  expect(readCapture).not.toHaveBeenCalled();
-});
+it.each(["P1", "P2"] as const)(
+  "reads only retained account-scoped %s original bytes and rejects changed pins or stale views",
+  async (family) => {
+    const f = await fixture(family),
+      material =
+        "snapshot" in f.f.input ? f.f.input.snapshot.materials[0] : f.f.input.material,
+      input = f.model.inputs[0];
+    const payloadId = randomUUID();
+    Object.assign(input, {
+      captureId: randomUUID(),
+      payloadId,
+      contentByteCount: Buffer.byteLength(material.text),
+    });
+    const readCapture = vi.fn(async () => ({
+      capture: { accountId: f.result.accountId, payloadId },
+      bytes: Buffer.from(material.text),
+    }));
+    const deps = {
+      getAccountId: async () => f.result.accountId,
+      isCurrent: () => true,
+      hash: f.f.deps.hash,
+      readCapture,
+    };
+    expect(
+      await readUniversalP1ReviewOriginal(
+        f.model,
+        f.result,
+        f.result.candidates[0].token,
+        deps,
+      ),
+    ).toBe(material.text);
+    Object.assign(input, { contentSha256: "0".repeat(64) });
+    await expect(
+      readUniversalP1ReviewOriginal(
+        f.model,
+        f.result,
+        f.result.candidates[0].token,
+        deps,
+      ),
+    ).rejects.toThrow();
+    readCapture.mockClear();
+    await expect(
+      readUniversalP1ReviewOriginal(f.model, f.result, f.result.candidates[0].token, {
+        ...deps,
+        isCurrent: () => false,
+      }),
+    ).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+    expect(readCapture).not.toHaveBeenCalled();
+  },
+);
 
 it("queues only the selected P3 using its exact owning published Plan and operation", async () => {
   const f = await fixture("P3");
@@ -282,3 +300,35 @@ it.each(["P1", "P3"] as const)(
     expect(f.core.refresh).toHaveBeenCalledOnce();
   },
 );
+
+it("queues the reviewed P2 only through owning Source Prepare and CREATE_SPARSE_FLIGHT", async () => {
+  const f = await fixture("P2"),
+    source = await universalP2SourceFixture();
+  const result = await f.consumer.confirm(
+    f.model,
+    f.result,
+    "i1",
+    source.input.selection.sourceReview,
+  );
+  expect(result.status).toBe("SYNC_PENDING");
+  expect(f.command.command).toBe("CREATE_SPARSE_FLIGHT");
+  expect(f.command.admission.mode).toBe("REVIEWED_SOURCE");
+  expect(f.transport.publishUniversalP1).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      family: "P2",
+      sourceReview: source.input.selection.sourceReview,
+    }),
+  );
+  expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
+  expect(f.transport.receipt).not.toHaveBeenCalled();
+  expect(f.command.payload).not.toHaveProperty("origin");
+});
+it("requires explicit P2 review and preserves the existing Candidate minimum-facts status", async () => {
+  const f = await fixture("P2"),
+    before = structuredClone(f.result);
+  await expect(f.consumer.confirm(f.model, f.result, "i1")).rejects.toThrow();
+  expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+  expect(f.result).toEqual(before);
+});

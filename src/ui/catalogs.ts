@@ -4,6 +4,11 @@ export const en = {
     "AI processing is queued. Check results to continue. No itinerary items have been saved.",
   "capture.ai.suggestionsStatus":
     "Suggestions are separate from saved items. Only confirmed items are saved.",
+  "capture.ai.p2ReviewValues": "Flight number: {title}. Departure date: {date}.",
+  "capture.ai.p2SelectNew": "Choose NEW: create a separate flight",
+  "capture.ai.p2Confirm": "Confirm flight number and departure date and add item",
+  "capture.ai.p2Details":
+    "Save the evidenced flight number and departure date as a private item for you. Other details stay with the source.",
   "capture.ai.p3ReviewValues":
     "Stay: {title}. Original check-in: {raw}; civil date: {date}. Original check-out: {endRaw}; civil date: {endDate}.",
   "capture.ai.p3SelectNew": "Choose NEW: create a separate stay",
@@ -2616,6 +2621,11 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.queued": "AI 处理已进入队列。请检查结果以继续，尚未保存任何行程项目。",
   "capture.ai.suggestionsStatus":
     "候选与已保存的行程项目分别显示。只有你明确确认的项目才会保存。",
+  "capture.ai.p2ReviewValues": "航班号：{title}；出发日期：{date}。",
+  "capture.ai.p2SelectNew": "选择新建：创建独立航班",
+  "capture.ai.p2Confirm": "确认航班号、出发日期并添加行程项目",
+  "capture.ai.p2Details":
+    "将有证据支持的航班号及出发日期保存为仅你可见的行程项目，其他信息继续保留在来源中。",
   "capture.ai.p3ReviewValues":
     "住宿：{title}。原文入住日期：{raw}；民用日期：{date}。原文退房日期：{endRaw}；民用日期：{endDate}。",
   "capture.ai.p3SelectNew": "选择新建：创建独立住宿",

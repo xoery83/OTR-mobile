@@ -12,7 +12,10 @@ import {
   personCloudCreateSchema,
 } from "@/domain/trip/tripPersonCloudCreate";
 import { retainedDeferredTripMetadataSchema } from "@/domain/trip/tripDeferredMetadata";
-import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
+import {
+  validateCoreCommand,
+  isReviewedSourceCreate,
+} from "@/domain/trip/tripCoreV2Commands";
 import { readTripMetadataConfirmation } from "../repositories/tripMetadataConfirmation";
 import { createTripPersonRepository } from "../repositories/tripPersonRepository";
 import { p1SharedParticipantsReady } from "./p1SharedParticipantQualification";
@@ -147,14 +150,7 @@ export async function getNormalTripQueueActivity(
               c.operationId !== op.id ||
               c.target.kind !== "ITEM" ||
               c.target.id !== op.entity_id ||
-              (c.admission.mode !== "MANUAL" &&
-                !(
-                  c.command === "CREATE_ITEM" &&
-                  ["P1", "P3"].includes((c.payload as { family: string }).family) &&
-                  c.admission.mode === "REVIEWED_SOURCE" &&
-                  c.admission.sourceIntentId !== null &&
-                  c.admission.policyVersion === null
-                ))
+              (c.admission.mode !== "MANUAL" && !isReviewedSourceCreate(c))
             )
               continue;
             const item = await database.getFirstAsync<{ experience_family: string }>(
@@ -164,17 +160,16 @@ export async function getNormalTripQueueActivity(
               c.target.id,
             );
             const p1 =
-              c.command === "CREATE_ITEM"
-                ? (c.payload as { family: string }).family === "P1" ||
-                  (c.admission.mode === "REVIEWED_SOURCE" &&
-                    (c.payload as { family: string }).family === "P3")
+              isReviewedSourceCreate(c) ||
+              (c.command === "CREATE_ITEM"
+                ? (c.payload as { family: string }).family === "P1"
                 : item?.experience_family === "P1" &&
                   [
                     "SET_ITEM_TEXT",
                     "SET_ITEM_SCHEDULE",
                     "SET_ITEM_PLACE",
                     "SET_ITEM_PARTICIPATION",
-                  ].includes(c.command);
+                  ].includes(c.command));
             eligible =
               !!p1 &&
               p1SharedParticipantsReady(c, await roster.listTripPersons(create.trip_id));

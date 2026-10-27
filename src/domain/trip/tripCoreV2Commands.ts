@@ -496,3 +496,16 @@ export const coreClosedCapabilities = {
   sourceEvidenceAvailable: false,
   operationalCustodyAvailable: false,
 } as const;
+
+// Shared queue classification only; owning Source and Core still verify admission.
+export function isReviewedSourceCreate(command: CoreCommand): boolean {
+  return (
+    command.target.kind === "ITEM" &&
+    command.admission.mode === "REVIEWED_SOURCE" &&
+    command.admission.sourceIntentId !== null &&
+    command.admission.policyVersion === null &&
+    (command.command === "CREATE_SPARSE_FLIGHT" ||
+      (command.command === "CREATE_ITEM" &&
+        ["P1", "P3"].includes(String((command.payload as { family: string }).family))))
+  );
+}

@@ -858,7 +858,10 @@ it("Core publication denies a queued Account transition and wrong Trip without t
   expect(a.sql.prepare("PRAGMA table_info(ttr_selections)").all()).toHaveLength(9);
   a.selection();
 });
-async function lostP1RecoveryFixture(reviewed = false, family: "P1" | "P3" = "P1") {
+async function lostP1RecoveryFixture(
+  reviewed = false,
+  family: "P1" | "P2" | "P3" = "P1",
+) {
   const f = fixture();
   const ctx = await f.repo.captureContext(trip);
   const command = {
@@ -868,17 +871,24 @@ async function lostP1RecoveryFixture(reviewed = false, family: "P1" | "P3" = "P1
       sourceIntentId: reviewed ? randomUUID() : null,
       policyVersion: null,
     },
-    command: "CREATE_ITEM",
-    payload: {
-      family,
-      core: { title: "Lost P1 response" },
-      schedule:
-        family === "P3"
-          ? { start: coreDateBoundary("2026-11-02"), end: coreDateBoundary("2026-11-03") }
-          : { start: ordinaryTime() },
-      place: ordinaryPlace(),
-      ...coreDefaults("member"),
-    },
+    command:
+      family === "P2" ? ("CREATE_SPARSE_FLIGHT" as const) : ("CREATE_ITEM" as const),
+    payload:
+      family === "P2"
+        ? sparse().payload
+        : {
+            family,
+            core: { title: "Lost P1 response" },
+            schedule:
+              family === "P3"
+                ? {
+                    start: coreDateBoundary("2026-11-02"),
+                    end: coreDateBoundary("2026-11-03"),
+                  }
+                : { start: ordinaryTime() },
+            place: ordinaryPlace(),
+            ...coreDefaults("member"),
+          },
   };
   await f.repo.enqueue(ctx, command);
   let graph = emptyCoreGraph();
@@ -890,7 +900,7 @@ async function lostP1RecoveryFixture(reviewed = false, family: "P1" | "P3" = "P1
         readReceipt: async () => stored,
         hasLegacyOperation: async () => false,
         canReadReceipt: async () => true,
-        enabledCommands: async () => ["CREATE_ITEM"],
+        enabledCommands: async () => [command.command],
         readLockedGraph: async () => graph,
         verifyAdmission: async () => {},
         lifecycleGraphHash: async () => undefined,
@@ -1065,6 +1075,8 @@ it.each([
   [true, "P1"],
   [false, "P3"],
   [true, "P3"],
+  [false, "P2"],
+  [true, "P2"],
 ] as const)(
   "resumes only accepted Source finalization after EVIDENCE_PENDING (reconciled: %s, family:%s)",
   async (reconciled, family) => {
@@ -1079,7 +1091,7 @@ it.each([
       capabilities: async () => ({
         ...coreClosedCapabilities,
         activationState: "ENABLED",
-        enabledCommands: ["CREATE_ITEM"],
+        enabledCommands: [f.command.command],
         enabledFamilies: [family],
         enabledAdmissionModes: ["REVIEWED_SOURCE"],
         sourceEvidenceAvailable: true,

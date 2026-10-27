@@ -24,11 +24,12 @@ export function isNormalP1Gate(gate: Record<string, unknown> | undefined): boole
 // Additive owning Import qualification; Manual permission never enables this mode.
 export function isReviewedP1Gate(
   gate: Record<string, unknown> | undefined,
-  family: "P1" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" = "P1",
 ): boolean {
   return (
     gate?.runtime_enabled === true &&
-    JSON.stringify(gate.enabled_commands) === '["CREATE_ITEM"]' &&
+    JSON.stringify(gate.enabled_commands) ===
+      JSON.stringify([family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM"]) &&
     JSON.stringify(gate.enabled_families) === JSON.stringify([family]) &&
     JSON.stringify(gate.enabled_admission_modes) === '["REVIEWED_SOURCE"]'
   );

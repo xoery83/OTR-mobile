@@ -30,6 +30,7 @@ function Harness(batchId: string, current = () => true) {
 }
 beforeEach(() => {
   hooks.slots = [];
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P2_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED", "true");
 });
 it("rejects retained actions after the committed Batch scope changes", async () => {
@@ -59,4 +60,12 @@ it("keeps P3 disabled under the P1 opt-in and requires its own opt-in", async ()
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P3_ADMISSION_ENABLED", "true");
   expect(Harness("batch-a").enabledFamilies).toEqual(["P3"]);
+});
+
+it("requires a separate default-closed P2 opt-in", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED", "false");
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P3_ADMISSION_ENABLED", "false");
+  expect(Harness("batch-a").enabledFamilies).toEqual([]);
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P2_ADMISSION_ENABLED", "true");
+  expect(Harness("batch-a").enabledFamilies).toEqual(["P2"]);
 });

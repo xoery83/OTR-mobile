@@ -1,4 +1,7 @@
-import type { UniversalP1QualificationContext } from "./universalP1SourcePg";
+import { universalItemSourceReviewSchema } from "../../src/domain/trip/universalP1SourceReview";
+import { universalP2SourceReviewSchema } from "../../src/domain/trip/universalP2SourceReview";
+import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
+import { projectUniversalP2SourceProposal } from "./universalP2SourceReview";
 import {
   coreUniversalP1PublishRequestSchema,
   coreSourceFinalizeV2Schema,
@@ -12,6 +15,7 @@ import {
   assertUniversalP1Capability,
   setUniversalP1WriteContext,
   type PublishedUniversalP1Reader,
+  type UniversalP1QualificationContext,
 } from "./universalP1SourcePg";
 import { universalP1Identity } from "./universalP1Source";
 import { readSourcePdfCoreProof } from "./sourcePdfCoreProof";
@@ -246,12 +250,92 @@ async function publication(
     throw new Error("INVALID_PROVENANCE");
   return { row, request, response };
 }
+// The existing Published reader and owning Source lease are mandatory for Universal P2.
+export async function assertUniversalP2Publication(
+  lease: CorePgLease,
+  scope: CoreSourceScopeV2 & { sourceId: string },
+  request: import("./tripCoreV2CandidatePublication").CoreCandidatePublicationV2,
+  hash: ImportHash,
+  readPublished?: PublishedUniversalP1Reader,
+  historical = false,
+) {
+  const binding = request.universalP2;
+  if (!binding) return undefined;
+  if (!readPublished) throw Error("CONTRACT_UNSUPPORTED");
+  if (!historical) await assertUniversalP1Capability(lease, scope, "P2");
+  const key = {
+    actorAccountId: scope.actorAccountId,
+    tripId: scope.tripId,
+    batchId: binding.batchId,
+    taskId: binding.taskId,
+  };
+  const published = await readPublished(key, lease);
+  if (
+    !published ||
+    published.runId !== request.runId ||
+    published.runId !== binding.runId ||
+    published.resultSha256 !== binding.resultSha256 ||
+    published.result.taskId !== binding.taskId ||
+    published.result.batchId !== binding.batchId
+  )
+    throw Error("UNIVERSAL_SELECTION_STALE");
+  const run = {
+    runId: published.runId,
+    taskId: binding.taskId,
+    batchId: binding.batchId,
+    resultSha256: published.resultSha256,
+  };
+  const catalog = await readOwningLegacySourceCatalog(
+    lease,
+    scope,
+    request.runId,
+    historical ? request.sourceRevision : undefined,
+    run,
+  );
+  if (
+    catalog.sourceRevision !== request.sourceRevision ||
+    catalog.inputCatalogSha256 !== request.inputCatalogSha256
+  )
+    throw Error("INPUT_STALE");
+  const originals = await materials(lease, catalog, hash, historical);
+  if (originals.length !== 1) throw Error("CONTRACT_UNSUPPORTED");
+  const context = await captureAccountRequestContext(
+    scope.tripId,
+    async () => scope.actorAccountId,
+  );
+  const rebuilt = await projectUniversalP2SourceProposal(
+    {
+      context,
+      result: published.result,
+      resultSha256: published.resultSha256,
+      selection: {
+        token: binding.token,
+        resultSha256: binding.resultSha256,
+        sourceReview: binding.sourceReview,
+      },
+      runId: published.runId,
+      inputCatalogSha256: catalog.inputCatalogSha256,
+      material: originals[0],
+    },
+    { hash, getAccountId: async () => scope.actorAccountId },
+  );
+  if (json(rebuilt.publication) !== json(request)) throw Error("INVALID_PROVENANCE");
+  const after = await readPublished(key, lease);
+  if (
+    !after ||
+    after.runId !== published.runId ||
+    after.resultSha256 !== published.resultSha256
+  )
+    throw Error("UNIVERSAL_SELECTION_STALE");
+  return { catalog, run };
+}
 async function catalogForCandidates(
   lease: CorePgLease,
   scope: CoreSourceScopeV2 & { sourceId: string },
   candidateIds: readonly string[],
   hash: ImportHash,
   historical = false,
+  readPublished?: PublishedUniversalP1Reader,
 ): Promise<CoreSourceCatalogV2> {
   const selected = (
     await lease.query(
@@ -267,12 +351,22 @@ async function catalogForCandidates(
   const ids = new Set(bodies.map((c) => c.publicationId));
   if (ids.size !== 1) throw new Error("CONTRACT_UNSUPPORTED");
   const pub = await publication(lease, scope, bodies[0].publicationId, hash),
-    catalog = await readOwningLegacySourceCatalog(
+    universal = await assertUniversalP2Publication(
       lease,
       scope,
-      pub.response.runId,
-      historical ? pub.response.sourceRevision : undefined,
-    );
+      pub.request,
+      hash,
+      readPublished,
+      historical,
+    ),
+    catalog =
+      universal?.catalog ??
+      (await readOwningLegacySourceCatalog(
+        lease,
+        scope,
+        pub.response.runId,
+        historical ? pub.response.sourceRevision : undefined,
+      ));
   if (
     catalog.sourceRevision !== pub.response.sourceRevision ||
     catalog.inputCatalogSha256 !== pub.response.inputCatalogSha256
@@ -683,7 +777,14 @@ export function createCoreSourcePgAuthority(
                 hash,
                 options.readUniversalP1!,
               )
-            : await catalogForCandidates(lease, own, ids, hash));
+            : await catalogForCandidates(
+                lease,
+                own,
+                ids,
+                hash,
+                false,
+                options.readUniversalP1,
+              ));
         const tx: CoreSourcePlanTransactionV2 = {
           ...legacy,
           readSealedCatalog: load,
@@ -882,7 +983,14 @@ export function createCoreSourcePgAuthority(
                       hash,
                       options.readUniversalP1,
                     )
-                  : await catalogForCandidates(lease, own, ids, hash, true);
+                  : await catalogForCandidates(
+                      lease,
+                      own,
+                      ids,
+                      hash,
+                      true,
+                      options.readUniversalP1,
+                    );
             } catch (error) {
               if (
                 error instanceof Error &&
@@ -973,7 +1081,16 @@ export function createCoreSourcePgAuthority(
       planId: request.publicationId,
       sourceId: request.sourceId,
     };
+    if (request.universalP2 && !options.readUniversalP1)
+      throw Error("CONTRACT_UNSUPPORTED");
     return withCoreSourcePgLease(connection, scope, async (lease) => {
+      const universal = await assertUniversalP2Publication(
+        lease,
+        scope,
+        request,
+        hash,
+        options.readUniversalP1,
+      );
       const prior = (
         await lease.query(
           "SELECT request_sha256,response_json FROM public.trip_source_core_v2_publications WHERE publication_id=$1::uuid",
@@ -993,7 +1110,9 @@ export function createCoreSourcePgAuthority(
           throw new Error("IMPORT_SCOPE_MISMATCH");
         return result;
       }
-      const catalog = await readOwningLegacySourceCatalog(lease, scope, request.runId);
+      const catalog =
+        universal?.catalog ??
+        (await readOwningLegacySourceCatalog(lease, scope, request.runId));
       if (
         catalog.sourceRevision !== request.sourceRevision ||
         catalog.inputCatalogSha256 !== request.inputCatalogSha256
@@ -1187,7 +1306,14 @@ export function createCoreSourcePgAuthority(
       throw new Error("INVALID_PROVENANCE");
     let catalog: CoreSourceCatalogV2;
     try {
-      catalog = await catalogForCandidates(lease, scope, plan.request.candidateIds, hash);
+      catalog = await catalogForCandidates(
+        lease,
+        scope,
+        plan.request.candidateIds,
+        hash,
+        false,
+        options.readUniversalP1,
+      );
     } catch (error) {
       if (
         error instanceof Error &&
@@ -1696,6 +1822,77 @@ export function createCoreSourcePgAuthority(
   async function publishUniversalP1(actor: string, trip: string, raw: unknown) {
     const input = coreUniversalP1PublishRequestSchema.parse(raw);
     if (!options.readUniversalP1) throw Error("CONTRACT_UNSUPPORTED");
+    if (input.family === "P2") {
+      const review = universalP2SourceReviewSchema.parse(input.sourceReview);
+      const scope = {
+        actorAccountId: actor,
+        tripId: trip,
+        sourceId: input.sourceId,
+        planId: universalP1Identity(input.taskId, input.token, "p2-publication"),
+      };
+      const proposed = await withCoreSourcePgLease(connection, scope, async (lease) => {
+        await assertUniversalP1Capability(lease, scope, "P2");
+        const published = await options.readUniversalP1!(
+          {
+            actorAccountId: actor,
+            tripId: trip,
+            batchId: input.batchId,
+            taskId: input.taskId,
+          },
+          lease,
+        );
+        if (
+          !published ||
+          published.result.requestSha256 !== input.requestSha256 ||
+          published.result.taskId !== input.taskId ||
+          published.result.batchId !== input.batchId
+        )
+          throw Error("UNIVERSAL_SELECTION_UNAVAILABLE");
+        const catalog = await readOwningLegacySourceCatalog(
+          lease,
+          scope,
+          published.runId,
+          undefined,
+          {
+            runId: published.runId,
+            taskId: input.taskId,
+            batchId: input.batchId,
+            resultSha256: published.resultSha256,
+          },
+        );
+        const originals = await materials(lease, catalog, hash);
+        if (originals.length !== 1) throw Error("CONTRACT_UNSUPPORTED");
+        const context = await captureAccountRequestContext(trip, async () => actor);
+        return projectUniversalP2SourceProposal(
+          {
+            context,
+            result: published.result,
+            resultSha256: published.resultSha256,
+            selection: {
+              token: input.token,
+              resultSha256: published.resultSha256,
+              sourceReview: review,
+            },
+            runId: published.runId,
+            inputCatalogSha256: catalog.inputCatalogSha256,
+            material: originals[0],
+          },
+          { hash, getAccountId: async () => actor },
+        );
+      });
+      // A fresh owning lease reconstructs every published/Source pin before sealing.
+      const sealed = await publish(actor, trip, proposed.publication);
+      if (sealed.candidates.length !== 1 || sealed.candidates[0].status !== "QUALIFIED")
+        throw Error("OWNING_REVIEW_REQUIRED");
+      return {
+        captureVersion: 2 as const,
+        status: "CANDIDATE_SEALED" as const,
+        proposedPlan: proposed.plan,
+        candidateSha256: sealed.candidates[0].candidateSha256,
+        grantsAdmission: false as const,
+      };
+    }
+    const family = input.family;
     return withCoreSourcePgLease(
       connection,
       {
@@ -1713,7 +1910,13 @@ export function createCoreSourcePgAuthority(
             sourceId: input.sourceId,
             planId: universalP1Identity(input.taskId, input.token, "plan"),
           },
-          input,
+          {
+            ...input,
+            family,
+            sourceReview: input.sourceReview
+              ? universalItemSourceReviewSchema.parse(input.sourceReview)
+              : undefined,
+          },
           options.readUniversalP1!,
           hash,
         ),

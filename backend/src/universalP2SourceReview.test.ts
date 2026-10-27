@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+import { assertUniversalP2Publication } from "./tripCoreV2SourcePgAuthority";
 import { advanceAccountGeneration } from "../../src/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
 import {
@@ -231,3 +232,172 @@ it.each(["extra-leg", "ignored-source", "change-notice", "historical", "date-dri
     ).rejects.toThrow();
   },
 );
+
+async function owningPublicationFixture() {
+  const f = await proposalFixture(),
+    deps = { hash, getAccountId: async () => f.result.accountId };
+  const proposed = await projectUniversalP2SourceProposal(f, deps),
+    pin = f.material.pin;
+  const state = {
+    family: "P2",
+    command: "CREATE_SPARSE_FLIGHT",
+    text: f.material.text,
+    afterHash: owning.task.result_sha256,
+  };
+  const query = vi.fn(async (sql: string) => {
+    if (sql.includes("trip_sustained_import_p1_capabilities"))
+      return {
+        rows: [
+          {
+            runtime_enabled: true,
+            enabled_commands: [state.command],
+            enabled_families: [state.family],
+            enabled_admission_modes: ["REVIEWED_SOURCE"],
+          },
+        ],
+      };
+    if (sql.startsWith("SELECT to_jsonb(s)"))
+      return {
+        rows: [
+          {
+            source: {
+              id: pin.source_id,
+              trip_id: f.result.tripId,
+              acquired_by: f.result.accountId,
+              lifecycle: "ACTIVE",
+              retention_state: "RETAINED",
+              current_material_revision: 1,
+            },
+          },
+        ],
+      };
+    if (sql.startsWith("SELECT to_jsonb(r)"))
+      return {
+        rows: [
+          {
+            run: {
+              id: f.runId,
+              extractor_key: "otr-universal-interpretation-v1",
+              capture_batch_id: f.result.batchId,
+              interpretation_task_id: f.result.taskId,
+              state: "PENDING",
+              retention_state: "RETAINED",
+              input_sha256: f.inputCatalogSha256,
+              scope_source_ids: [pin.source_id],
+            },
+          },
+        ],
+      };
+    if (sql.startsWith("SELECT to_jsonb(i)"))
+      return {
+        rows: [{ pin: { ...pin, run_id: f.runId, confirmation_id: null }, valid: true }],
+      };
+    if (sql.includes("trip_import_run_input_hash"))
+      return { rows: [{ hash: f.inputCatalogSha256 }] };
+    if (sql.startsWith("SELECT id,run_id,candidate_kind")) return { rows: [] };
+    if (sql.startsWith("SELECT original_representation_ids"))
+      return {
+        rows: [
+          {
+            original_representation_ids: [pin.representation_id],
+            retention_state: "RETAINED",
+          },
+        ],
+      };
+    if (sql.startsWith("SELECT role,material_kind"))
+      return {
+        rows: [
+          {
+            role: "ORIGINAL",
+            material_kind: "TEXT",
+            text_content: state.text,
+            payload_sha256: pin.payload_sha256,
+            byte_count: pin.byte_count,
+            retention_state: "RETAINED",
+          },
+        ],
+      };
+    throw Error("UNEXPECTED_SQL");
+  });
+  const lease = { query, retire: vi.fn() };
+  const read = vi.fn(async (_scope: unknown, currentLease: unknown) => {
+    expect(currentLease).toBe(lease);
+    return {
+      runId: f.runId,
+      resultSha256:
+        read.mock.calls.length > 1 ? state.afterHash : owning.task.result_sha256,
+      result: f.result,
+    };
+  });
+  const scope = {
+    actorAccountId: f.result.accountId,
+    tripId: f.result.tripId,
+    sourceId: pin.source_id,
+    planId: proposed.plan.planId,
+  };
+  return { f, proposed, state, query, lease, read, scope };
+}
+it("rebuilds the proposed publication through the same owning Published/Source lease before accepting its binding", async () => {
+  const f = await owningPublicationFixture();
+  const checked = await assertUniversalP2Publication(
+    f.lease as never,
+    f.scope,
+    f.proposed.publication,
+    hash,
+    f.read as never,
+  );
+  expect(checked?.run).toMatchObject({
+    taskId: f.f.result.taskId,
+    resultSha256: owning.task.result_sha256,
+  });
+  expect(f.read).toHaveBeenCalledTimes(2);
+  expect(f.query.mock.calls.every(([sql]) => sql.startsWith("SELECT"))).toBe(true);
+});
+it.each([
+  "reader",
+  "p1-window",
+  "client-hash",
+  "source-bytes",
+  "after-hash",
+  "catalog",
+  "forged-fact",
+])("rejects %s without trusting client publication pins", async (kind) => {
+  const f = await owningPublicationFixture();
+  if (kind === "p1-window") {
+    f.state.family = "P1";
+    f.state.command = "CREATE_ITEM";
+  }
+  if (kind === "client-hash")
+    f.proposed.publication.universalP2!.resultSha256 = "b".repeat(64);
+  if (kind === "source-bytes") f.state.text = "NX501 AKL→CHC 2026-11-02\n";
+  if (kind === "after-hash") f.state.afterHash = "b".repeat(64);
+  if (kind === "catalog") f.proposed.publication.inputCatalogSha256 = "b".repeat(64);
+  if (kind === "forged-fact")
+    f.proposed.publication.candidates[0].facts.flightNumberLiteral = "NZ502";
+  await expect(
+    assertUniversalP2Publication(
+      f.lease as never,
+      f.scope,
+      f.proposed.publication,
+      hash,
+      kind === "reader" ? undefined : (f.read as never),
+    ),
+  ).rejects.toThrow();
+  expect(f.query.mock.calls.every(([sql]) => sql.startsWith("SELECT"))).toBe(true);
+  if (kind === "reader" || kind === "p1-window") expect(f.read).not.toHaveBeenCalled();
+});
+it("leaves legacy Flight publication binding behavior unchanged", async () => {
+  const f = await owningPublicationFixture();
+  delete f.proposed.publication.universalP2;
+  expect(
+    await assertUniversalP2Publication(
+      f.lease as never,
+      f.scope,
+      f.proposed.publication,
+      hash,
+      f.read as never,
+    ),
+  ).toBeUndefined();
+  expect(f.query).not.toHaveBeenCalled();
+  expect(f.read).not.toHaveBeenCalled();
+});

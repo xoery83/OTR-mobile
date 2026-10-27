@@ -1,3 +1,4 @@
+import { isReviewedP1Gate } from "./tripNormalP1Policy";
 import { universalResultSchema } from "../../src/data/api/universalImportContracts";
 import { z } from "zod";
 import {
@@ -90,7 +91,7 @@ export const isUniversalP1Body = (raw: unknown) => header.safeParse(raw).success
 export async function assertUniversalP1Capability(
   lease: CorePgLease,
   scope: Pick<Scope, "actorAccountId" | "tripId">,
-  family: "P1" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" = "P1",
 ) {
   const c = (
     await lease.query(
@@ -98,13 +99,7 @@ export async function assertUniversalP1Capability(
       [scope.actorAccountId, scope.tripId],
     )
   ).rows[0];
-  if (
-    c?.runtime_enabled !== true ||
-    json(c.enabled_commands) !== '["CREATE_ITEM"]' ||
-    json(c.enabled_families) !== json([family]) ||
-    json(c.enabled_admission_modes) !== '["REVIEWED_SOURCE"]'
-  )
-    throw Error("CORE_CAPABILITY_CLOSED");
+  if (!isReviewedP1Gate(c, family)) throw Error("CORE_CAPABILITY_CLOSED");
 }
 export async function setUniversalP1WriteContext(
   lease: CorePgLease,

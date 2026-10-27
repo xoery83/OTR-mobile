@@ -11,7 +11,10 @@ import {
 } from "../auth/accountRequestContext";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
 import { coreUuid, coreTableSchemas, type CoreTable } from "../../domain/trip/tripCoreV2";
-import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
+import {
+  validateCoreCommand,
+  isReviewedSourceCreate,
+} from "../../domain/trip/tripCoreV2Commands";
 import {
   coreHashValue,
   validateCoreReadCollection,
@@ -994,9 +997,7 @@ export function createTripCoreV2Repository(
         for (const row of accepted) {
           const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
           if (
-            command.command !== "CREATE_ITEM" ||
-            !["P1", "P3"].includes((command.payload as { family: string }).family) ||
-            command.admission.mode !== "REVIEWED_SOURCE" ||
+            !isReviewedSourceCreate(command) ||
             !row.receipt_body ||
             !row.receipt_sha256
           )

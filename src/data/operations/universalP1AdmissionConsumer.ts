@@ -1,3 +1,7 @@
+import {
+  universalP2SourceReviewSchema,
+  type UniversalP2SourceReview,
+} from "../../domain/trip/universalP2SourceReview";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
@@ -35,7 +39,7 @@ export function createUniversalP1AdmissionConsumer(deps: {
       model: CaptureJobReadModel,
       result: UniversalImportResult,
       token: string,
-      sourceReview?: UniversalItemSourceReview,
+      sourceReview?: UniversalItemSourceReview | UniversalP2SourceReview,
     ) {
       current();
       assertUniversalCaptureResult(model, result);
@@ -47,26 +51,40 @@ export function createUniversalP1AdmissionConsumer(deps: {
       if (
         context.accountId !== result.accountId ||
         candidates.length !== 1 ||
-        !["P1", "P3"].includes(candidates[0].kind) ||
+        !["P1", "P2", "P3"].includes(candidates[0].kind) ||
         candidates[0].subtype !==
-          (candidates[0].kind === "P3" ? "ACCOMMODATION" : "ACTIVITY") ||
+          (candidates[0].kind === "P3"
+            ? "ACCOMMODATION"
+            : candidates[0].kind === "P2"
+              ? "FLIGHT"
+              : "ACTIVITY") ||
         result.providerOutcome !== "SETTLED" ||
         !deps.transport.publishUniversalP1
       )
         throw Error("OWNING_ADMISSION_UNAVAILABLE");
+      const flight = candidates[0].kind === "P2";
+      if (flight && !sourceReview) throw Error("OWNING_REVIEW_REQUIRED");
+      const review = flight
+        ? universalP2SourceReviewSchema.parse(sourceReview)
+        : sourceReview
+          ? universalItemSourceReviewSchema.parse(sourceReview)
+          : undefined;
       const aliases = new Set(
         candidates[0].fields
           .filter((f) =>
-            [
-              "activity.name",
-              "title",
-              "activity.date",
-              "property.name",
-              "check_in.date",
-              "check_out.date",
-              "schedule.end.local_date",
-              "schedule.start.local_date",
-            ].includes(f.path),
+            (flight
+              ? ["service", "flight_number", "marketing_flight", "origin.local_date"]
+              : [
+                  "activity.name",
+                  "title",
+                  "activity.date",
+                  "property.name",
+                  "check_in.date",
+                  "check_out.date",
+                  "schedule.end.local_date",
+                  "schedule.start.local_date",
+                ]
+            ).includes(f.path),
           )
           .map((f) => f.sourceId),
       );
@@ -81,10 +99,12 @@ export function createUniversalP1AdmissionConsumer(deps: {
           taskId: result.taskId,
           token,
           requestSha256: result.requestSha256,
-          ...(candidates[0].kind === "P3" ? { family: "P3" as const } : {}),
-          ...(sourceReview
-            ? { sourceReview: universalItemSourceReviewSchema.parse(sourceReview) }
-            : {}),
+          ...(flight
+            ? { family: "P2" as const }
+            : candidates[0].kind === "P3"
+              ? { family: "P3" as const }
+              : {}),
+          ...(review ? { sourceReview: review } : {}),
         }),
       );
       current();
@@ -97,9 +117,16 @@ export function createUniversalP1AdmissionConsumer(deps: {
         plan.slots.length !== 1 ||
         plan.candidateIds.length !== 1 ||
         plan.sourceId !== sources[0].sourceId ||
-        slot.command !== "CREATE_ITEM" ||
+        slot.command !== (flight ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
         slot.targetKind !== "ITEM" ||
-        (slot.payload as { family?: string }).family !== candidates[0].kind
+        (flight
+          ? review?.version !== "otr.universal.p2-source-review/1" ||
+            plan.sourceRevision !== review.sourceRevision ||
+            (slot.payload as { flightNumberLiteral?: string }).flightNumberLiteral !==
+              review.flightNumberLiteral ||
+            (slot.payload as { departureDate?: string }).departureDate !==
+              review.departureDate
+          : (slot.payload as { family?: string }).family !== candidates[0].kind)
       )
         throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
       const expected = validateCoreCommand({
@@ -219,7 +246,7 @@ export async function readUniversalP1ReviewOriginal(
   await current();
   assertUniversalCaptureResult(model, result);
   const candidates = result.candidates.filter(
-    (c) => c.token === token && ["P1", "P3"].includes(c.kind),
+    (c) => c.token === token && ["P1", "P2", "P3"].includes(c.kind),
   );
   if (candidates.length !== 1) throw Error("OWNING_REVIEW_REQUIRED");
   const aliases = new Set(candidates[0].fields.map((f) => f.sourceId));

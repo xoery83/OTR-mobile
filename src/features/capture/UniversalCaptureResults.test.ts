@@ -335,3 +335,54 @@ it("shows the P3 three-field review only with its own family opt-in and keeps co
   expect(confirm).not.toHaveBeenCalled();
   expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
 });
+
+it("offers the explicit P2 literal/date review only under its own opt-in, without changing generic readiness", () => {
+  const f = fixture(),
+    flight = f.result.candidates[0];
+  Object.assign(flight, {
+    kind: "P2",
+    subtype: "FLIGHT",
+    presentationTier: "INCOMPLETE",
+    fields: [
+      f.evidence("S0", "service", "NZ501"),
+      f.evidence("S0", "origin.local_date", "2026-11-02"),
+    ],
+  });
+  f.result.quality!.decisions[0].kind = "P2";
+  const confirm = vi.fn(async () => {});
+  renderToStaticMarkup(
+    createElement(UniversalResultView, {
+      ...f.props,
+      admission: {
+        enabled: true,
+        enabledFamilies: ["P1"],
+        statuses: {},
+        busyToken: null,
+        confirm,
+        readOriginal: vi.fn(async () => "original"),
+      },
+    }),
+  );
+  expect(state.buttons.some((b) => b.label === t("capture.ai.p2Confirm"))).toBe(false);
+  state.buttons = [];
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, {
+      ...f.props,
+      admission: {
+        enabled: true,
+        enabledFamilies: ["P2"],
+        statuses: {},
+        busyToken: null,
+        confirm,
+        readOriginal: vi.fn(async () => "original"),
+      },
+    }),
+  );
+  expect(html).toContain("NZ501");
+  expect(html).toContain(t("capture.ai.p2Details"));
+  const button = state.buttons.find((b) => b.label === t("capture.ai.p2Confirm"));
+  expect(button?.disabled).toBe(true);
+  button!.onPress();
+  expect(confirm).not.toHaveBeenCalled();
+  expect(flight.presentationTier).toBe("INCOMPLETE");
+});

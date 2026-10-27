@@ -218,8 +218,18 @@ export async function projectUniversalP2SourceProposal(
       locator: fragment.locator,
     });
   }
+  const binding = {
+    version: "otr.universal.p2-source-proposal/1" as const,
+    taskId: reviewed.taskId,
+    batchId: reviewed.batchId,
+    runId: input.runId,
+    resultSha256: reviewed.resultSha256,
+    token: reviewed.token,
+    sourceReview: reviewed.sourceReview,
+  };
   const publication = coreCandidatePublicationV2Schema.parse({
     publicationVersion: 2,
+    universalP2: binding,
     publicationId: identity("publication"),
     sourceId: material.pin.source_id,
     sourceRevision: material.pin.material_revision,
@@ -271,15 +281,7 @@ export async function projectUniversalP2SourceProposal(
   return {
     publication,
     plan,
-    binding: {
-      version: "otr.universal.p2-source-proposal/1" as const,
-      taskId: reviewed.taskId,
-      batchId: reviewed.batchId,
-      runId: input.runId,
-      resultSha256: reviewed.resultSha256,
-      token: reviewed.token,
-      sourceReview: reviewed.sourceReview,
-    },
+    binding,
     grantsAdmission: false as const,
   };
 }

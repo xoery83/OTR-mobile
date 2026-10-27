@@ -7,7 +7,10 @@ import { z } from "zod";
 import { structuredTripCreateRequestSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { tripMetadataWireUpdateSchema } from "@/domain/trip/tripMetadataV2Contract";
 import type { CoreCommand } from "@/domain/trip/tripCoreV2Commands";
-import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
+import {
+  validateCoreCommand,
+  isReviewedSourceCreate,
+} from "@/domain/trip/tripCoreV2Commands";
 import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
 import {
   captureAccountScope,
@@ -47,11 +50,7 @@ export function cloudSourceP1Command(operation: Row): CoreCommand | null {
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
       command.target.kind !== "ITEM" ||
-      command.command !== "CREATE_ITEM" ||
-      !["P1", "P3"].includes((command.payload as { family: string }).family) ||
-      command.admission.mode !== "REVIEWED_SOURCE" ||
-      command.admission.sourceIntentId === null ||
-      command.admission.policyVersion !== null
+      !isReviewedSourceCreate(command)
     )
       return null;
     return command;
@@ -208,28 +207,20 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               command.tripId !== row.trip_id ||
               command.target.id !== operation.entity_id ||
               command.target.kind !== "ITEM" ||
-              (command.admission.mode !== "MANUAL" &&
-                !(
-                  command.command === "CREATE_ITEM" &&
-                  ["P1", "P3"].includes((command.payload as { family: string }).family) &&
-                  command.admission.mode === "REVIEWED_SOURCE" &&
-                  command.admission.sourceIntentId !== null &&
-                  command.admission.policyVersion === null
-                ))
+              (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command))
             )
               continue;
             const p1 =
-              command.command === "CREATE_ITEM"
-                ? (command.payload as { family: string }).family === "P1" ||
-                  (command.admission.mode === "REVIEWED_SOURCE" &&
-                    (command.payload as { family: string }).family === "P3")
+              isReviewedSourceCreate(command) ||
+              (command.command === "CREATE_ITEM"
+                ? (command.payload as { family: string }).family === "P1"
                 : [
                     "SET_ITEM_TEXT",
                     "SET_ITEM_SCHEDULE",
                     "SET_ITEM_PLACE",
                     "SET_ITEM_PARTICIPATION",
                   ].includes(command.command) &&
-                  (await deps.isP1Item(row.trip_id, command.target.id));
+                  (await deps.isP1Item(row.trip_id, command.target.id)));
             await guard();
             if (p1) {
               const ready = await deps.participantsReady(row.trip_id, command);

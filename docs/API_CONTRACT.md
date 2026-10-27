@@ -1175,3 +1175,27 @@ P3 uses those same legacy-named publication/finalization routes with explicit `f
 Frontend P1 opt-in and backend P1 runtime are default-off. Protected DEV rollout/Admission remains separately scoped; code integration grants none. Local schemas69–74 are existing qualified prerequisites; the schema73 mixed-input rebuild preserves old records/FKs and rolls back atomically. No hosted DDL/RLS/GRANT is installed by this integration. Native manual-editor/asset additions remain excluded.
 
 Actual source-branch DEV evidence: [P1 formal receipt](ops/universal-stage2-20261025/actual-execution/resume-20261026/P1_FORMAL_SAVE_SERVER_RECEIPT.json). Scoped one-item E2E/Day/full-restart/duplicate/closure passed; this is not generic P2–P6 Save or main deployment qualification.
+
+
+## Universal P2 Flight publication binding — implementation candidate, runtime closed
+
+The existing Universal candidate route and existing Flight publication/Source Plan
+remain the owning path. Explicit family P2 requires the dedicated P2 Source Review:
+original and Trip reviewed, NEW, exact original flight-number literal and departure
+civil date. HIGH and the generic `service` field alone do not authorize creation.
+The first slice proposes only `CREATE_SPARSE_FLIGHT`, PRIVATE/SELF, with literal and
+date; no automatic QUALIFY, endpoint Place, clock, zone, Journey, Booking or Ticket.
+
+An optional `universalP2` reference on the existing Flight publication request binds
+Batch/Task/Run/token, the Backend-owned published result hash and exact Source Review.
+It is part of the existing immutable publication request hash, not a second store or
+authority. The Backend must reconstruct it from its owning Published reader and
+locked current Source inputs before sealing, and repeat the same owning checks on
+Source Plan/Admission/proof reads. Matching client hashes never substitute for that
+reader. Legacy Flight publications without this reference retain their contract;
+the later Universal P2 Save scope must reject publications lacking its exact binding.
+
+The existing date-bound airport identity and FLIGHT_OCCURRENCE proof remain required,
+even for this Sparse creation. Dormant QA registry rows confer no authority. All live
+P2 publication/Admission/Core write activation remains subject to its separate exact
+Owner Gate. Existing P1/P3 paths and their consumed windows are unchanged.

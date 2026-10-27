@@ -1,3 +1,4 @@
+import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
 import type { TripPerson } from "@/domain/trip/person";
 import type { CoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { coreParticipationSchema } from "@/domain/trip/tripCoreV2";
@@ -14,11 +15,7 @@ export function p1SharedParticipantsReady(
   // The owning Core resolves/verifies that identity; there are no selected Person dependencies.
   const acl = payload.acl as { visibility?: string; people?: unknown[] } | undefined;
   if (
-    command.command === "CREATE_ITEM" &&
-    ["P1", "P3"].includes(String(payload.family)) &&
-    command.admission.mode === "REVIEWED_SOURCE" &&
-    command.admission.sourceIntentId !== null &&
-    command.admission.policyVersion === null &&
+    isReviewedSourceCreate(command) &&
     selected.mode === "SELF" &&
     selected.selfPersonId === null &&
     selected.people.length === 0 &&

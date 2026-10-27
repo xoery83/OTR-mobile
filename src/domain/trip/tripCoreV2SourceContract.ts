@@ -1,3 +1,4 @@
+import { universalP2SourceReviewSchema } from "./universalP2SourceReview";
 import { universalItemSourceReviewSchema } from "./universalP1SourceReview";
 import { p1OutputPurposeV2Schema } from "./p1OutputPurposeV2";
 import { z } from "zod";
@@ -150,16 +151,26 @@ export const coreSourceFinalizeResultV2Schema = z.strictObject({
   errorCode: z.string().max(128).nullable(),
 });
 
-export const coreUniversalP1PublishRequestSchema = z.strictObject({
-  captureVersion: z.literal(2),
-  sourceId: uuid,
-  batchId: uuid,
-  taskId: uuid,
-  token: z.string().min(1).max(128),
-  requestSha256: hash,
-  family: z.enum(["P1", "P3"]).optional(),
-  sourceReview: universalItemSourceReviewSchema.optional(),
-});
+export const coreUniversalP1PublishRequestSchema = z
+  .strictObject({
+    captureVersion: z.literal(2),
+    sourceId: uuid,
+    batchId: uuid,
+    taskId: uuid,
+    token: z.string().min(1).max(128),
+    requestSha256: hash,
+    family: z.enum(["P1", "P2", "P3"]).optional(),
+    sourceReview: z
+      .union([universalItemSourceReviewSchema, universalP2SourceReviewSchema])
+      .optional(),
+  })
+  .superRefine((v, c) => {
+    if (
+      (v.family === "P2") !==
+      (v.sourceReview?.version === "otr.universal.p2-source-review/1")
+    )
+      c.addIssue({ code: "custom", message: "P2_SOURCE_REVIEW_REQUIRED" });
+  });
 export const coreUniversalP1PublishResultSchema = z.strictObject({
   captureVersion: z.literal(2),
   status: z.literal("CANDIDATE_SEALED"),

@@ -18,3 +18,13 @@ export const universalP2SourceReviewSchema = z.strictObject({
   tripReviewed: z.literal(true),
 });
 export type UniversalP2SourceReview = z.infer<typeof universalP2SourceReviewSchema>;
+
+export const universalP2PublicationBindingSchema = z.strictObject({
+  version: z.literal("otr.universal.p2-source-proposal/1"),
+  batchId: z.uuid(),
+  taskId: z.uuid(),
+  runId: z.uuid(),
+  token: z.string().min(1).max(128),
+  resultSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  sourceReview: universalP2SourceReviewSchema,
+});

@@ -144,11 +144,16 @@ it("exact Core target wakes and executes only that operation, retaining other sa
   expect(queue.markCompleted).toHaveBeenCalledExactlyOnceWith(f.operation.id);
 });
 
-async function sourceFixture(family: "P1" | "P3" = "P1") {
+async function sourceFixture(family: "P1" | "P2" | "P3" = "P1") {
   const f = await fixture(),
     { universalP1SourceFixture } =
       await import("../../../backend/src/__fixtures__/universalP1Source"),
-    source = await universalP1SourceFixture(actor, trip, "2026-11-03", family),
+    source = await universalP1SourceFixture(
+      actor,
+      trip,
+      "2026-11-03",
+      family === "P3" ? "P3" : "P1",
+    ),
     proposal = await source.run(),
     slot = proposal.body.plan.slots[0];
   const command = {
@@ -156,7 +161,8 @@ async function sourceFixture(family: "P1" | "P3" = "P1") {
     intentVersion: 2 as const,
     operationId: op,
     tripId: trip,
-    command: "CREATE_ITEM" as const,
+    command:
+      family === "P2" ? ("CREATE_SPARSE_FLIGHT" as const) : ("CREATE_ITEM" as const),
     target: { kind: "ITEM" as const, id },
     baseVector: [{ kind: "ITEM" as const, id, revision: null }],
     admission: {
@@ -164,7 +170,14 @@ async function sourceFixture(family: "P1" | "P3" = "P1") {
       sourceIntentId: slot.slotId,
       policyVersion: null,
     },
-    payload: slot.payload,
+    payload:
+      family === "P2"
+        ? {
+            flightNumberLiteral: "NZ501",
+            departureDate: "2026-11-02",
+            ...coreDefaults("member"),
+          }
+        : slot.payload,
   };
   f.repo.pending = vi.fn(async () => [{ command }] as never);
   const operation = { ...f.operation, payloadJson: canonicalCoreJson(command as Json) },
@@ -188,7 +201,7 @@ async function sourceFixture(family: "P1" | "P3" = "P1") {
   }));
   return { ...f, operation, slot, receipt, domainReceiptId };
 }
-it.each(["P1", "P3"] as const)(
+it.each(["P1", "P2", "P3"] as const)(
   "recovers the same accepted %s operation and finishes its Source relation without redispatch",
   async (family) => {
     const f = await sourceFixture(family);
@@ -208,7 +221,7 @@ it.each(["P1", "P3"] as const)(
     );
   },
 );
-it.each(["P1", "P3"] as const)(
+it.each(["P1", "P2", "P3"] as const)(
   "retains accepted %s intent through Source finalization failure and retries only the relation",
   async (family) => {
     const f = await sourceFixture(family);
@@ -222,7 +235,7 @@ it.each(["P1", "P3"] as const)(
   },
 );
 
-it.each(["P1", "P3"] as const)(
+it.each(["P1", "P2", "P3"] as const)(
   "never resubmits an APPLIED Source %s when its owning receipt cannot be read",
   async (family) => {
     const f = await sourceFixture(family);
@@ -239,7 +252,7 @@ it.each(["P1", "P3"] as const)(
   },
 );
 
-it.each(["P1", "P3"] as const)(
+it.each(["P1", "P2", "P3"] as const)(
   "dispatches only the prepared %s Source operation with Manual QA scope closed",
   async (family) => {
     const f = await sourceFixture(family),
@@ -249,7 +262,7 @@ it.each(["P1", "P3"] as const)(
     vi.mocked(f.transport.capabilities).mockResolvedValue({
       ...coreClosedCapabilities,
       activationState: "ENABLED",
-      enabledCommands: ["CREATE_ITEM"],
+      enabledCommands: [family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM"],
       enabledFamilies: [family],
       enabledAdmissionModes: ["REVIEWED_SOURCE"],
       sourceEvidenceAvailable: true,

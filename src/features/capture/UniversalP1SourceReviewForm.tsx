@@ -1,3 +1,4 @@
+import type { UniversalP2SourceReview } from "@/domain/trip/universalP2SourceReview";
 import { useEffect, useState } from "react";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
 import {
@@ -23,7 +24,7 @@ export function UniversalP1SourceReviewForm({
   disabled: boolean;
   isCurrent(): boolean;
   readOriginal(): Promise<string>;
-  onConfirm(review: UniversalItemSourceReview): void;
+  onConfirm(review: UniversalItemSourceReview | UniversalP2SourceReview): void;
 }) {
   useUiLocale();
   const [original, setOriginal] = useState<string | null>(null),
@@ -46,14 +47,22 @@ export function UniversalP1SourceReviewForm({
       active = false;
     };
   }, [readTripTargets, result.tripId, isCurrent]);
-  const stay = candidate.kind === "P3";
+  const stay = candidate.kind === "P3",
+    flight = candidate.kind === "P2";
   const names = candidate.fields.filter((f) =>
-      (stay ? ["property.name", "title"] : ["activity.name", "title"]).includes(f.path),
+      (flight
+        ? ["service", "flight_number", "marketing_flight"]
+        : stay
+          ? ["property.name", "title"]
+          : ["activity.name", "title"]
+      ).includes(f.path),
     ),
     dates = candidate.fields.filter((f) =>
-      (stay
-        ? ["check_in.date", "schedule.start.local_date"]
-        : ["activity.date", "schedule.start.local_date"]
+      (flight
+        ? ["origin.local_date"]
+        : stay
+          ? ["check_in.date", "schedule.start.local_date"]
+          : ["activity.date", "schedule.start.local_date"]
       ).includes(f.path),
     ),
     endDates = stay
@@ -73,7 +82,12 @@ export function UniversalP1SourceReviewForm({
     /* Evidence stays visible; no Save without supported date. */
   }
   if (
-    candidate.subtype !== (stay ? "ACCOMMODATION" : "ACTIVITY") ||
+    candidate.subtype !== (flight ? "FLIGHT" : stay ? "ACCOMMODATION" : "ACTIVITY") ||
+    (flight &&
+      (dates[0]?.raw !== localDate ||
+        new Set(names.map((f) => f.raw)).size !== 1 ||
+        new Set(dates.map((f) => f.raw)).size !== 1 ||
+        [...names, ...dates].some((f) => f.uncertainty))) ||
     (!stay &&
       (candidate.bookingTokens.length > 0 || candidate.ticketTokens.length > 0)) ||
     (stay && (!endLocalDate || !localDate || endLocalDate <= localDate)) ||
@@ -88,12 +102,19 @@ export function UniversalP1SourceReviewForm({
     <>
       <UiText>{t("capture.ai.p1ReviewTrip", { name: tripName ?? result.tripId })}</UiText>
       <UiText>
-        {t(stay ? "capture.ai.p3ReviewValues" : "capture.ai.p1ReviewValues", {
-          title: names[0].raw,
-          raw: dates[0].raw,
-          date: localDate,
-          ...(stay ? { endRaw: endDates[0].raw, endDate: endLocalDate! } : {}),
-        })}
+        {t(
+          flight
+            ? "capture.ai.p2ReviewValues"
+            : stay
+              ? "capture.ai.p3ReviewValues"
+              : "capture.ai.p1ReviewValues",
+          {
+            title: names[0].raw,
+            raw: dates[0].raw,
+            date: localDate,
+            ...(stay ? { endRaw: endDates[0].raw, endDate: endLocalDate! } : {}),
+          },
+        )}
       </UiText>
       <UiButton
         label={t("capture.ai.p1OpenOriginal")}
@@ -132,9 +153,11 @@ export function UniversalP1SourceReviewForm({
         label={t(
           newSelected
             ? "capture.ai.p1NewSelected"
-            : stay
-              ? "capture.ai.p3SelectNew"
-              : "capture.ai.p1SelectNew",
+            : flight
+              ? "capture.ai.p2SelectNew"
+              : stay
+                ? "capture.ai.p3SelectNew"
+                : "capture.ai.p1SelectNew",
         )}
         onPress={() => setNewSelected((v) => !v)}
       />
@@ -147,7 +170,13 @@ export function UniversalP1SourceReviewForm({
           !originalReviewed ||
           !newSelected
         }
-        label={t(stay ? "capture.ai.p3Confirm" : "capture.ai.p1Confirm")}
+        label={t(
+          flight
+            ? "capture.ai.p2Confirm"
+            : stay
+              ? "capture.ai.p3Confirm"
+              : "capture.ai.p1Confirm",
+        )}
         onPress={() => {
           if (
             !isCurrent() ||
@@ -157,6 +186,18 @@ export function UniversalP1SourceReviewForm({
             !newSelected
           )
             return;
+          if (flight) {
+            onConfirm({
+              version: "otr.universal.p2-source-review/1",
+              decision: "NEW",
+              sourceRevision: sources[0].revision,
+              flightNumberLiteral: names[0].raw,
+              departureDate: localDate,
+              originalReviewed: true,
+              tripReviewed: true,
+            });
+            return;
+          }
           onConfirm({
             ...(stay
               ? {

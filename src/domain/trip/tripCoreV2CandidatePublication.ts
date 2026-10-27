@@ -1,3 +1,4 @@
+import { universalP2PublicationBindingSchema } from "./universalP2SourceReview";
 import { z } from "zod";
 import { coreUuid, coreHash } from "./tripCoreV2";
 import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
@@ -78,6 +79,7 @@ export const coreCandidatePublicationV2Schema = z
   .strictObject({
     publicationVersion: z.literal(2),
     publicationId: coreUuid,
+    universalP2: universalP2PublicationBindingSchema.optional(),
     sourceId: coreUuid,
     sourceRevision: z.number().int().positive().safe(),
     runId: coreUuid,
@@ -97,6 +99,10 @@ export const coreCandidatePublicationV2Schema = z
   })
   .superRefine((v, c) => {
     if (
+      (v.universalP2 !== undefined &&
+        (v.candidates.length !== 1 ||
+          v.universalP2.runId !== v.runId ||
+          v.universalP2.sourceReview.sourceRevision !== v.sourceRevision)) ||
       new Set(v.candidates.map((x) => x.candidateId)).size !== v.candidates.length ||
       new Set(v.evidence.map((x) => x.candidateId + ":" + x.fieldKey)).size !==
         v.evidence.length ||

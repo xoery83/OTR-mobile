@@ -7,6 +7,7 @@ import {
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import {
+  corePayloadSchemas,
   coreClosedCapabilities,
   coreCapabilitiesSchema,
   validateCoreCommand,
@@ -239,9 +240,20 @@ export async function coreHttpBoundary(
         result.proposedPlan.candidateIds.length !== 1 ||
         result.proposedPlan.slots.length !== 1 ||
         result.proposedPlan.mode !== "REVIEWED_SOURCE" ||
-        result.proposedPlan.slots[0].command !== "CREATE_ITEM" ||
-        (result.proposedPlan.slots[0].payload as { family?: string }).family !==
-          (input.family ?? "P1")
+        (input.family === "P2"
+          ? result.proposedPlan.slots[0].command !== "CREATE_SPARSE_FLIGHT" ||
+            !corePayloadSchemas.CREATE_SPARSE_FLIGHT.safeParse(
+              result.proposedPlan.slots[0].payload,
+            ).success ||
+            input.sourceReview?.version !== "otr.universal.p2-source-review/1" ||
+            result.proposedPlan.sourceRevision !== input.sourceReview.sourceRevision ||
+            (result.proposedPlan.slots[0].payload as { flightNumberLiteral?: unknown })
+              .flightNumberLiteral !== input.sourceReview.flightNumberLiteral ||
+            (result.proposedPlan.slots[0].payload as { departureDate?: unknown })
+              .departureDate !== input.sourceReview.departureDate
+          : result.proposedPlan.slots[0].command !== "CREATE_ITEM" ||
+            (result.proposedPlan.slots[0].payload as { family?: string }).family !==
+              (input.family ?? "P1"))
       )
         throw Error("CORE_PUBLICATION_SCOPE_MISMATCH");
       return reply(200, result);

@@ -1,3 +1,4 @@
+import type { UniversalP2SourceReview } from "@/domain/trip/universalP2SourceReview";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
@@ -7,23 +8,25 @@ export type P1AdmissionStatus =
   "SYNC_PENDING" | "SERVER_ACCEPTED" | "OWNING_ADMISSION_PENDING" | "UNAVAILABLE";
 export type P1AdmissionActions = {
   enabled: boolean;
-  enabledFamilies?: readonly ("P1" | "P3")[];
+  enabledFamilies?: readonly ("P1" | "P2" | "P3")[];
   readOriginal(result: UniversalImportResult, token: string): Promise<string>;
   busyToken: string | null;
   statuses: Record<string, P1AdmissionStatus>;
   confirm(
     result: UniversalImportResult,
     token: string,
-    review?: UniversalItemSourceReview,
+    review?: UniversalItemSourceReview | UniversalP2SourceReview,
   ): Promise<void>;
 };
 export function useUniversalP1Admission(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
 ): P1AdmissionActions {
-  const enabledFamilies: ("P1" | "P3")[] = [];
+  const enabledFamilies: ("P1" | "P2" | "P3")[] = [];
   if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED === "true")
     enabledFamilies.push("P1");
+  if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P2_ADMISSION_ENABLED === "true")
+    enabledFamilies.push("P2");
   if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P3_ADMISSION_ENABLED === "true")
     enabledFamilies.push("P3");
   const enabled = enabledFamilies.length > 0;
