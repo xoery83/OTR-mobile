@@ -35,3 +35,24 @@ it("requires the separately bounded Sparse P2 reviewed capability", () => {
   ])
     expect(isReviewedP1Gate(changed, "P2")).toBe(false);
 });
+
+it("keeps reviewed P4 separate from Manual, P1, P3 and multi-family gates", () => {
+  const p4 = {
+    runtime_enabled: true,
+    enabled_commands: ["CREATE_ITEM"],
+    enabled_families: ["P4"],
+    enabled_admission_modes: ["REVIEWED_SOURCE"],
+  };
+  expect(isReviewedP1Gate(p4, "P4")).toBe(true);
+  expect(isNormalP1Gate(p4)).toBe(false);
+  expect(isReviewedP1Gate(p4, "P1")).toBe(false);
+  expect(isReviewedP1Gate(p4, "P3")).toBe(false);
+  for (const changed of [
+    { ...p4, enabled_families: ["P1"] },
+    { ...p4, enabled_families: ["P3"] },
+    { ...p4, enabled_families: ["P4", "P1"] },
+    { ...p4, enabled_admission_modes: ["MANUAL"] },
+    { ...p4, runtime_enabled: false },
+  ])
+    expect(isReviewedP1Gate(changed, "P4")).toBe(false);
+});

@@ -1,0 +1,4 @@
+Synthetic QA only
+Rental company: COASTLINE QA MOTORS
+Pickup date: 2026-11-02
+Return date: 2026-11-03

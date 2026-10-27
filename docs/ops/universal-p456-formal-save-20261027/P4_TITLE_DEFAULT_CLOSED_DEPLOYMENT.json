@@ -1,0 +1,14 @@
+{
+  "operatorSha256": "0d3d0fa9096e5edd17c414edb79c4390890bfb80248316fa283b5fafce8dcac7",
+  "status": "DEFAULT_CLOSED_DEPLOYED",
+  "source": "9b851a4d3b4c1d6f390f38669d5de349b3472d79",
+  "image": "sha256:8298d177a12d2939249834eeecf2c822f9d778a15a54544a7791936db2a641c9",
+  "container": "ad8e88a482921a9a01a51bd356f81332491598d0ac991da34e39e1ece8308f29",
+  "configHash": "8e6a8aae5e58dd2e9533f61455e851fe4ed4a81d112212be25ae8ee10a4ced07",
+  "hostHash": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+  "mountHash": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+  "normalization": "unchanged",
+  "rollbackContainer": "309d248452d83758b01c2f94cf2f77be973cb02c23c8e8e785e4d0d60d6b7d56",
+  "rollbackName": "otr-dev-backend-retained-3391c45319",
+  "health": 200
+}

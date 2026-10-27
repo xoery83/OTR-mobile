@@ -205,29 +205,32 @@ export function createCorePgReader(
               : undefined;
           const reviewedP2 = isReviewedP1Gate(reviewedGate, "P2");
           const reviewedP3 = isReviewedP1Gate(reviewedGate, "P3");
+          const reviewedP4 = isReviewedP1Gate(reviewedGate, "P4");
           const reviewed =
             enabled &&
             gateMode?.sustainedDev &&
             gateMode.reviewedP1 &&
-            (isReviewedP1Gate(reviewedGate) || reviewedP2 || reviewedP3);
+            (isReviewedP1Gate(reviewedGate) || reviewedP2 || reviewedP3 || reviewedP4);
           const result = enabled
             ? coreCapabilitiesSchema.parse({
                 ...coreClosedCapabilities,
                 activationState: "ENABLED",
                 enabledCommands: reviewedP2
                   ? ["CREATE_SPARSE_FLIGHT"]
-                  : normal && !reviewedP3
+                  : normal && !reviewedP3 && !reviewedP4
                     ? [...normalP1Commands]
                     : ["CREATE_ITEM"],
                 enabledFamilies: reviewedP2
                   ? ["P2"]
-                  : reviewedP3
-                    ? ["P3"]
-                    : normal
-                      ? ["P1"]
-                      : ["P1", "P3"],
+                  : reviewedP4
+                    ? ["P4"]
+                    : reviewedP3
+                      ? ["P3"]
+                      : normal
+                        ? ["P1"]
+                        : ["P1", "P3"],
                 enabledAdmissionModes:
-                  reviewedP2 || reviewedP3
+                  reviewedP2 || reviewedP3 || reviewedP4
                     ? ["REVIEWED_SOURCE"]
                     : reviewed
                       ? ["MANUAL", "REVIEWED_SOURCE"]

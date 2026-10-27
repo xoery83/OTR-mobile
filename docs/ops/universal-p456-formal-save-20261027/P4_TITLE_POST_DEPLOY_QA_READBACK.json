@@ -1,0 +1,12 @@
+{
+  "status": "NORMAL_QA_RESULT_UNCHANGED_PASS",
+  "http": 200,
+  "taskId": "28435c7a-8cc9-83a4-9c57-b2d7700ac0e7",
+  "batchId": "463ef68b-5bc3-4ded-b4e1-0bdfb84d6ff9",
+  "providerOutcome": "SETTLED",
+  "resultObjectEqualTo": "P4_BATCH11_SETTLED_RESULT.json",
+  "sealedResultRewritten": false,
+  "providerCallsMade": 0,
+  "businessGateActivated": false,
+  "readbackArtifactSha256": "75bc98ce5af530afa221de5ac5f25fc888a2b15bf197c1bf119f93dbb29f82e4"
+}

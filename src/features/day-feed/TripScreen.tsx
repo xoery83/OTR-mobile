@@ -364,7 +364,10 @@ function TripContent({ today = false }: { today?: boolean }) {
     );
     if (!header) {
       const civilDate =
-        current.family === "P1" || current.family === "P2" || current.family === "P3"
+        current.family === "P1" ||
+        current.family === "P2" ||
+        current.family === "P3" ||
+        current.family === "P4"
           ? snapshotItemDate(current)
           : null;
       if (!civilDate) throw new Error("HOME_ITEM_DATE_UNAVAILABLE");

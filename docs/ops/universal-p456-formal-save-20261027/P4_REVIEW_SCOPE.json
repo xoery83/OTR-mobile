@@ -1,0 +1,16 @@
+{
+  "family": "P4",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+  "batchId": "463ef68b-5bc3-4ded-b4e1-0bdfb84d6ff9",
+  "taskId": "28435c7a-8cc9-83a4-9c57-b2d7700ac0e7",
+  "token": "i1",
+  "resultSha256": "318be2bb3602f08529a0ef9fd4e6313e8f8a3e97fb39028783b1dd909723234a",
+  "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+  "targetId": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+  "operationId": "a2c3a7b4-f301-8343-b7d3-02571f67d3df",
+  "slotId": "b222734c-5454-8837-afd4-1eb9cefcc85b",
+  "title": "COASTLINE QA MOTORS",
+  "localDate": "2026-11-02",
+  "endLocalDate": "2026-11-03"
+}

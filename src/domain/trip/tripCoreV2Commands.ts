@@ -506,6 +506,8 @@ export function isReviewedSourceCreate(command: CoreCommand): boolean {
     command.admission.policyVersion === null &&
     (command.command === "CREATE_SPARSE_FLIGHT" ||
       (command.command === "CREATE_ITEM" &&
-        ["P1", "P3"].includes(String((command.payload as { family: string }).family))))
+        ["P1", "P3", "P4"].includes(
+          String((command.payload as { family: string }).family),
+        )))
   );
 }

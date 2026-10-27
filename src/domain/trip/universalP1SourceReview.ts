@@ -15,9 +15,17 @@ export const universalP3SourceReviewSchema = universalP1SourceReviewSchema.exten
   version: z.literal("otr.universal.p3-source-review/1"),
   endLocalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
+export const universalP4SourceReviewSchema = universalP1SourceReviewSchema.extend({
+  version: z.literal("otr.universal.p4-source-review/1"),
+  endLocalDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
 export const universalItemSourceReviewSchema = z.discriminatedUnion("version", [
   universalP1SourceReviewSchema,
   universalP3SourceReviewSchema,
+  universalP4SourceReviewSchema,
 ]);
 export type UniversalItemSourceReview = z.infer<typeof universalItemSourceReviewSchema>;
 

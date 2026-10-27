@@ -1,0 +1,14 @@
+{
+  "status": "P4_SCOPE_CLOSED_RUNTIME_DEFAULT_RESTORED",
+  "at": "2026-10-27T18:10:47.437931Z",
+  "policy": {
+    "enabled": false,
+    "scope": null
+  },
+  "runtime": {
+    "status": "ROLLBACK_VERIFIED",
+    "containerId": "ad8e88a482921a9a01a51bd356f81332491598d0ac991da34e39e1ece8308f29",
+    "imageId": "sha256:8298d177a12d2939249834eeecf2c822f9d778a15a54544a7791936db2a641c9"
+  },
+  "businessRecordsDeleted": 0
+}

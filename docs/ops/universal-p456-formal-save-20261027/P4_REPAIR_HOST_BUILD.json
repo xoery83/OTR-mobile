@@ -1,0 +1,17 @@
+{
+  "status": "P4_REPAIR_HOST_BUILT_NOT_DEPLOYED",
+  "universalCommit": "896ee25ce2b061c6d525cf76063e53a85a499159",
+  "hostCommit": "9b851a4d3b4c1d6f390f38669d5de349b3472d79",
+  "dispatchDisabledProofCommit": "a321886534358b50818579e778d90a678670c567",
+  "focusedTests": 83,
+  "bundles": {
+    "server.mjs": "ee4ec363fc6b1ff53cdb81df4cbe7fa8248b5fa34a942ff534a99c1c9f79e391",
+    "server-capture.mjs": "3b4acb1ad3b8a75e180724d45133489adbee536312a62f7b48bb9b839ca13a83"
+  },
+  "imageBuilt": false,
+  "deployed": false,
+  "businessGateActivated": false,
+  "independentReview": "NO_BLOCKER",
+  "deviceBlocker": "MAC_LOCKED_CONFIRMED",
+  "providerScopeClosed": false
+}

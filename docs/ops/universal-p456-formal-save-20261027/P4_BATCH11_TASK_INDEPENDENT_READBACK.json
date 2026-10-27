@@ -1,0 +1,21 @@
+{
+  "task": {
+    "task_id": "28435c7a-8cc9-83a4-9c57-b2d7700ac0e7",
+    "import_id": "463ef68b-5bc3-4ded-b4e1-0bdfb84d6ff9",
+    "run_id": "a1ca4b17-2198-858e-a186-22541aff82ad",
+    "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "work_disposition": "PUBLISHED",
+    "current_attempt_id": "4575edcc-3ef2-84de-8dda-97e46542b914",
+    "result_sha256": "318be2bb3602f08529a0ef9fd4e6313e8f8a3e97fb39028783b1dd909723234a",
+    "completed_at": "2026-10-27T11:44:42.441Z"
+  },
+  "attempts": [
+    {
+      "attempt_id": "4575edcc-3ef2-84de-8dda-97e46542b914",
+      "execution_observation": "TERMINAL",
+      "execution_outcome": "SUCCEEDED",
+      "result_install_disposition": "INSTALLED",
+      "usage_correlation_id": "6d8dd81b-aed5-8219-9ccd-0842318554a4"
+    }
+  ]
+}

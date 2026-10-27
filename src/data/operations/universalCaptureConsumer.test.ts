@@ -232,3 +232,54 @@ it("only a new explicit Start can wake a retained Task after a Backend restart",
   expect(prepare).toHaveBeenCalledOnce();
   expect(f.transport.execute).not.toHaveBeenCalled();
 });
+
+it("only explicit continuous Start wakes the same UNKNOWN Task for owning recovery without paid execute", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare, true);
+  Object.assign(f.result, {
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+  });
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(prepare).not.toHaveBeenCalled();
+  expect(await f.consumer.start(f.model)).toBeNull();
+  expect(prepare).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({
+      accountId: f.accountId,
+      tripId: f.model.batch.context.tripPrior!.id,
+    }),
+    f.model,
+  );
+  expect(f.consumer.queued).toBe(true);
+  expect(f.transport.execute).not.toHaveBeenCalled();
+  Object.assign(f.result, { status: "CANDIDATES_READY", providerOutcome: "SETTLED" });
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(f.consumer.queued).toBe(false);
+  expect(prepare).toHaveBeenCalledOnce();
+});
+it("refuses a changed Task after UNKNOWN recovery prepare and never uses paid execute", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare, true),
+    binding = await f.transport.context();
+  Object.assign(f.result, {
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+  });
+  f.transport.context
+    .mockResolvedValueOnce(binding)
+    .mockResolvedValueOnce({ ...binding, taskId: randomUUID() });
+  await expect(f.consumer.start(f.model)).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+  expect(prepare).toHaveBeenCalledOnce();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+it("keeps finite UNKNOWN and continuous GET recovery read-only", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare, false);
+  Object.assign(f.result, {
+    status: "EXECUTION_OUTCOME_UNKNOWN",
+    providerOutcome: "UNKNOWN",
+  });
+  expect(await f.consumer.start(f.model)).toBe(f.result);
+  expect(prepare).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});

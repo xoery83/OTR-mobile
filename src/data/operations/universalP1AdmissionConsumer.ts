@@ -51,19 +51,22 @@ export function createUniversalP1AdmissionConsumer(deps: {
       if (
         context.accountId !== result.accountId ||
         candidates.length !== 1 ||
-        !["P1", "P2", "P3"].includes(candidates[0].kind) ||
+        !["P1", "P2", "P3", "P4"].includes(candidates[0].kind) ||
         candidates[0].subtype !==
           (candidates[0].kind === "P3"
             ? "ACCOMMODATION"
-            : candidates[0].kind === "P2"
-              ? "FLIGHT"
-              : "ACTIVITY") ||
+            : candidates[0].kind === "P4"
+              ? "RENTAL_CAR"
+              : candidates[0].kind === "P2"
+                ? "FLIGHT"
+                : "ACTIVITY") ||
         result.providerOutcome !== "SETTLED" ||
         !deps.transport.publishUniversalP1
       )
         throw Error("OWNING_ADMISSION_UNAVAILABLE");
       const flight = candidates[0].kind === "P2";
-      if (flight && !sourceReview) throw Error("OWNING_REVIEW_REQUIRED");
+      if ((flight || candidates[0].kind === "P4") && !sourceReview)
+        throw Error("OWNING_REVIEW_REQUIRED");
       const review = flight
         ? universalP2SourceReviewSchema.parse(sourceReview)
         : sourceReview
@@ -81,6 +84,8 @@ export function createUniversalP1AdmissionConsumer(deps: {
                   "property.name",
                   "check_in.date",
                   "check_out.date",
+                  "pickup.date",
+                  "return.date",
                   "schedule.end.local_date",
                   "schedule.start.local_date",
                 ]
@@ -101,9 +106,11 @@ export function createUniversalP1AdmissionConsumer(deps: {
           requestSha256: result.requestSha256,
           ...(flight
             ? { family: "P2" as const }
-            : candidates[0].kind === "P3"
-              ? { family: "P3" as const }
-              : {}),
+            : candidates[0].kind === "P4"
+              ? { family: "P4" as const }
+              : candidates[0].kind === "P3"
+                ? { family: "P3" as const }
+                : {}),
           ...(review ? { sourceReview: review } : {}),
         }),
       );
@@ -246,7 +253,7 @@ export async function readUniversalP1ReviewOriginal(
   await current();
   assertUniversalCaptureResult(model, result);
   const candidates = result.candidates.filter(
-    (c) => c.token === token && ["P1", "P2", "P3"].includes(c.kind),
+    (c) => c.token === token && ["P1", "P2", "P3", "P4"].includes(c.kind),
   );
   if (candidates.length !== 1) throw Error("OWNING_REVIEW_REQUIRED");
   const aliases = new Set(candidates[0].fields.map((f) => f.sourceId));

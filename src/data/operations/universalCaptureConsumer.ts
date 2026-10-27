@@ -136,8 +136,32 @@ export function createUniversalCaptureConsumer(dependencies: {
       result = await dependencies.transport.execute(context, binding);
     }
     current();
-    queued = false;
     assertUniversalCaptureResult(model, result);
+    if (
+      allowDispatch &&
+      dependencies.continuous &&
+      !preparedThisAction &&
+      dependencies.prepareSources &&
+      result.status === "EXECUTION_OUTCOME_UNKNOWN" &&
+      result.providerOutcome === "UNKNOWN"
+    ) {
+      // Existing attempts only reconcile retained receipts in the owning queue; they cannot resend.
+      await dependencies.prepareSources(context, model);
+      current();
+      const resumed = await dependencies.transport.context(context, model.batch.batchId);
+      current();
+      if (
+        resumed.taskId !== binding.taskId ||
+        resumed.batchId !== binding.batchId ||
+        resumed.tripId !== binding.tripId ||
+        resumed.accountId !== binding.accountId ||
+        resumed.actorId !== binding.actorId
+      )
+        throw Error("UNIVERSAL_CAPTURE_STALE");
+      queued = true;
+      return null;
+    }
+    queued = false;
     return result;
   }
   return {

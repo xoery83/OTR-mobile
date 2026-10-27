@@ -1,0 +1,30 @@
+diff --git a/src/features/capture/useUniversalCapture.ts b/src/features/capture/useUniversalCapture.ts
+index 3ff92e98..759479af 100644
+--- a/src/features/capture/useUniversalCapture.ts
++++ b/src/features/capture/useUniversalCapture.ts
+@@ -1,3 +1,4 @@
++import { readLastApiFailure } from "@/data/api/client";
+ import { useEffect, useLayoutEffect, useRef, useState } from "react";
+ import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
+ import type { UniversalImportResult } from "@/data/api/universalImportContracts";
+@@ -96,7 +97,19 @@ export function useUniversalCapture(
+         setQueued(consumer.current.queued);
+         setUnavailable(next === null && !consumer.current.queued);
+       }
+-    } catch {
++    } catch (error) {
++      if (typeof __DEV__ !== "undefined" && __DEV__)
++        console.info("UNIVERSAL_CAPTURE_API_FAILURE", {
++          api: readLastApiFailure(),
++          guard: error instanceof Error && [
++            "UNIVERSAL_BACKEND_UNAVAILABLE", "UNIVERSAL_ACCOUNT_UNAVAILABLE",
++            "UNIVERSAL_ORIGIN_INVALID", "UNIVERSAL_CAPTURE_STALE",
++            "UNIVERSAL_CAPTURE_NOT_QUALIFIED", "UNIVERSAL_CAPTURE_SCOPE_MISMATCH",
++            "UNIVERSAL_CAPTURE_ORIGINALS_MISMATCH", "UNIVERSAL_CONTEXT_MISMATCH",
++            "UNIVERSAL_ACCOUNT_CHANGED", "UNIVERSAL_CAPTURE_INPUT_CHANGED",
++            "UNIVERSAL_CAPTURE_BATCH_NOT_READY", "UNIVERSAL_SOURCE_PROFILE_UNAVAILABLE",
++          ].includes(error.message) ? error.message : "UNCLASSIFIED",
++        });
+       if (current()) setUnavailable(true);
+     } finally {
+       running.current = false;

@@ -49,6 +49,7 @@ const header = z.object({
     "otr.core.universal-p1-source/1",
     "otr.core.universal-p1-source/2",
     "otr.core.universal-p3-source/1",
+    "otr.core.universal-p4-source/1",
   ]),
   sourceReview: universalItemSourceReviewSchema.optional(),
   reviewedBy: z.uuid().optional(),
@@ -91,7 +92,7 @@ export const isUniversalP1Body = (raw: unknown) => header.safeParse(raw).success
 export async function assertUniversalP1Capability(
   lease: CorePgLease,
   scope: Pick<Scope, "actorAccountId" | "tripId">,
-  family: "P1" | "P2" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" | "P4" = "P1",
 ) {
   const c = (
     await lease.query(
@@ -106,9 +107,9 @@ export async function setUniversalP1WriteContext(
   target: string,
   operation: string,
   slot: string,
-  family: "P1" | "P2" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" | "P4" = "P1",
 ) {
-  z.enum(["P1", "P2", "P3"]).parse(family);
+  z.enum(["P1", "P2", "P3", "P4"]).parse(family);
   const command = family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM";
   await lease.query(
     `SELECT set_config('otr.core.command','${command}',true),set_config('otr.core.family','${family}',true),set_config('otr.core.admission','REVIEWED_SOURCE',true),set_config('otr.core.target_item',$1,true),set_config('otr.core.operation',$2,true),set_config('otr.core.source_intent',$3,true)`,
@@ -271,6 +272,7 @@ export async function readUniversalP1Catalog(
   if (
     (h.schemaId === "otr.core.universal-p1-source/2" ||
       h.schemaId === "otr.core.universal-p3-source/1" ||
+      h.schemaId === "otr.core.universal-p4-source/1" ||
       h.sourceReview) &&
     (!h.sourceReview || h.reviewedBy !== scope.actorAccountId)
   )
@@ -339,7 +341,7 @@ export async function publishUniversalP1Candidate(
     taskId: string;
     token: string;
     requestSha256: string;
-    family?: "P1" | "P3";
+    family?: "P1" | "P3" | "P4";
     sourceReview?: UniversalItemSourceReview;
   },
   read: PublishedUniversalP1Reader,
@@ -347,8 +349,9 @@ export async function publishUniversalP1Candidate(
 ) {
   const family = input.family ?? "P1";
   if (
-    family === "P3" &&
-    input.sourceReview?.version !== "otr.universal.p3-source-review/1"
+    family !== "P1" &&
+    input.sourceReview?.version !==
+      `otr.universal.${family.toLowerCase()}-source-review/1`
   )
     throw Error("OWNING_REVIEW_REQUIRED");
   await assertUniversalP1Capability(lease, scope, family);

@@ -1,0 +1,9 @@
+# P4–P6 accelerated delivery authorization — 2026-10-27
+
+Owner explicitly authorized sequential minimal P4 Rental, one existing P5 Transport subtype, and P6 Activity through the already accepted Universal Source Review→Plan→Admission→Core→Receipt→Reader mechanism. No new platform or public infrastructure redesign.
+
+Standing execution covers necessary synthetic QA fixtures, same-approved-role/RLS/GRANT bounded DEV gates, first minimal legal P4/P5/P6 Save, normal fixes/deploy/review/commit/serial-main, idempotency and closure. No per-window approval or arbitrary15min limit within this scope. Preflight code/image/identity/evidence/controller/rollback before T0; automatic expiry/closure and independent verification mandatory. Production, real-user data, wider Account/Trip access, new Schema/RLS/GRANT/roles, Secret scope, Provider budget increase, destructive changes or outside-scope Mutation/Authority still require precise separate approval.
+
+P4 initial code delta: extend existing reviewed Item selection/header/purpose dispatch to P4; exact title+pickup civil date, optional explicitly evidenced/confirmed return date. CREATE_ITEM(P4) already creates Rental Details; unknown vehicle/supplier/contact/places/person/booking remain unknown. All inherited Source/Actor/Trip/result/original pin/provenance checks remain. Existing persistence/queue/receipt and closed runtime reused. Protected SQL changes must preserve OID/owner/ACL and remain within these commands and exact synthetic QA scope; any required new grant/schema is isolated for Owner decision. No P1/P2/P3 temporary gate is reused.
+
+Follow P4 with the existing admitted P5 enum only, then P6. Preserve unselected candidates and all prior accepted records. A local fixture or preview is never SERVER_ACCEPTED; Native pending must be stated honestly.

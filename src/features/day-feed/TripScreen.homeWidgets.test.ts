@@ -695,66 +695,80 @@ function acceptedCivilStay() {
     target: { scope: state.snapshot.scope, certificate: { epoch: "epoch" }, item },
   };
 }
-it("date-only accepted P3 opens explicit viewing context instead of failing Home, without filling Item clocks/zones", async () => {
-  const { event, item, target } = acceptedCivilStay();
-  const before = JSON.stringify({ event, item });
-  const p = page(await loaded());
-  await p.content.props.onOpenItem(target);
-  const dialog = find(render(), "Modal");
-  expect(dialog.visible).toBe(true);
-  expect(
-    find(dialog.children, "Input", (p) => p.accessibilityLabel === "dayFeed.date").value,
-  ).toBe("2026-11-02");
-  const zone = find(
-    dialog.children,
-    "Input",
-    (p) => p.accessibilityLabel === "dayFeed.zone",
-  );
-  expect(zone.value).toBe("");
-  expect(state.select).not.toHaveBeenCalled();
-  zone.onChangeText("not/a-zone");
-  find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
-  expect(state.select).not.toHaveBeenCalled();
-  zone.onChangeText("Pacific/Auckland");
-  find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
-  expect(state.select).toHaveBeenCalledWith({
-    tripId: reference,
-    date: "2026-11-02",
-    zone: "Pacific/Auckland",
-    generation: 5,
-  });
-  expect(state.params).toHaveBeenCalledWith({
-    tripId: reference,
-    date: "2026-11-02",
-    zone: "Pacific/Auckland",
-    view: "day",
-  });
-  expect(JSON.stringify({ event, item })).toBe(before);
-});
-it("accepted date-only P3 uses a legitimate saved viewing zone for the same Item's existing Details", async () => {
-  const { event, item, target } = acceptedCivilStay();
-  state.resume = { tripId: reference, zone: "Pacific/Auckland", generation: 5 };
-  const p = page(await loaded());
-  await p.content.props.onOpenItem(target);
-  const detail = find(render(), DayFeed);
-  expect(detail).toMatchObject({
-    date: "2026-11-02",
-    zone: "Pacific/Auckland",
-    directItem: { itemId: item.itemId },
-  });
-  expect(
-    event.boundaries.every(
-      (b) => b.zone_id === null && b.local_time === null && b.instant === null,
-    ),
-  ).toBe(true);
-  detail.directItem.onClose();
-  expect(find(render(), DayFeed)).toBeNull();
-  expect(state.select).not.toHaveBeenCalled();
-});
-it.each(["account", "trip", "generation", "epoch", "revision"])(
-  "accepted P3 still rejects stale/foreign %s before offering navigation",
-  async (kind) => {
+it.each(["P3", "P4"])(
+  "date-only accepted %s opens explicit viewing context instead of failing Home, without filling Item clocks/zones",
+  async (family) => {
+    const { event, item, target } = acceptedCivilStay();
+    item.family = family;
+    const before = JSON.stringify({ event, item });
+    const p = page(await loaded());
+    await p.content.props.onOpenItem(target);
+    const dialog = find(render(), "Modal");
+    expect(dialog.visible).toBe(true);
+    expect(
+      find(dialog.children, "Input", (p) => p.accessibilityLabel === "dayFeed.date")
+        .value,
+    ).toBe("2026-11-02");
+    const zone = find(
+      dialog.children,
+      "Input",
+      (p) => p.accessibilityLabel === "dayFeed.zone",
+    );
+    expect(zone.value).toBe("");
+    expect(state.select).not.toHaveBeenCalled();
+    zone.onChangeText("not/a-zone");
+    find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
+    expect(state.select).not.toHaveBeenCalled();
+    zone.onChangeText("Pacific/Auckland");
+    find(render(), "Button", (p) => p.label === "dayFeed.openDay").onPress();
+    expect(state.select).toHaveBeenCalledWith({
+      tripId: reference,
+      date: "2026-11-02",
+      zone: "Pacific/Auckland",
+      generation: 5,
+    });
+    expect(state.params).toHaveBeenCalledWith({
+      tripId: reference,
+      date: "2026-11-02",
+      zone: "Pacific/Auckland",
+      view: "day",
+    });
+    expect(JSON.stringify({ event, item })).toBe(before);
+  },
+);
+it.each(["P3", "P4"])(
+  "accepted date-only %s uses a legitimate saved viewing zone for the same Item's existing Details",
+  async (family) => {
+    const { event, item, target } = acceptedCivilStay();
+    item.family = family;
+    state.resume = { tripId: reference, zone: "Pacific/Auckland", generation: 5 };
+    const p = page(await loaded());
+    await p.content.props.onOpenItem(target);
+    const detail = find(render(), DayFeed);
+    expect(detail).toMatchObject({
+      date: "2026-11-02",
+      zone: "Pacific/Auckland",
+      directItem: { itemId: item.itemId },
+    });
+    expect(
+      event.boundaries.every(
+        (b) => b.zone_id === null && b.local_time === null && b.instant === null,
+      ),
+    ).toBe(true);
+    detail.directItem.onClose();
+    expect(find(render(), DayFeed)).toBeNull();
+    expect(state.select).not.toHaveBeenCalled();
+  },
+);
+it.each(
+  ["P3", "P4"].flatMap((family) =>
+    ["account", "trip", "generation", "epoch", "revision"].map((kind) => [family, kind]),
+  ),
+)(
+  "accepted %s still rejects stale/foreign %s before offering navigation",
+  async (family, kind) => {
     const { target } = acceptedCivilStay();
+    target.item.family = family;
     const p = page(await loaded());
     if (kind === "account") target.scope = { ...target.scope, accountId: "other" };
     if (kind === "trip") target.scope = { ...target.scope, tripId: "other" };

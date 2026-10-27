@@ -1,0 +1,11 @@
+{
+  "sourceHead": "d6bdb3242041ec85b9235a8a6ee5b12c0118c3c2",
+  "nativeHostBase": "9ff1eda57059aca58abc3769e610361b5a987074",
+  "universalPatch": "a3ca05b06bf8d0b0c88d5bf112da8498436c2f89",
+  "baseImageId": "sha256:6fca8a71076889f83816c326fb3fa405c333d5453810631e935fd2b4d12072a7",
+  "bundles": {
+    "server.mjs": "ee4ec363fc6b1ff53cdb81df4cbe7fa8248b5fa34a942ff534a99c1c9f79e391",
+    "server-capture.mjs": "f42b3e2ecb05a6370c78647ef45cc143536bb3206f55d48956404644b5cc3e6a"
+  },
+  "dockerfileSha256": "9d36e452ad953d5a76d94aa3b04849dd2ffba24906b2c9b71121192994e0d2b4"
+}

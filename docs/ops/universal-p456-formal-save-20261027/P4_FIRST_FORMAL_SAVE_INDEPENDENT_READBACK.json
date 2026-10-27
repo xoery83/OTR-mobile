@@ -1,0 +1,811 @@
+{
+  "at": "2026-10-27T18:08:54.334599+00:00",
+  "snapshot": {
+    "associations": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+        "created_at": "2026-10-27T18:08:17.446264+00:00",
+        "domain_receipt_id": "6db144a2-db9b-4c80-ac85-e992e68166b6",
+        "field_evidence": {
+          "END.local_date.0": {
+            "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+            "locator": {
+              "end": 101,
+              "excerpt": "2026-11-03",
+              "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 91
+            },
+            "payloadSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+            "raw": "2026-11-03",
+            "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0",
+            "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+            "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+            "sourceRevision": 1,
+            "value": "2026-11-03"
+          },
+          "ROOT.title.0": {
+            "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+            "locator": {
+              "end": 53,
+              "excerpt": "COASTLINE QA MOTORS",
+              "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 34
+            },
+            "payloadSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+            "raw": "COASTLINE QA MOTORS",
+            "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0",
+            "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+            "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+            "sourceRevision": 1,
+            "value": "COASTLINE QA MOTORS"
+          },
+          "START.local_date.0": {
+            "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+            "locator": {
+              "end": 77,
+              "excerpt": "2026-11-02",
+              "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 67
+            },
+            "payloadSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+            "raw": "2026-11-02",
+            "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0",
+            "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+            "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+            "sourceRevision": 1,
+            "value": "2026-11-02"
+          }
+        },
+        "id": "f2de7e03-2829-4218-88d0-98b8cde69955",
+        "identity_sha256": "c84602fc994fb2016062915e0670a1d01da016b0ef313d7f945b1fa0f3c6577c",
+        "output_slot_id": "b222734c-5454-8837-afd4-1eb9cefcc85b",
+        "receipt_sha256": "5235c75a6b3034a03773a81c1707dfa29a9e56a33a8838374e8a5d896c462553",
+        "run_id": "a1ca4b17-2198-858e-a186-22541aff82ad",
+        "source_id": "c64b3086-5ab9-4132-afd2-629a84854b64",
+        "source_revision": 1,
+        "target_id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+        "target_kind": "ITEM",
+        "target_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "candidates": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+        "candidate_json": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "batchId": "463ef68b-5bc3-4ded-b4e1-0bdfb84d6ff9",
+          "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+          "evidence": [
+            {
+              "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+              "fieldKey": "ROOT.title",
+              "locator": {
+                "end": 53,
+                "excerpt": "COASTLINE QA MOTORS",
+                "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 34
+              },
+              "raw": "COASTLINE QA MOTORS",
+              "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0"
+            },
+            {
+              "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+              "fieldKey": "START.local_date",
+              "locator": {
+                "end": 77,
+                "excerpt": "2026-11-02",
+                "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 67
+              },
+              "raw": "2026-11-02",
+              "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0"
+            },
+            {
+              "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+              "fieldKey": "END.local_date",
+              "locator": {
+                "end": 101,
+                "excerpt": "2026-11-03",
+                "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 91
+              },
+              "raw": "2026-11-03",
+              "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0"
+            }
+          ],
+          "fieldEvidence": {
+            "END.local_date.0": {
+              "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+              "locator": {
+                "end": 101,
+                "excerpt": "2026-11-03",
+                "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 91
+              },
+              "payloadSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+              "raw": "2026-11-03",
+              "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0",
+              "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+              "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+              "sourceRevision": 1,
+              "value": "2026-11-03"
+            },
+            "ROOT.title.0": {
+              "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+              "locator": {
+                "end": 53,
+                "excerpt": "COASTLINE QA MOTORS",
+                "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 34
+              },
+              "payloadSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+              "raw": "COASTLINE QA MOTORS",
+              "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0",
+              "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+              "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+              "sourceRevision": 1,
+              "value": "COASTLINE QA MOTORS"
+            },
+            "START.local_date.0": {
+              "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+              "locator": {
+                "end": 77,
+                "excerpt": "2026-11-02",
+                "input_id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 67
+              },
+              "payloadSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+              "raw": "2026-11-02",
+              "ref": "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0",
+              "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+              "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+              "sourceRevision": 1,
+              "value": "2026-11-02"
+            }
+          },
+          "inputCatalogSha256": "5e9bc0069d91ba01d02c0590220ece58503b0e3006bcab85e00cdbf0d7a4d06f",
+          "lifecycleRelationships": [
+            {
+              "candidateIds": [
+                "2f56f871-7c42-8672-bdde-89a4ffe4736b"
+              ],
+              "evidenceRefs": [
+                "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0",
+                "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0",
+                "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0"
+              ],
+              "id": "source-review:2f56f871-7c42-8672-bdde-89a4ffe4736b",
+              "kind": "NEW"
+            }
+          ],
+          "plan": {
+            "candidateIds": [
+              "2f56f871-7c42-8672-bdde-89a4ffe4736b"
+            ],
+            "captureVersion": 2,
+            "mode": "REVIEWED_SOURCE",
+            "planId": "84688e71-281e-8b5f-9378-6f0d564ae5f6",
+            "policyVersion": null,
+            "slots": [
+              {
+                "baseVector": [
+                  {
+                    "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+                    "kind": "ITEM",
+                    "revision": null
+                  }
+                ],
+                "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+                "command": "CREATE_ITEM",
+                "dependsOn": [],
+                "evidenceRefs": {
+                  "END.local_date": [
+                    "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0"
+                  ],
+                  "ROOT.title": [
+                    "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0"
+                  ],
+                  "START.local_date": [
+                    "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0"
+                  ]
+                },
+                "operationId": "a2c3a7b4-f301-8343-b7d3-02571f67d3df",
+                "payload": {
+                  "acl": {
+                    "people": [],
+                    "visibility": "PRIVATE"
+                  },
+                  "core": {
+                    "title": "COASTLINE QA MOTORS"
+                  },
+                  "family": "P4",
+                  "participation": {
+                    "mode": "SELF",
+                    "people": [],
+                    "selfPersonId": null
+                  },
+                  "schedule": {
+                    "end": {
+                      "basis": "DERIVED_CIVIL",
+                      "civil_resolution": "PENDING",
+                      "clock_precision": null,
+                      "instant": null,
+                      "interpretation_input_sha256": null,
+                      "interpretation_key": null,
+                      "local_date": "2026-11-03",
+                      "local_time": null,
+                      "provenance_refs": null,
+                      "quality": "UNKNOWN",
+                      "resolution_offset_seconds": null,
+                      "source_instant": null,
+                      "source_instant_precision": null,
+                      "supplied_offset_seconds": null,
+                      "zone_id": null
+                    },
+                    "start": {
+                      "basis": "DERIVED_CIVIL",
+                      "civil_resolution": "PENDING",
+                      "clock_precision": null,
+                      "instant": null,
+                      "interpretation_input_sha256": null,
+                      "interpretation_key": null,
+                      "local_date": "2026-11-02",
+                      "local_time": null,
+                      "provenance_refs": null,
+                      "quality": "UNKNOWN",
+                      "resolution_offset_seconds": null,
+                      "source_instant": null,
+                      "source_instant_precision": null,
+                      "supplied_offset_seconds": null,
+                      "zone_id": null
+                    }
+                  }
+                },
+                "selectedFields": [
+                  "ROOT.title",
+                  "START.local_date",
+                  "END.local_date"
+                ],
+                "slotId": "b222734c-5454-8837-afd4-1eb9cefcc85b",
+                "slotKey": "p4",
+                "target": {
+                  "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+                  "kind": "ITEM"
+                },
+                "targetKind": "ITEM"
+              }
+            ],
+            "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+            "sourceRevision": 1
+          },
+          "resultSha256": "318be2bb3602f08529a0ef9fd4e6313e8f8a3e97fb39028783b1dd909723234a",
+          "reviewedAdvisories": [],
+          "reviewedBy": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "runId": "a1ca4b17-2198-858e-a186-22541aff82ad",
+          "schemaId": "otr.core.universal-p4-source/1",
+          "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+          "sourceObservations": [],
+          "sourceReview": {
+            "decision": "NEW",
+            "endLocalDate": "2026-11-03",
+            "localDate": "2026-11-02",
+            "originalReviewed": true,
+            "sourceRevision": 1,
+            "title": "COASTLINE QA MOTORS",
+            "tripReviewed": true,
+            "version": "otr.universal.p4-source-review/1"
+          },
+          "sourceRevision": 1,
+          "taskId": "28435c7a-8cc9-83a4-9c57-b2d7700ac0e7",
+          "token": "i1",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "candidate_sha256": "f93eaa543a91af2db3e3a775acdb50fc29ef5871c08100a0e62ffb2221432f91",
+        "input_catalog_sha256": "5e9bc0069d91ba01d02c0590220ece58503b0e3006bcab85e00cdbf0d7a4d06f",
+        "run_id": "a1ca4b17-2198-858e-a186-22541aff82ad",
+        "sealed_at": "2026-10-27T18:06:54.501919+00:00",
+        "source_id": "c64b3086-5ab9-4132-afd2-629a84854b64",
+        "source_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "item": {
+      "accepted_address": null,
+      "accepted_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_region": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "activity_category": null,
+      "authored_address": null,
+      "authored_address_country": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_postal_code": null,
+      "authored_address_region": null,
+      "authored_label": null,
+      "authored_text": null,
+      "booking_reference": null,
+      "business_contract_version": 2,
+      "candidate_address": null,
+      "candidate_confidence": null,
+      "candidate_error_code": null,
+      "candidate_input_revision": null,
+      "candidate_label": null,
+      "candidate_latitude": null,
+      "candidate_longitude": null,
+      "candidate_observed_at": null,
+      "candidate_place_id": null,
+      "candidate_provider": null,
+      "candidate_provider_place_id": null,
+      "candidate_state": null,
+      "confidence": null,
+      "created_at": "2026-10-27T18:07:36.075239+00:00",
+      "created_by": null,
+      "date_confidence": null,
+      "description": null,
+      "end_basis": "DERIVED_CIVIL",
+      "end_civil_resolution": "PENDING",
+      "end_clock_precision": null,
+      "end_interpretation_input_sha256": null,
+      "end_interpretation_key": null,
+      "end_local_date": "2026-11-03",
+      "end_local_time": null,
+      "end_provenance_refs": null,
+      "end_quality": "UNKNOWN",
+      "end_resolution_offset_seconds": null,
+      "end_source_instant": null,
+      "end_source_instant_precision": null,
+      "end_supplied_offset_seconds": null,
+      "end_zone_id": null,
+      "event_type": "car",
+      "experience_family": "P4",
+      "field_state": {
+        "itinerary_events.end_basis": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.end_civil_resolution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.end_local_date": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.end_quality": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_basis": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_civil_resolution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_local_date": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_quality": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.title": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        }
+      },
+      "geocode_attempts": 0,
+      "geocode_error": null,
+      "geocoded_at": null,
+      "hidden_at": null,
+      "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+      "is_estimated_time": false,
+      "legacy_is_estimated_time": null,
+      "legacy_planned_end": null,
+      "legacy_planned_start": null,
+      "legacy_snapshot_at": null,
+      "location_confidence": null,
+      "location_input_revision": null,
+      "location_lat": null,
+      "location_lng": null,
+      "location_name": null,
+      "location_provider": null,
+      "location_provider_place_id": null,
+      "location_status": "none",
+      "location_text": null,
+      "manual_location": false,
+      "needs_review": false,
+      "order_index": null,
+      "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "participant_scope": "ASSIGNED",
+      "participants_confidence": null,
+      "participation_mode": "SELF",
+      "place_id": null,
+      "planned_end": null,
+      "planned_start": null,
+      "reservation_id": null,
+      "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+      "semantic_revision": 1,
+      "source_text": null,
+      "spatial_provenance_refs": null,
+      "start_basis": "DERIVED_CIVIL",
+      "start_civil_resolution": "PENDING",
+      "start_clock_precision": null,
+      "start_interpretation_input_sha256": null,
+      "start_interpretation_key": null,
+      "start_local_date": "2026-11-02",
+      "start_local_time": null,
+      "start_provenance_refs": null,
+      "start_quality": "UNKNOWN",
+      "start_resolution_offset_seconds": null,
+      "start_source_instant": null,
+      "start_source_instant_precision": null,
+      "start_supplied_offset_seconds": null,
+      "start_zone_id": null,
+      "status": "planned",
+      "temporal_contract_version": 1,
+      "temporal_shape": "SPAN",
+      "time_confidence": null,
+      "timing_label": null,
+      "timing_provenance_ref": null,
+      "title": "COASTLINE QA MOTORS",
+      "trip_day_id": null,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "updated_at": "2026-10-27T18:07:36.075239+00:00",
+      "url": null,
+      "visibility": "PRIVATE"
+    },
+    "receipts": [
+      {
+        "actor_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "body": {
+          "actorAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "audit": {
+            "after": [
+              {
+                "facts": {
+                  "accepted_address": null,
+                  "accepted_address_country": null,
+                  "accepted_address_line1": null,
+                  "accepted_address_line2": null,
+                  "accepted_address_locality": null,
+                  "accepted_address_postal_code": null,
+                  "accepted_address_region": null,
+                  "accepted_latitude": null,
+                  "accepted_longitude": null,
+                  "accepted_place_id": null,
+                  "activity_category": null,
+                  "authored_address": null,
+                  "authored_address_country": null,
+                  "authored_address_line1": null,
+                  "authored_address_line2": null,
+                  "authored_address_locality": null,
+                  "authored_address_postal_code": null,
+                  "authored_address_region": null,
+                  "authored_label": null,
+                  "authored_text": null,
+                  "business_contract_version": 2,
+                  "created_at": "2026-10-27T18:07:36.075239Z",
+                  "description": null,
+                  "end_basis": "DERIVED_CIVIL",
+                  "end_civil_resolution": "PENDING",
+                  "end_clock_precision": null,
+                  "end_interpretation_input_sha256": null,
+                  "end_interpretation_key": null,
+                  "end_local_date": "2026-11-03",
+                  "end_local_time": null,
+                  "end_provenance_refs": null,
+                  "end_quality": "UNKNOWN",
+                  "end_resolution_offset_seconds": null,
+                  "end_source_instant": null,
+                  "end_source_instant_precision": null,
+                  "end_supplied_offset_seconds": null,
+                  "end_zone_id": null,
+                  "event_type": "car",
+                  "experience_family": "P4",
+                  "field_state": {
+                    "itinerary_events.end_basis": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.end_civil_resolution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.end_local_date": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.end_quality": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_basis": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_civil_resolution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_local_date": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_quality": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.title": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    }
+                  },
+                  "hidden_at": null,
+                  "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+                  "location_input_revision": null,
+                  "order_index": null,
+                  "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+                  "participant_scope": "ASSIGNED",
+                  "participation_mode": "SELF",
+                  "planned_end": null,
+                  "planned_start": null,
+                  "reservation_id": null,
+                  "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+                  "semantic_revision": 1,
+                  "spatial_provenance_refs": null,
+                  "start_basis": "DERIVED_CIVIL",
+                  "start_civil_resolution": "PENDING",
+                  "start_clock_precision": null,
+                  "start_interpretation_input_sha256": null,
+                  "start_interpretation_key": null,
+                  "start_local_date": "2026-11-02",
+                  "start_local_time": null,
+                  "start_provenance_refs": null,
+                  "start_quality": "UNKNOWN",
+                  "start_resolution_offset_seconds": null,
+                  "start_source_instant": null,
+                  "start_source_instant_precision": null,
+                  "start_supplied_offset_seconds": null,
+                  "start_zone_id": null,
+                  "status": "planned",
+                  "temporal_contract_version": 1,
+                  "temporal_shape": "SPAN",
+                  "timing_label": null,
+                  "title": "COASTLINE QA MOTORS",
+                  "trip_day_id": null,
+                  "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+                  "updated_at": "2026-10-27T18:07:36.075239Z",
+                  "visibility": "PRIVATE"
+                },
+                "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+                "kind": "ITEM",
+                "revision": 1
+              }
+            ],
+            "authorizationRefs": [
+              "otr-core/source-candidate/2f56f871-7c42-8672-bdde-89a4ffe4736b/f93eaa543a91af2db3e3a775acdb50fc29ef5871c08100a0e62ffb2221432f91"
+            ],
+            "before": [],
+            "evidenceRefs": [
+              "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0",
+              "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0",
+              "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0"
+            ]
+          },
+          "command": "CREATE_ITEM",
+          "commandVersion": 2,
+          "committedAt": "2026-10-27T18:07:36.075239Z",
+          "errorCode": null,
+          "intentSha256": "98633d79b360e30fbbf435905841984dde335dc72c8c936fbfcbbe0eb7f1a265",
+          "intentVersion": 2,
+          "operationId": "a2c3a7b4-f301-8343-b7d3-02571f67d3df",
+          "outcome": "APPLIED",
+          "receiptSha256": "5235c75a6b3034a03773a81c1707dfa29a9e56a33a8838374e8a5d896c462553",
+          "receiptVersion": 2,
+          "result": {
+            "changed": [],
+            "created": [
+              {
+                "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+                "kind": "ITEM"
+              }
+            ],
+            "custodyGrantId": null,
+            "replacement": null,
+            "retiredEdges": []
+          },
+          "targetVector": [
+            {
+              "baseRevision": null,
+              "committedRevision": 1,
+              "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+              "kind": "ITEM"
+            }
+          ],
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"b222734c-5454-8837-afd4-1eb9cefcc85b\"},\"baseVector\":[{\"id\":\"55a323db-f975-8af5-b9af-e086d5ac08a2\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"a2c3a7b4-f301-8343-b7d3-02571f67d3df\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"COASTLINE QA MOTORS\"},\"family\":\"P4\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"schedule\":{\"end\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-03\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null},\"start\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-02\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"target\":{\"id\":\"55a323db-f975-8af5-b9af-e086d5ac08a2\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command_version": 2,
+        "committed_at": "2026-10-27T18:07:36.075239+00:00",
+        "id": "6db144a2-db9b-4c80-ac85-e992e68166b6",
+        "intent_sha256": "98633d79b360e30fbbf435905841984dde335dc72c8c936fbfcbbe0eb7f1a265",
+        "intent_version": 2,
+        "operation_id": "a2c3a7b4-f301-8343-b7d3-02571f67d3df",
+        "outcome": "APPLIED",
+        "receipt_sha256": "5235c75a6b3034a03773a81c1707dfa29a9e56a33a8838374e8a5d896c462553",
+        "receipt_version": 2,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "rental": [
+      {
+        "actual_vehicle_model": null,
+        "event_id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+        "or_similar": null,
+        "reserved_category": null,
+        "supplier": null,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+        "verified_plate": null
+      }
+    ],
+    "slots": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"b222734c-5454-8837-afd4-1eb9cefcc85b\"},\"baseVector\":[{\"id\":\"55a323db-f975-8af5-b9af-e086d5ac08a2\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"a2c3a7b4-f301-8343-b7d3-02571f67d3df\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"COASTLINE QA MOTORS\"},\"family\":\"P4\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"schedule\":{\"end\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-03\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null},\"start\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-02\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"target\":{\"id\":\"55a323db-f975-8af5-b9af-e086d5ac08a2\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command": "CREATE_ITEM",
+        "dependency_ids": [],
+        "domain_receipt_id": "6db144a2-db9b-4c80-ac85-e992e68166b6",
+        "identity_sha256": "c84602fc994fb2016062915e0670a1d01da016b0ef313d7f945b1fa0f3c6577c",
+        "intent_sha256": "98633d79b360e30fbbf435905841984dde335dc72c8c936fbfcbbe0eb7f1a265",
+        "operation_id": "a2c3a7b4-f301-8343-b7d3-02571f67d3df",
+        "output_purpose": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "candidateId": "2f56f871-7c42-8672-bdde-89a4ffe4736b",
+          "candidateSha256": "f93eaa543a91af2db3e3a775acdb50fc29ef5871c08100a0e62ffb2221432f91",
+          "evidenceRefs": {
+            "END.local_date": [
+              "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/END.local_date.0"
+            ],
+            "ROOT.title": [
+              "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/ROOT.title.0"
+            ],
+            "START.local_date": [
+              "track-c/field-evidence/2f56f871-7c42-8672-bdde-89a4ffe4736b/START.local_date.0"
+            ]
+          },
+          "inputCatalogSha256": "5e9bc0069d91ba01d02c0590220ece58503b0e3006bcab85e00cdbf0d7a4d06f",
+          "operationId": "a2c3a7b4-f301-8343-b7d3-02571f67d3df",
+          "payloadSha256": "8f670208cb53b08c6c1dc6866c2c27799c953cade2140806feb6cfa194499216",
+          "planId": "84688e71-281e-8b5f-9378-6f0d564ae5f6",
+          "purposeKind": "P4_ITEM",
+          "purposeSha256": "94a0b4394fc2edbc15d55e8d818bfb4974597c477beb92a63099a6c83d901afe",
+          "runId": "a1ca4b17-2198-858e-a186-22541aff82ad",
+          "selectedFields": [
+            "END.local_date",
+            "ROOT.title",
+            "START.local_date"
+          ],
+          "slotId": "b222734c-5454-8837-afd4-1eb9cefcc85b",
+          "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+          "sourceRevision": 1,
+          "targetId": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+          "targetKind": "ITEM",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+          "version": 2
+        },
+        "output_slot_id": "b222734c-5454-8837-afd4-1eb9cefcc85b",
+        "plan_id": "84688e71-281e-8b5f-9378-6f0d564ae5f6",
+        "purpose_sha256": "94a0b4394fc2edbc15d55e8d818bfb4974597c477beb92a63099a6c83d901afe",
+        "slot_key": "p4",
+        "source_id": "c64b3086-5ab9-4132-afd2-629a84854b64",
+        "source_lineage_id": "f2de7e03-2829-4218-88d0-98b8cde69955",
+        "state": "COMPLETE",
+        "target_id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+        "target_kind": "ITEM",
+        "target_vector": [
+          {
+            "id": "55a323db-f975-8af5-b9af-e086d5ac08a2",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ]
+  }
+}

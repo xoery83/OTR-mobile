@@ -173,7 +173,9 @@ export function UniversalResultView({
                         ? "capture.ai.p2Details"
                         : candidate.kind === "P3"
                           ? "capture.ai.p3Details"
-                          : "capture.ai.p1Details",
+                          : candidate.kind === "P4"
+                            ? "capture.ai.p4Details"
+                            : "capture.ai.p1Details",
                     )}
                   </UiText>
                   {admission.statuses[candidate.token] ? (

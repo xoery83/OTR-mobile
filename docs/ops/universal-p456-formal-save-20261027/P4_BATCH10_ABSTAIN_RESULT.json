@@ -1,0 +1,106 @@
+{
+  "http": 200,
+  "result": {
+    "version": "otr.backend.universal-interpretation/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "e1ef68f8-08a8-4f62-aa3d-9994e39e9bdb",
+    "taskId": "314f06d3-23bd-869f-af79-1dd9125fa4c2",
+    "requestSha256": "589c103bdcb04371b97b82f9fc2a72dcb93d3e71c55f1a08fd8a8fb3b2116905",
+    "promptVersion": "real-llm-01-compact/5",
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "d199f553-4d2a-4662-ba59-76f06234a0bf",
+        "sourceId": "7931a6ca-c6d5-4f76-947b-a9e89cb015cd",
+        "representationId": "60b11d7e-0f0e-4a64-b7b3-daec4d0a1662",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "079a091e5722388ba3d5344b31f59499078cec9cafa25c0b6ccd6c09277cd4d2",
+        "submittedSha256": "079a091e5722388ba3d5344b31f59499078cec9cafa25c0b6ccd6c09277cd4d2",
+        "status": "READY"
+      }
+    ],
+    "formalReview": "NOT_RUN",
+    "admission": "NOT_RUN",
+    "canonicalWrites": false,
+    "status": "ABSTAIN",
+    "providerOutcome": "SETTLED",
+    "providerReceipt": {
+      "requestId": "4425f310-e13b-421a-9793-7fe23cb10ca9",
+      "requestSha256": "041cff25bce5f1037748112bd424ca1ac8c853b780499cbe41522a67cac22cba",
+      "responseSha256": "5586fac96afe5e11cb47425535d3e91371e8aa8087e9005b8f913ce4d9c1edf3",
+      "usage": {
+        "input_tokens": 1535,
+        "output_tokens": 154,
+        "total_tokens": 1689,
+        "cached_input_tokens": 1280,
+        "reasoning_tokens": null,
+        "provider_extension": {
+          "prompt_cache_miss_tokens": 255
+        },
+        "usage_quality": "ACTUAL_REPORTED"
+      },
+      "costNanos": "268980"
+    },
+    "candidates": [],
+    "bookingObservations": [],
+    "ticketObservations": [],
+    "quality": {
+      "decisions": [
+        {
+          "token": "i1",
+          "kind": "P4",
+          "tier": "ABSTAIN",
+          "reasons": [
+            "OBJECT_EVIDENCE_OR_TYPED_VALIDATION_FAILED"
+          ],
+          "sourceIds": [
+            "S0"
+          ],
+          "fieldCount": 0
+        }
+      ],
+      "acceptedTokens": [],
+      "reviewableTokens": [],
+      "abstainedTokens": [
+        "i1"
+      ],
+      "formalQualification": "NOT_SCORABLE"
+    },
+    "minimumFacts": [],
+    "sourceObservations": [],
+    "advisoryStatus": "VALID",
+    "advisoryIssues": [],
+    "outputCoverage": "PARTIAL_COVERAGE",
+    "coverageGaps": [
+      {
+        "field": "P3-P6.image_advisory",
+        "reason": "INDEPENDENT_OCR_RECEIPT_UNAVAILABLE"
+      },
+      {
+        "field": "P5.dynamic_provider_label_value",
+        "reason": "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P5.dynamic_boarding_or_meeting_labels",
+        "reason": "FINITE_ROLE_LABELS_ONLY; PROVIDER-SPECIFIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P4.actual_vehicle_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; VEHICLE_PROOF_UNAVAILABLE"
+      },
+      {
+        "field": "P2.passenger_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; TRIP_PERSON_QUALIFIER_UNAVAILABLE"
+      }
+    ],
+    "unresolved": [
+      {
+        "sourceId": "S0",
+        "reason": "Conflicting rental company values; no explicit supplier booking reference"
+      }
+    ]
+  }
+}

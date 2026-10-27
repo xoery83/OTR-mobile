@@ -10,14 +10,29 @@ import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import type { UniversalImportResult } from "../api/universalImportContracts";
 async function fixture(
-  family: "P1" | "P2" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" | "P4" = "P1",
   sync?: (context: unknown, operationId: string) => Promise<unknown>,
 ) {
   const f =
       family === "P2"
         ? await universalP2SourceFixture()
         : await universalP1SourceFixture(undefined, undefined, "2026-11-03", family),
-    p = await f.run(),
+    review =
+      family === "P4"
+        ? {
+            version: "otr.universal.p4-source-review/1" as const,
+            decision: "NEW" as const,
+            sourceRevision: 1,
+            title: "海滨租车",
+            localDate: "2026-11-03",
+            endLocalDate: "2026-11-05",
+            originalReviewed: true as const,
+            tripReviewed: true as const,
+          }
+        : undefined,
+    p = await (review
+      ? (Object.assign(f.input.selection, { sourceReview: review }), f.run())
+      : f.run()),
     plan = p.body.plan,
     slot = plan.slots[0],
     result = f.input.result as UniversalImportResult;
@@ -81,6 +96,7 @@ async function fixture(
   });
   return {
     f,
+    review,
     result,
     model,
     core,
@@ -141,7 +157,7 @@ it("does not claim success while owning preparation or finalization is incomplet
     plan: { slots: [] },
     reviewSlots: [],
   });
-  expect((await f.consumer.confirm(f.model, f.result, "walk")).status).toBe(
+  expect((await f.consumer.confirm(f.model, f.result, "walk", f.review)).status).toBe(
     "OWNING_ADMISSION_PENDING",
   );
   expect(f.core.enqueue).not.toHaveBeenCalled();
@@ -166,14 +182,14 @@ it("restores an already accepted P1 through its same receipt and refuses incompl
       targetVector: [{ kind: "ITEM", id: f.slot.target.id, committedRevision: 1 }],
     },
   });
-  expect((await f.consumer.confirm(f.model, f.result, "walk")).status).toBe(
+  expect((await f.consumer.confirm(f.model, f.result, "walk", f.review)).status).toBe(
     "SERVER_ACCEPTED",
   );
   expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
   expect(f.core.refresh).toHaveBeenCalledOnce();
   f.transport.finalizeSourceSlot.mockResolvedValueOnce({ state: "EVIDENCE_PENDING" });
   f.core.refresh.mockClear();
-  expect((await f.consumer.confirm(f.model, f.result, "walk")).status).toBe(
+  expect((await f.consumer.confirm(f.model, f.result, "walk", f.review)).status).toBe(
     "OWNING_ADMISSION_PENDING",
   );
   expect(f.core.refresh).not.toHaveBeenCalled();
@@ -271,7 +287,7 @@ it("queues only the selected P3 using its exact owning published Plan and operat
   expect(f.command.payload).toMatchObject({ family: "P3" });
 });
 
-it.each(["P1", "P3"] as const)(
+it.each(["P1", "P3", "P4"] as const)(
   "wakes only the confirmed %s operation after owning preparation and waits for its real receipt",
   async (family) => {
     const sync = vi.fn(async () => {}),
@@ -289,7 +305,7 @@ it.each(["P1", "P3"] as const)(
         targetVector: [{ kind: "ITEM", id: f.slot.target.id, committedRevision: 1 }],
       },
     });
-    expect((await f.consumer.confirm(f.model, f.result, "walk")).status).toBe(
+    expect((await f.consumer.confirm(f.model, f.result, "walk", f.review)).status).toBe(
       "SERVER_ACCEPTED",
     );
     expect(sync).toHaveBeenCalledExactlyOnceWith(
@@ -331,4 +347,21 @@ it("requires explicit P2 review and preserves the existing Candidate minimum-fac
   expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
   expect(f.core.enqueue).not.toHaveBeenCalled();
   expect(f.result).toEqual(before);
+});
+
+it("requires explicit Rental Source Review and queues only the existing owning P4 operation", async () => {
+  const f = await fixture("P4");
+  await expect(f.consumer.confirm(f.model, f.result, "walk")).rejects.toThrow(
+    "OWNING_REVIEW_REQUIRED",
+  );
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+  const result = await f.consumer.confirm(f.model, f.result, "walk", f.review);
+  expect(result.status).toBe("SYNC_PENDING");
+  expect(f.transport.publishUniversalP1).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ family: "P4", sourceReview: f.review }),
+  );
+  expect(f.command.payload).toMatchObject({ family: "P4" });
+  expect(f.command.admission.mode).toBe("REVIEWED_SOURCE");
+  expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
 });

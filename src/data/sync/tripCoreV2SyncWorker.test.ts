@@ -144,7 +144,7 @@ it("exact Core target wakes and executes only that operation, retaining other sa
   expect(queue.markCompleted).toHaveBeenCalledExactlyOnceWith(f.operation.id);
 });
 
-async function sourceFixture(family: "P1" | "P2" | "P3" = "P1") {
+async function sourceFixture(family: "P1" | "P2" | "P3" | "P4" = "P1") {
   const f = await fixture(),
     { universalP1SourceFixture } =
       await import("../../../backend/src/__fixtures__/universalP1Source"),
@@ -152,9 +152,23 @@ async function sourceFixture(family: "P1" | "P2" | "P3" = "P1") {
       actor,
       trip,
       "2026-11-03",
-      family === "P3" ? "P3" : "P1",
+      family === "P3" || family === "P4" ? family : "P1",
     ),
-    proposal = await source.run(),
+    proposal = await (family === "P4"
+      ? (Object.assign(source.input.selection, {
+          sourceReview: {
+            version: "otr.universal.p4-source-review/1",
+            decision: "NEW",
+            sourceRevision: 1,
+            title: "海滨租车",
+            localDate: "2026-11-03",
+            endLocalDate: "2026-11-05",
+            originalReviewed: true,
+            tripReviewed: true,
+          },
+        }),
+        source.run())
+      : source.run()),
     slot = proposal.body.plan.slots[0];
   const command = {
     contractVersion: 2 as const,
@@ -201,7 +215,7 @@ async function sourceFixture(family: "P1" | "P2" | "P3" = "P1") {
   }));
   return { ...f, operation, slot, receipt, domainReceiptId };
 }
-it.each(["P1", "P2", "P3"] as const)(
+it.each(["P1", "P2", "P3", "P4"] as const)(
   "recovers the same accepted %s operation and finishes its Source relation without redispatch",
   async (family) => {
     const f = await sourceFixture(family);
@@ -221,7 +235,7 @@ it.each(["P1", "P2", "P3"] as const)(
     );
   },
 );
-it.each(["P1", "P2", "P3"] as const)(
+it.each(["P1", "P2", "P3", "P4"] as const)(
   "retains accepted %s intent through Source finalization failure and retries only the relation",
   async (family) => {
     const f = await sourceFixture(family);
@@ -235,7 +249,7 @@ it.each(["P1", "P2", "P3"] as const)(
   },
 );
 
-it.each(["P1", "P2", "P3"] as const)(
+it.each(["P1", "P2", "P3", "P4"] as const)(
   "never resubmits an APPLIED Source %s when its owning receipt cannot be read",
   async (family) => {
     const f = await sourceFixture(family);
@@ -252,7 +266,7 @@ it.each(["P1", "P2", "P3"] as const)(
   },
 );
 
-it.each(["P1", "P2", "P3"] as const)(
+it.each(["P1", "P2", "P3", "P4"] as const)(
   "dispatches only the prepared %s Source operation with Manual QA scope closed",
   async (family) => {
     const f = await sourceFixture(family),
