@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "observedAt": "2026-10-27T00:01:00Z",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "batchId": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+  "taskId": "7338329a-46eb-8050-9bec-96376f08b296",
+  "action": "Normal App Check processing status",
+  "observed": "Activity Progress original P2_MINIMUM_SYNTHETIC_QA.txt and P2 candidate NZ501/AKL/CHC displayed",
+  "minimumFacts": "INCOMPLETE",
+  "formalAdmission": "NOT_RUN",
+  "canonicalWrites": false,
+  "guiReturned": true,
+  "coldRestartVerified": false
+}

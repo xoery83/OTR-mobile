@@ -1,0 +1,184 @@
+{
+  "proof": {
+    "version": "otr.qa.resource-authority-probe/1",
+    "verifiedActorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "verifiedAt": "2026-10-26T23:57:30.013389Z",
+    "authSessionExpiresAt": "2026-10-27T00:51:38Z",
+    "emailConfirmed": true,
+    "oldResultsHTTP": 200,
+    "oldTaskId": "7338329a-46eb-8050-9bec-96376f08b296",
+    "oldResultsStatus": "CANDIDATES_READY",
+    "oldResultsDigest": "ccac4769629696b76bd836940711a56707289ffd51ef050f9d8414c43ef19a4e",
+    "oldCandidateCount": 1,
+    "oldRawFilesExist": [
+      true,
+      true
+    ],
+    "receiptSHA256": "a54eaee49d7f136b2c5a3828e864b8526792a6313689fc38018f4745dbfaabb3"
+  },
+  "results": {
+    "version": "otr.backend.universal-interpretation/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+    "taskId": "7338329a-46eb-8050-9bec-96376f08b296",
+    "requestSha256": "717a8e0492e99adc01a0fd412a60e7a11ef2e7ae1ecde600f2d8e0a0c1fdc1c6",
+    "promptVersion": "real-llm-01-compact/5",
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+        "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+        "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+        "submittedSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+        "status": "READY"
+      }
+    ],
+    "formalReview": "NOT_RUN",
+    "admission": "NOT_RUN",
+    "canonicalWrites": false,
+    "status": "CANDIDATES_READY",
+    "providerOutcome": "SETTLED",
+    "providerReceipt": {
+      "requestId": "fab905d3-b59f-49d4-b5ce-6765c57829d3",
+      "requestSha256": "2a3511ce701b94bd540498d8a443aedd82cd4cb5b2b1ae06f7743bead1a001b0",
+      "responseSha256": "a9336286d661f5b62502fe80898c3ef1d4c47324f22439622480c64d9fcd73ac",
+      "usage": {
+        "input_tokens": 1508,
+        "output_tokens": 93,
+        "total_tokens": 1601,
+        "cached_input_tokens": 1280,
+        "reasoning_tokens": null,
+        "provider_extension": {
+          "prompt_cache_miss_tokens": 228
+        },
+        "usage_quality": "ACTUAL_REPORTED"
+      },
+      "costNanos": "187680"
+    },
+    "candidates": [
+      {
+        "id": "89e5df16301d7691c84d2755",
+        "token": "i1",
+        "kind": "P2",
+        "subtype": "FLIGHT",
+        "fields": [
+          {
+            "sourceId": "S0",
+            "path": "service",
+            "raw": "NZ501",
+            "start": 0,
+            "end": 5
+          },
+          {
+            "sourceId": "S0",
+            "path": "origin.airport_code",
+            "raw": "AKL",
+            "start": 6,
+            "end": 9
+          },
+          {
+            "sourceId": "S0",
+            "path": "destination.airport_code",
+            "raw": "CHC",
+            "start": 12,
+            "end": 15
+          },
+          {
+            "sourceId": "S0",
+            "path": "origin.local_date",
+            "raw": "2026-11-02",
+            "start": 16,
+            "end": 26
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i1",
+          "kind": "P2",
+          "minimumFacts": "INCOMPLETE",
+          "missing": [
+            "FLIGHT_NUMBER_OR_QUALIFIED_EXCEPTION"
+          ],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "INCOMPLETE"
+      }
+    ],
+    "bookingObservations": [],
+    "ticketObservations": [],
+    "quality": {
+      "decisions": [
+        {
+          "token": "i1",
+          "kind": "P2",
+          "tier": "HIGH_CONFIDENCE",
+          "reasons": [
+            "CORE_AND_FIELD_EVIDENCE_VERIFIED"
+          ],
+          "sourceIds": [
+            "S0"
+          ],
+          "fieldCount": 4
+        }
+      ],
+      "acceptedTokens": [
+        "i1"
+      ],
+      "reviewableTokens": [],
+      "abstainedTokens": [],
+      "formalQualification": "NOT_SCORABLE"
+    },
+    "minimumFacts": [
+      {
+        "token": "i1",
+        "kind": "P2",
+        "minimumFacts": "INCOMPLETE",
+        "missing": [
+          "FLIGHT_NUMBER_OR_QUALIFIED_EXCEPTION"
+        ],
+        "createReady": false,
+        "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+      }
+    ],
+    "sourceObservations": [],
+    "advisoryStatus": "ABSENT",
+    "advisoryIssues": [
+      "ADVISORY_NOT_PROVIDED"
+    ],
+    "outputCoverage": "PARTIAL_COVERAGE",
+    "coverageGaps": [
+      {
+        "field": "P3-P6.image_advisory",
+        "reason": "INDEPENDENT_OCR_RECEIPT_UNAVAILABLE"
+      },
+      {
+        "field": "P5.dynamic_provider_label_value",
+        "reason": "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P5.dynamic_boarding_or_meeting_labels",
+        "reason": "FINITE_ROLE_LABELS_ONLY; PROVIDER-SPECIFIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P4.actual_vehicle_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; VEHICLE_PROOF_UNAVAILABLE"
+      },
+      {
+        "field": "P2.passenger_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; TRIP_PERSON_QUALIFIER_UNAVAILABLE"
+      }
+    ],
+    "unresolved": []
+  }
+}
