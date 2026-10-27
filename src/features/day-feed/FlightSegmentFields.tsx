@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Keyboard,
   Modal,
@@ -130,6 +130,7 @@ export function FlightSegmentFields({
   disabled,
   participantOptions,
   initialNavigationDate,
+  lookupAction,
   onPickerChange,
   onChange,
 }: {
@@ -138,6 +139,7 @@ export function FlightSegmentFields({
   disabled: boolean;
   participantOptions: readonly { personId: string; displayName: string }[];
   initialNavigationDate?: string | null;
+  lookupAction?: ReactNode;
   onChange(changes: Partial<FlightSegmentDraft>): void;
   onPickerChange(field: string, open: boolean): void;
 }) {
@@ -200,6 +202,7 @@ export function FlightSegmentFields({
         disabled={disabled}
         onChange={(departureDate) => changeDeparture(departureDate)}
       />
+      {lookupAction}
       {full ? (
         <>
           <FlightAirportField

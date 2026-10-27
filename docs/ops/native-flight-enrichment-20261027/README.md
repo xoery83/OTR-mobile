@@ -1,0 +1,32 @@
+# Manual Flight enrichment — integration candidate
+
+Owner 27 October authorizes explicit once-per-flight/date lookup in Create; Edit offers it only for a literal/date-only flight. This latest explicit button instruction supersedes the package's Create debounce. Manual entry stays before Participants, no Import auto-call. Follow-up scope keeps public flight results MISS/no writes; cache is not an E2E blocker.
+
+Pinned package: commit `9024307b86b1002219d7daa77522e61d88b6400f`, ZIP SHA256 `a31aeb4636fc2fc9ffe7ef9d540a8d96e77ab5b9c898a762ca1bb114ef38da3c`, manifest SHA256 `a16ac95a40027fcc70a1008670d9ce5519ac9706b4be7b395da47fefeb410cce`. Archive and all manifest entries checked. Reused service/provider/cache/projection/contracts, changed relative import extensions/shared contracts and node:test registration to Vitest. Original replay included; no private WebLab key or new dependency. Installed Host Zod compiles and passes these conformance tests; no unrelated dependency upgrade.
+
+## Implemented candidate
+
+- `FlightEnrichmentAction` is placed after flight number/date, before endpoint/manual fields and Participants. Capability-gated, hidden offline, explicit request only, once per draft flight/date identity, no automatic retry. Partial supported ADOPT fields fill only empty values; existing clocks offer Keep/Replace. No invented airport identity; airport name and zone prefill uses the existing descriptive local table. Zone conflicts stop automatic adoption. References are not automatic writes.
+- Draft revision/account/effect lease fence, Cancel abort, single in-flight request, reconnect recovery. Old results cannot apply or unlock a newer request. Existing Form Cancel/Save still uses its owning Repository/Core; no advisory result writes directly to Core or Queue.
+- `flightEnrichmentRepository` uses ordinary account-bound authenticated API with bounded body/response, stable per-request idempotency header and exact response identity checking.
+- Proposed authenticated Trip-scoped GET `/v1/trips/:tripId/flight-enrichment/capabilities` and POST `/v1/trips/:tripId/flight-enrichment`. `backend/src/app.ts` adds only this optional, default-false service boundary, reusing ordinary authenticate/authorizeRead. Body cannot choose Actor/Account/Trip. No serverCapture composition, new environment enable switch, credentials, deployment or live Provider call.
+- Shared `flightEnrichmentContracts.ts`; pinned module under `backend/src/flight-enrichment`. CachePort TTL/identity algorithms retained unchanged. `closedPublicFlightCache` returns MISS and rejects writes. No public cache SQL, cross-user reuse or license assumptions.
+
+## Required real Host work — not a cache blocker
+
+This candidate does **not** implement a live Host service. Production prerequisites from the supplied handoff remain actual implementation work:
+
+1. Independent FLIGHT_ENRICHMENT_V1 profile/credential custody bound to authenticated account/actor/Trip, using existing protected infrastructure. Import Task/pins/scopes/vault references are not reusable authorization.
+2. Durable request claim/replay plus necessary request concurrency dedup; reserve and durably mark each SEARCH/EXTRACTION dispatch before HTTP, retain uncertain outcomes and reconcile late costs. The package's IdempotencyPort is mandatory; its tests use synthetic ports, which are not a deployed adapter.
+3. Existing protected Usage/Cost Meter adapter with separate Search-unit and extraction token schedule, budget reservation and sole billable child steps. Existing token pricing is not evidence of Search pricing. No quota number, monthly tier, new billing ledger or temporary grant is invented.
+4. Owning transport allowlist/composition for the delivered Search protocol and extraction model, pinned model/price/config receipts. Then independent review, fixed image digest, bounded DEV deployment window and rollback; real usage receipt, independent readback, no duplicate charge, failed/offline/stale/Cancel cases and ordinary Core Save/recovery.
+
+Universal confirmed Native may own the default-CLOSED app boundary serially, but Universal remains Source/Admission/Core proof writer and is not implementing this adjacent live Host slice. No shared metering roots, SQL/RLS/GRANT, Backend bootstrap or Auth binding were changed here. Therefore Native candidate/offline tests are not a real query E2E or deployed capability claim. Next owning deliverable is the minimal protected runtime/permission difference; public caching is expressly deferred until after E2E.
+
+### Concrete protected owning delta
+
+Bounded source check found `cp_llm_validate_binding` in migration `20261012000100_model_task_protected_admission.sql` explicitly pins consumer `import`, its profile digest, `FLIGHT_IMPORT_V1`, OUTBOUND_MODEL and one attempt. The owning `external_integration_mark_dispatch` also checks protected admissions/resource holds/activation scopes. The existing Universal Host adapter pins Batch/Task/Attempt/Call IDs via `universal_import_read_scope`; using it for a Manual Form request would violate that scope. `createFlightHttpsSend` currently allowlists chat completions only; the delivered Search endpoint is not admitted there. These are the exact shared interfaces requiring a serial protected Host Writer, rather than a missing result-cache table.
+
+Required minimum contract: one durable logical enrichment request bound to Actor/Account/Trip/draft request digest; two individually reserved/marked/settled child steps, maximum one Search and one Extraction; independent model/profile and Search price schedule; durable terminal/UNKNOWN response custody and replay/concurrency decisions. Reuse the existing protected call/usage accounting and credential custody, not a parallel ledger or copied Import identity. No SQL/RLS/GRANT or protected metering/transport root was changed by this candidate. Universal gave this lane only the default-CLOSED app boundary window and explicitly retained its own Import authority work; activation/deployment requires the protected delta review/serial window.
+
+Checks: package43 tests retained; additional Host/Auth/public-cache boundary, Native Action/draft/Form and existing Backend suites are included in R28's15 suites291PASS. Real usage receipt, durable Host idempotency and real query→Core Save E2E remain NOT_RUN. The physical R28 install includes the gated Native UI but does not turn on a non-existent live Host service.

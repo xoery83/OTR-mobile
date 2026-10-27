@@ -1,3 +1,4 @@
+import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
 import { RentalContent } from "./RentalRow";
 import { calendarDate } from "./TripCalendarField";
 import { rentalFactsFromItem, rentalTemporalContext } from "./rentalReadPresentation";
@@ -226,10 +227,21 @@ export function LocalManualDayRows({
                 : null;
         if (item && row.family === "P2") {
           const focusKey = JSON.stringify(row.rowKey);
+          const flight = { authored: flightSegmentFromRead(item) };
+          const targets = flightAirportTargets(flight);
           return (
             <FlightLegRow
               key={focusKey}
-              leg={{ id: item.itemId, flight: { authored: flightSegmentFromRead(item) } }}
+              leg={{
+                id: item.itemId,
+                flight,
+                ...(targets
+                  ? {
+                      map: () => openFlightAirport(targets.map),
+                      navigate: () => openFlightAirport(targets.navigate),
+                    }
+                  : {}),
+              }}
               focused={p1Focus === focusKey}
               pending={item.localState === "PENDING"}
               context={context}

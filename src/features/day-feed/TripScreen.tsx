@@ -609,11 +609,43 @@ function TripContent({
       expected.scope.accountId === local.scope.accountId &&
       expected.source.fingerprint === local.source.fingerprint &&
       local.items.some(
-        (item) => item.itemId === id && item.family === "P2" && !item.hidden,
+        (item) =>
+          item.itemId === id &&
+          ["P1", "P2", "P3", "P4"].includes(item.family) &&
+          !item.hidden,
       )
     ) {
       // The destination validates the owning read; route IDs grant no read or edit authority.
-      router.push({ pathname: "/p2-detail", params: { tripId: requested, itemId: id } });
+      const item = local.items.find((item) => item.itemId === id)!;
+      const params = { tripId: requested, itemId: id };
+      if (item.family === "P1")
+        router.push({
+          pathname: "/p1-detail",
+          params: { ...params, occurrence: occurrence?.role === "END" ? "END" : "START" },
+        });
+      else if (item.family === "P2") router.push({ pathname: "/p2-detail", params });
+      else if (item.family === "P3")
+        router.push({
+          pathname: "/p3-detail",
+          params: {
+            ...params,
+            occurrence:
+              occurrence?.role === "CHECKOUT"
+                ? "CHECKOUT"
+                : occurrence?.role === "CHECKIN"
+                  ? "CHECKIN"
+                  : "BASE",
+            ...(occurrence?.date ? { date: occurrence.date } : {}),
+          },
+        });
+      else
+        router.push({
+          pathname: "/p4-detail",
+          params: {
+            ...params,
+            occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+          },
+        });
       return;
     }
     const ticket = request.current;

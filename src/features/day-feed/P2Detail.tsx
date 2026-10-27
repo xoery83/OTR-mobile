@@ -1,3 +1,4 @@
+import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -124,6 +125,18 @@ export function P2Detail() {
               single={{
                 id: visible.item.itemId,
                 flight: { authored: segment },
+                ...(flightAirportTargets({ authored: segment })
+                  ? {
+                      map: () =>
+                        openFlightAirport(
+                          flightAirportTargets({ authored: segment })!.map,
+                        ),
+                      navigate: () =>
+                        openFlightAirport(
+                          flightAirportTargets({ authored: segment })!.navigate,
+                        ),
+                    }
+                  : {}),
                 pending: visible.item.localState === "PENDING",
               }}
               facts={{

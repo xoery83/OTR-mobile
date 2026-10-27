@@ -57,7 +57,7 @@ export function FlightFidelityDetail() {
       </Stack.Toolbar>
       <NavigationContentFrame>
         <ScrollView style={s.root} contentContainerStyle={s.content}>
-          <FlightJourneyView journey={fixture.journey} />
+          <FlightJourneyView journey={fixture.journey} instant={fixture.instant} />
         </ScrollView>
       </NavigationContentFrame>
       <FixtureActionSheet value={action} onClose={() => setAction(null)} />

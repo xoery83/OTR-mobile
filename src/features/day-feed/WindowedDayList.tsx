@@ -161,6 +161,7 @@ export function WindowedDayList<T>({
   const prepending = useRef(false);
   const followPrependOrigin = useRef<number | null>(null);
   const statusBarOrigin = useRef<number | null>(null);
+  const statusBarFrame = useRef<number | null>(null);
   const contentHeight = useRef(0);
   const viewportHeight = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
@@ -392,7 +393,14 @@ export function WindowedDayList<T>({
         dragging.current = false;
         prepending.current = false;
         followPrependOrigin.current = null;
-        const row = live.current.rows[target.index];
+        // Keep a full tail batch so a final-day jump can clamp naturally at the list end.
+        const tailOrigin = Math.min(
+          target.index,
+          Math.max(0, live.current.rows.length - dayListWindow.initialNumToRender),
+        );
+        const firstDate = live.current.rows[tailOrigin].date;
+        const row =
+          live.current.rows[indexDayRows(live.current.rows).dates.get(firstDate)!];
         setWindowStart({
           scopeKey: live.current.scopeKey,
           key: row.key,
@@ -679,7 +687,11 @@ export function WindowedDayList<T>({
       }
       {...dayListWindow}
       removeClippedSubviews={false}
-      maintainVisibleContentPosition={jumping ? undefined : { minIndexForVisible: 0 }}
+      maintainVisibleContentPosition={
+        jumping || statusBarOrigin.current !== null
+          ? undefined
+          : { minIndexForVisible: 0 }
+      }
       style={style}
       contentContainerStyle={[
         contentContainerStyle,
@@ -868,15 +880,33 @@ export function WindowedDayList<T>({
         if (renderedEpoch !== listEpoch.current) return;
         if (contentHeight.current !== height && dragging.current)
           nativeLayoutChanged.current = true;
+        const previousHeight = contentHeight.current;
         contentHeight.current = height;
         trace("CONTENT_SIZE", { height });
         if (
           live.current.scrollEnabled &&
-          statusBarOrigin.current === live.current.origin
+          statusBarOrigin.current === live.current.origin &&
+          statusBarFrame.current === null
         ) {
-          statusBarOrigin.current = null;
-          offset.current = 0;
-          list.current?.scrollToOffset({ offset: 0, animated: true });
+          const expectedOrigin = live.current.origin;
+          // UIKit must commit the prefix before animating; MVCP must not undo that animation.
+          list.current?.scrollToOffset({
+            offset: Math.max(0, height - previousHeight),
+            animated: false,
+          });
+          statusBarFrame.current = requestAnimationFrame(() => {
+            statusBarFrame.current = null;
+            if (
+              renderedEpoch !== listEpoch.current ||
+              !live.current.scrollEnabled ||
+              statusBarOrigin.current !== expectedOrigin ||
+              live.current.origin !== expectedOrigin
+            )
+              return;
+            statusBarOrigin.current = null;
+            offset.current = 0;
+            list.current?.scrollToOffset({ offset: 0, animated: true });
+          });
         }
         retry();
       }}

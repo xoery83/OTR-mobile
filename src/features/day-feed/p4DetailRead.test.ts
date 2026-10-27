@@ -128,3 +128,26 @@ it("uses each known endpoint zone across device midnight and retains Floating fa
     ),
   ).toBe("UNKNOWN");
 });
+
+it("publishes validated readable content before slow edit qualification", async () => {
+  const ports = { read: async () => context(), repository: vi.fn(), generation: () => 5 };
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const onReadable = vi.fn();
+  const result = loadP4Detail(input, {
+    ...ports,
+    repository: async () => {
+      await gate;
+      throw Error("closed");
+    },
+    onReadable,
+  });
+  for (let i = 0; i < 6; i++) await Promise.resolve();
+  expect(onReadable).toHaveBeenCalledWith(
+    expect.objectContaining({ itemId, editor: null }),
+  );
+  release();
+  expect((await result)?.editor).toBeNull();
+});

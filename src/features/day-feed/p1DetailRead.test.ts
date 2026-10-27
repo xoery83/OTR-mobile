@@ -147,3 +147,26 @@ it("uses a current actor-filtered accepted projection and retains local-target p
   result.observed.projection.generation = 4;
   expect(await loadP1Detail(input, ports).catch(() => null)).toBeNull();
 });
+
+it("publishes validated readable content before slow edit qualification", async () => {
+  const { ports } = setup();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const onReadable = vi.fn();
+  const result = loadP1Detail(input, {
+    ...ports,
+    repository: async () => {
+      await gate;
+      throw Error("closed");
+    },
+    onReadable,
+  });
+  for (let i = 0; i < 6; i++) await Promise.resolve();
+  expect(onReadable).toHaveBeenCalledWith(
+    expect.objectContaining({ itemId, editor: null }),
+  );
+  release();
+  expect((await result)?.editor).toBeNull();
+});

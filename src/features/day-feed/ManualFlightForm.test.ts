@@ -1,3 +1,4 @@
+vi.mock("./FlightEnrichmentAction", () => ({ FlightEnrichmentAction: () => null }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (p: any) => {
@@ -107,7 +108,7 @@ vi.mock("./FlightSegmentFields", () => ({
       initialNavigationDate: p.initialNavigationDate,
       onChange: (departureDate: string) => p.onChange({ departureDate }),
     });
-    return createElement("div", null, p.value.flightNumberLiteral);
+    return createElement("div", null, p.value.flightNumberLiteral, p.lookupAction);
   },
 }));
 vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({

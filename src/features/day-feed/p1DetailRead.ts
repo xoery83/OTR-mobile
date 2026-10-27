@@ -24,6 +24,7 @@ export async function loadP1Detail(
     read(id: string): Promise<Read>;
     repository(): Promise<ManualPlanRepository>;
     generation(): number;
+    onReadable?(state: P1DetailState): void;
   },
 ): Promise<P1DetailState | null> {
   const { tripId, itemId, generation, occurrence } = input;
@@ -58,6 +59,7 @@ export async function loadP1Detail(
   if (!presentation) throw new Error("P1_UNAVAILABLE");
   if (accepted?.source.localTargetIds?.includes(itemId))
     presentation.facts = { ...presentation.facts, pending: true };
+  if (current()) ports.onReadable?.({ ...input, presentation, editor: null });
   let editor: P1DetailState["editor"] = null;
   try {
     const repository = await ports.repository();

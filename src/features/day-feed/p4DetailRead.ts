@@ -29,6 +29,7 @@ export async function loadP4Detail(
     read(id: string): Promise<Read>;
     repository(): Promise<ManualRentalRepository>;
     generation(): number;
+    onReadable?(state: P4DetailState): void;
   },
 ): Promise<P4DetailState | null> {
   const { tripId, itemId, generation } = input;
@@ -75,6 +76,7 @@ export async function loadP4Detail(
     ...(typeof item.description === "string" ? { note: item.description } : {}),
   };
   if (accepted?.source.localTargetIds?.includes(itemId)) presentation.pending = true;
+  if (current()) ports.onReadable?.({ ...input, presentation, editor: null });
   let editor: P4DetailState["editor"] = null;
   try {
     const repository = await ports.repository();

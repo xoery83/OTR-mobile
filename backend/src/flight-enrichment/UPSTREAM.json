@@ -1,0 +1,6 @@
+{
+  "commit": "9024307b86b1002219d7daa77522e61d88b6400f",
+  "archiveSha256": "a31aeb4636fc2fc9ffe7ef9d540a8d96e77ab5b9c898a762ca1bb114ef38da3c",
+  "manifestSha256": "a16ac95a40027fcc70a1008670d9ce5519ac9706b4be7b395da47fefeb410cce",
+  "adaptation": "Extensionless relative imports; contracts shared with Native. No Host runtime composition or live credentials."
+}

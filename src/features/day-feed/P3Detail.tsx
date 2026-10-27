@@ -45,7 +45,7 @@ export function P3Detail() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      setState(null);
+      setState((previous) => (previous ? { ...previous, editor: null } : null));
       setFailed(false);
       setEditing(false);
       void loadP3Detail(
@@ -64,13 +64,19 @@ export function P3Detail() {
           read: async (id) => (await readTripDayFeed()).trip(id),
           repository: createDefaultManualStayRepository,
           generation: getAccountGeneration,
+          onReadable: (next) => {
+            if (active && generation === getAccountGeneration()) setState(next);
+          },
         },
       )
         .then((next) => {
           if (active && next) setState(next);
         })
         .catch(() => {
-          if (active && generation === getAccountGeneration()) setFailed(true);
+          if (active && generation === getAccountGeneration()) {
+            setState(null);
+            setFailed(true);
+          }
         });
       return () => {
         active = false;

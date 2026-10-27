@@ -981,7 +981,7 @@ it("Today reuses only same Trip/generation saved zone and rejects stale local so
   ).rejects.toThrow("LOCAL_NAV_UNAVAILABLE");
   expect(state.navigate).not.toHaveBeenCalled();
 });
-it("local Day Stay opens native detail after owning reread and leaves no stale inline preview", async () => {
+it("current local Day Stay routes directly to owning detail without redundant source rereads", async () => {
   state.result.observed = null;
   state.result.localManual = localRead();
   state.routeMode = "day";
@@ -991,11 +991,7 @@ it("local Day Stay opens native detail after owning reread and leaves no stale i
   const feed = find(await loaded(), DayFeed);
   feed.onOpenLocalItem("manual-hotel", localRead());
   for (let i = 0; i < 24; i++) await Promise.resolve();
-  expect(state.resolveLocalItem).toHaveBeenCalledWith(
-    reference,
-    "manual-hotel",
-    expect.objectContaining({ scope: localRead().scope, source: localRead().source }),
-  );
+  expect(state.resolveLocalItem).not.toHaveBeenCalled();
   expect(state.push).toHaveBeenCalledWith({
     pathname: "/p3-detail",
     params: { tripId: reference, itemId: "manual-hotel", occurrence: "BASE" },
@@ -1310,7 +1306,7 @@ it("routes a current local P1 to the native detail without inventing Edit author
   await workspace.onOpenLocalHomeItem(reference, "manual-plan", localRead());
   expect(state.push).toHaveBeenCalledWith({
     pathname: "/p1-detail",
-    params: { tripId: reference, itemId: "manual-plan" },
+    params: { tripId: reference, itemId: "manual-plan", occurrence: "START" },
   });
   expect(find(render(), "LocalItemPreview")).toBeNull();
   expect(find(render(), "PlanEditor")).toBeNull();

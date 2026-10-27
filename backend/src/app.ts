@@ -1,3 +1,5 @@
+import { createFlightEnrichmentBoundary } from "./flight-enrichment/hostBoundary";
+import type { createFlightEnrichmentService } from "./flight-enrichment/service";
 import { tripPersonCloudCreateBoundary, type TripPersonCloudCreatePort } from "./tripPersonCloudCreateHttp";
 import { universalOriginalSourceBoundary, createUniversalOriginalSourceConnection } from "./universalOriginalSource";
 import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
@@ -616,6 +618,8 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  flightEnrichmentService?: ReturnType<typeof createFlightEnrichmentService>;
+  flightEnrichmentEnabled?: boolean;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   universalImportPort?: UniversalPort;
   universalOriginalSourcePort?: ReturnType<typeof createUniversalOriginalSourceConnection>;
@@ -2368,6 +2372,8 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  flightEnrichmentService,
+  flightEnrichmentEnabled = false,
   tripPersonCloudCreatePort,
   universalImportPort,
   universalOriginalSourcePort,
@@ -2462,7 +2468,24 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (/^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)) {
+      if (/^\/v1\/trips\/[^/]+\/flight-enrichment(?:\/capabilities)?$/.test(url.pathname)) {
+        route = "/v1/trips/:tripId/flight-enrichment";
+        response = (await createFlightEnrichmentBoundary({
+          service: flightEnrichmentService,
+          enabled: flightEnrichmentEnabled,
+          resolve: async (req, tripId) => {
+            const actor = await authorizeRead(req, gateway, tripId);
+            return {
+              accountId: actor.id, actorId: actor.id, tripId, authFence: requestId,
+              assertCurrent: async () => {
+                req.signal.throwIfAborted();
+                const current = await authorizeRead(req, gateway, tripId);
+                if (current.id !== actor.id) throw new Error("ENRICHMENT_AUTH_CHANGED");
+              },
+            };
+          },
+        })(request))!;
+      } else if (/^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)) {
         route = "/v2/import-batches/:batchId/interpretations";
         const actor = await authenticate(request, gateway);
         response = await universalBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalImportPort);

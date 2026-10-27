@@ -84,3 +84,26 @@ it("binds Edit to the exact Repository draft rather than granting it from readab
   expect(repository.read).toHaveBeenCalledWith(tripId, itemId, 1);
   expect(result?.editor).toEqual({ repository, draft });
 });
+
+it("publishes validated readable content before slow edit qualification", async () => {
+  const ports = { read: async () => context(), repository: vi.fn(), generation: () => 5 };
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const onReadable = vi.fn();
+  const result = loadP3Detail(input, {
+    ...ports,
+    repository: async () => {
+      await gate;
+      throw Error("closed");
+    },
+    onReadable,
+  });
+  for (let i = 0; i < 6; i++) await Promise.resolve();
+  expect(onReadable).toHaveBeenCalledWith(
+    expect.objectContaining({ itemId, editor: null }),
+  );
+  release();
+  expect((await result)?.editor).toBeNull();
+});

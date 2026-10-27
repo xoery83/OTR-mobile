@@ -1,3 +1,5 @@
+import { flightAirportContext } from "./flightAirportActions";
+import { useMinuteClock } from "./useMinuteClock";
 import { Pressable, StyleSheet, View } from "react-native";
 import { UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -50,6 +52,8 @@ export function FlightLegRow({
   useUiLocale();
   const s = useThemedStyles(styles);
   const active = context === "FUTURE" || context === "TODAY";
+  const map = leg.map;
+  const navigate = leg.navigate;
   const flightLabel =
     "authored" in leg.flight
       ? leg.flight.authored.flightNumberLiteral
@@ -102,10 +106,10 @@ export function FlightLegRow({
             </View>
             <View style={s.icons}>
               <BookingGlyph kind="detail" onPress={onOpen} />
-              {active && (context === "TODAY" ? leg.navigate : leg.map) ? (
+              {active && (context === "TODAY" ? navigate : map) ? (
                 <BookingGlyph
                   kind={context === "TODAY" ? "navigate" : "map"}
-                  onPress={(context === "TODAY" ? leg.navigate : leg.map)!}
+                  onPress={(context === "TODAY" ? navigate : map)!}
                 />
               ) : null}
             </View>
@@ -121,10 +125,12 @@ type SingleFlightLeg = Omit<FlightLegRead, "flight"> & {
   pending?: boolean;
 };
 export function FlightJourneyView(
-  props:
+  props: (
     | { journey: FlightJourneyRead }
-    | { single: SingleFlightLeg; facts: BookingAssociations },
+    | { single: SingleFlightLeg; facts: BookingAssociations }
+  ) & { instant?: string },
 ) {
+  const clock = useMinuteClock(null);
   const journey = "journey" in props ? props.journey : null;
   const facts = "facts" in props ? props.facts : props.journey;
   useUiLocale();
@@ -159,46 +165,68 @@ export function FlightJourneyView(
         </UiText>
       </View>
       <View style={s.legs}>
-        {legs.map((leg, index) => (
-          <View key={leg.id}>
-            {index ? <View style={s.divider} /> : null}
-            <FlightFidelityGrid
-              flight={leg.flight}
-              immersive
-              pending={"pending" in leg && leg.pending}
-            />
-            <View style={s.services}>
-              {("authored" in leg.flight ? [] : leg.flight.services).map((service, i) => (
-                <UiText key={i} style={s.service}>
-                  {t(
-                    service.attribution === "MARKETING"
-                      ? "bookingRead.marketing"
-                      : "bookingRead.operating",
-                    { number: service.service_literal },
-                  )}
-                </UiText>
-              ))}
-              {leg.seats?.length ? (
-                <UiText style={s.meta}>
-                  {t("bookingRead.seat")}{" "}
-                  <UiText style={s.value}>{leg.seats.join(", ")}</UiText>
+        {legs.map((leg, index) => {
+          const context = flightAirportContext(
+            leg.flight,
+            props.instant ?? clock.instant,
+          );
+          const action =
+            context === "TODAY"
+              ? leg.navigate
+              : context === "FUTURE"
+                ? leg.map
+                : undefined;
+          return (
+            <View key={leg.id}>
+              {index ? <View style={s.divider} /> : null}
+              <FlightFidelityGrid
+                flight={leg.flight}
+                immersive
+                pending={"pending" in leg && leg.pending}
+              />
+              <View style={s.services}>
+                {("authored" in leg.flight ? [] : leg.flight.services).map(
+                  (service, i) => (
+                    <UiText key={i} style={s.service}>
+                      {t(
+                        service.attribution === "MARKETING"
+                          ? "bookingRead.marketing"
+                          : "bookingRead.operating",
+                        { number: service.service_literal },
+                      )}
+                    </UiText>
+                  ),
+                )}
+                {leg.seats?.length ? (
+                  <UiText style={s.meta}>
+                    {t("bookingRead.seat")}{" "}
+                    <UiText style={s.value}>{leg.seats.join(", ")}</UiText>
+                  </UiText>
+                ) : null}
+              </View>
+              {action ? (
+                <View style={s.icons}>
+                  <BookingGlyph
+                    kind={context === "TODAY" ? "navigate" : "map"}
+                    onPress={action}
+                  />
+                </View>
+              ) : null}
+              {journey?.legs[index + 1] &&
+              flightConnectionMinutes(journey.legs[index], journey.legs[index + 1]) !==
+                null ? (
+                <UiText style={s.connection}>
+                  {t("bookingRead.connection", {
+                    minutes: flightConnectionMinutes(
+                      journey.legs[index],
+                      journey.legs[index + 1],
+                    )!,
+                  })}
                 </UiText>
               ) : null}
             </View>
-            {journey?.legs[index + 1] &&
-            flightConnectionMinutes(journey.legs[index], journey.legs[index + 1]) !==
-              null ? (
-              <UiText style={s.connection}>
-                {t("bookingRead.connection", {
-                  minutes: flightConnectionMinutes(
-                    journey.legs[index],
-                    journey.legs[index + 1],
-                  )!,
-                })}
-              </UiText>
-            ) : null}
-          </View>
-        ))}
+          );
+        })}
       </View>
       <BookingCommonFooter
         facts={{

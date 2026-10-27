@@ -1,0 +1,72 @@
+{
+  "note": "Historical extraction replay using minimal public-source excerpts; not independent ground truth or licensed shared-cache material. No new queries.",
+  "request": {
+    "version": "otr-flight-enrichment/1",
+    "requestId": "replay1",
+    "idempotencyKey": "replay1",
+    "mode": "CREATE",
+    "draft": {
+      "id": "replay",
+      "revision": 1
+    },
+    "flightNumber": "NZ101",
+    "departureLocalDate": "2026-10-27",
+    "knownFields": {}
+  },
+  "result": {
+    "proposal": {
+      "status": "PARTIAL",
+      "fields": {
+        "departureAirport": {
+          "value": "AKL",
+          "evidenceId": "S1",
+          "quote": "AKL Auckland, New Zealand",
+          "applicableFrom": "2026-10-27",
+          "applicableTo": "2026-10-27",
+          "dateEvidenceQuote": "2026年 10月 27日 (周二)"
+        },
+        "arrivalAirport": {
+          "value": "SYD",
+          "evidenceId": "S1",
+          "quote": "SYD 澳大利亚 悉尼 AU",
+          "applicableFrom": "2026-10-27",
+          "applicableTo": "2026-10-27",
+          "dateEvidenceQuote": "2026年 10月 27日 (周二)"
+        },
+        "departureLocalDate": {
+          "value": "2026-10-27",
+          "evidenceId": "S1",
+          "quote": "2026年 10月 27日 (周二)",
+          "applicableFrom": "2026-10-27",
+          "applicableTo": "2026-10-27",
+          "dateEvidenceQuote": "2026年 10月 27日 (周二)"
+        },
+        "departureLocalTime": {
+          "value": "06:50",
+          "evidenceId": "S1",
+          "quote": "计划 06:50 NZDT",
+          "applicableFrom": "2026-10-27",
+          "applicableTo": "2026-10-27",
+          "dateEvidenceQuote": "2026年 10月 27日 (周二)"
+        },
+        "arrivalLocalTime": {
+          "value": "08:35",
+          "evidenceId": "S1",
+          "quote": "计划 08:35 AEDT",
+          "applicableFrom": "2026-10-27",
+          "applicableTo": "2026-10-27",
+          "dateEvidenceQuote": "2026年 10月 27日 (周二)"
+        }
+      },
+      "candidates": []
+    },
+    "evidence": [
+      {
+        "id": "S1",
+        "url": "https://es.flightaware.com/live/flight/ANZ101/history/20261026/1800Z/NZAA/YSSY",
+        "observedAt": "2026-10-26T22:06:41.936987Z",
+        "text": "AKL Auckland, New Zealand\nSYD 澳大利亚 悉尼 AU\n2026年 10月 27日 (周二)\n计划 06:50 NZDT\n计划 08:35 AEDT"
+      }
+    ]
+  }
+}

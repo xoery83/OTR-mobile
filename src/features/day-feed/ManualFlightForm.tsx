@@ -1,3 +1,4 @@
+import { FlightEnrichmentAction } from "./FlightEnrichmentAction";
 import {
   useCallback,
   useEffect,
@@ -260,6 +261,37 @@ export function ManualFlightForm({
             ) : null}
             <FlightSegmentFields
               value={segment}
+              lookupAction={
+                <>
+                  <FlightEnrichmentAction
+                    tripId={tripId}
+                    value={segment}
+                    editing={Boolean(itemId)}
+                    disabled={frozen}
+                    onApply={(changes) => {
+                      if (!mutable()) return;
+                      publish(
+                        fields.current.map((entry) =>
+                          entry.key === segment.key
+                            ? { ...entry, ...changes, key: entry.key }
+                            : entry,
+                        ),
+                      );
+                      setFull(true);
+                    }}
+                  />
+                  {!full ? (
+                    <UiButton
+                      label={t("manualFlight.manualDetails")}
+                      variant="secondary"
+                      disabled={frozen}
+                      onPress={() => {
+                        if (mutable()) setFull(true);
+                      }}
+                    />
+                  ) : null}
+                </>
+              }
               full={full}
               disabled={frozen}
               participantOptions={participantOptions}
@@ -286,19 +318,6 @@ export function ManualFlightForm({
           </View>
         ))
       )}
-      {!full ? (
-        <>
-          <UiText style={styles.meta}>{t("manualFlight.lookupUnavailable")}</UiText>
-          <UiButton
-            label={t("manualFlight.manualDetails")}
-            variant="secondary"
-            disabled={frozen}
-            onPress={() => {
-              if (mutable()) setFull(true);
-            }}
-          />
-        </>
-      ) : null}
       <UiButton
         label={t("manualFlight.addFlight")}
         variant="text"

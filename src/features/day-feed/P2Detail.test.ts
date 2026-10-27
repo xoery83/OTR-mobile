@@ -14,6 +14,12 @@ const state = vi.hoisted(() => ({
   outcome: vi.fn(),
   push: vi.fn(),
 }));
+vi.mock("./useMinuteClock", () => ({
+  useMinuteClock: () => ({
+    instant: "2026-10-27T00:00:00Z",
+    deviceZone: "Pacific/Auckland",
+  }),
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useCallback: (fn: any) => fn,

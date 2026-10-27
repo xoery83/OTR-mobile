@@ -47,7 +47,7 @@ export function P4Detail() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      setState(null);
+      setState((previous) => (previous ? { ...previous, editor: null } : null));
       setFailed(false);
       setEditing(false);
       void loadP4Detail(
@@ -61,13 +61,19 @@ export function P4Detail() {
           read: async (id) => (await readTripDayFeed()).trip(id),
           repository: createDefaultManualRentalRepository,
           generation: getAccountGeneration,
+          onReadable: (next) => {
+            if (active && generation === getAccountGeneration()) setState(next);
+          },
         },
       )
         .then((next) => {
           if (active && next) setState(next);
         })
         .catch(() => {
-          if (active && generation === getAccountGeneration()) setFailed(true);
+          if (active && generation === getAccountGeneration()) {
+            setState(null);
+            setFailed(true);
+          }
         });
       return () => {
         active = false;

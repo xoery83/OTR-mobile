@@ -25,6 +25,7 @@ export async function loadP3Detail(
     read(id: string): Promise<Read>;
     repository(): Promise<ManualStayRepository>;
     generation(): number;
+    onReadable?(state: P3DetailState): void;
   },
 ): Promise<P3DetailState | null> {
   const { tripId, itemId, generation } = input;
@@ -58,6 +59,13 @@ export async function loadP3Detail(
   const presentation = localStayPresentation(item);
   if (!presentation) throw new Error("P3_UNAVAILABLE");
   if (accepted?.source.localTargetIds?.includes(itemId)) presentation.pending = true;
+  if (current())
+    ports.onReadable?.({
+      ...input,
+      presentation,
+      mapTargets: localStayMapTargets(item),
+      editor: null,
+    });
   let editor: P3DetailState["editor"] = null;
   try {
     const repository = await ports.repository();

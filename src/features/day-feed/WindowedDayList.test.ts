@@ -807,7 +807,7 @@ it("keeps missing zone/date-only rows and changes no business descriptor while r
   const before = JSON.stringify(rows);
   ref.current!.jumpToDayHeader(rows[89].date);
   rerender();
-  expect(state.props.data).toEqual([rows[89]]);
+  expect(state.props.data).toEqual(rows.slice(82));
   expect(JSON.stringify(rows)).toBe(before);
   expect(render.mock.calls.slice(-1)[0][0]).toBe(rows[89]);
 });
@@ -841,25 +841,12 @@ it("prepends at most one eight-row batch per drag despite a content-layout/overs
   expect(state.scrollToIndex).not.toHaveBeenCalled();
 });
 
-it("prefetches eight sparse dates on a real top drag even when a short final window emits no scroll", () => {
+it("a final-day jump retains an eight-row tail instead of a one-day list", () => {
   const { rows, ref, rerender } = setup(100);
-  state.nativeHeight = 874;
   ref.current!.jumpToDayHeader(rows[89].date);
-  mount(rows[89], 0, 100);
-  state.props.onContentSizeChange(390, 727.67);
-  visible(rows[89], 0);
-  flushFrames();
   rerender();
-  const listKey = state.props.key;
-  expect(state.props.data[0]).toBe(rows[89]);
-  state.props.onScrollBeginDrag();
-  state.props.onScrollEndDrag();
-  rerender();
-  expect(state.props.data[0]).toBe(rows[81]);
-  expect(state.props.data[8]).toBe(rows[89]);
-  expect(state.props.key).toBe(listKey);
-  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
-  expect(state.scrollToOffset).not.toHaveBeenCalled();
+  expect(state.props.data).toEqual(rows.slice(82));
+  expect(state.props.data.at(-1)).toBe(rows[89]);
 });
 
 it("waits until scrolling reaches the top threshold when a gesture begins farther down", () => {
@@ -1008,8 +995,13 @@ it("native status-bar scroll-to-top prepends a sparse batch without a drag or li
   expect(state.props.data[0]).toBe(rows[66]);
   expect(state.props.data[8]).toBe(rows[74]);
   expect(state.props.key).toBe(listKey);
-  expect(state.props.maintainVisibleContentPosition).toEqual({ minIndexForVisible: 0 });
+  expect(state.props.maintainVisibleContentPosition).toBeUndefined();
   state.props.onContentSizeChange(390, 4000);
+  expect(state.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: 4000,
+    animated: false,
+  });
+  flushFrames();
   expect(state.scrollToOffset).toHaveBeenLastCalledWith({ offset: 0, animated: true });
   state.props.onScrollToTop();
   rerender();
@@ -1047,5 +1039,19 @@ it("a deliberate new drag cancels a pending status-bar reposition", () => {
   rerender();
   state.scrollToOffset.mockClear();
   state.props.onContentSizeChange(390, 4000);
+  expect(state.scrollToOffset).not.toHaveBeenCalled();
+});
+
+it("does not animate a committed status-bar prefix after another drag cancels it", () => {
+  const { rows, ref, rerender } = setup();
+  ref.current!.jumpToDayHeader(rows[74].date);
+  reach(rows[74], 0);
+  rerender();
+  state.props.onScrollToTop();
+  rerender();
+  state.props.onContentSizeChange(390, 4000);
+  state.props.onScrollBeginDrag();
+  state.scrollToOffset.mockClear();
+  flushFrames();
   expect(state.scrollToOffset).not.toHaveBeenCalled();
 });
