@@ -70,3 +70,61 @@ Only after accepted geographic identity and shared-safe eligibility are present
 may the Native Header resolver consume them. Raw address parsing, first Trip
 destination, WHOLE_GROUP-as-visibility and private-to-shared location reuse remain
 forbidden. The existing exact fallbacks and Daily Base fix are retained.
+
+## Complete serial candidate — supersedes the authored-only patch
+
+Native metadata source is fixed at `7a546aff9cf60cd800243201a693b256c43fcc35`.
+Use **`FORMAL_P3_PLACE_SAVE_AND_HEADER.patch` alone**, after that Native commit;
+do not apply it on top of the historical authored-only patch. The active Native
+product tree still contains neither shared change. This file is the concrete
+unique-writer review/install candidate, not a request to redesign the subsystem.
+
+The combined patch supplies the remaining vertical path:
+
+1. Existing Manual Save accepts either a raw attributed Draft (authored-only) or
+   the explicit `ACCEPT_SELECTED_APPLE_PLACE_V1` reviewed-Save intent. Only the
+   latter commits selected address/components and paired coordinates into the
+   existing accepted fields. It repeats exact Trip/Item/Account generation/address
+   binding, then uses the unchanged Actor/CAS/manual-batch/queue boundary. The
+   first attempt pins the metadata and acceptance choice for exact retry.
+2. Native supplies that explicit intent only from the existing Save action after
+   the user selected the resolved target. No provider callback, refresh or mere
+   Draft presence promotes it. This is a proposed owning interpretation of
+   B-T1/B-T3C's **explicit reviewed manual acceptance**, requiring the unique
+   writer's policy/code review before installation. Provenance says user-reviewed
+   planned target, never server-verified address or actual visit. Opaque Apple ID
+   remains a provider reference; `accepted_place_id` remains null.
+3. Existing Core read projection exposes its committed structured geography,
+   provenance/input revision and explicit visibility. The pure Header adapter
+   accepts this supported manual provenance only when bound to that same current
+   input revision. A country-qualified locality/region tuple distinguishes
+   homonyms without a new Place identity or table.
+4. The Header uses GROUP + WHOLE_GROUP visible, active P3 Stays only. It resolves
+   check-in/interior/checkout base, empty covered nights, same-city moves and
+   explicit same-day checkout A/check-in B routes. Competing/missing/stale facts
+   remain unresolved. Account generation, Trip/date, read object and locale fence
+   component-local memoization. Pending items replace the same accepted Item ID;
+   no cross-account derived-label cache or new business reader is created.
+
+Old address-only rows cannot magically gain geography: normal Edit → reselect a
+resolved hotel/address → Save is needed after serial installation. Private or
+selected-member Stays still cannot supply a shared Header city. Other Import
+provenance, explicit Day destinations, P1 activity and ordered transport routes
+remain outside this bounded manual-P3 selector until their owning projections are
+qualified; nothing is inferred from addresses, names or codes.
+
+### Final isolated validation
+
+The combined patch is applied only in a disposable materialized source copy;
+active product authority files remain unchanged. **Eight suites / 180 assertions
+PASS**, typecheck, UI guard, scoped ESLint and Prettier PASS. The set includes real
+in-memory SQLite Manual Save → the existing Core/queue → normal Day Feed Reader
+→ Header selector: raw Draft stays unresolved; explicit reviewed Save reads back
+Nelson from the committed same Item with one queue operation. Exact retry,
+changed-metadata rejection and foreign-Item binding rejection pass. Header tests
+cover privacy, stale revision, homonyms, competing stays, empty night, checkout,
+same-city/cross-city transition and local-over-accepted identity overlay.
+
+This is **LOCAL candidate validation**, not installed Native acceptance, Hosted
+Backend E2E, Supabase readback or Cloud L3. Existing P3 write gates and the owning
+Backend contract remain in effect. No GUI/device/Metro/DEV operation was used.

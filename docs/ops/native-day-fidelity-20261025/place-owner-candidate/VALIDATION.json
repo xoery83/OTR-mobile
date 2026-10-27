@@ -1,0 +1,34 @@
+{
+  "nativeMetadataCommit": "7a546aff9cf60cd800243201a693b256c43fcc35",
+  "patch": "FORMAL_P3_PLACE_SAVE_AND_HEADER.patch",
+  "patchSha256": "7cc42fc610216039cd3ac38f27f173c0ab89efb5481f86a82370481f6fee0f79",
+  "status": "PATCH_ONLY_NOT_INSTALLED",
+  "validation": {
+    "nativePrimary": {
+      "suites": 6,
+      "assertions": 59,
+      "swiftZeroQueryAssertions": 4,
+      "typecheck": "PASS",
+      "uiGuard": "PASS",
+      "scopedLint": "PASS"
+    },
+    "isolatedCombinedCandidate": {
+      "suites": 8,
+      "assertions": 180,
+      "typecheck": "PASS",
+      "uiGuard": "PASS",
+      "scopedLint": "PASS",
+      "format": "PASS",
+      "applyCheck": "PASS",
+      "queueAndReader": "LOCAL_SQLITE_SYNTHETIC_PASS"
+    }
+  },
+  "nativeVision": "NOT_RUN",
+  "hostedCloud": "NOT_RUN",
+  "publicAuthorityFilesInPrimary": "UNCHANGED",
+  "limits": [
+    "unique Writer must review explicit Save acceptance policy and install serially",
+    "selector supports qualified manual P3 group Stays only",
+    "old address-only records require normal reselect plus Save; no text inference"
+  ]
+}
