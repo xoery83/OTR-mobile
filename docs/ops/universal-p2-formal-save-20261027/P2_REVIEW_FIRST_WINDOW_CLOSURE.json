@@ -1,0 +1,43 @@
+{
+  "status": "P2_FIRST_WINDOW_CLOSED_WITHOUT_ACTIVATION",
+  "gateCommit": "7129efe31f57a77e3b61f78bf5c8cf42b3368fa2",
+  "deadlineUnix": 1793078741.1076827,
+  "deadlineUTC": "2026-10-27T05:25:41.107683Z",
+  "remoteWatchdogPid": 1268181,
+  "firstFailure": "UNQUOTED_SQL_ALIAS_FOLDED_TO_LOWERCASE",
+  "actualFailingPolicyReadback": {
+    "airportsenabled": 0,
+    "enabled": false,
+    "scope": null
+  },
+  "fixedPolicyReadback": {
+    "airportsEnabled": 0,
+    "enabled": false,
+    "scope": null
+  },
+  "localArmRecovery": "REFUSED_ORIGINAL_DEADLINE_SAFETY_RESERVE",
+  "localWindowWritten": false,
+  "activationClaimed": false,
+  "sourcePublicationDispatched": false,
+  "coreCreateDispatched": false,
+  "providerCalls": 0,
+  "newInputObjects": 0,
+  "remoteRearmed": false,
+  "closure": {
+    "status": "P2_SCOPE_CLOSED_RUNTIME_DEFAULT_RESTORED",
+    "at": "2026-10-27T05:19:40.848219Z",
+    "policy": {
+      "airportsEnabled": 0,
+      "enabled": false,
+      "scope": null
+    },
+    "runtime": {
+      "status": "ROLLBACK_VERIFIED",
+      "containerId": "c5072bea46ccae9d9ad4eccae19908d02d0c84366dbb98c3d8bb7e709f43481e",
+      "imageId": "sha256:77c7055e5dea1e89ac2e595e6890058ec7b14689105d692143a56e65d566dbef"
+    },
+    "businessRecordsDeleted": 0
+  },
+  "independentAliasReview": "NO_BLOCKER",
+  "actualP2Save": "NOT_RUN"
+}

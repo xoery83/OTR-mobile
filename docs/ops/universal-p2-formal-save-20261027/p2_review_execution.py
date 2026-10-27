@@ -20,7 +20,7 @@ def source_sql(name):
 
 def transport(root):return SqlTransport('/Users/xoery/Project/otr-mobile/node_modules/.bin/supabase',str(LINKED),str(root))
 def observe(sql):
- rows=sql("BEGIN READ ONLY;SELECT universal_p1_import_enabled AS enabled,universal_p1_review_scope AS scope,(SELECT count(*)::int FROM public.trip_core_airport_identities WHERE registry_version='otr-dev-universal-p2-airports/20261027/1' AND enabled) AS airportsEnabled FROM public.trip_sustained_dev_policy WHERE actor_account_id='"+ACTOR+"';ROLLBACK;")['rows']
+ rows=sql("BEGIN READ ONLY;SELECT universal_p1_import_enabled AS enabled,universal_p1_review_scope AS scope,(SELECT count(*)::int FROM public.trip_core_airport_identities WHERE registry_version='otr-dev-universal-p2-airports/20261027/1' AND enabled) AS \"airportsEnabled\" FROM public.trip_sustained_dev_policy WHERE actor_account_id='"+ACTOR+"';ROLLBACK;")['rows']
  if len(rows)!=1:raise ValueError('P2_POLICY_NOT_UNIQUE')
  return rows[0]
 def remote(mode):
@@ -77,6 +77,9 @@ def main():
     else:raise AssertionError('CLOSED_WINDOW_REOPENED')
     assert len(calls)==before and not (root/'activation-claimed.json').exists()
   finally:globals()['transport'],globals()['remote']=original_transport,original_remote
+  observed_queries=[]
+  assert observe(lambda text:(observed_queries.append(text) or {'rows':[{'enabled':False,'scope':None,'airportsEnabled':0}]}))=={'enabled':False,'scope':None,'airportsEnabled':0}
+  assert 'AS \"airportsEnabled\"' in observed_queries[0]
   state={'enabled':False,'scope':None,'airportsEnabled':0}
   def active_sql(text):
    if 'DO $arm$' in text:
