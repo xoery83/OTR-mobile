@@ -1,0 +1,54 @@
+{
+  "sql": {
+    "at": "2026-10-27 23:09:37.225046+00",
+    "functions": {
+      "trip_core_guard_historical_source_association": {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "020142f091e49cb30ced7b6c392ffe17",
+        "oid": "65660",
+        "owner": "postgres"
+      },
+      "trip_sustained_import_p1_capabilities": {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "04641fb76fb01aa658c8260c8a77e4c9",
+        "oid": "66408",
+        "owner": "postgres"
+      },
+      "trip_sustained_import_p1_guard": {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "89e6e249f6b450ecb23a78bcd1a79c3c",
+        "oid": "66410",
+        "owner": "postgres"
+      }
+    },
+    "policy": {
+      "enabled": false,
+      "scope": null
+    }
+  },
+  "checks": {
+    "policyClosed": true,
+    "threeFunctionIdentitiesUnchanged": true,
+    "allSevenSetsMatchFirstAndRepeat": true
+  },
+  "businessSnapshotEvidence": "/private/tmp/otr-p6-reviewer-post-close-snapshot.json",
+  "devWrites": 0,
+  "actorSet": false,
+  "runtime": {
+    "at": "2026-10-27T23:09:48.603701+00:00",
+    "earlyClosed": {
+      "status": "ROLLBACK_VERIFIED",
+      "containerId": "2fd9deeccc12fe44753f8ad780b270f087803018064f7327cc8005a05e178d47",
+      "imageId": "sha256:291156be981b215f420694c91c2471d83eca5b5206dc90ada287f8429f31795d"
+    },
+    "checks": {
+      "defaultHealthy": true,
+      "closedFlags": true,
+      "reviewStopped": true,
+      "terminalMarker": true,
+      "watchSkip": true
+    }
+  },
+  "status": "CLOSED_VERIFIED",
+  "nativeGuiNotIndependentlyObserved": true
+}
