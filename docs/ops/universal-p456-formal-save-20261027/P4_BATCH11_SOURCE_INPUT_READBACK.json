@@ -1,0 +1,19 @@
+{
+  "batchId": "463ef68b-5bc3-4ded-b4e1-0bdfb84d6ff9",
+  "inputs": [
+    {
+      "byte_count": 101,
+      "historical_selection": false,
+      "id": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+      "material_revision": 1,
+      "observed_source_row_revision": 1,
+      "payload_sha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+      "representation_id": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+      "source_id": "c64b3086-5ab9-4132-afd2-629a84854b64"
+    }
+  ],
+  "runId": "a1ca4b17-2198-858e-a186-22541aff82ad",
+  "submissionSha256": "ceee4b9b00af60d590cea1275ba9a4ca296833cad88f0ee6b3a81a9c4b15db46",
+  "taskId": "28435c7a-8cc9-83a4-9c57-b2d7700ac0e7",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+}

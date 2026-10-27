@@ -387,16 +387,21 @@ it("offers the explicit P2 literal/date review only under its own opt-in, withou
   expect(flight.presentationTier).toBe("INCOMPLETE");
 });
 
-it.each([true, false])(
-  "offers explicit Rental review with optional return (%s) under its own opt-in",
-  (hasReturn) => {
+it.each([
+  [true, "title"],
+  [false, "title"],
+  [true, "rental.company"],
+  [false, "agency.name"],
+] as const)(
+  "offers explicit Rental review with optional return %s and evidenced name %s under its own opt-in",
+  (hasReturn, titlePath) => {
     const f = fixture(),
       rental = f.result.candidates[0];
     Object.assign(rental, {
       kind: "P4",
       subtype: "RENTAL_CAR",
       fields: [
-        f.evidence("S0", "title", "Harbour QA Rental"),
+        f.evidence("S0", titlePath, "Harbour QA Rental"),
         f.evidence("S0", "pickup.date", "2026-11-03"),
         ...(hasReturn ? [f.evidence("S0", "return.date", "2026-11-05")] : []),
       ],

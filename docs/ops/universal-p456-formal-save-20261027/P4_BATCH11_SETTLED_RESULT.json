@@ -1,0 +1,159 @@
+{
+  "http": 200,
+  "result": {
+    "version": "otr.backend.universal-interpretation/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "463ef68b-5bc3-4ded-b4e1-0bdfb84d6ff9",
+    "taskId": "28435c7a-8cc9-83a4-9c57-b2d7700ac0e7",
+    "requestSha256": "af118bd93e09b7aaa2a99cf8f5da52f3f4cfe39089b82735cd223ca6b0859a09",
+    "promptVersion": "real-llm-01-compact/5",
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "b3b3059e-6f24-44ff-852f-d4c4d6108997",
+        "sourceId": "c64b3086-5ab9-4132-afd2-629a84854b64",
+        "representationId": "549556cf-8b14-47af-bd64-f7d3c80d7c51",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+        "submittedSha256": "cdb1f84e08969c8b417b0b47737a96d4353c3adb0871719ab79805cb02c5da2b",
+        "status": "READY"
+      }
+    ],
+    "formalReview": "NOT_RUN",
+    "admission": "NOT_RUN",
+    "canonicalWrites": false,
+    "status": "CANDIDATES_READY",
+    "providerOutcome": "SETTLED",
+    "providerReceipt": {
+      "requestId": "842567d6-6384-48a5-8900-e278b3ba2454",
+      "requestSha256": "838bcade7f29e493c22d2d750e80370e828c3648ab2d99ce11af87ee14259619",
+      "responseSha256": "6fc70cf811192b41260297727699898f2ccc638c83609a9ff253c2d2c4802017",
+      "usage": {
+        "input_tokens": 1531,
+        "output_tokens": 126,
+        "total_tokens": 1657,
+        "cached_input_tokens": 1280,
+        "reasoning_tokens": null,
+        "provider_extension": {
+          "prompt_cache_miss_tokens": 251
+        },
+        "usage_quality": "ACTUAL_REPORTED"
+      },
+      "costNanos": "234180"
+    },
+    "candidates": [
+      {
+        "id": "59dc13236d52b5cb7111005f",
+        "token": "i1",
+        "kind": "P4",
+        "subtype": "RENTAL_CAR",
+        "fields": [
+          {
+            "sourceId": "S0",
+            "path": "rental.company",
+            "raw": "COASTLINE QA MOTORS",
+            "start": 34,
+            "end": 53
+          },
+          {
+            "sourceId": "S0",
+            "path": "pickup.date",
+            "raw": "2026-11-02",
+            "start": 67,
+            "end": 77
+          },
+          {
+            "sourceId": "S0",
+            "path": "return.date",
+            "raw": "2026-11-03",
+            "start": 91,
+            "end": 101
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i1",
+          "kind": "P4",
+          "minimumFacts": "INCOMPLETE",
+          "missing": [
+            "TITLE"
+          ],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "INCOMPLETE"
+      }
+    ],
+    "bookingObservations": [],
+    "ticketObservations": [],
+    "quality": {
+      "decisions": [
+        {
+          "token": "i1",
+          "kind": "P4",
+          "tier": "HIGH_CONFIDENCE",
+          "reasons": [
+            "CORE_AND_FIELD_EVIDENCE_VERIFIED"
+          ],
+          "sourceIds": [
+            "S0"
+          ],
+          "fieldCount": 3
+        }
+      ],
+      "acceptedTokens": [
+        "i1"
+      ],
+      "reviewableTokens": [],
+      "abstainedTokens": [],
+      "formalQualification": "NOT_SCORABLE"
+    },
+    "minimumFacts": [
+      {
+        "token": "i1",
+        "kind": "P4",
+        "minimumFacts": "INCOMPLETE",
+        "missing": [
+          "TITLE"
+        ],
+        "createReady": false,
+        "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+      }
+    ],
+    "sourceObservations": [],
+    "advisoryStatus": "VALID",
+    "advisoryIssues": [],
+    "outputCoverage": "PARTIAL_COVERAGE",
+    "coverageGaps": [
+      {
+        "field": "P3-P6.image_advisory",
+        "reason": "INDEPENDENT_OCR_RECEIPT_UNAVAILABLE"
+      },
+      {
+        "field": "P5.dynamic_provider_label_value",
+        "reason": "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P5.dynamic_boarding_or_meeting_labels",
+        "reason": "FINITE_ROLE_LABELS_ONLY; PROVIDER-SPECIFIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P4.actual_vehicle_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; VEHICLE_PROOF_UNAVAILABLE"
+      },
+      {
+        "field": "P2.passenger_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; TRIP_PERSON_QUALIFIER_UNAVAILABLE"
+      }
+    ],
+    "unresolved": []
+  }
+}

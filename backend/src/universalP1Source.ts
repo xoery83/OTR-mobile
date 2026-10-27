@@ -116,13 +116,17 @@ export async function projectUniversalP1Selection(
       review &&
       "endLocalDate" in review &&
       review.endLocalDate !== undefined);
-  const names = facts(
+  const nameFacts = facts(
       family === "P3"
         ? ["property.name", "title"]
         : family === "P4"
-          ? ["title"]
+          ? candidate.fields.some((f) => f.path === "title")
+            ? ["title"]
+            : ["rental.company", "agency.name"]
           : ["activity.name", "title"],
     ),
+    // The installed Rental guard expects one title proof after alias agreement.
+    names = family === "P4" ? nameFacts.slice(0, 1) : nameFacts,
     dates = facts(
       family === "P3"
         ? ["check_in.date", "schedule.start.local_date"]

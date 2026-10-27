@@ -56,7 +56,9 @@ export function UniversalP1SourceReviewForm({
         : stay
           ? ["property.name", "title"]
           : rental
-            ? ["title"]
+            ? candidate.fields.some((f) => f.path === "title")
+              ? ["title"]
+              : ["rental.company", "agency.name"]
             : ["activity.name", "title"]
       ).includes(f.path),
     ),

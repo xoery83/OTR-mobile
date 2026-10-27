@@ -136,3 +136,65 @@ it("allows a same-day Rental and rejects a return before the actual pinned picku
   const reverse = await fixture("2026-11-06");
   await expect(reverse.run()).rejects.toThrow("INVALID_RENTAL_DATE_RANGE");
 });
+
+it("uses an evidenced rental company only as an explicitly reviewed display title when title is absent", async () => {
+  const f = await fixture();
+  const candidate = f.input.result.candidates[0] as {
+    fields: { path: string; raw: string }[];
+  };
+  candidate.fields = candidate.fields.filter((x) => x.path !== "title");
+  const company = candidate.fields.find((x) => x.path === "rental.company")!;
+  Object.assign(
+    (f.input.selection as unknown as { sourceReview: { title: string } }).sourceReview,
+    { title: company.raw },
+  );
+  const r = await f.run();
+  expect(r.body.plan.slots[0]).toMatchObject({
+    payload: { family: "P4", core: { title: company.raw } },
+  });
+  expect((r.body.plan.slots[0].payload as any).details).toBeUndefined();
+  expect(candidate.fields.some((x) => x.path === "title")).toBe(false);
+  Object.assign(
+    (f.input.selection as unknown as { sourceReview: { title: string } }).sourceReview,
+    { title: "Invented rental" },
+  );
+  await expect(f.run()).rejects.toThrow("SOURCE_REVIEW_MISMATCH");
+});
+
+it("rejects conflicting company/agency title fallbacks", async () => {
+  const f = await fixture();
+  const candidate = f.input.result.candidates[0] as {
+    fields: { path: string; raw: string }[];
+  };
+  candidate.fields = candidate.fields.filter((x) => x.path !== "title");
+  const company = candidate.fields.find((x) => x.path === "rental.company")!;
+  candidate.fields.push({ ...company, path: "agency.name", raw: "Different company" });
+  Object.assign(
+    (f.input.selection as unknown as { sourceReview: { title: string } }).sourceReview,
+    { title: company.raw },
+  );
+  await expect(f.run()).rejects.toThrow("INCOMPLETE_SOURCE_EVIDENCE");
+});
+
+it.each([true, false])(
+  "keeps one title proof for equal company/agency aliases (return=%s)",
+  async (withReturn) => {
+    const f = await fixture();
+    const candidate = f.input.result.candidates[0] as {
+      fields: { path: string; raw: string }[];
+    };
+    candidate.fields = candidate.fields.filter((x) => x.path !== "title");
+    const company = candidate.fields.find((x) => x.path === "rental.company")!;
+    candidate.fields.push({ ...company, path: "agency.name" });
+    const review = (
+      f.input.selection as unknown as {
+        sourceReview: { title: string; endLocalDate?: string };
+      }
+    ).sourceReview;
+    review.title = company.raw;
+    if (!withReturn) delete review.endLocalDate;
+    const r = await f.run();
+    expect(r.body.evidence).toHaveLength(withReturn ? 3 : 2);
+    expect(r.body.evidence.filter((e) => e.fieldKey === "ROOT.title")).toHaveLength(1);
+  },
+);
