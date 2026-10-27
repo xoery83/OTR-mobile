@@ -341,6 +341,10 @@ export function LocalManualDayRows({
         if (item && row.family === "P1")
           return (
             <LocalP1Row
+              context={context}
+              onInsert={
+                onInsert ? (side) => onInsert(row.itemRef, role, date, side) : undefined
+              }
               key={JSON.stringify(row.rowKey)}
               item={item}
               move={move}
@@ -463,6 +467,8 @@ function LocalStayRow({
   return move ? move.wrapRow(rowKey, date, content) : content;
 }
 function LocalP1Row({
+  context,
+  onInsert,
   item,
   occurrence,
   move,
@@ -472,6 +478,8 @@ function LocalP1Row({
   focused,
   onFocus,
 }: {
+  context: BookingContext;
+  onInsert?(side: "BEFORE" | "AFTER"): void;
   move?: P1MoveInteraction;
   rowKey: string;
   date: string;
@@ -486,6 +494,8 @@ function LocalP1Row({
   const content = presentation ? (
     <P1Row
       {...presentation}
+      context={context}
+      onInsert={onInsert}
       occurrence={occurrence}
       moveGesture={
         occurrence === "START" && move?.canMove(item.itemId)

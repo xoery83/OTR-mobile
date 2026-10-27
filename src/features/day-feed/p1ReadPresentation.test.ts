@@ -48,17 +48,19 @@ it("bounds Note by Unicode code points, not UTF-16 code units", () => {
   expect(p1NoteExcerpt("🌿".repeat(57))).toBe("🌿".repeat(56) + "…");
   expect(p1NoteExcerpt("Original note")).toBe("Original note");
 });
-it("insertion is exact START only, never Past/pending/Floating or demonstrably-ended Today", () => {
+it("insertion is dated START only, allows local civil clocks, never Past or demonstrably-ended Today", () => {
   const event = place("one", "Activity", "2027-01-16", "10:30", "12:00");
   const at = "2027-01-16T12:00:00Z";
-  expect(p1InsertionEligible(event, "START", "TODAY", at, false)).toBe(false);
-  expect(p1InsertionEligible(event, "START", "FUTURE", at, false)).toBe(true);
-  expect(p1InsertionEligible(event, "END", "FUTURE", at, false)).toBe(false);
-  expect(p1InsertionEligible(event, "START", "PAST", at, false)).toBe(false);
-  expect(p1InsertionEligible(event, "START", "FUTURE", at, true)).toBe(false);
+  expect(p1InsertionEligible(event, "START", "TODAY", at)).toBe(false);
+  expect(p1InsertionEligible(event, "START", "FUTURE", at)).toBe(true);
+  expect(p1InsertionEligible(event, "END", "FUTURE", at)).toBe(false);
+  expect(p1InsertionEligible(event, "START", "PAST", at)).toBe(false);
+  event.status = "cancelled";
+  expect(p1InsertionEligible(event, "START", "FUTURE", at)).toBe(false);
+  event.status = "planned";
   event.boundaries[0].instant = null;
   event.boundaries[0].source_instant = null;
-  expect(p1InsertionEligible(event, "START", "FUTURE", at, false)).toBe(false);
+  expect(p1InsertionEligible(event, "START", "FUTURE", at)).toBe(true);
 });
 
 it("fresh direct entry selects a covering interval or next qualified item, excluding pending and floating", () => {

@@ -183,11 +183,7 @@ export function P1Row({
         ? activeActions?.navigate
         : undefined;
   const insert =
-    focused &&
-    sourceEvent &&
-    instant &&
-    onInsert &&
-    p1InsertionEligible(sourceEvent, occurrence, context, instant, !!facts?.pending);
+    focused && onInsert && p1InsertionEligible(event, occurrence, context, instant);
   const countLabel = (kind: "photos" | "attachments" | "expenses") =>
     t(count[kind] === 1 ? `fidelity.${kind}.one` : `fidelity.${kind}`, {
       count: formatUiNumber(count[kind] ?? 0),
@@ -239,18 +235,7 @@ export function P1Row({
         )}
         style={styles.insertTarget}
         onPress={() => {
-          if (
-            sourceEvent &&
-            instant &&
-            p1InsertionEligible(
-              sourceEvent,
-              occurrence,
-              context,
-              instant,
-              !!facts?.pending,
-            )
-          )
-            onInsert?.(side);
+          if (insert) onInsert?.(side);
         }}
       >
         <AppIcon name="plus" size={12} color={colors.textSecondary} />

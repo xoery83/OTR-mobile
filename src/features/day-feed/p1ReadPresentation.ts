@@ -61,22 +61,25 @@ export function p1NoteExcerpt(note: string) {
   return points.length > 56 ? points.slice(0, 56).join("") + "…" : note;
 }
 export function p1InsertionEligible(
-  event: DayEvent,
+  event: Pick<DayEvent, "status"> & {
+    boundaries?: DayEvent["boundaries"];
+    clocks?: { start?: { local_date: string | null } };
+  },
   role: "START" | "END",
   context: string,
-  now: string,
-  pending: boolean,
+  now?: string,
 ) {
-  const start = event.boundaries.find((b) => b.role === "START"),
-    end = event.boundaries.find((b) => b.role === "END");
+  const startDate =
+    event.boundaries?.find((b) => b.role === "START")?.local_date ??
+    event.clocks?.start?.local_date;
+  const end = event.boundaries?.find((b) => b.role === "END");
   const finish = end && acceptedBoundaryAnchor(end);
   return (
     role === "START" &&
-    !pending &&
+    !["cancelled", "skipped"].includes(event.status) &&
     ["FUTURE", "TODAY"].includes(context) &&
-    start?.quality === "EXACT" &&
-    !!acceptedBoundaryAnchor(start) &&
-    !(context === "TODAY" && finish && Date.parse(finish) <= Date.parse(now))
+    !!startDate &&
+    !(context === "TODAY" && finish && now && Date.parse(finish) <= Date.parse(now))
   );
 }
 

@@ -2,6 +2,7 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { P1Row } from "./P1Row";
+import { LocalManualDayRows } from "./LocalManualDayFeed";
 import { place, boundary } from "@/features/day-feed-lab/fixtureFacts";
 import { lightPalette } from "@/ui/palette";
 const state = vi.hoisted(() => ({ nodes: [] as any[], scale: 1 }));
@@ -14,6 +15,12 @@ vi.mock("react-native", () => ({
   useWindowDimensions: () => ({ fontScale: state.scale }),
   StyleSheet: { create: (s: any) => s, hairlineWidth: 1 },
 }));
+vi.mock("./ScheduledTransportRow", () => ({ ScheduledTransportContent: () => null }));
+vi.mock("./RentalRow", () => ({ RentalContent: () => null }));
+vi.mock("./FlightJourneyView", () => ({ FlightLegRow: () => null }));
+vi.mock("./StayReadView", () => ({ StayReadRow: () => null }));
+vi.mock("./WindowedDayList", () => ({ WindowedDayList: () => null }));
+vi.mock("./TripCalendarField", () => ({ calendarDate: () => "2026-10-28" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 vi.mock("@/ui/controls", () => ({
@@ -215,4 +222,66 @@ it("Immersive keeps four common actions, disables missing capabilities and hides
   expect(node("Add expense")?.disabled).toBe(false);
   node("Add expense").onPress();
   expect(addExpense).toHaveBeenCalledOnce();
+});
+
+it.each(["TODAY", "FUTURE"] as const)(
+  "real pending local P1 %s Focus forwards both quick-add intents without a timezone",
+  (context) => {
+    const date = "2026-11-05";
+    const rowKey = { itemId: "local-p1", projectionRole: "START", localDate: date };
+    const row = {
+      itemRef: "local-p1",
+      rowKey,
+      family: "P1",
+      title: "City tour",
+      position: "TNS",
+    };
+    const item = {
+      itemId: "local-p1",
+      itemRevision: 1,
+      family: "P1",
+      status: "planned",
+      hidden: false,
+      title: "City tour",
+      localState: "PENDING",
+      participation: { mode: "WHOLE_GROUP", personIds: [] },
+      documentSummaries: [],
+      schedule: {
+        start: { localDate: date, localTime: "07:27:00", comparable: false },
+        end: { localDate: date, localTime: "09:28:00", comparable: false },
+      },
+    };
+    const onInsert = vi.fn();
+    renderToStaticMarkup(
+      createElement(LocalManualDayRows, {
+        read: { items: [item], rows: () => [row] } as any,
+        onlyRow: row as any,
+        date,
+        context,
+        p1Focus: JSON.stringify(rowKey),
+        onInsert,
+      }),
+    );
+    expect(node("Add above")).toBeDefined();
+    expect(node("Add below")).toBeDefined();
+    node("Add above").onPress();
+    node("Add below").onPress();
+    expect(onInsert.mock.calls).toEqual([
+      ["local-p1", "START", date, "BEFORE"],
+      ["local-p1", "START", date, "AFTER"],
+    ]);
+  },
+);
+it.each(["B", "I"] as const)("does not show quick-add outside Focus (%s)", (depth) => {
+  renderToStaticMarkup(
+    createElement(P1Row, {
+      event: event(),
+      depth,
+      context: "FUTURE",
+      onDepth: vi.fn(),
+      onInsert: vi.fn(),
+    }),
+  );
+  expect(node("Add above")).toBeUndefined();
+  expect(node("Add below")).toBeUndefined();
 });
