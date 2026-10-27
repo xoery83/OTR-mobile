@@ -1,0 +1,52 @@
+{
+  "status": "APPROVED_DORMANT_INSTALL_INDEPENDENT_READBACK_PASS",
+  "at": "2026-10-27T00:45:57.105282+00:00",
+  "ownerApprovedCommit": "ce2da465",
+  "twoIndependentEqualReads": true,
+  "database": {
+    "admin": {
+      "login": false,
+      "sessions": 0
+    },
+    "function": {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "666ff90bad5c706a6007691a3328df75",
+      "oid": "65546",
+      "owner": "postgres"
+    },
+    "policy": {
+      "p1P3": false,
+      "scope": null
+    },
+    "rows": [
+      {
+        "airport_code": "AKL",
+        "enabled": false,
+        "identity_id": "IATA_AIRPORT:AKL",
+        "issuer": "IATA",
+        "namespace": "IATA_AIRPORT",
+        "registry_sha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+        "registry_version": "otr-dev-universal-p2-airports/20261027/1",
+        "valid_from": "2026-11-02",
+        "valid_until": "2026-11-02"
+      },
+      {
+        "airport_code": "CHC",
+        "enabled": false,
+        "identity_id": "IATA_AIRPORT:CHC",
+        "issuer": "IATA",
+        "namespace": "IATA_AIRPORT",
+        "registry_sha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+        "registry_version": "otr-dev-universal-p2-airports/20261027/1",
+        "valid_from": "2026-11-02",
+        "valid_until": "2026-11-02"
+      }
+    ]
+  },
+  "health": 200,
+  "providerCalls": 0,
+  "newObjects": 0,
+  "rowActivation": false,
+  "p2SaveAuthority": false,
+  "rollbackNeeded": false
+}
