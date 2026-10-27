@@ -1,0 +1,145 @@
+{
+  "status": "PREFLIGHT_PASS",
+  "scope": "Fixed authorized DEV QA P2 READY exact read-only SQL preflight",
+  "devBusinessWrites": 0,
+  "liveActorSet": false,
+  "containerOperations": 0,
+  "checks": {
+    "function_count": true,
+    "flight_activation_reserve_call(jsonb,jsonb)": true,
+    "trip_core_finite_read_state_guard()": true,
+    "trip_core_guard_historical_source_association()": true,
+    "trip_core_guard_write()": true,
+    "trip_core_publication_guard()": true,
+    "trip_core_resolve_airport(text,text,text,date)": true,
+    "trip_sustained_import_p1_capabilities(uuid,uuid)": true,
+    "trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)": true,
+    "policy_closed": true,
+    "airport_exact_dormant": true,
+    "no_item_receipt": true,
+    "publications_pins": true,
+    "candidates_pins": true,
+    "plans_pins": true,
+    "slots_pins": true
+  },
+  "airports": [
+    {
+      "airport_code": "AKL",
+      "enabled": false,
+      "identity_id": "IATA_AIRPORT:AKL",
+      "issuer": "IATA",
+      "namespace": "IATA_AIRPORT",
+      "registry_sha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+      "registry_version": "otr-dev-universal-p2-airports/20261027/1",
+      "valid_from": "2026-11-02",
+      "valid_until": "2026-11-02"
+    },
+    {
+      "airport_code": "CHC",
+      "enabled": false,
+      "identity_id": "IATA_AIRPORT:CHC",
+      "issuer": "IATA",
+      "namespace": "IATA_AIRPORT",
+      "registry_sha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+      "registry_version": "otr-dev-universal-p2-airports/20261027/1",
+      "valid_from": "2026-11-02",
+      "valid_until": "2026-11-02"
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "a85c1ab1-8dc4-8ff2-b0b7-4887a394b465",
+      "candidate_sha256": "7a5a157948d4ddb1a6eeb31324dba8bd8583e276bb07592e40b748c878c0f2c6",
+      "status": "QUALIFIED"
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_call_gateway=X/otr_external_integration_meter_writer}",
+      "identity": "flight_activation_reserve_call(jsonb,jsonb)",
+      "md5": "d7d6c6285b9752b89d516f8b2aaee554",
+      "owner": "otr_external_integration_meter_writer"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_core_finite_read_state_guard()",
+      "md5": "d07436a7f65eaa048ca9771bdc20bd9b",
+      "owner": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_core_guard_historical_source_association()",
+      "md5": "fbeeb65353a1c6f921f5b8e5d5fb5e20",
+      "owner": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_core_guard_write()",
+      "md5": "bdcb1ed27f1020a670bb8f51027a7062",
+      "owner": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_core_publication_guard()",
+      "md5": "bbd9cc3b2a59ff3e1740bbef4747a35b",
+      "owner": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_core_resolve_airport(text,text,text,date)",
+      "md5": "666ff90bad5c706a6007691a3328df75",
+      "owner": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_sustained_import_p1_capabilities(uuid,uuid)",
+      "md5": "a5097debd28ed0af06280ad45e433270",
+      "owner": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "identity": "trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)",
+      "md5": "03e0ae6a090e941ed0b8803209027981",
+      "owner": "postgres"
+    }
+  ],
+  "item_count": 0,
+  "observed_at": "2026-10-27 08:03:31.574243+00",
+  "plans": [
+    {
+      "plan_id": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+      "prepared_slots": 1,
+      "proposal_sha256": "30ef32a53a14e3b80cb46b67a2ef8e451d134c55e6fd2950f5419d3511ce8d7f",
+      "request_sha256": "30ef32a53a14e3b80cb46b67a2ef8e451d134c55e6fd2950f5419d3511ce8d7f"
+    }
+  ],
+  "policies": [
+    {
+      "enabled": false,
+      "policy_enabled": true,
+      "revoked_at": null,
+      "scope": null
+    }
+  ],
+  "publications": [
+    {
+      "input_catalog_sha256": "0a86a5dcb7c6b1ea138fa237b72782da9edcd0f2bb39fc5bb28f868dde218589",
+      "publication_id": "2d3ef30c-a3ee-81ba-8a8f-f6d2ecb4b57f",
+      "request_sha256": "42bcceccf523049b73d8120d18e9374dbb889ec5cd0a4c60202b3b231854eb40"
+    }
+  ],
+  "receipt_count": 0,
+  "slots": [
+    {
+      "domain_receipt_id": null,
+      "identity_sha256": "6317078bf77b03d0ba0b515412f2c33b590e626eb7df6e4baac3e889059cdfdb",
+      "intent_sha256": "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+      "operation_id": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+      "output_slot_id": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+      "purpose_sha256": "673790917cb5f3895d05bc3066db5fccbee73307fe1d0d3645e2811d87f4f7fa",
+      "source_lineage_id": null,
+      "state": "READY",
+      "target_id": "ec73e4fd-c580-8063-96a8-ef7accda3748"
+    }
+  ]
+}
