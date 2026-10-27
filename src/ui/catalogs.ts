@@ -1,6 +1,11 @@
 export const en = {
+  "capture.ai.p6ReviewValues": "Activity: {title}. Date: {raw} → {date}.",
+  "capture.ai.p6SelectNew": "Choose NEW: create a separate activity",
+  "capture.ai.p6Confirm": "Confirm activity name and date and add item",
+  "capture.ai.p6Details":
+    "Review the original and current Journey before adding this activity. Only the evidenced name and date will be saved privately for you.",
   "capture.ai.title": "AI preview",
-  "capture.composer.qaSample": "Fill synthetic train sample",
+  "capture.composer.qaSample": "Fill synthetic test sample",
   "capture.ai.queued":
     "AI processing is queued. Check results to continue. No itinerary items have been saved.",
   "capture.ai.suggestionsStatus":
@@ -2641,7 +2646,12 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.p2Confirm": "确认航班号、出发日期并添加行程项目",
   "capture.ai.p2Details":
     "将有证据支持的航班号及出发日期保存为仅你可见的行程项目，其他信息继续保留在来源中。",
-  "capture.composer.qaSample": "填入合成火车测试原件",
+  "capture.composer.qaSample": "填入合成测试原件",
+  "capture.ai.p6ReviewValues": "活动：{title}。日期：{raw} → {date}。",
+  "capture.ai.p6SelectNew": "选择新建：创建独立活动",
+  "capture.ai.p6Confirm": "确认活动名称及日期并添加行程项目",
+  "capture.ai.p6Details":
+    "添加活动前请审核原件及当前行程。仅为你私密保存有证据支持的名称和日期。",
   "capture.ai.p5ReviewValues": "火车：{title}。出发日期：{raw} → {date}。",
   "capture.ai.p5SelectNew": "选择新建：创建独立火车行程项目",
   "capture.ai.p5Confirm": "确认火车名称及日期并添加行程项目",

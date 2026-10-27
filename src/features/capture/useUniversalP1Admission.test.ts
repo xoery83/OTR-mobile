@@ -30,6 +30,7 @@ function Harness(batchId: string, current = () => true) {
 }
 beforeEach(() => {
   hooks.slots = [];
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P4_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P5_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P2_ADMISSION_ENABLED", "false");
@@ -92,4 +93,12 @@ it("keeps P5 closed until its own explicit opt-in", () => {
   expect(Harness("batch-a").enabledFamilies).not.toContain("P5");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P5_ADMISSION_ENABLED", "true");
   expect(Harness("batch-a").enabledFamilies).toEqual(["P5"]);
+});
+
+it("keeps P6 closed until its own opt-in", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED", "false");
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P3_ADMISSION_ENABLED", "false");
+  expect(Harness("batch-a").enabledFamilies).toEqual([]);
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED", "true");
+  expect(Harness("batch-a").enabledFamilies).toEqual(["P6"]);
 });

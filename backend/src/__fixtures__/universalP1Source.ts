@@ -17,7 +17,7 @@ export async function universalP1SourceFixture(
   accountId: string = randomUUID(),
   tripId: string = randomUUID(),
   dateRaw = "2026-11-03",
-  family: "P1" | "P3" | "P4" | "P5" = "P1",
+  family: "P1" | "P3" | "P4" | "P5" | "P6" = "P1",
 ) {
   const batchId = randomUUID(),
     taskId = randomUUID(),
@@ -26,13 +26,15 @@ export async function universalP1SourceFixture(
     representationId = randomUUID(),
     runId = randomUUID();
   const text =
-    family === "P1"
-      ? `Synthetic QA only\nActivity: 海滨散步\nActivity date: ${dateRaw}\nMeeting place: West gate\n`
-      : family === "P3"
-        ? `Synthetic QA only\nProperty: 海滨住宿\nCheck in: ${dateRaw}\nCheck out: 2026-11-05\nObserved address: West gate\n`
-        : family === "P5"
-          ? `Synthetic QA only\nService: Coastal QA Train\nOperator: Coastal QA Rail\nService number: CQ101\nTransport type: TRAIN\nDeparture date: ${dateRaw}\n`
-          : `Synthetic QA only\nRental: 海滨租车\nCompany: Harbour QA Rentals\nPickup date: ${dateRaw}\nReturn date: 2026-11-05\n`;
+    family === "P6"
+      ? `Synthetic QA only\nP6 Activity: Harbour QA Gallery Visit\nActivity date: ${dateRaw}`
+      : family === "P1"
+        ? `Synthetic QA only\nActivity: 海滨散步\nActivity date: ${dateRaw}\nMeeting place: West gate\n`
+        : family === "P3"
+          ? `Synthetic QA only\nProperty: 海滨住宿\nCheck in: ${dateRaw}\nCheck out: 2026-11-05\nObserved address: West gate\n`
+          : family === "P5"
+            ? `Synthetic QA only\nService: Coastal QA Train\nOperator: Coastal QA Rail\nService number: CQ101\nTransport type: TRAIN\nDeparture date: ${dateRaw}\n`
+            : `Synthetic QA only\nRental: 海滨租车\nCompany: Harbour QA Rentals\nPickup date: ${dateRaw}\nReturn date: 2026-11-05\n`;
   const bytes = Buffer.from(text),
     sha256 = await hash(bytes),
     stamp = "2026-10-25T00:00:00.000000Z";
@@ -126,7 +128,7 @@ export async function universalP1SourceFixture(
           id: "walk",
           kind: family,
           subtype:
-            family === "P1"
+            family === "P1" || family === "P6"
               ? "ACTIVITY"
               : family === "P3"
                 ? "ACCOMMODATION"
@@ -134,9 +136,13 @@ export async function universalP1SourceFixture(
                   ? "TRAIN"
                   : "RENTAL_CAR",
           f:
-            family === "P1"
+            family === "P1" || family === "P6"
               ? [
-                  [0, "activity.name", "海滨散步"],
+                  [
+                    0,
+                    "activity.name",
+                    family === "P6" ? "Harbour QA Gallery Visit" : "海滨散步",
+                  ],
                   [0, "activity.date", dateRaw],
                 ]
               : family === "P3"

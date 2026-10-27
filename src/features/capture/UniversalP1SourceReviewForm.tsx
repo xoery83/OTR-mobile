@@ -50,7 +50,8 @@ export function UniversalP1SourceReviewForm({
   const stay = candidate.kind === "P3",
     flight = candidate.kind === "P2",
     rental = candidate.kind === "P4",
-    transport = candidate.kind === "P5";
+    transport = candidate.kind === "P5",
+    activity = candidate.kind === "P6";
   const names = candidate.fields.filter((f) =>
       (transport
         ? candidate.fields.some((f) => f.path === "service")
@@ -156,7 +157,9 @@ export function UniversalP1SourceReviewForm({
                   ? endLocalDate
                     ? "capture.ai.p4ReviewReturnValues"
                     : "capture.ai.p4ReviewValues"
-                  : "capture.ai.p1ReviewValues",
+                  : activity
+                    ? "capture.ai.p6ReviewValues"
+                    : "capture.ai.p1ReviewValues",
           {
             title: names[0].raw,
             raw: dates[0].raw,
@@ -212,7 +215,9 @@ export function UniversalP1SourceReviewForm({
                   ? "capture.ai.p3SelectNew"
                   : rental
                     ? "capture.ai.p4SelectNew"
-                    : "capture.ai.p1SelectNew",
+                    : activity
+                      ? "capture.ai.p6SelectNew"
+                      : "capture.ai.p1SelectNew",
         )}
         onPress={() => setNewSelected((v) => !v)}
       />
@@ -234,7 +239,9 @@ export function UniversalP1SourceReviewForm({
                 ? "capture.ai.p3Confirm"
                 : rental
                   ? "capture.ai.p4Confirm"
-                  : "capture.ai.p1Confirm",
+                  : activity
+                    ? "capture.ai.p6Confirm"
+                    : "capture.ai.p1Confirm",
         )}
         onPress={() => {
           if (
@@ -270,7 +277,9 @@ export function UniversalP1SourceReviewForm({
                   }
                 : transport
                   ? { version: "otr.universal.p5-source-review/1" as const }
-                  : { version: "otr.universal.p1-source-review/1" as const }),
+                  : activity
+                    ? { version: "otr.universal.p6-source-review/1" as const }
+                    : { version: "otr.universal.p1-source-review/1" as const }),
             decision: "NEW",
             sourceRevision: sources[0].revision,
             title: names[0].raw,

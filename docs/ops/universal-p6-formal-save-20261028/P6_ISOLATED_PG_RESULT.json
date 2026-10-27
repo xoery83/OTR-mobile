@@ -1,0 +1,22 @@
+{
+  "status": "P6_SOURCE_ISOLATED_PG_PASS_NOT_DEV",
+  "network": "none",
+  "memory": "256m",
+  "count": 5,
+  "checks": [
+    "existing Source Review early branch preserved",
+    "candidate installs dormant with no active gate",
+    "exact three-function reverse-hash rollback restores actual DEV preimages",
+    "P6 candidate preserves all three OIDs owners and ACLs",
+    "actual owning P6 publication Source Plan Core receipt finalization replay"
+  ],
+  "at": "2026-10-27T22:19:44.219419+00:00",
+  "hostedInstalled": false,
+  "schemaGrantsRolesAdded": 0,
+  "firstFailure": "JSONB subtraction precedence, repaired before any hosted change",
+  "testDurationSeconds": 57.82,
+  "finalBusinessReadback": "Exact P6 CALENDAR title/date and null optional fields; one Activity details row with session_label/admission_note NULL",
+  "finalRunAt": "2026-10-27T22:25:52.206226+00:00",
+  "fixedImplementation": "69220ac8",
+  "independentReview": "NO_BLOCKER, fixed Diff69220ac8, no Hosted/GUI/main change"
+}

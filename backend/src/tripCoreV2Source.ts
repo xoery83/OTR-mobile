@@ -453,7 +453,7 @@ export async function prepareCoreSourcePlanV2(
     )
       throw new Error("INPUT_STALE");
     const claims: FlightOutputClaimV2[] = catalog.candidates.every((c) =>
-      ["P1", "P3", "P4", "P5"].includes(c.kind),
+      ["P1", "P3", "P4", "P5", "P6"].includes(c.kind),
     )
       ? []
       : await tx.readClaims();
@@ -481,7 +481,7 @@ export async function prepareCoreSourcePlanV2(
           if (proposed.command === "CREATE_ITEM") {
             if (
               !candidate ||
-              !["P1", "P3", "P4", "P5"].includes(candidate.kind) ||
+              !["P1", "P3", "P4", "P5", "P6"].includes(candidate.kind) ||
               (proposed.payload as { family?: string }).family !== candidate.kind ||
               !tx.verifyP1Evidence ||
               proposed.dependsOn.length ||

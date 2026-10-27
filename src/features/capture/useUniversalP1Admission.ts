@@ -8,7 +8,7 @@ export type P1AdmissionStatus =
   "SYNC_PENDING" | "SERVER_ACCEPTED" | "OWNING_ADMISSION_PENDING" | "UNAVAILABLE";
 export type P1AdmissionActions = {
   enabled: boolean;
-  enabledFamilies?: readonly ("P1" | "P2" | "P3" | "P4" | "P5")[];
+  enabledFamilies?: readonly ("P1" | "P2" | "P3" | "P4" | "P5" | "P6")[];
   readOriginal(result: UniversalImportResult, token: string): Promise<string>;
   busyToken: string | null;
   statuses: Record<string, P1AdmissionStatus>;
@@ -22,7 +22,7 @@ export function useUniversalP1Admission(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
 ): P1AdmissionActions {
-  const enabledFamilies: ("P1" | "P2" | "P3" | "P4" | "P5")[] = [];
+  const enabledFamilies: ("P1" | "P2" | "P3" | "P4" | "P5" | "P6")[] = [];
   if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED === "true")
     enabledFamilies.push("P1");
   if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P2_ADMISSION_ENABLED === "true")
@@ -33,6 +33,8 @@ export function useUniversalP1Admission(
     enabledFamilies.push("P4");
   if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P5_ADMISSION_ENABLED === "true")
     enabledFamilies.push("P5");
+  if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED === "true")
+    enabledFamilies.push("P6");
   const enabled = enabledFamilies.length > 0;
   const permits = (result: UniversalImportResult, token: string) =>
     result.candidates.some(

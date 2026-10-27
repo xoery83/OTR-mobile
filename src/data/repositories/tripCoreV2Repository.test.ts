@@ -860,32 +860,35 @@ it("Core publication denies a queued Account transition and wrong Trip without t
 });
 async function lostP1RecoveryFixture(
   reviewed = false,
-  family: "P1" | "P2" | "P3" | "P5" = "P1",
+  family: "P1" | "P2" | "P3" | "P5" | "P6" = "P1",
 ) {
   const f = fixture();
   const ctx = await f.repo.captureContext(trip);
-  let p5Payload: unknown;
-  if (family === "P5") {
+  let sourcePayload: unknown;
+  if (family === "P5" || family === "P6") {
     const { universalP1SourceFixture } =
       await import("../../../backend/src/__fixtures__/universalP1Source");
     const source = await universalP1SourceFixture(
       undefined,
       undefined,
       "2026-11-03",
-      "P5",
+      family,
     );
     Object.assign(source.input.selection, {
       sourceReview: {
-        version: "otr.universal.p5-source-review/1",
+        version:
+          family === "P6"
+            ? "otr.universal.p6-source-review/1"
+            : "otr.universal.p5-source-review/1",
         decision: "NEW",
         sourceRevision: 1,
-        title: "Coastal QA Train",
+        title: family === "P6" ? "Harbour QA Gallery Visit" : "Coastal QA Train",
         localDate: "2026-11-03",
         originalReviewed: true,
         tripReviewed: true,
       },
     });
-    p5Payload = (await source.run()).body.plan.slots[0].payload;
+    sourcePayload = (await source.run()).body.plan.slots[0].payload;
   }
   const command = {
     ...sparse(),
@@ -899,8 +902,8 @@ async function lostP1RecoveryFixture(
     payload:
       family === "P2"
         ? sparse().payload
-        : family === "P5"
-          ? p5Payload
+        : family === "P5" || family === "P6"
+          ? sourcePayload
           : {
               family,
               core: { title: "Lost P1 response" },
@@ -1104,6 +1107,8 @@ it.each([
   [true, "P2"],
   [false, "P5"],
   [true, "P5"],
+  [false, "P6"],
+  [true, "P6"],
 ] as const)(
   "resumes only accepted Source finalization after EVIDENCE_PENDING (reconciled: %s, family:%s)",
   async (reconciled, family) => {

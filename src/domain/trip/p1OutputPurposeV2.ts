@@ -36,7 +36,7 @@ export const p1PurposeBindingV2Schema = z.strictObject({
   targetKind: z.literal("ITEM"),
   targetId: uuid,
   operationId: uuid,
-  purposeKind: z.enum(["P1_ITEM", "P3_ITEM", "P4_ITEM", "P5_ITEM"]),
+  purposeKind: z.enum(["P1_ITEM", "P3_ITEM", "P4_ITEM", "P5_ITEM", "P6_ITEM"]),
 });
 const selected = z
   .array(p1SourceFieldSchema)

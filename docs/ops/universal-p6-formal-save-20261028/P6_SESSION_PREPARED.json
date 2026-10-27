@@ -1,0 +1,9 @@
+{
+  "status": "P6_REVIEW_RUNTIME_CREATED_NOT_STARTED_NOT_ARMED",
+  "candidateContainerId": "52a063109521846f031809ee7b7f8ca32065ff69e6f69aa5bfffb380e53f3f99",
+  "candidateConfigSHA256": "1702484d58fff82c6a0ea58b8b0241a6b56556b307e191b4e5b0155547cf505c",
+  "baselineContainerId": "2fd9deeccc12fe44753f8ad780b270f087803018064f7327cc8005a05e178d47",
+  "imageId": "sha256:291156be981b215f420694c91c2471d83eca5b5206dc90ada287f8429f31795d",
+  "onlyReviewEnvChanged": true,
+  "businessGateActivated": false
+}

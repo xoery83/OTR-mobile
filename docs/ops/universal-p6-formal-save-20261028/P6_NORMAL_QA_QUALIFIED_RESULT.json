@@ -1,0 +1,188 @@
+{
+  "status": "P6_NORMAL_QA_DIRECT_RESULTS_200_NATIVE_RESULTS_RECOVERED",
+  "http": 200,
+  "sourceBytes": 81,
+  "sourceSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+  "exactOffsets": [
+    {
+      "path": "activity.name",
+      "raw": "Harbour QA Gallery Visit",
+      "start": 31,
+      "end": 55
+    },
+    {
+      "path": "activity.date",
+      "raw": "2026-11-03",
+      "start": 71,
+      "end": 81
+    }
+  ],
+  "taskReadback": {
+    "task": {
+      "task_id": "e05fca8e-2044-8c4e-9c11-4f4ade39ecb9",
+      "policy_snapshot": "{\"budget_currency\":\"USD\",\"budget_nanos\":\"50000000\",\"deadline\":\"2026-10-27T22:52:29.642Z\",\"max_attempts\":1,\"network_required\":true,\"privacy\":\"REMOTE_ALLOWED\",\"region\":\"CN\",\"route\":\"DIRECT\",\"version\":1}",
+      "created_at": "2026-10-27T22:42:29.642136Z",
+      "row_revision": 5,
+      "work_disposition": "PUBLISHED",
+      "current_attempt_id": "4cbbad2b-692b-8b1c-97f1-583de2d9f187",
+      "result_sha256": "2d4b6a4a2fff864e164b204b84bf9fc64a0c891b9253b5129b7b7b605761a17f",
+      "updated_at": "2026-10-27T22:47:23.997Z"
+    },
+    "attempts": [
+      {
+        "attempt_id": "4cbbad2b-692b-8b1c-97f1-583de2d9f187",
+        "task_id": "e05fca8e-2044-8c4e-9c11-4f4ade39ecb9",
+        "created_at": "2026-10-27T22:43:32.192Z",
+        "row_revision": 5,
+        "execution_observation": "TERMINAL",
+        "metering_disposition": "COMPLETE",
+        "updated_at": "2026-10-27T22:47:23.998Z"
+      }
+    ]
+  },
+  "result": {
+    "version": "otr.backend.universal-interpretation/1",
+    "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "batchId": "168ab060-4dbc-495e-806d-5fb60ed6face",
+    "taskId": "e05fca8e-2044-8c4e-9c11-4f4ade39ecb9",
+    "requestSha256": "693819b48c8892426429d9f80b08a4200fc7f1f572f82ca432de50519eefa3f5",
+    "promptVersion": "real-llm-01-compact/5",
+    "sourceBindings": [
+      {
+        "alias": "S0",
+        "inputId": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+        "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+        "representationId": "5892cb90-9e78-41c2-880b-2d7933c7ea87",
+        "revision": 1,
+        "mime": "text/plain",
+        "originalSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+        "submittedSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+        "status": "READY"
+      }
+    ],
+    "formalReview": "NOT_RUN",
+    "admission": "NOT_RUN",
+    "canonicalWrites": false,
+    "status": "CANDIDATES_READY",
+    "providerOutcome": "SETTLED",
+    "providerReceipt": {
+      "requestId": "e74c952e-093d-4b6b-9f5f-231efd7ad90e",
+      "requestSha256": "abd0efbc107ebe69aa69d8f71b9a40477a2901f935e046b83f1e39d51b789c6f",
+      "responseSha256": "d1b5043c5e3e7894069d543ebbc920a533dcf8cf8d3b64a3fd80ca2ec0679f36",
+      "usage": {
+        "input_tokens": 1514,
+        "output_tokens": 109,
+        "total_tokens": 1623,
+        "cached_input_tokens": 1280,
+        "reasoning_tokens": null,
+        "provider_extension": {
+          "prompt_cache_miss_tokens": 234
+        },
+        "usage_quality": "ACTUAL_REPORTED"
+      },
+      "costNanos": "208680"
+    },
+    "candidates": [
+      {
+        "id": "dfb990fd7e68023c3cfd5196",
+        "token": "i1",
+        "kind": "P6",
+        "subtype": "ACTIVITY",
+        "fields": [
+          {
+            "sourceId": "S0",
+            "path": "activity.name",
+            "raw": "Harbour QA Gallery Visit",
+            "start": 31,
+            "end": 55
+          },
+          {
+            "sourceId": "S0",
+            "path": "activity.date",
+            "raw": "2026-11-03",
+            "start": 71,
+            "end": 81
+          }
+        ],
+        "bookingTokens": [],
+        "ticketTokens": [],
+        "validation": "CANDIDATE_VALIDATED",
+        "admission": "NOT_RUN",
+        "closure": "POLICY_PENDING",
+        "visualReviewRequired": false,
+        "readiness": {
+          "token": "i1",
+          "kind": "P6",
+          "minimumFacts": "EVIDENCED_CANDIDATE_FACTS",
+          "missing": [],
+          "createReady": false,
+          "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+        },
+        "presentationTier": "REVIEWABLE"
+      }
+    ],
+    "bookingObservations": [],
+    "ticketObservations": [],
+    "quality": {
+      "decisions": [
+        {
+          "token": "i1",
+          "kind": "P6",
+          "tier": "REVIEWABLE",
+          "reasons": [
+            "P6_PARTICIPATION_OR_RIGHTS_UNVERIFIED"
+          ],
+          "sourceIds": [
+            "S0"
+          ],
+          "fieldCount": 2
+        }
+      ],
+      "acceptedTokens": [],
+      "reviewableTokens": [
+        "i1"
+      ],
+      "abstainedTokens": [],
+      "formalQualification": "NOT_SCORABLE"
+    },
+    "minimumFacts": [
+      {
+        "token": "i1",
+        "kind": "P6",
+        "minimumFacts": "EVIDENCED_CANDIDATE_FACTS",
+        "missing": [],
+        "createReady": false,
+        "formalAdmission": "OWNING_INTERFACE_UNAVAILABLE"
+      }
+    ],
+    "sourceObservations": [],
+    "advisoryStatus": "VALID",
+    "advisoryIssues": [],
+    "outputCoverage": "PARTIAL_COVERAGE",
+    "coverageGaps": [
+      {
+        "field": "P3-P6.image_advisory",
+        "reason": "INDEPENDENT_OCR_RECEIPT_UNAVAILABLE"
+      },
+      {
+        "field": "P5.dynamic_provider_label_value",
+        "reason": "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P5.dynamic_boarding_or_meeting_labels",
+        "reason": "FINITE_ROLE_LABELS_ONLY; PROVIDER-SPECIFIC_KEYS_NOT_SUPPORTED"
+      },
+      {
+        "field": "P4.actual_vehicle_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; VEHICLE_PROOF_UNAVAILABLE"
+      },
+      {
+        "field": "P2.passenger_identity",
+        "reason": "SOURCE_OBSERVATION_ONLY; TRIP_PERSON_QUALIFIER_UNAVAILABLE"
+      }
+    ],
+    "unresolved": []
+  }
+}

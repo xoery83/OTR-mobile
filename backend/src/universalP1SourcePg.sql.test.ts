@@ -11,24 +11,28 @@ import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { prepareCoreSourcePlanV2, finalizeCoreSourceSlotV2 } from "./tripCoreV2Source";
 const container = process.env.OTR_UNIVERSAL_P1_OWNED_SQL_FIXTURE;
 // Actual protected PG transactions; model publication and identities are explicit disposable fixtures.
-it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5" }>(
-  process.env.OTR_UNIVERSAL_P5_OWNED_SQL_FIXTURE
-    ? [{ reviewed: true, family: "P5" as const }]
-    : process.env.OTR_UNIVERSAL_P4_OWNED_SQL_FIXTURE
-      ? [{ reviewed: true, family: "P4" as const }]
-      : process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE
-        ? [{ reviewed: true, family: "P3" as const }]
-        : process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
-          ? [
-              { reviewed: false, family: "P1" as const },
-              { reviewed: true, family: "P1" as const },
-              { reviewed: true, family: "P3" as const },
-            ]
-          : [
-              { reviewed: false, family: "P1" as const },
-              { reviewed: true, family: "P1" as const },
-            ],
-)(
+it
+  .skipIf(!container)
+  .each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5" | "P6" }>(
+    process.env.OTR_UNIVERSAL_P6_OWNED_SQL_FIXTURE
+      ? [{ reviewed: true, family: "P6" as const }]
+      : process.env.OTR_UNIVERSAL_P5_OWNED_SQL_FIXTURE
+        ? [{ reviewed: true, family: "P5" as const }]
+        : process.env.OTR_UNIVERSAL_P4_OWNED_SQL_FIXTURE
+          ? [{ reviewed: true, family: "P4" as const }]
+          : process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE
+            ? [{ reviewed: true, family: "P3" as const }]
+            : process.env.OTR_UNIVERSAL_P3_OWNED_SQL_FIXTURE
+              ? [
+                  { reviewed: false, family: "P1" as const },
+                  { reviewed: true, family: "P1" as const },
+                  { reviewed: true, family: "P3" as const },
+                ]
+              : [
+                  { reviewed: false, family: "P1" as const },
+                  { reviewed: true, family: "P1" as const },
+                ],
+  )(
   "qualifies original Source bytes through existing Source Plan/Core/receipt and recovers once (explicit review: %s)",
   async ({ reviewed, family }) => {
     if (!/^otr-trip-sustained-[a-f0-9]{12}$/.test(container!))
@@ -54,7 +58,9 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
                 ? "otr.universal.p4-source-review/1"
                 : family === "P5"
                   ? "otr.universal.p5-source-review/1"
-                  : "otr.universal.p1-source-review/1",
+                  : family === "P6"
+                    ? "otr.universal.p6-source-review/1"
+                    : "otr.universal.p1-source-review/1",
           decision: "NEW",
           sourceRevision: 1,
           title:
@@ -64,7 +70,9 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
                 ? "海滨住宿"
                 : family === "P4"
                   ? "海滨租车"
-                  : "海滨散步",
+                  : family === "P6"
+                    ? "Harbour QA Gallery Visit"
+                    : "海滨散步",
           localDate: family !== "P1" ? "2026-11-03" : "2026-11-01",
           ...(["P3", "P4"].includes(family) ? { endLocalDate: "2026-11-05" } : {}),
           originalReviewed: true,
@@ -259,17 +267,27 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         family !== "P1" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
       );
-      if (family === "P5") {
+      if (family === "P5" || family === "P6") {
         const packet = new URL(
-          "../../docs/ops/universal-p5-formal-save-20261028/",
+          family === "P6"
+            ? "../../docs/ops/universal-p6-formal-save-20261028/"
+            : "../../docs/ops/universal-p5-formal-save-20261028/",
           import.meta.url,
         );
         const fixed = JSON.parse(
-          readFileSync(new URL("P5_REVIEW_SCOPE.json", packet), "utf8"),
+          readFileSync(new URL(`${family}_REVIEW_SCOPE.json`, packet), "utf8"),
         );
-        expect(fixed.operatorLiteral).toBe("Coastal QA Rail");
-        expect(fixed.serviceNumber).toBe("CQ101");
-        let activation = readFileSync(new URL("P5_REVIEW_ACTIVATE.sql", packet), "utf8");
+        if (family === "P5") {
+          expect(fixed.operatorLiteral).toBe("Coastal QA Rail");
+          expect(fixed.serviceNumber).toBe("CQ101");
+        } else {
+          expect(fixed.title).toBe("Harbour QA Gallery Visit");
+          expect(fixed.localDate).toBe("2026-11-03");
+        }
+        let activation = readFileSync(
+          new URL(`${family}_REVIEW_ACTIVATE.sql`, packet),
+          "utf8",
+        );
         const identities: Record<string, string> = {
           sourceId,
           batchId: request.batchId,
@@ -285,9 +303,14 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
         for (const [key, value] of Object.entries(identities))
           activation = activation.replaceAll(fixed[key], value);
         activation = activation
-          .replaceAll("5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5", f.input.runId)
+          .replaceAll(
+            family === "P6"
+              ? "c08faaf5-e019-824a-b9b2-eab5657cc8f6"
+              : "5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5",
+            f.input.runId,
+          )
           .replace(
-            "__P5_FIXED_WINDOW_DEADLINE__",
+            `__${family}_FIXED_WINDOW_DEADLINE__`,
             new Date(Date.now() + 900000).toISOString(),
           );
         await admin.lease.query(
@@ -642,6 +665,36 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
       expect(saved.projection).toBe("FULL");
       if (saved.projection !== "FULL") throw Error("EXPECTED_FULL_RECEIPT");
       expect(saved.receipt.outcome).toBe("APPLIED");
+      if (family === "P6") {
+        const row = (
+          await admin.lease.query(
+            "SELECT title,experience_family,temporal_shape,start_local_date::text,start_local_time,start_zone_id,end_local_date,description,activity_category,reservation_id FROM public.itinerary_events WHERE id=$1::uuid AND trip_id=$2::uuid",
+            [command.target.id, trip],
+          )
+        ).rows;
+        expect(row).toEqual([
+          {
+            title: "Harbour QA Gallery Visit",
+            experience_family: "P6",
+            temporal_shape: "CALENDAR",
+            start_local_date: "2026-11-03",
+            start_local_time: null,
+            start_zone_id: null,
+            end_local_date: null,
+            description: null,
+            activity_category: null,
+            reservation_id: null,
+          },
+        ]);
+        expect(
+          (
+            await admin.lease.query(
+              "SELECT session_label,admission_note FROM public.trip_activity_details WHERE event_id=$1::uuid",
+              [command.target.id],
+            )
+          ).rows,
+        ).toEqual([{ session_label: null, admission_note: null }]);
+      }
       if (family === "P5") {
         const service = (
           await admin.lease.query(
@@ -701,16 +754,18 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
           verified_plate: null,
         });
       }
-      if (["P4", "P5"].includes(family)) {
+      if (["P4", "P5", "P6"].includes(family)) {
         await admin.lease.query(
           "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=false,universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
           [actor],
         );
         const rollback = readFileSync(
             new URL(
-              family === "P5"
-                ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              family === "P6"
+                ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                : family === "P5"
+                  ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                  : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",
@@ -718,9 +773,11 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
           isolatedControl = session(container!);
         try {
           await expect(isolatedControl.lease.query(rollback)).rejects.toThrow(
-            family === "P5"
-              ? "P5_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
-              : "P4_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
+            family === "P6"
+              ? "P6_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
+              : family === "P5"
+                ? "P5_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
+                : "P4_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
           );
         } finally {
           isolatedControl.close();
@@ -813,7 +870,7 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         "CORE_CAPABILITY_CLOSED",
       );
-      if (["P4", "P5"].includes(family)) {
+      if (["P4", "P5", "P6"].includes(family)) {
         await admin.lease.query(
           "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
           [actor],
@@ -821,9 +878,11 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
         await admin.lease.query(
           readFileSync(
             new URL(
-              family === "P5"
-                ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              family === "P6"
+                ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                : family === "P5"
+                  ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                  : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",
@@ -832,9 +891,11 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
         expect(
           (
             await admin.lease.query(
-              family === "P5"
-                ? "SELECT count(*)::int AS n FROM public.itinerary_transport_services WHERE event_id=$1::uuid"
-                : "SELECT count(*)::int AS n FROM public.trip_rental_details WHERE event_id=$1::uuid",
+              family === "P6"
+                ? "SELECT count(*)::int AS n FROM public.trip_activity_details WHERE event_id=$1::uuid"
+                : family === "P5"
+                  ? "SELECT count(*)::int AS n FROM public.itinerary_transport_services WHERE event_id=$1::uuid"
+                  : "SELECT count(*)::int AS n FROM public.trip_rental_details WHERE event_id=$1::uuid",
               [command.target.id],
             )
           ).rows[0].n,

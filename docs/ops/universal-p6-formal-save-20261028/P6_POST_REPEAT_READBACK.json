@@ -1,0 +1,672 @@
+{
+  "at": "2026-10-27T23:08:31.836921+00:00",
+  "snapshot": {
+    "associations": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "32437279-c76b-8d00-9d82-d5c521256bf2",
+        "created_at": "2026-10-27T23:04:57.15768+00:00",
+        "domain_receipt_id": "edee9ae3-1486-4268-9d3e-908ae2f2e23e",
+        "field_evidence": {
+          "ROOT.title.0": {
+            "inputId": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+            "locator": {
+              "end": 55,
+              "excerpt": "Harbour QA Gallery Visit",
+              "input_id": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 31
+            },
+            "payloadSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+            "raw": "Harbour QA Gallery Visit",
+            "ref": "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0",
+            "representationId": "5892cb90-9e78-41c2-880b-2d7933c7ea87",
+            "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+            "sourceRevision": 1,
+            "value": "Harbour QA Gallery Visit"
+          },
+          "START.local_date.0": {
+            "inputId": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+            "locator": {
+              "end": 81,
+              "excerpt": "2026-11-03",
+              "input_id": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 71
+            },
+            "payloadSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+            "raw": "2026-11-03",
+            "ref": "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0",
+            "representationId": "5892cb90-9e78-41c2-880b-2d7933c7ea87",
+            "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+            "sourceRevision": 1,
+            "value": "2026-11-03"
+          }
+        },
+        "id": "e1e82ae3-0fbf-48ce-b5f4-1ed04d3b6df6",
+        "identity_sha256": "c87a2a36e61874bbf94d25988886fe8d111d1e7fca5d69020d2451f7d52abee9",
+        "output_slot_id": "9d8a71ed-39d7-811d-bfb9-ede174c58b14",
+        "receipt_sha256": "26d50a0f05946d70bd2dd1e22000e48696a4f93f6b713ee2030786bf191bdf66",
+        "run_id": "c08faaf5-e019-824a-b9b2-eab5657cc8f6",
+        "source_id": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+        "source_revision": 1,
+        "target_id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+        "target_kind": "ITEM",
+        "target_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "candidates": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "32437279-c76b-8d00-9d82-d5c521256bf2",
+        "candidate_json": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "batchId": "168ab060-4dbc-495e-806d-5fb60ed6face",
+          "candidateId": "32437279-c76b-8d00-9d82-d5c521256bf2",
+          "evidence": [
+            {
+              "candidateId": "32437279-c76b-8d00-9d82-d5c521256bf2",
+              "fieldKey": "ROOT.title",
+              "locator": {
+                "end": 55,
+                "excerpt": "Harbour QA Gallery Visit",
+                "input_id": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 31
+              },
+              "raw": "Harbour QA Gallery Visit",
+              "ref": "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0"
+            },
+            {
+              "candidateId": "32437279-c76b-8d00-9d82-d5c521256bf2",
+              "fieldKey": "START.local_date",
+              "locator": {
+                "end": 81,
+                "excerpt": "2026-11-03",
+                "input_id": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 71
+              },
+              "raw": "2026-11-03",
+              "ref": "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0"
+            }
+          ],
+          "fieldEvidence": {
+            "ROOT.title.0": {
+              "inputId": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+              "locator": {
+                "end": 55,
+                "excerpt": "Harbour QA Gallery Visit",
+                "input_id": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 31
+              },
+              "payloadSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+              "raw": "Harbour QA Gallery Visit",
+              "ref": "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0",
+              "representationId": "5892cb90-9e78-41c2-880b-2d7933c7ea87",
+              "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+              "sourceRevision": 1,
+              "value": "Harbour QA Gallery Visit"
+            },
+            "START.local_date.0": {
+              "inputId": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+              "locator": {
+                "end": 81,
+                "excerpt": "2026-11-03",
+                "input_id": "e0cc0d6f-eb07-478d-9c46-f0d54cfa77a1",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 71
+              },
+              "payloadSha256": "01c384be4665bb3e86d118a2ba49daa0009a974ca983fb01ffe5c4527494491f",
+              "raw": "2026-11-03",
+              "ref": "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0",
+              "representationId": "5892cb90-9e78-41c2-880b-2d7933c7ea87",
+              "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+              "sourceRevision": 1,
+              "value": "2026-11-03"
+            }
+          },
+          "inputCatalogSha256": "202ec920246d62877efb6db30dd1deb8ebe8476ad517c27028ebb654bb61527d",
+          "lifecycleRelationships": [
+            {
+              "candidateIds": [
+                "32437279-c76b-8d00-9d82-d5c521256bf2"
+              ],
+              "evidenceRefs": [
+                "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0",
+                "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0"
+              ],
+              "id": "source-review:32437279-c76b-8d00-9d82-d5c521256bf2",
+              "kind": "NEW"
+            }
+          ],
+          "plan": {
+            "candidateIds": [
+              "32437279-c76b-8d00-9d82-d5c521256bf2"
+            ],
+            "captureVersion": 2,
+            "mode": "REVIEWED_SOURCE",
+            "planId": "d3ab9c7f-4a66-8b76-aa04-9d9ed4e96445",
+            "policyVersion": null,
+            "slots": [
+              {
+                "baseVector": [
+                  {
+                    "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+                    "kind": "ITEM",
+                    "revision": null
+                  }
+                ],
+                "candidateId": "32437279-c76b-8d00-9d82-d5c521256bf2",
+                "command": "CREATE_ITEM",
+                "dependsOn": [],
+                "evidenceRefs": {
+                  "ROOT.title": [
+                    "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0"
+                  ],
+                  "START.local_date": [
+                    "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0"
+                  ]
+                },
+                "operationId": "e58ed798-64e9-8765-b11f-f8ef14921b8a",
+                "payload": {
+                  "acl": {
+                    "people": [],
+                    "visibility": "PRIVATE"
+                  },
+                  "core": {
+                    "title": "Harbour QA Gallery Visit"
+                  },
+                  "family": "P6",
+                  "participation": {
+                    "mode": "SELF",
+                    "people": [],
+                    "selfPersonId": null
+                  },
+                  "schedule": {
+                    "start": {
+                      "basis": "DERIVED_CIVIL",
+                      "civil_resolution": "PENDING",
+                      "clock_precision": null,
+                      "instant": null,
+                      "interpretation_input_sha256": null,
+                      "interpretation_key": null,
+                      "local_date": "2026-11-03",
+                      "local_time": null,
+                      "provenance_refs": null,
+                      "quality": "UNKNOWN",
+                      "resolution_offset_seconds": null,
+                      "source_instant": null,
+                      "source_instant_precision": null,
+                      "supplied_offset_seconds": null,
+                      "zone_id": null
+                    }
+                  }
+                },
+                "selectedFields": [
+                  "ROOT.title",
+                  "START.local_date"
+                ],
+                "slotId": "9d8a71ed-39d7-811d-bfb9-ede174c58b14",
+                "slotKey": "p6",
+                "target": {
+                  "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+                  "kind": "ITEM"
+                },
+                "targetKind": "ITEM"
+              }
+            ],
+            "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+            "sourceRevision": 1
+          },
+          "resultSha256": "2d4b6a4a2fff864e164b204b84bf9fc64a0c891b9253b5129b7b7b605761a17f",
+          "reviewedAdvisories": [],
+          "reviewedBy": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "runId": "c08faaf5-e019-824a-b9b2-eab5657cc8f6",
+          "schemaId": "otr.core.universal-p6-source/1",
+          "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+          "sourceObservations": [],
+          "sourceReview": {
+            "decision": "NEW",
+            "localDate": "2026-11-03",
+            "originalReviewed": true,
+            "sourceRevision": 1,
+            "title": "Harbour QA Gallery Visit",
+            "tripReviewed": true,
+            "version": "otr.universal.p6-source-review/1"
+          },
+          "sourceRevision": 1,
+          "taskId": "e05fca8e-2044-8c4e-9c11-4f4ade39ecb9",
+          "token": "i1",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "candidate_sha256": "87a31c070b714619617cbc893de0f0b8afdb5e36b1f3b55aba96e5d993c52a30",
+        "input_catalog_sha256": "202ec920246d62877efb6db30dd1deb8ebe8476ad517c27028ebb654bb61527d",
+        "run_id": "c08faaf5-e019-824a-b9b2-eab5657cc8f6",
+        "sealed_at": "2026-10-27T23:03:32.401981+00:00",
+        "source_id": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+        "source_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "details": [
+      {
+        "admission_note": null,
+        "event_id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+        "session_label": null,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "entryplaces": null,
+    "item": {
+      "accepted_address": null,
+      "accepted_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_region": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "activity_category": null,
+      "authored_address": null,
+      "authored_address_country": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_postal_code": null,
+      "authored_address_region": null,
+      "authored_label": null,
+      "authored_text": null,
+      "booking_reference": null,
+      "business_contract_version": 2,
+      "candidate_address": null,
+      "candidate_confidence": null,
+      "candidate_error_code": null,
+      "candidate_input_revision": null,
+      "candidate_label": null,
+      "candidate_latitude": null,
+      "candidate_longitude": null,
+      "candidate_observed_at": null,
+      "candidate_place_id": null,
+      "candidate_provider": null,
+      "candidate_provider_place_id": null,
+      "candidate_state": null,
+      "confidence": null,
+      "created_at": "2026-10-27T23:04:15.73017+00:00",
+      "created_by": null,
+      "date_confidence": null,
+      "description": null,
+      "end_basis": null,
+      "end_civil_resolution": null,
+      "end_clock_precision": null,
+      "end_interpretation_input_sha256": null,
+      "end_interpretation_key": null,
+      "end_local_date": null,
+      "end_local_time": null,
+      "end_provenance_refs": null,
+      "end_quality": null,
+      "end_resolution_offset_seconds": null,
+      "end_source_instant": null,
+      "end_source_instant_precision": null,
+      "end_supplied_offset_seconds": null,
+      "end_zone_id": null,
+      "event_type": "activity",
+      "experience_family": "P6",
+      "field_state": {
+        "itinerary_events.start_basis": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_civil_resolution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_local_date": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_quality": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.title": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        }
+      },
+      "geocode_attempts": 0,
+      "geocode_error": null,
+      "geocoded_at": null,
+      "hidden_at": null,
+      "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+      "is_estimated_time": false,
+      "legacy_is_estimated_time": null,
+      "legacy_planned_end": null,
+      "legacy_planned_start": null,
+      "legacy_snapshot_at": null,
+      "location_confidence": null,
+      "location_input_revision": null,
+      "location_lat": null,
+      "location_lng": null,
+      "location_name": null,
+      "location_provider": null,
+      "location_provider_place_id": null,
+      "location_status": "none",
+      "location_text": null,
+      "manual_location": false,
+      "needs_review": false,
+      "order_index": null,
+      "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "participant_scope": "ASSIGNED",
+      "participants_confidence": null,
+      "participation_mode": "SELF",
+      "place_id": null,
+      "planned_end": null,
+      "planned_start": null,
+      "reservation_id": null,
+      "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+      "semantic_revision": 1,
+      "source_text": null,
+      "spatial_provenance_refs": null,
+      "start_basis": "DERIVED_CIVIL",
+      "start_civil_resolution": "PENDING",
+      "start_clock_precision": null,
+      "start_interpretation_input_sha256": null,
+      "start_interpretation_key": null,
+      "start_local_date": "2026-11-03",
+      "start_local_time": null,
+      "start_provenance_refs": null,
+      "start_quality": "UNKNOWN",
+      "start_resolution_offset_seconds": null,
+      "start_source_instant": null,
+      "start_source_instant_precision": null,
+      "start_supplied_offset_seconds": null,
+      "start_zone_id": null,
+      "status": "planned",
+      "temporal_contract_version": 1,
+      "temporal_shape": "CALENDAR",
+      "time_confidence": null,
+      "timing_label": null,
+      "timing_provenance_ref": null,
+      "title": "Harbour QA Gallery Visit",
+      "trip_day_id": null,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "updated_at": "2026-10-27T23:04:15.73017+00:00",
+      "url": null,
+      "visibility": "PRIVATE"
+    },
+    "receipts": [
+      {
+        "actor_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "body": {
+          "actorAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "audit": {
+            "after": [
+              {
+                "facts": {
+                  "accepted_address": null,
+                  "accepted_address_country": null,
+                  "accepted_address_line1": null,
+                  "accepted_address_line2": null,
+                  "accepted_address_locality": null,
+                  "accepted_address_postal_code": null,
+                  "accepted_address_region": null,
+                  "accepted_latitude": null,
+                  "accepted_longitude": null,
+                  "accepted_place_id": null,
+                  "activity_category": null,
+                  "authored_address": null,
+                  "authored_address_country": null,
+                  "authored_address_line1": null,
+                  "authored_address_line2": null,
+                  "authored_address_locality": null,
+                  "authored_address_postal_code": null,
+                  "authored_address_region": null,
+                  "authored_label": null,
+                  "authored_text": null,
+                  "business_contract_version": 2,
+                  "created_at": "2026-10-27T23:04:15.73017Z",
+                  "description": null,
+                  "end_basis": null,
+                  "end_civil_resolution": null,
+                  "end_clock_precision": null,
+                  "end_interpretation_input_sha256": null,
+                  "end_interpretation_key": null,
+                  "end_local_date": null,
+                  "end_local_time": null,
+                  "end_provenance_refs": null,
+                  "end_quality": null,
+                  "end_resolution_offset_seconds": null,
+                  "end_source_instant": null,
+                  "end_source_instant_precision": null,
+                  "end_supplied_offset_seconds": null,
+                  "end_zone_id": null,
+                  "event_type": "activity",
+                  "experience_family": "P6",
+                  "field_state": {
+                    "itinerary_events.start_basis": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_civil_resolution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_local_date": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.start_quality": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_events.title": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    }
+                  },
+                  "hidden_at": null,
+                  "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+                  "location_input_revision": null,
+                  "order_index": null,
+                  "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+                  "participant_scope": "ASSIGNED",
+                  "participation_mode": "SELF",
+                  "planned_end": null,
+                  "planned_start": null,
+                  "reservation_id": null,
+                  "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+                  "semantic_revision": 1,
+                  "spatial_provenance_refs": null,
+                  "start_basis": "DERIVED_CIVIL",
+                  "start_civil_resolution": "PENDING",
+                  "start_clock_precision": null,
+                  "start_interpretation_input_sha256": null,
+                  "start_interpretation_key": null,
+                  "start_local_date": "2026-11-03",
+                  "start_local_time": null,
+                  "start_provenance_refs": null,
+                  "start_quality": "UNKNOWN",
+                  "start_resolution_offset_seconds": null,
+                  "start_source_instant": null,
+                  "start_source_instant_precision": null,
+                  "start_supplied_offset_seconds": null,
+                  "start_zone_id": null,
+                  "status": "planned",
+                  "temporal_contract_version": 1,
+                  "temporal_shape": "CALENDAR",
+                  "timing_label": null,
+                  "title": "Harbour QA Gallery Visit",
+                  "trip_day_id": null,
+                  "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+                  "updated_at": "2026-10-27T23:04:15.73017Z",
+                  "visibility": "PRIVATE"
+                },
+                "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+                "kind": "ITEM",
+                "revision": 1
+              }
+            ],
+            "authorizationRefs": [
+              "otr-core/source-candidate/32437279-c76b-8d00-9d82-d5c521256bf2/87a31c070b714619617cbc893de0f0b8afdb5e36b1f3b55aba96e5d993c52a30"
+            ],
+            "before": [],
+            "evidenceRefs": [
+              "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0",
+              "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0"
+            ]
+          },
+          "command": "CREATE_ITEM",
+          "commandVersion": 2,
+          "committedAt": "2026-10-27T23:04:15.73017Z",
+          "errorCode": null,
+          "intentSha256": "0ae51c3a6318b89a35573b1a4e46eeb9cfeb3055f2509b9bc9c3086974899f55",
+          "intentVersion": 2,
+          "operationId": "e58ed798-64e9-8765-b11f-f8ef14921b8a",
+          "outcome": "APPLIED",
+          "receiptSha256": "26d50a0f05946d70bd2dd1e22000e48696a4f93f6b713ee2030786bf191bdf66",
+          "receiptVersion": 2,
+          "result": {
+            "changed": [],
+            "created": [
+              {
+                "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+                "kind": "ITEM"
+              }
+            ],
+            "custodyGrantId": null,
+            "replacement": null,
+            "retiredEdges": []
+          },
+          "targetVector": [
+            {
+              "baseRevision": null,
+              "committedRevision": 1,
+              "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+              "kind": "ITEM"
+            }
+          ],
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"9d8a71ed-39d7-811d-bfb9-ede174c58b14\"},\"baseVector\":[{\"id\":\"fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"e58ed798-64e9-8765-b11f-f8ef14921b8a\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"Harbour QA Gallery Visit\"},\"family\":\"P6\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"schedule\":{\"start\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-03\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"target\":{\"id\":\"fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command_version": 2,
+        "committed_at": "2026-10-27T23:04:15.73017+00:00",
+        "id": "edee9ae3-1486-4268-9d3e-908ae2f2e23e",
+        "intent_sha256": "0ae51c3a6318b89a35573b1a4e46eeb9cfeb3055f2509b9bc9c3086974899f55",
+        "intent_version": 2,
+        "operation_id": "e58ed798-64e9-8765-b11f-f8ef14921b8a",
+        "outcome": "APPLIED",
+        "receipt_sha256": "26d50a0f05946d70bd2dd1e22000e48696a4f93f6b713ee2030786bf191bdf66",
+        "receipt_version": 2,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "slots": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "32437279-c76b-8d00-9d82-d5c521256bf2",
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"9d8a71ed-39d7-811d-bfb9-ede174c58b14\"},\"baseVector\":[{\"id\":\"fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"e58ed798-64e9-8765-b11f-f8ef14921b8a\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"Harbour QA Gallery Visit\"},\"family\":\"P6\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"schedule\":{\"start\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-03\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"target\":{\"id\":\"fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command": "CREATE_ITEM",
+        "dependency_ids": [],
+        "domain_receipt_id": "edee9ae3-1486-4268-9d3e-908ae2f2e23e",
+        "identity_sha256": "c87a2a36e61874bbf94d25988886fe8d111d1e7fca5d69020d2451f7d52abee9",
+        "intent_sha256": "0ae51c3a6318b89a35573b1a4e46eeb9cfeb3055f2509b9bc9c3086974899f55",
+        "operation_id": "e58ed798-64e9-8765-b11f-f8ef14921b8a",
+        "output_purpose": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "candidateId": "32437279-c76b-8d00-9d82-d5c521256bf2",
+          "candidateSha256": "87a31c070b714619617cbc893de0f0b8afdb5e36b1f3b55aba96e5d993c52a30",
+          "evidenceRefs": {
+            "ROOT.title": [
+              "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/ROOT.title.0"
+            ],
+            "START.local_date": [
+              "track-c/field-evidence/32437279-c76b-8d00-9d82-d5c521256bf2/START.local_date.0"
+            ]
+          },
+          "inputCatalogSha256": "202ec920246d62877efb6db30dd1deb8ebe8476ad517c27028ebb654bb61527d",
+          "operationId": "e58ed798-64e9-8765-b11f-f8ef14921b8a",
+          "payloadSha256": "553b15ffbab13a9423b0d72753de709b9c6a0c20f3cd49eb6f5f0770f115d285",
+          "planId": "d3ab9c7f-4a66-8b76-aa04-9d9ed4e96445",
+          "purposeKind": "P6_ITEM",
+          "purposeSha256": "d4f7a3141cbbe612c8228b7992299730cdbbef1264844ad4f79d06237cbb1073",
+          "runId": "c08faaf5-e019-824a-b9b2-eab5657cc8f6",
+          "selectedFields": [
+            "ROOT.title",
+            "START.local_date"
+          ],
+          "slotId": "9d8a71ed-39d7-811d-bfb9-ede174c58b14",
+          "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+          "sourceRevision": 1,
+          "targetId": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+          "targetKind": "ITEM",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+          "version": 2
+        },
+        "output_slot_id": "9d8a71ed-39d7-811d-bfb9-ede174c58b14",
+        "plan_id": "d3ab9c7f-4a66-8b76-aa04-9d9ed4e96445",
+        "purpose_sha256": "d4f7a3141cbbe612c8228b7992299730cdbbef1264844ad4f79d06237cbb1073",
+        "slot_key": "p6",
+        "source_id": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+        "source_lineage_id": "e1e82ae3-0fbf-48ce-b5f4-1ed04d3b6df6",
+        "state": "COMPLETE",
+        "target_id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+        "target_kind": "ITEM",
+        "target_vector": [
+          {
+            "id": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ]
+  }
+}
