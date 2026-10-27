@@ -16,7 +16,7 @@ Source: `OTR_P5_TRANSPORT_NATIVE_FIDELITY_V1`, frozen 27 October, source commit 
 
 ## Serial host candidate
 
-`HOST_INTEGRATION.patch` (122 lines) is **not applied**. It adds only P5 to existing LocalManual rows, Core experience open/insert callbacks, TripScreen route handoffs, `app/p5-detail.tsx`, DEV `day-feed-lab?fidelity=p5` and a P6 import of the unchanged pure map helper. No Shell algorithm, Reader Authority, public Core, SQLite registry, Auth, Backend, Import, Schema/RLS or DEV change.
+`HOST_INTEGRATION.patch` (including the mixed-Focus follow-up) is **not applied**. It adds only P5 to existing LocalManual rows, Core experience open/insert callbacks, TripScreen route handoffs, `app/p5-detail.tsx`, DEV `day-feed-lab?fidelity=p5` and a P6 import of the unchanged pure map helper. No Shell algorithm, Reader Authority, public Core, SQLite registry, Auth, Backend, Import, Schema/RLS or DEV change.
 
 Apply the patch after cherry-picking this candidate, format changed host files and refresh Expo typed routes if enabled. Patch applies cleanly to this fixed base (`git apply --check` PASS). The P5 DEV preview renders 21 scenarios and all nine states; original opens/calls are explicitly synthetic intents, never real execution.
 
@@ -34,3 +34,32 @@ Apply the patch after cherry-picking this candidate, format changed host files a
 4. Real dynamic boarding edit mapping, Ticket custody/access, Documents, related-Segment authority, Media and Ledger associations require their accepted owning ports. The Form's local tests do not establish Cloud E2E. No P5 backend/Supabase/Provider permissions were changed.
 
 All attached acceptance rows remain Native NOT_TESTED until the actual device window. P1–P4 and existing QA data are untouched.
+
+## Independent review follow-up — mixed accepted/local P5 Focus
+
+Reviewer `day_header_destination` found a real host blocker: `DayFeed.tsx`'s
+local-Focus preservation guard admitted P1–P4 but omitted P5 in **both** its
+row-family and Item-family qualifications. With accepted v2 plus a pending local
+P5 of the same identity, `pendingIds` correctly removes the accepted Event; the
+remaining local Focus was then cleared on the next render.
+
+The unapplied host patch now adds P5 to both existing qualifications and includes
+`P5MixedFocus.test.ts`. No unavailable-Item check is relaxed. Exact preimage in a
+disposable `/private/tmp/otr-p5-focus-host-20261027` shadow reproduced the issue:
+**1 failure / 4 passes**, failing precisely on the second Focus render. The same
+harness with only the two whitelist additions: **5/5 PASS**. It proves stable
+mixed Focus, original Item/role/date detail handoff, hidden/cancelled/skipped
+Focus removal, and row-withdrawal cleanup. The local renderer is an explicit
+port double, while the real AcceptedDayFeed/pendingIds/Focus guard executes.
+
+The new regression is carried in the patch, not installed into `src` before its
+required host fix. The isolated branch remains locally green without silently
+applying shared ownership changes. Existing six P5 suites are rerun separately;
+this adds five host-candidate checks, not device/Cloud acceptance.
+
+Offline runtime used: existing `/Users/xoery/Project/otr-mobile/node_modules`,
+Vitest `--configLoader runner --no-cache`; no dependency download. The tracked
+worktree dependency link is restored after verification, so a reviewer whose
+old target is unavailable must point to this existing runtime temporarily before
+running tests. Logs: `/private/tmp/p5-focus-red.log`,
+`/private/tmp/p5-focus-green.log`, `/private/tmp/p5-focus-existing.log`.
