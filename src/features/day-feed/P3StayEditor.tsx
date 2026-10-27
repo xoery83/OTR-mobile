@@ -34,6 +34,7 @@ import { PlanParticipantsField } from "./PlanParticipantsField";
 import { P3StayLocationField } from "./P3StayLocationField";
 import {
   p3PlaceSelectionDraft,
+  currentP3PlaceSelection,
   type P3PlaceSelectionDraft,
 } from "./p3PlaceSelectionDraft";
 
@@ -180,6 +181,7 @@ export function P3StayEditor({
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
   const firstAttemptRef = useRef<ManualStayFields | null>(null);
+  const firstPlaceAttemptRef = useRef<P3PlaceSelectionDraft | null>(null);
   const unavailableRef = useRef(false);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
@@ -282,6 +284,14 @@ export function P3StayEditor({
       !manualStayFieldsSchema.safeParse(fieldsRef.current).success
     )
       return;
+    if (firstAttemptRef.current === null)
+      firstPlaceAttemptRef.current = currentP3PlaceSelection(selectedPlaceDraft.current, {
+        tripId,
+        itemId: source.draft.itemId,
+        accountGeneration: generation,
+        inputRevision: locationInputRevision.current,
+        location: fieldsRef.current.location,
+      });
     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
     firstAttemptRef.current = attempt;
     busyRef.current = true;
@@ -290,7 +300,13 @@ export function P3StayEditor({
     setFrozen(true);
     setStatus("READY");
     try {
-      const result = await source.repository.save(source.draft, attempt);
+      const placeAttempt = firstPlaceAttemptRef.current;
+      const result = placeAttempt
+        ? await source.repository.save(source.draft, attempt, {
+            intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
+            draft: placeAttempt,
+          })
+        : await source.repository.save(source.draft, attempt);
       if (current()) onSaved(result.itemId);
     } catch (error) {
       if (current()) {

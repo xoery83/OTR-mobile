@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { createUuid } from "@/domain/localId";
 import {
+  appleSelectedPlaceDraftSchema,
+  type AppleSelectedPlaceDraft,
+} from "../places/appleSelectedPlaceDraft";
+import {
   coreDefaults,
   coreParticipationSchema,
   corePlaceSchema,
@@ -123,6 +127,14 @@ type ManualItemDraft<F extends ManualPlanFields = ManualItemFields> = Omit<
   "fields"
 > &
   Readonly<{ fields: F }>;
+export type ManualPlaceAcceptance = Readonly<{
+  intent: "ACCEPT_SELECTED_APPLE_PLACE_V1";
+  draft: AppleSelectedPlaceDraft;
+}>;
+const manualPlaceAcceptanceSchema = z.strictObject({
+  intent: z.literal("ACCEPT_SELECTED_APPLE_PLACE_V1"),
+  draft: appleSelectedPlaceDraftSchema,
+});
 type ManualItemRepository<F extends ManualPlanFields> = {
   createDraft(tripId: string): Promise<ManualItemDraft<F>>;
   read(
@@ -130,7 +142,11 @@ type ManualItemRepository<F extends ManualPlanFields> = {
     itemId: string,
     expectedRevision?: number,
   ): Promise<ManualItemDraft<F>>;
-  save(draft: ManualItemDraft<F>, fields: F): Promise<ManualPlanSaveResult>;
+  save(
+    draft: ManualItemDraft<F>,
+    fields: F,
+    placeDraft?: AppleSelectedPlaceDraft | ManualPlaceAcceptance,
+  ): Promise<ManualPlanSaveResult>;
 };
 type DraftState = {
   context: AccountRequestContext;
@@ -139,7 +155,12 @@ type DraftState = {
   revision: number | null;
   original: ManualItemFields;
   ids: string[];
-  attempt?: { fields: string; commands: Command[] };
+  attempt?: {
+    fields: string;
+    placeDraft: string;
+    place: z.infer<typeof corePlaceSchema>;
+    commands: Command[];
+  };
 };
 function fieldsFor(
   row: Record<string, unknown>,
@@ -476,6 +497,7 @@ export function createManualItemRepository(
     async save(
       draft: ManualItemDraft,
       input: ManualItemFields,
+      selectedPlaceDraft?: AppleSelectedPlaceDraft | ManualPlaceAcceptance,
     ): Promise<ManualPlanSaveResult> {
       const state = drafts.get(draft);
       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
@@ -493,6 +515,28 @@ export function createManualItemRepository(
         throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
       fields.participation.people.sort();
       fields.location = fields.location || null;
+      const review =
+        selectedPlaceDraft && "intent" in selectedPlaceDraft
+          ? manualPlaceAcceptanceSchema.parse(selectedPlaceDraft)
+          : null;
+      const placeDraft =
+        selectedPlaceDraft === undefined
+          ? null
+          : appleSelectedPlaceDraftSchema.parse(
+              review ? review.draft : selectedPlaceDraft,
+            );
+      if (
+        placeDraft &&
+        (family !== "P3" ||
+          placeDraft.binding.tripId !== state.context.tripId ||
+          placeDraft.binding.itemId !== draft.itemId ||
+          placeDraft.binding.accountGeneration !== state.context.generation ||
+          placeDraft.binding.location !== fields.location)
+      )
+        throw new Error("MANUAL_PLACE_DRAFT_BINDING");
+      const placeDraftText = json({ draft: placeDraft, reviewed: review !== null });
+      if (state.attempt && state.attempt.placeDraft !== placeDraftText)
+        throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
       const fieldsText = json(fields);
       if (state.attempt && state.attempt.fields !== fieldsText)
         throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
@@ -557,9 +601,47 @@ export function createManualItemRepository(
           ),
         };
         const place = corePlaceSchema.parse(
-          Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+          state.attempt?.place ??
+            Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
         );
         place.authored_label = fields.location || null;
+        if (placeDraft && !state.attempt?.place) {
+          const parts = placeDraft.addressComponents;
+          place.authored_address = placeDraft.binding.location;
+          place.authored_address_locality = parts?.locality ?? null;
+          place.authored_address_region = parts?.administrativeArea ?? null;
+          place.authored_address_country = parts?.country ?? null;
+          const priorInput = row?.location_input_revision;
+          place.location_input_revision =
+            typeof priorInput === "number" ? priorInput + 1 : 1;
+          place.spatial_provenance_refs = {
+            source: "APPLE_USER_SELECTED_DRAFT",
+            acceptance: "UNACCEPTED_PROVIDER_DRAFT",
+            provider: "apple",
+            input_revision: String(place.location_input_revision),
+            ...(placeDraft.providerPlaceId
+              ? { provider_place_id: placeDraft.providerPlaceId }
+              : {}),
+            ...(parts?.countryCode ? { provider_country_code: parts.countryCode } : {}),
+          };
+          if (review) {
+            // Explicit reviewed Save at the owning mutation boundary; not provider auto-copy.
+            place.accepted_address = placeDraft.binding.location;
+            place.accepted_address_locality = parts?.locality ?? null;
+            place.accepted_address_region = parts?.administrativeArea ?? null;
+            place.accepted_address_country = parts?.country ?? null;
+            place.accepted_latitude = placeDraft.point?.latitude ?? null;
+            place.accepted_longitude = placeDraft.point?.longitude ?? null;
+            place.spatial_provenance_refs = {
+              ...place.spatial_provenance_refs,
+              source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
+              acceptance: "USER_CONFIRMED_SAVE",
+              reviewed_at: clock(),
+            };
+          }
+          // accepted_place_id stays null: Apple references are not internal places.id UUIDs.
+          // No timezone, schedule, participation or visibility is inferred from a Place.
+        }
         const storedStay = snapshot.graph.trip_stay_details.find(
           (r) => r.event_id === draft.itemId,
         );
@@ -664,7 +746,7 @@ export function createManualItemRepository(
               schedule.end = coreStoredBoundary(row!, "end");
             payloads.push({ command: "SET_ITEM_SCHEDULE", payload: { schedule } });
           }
-          if (fields.location !== state.original.location)
+          if (fields.location !== state.original.location || placeDraft)
             payloads.push({ command: "SET_ITEM_PLACE", payload: { place } });
           if (json(fields.participation) !== json(state.original.participation))
             payloads.push({
@@ -731,7 +813,13 @@ export function createManualItemRepository(
         });
         if (state.attempt && json(state.attempt.commands) !== json(commands))
           throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
-        state.attempt = { fields: fieldsText, commands };
+        state.attempt = {
+          fields: fieldsText,
+          placeDraft: placeDraftText,
+          // Exact Place/provenance is intent data; rollback retries must not regenerate its clock.
+          place: structuredClone(place),
+          commands,
+        };
         return {
           commands,
           result: async () => {

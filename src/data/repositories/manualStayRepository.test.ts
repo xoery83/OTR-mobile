@@ -1,9 +1,16 @@
+import {
+  dayHeaderDestinationRead,
+  resolveDayHeaderDestination,
+} from "@/features/day-feed/dayHeaderDestinationRead";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
-import { advanceAccountGeneration } from "../auth/accountGeneration";
+import {
+  advanceAccountGeneration,
+  getAccountGeneration,
+} from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
 import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
@@ -62,7 +69,8 @@ async function fixture() {
     },
   });
   const identity = async () => accountId;
-  const clock = () => "2026-10-20T00:00:00.000Z";
+  let currentClock = "2026-10-20T00:00:00.000Z";
+  const clock = () => currentClock;
   const core = createTripCoreV2Repository(
     database,
     identity,
@@ -99,6 +107,9 @@ async function fixture() {
     read,
     days,
     originalAccount,
+    setClock(value: string) {
+      currentClock = value;
+    },
     failNext(n: number) {
       inserts = 0;
       failAt = n;
@@ -592,4 +603,119 @@ it("reviewer: title-only legacy rename followed by independent property match ne
   expect((await f.repo().read(f.tripId, d.itemId)).fields.stayDetails.propertyName).toBe(
     "Legacy renamed title",
   );
+});
+
+const appleSelectionFor = (tripId: string, itemId: string, location: string) => ({
+  authority: "UNACCEPTED_PROVIDER_DRAFT" as const,
+  binding: {
+    tripId,
+    itemId,
+    location,
+    accountGeneration: getAccountGeneration(),
+    inputRevision: 1,
+  },
+  provider: "apple" as const,
+  selectionSessionId: randomUUID(),
+  selectionGeneration: 1,
+  providerPlaceId: "opaque-apple-poi-not-an-internal-uuid",
+  addressComponents: {
+    locality: "Nelson",
+    administrativeArea: "Nelson",
+    country: "New Zealand",
+    countryCode: "NZ",
+  },
+  point: { latitude: -41.27, longitude: 173.28 },
+});
+it("owning candidate retains an unaccepted provider draft without automatically promoting geography", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = inputFor(draft.fields),
+    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
+  await repo.save(draft, input, selection);
+  const item = (await f.read(f.tripId))!.items[0];
+  expect(item.place).toMatchObject({
+    authoredAddressLocality: "Nelson",
+    spatialProvenanceRefs: { acceptance: "UNACCEPTED_PROVIDER_DRAFT" },
+  });
+  expect(item.place).not.toHaveProperty("acceptedAddressLocality");
+  expect(item.place).not.toHaveProperty("latitude");
+  expect(
+    resolveDayHeaderDestination(
+      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
+      "2026-10-21",
+    ).kind,
+  ).toBe("unresolved");
+});
+it("only an explicit reviewed Save commits accepted geography through the existing same-ID Core and Queue", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = inputFor(draft.fields),
+    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
+  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
+  const result = await repo.save(draft, input, request);
+  const item = (await f.read(f.tripId))!.items[0];
+  expect(item.itemId).toBe(draft.itemId);
+  expect(item.place).toMatchObject({
+    acceptedAddressLocality: "Nelson",
+    acceptedAddressRegion: "Nelson",
+    acceptedAddressCountry: "New Zealand",
+    latitude: -41.27,
+    longitude: 173.28,
+    spatialProvenanceRefs: {
+      source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
+      acceptance: "USER_CONFIRMED_SAVE",
+    },
+  });
+  expect(item.place).not.toHaveProperty("placeId");
+  expect(
+    resolveDayHeaderDestination(
+      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
+      "2026-10-21",
+    ),
+  ).toEqual({ kind: "single", source: "stay", label: "Nelson" });
+  expect(item.schedule).toMatchObject({
+    start: { localDate: input.startDate },
+    end: { localDate: input.endDate },
+  });
+  expect(count(f.sql)).toBe(1);
+  expect(await repo.save(draft, input, request)).toEqual(result);
+  await expect(
+    repo.save(draft, input, {
+      ...request,
+      draft: { ...selection, binding: { ...selection.binding, inputRevision: 2 } },
+    }),
+  ).rejects.toThrow("MANUAL_PLAN_DRAFT_FROZEN");
+  const other = await repo.createDraft(f.tripId);
+  await expect(repo.save(other, input, request)).rejects.toThrow(
+    "MANUAL_PLACE_DRAFT_BINDING",
+  );
+  expect(count(f.sql)).toBe(1);
+});
+
+it("reuses the exact reviewed Place after first SQLite insert rollback and a changed retry clock", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const input = inputFor(draft.fields),
+    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
+  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
+  f.failNext(1);
+  await expect(repo.save(draft, input, request)).rejects.toThrow("TEST_WRITE_FAILURE");
+  expect(count(f.sql)).toBe(0);
+  f.setClock("2026-10-21T12:34:56.000Z");
+  f.failNext(0);
+  const saved = await repo.save(draft, input, request);
+  expect(saved.itemId).toBe(draft.itemId);
+  expect(count(f.sql)).toBe(1);
+  const item = (await f.read(f.tripId))!.items[0];
+  expect(item.place).toMatchObject({
+    acceptedAddressLocality: "Nelson",
+    spatialProvenanceRefs: {
+      reviewed_at: "2026-10-20T00:00:00.000Z",
+      acceptance: "USER_CONFIRMED_SAVE",
+    },
+  });
+  expect(await repo.save(draft, input, request)).toEqual(saved);
 });

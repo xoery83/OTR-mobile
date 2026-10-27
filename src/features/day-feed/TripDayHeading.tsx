@@ -1,13 +1,24 @@
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { dayHeaderStylePreference } from "@/native/dayHeaderStylePreference";
 import { DayFeedFidelityHeading } from "./DayFeedFidelityHeading";
 import { unresolvedDayHeaderDestination } from "./dayHeaderPresentation";
+import {
+  resolveDayHeaderDestination,
+  type DayHeaderDestinationRead,
+} from "./dayHeaderDestinationRead";
+import { useUiLocale } from "@/ui/useUiLocale";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 
 export function TripDayHeading({
   tripId,
+  destinationRead,
   ...props
 }: {
   tripId: string;
+  destinationRead?: DayHeaderDestinationRead | null;
 } & Omit<
   Parameters<typeof DayFeedFidelityHeading>[0],
   "styleMode" | "destination" | "onCycleStyle"
@@ -18,6 +29,21 @@ export function TripDayHeading({
   );
   const snapshot = useCallback(() => dayHeaderStylePreference.get(tripId), [tripId]);
   const styleMode = useSyncExternalStore(subscribe, snapshot, snapshot);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+    getAccountGeneration,
+  );
+  const locale = useUiLocale();
+  const destination = useMemo(() => {
+    // Locale is an explicit cache fence; accepted business labels remain original.
+    void locale;
+    return destinationRead &&
+      destinationRead.tripId === tripId &&
+      destinationRead.generation === generation
+      ? resolveDayHeaderDestination(destinationRead, props.date)
+      : unresolvedDayHeaderDestination;
+  }, [destinationRead, tripId, props.date, generation, locale]);
   useEffect(() => {
     void dayHeaderStylePreference.hydrate(tripId);
   }, [tripId]);
@@ -25,7 +51,7 @@ export function TripDayHeading({
     <DayFeedFidelityHeading
       {...props}
       styleMode={styleMode}
-      destination={unresolvedDayHeaderDestination}
+      destination={destination}
       onCycleStyle={() => {
         void dayHeaderStylePreference.cycle(tripId);
       }}

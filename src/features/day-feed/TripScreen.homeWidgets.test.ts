@@ -127,6 +127,7 @@ vi.mock("./DayFeedShell", () => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: () => state.renderedGeneration,
+  useMemo: (calculate: () => unknown) => calculate(),
   useCallback: (callback: unknown, deps: readonly unknown[]) => {
     const i = state.callbackCursor++;
     const previous = state.callbacks[i];

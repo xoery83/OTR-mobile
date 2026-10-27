@@ -9,6 +9,7 @@ import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import { TripDayHeading } from "./TripDayHeading";
+import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
 import { p1InsertionTime } from "./p1InsertionTime";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import {
@@ -63,6 +64,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -352,6 +354,10 @@ function TripContent({
       trip.localManual?.scope.tripId === requested)
       ? trip
       : null;
+  const headerDestinationRead = useMemo(
+    () => dayHeaderDestinationRead(visibleTrip),
+    [visibleTrip],
+  );
   const homePerspective = referenceTripHomePerspective(
     visibleTrip,
     params.homeQaScenario,
@@ -1598,6 +1604,7 @@ function TripContent({
                     >
                       <TripDayHeading
                         tripId={requested}
+                        destinationRead={headerDestinationRead}
                         date={date}
                         start={dayFacts.startDate!}
                         today={appearanceToday ?? ""}

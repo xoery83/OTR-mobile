@@ -48,6 +48,7 @@ const item = (
     description,
     status: "PLANNED",
     hidden: false,
+    visibility: "PRIVATE",
     localState: "PENDING",
     participation: { mode: "WHOLE_GROUP", personIds: [] },
     schedule: { shape: "POINT" },
