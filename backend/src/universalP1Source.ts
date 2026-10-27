@@ -31,6 +31,7 @@ const selectionSchema = z.strictObject({
     "CONFIRM_NEW_P3",
     "CONFIRM_NEW_P4",
     "CONFIRM_NEW_P5",
+    "CONFIRM_NEW_P6",
   ]),
   token: z.string().min(1).max(128),
   resultSha256: digest,
@@ -82,7 +83,7 @@ export async function projectUniversalP1Selection(
     quality = result.quality?.decisions.filter((d) => d.token === selection.token);
   if (
     candidates.length !== 1 ||
-    !["P1", "P3", "P4", "P5"].includes(candidates[0].kind) ||
+    !["P1", "P3", "P4", "P5", "P6"].includes(candidates[0].kind) ||
     selection.action !== `CONFIRM_NEW_${candidates[0].kind}` ||
     candidates[0].subtype !==
       (candidates[0].kind === "P3"
@@ -99,11 +100,11 @@ export async function projectUniversalP1Selection(
   )
     throw Error("OWNING_REVIEW_REQUIRED");
   const candidate = candidates[0];
-  const family = candidate.kind as "P1" | "P3" | "P4" | "P5";
-  if (["P4", "P5"].includes(family) && !selection.sourceReview)
+  const family = candidate.kind as "P1" | "P3" | "P4" | "P5" | "P6";
+  if (["P4", "P5", "P6"].includes(family) && !selection.sourceReview)
     throw Error("OWNING_REVIEW_REQUIRED");
   if (
-    family === "P1" &&
+    ["P1", "P6"].includes(family) &&
     (candidate.bookingTokens.length || candidate.ticketTokens.length)
   )
     throw Error("OWNING_RELATION_QUALIFICATION_REQUIRED");
@@ -177,7 +178,9 @@ export async function projectUniversalP1Selection(
           ? "otr.universal.p4-source-review/1"
           : family === "P5"
             ? "otr.universal.p5-source-review/1"
-            : "otr.universal.p1-source-review/1") ||
+            : family === "P6"
+              ? "otr.universal.p6-source-review/1"
+              : "otr.universal.p1-source-review/1") ||
       review.sourceRevision !== catalog.sourceRevision ||
       review.title !== names[0].raw ||
       review.localDate !== sourceReviewCivilDate(dates[0].raw) ||
@@ -400,9 +403,11 @@ export async function projectUniversalP1Selection(
           ? ("otr.core.universal-p4-source/1" as const)
           : family === "P5"
             ? ("otr.core.universal-p5-source/1" as const)
-            : review
-              ? ("otr.core.universal-p1-source/2" as const)
-              : ("otr.core.universal-p1-source/1" as const),
+            : family === "P6"
+              ? ("otr.core.universal-p6-source/1" as const)
+              : review
+                ? ("otr.core.universal-p1-source/2" as const)
+                : ("otr.core.universal-p1-source/1" as const),
     ...(review ? { sourceReview: review, reviewedBy: context.accountId } : {}),
     accountId: context.accountId,
     tripId: context.tripId,
@@ -485,7 +490,7 @@ export async function qualifyUniversalP1Selection(
 }
 
 // These exact advisories concern unselected fields or absent commercial rights, never lifecycle.
-function p1UnselectedAdvisory(reason: string, family: "P1" | "P3" | "P4" | "P5") {
+function p1UnselectedAdvisory(reason: string, family: "P1" | "P3" | "P4" | "P5" | "P6") {
   if (family === "P3") {
     if (
       reason ===

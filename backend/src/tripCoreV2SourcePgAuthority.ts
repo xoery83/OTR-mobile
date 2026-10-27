@@ -688,14 +688,14 @@ async function putPlan(
     await assertUniversalP1Capability(
       lease,
       scope,
-      (firstP1.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+      (firstP1.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
     );
     await setUniversalP1WriteContext(
       lease,
       firstP1.proposed.target.id,
       firstP1.proposed.operationId,
       firstP1.proposed.slotId,
-      (firstP1.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+      (firstP1.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
     );
   }
   await lease.query(
@@ -947,14 +947,14 @@ export function createCoreSourcePgAuthority(
           assertCommandAdmission: async (command) => {
             if (
               command.command === "CREATE_ITEM" &&
-              ["P1", "P3", "P4", "P5"].includes(
+              ["P1", "P3", "P4", "P5", "P6"].includes(
                 (command.payload as { family: string }).family,
               )
             ) {
               await assertUniversalP1Capability(
                 lease,
                 own,
-                (command.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+                (command.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
               );
               if (!options.readUniversalP1) throw Error("CONTRACT_UNSUPPORTED");
               const verified = verifiedP1.get(command.operationId);
@@ -1173,14 +1173,16 @@ export function createCoreSourcePgAuthority(
               await assertUniversalP1Capability(
                 lease,
                 own,
-                (slot.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+                (slot.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" })
+                  .family,
               );
               await setUniversalP1WriteContext(
                 lease,
                 slot.proposed.target.id,
                 slot.proposed.operationId,
                 slot.proposed.slotId,
-                (slot.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+                (slot.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" })
+                  .family,
               );
             } else if (plan && universalP2) {
               if (
@@ -1541,7 +1543,7 @@ export function createCoreSourcePgAuthority(
     if (
       !options.readUniversalP1 ||
       command.command !== "CREATE_ITEM" ||
-      !["P1", "P3", "P4", "P5"].includes(
+      !["P1", "P3", "P4", "P5", "P6"].includes(
         (command.payload as { family: string }).family,
       ) ||
       command.admission.mode !== "REVIEWED_SOURCE"
@@ -1564,7 +1566,7 @@ export function createCoreSourcePgAuthority(
     await assertUniversalP1Capability(
       lease,
       scope,
-      (command.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+      (command.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
     );
     const plan = row.prepared_json as CoreSourceStoredPlanV2,
       slot = plan.slots.find(
@@ -1698,7 +1700,9 @@ export function createCoreSourcePgAuthority(
     sourceReader(lease, async () => {
       if (
         command.command === "CREATE_ITEM" &&
-        ["P1", "P3", "P4", "P5"].includes((command.payload as { family: string }).family)
+        ["P1", "P3", "P4", "P5", "P6"].includes(
+          (command.payload as { family: string }).family,
+        )
       ) {
         const value = await p1SlotAuthority(lease, actor, command, intentSha256, true, {
           actor,
@@ -1780,7 +1784,9 @@ export function createCoreSourcePgAuthority(
     sourceReader(lease, async () => {
       if (
         command.command === "CREATE_ITEM" &&
-        ["P1", "P3", "P4", "P5"].includes((command.payload as { family: string }).family)
+        ["P1", "P3", "P4", "P5", "P6"].includes(
+          (command.payload as { family: string }).family,
+        )
       ) {
         const known = p1Commands.get(lease)?.get(command.operationId);
         if (known && (known.command !== json(command) || known.intent !== intentSha256))
@@ -1797,7 +1803,7 @@ export function createCoreSourcePgAuthority(
           await assertUniversalP1Capability(
             lease,
             c.scope,
-            (command.payload as { family: "P1" | "P3" | "P4" | "P5" }).family,
+            (command.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
           );
           await assertPublication(lease, actor, c.candidate);
         }
@@ -2175,7 +2181,7 @@ export function createCoreSourcePgAuthority(
         );
         const row = (
           await lease.query(
-            "SELECT s.plan_id FROM public.trip_source_core_v2_slots s WHERE s.account_id=$1::uuid AND s.trip_id=$2::uuid AND s.output_slot_id=$3::uuid AND s.operation_id=$4::uuid AND s.intent_sha256=$5 AND (s.output_purpose->>'purposeKind' IN ('P1_ITEM','P3_ITEM','P4_ITEM','P5_ITEM') OR (s.command='CREATE_SPARSE_FLIGHT' AND s.output_purpose->>'purposeKind'='FLIGHT_OCCURRENCE' AND EXISTS(SELECT 1 FROM public.trip_source_core_v2_candidates c JOIN public.trip_source_core_v2_publications p ON p.publication_id=(c.candidate_json->>'publicationId')::uuid WHERE c.candidate_id=s.candidate_id AND c.account_id=s.account_id AND c.trip_id=s.trip_id AND p.account_id=s.account_id AND p.trip_id=s.trip_id AND p.request_json->'universalP2'->>'version'='otr.universal.p2-source-proposal/1')))",
+            "SELECT s.plan_id FROM public.trip_source_core_v2_slots s WHERE s.account_id=$1::uuid AND s.trip_id=$2::uuid AND s.output_slot_id=$3::uuid AND s.operation_id=$4::uuid AND s.intent_sha256=$5 AND (s.output_purpose->>'purposeKind' IN ('P1_ITEM','P3_ITEM','P4_ITEM','P5_ITEM','P6_ITEM') OR (s.command='CREATE_SPARSE_FLIGHT' AND s.output_purpose->>'purposeKind'='FLIGHT_OCCURRENCE' AND EXISTS(SELECT 1 FROM public.trip_source_core_v2_candidates c JOIN public.trip_source_core_v2_publications p ON p.publication_id=(c.candidate_json->>'publicationId')::uuid WHERE c.candidate_id=s.candidate_id AND c.account_id=s.account_id AND c.trip_id=s.trip_id AND p.account_id=s.account_id AND p.trip_id=s.trip_id AND p.request_json->'universalP2'->>'version'='otr.universal.p2-source-proposal/1')))",
             [actor, trip, input.slotId, input.operationId, input.intentSha256],
           )
         ).rows[0];

@@ -25,11 +25,15 @@ export const universalP4SourceReviewSchema = universalP1SourceReviewSchema.exten
 export const universalP5SourceReviewSchema = universalP1SourceReviewSchema.extend({
   version: z.literal("otr.universal.p5-source-review/1"),
 });
+export const universalP6SourceReviewSchema = universalP1SourceReviewSchema.extend({
+  version: z.literal("otr.universal.p6-source-review/1"),
+});
 export const universalItemSourceReviewSchema = z.discriminatedUnion("version", [
   universalP1SourceReviewSchema,
   universalP3SourceReviewSchema,
   universalP4SourceReviewSchema,
   universalP5SourceReviewSchema,
+  universalP6SourceReviewSchema,
 ]);
 export type UniversalItemSourceReview = z.infer<typeof universalItemSourceReviewSchema>;
 

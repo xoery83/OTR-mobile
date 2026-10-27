@@ -16,3 +16,11 @@ it.each([
 ] as const)("has no fixture outside DEV Actor/Trip (%s/%s/%s)", (a, t, d) =>
   expect(universalQaFixture(a, t, d)).toBeUndefined(),
 );
+
+it("fills only the P6 original text for its own qualified slice", () => {
+  expect(universalQaFixture(account, trip, true, "P6")).toBe(
+    "Synthetic QA only\nP6 Activity: Harbour QA Gallery Visit\nActivity date: 2026-11-03",
+  );
+  expect(universalQaFixture("another", trip, true, "P6")).toBeUndefined();
+  expect(universalQaFixture(account, trip, false, "P6")).toBeUndefined();
+});

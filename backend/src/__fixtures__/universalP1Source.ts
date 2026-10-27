@@ -17,7 +17,7 @@ export async function universalP1SourceFixture(
   accountId: string = randomUUID(),
   tripId: string = randomUUID(),
   dateRaw = "2026-11-03",
-  family: "P1" | "P3" | "P4" | "P5" = "P1",
+  family: "P1" | "P3" | "P4" | "P5" | "P6" = "P1",
 ) {
   const batchId = randomUUID(),
     taskId = randomUUID(),
@@ -26,7 +26,7 @@ export async function universalP1SourceFixture(
     representationId = randomUUID(),
     runId = randomUUID();
   const text =
-    family === "P1"
+    family === "P1" || family === "P6"
       ? `Synthetic QA only\nActivity: 海滨散步\nActivity date: ${dateRaw}\nMeeting place: West gate\n`
       : family === "P3"
         ? `Synthetic QA only\nProperty: 海滨住宿\nCheck in: ${dateRaw}\nCheck out: 2026-11-05\nObserved address: West gate\n`
@@ -126,7 +126,7 @@ export async function universalP1SourceFixture(
           id: "walk",
           kind: family,
           subtype:
-            family === "P1"
+            family === "P1" || family === "P6"
               ? "ACTIVITY"
               : family === "P3"
                 ? "ACCOMMODATION"
@@ -134,7 +134,7 @@ export async function universalP1SourceFixture(
                   ? "TRAIN"
                   : "RENTAL_CAR",
           f:
-            family === "P1"
+            family === "P1" || family === "P6"
               ? [
                   [0, "activity.name", "海滨散步"],
                   [0, "activity.date", dateRaw],

@@ -278,7 +278,7 @@ export async function qualifyImportLifecycleProposals(
                       s.slot.command !== "CREATE_ITEM" ||
                       !(
                         (field === "START.local_date" &&
-                          ["P1", "P3", "P4", "P5"].includes(
+                          ["P1", "P3", "P4", "P5", "P6"].includes(
                             (s.slot.payload as { family: string }).family,
                           )) ||
                         (field === "END.local_date" &&

@@ -144,7 +144,7 @@ it("exact Core target wakes and executes only that operation, retaining other sa
   expect(queue.markCompleted).toHaveBeenCalledExactlyOnceWith(f.operation.id);
 });
 
-async function sourceFixture(family: "P1" | "P2" | "P3" | "P4" | "P5" = "P1") {
+async function sourceFixture(family: "P1" | "P2" | "P3" | "P4" | "P5" | "P6" = "P1") {
   const f = await fixture(),
     { universalP1SourceFixture } =
       await import("../../../backend/src/__fixtures__/universalP1Source"),
@@ -152,18 +152,27 @@ async function sourceFixture(family: "P1" | "P2" | "P3" | "P4" | "P5" = "P1") {
       actor,
       trip,
       "2026-11-03",
-      family === "P3" || family === "P4" || family === "P5" ? family : "P1",
+      family === "P3" || family === "P4" || family === "P5" || family === "P6"
+        ? family
+        : "P1",
     ),
-    proposal = await (family === "P4" || family === "P5"
+    proposal = await (family === "P4" || family === "P5" || family === "P6"
       ? (Object.assign(source.input.selection, {
           sourceReview: {
             version:
-              family === "P5"
-                ? "otr.universal.p5-source-review/1"
-                : "otr.universal.p4-source-review/1",
+              family === "P6"
+                ? "otr.universal.p6-source-review/1"
+                : family === "P5"
+                  ? "otr.universal.p5-source-review/1"
+                  : "otr.universal.p4-source-review/1",
             decision: "NEW",
             sourceRevision: 1,
-            title: family === "P5" ? "Coastal QA Train" : "海滨租车",
+            title:
+              family === "P6"
+                ? "海滨散步"
+                : family === "P5"
+                  ? "Coastal QA Train"
+                  : "海滨租车",
             localDate: "2026-11-03",
             ...(family === "P4" ? { endLocalDate: "2026-11-05" } : {}),
             originalReviewed: true,
@@ -218,7 +227,7 @@ async function sourceFixture(family: "P1" | "P2" | "P3" | "P4" | "P5" = "P1") {
   }));
   return { ...f, operation, slot, receipt, domainReceiptId };
 }
-it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
   "recovers the same accepted %s operation and finishes its Source relation without redispatch",
   async (family) => {
     const f = await sourceFixture(family);
@@ -238,7 +247,7 @@ it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
     );
   },
 );
-it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
   "retains accepted %s intent through Source finalization failure and retries only the relation",
   async (family) => {
     const f = await sourceFixture(family);
@@ -252,7 +261,7 @@ it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
   },
 );
 
-it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
   "never resubmits an APPLIED Source %s when its owning receipt cannot be read",
   async (family) => {
     const f = await sourceFixture(family);
@@ -269,7 +278,7 @@ it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
   },
 );
 
-it.each(["P1", "P2", "P3", "P4", "P5"] as const)(
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
   "dispatches only the prepared %s Source operation with Manual QA scope closed",
   async (family) => {
     const f = await sourceFixture(family),

@@ -11,15 +11,18 @@ import {
   type P1PurposeVerification,
 } from "../../src/domain/trip/p1OutputPurposeV2";
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
-async function fixture(family: "P1" | "P3" | "P5" = "P1") {
+async function fixture(family: "P1" | "P3" | "P5" | "P6" = "P1") {
   const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", family);
-  if (family === "P5")
+  if (family === "P5" || family === "P6")
     Object.assign(f.input.selection, {
       sourceReview: {
-        version: "otr.universal.p5-source-review/1",
+        version:
+          family === "P6"
+            ? "otr.universal.p6-source-review/1"
+            : "otr.universal.p5-source-review/1",
         decision: "NEW",
         sourceRevision: 1,
-        title: "Coastal QA Train",
+        title: family === "P6" ? "海滨散步" : "Coastal QA Train",
         localDate: "2026-11-03",
         originalReviewed: true,
         tripReviewed: true,
@@ -58,7 +61,14 @@ async function fixture(family: "P1" | "P3" | "P5" = "P1") {
       targetKind: "ITEM",
       targetId: slot.target.id,
       operationId: slot.operationId,
-      purposeKind: family === "P5" ? "P5_ITEM" : family === "P3" ? "P3_ITEM" : "P1_ITEM",
+      purposeKind:
+        family === "P6"
+          ? "P6_ITEM"
+          : family === "P5"
+            ? "P5_ITEM"
+            : family === "P3"
+              ? "P3_ITEM"
+              : "P1_ITEM",
     },
     command,
     selectedFields: slot.selectedFields as P1PurposeVerification["selectedFields"],
@@ -91,7 +101,7 @@ it("certifies only after owning verification and rejects changed payload/Manual 
     ),
   ).rejects.toThrow("OWNING_REVIEW_REQUIRED");
 });
-it.each(["P1", "P3", "P5"] as const)(
+it.each(["P1", "P3", "P5", "P6"] as const)(
   "uses existing Source Prepare storage for %s and remains closed without its owning verifier",
   async (family) => {
     const { f, p } = await fixture(family);

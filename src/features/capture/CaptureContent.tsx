@@ -321,6 +321,9 @@ export function CaptureContent({
             accountId,
             selectedTripPrior,
             typeof __DEV__ !== "undefined" && __DEV__,
+            process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED === "true"
+              ? "P6"
+              : "P5",
           ) !== undefined
             ? () => {
                 if (!current() || running.current || attempted || reopening || model)
@@ -329,6 +332,9 @@ export function CaptureContent({
                   accountId,
                   selectedTripPrior,
                   typeof __DEV__ !== "undefined" && __DEV__,
+                  process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED === "true"
+                    ? "P6"
+                    : "P5",
                 );
                 if (sample !== undefined) staging.setEditorText(sample);
               }
