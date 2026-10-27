@@ -11,13 +11,13 @@ def replace(k,a,b,count=1):
  assert new[k].count(a)==count,(k,a,new[k].count(a))
  new[k]=new[k].replace(a,b)
 statement='trip_core_service_statement_guard()'
-replace(statement,"not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled)", """(not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled) AND NOT (
+replace(statement,"not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled)", """(not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled) AND NOT ((
     tg_op='INSERT' AND current_setting('otr.core.command',true)='CREATE_ITEM'
     AND current_setting('otr.core.family',true)='P5' AND current_setting('otr.core.admission',true)='REVIEWED_SOURCE'
     AND current_setting('otr.core.actor',true)='f4b059c5-8241-4ffb-aa15-37fa25474543'
     AND current_setting('otr.core.trip',true)='825f79b2-4a9d-4535-a62e-43000ca50c4a'
     AND EXISTS(SELECT 1 FROM public.trip_sustained_import_p1_capabilities('f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid,'825f79b2-4a9d-4535-a62e-43000ca50c4a'::uuid) c WHERE c.runtime_enabled AND c.enabled_families=ARRAY['P5']::text[] AND c.enabled_commands=ARRAY['CREATE_ITEM']::text[] AND c.enabled_admission_modes=ARRAY['REVIEWED_SOURCE']::text[])
-  ))""")
+  ) IS TRUE))""")
 replace(h,"(ps.output_purpose->>'purposeKind'='P4_ITEM' and pc.candidate_json->>'schemaId'='otr.core.universal-p4-source/1')","(ps.output_purpose->>'purposeKind'='P4_ITEM' and pc.candidate_json->>'schemaId'='otr.core.universal-p4-source/1') OR (ps.output_purpose->>'purposeKind'='P5_ITEM' and pc.candidate_json->>'schemaId'='otr.core.universal-p5-source/1')")
 replace(c,"p.universal_p1_review_scope->>'family'='P4'", "p.universal_p1_review_scope->>'family' IN ('P4','P5')")
 replace(g,"coalesce(family,'') NOT IN ('P1','P3','P4')","coalesce(family,'') NOT IN ('P1','P3','P4','P5')")

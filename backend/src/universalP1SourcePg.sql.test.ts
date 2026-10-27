@@ -515,7 +515,7 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
       if (family === "P5") {
         const statement = async (
           overrides: Partial<
-            Record<"actor" | "trip" | "command" | "family" | "admission", string>
+            Record<"actor" | "trip" | "command" | "family" | "admission", string | null>
           >,
           update = false,
         ) =>
@@ -532,10 +532,11 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
                 ...overrides,
               };
               for (const [key, value] of Object.entries(context))
-                await lease.query("SELECT set_config($1,$2,true)", [
-                  "otr.core." + key,
-                  value,
-                ]);
+                if (value !== null)
+                  await lease.query("SELECT set_config($1,$2,true)", [
+                    "otr.core." + key,
+                    value,
+                  ]);
               await lease.query(
                 update
                   ? "UPDATE public.itinerary_transport_services SET service_literal=service_literal WHERE false"
@@ -555,6 +556,10 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
         ])
           await expect(statement(denied)).rejects.toThrow("CORE_V2_CAPABILITY_CLOSED");
         await expect(statement({}, true)).rejects.toThrow("CORE_V2_CAPABILITY_CLOSED");
+        for (const key of ["actor", "trip", "command", "family", "admission"] as const)
+          await expect(statement({ [key]: null })).rejects.toThrow(
+            "CORE_V2_CAPABILITY_CLOSED",
+          );
       }
       const command = prepared.readyCommands[0],
         commands = createCorePgStorage(

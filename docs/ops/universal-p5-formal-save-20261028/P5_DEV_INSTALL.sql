@@ -361,13 +361,13 @@ CREATE OR REPLACE FUNCTION public.trip_core_service_statement_guard()
  SET search_path TO 'pg_catalog'
 AS $function$ begin
  if current_user='otr_trip_core_v2_writer' and session_user='otr_trip_core_v2_gateway' then
-  if tg_op='TRUNCATE' or (not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled) AND NOT (
+  if tg_op='TRUNCATE' or (not exists(select 1 from public.trip_core_activation_gate where singleton and runtime_enabled) AND NOT ((
     tg_op='INSERT' AND current_setting('otr.core.command',true)='CREATE_ITEM'
     AND current_setting('otr.core.family',true)='P5' AND current_setting('otr.core.admission',true)='REVIEWED_SOURCE'
     AND current_setting('otr.core.actor',true)='f4b059c5-8241-4ffb-aa15-37fa25474543'
     AND current_setting('otr.core.trip',true)='825f79b2-4a9d-4535-a62e-43000ca50c4a'
     AND EXISTS(SELECT 1 FROM public.trip_sustained_import_p1_capabilities('f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid,'825f79b2-4a9d-4535-a62e-43000ca50c4a'::uuid) c WHERE c.runtime_enabled AND c.enabled_families=ARRAY['P5']::text[] AND c.enabled_commands=ARRAY['CREATE_ITEM']::text[] AND c.enabled_admission_modes=ARRAY['REVIEWED_SOURCE']::text[])
-  )) then raise exception 'CORE_V2_CAPABILITY_CLOSED' using errcode='42501';end if;
+  ) IS TRUE)) then raise exception 'CORE_V2_CAPABILITY_CLOSED' using errcode='42501';end if;
   return null;
  end if;
  if current_user<>'otr_trip_event_semantic_writer' or session_user<>'otr_trip_event_command_gateway' or tg_op='TRUNCATE' then raise exception 'TRANSPORT_SERVICES_PROTECTED' using errcode='42501';end if;
@@ -379,5 +379,5 @@ end $function$
 DO $guard$ BEGIN IF md5(pg_get_functiondef('public.trip_core_guard_historical_source_association()'::regprocedure)) IS DISTINCT FROM '93801f3fadf5dba7a6214561642fe436' THEN RAISE EXCEPTION 'P5_POSTIMAGE_DRIFT';END IF;END $guard$;
 DO $guard$ BEGIN IF md5(pg_get_functiondef('public.trip_sustained_import_p1_capabilities(uuid,uuid)'::regprocedure)) IS DISTINCT FROM '1079d0aab7b396055ea96c98bf0fe96d' THEN RAISE EXCEPTION 'P5_POSTIMAGE_DRIFT';END IF;END $guard$;
 DO $guard$ BEGIN IF md5(pg_get_functiondef('public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)'::regprocedure)) IS DISTINCT FROM '1276642cf7fcd0ae5be4be2934e79ee1' THEN RAISE EXCEPTION 'P5_POSTIMAGE_DRIFT';END IF;END $guard$;
-DO $guard$ BEGIN IF md5(pg_get_functiondef('public.trip_core_service_statement_guard()'::regprocedure)) IS DISTINCT FROM 'b14bcd77dece213dc9a39e30bdde9433' THEN RAISE EXCEPTION 'P5_POSTIMAGE_DRIFT';END IF;END $guard$;
+DO $guard$ BEGIN IF md5(pg_get_functiondef('public.trip_core_service_statement_guard()'::regprocedure)) IS DISTINCT FROM '114c66014850ca45c288752f39a11370' THEN RAISE EXCEPTION 'P5_POSTIMAGE_DRIFT';END IF;END $guard$;
 COMMIT;

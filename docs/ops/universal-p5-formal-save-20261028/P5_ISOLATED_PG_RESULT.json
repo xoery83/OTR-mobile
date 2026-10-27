@@ -10,7 +10,7 @@
     "P5 candidate preserves all four OIDs owners and ACLs",
     "actual owning P5 publication Source Plan Core receipt finalization replay"
   ],
-  "at": "2026-10-27T20:04:44.373122+00:00",
+  "at": "2026-10-27T20:20:29.781369+00:00",
   "hostedInstalled": false,
   "schemaGrantsRolesAdded": 0,
   "statementGuardNegatives": [
@@ -25,5 +25,13 @@
     "one exact service with literal operator/number",
     "two endpoints with exact origin date and unknown clocks/zones/Places"
   ],
-  "acceptedRecoveryRollbackProtected": true
+  "acceptedRecoveryRollbackProtected": true,
+  "missingGucNegatives": [
+    "actor",
+    "trip",
+    "command",
+    "family",
+    "admission"
+  ],
+  "statementNullRepair": "actual missing-GUC INSERT RED -> NOT ((predicate) IS TRUE) GREEN"
 }
