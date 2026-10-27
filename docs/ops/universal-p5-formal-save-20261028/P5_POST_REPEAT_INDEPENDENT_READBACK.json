@@ -1,0 +1,1210 @@
+{
+  "at": "2026-10-27T21:41:26.038223+00:00",
+  "snapshot": {
+    "associations": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+        "created_at": "2026-10-27T21:36:16.122785+00:00",
+        "domain_receipt_id": "f6d056c9-2139-41cc-be73-c019e5ede5af",
+        "field_evidence": {
+          "ROOT.title.0": {
+            "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+            "locator": {
+              "end": 43,
+              "excerpt": "Coastal QA Train",
+              "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 27
+            },
+            "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+            "raw": "Coastal QA Train",
+            "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0",
+            "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+            "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+            "sourceRevision": 1,
+            "value": "Coastal QA Train"
+          },
+          "SERVICE.main.operator_literal.0": {
+            "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+            "locator": {
+              "end": 69,
+              "excerpt": "Coastal QA Rail",
+              "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 54
+            },
+            "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+            "raw": "Coastal QA Rail",
+            "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0",
+            "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+            "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+            "sourceRevision": 1,
+            "value": "Coastal QA Rail"
+          },
+          "SERVICE.main.service_number.0": {
+            "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+            "locator": {
+              "end": 91,
+              "excerpt": "CQ101",
+              "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 86
+            },
+            "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+            "raw": "CQ101",
+            "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0",
+            "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+            "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+            "sourceRevision": 1,
+            "value": "CQ101"
+          },
+          "SERVICE.main.transport_subtype.0": {
+            "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+            "locator": {
+              "end": 116,
+              "excerpt": "TRAIN",
+              "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 111
+            },
+            "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+            "raw": "TRAIN",
+            "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0",
+            "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+            "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+            "sourceRevision": 1,
+            "value": "TRAIN"
+          },
+          "START.local_date.0": {
+            "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+            "locator": {
+              "end": 143,
+              "excerpt": "2026-11-03",
+              "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "kind": "TEXT_SPAN",
+              "page": null,
+              "region": null,
+              "start": 133
+            },
+            "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+            "raw": "2026-11-03",
+            "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0",
+            "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+            "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+            "sourceRevision": 1,
+            "value": "2026-11-03"
+          }
+        },
+        "id": "23ead404-4478-4dcf-b0c2-c6ffc18f3592",
+        "identity_sha256": "97e78a3c6b2ba1f17aaf3b2004f77f82416b74b250ddb39f9beaae804cd4a172",
+        "output_slot_id": "fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6",
+        "receipt_sha256": "146a666317cc3dd5767622f6370322a9407b44e957337dec0614fdd4ed276d96",
+        "run_id": "5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5",
+        "source_id": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+        "source_revision": 1,
+        "target_id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+        "target_kind": "ITEM",
+        "target_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "candidates": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+        "candidate_json": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "batchId": "6a8ee6be-88a3-4f91-8a1e-2881d5409b23",
+          "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+          "evidence": [
+            {
+              "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+              "fieldKey": "ROOT.title",
+              "locator": {
+                "end": 43,
+                "excerpt": "Coastal QA Train",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 27
+              },
+              "raw": "Coastal QA Train",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0"
+            },
+            {
+              "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+              "fieldKey": "START.local_date",
+              "locator": {
+                "end": 143,
+                "excerpt": "2026-11-03",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 133
+              },
+              "raw": "2026-11-03",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0"
+            },
+            {
+              "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+              "fieldKey": "SERVICE.main.transport_subtype",
+              "locator": {
+                "end": 116,
+                "excerpt": "TRAIN",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 111
+              },
+              "raw": "TRAIN",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0"
+            },
+            {
+              "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+              "fieldKey": "SERVICE.main.operator_literal",
+              "locator": {
+                "end": 69,
+                "excerpt": "Coastal QA Rail",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 54
+              },
+              "raw": "Coastal QA Rail",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0"
+            },
+            {
+              "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+              "fieldKey": "SERVICE.main.service_number",
+              "locator": {
+                "end": 91,
+                "excerpt": "CQ101",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 86
+              },
+              "raw": "CQ101",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0"
+            }
+          ],
+          "fieldEvidence": {
+            "ROOT.title.0": {
+              "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "locator": {
+                "end": 43,
+                "excerpt": "Coastal QA Train",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 27
+              },
+              "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+              "raw": "Coastal QA Train",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0",
+              "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+              "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+              "sourceRevision": 1,
+              "value": "Coastal QA Train"
+            },
+            "SERVICE.main.operator_literal.0": {
+              "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "locator": {
+                "end": 69,
+                "excerpt": "Coastal QA Rail",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 54
+              },
+              "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+              "raw": "Coastal QA Rail",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0",
+              "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+              "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+              "sourceRevision": 1,
+              "value": "Coastal QA Rail"
+            },
+            "SERVICE.main.service_number.0": {
+              "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "locator": {
+                "end": 91,
+                "excerpt": "CQ101",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 86
+              },
+              "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+              "raw": "CQ101",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0",
+              "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+              "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+              "sourceRevision": 1,
+              "value": "CQ101"
+            },
+            "SERVICE.main.transport_subtype.0": {
+              "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "locator": {
+                "end": 116,
+                "excerpt": "TRAIN",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 111
+              },
+              "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+              "raw": "TRAIN",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0",
+              "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+              "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+              "sourceRevision": 1,
+              "value": "TRAIN"
+            },
+            "START.local_date.0": {
+              "inputId": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+              "locator": {
+                "end": 143,
+                "excerpt": "2026-11-03",
+                "input_id": "625f6aec-4e74-4076-bc25-15bfe38f93ae",
+                "kind": "TEXT_SPAN",
+                "page": null,
+                "region": null,
+                "start": 133
+              },
+              "payloadSha256": "e062f00fe259a9fe4feb6ac232ea75c9b5b34bd30cc1ed7e6dc9e0c4e6768643",
+              "raw": "2026-11-03",
+              "ref": "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0",
+              "representationId": "155560c3-4c8b-42a6-9442-46c3c0dd6892",
+              "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+              "sourceRevision": 1,
+              "value": "2026-11-03"
+            }
+          },
+          "inputCatalogSha256": "96f8dde7adbd1eeb3dddc15a248f4bcb315a4550f069ee814531b22a132c8746",
+          "lifecycleRelationships": [
+            {
+              "candidateIds": [
+                "94f2ab9e-fb01-80b5-a759-96c4850d8af7"
+              ],
+              "evidenceRefs": [
+                "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0",
+                "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0",
+                "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0",
+                "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0",
+                "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0"
+              ],
+              "id": "source-review:94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+              "kind": "NEW"
+            }
+          ],
+          "plan": {
+            "candidateIds": [
+              "94f2ab9e-fb01-80b5-a759-96c4850d8af7"
+            ],
+            "captureVersion": 2,
+            "mode": "REVIEWED_SOURCE",
+            "planId": "d4c2d878-225c-8bde-b1c8-dfd609d074c8",
+            "policyVersion": null,
+            "slots": [
+              {
+                "baseVector": [
+                  {
+                    "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+                    "kind": "ITEM",
+                    "revision": null
+                  }
+                ],
+                "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+                "command": "CREATE_ITEM",
+                "dependsOn": [],
+                "evidenceRefs": {
+                  "ROOT.title": [
+                    "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0"
+                  ],
+                  "SERVICE.main.operator_literal": [
+                    "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0"
+                  ],
+                  "SERVICE.main.service_number": [
+                    "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0"
+                  ],
+                  "SERVICE.main.transport_subtype": [
+                    "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0"
+                  ],
+                  "START.local_date": [
+                    "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0"
+                  ]
+                },
+                "operationId": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
+                "payload": {
+                  "acl": {
+                    "people": [],
+                    "visibility": "PRIVATE"
+                  },
+                  "core": {
+                    "title": "Coastal QA Train"
+                  },
+                  "endpoints": {
+                    "destination": {
+                      "place": {
+                        "accepted_address": null,
+                        "accepted_address_country": null,
+                        "accepted_address_line1": null,
+                        "accepted_address_line2": null,
+                        "accepted_address_locality": null,
+                        "accepted_address_postal_code": null,
+                        "accepted_address_region": null,
+                        "accepted_latitude": null,
+                        "accepted_longitude": null,
+                        "accepted_place_id": null,
+                        "authored_address": null,
+                        "authored_address_country": null,
+                        "authored_address_line1": null,
+                        "authored_address_line2": null,
+                        "authored_address_locality": null,
+                        "authored_address_postal_code": null,
+                        "authored_address_region": null,
+                        "authored_label": null,
+                        "authored_text": null,
+                        "location_input_revision": null,
+                        "spatial_provenance_refs": null
+                      },
+                      "time": {
+                        "basis": "DERIVED_CIVIL",
+                        "civil_resolution": "PENDING",
+                        "clock_precision": null,
+                        "instant": null,
+                        "interpretation_input_sha256": null,
+                        "interpretation_key": null,
+                        "local_date": null,
+                        "local_time": null,
+                        "provenance_refs": null,
+                        "quality": "UNKNOWN",
+                        "resolution_offset_seconds": null,
+                        "source_instant": null,
+                        "source_instant_precision": null,
+                        "supplied_offset_seconds": null,
+                        "zone_id": null
+                      }
+                    },
+                    "origin": {
+                      "place": {
+                        "accepted_address": null,
+                        "accepted_address_country": null,
+                        "accepted_address_line1": null,
+                        "accepted_address_line2": null,
+                        "accepted_address_locality": null,
+                        "accepted_address_postal_code": null,
+                        "accepted_address_region": null,
+                        "accepted_latitude": null,
+                        "accepted_longitude": null,
+                        "accepted_place_id": null,
+                        "authored_address": null,
+                        "authored_address_country": null,
+                        "authored_address_line1": null,
+                        "authored_address_line2": null,
+                        "authored_address_locality": null,
+                        "authored_address_postal_code": null,
+                        "authored_address_region": null,
+                        "authored_label": null,
+                        "authored_text": null,
+                        "location_input_revision": null,
+                        "spatial_provenance_refs": null
+                      },
+                      "time": {
+                        "basis": "DERIVED_CIVIL",
+                        "civil_resolution": "PENDING",
+                        "clock_precision": null,
+                        "instant": null,
+                        "interpretation_input_sha256": null,
+                        "interpretation_key": null,
+                        "local_date": "2026-11-03",
+                        "local_time": null,
+                        "provenance_refs": null,
+                        "quality": "UNKNOWN",
+                        "resolution_offset_seconds": null,
+                        "source_instant": null,
+                        "source_instant_precision": null,
+                        "supplied_offset_seconds": null,
+                        "zone_id": null
+                      }
+                    }
+                  },
+                  "family": "P5",
+                  "participation": {
+                    "mode": "SELF",
+                    "people": [],
+                    "selfPersonId": null
+                  },
+                  "service": {
+                    "attribution": "UNSPECIFIED",
+                    "codeshare_operating_key": null,
+                    "operator_issuer": "NAME",
+                    "operator_literal": "Coastal QA Rail",
+                    "operator_namespace": "NAME",
+                    "operator_value": "Coastal QA Rail",
+                    "service_key": "main",
+                    "service_literal": "Coastal QA Train",
+                    "service_number": "CQ101",
+                    "transport_subtype": "TRAIN"
+                  }
+                },
+                "selectedFields": [
+                  "ROOT.title",
+                  "START.local_date",
+                  "SERVICE.main.transport_subtype",
+                  "SERVICE.main.operator_literal",
+                  "SERVICE.main.service_number"
+                ],
+                "slotId": "fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6",
+                "slotKey": "p5",
+                "target": {
+                  "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+                  "kind": "ITEM"
+                },
+                "targetKind": "ITEM"
+              }
+            ],
+            "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+            "sourceRevision": 1
+          },
+          "resultSha256": "ecdb84fc4c5d830dec1f2d3a449808024a2192aaa7bacc0420d1aea89ca4c082",
+          "reviewedAdvisories": [],
+          "reviewedBy": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "runId": "5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5",
+          "schemaId": "otr.core.universal-p5-source/1",
+          "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+          "sourceObservations": [],
+          "sourceReview": {
+            "decision": "NEW",
+            "localDate": "2026-11-03",
+            "originalReviewed": true,
+            "sourceRevision": 1,
+            "title": "Coastal QA Train",
+            "tripReviewed": true,
+            "version": "otr.universal.p5-source-review/1"
+          },
+          "sourceRevision": 1,
+          "taskId": "43c79b67-519e-8828-8854-c076356c6a45",
+          "token": "i1",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "candidate_sha256": "a7f6175325aeb0f6e80155a8e2c08f202c7b09c091c2de6ed466d8eaee927be5",
+        "input_catalog_sha256": "96f8dde7adbd1eeb3dddc15a248f4bcb315a4550f069ee814531b22a132c8746",
+        "run_id": "5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5",
+        "sealed_at": "2026-10-27T21:34:50.135269+00:00",
+        "source_id": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+        "source_revision": 1,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "endpoints": [
+      {
+        "accepted_address": null,
+        "accepted_address_country": null,
+        "accepted_address_line1": null,
+        "accepted_address_line2": null,
+        "accepted_address_locality": null,
+        "accepted_address_postal_code": null,
+        "accepted_address_region": null,
+        "accepted_latitude": null,
+        "accepted_longitude": null,
+        "accepted_place_id": null,
+        "authored_address": null,
+        "authored_address_country": null,
+        "authored_address_line1": null,
+        "authored_address_line2": null,
+        "authored_address_locality": null,
+        "authored_address_postal_code": null,
+        "authored_address_region": null,
+        "authored_label": null,
+        "authored_text": null,
+        "basis": "DERIVED_CIVIL",
+        "candidate_address": null,
+        "candidate_confidence": null,
+        "candidate_error_code": null,
+        "candidate_input_revision": null,
+        "candidate_label": null,
+        "candidate_latitude": null,
+        "candidate_longitude": null,
+        "candidate_observed_at": null,
+        "candidate_place_id": null,
+        "candidate_provider": null,
+        "candidate_provider_place_id": null,
+        "candidate_state": null,
+        "civil_resolution": "PENDING",
+        "clock_precision": null,
+        "event_id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+        "instant": null,
+        "interpretation_input_sha256": null,
+        "interpretation_key": null,
+        "local_date": null,
+        "local_time": null,
+        "location_input_revision": null,
+        "provenance_refs": null,
+        "quality": "UNKNOWN",
+        "resolution_offset_seconds": null,
+        "role": "DESTINATION",
+        "source_instant": null,
+        "source_instant_precision": null,
+        "spatial_provenance_refs": null,
+        "supplied_offset_seconds": null,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+        "zone_id": null
+      },
+      {
+        "accepted_address": null,
+        "accepted_address_country": null,
+        "accepted_address_line1": null,
+        "accepted_address_line2": null,
+        "accepted_address_locality": null,
+        "accepted_address_postal_code": null,
+        "accepted_address_region": null,
+        "accepted_latitude": null,
+        "accepted_longitude": null,
+        "accepted_place_id": null,
+        "authored_address": null,
+        "authored_address_country": null,
+        "authored_address_line1": null,
+        "authored_address_line2": null,
+        "authored_address_locality": null,
+        "authored_address_postal_code": null,
+        "authored_address_region": null,
+        "authored_label": null,
+        "authored_text": null,
+        "basis": "DERIVED_CIVIL",
+        "candidate_address": null,
+        "candidate_confidence": null,
+        "candidate_error_code": null,
+        "candidate_input_revision": null,
+        "candidate_label": null,
+        "candidate_latitude": null,
+        "candidate_longitude": null,
+        "candidate_observed_at": null,
+        "candidate_place_id": null,
+        "candidate_provider": null,
+        "candidate_provider_place_id": null,
+        "candidate_state": null,
+        "civil_resolution": "PENDING",
+        "clock_precision": null,
+        "event_id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+        "instant": null,
+        "interpretation_input_sha256": null,
+        "interpretation_key": null,
+        "local_date": "2026-11-03",
+        "local_time": null,
+        "location_input_revision": null,
+        "provenance_refs": null,
+        "quality": "UNKNOWN",
+        "resolution_offset_seconds": null,
+        "role": "ORIGIN",
+        "source_instant": null,
+        "source_instant_precision": null,
+        "spatial_provenance_refs": null,
+        "supplied_offset_seconds": null,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+        "zone_id": null
+      }
+    ],
+    "item": {
+      "accepted_address": null,
+      "accepted_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_region": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "activity_category": null,
+      "authored_address": null,
+      "authored_address_country": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_postal_code": null,
+      "authored_address_region": null,
+      "authored_label": null,
+      "authored_text": null,
+      "booking_reference": null,
+      "business_contract_version": 2,
+      "candidate_address": null,
+      "candidate_confidence": null,
+      "candidate_error_code": null,
+      "candidate_input_revision": null,
+      "candidate_label": null,
+      "candidate_latitude": null,
+      "candidate_longitude": null,
+      "candidate_observed_at": null,
+      "candidate_place_id": null,
+      "candidate_provider": null,
+      "candidate_provider_place_id": null,
+      "candidate_state": null,
+      "confidence": null,
+      "created_at": "2026-10-27T21:35:33.511856+00:00",
+      "created_by": null,
+      "date_confidence": null,
+      "description": null,
+      "end_basis": null,
+      "end_civil_resolution": null,
+      "end_clock_precision": null,
+      "end_interpretation_input_sha256": null,
+      "end_interpretation_key": null,
+      "end_local_date": null,
+      "end_local_time": null,
+      "end_provenance_refs": null,
+      "end_quality": null,
+      "end_resolution_offset_seconds": null,
+      "end_source_instant": null,
+      "end_source_instant_precision": null,
+      "end_supplied_offset_seconds": null,
+      "end_zone_id": null,
+      "event_type": "transport",
+      "experience_family": "P5",
+      "field_state": {
+        "itinerary_events.title": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.DESTINATION.basis": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.DESTINATION.civil_resolution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.DESTINATION.quality": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.ORIGIN.basis": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.ORIGIN.civil_resolution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.ORIGIN.local_date": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_endpoints.ORIGIN.quality": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.attribution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.operator_issuer": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.operator_literal": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.operator_namespace": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.operator_value": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.service_literal": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.service_number": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_transport_services.main.transport_subtype": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        }
+      },
+      "geocode_attempts": 0,
+      "geocode_error": null,
+      "geocoded_at": null,
+      "hidden_at": null,
+      "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+      "is_estimated_time": false,
+      "legacy_is_estimated_time": null,
+      "legacy_planned_end": null,
+      "legacy_planned_start": null,
+      "legacy_snapshot_at": null,
+      "location_confidence": null,
+      "location_input_revision": null,
+      "location_lat": null,
+      "location_lng": null,
+      "location_name": null,
+      "location_provider": null,
+      "location_provider_place_id": null,
+      "location_status": "none",
+      "location_text": null,
+      "manual_location": false,
+      "needs_review": false,
+      "order_index": null,
+      "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "participant_scope": "ASSIGNED",
+      "participants_confidence": null,
+      "participation_mode": "SELF",
+      "place_id": null,
+      "planned_end": null,
+      "planned_start": null,
+      "reservation_id": null,
+      "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+      "semantic_revision": 1,
+      "source_text": null,
+      "spatial_provenance_refs": null,
+      "start_basis": null,
+      "start_civil_resolution": null,
+      "start_clock_precision": null,
+      "start_interpretation_input_sha256": null,
+      "start_interpretation_key": null,
+      "start_local_date": null,
+      "start_local_time": null,
+      "start_provenance_refs": null,
+      "start_quality": null,
+      "start_resolution_offset_seconds": null,
+      "start_source_instant": null,
+      "start_source_instant_precision": null,
+      "start_supplied_offset_seconds": null,
+      "start_zone_id": null,
+      "status": "planned",
+      "temporal_contract_version": 1,
+      "temporal_shape": "TRANSPORT",
+      "time_confidence": null,
+      "timing_label": null,
+      "timing_provenance_ref": null,
+      "title": "Coastal QA Train",
+      "trip_day_id": null,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "updated_at": "2026-10-27T21:35:33.511856+00:00",
+      "url": null,
+      "visibility": "PRIVATE"
+    },
+    "receipts": [
+      {
+        "actor_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "body": {
+          "actorAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "audit": {
+            "after": [
+              {
+                "facts": {
+                  "accepted_address": null,
+                  "accepted_address_country": null,
+                  "accepted_address_line1": null,
+                  "accepted_address_line2": null,
+                  "accepted_address_locality": null,
+                  "accepted_address_postal_code": null,
+                  "accepted_address_region": null,
+                  "accepted_latitude": null,
+                  "accepted_longitude": null,
+                  "accepted_place_id": null,
+                  "activity_category": null,
+                  "authored_address": null,
+                  "authored_address_country": null,
+                  "authored_address_line1": null,
+                  "authored_address_line2": null,
+                  "authored_address_locality": null,
+                  "authored_address_postal_code": null,
+                  "authored_address_region": null,
+                  "authored_label": null,
+                  "authored_text": null,
+                  "business_contract_version": 2,
+                  "created_at": "2026-10-27T21:35:33.511856Z",
+                  "description": null,
+                  "end_basis": null,
+                  "end_civil_resolution": null,
+                  "end_clock_precision": null,
+                  "end_interpretation_input_sha256": null,
+                  "end_interpretation_key": null,
+                  "end_local_date": null,
+                  "end_local_time": null,
+                  "end_provenance_refs": null,
+                  "end_quality": null,
+                  "end_resolution_offset_seconds": null,
+                  "end_source_instant": null,
+                  "end_source_instant_precision": null,
+                  "end_supplied_offset_seconds": null,
+                  "end_zone_id": null,
+                  "event_type": "transport",
+                  "experience_family": "P5",
+                  "field_state": {
+                    "itinerary_events.title": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.DESTINATION.basis": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.DESTINATION.civil_resolution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.DESTINATION.quality": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.ORIGIN.basis": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.ORIGIN.civil_resolution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.ORIGIN.local_date": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_endpoints.ORIGIN.quality": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.attribution": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.operator_issuer": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.operator_literal": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.operator_namespace": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.operator_value": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.service_literal": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.service_number": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    },
+                    "itinerary_transport_services.main.transport_subtype": {
+                      "changed_revision": 1,
+                      "evidence_ref": null,
+                      "origin": "SOURCE",
+                      "protected": false,
+                      "state": "KNOWN"
+                    }
+                  },
+                  "hidden_at": null,
+                  "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+                  "location_input_revision": null,
+                  "order_index": null,
+                  "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+                  "participant_scope": "ASSIGNED",
+                  "participation_mode": "SELF",
+                  "planned_end": null,
+                  "planned_start": null,
+                  "reservation_id": null,
+                  "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+                  "semantic_revision": 1,
+                  "spatial_provenance_refs": null,
+                  "start_basis": null,
+                  "start_civil_resolution": null,
+                  "start_clock_precision": null,
+                  "start_interpretation_input_sha256": null,
+                  "start_interpretation_key": null,
+                  "start_local_date": null,
+                  "start_local_time": null,
+                  "start_provenance_refs": null,
+                  "start_quality": null,
+                  "start_resolution_offset_seconds": null,
+                  "start_source_instant": null,
+                  "start_source_instant_precision": null,
+                  "start_supplied_offset_seconds": null,
+                  "start_zone_id": null,
+                  "status": "planned",
+                  "temporal_contract_version": 1,
+                  "temporal_shape": "TRANSPORT",
+                  "timing_label": null,
+                  "title": "Coastal QA Train",
+                  "trip_day_id": null,
+                  "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+                  "updated_at": "2026-10-27T21:35:33.511856Z",
+                  "visibility": "PRIVATE"
+                },
+                "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+                "kind": "ITEM",
+                "revision": 1
+              }
+            ],
+            "authorizationRefs": [
+              "otr-core/source-candidate/94f2ab9e-fb01-80b5-a759-96c4850d8af7/a7f6175325aeb0f6e80155a8e2c08f202c7b09c091c2de6ed466d8eaee927be5"
+            ],
+            "before": [],
+            "evidenceRefs": [
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0",
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0",
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0",
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0",
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0"
+            ]
+          },
+          "command": "CREATE_ITEM",
+          "commandVersion": 2,
+          "committedAt": "2026-10-27T21:35:33.511856Z",
+          "errorCode": null,
+          "intentSha256": "1ece011f082a81be11f3436c4f9855f3c011fda531bdd75a21c5e5bc8e7e3499",
+          "intentVersion": 2,
+          "operationId": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
+          "outcome": "APPLIED",
+          "receiptSha256": "146a666317cc3dd5767622f6370322a9407b44e957337dec0614fdd4ed276d96",
+          "receiptVersion": 2,
+          "result": {
+            "changed": [],
+            "created": [
+              {
+                "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+                "kind": "ITEM"
+              }
+            ],
+            "custodyGrantId": null,
+            "replacement": null,
+            "retiredEdges": []
+          },
+          "targetVector": [
+            {
+              "baseRevision": null,
+              "committedRevision": 1,
+              "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+              "kind": "ITEM"
+            }
+          ],
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+        },
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6\"},\"baseVector\":[{\"id\":\"7151caa5-4d9a-89db-b033-89d6f71deda5\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"Coastal QA Train\"},\"endpoints\":{\"destination\":{\"place\":{\"accepted_address\":null,\"accepted_address_country\":null,\"accepted_address_line1\":null,\"accepted_address_line2\":null,\"accepted_address_locality\":null,\"accepted_address_postal_code\":null,\"accepted_address_region\":null,\"accepted_latitude\":null,\"accepted_longitude\":null,\"accepted_place_id\":null,\"authored_address\":null,\"authored_address_country\":null,\"authored_address_line1\":null,\"authored_address_line2\":null,\"authored_address_locality\":null,\"authored_address_postal_code\":null,\"authored_address_region\":null,\"authored_label\":null,\"authored_text\":null,\"location_input_revision\":null,\"spatial_provenance_refs\":null},\"time\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":null,\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}},\"origin\":{\"place\":{\"accepted_address\":null,\"accepted_address_country\":null,\"accepted_address_line1\":null,\"accepted_address_line2\":null,\"accepted_address_locality\":null,\"accepted_address_postal_code\":null,\"accepted_address_region\":null,\"accepted_latitude\":null,\"accepted_longitude\":null,\"accepted_place_id\":null,\"authored_address\":null,\"authored_address_country\":null,\"authored_address_line1\":null,\"authored_address_line2\":null,\"authored_address_locality\":null,\"authored_address_postal_code\":null,\"authored_address_region\":null,\"authored_label\":null,\"authored_text\":null,\"location_input_revision\":null,\"spatial_provenance_refs\":null},\"time\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-03\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"family\":\"P5\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"service\":{\"attribution\":\"UNSPECIFIED\",\"codeshare_operating_key\":null,\"operator_issuer\":\"NAME\",\"operator_literal\":\"Coastal QA Rail\",\"operator_namespace\":\"NAME\",\"operator_value\":\"Coastal QA Rail\",\"service_key\":\"main\",\"service_literal\":\"Coastal QA Train\",\"service_number\":\"CQ101\",\"transport_subtype\":\"TRAIN\"}},\"target\":{\"id\":\"7151caa5-4d9a-89db-b033-89d6f71deda5\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command_version": 2,
+        "committed_at": "2026-10-27T21:35:33.511856+00:00",
+        "id": "f6d056c9-2139-41cc-be73-c019e5ede5af",
+        "intent_sha256": "1ece011f082a81be11f3436c4f9855f3c011fda531bdd75a21c5e5bc8e7e3499",
+        "intent_version": 2,
+        "operation_id": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
+        "outcome": "APPLIED",
+        "receipt_sha256": "146a666317cc3dd5767622f6370322a9407b44e957337dec0614fdd4ed276d96",
+        "receipt_version": 2,
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "services": [
+      {
+        "attribution": "UNSPECIFIED",
+        "codeshare_operating_key": null,
+        "event_id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+        "operator_issuer": "NAME",
+        "operator_literal": "Coastal QA Rail",
+        "operator_namespace": "NAME",
+        "operator_value": "Coastal QA Rail",
+        "provenance_refs": {},
+        "service_key": "main",
+        "service_literal": "Coastal QA Train",
+        "service_number": "CQ101",
+        "transport_subtype": "TRAIN",
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ],
+    "slots": [
+      {
+        "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "candidate_id": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+        "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6\"},\"baseVector\":[{\"id\":\"7151caa5-4d9a-89db-b033-89d6f71deda5\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_ITEM\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"core\":{\"title\":\"Coastal QA Train\"},\"endpoints\":{\"destination\":{\"place\":{\"accepted_address\":null,\"accepted_address_country\":null,\"accepted_address_line1\":null,\"accepted_address_line2\":null,\"accepted_address_locality\":null,\"accepted_address_postal_code\":null,\"accepted_address_region\":null,\"accepted_latitude\":null,\"accepted_longitude\":null,\"accepted_place_id\":null,\"authored_address\":null,\"authored_address_country\":null,\"authored_address_line1\":null,\"authored_address_line2\":null,\"authored_address_locality\":null,\"authored_address_postal_code\":null,\"authored_address_region\":null,\"authored_label\":null,\"authored_text\":null,\"location_input_revision\":null,\"spatial_provenance_refs\":null},\"time\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":null,\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}},\"origin\":{\"place\":{\"accepted_address\":null,\"accepted_address_country\":null,\"accepted_address_line1\":null,\"accepted_address_line2\":null,\"accepted_address_locality\":null,\"accepted_address_postal_code\":null,\"accepted_address_region\":null,\"accepted_latitude\":null,\"accepted_longitude\":null,\"accepted_place_id\":null,\"authored_address\":null,\"authored_address_country\":null,\"authored_address_line1\":null,\"authored_address_line2\":null,\"authored_address_locality\":null,\"authored_address_postal_code\":null,\"authored_address_region\":null,\"authored_label\":null,\"authored_text\":null,\"location_input_revision\":null,\"spatial_provenance_refs\":null},\"time\":{\"basis\":\"DERIVED_CIVIL\",\"civil_resolution\":\"PENDING\",\"clock_precision\":null,\"instant\":null,\"interpretation_input_sha256\":null,\"interpretation_key\":null,\"local_date\":\"2026-11-03\",\"local_time\":null,\"provenance_refs\":null,\"quality\":\"UNKNOWN\",\"resolution_offset_seconds\":null,\"source_instant\":null,\"source_instant_precision\":null,\"supplied_offset_seconds\":null,\"zone_id\":null}}},\"family\":\"P5\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null},\"service\":{\"attribution\":\"UNSPECIFIED\",\"codeshare_operating_key\":null,\"operator_issuer\":\"NAME\",\"operator_literal\":\"Coastal QA Rail\",\"operator_namespace\":\"NAME\",\"operator_value\":\"Coastal QA Rail\",\"service_key\":\"main\",\"service_literal\":\"Coastal QA Train\",\"service_number\":\"CQ101\",\"transport_subtype\":\"TRAIN\"}},\"target\":{\"id\":\"7151caa5-4d9a-89db-b033-89d6f71deda5\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+        "command": "CREATE_ITEM",
+        "dependency_ids": [],
+        "domain_receipt_id": "f6d056c9-2139-41cc-be73-c019e5ede5af",
+        "identity_sha256": "97e78a3c6b2ba1f17aaf3b2004f77f82416b74b250ddb39f9beaae804cd4a172",
+        "intent_sha256": "1ece011f082a81be11f3436c4f9855f3c011fda531bdd75a21c5e5bc8e7e3499",
+        "operation_id": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
+        "output_purpose": {
+          "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+          "candidateId": "94f2ab9e-fb01-80b5-a759-96c4850d8af7",
+          "candidateSha256": "a7f6175325aeb0f6e80155a8e2c08f202c7b09c091c2de6ed466d8eaee927be5",
+          "evidenceRefs": {
+            "ROOT.title": [
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/ROOT.title.0"
+            ],
+            "SERVICE.main.operator_literal": [
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.operator_literal.0"
+            ],
+            "SERVICE.main.service_number": [
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.service_number.0"
+            ],
+            "SERVICE.main.transport_subtype": [
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/SERVICE.main.transport_subtype.0"
+            ],
+            "START.local_date": [
+              "track-c/field-evidence/94f2ab9e-fb01-80b5-a759-96c4850d8af7/START.local_date.0"
+            ]
+          },
+          "inputCatalogSha256": "96f8dde7adbd1eeb3dddc15a248f4bcb315a4550f069ee814531b22a132c8746",
+          "operationId": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
+          "payloadSha256": "5295e4626929ec61b97be388a87168ad4111956465ee9f9e9e97d6be23871ac3",
+          "planId": "d4c2d878-225c-8bde-b1c8-dfd609d074c8",
+          "purposeKind": "P5_ITEM",
+          "purposeSha256": "9fef4e1220a480c02165113daa92cfad7aa120707dd1654357106f3d5960f10d",
+          "runId": "5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5",
+          "selectedFields": [
+            "ROOT.title",
+            "SERVICE.main.operator_literal",
+            "SERVICE.main.service_number",
+            "SERVICE.main.transport_subtype",
+            "START.local_date"
+          ],
+          "slotId": "fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6",
+          "sourceId": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+          "sourceRevision": 1,
+          "targetId": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+          "targetKind": "ITEM",
+          "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+          "version": 2
+        },
+        "output_slot_id": "fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6",
+        "plan_id": "d4c2d878-225c-8bde-b1c8-dfd609d074c8",
+        "purpose_sha256": "9fef4e1220a480c02165113daa92cfad7aa120707dd1654357106f3d5960f10d",
+        "slot_key": "p5",
+        "source_id": "58622bc1-fb9c-47ae-8e56-5a289ad217fa",
+        "source_lineage_id": "23ead404-4478-4dcf-b0c2-c6ffc18f3592",
+        "state": "COMPLETE",
+        "target_id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+        "target_kind": "ITEM",
+        "target_vector": [
+          {
+            "id": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      }
+    ]
+  }
+}

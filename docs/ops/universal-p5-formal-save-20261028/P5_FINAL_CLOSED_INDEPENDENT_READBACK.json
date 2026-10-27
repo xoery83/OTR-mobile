@@ -1,0 +1,19 @@
+{
+  "status": "CLOSED_VERIFIED",
+  "at": "2026-10-27T21:45:39.689724+00:00",
+  "checks": {
+    "rowsUnchanged": true,
+    "fourFunctionIdentityUnchanged": true,
+    "lineage": true,
+    "policyClosed": true
+  },
+  "businessReadbackStatus": "P5_BUSINESS_CLOSED_ACCEPTED_RECORDS_RETAINED",
+  "runtimeStatus": "DEFAULT_CLOSED_VERIFIED",
+  "itemId": "7151caa5-4d9a-89db-b033-89d6f71deda5",
+  "receiptId": "f6d056c9-2139-41cc-be73-c019e5ede5af",
+  "receiptSHA": "146a666317cc3dd5767622f6370322a9407b44e957337dec0614fdd4ed276d96",
+  "firstPostRepeatSnapshots": "FULL_ROWS_IDENTICAL",
+  "devWrites": 0,
+  "actorSet": false,
+  "nativeColdNotIndependentlyObserved": true
+}
