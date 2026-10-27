@@ -1,0 +1,682 @@
+{
+  "status": "INDEPENDENT_REPEAT_IDEMPOTENCY_PASS",
+  "scope": "Same fixed authorized QA P2 Item/operation/slot only; post normal Native duplicate confirmation",
+  "devBusinessWrites": 0,
+  "liveActorSet": false,
+  "GUIOperations": 0,
+  "baselineObservedAt": "2026-10-27 08:20:03.218599+00",
+  "canonicalBodyHashes": {
+    "items": {
+      "before": "647bd6347b61d1603c31419ac9bc3fbac6700153744711274146326fc9d66c64",
+      "after": "647bd6347b61d1603c31419ac9bc3fbac6700153744711274146326fc9d66c64"
+    },
+    "flight_intents": {
+      "before": "d5d43094dad260baf196fa5eac673dd298143f360d36f5e741dafa9c8e8d8e3e",
+      "after": "d5d43094dad260baf196fa5eac673dd298143f360d36f5e741dafa9c8e8d8e3e"
+    },
+    "receipts": {
+      "before": "59e048e1f4fbb2062039a4fe29304837cdc105f4e26519b9d9bd26600af07af6",
+      "after": "59e048e1f4fbb2062039a4fe29304837cdc105f4e26519b9d9bd26600af07af6"
+    },
+    "slots": {
+      "before": "e13cd3742e24dc66ce1f3cdcd406f85d2d107ab28ea569f3750fe5463a915e7f",
+      "after": "e13cd3742e24dc66ce1f3cdcd406f85d2d107ab28ea569f3750fe5463a915e7f"
+    },
+    "associations": {
+      "before": "84b3bd1b35445147f57b336248782e66bc137065d10b3be73e49574ec6b1e3ea",
+      "after": "84b3bd1b35445147f57b336248782e66bc137065d10b3be73e49574ec6b1e3ea"
+    }
+  },
+  "checks": {
+    "items_single_unchanged": true,
+    "flight_intents_single_unchanged": true,
+    "receipts_single_unchanged": true,
+    "slots_single_unchanged": true,
+    "associations_single_unchanged": true,
+    "revision_one": true,
+    "receipt_id_and_sha_unchanged": true,
+    "source_complete": true
+  },
+  "associations": [
+    {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "candidate_id": "a85c1ab1-8dc4-8ff2-b0b7-4887a394b465",
+      "created_at": "2026-10-27T08:18:59.221722+00:00",
+      "domain_receipt_id": "b68bcb7b-865c-46b5-9baa-46b49ad1b3e2",
+      "field_evidence": {
+        "DESTINATION.authored_label": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 15,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 6
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/DESTINATION.authored_label",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "CHC"
+        },
+        "ORIGIN.authored_label": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 15,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 6
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.authored_label",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "AKL"
+        },
+        "ORIGIN.local_date": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 26,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 16
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.local_date",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "2026-11-02"
+        },
+        "SERVICE.service.attribution": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.attribution",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "UNSPECIFIED"
+        },
+        "SERVICE.service.operator_issuer": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.operator_issuer",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "IATA"
+        },
+        "SERVICE.service.operator_literal": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.operator_literal",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "NZ"
+        },
+        "SERVICE.service.operator_namespace": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.operator_namespace",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "IATA_AIRLINE"
+        },
+        "SERVICE.service.operator_value": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.operator_value",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "NZ"
+        },
+        "SERVICE.service.service_literal": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.service_literal",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "NZ501"
+        },
+        "SERVICE.service.service_number": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.service_number",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "501"
+        },
+        "departureDate": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 26,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 16
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/departureDate",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "2026-11-02"
+        },
+        "flightNumberLiteral": {
+          "inputId": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+          "locator": {
+            "end": 5,
+            "input_id": "0f3ae2c4-2dfc-43bb-9668-91a589fdb4e4",
+            "kind": "TEXT_SPAN",
+            "page": null,
+            "region": null,
+            "start": 0
+          },
+          "payloadSha256": "898bccf74ea63279b1aa43b49b8539625b97027e61c3e35dad14e6df2ed9d068",
+          "ref": "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/flightNumberLiteral",
+          "representationId": "adba1b30-7115-4f57-b551-548e498f9afc",
+          "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+          "sourceRevision": 1,
+          "value": "NZ501"
+        }
+      },
+      "id": "c19395f7-558b-42a0-9c38-c473d1899be8",
+      "identity_sha256": "6317078bf77b03d0ba0b515412f2c33b590e626eb7df6e4baac3e889059cdfdb",
+      "output_slot_id": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+      "receipt_sha256": "82cb02bad586277abefe43436ab77c3ae5faaa28c532d164b5a49c606d9a445b",
+      "run_id": "8af82103-55f2-84ea-8e6f-445a15321cf6",
+      "source_id": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "source_revision": 1,
+      "target_id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "target_kind": "ITEM",
+      "target_revision": 1,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ],
+  "flight_intents": [
+    {
+      "event_id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "flight_number_literal": "NZ501",
+      "qualification": "SPARSE",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ],
+  "items": [
+    {
+      "accepted_address": null,
+      "accepted_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_region": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "activity_category": null,
+      "authored_address": null,
+      "authored_address_country": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_postal_code": null,
+      "authored_address_region": null,
+      "authored_label": null,
+      "authored_text": null,
+      "booking_reference": null,
+      "business_contract_version": 2,
+      "candidate_address": null,
+      "candidate_confidence": null,
+      "candidate_error_code": null,
+      "candidate_input_revision": null,
+      "candidate_label": null,
+      "candidate_latitude": null,
+      "candidate_longitude": null,
+      "candidate_observed_at": null,
+      "candidate_place_id": null,
+      "candidate_provider": null,
+      "candidate_provider_place_id": null,
+      "candidate_state": null,
+      "confidence": null,
+      "created_at": "2026-10-27T08:18:12.783458+00:00",
+      "created_by": null,
+      "date_confidence": null,
+      "description": null,
+      "end_basis": null,
+      "end_civil_resolution": null,
+      "end_clock_precision": null,
+      "end_interpretation_input_sha256": null,
+      "end_interpretation_key": null,
+      "end_local_date": null,
+      "end_local_time": null,
+      "end_provenance_refs": null,
+      "end_quality": null,
+      "end_resolution_offset_seconds": null,
+      "end_source_instant": null,
+      "end_source_instant_precision": null,
+      "end_supplied_offset_seconds": null,
+      "end_zone_id": null,
+      "event_type": "flight",
+      "experience_family": "P2",
+      "field_state": {
+        "itinerary_events.start_basis": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_civil_resolution": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_local_date": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.start_quality": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        },
+        "itinerary_events.title": {
+          "changed_revision": 1,
+          "evidence_ref": null,
+          "origin": "SOURCE",
+          "protected": false,
+          "state": "KNOWN"
+        }
+      },
+      "geocode_attempts": 0,
+      "geocode_error": null,
+      "geocoded_at": null,
+      "hidden_at": null,
+      "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "is_estimated_time": false,
+      "legacy_is_estimated_time": null,
+      "legacy_planned_end": null,
+      "legacy_planned_start": null,
+      "legacy_snapshot_at": null,
+      "location_confidence": null,
+      "location_input_revision": null,
+      "location_lat": null,
+      "location_lng": null,
+      "location_name": null,
+      "location_provider": null,
+      "location_provider_place_id": null,
+      "location_status": "none",
+      "location_text": null,
+      "manual_location": false,
+      "needs_review": false,
+      "order_index": null,
+      "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "participant_scope": "ASSIGNED",
+      "participants_confidence": null,
+      "participation_mode": "SELF",
+      "place_id": null,
+      "planned_end": null,
+      "planned_start": null,
+      "reservation_id": null,
+      "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+      "semantic_revision": 1,
+      "source_text": null,
+      "spatial_provenance_refs": null,
+      "start_basis": "DERIVED_CIVIL",
+      "start_civil_resolution": "PENDING",
+      "start_clock_precision": null,
+      "start_interpretation_input_sha256": null,
+      "start_interpretation_key": null,
+      "start_local_date": "2026-11-02",
+      "start_local_time": null,
+      "start_provenance_refs": null,
+      "start_quality": "UNKNOWN",
+      "start_resolution_offset_seconds": null,
+      "start_source_instant": null,
+      "start_source_instant_precision": null,
+      "start_supplied_offset_seconds": null,
+      "start_zone_id": null,
+      "status": "planned",
+      "temporal_contract_version": 1,
+      "temporal_shape": "CALENDAR",
+      "time_confidence": null,
+      "timing_label": null,
+      "timing_provenance_ref": null,
+      "title": "NZ501",
+      "trip_day_id": null,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "updated_at": "2026-10-27T08:18:12.783458+00:00",
+      "url": null,
+      "visibility": "PRIVATE"
+    }
+  ],
+  "observed_at": "2026-10-27 08:23:33.221876+00",
+  "receipts": [
+    {
+      "actor_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "body": {
+        "actorAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+        "audit": {
+          "after": [
+            {
+              "facts": {
+                "accepted_address": null,
+                "accepted_address_country": null,
+                "accepted_address_line1": null,
+                "accepted_address_line2": null,
+                "accepted_address_locality": null,
+                "accepted_address_postal_code": null,
+                "accepted_address_region": null,
+                "accepted_latitude": null,
+                "accepted_longitude": null,
+                "accepted_place_id": null,
+                "activity_category": null,
+                "authored_address": null,
+                "authored_address_country": null,
+                "authored_address_line1": null,
+                "authored_address_line2": null,
+                "authored_address_locality": null,
+                "authored_address_postal_code": null,
+                "authored_address_region": null,
+                "authored_label": null,
+                "authored_text": null,
+                "business_contract_version": 2,
+                "created_at": "2026-10-27T08:18:12.783458Z",
+                "description": null,
+                "end_basis": null,
+                "end_civil_resolution": null,
+                "end_clock_precision": null,
+                "end_interpretation_input_sha256": null,
+                "end_interpretation_key": null,
+                "end_local_date": null,
+                "end_local_time": null,
+                "end_provenance_refs": null,
+                "end_quality": null,
+                "end_resolution_offset_seconds": null,
+                "end_source_instant": null,
+                "end_source_instant_precision": null,
+                "end_supplied_offset_seconds": null,
+                "end_zone_id": null,
+                "event_type": "flight",
+                "experience_family": "P2",
+                "field_state": {
+                  "itinerary_events.start_basis": {
+                    "changed_revision": 1,
+                    "evidence_ref": null,
+                    "origin": "SOURCE",
+                    "protected": false,
+                    "state": "KNOWN"
+                  },
+                  "itinerary_events.start_civil_resolution": {
+                    "changed_revision": 1,
+                    "evidence_ref": null,
+                    "origin": "SOURCE",
+                    "protected": false,
+                    "state": "KNOWN"
+                  },
+                  "itinerary_events.start_local_date": {
+                    "changed_revision": 1,
+                    "evidence_ref": null,
+                    "origin": "SOURCE",
+                    "protected": false,
+                    "state": "KNOWN"
+                  },
+                  "itinerary_events.start_quality": {
+                    "changed_revision": 1,
+                    "evidence_ref": null,
+                    "origin": "SOURCE",
+                    "protected": false,
+                    "state": "KNOWN"
+                  },
+                  "itinerary_events.title": {
+                    "changed_revision": 1,
+                    "evidence_ref": null,
+                    "origin": "SOURCE",
+                    "protected": false,
+                    "state": "KNOWN"
+                  }
+                },
+                "hidden_at": null,
+                "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+                "location_input_revision": null,
+                "order_index": null,
+                "owner_account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+                "participant_scope": "ASSIGNED",
+                "participation_mode": "SELF",
+                "planned_end": null,
+                "planned_start": null,
+                "reservation_id": null,
+                "self_person_id": "b522f95d-6132-46e5-8068-2ed69573204d",
+                "semantic_revision": 1,
+                "spatial_provenance_refs": null,
+                "start_basis": "DERIVED_CIVIL",
+                "start_civil_resolution": "PENDING",
+                "start_clock_precision": null,
+                "start_interpretation_input_sha256": null,
+                "start_interpretation_key": null,
+                "start_local_date": "2026-11-02",
+                "start_local_time": null,
+                "start_provenance_refs": null,
+                "start_quality": "UNKNOWN",
+                "start_resolution_offset_seconds": null,
+                "start_source_instant": null,
+                "start_source_instant_precision": null,
+                "start_supplied_offset_seconds": null,
+                "start_zone_id": null,
+                "status": "planned",
+                "temporal_contract_version": 1,
+                "temporal_shape": "CALENDAR",
+                "timing_label": null,
+                "title": "NZ501",
+                "trip_day_id": null,
+                "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+                "updated_at": "2026-10-27T08:18:12.783458Z",
+                "visibility": "PRIVATE"
+              },
+              "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+              "kind": "ITEM",
+              "revision": 1
+            }
+          ],
+          "authorizationRefs": [
+            "otr-core/airport-registry/otr-dev-universal-p2-airports%2F20261027%2F1/19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+            "otr-core/source-publication/2d3ef30c-a3ee-81ba-8a8f-f6d2ecb4b57f/42bcceccf523049b73d8120d18e9374dbb889ec5cd0a4c60202b3b231854eb40"
+          ],
+          "before": [],
+          "evidenceRefs": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/DESTINATION.authored_label",
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.authored_label",
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.local_date",
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.service_number",
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/departureDate",
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/flightNumberLiteral"
+          ]
+        },
+        "command": "CREATE_SPARSE_FLIGHT",
+        "commandVersion": 2,
+        "committedAt": "2026-10-27T08:18:12.783458Z",
+        "errorCode": null,
+        "intentSha256": "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+        "intentVersion": 2,
+        "operationId": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+        "outcome": "APPLIED",
+        "receiptSha256": "82cb02bad586277abefe43436ab77c3ae5faaa28c532d164b5a49c606d9a445b",
+        "receiptVersion": 2,
+        "result": {
+          "changed": [],
+          "created": [
+            {
+              "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+              "kind": "ITEM"
+            }
+          ],
+          "custodyGrantId": null,
+          "replacement": null,
+          "retiredEdges": []
+        },
+        "targetVector": [
+          {
+            "baseRevision": null,
+            "committedRevision": 1,
+            "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+            "kind": "ITEM"
+          }
+        ],
+        "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+      },
+      "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4\"},\"baseVector\":[{\"id\":\"ec73e4fd-c580-8063-96a8-ef7accda3748\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_SPARSE_FLIGHT\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"50bfe576-c16d-8645-8cde-a355da5f13f9\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"departureDate\":\"2026-11-02\",\"flightNumberLiteral\":\"NZ501\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null}},\"target\":{\"id\":\"ec73e4fd-c580-8063-96a8-ef7accda3748\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+      "command_version": 2,
+      "committed_at": "2026-10-27T08:18:12.783458+00:00",
+      "id": "b68bcb7b-865c-46b5-9baa-46b49ad1b3e2",
+      "intent_sha256": "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+      "intent_version": 2,
+      "operation_id": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+      "outcome": "APPLIED",
+      "receipt_sha256": "82cb02bad586277abefe43436ab77c3ae5faaa28c532d164b5a49c606d9a445b",
+      "receipt_version": 2,
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ],
+  "slots": [
+    {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "candidate_id": "a85c1ab1-8dc4-8ff2-b0b7-4887a394b465",
+      "canonical_intent_text": "{\"admission\":{\"mode\":\"REVIEWED_SOURCE\",\"policyVersion\":null,\"sourceIntentId\":\"0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4\"},\"baseVector\":[{\"id\":\"ec73e4fd-c580-8063-96a8-ef7accda3748\",\"kind\":\"ITEM\",\"revision\":null}],\"command\":\"CREATE_SPARSE_FLIGHT\",\"contractVersion\":2,\"intentVersion\":2,\"operationId\":\"50bfe576-c16d-8645-8cde-a355da5f13f9\",\"payload\":{\"acl\":{\"people\":[],\"visibility\":\"PRIVATE\"},\"departureDate\":\"2026-11-02\",\"flightNumberLiteral\":\"NZ501\",\"participation\":{\"mode\":\"SELF\",\"people\":[],\"selfPersonId\":null}},\"target\":{\"id\":\"ec73e4fd-c580-8063-96a8-ef7accda3748\",\"kind\":\"ITEM\"},\"tripId\":\"825f79b2-4a9d-4535-a62e-43000ca50c4a\"}",
+      "command": "CREATE_SPARSE_FLIGHT",
+      "dependency_ids": [],
+      "domain_receipt_id": "b68bcb7b-865c-46b5-9baa-46b49ad1b3e2",
+      "identity_sha256": "6317078bf77b03d0ba0b515412f2c33b590e626eb7df6e4baac3e889059cdfdb",
+      "intent_sha256": "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+      "operation_id": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+      "output_purpose": {
+        "candidateSha256": "7a5a157948d4ddb1a6eeb31324dba8bd8583e276bb07592e40b748c878c0f2c6",
+        "identityEvidenceRefs": {
+          "destinationAirportId": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/DESTINATION.authored_label"
+          ],
+          "originAirportId": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.authored_label"
+          ],
+          "originDate": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/ORIGIN.local_date"
+          ],
+          "service": [
+            "track-c/field-evidence/a85c1ab1-8dc4-8ff2-b0b7-4887a394b465/SERVICE.service.service_number"
+          ]
+        },
+        "identityFacts": {
+          "destinationAirportId": "IATA_AIRPORT:CHC",
+          "issuer": "IATA",
+          "namespace": "IATA_AIRLINE",
+          "operator": "NZ",
+          "originAirportId": "IATA_AIRPORT:AKL",
+          "originDate": "2026-11-02",
+          "serviceNumber": "501"
+        },
+        "inputCatalogSha256": "0a86a5dcb7c6b1ea138fa237b72782da9edcd0f2bb39fc5bb28f868dde218589",
+        "planId": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+        "purposeKind": "FLIGHT_OCCURRENCE",
+        "purposeSha256": "673790917cb5f3895d05bc3066db5fccbee73307fe1d0d3645e2811d87f4f7fa",
+        "slotId": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+        "sourceId": "66f7d254-9cf7-4915-82a2-fd526d633864",
+        "sourceRevision": 1,
+        "targetId": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+        "targetKind": "ITEM",
+        "version": 2
+      },
+      "output_slot_id": "0886cd6b-02c1-8dc3-ba1e-29bc6543c6f4",
+      "plan_id": "990d9af8-2a69-86ec-a827-2e1a337a9b09",
+      "purpose_sha256": "673790917cb5f3895d05bc3066db5fccbee73307fe1d0d3645e2811d87f4f7fa",
+      "slot_key": "create",
+      "source_id": "66f7d254-9cf7-4915-82a2-fd526d633864",
+      "source_lineage_id": "c19395f7-558b-42a0-9c38-c473d1899be8",
+      "state": "COMPLETE",
+      "target_id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "target_kind": "ITEM",
+      "target_vector": [
+        {
+          "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+          "kind": "ITEM",
+          "revision": null
+        }
+      ],
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a"
+    }
+  ]
+}

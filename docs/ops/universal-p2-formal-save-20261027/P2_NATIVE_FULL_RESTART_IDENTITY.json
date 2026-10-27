@@ -1,0 +1,41 @@
+{
+  "status": "NATIVE_POST_FULL_RESTART_IDENTITY_VERIFIED",
+  "at": "2026-10-27T08:44:41.928176+00:00",
+  "item": [
+    {
+      "id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "semantic_revision": 1,
+      "title": "NZ501",
+      "experience_family": "P2",
+      "visibility": "PRIVATE",
+      "participation_mode": "SELF",
+      "start_local_date": "2026-11-02",
+      "start_local_time": null,
+      "start_zone_id": null,
+      "accepted_place_id": null
+    }
+  ],
+  "flight": [
+    {
+      "event_id": "ec73e4fd-c580-8063-96a8-ef7accda3748",
+      "trip_id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+      "qualification": "SPARSE",
+      "flight_number_literal": "NZ501"
+    }
+  ],
+  "receipt": [
+    {
+      "operation_id": "50bfe576-c16d-8645-8cde-a355da5f13f9",
+      "intent_sha256": "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+      "receipt_sha256": "82cb02bad586277abefe43436ab77c3ae5faaa28c532d164b5a49c606d9a445b"
+    }
+  ],
+  "queue": [
+    {
+      "state": "APPLIED",
+      "status": "COMPLETED",
+      "attempt_count": 3
+    }
+  ]
+}
