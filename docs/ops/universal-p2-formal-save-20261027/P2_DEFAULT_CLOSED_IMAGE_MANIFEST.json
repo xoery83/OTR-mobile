@@ -1,0 +1,10 @@
+{
+  "sourceHead": "088b49e51a36a5c699e3257d34ba8764398c1208",
+  "imageId": "sha256:77c7055e5dea1e89ac2e595e6890058ec7b14689105d692143a56e65d566dbef",
+  "baseImageId": "sha256:0d50d567cbd9f35022b626b2f45b05a9fe7aa2137fbfbe443c48e3329ca157cb",
+  "deploymentScope": "same approved DEV; Capture software only; default closed; no SQL installation/authority/Provider/object/budget changes",
+  "bundles": {
+    "server-capture.mjs": "475f497bc75523981f8841b8f562174a721a4b6d990de5ff7f5a403142ea26d2"
+  },
+  "dockerfileSHA256": "6ca820904b005a68397b91c58d9af55fa8deb7cc172788e5a22949f61b56a505"
+}

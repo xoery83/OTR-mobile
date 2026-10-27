@@ -1,0 +1,22 @@
+{
+  "status": "NORMAL_QA_RESULTS_PASS_P2_SAVE_CLOSED",
+  "verifiedActorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "batchId": "a9be165b-5a90-4244-add7-d4977c9e7ba5",
+  "taskId": "7338329a-46eb-8050-9bec-96376f08b296",
+  "resultsHTTP": 200,
+  "resultsStatus": "CANDIDATES_READY",
+  "settlement": "SETTLED",
+  "candidateCount": 1,
+  "candidateToken": "i1",
+  "candidateKind": "P2",
+  "resultResponseSHA256": "ccac4769629696b76bd836940711a56707289ffd51ef050f9d8414c43ef19a4e",
+  "capabilitiesHTTP": 200,
+  "sparseCreateEnabled": false,
+  "sourceEvidenceAvailable": false,
+  "imageId": "sha256:77c7055e5dea1e89ac2e595e6890058ec7b14689105d692143a56e65d566dbef",
+  "containerId": "c5072bea46ccae9d9ad4eccae19908d02d0c84366dbb98c3d8bb7e709f43481e",
+  "verifiedAt": "2026-10-27T03:22:06.839464Z",
+  "newObjects": 0,
+  "providerCalls": 0
+}
