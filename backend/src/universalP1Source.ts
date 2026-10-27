@@ -26,7 +26,7 @@ import {
 } from "../../src/domain/trip/universalP1SourceReview";
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const selectionSchema = z.strictObject({
-  action: z.enum(["CONFIRM_NEW_P1", "CONFIRM_NEW_P3"]),
+  action: z.enum(["CONFIRM_NEW_P1", "CONFIRM_NEW_P3", "CONFIRM_NEW_P4"]),
   token: z.string().min(1).max(128),
   resultSha256: digest,
   sourceReview: universalItemSourceReviewSchema.optional(),
@@ -77,10 +77,14 @@ export async function projectUniversalP1Selection(
     quality = result.quality?.decisions.filter((d) => d.token === selection.token);
   if (
     candidates.length !== 1 ||
-    !["P1", "P3"].includes(candidates[0].kind) ||
+    !["P1", "P3", "P4"].includes(candidates[0].kind) ||
     selection.action !== `CONFIRM_NEW_${candidates[0].kind}` ||
     candidates[0].subtype !==
-      (candidates[0].kind === "P3" ? "ACCOMMODATION" : "ACTIVITY") ||
+      (candidates[0].kind === "P3"
+        ? "ACCOMMODATION"
+        : candidates[0].kind === "P4"
+          ? "RENTAL_CAR"
+          : "ACTIVITY") ||
     quality?.length !== 1 ||
     (!selection.sourceReview && candidates[0].kind === "P1"
       ? quality[0].tier !== "HIGH_CONFIDENCE"
@@ -88,7 +92,8 @@ export async function projectUniversalP1Selection(
   )
     throw Error("OWNING_REVIEW_REQUIRED");
   const candidate = candidates[0];
-  const family = candidate.kind as "P1" | "P3";
+  const family = candidate.kind as "P1" | "P3" | "P4";
+  if (family === "P4" && !selection.sourceReview) throw Error("OWNING_REVIEW_REQUIRED");
   if (
     family === "P1" &&
     (candidate.bookingTokens.length || candidate.ticketTokens.length)
@@ -104,18 +109,35 @@ export async function projectUniversalP1Selection(
       throw Error("INCOMPLETE_SOURCE_EVIDENCE");
     return fields;
   };
+  const review = selection.sourceReview;
+  const withEnd =
+    family === "P3" ||
+    (family === "P4" &&
+      review &&
+      "endLocalDate" in review &&
+      review.endLocalDate !== undefined);
   const names = facts(
-      family === "P3" ? ["property.name", "title"] : ["activity.name", "title"],
+      family === "P3"
+        ? ["property.name", "title"]
+        : family === "P4"
+          ? ["title"]
+          : ["activity.name", "title"],
     ),
     dates = facts(
       family === "P3"
         ? ["check_in.date", "schedule.start.local_date"]
-        : ["activity.date", "schedule.start.local_date"],
+        : family === "P4"
+          ? ["pickup.date", "schedule.start.local_date"]
+          : ["activity.date", "schedule.start.local_date"],
     ),
-    endDates =
-      family === "P3" ? facts(["check_out.date", "schedule.end.local_date"]) : [];
+    endDates = withEnd
+      ? facts(
+          family === "P4"
+            ? ["return.date", "schedule.end.local_date"]
+            : ["check_out.date", "schedule.end.local_date"],
+        )
+      : [];
   if (!names[0].raw.trim()) throw Error("INCOMPLETE_SOURCE_EVIDENCE");
-  const review = selection.sourceReview;
   if (review && input.owningLifecycleRelationships?.some((r) => r.kind !== "NEW"))
     throw Error("LIFECYCLE_QUALIFICATION_REQUIRED");
   if (
@@ -133,11 +155,13 @@ export async function projectUniversalP1Selection(
     (review.version !==
       (family === "P3"
         ? "otr.universal.p3-source-review/1"
-        : "otr.universal.p1-source-review/1") ||
+        : family === "P4"
+          ? "otr.universal.p4-source-review/1"
+          : "otr.universal.p1-source-review/1") ||
       review.sourceRevision !== catalog.sourceRevision ||
       review.title !== names[0].raw ||
       review.localDate !== sourceReviewCivilDate(dates[0].raw) ||
-      (family === "P3" &&
+      (withEnd &&
         (!("endLocalDate" in review) ||
           review.endLocalDate !== sourceReviewCivilDate(endDates[0].raw))))
   )
@@ -147,17 +171,26 @@ export async function projectUniversalP1Selection(
     slotId = universalP1Identity(result.taskId, candidate.token, "slot"),
     operationId = universalP1Identity(result.taskId, candidate.token, "operation"),
     targetId = universalP1Identity(result.taskId, candidate.token, "item");
-  const end =
-    family === "P3"
-      ? coreDateBoundary(
-          review && "endLocalDate" in review ? review.endLocalDate : endDates[0].raw,
-        )
-      : null;
-  if (end && end.local_date! <= start.local_date!) throw Error("INVALID_STAY_DATE_RANGE");
+  const end = withEnd
+    ? coreDateBoundary(
+        review && "endLocalDate" in review && review.endLocalDate
+          ? review.endLocalDate
+          : endDates[0].raw,
+      )
+    : null;
+  if (
+    end &&
+    (family === "P3"
+      ? end.local_date! <= start.local_date!
+      : end.local_date! < start.local_date!)
+  )
+    throw Error(
+      family === "P3" ? "INVALID_STAY_DATE_RANGE" : "INVALID_RENTAL_DATE_RANGE",
+    );
   const selectedFacts = [
     ["ROOT.title", names],
     ["START.local_date", dates],
-    ...(family === "P3" ? ([["END.local_date", endDates]] as const) : []),
+    ...(withEnd ? ([["END.local_date", endDates]] as const) : []),
   ] as const;
   const evidence: ImportLifecycleRequest["evidence"] = [];
   for (const [fieldKey, fields] of selectedFacts) {
@@ -190,24 +223,22 @@ export async function projectUniversalP1Selection(
         ) !== field.raw
       )
         throw Error("IMPORT_EVIDENCE_INVALID");
+      const reviewedDate =
+        fieldKey === "END.local_date" && review && "endLocalDate" in review
+          ? review.endLocalDate
+          : review?.localDate;
       evidence.push({
         ref: fieldRef(candidateId, `${fieldKey}.${index}`),
         candidateId,
         fieldKey,
         raw: field.raw,
-        ...(review &&
+        ...(reviewedDate &&
         ["START.local_date", "END.local_date"].includes(fieldKey) &&
-        field.raw !==
-          (fieldKey === "END.local_date" && "endLocalDate" in review
-            ? review.endLocalDate
-            : review.localDate)
+        field.raw !== reviewedDate
           ? {
               normalization: {
                 rule: "ENGLISH_MONTH_CIVIL_DATE" as const,
-                value:
-                  fieldKey === "END.local_date" && "endLocalDate" in review
-                    ? review.endLocalDate
-                    : review.localDate,
+                value: reviewedDate,
               },
             }
           : {}),
@@ -298,9 +329,11 @@ export async function projectUniversalP1Selection(
     schemaId:
       family === "P3"
         ? ("otr.core.universal-p3-source/1" as const)
-        : review
-          ? ("otr.core.universal-p1-source/2" as const)
-          : ("otr.core.universal-p1-source/1" as const),
+        : family === "P4"
+          ? ("otr.core.universal-p4-source/1" as const)
+          : review
+            ? ("otr.core.universal-p1-source/2" as const)
+            : ("otr.core.universal-p1-source/1" as const),
     ...(review ? { sourceReview: review, reviewedBy: context.accountId } : {}),
     accountId: context.accountId,
     tripId: context.tripId,
@@ -382,7 +415,7 @@ export async function qualifyUniversalP1Selection(
 }
 
 // These exact advisories concern unselected fields or absent commercial rights, never lifecycle.
-function p1UnselectedAdvisory(reason: string, family: "P1" | "P3") {
+function p1UnselectedAdvisory(reason: string, family: "P1" | "P3" | "P4") {
   if (family === "P3") {
     if (
       reason ===

@@ -48,13 +48,16 @@ export function UniversalP1SourceReviewForm({
     };
   }, [readTripTargets, result.tripId, isCurrent]);
   const stay = candidate.kind === "P3",
-    flight = candidate.kind === "P2";
+    flight = candidate.kind === "P2",
+    rental = candidate.kind === "P4";
   const names = candidate.fields.filter((f) =>
       (flight
         ? ["service", "flight_number", "marketing_flight"]
         : stay
           ? ["property.name", "title"]
-          : ["activity.name", "title"]
+          : rental
+            ? ["title"]
+            : ["activity.name", "title"]
       ).includes(f.path),
     ),
     dates = candidate.fields.filter((f) =>
@@ -62,14 +65,20 @@ export function UniversalP1SourceReviewForm({
         ? ["origin.local_date"]
         : stay
           ? ["check_in.date", "schedule.start.local_date"]
-          : ["activity.date", "schedule.start.local_date"]
+          : rental
+            ? ["pickup.date", "schedule.start.local_date"]
+            : ["activity.date", "schedule.start.local_date"]
       ).includes(f.path),
     ),
-    endDates = stay
-      ? candidate.fields.filter((f) =>
-          ["check_out.date", "schedule.end.local_date"].includes(f.path),
-        )
-      : [],
+    endDates =
+      stay || rental
+        ? candidate.fields.filter((f) =>
+            (rental
+              ? ["return.date", "schedule.end.local_date"]
+              : ["check_out.date", "schedule.end.local_date"]
+            ).includes(f.path),
+          )
+        : [],
     sources = result.sourceBindings.filter((b) =>
       [...names, ...dates, ...endDates].some((f) => f.sourceId === b.alias),
     );
@@ -77,20 +86,26 @@ export function UniversalP1SourceReviewForm({
     endLocalDate: string | null = null;
   try {
     localDate = sourceReviewCivilDate(dates[0]?.raw ?? "");
-    if (stay) endLocalDate = sourceReviewCivilDate(endDates[0]?.raw ?? "");
+    if (stay || (rental && endDates.length))
+      endLocalDate = sourceReviewCivilDate(endDates[0]?.raw ?? "");
   } catch {
     /* Evidence stays visible; no Save without supported date. */
   }
   if (
-    candidate.subtype !== (flight ? "FLIGHT" : stay ? "ACCOMMODATION" : "ACTIVITY") ||
+    candidate.subtype !==
+      (flight ? "FLIGHT" : stay ? "ACCOMMODATION" : rental ? "RENTAL_CAR" : "ACTIVITY") ||
     (flight &&
       (dates[0]?.raw !== localDate ||
         new Set(names.map((f) => f.raw)).size !== 1 ||
         new Set(dates.map((f) => f.raw)).size !== 1 ||
         [...names, ...dates].some((f) => f.uncertainty))) ||
     (!stay &&
+      !rental &&
       (candidate.bookingTokens.length > 0 || candidate.ticketTokens.length > 0)) ||
     (stay && (!endLocalDate || !localDate || endLocalDate <= localDate)) ||
+    (rental &&
+      endDates.length > 0 &&
+      (!endLocalDate || !localDate || endLocalDate < localDate)) ||
     !names.length ||
     !dates.length ||
     !localDate ||
@@ -107,12 +122,18 @@ export function UniversalP1SourceReviewForm({
             ? "capture.ai.p2ReviewValues"
             : stay
               ? "capture.ai.p3ReviewValues"
-              : "capture.ai.p1ReviewValues",
+              : rental
+                ? endLocalDate
+                  ? "capture.ai.p4ReviewReturnValues"
+                  : "capture.ai.p4ReviewValues"
+                : "capture.ai.p1ReviewValues",
           {
             title: names[0].raw,
             raw: dates[0].raw,
             date: localDate,
-            ...(stay ? { endRaw: endDates[0].raw, endDate: endLocalDate! } : {}),
+            ...(stay || (rental && endLocalDate)
+              ? { endRaw: endDates[0].raw, endDate: endLocalDate! }
+              : {}),
           },
         )}
       </UiText>
@@ -157,7 +178,9 @@ export function UniversalP1SourceReviewForm({
               ? "capture.ai.p2SelectNew"
               : stay
                 ? "capture.ai.p3SelectNew"
-                : "capture.ai.p1SelectNew",
+                : rental
+                  ? "capture.ai.p4SelectNew"
+                  : "capture.ai.p1SelectNew",
         )}
         onPress={() => setNewSelected((v) => !v)}
       />
@@ -175,7 +198,9 @@ export function UniversalP1SourceReviewForm({
             ? "capture.ai.p2Confirm"
             : stay
               ? "capture.ai.p3Confirm"
-              : "capture.ai.p1Confirm",
+              : rental
+                ? "capture.ai.p4Confirm"
+                : "capture.ai.p1Confirm",
         )}
         onPress={() => {
           if (
@@ -204,7 +229,12 @@ export function UniversalP1SourceReviewForm({
                   version: "otr.universal.p3-source-review/1" as const,
                   endLocalDate: endLocalDate!,
                 }
-              : { version: "otr.universal.p1-source-review/1" as const }),
+              : rental
+                ? {
+                    version: "otr.universal.p4-source-review/1" as const,
+                    ...(endLocalDate ? { endLocalDate } : {}),
+                  }
+                : { version: "otr.universal.p1-source-review/1" as const }),
             decision: "NEW",
             sourceRevision: sources[0].revision,
             title: names[0].raw,

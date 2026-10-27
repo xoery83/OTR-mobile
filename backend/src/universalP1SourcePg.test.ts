@@ -108,7 +108,7 @@ it.each(["actor", "trip", "inactive"])(
   },
 );
 
-it.each(["P1", "P2", "P3"] as const)(
+it.each(["P1", "P2", "P3", "P4"] as const)(
   "sets the existing owning write context for exact %s command",
   async (family) => {
     const query = vi.fn(async (_sql: string, _params?: unknown[]) => ({ rows: [] }));

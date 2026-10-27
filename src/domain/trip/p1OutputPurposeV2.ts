@@ -33,7 +33,7 @@ export const p1PurposeBindingV2Schema = z.strictObject({
   targetKind: z.literal("ITEM"),
   targetId: uuid,
   operationId: uuid,
-  purposeKind: z.enum(["P1_ITEM", "P3_ITEM"]),
+  purposeKind: z.enum(["P1_ITEM", "P3_ITEM", "P4_ITEM"]),
 });
 const selected = z
   .array(p1SourceFieldSchema)
@@ -66,8 +66,7 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     b = v.binding;
   if (
     c.command !== "CREATE_ITEM" ||
-    (c.payload as { family?: string }).family !==
-      (b.purposeKind === "P3_ITEM" ? "P3" : "P1") ||
+    (c.payload as { family?: string }).family !== b.purposeKind.slice(0, 2) ||
     c.admission.mode !== "REVIEWED_SOURCE" ||
     c.admission.policyVersion !== null ||
     c.admission.sourceIntentId !== b.slotId ||
@@ -95,6 +94,9 @@ function checked(input: P1PurposeVerification): P1PurposeVerification {
     !v.selectedFields.includes("START.local_date") ||
     (b.purposeKind === "P3_ITEM" &&
       (!p.schedule?.end?.local_date || !v.selectedFields.includes("END.local_date"))) ||
+    (b.purposeKind === "P4_ITEM" &&
+      p.schedule?.end?.local_date &&
+      !v.selectedFields.includes("END.local_date")) ||
     Object.keys(v.evidenceRefs).sort().join("|") !== v.selectedFields.join("|")
   )
     throw Error("INCOMPLETE_SOURCE_EVIDENCE");
@@ -111,7 +113,7 @@ export async function mintP1OutputPurposeV2(
 ): Promise<CertifiedP1PurposeV2> {
   const v = checked(input);
   await verify(structuredClone(v));
-  const family = v.binding.purposeKind === "P3_ITEM" ? "p3" : "p1";
+  const family = v.binding.purposeKind.slice(0, 2).toLowerCase();
   const unsigned = {
     ...v.binding,
     payloadSha256: await importDigest(

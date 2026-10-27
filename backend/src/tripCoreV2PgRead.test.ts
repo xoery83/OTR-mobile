@@ -229,7 +229,7 @@ it("expired read scope rejects before graph access and leaves cached data untouc
   );
 });
 
-it.each(["P2", "P3"] as const)(
+it.each(["P2", "P3", "P4"] as const)(
   "advertises the exact %s reviewed window without granting Manual or other family edits",
   async (family) => {
     const f = fixture();

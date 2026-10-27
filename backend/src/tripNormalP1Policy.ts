@@ -24,7 +24,7 @@ export function isNormalP1Gate(gate: Record<string, unknown> | undefined): boole
 // Additive owning Import qualification; Manual permission never enables this mode.
 export function isReviewedP1Gate(
   gate: Record<string, unknown> | undefined,
-  family: "P1" | "P2" | "P3" = "P1",
+  family: "P1" | "P2" | "P3" | "P4" = "P1",
 ): boolean {
   return (
     gate?.runtime_enabled === true &&

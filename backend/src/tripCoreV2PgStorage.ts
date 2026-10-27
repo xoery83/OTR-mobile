@@ -332,8 +332,8 @@ export function createCorePgStorage(
                   actor.tripId,
                 );
                 if (
-                  ["P1", "P2", "P3"].some((family) =>
-                    isReviewedP1Gate(reviewed, family as "P1" | "P2" | "P3"),
+                  ["P1", "P2", "P3", "P4"].some((family) =>
+                    isReviewedP1Gate(reviewed, family as "P1" | "P2" | "P3" | "P4"),
                   )
                 )
                   return reviewed.enabled_commands as CoreCommandName[];
@@ -398,13 +398,19 @@ export function createCorePgStorage(
                 sourceP1 &&
                 isReviewedP1Gate(
                   activation,
-                  finiteFamily === "P2" ? "P2" : finiteFamily === "P3" ? "P3" : "P1",
+                  finiteFamily === "P2"
+                    ? "P2"
+                    : finiteFamily === "P3"
+                      ? "P3"
+                      : finiteFamily === "P4"
+                        ? "P4"
+                        : "P1",
                 );
               if (
                 reviewed
                   ? command.command !==
                       (finiteFamily === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
-                    !["P1", "P2", "P3"].includes(String(finiteFamily)) ||
+                    !["P1", "P2", "P3", "P4"].includes(String(finiteFamily)) ||
                     !command.admission.sourceIntentId ||
                     command.admission.policyVersion !== null
                   : normal

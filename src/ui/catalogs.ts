@@ -9,6 +9,13 @@ export const en = {
   "capture.ai.p2Confirm": "Confirm flight number and departure date and add item",
   "capture.ai.p2Details":
     "Save the evidenced flight number and departure date as a private item for you. Other details stay with the source.",
+  "capture.ai.p4ReviewValues": "Rental: {title}. Pickup date: {raw} → {date}.",
+  "capture.ai.p4ReviewReturnValues":
+    "Rental: {title}. Pickup: {raw} → {date}. Return: {endRaw} → {endDate}.",
+  "capture.ai.p4SelectNew": "Choose NEW: create a separate rental",
+  "capture.ai.p4Confirm": "Confirm rental name and dates and add item",
+  "capture.ai.p4Details":
+    "Review the original and current Journey before adding this rental. Vehicle, driver, booking and payment are not confirmed by this action.",
   "capture.ai.p3ReviewValues":
     "Stay: {title}. Original check-in: {raw}; civil date: {date}. Original check-out: {endRaw}; civil date: {endDate}.",
   "capture.ai.p3SelectNew": "Choose NEW: create a separate stay",
@@ -2626,6 +2633,13 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.p2Confirm": "确认航班号、出发日期并添加行程项目",
   "capture.ai.p2Details":
     "将有证据支持的航班号及出发日期保存为仅你可见的行程项目，其他信息继续保留在来源中。",
+  "capture.ai.p4ReviewValues": "租车：{title}。取车日期：{raw} → {date}。",
+  "capture.ai.p4ReviewReturnValues":
+    "租车：{title}。取车：{raw} → {date}。还车：{endRaw} → {endDate}。",
+  "capture.ai.p4SelectNew": "选择新建：创建独立租车",
+  "capture.ai.p4Confirm": "确认租车名称及日期并添加行程项目",
+  "capture.ai.p4Details":
+    "添加此租车前，请审核原件和当前行程。此操作不确认车辆、驾驶员、预订或付款。",
   "capture.ai.p3ReviewValues":
     "住宿：{title}。原文入住日期：{raw}；民用日期：{date}。原文退房日期：{endRaw}；民用日期：{endDate}。",
   "capture.ai.p3SelectNew": "选择新建：创建独立住宿",

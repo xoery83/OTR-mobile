@@ -386,3 +386,42 @@ it("offers the explicit P2 literal/date review only under its own opt-in, withou
   expect(confirm).not.toHaveBeenCalled();
   expect(flight.presentationTier).toBe("INCOMPLETE");
 });
+
+it.each([true, false])(
+  "offers explicit Rental review with optional return (%s) under its own opt-in",
+  (hasReturn) => {
+    const f = fixture(),
+      rental = f.result.candidates[0];
+    Object.assign(rental, {
+      kind: "P4",
+      subtype: "RENTAL_CAR",
+      fields: [
+        f.evidence("S0", "title", "Harbour QA Rental"),
+        f.evidence("S0", "pickup.date", "2026-11-03"),
+        ...(hasReturn ? [f.evidence("S0", "return.date", "2026-11-05")] : []),
+      ],
+    });
+    f.result.quality!.decisions[0].kind = "P4";
+    const confirm = vi.fn(async () => {});
+    const html = renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        admission: {
+          enabled: true,
+          enabledFamilies: ["P4"],
+          statuses: {},
+          busyToken: null,
+          confirm,
+          readOriginal: vi.fn(async () => "original"),
+        },
+      }),
+    );
+    expect(html).toContain("Harbour QA Rental");
+    expect(html).toContain("2026-11-03");
+    const button = state.buttons.find((b) => b.label === t("capture.ai.p4Confirm"));
+    expect(button?.disabled).toBe(true);
+    button!.onPress();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
+  },
+);

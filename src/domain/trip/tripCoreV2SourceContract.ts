@@ -159,7 +159,7 @@ export const coreUniversalP1PublishRequestSchema = z
     taskId: uuid,
     token: z.string().min(1).max(128),
     requestSha256: hash,
-    family: z.enum(["P1", "P2", "P3"]).optional(),
+    family: z.enum(["P1", "P2", "P3", "P4"]).optional(),
     sourceReview: z
       .union([universalItemSourceReviewSchema, universalP2SourceReviewSchema])
       .optional(),
