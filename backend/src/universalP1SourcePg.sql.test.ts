@@ -11,7 +11,7 @@ import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { prepareCoreSourcePlanV2, finalizeCoreSourceSlotV2 } from "./tripCoreV2Source";
 const container = process.env.OTR_UNIVERSAL_P1_OWNED_SQL_FIXTURE;
 // Actual protected PG transactions; model publication and identities are explicit disposable fixtures.
-it.skipIf(!container).each(
+it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" }>(
   process.env.OTR_UNIVERSAL_P4_OWNED_SQL_FIXTURE
     ? [{ reviewed: true, family: "P4" as const }]
     : process.env.OTR_UNIVERSAL_P3_RETRY_OWNED_SQL_FIXTURE

@@ -1,0 +1,5 @@
+Synthetic QA only
+Rental: Harbour QA Rental
+Company: Harbour QA Rentals
+Pickup date: 2026-11-04
+Return date: 2026-11-05

@@ -1,0 +1,13 @@
+{
+  "status": "DEFAULT_CLOSED_DEPLOYED",
+  "source": "d6bdb3242041ec85b9235a8a6ee5b12c0118c3c2",
+  "image": "sha256:e049ad38638e527bc4e8941dc73fe51d71f00d50378f697679cd638a2ef50b2f",
+  "container": "309d248452d83758b01c2f94cf2f77be973cb02c23c8e8e785e4d0d60d6b7d56",
+  "configHash": "7ce7254160c7668a1885e1ef3241d8b3b37230c2b64cc614c5a29e8e5f071697",
+  "hostHash": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+  "mountHash": "8f811188e4d4decefce8006c7ccd4f27ae905f4c7a9afb98374cbe526f5609fa",
+  "normalization": "OomKillDisable:null->false only",
+  "rollbackContainer": "98d92837b21136f14999138339c2cff2c87b550c3093b87c26e187b28b640206",
+  "rollbackName": "otr-dev-backend-retained-e3ec150c30",
+  "health": 200
+}
