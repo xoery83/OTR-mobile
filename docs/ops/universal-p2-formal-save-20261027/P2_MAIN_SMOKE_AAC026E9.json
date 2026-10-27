@@ -1,0 +1,16 @@
+{
+  "status": "ACTUAL_MAIN_SMOKE_PASS",
+  "head": "aac026e9ca72d0eb0e770667d45609d48a65afce",
+  "tests": 60,
+  "files": [
+    "backend/src/universalP2SourceReview.test.ts",
+    "src/data/interpretation/captureFlightCoreV2.test.ts",
+    "backend/src/tripCoreV2CandidatePublication.test.ts",
+    "backend/src/universalP1Source.test.ts"
+  ],
+  "typecheck": "PASS",
+  "unrelatedDirtyBytesPreserved": true,
+  "push": false,
+  "deployment": false,
+  "businessGateOpened": false
+}

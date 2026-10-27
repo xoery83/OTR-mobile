@@ -1,0 +1,30 @@
+{
+  "status": "P2_AIRPORT_DORMANT_ISOLATED_PG_PASS_NOT_DEV",
+  "count": 19,
+  "checks": [
+    "actual DEV resolver preimage matches canonical isolated function",
+    "NULL ACL fails closed before any registry change",
+    "preexisting extra code under proposed registry version rejects atomically",
+    "exact packaged install changes only resolver to pinned postimage",
+    "actual function OID owner and ACL remain identical",
+    "two proposed real-code rows are installed inactive",
+    "owning resolver returns no authority while dormant",
+    "second install cannot reset or reuse package",
+    "administrative session cannot impersonate owning resolver",
+    "no public table read or function execution privilege",
+    "fixture-only activation permits exact legitimate QA actor/trip/date",
+    "another legitimate actor/trip cannot use proposed QA identities",
+    "exact actor/trip cannot transplant authority to another service date",
+    "rollback refuses to overwrite a later active window",
+    "existing unrelated registry remains available under original owning contract",
+    "rollback rejects extra or drifted registry-version rows",
+    "exact reverse-hash rollback restores original function",
+    "rollback retains both immutable proposed rows inactive",
+    "rollback is idempotent without deleting evidence or reopening authority"
+  ],
+  "network": "none",
+  "memory": "256m",
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "fixtureOnlyActivation": true
+}

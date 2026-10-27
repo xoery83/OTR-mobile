@@ -1,0 +1,28 @@
+{
+  "version": "otr-dev-universal-p2-airports/20261027/1",
+  "status": "PROPOSED_DORMANT_NOT_AUTHORIZED",
+  "namespace": "IATA_AIRPORT",
+  "issuer": "IATA",
+  "actorId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "serviceDate": "2026-11-02",
+  "entries": [
+    {
+      "code": "AKL",
+      "identityId": "IATA_AIRPORT:AKL",
+      "name": "Auckland Airport",
+      "reference": "https://www.airnewzealand.co.nz/flights/en-nz/flights-to-auckland"
+    },
+    {
+      "code": "CHC",
+      "identityId": "IATA_AIRPORT:CHC",
+      "name": "Christchurch International Airport",
+      "reference": "https://www.airnewzealand.co.nz/flights/en-nz/flights-to-christchurch"
+    }
+  ],
+  "sourceQualification": "Public primary airline reference corroboration, proposed Owner-reviewed Core registry admission. Not a licensed IATA corpus, operating-flight proof, accepted Place, timezone, or Native Form reference promotion.",
+  "validity": "Single QA service date qualification only; not a claim of airport operating dates.",
+  "enabled": false,
+  "activationAuthority": "NONE: later exact P2 Save Gate must separately authorize any enablement.",
+  "registrySha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9"
+}

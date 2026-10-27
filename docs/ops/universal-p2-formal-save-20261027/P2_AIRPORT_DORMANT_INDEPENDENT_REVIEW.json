@@ -1,0 +1,16 @@
+{
+  "status": "INDEPENDENT_READONLY_NO_BLOCKER",
+  "reviewer": "/root/p1_source_review_independent",
+  "closedFindings": [
+    "NULL-safe exact MD5/owner/ACL comparisons",
+    "empty registry-version preimage and exact complete two-row set post/rollback checks"
+  ],
+  "packageHashesRecomputed": true,
+  "qualification": "Owner-reviewed OTR registry proposal with primary public AirNZ corroboration, not licensed IATA or flight operating proof",
+  "futureActivationRequires": "Exact post-resolver and manifest plus a separately authorized P2 Save Gate",
+  "actualIsolatedPGChecks": 19,
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "installed": false,
+  "activated": false
+}

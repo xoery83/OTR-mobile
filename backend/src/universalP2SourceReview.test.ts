@@ -13,6 +13,15 @@ const receipt = JSON.parse(
     "utf8",
   ),
 );
+const owning = JSON.parse(
+  readFileSync(
+    new URL(
+      "../../docs/ops/universal-p2-formal-save-20261027/P2_BATCH9_OWNING_TASK_RECEIPT.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 async function fixture() {
@@ -25,10 +34,10 @@ async function fixture() {
   return {
     context,
     result,
-    resultSha256: receipt.proof.oldResultsDigest,
+    resultSha256: owning.task.result_sha256,
     selection: {
       token: "i1",
-      resultSha256: receipt.proof.oldResultsDigest,
+      resultSha256: owning.task.result_sha256,
       sourceReview: {
         version: "otr.universal.p2-source-review/1",
         decision: "NEW",

@@ -1,0 +1,13 @@
+{
+  "preMD5": "1bfcf2b5daabcab72dd75036ad49122e",
+  "postMD5": "666ff90bad5c706a6007691a3328df75",
+  "registrySha256": "19066b80cbd09c04b365b175e41d7f3a6cbd0f36fe79172187f28756bf8c00e9",
+  "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+  "files": {
+    "P2_AIRPORT_REGISTRY_PROPOSAL.json": "ee73aa5f69f4656612f6f76233658bc3e288be671977f193601c9c90bbceb81b",
+    "P2_AIRPORT_RESOLVER_PREIMAGE.sql": "88b7e826eaa208a41b584d5c559e0a207a7c91e22aeb1d7824a3227b3e1d4c35",
+    "P2_AIRPORT_RESOLVER_POSTIMAGE.sql": "c1ddbe4bf6d87709c36b2b62482721620ba75789b7934f29aa1e22064617ab20",
+    "P2_AIRPORT_DORMANT_INSTALL.sql": "5f3a271bf6b9232868b5ce347e048fa806cfe0c604d1f8b244c099bebe27c865",
+    "P2_AIRPORT_DORMANT_ROLLBACK.sql": "8f729e69d4c32a272ef8691b23c235c779ea77a8c2e998d231d5630a49be1e09"
+  }
+}
