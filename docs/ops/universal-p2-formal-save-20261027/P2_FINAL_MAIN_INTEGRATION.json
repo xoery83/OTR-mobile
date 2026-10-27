@@ -1,0 +1,16 @@
+{
+  "status": "SERIAL_MAIN_FAST_FORWARD_DIRTY_BYTES_PRESERVED",
+  "before": "7caf711947c3515ef3165f9d569cf3f8f95ace5e",
+  "after": "d2bd2e8ca6892d1ff0b8b291b97bf7c6be84e71e",
+  "preservedEntries": 6,
+  "pushed": false,
+  "postMergeValidation": {
+    "focusedTests": 63,
+    "retainedSiblingRollbackRegression": 1,
+    "readyControllerSelfTest": "PASS",
+    "realIsolatedPg": "PASS_BEFORE_MERGE_SAME_SOURCE",
+    "types": "PASS_BEFORE_MERGE",
+    "hostedSparseP2E2E": "PASS",
+    "pushed": false
+  }
+}
