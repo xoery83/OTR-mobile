@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { advanceAccountGeneration } from "../../src/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
-import { reviewUniversalP2Selection } from "./universalP2SourceReview";
+import {
+  reviewUniversalP2Selection,
+  projectUniversalP2SourceProposal,
+} from "./universalP2SourceReview";
+import { extractCoreFlightPublication } from "./tripCoreV2CandidatePublication";
 const receipt = JSON.parse(
   readFileSync(
     new URL(
@@ -146,3 +150,84 @@ it("fences an account generation change during hashing", async () => {
     }),
   ).rejects.toThrow();
 });
+
+async function proposalFixture() {
+  const f = await fixture(),
+    b = f.result.sourceBindings[0];
+  return {
+    ...f,
+    runId: "8af82103-55f2-84ea-8e6f-445a15321cf6",
+    inputCatalogSha256: "a".repeat(64),
+    material: {
+      pin: {
+        id: b.inputId,
+        source_id: b.sourceId,
+        material_revision: b.revision,
+        representation_id: b.representationId,
+        payload_sha256: b.originalSha256,
+        byte_count: 27,
+        observed_source_row_revision: 1,
+        historical_selection: false,
+      },
+      form: "TEXT" as const,
+      media_type: "text/plain" as const,
+      text: "NZ501 AKL→CHC 2026-11-02\n",
+    },
+  };
+}
+it("maps the actual reviewed P2 through existing Flight publication and one stable Sparse-only plan without granting admission", async () => {
+  const f = await proposalFixture(),
+    deps = { hash, getAccountId: async () => f.result.accountId };
+  const r = await projectUniversalP2SourceProposal(f, deps);
+  expect(r.grantsAdmission).toBe(false);
+  expect(r.publication.candidates).toHaveLength(1);
+  expect(r.publication.candidates[0].facts.flightNumberLiteral).toBe("NZ501");
+  expect(r.plan.slots.map((s) => s.command)).toEqual(["CREATE_SPARSE_FLIGHT"]);
+  expect(r.plan.slots[0].payload).not.toHaveProperty("origin");
+  expect(r.plan.slots[0].payload).not.toHaveProperty("services");
+  expect(r.binding).toMatchObject({
+    taskId: f.result.taskId,
+    batchId: f.result.batchId,
+    runId: f.runId,
+    resultSha256: owning.task.result_sha256,
+    token: "i1",
+  });
+  expect(await projectUniversalP2SourceProposal(f, deps)).toEqual(r);
+  const checked = await extractCoreFlightPublication(
+    r.publication,
+    [f.material],
+    f.result.accountId,
+    f.result.tripId,
+    hash,
+    async () => null,
+  );
+  expect(checked.sealed[0]).toMatchObject({
+    status: "REVIEW",
+    errorCode: "UNRESOLVED_IDENTITY",
+    identityFacts: null,
+  });
+});
+it.each(["extra-leg", "ignored-source", "change-notice", "historical", "date-drift"])(
+  "does not manufacture an eligible P2 from %s",
+  async (kind) => {
+    const f = await proposalFixture();
+    if (kind === "extra-leg") f.material.text += "NZ502 CHC→AKL 2026-11-03\n";
+    if (kind === "ignored-source") f.material.text += "Cancellation: NZ501 cancelled\n";
+    if (kind === "change-notice") f.material.text += "change=Flight cancelled\n";
+    if (kind === "historical") f.material.pin.historical_selection = true;
+    if (kind === "date-drift") f.selection.sourceReview.departureDate = "2026-11-03";
+    if (kind === "extra-leg" || kind === "ignored-source" || kind === "change-notice") {
+      const sha = await hash(Buffer.from(f.material.text));
+      f.material.pin.payload_sha256 = sha;
+      f.material.pin.byte_count = Buffer.byteLength(f.material.text);
+      f.result.sourceBindings[0].originalSha256 = sha;
+      f.result.sourceBindings[0].submittedSha256 = sha;
+    }
+    await expect(
+      projectUniversalP2SourceProposal(f, {
+        hash,
+        getAccountId: async () => f.result.accountId,
+      }),
+    ).rejects.toThrow();
+  },
+);

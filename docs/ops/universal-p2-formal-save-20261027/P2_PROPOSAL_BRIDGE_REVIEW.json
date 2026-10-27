@@ -1,0 +1,23 @@
+{
+  "status": "INDEPENDENT_READONLY_PROPOSAL_BRIDGE_NO_BLOCKER",
+  "reviewer": "/root/p1_source_review_independent",
+  "focusedTests": 40,
+  "typecheck": "PASS",
+  "runtimeWired": false,
+  "sqlWrites": false,
+  "providerCalls": 0,
+  "grantsAdmission": false,
+  "reused": [
+    "referenceFlightExtractor",
+    "sourceValues/observationPath (export only)",
+    "coreCandidatePublicationV2Schema",
+    "deterministic Task/token IDs",
+    "buildCaptureFlightSourcePlanV2 SPARSE_ONLY"
+  ],
+  "boundary": "Future HTTP and storage must re-read and bind owning Published Task/Batch/Run/result hash/Source pins under locks; caller values are not authority. No proof from dormant airport rows.",
+  "files": [
+    "backend/src/universalP2SourceReview.ts",
+    "backend/src/universalP2SourceReview.test.ts",
+    "backend/src/tripCoreV2CandidatePublication.ts"
+  ]
+}

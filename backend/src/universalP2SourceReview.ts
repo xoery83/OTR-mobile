@@ -5,7 +5,21 @@ import {
 } from "../../src/data/auth/accountRequestContext";
 import { universalResultSchema } from "../../src/data/api/universalImportContracts";
 import { universalP2SourceReviewSchema } from "../../src/domain/trip/universalP2SourceReview";
-import { normalizeFlightObservation } from "../../src/domain/trip/referenceFlightExtractor";
+import {
+  normalizeFlightObservation,
+  parseReferenceFlightText,
+} from "../../src/domain/trip/referenceFlightExtractor";
+import { interpretationMaterialSchema } from "../../src/domain/intelligence/interpretation";
+import { flightCommandLeaves } from "../../src/domain/trip/flightAdmission";
+import { buildCaptureFlightSourcePlanV2 } from "../../src/data/interpretation/captureFlightCoreV2";
+import { universalP1Identity } from "./universalP1Source";
+import {
+  coreCandidatePublicationV2Schema,
+  fieldRef,
+  sourceValues,
+  observationPath,
+  type CoreCandidatePublicationV2,
+} from "./tripCoreV2CandidatePublication";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
 
 const selectionSchema = z.strictObject({
@@ -112,5 +126,160 @@ export async function reviewUniversalP2Selection(
     sourceObservations: candidate.fields.filter((f) => !evidence.includes(f)),
     grantsAdmission: false as const,
     requiresOwningFlightProof: true as const,
+  };
+}
+
+// Proposals use the existing independent Flight grammar and Source Plan builder.
+// The caller must supply owning Published Task/Run/catalog pins, never client hashes.
+export async function projectUniversalP2SourceProposal(
+  input: Omit<Parameters<typeof reviewUniversalP2Selection>[0], "material"> & {
+    runId: string;
+    inputCatalogSha256: string;
+    material: import("./tripCoreV2CandidatePublication").CorePublicationMaterial;
+  },
+  deps: Parameters<typeof reviewUniversalP2Selection>[1],
+) {
+  const material = interpretationMaterialSchema.parse(input.material);
+  if (
+    material.form !== "TEXT" ||
+    material.media_type !== "text/plain" ||
+    material.pin.historical_selection
+  )
+    throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+  const reviewed = await reviewUniversalP2Selection(
+    {
+      ...input,
+      material: {
+        inputId: material.pin.id,
+        sourceId: material.pin.source_id,
+        sourceRevision: material.pin.material_revision,
+        representationId: material.pin.representation_id,
+        sha256: material.pin.payload_sha256,
+        bytes: Buffer.from(material.text),
+      },
+    },
+    deps,
+  );
+  if (Buffer.byteLength(material.text) !== material.pin.byte_count)
+    throw Error("SOURCE_INTEGRITY_FAILURE");
+  const parsed = parseReferenceFlightText(material.pin.id, material.text);
+  if (
+    parsed.items.length !== 1 ||
+    parsed.ignored.length ||
+    parsed.items.some((item) =>
+      item.fields.some(
+        (f) =>
+          ![
+            "transport_subtype",
+            "service",
+            "origin.airport",
+            "destination.airport",
+            "origin.local_date",
+          ].includes(f.path),
+      ),
+    )
+  )
+    throw Error("INCOMPLETE_SOURCE_EVIDENCE");
+  const item = parsed.items[0],
+    values = sourceValues(item);
+  if (
+    values.services?.[0]?.service_literal !== reviewed.flightNumberLiteral ||
+    values.origin?.time.local_date !== reviewed.departureDate
+  )
+    throw Error("SOURCE_REVIEW_MISMATCH");
+  const identity = (purpose: string) =>
+    universalP1Identity(reviewed.taskId, reviewed.token, "p2-" + purpose);
+  const candidateId = identity("candidate");
+  const facts = {
+    flightNumberLiteral: reviewed.flightNumberLiteral,
+    departureDate: reviewed.departureDate,
+    ...values,
+  };
+  const leaves = {
+    flightNumberLiteral: reviewed.flightNumberLiteral,
+    departureDate: reviewed.departureDate,
+    ...flightCommandLeaves(values),
+  };
+  const evidence: CoreCandidatePublicationV2["evidence"] = [];
+  for (const key of Object.keys(leaves)) {
+    const fields = item.fields.filter((f) => f.path === observationPath(key));
+    if (
+      fields.length !== 1 ||
+      fields[0].uncertainty.length ||
+      fields[0].fragment_ids.length !== 1
+    )
+      throw Error("INCOMPLETE_SOURCE_EVIDENCE");
+    const fragment = parsed.fragments.find((f) => f.id === fields[0].fragment_ids[0]);
+    if (!fragment) throw Error("IMPORT_EVIDENCE_INVALID");
+    evidence.push({
+      candidateId,
+      fieldKey: key,
+      inputId: material.pin.id,
+      locator: fragment.locator,
+    });
+  }
+  const publication = coreCandidatePublicationV2Schema.parse({
+    publicationVersion: 2,
+    publicationId: identity("publication"),
+    sourceId: material.pin.source_id,
+    sourceRevision: material.pin.material_revision,
+    runId: z.uuid().parse(input.runId),
+    inputCatalogSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .parse(input.inputCatalogSha256),
+    candidates: [
+      {
+        schemaId: "otr.trip.capture.candidate/2",
+        candidateId,
+        accountId: input.context.accountId,
+        tripId: input.context.tripId,
+        sourceId: material.pin.source_id,
+        sourceRevision: material.pin.material_revision,
+        runId: input.runId,
+        inputRepresentationIds: [material.pin.representation_id],
+        kind: "P2",
+        facts,
+        fieldKnowledge: Object.fromEntries(
+          Object.keys(leaves).map((key) => [key, "PRESENT"]),
+        ),
+        fieldEvidence: Object.fromEntries(
+          Object.keys(leaves).map((key) => [key, [fieldRef(candidateId, key)]]),
+        ),
+        existingTargetHint: null,
+        unmappedObservations: [],
+      },
+    ],
+    evidence,
+  });
+  const plan = buildCaptureFlightSourcePlanV2(
+    publication,
+    identity("plan"),
+    [
+      {
+        candidateId,
+        itemId: identity("item"),
+        createSlotId: identity("slot"),
+        createOperationId: identity("operation"),
+        qualifySlotId: identity("qualify-slot"),
+        qualifyOperationId: identity("qualify-operation"),
+      },
+    ],
+    "SPARSE_ONLY",
+  );
+  await assertAccountRequestContext(input.context, deps.getAccountId);
+  return {
+    publication,
+    plan,
+    binding: {
+      version: "otr.universal.p2-source-proposal/1" as const,
+      taskId: reviewed.taskId,
+      batchId: reviewed.batchId,
+      runId: input.runId,
+      resultSha256: reviewed.resultSha256,
+      token: reviewed.token,
+      sourceReview: reviewed.sourceReview,
+    },
+    grantsAdmission: false as const,
   };
 }

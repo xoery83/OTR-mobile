@@ -41,7 +41,7 @@ function unique(item: InterpretationItem, path: string) {
     return undefined;
   return fields[0];
 }
-function sourceValues(item: InterpretationItem): FlightValues {
+export function sourceValues(item: InterpretationItem): FlightValues {
   const service = unique(item, "service")?.normalized as FlightValues["services"] extends
     (infer T)[] | undefined
     ? T
@@ -80,7 +80,7 @@ function sourceValues(item: InterpretationItem): FlightValues {
   }
   return values;
 }
-function observationPath(key: string) {
+export function observationPath(key: string) {
   if (key === "flightNumberLiteral" || key === "ROOT.title" || key.startsWith("SERVICE."))
     return "service";
   if (key === "departureDate") return "origin.local_date";
