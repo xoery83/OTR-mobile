@@ -169,7 +169,7 @@ async function sourceFixture(family: "P1" | "P2" | "P3" | "P4" | "P5" | "P6" = "
             sourceRevision: 1,
             title:
               family === "P6"
-                ? "海滨散步"
+                ? "Harbour QA Gallery Visit"
                 : family === "P5"
                   ? "Coastal QA Train"
                   : "海滨租车",

@@ -1,0 +1,16 @@
+BEGIN; SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(714024,3);
+DO $activate$ DECLARE deadline timestamptz:='__P6_FIXED_WINDOW_DEADLINE__'::timestamptz; scope jsonb:='{"family":"P6","tripId":"825f79b2-4a9d-4535-a62e-43000ca50c4a","sourceId":"1a231256-70f9-4925-bbfe-7776cbcc9d20","batchId":"168ab060-4dbc-495e-806d-5fb60ed6face","taskId":"e05fca8e-2044-8c4e-9c11-4f4ade39ecb9","token":"i1","resultSha256":"2d4b6a4a2fff864e164b204b84bf9fc64a0c891b9253b5129b7b7b605761a17f","candidateId":"32437279-c76b-8d00-9d82-d5c521256bf2","targetId":"fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb","operationId":"e58ed798-64e9-8765-b11f-f8ef14921b8a","slotId":"9d8a71ed-39d7-811d-bfb9-ede174c58b14","title":"Harbour QA Gallery Visit","localDate":"2026-11-03"}'::jsonb; BEGIN
+ IF deadline<=clock_timestamp() OR deadline>clock_timestamp()+interval '3600 seconds' THEN RAISE EXCEPTION 'P6_INVALID_DEADLINE';END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND enabled AND revoked_at IS NULL AND NOT universal_p1_import_enabled AND universal_p1_review_scope IS NULL) THEN RAISE EXCEPTION 'P6_POLICY_DRIFT';END IF;
+ IF EXISTS(SELECT 1 FROM public.trip_source_core_v2_candidates WHERE candidate_id=(scope->>'candidateId')::uuid)
+ OR EXISTS(SELECT 1 FROM public.itinerary_events WHERE id=(scope->>'targetId')::uuid)
+ OR EXISTS(SELECT 1 FROM public.trip_core_command_receipts WHERE operation_id=(scope->>'operationId')::uuid) THEN RAISE EXCEPTION 'P6_ALREADY_STARTED_RECONCILE_ONLY';END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.trip_sources WHERE id=(scope->>'sourceId')::uuid AND trip_id=(scope->>'tripId')::uuid AND acquired_by='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND lifecycle='ACTIVE' AND retention_state='RETAINED' AND current_material_revision=1)
+ OR NOT EXISTS(SELECT 1 FROM public.trip_source_runs WHERE id='c08faaf5-e019-824a-b9b2-eab5657cc8f6' AND actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND trip_id=(scope->>'tripId')::uuid AND capture_batch_id=(scope->>'batchId')::uuid AND interpretation_task_id=(scope->>'taskId')::uuid AND state='PENDING' AND retention_state='RETAINED' AND superseded_by IS NULL) THEN RAISE EXCEPTION 'P6_SOURCE_STALE';END IF;
+IF md5(pg_get_functiondef('public.trip_core_guard_historical_source_association()'::regprocedure)) IS DISTINCT FROM '020142f091e49cb30ced7b6c392ffe17' THEN RAISE EXCEPTION 'P6_FUNCTION_DRIFT';END IF;
+IF md5(pg_get_functiondef('public.trip_sustained_import_p1_capabilities(uuid,uuid)'::regprocedure)) IS DISTINCT FROM '04641fb76fb01aa658c8260c8a77e4c9' THEN RAISE EXCEPTION 'P6_FUNCTION_DRIFT';END IF;
+IF md5(pg_get_functiondef('public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)'::regprocedure)) IS DISTINCT FROM '89e6e249f6b450ecb23a78bcd1a79c3c' THEN RAISE EXCEPTION 'P6_FUNCTION_DRIFT';END IF;
+IF md5(pg_get_functiondef('public.trip_core_service_statement_guard()'::regprocedure)) IS DISTINCT FROM '114c66014850ca45c288752f39a11370' THEN RAISE EXCEPTION 'P6_FUNCTION_DRIFT';END IF;
+ UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=scope||jsonb_build_object('expiresAt',deadline) WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid;
+END $activate$;
+COMMIT;

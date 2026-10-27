@@ -882,7 +882,7 @@ async function lostP1RecoveryFixture(
             : "otr.universal.p5-source-review/1",
         decision: "NEW",
         sourceRevision: 1,
-        title: family === "P6" ? "海滨散步" : "Coastal QA Train",
+        title: family === "P6" ? "Harbour QA Gallery Visit" : "Coastal QA Train",
         localDate: "2026-11-03",
         originalReviewed: true,
         tripReviewed: true,

@@ -70,7 +70,9 @@ it
                 ? "海滨住宿"
                 : family === "P4"
                   ? "海滨租车"
-                  : "海滨散步",
+                  : family === "P6"
+                    ? "Harbour QA Gallery Visit"
+                    : "海滨散步",
           localDate: family !== "P1" ? "2026-11-03" : "2026-11-01",
           ...(["P3", "P4"].includes(family) ? { endLocalDate: "2026-11-05" } : {}),
           originalReviewed: true,
@@ -265,17 +267,27 @@ it
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         family !== "P1" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
       );
-      if (family === "P5") {
+      if (family === "P5" || family === "P6") {
         const packet = new URL(
-          "../../docs/ops/universal-p5-formal-save-20261028/",
+          family === "P6"
+            ? "../../docs/ops/universal-p6-formal-save-20261028/"
+            : "../../docs/ops/universal-p5-formal-save-20261028/",
           import.meta.url,
         );
         const fixed = JSON.parse(
-          readFileSync(new URL("P5_REVIEW_SCOPE.json", packet), "utf8"),
+          readFileSync(new URL(`${family}_REVIEW_SCOPE.json`, packet), "utf8"),
         );
-        expect(fixed.operatorLiteral).toBe("Coastal QA Rail");
-        expect(fixed.serviceNumber).toBe("CQ101");
-        let activation = readFileSync(new URL("P5_REVIEW_ACTIVATE.sql", packet), "utf8");
+        if (family === "P5") {
+          expect(fixed.operatorLiteral).toBe("Coastal QA Rail");
+          expect(fixed.serviceNumber).toBe("CQ101");
+        } else {
+          expect(fixed.title).toBe("Harbour QA Gallery Visit");
+          expect(fixed.localDate).toBe("2026-11-03");
+        }
+        let activation = readFileSync(
+          new URL(`${family}_REVIEW_ACTIVATE.sql`, packet),
+          "utf8",
+        );
         const identities: Record<string, string> = {
           sourceId,
           batchId: request.batchId,
@@ -291,9 +303,14 @@ it
         for (const [key, value] of Object.entries(identities))
           activation = activation.replaceAll(fixed[key], value);
         activation = activation
-          .replaceAll("5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5", f.input.runId)
+          .replaceAll(
+            family === "P6"
+              ? "c08faaf5-e019-824a-b9b2-eab5657cc8f6"
+              : "5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5",
+            f.input.runId,
+          )
           .replace(
-            "__P5_FIXED_WINDOW_DEADLINE__",
+            `__${family}_FIXED_WINDOW_DEADLINE__`,
             new Date(Date.now() + 900000).toISOString(),
           );
         await admin.lease.query(
@@ -311,14 +328,9 @@ it
               ...(family !== "P1"
                 ? {
                     family,
-                    title:
-                      family === "P6"
-                        ? "海滨散步"
-                        : family === "P3"
-                          ? "海滨住宿"
-                          : "海滨租车",
+                    title: family === "P3" ? "海滨住宿" : "海滨租车",
                     localDate: "2026-11-03",
-                    ...(family !== "P6" ? { endLocalDate: "2026-11-05" } : {}),
+                    endLocalDate: "2026-11-05",
                   }
                 : {}),
               sourceId,
@@ -662,7 +674,7 @@ it
         ).rows;
         expect(row).toEqual([
           {
-            title: "海滨散步",
+            title: "Harbour QA Gallery Visit",
             experience_family: "P6",
             temporal_shape: "CALENDAR",
             start_local_date: "2026-11-03",

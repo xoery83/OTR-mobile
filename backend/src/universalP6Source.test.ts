@@ -10,7 +10,7 @@ async function fixture() {
       version: "otr.universal.p6-source-review/1",
       decision: "NEW",
       sourceRevision: 1,
-      title: "海滨散步",
+      title: "Harbour QA Gallery Visit",
       localDate: "2026-11-03",
       originalReviewed: true,
       tripReviewed: true,
@@ -26,7 +26,7 @@ it("qualifies only explicitly reviewed P6 name/date through existing Source and 
   expect(r.qualification.eligibleNewRecords).toHaveLength(1);
   expect(slot.payload).toMatchObject({
     family: "P6",
-    core: { title: "海滨散步" },
+    core: { title: "Harbour QA Gallery Visit" },
     schedule: { start: { local_date: "2026-11-03", local_time: null, zone_id: null } },
   });
   expect(slot.selectedFields).toEqual(["ROOT.title", "START.local_date"]);

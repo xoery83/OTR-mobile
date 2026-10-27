@@ -23,7 +23,7 @@ async function fixture(
             version: "otr.universal.p6-source-review/1" as const,
             decision: "NEW" as const,
             sourceRevision: 1,
-            title: "海滨散步",
+            title: "Harbour QA Gallery Visit",
             localDate: "2026-11-03",
             originalReviewed: true as const,
             tripReviewed: true as const,
@@ -419,7 +419,10 @@ it("uses P6 owning Review and same durable operation, never Manual Save", async 
     expect.anything(),
     expect.objectContaining({ family: "P6", sourceReview: f.review }),
   );
-  expect(f.command.payload).toMatchObject({ family: "P6", core: { title: "海滨散步" } });
+  expect(f.command.payload).toMatchObject({
+    family: "P6",
+    core: { title: "Harbour QA Gallery Visit" },
+  });
   expect(f.command.admission.mode).toBe("REVIEWED_SOURCE");
   expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
 });

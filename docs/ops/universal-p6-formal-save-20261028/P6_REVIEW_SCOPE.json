@@ -1,0 +1,15 @@
+{
+  "family": "P6",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "sourceId": "1a231256-70f9-4925-bbfe-7776cbcc9d20",
+  "batchId": "168ab060-4dbc-495e-806d-5fb60ed6face",
+  "taskId": "e05fca8e-2044-8c4e-9c11-4f4ade39ecb9",
+  "token": "i1",
+  "resultSha256": "2d4b6a4a2fff864e164b204b84bf9fc64a0c891b9253b5129b7b7b605761a17f",
+  "candidateId": "32437279-c76b-8d00-9d82-d5c521256bf2",
+  "targetId": "fa8aa691-8c18-8eaa-88aa-2eed8fe8cfdb",
+  "operationId": "e58ed798-64e9-8765-b11f-f8ef14921b8a",
+  "slotId": "9d8a71ed-39d7-811d-bfb9-ede174c58b14",
+  "title": "Harbour QA Gallery Visit",
+  "localDate": "2026-11-03"
+}
