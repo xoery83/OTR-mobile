@@ -1,4 +1,4 @@
-# P4 first formal Import Save — SERVER_VERIFIED / NATIVE_PENDING
+# P4 first formal Import Save — CLOUD_E2E_PASS
 
 Same Batch11/Task28435c7a/i1, retained original/result; no new DeepSeek call, object or schema/ACL/role. SourceReview original/QA Journey/NEW/name/date confirmed in normal AD5 Native. Item accepted by server shown; source owning Plan→Admission→CREATE_ITEM(P4)→receipt/finalization completed.
 
@@ -6,8 +6,10 @@ Same Batch11/Task28435c7a/i1, retained original/result; no new DeepSeek call, ob
 - Operation `a2c3a7b4-f301-8343-b7d3-02571f67d3df`; receipt `6db144a2-db9b-4c80-ac85-e992e68166b6`, APPLIED/SHA5235c75a6b3034a03773a81c1707dfa29a9e56a33a8838374e8a5d896c462553. Slot COMPLETE, one Candidate/association matching exact Source/material/receipt proofs.
 - Independent firstread18:08:54Z and post-repeat18:11:10Z: six complete record sets canonicalSHA exactly unchanged, one Item/revision/receipt/slot/candidate/association. Normal Native repeated confirmation returned same accepted state; no replacement ID or duplicate.
 - Earlyclose18:10:47Z: policyfalse/scopenull, defaultad8/image8298 restored/ROLLBACK_VERIFIED. IndependentSQL18:11:26Z+SSH18:11:32Z verify closedhealthy, Review containerstopped and terminalearlyclosemarker. Original firstwindow remains terminal; both preserve all records. Ordinary Provider scope6 remains separately authorized; this is not a claim all Provider scopes are closed.
-- Actual ordinary TripHome showed Rentals1 and same title. Clicking that row produced preparation.unavailable; current TripScreen unknown-zone fallback excludesP4 (allowsP1/P2/P3 only). Unique Native Writer informed with exact firstFAIL; existing explicit viewing-zone chooser should be reused without inventing Item zone. DayFeed/cold recovery NOT_PASS yet.
+- Native unique Writer handed off the precise TripScreen P4 date-only entry failure. Source1fe65e7f/Hostf78ade78 reuses the existing explicit civil-date/viewing-zone chooser, with 49 focused RED→GREEN assertions and independent NO_BLOCKER review. No missing Item clock/zone is inferred.
+- Actual AD5 Day Feed showed the same COASTLINE QA MOTORS, Pickup Nov2 / Return Nov3 and incomplete time details using explicit viewing context Pacific/Auckland. Full Device Hub Restart returned to My Trips; same QA Trip Rentals1/title restored. Read-only SQLite at18:23:58Z proves same Item/revision1/dates and null clocks/zones. Reopening the chooser after restart displayed the same Day Feed at approximately07:45 NZDT. GUI observations are the delivery agent's observations; independent review covered code/evidence, not a second GUI eyewitness.
+- Serial main integration c0176587→ccc84815 (source891bbc49): merged tree exactly equals reviewed source tree; 10 suites/153 tests, typecheck/UIguard PASS, unrelated dirty bytes/status preserved. Independent integration review NO_BLOCKER; no push. Historical integration receipt correctly records GUI still pending at its earlier timestamp; this final result supplies the later cold Day acceptance.
 
 UI recovery requirement: Owner requested Activity Progress independently operable because DeviceHub auto drag jumps top/bottom. DEV-only deterministic scroll buttons are under focused implementation/review; they never perform original review or confirm automatically.
 
-P4 sourcefix896ee25c; deployedcompatibleHost9b851a4d/image8298d177. Executionpacketef576d30; rootfixedsourced28840c0/mainc0176587. No P4 acceptance merge yet; do not merge the complete Host branch or claim P5/P6 Save.
+P4 sourcefix896ee25c; deployedcompatibleHost9b851a4d/image8298d177. Executionpacketef576d30; rootfixedsourced28840c0/mainc0176587. Accepted P4 slice is in mainccc84815; do not merge the complete Host branch or claim P5/P6 Save.
