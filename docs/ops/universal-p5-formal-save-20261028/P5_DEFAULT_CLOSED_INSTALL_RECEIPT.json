@@ -1,0 +1,39 @@
+{
+  "status": "P5_DEFAULT_CLOSED_INSTALLED_INDEPENDENT_READBACK",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "sourceCommit": "fbd31424b2d153a54e802cc732297c3ecd4ff8d4",
+  "ack": "ACKNOWLEDGED",
+  "at": "2026-10-27T20:59:14.912607+00:00",
+  "policy": {
+    "enabled": false,
+    "scope": null
+  },
+  "functions": {
+    "trip_core_guard_historical_source_association": {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "93801f3fadf5dba7a6214561642fe436",
+      "oid": "65660",
+      "owner": "postgres"
+    },
+    "trip_core_service_statement_guard": {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres,otr_trip_event_semantic_writer=X/postgres}",
+      "md5": "114c66014850ca45c288752f39a11370",
+      "oid": "65415",
+      "owner": "postgres"
+    },
+    "trip_sustained_import_p1_capabilities": {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "1079d0aab7b396055ea96c98bf0fe96d",
+      "oid": "66408",
+      "owner": "postgres"
+    },
+    "trip_sustained_import_p1_guard": {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "1276642cf7fcd0ae5be4be2934e79ee1",
+      "oid": "66410",
+      "owner": "postgres"
+    }
+  },
+  "schemaRlsGrantRoleChanges": 0,
+  "businessGateActivated": false
+}
