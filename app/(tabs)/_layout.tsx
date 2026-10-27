@@ -15,6 +15,7 @@ export default function TabsLayout() {
   const pathname = usePathname();
   return (
     <Tabs
+      initialRouteName="trip"
       tabBar={() => (
         <ExperienceBottomShell visible={bottomBarVisible(pathname)} pathname={pathname} />
       )}
