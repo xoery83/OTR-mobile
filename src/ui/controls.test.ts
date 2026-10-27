@@ -254,3 +254,21 @@ it("keeps ordinary action cards unchanged while compact Participants cards fit t
   expect(compact).toContain("min-height:64px");
   expect(compact).toContain("flex-grow:0");
 });
+
+it("renders a field accessory without losing the canonical value or disabled state", () => {
+  const markup = renderToStaticMarkup(
+    createElement(UiFormRow, {
+      variant: "field",
+      label: "Transport type",
+      value: "Train",
+      disabled: true,
+      onPress: () => undefined,
+      trailing: createElement("span", null, "chevron"),
+    }),
+  );
+  expect(markup).toContain("Transport type");
+  expect(markup).toContain("Train");
+  expect(markup).toContain("chevron");
+  expect(markup).toContain('aria-disabled="true"');
+  expect(markup).toContain("flex-direction:row");
+});

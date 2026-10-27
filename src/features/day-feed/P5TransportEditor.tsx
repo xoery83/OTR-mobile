@@ -609,7 +609,12 @@ const createStyles = (colors: UiColors) =>
       borderTopColor: colors.separator,
       paddingTop: visual.space.section,
     },
-    dateTime: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.card },
+    dateTime: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "flex-end",
+      gap: visual.space.card,
+    },
     dateField: { flexGrow: 2, flexBasis: 180, minWidth: 0 },
     timeField: { flexGrow: 1, flexBasis: 130, minWidth: 0 },
     notes: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },

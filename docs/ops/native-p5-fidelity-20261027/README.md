@@ -1,3 +1,9 @@
+## R36 physical acceptance — 28 October 2026
+
+Installed same Forms QA bundle, normal Session/Trips retained. FormsQA1027: cold read restored existing P5; Home Widget→revised Immersive→Edit→native Transport type selector→Train changed to Bus→top Save→same Detail visibly refreshed to Bus. Unknown arrival stays hidden, Everyone shown, four footer actions retain real capability gating. Evidence: ignored `.forms-qa/r36/p5-real-immersive.png`, `p5-type-selector.png`, `p5-edit-saved-bus.png`. No fixture inserted into real data, no Cloud PASS. Full nine-state, Dark/Dynamic Type and revised Notes software-keyboard Vision not yet claimed.
+
+Device found existing UiFormRow field branch ignored trailing; minimal shared primitive follow-up honors that existing prop without changing fields that omit it. P5 date/time values also align at bottom when labels wrap. Fifteen focused controls/Form assertions and UIguard PASS; this final accessory/alignment change is not in the already installed R36 and awaits follow-up install. Mirror/GUI explicitly returned to Universal after saved Detail.
+
 ## Owner fidelity repair — 28 October 2026
 
 Form correction candidate: replace six tall mode chips with one native selector; canonical form Header Cancel/Save replaces bottom Save; reuse compact PlanParticipantsField, actor/draft/generation-bound Apple PlaceSearchSheet, P4-style time picker and shared CalendarField field presentation. Departure/Arrival group location before their date/time row. Notes reuses keyboard avoidance and focus-to-end behavior. Place selection supplies authored address text only, not accepted geography. Arrival date and clock remain independently nullable; unknown time is never fabricated. Existing opaque Draft, same-ID Save, frozen retry and Cancel behavior remain.

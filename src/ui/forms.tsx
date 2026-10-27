@@ -124,6 +124,7 @@ export function UiFormRow({
       style={[
         field ? styles.input : styles.row,
         field && styles.fieldButton,
+        field && !!trailing && styles.fieldWithAccessory,
         !field && (largeText || stacked) && styles.rowLargeText,
         disabled && styles.disabledSurface,
         !field && horizontalInset !== undefined && { paddingHorizontal: horizontalInset },
@@ -144,12 +145,14 @@ export function UiFormRow({
         numberOfLines={2}
         style={[
           field ? styles.fieldValue : styles.rowValue,
+          field && !!trailing && styles.fieldAccessoryValue,
           !field && (largeText || stacked) && styles.rowValueLargeText,
           disabled && styles.disabledText,
         ]}
       >
         {value}
       </Text>
+      {field ? trailing : null}
     </Pressable>
   );
   return field ? (
@@ -233,6 +236,12 @@ const createStyles = (colors: UiColors) =>
     fieldLabel: { ...visual.type.action, color: colors.textPrimary },
     fieldButton: { justifyContent: "center", paddingVertical: visual.space.heading },
     fieldValue: { ...visual.type.row, color: colors.textPrimary },
+    fieldWithAccessory: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.heading,
+    },
+    fieldAccessoryValue: { flex: 1 },
     bareInput: {
       backgroundColor: colors.background,
       borderWidth: 0,
