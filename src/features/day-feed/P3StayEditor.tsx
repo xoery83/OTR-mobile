@@ -32,6 +32,10 @@ import { visual } from "@/ui/visual";
 import { TripCalendarRangeField } from "./TripCalendarRangeField";
 import { PlanParticipantsField } from "./PlanParticipantsField";
 import { P3StayLocationField } from "./P3StayLocationField";
+import {
+  p3PlaceSelectionDraft,
+  type P3PlaceSelectionDraft,
+} from "./p3PlaceSelectionDraft";
 
 type Opened = { repository: ManualStayRepository; draft: ManualStayDraft };
 
@@ -170,6 +174,8 @@ export function P3StayEditor({
     opened ? structuredClone(opened.draft.fields) : null,
   );
   const fieldsRef = useRef(fields);
+  const locationInputRevision = useRef(0);
+  const selectedPlaceDraft = useRef<P3PlaceSelectionDraft | null>(null);
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
@@ -234,6 +240,10 @@ export function P3StayEditor({
     alive.current && !closedRef.current && generation === getAccountGeneration();
   const change = (next: Partial<ManualStayFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
+    if (Object.hasOwn(next, "location")) {
+      locationInputRevision.current++;
+      selectedPlaceDraft.current = null;
+    }
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
@@ -417,6 +427,23 @@ export function P3StayEditor({
                     }
                     onChange={(location) => change({ location })}
                     onKeepName={() => setNameQuery(null)}
+                    onPlaceSelected={(place) => {
+                      if (
+                        !current() ||
+                        busyRef.current ||
+                        frozenRef.current ||
+                        !source ||
+                        !fieldsRef.current
+                      )
+                        return;
+                      selectedPlaceDraft.current = p3PlaceSelectionDraft(place, {
+                        tripId,
+                        itemId: source.draft.itemId,
+                        accountGeneration: generation,
+                        inputRevision: locationInputRevision.current,
+                        location: fieldsRef.current.location,
+                      });
+                    }}
                     onSelectHotel={(title, location) => {
                       if (!current() || busyRef.current || frozenRef.current) return;
                       change({ title, location });

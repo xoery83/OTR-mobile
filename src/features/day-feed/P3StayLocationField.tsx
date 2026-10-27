@@ -36,6 +36,7 @@ type Props = {
   isCurrent(): boolean;
   onChange(value: string | null): void;
   onSelectHotel(title: string, location: string): void;
+  onPlaceSelected?(place: ApplePlaceCandidate): void;
   onKeepName(): void;
 };
 const empty: PlaceSearchState = { status: "IDLE", rows: [], more: false };
@@ -190,6 +191,7 @@ export function P3StayLocationField(props: Props) {
     controller.current = null;
     setState(empty);
     latest.current.onSelectHotel(title, address);
+    latest.current.onPlaceSelected?.(result);
   };
   const closeSearch = () => {
     ticket.current.value++;
@@ -234,6 +236,7 @@ export function P3StayLocationField(props: Props) {
       return;
     closeSearch();
     apply(text);
+    if (result.kind === "SELECTED") latest.current.onPlaceSelected?.(result.place);
   };
   return (
     <View style={styles.fields}>

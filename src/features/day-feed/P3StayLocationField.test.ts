@@ -119,6 +119,7 @@ const props = () => ({
   isCurrent: () => true,
   onChange: vi.fn(),
   onSelectHotel: vi.fn(),
+  onPlaceSelected: vi.fn(),
   onKeepName: vi.fn(),
 });
 function render(p: ReturnType<typeof props>) {
@@ -178,6 +179,9 @@ it("shows Apple matches before the address input and fills hotel name plus addre
   await tick();
   render(p);
   expect(p.onSelectHotel).toHaveBeenCalledExactlyOnceWith("Park Hyatt Auckland", address);
+  expect(p.onPlaceSelected).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ kind: "mapItem", address }),
+  );
   expect(p.onChange).not.toHaveBeenCalled();
   expect(node("Park Hyatt Auckland, Auckland")).toBeUndefined();
 });
@@ -220,11 +224,32 @@ it("rejects delayed provider results after name changes, freezing or account swi
   await tick();
   expect(p.onChange).not.toHaveBeenCalled();
   state.generation++;
+  expect(p.onPlaceSelected).not.toHaveBeenCalled();
   node("tripCreate.stayLocation").onFocus();
   await tick();
   render(p);
   expect(node("searchSheet")).toBeUndefined();
   expect(p.onChange).not.toHaveBeenCalled();
+});
+it("retains structured components from the full-screen selection and clears no existing authored fields on Cancel", async () => {
+  const p = { ...props(), value: "Original address" };
+  render(p);
+  node("tripCreate.stayLocation").onFocus();
+  await tick();
+  render(p);
+  const selected = {
+    ...candidate,
+    kind: "mapItem" as const,
+    address,
+    addressComponents: { locality: "Auckland", country: "New Zealand" },
+  };
+  node("searchSheet").onConfirm({
+    kind: "SELECTED",
+    place: selected,
+    usePlaceName: false,
+  });
+  expect(p.onChange).toHaveBeenCalledWith(address);
+  expect(p.onPlaceSelected).toHaveBeenCalledWith(selected);
 });
 it("does not send a name search when opening an unchanged Edit, and closes pending initialization on unmount", async () => {
   const p = { ...props(), nameQuery: null };

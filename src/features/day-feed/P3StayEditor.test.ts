@@ -241,6 +241,72 @@ it("opens the sibling Rental form without changing a clean P3 draft", async () =
   expect(p.onChooseRental).toHaveBeenCalledOnce();
   expect(p.onClose).not.toHaveBeenCalled();
 });
+it("retains selected Apple geography as a revision-bound unaccepted draft and invalidates manual address edits", async () => {
+  const p = props(),
+    initial = {
+      ...fields(),
+      title: "Keep my name",
+      startDate: "2027-12-30",
+      endDate: "2028-01-02",
+      description: "Keep notes",
+    };
+  const draft = {
+    mode: "CREATE",
+    itemId: "00000000-0000-4000-8000-000000000002",
+    fields: initial,
+    participantOptions: [],
+  };
+  await open(p, { createDraft: vi.fn(async () => draft), save: vi.fn() });
+  const address = "1 Example Street";
+  const selected = {
+    provider: "apple",
+    kind: "mapItem",
+    handle: "handle",
+    title: "Hotel",
+    secondary: address,
+    address,
+    sessionId: "00000000-0000-4000-8000-000000000003",
+    generation: 1,
+    addressComponents: {
+      locality: "Nelson",
+      administrativeArea: "Nelson",
+      country: "New Zealand",
+      countryCode: "NZ",
+    },
+  };
+  node("tripCreate.stayLocation").onSelectHotel("Hotel", address);
+  render(p);
+  const onPlaceSelected = node("tripCreate.stayLocation").onPlaceSelected;
+  onPlaceSelected(selected);
+  const selectedRef = state.refs.find(
+    (ref) => (ref.current as any)?.authority === "UNACCEPTED_PROVIDER_DRAFT",
+  )!;
+  expect(selectedRef.current).toMatchObject({
+    addressComponents: selected.addressComponents,
+    binding: {
+      itemId: "00000000-0000-4000-8000-000000000002",
+      tripId: p.tripId,
+      inputRevision: 1,
+      location: address,
+    },
+  });
+  const preserved = state.refs.find(
+    (ref) => (ref.current as any)?.description === "Keep notes",
+  )!.current;
+  expect(preserved).toMatchObject({
+    description: "Keep notes",
+    startDate: initial.startDate,
+    endDate: initial.endDate,
+    participation: initial.participation,
+  });
+  node("tripCreate.stayLocation").onChange("Manually changed");
+  expect(selectedRef.current).toBeNull();
+  onPlaceSelected(selected);
+  expect(selectedRef.current).toBeNull();
+  state.generation++;
+  onPlaceSelected({ ...selected, address: "Manually changed" });
+  expect(selectedRef.current).toBeNull();
+});
 
 it("opens Transport from a clean P3 draft", async () => {
   const p = { ...props(), onChooseTransport: vi.fn() };

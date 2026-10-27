@@ -24,6 +24,16 @@ const point = z.strictObject({
   latitude: z.number().finite().min(-90).max(90),
   longitude: z.number().finite().min(-180).max(180),
 });
+const addressComponent = z.string().trim().min(1).max(256);
+export const applePlaceAddressComponentsSchema = z.strictObject({
+  locality: addressComponent.optional(),
+  administrativeArea: addressComponent.optional(),
+  country: addressComponent.optional(),
+  countryCode: addressComponent.optional(),
+});
+export type ApplePlaceAddressComponents = Readonly<
+  z.infer<typeof applePlaceAddressComponentsSchema>
+>;
 const candidateSchema = z.strictObject({
   provider: z.literal("apple"),
   handle: z.uuid(),
@@ -34,6 +44,8 @@ const candidateSchema = z.strictObject({
   point: point.optional(),
   category: z.string().max(256).optional(),
   providerPlaceId: z.string().min(1).max(1024).optional(),
+  // Attributed raw provider components, never a Canonical qualification or Day label.
+  addressComponents: applePlaceAddressComponentsSchema.optional(),
   area: z
     .strictObject({
       kind: z.enum(["locality", "administrativeArea", "country", "physicalFeature"]),
@@ -188,7 +200,14 @@ export function createApplePlaceProvider(
         )
         .slice(0, kind === "complete" ? 5 : kind === "resolve" ? 1 : 20)
         .map((value): ApplePlaceCandidate =>
-          Object.freeze({ ...value, sessionId, generation: requestGeneration }),
+          Object.freeze({
+            ...value,
+            ...(value.addressComponents
+              ? { addressComponents: Object.freeze({ ...value.addressComponents }) }
+              : {}),
+            sessionId,
+            generation: requestGeneration,
+          }),
         );
     } catch (error) {
       reportApplePlaceFailure(kind.toUpperCase(), error);

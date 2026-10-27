@@ -227,6 +227,11 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
     }
     var result: [String: Any] = ["handle": id, "title": item.name ?? "", "secondary": address,
       "address": address, "kind": "mapItem", "provider": "apple"]
+    let placemark = item.placemark
+    let components = applePlaceAddressComponents(locality: placemark.locality,
+      administrativeArea: placemark.administrativeArea, country: placemark.country,
+      countryCode: placemark.isoCountryCode)
+    if !components.isEmpty { result["addressComponents"] = components }
     if let area {
       result["area"] = area.payload
       result["title"] = area.label
@@ -272,6 +277,16 @@ final class ApplePlaceSearchEngine: @unchecked Sendable {
       return "ERROR"
     }
   }
+}
+
+// Provider facts only: do not parse the formatted address or claim Canonical acceptance.
+func applePlaceAddressComponents(locality: String?, administrativeArea: String?, country: String?, countryCode: String?) -> [String: String] {
+  var result: [String: String] = [:]
+  for (key, raw) in [("locality", locality), ("administrativeArea", administrativeArea), ("country", country), ("countryCode", countryCode)] {
+    guard let value = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty, value.count <= 256 else { continue }
+    result[key] = value
+  }
+  return result
 }
 
 

@@ -58,6 +58,25 @@ it("reuses frozen normalization without changing authored text", () => {
     tokens: ["295", "sandy", "bay-marahau", "road"],
   });
 });
+it("preserves optional raw provider address components without declaring a city accepted", async () => {
+  const f = fixture();
+  const row = {
+    ...f.row,
+    addressComponents: {
+      locality: "Auckland",
+      administrativeArea: "Auckland",
+      country: "New Zealand",
+      countryCode: "NZ",
+    },
+  };
+  f.native.resolve.mockImplementation(async (input) => f.reply(input, [row]));
+  const rows = await f.provider.complete({ text: "Sky Tower" });
+  const resolved = await f.provider.resolve(rows[0], { text: "Sky Tower" });
+  expect(resolved.addressComponents).toEqual(row.addressComponents);
+  expect(Object.isFrozen(resolved.addressComponents)).toBe(true);
+  expect(resolved).not.toHaveProperty("acceptedCity");
+  expect(resolved).not.toHaveProperty("qualification");
+});
 it("uses opaque Apple handles, preserves resolved facts and explicit qualified soft bias", async () => {
   const f = fixture(),
     rows = await f.provider.complete({
