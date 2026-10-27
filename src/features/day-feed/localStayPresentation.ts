@@ -29,6 +29,8 @@ export function localStayPresentation(
       ? (item.details[key] as string)
       : undefined;
   const mode = item.participation.mode;
+  const address = item.place?.acceptedAddress ?? item.place?.authoredAddress;
+  const placeName = item.place?.authoredLabel;
   return {
     pending: item.localState === "PENDING",
     id: item.itemId,
@@ -39,8 +41,8 @@ export function localStayPresentation(
     checkinTime: schedule.start.localTime,
     checkoutTime: schedule.end.localTime,
     zone: schedule.start.zoneId,
-    placeName: item.place?.authoredLabel,
-    address: item.place?.acceptedAddress ?? item.place?.authoredAddress,
+    placeName: placeName?.trim() === address?.trim() ? undefined : placeName,
+    address,
     permittedCheckin:
       [text("permittedCheckinFrom"), text("permittedCheckinUntil")]
         .filter(Boolean)

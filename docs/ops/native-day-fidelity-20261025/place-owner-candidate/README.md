@@ -1,5 +1,29 @@
 # P3 selected-place metadata / serial owning candidate
 
+## R33 Native follow-through — 27 October, 23:47–23:55 NZDT
+
+Serial product intake is fixed at `149b6eb5`, included in signed R33 build at
+`9ab2387e`; dedicated Forms QA same-bundle install and cold launch passed. Existing
+Trips plus the normally Server Accepted new Enrichment Trip remained visible.
+No AD5 interaction or data copying was used.
+
+Actual normal UI: existing synthetic Stay → Edit → Apple full-screen search for
+SkyCity Hotel Auckland → select The Grand by SkyCity → resolved90 Federal St →
+Save → refreshed Stay Details → Day Feed. Accommodation title,25–30Oct dates,
+19:00 check-in and Everyone remained. Header styles B/C now display **Auckland**
+for the covered25–30Oct dates; dates lacking qualified place still fall back.
+The observed26/27Oct dates each show one Daily base. Screenshot:
+`/.forms-qa/r33/day-header-after-normal-save.png` relative to this worktree.
+This is local Native acceptance, not Manual P3 Cloud L3 or a full generic resolver.
+
+The structured address exposed a duplicate identical name/address in Details;
+the shared pure Stay presentation mapper now suppresses only the duplicate label,
+retaining a distinct place name. Four directed suites27 assertions PASS. That
+small display follow-up needs the next bundle; R33 screenshot precedes it.
+
+Historical candidate-only statements below describe the independent delivery
+before serial intake; do not reapply its patch on top of149b6eb5.
+
 Native implementation now retains raw Apple `addressComponents` (locality,
 administrativeArea, country, countryCode) beside the already resolved address,
 point and opaque provider reference. It makes no additional provider request.

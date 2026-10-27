@@ -63,3 +63,13 @@ it("uses visible booking references without inventing guests from participants",
     })?.bookings,
   ).toEqual([{ id: "visible", title: "Reservation", reference: "REF" }]);
 });
+it("shows an address once while retaining a distinct place name", () => {
+  const place = { authoredLabel: "90 Federal St ", acceptedAddress: "90 Federal St" };
+  expect(localStayPresentation({ ...item, place })).toMatchObject({
+    address: "90 Federal St",
+    placeName: undefined,
+  });
+  expect(
+    localStayPresentation({ ...item, place: { ...place, authoredLabel: "The Grand" } }),
+  ).toMatchObject({ placeName: "The Grand", address: "90 Federal St" });
+});

@@ -1,3 +1,7 @@
+## 28 October — R33 Native follow-through
+
+R33 signed embedded simulator build, same-bundle install, cold launch and existing Trip retention PASS. Normal P3 Edit→Apple resolved hotel selection→Save→refreshed Details/Day Feed displays Auckland in Header B/C for covered25–30Oct; observed26/27Oct each have one Daily base. This is Native/local qualification, not P3 Cloud L3. Screenshot and exact operation receipt are in `ops/native-day-fidelity-20261025/place-owner-candidate/README.md`. A duplicate identical place label/address exposed by structured metadata is fixed in the shared Stay mapper;27 directed assertions PASS, next bundle pending. GUI was returned to Universal with keyboard capture OFF and AD5 untouched. Enrichment remains unarmed while Universal diagnoses real Results/settlement latency; no Provider request from this lane.
+
 ## 27 October — Forms QA accepted Trip / serial Header intake
 
 Normal Forms QA CreateTrip now independently Server Accepted: Trip `215bbb17-dd5e-4a03-80fd-9df7d4360129`, receipt `efe64e66-25c0-4e66-aefe-a291b0de392d`, accepted27Oct09:48:57UTC. Normal authenticated self-profile initialization repaired a missing own `profiles` row; no Auth redesign, admin upsert, copied session or historical queue adoption. Same normal identity independently read the new Trip; SQL independently joined its receipt. R32b dedicated simulator same-bundle signed embedded build preserves existing QA data. One Expo AppContextLost crash was captured; cold launch then normal form entry/Create succeeded, so no general crash fix is claimed.
