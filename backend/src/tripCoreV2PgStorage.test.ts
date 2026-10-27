@@ -267,7 +267,10 @@ it("accepts a reviewed Sparse P2 only through its exact source capability and ow
       operationId: operation,
       baseVector: c.baseVector,
     },
-    (tx) => tx.verifyAdmission(c, "a".repeat(64), emptyCoreGraph()),
+    async (tx) => {
+      expect(await tx.enabledCommands()).toEqual(["CREATE_SPARSE_FLIGHT"]);
+      return tx.verifyAdmission(c, "a".repeat(64), emptyCoreGraph());
+    },
   );
   expect(verify).toHaveBeenCalledExactlyOnceWith(
     f.lease,

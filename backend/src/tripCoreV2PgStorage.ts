@@ -254,9 +254,9 @@ export function createCorePgStorage(
         try {
           await lease.query("BEGIN ISOLATION LEVEL READ COMMITTED");
           began = true;
-          await lease.query("SET LOCAL statement_timeout='5000ms'");
-          await lease.query("SET LOCAL lock_timeout='1000ms'");
-          await lease.query("SET LOCAL TIME ZONE 'UTC'");
+          await lease.query(
+            "SET LOCAL statement_timeout='5000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL TIME ZONE 'UTC'",
+          );
           const identity = (
             await lease.query("SELECT session_user AS principal,current_user AS role")
           ).rows[0];
@@ -325,6 +325,19 @@ export function createCorePgStorage(
               );
             },
             async enabledCommands() {
+              if (gateMode?.sustainedDev && gateMode.reviewedP1) {
+                const reviewed = await readReviewedP1Gate(
+                  lease,
+                  actor.accountId,
+                  actor.tripId,
+                );
+                if (
+                  ["P1", "P2", "P3"].some((family) =>
+                    isReviewedP1Gate(reviewed, family as "P1" | "P2" | "P3"),
+                  )
+                )
+                  return reviewed.enabled_commands as CoreCommandName[];
+              }
               const r = await readCoreGate(
                 lease,
                 actor.accountId,
@@ -447,7 +460,7 @@ export function createCorePgStorage(
               }
 
               const gate = sourceP1
-                ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
+                ? activation
                 : await readCoreGate(
                     lease,
                     actor.accountId,

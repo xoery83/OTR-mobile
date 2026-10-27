@@ -1,0 +1,64 @@
+{
+  "status": "PASS_ISOLATED_ONLY_NOT_DEV_SAVE",
+  "vitest_cases": 1,
+  "assertions": 27,
+  "package_checks": 5,
+  "network": "none",
+  "memory": "256m",
+  "delayPerQueryMs": 290,
+  "delayPerLeaseMs": 1000,
+  "unchangedLeaseDeadlineMs": 30000,
+  "phaseTimes": [
+    {
+      "phase": "source-prepare",
+      "ms": 18517,
+      "queries": 59
+    },
+    {
+      "phase": "core-create",
+      "ms": 25881,
+      "queries": 84
+    },
+    {
+      "phase": "source-finalize",
+      "ms": 2482,
+      "queries": 5
+    },
+    {
+      "phase": "source-finalize",
+      "ms": 14659,
+      "queries": 46
+    }
+  ],
+  "leaseQueryCounts": [
+    13,
+    30,
+    45,
+    59,
+    84,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    46,
+    5,
+    13,
+    5,
+    5,
+    21
+  ],
+  "checks": [
+    "exact five-function install/reverse-hash rollback/OID-owner-ACL preservation",
+    "activation deadline bound and repeated-arm rejection",
+    "actual Source publication/Plan/Admission/Sparse Core create and independent SQL readback",
+    "SQL scope and airport closure before fresh-lease finalize; repeat finalize/Core receipt replay",
+    "wrong operation/slot/target read-state rejection",
+    "wrong domain receipt/hash/COMPLETE without association/lineage replacement rejection"
+  ],
+  "runtimeCaveat": "Closed-SQL recovery tested with existing Source Review runtime composition present; default-closed deployed composition and Native E2E remain to be qualified.",
+  "hostedWrites": 0,
+  "providerCalls": 0
+}
