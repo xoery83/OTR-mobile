@@ -59,6 +59,7 @@ def main():
  if args.mode=='self-test':
   scope=json.loads((PACKET/'P5_REVIEW_SCOPE.json').read_text())
   assert scope['candidateId']=='94f2ab9e-fb01-80b5-a759-96c4850d8af7' and scope['taskId']=='43c79b67-519e-8828-8854-c076356c6a45'
+  assert scope['operatorLiteral']=='Coastal QA Rail' and scope['serviceNumber']=='CQ101'
   assert 'trip_sustained_dev_policy' in source_sql('P5_REVIEW_CLOSE.sql')
   assert "__P5_FIXED_WINDOW_DEADLINE__" in source_sql('P5_REVIEW_ACTIVATE.sql')
   import tempfile

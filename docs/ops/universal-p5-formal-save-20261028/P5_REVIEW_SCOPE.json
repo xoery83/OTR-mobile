@@ -11,5 +11,7 @@
   "operationId": "3f9e8b09-0ea2-8a4d-8b4c-de9aec316e8d",
   "slotId": "fbb1c9dc-b6c2-8f63-b596-8a6af651e5a6",
   "title": "Coastal QA Train",
-  "localDate": "2026-11-03"
+  "localDate": "2026-11-03",
+  "operatorLiteral": "Coastal QA Rail",
+  "serviceNumber": "CQ101"
 }

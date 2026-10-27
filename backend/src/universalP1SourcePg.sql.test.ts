@@ -259,41 +259,78 @@ it.skipIf(!container).each<{ reviewed: boolean; family: "P1" | "P3" | "P4" | "P5
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         family !== "P1" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
       );
-      await admin.lease.query(
-        "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
-        [
-          actor,
-          JSON.stringify({
-            tripId: trip,
-            ...(family !== "P1"
-              ? {
-                  family,
-                  ...(family === "P5"
-                    ? { operatorLiteral: "Coastal QA Rail", serviceNumber: "CQ101" }
-                    : {}),
-                  title:
-                    family === "P5"
-                      ? "Coastal QA Train"
-                      : family === "P3"
-                        ? "海滨住宿"
-                        : "海滨租车",
-                  localDate: "2026-11-03",
-                  endLocalDate: "2026-11-05",
-                }
-              : {}),
-            sourceId,
-            batchId: request.batchId,
-            taskId: request.taskId,
-            token: request.token,
-            resultSha256: published.resultSha256,
-            candidateId: universalP1Identity(request.taskId, request.token, "candidate"),
-            targetId: universalP1Identity(request.taskId, request.token, "item"),
-            operationId: universalP1Identity(request.taskId, request.token, "operation"),
-            slotId: universalP1Identity(request.taskId, request.token, "slot"),
-            expiresAt: new Date(Date.now() + 900000).toISOString(),
-          }),
-        ],
-      );
+      if (family === "P5") {
+        const packet = new URL(
+          "../../docs/ops/universal-p5-formal-save-20261028/",
+          import.meta.url,
+        );
+        const fixed = JSON.parse(
+          readFileSync(new URL("P5_REVIEW_SCOPE.json", packet), "utf8"),
+        );
+        expect(fixed.operatorLiteral).toBe("Coastal QA Rail");
+        expect(fixed.serviceNumber).toBe("CQ101");
+        let activation = readFileSync(new URL("P5_REVIEW_ACTIVATE.sql", packet), "utf8");
+        const identities: Record<string, string> = {
+          sourceId,
+          batchId: request.batchId,
+          taskId: request.taskId,
+          token: request.token,
+          resultSha256: published.resultSha256,
+          candidateId: universalP1Identity(request.taskId, request.token, "candidate"),
+          targetId: universalP1Identity(request.taskId, request.token, "item"),
+          operationId: universalP1Identity(request.taskId, request.token, "operation"),
+          slotId: universalP1Identity(request.taskId, request.token, "slot"),
+        };
+        // Only disposable fixture identities differ; execute the fixed activation and field constraints.
+        for (const [key, value] of Object.entries(identities))
+          activation = activation.replaceAll(fixed[key], value);
+        activation = activation
+          .replaceAll("5edc5aeb-e3a2-8649-9bb9-4fd9b3ac9ee5", f.input.runId)
+          .replace(
+            "__P5_FIXED_WINDOW_DEADLINE__",
+            new Date(Date.now() + 900000).toISOString(),
+          );
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=NULL WHERE actor_account_id=$1::uuid",
+          [actor],
+        );
+        await admin.lease.query(activation);
+      } else
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
+          [
+            actor,
+            JSON.stringify({
+              tripId: trip,
+              ...(family !== "P1"
+                ? {
+                    family,
+                    title: family === "P3" ? "海滨住宿" : "海滨租车",
+                    localDate: "2026-11-03",
+                    endLocalDate: "2026-11-05",
+                  }
+                : {}),
+              sourceId,
+              batchId: request.batchId,
+              taskId: request.taskId,
+              token: request.token,
+              resultSha256: published.resultSha256,
+              candidateId: universalP1Identity(
+                request.taskId,
+                request.token,
+                "candidate",
+              ),
+              targetId: universalP1Identity(request.taskId, request.token, "item"),
+              operationId: universalP1Identity(
+                request.taskId,
+                request.token,
+                "operation",
+              ),
+              slotId: universalP1Identity(request.taskId, request.token, "slot"),
+              expiresAt: new Date(Date.now() + 900000).toISOString(),
+            }),
+          ],
+        );
       const previewOnly = createCoreSourcePgAuthority(connection, f.deps.hash, {
         readUniversalP1: async () => ({
           result: published.result,
