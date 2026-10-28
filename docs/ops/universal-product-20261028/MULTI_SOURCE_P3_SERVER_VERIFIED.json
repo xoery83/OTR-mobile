@@ -1,0 +1,39 @@
+{
+  "status": "SERVER_VERIFIED_NATIVE_PENDING",
+  "batchId": "3bdff8ee-9bef-4c7e-a1b6-5f0d22f29539",
+  "taskId": "a180447c-001d-8036-9af3-9518d06cc3e9",
+  "family": "P3",
+  "token": "i1",
+  "itemId": "a7fa63cf-8d47-86c6-b75f-2852090fb06f",
+  "operationId": "3f569a35-77e5-8a98-a8bf-f7cd4492a835",
+  "receiptId": "87f2d69a-592f-46a6-9b23-3889d4d14916",
+  "outcome": "APPLIED",
+  "committedAt": "2026-10-28T19:22:15.512343+00:00",
+  "sourceId": "daae5c17-d218-4f18-8944-6bcbd8081329",
+  "sourceSlot": "COMPLETE",
+  "ownSourceAssociationCount": 1,
+  "item": {
+    "title": "Harbour QA Beta Hotel",
+    "start_local_date": "2026-11-02",
+    "end_local_date": "2026-11-03",
+    "visibility": "PRIVATE",
+    "participation_mode": "SELF"
+  },
+  "unknownClocksZonesBookingPlacePreserved": true,
+  "deployedCommit": "e973ffe0b2eb4cf67a6abd09980c44bf25dca0a9",
+  "image": "sha256:98f93661522206c249a8e187f0f89802b912f66f8624c107f601841ea0ed5df7",
+  "execution": "Normal Native original/Trip/NEW/final confirmation; same retained task and identity",
+  "providerCallsAdded": 0,
+  "objectsAdded": 0,
+  "firstHostedFailureCause": "NOT_OBSERVED; no inferred cause",
+  "nativeResults": "SERVER_ACCEPTED visible; duplicate final confirmation disabled",
+  "nativeDayAndCold": "PENDING",
+  "sourceScope": "Approved same-scope continuous activation; active during this checkpoint",
+  "privateReadbackSha256": "b57cf42945c7e414dd0979a84cf208e9f0827cbaed31a493d82dbd6006293c29",
+  "notClaimed": [
+    "P2 Save for this Batch",
+    "P3 Day Feed/cold recovery",
+    "Complete ordinary-user Beta",
+    "Binary Source ingress"
+  ]
+}
