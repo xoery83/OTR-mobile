@@ -1,0 +1,58 @@
+{
+  "status": "NATIVE_E2E_PASS_LOCAL_IMAGE_CUSTODY_AND_READER_NOT_IMAGE_IMPORT",
+  "artifact": {
+    "build": 75,
+    "sourceCommit": "1daa2680e589b8c758b116e120c959b6089ecc00",
+    "newNativeBuild": true,
+    "nativeSHA256": "9809e7304ea00e346ead443a6c241d22ebf5a2762722f3d588c31a1f70ad18ff",
+    "nativeModuleSHA256": "eaf342a830e949cc36ccfd0e884be17f056e79a5dda35007cfa8109b3306c895",
+    "binaryPreviewExplicitQaEnabled": true,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "7d7bfd71d8409d74f1ca4eaa8dc12a338c3df0dc9616c5ed1aac3582971cd909",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "localImage": {
+    "capture": {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "id": "3781b7a3-7364-45a8-9c78-aa3a6e64a2e9",
+      "payload_id": "077252fd-5fc8-47c0-904b-07caf09d8fe7",
+      "kind": "IMAGE",
+      "original_filename": "splash-icon.png",
+      "declared_content_type": "image/png",
+      "created_at": "2026-10-28T15:51:37.402Z",
+      "trip_id": null,
+      "state": "INBOX",
+      "revision": 1
+    },
+    "byteCount": 17547,
+    "sha256": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8",
+    "exactRepositoryFixtureBytes": true,
+    "privateAccountInbox": true,
+    "sourceOrTaskOrProviderCalled": false
+  },
+  "actualUi": {
+    "normalScopedPhotosPicker": true,
+    "privateInboxDetail": true,
+    "originalImageVisible": true,
+    "retainedFilenameVisible": true,
+    "backgroundTempCopiesZero": true,
+    "coldMyTripsAndSameOriginalReopen": true,
+    "normalCloseTempCopiesZero": true
+  },
+  "coldReadback": {
+    "byteCount": 17547,
+    "sha256": "5f4c0a732b6325bf4071d9124d2ae67e037cb24fcc9c482ef82bea742109a3b8"
+  },
+  "pdfRetainedFilenameActualUiPass": true,
+  "independentReview": "NO_BLOCKER for paired Native75 and matching JS only",
+  "limitations": [
+    "Default preview remains off outside explicit QA bundle.",
+    "New JS third Native argument requires paired binary; no cross-version ABI qualification.",
+    "Image is repository colormap PNG; not qualified PNG Source profile/OCR/Task/Admission.",
+    "No alternate-account actual device switch in this slice."
+  ],
+  "newProviderCalls": 0,
+  "sourceAdmissionOrCoreWrites": 0,
+  "cloudBackupAsserted": false
+}
