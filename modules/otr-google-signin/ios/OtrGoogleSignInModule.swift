@@ -3,6 +3,7 @@ import GoogleSignIn
 
 public class OtrGoogleSignInModule: Module {
   private var signingIn = false
+  private let cancelledCode = -5 // kGIDSignInErrorCodeCanceled in pinned GoogleSignIn 9.2.0.
 
   public func definition() -> ModuleDefinition {
     Name("OtrGoogleSignIn")
@@ -22,7 +23,7 @@ public class OtrGoogleSignInModule: Module {
       GIDSignIn.sharedInstance.signIn(withPresenting: presenter, hint: nil, additionalScopes: nil, nonce: nonceDigest) { result, error in
         self.signingIn = false
         if let error = error as NSError? {
-          if error.domain == kGIDSignInErrorDomain && error.code == GIDSignInErrorCode.canceled.rawValue {
+          if error.domain == kGIDSignInErrorDomain && error.code == self.cancelledCode {
             promise.resolve(["type": "cancelled"])
           } else {
             promise.reject("GOOGLE_SIGN_IN_FAILED", "Google sign-in failed.")
