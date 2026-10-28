@@ -1,0 +1,32 @@
+{
+  "status": "LOCAL_PASS_NOT_DEV_VERIFIED",
+  "firstFailures": [
+    "Native Review incorrectly required originalSha256 == submittedSha256 after legal frozen text compaction.",
+    "Backend selected normalized offsets against original UTF8 bytes and blocked different hash."
+  ],
+  "repair": [
+    "Preserve exact retained original and independently validate frozen submitted text hash.",
+    "Validate submitted byte span, require unique exact original literal, re-anchor clone evidence and observations to original UTF8 bytes.",
+    "Do not mutate sealed Results or Source original; ambiguous or missing original literals reject."
+  ],
+  "validation": {
+    "directedBefore": "2 FAIL / 59 PASS",
+    "affectedRegression": "9 suites / 133 PASS",
+    "typecheck": "PASS",
+    "backendCaptureBuild": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "unchanged": [
+    "Frozen Interpreter",
+    "SQL/RLS/GRANT/roles/authority",
+    "P2 different-hash rejection",
+    "Provider budget"
+  ],
+  "remaining": [
+    "DEV deployment and normal Native confirmation not yet verified.",
+    "UTF8 BOM dispatch mismatch remains a separate rejected input.",
+    "Binary ingress/derived proof is separate and not qualified by this TEXT repair."
+  ]
+}

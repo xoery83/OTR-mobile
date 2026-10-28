@@ -1,3 +1,4 @@
+import { universalResultSchema } from "../../src/data/api/universalImportContracts";
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
 import { universalP1SourceFixture as fixture } from "./__fixtures__/universalP1Source";
@@ -190,3 +191,75 @@ it.each([
   Object.assign(f.input.selection, { sourceReview: review });
   await expect(f.run()).rejects.toThrow();
 });
+
+async function normalizedTextFixture(suffix = "") {
+  const f = await fixture();
+  const text =
+    "中文😀\r\n\r\n\r\n" +
+    f.input.snapshot.materials[0].text.replace(/\n/g, " \t\r\n") +
+    suffix;
+  const sha = createHash("sha256").update(text).digest("hex");
+  const submitted = text
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
+  const prefix = Buffer.byteLength("中文😀\n\n");
+  const candidate = universalResultSchema.parse(f.input.result).candidates[0];
+  f.input.result.candidates[0] = candidate;
+  for (const field of candidate.fields) {
+    if ("start" in field) {
+      field.start += prefix;
+      field.end += prefix;
+    }
+  }
+  const material = f.input.snapshot.materials[0];
+  material.text = text;
+  Object.assign(material.pin, {
+    payload_sha256: sha,
+    byte_count: Buffer.byteLength(text),
+  });
+  f.input.catalog.inputs[0] = material.pin;
+  Object.assign(f.input.snapshot.representations[0], {
+    text_content: text,
+    payload_sha256: sha,
+    byte_count: Buffer.byteLength(text),
+  });
+  f.input.snapshot.sources[0].acquisition_sha256 = sha;
+  f.input.result.sourceBindings[0].originalSha256 = sha;
+  f.input.result.sourceBindings[0].submittedSha256 = createHash("sha256")
+    .update(submitted)
+    .digest("hex");
+  return { ...f, candidate };
+}
+
+it("reanchors normalized CRLF model evidence to exact original UTF8 bytes", async () => {
+  const f = await normalizedTextFixture(),
+    text = f.input.snapshot.materials[0].text;
+  const before = structuredClone(f.input.result);
+  const r = await f.run();
+  for (const e of r.body.evidence) {
+    expect(Buffer.from(text).subarray(e.locator.start!, e.locator.end!).toString()).toBe(
+      e.raw,
+    );
+    expect(e.locator.start).toBe(Buffer.from(text).indexOf(e.raw));
+  }
+  expect(f.input.result).toEqual(before);
+});
+
+it.each(["duplicate", "wrong-submitted-hash", "wrong-span", "cross-line-literal"])(
+  "rejects %s instead of guessing original evidence",
+  async (kind) => {
+    const f = await normalizedTextFixture(kind === "duplicate" ? "海滨散步" : "");
+    const field = f.candidate.fields[0];
+    if (kind === "wrong-submitted-hash")
+      f.input.result.sourceBindings[0].submittedSha256 = "0".repeat(64);
+    if ("start" in field) {
+      if (kind === "wrong-span") field.start += 1;
+      if (kind === "cross-line-literal") {
+        field.raw = "海滨散步\nActivity date";
+        field.end = field.start + Buffer.byteLength(field.raw);
+      }
+    }
+    await expect(f.run()).rejects.toThrow();
+  },
+);

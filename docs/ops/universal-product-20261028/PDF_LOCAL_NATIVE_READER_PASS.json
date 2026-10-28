@@ -1,0 +1,68 @@
+{
+  "status": "NATIVE_E2E_PASS_LOCAL_PDF_CUSTODY_AND_READER_NOT_PDF_IMPORT",
+  "artifact": {
+    "build": 73,
+    "sourceCommit": "4e2dd66e06eb70867356bfd6543cf3e446b0f4ae",
+    "newNativeBuild": true,
+    "nativeSHA256": "61ee971dadcc241c84d1bcc0791213cf2141da56f44597625df15869d917f8b6",
+    "nativeModuleSHA256": "8b3d7b49a9c1f350a8607e949c95bb39ee1b2acaff8e07c93fd8044843e1505d",
+    "binaryPreviewExplicitQaEnabled": true,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "a1fc946ef206c8dd0b9eb5b1959f942dd691b3f3e9ed8b5d57911f21992668b8",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "fixtureSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+  "fixtureByteCount": 950,
+  "captureId": "26adbb36-b330-4b77-82d3-4da34b2f0598",
+  "payloadId": "4f65bc54-51fb-4637-9025-7102524dbc0d",
+  "localSubmission": {
+    "batchId": "db8e21ea-9d3b-4c96-acde-79c51662ef30",
+    "inputId": "2218eacd-d95f-4251-b56f-796c03133123",
+    "jobId": "b6830acc-4b83-4ad7-b92c-1c22c9ec4a37"
+  },
+  "nativeStateChecks": {
+    "beforeBuild71": {
+      "LOADED_TIMEOUT": "FAIL",
+      "TIMEOUT_LATE_LOAD": "FAIL"
+    },
+    "afterBuild73": {
+      "LOADED_TIMEOUT": "PASS",
+      "TIMEOUT_LATE_LOAD": "PASS"
+    },
+    "checksUseActualUIKitController": true,
+    "captureBytesReadByStateChecks": false
+  },
+  "actualNormalUi": {
+    "filePickerAndSubmit": true,
+    "privateInboxAndDetail": true,
+    "pdfTwoPagesVisible": true,
+    "normalClose": true,
+    "backgroundCloseAndSameOriginalReopen": true,
+    "abruptTerminationColdMyTrips": true,
+    "coldSameOriginalReopen": true
+  },
+  "backgroundReadback": {
+    "nativeBuild": 73,
+    "afterNormalAppBackground": true,
+    "disposablePreviewCopyCount": 0,
+    "durablePdfByteCount": 950,
+    "durablePdfSHA256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+  },
+  "coldReadback": {
+    "nativeBuild": 73,
+    "afterAbruptTerminationAndColdLaunch": true,
+    "disposablePreviewCopyCount": 0,
+    "durablePdfByteCount": 950,
+    "durablePdfSHA256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+  },
+  "limitations": [
+    "Default binary preview remains off outside explicit QA configuration.",
+    "Actual alternate-Account device switch not exercised; JS account-generation close contract is locally tested.",
+    "PDF Source/Task/Interpretation/Admission is not qualified by this local reader test.",
+    "Native preview still displays temporary technical filename; next UI delta will carry original display name."
+  ],
+  "newProviderCalls": 0,
+  "sourceAdmissionOrCoreWrites": 0,
+  "cloudOriginalBackupAsserted": false
+}

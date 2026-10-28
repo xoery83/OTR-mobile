@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_PASS_RACE_AND_NATIVE_E2E_PASS_TERMINAL_READ_RECOVERY",
+  "codeCommit": "1937c355",
+  "artifact": {
+    "build": 79,
+    "sourceCommit": "1937c3558a4cb639b7794620516a06c8449f9b70",
+    "newNativeBuild": false,
+    "retainedNativeBuild": 75,
+    "nativeSHA256": "9809e7304ea00e346ead443a6c241d22ebf5a2762722f3d588c31a1f70ad18ff",
+    "nativeModuleSHA256": "eaf342a830e949cc36ccfd0e884be17f056e79a5dda35007cfa8109b3306c895",
+    "binaryPreviewExplicitQaEnabled": true,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "4c4f065374dd749d2f02a7d2c2b766d8094526802e28e52c0a4137031a5653fa",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "firstActualFailure": "Native77 showed Reading travel information after sealed Results and formal Save because pending Task polling stopped when result existed.",
+  "directedRace": "1 RED -> 56 affected tests PASS; types/UIguard/lint/independent NO_BLOCKER",
+  "actualNative79": {
+    "coldMyTrips": true,
+    "updatesActualSavedEventAt": "2026-10-28T16:17:23.509753Z",
+    "savedEventCount": 1,
+    "opensSameBatch": "2b417bac-4c34-4347-b05b-3e6df38a6399",
+    "terminalActivityLabel": "Interpretation finished. Choose which suggestions to save.",
+    "sameCandidateTitle": "Harbour QA Text Review",
+    "serverAcceptedVisible": true,
+    "finalConfirmationDisabled": true,
+    "sourceScopeClosed": true
+  },
+  "newProviderCalls": 0,
+  "newSourceAdmissionOrCoreWrites": 0,
+  "limitation": "The Results-before-terminal race is reproduced with directed local tests; Native79 verifies normal terminal recovery of the existing Task without paying for another live race."
+}

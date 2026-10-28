@@ -1,0 +1,94 @@
+{
+  "status": "NATIVE_E2E_PASS_NORMAL_TEXT_PREPARATION_EVIDENCE_REANCHOR",
+  "sourceCommit": "ea09a9f1fca6f6ca6f2ae669cc2c1d9e9ff0f72b",
+  "artifact": {
+    "build": 77,
+    "sourceCommit": "ea09a9f1fca6f6ca6f2ae669cc2c1d9e9ff0f72b",
+    "newNativeBuild": false,
+    "retainedNativeBuild": 75,
+    "nativeSHA256": "9809e7304ea00e346ead443a6c241d22ebf5a2762722f3d588c31a1f70ad18ff",
+    "nativeModuleSHA256": "eaf342a830e949cc36ccfd0e884be17f056e79a5dda35007cfa8109b3306c895",
+    "binaryPreviewExplicitQaEnabled": true,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "01cbe1a85a92c4d1486c2fd751ebeb02255e1db005a9fb3aee646bd30d3ea10b",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "input": {
+    "capture": {
+      "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "id": "a333aa8f-685c-4831-acfa-5acbd8f679fd",
+      "payload_id": "d300eae0-c9a9-444a-b5b6-c56ffeae63aa",
+      "kind": "TEXT",
+      "original_filename": null,
+      "declared_content_type": "text/plain",
+      "created_at": "2026-10-28T16:05:08.595Z",
+      "trip_id": null,
+      "state": "INBOX",
+      "revision": 1
+    },
+    "originalByteCount": 60,
+    "originalSHA256": "0e739028ce6ce7c903e9c5ee743e555bb8ec133d35bfa1dbe0ccc9f860b76f65",
+    "expectedSubmittedSHA256": "2e7b7045d6ab46e9e3b88e2697ade93a18d17d52e1a640c92fb1091c95dde447",
+    "normalUiInputExactBytesVerified": true
+  },
+  "batchId": "2b417bac-4c34-4347-b05b-3e6df38a6399",
+  "taskId": "04433f86-7db9-8dbc-ba2c-10323c620102",
+  "attemptId": "187fe711-86fb-8327-aba2-8e656c1fcc5c",
+  "callId": "73a546b8-bcdb-89c4-8363-1994a1bea104",
+  "sourceId": "f7bc1cb4-eb59-44db-acd9-6a152a858e29",
+  "item": {
+    "id": "761730ba-e3af-82fa-8b25-e57edd607429",
+    "title": "Harbour QA Text Review",
+    "start_local_date": "2026-11-02",
+    "start_local_time": null,
+    "start_zone_id": null,
+    "visibility": "PRIVATE",
+    "participation_mode": "SELF"
+  },
+  "operationId": "2c9a67bd-66fd-8ae6-bf91-aeee5b4e2066",
+  "receiptId": "3a462206-fcb7-473b-bed7-7e1de6fc0814",
+  "receiptOutcome": "APPLIED",
+  "sourceSlotState": "COMPLETE",
+  "originalEvidenceSpans": [
+    [
+      10,
+      32
+    ],
+    [
+      41,
+      57
+    ]
+  ],
+  "serverItemCount": 1,
+  "serverReceiptCount": 1,
+  "normalUiOriginalReviewAndNew": true,
+  "nativeServerAccepted": true,
+  "finalConfirmationDisabledAfterAccepted": true,
+  "nativeDay2AndColdRecovery": true,
+  "coldItemSHA256": "18430b36b09f54095b959d041fe253e378b051370f2809bbe5faa54e4d4fcdd1",
+  "sourceScopeClosed": true,
+  "airportsDisabled": true,
+  "sixFunctionsUnchanged": true,
+  "newProviderCalls": 1,
+  "reportedCost": "USD 0.000209880 estimated ledger cost; not an invoice.",
+  "limitations": [
+    "Only normal line-end whitespace normalization was exercised in this real call; CRLF/blank-line/Unicode and ambiguous literals have directed local tests.",
+    "Normal Task prepare-to-publication took approximately six minutes; latency remains a Beta concern.",
+    "Actual Activity displayed stale Processing after Results; independent follow-up software fix is locally tested, not yet Native verified.",
+    "This does not qualify binary Source ingress, BOM inputs or P2 changed-hash."
+  ],
+  "providerUsage": {
+    "cached_input_tokens": 1280,
+    "cost_nanos": "209880",
+    "cost_quality": "ESTIMATED",
+    "currency": "USD",
+    "input_tokens": 1514,
+    "observation_kind": "COMPLETION",
+    "output_tokens": 110,
+    "reasoning_tokens": null,
+    "status": "SUCCEEDED",
+    "total_tokens": 1624,
+    "usage_quality": "ACTUAL_REPORTED"
+  }
+}

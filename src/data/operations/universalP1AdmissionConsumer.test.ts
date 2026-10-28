@@ -631,3 +631,40 @@ it("distinguishes a complete exact Source from Core acceptance and keeps incompl
   });
   await expect(read()).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
 });
+
+it("shows retained original when frozen text preparation changes its submitted hash", async () => {
+  const f = await fixture();
+  if (!("snapshot" in f.f.input)) throw Error("P1 fixture required");
+  const text = f.f.input.snapshot.materials[0].text.replace(/\n/g, " \t\r\n");
+  const bytes = Buffer.from(text),
+    sha = await f.f.deps.hash(bytes),
+    payloadId = randomUUID();
+  Object.assign(f.model.inputs[0], {
+    captureId: randomUUID(),
+    payloadId,
+    contentByteCount: bytes.length,
+    contentSha256: sha,
+  });
+  f.result.sourceBindings[0].originalSha256 = sha;
+  const deps = {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => true,
+    hash: f.f.deps.hash,
+    readCapture: async () => ({
+      capture: { accountId: f.result.accountId, payloadId },
+      bytes,
+    }),
+  };
+  expect(
+    await readUniversalP1ReviewOriginal(
+      f.model,
+      f.result,
+      f.result.candidates[0].token,
+      deps,
+    ),
+  ).toBe(text);
+  f.result.sourceBindings[0].submittedSha256 = "0".repeat(64);
+  await expect(
+    readUniversalP1ReviewOriginal(f.model, f.result, f.result.candidates[0].token, deps),
+  ).rejects.toThrow("IMPORT_EVIDENCE_INVALID");
+});

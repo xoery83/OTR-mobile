@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { t } from "@/ui/locale";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type {
@@ -19,6 +20,7 @@ type Props = {
   previewOriginal?(
     original: { document: ImportDocument; bytes: Uint8Array },
     isCurrent: () => boolean,
+    displayName: string,
   ): Promise<void>;
 };
 
@@ -121,6 +123,7 @@ function ScopedDocuments(props: Props) {
     setOpening(true);
     setError(false);
     setOriginal(null);
+    let phase = "REPOSITORY_READ";
     try {
       const { context, repository } = await reader();
       const retained = await repository.original(context, props.scope, captureId);
@@ -143,13 +146,56 @@ function ScopedDocuments(props: Props) {
         if (current() && request === sequence.current && retained.document.sha256)
           setOriginal({ captureId, sha256: retained.document.sha256, text });
       } else {
+        phase = "NATIVE_PREVIEW";
         const preview =
           props.previewOriginal ??
           (await import("@/native/importOriginalPreview")).previewImportOriginal;
         if (!current() || request !== sequence.current) return;
-        await preview(retained, () => current() && request === sequence.current);
+        await preview(
+          retained,
+          () => current() && request === sequence.current,
+          retained.document.originalFilename ?? t("capture.unnamed"),
+        );
       }
-    } catch {
+    } catch (error) {
+      if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true") {
+        try {
+          const code =
+            typeof error === "object" && error !== null && "code" in error
+              ? error.code
+              : error instanceof Error
+                ? error.message
+                : null;
+          console.info(
+            JSON.stringify({
+              event: "import_original_preview_failure",
+              phase,
+              code:
+                typeof code === "string" &&
+                [
+                  "IMPORT_ORIGINAL_INTEGRITY",
+                  "IMPORT_PREVIEW_UNAVAILABLE",
+                  "IMPORT_PREVIEW_UNSUPPORTED",
+                  "DOCUMENTS_ORIGINAL_CHANGED",
+                  "DOCUMENTS_NOT_FOUND",
+                  "DOCUMENTS_SCOPE_MISMATCH",
+                  "DOCUMENTS_TRIP_ACCESS",
+                  "DOCUMENTS_STALE",
+                ].includes(code)
+                  ? code
+                  : "UNCLASSIFIED",
+              kind:
+                error instanceof TypeError
+                  ? "TYPE"
+                  : error instanceof Error
+                    ? "ERROR"
+                    : "UNKNOWN",
+            }),
+          );
+        } catch {
+          // Diagnostics must not suppress original-unavailable recovery.
+        }
+      }
       if (current() && request === sequence.current) setError(true);
     } finally {
       if (scopeCurrent()) setOpening(false);

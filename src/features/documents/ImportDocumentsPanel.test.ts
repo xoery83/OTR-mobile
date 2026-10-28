@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
   read: vi.fn(),
   original: vi.fn(),
   associations: vi.fn(),
+  preview: vi.fn(),
 }));
 vi.mock("react", () => ({
   useState(initial: unknown) {
@@ -49,9 +50,7 @@ vi.mock("@/data/operations/importDocumentItems", () => ({
   readDefaultImportDocumentItems: h.associations,
 }));
 vi.mock("@/native/importOriginalPreview", () => ({
-  previewImportOriginal: vi.fn(async () => {
-    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
-  }),
+  previewImportOriginal: h.preview,
 }));
 vi.mock("./ImportDocuments", () => ({
   ImportDocumentsList: vi.fn(),
@@ -115,6 +114,7 @@ beforeEach(() => {
   h.list.mockResolvedValue([doc]);
   h.read.mockResolvedValue(doc);
   h.associations.mockReset().mockResolvedValue([]);
+  h.preview.mockReset().mockRejectedValue(Error("IMPORT_PREVIEW_UNAVAILABLE"));
   h.original.mockResolvedValue({
     document: doc,
     bytes: new TextEncoder().encode("retained original"),
@@ -312,4 +312,106 @@ it("a Source link lookup failure leaves the retained original reader usable", as
   detail = Harness(doc.captureId, () => true, "TRIP");
   expect(detail.props.original).toMatchObject({ text: "retained original" });
   expect(detail.props.error).toBe(false);
+});
+
+it("QA preview diagnostics identify the failing port without original or error details", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const pdf = { ...doc, kind: "FILE", declaredContentType: "application/pdf" };
+    h.read.mockResolvedValue(pdf);
+    h.original.mockRejectedValue(
+      new Error("private original or token must never be logged"),
+    );
+    Harness(doc.captureId);
+    await settle();
+    (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(doc.captureId);
+    await settle();
+    expect(info).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: "import_original_preview_failure",
+        phase: "REPOSITORY_READ",
+        code: "UNCLASSIFIED",
+        kind: "ERROR",
+      }),
+    );
+    expect(info.mock.calls.flat().join()).not.toContain("private original");
+  } finally {
+    info.mockRestore();
+    vi.unstubAllEnvs();
+  }
+});
+
+it("failed QA diagnostics never suppress original-unavailable recovery", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+  const info = vi.spyOn(console, "info").mockImplementation(() => {
+    throw Error("LOG_SINK_FAILED");
+  });
+  try {
+    h.original.mockRejectedValue(Error("DOCUMENTS_ORIGINAL_CHANGED"));
+    Harness(doc.captureId);
+    await settle();
+    (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(doc.captureId);
+    await settle();
+    expect(Harness(doc.captureId).props.error).toBe(true);
+    expect(Harness(doc.captureId).props.opening).toBe(false);
+  } finally {
+    info.mockRestore();
+    vi.unstubAllEnvs();
+  }
+});
+
+it.each([
+  new Error("PASSPORTAB12345"),
+  Object.assign(new Error("unclassified"), { code: "PRIVATE_ORIGINAL_NAME" }),
+])(
+  "QA diagnostics never log arbitrary uppercase messages or custom codes",
+  async (error) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      h.original.mockRejectedValue(error);
+      Harness(doc.captureId);
+      await settle();
+      (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(
+        doc.captureId,
+      );
+      await settle();
+      expect(info).toHaveBeenCalledWith(
+        JSON.stringify({
+          event: "import_original_preview_failure",
+          phase: "REPOSITORY_READ",
+          code: "UNCLASSIFIED",
+          kind: "ERROR",
+        }),
+      );
+      expect(Harness(doc.captureId).props.error).toBe(true);
+      expect(info.mock.calls.flat().join()).not.toMatch(
+        /PASSPORTAB12345|PRIVATE_ORIGINAL_NAME/,
+      );
+    } finally {
+      info.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  },
+);
+
+it("carries the scoped original filename to native display, never a temporary ID", async () => {
+  const pdf = {
+    ...doc,
+    kind: "FILE",
+    declaredContentType: "application/pdf",
+    originalFilename: "synthetic-roundtrip.pdf",
+  };
+  h.read.mockResolvedValue(pdf);
+  h.original.mockResolvedValue({
+    document: pdf,
+    bytes: new TextEncoder().encode("%PDF"),
+  });
+  h.preview.mockResolvedValue(undefined);
+  Harness(doc.captureId);
+  await settle();
+  (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(doc.captureId);
+  await settle();
+  expect(h.preview.mock.calls[0][2]).toBe("synthetic-roundtrip.pdf");
 });
