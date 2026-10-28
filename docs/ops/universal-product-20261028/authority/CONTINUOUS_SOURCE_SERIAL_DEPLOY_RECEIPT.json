@@ -46,7 +46,9 @@
     "analyzeClicked": false,
     "newProviderCalls": 0,
     "savePerformed": false,
-    "coreReceiptRecovery": "REQUEST_TIMEOUT_DEFAULT_15_SECONDS_PENDING_IMPORT_CLIENT_REPAIR"
+    "coreReceiptRecovery": "NATIVE_COLD_RECEIPT_RECOVERY_PASS_IMPORT47",
+    "receiptVerifiedAtLocal": "2026-10-28T20:08 Pacific/Auckland",
+    "reconfirmed": false
   },
   "importSave": "CLOSED",
   "sqlAuthorityChanged": false,

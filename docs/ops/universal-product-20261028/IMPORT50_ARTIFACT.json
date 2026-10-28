@@ -1,0 +1,29 @@
+{
+  "build": 50,
+  "sourceCommit": "0cbaa6c81cee477f5ba66c76ded9d08605ca5835",
+  "nativeBaseBuild": 49,
+  "nativeBaseSource": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+  "bundleId": "com.xoery.otrmobile",
+  "nativeSectionsUnchanged": true,
+  "nativeSectionSHA256": {
+    "OTRMobile:__text": "77842de705b2b4399fe90e7635c8c9bbaa8fe09442ac8988b66b597b1fa05d39",
+    "OTRMobile:__entitlements": "b8be4ea85cfcf5a859d831ab37b8e02ce139983e9833105b20054d8c709a6162",
+    "OTRMobile:__ents_der": "47fc5a4b01ac043d2dbe5cb8d2f948d565a0ae16e3823ef1b8f1bd51cba86612",
+    "OTRMobile.debug.dylib:__text": "a9014bdc120b70d92d96cdf84bf89cef75194e0d7790a9f0fdc9994557741ef1",
+    "OTRMobile.debug.dylib:__entitlements": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "OTRMobile.debug.dylib:__ents_der": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "javascriptSHA256": "cc42ff0d68f3f7d50929c26b692a0729e90858e815bad993d732947262de4b8e",
+  "publicEnvironmentSHA256": "b115d07e2a1608e2adaedfe48144a5df601bacef8bb0d606c947eee606990dfe",
+  "sessionOrKeychainCopied": false,
+  "installed": false,
+  "target": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "nativeBuildMode": "Existing Native49 Debug embedded-bundle code, own minified Hermes JS",
+  "validation": {
+    "joinedTests": 87,
+    "typecheck": "PASS",
+    "documentsTests": 35,
+    "documentsReview": "NO_BLOCKER",
+    "uiGuard": "PASS"
+  }
+}
