@@ -8,15 +8,15 @@
   "tripCreate": "SERVER_ACCEPTED_SERVER_VERIFIED",
   "itemId": "a575f6a9-c9f8-447f-9a25-101a40fde474",
   "family": "P3",
-  "itemRevision": 1,
+  "itemRevision": 3,
   "title": "Forms QA Phone Stay",
   "dates": [
     "2026-10-29",
     "2026-10-31"
   ],
   "clocks": [
-    null,
-    null
+    "17:00",
+    "10:00"
   ],
   "participation": "WHOLE_GROUP",
   "receipts": [
@@ -25,13 +25,30 @@
       "operationId": "eabd4f56-9f42-431d-b4b7-47ac33a9bdff",
       "outcome": "APPLIED",
       "receiptSHA256": "6903b2add94f50374ca8dd328b17b3b0dd45f95b8e66e53ea41baf0a6b67caab"
+    },
+    {
+      "command": "SET_ITEM_TEXT",
+      "operationId": "9f8b6e87-10be-4528-bc40-e50da8bea433",
+      "outcome": "APPLIED",
+      "receiptSHA256": "72076ce00d85aa772946502bfb0aacefb4143c0db066021f8658cc1944255763"
+    },
+    {
+      "command": "SET_ITEM_SCHEDULE",
+      "operationId": "e8149793-a895-4a6d-8225-da578237e0cb",
+      "outcome": "APPLIED",
+      "receiptSHA256": "44dc01ed3ef3dae7855468957c9937c2d5bac40f39608e5e22536058afaee711"
     }
   ],
   "create": "SERVER_ACCEPTED_SERVER_VERIFIED",
-  "nativeRecovery": "HOME_WIDGET_SAME_TITLE_NO_PENDING_DOT",
-  "edit": "NOT_RUN_ON_THIS_PHONE_ITEM",
-  "coldRecovery": "NOT_RUN_ON_THIS_PHONE_ITEM",
-  "fullCloudL3": "PENDING_OFFLINE_PERMISSION_NEGATIVES",
+  "nativeRecovery": "DETAILS_IMMEDIATE_AND_COLD_LATEST_CLOCKS_NOTE_EVERYONE_NO_PENDING_DOT",
+  "edit": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "coldRecovery": "PASS_NORMAL_PROCESS_RELAUNCH_SAME_ITEM_LATEST_FIELDS",
+  "fullCloudL3": "PENDING_NATIVE_OFFLINE_LIVE_PERMISSION_NEGATIVES",
   "historicalDataPreserved": true,
-  "normalCoreWindow": "RETURNED_NO_DRAFT_OR_UNKNOWN_WRITE"
+  "normalCoreWindow": "ACTIVE_NEXT_P4_CANDIDATE",
+  "description": "Phone P3 edited note",
+  "clockDefaultPickerObserved": [
+    "CHECKIN_17:00",
+    "CHECKOUT_10:00"
+  ]
 }
