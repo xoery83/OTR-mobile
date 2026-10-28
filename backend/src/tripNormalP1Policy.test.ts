@@ -6,6 +6,7 @@ import {
   normalP3Commands,
   normalP4Commands,
   normalP5P6Commands,
+  normalP2SparseCommands,
 } from "./tripNormalP1Policy";
 it("requires a separately matching single-family reviewed capability for P3", () => {
   const gate = {
@@ -196,4 +197,32 @@ it("recognizes exact additive P5/P6 Manual union without widening Source or Flig
     expect(normalManualCapabilities(change)).toBeNull();
   for (const family of ["P1", "P2", "P3", "P4", "P5", "P6"] as const)
     expect(isReviewedP1Gate(gate, family)).toBe(false);
+});
+
+it("recognizes only exact additive Manual Sparse P2 profile, never qualification or Source", () => {
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: [...normalP2SparseCommands],
+    enabled_families: ["P1", "P2", "P3", "P4", "P5", "P6"],
+    enabled_admission_modes: ["MANUAL"],
+  };
+  expect(normalManualCapabilities(gate)).toEqual({
+    commands: [...normalP2SparseCommands],
+    families: gate.enabled_families,
+  });
+  for (const altered of [
+    { ...gate, runtime_enabled: false },
+    { ...gate, enabled_families: ["P2"] },
+    { ...gate, enabled_admission_modes: ["REVIEWED_SOURCE"] },
+    { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+    ...["QUALIFY_FLIGHT", "UPDATE_FLIGHT_FACTS", "REPLACE_FLIGHT_SERVICE"].map(
+      (command) => ({ ...gate, enabled_commands: [...gate.enabled_commands, command] }),
+    ),
+    ...["CREATE_SPARSE_FLIGHT", "SET_AUTHORED_FLIGHT_DETAILS"].map((command) => ({
+      ...gate,
+      enabled_commands: gate.enabled_commands.filter((c) => c !== command),
+    })),
+  ])
+    expect(normalManualCapabilities(altered)).toBeNull();
+  expect(isReviewedP1Gate(gate, "P2")).toBe(false);
 });
