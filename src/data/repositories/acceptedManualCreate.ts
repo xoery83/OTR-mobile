@@ -9,7 +9,7 @@ export async function hasAcceptedManualCreate(
   database: Pick<CoreDatabase, "getAllAsync">,
   context: AccountRequestContext,
   itemId: string,
-  family: "P1" | "P3" | "P4" | "P5" | "P6",
+  family: "P1" | "P2" | "P3" | "P4" | "P5" | "P6",
 ) {
   const rows = await database.getAllAsync<{
     operation_id: string;
@@ -34,11 +34,11 @@ export async function hasAcceptedManualCreate(
   for (const row of rows) {
     const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
     if (
-      command.command !== "CREATE_ITEM" ||
+      command.command !== (family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
       command.admission.mode !== "MANUAL" ||
       command.target.id !== itemId ||
       command.tripId !== context.tripId ||
-      (command.payload as { family?: string }).family !== family
+      (family !== "P2" && (command.payload as { family?: string }).family !== family)
     )
       continue;
     const receipt = await validateCoreReceipt(
@@ -48,15 +48,12 @@ export async function hasAcceptedManualCreate(
     if (
       command.operationId === row.operation_id &&
       row.payload_json === row.canonical_intent_text &&
-      (await coreHashValue(
-        "otr-trip-core-intent-v2",
-        command,
-        tripCoreSha256Hex,
-      )) === row.intent_sha256 &&
+      (await coreHashValue("otr-trip-core-intent-v2", command, tripCoreSha256Hex)) ===
+        row.intent_sha256 &&
       receipt.actorAccountId === context.accountId &&
       receipt.tripId === context.tripId &&
       receipt.operationId === command.operationId &&
-      receipt.command === "CREATE_ITEM" &&
+      receipt.command === command.command &&
       receipt.intentSha256 === row.intent_sha256 &&
       receipt.receiptSha256 === row.receipt_sha256 &&
       receipt.outcome === "APPLIED"

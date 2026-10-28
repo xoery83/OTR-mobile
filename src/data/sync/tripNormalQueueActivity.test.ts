@@ -24,7 +24,10 @@ function fixture() {
     },
     async runAsync(q: string, ...a: unknown[]) {
       const r = sql.prepare(q).run(...(a as never[]));
-      return { changes: r.changes, lastInsertRowId: r.lastInsertRowid } as never;
+      return {
+        changes: r.changes,
+        lastInsertRowId: r.lastInsertRowid,
+      } as never;
     },
     async withTransactionAsync(work: () => Promise<void>) {
       sql.exec("BEGIN");
@@ -325,7 +328,11 @@ it.each(["P3", "P4"])(
         command: "CREATE_ITEM",
         target: { kind: "ITEM", id: itemId },
         baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
-        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
         payload: {
           family,
           ...(family === "P4" ? { details: {}, places: {} } : {}),
@@ -446,17 +453,14 @@ it.each(["P5", "P4"])(
         .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
         .run(new Date(f.now + 15000).toISOString(), operationId);
       const allowed =
-        (family === "P5" &&
-          ["SET_ITEM_TEXT", "SET_TRANSPORT_DETAILS"].includes(name)) ||
-        (family === "P4" &&
-          ["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE"].includes(name));
+        (family === "P5" && ["SET_ITEM_TEXT", "SET_TRANSPORT_DETAILS"].includes(name)) ||
+        (family === "P4" && ["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE"].includes(name));
       expect(await getNormalTripQueueActivity(db, f.scope, f.now)).toEqual({
         actionableNow: 0,
         nextActionableAt: allowed ? f.now + 15000 : null,
       });
       expect(
-        (await getNormalTripQueueActivity(db, f.scope, f.now + 15001))
-          .actionableNow,
+        (await getNormalTripQueueActivity(db, f.scope, f.now + 15001)).actionableNow,
       ).toBe(allowed ? 1 : 0);
       f.sql
         .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
@@ -529,9 +533,7 @@ it("P5 Create wakes existing normal scheduler without borrowing Import admission
     "PENDING",
     itemId,
   );
-  expect(
-    (await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow,
-  ).toBe(1);
+  expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
 });
 
 const p6DispatchPayloads = {
@@ -688,3 +690,68 @@ it("minimum P6 Create wakes the existing scheduler with qualified participants",
   );
   expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
 });
+
+it.each(["P2", "P5"])(
+  "normal authored-flight queue activity requires P2 target and keeps original due time (%s)",
+  async (family) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(f.createId);
+    const db = {
+      ...f.db,
+      getFirstAsync: async <T>(query: string, ...args: unknown[]) =>
+        query.startsWith("SELECT experience_family")
+          ? ({ experience_family: family } as T)
+          : f.db.getFirstAsync<T>(query, ...args),
+    };
+    f.operation(
+      operationId,
+      "CORE_V2_COMMAND",
+      "TRIP_CORE_V2",
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId,
+        tripId: f.tripId,
+        command: "SET_AUTHORED_FLIGHT_DETAILS",
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
+        payload: {
+          flightNumberLiteral: "NZ5069",
+          origin: {
+            airportCode: "AKL",
+            name: "Auckland",
+            terminal: null,
+            time: coreDateBoundary("2026-11-02"),
+          },
+          destination: {
+            airportCode: null,
+            name: null,
+            terminal: null,
+            time: { ...coreDateBoundary("2026-11-02"), local_date: null },
+          },
+        },
+      },
+      "RETRYABLE",
+      itemId,
+    );
+    f.sql
+      .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
+      .run(new Date(f.now + 15000).toISOString(), operationId);
+    expect(await getNormalTripQueueActivity(db, f.scope, f.now)).toEqual({
+      actionableNow: 0,
+      nextActionableAt: family === "P2" ? f.now + 15000 : null,
+    });
+    expect(
+      (await getNormalTripQueueActivity(db, f.scope, f.now + 15001)).actionableNow,
+    ).toBe(family === "P2" ? 1 : 0);
+  },
+);

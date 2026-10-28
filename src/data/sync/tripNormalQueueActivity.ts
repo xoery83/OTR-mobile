@@ -153,7 +153,9 @@ export async function getNormalTripQueueActivity(
               (c.admission.mode !== "MANUAL" && !isReviewedSourceCreate(c))
             )
               continue;
-            const item = await database.getFirstAsync<{ experience_family: string }>(
+            const item = await database.getFirstAsync<{
+              experience_family: string;
+            }>(
               "SELECT experience_family FROM trip_core_itinerary_events WHERE cache_account_id=? AND trip_id=? AND id=?",
               scope.accountId,
               create.trip_id,
@@ -161,8 +163,16 @@ export async function getNormalTripQueueActivity(
             );
             const manual =
               isReviewedSourceCreate(c) ||
+              (c.admission.mode === "MANUAL" && c.command === "CREATE_SPARSE_FLIGHT") ||
+              (c.admission.mode === "MANUAL" &&
+                item?.experience_family === "P2" &&
+                ["SET_AUTHORED_FLIGHT_DETAILS", "SET_ITEM_PARTICIPATION"].includes(
+                  c.command,
+                )) ||
               (c.command === "CREATE_ITEM"
-                ? ["P1", "P3", "P4", "P5", "P6"].includes((c.payload as { family: string }).family)
+                ? ["P1", "P3", "P4", "P5", "P6"].includes(
+                    (c.payload as { family: string }).family,
+                  )
                 : item?.experience_family === "P1" &&
                   [
                     "SET_ITEM_TEXT",

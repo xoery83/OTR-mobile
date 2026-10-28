@@ -127,8 +127,16 @@ it("local deferred or unknown operations never reach transport; legitimate V3 is
     .mockResolvedValue([])
     .mockResolvedValueOnce([f.create])
     .mockResolvedValueOnce([
-      { ...f.create, operation_type: "TRIP_METADATA_DEFERRED", payload_json: "{}" },
-      { ...f.create, operation_type: "UPDATE_TRIP_METADATA", payload_json: "{broken" },
+      {
+        ...f.create,
+        operation_type: "TRIP_METADATA_DEFERRED",
+        payload_json: "{}",
+      },
+      {
+        ...f.create,
+        operation_type: "UPDATE_TRIP_METADATA",
+        payload_json: "{broken",
+      },
       {
         ...f.create,
         id: metaId,
@@ -434,11 +442,9 @@ it.each([true, false])(
       await f.run();
       expect(f.deps.runP1).toHaveBeenCalledTimes(
         matching &&
-          [
-            "SET_ITEM_TEXT",
-            "SET_ITEM_PARTICIPATION",
-            "SET_TRANSPORT_DETAILS",
-          ].includes(name)
+          ["SET_ITEM_TEXT", "SET_ITEM_PARTICIPATION", "SET_TRANSPORT_DETAILS"].includes(
+            name,
+          )
           ? 1
           : 0,
       );
@@ -631,3 +637,100 @@ it("P6 minimum Create uses existing formal Core worker without Source evidence",
   await f.run();
   expect(f.deps.runP1).toHaveBeenCalledOnce();
 });
+
+it.each([true, false])(
+  "normal P2 manual Create/authored edit uses only owning family and existing runner (%s)",
+  async (matching) => {
+    for (const name of [
+      "CREATE_SPARSE_FLIGHT",
+      "SET_AUTHORED_FLIGHT_DETAILS",
+      "SET_ITEM_PARTICIPATION",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+    ]) {
+      const f = fixture(),
+        operationId = randomUUID(),
+        itemId = randomUUID();
+      f.deps.isManualItem.mockImplementation(
+        async (_trip, _id, family) => matching && family === "P2",
+      );
+      f.deps.participantsReady.mockResolvedValue(true);
+      const payload =
+        name === "CREATE_SPARSE_FLIGHT"
+          ? {
+              flightNumberLiteral: "NZ5069",
+              departureDate: "2026-11-02",
+              ...coreDefaults("organizer"),
+            }
+          : name === "SET_AUTHORED_FLIGHT_DETAILS"
+            ? {
+                flightNumberLiteral: "NZ5069",
+                origin: {
+                  airportCode: "AKL",
+                  name: "Auckland",
+                  terminal: null,
+                  time: coreDateBoundary("2026-11-02"),
+                },
+                destination: {
+                  airportCode: null,
+                  name: null,
+                  terminal: null,
+                  time: { ...coreDateBoundary("2026-11-02"), local_date: null },
+                },
+              }
+            : name === "SET_ITEM_PARTICIPATION"
+              ? { participation: coreDefaults("organizer").participation }
+              : name === "SET_ITEM_SCHEDULE"
+                ? { schedule: { start: coreDateBoundary("2026-11-02") } }
+                : {
+                    place: Object.fromEntries(
+                      Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+                    ),
+                  };
+      const command = {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId,
+        tripId: f.tripId,
+        command: name,
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [
+          {
+            kind: "ITEM",
+            id: itemId,
+            revision: name === "CREATE_SPARSE_FLIGHT" ? null : 1,
+          },
+        ],
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
+        payload,
+      };
+      f.deps.database.getAllAsync
+        .mockReset()
+        .mockResolvedValue([])
+        .mockResolvedValueOnce([f.create])
+        .mockResolvedValueOnce([
+          {
+            ...f.create,
+            id: operationId,
+            entity_id: itemId,
+            idempotency_key: operationId,
+            entity_type: "TRIP_CORE_V2",
+            operation_type: "CORE_V2_COMMAND",
+            payload_json: JSON.stringify(command),
+          },
+        ]);
+      await f.run();
+      expect(f.deps.runP1).toHaveBeenCalledTimes(
+        name === "CREATE_SPARSE_FLIGHT" ||
+          (matching &&
+            ["SET_AUTHORED_FLIGHT_DETAILS", "SET_ITEM_PARTICIPATION"].includes(name))
+          ? 1
+          : 0,
+      );
+    }
+  },
+);

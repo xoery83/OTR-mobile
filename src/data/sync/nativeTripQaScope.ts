@@ -135,6 +135,25 @@ export function nativeTripAuthoredCloudTravelers(accountId: string | null) {
   );
 }
 
+// Dormant explicit Native opt-in. This never enables Backend authority or upgrades retained journals.
+export function nativeTripQaFormalManualFlightScope(accountId: string) {
+  const scope = readConfiguration();
+  return process.env.EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED === "true" &&
+    scope?.version === 2 &&
+    scope.accountId === accountId &&
+    scopeEnabled(scope)
+    ? {
+        accountId,
+        newTripsFrom: new Date(
+          Math.max(
+            Date.parse(scope.normal.newTripsFrom),
+            Date.parse("2026-10-28T02:16:48Z"),
+          ),
+        ).toISOString(),
+      }
+    : null;
+}
+
 // View-only isolation; retained historical rows/receipts are neither deleted nor relabelled.
 export function filterNativeTripQaList<
   T extends { id: string; syncFormatVersion?: 2; createdAt?: string | null },
