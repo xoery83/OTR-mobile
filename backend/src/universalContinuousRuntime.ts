@@ -1,3 +1,4 @@
+import { serializeUniversalSourceConnection } from "./universalSourceConnection";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import type { CorePgLease } from "./tripCoreV2PgStorage";
 import { DatabaseSync } from "node:sqlite";
@@ -57,7 +58,6 @@ export async function loadDevUniversalContinuousRuntime(
     if (before.ino !== after.ino || before.dev !== after.dev)
       throw Error("UNIVERSAL_TASK_DATABASE_CHANGED");
     const db = initializeUniversalTaskDatabase(sql),
-      sourceConnection = createSourcePgConnection(config.sourcePg),
       taskConnection = createModelTaskPgConnection(config.taskPg);
     const gateway = createSupabaseDevGateway({
       url: env.OTR_DEV_SUPABASE_URL!,
@@ -68,6 +68,10 @@ export async function loadDevUniversalContinuousRuntime(
       if (closed || env.OTR_DEV_UNIVERSAL_CONTINUOUS_HOST !== "enabled")
         throw Error("UNIVERSAL_CONTINUOUS_CLOSED");
     };
+    const sourceConnection = serializeUniversalSourceConnection(
+      createSourcePgConnection(config.sourcePg),
+      guard,
+    );
     async function host(
       actor: string,
       trip: string,
