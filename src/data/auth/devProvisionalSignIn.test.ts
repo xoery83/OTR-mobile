@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { createDevProvisionalSignIn } from "./devProvisionalSignIn";
 import { verifySupabaseDevEmailOtp } from "./devSupabaseAuth";
 
+vi.mock("./googleSignIn", () => ({
+  createGoogleSignInAdapter: () => ({
+    capability: async () => ({ available: false, reason: "NATIVE_MODULE_MISSING" }),
+  }),
+}));
+
 vi.mock("./devSupabaseAuth", () => ({ verifySupabaseDevEmailOtp: vi.fn() }));
 
 describe("DEV provisional provider composition", () => {
@@ -32,7 +38,8 @@ describe("DEV provisional provider composition", () => {
         createDevProvisionalSignIn().verify({ provider }),
       ).resolves.toMatchObject({
         status: "UNAVAILABLE",
-        reason: "CONFIGURATION_UNVERIFIED",
+        reason:
+          provider === "google" ? "NATIVE_MODULE_MISSING" : "CONFIGURATION_UNVERIFIED",
       });
       expect(verifySupabaseDevEmailOtp).not.toHaveBeenCalled();
     },

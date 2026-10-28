@@ -1,0 +1,67 @@
+{
+  "scope": "HOST_ONLY_NORMAL_PASSWORD_SESSION_NOT_OTP_OR_NATIVE",
+  "sourceCommit": "6b4bc3c5bd0a60d36ac3e2c229c2bb3184e85634",
+  "runnerSha256": "1d238e1433b890a2c290a6de9dd99815c3a9f65f1777c380c3f0c5206f6f4848",
+  "observedAt": "2026-10-28T04:03:09.588Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "ownSessionId": "afd5d9bf-18af-4227-a484-55811be6c147",
+  "normalLogin": "PASS",
+  "independentAuthUserRead": "PASS",
+  "independentSessionPresentThenAbsent": "PASS",
+  "baselineSessionsPreserved": 14,
+  "repositoryReconstruction": "PASS_MEMORY_STORAGE_ONLY",
+  "nativeKeychainColdStart": "NOT_TESTED",
+  "parallelRefreshRequests": 5,
+  "actualRefreshDispatches": 1,
+  "wrongAccountExpectedId": "DENIED",
+  "localSignoutRestore": "SIGNED_OUT",
+  "revokedRefresh": "DENIED",
+  "accessJwtImmediateInvalidation": "NOT_ASSERTED",
+  "otherDeviceSessionOrKeychainRead": false,
+  "businessWriteOrGateChange": false,
+  "requests": [
+    {
+      "method": "POST",
+      "route": "/auth/v1/token?grant_type=password",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "01a180ac-e30e-75b9-9c01-64ddf0f24893"
+    },
+    {
+      "method": "GET",
+      "route": "/auth/v1/user",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "01a180ac-e65b-7049-a919-de79d26bca9f"
+    },
+    {
+      "method": "POST",
+      "route": "/auth/v1/token?grant_type=refresh_token",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "01a180ac-fd7f-7ec1-b8ea-ea47135cc554"
+    },
+    {
+      "method": "GET",
+      "route": "/auth/v1/user",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "01a180ac-fe1f-7c09-8920-87485db49d97"
+    },
+    {
+      "method": "POST",
+      "route": "/auth/v1/logout?scope=local",
+      "status": 204,
+      "errorCode": null,
+      "requestId": "01a180ac-fe77-76c4-8345-a6da14035fbd"
+    },
+    {
+      "method": "POST",
+      "route": "/auth/v1/token?grant_type=refresh_token",
+      "status": 400,
+      "errorCode": "refresh_token_not_found",
+      "requestId": "01a180ac-ff05-7292-8d5d-254fef880741"
+    }
+  ]
+}

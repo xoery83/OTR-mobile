@@ -1,9 +1,11 @@
+import { createGoogleSignInAdapter } from "./googleSignIn";
 import { createProvisionalSignIn } from "./provisionalSignIn";
 import { verifySupabaseDevEmailOtp } from "./devSupabaseAuth";
 
-// Reuse the reviewed provider boundary; unconfigured native providers remain unavailable.
+// Provider credentials remain provisional until the existing account transition accepts them.
 export function createDevProvisionalSignIn() {
   return createProvisionalSignIn({
+    google: createGoogleSignInAdapter(),
     email_otp: {
       capability: async () => ({ available: true }),
       verify: async (request, signal) => {
