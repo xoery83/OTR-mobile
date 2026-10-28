@@ -1,4 +1,7 @@
-import { createGuestPrincipalRepository } from "./guestPrincipalRepository";
+import {
+  createGuestPrincipalRepository,
+  type LaunchIdentity,
+} from "./guestPrincipalRepository";
 import {
   identityFromAccessToken,
   type AccountIdentity,
@@ -42,6 +45,28 @@ export function createAuthRepository(
 
   async function writeIndex(index: AccountIndex) {
     await storage.setItem(accountIndexStorageKey, JSON.stringify(index));
+  }
+
+  async function readPrincipalIndex(): Promise<AccountIndex | null> {
+    const raw = await storage.getItem(accountIndexStorageKey);
+    if (raw === null) return null;
+    try {
+      const index = JSON.parse(raw) as Partial<AccountIndex> | null;
+      if (!index || !Array.isArray(index.accounts)) throw new Error();
+      const ids = index.accounts.map((account) => account?.userId);
+      if (
+        ids.some((id) => typeof id !== "string" || !id) ||
+        new Set(ids).size !== ids.length ||
+        (index.activeUserId !== null &&
+          (typeof index.activeUserId !== "string" ||
+            !index.activeUserId ||
+            !ids.includes(index.activeUserId)))
+      )
+        throw new Error();
+      return index as AccountIndex;
+    } catch {
+      throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
+    }
   }
 
   async function readAccountSession(userId: string): Promise<LocalSession | null> {
@@ -165,6 +190,22 @@ export function createAuthRepository(
   };
   return {
     ...repository,
+    async readCommittedLocalPrincipal(): Promise<LaunchIdentity | null> {
+      const index = await readPrincipalIndex();
+      const session = index?.activeUserId
+        ? await readAccountSession(index.activeUserId)
+        : null;
+      if (index?.activeUserId && !session) throw new Error("SESSION_NOT_ADOPTED");
+      if (session?.identity?.userId)
+        return { kind: "ACCOUNT", accountId: session.identity.userId };
+      if (session) throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
+      if ((await storage.getItem(legacySessionStorageKey)) !== null)
+        throw new Error("SESSION_NOT_ADOPTED");
+      const stored = await launch.readStoredIdentity();
+      if (stored?.kind === "GUEST" && index)
+        throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
+      return stored ?? (index ? { kind: "SIGNED_OUT" } : null);
+    },
     async readLocalAuthSnapshot() {
       const session = await repository.readLocalSession();
       return { session, principal: await launch.readLaunchIdentity(session) };

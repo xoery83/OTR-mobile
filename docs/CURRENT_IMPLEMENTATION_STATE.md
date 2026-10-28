@@ -53,6 +53,16 @@ operation identities and UNKNOWN recovery. No new quota/pricing policy is invent
 Main integration remains serial and must preserve concurrent Native/Import work
 and the six unrelated dirty primary-checkout files.
 
+Phase2 focused intake is recorded in ops/auth-phase2-20261028/INTAKE.json.
+The read-only readCommittedLocalPrincipal/v1 candidate distinguishes persisted
+Guest, committed Account, prior SIGNED_OUT and genuinely unchosen null. Existing
+corrupt/contradictory Account indexes and legacy states fail closed without writes;
+cached valid Account access remains independent of Guest marker corruption.
+19 suites205 tests/types/UIguard/scopedlint and independent3 suites38 plus real
+public-port memory/gate checks pass. This does not wire Native Guest business
+access or implement adoption. Next: typed local Guest repository scope/full census;
+shared startup/Core/migration writers coordinate before any consumer changes.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.

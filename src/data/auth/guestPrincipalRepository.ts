@@ -35,7 +35,18 @@ export function createGuestPrincipalRepository(
       throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
     return record as LaunchRecord;
   }
+  async function readStoredIdentity(): Promise<
+    GuestPrincipal | { kind: "SIGNED_OUT" } | null
+  > {
+    const record = await readRecord();
+    return record?.kind === "GUEST"
+      ? { kind: "GUEST", localId: record.localId }
+      : record
+        ? { kind: "SIGNED_OUT" }
+        : null;
+  }
   return {
+    readStoredIdentity,
     async readLaunchIdentity(session: LocalSession | null): Promise<LaunchIdentity> {
       // Existing offline Account access never depends on the new Guest marker.
       if (session?.identity?.userId)
@@ -43,10 +54,8 @@ export function createGuestPrincipalRepository(
       if (session) throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
       if (!pending)
         pending = (async () => {
-          const record = await readRecord();
-          if (record?.kind === "GUEST")
-            return { kind: "GUEST" as const, localId: record.localId };
-          if (record?.kind === "SIGNED_OUT") return { kind: "SIGNED_OUT" as const };
+          const existing = await readStoredIdentity();
+          if (existing) return existing;
           // Prior installations without a marker must not become a fresh Guest.
           const [index, legacy] = await Promise.all([
             storage.getItem("otr.mobile.accounts.v2"),

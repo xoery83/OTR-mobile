@@ -25,6 +25,14 @@ error/keyboard dismissal/cancel/A-four-Trips acceptance passes. Apple
 is explicitly paused by Owner until Developer enrollment. Exact scope
 and six-point data checklist: `../ops/auth-phase1-20261028/README.md`.
 
+Phase2 local preparation: `readCommittedLocalPrincipal` v1 observes only the
+already-persisted Guest, committed Account, explicit SIGNED_OUT or null unchosen
+state. It reuses the same secure repository/apply gate. No Guest selection,
+legacy credential adoption, Session installation, database reassignment or upload
+is allowed through this read port. Existing Account-only consumers keep
+`readCommittedLocalSession`; Native owns subsequent startup/consumer wiring.
+This is a headless foundation candidate, not Guest/adoption runtime acceptance.
+
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17
 
 - FP-02A builder owns new adjacent sparse-proof modules/tests in an isolated
