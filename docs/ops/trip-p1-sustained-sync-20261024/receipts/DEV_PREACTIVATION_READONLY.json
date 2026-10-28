@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-24T02:15:49.582413+00:00",
+  "qualification": {
+    "actorAuth": true,
+    "actorProfile": true,
+    "oldGatesClosed": true,
+    "policyCount": 0,
+    "rolesClosed": true,
+    "serviceSessions": 0
+  }
+}

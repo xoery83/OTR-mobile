@@ -1,3 +1,8 @@
+import {
+  readCoreDisplaySnapshot,
+  coreDayProjectionContext,
+  type CoreDisplayReader,
+} from "./coreDayProjectionContext";
 import { requireActiveUserId } from "../auth/authRepository";
 import { assertAccountRequestContext } from "../auth/accountRequestContext";
 import { readInitializedDatabase } from "../db/database";
@@ -14,10 +19,7 @@ import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadMo
 import { projectCoreP6Feed } from "@/domain/trip/tripCoreV2P6DayFeed";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
 
-type Core = Pick<
-  ReturnType<typeof createTripCoreV2Repository>,
-  "captureContext" | "acceptedSnapshot"
->;
+type Core = CoreDisplayReader;
 export function createTripJourneySnapshotReader(
   core: Core,
   root: (tripId: string) => Promise<SnapshotTripFacts | null>,
@@ -27,7 +29,7 @@ export function createTripJourneySnapshotReader(
     coreUuid.parse(tripId);
     const context = await core.captureContext(tripId);
     const facts = await root(tripId);
-    const snapshot = await core.acceptedSnapshot(context);
+    const snapshot = await readCoreDisplaySnapshot(core, context);
     await assertAccountRequestContext(context, account);
     if (facts && facts.id !== tripId) throw new Error("SNAPSHOT_TRIP_SCOPE");
     if (!snapshot) return null;
@@ -37,12 +39,22 @@ export function createTripJourneySnapshotReader(
     )
       throw new Error("SNAPSHOT_ACTOR_SCOPE");
     const authority = {
-      rosterHash: snapshot.certificate.roster_hash,
+      rosterHash: coreDayProjectionContext(snapshot, context.generation)
+        .participatingRosterHash,
       participatingPersonIds: snapshot.participatingPersonIds,
     };
+    const localTargets = new Set(
+      coreDayProjectionContext(snapshot, context.generation).localTargetIds ?? [],
+    );
     const items = snapshot.graph.itinerary_events
       .map((row) =>
-        projectCoreItem(snapshot.graph, snapshot.actor, String(row.id), authority),
+        projectCoreItem(
+          snapshot.graph,
+          snapshot.actor,
+          String(row.id),
+          authority,
+          localTargets.has(String(row.id)) ? "PENDING" : "ACCEPTED",
+        ),
       )
       .filter((item): item is NonNullable<typeof item> => item !== null);
     return { context, facts, snapshot, items };
@@ -54,7 +66,7 @@ export function createTripJourneySnapshotReader(
         ? {
             scope: result.context,
             trip: result.facts,
-            epoch: result.snapshot.certificate.epoch,
+            epoch: result.snapshot.certificate?.epoch ?? null,
             candidateDays: journeySnapshotDayCandidates(result.facts, result.items),
             snapshot: selectJourneySnapshot(result.facts, result.items),
           }
@@ -62,7 +74,7 @@ export function createTripJourneySnapshotReader(
     },
     async resolveDayContext(
       tripId: string,
-      expectedEpoch: string,
+      expectedEpoch: string | null,
       date: string,
       zone: string,
     ) {
@@ -73,7 +85,7 @@ export function createTripJourneySnapshotReader(
       const result = await current(tripId);
       if (
         !result ||
-        result.snapshot.certificate.epoch !== expectedEpoch ||
+        (result.snapshot.certificate?.epoch ?? null) !== expectedEpoch ||
         !journeySnapshotDayCandidates(result.facts, result.items).includes(date)
       )
         return null;
@@ -81,21 +93,13 @@ export function createTripJourneySnapshotReader(
       const projection = projectCoreP6Feed(
         result.snapshot.graph,
         result.snapshot.actor,
-        {
-          epoch: c.epoch,
-          revision: c.revision,
-          accessRevision: c.access_revision,
-          generation: c.applied_generation,
-          actorPersonBindingHash: c.actor_person_binding_hash,
-          participatingRosterHash: c.roster_hash,
-          manifestSha256: c.manifest_sha256,
-        },
+        coreDayProjectionContext(result.snapshot, result.context.generation),
         result.snapshot.participatingPersonIds,
       );
       projection.query(date, zone);
       return {
         scope: result.context,
-        epoch: c.epoch,
+        epoch: c?.epoch ?? null,
         certificate: c,
         projection,
         services: Object.fromEntries(
@@ -108,10 +112,11 @@ export function createTripJourneySnapshotReader(
         zone,
       };
     },
-    async resolveItem(tripId: string, itemId: string, expectedEpoch: string) {
+    async resolveItem(tripId: string, itemId: string, expectedEpoch: string | null) {
       coreUuid.parse(itemId);
       const result = await current(tripId);
-      if (!result || result.snapshot.certificate.epoch !== expectedEpoch) return null;
+      if (!result || (result.snapshot.certificate?.epoch ?? null) !== expectedEpoch)
+        return null;
       const item = result.items.find(
         (item) =>
           item.itemId === itemId &&

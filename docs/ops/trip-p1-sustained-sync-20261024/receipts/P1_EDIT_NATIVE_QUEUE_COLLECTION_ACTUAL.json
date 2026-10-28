@@ -1,0 +1,309 @@
+{
+  "at": "2026-10-24T06:39:20.841709+00:00",
+  "queue": [
+    {
+      "id": "1a9d006e-6554-4780-824c-09cf3b37ef7b",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 7,
+      "last_error_code": null,
+      "created_at": "2026-10-24T03:47:27.907Z",
+      "updated_at": "2026-10-24T05:22:11.358Z"
+    },
+    {
+      "id": "f941cc8f-dbcb-4f0a-bcbd-b0aff55337e6",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "created_at": "2026-10-24T06:05:03.969Z",
+      "updated_at": "2026-10-24T06:23:17.067Z"
+    },
+    {
+      "id": "7d00f8dd-0d6d-448d-9025-67bad5a5931d",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "created_at": "2026-10-24T06:05:03.978Z",
+      "updated_at": "2026-10-24T06:24:16.679Z"
+    },
+    {
+      "id": "720b1c0e-5694-46ab-9854-5948c111df5f",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "created_at": "2026-10-24T06:05:03.983Z",
+      "updated_at": "2026-10-24T06:25:16.182Z"
+    },
+    {
+      "id": "733ceb22-034e-44f9-a024-ff0d8ad61c60",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "created_at": "2026-10-24T06:33:30.351Z",
+      "updated_at": "2026-10-24T06:34:08.475Z"
+    }
+  ],
+  "intents": [
+    {
+      "operation_id": "1a9d006e-6554-4780-824c-09cf3b37ef7b",
+      "state": "APPLIED",
+      "reconciled_revision": 8
+    },
+    {
+      "operation_id": "f941cc8f-dbcb-4f0a-bcbd-b0aff55337e6",
+      "state": "APPLIED",
+      "reconciled_revision": 8
+    },
+    {
+      "operation_id": "7d00f8dd-0d6d-448d-9025-67bad5a5931d",
+      "state": "APPLIED",
+      "reconciled_revision": 8
+    },
+    {
+      "operation_id": "720b1c0e-5694-46ab-9854-5948c111df5f",
+      "state": "APPLIED",
+      "reconciled_revision": 8
+    },
+    {
+      "operation_id": "733ceb22-034e-44f9-a024-ff0d8ad61c60",
+      "state": "APPLIED",
+      "reconciled_revision": 8
+    }
+  ],
+  "items": [
+    {
+      "id": "491fb764-892e-4c09-9f0d-fe181631a1be",
+      "title": "AD5 Sustained Auto P1 Edited",
+      "start_local_date": "2026-11-02",
+      "end_local_date": "2026-11-03",
+      "authored_label": "Queenstown Gardens QA meeting point",
+      "participation_mode": "SELECTED_MEMBERS",
+      "semantic_revision": 5
+    }
+  ],
+  "participants": [
+    {
+      "cache_account_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "mirror_key": "[\"491fb764-892e-4c09-9f0d-fe181631a1be\",\"0954dff9-a064-4763-8f7b-ec59fce9f521\"]",
+      "trip_id": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+      "item_id": "491fb764-892e-4c09-9f0d-fe181631a1be",
+      "person_id": "0954dff9-a064-4763-8f7b-ec59fce9f521",
+      "active": 1
+    }
+  ],
+  "readLedger": {
+    "version": 1,
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 72,
+    "entries": [
+      {
+        "ordinal": 1,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:03.444Z"
+      },
+      {
+        "ordinal": 2,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:09.589Z"
+      },
+      {
+        "ordinal": 3,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:24.666Z"
+      },
+      {
+        "ordinal": 4,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:30.033Z"
+      },
+      {
+        "ordinal": 5,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:20:45.137Z"
+      },
+      {
+        "ordinal": 6,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:20:51.195Z"
+      },
+      {
+        "ordinal": 7,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T05:21:07.936Z"
+      },
+      {
+        "ordinal": 8,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:21:25.797Z"
+      },
+      {
+        "ordinal": 9,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:21:31.158Z"
+      },
+      {
+        "ordinal": 10,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:21:36.415Z"
+      },
+      {
+        "ordinal": 11,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T05:21:52.848Z"
+      },
+      {
+        "ordinal": 12,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:22:11.384Z"
+      },
+      {
+        "ordinal": 13,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:56:39.334Z"
+      },
+      {
+        "ordinal": 14,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:56:45.135Z"
+      },
+      {
+        "ordinal": 15,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:11:20.767Z"
+      },
+      {
+        "ordinal": 16,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:11:26.930Z"
+      },
+      {
+        "ordinal": 17,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:22:27.394Z"
+      },
+      {
+        "ordinal": 18,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:22:33.329Z"
+      },
+      {
+        "ordinal": 19,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:22:38.629Z"
+      },
+      {
+        "ordinal": 20,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:22:46.219Z"
+      },
+      {
+        "ordinal": 21,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:23:17.085Z"
+      },
+      {
+        "ordinal": 22,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:23:21.982Z"
+      },
+      {
+        "ordinal": 23,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:23:40.382Z"
+      },
+      {
+        "ordinal": 24,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:23:47.321Z"
+      },
+      {
+        "ordinal": 25,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:24:16.698Z"
+      },
+      {
+        "ordinal": 26,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:24:21.283Z"
+      },
+      {
+        "ordinal": 27,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:24:39.818Z"
+      },
+      {
+        "ordinal": 28,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:24:47.366Z"
+      },
+      {
+        "ordinal": 29,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:25:16.198Z"
+      },
+      {
+        "ordinal": 30,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:25:21.660Z"
+      },
+      {
+        "ordinal": 31,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T06:33:30.915Z"
+      },
+      {
+        "ordinal": 32,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/capabilities",
+        "at": "2026-10-24T06:33:39.156Z"
+      },
+      {
+        "ordinal": 33,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T06:34:08.508Z"
+      },
+      {
+        "ordinal": 34,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/collection",
+        "at": "2026-10-24T06:34:13.740Z"
+      }
+    ]
+  }
+}

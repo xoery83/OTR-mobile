@@ -1,0 +1,802 @@
+--- a/src/data/repositories/manualPlanRepository.ts
++++ b/src/data/repositories/manualPlanRepository.ts
+@@ -1,5 +1,9 @@
+ import { z } from "zod";
+ import { createUuid } from "@/domain/localId";
++import {
++  appleSelectedPlaceDraftSchema,
++  type AppleSelectedPlaceDraft,
++} from "../places/appleSelectedPlaceDraft";
+ import {
+   coreDefaults,
+   coreParticipationSchema,
+@@ -123,6 +127,14 @@
+   "fields"
+ > &
+   Readonly<{ fields: F }>;
++export type ManualPlaceAcceptance = Readonly<{
++  intent: "ACCEPT_SELECTED_APPLE_PLACE_V1";
++  draft: AppleSelectedPlaceDraft;
++}>;
++const manualPlaceAcceptanceSchema = z.strictObject({
++  intent: z.literal("ACCEPT_SELECTED_APPLE_PLACE_V1"),
++  draft: appleSelectedPlaceDraftSchema,
++});
+ type ManualItemRepository<F extends ManualPlanFields> = {
+   createDraft(tripId: string): Promise<ManualItemDraft<F>>;
+   read(
+@@ -130,7 +142,11 @@
+     itemId: string,
+     expectedRevision?: number,
+   ): Promise<ManualItemDraft<F>>;
+-  save(draft: ManualItemDraft<F>, fields: F): Promise<ManualPlanSaveResult>;
++  save(
++    draft: ManualItemDraft<F>,
++    fields: F,
++    placeDraft?: AppleSelectedPlaceDraft | ManualPlaceAcceptance,
++  ): Promise<ManualPlanSaveResult>;
+ };
+ type DraftState = {
+   context: AccountRequestContext;
+@@ -139,7 +155,12 @@
+   revision: number | null;
+   original: ManualItemFields;
+   ids: string[];
+-  attempt?: { fields: string; commands: Command[] };
++  attempt?: {
++    fields: string;
++    placeDraft: string;
++    place: z.infer<typeof corePlaceSchema>;
++    commands: Command[];
++  };
+ };
+ function fieldsFor(
+   row: Record<string, unknown>,
+@@ -476,6 +497,7 @@
+     async save(
+       draft: ManualItemDraft,
+       input: ManualItemFields,
++      selectedPlaceDraft?: AppleSelectedPlaceDraft | ManualPlaceAcceptance,
+     ): Promise<ManualPlanSaveResult> {
+       const state = drafts.get(draft);
+       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
+@@ -493,6 +515,28 @@
+         throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
+       fields.participation.people.sort();
+       fields.location = fields.location || null;
++      const review =
++        selectedPlaceDraft && "intent" in selectedPlaceDraft
++          ? manualPlaceAcceptanceSchema.parse(selectedPlaceDraft)
++          : null;
++      const placeDraft =
++        selectedPlaceDraft === undefined
++          ? null
++          : appleSelectedPlaceDraftSchema.parse(
++              review ? review.draft : selectedPlaceDraft,
++            );
++      if (
++        placeDraft &&
++        (family !== "P3" ||
++          placeDraft.binding.tripId !== state.context.tripId ||
++          placeDraft.binding.itemId !== draft.itemId ||
++          placeDraft.binding.accountGeneration !== state.context.generation ||
++          placeDraft.binding.location !== fields.location)
++      )
++        throw new Error("MANUAL_PLACE_DRAFT_BINDING");
++      const placeDraftText = json({ draft: placeDraft, reviewed: review !== null });
++      if (state.attempt && state.attempt.placeDraft !== placeDraftText)
++        throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
+       const fieldsText = json(fields);
+       if (state.attempt && state.attempt.fields !== fieldsText)
+         throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
+@@ -557,9 +601,47 @@
+           ),
+         };
+         const place = corePlaceSchema.parse(
+-          Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
++          state.attempt?.place ??
++            Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+         );
+         place.authored_label = fields.location || null;
++        if (placeDraft && !state.attempt?.place) {
++          const parts = placeDraft.addressComponents;
++          place.authored_address = placeDraft.binding.location;
++          place.authored_address_locality = parts?.locality ?? null;
++          place.authored_address_region = parts?.administrativeArea ?? null;
++          place.authored_address_country = parts?.country ?? null;
++          const priorInput = row?.location_input_revision;
++          place.location_input_revision =
++            typeof priorInput === "number" ? priorInput + 1 : 1;
++          place.spatial_provenance_refs = {
++            source: "APPLE_USER_SELECTED_DRAFT",
++            acceptance: "UNACCEPTED_PROVIDER_DRAFT",
++            provider: "apple",
++            input_revision: String(place.location_input_revision),
++            ...(placeDraft.providerPlaceId
++              ? { provider_place_id: placeDraft.providerPlaceId }
++              : {}),
++            ...(parts?.countryCode ? { provider_country_code: parts.countryCode } : {}),
++          };
++          if (review) {
++            // Explicit reviewed Save at the owning mutation boundary; not provider auto-copy.
++            place.accepted_address = placeDraft.binding.location;
++            place.accepted_address_locality = parts?.locality ?? null;
++            place.accepted_address_region = parts?.administrativeArea ?? null;
++            place.accepted_address_country = parts?.country ?? null;
++            place.accepted_latitude = placeDraft.point?.latitude ?? null;
++            place.accepted_longitude = placeDraft.point?.longitude ?? null;
++            place.spatial_provenance_refs = {
++              ...place.spatial_provenance_refs,
++              source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
++              acceptance: "USER_CONFIRMED_SAVE",
++              reviewed_at: clock(),
++            };
++          }
++          // accepted_place_id stays null: Apple references are not internal places.id UUIDs.
++          // No timezone, schedule, participation or visibility is inferred from a Place.
++        }
+         const storedStay = snapshot.graph.trip_stay_details.find(
+           (r) => r.event_id === draft.itemId,
+         );
+@@ -664,7 +746,7 @@
+               schedule.end = coreStoredBoundary(row!, "end");
+             payloads.push({ command: "SET_ITEM_SCHEDULE", payload: { schedule } });
+           }
+-          if (fields.location !== state.original.location)
++          if (fields.location !== state.original.location || placeDraft)
+             payloads.push({ command: "SET_ITEM_PLACE", payload: { place } });
+           if (json(fields.participation) !== json(state.original.participation))
+             payloads.push({
+@@ -731,7 +813,13 @@
+         });
+         if (state.attempt && json(state.attempt.commands) !== json(commands))
+           throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
+-        state.attempt = { fields: fieldsText, commands };
++        state.attempt = {
++          fields: fieldsText,
++          placeDraft: placeDraftText,
++          // Exact Place/provenance is intent data; rollback retries must not regenerate its clock.
++          place: structuredClone(place),
++          commands,
++        };
+         return {
+           commands,
+           result: async () => {
+--- a/src/data/repositories/manualStayRepository.test.ts
++++ b/src/data/repositories/manualStayRepository.test.ts
+@@ -1,9 +1,16 @@
++import {
++  dayHeaderDestinationRead,
++  resolveDayHeaderDestination,
++} from "@/features/day-feed/dayHeaderDestinationRead";
+ import { createHash, randomUUID } from "node:crypto";
+ import { DatabaseSync } from "node:sqlite";
+ import { afterEach, expect, it, vi } from "vitest";
+ import { migrations } from "../db/migrations";
+ import { serializeDatabaseTransactions } from "../db/databaseConnection";
+-import { advanceAccountGeneration } from "../auth/accountGeneration";
++import {
++  advanceAccountGeneration,
++  getAccountGeneration,
++} from "../auth/accountGeneration";
+ import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
+ import { createTripRepository } from "./tripRepository";
+ import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
+@@ -62,7 +69,8 @@
+     },
+   });
+   const identity = async () => accountId;
+-  const clock = () => "2026-10-20T00:00:00.000Z";
++  let currentClock = "2026-10-20T00:00:00.000Z";
++  const clock = () => currentClock;
+   const core = createTripCoreV2Repository(
+     database,
+     identity,
+@@ -99,6 +107,9 @@
+     read,
+     days,
+     originalAccount,
++    setClock(value: string) {
++      currentClock = value;
++    },
+     failNext(n: number) {
+       inserts = 0;
+       failAt = n;
+@@ -593,3 +604,118 @@
+     "Legacy renamed title",
+   );
+ });
++
++const appleSelectionFor = (tripId: string, itemId: string, location: string) => ({
++  authority: "UNACCEPTED_PROVIDER_DRAFT" as const,
++  binding: {
++    tripId,
++    itemId,
++    location,
++    accountGeneration: getAccountGeneration(),
++    inputRevision: 1,
++  },
++  provider: "apple" as const,
++  selectionSessionId: randomUUID(),
++  selectionGeneration: 1,
++  providerPlaceId: "opaque-apple-poi-not-an-internal-uuid",
++  addressComponents: {
++    locality: "Nelson",
++    administrativeArea: "Nelson",
++    country: "New Zealand",
++    countryCode: "NZ",
++  },
++  point: { latitude: -41.27, longitude: 173.28 },
++});
++it("owning candidate retains an unaccepted provider draft without automatically promoting geography", async () => {
++  const f = await fixture(),
++    repo = f.repo(),
++    draft = await repo.createDraft(f.tripId);
++  const input = inputFor(draft.fields),
++    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
++  await repo.save(draft, input, selection);
++  const item = (await f.read(f.tripId))!.items[0];
++  expect(item.place).toMatchObject({
++    authoredAddressLocality: "Nelson",
++    spatialProvenanceRefs: { acceptance: "UNACCEPTED_PROVIDER_DRAFT" },
++  });
++  expect(item.place).not.toHaveProperty("acceptedAddressLocality");
++  expect(item.place).not.toHaveProperty("latitude");
++  expect(
++    resolveDayHeaderDestination(
++      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
++      "2026-10-21",
++    ).kind,
++  ).toBe("unresolved");
++});
++it("only an explicit reviewed Save commits accepted geography through the existing same-ID Core and Queue", async () => {
++  const f = await fixture(),
++    repo = f.repo(),
++    draft = await repo.createDraft(f.tripId);
++  const input = inputFor(draft.fields),
++    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
++  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
++  const result = await repo.save(draft, input, request);
++  const item = (await f.read(f.tripId))!.items[0];
++  expect(item.itemId).toBe(draft.itemId);
++  expect(item.place).toMatchObject({
++    acceptedAddressLocality: "Nelson",
++    acceptedAddressRegion: "Nelson",
++    acceptedAddressCountry: "New Zealand",
++    latitude: -41.27,
++    longitude: 173.28,
++    spatialProvenanceRefs: {
++      source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
++      acceptance: "USER_CONFIRMED_SAVE",
++    },
++  });
++  expect(item.place).not.toHaveProperty("placeId");
++  expect(
++    resolveDayHeaderDestination(
++      dayHeaderDestinationRead(await f.days.trip(f.tripId))!,
++      "2026-10-21",
++    ),
++  ).toEqual({ kind: "single", source: "stay", label: "Nelson" });
++  expect(item.schedule).toMatchObject({
++    start: { localDate: input.startDate },
++    end: { localDate: input.endDate },
++  });
++  expect(count(f.sql)).toBe(1);
++  expect(await repo.save(draft, input, request)).toEqual(result);
++  await expect(
++    repo.save(draft, input, {
++      ...request,
++      draft: { ...selection, binding: { ...selection.binding, inputRevision: 2 } },
++    }),
++  ).rejects.toThrow("MANUAL_PLAN_DRAFT_FROZEN");
++  const other = await repo.createDraft(f.tripId);
++  await expect(repo.save(other, input, request)).rejects.toThrow(
++    "MANUAL_PLACE_DRAFT_BINDING",
++  );
++  expect(count(f.sql)).toBe(1);
++});
++
++it("reuses the exact reviewed Place after first SQLite insert rollback and a changed retry clock", async () => {
++  const f = await fixture(),
++    repo = f.repo(),
++    draft = await repo.createDraft(f.tripId);
++  const input = inputFor(draft.fields),
++    selection = appleSelectionFor(f.tripId, draft.itemId, input.location!);
++  const request = { intent: "ACCEPT_SELECTED_APPLE_PLACE_V1" as const, draft: selection };
++  f.failNext(1);
++  await expect(repo.save(draft, input, request)).rejects.toThrow("TEST_WRITE_FAILURE");
++  expect(count(f.sql)).toBe(0);
++  f.setClock("2026-10-21T12:34:56.000Z");
++  f.failNext(0);
++  const saved = await repo.save(draft, input, request);
++  expect(saved.itemId).toBe(draft.itemId);
++  expect(count(f.sql)).toBe(1);
++  const item = (await f.read(f.tripId))!.items[0];
++  expect(item.place).toMatchObject({
++    acceptedAddressLocality: "Nelson",
++    spatialProvenanceRefs: {
++      reviewed_at: "2026-10-20T00:00:00.000Z",
++      acceptance: "USER_CONFIRMED_SAVE",
++    },
++  });
++  expect(await repo.save(draft, input, request)).toEqual(saved);
++});
+--- a/src/domain/trip/tripCoreV2Day.ts
++++ b/src/domain/trip/tripCoreV2Day.ts
+@@ -20,6 +20,14 @@
+   authoredText?: string;
+   authoredAddress?: string;
+   acceptedAddress?: string;
++  authoredAddressLocality?: string;
++  authoredAddressRegion?: string;
++  authoredAddressCountry?: string;
++  acceptedAddressLocality?: string;
++  acceptedAddressRegion?: string;
++  acceptedAddressCountry?: string;
++  spatialProvenanceRefs?: Record<string, string>;
++  locationInputRevision?: number;
+   placeId?: string;
+   latitude?: number;
+   longitude?: number;
+@@ -87,6 +95,14 @@
+     authored_text: "authoredText",
+     authored_address: "authoredAddress",
+     accepted_address: "acceptedAddress",
++    authored_address_locality: "authoredAddressLocality",
++    authored_address_region: "authoredAddressRegion",
++    authored_address_country: "authoredAddressCountry",
++    accepted_address_locality: "acceptedAddressLocality",
++    accepted_address_region: "acceptedAddressRegion",
++    accepted_address_country: "acceptedAddressCountry",
++    spatial_provenance_refs: "spatialProvenanceRefs",
++    location_input_revision: "locationInputRevision",
+     accepted_place_id: "placeId",
+     accepted_latitude: "latitude",
+     accepted_longitude: "longitude",
+--- a/src/domain/trip/tripCoreV2Views.ts
++++ b/src/domain/trip/tripCoreV2Views.ts
+@@ -296,6 +296,7 @@
+       : {}),
+     status: item.status,
+     hidden: item.hidden_at !== null,
++    visibility: item.visibility,
+     localState,
+     participation: {
+       mode: item.participation_mode,
+--- a/src/features/day-feed/P3StayEditor.tsx
++++ b/src/features/day-feed/P3StayEditor.tsx
+@@ -34,6 +34,7 @@
+ import { P3StayLocationField } from "./P3StayLocationField";
+ import {
+   p3PlaceSelectionDraft,
++  currentP3PlaceSelection,
+   type P3PlaceSelectionDraft,
+ } from "./p3PlaceSelectionDraft";
+ 
+@@ -180,6 +181,7 @@
+   const busyRef = useRef(false);
+   const frozenRef = useRef(false);
+   const firstAttemptRef = useRef<ManualStayFields | null>(null);
++  const firstPlaceAttemptRef = useRef<P3PlaceSelectionDraft | null>(null);
+   const unavailableRef = useRef(false);
+   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
+     opened ? "READY" : "LOADING",
+@@ -282,6 +284,14 @@
+       !manualStayFieldsSchema.safeParse(fieldsRef.current).success
+     )
+       return;
++    if (firstAttemptRef.current === null)
++      firstPlaceAttemptRef.current = currentP3PlaceSelection(selectedPlaceDraft.current, {
++        tripId,
++        itemId: source.draft.itemId,
++        accountGeneration: generation,
++        inputRevision: locationInputRevision.current,
++        location: fieldsRef.current.location,
++      });
+     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
+     firstAttemptRef.current = attempt;
+     busyRef.current = true;
+@@ -290,7 +300,13 @@
+     setFrozen(true);
+     setStatus("READY");
+     try {
+-      const result = await source.repository.save(source.draft, attempt);
++      const placeAttempt = firstPlaceAttemptRef.current;
++      const result = placeAttempt
++        ? await source.repository.save(source.draft, attempt, {
++            intent: "ACCEPT_SELECTED_APPLE_PLACE_V1",
++            draft: placeAttempt,
++          })
++        : await source.repository.save(source.draft, attempt);
+       if (current()) onSaved(result.itemId);
+     } catch (error) {
+       if (current()) {
+--- a/src/features/day-feed/LocalCoreItemPreview.test.ts
++++ b/src/features/day-feed/LocalCoreItemPreview.test.ts
+@@ -48,6 +48,7 @@
+     description,
+     status: "PLANNED",
+     hidden: false,
++    visibility: "PRIVATE",
+     localState: "PENDING",
+     participation: { mode: "WHOLE_GROUP", personIds: [] },
+     schedule: { shape: "POINT" },
+--- /dev/null
++++ b/src/features/day-feed/dayHeaderDestinationRead.ts
+@@ -0,0 +1,116 @@
++import type { createTripDayFeedReader } from "@/data/repositories/tripDayFeedRepository";
++import type { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
++import { validateCalendarDate } from "@/domain/trip/dayReadModel";
++import {
++  unresolvedDayHeaderDestination,
++  type DayHeaderDestination,
++} from "./dayHeaderPresentation";
++
++type Item = NonNullable<ReturnType<typeof projectCoreItem>>;
++type Read = Awaited<ReturnType<ReturnType<typeof createTripDayFeedReader>["trip"]>>;
++export type DayHeaderDestinationRead = {
++  tripId: string;
++  accountId: string;
++  generation: number;
++  items: readonly Item[];
++};
++export function dayHeaderDestinationRead(
++  read: Read | null,
++): DayHeaderDestinationRead | null {
++  if (!read) return null;
++  const tripId = read.observed?.projection.tripId ?? read.localManual?.scope.tripId;
++  if (!tripId) return null;
++  const local = read.localManual?.items ?? [],
++    localIds = new Set(local.map((item) => item.itemId));
++  const accepted =
++    read.observed?.projection.version === 2 ? read.observed.projection.items : [];
++  return {
++    ...read.scope,
++    tripId,
++    items: [...accepted.filter((item) => !localIds.has(item.itemId)), ...local],
++  };
++}
++type Area = { identity: string; label: string };
++function acceptedArea(item: Item): Area | null {
++  const place = item.place,
++    refs = place?.spatialProvenanceRefs;
++  // Coordinates qualify navigation, not a city; only the reviewed owning input can qualify these fields.
++  if (
++    !place ||
++    refs?.source !== "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1" ||
++    refs.acceptance !== "USER_CONFIRMED_SAVE" ||
++    !Number.isSafeInteger(place.locationInputRevision) ||
++    refs.input_revision !== String(place.locationInputRevision)
++  )
++    return null;
++  const locality = place.acceptedAddressLocality?.trim(),
++    region = place.acceptedAddressRegion?.trim(),
++    country = place.acceptedAddressCountry?.trim();
++  if (!country || (!locality && !region)) return null;
++  return {
++    identity: JSON.stringify([country, region ?? null, locality ?? null]),
++    label: locality || region!,
++  };
++}
++export function resolveDayHeaderDestination(
++  read: DayHeaderDestinationRead,
++  date: string,
++): DayHeaderDestination {
++  try {
++    validateCalendarDate(date);
++  } catch {
++    return unresolvedDayHeaderDestination;
++  }
++  const stays = read.items.flatMap((item) => {
++    if (
++      item.tripId !== read.tripId ||
++      item.family !== "P3" ||
++      item.hidden ||
++      ["cancelled", "skipped"].includes(String(item.status)) ||
++      item.visibility !== "GROUP" ||
++      item.participation.mode !== "WHOLE_GROUP"
++    )
++      return [];
++    const schedule = item.schedule as {
++      start?: { localDate?: string };
++      end?: { localDate?: string };
++    };
++    const start = schedule.start?.localDate,
++      end = schedule.end?.localDate;
++    try {
++      validateCalendarDate(start!);
++      validateCalendarDate(end!);
++    } catch {
++      return [];
++    }
++    if (!start || !end || start > date || end < date || end < start) return [];
++    return [{ start, end, area: acceptedArea(item) }];
++  });
++  // No fabricated explicit-Day, transport-Journey order or confirmed-activity port.
++  if (!stays.length || stays.some((stay) => !stay.area))
++    return unresolvedDayHeaderDestination;
++  const places = new Map(stays.map((stay) => [stay.area!.identity, stay.area!]));
++  const single = (area: Area): DayHeaderDestination => ({
++    kind: "single",
++    source: "stay",
++    label: area.label,
++  });
++  if (places.size === 1) return single(places.values().next().value!);
++  const departures = stays.filter((stay) => stay.start < date && stay.end === date);
++  const arrivals = stays.filter((stay) => stay.start === date && stay.end > date);
++  if (departures.length + arrivals.length !== stays.length)
++    return unresolvedDayHeaderDestination;
++  const from = new Map(departures.map((stay) => [stay.area!.identity, stay.area!]));
++  const to = new Map(arrivals.map((stay) => [stay.area!.identity, stay.area!]));
++  if (from.size !== 1 || to.size !== 1) return unresolvedDayHeaderDestination;
++  const origin = from.values().next().value!,
++    destination = to.values().next().value!;
++  // The approved bilingual route separator formats business place labels, not inferred movement.
++  return origin.identity === destination.identity
++    ? single(origin)
++    : {
++        kind: "route",
++        source: "stay",
++        label: [origin.label, destination.label].join(" → "),
++      };
++}
+--- /dev/null
++++ b/src/features/day-feed/dayHeaderDestinationRead.test.ts
+@@ -0,0 +1,151 @@
++import { expect, it } from "vitest";
++import {
++  dayHeaderDestinationRead,
++  resolveDayHeaderDestination,
++} from "./dayHeaderDestinationRead";
++const none = { kind: "unresolved", label: null, source: "none" };
++const stay = (
++  id = "stay",
++  start = "2026-10-27",
++  end = "2026-10-30",
++  city = "Nelson",
++  region = "Nelson",
++) =>
++  ({
++    itemId: id,
++    tripId: "trip",
++    family: "P3",
++    title: "SkyCity Hotel",
++    itemRevision: 1,
++    hidden: false,
++    status: "planned",
++    visibility: "GROUP",
++    participation: { mode: "WHOLE_GROUP", personIds: [] },
++    schedule: { start: { localDate: start }, end: { localDate: end } },
++    place: {
++      qualification: "QUALIFIED",
++      latitude: 1,
++      longitude: 2,
++      acceptedAddressLocality: city,
++      acceptedAddressRegion: region,
++      acceptedAddressCountry: "New Zealand",
++      locationInputRevision: 1,
++      spatialProvenanceRefs: {
++        source: "MANUAL_USER_REVIEWED_APPLE_SELECTION_V1",
++        acceptance: "USER_CONFIRMED_SAVE",
++        input_revision: "1",
++      },
++    },
++  }) as any;
++const read = (items: any[]) => ({
++  tripId: "trip",
++  accountId: "viewer",
++  generation: 1,
++  items,
++});
++it.each(["2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"])(
++  "uses only a qualified covering Stay, including empty nights and checkout base: %s",
++  (date) => {
++    expect(resolveDayHeaderDestination(read([stay()]), date)).toEqual({
++      kind: "single",
++      source: "stay",
++      label: "Nelson",
++    });
++  },
++);
++it("does not extend a Stay to unrelated empty days", () => {
++  expect(resolveDayHeaderDestination(read([stay()]), "2026-10-31")).toEqual(none);
++});
++it("resolves same-day check-out/check-in with verified different identities and collapses the same city", () => {
++  const from = stay("first", "2026-10-26", "2026-10-28", "Auckland", "Auckland"),
++    to = stay("second", "2026-10-28", "2026-10-30");
++  expect(resolveDayHeaderDestination(read([from, to]), "2026-10-28")).toEqual({
++    kind: "route",
++    source: "stay",
++    label: "Auckland → Nelson",
++  });
++  expect(
++    resolveDayHeaderDestination(
++      read([to, stay("third", "2026-10-26", "2026-10-28")]),
++      "2026-10-28",
++    ),
++  ).toEqual({ kind: "single", source: "stay", label: "Nelson" });
++});
++it("keeps overlapping conflicting cities unresolved, including homonyms in different regions", () => {
++  expect(
++    resolveDayHeaderDestination(
++      read([stay(), stay("other", "2026-10-27", "2026-10-30", "Auckland", "Auckland")]),
++      "2026-10-28",
++    ),
++  ).toEqual(none);
++  expect(
++    resolveDayHeaderDestination(
++      read([
++        stay("a", undefined, undefined, "Springfield", "Illinois"),
++        stay("b", undefined, undefined, "Springfield", "Massachusetts"),
++      ]),
++      "2026-10-28",
++    ),
++  ).toEqual(none);
++});
++it("never promotes POI/address text, draft metadata or stale geography", () => {
++  const qualified = stay();
++  for (const place of [
++    {
++      qualification: "QUALIFIED",
++      authoredLabel: "Nelson Airport",
++      acceptedAddress: "Nelson, New Zealand",
++      latitude: 1,
++      longitude: 2,
++    },
++    {
++      ...qualified.place,
++      spatialProvenanceRefs: {
++        ...qualified.place.spatialProvenanceRefs,
++        acceptance: "UNACCEPTED_PROVIDER_DRAFT",
++      },
++    },
++    { ...qualified.place, locationInputRevision: 2 },
++    { ...qualified.place, acceptedAddressCountry: undefined },
++  ])
++    expect(
++      resolveDayHeaderDestination(read([{ ...qualified, place }]), "2026-10-28"),
++    ).toEqual(none);
++});
++it("does not leak private, selected-member, hidden, cancelled or foreign Trip places into the Header", () => {
++  for (const change of [
++    { visibility: "PRIVATE" },
++    { visibility: "SELECTED_PERSONS" },
++    { participation: { mode: "SELF" } },
++    { participation: { mode: "SELECTED_MEMBERS" } },
++    { hidden: true },
++    { status: "cancelled" },
++    { tripId: "foreign" },
++  ])
++    expect(
++      resolveDayHeaderDestination(read([{ ...stay(), ...change }]), "2026-10-28"),
++    ).toEqual(none);
++});
++it("uses region only when its accepted country-qualified locality is absent", () => {
++  const item = stay();
++  delete item.place.acceptedAddressLocality;
++  expect(resolveDayHeaderDestination(read([item]), "2026-10-28")).toEqual({
++    kind: "single",
++    source: "stay",
++    label: "Nelson",
++  });
++});
++it("overlays by stable Item ID, keeps viewer scope and has no cross-Account derived cache", () => {
++  const old = stay(),
++    current = stay();
++  current.place.acceptedAddressLocality = "Auckland";
++  const result = dayHeaderDestinationRead({
++    scope: { tripId: "trip", accountId: "viewer", generation: 2 },
++    observed: { projection: { version: 2, tripId: "trip", items: [old] } },
++    localManual: { items: [current] },
++  } as any)!;
++  expect(result.items).toEqual([current]);
++  expect(result.generation).toBe(2);
++  expect(resolveDayHeaderDestination(result, "2026-10-28").label).toBe("Auckland");
++  expect(resolveDayHeaderDestination(read([]), "2026-10-28")).toEqual(none);
++});
+--- a/src/features/day-feed/TripDayHeading.tsx
++++ b/src/features/day-feed/TripDayHeading.tsx
+@@ -1,13 +1,24 @@
+-import { useCallback, useEffect, useSyncExternalStore } from "react";
++import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+ import { dayHeaderStylePreference } from "@/native/dayHeaderStylePreference";
+ import { DayFeedFidelityHeading } from "./DayFeedFidelityHeading";
+ import { unresolvedDayHeaderDestination } from "./dayHeaderPresentation";
++import {
++  resolveDayHeaderDestination,
++  type DayHeaderDestinationRead,
++} from "./dayHeaderDestinationRead";
++import { useUiLocale } from "@/ui/useUiLocale";
++import {
++  getAccountGeneration,
++  subscribeAccountGeneration,
++} from "@/data/auth/accountGeneration";
+ 
+ export function TripDayHeading({
+   tripId,
++  destinationRead,
+   ...props
+ }: {
+   tripId: string;
++  destinationRead?: DayHeaderDestinationRead | null;
+ } & Omit<
+   Parameters<typeof DayFeedFidelityHeading>[0],
+   "styleMode" | "destination" | "onCycleStyle"
+@@ -18,6 +29,21 @@
+   );
+   const snapshot = useCallback(() => dayHeaderStylePreference.get(tripId), [tripId]);
+   const styleMode = useSyncExternalStore(subscribe, snapshot, snapshot);
++  const generation = useSyncExternalStore(
++    subscribeAccountGeneration,
++    getAccountGeneration,
++    getAccountGeneration,
++  );
++  const locale = useUiLocale();
++  const destination = useMemo(() => {
++    // Locale is an explicit cache fence; accepted business labels remain original.
++    void locale;
++    return destinationRead &&
++      destinationRead.tripId === tripId &&
++      destinationRead.generation === generation
++      ? resolveDayHeaderDestination(destinationRead, props.date)
++      : unresolvedDayHeaderDestination;
++  }, [destinationRead, tripId, props.date, generation, locale]);
+   useEffect(() => {
+     void dayHeaderStylePreference.hydrate(tripId);
+   }, [tripId]);
+@@ -25,7 +51,7 @@
+     <DayFeedFidelityHeading
+       {...props}
+       styleMode={styleMode}
+-      destination={unresolvedDayHeaderDestination}
++      destination={destination}
+       onCycleStyle={() => {
+         void dayHeaderStylePreference.cycle(tripId);
+       }}
+--- a/src/features/day-feed/TripScreen.tsx
++++ b/src/features/day-feed/TripScreen.tsx
+@@ -9,6 +9,7 @@
+ import type { Trip } from "@/domain/trip/types";
+ import { ManualItineraryContent } from "./ManualItineraryContent";
+ import { TripDayHeading } from "./TripDayHeading";
++import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
+ import { p1InsertionTime } from "./p1InsertionTime";
+ import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+ import {
+@@ -63,6 +64,7 @@
+   useCallback,
+   useEffect,
+   useLayoutEffect,
++  useMemo,
+   useRef,
+   useState,
+   useSyncExternalStore,
+@@ -352,6 +354,10 @@
+       trip.localManual?.scope.tripId === requested)
+       ? trip
+       : null;
++  const headerDestinationRead = useMemo(
++    () => dayHeaderDestinationRead(visibleTrip),
++    [visibleTrip],
++  );
+   const homePerspective = referenceTripHomePerspective(
+     visibleTrip,
+     params.homeQaScenario,
+@@ -1598,6 +1604,7 @@
+                     >
+                       <TripDayHeading
+                         tripId={requested}
++                        destinationRead={headerDestinationRead}
+                         date={date}
+                         start={dayFacts.startDate!}
+                         today={appearanceToday ?? ""}
+--- a/src/features/day-feed/TripScreen.homeWidgets.test.ts
++++ b/src/features/day-feed/TripScreen.homeWidgets.test.ts
+@@ -127,6 +127,7 @@
+ vi.mock("react", async (original) => ({
+   ...(await original<typeof import("react")>()),
+   useSyncExternalStore: () => state.renderedGeneration,
++  useMemo: (calculate: () => unknown) => calculate(),
+   useCallback: (callback: unknown, deps: readonly unknown[]) => {
+     const i = state.callbackCursor++;
+     const previous = state.callbacks[i];

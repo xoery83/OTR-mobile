@@ -1,0 +1,70 @@
+{
+  "observedAt": "2026-10-24T18:31:19.398958+00:00",
+  "environment": {
+    "kill": true,
+    "version": 1
+  },
+  "grants": [
+    {
+      "actor_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "admin_grant_id": "c9dc16ce-2ccd-4bc2-9b3f-100839ef8a08",
+      "created_at": "2026-10-24T17:08:09+00:00",
+      "created_by": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "environment": "DEV",
+      "expires_at": "2026-10-24T18:34:24+00:00",
+      "grant_revision": 8,
+      "permission": "CONFIG_ADMIN",
+      "revoked_at": "2026-10-24T18:29:39.088148+00:00"
+    },
+    {
+      "actor_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "admin_grant_id": "1e8a72aa-3832-4031-bdab-5bd2c471b73f",
+      "created_at": "2026-10-24T17:08:09+00:00",
+      "created_by": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "environment": "DEV",
+      "expires_at": "2026-10-24T18:34:24+00:00",
+      "grant_revision": 8,
+      "permission": "SECURITY_ADMIN",
+      "revoked_at": "2026-10-24T18:29:39.095881+00:00"
+    }
+  ],
+  "integrationCount": 0,
+  "proof": [
+    {
+      "lifecycle": "ACTIVE",
+      "materialRevision": 1,
+      "operationId": "14b1f067-40bd-492c-973a-4d126d378faf",
+      "operationSha256": "93021303a1d92e4770314eb5af82cf3cea77f6deb0adc1344b8f8811094758dd",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "representationId": "934f9157-7702-44b0-aa6d-65081c4d837c",
+      "resultSha256": "cb53de14be7603014286a4ef60e519fc1ca7c862859b7ab49db1b5efc06b54e8",
+      "sourceId": "b17adf6c-d7b6-4cfa-9af2-0201025d7849",
+      "sourceRevision": 1
+    },
+    {
+      "lifecycle": "ACTIVE",
+      "materialRevision": 1,
+      "operationId": "2f0bb9b8-f38d-4d3b-b14c-ea5a88e26184",
+      "operationSha256": "27f50931ea158269e76a907f74658642097cb9e1be0a294ec45c9698fdf0f324",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "representationId": "b6469013-35df-4b95-b2dc-e8a57d6da2f7",
+      "resultSha256": "669ec68ac52aa0d4638b67ed5828038833e53c83dc63f84ef261f45ffbf2ec02",
+      "sourceId": "0562c0b1-83af-4945-8ce9-9df2c66ebb27",
+      "sourceRevision": 1
+    },
+    {
+      "lifecycle": "ACTIVE",
+      "materialRevision": 1,
+      "operationId": "c06d4bcf-0372-47a4-b3b8-490a49c5f958",
+      "operationSha256": "f782c6e7b5c950af7f4efa02d00035a151dae99b5b03a897536d7b0d67bcaff7",
+      "outcome": "APPLIED",
+      "phase": "FINAL",
+      "representationId": "63beacf3-0c63-4ed8-a2ce-639dafa73d71",
+      "resultSha256": "aac46048831ebb82eac5b5410091195cc5092ef7ff2b8646714bb3bd3033606f",
+      "sourceId": "56d7c073-8235-47c9-a3c3-81c7d2c6ad99",
+      "sourceRevision": 1
+    }
+  ]
+}

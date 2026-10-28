@@ -1,0 +1,20 @@
+test_failed_sql_never_restores_other_scope (control_test.Tests.test_failed_sql_never_restores_other_scope) ... ok
+test_inactive_plan_cannot_activate (control_test.Tests.test_inactive_plan_cannot_activate) ... ok
+test_manifest_pins_recovery_and_scope (control_test.Tests.test_manifest_pins_recovery_and_scope) ... ok
+test_strict_closed_boolean (control_test.Tests.test_strict_closed_boolean) ... ok
+test_termination_precedes_gate_update_and_only_two_roles (control_test.Tests.test_termination_precedes_gate_update_and_only_two_roles) ... ok
+test_inflight_activation_cannot_land_after_verified_restore (service_race_test.Tests.test_inflight_activation_cannot_land_after_verified_restore) ... ok
+test_lock_timeout_is_reconcile_not_success (service_race_test.Tests.test_lock_timeout_is_reconcile_not_success) ... ok
+test_waiting_activation_rechecks_expiry_after_restore_lock (service_race_test.Tests.test_waiting_activation_rechecks_expiry_after_restore_lock) ... ok
+test_actual_activation_waits_lock_then_rejects_expired_without_compose (service_test.Tests.test_actual_activation_waits_lock_then_rejects_expired_without_compose) ... ok
+test_diagnostic_failure_not_pass (service_test.Tests.test_diagnostic_failure_not_pass) ... ok
+test_exact_mounts_and_runtime_then_restore (service_test.Tests.test_exact_mounts_and_runtime_then_restore) ... ok
+test_http_health_failure_not_pass (service_test.Tests.test_http_health_failure_not_pass) ... ok
+test_persist_failure_still_restores_but_cannot_pass (service_test.Tests.test_persist_failure_still_restores_but_cannot_pass) ... ok
+test_same_count_wrong_target_fails (service_test.Tests.test_same_count_wrong_target_fails) ... ok
+test_stopped_candidate_captured_before_restore_without_preexec (service_test.Tests.test_stopped_candidate_captured_before_restore_without_preexec) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.493s
+
+OK

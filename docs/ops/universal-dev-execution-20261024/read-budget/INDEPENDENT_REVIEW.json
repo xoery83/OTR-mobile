@@ -1,0 +1,24 @@
+{
+  "status": "BOUNDED_QA_BUDGET_PREPARATION_REVIEW_PASS_NOT_ACTIVATED",
+  "findings": [],
+  "rootHEAD": "c37212e60a9a7376053d3784049d01229b3905e6",
+  "binding": "Dirty four-file delta pinned below",
+  "independentTest": "15/15 tests PASS across two files; configLoader runner --no-cache",
+  "confirmed": [
+    "POST exact Source result route reserves same synchronous durable read ledger before HTTP; acquire excluded and has no newly granted allowance.",
+    "Cold ledger accepts POST entries only for redacted exact Source result path; no IDs/body/token stored in quota entries.",
+    "136 maximum remains dormant: same fixed runId, matching explicit ledger.maximum and >=72 retained valid entries required; old72/missing/empty ledger or env-only change fail closed.",
+    "Exhaustion/corruption/write-readback failure stops before network; existing account/generation, request cap, authority and Source contracts unchanged."
+  ],
+  "limits": [
+    "No actual quota metadata/env update, network, AD5 or DEV action performed by reviewer.",
+    "Actual Operator extension must independently prove first72 entry byte/value preservation and current exhausted ledger identity; client cannot infer historical prefix provenance after trusted filesystem edits.",
+    "Owner budget remains separately gated; code support for136 is not authorization to extend/reset existing allowance."
+  ],
+  "sha256": {
+    "src/data/api/nativeQaReadBudget.ts": "3310c9a7b2dc9be90faaae92d29242df96cdffc1fd95fc42c461097adf9e7646",
+    "src/data/api/nativeQaReadBudget.test.ts": "da543a8b8e66f04a1032b4c09fb6785c1455d1d6f73edeafe114591cbc0d5d88",
+    "src/data/api/universalOriginalSourceTransport.ts": "83c62966b00e9de753ff5086a725fa62027c9e3fffcc567a5cba36ed05f6e07e",
+    "src/data/api/universalOriginalSourceTransport.test.ts": "794c5f49cdbc6e2058f19ae471115ab4fa51c83025c831bf0eedd68e1fdb5980"
+  }
+}

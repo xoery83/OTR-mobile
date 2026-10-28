@@ -1,0 +1,174 @@
+{
+  "utc": "2026-10-24T09:28:19.342298+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "readOnly": true,
+  "sqlSHA256": "a31826f3577e78a4cde12b3c278e309667252b37ba6fcabb2f06bbebdd96b14f",
+  "exitCode": 0,
+  "result": {
+    "rows": [
+      {
+        "qualification": {
+          "check_1": [
+            {
+              "current_database": "postgres",
+              "current_user": "postgres",
+              "version": "PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit"
+            }
+          ],
+          "check_10": [],
+          "check_11": [],
+          "check_2": [
+            {
+              "body_md5": "03f32879084ffeed49cc0dcc459e941e",
+              "function_name": "external_integration_mark_dispatch(jsonb,jsonb)",
+              "owner": "otr_external_integration_meter_writer",
+              "proacl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_call_gateway=X/otr_external_integration_meter_writer}",
+              "proconfig": [
+                "search_path=pg_catalog"
+              ],
+              "prosecdef": true
+            },
+            {
+              "body_md5": "32715f0c32706e72dff21eb03fe2db32",
+              "function_name": "trip_source_command_codec(text)",
+              "owner": "postgres",
+              "proacl": "{postgres=X/postgres,otr_trip_source_writer=X/postgres}",
+              "proconfig": [
+                "search_path=pg_catalog"
+              ],
+              "prosecdef": false
+            },
+            {
+              "body_md5": "6dd198b593f24571d494f3cd27dc7bc3",
+              "function_name": "trip_source_read_import_catalogs(uuid,uuid)",
+              "owner": "otr_trip_source_writer",
+              "proacl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer,otr_trip_publication_catalog_reader=X/otr_trip_source_writer}",
+              "proconfig": [
+                "search_path=pg_catalog"
+              ],
+              "prosecdef": true
+            },
+            {
+              "body_md5": "0a350c6e55e425dbd6c225a26fb3fd76",
+              "function_name": "trip_source_register(text,uuid,text)",
+              "owner": "postgres",
+              "proacl": "{postgres=X/postgres,otr_trip_source_writer=X/postgres}",
+              "proconfig": [
+                "search_path=pg_catalog"
+              ],
+              "prosecdef": false
+            }
+          ],
+          "check_3": [
+            {
+              "rolbypassrls": false,
+              "rolcanlogin": true,
+              "rolconnlimit": 1,
+              "rolcreatedb": false,
+              "rolcreaterole": false,
+              "rolname": "otr_trip_publication_catalog_reader",
+              "rolsuper": false,
+              "rolvaliduntil": "2027-01-09T02:03:36.084144+00:00"
+            },
+            {
+              "rolbypassrls": false,
+              "rolcanlogin": false,
+              "rolconnlimit": -1,
+              "rolcreatedb": false,
+              "rolcreaterole": false,
+              "rolname": "otr_external_integration_meter_writer",
+              "rolsuper": false,
+              "rolvaliduntil": null
+            },
+            {
+              "rolbypassrls": false,
+              "rolcanlogin": false,
+              "rolconnlimit": -1,
+              "rolcreatedb": false,
+              "rolcreaterole": false,
+              "rolname": "otr_trip_source_writer",
+              "rolsuper": false,
+              "rolvaliduntil": null
+            },
+            {
+              "rolbypassrls": false,
+              "rolcanlogin": false,
+              "rolconnlimit": -1,
+              "rolcreatedb": false,
+              "rolcreaterole": false,
+              "rolname": "otr_external_integration_reader",
+              "rolsuper": false,
+              "rolvaliduntil": null
+            },
+            {
+              "rolbypassrls": false,
+              "rolcanlogin": false,
+              "rolconnlimit": -1,
+              "rolcreatedb": false,
+              "rolcreaterole": false,
+              "rolname": "otr_external_integration_call_gateway",
+              "rolsuper": false,
+              "rolvaliduntil": null
+            },
+            {
+              "rolbypassrls": false,
+              "rolcanlogin": false,
+              "rolconnlimit": -1,
+              "rolcreatedb": false,
+              "rolcreaterole": false,
+              "rolname": "otr_trip_source_command_gateway",
+              "rolsuper": false,
+              "rolvaliduntil": "2026-10-18T18:50:15.058+00:00"
+            }
+          ],
+          "check_4": [
+            {
+              "existing_relation": null,
+              "name": "trip_source_universal_scope"
+            },
+            {
+              "existing_relation": null,
+              "name": "universal_import_provider_scope"
+            },
+            {
+              "existing_relation": "trip_source_runs",
+              "name": "trip_source_runs"
+            },
+            {
+              "existing_relation": null,
+              "name": "model_task_admissions"
+            },
+            {
+              "existing_relation": "external_integration_calls",
+              "name": "external_integration_calls"
+            }
+          ],
+          "check_5": [],
+          "check_6": [
+            {
+              "has_public_create": false,
+              "rolname": "otr_external_integration_meter_writer"
+            },
+            {
+              "has_public_create": false,
+              "rolname": "otr_trip_source_writer"
+            },
+            {
+              "has_public_create": false,
+              "rolname": "otr_external_integration_reader"
+            }
+          ],
+          "check_7": [
+            {
+              "environment": "DEV",
+              "kill_switch": true
+            }
+          ],
+          "check_8": [],
+          "check_9": []
+        }
+      }
+    ]
+  },
+  "errorCodes": []
+}

@@ -1,0 +1,21 @@
+{
+  "status": "BOUNDED_MODEL_TASK_DEPENDENCY_WRAPPER_REVIEW_PASS_NOT_DEV_INSTALLED",
+  "findings": [],
+  "fixedHashes": {
+    "supabase/migrations/20261012000100_model_task_protected_admission.sql": "efee375bec1da7c12d33e7d7994d8983ad9fb32ba7851a56cc4f82b550d65e94",
+    "backend/sql/universal_model_task_dependency_candidate.sql": "5366c24291c3df8426cb350e7c1b428630e2906d6629d8e64f35d0ce26695576",
+    "scripts/import-workbench/prepare-universal-model-task-dependency.py": "f7e494310b629f95d1054ebf052f69ce264e12402d6ee4049dd4766722d7a131",
+    "scripts/import-workbench/universal-model-task-dependency-acceptance.py": "59cb87d910c3744852ade7ee506cb87b33a3dd398f6be4de8f51b4041e049bc1"
+  },
+  "independentValidation": [
+    "Exact original transaction bytes reconstruct after removing only the preflight and membership-restore wrapper; owning function bodies unchanged.",
+    "Network-none disposable PG acceptance independently rerun: all7 checks PASS.",
+    "Actual observed dual-grantor fixture preserves roleid/member/grantor/admin/inherit/set tuples.",
+    "Unknown root rejects atomically before table install or edge changes; reapply rejects unchanged.",
+    "Temporary CREATE removed, empty admission FORCE RLS retained, public/anon/authenticated/service_role/authenticator no table rights, DEV kill=true/runtime=false retained."
+  ],
+  "boundaryAnalysis": "Fixed source hash and exact foundation roots gate the install. Membership snapshot includes all grantors; restore changes only current postgres grantor edge and full tuple comparison fails transaction if any other edge changes. No new runtime activation, role LOGIN, admin assignment, Source or Provider operation.",
+  "evidenceLevel": "Local isolated SQL contract/compatibility only; not DEV installation or Universal execution.",
+  "remaining": "Needs explicit exact dormant dependency installation authority and actual postimage/ACL receipt; other ModelTask/Universal configuration/price/key/kill/runtime prerequisites remain separately gated.",
+  "reviewerOperations": "Local filesystem comparison and isolated PG only. No DEV, GUI, Provider, Auth or protected Source write."
+}

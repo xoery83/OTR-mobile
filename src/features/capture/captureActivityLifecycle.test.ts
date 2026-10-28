@@ -2,6 +2,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { CaptureActivity } from "./CaptureActivity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
+// Native diagnostic controls are outside this UI lifecycle suite.
+vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
 const ui = vi.hoisted(() => ({
   slots: [] as unknown[],
   cursor: 0,

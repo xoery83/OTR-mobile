@@ -1,0 +1,20 @@
+{
+  "sha": "f7bb2ab3e8263cb29e7fc8d7ef0715277b93acdd",
+  "parent": "1e079389da1a62e6cdf3074b1bbacb3fd5a87ea6",
+  "status": "PASS_BOUNDED_LOCAL_L2",
+  "findings": [],
+  "tests": {
+    "existingClientAndBoundedTests": 27,
+    "withReviewerUnknownTransportMessageNegative": 28,
+    "files": 2
+  },
+  "scope": [
+    "Only bounded catch diagnostic metadata; original ApiClientError instance/code mapping and RequestBoundaryError conversion retained.",
+    "Extra server diagnostic code is finite allowlist only; body, headers, Bearer token, error.details, unknown error message not included. UUID path components masked and query omitted.",
+    "No request/retry/stream/body-limit/session behavior changed.",
+    "Existing ordinary-request logging is unchanged and not broadly re-audited."
+  ],
+  "DEV": false,
+  "NativeGUI": false,
+  "remaining": "Actual AD5 diagnosis and Backend/Supabase acceptance remain Root work; diagnostics are not sync-success evidence."
+}

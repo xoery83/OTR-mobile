@@ -1,0 +1,10 @@
+{
+  "startsAt": "2026-10-24T22:37:36Z",
+  "innerExpiresAt": "2026-10-24T22:47:36Z",
+  "outerExpiresAt": "2026-10-24T22:52:36Z",
+  "operator": "Unified Coordinator",
+  "closeOwner": "independent universal_watchdog.py",
+  "planSHA256": "d3bb1d304530e14cebbb073a2cb4af7aee675830c18e82c07a61deea58370a29",
+  "windowId": "0e31f8663ba5579a48ab481832996ebb189928d3754778daec1bc5b42f866787",
+  "status": "SEALED_NOT_ACTIVATED"
+}

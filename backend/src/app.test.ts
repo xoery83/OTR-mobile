@@ -2662,3 +2662,16 @@ describe("Expense consistency v2 HTTP contract", () => {
     expect(gateway.resolveExpenseConflictChain).not.toHaveBeenCalled();
   });
 });
+
+it("Manual Flight enrichment is authenticated, Trip scoped and default closed", async () => {
+  const { gateway } = createGateway();
+  const handler = createDevBackendHandler({ gateway });
+  const path = `http://localhost/v1/trips/${tripId}/flight-enrichment`;
+  expect((await handler(new Request(path + "/capabilities"))).status).toBe(401);
+  const headers = { Authorization: "Bearer valid-token" };
+  const capability = await handler(new Request(path + "/capabilities", { headers }));
+  expect(capability.status).toBe(200);
+  expect(await capability.json()).toEqual({ version: "otr-flight-enrichment/1", enabled: false });
+  expect((await handler(new Request(path, { method: "POST", headers, body: "{}" }))).status).toBe(503);
+  expect(gateway.canReadTrip).toHaveBeenCalledWith(userId, tripId);
+});

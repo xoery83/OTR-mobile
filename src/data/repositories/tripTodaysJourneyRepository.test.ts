@@ -1,7 +1,10 @@
 import { expect, it, vi } from "vitest";
 import { createTripTodaysJourneyReader } from "./tripTodaysJourneyRepository";
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
-import { getAccountGeneration } from "../auth/accountGeneration";
+import {
+  getAccountGeneration,
+  advanceAccountGeneration,
+} from "../auth/accountGeneration";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
@@ -16,13 +19,13 @@ const source = {
   participatingRosterHash: "roster",
   manifestSha256: "manifest",
 };
-function setup() {
+function setup(coreGeneration = getAccountGeneration(), localUnavailable = false) {
   let active = "actor";
   let projection = {
     version: 2,
     accountId: active,
     tripId,
-    generation: getAccountGeneration(),
+    generation: coreGeneration,
     source,
     events: [],
     items: [],
@@ -41,6 +44,11 @@ function setup() {
   const days = createTripDayFeedReader({
     account,
     projection: async () => null,
+    localManual: localUnavailable
+      ? async () => {
+          throw new Error("LOCAL_READ_UNAVAILABLE");
+        }
+      : undefined,
     coreProjection: async () => ({ projection, sourceStatus: status }) as never,
     candidates: async () => [],
     services: async () => ({}),
@@ -80,4 +88,29 @@ it("fails closed for stale, missing zone, switched account and changed source at
   expect(await b.reader.read(tripId, { ...clock, zone: null })).toBeNull();
   b.revoke();
   await expect(b.reader.read(tripId, clock)).rejects.toThrow("DAY_FEED_SCOPE");
+});
+
+it("reads an accepted Core certificate whose generation differs from the Auth session", async () => {
+  const { reader } = setup(getAccountGeneration() + 70);
+  const result = await reader.read(tripId, clock);
+  expect(result?.scope.generation).toBe(getAccountGeneration());
+  expect(result?.today.date).toBe("2027-02-06");
+});
+it("rejects a saved Today tap after the Auth generation changes", async () => {
+  const { reader, resolveItem } = setup();
+  const expected = (await reader.read(tripId, clock))!;
+  advanceAccountGeneration();
+  expect(await reader.resolveItem(tripId, "item", expected, clock)).toBeNull();
+  expect(resolveItem).not.toHaveBeenCalled();
+});
+
+it("accepted planning day stays useful without guessing today, but failed local read cannot become an empty day", async () => {
+  const clock = { now: "2027-02-05T23:00:00Z", zone: null, planningDate: "2027-02-06" };
+  const result = await setup().reader.read(tripId, clock);
+  expect(result?.today).toMatchObject({
+    date: "2027-02-06",
+    zone: null,
+    primaryKind: "FREE",
+  });
+  expect(await setup(getAccountGeneration(), true).reader.read(tripId, clock)).toBeNull();
 });

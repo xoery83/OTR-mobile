@@ -1,0 +1,187 @@
+--- a/src/data/repositories/manualPlanRepository.ts
++++ b/src/data/repositories/manualPlanRepository.ts
+@@ -1,5 +1,6 @@
+ import { z } from "zod";
+ import { createUuid } from "@/domain/localId";
++import { appleSelectedPlaceDraftSchema, type AppleSelectedPlaceDraft } from "../places/appleSelectedPlaceDraft";
+ import {
+   coreDefaults,
+   coreParticipationSchema,
+@@ -130,7 +131,7 @@
+     itemId: string,
+     expectedRevision?: number,
+   ): Promise<ManualItemDraft<F>>;
+-  save(draft: ManualItemDraft<F>, fields: F): Promise<ManualPlanSaveResult>;
++  save(draft: ManualItemDraft<F>, fields: F, placeDraft?: AppleSelectedPlaceDraft): Promise<ManualPlanSaveResult>;
+ };
+ type DraftState = {
+   context: AccountRequestContext;
+@@ -139,7 +140,7 @@
+   revision: number | null;
+   original: ManualItemFields;
+   ids: string[];
+-  attempt?: { fields: string; commands: Command[] };
++  attempt?: { fields: string; placeDraft: string; commands: Command[] };
+ };
+ function fieldsFor(
+   row: Record<string, unknown>,
+@@ -476,6 +477,7 @@
+     async save(
+       draft: ManualItemDraft,
+       input: ManualItemFields,
++      selectedPlaceDraft?: AppleSelectedPlaceDraft,
+     ): Promise<ManualPlanSaveResult> {
+       const state = drafts.get(draft);
+       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
+@@ -493,6 +495,14 @@
+         throw new Error("MANUAL_RENTAL_PARTICIPATION_UNAVAILABLE");
+       fields.participation.people.sort();
+       fields.location = fields.location || null;
++      const placeDraft = selectedPlaceDraft === undefined ? null : appleSelectedPlaceDraftSchema.parse(selectedPlaceDraft);
++      if (placeDraft && (family !== "P3" || placeDraft.binding.tripId !== state.context.tripId ||
++          placeDraft.binding.itemId !== draft.itemId || placeDraft.binding.accountGeneration !== state.context.generation ||
++          placeDraft.binding.location !== fields.location))
++        throw new Error("MANUAL_PLACE_DRAFT_BINDING");
++      const placeDraftText = json(placeDraft);
++      if (state.attempt && state.attempt.placeDraft !== placeDraftText)
++        throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
+       const fieldsText = json(fields);
+       if (state.attempt && state.attempt.fields !== fieldsText)
+         throw new Error("MANUAL_PLAN_DRAFT_FROZEN");
+@@ -560,6 +570,24 @@
+           Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+         );
+         place.authored_label = fields.location || null;
++        if (placeDraft) {
++          const parts = placeDraft.addressComponents;
++          place.authored_address = placeDraft.binding.location;
++          place.authored_address_locality = parts?.locality ?? null;
++          place.authored_address_region = parts?.administrativeArea ?? null;
++          place.authored_address_country = parts?.country ?? null;
++          const priorInput = row?.location_input_revision;
++          place.location_input_revision = typeof priorInput === "number" ? priorInput + 1 : 1;
++          place.spatial_provenance_refs = {
++            source: "APPLE_USER_SELECTED_DRAFT",
++            acceptance: "UNACCEPTED_PROVIDER_DRAFT",
++            provider: "apple",
++            input_revision: String(place.location_input_revision),
++            ...(placeDraft.providerPlaceId ? { provider_place_id: placeDraft.providerPlaceId } : {}),
++            ...(parts?.countryCode ? { provider_country_code: parts.countryCode } : {}),
++          };
++          // No accepted_* field, coordinate, Place identity or timezone is promoted here.
++        }
+         const storedStay = snapshot.graph.trip_stay_details.find(
+           (r) => r.event_id === draft.itemId,
+         );
+@@ -664,7 +692,7 @@
+               schedule.end = coreStoredBoundary(row!, "end");
+             payloads.push({ command: "SET_ITEM_SCHEDULE", payload: { schedule } });
+           }
+-          if (fields.location !== state.original.location)
++          if (fields.location !== state.original.location || placeDraft)
+             payloads.push({ command: "SET_ITEM_PLACE", payload: { place } });
+           if (json(fields.participation) !== json(state.original.participation))
+             payloads.push({
+@@ -731,7 +759,7 @@
+         });
+         if (state.attempt && json(state.attempt.commands) !== json(commands))
+           throw new Error("MANUAL_PLAN_RETRY_MISMATCH");
+-        state.attempt = { fields: fieldsText, commands };
++        state.attempt = { fields: fieldsText, placeDraft: placeDraftText, commands };
+         return {
+           commands,
+           result: async () => {
+--- a/src/features/day-feed/P3StayEditor.tsx
++++ b/src/features/day-feed/P3StayEditor.tsx
+@@ -34,6 +34,7 @@
+ import { P3StayLocationField } from "./P3StayLocationField";
+ import {
+   p3PlaceSelectionDraft,
++  currentP3PlaceSelection,
+   type P3PlaceSelectionDraft,
+ } from "./p3PlaceSelectionDraft";
+ 
+@@ -180,6 +181,7 @@
+   const busyRef = useRef(false);
+   const frozenRef = useRef(false);
+   const firstAttemptRef = useRef<ManualStayFields | null>(null);
++  const firstPlaceAttemptRef = useRef<P3PlaceSelectionDraft | null>(null);
+   const unavailableRef = useRef(false);
+   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
+     opened ? "READY" : "LOADING",
+@@ -282,6 +284,11 @@
+       !manualStayFieldsSchema.safeParse(fieldsRef.current).success
+     )
+       return;
++    if (firstAttemptRef.current === null)
++      firstPlaceAttemptRef.current = currentP3PlaceSelection(selectedPlaceDraft.current, {
++        tripId, itemId: source.draft.itemId, accountGeneration: generation,
++        inputRevision: locationInputRevision.current, location: fieldsRef.current.location,
++      });
+     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
+     firstAttemptRef.current = attempt;
+     busyRef.current = true;
+@@ -290,7 +297,10 @@
+     setFrozen(true);
+     setStatus("READY");
+     try {
+-      const result = await source.repository.save(source.draft, attempt);
++      const placeAttempt = firstPlaceAttemptRef.current;
++      const result = placeAttempt
++        ? await source.repository.save(source.draft, attempt, placeAttempt)
++        : await source.repository.save(source.draft, attempt);
+       if (current()) onSaved(result.itemId);
+     } catch (error) {
+       if (current()) {
+--- a/src/domain/trip/tripCoreV2Day.ts
++++ b/src/domain/trip/tripCoreV2Day.ts
+@@ -20,6 +20,14 @@
+   authoredText?: string;
+   authoredAddress?: string;
+   acceptedAddress?: string;
++  authoredAddressLocality?: string;
++  authoredAddressRegion?: string;
++  authoredAddressCountry?: string;
++  acceptedAddressLocality?: string;
++  acceptedAddressRegion?: string;
++  acceptedAddressCountry?: string;
++  spatialProvenanceRefs?: Record<string, string>;
++  locationInputRevision?: number;
+   placeId?: string;
+   latitude?: number;
+   longitude?: number;
+@@ -87,6 +95,14 @@
+     authored_text: "authoredText",
+     authored_address: "authoredAddress",
+     accepted_address: "acceptedAddress",
++    authored_address_locality: "authoredAddressLocality",
++    authored_address_region: "authoredAddressRegion",
++    authored_address_country: "authoredAddressCountry",
++    accepted_address_locality: "acceptedAddressLocality",
++    accepted_address_region: "acceptedAddressRegion",
++    accepted_address_country: "acceptedAddressCountry",
++    spatial_provenance_refs: "spatialProvenanceRefs",
++    location_input_revision: "locationInputRevision",
+     accepted_place_id: "placeId",
+     accepted_latitude: "latitude",
+     accepted_longitude: "longitude",
+--- a/src/domain/trip/tripCoreV2Views.ts
++++ b/src/domain/trip/tripCoreV2Views.ts
+@@ -296,6 +296,7 @@
+       : {}),
+     status: item.status,
+     hidden: item.hidden_at !== null,
++    visibility: item.visibility,
+     localState,
+     participation: {
+       mode: item.participation_mode,
+--- a/src/features/day-feed/LocalCoreItemPreview.test.ts
++++ b/src/features/day-feed/LocalCoreItemPreview.test.ts
+@@ -48,6 +48,7 @@
+     description,
+     status: "PLANNED",
+     hidden: false,
++    visibility: "PRIVATE",
+     localState: "PENDING",
+     participation: { mode: "WHOLE_GROUP", personIds: [] },
+     schedule: { shape: "POINT" },

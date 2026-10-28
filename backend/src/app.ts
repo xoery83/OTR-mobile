@@ -11,6 +11,8 @@ import {
   universalOriginalSourceBoundary,
   createUniversalOriginalSourceConnection,
 } from "./universalOriginalSource";
+import { createFlightEnrichmentBoundary } from "./flight-enrichment/hostBoundary";
+import type { createFlightEnrichmentService } from "./flight-enrichment/service";
 import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
 import { universalBoundary, type UniversalPort } from "./universalImport";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
@@ -643,6 +645,8 @@ export type BackendDependencies = {
   universalOriginalSourcePort?: ReturnType<
     typeof createUniversalOriginalSourceConnection
   >;
+  flightEnrichmentService?: ReturnType<typeof createFlightEnrichmentService>;
+  flightEnrichmentEnabled?: boolean;
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
@@ -2403,6 +2407,8 @@ export function createDevBackendHandler({
   tripPersonCloudCreatePort,
   universalImportPort,
   universalRuntimeForRequest,
+  flightEnrichmentService,
+  flightEnrichmentEnabled = false,
   universalOriginalSourcePort,
   captureMaterialCustody,
   tripCreatePort,
@@ -2496,6 +2502,28 @@ export function createDevBackendHandler({
     try {
       const url = new URL(request.url);
       if (
+        /^\/v1\/trips\/[^/]+\/flight-enrichment(?:\/capabilities)?$/.test(url.pathname)
+      ) {
+        route = "/v1/trips/:tripId/flight-enrichment";
+        response = (await createFlightEnrichmentBoundary({
+          service: flightEnrichmentService,
+          enabled: flightEnrichmentEnabled,
+          resolve: async (req, tripId) => {
+            const actor = await authorizeRead(req, gateway, tripId);
+            return {
+              accountId: actor.id,
+              actorId: actor.id,
+              tripId,
+              authFence: requestId,
+              assertCurrent: async () => {
+                req.signal.throwIfAborted();
+                const current = await authorizeRead(req, gateway, tripId);
+                if (current.id !== actor.id) throw new Error("ENRICHMENT_AUTH_CHANGED");
+              },
+            };
+          },
+        })(request))!;
+      } else if (
         /^\/v2\/capture-jobs\/[^/]+\/inputs\/[^/]+\/processing\/[^/]+$/.test(url.pathname)
       ) {
         route = "/v2/capture-jobs/:jobId/inputs/:inputId/processing/:taskId";

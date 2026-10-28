@@ -6,23 +6,21 @@ import type { createCaptureSubmissionRepository } from "../repositories/captureS
 import type { createLocalCaptureInboxRepository } from "../repositories/localCaptureInboxRepository";
 import type { CaptureCustodyTransport } from "../api/captureCustodyTransport";
 import {
-  captureCustodyBindingSchema,
+  captureMaterialBindingSchema,
   captureCustodyMedia,
   captureCustodyBindingJson,
   assertCaptureCustodyBytes,
 } from "@/domain/capture/captureCustody";
 
 export function createCaptureCustodyOperation(deps: {
-  submissions: Pick<
-    ReturnType<typeof createCaptureSubmissionRepository>,
-    "reopen"
-  >;
+  submissions: Pick<ReturnType<typeof createCaptureSubmissionRepository>, "reopen">;
   inbox: Pick<
     ReturnType<typeof createLocalCaptureInboxRepository>,
     "getForSourceHandoff"
   >;
   transport: CaptureCustodyTransport;
   getAccountId(): Promise<string>;
+  bindingVersion?: 1 | 2;
 }) {
   async function original(
     context: AccountRequestContext,
@@ -35,9 +33,7 @@ export function createCaptureCustodyOperation(deps: {
     const input = job.inputs.find((item) => item.id === inputId);
     if (!input || input.state !== "ACCEPTED" || !input.captureId)
       throw new Error("CAPTURE_CUSTODY_INPUT_UNAVAILABLE");
-    const { capture, bytes } = await deps.inbox.getForSourceHandoff(
-      input.captureId,
-    );
+    const { capture, bytes } = await deps.inbox.getForSourceHandoff(input.captureId);
     await assertAccountRequestContext(context, deps.getAccountId);
     if (
       capture.accountId !== context.accountId ||
@@ -45,11 +41,20 @@ export function createCaptureCustodyOperation(deps: {
       capture.revision !== input.captureRevision ||
       capture.payloadId !== input.payloadId ||
       capture.sha256 !== input.contentSha256 ||
-      capture.byteCount !== input.contentByteCount
+      capture.byteCount !== input.contentByteCount ||
+      capture.kind !== input.kind ||
+      capture.originalFilename !== input.originalFilename
     )
       throw new Error("CAPTURE_CUSTODY_INPUT_STALE");
-    const binding = captureCustodyBindingSchema.parse({
-      version: 1,
+    const binding = captureMaterialBindingSchema.parse({
+      version: deps.bindingVersion ?? 1,
+      ...(deps.bindingVersion === 2
+        ? {
+            acquisitionSource: input.acquisitionSource,
+            originalFilename: input.originalFilename,
+            kind: input.kind,
+          }
+        : {}),
       accountId: context.accountId,
       batchId: job.batch.batchId,
       jobId,
@@ -60,7 +65,12 @@ export function createCaptureCustodyOperation(deps: {
       captureRevision: capture.revision,
       sha256: capture.sha256,
       byteCount: capture.byteCount,
-      mediaType: captureCustodyMedia(bytes),
+      mediaType:
+        deps.bindingVersion === 2 &&
+        (input.kind === "TEXT" ||
+          (input.kind === "FILE" && input.declaredContentType === "text/plain"))
+          ? "text/plain"
+          : captureCustodyMedia(bytes),
     });
     return { binding, bytes };
   }
@@ -84,11 +94,8 @@ export function createCaptureCustodyOperation(deps: {
     return bytes;
   }
   return {
-    binding: async (
-      context: AccountRequestContext,
-      jobId: string,
-      inputId: string,
-    ) => (await original(context, jobId, inputId)).binding,
+    binding: async (context: AccountRequestContext, jobId: string, inputId: string) =>
+      (await original(context, jobId, inputId)).binding,
     put: (context: AccountRequestContext, jobId: string, inputId: string) =>
       run(context, jobId, inputId, true),
     recover: (context: AccountRequestContext, jobId: string, inputId: string) =>

@@ -1,0 +1,20 @@
+{
+  "status": "ACTUAL_DORMANT_GUARD_INSTALL_RECEIPTS_INDEPENDENT_REVIEW_PASS",
+  "findings": [],
+  "evidence": "Root actual DEV receipts read offline; reviewer did not execute DEV",
+  "confirmed": [
+    "CandidateSHA511825eea1c1d601d49e243e68edab5bae07dcf8100cf64ea499e3a55d0838f5 matches reviewed fixed SQL.",
+    "Prebody116a2da66b315366c59dc56649ed4686\u2192postbodybbee177305b76f119becaf150af8e5cd matches independent prior computation.",
+    "Function owner/ACL/invoker/config identical, all grantor edges incloids/options identical, schemaCREATEfalse.",
+    "Closed finite scopes, gateway rolesNOLOGIN, sessionsabsent recorded true."
+  ],
+  "limits": [
+    "Installation receipt sourceAcquisitions/runBegins/providerCalls0 denotes this installation action; does not erase earlier Source acquisition history.",
+    "No Run/Task/AI success inferred. Same-ID attempt3 remains conditional on authoritative currentabsence+priorquiescence, unchanged identity/hash/caps, current authorized window and UNKNOWN no-retry rule."
+  ],
+  "sha256": {
+    "RUN_GUARD_PREINSTALL_READBACK.json": "b6983b21574fbcb44a3f990c2a5865478500039efd5f612ceac65d403ec5672c",
+    "RUN_GUARD_POSTINSTALL_READBACK.json": "8579a3114ded4de7d88d6d9d91c7b144ab11874341daad765f1100f87838d14d",
+    "ACTUAL_RUN_GUARD_INSTALLATION.json": "4bdd6e7eee195fd8fa9705dc94cb9feedf7facd3e405faa13de68e76ded502dc"
+  }
+}

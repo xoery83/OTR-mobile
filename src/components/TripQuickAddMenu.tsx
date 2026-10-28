@@ -1,10 +1,16 @@
+import { ManualItineraryContent } from "@/features/day-feed/ManualItineraryContent";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 import { readCaptureTripPrior } from "@/features/capture/captureTripPrior";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
@@ -48,6 +54,7 @@ export function TripQuickAddMenu({
   date,
   showDate,
   itinerary,
+  onManualSaved,
   photos,
   expense,
   capture,
@@ -57,6 +64,7 @@ export function TripQuickAddMenu({
   date?: string;
   showDate: boolean;
   itinerary?: (date: string | null) => void;
+  onManualSaved?: (itemId: string) => void;
   photos?: () => void;
   expense: (date: string | null) => void;
   capture?: () => void;
@@ -65,6 +73,15 @@ export function TripQuickAddMenu({
   useUiLocale();
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+  );
+  const [manual, setManual] = useState(false);
+  const [openedScope, setOpenedScope] = useState<{
+    tripId: string;
+    generation: number;
+  } | null>(null);
   const [visible, setVisible] = useState(false),
     [suggested, setSuggested] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -72,6 +89,17 @@ export function TripQuickAddMenu({
   const [expenseReady, setExpenseReady] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
   const request = useRef(0);
+  const openedContext = useRef<{ tripId: string; generation: number } | null>(null);
+  const manualDismiss = useRef<(() => void) | null>(null);
+  const current = () =>
+    openedContext.current?.tripId === tripId &&
+    openedContext.current.generation === getAccountGeneration();
+  const registerDismissHandler = (handler: () => void) => {
+    manualDismiss.current = handler;
+    return () => {
+      if (manualDismiss.current === handler) manualDismiss.current = null;
+    };
+  };
   useLayoutEffect(
     () => () => {
       request.current += 1;
@@ -80,11 +108,18 @@ export function TripQuickAddMenu({
   );
   const close = () => {
     request.current += 1;
+    openedContext.current = null;
+    setOpenedScope(null);
+    manualDismiss.current = null;
     setVisible(false);
     setPickerOpen(false);
+    setManual(false);
   };
   const open = async () => {
     const ticket = ++request.current;
+    openedContext.current = { tripId, generation };
+    setOpenedScope({ tripId, generation });
+    setManual(false);
     setSuggested(validSuggestedDate(date ?? "") ?? "");
     setExpenseReady(false);
     setCaptureReady(false);
@@ -111,11 +146,20 @@ export function TripQuickAddMenu({
     }
   };
   const invoke = (action: (() => void) | undefined) => {
-    if (!action) return;
+    if (!action || !current()) return;
     close();
     action();
   };
+  const largeText = useWindowDimensions().fontScale > 2;
   const knownDate = validSuggestedDate(suggested);
+  const dateLabel = knownDate
+    ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : t("actionIsland.selectDate");
   return (
     <>
       <Pressable
@@ -128,133 +172,250 @@ export function TripQuickAddMenu({
       >
         <AppIcon size={visual.bottomShell.icon} name="plus" color={colors.accent} />
       </Pressable>
-      <Modal visible={visible} onRequestClose={close} animationType="slide">
-        <SafeAreaProvider style={styles.body}>
-          <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.body}>
-            <SheetHeader
-              title={t("actionIsland.addToTrip")}
-              leftLabel={t("common.cancel")}
-              onLeft={close}
-              safeTop={false}
+      <Modal
+        visible={
+          visible &&
+          openedScope?.tripId === tripId &&
+          openedScope?.generation === generation
+        }
+        onRequestClose={() => {
+          if (manualDismiss.current) manualDismiss.current();
+          else close();
+        }}
+        animationType="slide"
+        transparent
+        presentationStyle="overFullScreen"
+      >
+        <SafeAreaProvider style={styles.modalHost}>
+          {manual &&
+          onManualSaved &&
+          openedScope?.tripId === tripId &&
+          openedScope?.generation === generation ? (
+            <ManualItineraryContent
+              key={`${tripId}:${generation}`}
+              tripId={tripId}
+              generation={generation}
+              initialDate={showDate ? knownDate : null}
+              onClose={close}
+              registerDismissHandler={registerDismissHandler}
+              onSaved={(id) => {
+                if (!current()) return;
+                close();
+                onManualSaved(id);
+              }}
             />
-            <ScrollView contentContainerStyle={styles.content}>
-              {showDate ? (
-                <View style={styles.dates}>
-                  <UiText style={styles.heading}>
-                    {t("actionIsland.suggestedDate")}
-                  </UiText>
+          ) : (
+            <View style={styles.backdrop}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("common.close")}
+                style={StyleSheet.absoluteFill}
+                onPress={close}
+              />
+              <SafeAreaView edges={["bottom", "left", "right"]} style={styles.menuSheet}>
+                <SheetHeader
+                  category="action"
+                  surface="background"
+                  title={t("actionIsland.addToTrip")}
+                  leftLabel={t("common.cancel")}
+                  onLeft={close}
+                  safeTop={false}
+                />
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  style={styles.menuScroll}
+                  contentContainerStyle={styles.content}
+                >
+                  {showDate ? (
+                    <View style={[styles.dates, !largeText && styles.tightDates]}>
+                      <View style={styles.dateRow}>
+                        {([-1, 0, 1] as const).map((direction) =>
+                          direction === 0 ? (
+                            <Pressable
+                              key={direction}
+                              accessibilityRole="button"
+                              accessibilityLabel={t("quickAdd.selectedDay")}
+                              accessibilityValue={{ text: dateLabel }}
+                              style={styles.dateTarget}
+                              onPress={() => {
+                                setPickerValue(
+                                  knownDate
+                                    ? new Date(
+                                        +knownDate.slice(0, 4),
+                                        +knownDate.slice(5, 7) - 1,
+                                        +knownDate.slice(8, 10),
+                                        12,
+                                      )
+                                    : new Date(),
+                                );
+                                setPickerOpen(true);
+                              }}
+                            >
+                              <UiText style={styles.meta}>{dateLabel}</UiText>
+                            </Pressable>
+                          ) : (
+                            <Pressable
+                              key={direction}
+                              accessibilityRole="button"
+                              accessibilityLabel={t(
+                                direction === -1
+                                  ? "actionIsland.previousDate"
+                                  : "actionIsland.nextDate",
+                              )}
+                              accessibilityState={{ disabled: !knownDate }}
+                              disabled={!knownDate}
+                              onPress={() =>
+                                setSuggested(
+                                  shiftSuggestedDate(suggested, direction) ?? "",
+                                )
+                              }
+                              style={styles.dateArrow}
+                            >
+                              <AppIcon
+                                name={direction === -1 ? "chevron.left" : "chevron.right"}
+                                size={12}
+                                color={knownDate ? colors.textSecondary : colors.disabled}
+                              />
+                            </Pressable>
+                          ),
+                        )}
+                      </View>
+                      {pickerOpen ? (
+                        <View>
+                          <UiDatePicker
+                            value={pickerValue}
+                            mode="date"
+                            display="spinner"
+                            accessibilityLabel={t("actionIsland.suggestedDate")}
+                            onChange={(_, value) => {
+                              if (value) setPickerValue(value);
+                            }}
+                          />
+                          <UiButton
+                            label={t("common.done")}
+                            onPress={() => {
+                              setSuggested(
+                                [
+                                  pickerValue.getFullYear(),
+                                  String(pickerValue.getMonth() + 1).padStart(2, "0"),
+                                  String(pickerValue.getDate()).padStart(2, "0"),
+                                ].join("-"),
+                              );
+                              setPickerOpen(false);
+                            }}
+                          />
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
                   <UiFormRow
-                    label={t("actionIsland.suggestedDate")}
-                    value={
-                      knownDate
-                        ? formatUiDate(new Date(`${knownDate}T12:00:00Z`), {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            timeZone: "UTC",
-                          })
-                        : t("actionIsland.selectDate")
+                    variant="action"
+                    compact
+                    value={t(
+                      captureReady
+                        ? "quickAdd.importHint"
+                        : "actionIsland.tripCaptureUnavailable",
+                    )}
+                    label={t("actionIsland.importPlans")}
+                    leading={
+                      <View style={styles.icon}>
+                        <AppIcon
+                          name="doc.badge.arrow.up"
+                          size={26}
+                          color={colors.accent}
+                        />
+                      </View>
                     }
-                    onPress={() => {
-                      setPickerValue(
-                        knownDate
-                          ? new Date(
-                              +knownDate.slice(0, 4),
-                              +knownDate.slice(5, 7) - 1,
-                              +knownDate.slice(8, 10),
-                              12,
-                            )
-                          : new Date(),
-                      );
-                      setPickerOpen(true);
-                    }}
-                  />
-                  {pickerOpen ? (
-                    <View>
-                      <UiDatePicker
-                        value={pickerValue}
-                        mode="date"
-                        display="spinner"
-                        accessibilityLabel={t("actionIsland.suggestedDate")}
-                        onChange={(_, value) => {
-                          if (value) setPickerValue(value);
-                        }}
+                    trailing={
+                      <AppIcon
+                        name="chevron.right"
+                        size={16}
+                        color={colors.textSecondary}
                       />
-                      <UiButton
-                        label={t("common.done")}
+                    }
+                    disabled={!capture || !captureReady}
+                    onPress={() => invoke(capture)}
+                  />
+                  <View style={styles.grid}>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        compact
+                        value={t("quickAdd.itineraryHint")}
+                        label={t("quickAdd.itinerary")}
+                        leading={
+                          <View style={styles.icon}>
+                            <AppIcon
+                              name="calendar.badge.plus"
+                              size={22}
+                              color={colors.accent}
+                            />
+                          </View>
+                        }
+                        disabled={
+                          (!itinerary && !onManualSaved) || (showDate && !knownDate)
+                        }
                         onPress={() => {
-                          setSuggested(
-                            [
-                              pickerValue.getFullYear(),
-                              String(pickerValue.getMonth() + 1).padStart(2, "0"),
-                              String(pickerValue.getDate()).padStart(2, "0"),
-                            ].join("-"),
-                          );
-                          setPickerOpen(false);
+                          if (!current()) return;
+                          if (onManualSaved) setManual(true);
+                          else invoke(itinerary ? () => itinerary(knownDate) : undefined);
                         }}
                       />
                     </View>
-                  ) : null}
-                  <View style={styles.arrows}>
-                    <UiButton
-                      variant="text"
-                      label={t("actionIsland.previousDate")}
-                      disabled={!knownDate}
-                      onPress={() =>
-                        setSuggested(shiftSuggestedDate(suggested, -1) ?? "")
-                      }
-                    />
-                    <UiButton
-                      variant="text"
-                      label={t("actionIsland.nextDate")}
-                      disabled={!knownDate}
-                      onPress={() => setSuggested(shiftSuggestedDate(suggested, 1) ?? "")}
-                    />
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        compact
+                        value={t("quickAdd.expenseHint")}
+                        label={t("quickAdd.expense")}
+                        leading={
+                          <View style={styles.expenseIcon}>
+                            <AppIcon name="banknote" size={22} color={colors.warning} />
+                          </View>
+                        }
+                        disabled={!expenseReady || (showDate && !knownDate)}
+                        onPress={() => invoke(() => expense(knownDate))}
+                      />
+                    </View>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        compact
+                        value={t("quickAdd.membersHint")}
+                        label={t("quickAdd.member")}
+                        leading={
+                          <View style={styles.icon}>
+                            <AppIcon
+                              name="person.badge.plus"
+                              size={22}
+                              color={colors.textSecondary}
+                            />
+                          </View>
+                        }
+                        disabled
+                        onPress={() => {}}
+                      />
+                    </View>
+                    <View style={styles.tile}>
+                      <UiFormRow
+                        variant="action"
+                        compact
+                        value={t("quickAdd.photosHint")}
+                        label={t("quickAdd.photos")}
+                        leading={
+                          <View style={styles.icon}>
+                            <AppIcon name="photo" size={22} color={colors.accent} />
+                          </View>
+                        }
+                        disabled={!photos}
+                        onPress={() => invoke(photos)}
+                      />
+                    </View>
                   </View>
-                  <UiText style={styles.meta}>
-                    {t(knownDate ? "actionIsland.weakDate" : "actionIsland.selectDate")}
-                  </UiText>
-                </View>
-              ) : null}
-              <UiFormRow
-                value=""
-                label={t("actionIsland.importCapture")}
-                disabled={!capture || !captureReady}
-                onPress={() => invoke(capture)}
-              />
-              <UiText style={styles.meta}>
-                {t(
-                  captureReady
-                    ? "actionIsland.tripCapturePrior"
-                    : "actionIsland.tripCaptureUnavailable",
-                )}
-              </UiText>
-              <UiFormRow
-                value=""
-                label={t("actionIsland.itinerary")}
-                disabled={!itinerary || (showDate && !knownDate)}
-                onPress={() => invoke(itinerary ? () => itinerary(knownDate) : undefined)}
-              />
-              <UiFormRow
-                value=""
-                label={t("ledger.addExpense")}
-                disabled={!expenseReady || (showDate && !knownDate)}
-                onPress={() => invoke(() => expense(knownDate))}
-              />
-              <UiFormRow
-                value={t("cleanup.unavailable")}
-                label={t("actionIsland.member")}
-                disabled
-                onPress={() => {}}
-              />
-              <UiFormRow
-                value=""
-                label={t("tripPhotos.choose")}
-                disabled={!photos}
-                onPress={() => invoke(photos)}
-              />
-            </ScrollView>
-          </SafeAreaView>
+                </ScrollView>
+              </SafeAreaView>
+            </View>
+          )}
         </SafeAreaProvider>
       </Modal>
     </>
@@ -263,9 +424,55 @@ export function TripQuickAddMenu({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: c.background },
-    content: { padding: visual.space.page, gap: visual.space.card },
+    modalHost: { flex: 1 },
+    backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: c.overlay },
+    menuSheet: {
+      maxHeight: "90%",
+      backgroundColor: c.background,
+      borderTopLeftRadius: visual.radius.sheet,
+      borderTopRightRadius: visual.radius.sheet,
+      overflow: "hidden",
+    },
+    menuScroll: { flexGrow: 0, flexShrink: 1 },
+    content: { padding: visual.space.page, paddingTop: 0, gap: visual.space.heading },
     dates: { gap: visual.space.heading },
-    arrows: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
+    tightDates: { marginTop: -visual.space.page },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    tile: { flexBasis: "47%", flexGrow: 1 },
+    icon: {
+      width: 36,
+      minHeight: 36,
+      borderRadius: visual.radius.card,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.accentSurface,
+    },
+    expenseIcon: {
+      width: 36,
+      minHeight: 36,
+      borderRadius: visual.radius.card,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.warningSurface,
+    },
+    dateRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dateTarget: {
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+      flexShrink: 1,
+    },
+    dateArrow: {
+      minWidth: 44,
+      minHeight: 44,
+      borderRadius: visual.radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     heading: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
   });

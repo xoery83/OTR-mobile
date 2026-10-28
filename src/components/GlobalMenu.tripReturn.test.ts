@@ -7,21 +7,29 @@ const state = vi.hoisted(() => ({
   path: "/trip",
   actions: null as any,
   ref: { current: null as any },
+  requestRef: { current: 0 },
+  refCursor: 0,
+  setters: [] as any[],
+  stateCursor: 0,
   memo: [] as { deps: readonly unknown[]; value: unknown }[],
   cursor: 0,
   cleanup: null as null | (() => void),
   navigate: vi.fn(),
   alerts: vi.fn(),
+  readMembers: vi.fn(),
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useState: (value: unknown) => [value, vi.fn()],
+  useState: (value: unknown) => {
+    const i = state.stateCursor++;
+    return [value, (state.setters[i] ??= vi.fn())];
+  },
   useEffect: () => {},
   useLayoutEffect: (effect: () => (() => void) | void) => {
     state.cleanup?.();
     state.cleanup = effect() ?? null;
   },
-  useRef: () => state.ref,
+  useRef: () => (state.refCursor++ === 0 ? state.requestRef : state.ref),
   useSyncExternalStore: (_: unknown, get: () => unknown) => get(),
   useMemo: (make: () => unknown, deps: readonly unknown[]) => {
     const index = state.cursor++;
@@ -55,10 +63,18 @@ vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
 vi.mock("@/features/day-feed/TripViewContext", () => ({
   useTripView: () => ({ quickActions: state.actions }),
 }));
+vi.mock("@/features/day-feed/TripMembersSheet", () => ({
+  TripMembersSheet: "MembersSheet",
+}));
+vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
+  readTripPreparationSetupRepository: async () => ({ read: state.readMembers }),
+}));
 vi.mock("./AppNavigationMenu", () => ({ AppNavigationMenu: "Menu" }));
 const render = (module: GlobalMenuModule = "TRIP") => {
   state.cursor = 0;
-  return GlobalMenu({ module });
+  state.refCursor = 0;
+  state.stateCursor = 0;
+  return GlobalMenu({ module }).props.children[0];
 };
 const back = () =>
   (render().props.sections as any[][])
@@ -72,8 +88,15 @@ beforeEach(() => {
   state.memo = [];
   state.cleanup = null;
   state.ref.current = null;
+  state.requestRef.current = 0;
+  state.setters = [];
   state.navigate.mockReset();
   state.alerts.mockReset();
+  state.readMembers.mockReset();
+  state.readMembers.mockResolvedValue({
+    context: { tripId: "a", generation: 1 },
+    members: { state: "AVAILABLE", people: [] },
+  });
 });
 it("uses the existing Workspace return/dirty guard instead of bypassing it", () => {
   state.actions = { tripId: "a", generation: 1, backToTrips: vi.fn() };
@@ -146,4 +169,114 @@ it("unmounted Menu cannot navigate from a delayed return callback in the same ac
   state.cleanup?.();
   retained.onPress();
   expect(state.navigate).not.toHaveBeenCalled();
+});
+
+it("Native Home All Trips preserves the current owner guard across a hot cross-Trip sequence", () => {
+  for (const tripId of ["auckland", "nelson", "japan", "auckland"]) {
+    state.path = "/trip-home";
+    state.params = { tripId, view: "home" };
+    const backToTrips = vi.fn();
+    state.actions = { tripId, generation: 1, backToTrips };
+    back().onPress();
+    expect(backToTrips).toHaveBeenCalledOnce();
+    expect(state.navigate).not.toHaveBeenCalled();
+  }
+});
+
+it("Home and Day share the same scoped utility menu with disabled future Documents and Photos", () => {
+  const editTrip = vi.fn(),
+    chooseDay = vi.fn(),
+    members = vi.fn();
+  state.actions = { tripId: "a", generation: 1, editTrip, chooseDay, members };
+  for (const view of ["home", "day"]) {
+    state.params.view = view;
+    if (view === "day") state.actions = null; // Home focus cleanup unregisters its actions.
+    const items = (render().props.sections as any[][]).flat();
+    expect(
+      items.some((item) => ["tripHome.edit", "dayFeed.openDay"].includes(item.label)),
+    ).toBe(false);
+    expect(
+      items
+        .filter((item) => item.label.startsWith("tripHome."))
+        .map((item) => item.label),
+    ).toEqual(["tripHome.members", "tripHome.documents", "tripHome.photos"]);
+    for (const label of ["tripHome.documents", "tripHome.photos"]) {
+      const item = items.find((entry) => entry.label === label);
+      expect(item.disabled).toBe(true);
+      item.onPress();
+    }
+  }
+  expect(editTrip).not.toHaveBeenCalled();
+  expect(chooseDay).not.toHaveBeenCalled();
+});
+
+it("reads Members through the owning reader after Home actions unmount, with stale account callbacks fenced", async () => {
+  state.params.view = "day";
+  state.actions = null;
+  const items = (render().props.sections as any[][]).flat();
+  const entry = items.find((item) => item.label === "tripHome.members");
+  entry.onPress();
+  await vi.waitFor(() => expect(state.readMembers).toHaveBeenCalledWith("a"));
+  state.readMembers.mockClear();
+  state.generation = 2;
+  entry.onPress();
+  await Promise.resolve();
+  expect(state.readMembers).not.toHaveBeenCalled();
+});
+
+it("drops delayed member reads after route changes and closes stale sheets on A to B to A", async () => {
+  let resolve!: (value: any) => void;
+  state.readMembers.mockReturnValue(
+    new Promise((done) => {
+      resolve = done;
+    }),
+  );
+  const entry = (render().props.sections as any[][])
+    .flat()
+    .find((item) => item.label === "tripHome.members");
+  entry.onPress();
+  await vi.waitFor(() => expect(state.readMembers).toHaveBeenCalledOnce());
+  state.params = { tripId: "b", view: "day" };
+  render();
+  state.params = { tripId: "a", view: "day" };
+  render();
+  await Promise.resolve();
+  for (const setter of state.setters) setter.mockClear();
+  resolve({
+    context: { tripId: "a", generation: 1 },
+    members: { state: "AVAILABLE", people: [] },
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  for (const setter of state.setters) expect(setter).not.toHaveBeenCalled();
+});
+
+it("closing or unmounting invalidates an in-flight member read", async () => {
+  for (const interrupt of ["close", "unmount"] as const) {
+    let resolve!: (value: any) => void;
+    state.readMembers.mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      }),
+    );
+    state.cursor = state.refCursor = state.stateCursor = 0;
+    const tree = GlobalMenu({ module: "TRIP" });
+    const children = tree.props.children;
+    children[0].props.sections
+      .flat()
+      .find((item: any) => item.label === "tripHome.members")
+      .onPress();
+    await Promise.resolve();
+    await Promise.resolve();
+    if (interrupt === "close") children[1].props.onClose();
+    else state.cleanup?.();
+    for (const setter of state.setters) setter.mockClear();
+    resolve({
+      context: { tripId: "a", generation: 1 },
+      members: { state: "AVAILABLE", people: [] },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    for (const setter of state.setters) expect(setter).not.toHaveBeenCalled();
+  }
 });

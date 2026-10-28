@@ -119,6 +119,24 @@ describe("default bootstrap sync", () => {
     expect(mocks.discover).toHaveBeenCalledOnce();
     expect(mocks.runSync).toHaveBeenCalledBefore(mocks.discover);
   });
+  it.each(["{", "expired-scope"])(
+    "keeps account-wide discovery and maintenance closed whenever a finite QA selector is present: %s",
+    async (scope) => {
+      vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", scope);
+      try {
+        const { defaultBootstrapDependencies } =
+          await import("./defaultBootstrapDependencies");
+        await defaultBootstrapDependencies.resumeSync!();
+        await defaultBootstrapDependencies.scheduleHealth!();
+        expect(mocks.runSync).toHaveBeenCalledTimes(1);
+        expect(mocks.discover).not.toHaveBeenCalled();
+        expect(mocks.refreshJourney).not.toHaveBeenCalled();
+        expect(mocks.scheduleHealth).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    },
+  );
 
   it("coalesces foreground and Ledger refresh-before-sync work", async () => {
     const { resumeOperationalSync } = await import("./defaultBootstrapDependencies");

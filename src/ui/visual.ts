@@ -1,8 +1,35 @@
 export const visual = {
-  radius: { hero: 18, card: 14, control: 10, pill: 999 },
-  space: { page: 16, section: 24, heading: 9, card: 12, row: 14 },
+  radius: {
+    feedFocus: 13,
+    association: 17,
+    hero: 18,
+    card: 14,
+    control: 10,
+    sheet: 26,
+    pill: 999,
+  },
+  space: { feedGutter: 21, page: 16, section: 24, heading: 9, card: 12, row: 14 },
   bottomShell: { height: 60, icon: 24, gap: 4 },
   type: {
+    feedTitle: { fontSize: 15, fontWeight: "600" as const, lineHeight: 20 },
+    feedClock: {
+      fontSize: 13,
+      fontWeight: "700" as const,
+      fontVariant: ["tabular-nums"] as ["tabular-nums"],
+    },
+    feedEndClock: {
+      fontSize: 11,
+      fontWeight: "400" as const,
+      fontVariant: ["tabular-nums"] as ["tabular-nums"],
+    },
+    feedTag: { fontSize: 11, fontWeight: "600" as const, lineHeight: 14.3 },
+    feedNote: { fontSize: 12, fontWeight: "400" as const, lineHeight: 17.4 },
+    immersiveTitle: {
+      fontSize: 29,
+      fontWeight: "700" as const,
+      lineHeight: 34,
+      letterSpacing: -0.725,
+    },
     navigation: { fontSize: 11, fontWeight: "600" as const },
     tripSectionLabel: { fontSize: 13, fontWeight: "500" as const },
     tripRowTitle: { fontSize: 16, fontWeight: "600" as const },

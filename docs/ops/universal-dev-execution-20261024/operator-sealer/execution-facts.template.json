@@ -1,0 +1,15 @@
+{
+  "integrationId": null,
+  "configVersion": 2,
+  "configurationSha256": null,
+  "providerConfigId": null,
+  "priceScheduleId": null,
+  "providerId": "DeepSeek",
+  "modelId": "deepseek-flash",
+  "modelVersion": "DeepSeek-V4.1-Flash",
+  "adapterVersion": null,
+  "region": "CN",
+  "route": "DIRECT",
+  "startsAt": null,
+  "expiresAt": null
+}

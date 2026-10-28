@@ -1,0 +1,344 @@
+import { randomUUID } from "node:crypto";
+import { expect, it, vi } from "vitest";
+import {
+  advanceAccountGeneration,
+  getAccountGeneration,
+} from "../auth/accountGeneration";
+import {
+  createApplePlaceProvider,
+  normalizePlaceQuery,
+  type ApplePlaceNative,
+} from "./applePlaceProvider";
+function fixture() {
+  let current = true;
+  const row = {
+    provider: "apple",
+    handle: randomUUID(),
+    kind: "mapItem",
+    title: "Sky Tower",
+    secondary: "Auckland",
+    address: "Victoria Street, Auckland",
+    point: { latitude: -36.848, longitude: 174.762 },
+  };
+  const reply = (input: Record<string, unknown>, rows = [row]) => ({
+    provider: "apple",
+    status: "READY",
+    sessionId: input.sessionId,
+    requestId: input.requestId,
+    generation: input.generation,
+    candidates: rows,
+  });
+  const native = {
+    complete: vi.fn(async (i: Record<string, unknown>) => reply(i)),
+    search: vi.fn(async (i: Record<string, unknown>) => reply(i)),
+    resolve: vi.fn(async (i: Record<string, unknown>) => reply(i)),
+    cancel: vi.fn(),
+  } satisfies ApplePlaceNative;
+  const provider = createApplePlaceProvider(native, {
+    accountId: randomUUID(),
+    tripId: randomUUID(),
+    editorId: randomUUID(),
+    accountGeneration: getAccountGeneration(),
+    isCurrent: () => current,
+  });
+  return {
+    native,
+    provider,
+    row,
+    reply,
+    invalidate: () => {
+      current = false;
+    },
+  };
+}
+it("reuses frozen normalization without changing authored text", () => {
+  expect(normalizePlaceQuery("  ２９５ Sandy Bay–Marahau  Road ")).toMatchObject({
+    original: "  ２９５ Sandy Bay–Marahau  Road ",
+    phrase: "295 Sandy Bay-Marahau Road",
+    tokens: ["295", "sandy", "bay-marahau", "road"],
+  });
+});
+it("preserves optional raw provider address components without declaring a city accepted", async () => {
+  const f = fixture();
+  const row = {
+    ...f.row,
+    addressComponents: {
+      locality: "Auckland",
+      administrativeArea: "Auckland",
+      country: "New Zealand",
+      countryCode: "NZ",
+    },
+  };
+  f.native.resolve.mockImplementation(async (input) => f.reply(input, [row]));
+  const rows = await f.provider.complete({ text: "Sky Tower" });
+  const resolved = await f.provider.resolve(rows[0], { text: "Sky Tower" });
+  expect(resolved.addressComponents).toEqual(row.addressComponents);
+  expect(Object.isFrozen(resolved.addressComponents)).toBe(true);
+  expect(resolved).not.toHaveProperty("acceptedCity");
+  expect(resolved).not.toHaveProperty("qualification");
+});
+it("uses opaque Apple handles, preserves resolved facts and explicit qualified soft bias", async () => {
+  const f = fixture(),
+    rows = await f.provider.complete({
+      text: " Sky Tower ",
+      region: { latitude: -36.84, longitude: 174.76 },
+    });
+  expect(f.native.complete).toHaveBeenCalledOnce();
+  expect(f.native.complete.mock.calls[0][0]).toMatchObject({
+    text: "Sky Tower",
+    region: { latitude: -36.84, longitude: 174.76 },
+  });
+  expect(f.native.complete.mock.calls[0][0]).not.toHaveProperty("sessionToken");
+  expect(await f.provider.resolve(rows[0], { text: "Sky Tower" })).toMatchObject({
+    provider: "apple",
+    title: "Sky Tower",
+    address: "Victoria Street, Auckland",
+  });
+});
+it("caps quick5 and Search More20; makes one request and never performs fill-up calls", async () => {
+  const f = fixture();
+  f.native.complete.mockImplementation(async (i) =>
+    f.reply(
+      i,
+      Array.from({ length: 20 }, () => ({ ...f.row, handle: randomUUID() })),
+    ),
+  );
+  expect(await f.provider.complete({ text: "Tower" })).toHaveLength(5);
+  expect(await f.provider.search({ text: "Tower" })).toHaveLength(1);
+  expect(f.native.search).toHaveBeenCalledOnce();
+});
+it("does not query empty input or invent GPS/placeholder bias", async () => {
+  const f = fixture();
+  expect(await f.provider.complete({ text: "   " })).toEqual([]);
+  expect(f.native.complete).not.toHaveBeenCalled();
+  await f.provider.search({ text: "Sky Tower", region: { latitude: 0, longitude: 0 } });
+  expect(f.native.search.mock.calls[0][0]).not.toHaveProperty("region");
+});
+it("cancel abort is generation-scoped and late callbacks cannot write", async () => {
+  const f = fixture(),
+    controller = new AbortController();
+  let finish!: (v: unknown) => void;
+  f.native.complete.mockImplementation(
+    (i) =>
+      new Promise((resolve) => {
+        finish = () => resolve(f.reply(i));
+      }),
+  );
+  const pending = f.provider.complete({ text: "Tower" }, controller.signal);
+  controller.abort();
+  expect(f.native.cancel.mock.calls[0][1]).toBe(1);
+  const newer = await f.provider.search({ text: "SkyCity" });
+  finish({});
+  await expect(pending).rejects.toThrow("CANCELLED");
+  expect(newer[0].generation).toBe(2);
+});
+it("rejects stale selection, wrong response binding, closed editor and Account generation changes", async () => {
+  const f = fixture(),
+    rows = await f.provider.complete({ text: "Tower" });
+  await f.provider.search({ text: "Hotel" });
+  await expect(f.provider.resolve(rows[0], { text: "Tower" })).rejects.toThrow(
+    "STALE_HANDLE",
+  );
+  f.native.search.mockImplementation(async (i) => ({
+    ...f.reply(i),
+    sessionId: randomUUID(),
+  }));
+  await expect(f.provider.search({ text: "Hotel" })).rejects.toThrow("CANCELLED");
+  f.invalidate();
+  await expect(f.provider.search({ text: "Hotel" })).rejects.toThrow("CANCELLED");
+  const fresh = fixture();
+  advanceAccountGeneration();
+  await expect(fresh.provider.search({ text: "Hotel" })).rejects.toThrow("CANCELLED");
+});
+it("exposes no-result and provider failure honestly; never converts errors to synthetic facts", async () => {
+  const f = fixture();
+  f.native.search.mockImplementation(async (i) => ({
+    ...f.reply(i),
+    status: "NO_RESULTS",
+    candidates: [],
+  }));
+  expect(await f.provider.search({ text: "Absent" })).toEqual([]);
+  f.native.search.mockImplementation(async (i) => ({
+    ...f.reply(i),
+    status: "NETWORK_ERROR",
+    candidates: [],
+  }));
+  await expect(f.provider.search({ text: "Hotel" })).rejects.toThrow("NETWORK_ERROR");
+  f.native.search.mockImplementation(async (i) => ({
+    ...f.reply(i),
+    candidates: [{ ...f.row, provider: "mock" }],
+  }));
+  await expect(f.provider.search({ text: "Hotel" })).rejects.toThrow();
+});
+it("clearing input invalidates pending completion even without a UI cancel call", async () => {
+  const f = fixture();
+  let finish!: (v: unknown) => void;
+  f.native.complete.mockImplementation(
+    (i) =>
+      new Promise((resolve) => {
+        finish = () => resolve(f.reply(i));
+      }),
+  );
+  const pending = f.provider.complete({ text: "Sky Tower" });
+  expect(await f.provider.complete({ text: "" })).toEqual([]);
+  finish({});
+  await expect(pending).rejects.toThrow("CANCELLED");
+  expect(f.native.cancel).toHaveBeenCalledWith(expect.any(String), 1);
+});
+it("rejects UTF8-overlong queries consistently before native dispatch", async () => {
+  const f = fixture();
+  await expect(f.provider.search({ text: "旅".repeat(700) })).rejects.toThrow(
+    "INVALID_REQUEST",
+  );
+  expect(f.native.search).not.toHaveBeenCalled();
+});
+
+it("supports a real precreation draft binding without manufacturing a Trip", async () => {
+  const f = fixture();
+  let active = true;
+  const p = createApplePlaceProvider(f.native, {
+    accountId: randomUUID(),
+    draftId: randomUUID(),
+    editorId: randomUUID(),
+    accountGeneration: getAccountGeneration(),
+    isCurrent: () => active,
+  });
+  const rows = await p.complete({ text: "Tokyo" });
+  expect(rows).toHaveLength(1);
+  const request = f.native.complete.mock.calls[0][0];
+  expect(request).not.toHaveProperty("tripId");
+  expect(request).not.toHaveProperty("draftId");
+  expect(request).not.toHaveProperty("accountId");
+  active = false;
+  await expect(p.resolve(rows[0], { text: "Tokyo" })).rejects.toMatchObject({
+    code: "CANCELLED",
+  });
+  p.close();
+  expect(() =>
+    createApplePlaceProvider(f.native, {
+      accountId: randomUUID(),
+      editorId: randomUUID(),
+      tripId: randomUUID(),
+      draftId: randomUUID(),
+      accountGeneration: getAccountGeneration(),
+      isCurrent: () => true,
+    } as never),
+  ).toThrow("INVALID_BINDING");
+});
+
+it("retains a genuine optional provider Place ID separately from opaque handles", async () => {
+  const f = fixture();
+  f.native.search.mockImplementation(async (i) => ({
+    ...f.reply(i),
+    candidates: [{ ...f.row, providerPlaceId: "apple-stable-place" }],
+  }));
+  const [row] = await f.provider.search({ text: "Auckland" });
+  expect(row.providerPlaceId).toBe("apple-stable-place");
+  expect(row.providerPlaceId).not.toBe(row.handle);
+  const legacy = fixture();
+  expect(
+    (await legacy.provider.search({ text: "Auckland" }))[0].providerPlaceId,
+  ).toBeUndefined();
+});
+
+it("reports preflight runtime failure without sending a query or exposing its text", async () => {
+  const { provider, native } = fixture();
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  vi.stubGlobal("__DEV__", true);
+  vi.stubGlobal("TextEncoder", undefined);
+  try {
+    await expect(
+      provider.complete({ text: "Private query must never be logged" }),
+    ).rejects.toBeInstanceOf(TypeError);
+    expect(native.complete).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "apple_place_failure",
+        phase: "COMPLETE",
+        errorType: "TypeError",
+        textEncoderAvailable: false,
+      }),
+    );
+    expect(JSON.stringify(log.mock.calls)).not.toContain("Private query");
+  } finally {
+    vi.unstubAllGlobals();
+    log.mockRestore();
+  }
+});
+
+it("keeps qualified area map items without inventing a required Apple POI ID", async () => {
+  const f = fixture();
+  const area = {
+    ...f.row,
+    title: "Nelson",
+    secondary: "New Zealand",
+    area: { kind: "locality", label: "Nelson", qualifier: "New Zealand" },
+  };
+  f.native.complete.mockImplementation(async (input) => f.reply(input, [f.row, area]));
+  const rows = await f.provider.complete({ text: "Nelson", intent: "destinationArea" });
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ title: "Nelson", area: area.area });
+  expect(rows[0]).not.toHaveProperty("providerPlaceId");
+  expect(f.native.complete.mock.calls[0][0]).toMatchObject({ intent: "destinationArea" });
+  f.native.resolve.mockImplementation(async (input) => f.reply(input, [area]));
+  expect(
+    await f.provider.resolve(rows[0], { text: "Nelson", intent: "destinationArea" }),
+  ).toMatchObject({ area: area.area });
+  expect(f.native.resolve.mock.calls[0][0]).toMatchObject({ intent: "destinationArea" });
+});
+it("area intent rejects POI IDs, unqualified completions and mismatched visible area captions", async () => {
+  const f = fixture();
+  const mismatched = {
+    ...f.row,
+    providerPlaceId: "real-poi-id",
+    area: { kind: "locality", label: "Another area", qualifier: "Another country" },
+  };
+  const poi = { ...f.row, providerPlaceId: "real-poi-id" };
+  f.native.search.mockImplementation(async (input) => f.reply(input, [poi, mismatched]));
+  expect(await f.provider.search({ text: "Tower", intent: "destinationArea" })).toEqual(
+    [],
+  );
+  expect(f.native.search.mock.calls[0][0]).toMatchObject({ intent: "destinationArea" });
+  expect(await f.provider.search({ text: "Tower" })).toHaveLength(2);
+  expect(f.native.search.mock.calls[1][0]).not.toHaveProperty("intent");
+});
+it("pins resolve handles to their original search intent", async () => {
+  const f = fixture();
+  const rows = await f.provider.complete({ text: "Tower" });
+  await expect(
+    f.provider.resolve(rows[0], { text: "Tower", intent: "destinationArea" }),
+  ).rejects.toMatchObject({ code: "STALE_HANDLE" });
+  expect(f.native.resolve).not.toHaveBeenCalled();
+  await expect(
+    f.provider.search({ text: "Tower", intent: "unknown" as "destinationArea" }),
+  ).rejects.toMatchObject({ code: "INVALID_REQUEST" });
+});
+
+it("shows an area completion but requires its explicit resolve before returning qualified city facts", async () => {
+  const f = fixture();
+  const completion = {
+    ...f.row,
+    kind: "completion",
+    title: "Sydney",
+    secondary: "NSW, Australia",
+  };
+  const resolved = {
+    ...f.row,
+    title: "Sydney",
+    secondary: "NSW, Australia",
+    area: { kind: "locality", label: "Sydney", qualifier: "NSW, Australia" },
+  };
+  f.native.complete.mockImplementation(async (input) => f.reply(input, [completion]));
+  f.native.resolve.mockImplementation(async (input) => f.reply(input, [resolved]));
+  const query = { text: "Sydney", intent: "destinationArea" as const };
+  const rows = await f.provider.complete(query);
+  expect(rows[0]).toMatchObject({ kind: "completion", title: "Sydney" });
+  expect(rows[0]).not.toHaveProperty("area");
+  expect(await f.provider.resolve(rows[0], query)).toMatchObject({
+    kind: "mapItem",
+    area: resolved.area,
+  });
+  expect(f.native.complete).toHaveBeenCalledOnce();
+  expect(f.native.resolve).toHaveBeenCalledOnce();
+  expect(f.native.search).not.toHaveBeenCalled();
+});

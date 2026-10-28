@@ -307,6 +307,7 @@ export function LedgerAnalysisScreen() {
         />
       </Stack.Toolbar>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         ref={mainScroll}
         onScroll={(event) => {
           scopeOffsets.current[scope] = Math.max(0, event.nativeEvent.contentOffset.y);
@@ -542,7 +543,10 @@ export function LedgerAnalysisScreen() {
               leftLabel={t("ui.close")}
               onLeft={() => setCompletenessOpen(false)}
             />
-            <ScrollView contentContainerStyle={styles.modalContent}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalContent}
+            >
               <Text style={shared.meta}>
                 {formatExpenseCount(dashboard.incomplete.length)} ·{" "}
                 {scope === "MINE" ? t("ledger.mine") : t("ledger.group")}
@@ -589,7 +593,10 @@ export function LedgerAnalysisScreen() {
             leftLabel={t("ui.cancel")}
             onLeft={() => setRangeOpen(false)}
           />
-          <ScrollView contentContainerStyle={styles.modalContent}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.modalContent}
+          >
             {presets.map((preset) => (
               <Pressable
                 accessibilityRole="button"
@@ -656,7 +663,10 @@ export function LedgerAnalysisScreen() {
             title={t("ui.chooseCategory")}
             onLeft={() => setCategoryMenu(null)}
           />
-          <ScrollView contentContainerStyle={styles.modalContent}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.modalContent}
+          >
             {[null, ...categoryChoices].map((category) => (
               <Pressable
                 accessibilityRole="button"

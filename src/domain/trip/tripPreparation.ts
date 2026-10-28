@@ -8,21 +8,27 @@ export type PreparationEntry = {
   createdAt: string | null;
 };
 
-// Consume only owning, actor-filtered formal Items; never Import candidates or files.
-export function selectTripPreparation(input: readonly PreparationEntry[]) {
+// Consume owning, actor-filtered Items; pending IDs must come from the strict local-manual reader.
+export function selectTripPreparation(
+  input: readonly PreparationEntry[],
+  committedPendingIds: ReadonlySet<string> = new Set(),
+) {
   const items = [
     ...new Map(
       input
         .filter(
           ({ item }) =>
-            item.localState === "ACCEPTED" &&
-            !item.hidden &&
-            !["cancelled", "skipped"].includes(String(item.status)) &&
-            preparationFamilies.includes(item.family as PreparationFamily),
+            item.localState === "ACCEPTED" ||
+            (item.localState === "PENDING" && committedPendingIds.has(item.itemId)),
         )
         .map((entry) => [entry.item.itemId, entry]),
     ).values(),
-  ];
+  ].filter(
+    ({ item }) =>
+      !item.hidden &&
+      !["cancelled", "skipped"].includes(String(item.status)) &&
+      preparationFamilies.includes(item.family as PreparationFamily),
+  );
   const counts = preparationFamilies.flatMap((family) => {
     const count = items.filter(({ item }) => item.family === family).length;
     return count ? [{ family, count }] : [];

@@ -1,0 +1,43 @@
+{
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "health": "healthy",
+  "user": "otr",
+  "entry": [
+    "node",
+    "server-capture.mjs"
+  ],
+  "environmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "normalizedHostConfigSHA256": "d4fa1bb2bd172519e1c732308d3315d2aa18dfe2f137ec4a604c9c8187f4d951",
+  "mounts": [
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/capture-custody",
+      "destination": "/var/lib/otr/capture-custody",
+      "rw": true
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/c-finite-388c0c3594e95bcc941eadee175bce8c93cb98f5d39199528c37ad4afac2df11/create.json",
+      "destination": "/run/otr/trip-create-runtime.json",
+      "rw": false
+    }
+  ],
+  "bundleSHA256": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9",
+  "runtimeSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+  "baselineMatches": false,
+  "at": "2026-10-24T07:01:37.504201+00:00",
+  "operatorOrdinal": 6,
+  "publicHealth": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "readOnly": true
+}

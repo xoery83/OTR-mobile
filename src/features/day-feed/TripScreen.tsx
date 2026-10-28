@@ -1,4 +1,61 @@
-import { snapshotItemDate } from "@/domain/trip/journeySnapshot";
+import { localInsertionTime } from "./localInsertionTime";
+import { UiGlassSurface } from "@/ui/UiGlassSurface";
+import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
+import { useMinuteClock } from "./useMinuteClock";
+import { useP1CivilMove } from "./useP1CivilMove";
+import { P1MeasuredMoveRegion } from "./useP1Move";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { tripDestinationDisplay } from "./tripDestinationDisplay";
+import type { Trip } from "@/domain/trip/types";
+import { ManualItineraryContent } from "./ManualItineraryContent";
+import { TripDayHeading } from "./TripDayHeading";
+import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
+import { p1InsertionTime } from "./p1InsertionTime";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import {
+  DayFeedIntroduction,
+  DayFeedShellTitle,
+  formatDayFeedVisibleDates,
+  useDayFeedShellState,
+} from "./DayFeedShell";
+import { dayFeedCalendarBounds, DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
+import type { DayListHandle } from "./WindowedDayList";
+import type { DaySummary } from "./dayFeedWindow";
+import {
+  readLocalTripDiscoveryRepository,
+  type TripListSummary,
+} from "@/data/repositories/tripDiscoveryRepository";
+import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
+import { P1PlanEditor } from "./P1PlanEditor";
+import { P3StayEditor } from "./P3StayEditor";
+import { P4RentalEditor } from "./P4RentalEditor";
+import { P5TransportEditor } from "./P5TransportEditor";
+import {
+  createDefaultManualPlanRepository,
+  type ManualPlanDraft,
+  type ManualPlanRepository,
+} from "@/data/repositories/manualPlanRepository";
+import {
+  createDefaultManualStayRepository,
+  type ManualStayDraft,
+  type ManualStayRepository,
+} from "@/data/repositories/manualStayRepository";
+import {
+  createDefaultManualRentalRepository,
+  type ManualRentalDraft,
+  type ManualRentalRepository,
+} from "@/data/repositories/manualRentalRepository";
+import {
+  createDefaultManualTransportRepository,
+  type ManualTransportDraft,
+  type ManualTransportRepository,
+} from "@/data/repositories/manualTransportRepository";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
+import {
+  readTripTodaysJourney,
+  type createTripTodaysJourneyReader,
+} from "@/data/repositories/tripTodaysJourneyRepository";
+import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
@@ -7,12 +64,28 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router, useLocalSearchParams, useNavigation } from "expo-router";
+import {
+  AppState,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import {
+  router,
+  useLocalSearchParams,
+  useNavigation,
+  usePathname,
+  useFocusEffect,
+} from "expo-router";
+import { useHeaderHeight, usePreventRemove } from "expo-router/react-navigation";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -21,17 +94,17 @@ import {
   readTripDayFeed,
   type createTripDayFeedReader,
 } from "@/data/repositories/tripDayFeedRepository";
-import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
-import { formatUiDate, t } from "@/ui/locale";
+import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { boundaryZone, explicitBoundaryZones, viewContext } from "./presentation";
+import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { wholeTripCalendarDates } from "./tripListPresentation";
+import { tripCoreDayNumber } from "./tripCoreDayNumber";
 import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
 import { acceptedHomeHeader, useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
@@ -49,11 +122,36 @@ import {
 type SnapshotReader = ReturnType<typeof createTripJourneySnapshotReader>;
 type SnapshotItem = NonNullable<Awaited<ReturnType<SnapshotReader["resolveItem"]>>>;
 type SnapshotRead = NonNullable<Awaited<ReturnType<SnapshotReader["read"]>>>;
+type LocalItem = NonNullable<
+  Awaited<
+    ReturnType<ReturnType<typeof createTripTodaysJourneyReader>["resolveLocalItem"]>
+  >
+>;
 type Reader = ReturnType<typeof createTripDayFeedReader>;
 type TripRead = Awaited<ReturnType<Reader["trip"]>>;
 const value = (p: string | string[] | undefined) => (typeof p === "string" ? p : "");
 
-export function TripScreen({ today = false }: { today?: boolean }) {
+function savedTripZone(
+  view: { tripId: string; zone: string | null; generation: number } | null,
+  tripId: string,
+  generation: number,
+) {
+  if (!view || !view.zone || view.tripId !== tripId || view.generation !== generation)
+    return null;
+  try {
+    return viewContext("2000-01-01", view.zone).zone;
+  } catch {
+    return null;
+  }
+}
+
+export function TripScreen({
+  today = false,
+  contentFrameManaged = false,
+}: {
+  today?: boolean;
+  contentFrameManaged?: boolean;
+}) {
   const params = useLocalSearchParams();
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
@@ -62,25 +160,46 @@ export function TripScreen({ today = false }: { today?: boolean }) {
   const { view } = useTripView();
   return (
     <TripContent
-      key={JSON.stringify([generation, today ? view : params])}
+      key={JSON.stringify([
+        generation,
+        today ? view?.tripId : value(params.tripId),
+        params.view === "create",
+      ])}
       today={today}
+      contentFrameManaged={contentFrameManaged}
     />
   );
 }
-function TripContent({ today = false }: { today?: boolean }) {
+function TripContent({
+  today = false,
+  contentFrameManaged = false,
+}: {
+  today?: boolean;
+  contentFrameManaged?: boolean;
+}) {
+  const pathname = usePathname();
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const insets = useSafeAreaInsets();
+  const measuredHeader = useHeaderHeight();
+  const [retainedHeader, setRetainedHeader] = useState(
+    Math.max(measuredHeader, insets.top),
+  );
+  // UIKit reports zero after hiding the bar; keep the measured list boundary.
+  if (measuredHeader > insets.top && measuredHeader !== retainedHeader)
+    setRetainedHeader(measuredHeader);
+  const headerBottom = Math.max(measuredHeader, retainedHeader, insets.top);
+  const dayTopInset = contentFrameManaged ? 0 : headerBottom;
   const heroHeight = useRef(0);
   const homeScrollOffset = useRef(0);
   const [heroBehindStatus, setHeroBehindStatus] = useState(true);
   const onHomeHeroHeight = useCallback(
     (height: number) => {
       heroHeight.current = height;
-      setHeroBehindStatus(homeScrollOffset.current < height - insets.top);
+      setHeroBehindStatus(homeScrollOffset.current < height - headerBottom);
     },
-    [insets.top],
+    [headerBottom],
   );
   const navigation = useNavigation();
   const bottomBarHeight = useBottomShellHeight();
@@ -90,19 +209,70 @@ function TripContent({ today = false }: { today?: boolean }) {
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const { view, resumeView, select, switchTrip, entry, saveReading, enterHeader } =
-    useTripView();
+  const {
+    view,
+    resumeView,
+    select,
+    switchTrip,
+    entry,
+    saveReading,
+    enterHeader,
+    publishDayShellChrome,
+    quickActions,
+    manualOutcome,
+  } = useTripView();
   const params = useLocalSearchParams<{
     tripId?: string;
     date?: string;
     zone?: string;
+    viewMode?: string;
     view?: string;
     homeQaScenario?: string;
   }>();
-  const [dayChooser, setDayChooser] = useState(false);
-  const chooseDay = useCallback(() => {
-    if (generation === getAccountGeneration()) setDayChooser(true);
-  }, [generation]);
+  const [dayTripFacts, setDayTripFacts] = useState<{
+    generation: number;
+    trip: TripListSummary & Pick<Trip, "destinations">;
+  } | null>(null);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [insertion, setInsertion] = useState<{
+    date: string;
+    startTime: string | null;
+  } | null>(null);
+  const insertionDismiss = useRef<(() => void) | null>(null);
+  const [daySummaries, setDaySummaries] = useState<DaySummary[]>([]);
+  const dayList = useRef<DayListHandle>(null);
+  const dayOffset = useRef(0);
+  const dayOrigin = useRef(0);
+  const dayIntroductionBottom = useRef<number | null>(null);
+  const [dayPastIntroduction, setDayPastIntroduction] = useState(false);
+  const [dayChromeOwner] = useState(() => Symbol("day-shell"));
+  const [revision, setRevision] = useState(0);
+  const [localItem, setLocalItem] = useState<LocalItem | null>(null);
+  const [planEditError, setPlanEditError] = useState(false);
+  const [planEdit, setPlanEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualPlanRepository;
+    draft: ManualPlanDraft;
+  } | null>(null);
+  const [stayEdit, setStayEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualStayRepository;
+    draft: ManualStayDraft;
+  } | null>(null);
+  const [rentalEdit, setRentalEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualRentalRepository;
+    draft: ManualRentalDraft;
+  } | null>(null);
+  const [transportEdit, setTransportEdit] = useState<{
+    tripId: string;
+    generation: number;
+    repository: ManualTransportRepository;
+    draft: ManualTransportDraft;
+  } | null>(null);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
@@ -123,46 +293,71 @@ function TripContent({ today = false }: { today?: boolean }) {
     : params.view === "trips" || params.view === "create"
       ? ""
       : value(params.tripId);
+  const dayShell = useDayFeedShellState(JSON.stringify([requested, generation]));
+  const dayFacts =
+    dayTripFacts?.generation === generation && dayTripFacts.trip.id === requested
+      ? dayTripFacts.trip
+      : null;
+  const dayName = dayFacts?.name ?? t("navigation.trip");
+  const dayBounds = dayFeedCalendarBounds(dayFacts?.startDate, dayFacts?.endDate);
+  const dayRangeLabel = dayBounds
+    ? (() => {
+        const days =
+          Math.round(
+            (Date.parse(dayBounds.end + "T00:00:00Z") -
+              Date.parse(dayBounds.start + "T00:00:00Z")) /
+              86400000,
+          ) + 1;
+        return t(days === 1 ? "dayShell.range.one" : "dayShell.range.many", {
+          range: formatDayFeedVisibleDates({
+            first: dayBounds.start,
+            last: dayBounds.end,
+          }),
+          days: formatUiNumber(days),
+        });
+      })()
+    : null;
+  const dayActive = !!requested && (today || params.view === "day");
+  const leavingTrip = useRef(false);
+  usePreventRemove(!today && pathname === "/trip-home" && dayActive, ({ data }) => {
+    if (
+      leavingTrip.current ||
+      generation !== getAccountGeneration() ||
+      !["POP", "GO_BACK"].includes(data.action.type)
+    ) {
+      leavingTrip.current = false;
+      navigation.dispatch(data.action);
+      return;
+    }
+    router.setParams({ view: "home" });
+  });
+  const dayTitle =
+    dayPastIntroduction && dayShell.visibleDates
+      ? formatDayFeedVisibleDates(dayShell.visibleDates)
+      : dayName;
   const isMyTrips = !today && !requested && params.view !== "create";
   const immersiveHome = !today && home && !!requested;
   const headerTitle = isMyTrips
     ? t(headingHidden ? "dayFeed.myTrips" : "myTrips.appTitle")
     : requested && home
-      ? ""
-      : t("navigation.trip");
-  useLayoutEffect(() => {
-    if (today) return;
-    navigation.setOptions({
-      headerTransparent: true,
-      headerStyle: {
-        backgroundColor: immersiveHome ? colors.transparent : colors.surface,
-      },
-      headerShadowVisible: false,
-      statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
-      headerTitle: ({
-        onLayout,
-      }: {
-        onLayout?: import("react-native").TextProps["onLayout"];
-      }) => (
-        <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
-          {headerTitle}
-        </ThemedText>
-      ),
-    });
-  }, [
-    navigation,
-    today,
-    headerTitle,
-    styles.navTitle,
-    immersiveHome,
-    colors,
-    heroBehindStatus,
-  ]);
+      ? heroBehindStatus
+        ? ""
+        : quickActions?.tripId === requested && quickActions.generation === generation
+          ? quickActions.tripName
+          : (dayFacts?.name ?? "")
+      : dayActive
+        ? dayTitle
+        : t("navigation.trip");
   const visibleTrip =
     trip?.scope.generation === generation &&
-    trip.observed?.projection.tripId === requested
+    (trip.observed?.projection.tripId === requested ||
+      trip.localManual?.scope.tripId === requested)
       ? trip
       : null;
+  const headerDestinationRead = useMemo(
+    () => dayHeaderDestinationRead(visibleTrip),
+    [visibleTrip],
+  );
   const homePerspective = referenceTripHomePerspective(
     visibleTrip,
     params.homeQaScenario,
@@ -172,25 +367,64 @@ function TripContent({ today = false }: { today?: boolean }) {
     useState<WorkspaceResolution | null>(null);
   const knownTrip = useCallback(
     (kind: WorkspaceKind) => {
+      if (generation !== getAccountGeneration()) return;
       setWorkspaceResolution({ tripId: requested, generation, kind });
+      if (navigation.isFocused() && requested && (kind === "LOCAL" || kind === "CACHED"))
+        switchTrip(requested, generation);
     },
-    [requested, generation],
+    [requested, generation, switchTrip, navigation],
   );
   const workspaceKind = resolvedWorkspaceKind(workspaceResolution, requested, generation);
   const localChecked = workspaceKind !== null;
   const knownWorkspaceTrip = workspaceKind === "LOCAL" || workspaceKind === "CACHED";
   const hideHomePrelude = !today && home && knownWorkspaceTrip;
+  const workingViewTripId = view?.tripId;
+  const workingViewGeneration = view?.generation;
   const load = useCallback(async () => {
     const captured = getAccountGeneration(),
       ticket = ++request.current;
     await Promise.resolve();
-    setStatus("LOADING");
+    setStatus((previous) => (previous === "READY" ? previous : "LOADING"));
     try {
       if (requested) {
         const reader = await readTripDayFeed();
         const result = await reader.trip(requested);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
-        setTrip(result);
+        const [rootFacts, localMetadata] = await Promise.all([
+          readLocalTripDiscoveryRepository()
+            .then((reader) => reader.readMerged())
+            .then((read) => read.trips.find((row) => row.id === requested))
+            .catch(() => undefined),
+          readLocalTripRepository()
+            .then((reader) => reader.getTrip(requested))
+            .catch(() => null),
+        ]);
+        if (getAccountGeneration() !== captured || ticket !== request.current) return;
+        setDayTripFacts(
+          rootFacts
+            ? {
+                generation: captured,
+                trip: {
+                  ...rootFacts,
+                  ...(localMetadata ? { destinations: localMetadata.destinations } : {}),
+                },
+              }
+            : null,
+        );
+        if (
+          !result.observed &&
+          result.localManual?.scope.tripId === requested &&
+          result.scope.generation === captured
+        )
+          knownTrip("LOCAL");
+        if (
+          navigation.isFocused() &&
+          result.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
+          result.observed.projection.tripId === requested &&
+          result.scope.generation === captured &&
+          (workingViewTripId !== requested || workingViewGeneration !== captured)
+        )
+          switchTrip(requested, captured);
         if (
           result.observed?.projection.version === 2 &&
           result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
@@ -208,7 +442,8 @@ function TripContent({ today = false }: { today?: boolean }) {
             setHomeSnapshot(snapshot);
           else setHomeSnapshot(null);
         } else setHomeSnapshot(null);
-        setStatus(result.observed ? "READY" : "UNAVAILABLE");
+        setTrip(result);
+        setStatus(result.observed || result.localManual ? "READY" : "UNAVAILABLE");
         if (!today && result.observed)
           setZone(
             (previous) => previous || boundaryZone(result.observed!.projection) || "",
@@ -223,56 +458,317 @@ function TripContent({ today = false }: { today?: boolean }) {
         setStatus("UNAVAILABLE");
       }
     }
-  }, [requested, today]);
-  useEffect(() => {
-    void Promise.resolve().then(load);
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") void load();
-    });
-    return () => {
-      request.current += 1;
-      sub.remove();
-    };
-  }, [load, generation]);
+  }, [
+    requested,
+    today,
+    workingViewTripId,
+    workingViewGeneration,
+    switchTrip,
+    knownTrip,
+    navigation,
+  ]);
+  useFocusEffect(
+    useCallback(() => {
+      void Promise.resolve().then(load);
+      const sub = AppState.addEventListener("change", (state) => {
+        if (state === "active") void load();
+      });
+      const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+        if (
+          event.generation === generation &&
+          generation === getAccountGeneration() &&
+          event.accountId === trip?.scope.accountId &&
+          requested &&
+          event.journeyIds.includes(requested)
+        ) {
+          setRevision((value) => value + 1);
+          void load();
+        }
+      });
+      return () => {
+        stopSync();
+        request.current += 1;
+        sub.remove();
+      };
+    }, [load, generation, trip?.scope.accountId, requested]),
+  );
   const open = (id: string) => {
+    if (generation !== getAccountGeneration()) return;
     switchTrip(id.trim(), generation);
-    router.setParams({ tripId: id.trim(), date: "", zone: "", view: "home" });
+    if (params.view === "create") router.setParams({ view: "trips" });
+    router.push({
+      pathname: "/trip-home",
+      params: { tripId: id.trim(), view: "home" },
+    });
   };
   const backToTrips = useCallback(() => {
     if (generation !== getAccountGeneration()) return;
+    leavingTrip.current = true;
     select(null);
-    router.setParams({ tripId: "", date: "", zone: "", view: "" });
-  }, [select, generation]);
+    if (pathname === "/trip-home" && router.canGoBack()) router.back();
+    else
+      router.replace({
+        pathname: "/trip",
+        params: { view: "trips", tripId: "" },
+      });
+  }, [select, generation, pathname]);
   const createTrip = () => {
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "create" });
   };
   const openToday = (id: string, context: TodayEntry) => {
     if (generation !== getAccountGeneration()) return;
-    enterHeader({ tripId: id, ...context, generation }, "EXPLICIT_TODAY_HEADER");
-    router.navigate(
-      homePerspective
-        ? { pathname: "/", params: { homeQaScenario: value(params.homeQaScenario) } }
-        : "/",
+    const display = viewContext(
+      context.date,
+      context.zone || { zone: null, viewMode: "FLOATING" },
     );
+    enterHeader({ tripId: id, ...display, generation }, "EXPLICIT_TODAY_HEADER");
+    router.navigate({
+      pathname: "/trip-home",
+      params: {
+        view: "day",
+        tripId: id,
+        date: context.date,
+        zone: display.zone ?? "",
+        viewMode: display.viewMode ?? "NAMED_ZONE",
+        ...(homePerspective ? { homeQaScenario: value(params.homeQaScenario) } : {}),
+      },
+    });
   };
-  const enterDay = () => {
+  const canChooseDay =
+    !!visibleTrip?.localManual ||
+    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE";
+  const enterDay = useCallback(
+    async (requestedDate?: string | null, requestedZone: string | null = zone) => {
+      if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
+      try {
+        const selectedDate = requestedDate || date;
+        const dateValue = selectedDate ? validateCalendarDate(selectedDate) : "";
+        const context = dateValue
+          ? viewContext(dateValue, requestedZone || { zone: null, viewMode: "FLOATING" })
+          : null;
+        const ticket = request.current;
+        const result = await (await readTripDayFeed()).trip(requested);
+        if (
+          ticket !== request.current ||
+          generation !== getAccountGeneration() ||
+          (result.observed?.projection.tripId !== requested &&
+            result.localManual?.scope.tripId !== requested) ||
+          result.scope.accountId !== visibleTrip.scope.accountId ||
+          result.scope.generation !== generation ||
+          (!result.localManual &&
+            result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE")
+        )
+          return;
+        if (context?.zone === null && result.observed?.projection.version === 1) {
+          setContextError(true);
+          return;
+        }
+        setTrip(result);
+        if (context) select({ tripId: requested, ...context, generation });
+        router.setParams({
+          tripId: requested,
+          date: dateValue,
+          zone: context?.zone ?? "",
+          ...(context?.zone === null
+            ? { viewMode: "FLOATING" }
+            : { viewMode: "NAMED_ZONE" }),
+          view: "day",
+        });
+        setContextError(false);
+      } catch {
+        setContextError(true);
+      }
+    },
+    [generation, canChooseDay, visibleTrip, date, zone, requested, select],
+  );
+  const freshLocalRead = async (expected: Pick<LocalManualRead, "scope" | "source">) => {
     if (
-      generation !== getAccountGeneration() ||
-      visibleTrip?.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE"
+      expected.scope.tripId !== requested ||
+      expected.scope.generation !== generation ||
+      generation !== getAccountGeneration()
     )
-      return;
-    try {
-      const context = viewContext(date, zone);
-      if (!visibleTrip?.observed) return;
-      select({ tripId: requested, ...context, generation });
-      router.setParams({ tripId: requested, ...context, view: "day" });
-      setContextError(false);
-    } catch {
-      setContextError(true);
-    }
+      throw new Error("LOCAL_NAV_SCOPE");
+    const ticket = request.current;
+    const result = await (await readTripDayFeed()).trip(requested);
+    if (
+      ticket !== request.current ||
+      generation !== getAccountGeneration() ||
+      result.scope.accountId !== expected.scope.accountId ||
+      result.scope.generation !== generation ||
+      result.localManual?.source.fingerprint !== expected.source.fingerprint
+    )
+      throw new Error("LOCAL_NAV_UNAVAILABLE");
+    return result;
   };
-  const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string) => {
+  const openLocalItem = async (
+    id: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
+  ) => {
+    const local = visibleTrip?.localManual;
+    if (
+      generation === getAccountGeneration() &&
+      local &&
+      expected.scope.tripId === requested &&
+      expected.scope.generation === generation &&
+      expected.scope.accountId === local.scope.accountId &&
+      expected.source.fingerprint === local.source.fingerprint &&
+      local.items.some(
+        (item) =>
+          item.itemId === id &&
+          ["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) &&
+          !item.hidden,
+      )
+    ) {
+      // The destination validates the owning read; route IDs grant no read or edit authority.
+      const item = local.items.find((item) => item.itemId === id)!;
+      const params = { tripId: requested, itemId: id };
+      if (item.family === "P1")
+        router.push({
+          pathname: "/p1-detail",
+          params: { ...params, occurrence: occurrence?.role === "END" ? "END" : "START" },
+        });
+      else if (item.family === "P2") router.push({ pathname: "/p2-detail", params });
+      else if (item.family === "P3")
+        router.push({
+          pathname: "/p3-detail",
+          params: {
+            ...params,
+            occurrence:
+              occurrence?.role === "CHECKOUT"
+                ? "CHECKOUT"
+                : occurrence?.role === "CHECKIN"
+                  ? "CHECKIN"
+                  : "BASE",
+            ...(occurrence?.date ? { date: occurrence.date } : {}),
+          },
+        });
+      else if (item.family === "P6")
+        router.push({
+          pathname: "/p6-detail",
+          params: {
+            ...params,
+            occurrence: occurrence?.role === "END" ? "END" : "START",
+            ...(occurrence?.date ? { date: occurrence.date } : {}),
+          },
+        });
+      else if (item.family === "P5")
+        router.push({
+          pathname: "/p5-detail",
+          params: {
+            ...params,
+            occurrence: occurrence?.role ?? "ORIGIN",
+            ...(occurrence?.date ? { date: occurrence.date } : {}),
+          },
+        });
+      else
+        router.push({
+          pathname: "/p4-detail",
+          params: {
+            ...params,
+            occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+          },
+        });
+      return;
+    }
+    const ticket = request.current;
+    const resolved = await (
+      await readTripTodaysJourney()
+    ).resolveLocalItem(requested, id, expected);
+    if (!resolved || ticket !== request.current || generation !== getAccountGeneration())
+      throw new Error("LOCAL_ITEM_UNAVAILABLE");
+    const current = await freshLocalRead(resolved);
+    setTrip(current);
+    if (resolved.item.family === "P1") {
+      router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId: id } });
+      return;
+    }
+    if (resolved.item.family === "P2") {
+      router.push({ pathname: "/p2-detail", params: { tripId: requested, itemId: id } });
+      return;
+    }
+    if (resolved.item.family === "P3") {
+      router.push({
+        pathname: "/p3-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence:
+            occurrence?.role === "CHECKOUT"
+              ? "CHECKOUT"
+              : occurrence?.role === "CHECKIN"
+                ? "CHECKIN"
+                : "BASE",
+          ...(occurrence?.date ? { date: occurrence.date } : {}),
+        },
+      });
+      return;
+    }
+    if (resolved.item.family === "P4") {
+      router.push({
+        pathname: "/p4-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+        },
+      });
+      return;
+    }
+    if (resolved.item.family === "P6") {
+      router.push({
+        pathname: "/p6-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence: occurrence?.role === "END" ? "END" : "START",
+          ...(occurrence?.date ? { date: occurrence.date } : {}),
+        },
+      });
+      return;
+    }
+    if (resolved.item.family === "P5") {
+      router.push({
+        pathname: "/p5-detail",
+        params: {
+          tripId: requested,
+          itemId: id,
+          occurrence: occurrence?.role ?? "ORIGIN",
+          ...(occurrence?.date ? { date: occurrence.date } : {}),
+        },
+      });
+      return;
+    }
+    setLocalItem(resolved);
+    setPlanEditError(false);
+  };
+  const manualItemSaved = useCallback(
+    (tripId: string, captured: number) => {
+      if (
+        tripId !== requested ||
+        captured !== generation ||
+        captured !== getAccountGeneration()
+      )
+        return;
+      setRevision((value) => value + 1);
+      setLocalItem(null);
+      void load();
+    },
+    [requested, generation, load],
+  );
+  const handledManualOutcome = useRef<typeof manualOutcome>(null);
+  useEffect(() => {
+    if (
+      manualOutcome?.tripId === requested &&
+      manualOutcome.generation === generation &&
+      handledManualOutcome.current !== manualOutcome
+    ) {
+      handledManualOutcome.current = manualOutcome;
+      manualItemSaved(requested, generation);
+    }
+  }, [manualOutcome, requested, generation, manualItemSaved]);
+  const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string | null) => {
     if (
       scope.tripId !== requested ||
       scope.generation !== getAccountGeneration() ||
@@ -339,6 +835,36 @@ function TripContent({ today = false }: { today?: boolean }) {
         });
       }
     : undefined;
+  const openAcceptedPlan = async (
+    itemId: string,
+    expectedRevision: number,
+    knownRead?: TripRead,
+  ) => {
+    const ticket = request.current;
+    const result = knownRead ?? (await (await readTripDayFeed()).trip(requested));
+    const projection = result.observed?.projection;
+    if (
+      projection?.version !== 2 ||
+      result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
+      projection.tripId !== requested ||
+      result.scope.generation !== generation ||
+      generation !== getAccountGeneration()
+    )
+      return;
+    const item = projection.items.find(
+      (i) =>
+        i.itemId === itemId &&
+        i.itemRevision === expectedRevision &&
+        i.family === "P1" &&
+        !i.hidden &&
+        !["cancelled", "skipped"].includes(String(i.status)),
+    );
+    if (!item) return;
+    if (ticket !== request.current || generation !== getAccountGeneration()) return;
+    setTrip(result);
+    setPlanEditError(false);
+    router.push({ pathname: "/p1-detail", params: { tripId: requested, itemId } });
+  };
   const openHomeItem = async (value: SnapshotItem) => {
     const itemRevision = value.item.itemRevision;
     if (
@@ -347,7 +873,7 @@ function TripContent({ today = false }: { today?: boolean }) {
       itemRevision < 1
     )
       throw new Error("HOME_ITEM_REVISION_UNAVAILABLE");
-    const result = await freshHomeRead(value.scope, value.certificate.epoch);
+    const result = await freshHomeRead(value.scope, value.certificate?.epoch ?? null);
     const projection = result.observed!.projection;
     if (projection.version !== 2) throw new Error("HOME_ITEM_UNAVAILABLE");
     const current = projection.items.find(
@@ -356,6 +882,18 @@ function TripContent({ today = false }: { today?: boolean }) {
         item.itemRevision === value.item.itemRevision,
     );
     if (!current) throw new Error("HOME_RENDERER_UNAVAILABLE");
+    if (current.family === "P1")
+      return openAcceptedPlan(current.itemId, itemRevision, result);
+    if (current.family === "P6") {
+      if (current.hidden || ["cancelled", "skipped"].includes(String(current.status)))
+        throw new Error("HOME_ITEM_UNAVAILABLE");
+      setTrip(result);
+      router.push({
+        pathname: "/p6-detail",
+        params: { tripId: requested, itemId: current.itemId, occurrence: "START" },
+      });
+      return;
+    }
     const header = acceptedHomeHeader(
       projection.events,
       (date, zone) => projection.query(date, zone),
@@ -363,21 +901,28 @@ function TripContent({ today = false }: { today?: boolean }) {
       reviewZone ?? undefined,
     );
     if (!header) {
-      const civilDate =
-        current.family === "P1" ||
-        current.family === "P2" ||
-        current.family === "P3" ||
-        current.family === "P4" ||
-        current.family === "P5" ||
-        current.family === "P6"
-          ? snapshotItemDate(current)
-          : null;
-      if (!civilDate) throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
-      // A viewing zone is explicit UI context, never a missing Item fact.
+      const sparseDetails = {
+        P2: { pathname: "/p2-detail", occurrence: "ORIGIN" },
+        P3: { pathname: "/p3-detail", occurrence: "CHECKIN" },
+        P4: { pathname: "/p4-detail", occurrence: "PICKUP" },
+        P5: { pathname: "/p5-detail", occurrence: "ORIGIN" },
+      } as const;
+      if (
+        !(current.family in sparseDetails) ||
+        current.hidden ||
+        ["cancelled", "skipped"].includes(String(current.status))
+      )
+        throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
+      const detail = sparseDetails[current.family as keyof typeof sparseDetails];
       setTrip(result);
-      setDate(civilDate);
-      setZone("");
-      setDayChooser(true);
+      router.push({
+        pathname: detail.pathname,
+        params: {
+          tripId: requested,
+          itemId: current.itemId,
+          occurrence: detail.occurrence,
+        },
+      });
       return;
     }
     setTrip(result);
@@ -391,6 +936,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const widgetsForHome = (
     id: string,
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
+    tripStartDate?: string | null,
   ) => {
     if (id !== requested) return [];
     if (lifecycle === "Active")
@@ -404,12 +950,37 @@ function TripContent({ today = false }: { today?: boolean }) {
               tripId={requested}
               zone={
                 homePerspective?.zone ??
+                savedTripZone(view, requested, generation) ??
+                savedTripZone(resumeView, requested, generation) ??
                 (visibleTrip?.observed
                   ? boundaryZone(visibleTrip.observed.projection)
                   : null)
               }
+              planningDate={
+                homePerspective?.date ??
+                localCalendarDate(displayClock.instant, displayClock.deviceZone)
+              }
               now={homePerspective?.now}
+              refreshKey={revision}
+              onOpenDayChooser={canChooseDay ? chooseDay : undefined}
+              onOpenLocalToday={async (read) => {
+                const result = await freshLocalRead(read);
+                if (read.today.zone) viewContext(read.today.date, read.today.zone);
+                setTrip(result);
+                openToday(requested, {
+                  date: read.today.date,
+                  zone: read.today.zone ?? "",
+                });
+              }}
+              onOpenLocalItem={(value) => openLocalItem(value.item.itemId, value)}
               copy={{
+                planningTitle: t("tripHome.today.planningTitle"),
+                planningDate: t("tripHome.today.planningDate"),
+                planningStay: t("tripHome.today.planningStay"),
+                planningEmpty: t("tripHome.today.planningEmpty"),
+                planningLater: t("tripHome.today.planningLater"),
+                timezoneUnknown: t("tripHome.today.timezoneUnknown"),
+                chooseDay: t("tripHome.today.chooseDay"),
                 title: t("tripHome.today.title"),
                 openToday: t("tripHome.today.open"),
                 upcoming: t("tripHome.today.upcoming"),
@@ -423,7 +994,10 @@ function TripContent({ today = false }: { today?: boolean }) {
               }}
               onOpenToday={async (read) => {
                 await freshHomeRead(read.scope, read.source.epoch);
-                openToday(requested, { date: read.today.date, zone: read.today.zone });
+                openToday(requested, {
+                  date: read.today.date,
+                  zone: read.today.zone ?? "",
+                });
               }}
               onOpenItem={openHomeItem}
             />
@@ -485,7 +1059,228 @@ function TripContent({ today = false }: { today?: boolean }) {
     overlayProjection.source.epoch === visibleTrip.observed.projection.source.epoch
       ? { ...homeItem, read: visibleTrip }
       : null;
-  const selected = today ? view : !home && view?.tripId === requested ? view : null;
+  const savedDay = (() => {
+    if (view?.tripId !== requested || view.generation !== generation) return null;
+    try {
+      validateCalendarDate(view.date);
+      if (view.zone !== "") viewContext(view.date, view);
+      return view;
+    } catch {
+      return null;
+    }
+  })();
+  const currentSnapshot =
+    homeSnapshot &&
+    homeSnapshot.scope.tripId === requested &&
+    homeSnapshot.scope.generation === generation &&
+    homeSnapshot.scope.accountId === visibleTrip?.scope.accountId &&
+    visibleTrip.observed?.projection.version === 2 &&
+    homeSnapshot.epoch === visibleTrip.observed.projection.source.epoch
+      ? homeSnapshot
+      : null;
+  const routeDay = (() => {
+    if (today || home || !visibleTrip) return null;
+    try {
+      const routeDate = validateCalendarDate(
+        value(params.date) ||
+          (view?.tripId === requested && view.generation === generation
+            ? view.date
+            : "") ||
+          (resumeView?.tripId === requested && resumeView.generation === generation
+            ? resumeView.date
+            : "") ||
+          currentSnapshot?.trip?.startDate ||
+          currentSnapshot?.candidateDays[0] ||
+          visibleTrip.localManual?.items
+            .flatMap((item) => {
+              const schedule = item.schedule as {
+                start?: { localDate?: string };
+                origin?: { time?: { localDate?: string } };
+              };
+              const first = schedule.start?.localDate ?? schedule.origin?.time?.localDate;
+              return first ? [first] : [];
+            })
+            .sort()[0] ||
+          "",
+      );
+      const routeZone = value(params.zone);
+      if (routeZone)
+        return { tripId: requested, ...viewContext(routeDate, routeZone), generation };
+      if (visibleTrip.observed?.projection.version === 1)
+        return params.viewMode === "FLOATING"
+          ? null
+          : { tripId: requested, date: routeDate, zone: "", generation };
+      if (params.viewMode !== "FLOATING" && !visibleTrip.localManual) return null;
+      return {
+        tripId: requested,
+        ...viewContext(routeDate, { zone: null, viewMode: "FLOATING" }),
+        generation,
+      };
+    } catch {
+      return null;
+    }
+  })();
+  const candidateDay = today || home ? savedDay : (routeDay ?? savedDay);
+  const dayContext =
+    candidateDay?.zone === null && visibleTrip?.observed?.projection.version === 1
+      ? null
+      : candidateDay;
+  const selected =
+    savedDay?.date === dayContext?.date &&
+    savedDay?.zone === dayContext?.zone &&
+    savedDay?.viewMode === dayContext?.viewMode
+      ? savedDay
+      : null;
+  const visibleLocalItem =
+    localItem &&
+    visibleTrip?.localManual &&
+    localItem.scope.tripId === requested &&
+    localItem.scope.generation === generation &&
+    localItem.scope.accountId === visibleTrip.scope.accountId &&
+    localItem.source.fingerprint === visibleTrip.localManual.source.fingerprint
+      ? localItem
+      : null;
+  const localPreview =
+    visibleLocalItem && !planEdit && !stayEdit && !rentalEdit && !transportEdit ? (
+      <LocalCoreItemPreview
+        item={visibleLocalItem.item}
+        onClose={() => setLocalItem(null)}
+        editError={planEditError}
+        onEdit={
+          ["P1", "P2", "P3", "P4", "P5"].includes(visibleLocalItem.item.family) &&
+          visibleLocalItem.item.localState === "PENDING"
+            ? () => {
+                setPlanEditError(false);
+                const ticket = request.current;
+                void (async () => {
+                  try {
+                    const itemId = visibleLocalItem.item.itemId;
+                    const current = (draftId: string) =>
+                      ticket === request.current &&
+                      generation === getAccountGeneration() &&
+                      draftId === itemId;
+                    if (visibleLocalItem.item.family === "P5") {
+                      const repository = await createDefaultManualTransportRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setTransportEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    } else if (visibleLocalItem.item.family === "P4") {
+                      const repository = await createDefaultManualRentalRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setRentalEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    } else if (visibleLocalItem.item.family === "P3") {
+                      const repository = await createDefaultManualStayRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setStayEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    } else {
+                      const repository = await createDefaultManualPlanRepository();
+                      const draft = await repository.read(requested, itemId);
+                      if (!current(draft.itemId)) return;
+                      setPlanEdit({
+                        tripId: requested,
+                        generation,
+                        repository,
+                        draft,
+                      });
+                    }
+                  } catch {
+                    if (
+                      ticket === request.current &&
+                      generation === getAccountGeneration()
+                    )
+                      setPlanEditError(true);
+                  }
+                })();
+              }
+            : undefined
+        }
+      />
+    ) : null;
+  const planEditor =
+    planEdit?.tripId === requested && planEdit.generation === generation ? (
+      <P1PlanEditor
+        key={`${planEdit.tripId}:${planEdit.draft.itemId}:${generation}`}
+        tripId={planEdit.tripId}
+        itemId={planEdit.draft.itemId}
+        opened={planEdit}
+        onClose={() => setPlanEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setPlanEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
+  const stayEditor =
+    stayEdit?.tripId === requested && stayEdit.generation === generation ? (
+      <P3StayEditor
+        key={`${stayEdit.tripId}:${stayEdit.draft.itemId}:${generation}`}
+        tripId={stayEdit.tripId}
+        itemId={stayEdit.draft.itemId}
+        opened={stayEdit}
+        onClose={() => setStayEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setStayEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
+  const rentalEditor =
+    rentalEdit?.tripId === requested && rentalEdit.generation === generation ? (
+      <P4RentalEditor
+        key={`${rentalEdit.tripId}:${rentalEdit.draft.itemId}:${generation}`}
+        tripId={rentalEdit.tripId}
+        itemId={rentalEdit.draft.itemId}
+        opened={rentalEdit}
+        onClose={() => setRentalEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setRentalEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
+  const transportEditor =
+    transportEdit?.tripId === requested && transportEdit.generation === generation ? (
+      <P5TransportEditor
+        key={`${transportEdit.tripId}:${transportEdit.draft.itemId}:${generation}`}
+        tripId={transportEdit.tripId}
+        itemId={transportEdit.draft.itemId}
+        opened={transportEdit}
+        onClose={() => setTransportEdit(null)}
+        onSaved={() => {
+          if (generation !== getAccountGeneration()) return;
+          setTransportEdit(null);
+          setLocalItem(null);
+          setRevision((value) => value + 1);
+          void load();
+        }}
+      />
+    ) : null;
   const homeContextCurrent =
     homeSnapshot &&
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
@@ -504,13 +1299,40 @@ function TripContent({ today = false }: { today?: boolean }) {
           homeSnapshot!.candidateDays,
           firstKnownDate,
         )
-      : [];
-  const zoneChoices =
-    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
-      ? explicitBoundaryZones(visibleTrip.observed.projection)
-      : [];
+      : [
+          ...new Set(
+            visibleTrip?.localManual?.items.flatMap((item) => {
+              const schedule = item.schedule as {
+                start?: { localDate?: string };
+                end?: { localDate?: string };
+                origin?: { time?: { localDate?: string } };
+                destination?: { time?: { localDate?: string } };
+              };
+              return [
+                schedule.start?.localDate,
+                schedule.end?.localDate,
+                schedule.origin?.time?.localDate,
+                schedule.destination?.time?.localDate,
+              ].filter((date): date is string => !!date);
+            }) ?? [],
+          ),
+        ].sort();
+  const firstItemDate = String(dateChoices[0] ?? "");
+  const routeDate = value(params.date);
+  const chooseDay = useCallback(
+    (tripStartDate?: string | null) => {
+      const bookmark = [resumeView, view].find(
+        (saved) => saved?.tripId === requested && saved.generation === generation,
+      );
+      void enterDay(
+        bookmark?.date || routeDate || tripStartDate || firstItemDate,
+        bookmark ? bookmark.zone : zone,
+      );
+    },
+    [view, resumeView, requested, generation, routeDate, zone, firstItemDate, enterDay],
+  );
   const calendarDates =
-    selected &&
+    dayContext &&
     homeSnapshot &&
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
     visibleTrip.observed.projection.version === 2 &&
@@ -520,219 +1342,745 @@ function TripContent({ today = false }: { today?: boolean }) {
       ? wholeTripCalendarDates(
           homeSnapshot.trip,
           homeSnapshot.candidateDays,
-          selected.date,
+          dayContext.date,
         )
-      : undefined;
-  if (visibleTrip?.observed && selected)
-    return (
-      <View style={styles.root}>
-        <View style={styles.header}>
-          <Text style={styles.meta}>{selected.zone}</Text>
-          {!calendarDates ? (
-            <Text style={styles.meta}>{t("dayFeed.calendarUnavailable")}</Text>
-          ) : null}
-          {visibleTrip.observed.sourceStatus === "HISTORICAL_ACCEPTED_PROJECTION" ? (
-            <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
-          ) : null}
-          <UiButton
-            label={t("dayFeed.tripHome")}
-            variant="text"
-            onPress={() =>
-              today
-                ? router.navigate({
-                    pathname: "/trip",
-                    params: {
-                      tripId: selected.tripId,
-                      date: selected.date,
-                      zone: selected.zone,
-                      view: "home",
-                    },
-                  })
-                : router.setParams({ view: "home" })
+      : dayContext && dayFacts
+        ? wholeTripCalendarDates(dayFacts, dateChoices, dayContext.date)
+        : undefined;
+  const displayClock = useMinuteClock(dayContext?.zone ?? null);
+  const appearanceToday = dayFeedAppearanceDate(
+    displayClock.instant,
+    dayContext?.zone,
+    displayClock.deviceZone,
+  );
+  const phase = (date: string) => dayFeedPhaseColor(date, appearanceToday, colors);
+  const move = useP1CivilMove(
+    dayList,
+    dayActive ? visibleTrip : null,
+    requested,
+    generation,
+    calendarDates ?? [],
+    insets.top,
+    insets.bottom,
+    () => manualItemSaved(requested, generation),
+    () => dayShell.observeReadingStopped(),
+  );
+  const moveActive = move.active;
+  const readingOnly = dayActive && dayPastIntroduction && !dayShell.navigationVisible;
+  useLayoutEffect(() => {
+    if (!dayActive || !navigation.isFocused()) return;
+    publishDayShellChrome(
+      {
+        tripId: requested,
+        generation,
+        owner: dayChromeOwner,
+        navigationVisible:
+          !moveActive && (!dayPastIntroduction || dayShell.navigationVisible),
+      },
+      dayChromeOwner,
+    );
+    return () => publishDayShellChrome(null, dayChromeOwner);
+  }, [
+    dayActive,
+    requested,
+    generation,
+    dayChromeOwner,
+    dayShell.navigationVisible,
+    dayPastIntroduction,
+    moveActive,
+    publishDayShellChrome,
+    navigation,
+  ]);
+  useLayoutEffect(() => {
+    if (today && !dayActive) return;
+    const blurHeader =
+      (dayActive && dayShell.navigationVisible) || (immersiveHome && !heroBehindStatus);
+    const nativeEdge =
+      Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
+    navigation.setOptions({
+      // Native Stack falls back to the route name when a custom title renders null.
+      title: moveActive ? "" : headerTitle,
+      headerTransparent: true,
+      headerShown: !dayActive || (!readingOnly && !moveActive),
+      fullScreenGestureEnabled: immersiveHome,
+      headerStyle: {
+        backgroundColor:
+          dayActive && !dayPastIntroduction && !moveActive
+            ? colors.tripIntroduction
+            : colors.transparent,
+      },
+      headerShadowVisible: false,
+      // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
+      headerBlurEffect:
+        dayActive && (moveActive || !dayShell.navigationVisible)
+          ? "none"
+          : !moveActive && blurHeader && !nativeEdge
+            ? "systemUltraThinMaterial"
+            : undefined,
+      scrollEdgeEffects:
+        dayActive && (moveActive || !dayShell.navigationVisible)
+          ? { top: "hidden", bottom: "hidden", left: "hidden", right: "hidden" }
+          : blurHeader
+            ? {
+                top: nativeEdge ? "soft" : "hidden",
+                bottom: "hidden",
+                left: "hidden",
+                right: "hidden",
+              }
+            : undefined,
+      statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
+      headerTitle: moveActive
+        ? () => null
+        : ({ onLayout }: { onLayout?: import("react-native").TextProps["onLayout"] }) =>
+            dayActive ? (
+              dayTitle ? (
+                dayPastIntroduction ? (
+                  <UiGlassSurface style={styles.dateIsland}>
+                    <DayFeedShellTitle
+                      label={dayTitle}
+                      openCalendarLabel={t("dayShell.calendar.open")}
+                      onOpenCalendar={() => setCalendarVisible(true)}
+                    />
+                  </UiGlassSurface>
+                ) : (
+                  <ThemedText
+                    onLayout={onLayout}
+                    numberOfLines={1}
+                    style={styles.navTitle}
+                  >
+                    {dayTitle}
+                  </ThemedText>
+                )
+              ) : null
+            ) : (
+              <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
+                {headerTitle}
+              </ThemedText>
+            ),
+    });
+  }, [
+    navigation,
+    today,
+    headerTitle,
+    styles.navTitle,
+    styles.dateIsland,
+    readingOnly,
+    immersiveHome,
+    colors,
+    heroBehindStatus,
+    dayActive,
+    dayTitle,
+    dayShell.navigationVisible,
+    dayPastIntroduction,
+    moveActive,
+  ]);
+  const moveInteraction = {
+    canMove: move.canMove,
+    start: move.handlers.start,
+    wrapRow: move.wrapRow,
+    wrapClock: move.wrapClock,
+  };
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const homeContent = (
+    <ScrollView
+      scrollsToTop={!dayActive}
+      keyboardShouldPersistTaps="handled"
+      contentInsetAdjustmentBehavior="never"
+      style={styles.root}
+      contentContainerStyle={[
+        styles.content,
+        immersiveHome && styles.homeContent,
+        { paddingBottom: bottomBarHeight + visual.space.page },
+      ]}
+      scrollIndicatorInsets={{ bottom: bottomBarHeight }}
+      scrollEventThrottle={16}
+      onScroll={
+        isMyTrips
+          ? ({ nativeEvent }) => {
+              const offset = nativeEvent.contentOffset.y;
+              if (headingBottom.current > 0)
+                setHeadingHidden(offset >= headingBottom.current);
             }
-          />
-        </View>
-        <DayFeed
-          instant={homePerspective?.now}
-          key={`${requested}/${selected.date}/${selected.zone}/${generation}`}
-          entry={entry}
-          onReadingChange={(reading) => saveReading(selected, reading)}
-          projection={visibleTrip.observed.projection}
-          date={selected.date}
-          dates={calendarDates ?? [selected.date]}
-          zone={selected.zone}
-          services={visibleTrip.services}
-          renderer={
-            visibleTrip.observed.projection.version === 2
-              ? createCoreExperienceRenderer(visibleTrip.observed.projection)
+          : immersiveHome
+            ? ({ nativeEvent }) => {
+                homeScrollOffset.current = nativeEvent.contentOffset.y;
+                if (heroHeight.current > 0)
+                  setHeroBehindStatus(
+                    nativeEvent.contentOffset.y < heroHeight.current - headerBottom,
+                  );
+              }
+            : undefined
+      }
+    >
+      {!hideHomePrelude && !immersiveHome ? (
+        <Text
+          accessibilityRole="header"
+          style={styles.heading}
+          onLayout={
+            isMyTrips
+              ? ({ nativeEvent }) => {
+                  headingBottom.current =
+                    nativeEvent.layout.y + nativeEvent.layout.height;
+                }
               : undefined
           }
+        >
+          {t(
+            today
+              ? "navigation.today"
+              : visibleTrip?.observed || knownWorkspaceTrip
+                ? "dayFeed.tripHome"
+                : "dayFeed.myTrips",
+          )}
+        </Text>
+      ) : null}
+      {!hideHomePrelude && status === "LOADING" ? (
+        <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
+      ) : null}
+      {!hideHomePrelude &&
+      status === "UNAVAILABLE" &&
+      (today || (localChecked && !knownWorkspaceTrip)) ? (
+        <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
+      ) : null}
+      {!today ? (
+        <LocalTripWorkspace
+          refreshKey={revision}
+          onHomeHeroHeight={onHomeHeroHeight}
+          tripId={requested || null}
+          mode={params.view === "create" ? "CREATE" : "LIST"}
+          onOpen={open}
+          onCreate={createTrip}
+          onOpenToday={openToday}
+          onKnownTrip={knownTrip}
+          onManualItemSaved={manualItemSaved}
+          onBackToTrips={backToTrips}
+          onChooseDay={canChooseDay ? chooseDay : undefined}
+          homePerspective={homePerspective}
+          widgetsForHome={widgetsForHome}
+          onOpenLocalHomeItem={async (tripId, itemId, expected) => {
+            if (tripId !== requested || generation !== getAccountGeneration()) return;
+            await openLocalItem(itemId, expected);
+          }}
+          onOpenHomeItem={async (tripId, itemId, epoch) => {
+            if (tripId !== requested || generation !== getAccountGeneration()) return;
+            const item = await (
+              await readTripJourneySnapshot()
+            ).resolveItem(tripId, itemId, epoch);
+            if (!item) throw new Error("HOME_ITEM_UNAVAILABLE");
+            await openHomeItem(item);
+          }}
         />
+      ) : null}
+      {today ? (
+        <>
+          <Text style={styles.meta}>{t("dayFeed.todayContext")}</Text>
+          <UiButton
+            label={t("dayFeed.myTrips")}
+            onPress={() => router.navigate("/trip")}
+          />
+        </>
+      ) : (
+        <></>
+      )}
+    </ScrollView>
+  );
+  const dayContent =
+    visibleTrip && dayContext && (visibleTrip.localManual || visibleTrip.observed) ? (
+      <>
+        <View
+          style={styles.root}
+          {...move.touchHandlers}
+          onStartShouldSetResponderCapture={(event) => {
+            swipeStart.current =
+              move.active || event.nativeEvent.touches.length !== 1
+                ? null
+                : {
+                    x: event.nativeEvent.pageX,
+                    y: event.nativeEvent.pageY,
+                  };
+            return false;
+          }}
+          onMoveShouldSetResponderCapture={(event) => {
+            if (move.touchHandlers.onMoveShouldSetResponderCapture?.()) {
+              swipeStart.current = null;
+              return true;
+            }
+            if (event.nativeEvent.touches.length !== 1) swipeStart.current = null;
+            const start = swipeStart.current;
+            return (
+              !!start &&
+              dayActive &&
+              !move.active &&
+              event.nativeEvent.touches.length === 1 &&
+              event.nativeEvent.pageX - start.x > 30 &&
+              Math.abs(event.nativeEvent.pageY - start.y) < 20
+            );
+          }}
+          onTouchCancel={() => {
+            swipeStart.current = null;
+            move.touchHandlers.onTouchCancel?.();
+          }}
+          onResponderTerminate={() => {
+            swipeStart.current = null;
+            move.touchHandlers.onResponderTerminate?.();
+          }}
+          onResponderRelease={(event) => {
+            if (move.active) return move.touchHandlers.onResponderRelease();
+            const start = swipeStart.current;
+            swipeStart.current = null;
+            if (
+              start &&
+              generation === getAccountGeneration() &&
+              event.nativeEvent.pageX - start.x > 80 &&
+              Math.abs(event.nativeEvent.pageY - start.y) < 40
+            )
+              router.setParams({ view: "home" });
+          }}
+        >
+          <DayFeed
+            bottomInset={bottomBarHeight}
+            presentation={{
+              scrollEnabled: dayActive && !move.active,
+              p1Move: moveInteraction,
+              localContextForDate: (date) =>
+                !appearanceToday
+                  ? "UNKNOWN"
+                  : date === appearanceToday
+                    ? "TODAY"
+                    : date < appearanceToday
+                      ? "PAST"
+                      : "FUTURE",
+              onLocalInsert: (itemId, role, date, side) => {
+                if (!visibleTrip.localManual) return;
+                const suggestion = localInsertionTime(
+                  visibleTrip.localManual,
+                  itemId,
+                  role,
+                  date,
+                  side,
+                );
+                setInsertion({
+                  date: suggestion.startDate,
+                  startTime: suggestion.startTime,
+                });
+              },
+              listStyle: { backgroundColor: colors.tripIntroduction },
+              listContentStyle: {
+                backgroundColor: calendarDates?.length
+                  ? phase(calendarDates[calendarDates.length - 1])
+                  : colors.background,
+              },
+              showTimeUnspecified: false,
+              renderDayHeading: dayFacts?.startDate
+                ? (date, empty) => (
+                    <P1MeasuredMoveRegion
+                      regionKey={`day:${date}`}
+                      date={date}
+                      register={move.register}
+                      unregister={move.unregister}
+                    >
+                      <TripDayHeading
+                        tripId={requested}
+                        destinationRead={headerDestinationRead}
+                        date={date}
+                        start={dayFacts.startDate!}
+                        today={appearanceToday ?? ""}
+                        empty={empty}
+                        dayColor={phase(date)}
+                        previousColor={
+                          date === dayFacts.startDate
+                            ? colors.tripIntroduction
+                            : phase(
+                                new Date(Date.parse(date + "T12:00:00Z") - 86400000)
+                                  .toISOString()
+                                  .slice(0, 10),
+                              )
+                        }
+                        onAdd={() => setInsertion({ date, startTime: null })}
+                      />
+                    </P1MeasuredMoveRegion>
+                  )
+                : undefined,
+              wrapDayRow: (date, content) => (
+                <View
+                  style={{
+                    backgroundColor: phase(date),
+                    paddingHorizontal: visual.space.feedGutter,
+                  }}
+                >
+                  {content}
+                </View>
+              ),
+              formatDayHeading: (date) => {
+                const day = tripCoreDayNumber(date, dayFacts);
+                const label = formatUiDate(new Date(`${date}T12:00:00Z`), {
+                  dateStyle: "medium",
+                  timeZone: "UTC",
+                });
+                return day === null
+                  ? label
+                  : t("dayShell.coreDay", {
+                      day: formatUiNumber(day),
+                      date: label,
+                    });
+              },
+              listRef: (value) => {
+                dayList.current = value;
+              },
+              topInset: dayTopInset,
+              header: (
+                <View
+                  style={{
+                    paddingTop: dayTopInset,
+                    backgroundColor: colors.tripIntroduction,
+                  }}
+                  onLayout={({ nativeEvent }) => {
+                    dayIntroductionBottom.current = Math.max(
+                      0,
+                      nativeEvent.layout.height - dayTopInset,
+                    );
+                    setDayPastIntroduction(
+                      dayOrigin.current > 0 ||
+                        dayOffset.current >= dayIntroductionBottom.current,
+                    );
+                  }}
+                >
+                  <DayFeedIntroduction
+                    fidelity
+                    tripName={dayName}
+                    rangeLabel={dayRangeLabel}
+                    locationSummary={dayFacts ? tripDestinationDisplay(dayFacts) : null}
+                    openCalendarLabel={t("dayShell.calendar.open")}
+                    onOpenCalendar={() => setCalendarVisible(true)}
+                  />
+                  {visibleTrip.observed?.sourceStatus ===
+                  "HISTORICAL_ACCEPTED_PROJECTION" ? (
+                    <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
+                  ) : null}
+                </View>
+              ),
+              onSummaries: setDaySummaries,
+              onMountedRowsChange:
+                typeof __DEV__ !== "undefined" && __DEV__
+                  ? (count) =>
+                      console.info(
+                        JSON.stringify({ event: "day_window_mount", mountedRows: count }),
+                      )
+                  : undefined,
+              onReadingMotion: dayShell.observeReadingMotion,
+              onOffsetChange: (value) => {
+                if (
+                  dayIntroductionBottom.current !== null &&
+                  (!move.active ||
+                    dayOffset.current >= dayIntroductionBottom.current !==
+                      value >= dayIntroductionBottom.current)
+                )
+                  setDayPastIntroduction(
+                    dayOrigin.current > 0 || value >= dayIntroductionBottom.current,
+                  );
+                dayOffset.current = value;
+              },
+              onViewportChange: (viewport) => {
+                if (viewport.originIndex === 0 && viewport.scrollOffset <= 4)
+                  dayShell.observeScroll(0, false);
+                if (dayOrigin.current !== viewport.originIndex) {
+                  dayOrigin.current = viewport.originIndex;
+                  setDayPastIntroduction(
+                    viewport.originIndex > 0 ||
+                      (dayIntroductionBottom.current !== null &&
+                        viewport.scrollOffset >= dayIntroductionBottom.current),
+                  );
+                }
+                dayShell.observeVisibleDates({
+                  first: viewport.firstVisibleDate,
+                  last: viewport.lastVisibleDate,
+                });
+              },
+            }}
+            instant={homePerspective?.now}
+            key={`${requested}/${generation}`}
+            entry={entry}
+            onReadingChange={
+              selected ? (reading) => saveReading(selected, reading) : undefined
+            }
+            projection={visibleTrip.observed?.projection}
+            localManual={visibleTrip.localManual}
+            onOpenLocalItem={(id, expected, occurrence) => {
+              void openLocalItem(id, expected, occurrence).catch(() => {
+                setLocalItem(null);
+                void load();
+              });
+            }}
+            date={dayContext.date}
+            dates={calendarDates ?? [dayContext.date]}
+            zone={dayContext.zone}
+            viewMode={dayContext.viewMode}
+            onOpenAcceptedP1={(id, revision) => {
+              void openAcceptedPlan(id, revision).catch(() => {
+                void load();
+              });
+            }}
+            services={visibleTrip.services}
+            renderer={
+              visibleTrip.observed?.projection.version === 2
+                ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
+                    instant: new Date().toISOString(),
+                    onOpenActivity: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p6-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertActivity: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
+                    onOpenTransport: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p5-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertTransport: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
+                    onOpenRental: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p4-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertRental: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
+                    onOpenStay: (itemId, occurrence, date) =>
+                      router.push({
+                        pathname: "/p3-detail",
+                        params: { tripId: requested, itemId, occurrence, date },
+                      }),
+                    onInsertStay: (itemId, role, date, side) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        role,
+                        date,
+                        side,
+                      );
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
+                    onInsert: (itemId, side, date) => {
+                      const projection = visibleTrip.observed!.projection;
+                      if (projection.version !== 2) return;
+                      const query = projection.query(date, dayContext);
+                      const rows = [...query.timed, ...query.nonComparable].map(
+                        (item) => item.event,
+                      );
+                      const suggestion = p1InsertionTime(rows, itemId, side, date);
+                      setInsertion({
+                        date: suggestion.startDate,
+                        startTime: suggestion.startTime,
+                      });
+                    },
+                  })
+                : undefined
+            }
+          />
+          {readingOnly && !moveActive && dayTitle ? (
+            <View
+              pointerEvents="box-none"
+              style={[styles.dateOverlay, { top: insets.top }]}
+            >
+              <UiGlassSurface style={styles.dateIsland}>
+                <DayFeedShellTitle
+                  label={dayTitle}
+                  openCalendarLabel={t("dayShell.calendar.open")}
+                  onOpenCalendar={() => setCalendarVisible(true)}
+                />
+              </UiGlassSurface>
+            </View>
+          ) : null}
+          {move.overlay}
+        </View>
+        {move.confirmation}
+        <DayFeedCalendarSheet
+          today={appearanceToday}
+          visible={calendarVisible}
+          tripName={dayName}
+          rangeLabel={dayRangeLabel ?? undefined}
+          tripStart={dayFacts?.startDate}
+          tripEnd={dayFacts?.endDate}
+          selectedDate={dayShell.visibleDates?.first ?? dayContext.date}
+          dates={calendarDates}
+          summaries={daySummaries}
+          copy={{
+            unknownBounds: t("dayShell.calendar.unknownBounds"),
+            markers: {
+              Plans: t("dayShell.calendar.plans"),
+              Stay: t("dayShell.calendar.stay"),
+              Transport: t("dayShell.calendar.transport"),
+            },
+          }}
+          onClose={() => setCalendarVisible(false)}
+          onSelect={(target) => {
+            setCalendarVisible(false);
+            dayList.current?.jumpToDayHeader(target, target === dayFacts?.startDate);
+          }}
+        />
+        <Modal
+          visible={!!insertion}
+          animationType="slide"
+          transparent
+          presentationStyle="overFullScreen"
+          onRequestClose={() =>
+            insertionDismiss.current ? insertionDismiss.current() : setInsertion(null)
+          }
+        >
+          <SafeAreaProvider style={{ flex: 1 }}>
+            {insertion ? (
+              <ManualItineraryContent
+                tripId={requested}
+                generation={generation}
+                initialDate={insertion.date}
+                initialStartTime={insertion.startTime}
+                tripStartDate={dayFacts?.startDate}
+                tripEndDate={dayFacts?.endDate}
+                registerDismissHandler={(handler) => {
+                  insertionDismiss.current = handler;
+                  return () => {
+                    if (insertionDismiss.current === handler)
+                      insertionDismiss.current = null;
+                  };
+                }}
+                onClose={() => setInsertion(null)}
+                onSaved={() => {
+                  setInsertion(null);
+                  manualItemSaved(requested, generation);
+                }}
+              />
+            ) : null}
+          </SafeAreaProvider>
+        </Modal>
+      </>
+    ) : null;
+  // Keep the requested Day shell while its local reader resolves; never paint the old Today root.
+  if (dayActive && !visibleTrip)
+    return (
+      <View style={[styles.root, { paddingTop: dayTopInset }]}>
+        <ThemedText
+          accessibilityRole={status === "UNAVAILABLE" ? "alert" : undefined}
+          style={styles.meta}
+        >
+          {t(status === "UNAVAILABLE" ? "dayFeed.unavailable" : "dayFeed.loading")}
+        </ThemedText>
+      </View>
+    );
+  if (!dayContent && !home && !today && visibleTrip && canChooseDay)
+    return (
+      <View style={styles.root}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: bottomBarHeight + visual.space.page },
+          ]}
+        >
+          <Text accessibilityRole="header" style={styles.heading}>
+            {t("shell.day")}
+          </Text>
+          <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
+          <Text style={styles.meta}>{t("dayFeed.date")}</Text>
+          <UiTextInput
+            accessibilityLabel={t("dayFeed.date")}
+            value={date}
+            onChangeText={setDate}
+            autoCapitalize="none"
+          />
+          {dateChoices.map((choice) => (
+            <UiChoiceChip
+              compact
+              key={choice}
+              label={choice}
+              selected={date === choice}
+              onPress={() => void enterDay(choice)}
+            />
+          ))}
+          {contextError ? (
+            <Text accessibilityRole="alert" style={styles.meta}>
+              {t("dayFeed.contextInvalid")}
+            </Text>
+          ) : null}
+          <UiButton label={t("dayFeed.openDay")} onPress={() => void enterDay()} />
+        </ScrollView>
       </View>
     );
   return (
     <>
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        style={styles.root}
-        contentContainerStyle={[
-          styles.content,
-          immersiveHome && styles.homeContent,
-          { paddingBottom: bottomBarHeight + visual.space.page },
-        ]}
-        scrollIndicatorInsets={{ bottom: bottomBarHeight }}
-        scrollEventThrottle={16}
-        onScroll={
-          isMyTrips
-            ? ({ nativeEvent }) => {
-                const offset = nativeEvent.contentOffset.y;
-                if (headingBottom.current > 0)
-                  setHeadingHidden(offset >= headingBottom.current);
-              }
-            : immersiveHome
-              ? ({ nativeEvent }) => {
-                  homeScrollOffset.current = nativeEvent.contentOffset.y;
-                  if (heroHeight.current > 0)
-                    setHeroBehindStatus(
-                      nativeEvent.contentOffset.y < heroHeight.current - insets.top,
-                    );
-                }
-              : undefined
-        }
+      <View
+        accessibilityElementsHidden={dayActive}
+        style={[styles.root, dayActive && styles.inactive]}
       >
-        {!hideHomePrelude && !immersiveHome ? (
-          <Text
-            accessibilityRole="header"
-            style={styles.heading}
-            onLayout={
-              isMyTrips
-                ? ({ nativeEvent }) => {
-                    headingBottom.current =
-                      nativeEvent.layout.y + nativeEvent.layout.height;
-                  }
-                : undefined
-            }
-          >
-            {t(
-              today
-                ? "navigation.today"
-                : visibleTrip?.observed || knownWorkspaceTrip
-                  ? "dayFeed.tripHome"
-                  : "dayFeed.myTrips",
-            )}
-          </Text>
-        ) : null}
-        {!hideHomePrelude && status === "LOADING" ? (
-          <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
-        ) : null}
-        {!hideHomePrelude &&
-        status === "UNAVAILABLE" &&
-        (today || (localChecked && !knownWorkspaceTrip)) ? (
-          <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
-        ) : null}
-        {!today ? (
-          <LocalTripWorkspace
-            onHomeHeroHeight={onHomeHeroHeight}
-            tripId={requested || null}
-            mode={params.view === "create" ? "CREATE" : "LIST"}
-            onOpen={open}
-            onCreate={createTrip}
-            onOpenToday={openToday}
-            onKnownTrip={knownTrip}
-            onBackToTrips={backToTrips}
-            onChooseDay={
-              visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
-                ? chooseDay
-                : undefined
-            }
-            homePerspective={homePerspective}
-            widgetsForHome={widgetsForHome}
-            onOpenHomeItem={async (tripId, itemId, epoch) => {
-              if (tripId !== requested || generation !== getAccountGeneration()) return;
-              const item = await (
-                await readTripJourneySnapshot()
-              ).resolveItem(tripId, itemId, epoch);
-              if (!item) throw new Error("HOME_ITEM_UNAVAILABLE");
-              await openHomeItem(item);
-            }}
-          />
-        ) : null}
-        {today ? (
-          <>
-            <Text style={styles.meta}>{t("dayFeed.todayContext")}</Text>
-            <UiButton
-              label={t("dayFeed.myTrips")}
-              onPress={() => router.navigate("/trip")}
-            />
-          </>
-        ) : (
-          <>
-            {visibleTrip?.observed ? (
-              <>
-                <Modal
-                  visible={dayChooser}
-                  onRequestClose={() => setDayChooser(false)}
-                  animationType="slide"
-                >
-                  <SafeAreaProvider style={styles.modal}>
-                    <SheetHeader
-                      title={t("dayFeed.openDay")}
-                      onLeft={() => setDayChooser(false)}
-                    />
-                    <ScrollView contentContainerStyle={styles.content}>
-                      <Text style={styles.meta}>{t("dayFeed.date")}</Text>
-                      {dateChoices.length ? (
-                        <ScrollView horizontal contentContainerStyle={styles.choices}>
-                          {dateChoices.map((choice) => (
-                            <UiChoiceChip
-                              compact
-                              key={choice}
-                              label={formatUiDate(new Date(`${choice}T12:00:00`))}
-                              selected={date === choice}
-                              onPress={() => setDate(choice)}
-                            />
-                          ))}
-                        </ScrollView>
-                      ) : null}
-                      <UiTextInput
-                        accessibilityLabel={t("dayFeed.date")}
-                        value={date}
-                        onChangeText={setDate}
-                        autoCapitalize="none"
-                      />
-                      <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
-                      <View style={styles.choices}>
-                        {zoneChoices.map((choice) => (
-                          <UiChoiceChip
-                            compact
-                            key={choice}
-                            label={choice}
-                            selected={zone === choice}
-                            onPress={() => setZone(choice)}
-                          />
-                        ))}
-                      </View>
-                      <UiTextInput
-                        accessibilityLabel={t("dayFeed.zone")}
-                        value={zone}
-                        onChangeText={setZone}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                      />
-                      {contextError ? (
-                        <Text accessibilityRole="alert" style={styles.meta}>
-                          {t("dayFeed.contextInvalid")}
-                        </Text>
-                      ) : null}
-                      <UiButton label={t("dayFeed.openDay")} onPress={enterDay} />
-                    </ScrollView>
-                  </SafeAreaProvider>
-                </Modal>
-              </>
-            ) : null}
-          </>
-        )}
-      </ScrollView>
+        {homeContent}
+      </View>
+      <View
+        accessibilityElementsHidden={!dayActive}
+        style={[styles.root, !dayActive && styles.inactive]}
+      >
+        {dayContent}
+      </View>
+      {localPreview}
+      {planEditor}
+      {stayEditor}
+      {rentalEditor}
+      {transportEditor}
       {visibleOverlay?.read.observed ? (
         <DayFeed
           instant={homePerspective?.now}
@@ -759,12 +2107,22 @@ function TripContent({ today = false }: { today?: boolean }) {
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
+    inactive: { display: "none" },
     modal: { flex: 1, backgroundColor: c.background },
     choices: { flexDirection: "row", gap: visual.space.heading },
     root: { flex: 1, backgroundColor: c.background },
     content: { padding: visual.space.page, gap: visual.space.heading },
     homeContent: { paddingHorizontal: 0, paddingTop: 0 },
     header: { paddingHorizontal: visual.space.page, paddingTop: visual.space.heading },
+    dateOverlay: { position: "absolute", left: 0, right: 0, alignItems: "center" },
+    dateIsland: {
+      minHeight: 44,
+      paddingHorizontal: 12,
+      borderRadius: visual.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.separator,
+      overflow: "hidden",
+    },
     navTitle: { ...visual.type.section, color: c.textPrimary },
     heading: { ...visual.type.metric, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },

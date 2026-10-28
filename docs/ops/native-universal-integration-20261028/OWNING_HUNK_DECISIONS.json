@@ -1,0 +1,1108 @@
+[
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 1,
+    "mainSha": "98cfcfdac41620e2cade66fde5af7256f1e07f6c1de267def7dd6e52509c0b6b",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 2,
+    "mainSha": "3ad3ea6e2ec1e3d61aff935cc8f2053a3867df6543993acea2db2b8e873b10e5",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 3,
+    "mainSha": "1348ed6254a9678fb650bd86e613d628e1e73b27704095d973ae90cce91be3bd",
+    "nativeSha": "14042e22907681c4a29c4d84aea5e8b3139ac61dd0635d6ed79d930927a175b2",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 4,
+    "mainSha": "492895795b355797f906b1302c3564cb30a3b86faed6ca9c0c11a6651ba04247",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 5,
+    "mainSha": "6d38b44143091cb8f33ed2622511a7508bfff43cb6e16d86d75c1916ce5bfb04",
+    "nativeSha": "4fd3208f9eacd2b98a9506855609541f7e1263463e4c227e6a6bb46560ea3cb0",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 6,
+    "mainSha": "1a1d1c7ff3238adaf49a0f5d637e1a9b0ce30548a86d5b2b0d0e3392969c799d",
+    "nativeSha": "b64526fc78eea85d77c06ad673c96676cb1a24c51327e1c189a3b4aed95bdd77",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 7,
+    "mainSha": "90858b803a189236afab447e6e14d33d02608c5e3efed5c3b1fb7ddfd0ec03cb",
+    "nativeSha": "b32e05f88157a36c47e3fa22b278023c5ec8bd072fc9b9c669ca9c3e24ee0d8d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 8,
+    "mainSha": "1a1d1c7ff3238adaf49a0f5d637e1a9b0ce30548a86d5b2b0d0e3392969c799d",
+    "nativeSha": "b64526fc78eea85d77c06ad673c96676cb1a24c51327e1c189a3b4aed95bdd77",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.test.ts",
+    "hunk": 9,
+    "mainSha": "1991bb7f72b40c2b04e5ec984e06b3de864345e965afdb65984c6631e6d6ce39",
+    "nativeSha": "e58c6649ad38a603bada0e51a6f4aa6e5d767e4bfc0de3413180e52825568b42",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 1,
+    "mainSha": "33c85a62aef0cbb7ca6342dc318802d00d4624f1b464c0a5c470b9c6cfd0dfc4",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 2,
+    "mainSha": "7d58e27fb8be64afc50bb4ab2cf80a1437aa607b31d7d1d4fde3ff6001741fdf",
+    "nativeSha": "b8bb89cab359b934aa9f55316504a5bd8400932b9dbb96daa4355f31ab350774",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 3,
+    "mainSha": "a7c8b6feccf78ed2f7d205e23b775b5d288693e11bc34734c559596faadc41d2",
+    "nativeSha": "e34dfc55875acf4dc96694ebb52569220911ea098394377a65d4d23c8ea967e0",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 4,
+    "mainSha": "b4b3c448aafb39cec44813b6b842a901b22e033045e68a9ea8f1fb5d13e1f200",
+    "nativeSha": "a1254768e5a83f08d2fb19b52e1b59066b706b0e3deb153b9a0156f4d88dab09",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 5,
+    "mainSha": "33003f524917a47a575088b4b365715672d80720d6a278373c30709b38b752d9",
+    "nativeSha": "1114b9131b5beef49234c1e0a1cfdcb9dc40a9f0f61eab054546f4a8df9a26f4",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 6,
+    "mainSha": "8a0ca2a8cdb7eb69bcddedc80b8d252775fc64f5d526f9cb8111e7a002182def",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 7,
+    "mainSha": "35f9d163e20a195c8e0f0b9c704c2dfa4816dc27700a1f149a4ee2d07d9a4fd5",
+    "nativeSha": "74d35cc5349c34d45f208934486d6c1bc5c3c74d270b497bdafbb0afe5c7a2db",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 8,
+    "mainSha": "7119fd6b1b8803516f585bc97c71c0c50e55308a95d7c012edbcdf44c1c3a1c6",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverCapture.ts",
+    "hunk": 9,
+    "mainSha": "658b47bc6e8b78357f162f63e281e3dba9f4a4ce11dae791d71349b365936dd6",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverStartup.ts",
+    "hunk": 1,
+    "mainSha": "9a30e5288194f6f9b0f58c771ccb6707f897e11c6a94ec0a53190ba4b855e350",
+    "nativeSha": "b225225ea9bba9cd217b55fc570cc15551a48fdbc9b0851c9a45ff29c2040c03",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverStartup.ts",
+    "hunk": 2,
+    "mainSha": "0a380998ace9dd70a6410eb710c2af2ae627ba30176c9bebff769269dccf9831",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/serverStartup.ts",
+    "hunk": 3,
+    "mainSha": "716be2a3ceed0f0f028f5b160e5fc2e64040d813b45422e913d22afa70eba060",
+    "nativeSha": "5bbdbea8e6ad4f2ece14ff7b8349fdc344f0279b6792afaf259de299bc2290c5",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgHttpConnection.ts",
+    "hunk": 1,
+    "mainSha": "8c98ac957385fb8070ec2761ebe979f3291b188977ac6b25a64426657fc1a0c1",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgHttpConnection.ts",
+    "hunk": 2,
+    "mainSha": "1d72db3d6877734fd6f4878ff5969e73899607d78b2258cd03b3a46b028c34e6",
+    "nativeSha": "a07989a0d641d6526a36ae8223705ba6fca27bfa32641e6dccdf7aae277d43f1",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgRead.ts",
+    "hunk": 1,
+    "mainSha": "a72fa834ed73491958f9ecb351a5b85b171eb185db69e3d85153bb2b115f0d69",
+    "nativeSha": "7489e4ae50b143ea0bdad5d0983082b5439967d4ac2c597c99ebaab4ca9e2cb0",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgRead.ts",
+    "hunk": 2,
+    "mainSha": "8ad394d4bd056e7ec93ed3d75c83f5d963c14bc824cd6572a420264508dfd94a",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgRead.ts",
+    "hunk": 3,
+    "mainSha": "fd53feb504b7ec7eeeb22edfcf9254d9385a5e87a8cf740ac53333055dd95a99",
+    "nativeSha": "51702a549bf600736a08fde6d1a19f4e83f30293d9d56cb625e74c6c791da807",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.test.ts",
+    "hunk": 1,
+    "mainSha": "0b7ddd4ba681f6576d0b65442576869a9327f7db995a31f5d0fcb924cc535e64",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.ts",
+    "hunk": 1,
+    "mainSha": "a72fa834ed73491958f9ecb351a5b85b171eb185db69e3d85153bb2b115f0d69",
+    "nativeSha": "7489e4ae50b143ea0bdad5d0983082b5439967d4ac2c597c99ebaab4ca9e2cb0",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.ts",
+    "hunk": 2,
+    "mainSha": "810bd315546da5bc3174177dd83600dce25418e120dbc05a35a923c827809f7b",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.ts",
+    "hunk": 3,
+    "mainSha": "8d02bcf419b113652e98eac5253d65b31651c31e8a988d9b794923b1f5fe1611",
+    "nativeSha": "1c4354a91efc69fea3650c8b7b27f9d44352d2b6a7db0c11751ac2757a8cd36f",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.ts",
+    "hunk": 4,
+    "mainSha": "cf4aca471a23760ec2db513f54e7d4efd3db9d871991797671bd3af0ba973126",
+    "nativeSha": "49449879eade3d28d2c72842c3a9e6cf519bb455750e730a869b54f5919a2e94",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.ts",
+    "hunk": 5,
+    "mainSha": "b93e241049681f83429d01b7ca87c5c42d334eb49cc83e59067c26987f9663ea",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCoreV2PgStorage.ts",
+    "hunk": 6,
+    "mainSha": "b2ed8bb8ae2080daf887d3446076e1eefbdb096c2d701aeed5eedd82b066c918",
+    "nativeSha": "1b2c5cd3c6b1b1f976a6b1d8231dbab64b79aef4e153bb9c85b06a9a386d1f5f",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCreateRuntime.ts",
+    "hunk": 1,
+    "mainSha": "8c98ac957385fb8070ec2761ebe979f3291b188977ac6b25a64426657fc1a0c1",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCreateRuntime.ts",
+    "hunk": 2,
+    "mainSha": "c25e0c527e3eab34fa44a3eba8e06323609b8f135cb46a8a174811e08e55cb83",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripCreateRuntime.ts",
+    "hunk": 3,
+    "mainSha": "4fce2ab44fb334469783ca6161ba570b94c15f166ee40e7457a36c4d5a7515e1",
+    "nativeSha": "54c0445881e2e077e2fc7e941df09a59a7dd1b065b9abd2aae88d332c77f8e7d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripNormalP1Policy.ts",
+    "hunk": 1,
+    "mainSha": "aaee21d9aee8ecf3b7ca8d9e4241cce47067936506223b3fbe695ad85953e6b2",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripSustainedGate.ts",
+    "hunk": 1,
+    "mainSha": "cdc04656571438cd00fd9039e129dc36fe2170c1bcd5cd000042b156d311b334",
+    "nativeSha": "37d951af63b3e7d277d6cd53e62641c1fa4267fc3b6d0efda44899247f7976bf",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripSustainedGate.ts",
+    "hunk": 2,
+    "mainSha": "343178b249b3f189d425bf087b4fcc75ffdadba8d2ff22e66613ed644da00229",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/tripSustainedRuntime.ts",
+    "hunk": 1,
+    "mainSha": "70dc31952d864449768e5e37287669f548282f2eac9601a9c4e2e9ef09c52f77",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalDeepSeekProvider.test.ts",
+    "hunk": 1,
+    "mainSha": "d34d10bb70922b79aa780a1875bc11114296d2ebb786afc82d01defbaf0ace58",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalDeepSeekProvider.ts",
+    "hunk": 1,
+    "mainSha": "292f10cf8822df228a6650fc3603113927c0a880fe333b09de8691d083ebf31f",
+    "nativeSha": "fee9461a2d5cb870a43288d7e217608ee4adcfa924522700e117991518a95f9d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalDeepSeekProvider.ts",
+    "hunk": 2,
+    "mainSha": "050f6e72c8f5501c9c64dc31cdecdbc084eb9c2a253c073bc791259a30cb57de",
+    "nativeSha": "56cd68e59f0d4f02a5dfe779198d13078542fc6a8745aa99b9def9b87b82f553",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalDeepSeekProvider.ts",
+    "hunk": 3,
+    "mainSha": "701ec1b4cc079bf3312ad835fdd67796b08dd173d91d1cde4ca1ed90c7c2b061",
+    "nativeSha": "95fefe866997b0fad7f73611371786923f9c450994fef2cd610f92e7f6b50c99",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalDeepSeekProvider.ts",
+    "hunk": 4,
+    "mainSha": "d1e79e80a7744e3294e5c11856e8c1155d8f0e2a9898884230186afa72bac46f",
+    "nativeSha": "2093d1cf26a7ba9060e69d5483a59f68fc34ec2afdf70b91576a68a3a27c58ee",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 1,
+    "mainSha": "62eecc173667eab045adb3c293e3b28ec097c984214664a66994a45f108bb8b3",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 2,
+    "mainSha": "25773d2a1cb6063291c5385f74b4caf06b25e21aabbdc4ab23eb6ada271acc60",
+    "nativeSha": "fc96a5efb097f4bb15998f8008800e4e110f7c898f7caf02522d06799047bb79",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 3,
+    "mainSha": "6a6ae59597f31707e7d7c6f93d36e2757b7b4c63f97de89b054f4606d0cc108f",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 4,
+    "mainSha": "393b396e425ef67e94d4c4d32d850153d0292db1adb5376d475bf8250337141a",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 5,
+    "mainSha": "086ef9c7802cf476cfd45e44617a6bfd27b7c29210f1da34fa993b069748d88e",
+    "nativeSha": "04f5143ab2a0b1f22bb60cde5c31bc326ac1c91c9a4394849cc04e48cd7eea50",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 6,
+    "mainSha": "17aa5755e8925ffe8333eef6ae3c2ed9d53e4b7733bf6e06ef51b7c748f1cbaf",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalPersistenceHost.ts",
+    "hunk": 7,
+    "mainSha": "a4597c4e5a9d72bfd4860c7ff34c00cfd68313dc53b47795e54a5388926d3507",
+    "nativeSha": "fefed4bb834c69fd782460a6135ac7ddbfbac0c64c697fe0cc441518de026ed3",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalRuntime.ts",
+    "hunk": 1,
+    "mainSha": "9bffb99ebf3719db919a604ef73cca5777b91ca32b2a4c9724c600062bfb2980",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalRuntime.ts",
+    "hunk": 2,
+    "mainSha": "bacc557d137d58f6627d0863e64c57133f4f73e4279b4d970d52c68a9172a90b",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalRuntime.ts",
+    "hunk": 3,
+    "mainSha": "3152f7555217310c638e22c30c113cd415593f7b122b8934e87176b90b4b8e80",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalSourceRead.ts",
+    "hunk": 1,
+    "mainSha": "020db3a8200e20c34e4e30505dada2bd34ccae9c6f5b74e8a670f3619eeeb4eb",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalSourceRead.ts",
+    "hunk": 2,
+    "mainSha": "26555d37aaa7619746215b0a81ccbfd229e627c4f5c0b74884ed2feeff931ca3",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalSourceRead.ts",
+    "hunk": 3,
+    "mainSha": "9daa664fc2e46310f29359bd6ea2cc6c3bc70fe6757b33b92809eacc11178b0b",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalSourceRead.ts",
+    "hunk": 4,
+    "mainSha": "baee9f37326f47a025dc11c4fc608a0ddf1b4e12f6ee7b27738f15ce6ff480fc",
+    "nativeSha": "465be1f623eaced92484350b1c8242f8a76436ee8797144be0bbbdf83754e1a1",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalSourceRead.ts",
+    "hunk": 5,
+    "mainSha": "8f9e184e62a90cbe46b69d09eb952cc5019b8d89cf430018b7630a3b7a152ccd",
+    "nativeSha": "5d8c16f17da1452217c510bf605fda402c1aa7e409b38756a2292ab9a3267424",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalSourceRead.ts",
+    "hunk": 6,
+    "mainSha": "0c5ea63a09994450391233394f85c0c05994767e003fd304d3b2b7d4052033da",
+    "nativeSha": "27cbdfec741ff0c2ac93a3b045dc241147a52df04d5a806b20188d99d779bcb5",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalTaskBootstrap.ts",
+    "hunk": 1,
+    "mainSha": "37a1df1231561d9f3d9b8fb53a9f59528507e3273cfd5c12a8afc1822cbc05b7",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalTaskBootstrap.ts",
+    "hunk": 2,
+    "mainSha": "6e5d4aee593bfd1c64d6d760da4b30558b97f53c6d34d186d06e7945b399d7cd",
+    "nativeSha": "ad81480dc8b93c1866556fe86624aca70a657ffc5497b57f36fb2c46b6f6440d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalTaskBootstrap.ts",
+    "hunk": 3,
+    "mainSha": "3a3e46f94276b6f6f4ed1f02af78bef6a2ee1c439dd5584b973948313214d2b7",
+    "nativeSha": "42a2cb25a122b44221a6234ec660a7b5fb7f9bde7b3b9e2b3c559a0d96fac739",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalTaskBootstrap.ts",
+    "hunk": 4,
+    "mainSha": "a899c7bfd798297f88a923842c25e460c0c55e4e5274fe730456c4801c7fc563",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "backend/src/universalTaskBootstrap.ts",
+    "hunk": 5,
+    "mainSha": "5e9889509a526402cfeb7d05e311b8251ad3683f393bd4aea4b55db6914eb042",
+    "nativeSha": "074fce32da936d330e456bad18bcb8805cce51f439e2faee042f7545de2b5fd4",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "deploy/dev-backend/Dockerfile",
+    "hunk": 1,
+    "mainSha": "ec445977b97a874b8f403e8fe2bd0ffedd4425579e3744c7a83fa2f0ce15147f",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "modules/local-dictation/expo-module.config.json",
+    "hunk": 1,
+    "mainSha": "e23427f600109b255eda7cfd12c701161b599213db0723c2848871587f2800ea",
+    "nativeSha": "0893d8fee22dfe1a7e4f342729777d15d4f7365aad1e4fcf7863d81d7d637860",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "scripts/import/build-universal-package.py",
+    "hunk": 1,
+    "mainSha": "81ed52dca47c52742dfc07ec01913eb2e6115f0287905f05347915f8f83ff70b",
+    "nativeSha": "aec12d6f56818af600a33b7d841e079fd12bccf4f0c3cc3b2de1dd70e62e0e1b",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/api/universalImportContracts.ts",
+    "hunk": 1,
+    "mainSha": "af6241377c01a3fc91c57921d40e087df208a1240ba9722d9d6ff9381fd55401",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/api/universalImportTransport.ts",
+    "hunk": 1,
+    "mainSha": "4f27ab4bc2afa1c830aeaac939e5f3222f8b4721c76863bfe922258184df2b32",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/api/universalImportTransport.ts",
+    "hunk": 2,
+    "mainSha": "aee891ee4a093e2e7a78c57c09d3c535c6921eec37b22625e75b80924d9188dd",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/auth/authRepository.ts",
+    "hunk": 1,
+    "mainSha": "8efe25cd61367b6235f058da6f945768125ad5a5acc3a3256c2f1f4bda574c76",
+    "nativeSha": "19bb5c08f5d752a89a327a30bb4e57aad6eb7e580c4cf7d740b7bb8943e017a5",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/defaultUniversalOriginalSource.test.ts",
+    "hunk": 1,
+    "mainSha": "7416739926483b3095bae2d10573a8053ae56797831e7f2178cc569751be588e",
+    "nativeSha": "b08538162019d152ac71484c339e3185320b49c7becda58539d9a2fbf3db3dee",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/defaultUniversalOriginalSource.test.ts",
+    "hunk": 2,
+    "mainSha": "58a77f74bef481cf8a4088a2fb4fe575b5f10fdab3e37d08935ba2979adc6272",
+    "nativeSha": "61cebebc1e6b9f75729185ce7fe67aecf900f81fe36fda3ccbea2396906e8679",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/defaultUniversalOriginalSource.test.ts",
+    "hunk": 3,
+    "mainSha": "0ab260d7d6b159a547364642800c4c122a44bc3d48295767249d718cce6d778f",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/defaultUniversalOriginalSource.ts",
+    "hunk": 1,
+    "mainSha": "77b20ca10e0b36cd4758abd99b11385c877c5992b1958ce33585a433aa126d29",
+    "nativeSha": "1bd0eea9fe3458bcb044c095dcb026c46c864dd11bf306ca98e05e83f08df98d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/defaultUniversalOriginalSource.ts",
+    "hunk": 2,
+    "mainSha": "0e298db4d67826aad375f99fabd4760de802e8c65fb1699c8c9addb4f5eff648",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/defaultUniversalOriginalSource.ts",
+    "hunk": 3,
+    "mainSha": "3f15003f311151a53babb4c696c6dc805e1dbdf5f10545d831816104ddf418e5",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.test.ts",
+    "hunk": 1,
+    "mainSha": "a9b13c586edaf398028f332f5575a07263d2714861c24c1d0d29de8d3da44df0",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.test.ts",
+    "hunk": 2,
+    "mainSha": "f46bd5e39262abac3159aba798aecb5925b8af28856e31b3b2437801cd824d87",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.test.ts",
+    "hunk": 3,
+    "mainSha": "fd8e48774bf3290273400b83cb49a810128f32243e4b123eddea079a854a62cf",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 1,
+    "mainSha": "8b34383ab3ab6a2511e200b2a8b69b1acc4e42fd91fe752017b2282a5ccd1f95",
+    "nativeSha": "0a6e39570a5785e479f6334d49ad8d15d18155a42b5cd0e4d9b6a926496c58f7",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 2,
+    "mainSha": "a26856082f16472f8d5dc97774889ce4dd63ae8f3346f87ca7f49b3ee4faf9ee",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 3,
+    "mainSha": "f2cbcaff05a1fb95e0e703de402f8a47cc725d65e2b973b8a4d93df1cbd71b62",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 4,
+    "mainSha": "56d7f6e6870fe6d29e82a078b7f7cbcf0fcaa9cabcfd31c4541d60bdf7a9a626",
+    "nativeSha": "17565780f55ce054692cab9c9013b4287a0c87ea560ebde0ba1f8a603ac42131",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 5,
+    "mainSha": "80360515be44e47427079aabec62e688a36d23c35e276050e6887e90449ddbe4",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 6,
+    "mainSha": "56d7f6e6870fe6d29e82a078b7f7cbcf0fcaa9cabcfd31c4541d60bdf7a9a626",
+    "nativeSha": "17565780f55ce054692cab9c9013b4287a0c87ea560ebde0ba1f8a603ac42131",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 7,
+    "mainSha": "8d041892be0c31e5b68a09a9c58407498ae40ee37cc73832e2e3ee6b87c8f90d",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/operations/universalCaptureConsumer.ts",
+    "hunk": 8,
+    "mainSha": "89631f48b43ef5ef70e9cff1a5be8b9673747fb08d8f70bb880c6a992fae118b",
+    "nativeSha": "35f986e974d9b115b568e751c00989a6a8050ad3af273a014758119fc5955b6e",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/repositories/captureSourceAdmissionRepository.ts",
+    "hunk": 1,
+    "mainSha": "d56207fda626925527c504bec7e8093e70160fc333143e81b4c13cab826a2a01",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/repositories/captureSubmissionRepository.test.ts",
+    "hunk": 1,
+    "mainSha": "22e61471e09aaa02bf6d8ba8c2f684fe7c4a50e761c5870ac7c807f702b892f6",
+    "nativeSha": "3b8df5fa938975492e6d9b141db1786c68720c0f19013048a73bf106b3d83ca4",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/repositories/captureSubmissionRepository.test.ts",
+    "hunk": 2,
+    "mainSha": "be1600e44b0e455d8466adc7eb8608b9246269114b51a4ddc05b2fac3cdcf10c",
+    "nativeSha": "1438fe7243564eaf1eb7d535425d49d5629de3e6267a006a9af4e4c309825548",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/repositories/tripDiscoveryRepository.ts",
+    "hunk": 1,
+    "mainSha": "aef738a7efeaf49d203d56de8238db179f6c2c879bd51dcdb7f2a035efecd22d",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/repositories/tripMetadataRepository.ts",
+    "hunk": 1,
+    "mainSha": "b58e7d972b9fa4d2f540671c9dac3da70a7d90d603d6d38a3121bb41b8363d3a",
+    "nativeSha": "d9f5052e2e4443ab101073412beb8d72ddac34c2f9a2a6de5d15712b5581c9c5",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/p1SharedParticipantQualification.ts",
+    "hunk": 1,
+    "mainSha": "698bc071548be7fc2006403facc8256ddb898ca9016c8fcb82ff8684b1ba14b9",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/p1SharedParticipantQualification.ts",
+    "hunk": 2,
+    "mainSha": "4e79295894bfc6a3e5a3e3c93f7ad299d0d259e07204cd75a178358e5565a766",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripCoreV2SyncWorker.test.ts",
+    "hunk": 1,
+    "mainSha": "360b47cd84fbc376519b797564af491590b2a2b31fd95746c4aa291650be20c3",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripCoreV2SyncWorker.test.ts",
+    "hunk": 2,
+    "mainSha": "77a76062ac19ea08b8cc8eed8e4cc94529ec2e3ac627d969f8f3b466369913c5",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalCoordinator.ts",
+    "hunk": 1,
+    "mainSha": "698bc071548be7fc2006403facc8256ddb898ca9016c8fcb82ff8684b1ba14b9",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalCoordinator.ts",
+    "hunk": 2,
+    "mainSha": "fa509cd0020d7c5c11883b65a769a08170590f3494a98689b3866fe8d714dbfe",
+    "nativeSha": "279acaa10d0467c87526b7f82351ded03d98b6a9f6efa855b01550749e5ced4e",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalCoordinator.ts",
+    "hunk": 3,
+    "mainSha": "4072a42fe3905ffc0ce64e26015bca422f1419027f4776b11ec946ffaddc5e7c",
+    "nativeSha": "52775012231f2b5277a8fd799f45c506cd74de0b3c3a15fe2253243336568895",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalQueueActivity.ts",
+    "hunk": 1,
+    "mainSha": "467cc32deec3ef84309f8c6b7d22d77d1d2b94565bf88881ec575851148bbc26",
+    "nativeSha": "5b36f9cb270ea73b3a6248d73c4bc4d292a1b5709aeea6d9db49e20eee9b8f39",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalQueueActivity.ts",
+    "hunk": 2,
+    "mainSha": "07ed14d620bbcdb8aeb2996a41e5a605974f667f74a441e56364b11ad34b866d",
+    "nativeSha": "675d29bf969219be628568540496ed3e17afc5624ba77c3cbc6f799014a5e684",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalQueueActivity.ts",
+    "hunk": 3,
+    "mainSha": "20391aba52838152b7816ce0ef40cd2c709788a61012049b6859262e87460494",
+    "nativeSha": "0d61c5fdc2b6c36d992f83df7fd5a3951863efb75d52ed843201bf9378802963",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalQueueActivity.ts",
+    "hunk": 4,
+    "mainSha": "6029be8658b03866dc63ffd2c0d6e60d33f7846fb9b4dd50e9aa95a4e121664e",
+    "nativeSha": "40855da33d013cf42d4784cfdf2a3b3bd59656103501d6a8711ed6495a1e16ff",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalQueueActivity.ts",
+    "hunk": 5,
+    "mainSha": "a937e962fb745ee181cf60d6c66a9fa53ddd746e0dd613ac15a05d5f4ac98d59",
+    "nativeSha": "cda14024ee74025b22b48299cff8a9f6b50b36a7e91343807ee16a07ef748c64",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalQueueActivity.ts",
+    "hunk": 6,
+    "mainSha": "880774122840a59d1c10eec9ca1f115103ff5b8f97f947fcba22cebfaf7ea3c4",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalSync.ts",
+    "hunk": 1,
+    "mainSha": "07ed14d620bbcdb8aeb2996a41e5a605974f667f74a441e56364b11ad34b866d",
+    "nativeSha": "675d29bf969219be628568540496ed3e17afc5624ba77c3cbc6f799014a5e684",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalSync.ts",
+    "hunk": 2,
+    "mainSha": "286498a7bf64d8ece90bdedf13a8a40b3f170d9506a072238f739c779968497c",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalSync.ts",
+    "hunk": 3,
+    "mainSha": "fa1de4525981abf698f6dd0a77a072123dab7bc908987092aea64836f727ed11",
+    "nativeSha": "eb6ee411177d5050b248c558bde3e8532d23793aea676e8d5683ce3dc1329a56",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalSync.ts",
+    "hunk": 4,
+    "mainSha": "4bd8e4338c6928e002b3674a93c9868d6b13ab4f0afaf93844c2f8a121a26738",
+    "nativeSha": "1d43d2ef5951d5275fe28b199d9b7b33db87afdd87712c7d0418682539fee141",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/tripNormalSync.ts",
+    "hunk": 5,
+    "mainSha": "9bc7826d0037945f421bfa0bc0716ab2c043202d998b628b0e3b7a3594ac8f86",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/domain/trip/person.ts",
+    "hunk": 1,
+    "mainSha": "057d8bb1dbcf04f2cb21a7091d973671ac42ec58640a59b1725ac3554407f39f",
+    "nativeSha": "4f11b1f8eafbd7a44740205d7751924b07d80d33107c9f34ad7a34466208b9a7",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/CaptureContent.tsx",
+    "hunk": 1,
+    "mainSha": "308be03c1795454760a82dc6560c7118772984e325df731437ccf6af53f91ab3",
+    "nativeSha": "4728fda56a207c83ca12b075f32c231383a6dba13c2773f136dedf213a0e7c45",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/CaptureContent.tsx",
+    "hunk": 2,
+    "mainSha": "3ebd04e4fdac581568f251c5f7d1ce7ffb202836e4f23f37d22a274ba4c3a940",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/CaptureProgress.tsx",
+    "hunk": 1,
+    "mainSha": "5c5b0a5861f17b08bc46ebd3cad5f246e298534628558888ba6bd2e3b9e6b3d0",
+    "nativeSha": "a69a13ddbad13a5f487bd69901fc6f25e77d0f9144dbfcd7b69fa82493b77e93",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/CaptureProgress.tsx",
+    "hunk": 2,
+    "mainSha": "1690dd5d8a76eb9338aaffe2352ac20678fb69c8587b8c86d435636ad38fd1c3",
+    "nativeSha": "062de57b34489fe32c86c02f0c7548b239a69dba623c887f4b7aaea0663e9eb3",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/CaptureProgress.tsx",
+    "hunk": 3,
+    "mainSha": "3ebd04e4fdac581568f251c5f7d1ce7ffb202836e4f23f37d22a274ba4c3a940",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 1,
+    "mainSha": "a25b46424a6088b845ec678a6f1621508bab5f38d416804df2f15c99e42bc4aa",
+    "nativeSha": "2b67be0f894b340a56db2af4ca5c7bc88e8ca1aa90bb93d39bd45ac4ac43fdf9",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 2,
+    "mainSha": "8a0d7853b9d89cc89c9c55852d93beba70254aafb2439b795a2f8673579c1b96",
+    "nativeSha": "c3834c4f3ef69ab07b8a54ec7001fcab929dd63afcdc02feedd0b3fffd1e04c1",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 3,
+    "mainSha": "65005357d77924765615310ff5919f60bcd516cde54cb6f61a5d76c9de70ecda",
+    "nativeSha": "248a1739f1ec0e2a4113c148282d8a6037674686bf4ccd60356f3c8cefe8416a",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 4,
+    "mainSha": "beef425b5ceaefb4f37ddcea83641c5ee29bdcf5366eea569c5617f8f2cbc0a9",
+    "nativeSha": "1a1b3ea190fd130e4770238092c76f9da83335b9288d93586e49828f3e212776",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 5,
+    "mainSha": "24bca2d0a1d1db4f7555ec078dfed2718672a9d779891c400a1c10b03ee6df7d",
+    "nativeSha": "c52a72949c55e60f86f9220152b1de91e820c41aee8ea86d6ca2021404734fe2",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 6,
+    "mainSha": "32d0448f4127c4de12bac275ddac9882267636d42d41296a5042d4a4e069469e",
+    "nativeSha": "3bac237e6c8849073838770d72f3746760fe7fc10a4325acad3759abfde937a3",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 7,
+    "mainSha": "9eefa2027be836c817dabfb95b9e61d02f96932148767b96e2de1392ad892c6e",
+    "nativeSha": "e515a6a48490308802e5603f7987a336ec77c84bae97ea6277c11d52ca5a504d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.test.ts",
+    "hunk": 8,
+    "mainSha": "a11e662437c1ee4f6c971e0346273d366b27056a239748587390ddb19670e2c9",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 1,
+    "mainSha": "2d999a34e84b443d535c53bcdcca9547fa443f198ca6591106b014ac37271c12",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "6669c5a775b553066d8af8a90d0ed0a02570d789d75ef69c581662e978c43569",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 3,
+    "mainSha": "3914e8540cfde1e5ded0d1f443b586d711c78cad2b1d85900381bdb9abc719c9",
+    "nativeSha": "7ca3b617599d63f71da4382cf8a408c50cf7c4ffbf40de7ba9ecd0d7bbdc2a0d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 4,
+    "mainSha": "92c715745aa891d9a84d54b38a9e0dad24113b1ba29c2103927cdf659bf75493",
+    "nativeSha": "b028927b2905476c65557f08d08217cde1de8f0e727ac039443bfcead9b28d6e",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 5,
+    "mainSha": "11771f2f89dcfb76592ddbe9bf4631e6a6384ccf760a53618f11e5aa9584fb18",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 6,
+    "mainSha": "3b249cd4bb6cbf9f15cafff1bd62b774e4e4cd85b5e62b204a38ec751a913547",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 7,
+    "mainSha": "f55acda8a1aee8d8d1a98cc6c72a690d3c8437ea89b3a632438b911e39a8c9e0",
+    "nativeSha": "97c200b9becd7b44e110fc3d2b61f5444c604a76dcba95b7f5d6d3430615316c",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 8,
+    "mainSha": "80052fbdfec59927df1fb6c5a8bc830d19211a67bd3359bc518a9f76f9a7924e",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/UniversalCaptureResults.tsx",
+    "hunk": 9,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "fb5735262efccb0c31cdbbe02568eb9a3526cfbc596ef3998aa49b67bd297d2c",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/captureStaging.test.ts",
+    "hunk": 1,
+    "mainSha": "0c0157c0cf09b44ca33877fa2fd85a6b38289b4be219b3b04e70f6568f151dcb",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/captureStaging.ts",
+    "hunk": 1,
+    "mainSha": "08a35f6e549cd9f075562509d6532fef6a97859e3d2c242132fea4bb6f20b2a7",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/captureStaging.ts",
+    "hunk": 2,
+    "mainSha": "ac41f20cce7ed0bc64d270c8f18d4c8b2f6cc38c480d8a5839e2492861fcc568",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/useUniversalCapture.ts",
+    "hunk": 1,
+    "mainSha": "f2ca3323f1cc483b1cae01b9ae58c76509567e9ec1159c14498d919d32d6228a",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/useUniversalCapture.ts",
+    "hunk": 2,
+    "mainSha": "c02a842c921904e7af6d03f50cf464c6696218d2b90161512bb4ce502b2b48c5",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/useUniversalCapture.ts",
+    "hunk": 3,
+    "mainSha": "dae65b2eef6531cbdd0120ffbb6a0f66c2709bb4843dd9168e7962a91bceb8d4",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/useUniversalCapture.ts",
+    "hunk": 4,
+    "mainSha": "e27191fb4a35993f871150b04996a7facb9ae0a82190d5e04265f5e2ed320c7a",
+    "nativeSha": "634c9feae80330d42cfc07ac184a1b0046f17132776c1be6964a042bc50594fa",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/features/capture/useUniversalCapture.ts",
+    "hunk": 5,
+    "mainSha": "53ad0039357b142305d3b3f969aa0f4e337e46b9deb75c1ce256bb5e3a5acc9d",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/native/captureUriReader.ts",
+    "hunk": 1,
+    "mainSha": "3bf71be55ccd0e087d6cb431b86d88e25ef0dde1b50bcff24a8d634031b9726d",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/native/publicationCatalogReceive.ts",
+    "hunk": 1,
+    "mainSha": "fa8aa9ad38cd7dbb86c32bffc90eb30f529c39789bcbe97d1798e114e50dac9d",
+    "nativeSha": "5ac2dcff7b094740867c45d0304d021453868578bcfc32e549680a99c8767e84",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/native/publicationCatalogReceive.ts",
+    "hunk": 2,
+    "mainSha": "6479fa0d3fa091047f564b82190a39723617db4224359c17ea950f703a43ef07",
+    "nativeSha": "580f4063ecb84443fb7bde4d00429767ec5af1f7d2a31d7768886341457fcb0d",
+    "reason": "Independent owning review: retain latest main Source/Admission/Actor/Queue/receipt/read semantics; Native-only UI and local functions merged separately"
+  },
+  {
+    "path": "src/data/sync/nativeTripQaScope.ts",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "46dd03a41c2615910d179c8ccd8cbdadb7489c2c657d9864a2d144dbdca3d846",
+    "reason": "Retain additive Native view-only/test refinements; does not expand queue authority"
+  },
+  {
+    "path": "src/data/sync/nativeTripQaScope.ts",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "3c15dfb951226b3cf64effef7f73c9715251ea25acbcdc6da8cf151e612dbde5",
+    "reason": "Retain additive Native view-only/test refinements; does not expand queue authority"
+  },
+  {
+    "path": "src/data/sync/nativeTripQaScope.ts",
+    "hunk": 3,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "0198dcc08c1d6517d88d78d5a7f4e395bacb08f3a72080f2d9f997c217342ba8",
+    "reason": "Retain additive Native view-only/test refinements; does not expand queue authority"
+  },
+  {
+    "path": "src/data/repositories/tripDiscoveryRepository.test.ts",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "dac3660a817ed504019ec13f05a4ee0510fdf1464635be5f187200725ab2e2b1",
+    "reason": "Retain additive Native view-only/test refinements; does not expand queue authority"
+  },
+  {
+    "path": "src/native/publicationCatalogReceive.test.ts",
+    "hunk": 1,
+    "mainSha": "9ebf8f363c934eb8c205e764a199054bf7e5deeaaa9bae3ae9fdb87c5fab9893",
+    "nativeSha": "9aaa5bf22968899906247ef69c2ff15aac9e7ed80ecf2b84dc75ec1015da2310",
+    "reason": "Retain additive Native view-only/test refinements; does not expand queue authority"
+  },
+  {
+    "path": "backend/src/app.ts",
+    "hunk": 1,
+    "mainSha": "7003aa30ca79dec6ba6b96de6d345b62296d8570e3caff83c73aee223843666b",
+    "nativeSha": "60a0cad2ab9a0a250ff2e96f7d08f1c93defd034b0887770f1dd3f71ef694f48",
+    "reason": "Combine unchanged main request-scoped Universal routes with only optional default-false Native Enrichment boundary"
+  },
+  {
+    "path": "backend/src/app.ts",
+    "hunk": 2,
+    "mainSha": "b699a6482cd38bd5f0842db02e1dc20b9b911acefe404e4229a09e98c89d01e6",
+    "nativeSha": "e384e4c4f683d97e045338f20585b574d6521b3aefbbdda8d2d0914b536cc074",
+    "reason": "Combine unchanged main request-scoped Universal routes with only optional default-false Native Enrichment boundary"
+  },
+  {
+    "path": "backend/src/app.ts",
+    "hunk": 3,
+    "mainSha": "ec91fe19110731413f343da034d6e1328cb72caf4fd2537edeb57dba13975389",
+    "nativeSha": "d14e37bba5106de45ec6d0eb57f8832eab22f9efbdfb863b10f013846e1a51fa",
+    "reason": "Combine unchanged main request-scoped Universal routes with only optional default-false Native Enrichment boundary"
+  },
+  {
+    "path": "backend/src/app.ts",
+    "hunk": 4,
+    "mainSha": "ba0fa146813af7d74b314e7c84cb113498b03805625d2f5d62f18e2aa45a10b6",
+    "nativeSha": "1d4aa558fb4912b300c4b31bbcb27c83853f9b727ac8e034bddf04395ff00789",
+    "reason": "Combine unchanged main request-scoped Universal routes with only optional default-false Native Enrichment boundary"
+  },
+  {
+    "path": "backend/src/app.ts",
+    "hunk": 5,
+    "mainSha": "935518685c89cd921375cae6ff5e68b693a23cdd6e2d33bbee7086b203a687b2",
+    "nativeSha": "313bf955b90957edb72920a4a2000cee3f599a3fb0c8bd048bbf225e5f8ec4bc",
+    "reason": "Combine unchanged main request-scoped Universal routes with only optional default-false Native Enrichment boundary"
+  },
+  {
+    "path": "backend/src/app.ts",
+    "hunk": 6,
+    "mainSha": "911549623418636bb1635fe7256d76a92337758a59ed42d8766b4d2d214de661",
+    "nativeSha": "1736a4e876e4634346af41a8c6432b859b840d370b5df89e8163749ed111e03e",
+    "reason": "Combine unchanged main request-scoped Universal routes with only optional default-false Native Enrichment boundary"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-24T02:42:27.136970+00:00",
+  "readOnly": true,
+  "checks": {
+    "local_trip_containers": {
+      "baselineCount": 20,
+      "retainedCount": 20,
+      "unchanged": true
+    },
+    "sync_operations": {
+      "baselineCount": 191,
+      "retainedCount": 191,
+      "unchanged": true
+    },
+    "local_trip_destinations": {
+      "baselineCount": 13,
+      "retainedCount": 13,
+      "unchanged": true
+    }
+  }
+}

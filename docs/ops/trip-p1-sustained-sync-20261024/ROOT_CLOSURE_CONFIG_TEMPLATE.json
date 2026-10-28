@@ -1,0 +1,18 @@
+{
+  "project": "tuqigdxrvrerfewsxqgm",
+  "actorId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "adoptionCutoff": "2026-10-24T01:41:25.160Z",
+  "approvedGateSHA256": "0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0",
+  "transitionId": "ROOT_SET_ACTUAL_TRANSITION_UUID",
+  "gatePath": "/private/tmp/otr-universal-coordinator-integration-20261024/docs/ops/trip-p1-sustained-sync-20261024/OWNER_EXECUTION_GATE.md",
+  "rendererPath": "/private/tmp/otr-universal-coordinator-integration-20261024/scripts/trip/sustained_sql_prepare.py",
+  "rendererSHA256": "b3bf299194f92ecc393297925b1031be2b57a91702565c71af45dca5abb4bf57",
+  "servicePath": "/private/tmp/otr-universal-coordinator-integration-20261024/scripts/trip/c-execution/service.py",
+  "serviceSHA256": "04350ee2b00a460c65cbacb29b1580e959c438c69e2c3a617ccda4adeff10ea9",
+  "dependencyHashes": {
+    "control.py": "f0b8c8b3c9e91be4ff13d9c2407ab832715063eed0f187ba9479cb1d1c90f123",
+    "metadata_closed_retry.py": "30eedd4d653b928c62cb468c7276267bb7f1d67157adcaa3fb619dd492e29ff2"
+  },
+  "runtimePlanPath": "/private/tmp/otr-universal-coordinator-integration-20261024/docs/ops/trip-p1-sustained-sync-20261024/receipts/APPROVED_RUNTIME_MOUNT_PLAN_ATTEMPT2.json",
+  "runtimePlanSHA256": "183b202f921d96b030813ef25da36fc022263349d4f01669e967edb545768296"
+}

@@ -1,3 +1,9 @@
+import {
+  createLocalCoreCommitRepository,
+  type LocalCoreAuthorityDependencies,
+  type LocalCoreBaseline,
+  type LocalCoreSnapshot,
+} from "./localCoreCommitRepository";
 import { qualifyCoreTtr, type CoreTtrResult } from "../../domain/trip/tripCoreTtr";
 import type { TtrInput } from "../../domain/trip/ttr";
 import type * as SQLite from "expo-sqlite";
@@ -34,6 +40,7 @@ import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
 import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
+import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
 export type CoreDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
@@ -140,8 +147,11 @@ export function createTripCoreV2Repository(
   getAccountId: () => Promise<string>,
   hash: ImportHash,
   clock = () => new Date().toISOString(),
+  localAuthority: Omit<
+    LocalCoreAuthorityDependencies,
+    "readBaselineWithinTransaction"
+  > = {},
 ) {
-  const queue = createSyncOperationRepository(database, getAccountId, clock);
   const captureContext = (tripId: string) =>
     captureAccountRequestContext(tripId, getAccountId);
   const assertContext = (ctx: AccountRequestContext) =>
@@ -192,6 +202,72 @@ export function createTripCoreV2Repository(
     }
     await assertContext(ctx);
     return graph;
+  }
+  async function localBaselineWithinTransaction(
+    ctx: AccountRequestContext,
+  ): Promise<LocalCoreBaseline | null> {
+    await assertContext(ctx);
+    await scope(ctx);
+    const accepted = await acceptedWithinTransaction(ctx);
+    const manual = await readLocalManualSnapshotWithinTransaction(
+      database,
+      getAccountId,
+      { manualReadSnapshot },
+      ctx,
+      accepted,
+    );
+    if (!manual) return null;
+    return {
+      graph: accepted?.graph ?? emptyCoreGraph(),
+      actor: manual.actor,
+      participatingPersonIds: manual.participatingPersonIds.length
+        ? manual.participatingPersonIds
+        : [...manual.actor.personIds],
+      certificate: accepted?.certificate ?? null,
+    };
+  }
+  const localCommits = createLocalCoreCommitRepository(
+    database,
+    getAccountId,
+    hash,
+    {
+      ...localAuthority,
+      readBaselineWithinTransaction: localBaselineWithinTransaction,
+    },
+    () => clock().replace(/\.(\d{3})Z$/, ".$1000Z"),
+  );
+  async function readLocalCombinedWithinTransaction(ctx: AccountRequestContext) {
+    if (
+      !("isInTransactionAsync" in database) ||
+      typeof database.isInTransactionAsync !== "function" ||
+      !(await database.isInTransactionAsync())
+    )
+      throw new Error("LOCAL_SOURCE_TRANSACTION_CAPABILITY_UNAVAILABLE");
+    await assertContext(ctx);
+    const baseline = await localBaselineWithinTransaction(ctx);
+    if (!baseline) return null;
+    const snapshot = await localCommits.readCommittedWithinTransaction(ctx, baseline);
+    await assertContext(ctx);
+    return snapshot;
+  }
+  async function combinedSnapshot(
+    ctx: AccountRequestContext,
+  ): Promise<LocalCoreSnapshot | null> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result: Awaited<
+        ReturnType<typeof localCommits.readCommittedWithinTransaction>
+      > | null = null;
+      await database.withTransactionAsync(async () => {
+        const baseline = await localBaselineWithinTransaction(ctx);
+        if (!baseline) return;
+        const snapshot = await localCommits.readCommittedWithinTransaction(ctx, baseline);
+        if (snapshot.certificate || snapshot.localRevision) result = snapshot;
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
   }
   async function acceptedTripIds() {
     return withAccountApplyGate(async () => {
@@ -450,58 +526,170 @@ export function createTripCoreV2Repository(
         : result,
     );
   }
-  async function enqueue(ctx: AccountRequestContext, input: unknown) {
+  // Caller must hold the Account apply gate and the database transaction.
+  async function enqueueWithinTransaction(
+    ctx: AccountRequestContext,
+    input: unknown,
+    createdAt = clock(),
+  ) {
     const command = validateCoreCommand(input);
     if (command.tripId !== ctx.tripId) throw new Error("CORE_SCOPE_MISMATCH");
     const text = canonicalCoreJson(command as Json),
       digest = await coreHashValue("otr-trip-core-intent-v2", command, hash);
-    await withAccountApplyGate(async () => {
-      await assertContext(ctx);
-      await database.withTransactionAsync(async () => {
-        await scope(ctx);
-        const prior = await database.getFirstAsync<{ intent_sha256: string }>(
-          "SELECT intent_sha256 FROM trip_core_pending_intents WHERE account_id=? AND operation_id=?",
-          ctx.accountId,
-          command.operationId,
-        );
-        if (prior) {
-          if (prior.intent_sha256 !== digest) throw new Error("OPERATION_REUSE_MISMATCH");
-          return;
-        }
-        await database.runAsync(
-          "INSERT INTO trip_core_pending_intents(account_id,trip_id,operation_id,intent_version,canonical_intent_text,intent_sha256,base_vector,queue_operation_id,created_at,state) VALUES(?,?,?,2,?,?,?,?,?,'BLOCKED')",
-          ctx.accountId,
-          ctx.tripId,
-          command.operationId,
-          text,
-          digest,
-          canonicalCoreJson(command.baseVector as Json),
-          command.operationId,
-          clock(),
-        );
-        await queue.enqueue({
-          id: command.operationId,
-          tripId: ctx.tripId,
-          entityType: "TRIP_CORE_V2",
-          entityId: command.target.id,
-          operationType: "CORE_V2_COMMAND",
-          idempotencyKey: command.operationId,
-          baseVersion: command.baseVector.find(
-            (v) => v.kind === command.target.kind && v.id === command.target.id,
-          )!.revision,
-          payloadJson: text,
-          status: "DEPENDENCY_BLOCKED",
-          nextAttemptAt: null,
-        });
-        await assertContext(ctx);
-      });
+    await assertContext(ctx);
+    await scope(ctx);
+    const prior = await database.getFirstAsync<{ intent_sha256: string }>(
+      "SELECT intent_sha256 FROM trip_core_pending_intents WHERE account_id=? AND operation_id=?",
+      ctx.accountId,
+      command.operationId,
+    );
+    if (prior) {
+      if (prior.intent_sha256 !== digest) throw new Error("OPERATION_REUSE_MISMATCH");
+      return {
+        localStatus: "PENDING" as const,
+        itemId: command.target.id,
+        operationId: command.operationId,
+      };
+    }
+    // Predictions replay by (created_at, operation_id), including same-tick field saves.
+    const latest = await database.getFirstAsync<{ created_at: string }>(
+      "SELECT created_at FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? ORDER BY created_at DESC,operation_id DESC LIMIT 1",
+      ctx.accountId,
+      ctx.tripId,
+    );
+    const orderedAt = new Date(
+      Math.max(Date.parse(createdAt), latest ? Date.parse(latest.created_at) + 1 : 0),
+    ).toISOString();
+    await database.runAsync(
+      "INSERT INTO trip_core_pending_intents(account_id,trip_id,operation_id,intent_version,canonical_intent_text,intent_sha256,base_vector,queue_operation_id,created_at,state) VALUES(?,?,?,2,?,?,?,?,?,'BLOCKED')",
+      ctx.accountId,
+      ctx.tripId,
+      command.operationId,
+      text,
+      digest,
+      canonicalCoreJson(command.baseVector as Json),
+      command.operationId,
+      orderedAt,
+    );
+    await createSyncOperationRepository(database, getAccountId, () => orderedAt).enqueue({
+      id: command.operationId,
+      tripId: ctx.tripId,
+      entityType: "TRIP_CORE_V2",
+      entityId: command.target.id,
+      operationType: "CORE_V2_COMMAND",
+      idempotencyKey: command.operationId,
+      baseVersion: command.baseVector.find(
+        (v) => v.kind === command.target.kind && v.id === command.target.id,
+      )!.revision,
+      payloadJson: text,
+      status: "DEPENDENCY_BLOCKED",
+      nextAttemptAt: null,
     });
-    announceLedgerQueueWorkAvailable();
+    await assertContext(ctx);
     return {
       localStatus: "PENDING" as const,
       itemId: command.target.id,
       operationId: command.operationId,
     };
+  }
+  async function enqueue(ctx: AccountRequestContext, input: unknown) {
+    let result: Awaited<ReturnType<typeof enqueueWithinTransaction>>;
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        result = await enqueueWithinTransaction(ctx, input);
+      });
+    });
+    await assertContext(ctx);
+    announceLedgerQueueWorkAvailable();
+    return result!;
+  }
+  // Both preparation reads and post-write verification share this owning transaction.
+  async function commitManualBatch<T>(
+    ctx: AccountRequestContext,
+    prepare: () => Promise<{ commands: readonly unknown[]; result(): Promise<T> }>,
+  ): Promise<T> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result!: T;
+      let queued = false;
+      await database.withTransactionAsync(async () => {
+        await scope(ctx);
+        const prepared = await prepare();
+        if (prepared.commands.length > 5) throw new Error("MANUAL_BATCH_INVALID");
+        const commands = prepared.commands.map(validateCoreCommand);
+        if (
+          commands.some(
+            (c) =>
+              c.tripId !== ctx.tripId ||
+              c.target.kind !== "ITEM" ||
+              c.admission.mode !== "MANUAL" ||
+              ![
+                "CREATE_ITEM",
+                "SET_ITEM_TEXT",
+                "SET_ITEM_SCHEDULE",
+                "SET_ITEM_PLACE",
+                "SET_ITEM_PARTICIPATION",
+                "SET_STAY_DETAILS",
+                "SET_RENTAL_DETAILS",
+                "SET_TRANSPORT_DETAILS",
+                "SET_ACTIVITY_DETAILS",
+              ].includes(c.command) ||
+              (c.command === "CREATE_ITEM" &&
+                !["P1", "P3", "P4", "P5", "P6"].includes(
+                  (c.payload as { family: string }).family,
+                )),
+          ) ||
+          new Set(commands.map((c) => c.target.id)).size > 1
+        )
+          throw new Error("MANUAL_BATCH_INVALID");
+        if (commands.length) {
+          const creation = commands.find((c) => c.command === "CREATE_ITEM");
+          let family: unknown;
+          if (creation) {
+            if (
+              commands[0] !== creation ||
+              commands.filter((c) => c.command === "CREATE_ITEM").length !== 1
+            )
+              throw new Error("MANUAL_BATCH_INVALID");
+            family = (creation.payload as { family: string }).family;
+          } else {
+            const snapshot = await readLocalManualSnapshotWithinTransaction(
+              database,
+              getAccountId,
+              { manualReadSnapshot },
+              ctx,
+              await acceptedWithinTransaction(ctx),
+            );
+            family = snapshot?.graph.itinerary_events.find(
+              (r) => r.id === commands[0].target.id,
+            )?.experience_family;
+          }
+          if (
+            !["P1", "P3", "P4", "P5", "P6"].includes(String(family)) ||
+            (family !== "P3" && commands.some((c) => c.command === "SET_STAY_DETAILS")) ||
+            (family !== "P4" &&
+              commands.some((c) => c.command === "SET_RENTAL_DETAILS")) ||
+            (family !== "P5" &&
+              commands.some((c) => c.command === "SET_TRANSPORT_DETAILS")) ||
+            (family !== "P6" &&
+              commands.some((c) => c.command === "SET_ACTIVITY_DETAILS")) ||
+            (family === "P5" &&
+              commands.some((c) =>
+                ["SET_ITEM_SCHEDULE", "SET_ITEM_PLACE"].includes(c.command),
+              ))
+          )
+            throw new Error("MANUAL_BATCH_INVALID");
+        }
+        for (const command of commands) await enqueueWithinTransaction(ctx, command);
+        queued = commands.length > 0;
+        result = await prepared.result();
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      if (queued) announceLedgerQueueWorkAvailable();
+      return result;
+    });
   }
   async function pending(ctx: AccountRequestContext, retainedOperationId?: string) {
     if (retainedOperationId !== undefined) coreUuid.parse(retainedOperationId);
@@ -875,20 +1063,23 @@ export function createTripCoreV2Repository(
       });
     });
   }
-  async function projection(ctx: AccountRequestContext, actor: CoreActor) {
+  async function projection(
+    ctx: AccountRequestContext,
+    actor: CoreActor,
+    committed?: ReadonlySet<string>,
+    certifiedBase = true,
+  ) {
     if (actor.accountId !== ctx.accountId || actor.tripId !== ctx.tripId)
       throw new Error("CORE_SCOPE_MISMATCH");
     const graph = await readGraph(ctx);
-    const cert = await database.getFirstAsync<{
-      applied_generation: number;
-      roster_hash: string;
-    }>(
-      "SELECT applied_generation,roster_hash FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+    const cert = await database.getFirstAsync<CoreAcceptedCertificate>(
+      "SELECT * FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
       ctx.accountId,
       ctx.tripId,
     );
+    if (committed && !certifiedBase) Object.assign(graph, emptyCoreGraph());
     let participatingPersonIds: string[] = [];
-    if (cert) {
+    if (cert && (!committed || certifiedBase)) {
       const bindings = await database.getAllAsync<{
         person_id: string;
         linked_account_id: string | null;
@@ -917,6 +1108,7 @@ export function createTripCoreV2Repository(
     const predictedIds = new Set<string>();
     for (const intent of await pending(ctx)) {
       if (
+        (committed && !committed.has(intent.command.operationId)) ||
         intent.state === "CONFLICT" ||
         intent.state === "REVIEW" ||
         intent.command.admission.mode !== "MANUAL"
@@ -941,6 +1133,149 @@ export function createTripCoreV2Repository(
     }
     await assertContext(ctx);
     return { graph, cert, predictedIds, participatingPersonIds };
+  }
+  // Read-only local authority: only durable MANUAL intents with their owning queue pin.
+  async function manualReadSnapshot(
+    ctx: AccountRequestContext,
+    actor: CoreActor,
+    certifiedBase = false,
+  ) {
+    await assertContext(ctx);
+    const rows = await database.getAllAsync<{
+      operation_id: string;
+      canonical_intent_text: string;
+      intent_sha256: string;
+      state: string;
+      queue_id: string | null;
+      payload_json: string | null;
+      entity_id: string | null;
+      idempotency_key: string | null;
+      queue_status: string | null;
+      receipt_body: string | null;
+      receipt_sha256: string | null;
+    }>(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,i.state,
+       op.id AS queue_id,op.payload_json,op.entity_id,op.idempotency_key,op.status AS queue_status,
+       r.body_json AS receipt_body,r.receipt_sha256
+       FROM trip_core_pending_intents i LEFT JOIN sync_operations op
+       ON op.id=i.queue_operation_id AND op.owner_user_id=i.account_id AND op.trip_id=i.trip_id
+       AND op.entity_type='TRIP_CORE_V2' AND op.operation_type='CORE_V2_COMMAND'
+       LEFT JOIN trip_core_trip_core_command_receipts r ON r.account_id=i.account_id
+       AND r.trip_id=i.trip_id AND r.operation_id=i.operation_id AND r.intent_sha256=i.intent_sha256
+       WHERE i.account_id=? AND i.trip_id=? AND i.reconciled_revision IS NULL
+       AND i.state IN ('BLOCKED','PENDING','IN_FLIGHT','APPLIED') ORDER BY i.created_at,i.operation_id`,
+      ctx.accountId,
+      ctx.tripId,
+    );
+    const operations: {
+      operationId: string;
+      sha256: string;
+      state: string;
+      receiptSha256?: string;
+    }[] = [];
+    for (const row of rows) {
+      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      if (command.admission.mode !== "MANUAL") continue;
+      if (
+        command.tripId !== ctx.tripId ||
+        command.operationId !== row.operation_id ||
+        row.queue_id !== row.operation_id ||
+        row.idempotency_key !== row.operation_id ||
+        row.entity_id !== command.target.id ||
+        row.payload_json !== row.canonical_intent_text ||
+        (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !==
+          row.intent_sha256
+      )
+        throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+      const activeQueue = [
+        "PENDING",
+        "DEPENDENCY_BLOCKED",
+        "PROCESSING",
+        "RETRYABLE",
+      ].includes(row.queue_status ?? "");
+      if (!activeQueue && !(row.state === "APPLIED" && row.queue_status === "COMPLETED"))
+        throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+      let receiptSha256: string | undefined;
+      if (row.state === "APPLIED") {
+        if (!row.receipt_body) throw new Error("LOCAL_MANUAL_RECEIPT_PIN");
+        const receipt = await validateCoreReceipt(JSON.parse(row.receipt_body), hash);
+        if (
+          receipt.actorAccountId !== ctx.accountId ||
+          receipt.tripId !== ctx.tripId ||
+          receipt.operationId !== row.operation_id ||
+          receipt.intentSha256 !== row.intent_sha256 ||
+          receipt.receiptSha256 !== row.receipt_sha256 ||
+          receipt.command !== command.command ||
+          !["APPLIED", "NO_CHANGE"].includes(receipt.outcome)
+        )
+          throw new Error("LOCAL_MANUAL_RECEIPT_PIN");
+        receiptSha256 = receipt.receiptSha256;
+      }
+      operations.push({
+        operationId: row.operation_id,
+        sha256: row.intent_sha256,
+        state: row.state,
+        ...(receiptSha256 ? { receiptSha256 } : {}),
+      });
+    }
+    const projected = await projection(
+      ctx,
+      actor,
+      new Set(operations.map((o) => o.operationId)),
+      certifiedBase,
+    );
+    // Reuse the verified local journal for P2; only Manual-owned targets join this reader.
+    const journalAvailable = await database.getFirstAsync(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='local_core_authority_commits'",
+    );
+    if (
+      journalAvailable &&
+      (await database.getFirstAsync(
+        "SELECT 1 FROM local_core_authority_commits WHERE account_id=? AND trip_id=? AND authority_kind='LOCAL_MANUAL' LIMIT 1",
+        ctx.accountId,
+        ctx.tripId,
+      ))
+    ) {
+      const local = await localCommits.readCommittedWithinTransaction(ctx, {
+        graph: projected.graph,
+        actor,
+        participatingPersonIds: projected.participatingPersonIds.length
+          ? projected.participatingPersonIds
+          : [...actor.personIds],
+        certificate: projected.cert,
+      });
+      const localFlights = local.graph.trip_flight_intents.filter(
+        (r) =>
+          local.perTargetAuthority[`ITEM:${r.event_id}`]?.authority === "LOCAL_MANUAL",
+      );
+      if (localFlights.length) {
+        Object.assign(projected.graph, local.graph);
+        for (const flight of localFlights)
+          projected.predictedIds.add(String(flight.event_id));
+        for (const receipt of local.receipts.filter(
+          (r) =>
+            r.authority === "LOCAL_MANUAL" &&
+            localFlights.some((f) => f.event_id === r.target.id),
+        ))
+          operations.push({
+            operationId: receipt.operationId,
+            sha256: receipt.intentSha256,
+            state: "LOCAL_COMMITTED",
+            receiptSha256: receipt.receiptSha256,
+          });
+      }
+    }
+    const fingerprint = await coreHashValue(
+      "otr-local-manual-read-v1",
+      {
+        operations,
+        actor,
+        certificate: projected.cert ?? null,
+      },
+      hash,
+    );
+    await assertContext(ctx);
+    return { ...projected, operations, fingerprint };
   }
   async function item(ctx: AccountRequestContext, actor: CoreActor, itemId: string) {
     const p = await projection(ctx, actor);
@@ -1049,8 +1384,13 @@ export function createTripCoreV2Repository(
   return {
     captureContext,
     readGraph,
+    manualReadSnapshot,
     acceptedSnapshot,
-    // Caller already owns the Account apply gate and serialized transaction.
+    combinedSnapshot,
+    readLocalCombinedWithinTransaction,
+    commitLocal: localCommits.commit,
+    prepareLocalManualSparse: localCommits.prepareManualSparse,
+    // Caller must hold the Account apply gate and the database transaction.
     readAcceptedSnapshotWithinTransaction: acceptedWithinTransaction,
     readTtr,
     guardTtrPublication,
@@ -1061,6 +1401,7 @@ export function createTripCoreV2Repository(
     refresh,
     resume,
     enqueue,
+    commitManualBatch,
     pending,
     beginRefresh,
     install,

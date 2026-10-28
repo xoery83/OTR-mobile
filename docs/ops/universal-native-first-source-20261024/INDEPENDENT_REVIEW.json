@@ -1,0 +1,23 @@
+{
+  "fixed_sha": "8c9bb16ce3059213d56a208b549cb0cc39a16880",
+  "base": "1d0c979",
+  "scope": "First explicit Native Start Source preparation increment only",
+  "conclusion": "PASS_LOCAL_L2",
+  "findings": [],
+  "validation": {
+    "baseline": "26tests/3files independently PASS",
+    "additional": "28tests/3files PASS including identical missing-context errorcode with404/500 cannot prepare Sources",
+    "real_sqlite": "Cold reopen retains same stable C3 admission key and exact binding/Operation/Source/Representation IDs, one queue entry, zero Run",
+    "semantics": "Only explicitStart exact503 missing context may prepare; recover/Auth/network/other503/paidUNKNOWN never fall back to Source writes",
+    "auth": "Current Account/generation/screen callbacks fence concrete repository/transport composition",
+    "authority": "Sealed Native catalog receiver required; existing owning Source command/targeted queue/catalog only; Backend must return real Task afterwards, otherwise OWNING_TASK_READER_UNAVAILABLE"
+  },
+  "not_run": [
+    "DEV",
+    "Provider",
+    "Native GUI",
+    "Deployment",
+    "Cloud E2E"
+  ],
+  "remaining": "Root serial integration and legal Source/Task Runtime deployment/activation remain prerequisites; local Source preparation is not AI or Admission PASS."
+}

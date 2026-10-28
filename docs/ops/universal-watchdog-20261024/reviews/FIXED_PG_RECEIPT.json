@@ -1,0 +1,16 @@
+{
+  "status": "ISOLATED_PG_AND_DETACHED_WATCH_PASS",
+  "checks": [
+    "actual owning scope tables closed; exact finite role NOLOGIN and window session terminated",
+    "repeated exact close is idempotent; no business row touched",
+    "stale scope mismatch leaves newer window and service unchanged",
+    "foreign role expiry refuses NOLOGIN/session/service changes",
+    "actual committed close with lost response reconciles by independent readback, no write retry",
+    "independent watchdog survives killed parent and closes actual PG at expiry; runtime restore simulated",
+    "existing global Source gate remains closed; Trip/P1 global policies never referenced"
+  ],
+  "runtimeRestore": "SIMULATED_UNIT_TESTED_SEPARATELY",
+  "realAuth": false,
+  "hostedWrites": 0,
+  "providerCalls": 0
+}

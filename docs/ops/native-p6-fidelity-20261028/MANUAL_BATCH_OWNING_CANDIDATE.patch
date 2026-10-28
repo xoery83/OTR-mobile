@@ -1,0 +1,30 @@
+--- a/src/data/repositories/tripCoreV2Repository.ts
++++ b/src/data/repositories/tripCoreV2Repository.ts
+@@ -628,9 +628,10 @@
+                 "SET_STAY_DETAILS",
+                 "SET_RENTAL_DETAILS",
+                 "SET_TRANSPORT_DETAILS",
++                "SET_ACTIVITY_DETAILS",
+               ].includes(c.command) ||
+               (c.command === "CREATE_ITEM" &&
+-                !["P1", "P3", "P4", "P5"].includes(
++                !["P1", "P3", "P4", "P5", "P6"].includes(
+                   (c.payload as { family: string }).family,
+                 )),
+           ) ||
+@@ -660,12 +661,14 @@
+             )?.experience_family;
+           }
+           if (
+-            !["P1", "P3", "P4", "P5"].includes(String(family)) ||
++            !["P1", "P3", "P4", "P5", "P6"].includes(String(family)) ||
+             (family !== "P3" && commands.some((c) => c.command === "SET_STAY_DETAILS")) ||
+             (family !== "P4" &&
+               commands.some((c) => c.command === "SET_RENTAL_DETAILS")) ||
+             (family !== "P5" &&
+               commands.some((c) => c.command === "SET_TRANSPORT_DETAILS")) ||
++            (family !== "P6" &&
++              commands.some((c) => c.command === "SET_ACTIVITY_DETAILS")) ||
+             (family === "P5" &&
+               commands.some((c) =>
+                 ["SET_ITEM_SCHEDULE", "SET_ITEM_PLACE"].includes(c.command),

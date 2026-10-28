@@ -1,0 +1,12 @@
+{
+  "status": "LOCAL_AND_INDEPENDENT_REVIEW_PASS_NO_QUOTA_ACTIVATION",
+  "tests": 15,
+  "sourceResultPost": "durable reservation before network",
+  "extension": "proposed64Native; matching maximum136 and >=72existing entries required; operator must preserve first72 exactly",
+  "actualNativeReadConsumed": 72,
+  "actualNativeReadLimit": 72,
+  "quotaChanged": false,
+  "networkCalls": 0,
+  "typecheck": "PASS",
+  "scopedLint": "PASS"
+}

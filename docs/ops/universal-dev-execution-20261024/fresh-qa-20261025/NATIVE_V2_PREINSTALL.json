@@ -1,0 +1,20 @@
+{
+  "status": "SDK_COMPILE_PASS_PREINSTALL_IDENTITY_MATCH",
+  "sameInfoKeys": [
+    "CFBundleIdentifier",
+    "CFBundleExecutable",
+    "CFBundleVersion",
+    "CFBundleShortVersionString",
+    "CFBundleURLTypes"
+  ],
+  "sameSignedEntitlements": true,
+  "entitlements": {},
+  "candidateBinarySHA256": "859938a406eefcb3c07c890c31b27fb89bca378d77888ea98967c4516e50b660",
+  "dataContainer": "/Users/xoery/Library/Developer/CoreSimulator/Devices/AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A/data/Containers/Data/Application/0A5F8A07-C107-4772-9EB0-F57998B2492A",
+  "dataHashes": {
+    "Documents/SQLite/otr-mobile.db": "e66dd8948d5e8372f9e83d93a5ca518f5ed3091287131050231539a505bbf076",
+    "Documents/SQLite/otr-mobile.db-wal": null,
+    "Documents/otr-native-qa-read-budget-v1.json": "d3292a285398d4fcc92a6135e5185fa5aafa06cc1339f0177ee0b0e19c9ed830"
+  },
+  "reset": false
+}

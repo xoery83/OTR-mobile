@@ -1,0 +1,40 @@
+{
+  "status": "PASS_ACTUAL_RECEIPT_SCOPE_WITH_EXPLICIT_GAPS",
+  "findings": [],
+  "actualVerifiedByReceipt": {
+    "deployment": "Image8d9a81d\u2026 CLOSED_DEPLOYMENT_PASS at2026-10-25T00:24:44Z",
+    "runtime": "FINITE_BACKEND_HEALTH_PASS exact image, retained original and active hashes recorded",
+    "settledRecovery": "Same Taskcd36d6f4-a09b-41ef-977e-bb4127920d7f PUBLISHED, CANDIDATES_READY6, recoveryProviderCalls0",
+    "paidResponse": "Original rawSHA7c1022a36e52df4d0db38bb7446b18b031f8feef2c1f9ade8d970543a2e3b6c6 retained; prompt2200/completion1257, original single paid call only",
+    "newOperatorReadReservations": "Ordinals44..50,7/16; historical UNKNOWN neither refunded nor reset",
+    "closure": "Initial closed=false and watchdog RECONCILE preserved; later precise SQL_ROLES_SCOPES_CLOSED_VERIFIED and runtime verifiedtrue reconcile safe closure."
+  },
+  "nativeEvidenceReportedByCoordinator": {
+    "liveResults": "Actual normal Native GET and CUA showed six P1-P6 candidate classes, Source/field evidence, Unresolved and No items saved. Reviewer did not operate GUI.",
+    "cold": "App cold restart restored original Batch/threeSource identities. Cold Results GET was not completed before window expiry; current Results useState is memory-only.",
+    "readLedger": "Native120/136 reported, includes2 normal Trip GET; no Reviewer consumption."
+  },
+  "allowedMilestoneClaims": [
+    "BACKEND real original Provider execution and same-Task durable result publication PASS for this fixed QA scenario.",
+    "NATIVE_CAPTURE_AI_PREVIEW_PASS / live BATCH_N_TO_M_RESULTS_PASS limited to Root observed six-family candidate preview; no formal business save."
+  ],
+  "notProven": [
+    "Cold Results display/recovery is NOT PASS; persist/reload Results seam remains Integration Delta.",
+    "Formal Review/Admission/Canonical Item/Booking/Ticket Save not proven and no automatic rights created.",
+    "Watchdog automatic closure did not fully pass; final state was independently reconciled closed.",
+    "No claim every file independently supports every candidate or general reliability beyond fixed scenario."
+  ],
+  "remainingMinimalDelta": "Durable Native result identity/state plus lawful read-only reload after cold start; preserve exact result/Source binding and no Provider resubmission. Must respect closed window and new authorization if further reads needed.",
+  "fileSHA256": {
+    "/private/tmp/otr-universal-startup-guard-deployment-20261025/ACTUAL_DEPLOYMENT.json": "6792f41b8d97130d47c0e689fe65c8a7974523eeb42295c2f409e36e64e3fe34",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/start-settled-runtime.json": "fc569ed9999c246479e77604ae028a8415ff9df3d001ee61c9b597d1d0bf82fb",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/ACTUAL_SETTLED_RECOVERY.json": "b5a95a1f1caa6630f11b9736e76879a819ce22bfbbce4f8056656aacfe49fd4b",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/ACTUAL_PROVIDER_SUMMARY.json": "27201f4c64321b35574e64ede87fbfb1d40679f52e54d58cacf4dc5da51c2286",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/HOST_STARTUP_READ_RESERVATION.json": "ad93bac13eac95edd9a94450500a63b052b3965b3c2a846dffe1a45cb3f77987",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/OPERATOR_READ_RESERVATIONS.json": "e8d357dbcc332a908b3080a3428ff39d06fc58a7374c3d4e3b42fc3a83aafca5",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/CLOSURE_READ_ONLY_RECONCILIATION.json": "7e04a8aad0bf9075a232505b3c6ec41bec385abcee97bc8b3ab9882a944796cf",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/SQL_CLOSURE_RECONCILED.json": "8e1eb19c15c39378fdd4da4d7ea00da5b5838075a8abe4fe78d94ab1ecbcb40b",
+    "/private/tmp/otr-universal-startup-guard-execution-20261025/RUNTIME_CLOSURE_RECONCILED.json": "79547631bc063e1dc520c0625d0ce34e50b824b991ca6d1a60bbad5ccca0b089"
+  },
+  "reviewerBoundary": "Only named nonsecret local receipt inspection. No DEV/network/GUI/Auth/Provider/business reads or writes."
+}

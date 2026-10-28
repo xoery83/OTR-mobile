@@ -1,0 +1,9 @@
+{
+  "status": "EXACT_RETAINED_RUNTIME_RESTORATION_VERIFIED",
+  "result": {
+    "verified": true,
+    "windowId": "59be98eab62ca2f59d4f9ba30e197ca0eab526fd058696a492f2c988ae04e8ec"
+  },
+  "transport": "fresh trusted SSH, no multiplex reuse",
+  "originalUnknownReceiptPreserved": true
+}

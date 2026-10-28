@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "ownerAuthorized": true,
+  "approvedAtRecordedUTC": "2026-10-24T15:23:32.538172+00:00",
+  "source": "Direct Owner reply: \u597d\u7684\uff0c\u540c\u610f\u6388\u6743\u3002\u4f60\u7ee7\u7eed\u5427",
+  "gateFile": "docs/ops/universal-dev-execution-20261024/OWNER_ACTIVATION_GATE.md",
+  "gateSha256": "1bb67721582e89953bc2f721b7e245daca338aec24aa8ccb836becb82ea94f06",
+  "scope": "Six fixed dormant SQL; finite existing admin grants/logins; new Universal config/real price; temporary DEV kill CAS; exact retained Batch;1paidcall/4096tokens/USD1; additional Native64/Operator32 reads; existing watcher closure",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "providerCallsMax": 1,
+  "paidRetriesMax": 0,
+  "activationWindow": "Not started; seal fresh outer<=900/inner<=600+300restoration when all runtime inputs ready"
+}

@@ -1,0 +1,28 @@
+{
+  "status": "EXACT_REVOKED_GRANT_RENEWAL_AND_SAFE_DIAGNOSTIC_BOUNDED_REVIEW_PASS",
+  "binding": "Root frozen dirty4 renewal files by SHA; diagnostic fixedb11c6c5",
+  "findings": [],
+  "independentTests": {
+    "renewalUnit": 4,
+    "safeDiagnostic": 2,
+    "actualNetworkNonePG": 6
+  },
+  "confirmed": [
+    "Existing UNIQUE(actor,environment,permission) is respected by retaining old grant ID and created identity; no alternate row/UPSERT/schema/permission created.",
+    "Full exact revoked preimage, bounded even revision and timestamps validated; provision pure SQL uses locked CAS and updates only expires_at/revoked_at/grant_revision. Observed2\u21923(active)\u21924(revoked).",
+    "Foreign expiry preimage fails without mutation; active replay cannot renew again. Exact old revoked row may confirm read-only closed if provisioning never happened.",
+    "Existing normal revision1 path unchanged; actual authority preflight accepts exact revision3 after renewal; exact revocation and read-only closure verified.",
+    "Builder does not issue authority; Owner-approved finite grant scope, legitimate normalAuth issuer and actual preimage remain mandatory.",
+    "Transport failure diagnostic persists only fixed enum/category, exitCode and guardPrefixPresent boolean; no raw CLI output, SQL, token or secret marker retained."
+  ],
+  "scope": "No new SQL schema, role permission, Provider or business authority. Reviewer only isolated PG/local tests, no DEV/GUI/credential reads.",
+  "sha256": {
+    "scripts/import/universal_config_control.py": "770ec75d34deb370843d8dd4341991be25e5b09aaabfc9b0760c264b1c63a242",
+    "scripts/import/build_universal_admin_plan.py": "dd8ec29cd550d95e4fee6b80e1fe11988e782b4f1ce5c098188b830d66c6b9d2",
+    "scripts/import/universal_grant_renewal_test.py": "25d9589c360695f43f9743d7cb3f503be7d86d88183725219fb7f9c621d46600",
+    "scripts/import/universal_grant_renewal_pg_check.py": "07c128a32703edfdaab77915aa6e0eb93494073d390f7a4e3e2c41168f8f55fb",
+    "scripts/import/universal_scope_close.py": "ad65ae0c412e77525553d01e36b3fce1ee6ced2a75e003fc98e9213b459c08d4",
+    "scripts/import/universal_management_diagnostic_test.py": "6caf562117d8d32a02ffb86166e0de9f76a9f9a087c6e981bad63e2064251eeb"
+  },
+  "patchSHA256": "05c473b97e00673ae96ea5d5448da90150d386e73cd577afa764be3e68703cfc"
+}

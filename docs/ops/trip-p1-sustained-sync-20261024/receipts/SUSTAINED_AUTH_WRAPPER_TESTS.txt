@@ -1,0 +1,21 @@
+✔ fixed in-place source/SDK each label sends exactly one scoped POST and safe identity receipt (43.331208ms)
+✔ invalid absence/window/source/ordinal refuse all wire requests (0.467417ms)
+✔ unknown network attempt retained exactly once with no raw message/key (0.83275ms)
+✔ async caller mutation cannot rebind label/window/absence (2.376583ms)
+✔ actual bundled stdin invocation works without remote files; private env key stays out of receipt (74.694583ms)
+✔ each fixed identity sends one ordinary SDK request, retains exact201 and no secrets/session (23.507417ms)
+✔ wrong scope/authority/approvedGate/window reject without transport (0.344708ms)
+✔ existing/stale/wrongIdentity/unknown prior attempt orordinal never dispatch (0.250708ms)
+✔ second safe ordinal allowed only with newfresh exactabsence (0.979292ms)
+✔ UNKNOWN stops with original dispatch metadata and no automatic retry (0.715583ms)
+✔ non201 success remains reconcile-required without trusting SDK body (0.865709ms)
+✔ caller mutation cannot redirect fixed identity (0.759459ms)
+✔ HTTP rejection and malformed201 retain no invented identity (0.892209ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 284.607834

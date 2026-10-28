@@ -1,0 +1,41 @@
+{
+  "main": {
+    "path": "/Users/xoery/Project/otr-mobile",
+    "head": "817583e046b98ffaa2e7727a70e2306f8f167cf5",
+    "status": " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md\n?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md\n?? docs/beta/visual-acceptance/assets.zip\n?? scripts/dev/__pycache__/\n",
+    "main-working.patch": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "main-staged.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "untrackedCopies": [
+      {
+        "path": "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+        "sha256": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4"
+      },
+      {
+        "path": "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+        "sha256": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573"
+      },
+      {
+        "path": "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+        "sha256": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a"
+      },
+      {
+        "path": "docs/beta/visual-acceptance/assets.zip",
+        "sha256": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529"
+      }
+    ]
+  },
+  "native": {
+    "path": "/Users/xoery/.codex/worktrees/native-forms-p3/otr-mobile-canonical",
+    "head": "e18b8e0544ebfaa936e97ebd0e8ef0841d5809ab",
+    "status": " M node_modules\n?? .forms-qa/\n",
+    "native-working.patch": "7712cedbc936b4fdfed3c654cd0fcbaf448e33f8698d4e49e0c18bd19d10cdca",
+    "native-staged.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "host": {
+    "path": "/Users/xoery/.codex/worktrees/p3-accepted-read-entry/otr-mobile-canonical",
+    "head": "0f222171d23fe9b2f3838657cdb31910d5c2dc89",
+    "status": "?? docs/ops/native-flight-enrichment-20261027/finite-acceptance/__pycache__/\n?? node_modules\n?? scripts/import/__pycache__/\n",
+    "host-working.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "host-staged.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

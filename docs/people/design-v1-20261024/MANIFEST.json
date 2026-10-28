@@ -1,0 +1,55 @@
+{
+  "archive": "/Users/xoery/Downloads/Members DesignV1.zip",
+  "archiveSha256": "441add76a843d94663382ca74ed75565ff7a117b16e782c83700bd89772d6d1e",
+  "ownerApproval": "2026-10-24 People / Identity Design V1 intake only",
+  "files": [
+    {
+      "archivePath": "Members DesignV1/µêÉσæÿΣ╕╗Θí╡∩╝Üτ╗äτ╗çΦÇàΣ╕ÄµêÉσæÿΦºåσ¢╛.png",
+      "retainedPath": "originals/成员主页：组织者与成员视图.png",
+      "bytes": 1592158,
+      "sha256": "52998b52f69c5f8bb2a42b18b07705598b3ee2e5bf0084ab98d36c00ae72eda4",
+      "decodedFilename": "成员主页：组织者与成员视图.png"
+    },
+    {
+      "archivePath": "Members DesignV1/µùàΦíîσ║öτö¿µ╖╗σèáΣ║║σæÿΣ╕ÄΘéÇΦ»╖µ╡üτ¿ïΦ«╛Φ«íτ¿┐.png",
+      "retainedPath": "originals/旅行应用添加人员与邀请流程设计稿.png",
+      "bytes": 1671260,
+      "sha256": "b2ef249a2648478ea5ca0efab5d48e038d5012c627f1e117a7e072b363a84cfd",
+      "decodedFilename": "旅行应用添加人员与邀请流程设计稿.png"
+    },
+    {
+      "archivePath": "Members DesignV1/OTR_People_Identity_Coordinator_Intake_Handoff_20261024.docx",
+      "retainedPath": "originals/OTR_People_Identity_Coordinator_Intake_Handoff_20261024.docx",
+      "bytes": 37967,
+      "sha256": "3b297f63fde8ad149b6838c9e0ac8c2ece59dbc61aefc0bca9d92eef70d5b2c3"
+    },
+    {
+      "archivePath": "Members DesignV1/σà¿τÉâΣ╕¬Σ║║Φ╡äµûÖσ║öτö¿µ╡üτ¿ïΦ«╛Φ«íΦºäΦîâ.png",
+      "retainedPath": "originals/全球个人资料应用流程设计规范.png",
+      "bytes": 1690804,
+      "sha256": "cdb6839736524711f2f738048e75c8be5a7819ac590db4cf152d5bd9d7597d77",
+      "decodedFilename": "全球个人资料应用流程设计规范.png"
+    },
+    {
+      "archivePath": "Members DesignV1/σÅéΣ╕ÄΦÇàΦ»ªµâàσñÜΦºÆΦë▓τòîΘ¥óΦºäΦîâ.png",
+      "retainedPath": "originals/参与者详情多角色界面规范.png",
+      "bytes": 1594729,
+      "sha256": "fad67fb760fcfaafafccab5334cfb5d241f6f20066b9a53255d75f6eb50e251e",
+      "decodedFilename": "参与者详情多角色界面规范.png"
+    },
+    {
+      "archivePath": "Members DesignV1/OTR_People_Profile_Invitations_UI_Blueprint_20261024.docx",
+      "retainedPath": "originals/OTR_People_Profile_Invitations_UI_Blueprint_20261024.docx",
+      "bytes": 40154,
+      "sha256": "afe6bffed7397778a454c7cf4d8f1b6a979b1ee0ea389a06f5f772f958afff4d"
+    },
+    {
+      "archivePath": "Members DesignV1/OTR_People_Identity_Permissions_Product_Delta_20261024.docx",
+      "retainedPath": "originals/OTR_People_Identity_Permissions_Product_Delta_20261024.docx",
+      "bytes": 39774,
+      "sha256": "ccb0ecf4bf60accb628225f14117fd3a3e541b180c5a116e824888b5ada03fb8"
+    }
+  ],
+  "ignored": "macOS resource forks and .DS_Store",
+  "filenameNote": "ZIP image names omit UTF8 flag; CP437 decoding was reversibly recovered as UTF8. Original bytes/SHA unchanged; raw archive path retained."
+}

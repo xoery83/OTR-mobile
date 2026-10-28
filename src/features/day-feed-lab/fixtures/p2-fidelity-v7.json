@@ -1,0 +1,842 @@
+{
+  "version": "otr.p2-ux-synthetic/7",
+  "synthetic": true,
+  "authority": "NONE: no source proof, canonical admission, real ACL or device readiness",
+  "trip": {
+    "title": "Flight Journey Lab",
+    "destinations": [
+      {
+        "displayLabel": "Auckland, New Zealand"
+      },
+      {
+        "displayLabel": "Los Angeles, United States"
+      },
+      {
+        "displayLabel": "London, United Kingdom"
+      }
+    ]
+  },
+  "clockPresets": {
+    "future": "2027-01-14T12:00:00Z",
+    "today": "2027-01-16T12:00:00Z",
+    "past": "2027-01-27T12:00:00Z"
+  },
+  "items": [
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [],
+      "ticketSummaries": [],
+      "id": "syn-p2-minimal",
+      "title": "ZZ901",
+      "legs": [
+        {
+          "id": "syn-leg-minimal",
+          "flightNumberLiteral": "ZZ901",
+          "projection": "ITEM",
+          "origin": {
+            "date": "2027-01-16"
+          },
+          "destination": {}
+        }
+      ],
+      "expected": "Only flight literal and credible departure date; NTC; no invented airport/time/booking",
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-minimal"
+        ]
+      }
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [],
+      "ticketSummaries": [],
+      "id": "syn-p2-full",
+      "title": "AKL → LAX",
+      "legs": [
+        {
+          "id": "syn-leg-full",
+          "flightNumberLiteral": "ZZ101",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "AKL",
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland",
+            "instant": "2027-01-16T07:00:00Z",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Auckland International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "LAX",
+            "date": "2027-01-16",
+            "time": "11:00",
+            "zone": "America/Los_Angeles",
+            "instant": "2027-01-16T19:00:00Z"
+          },
+          "services": [
+            {
+              "attribution": "MARKETING",
+              "literal": "ZZ101"
+            },
+            {
+              "attribution": "OPERATING",
+              "literal": "YY201"
+            }
+          ],
+          "codeshareEvidence": "SYNTHETIC_EXPLICIT_MAPPING",
+          "bookingSummaries": [
+            {
+              "id": "syn-booking-syn-leg-full",
+              "confirmationCode": "SYN-A1",
+              "visible": true
+            }
+          ],
+          "seatSummaries": [
+            {
+              "id": "syn-entitlement-syn-leg-full-0",
+              "seat": "12A",
+              "visible": true
+            }
+          ],
+          "documentSummaries": [
+            {
+              "id": "syn-document-syn-leg-full-0",
+              "contentVersion": 1,
+              "title": "ZZ101 · Flight confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Flight confirmation.txt\nFlight: ZZ101\nBooking reference: SYN-A1\nThis is a synthetic WebLab document, not a valid travel credential."
+            }
+          ]
+        }
+      ],
+      "expected": "IDL arrival clock earlier on same local date; no END row; marketing and operating distinct",
+      "participation": {
+        "mode": "WHOLE_GROUP"
+      },
+      "linkedExpenseIds": [
+        "syn-journey-expense-syn-p2-full-1"
+      ],
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-full"
+        ]
+      }
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [],
+      "ticketSummaries": [],
+      "id": "syn-p2-floating",
+      "title": "ZZ902 · AKL → LAX",
+      "legs": [
+        {
+          "id": "syn-leg-floating",
+          "flightNumberLiteral": "ZZ902",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "AKL",
+            "date": "2027-01-16",
+            "time": "09:00",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Auckland International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "LAX"
+          },
+          "bookingSummaries": [],
+          "seatSummaries": [],
+          "documentSummaries": []
+        }
+      ],
+      "expected": "Original floating 09:00 visible with timezone warning; no instant/NOW",
+      "presentationClockOrder": {
+        "basis": "OWNER_WEBLAB_PLANNING_POSITION",
+        "contextZone": "Pacific/Auckland",
+        "itemIds": [
+          "syn-p2-floating",
+          "syn-p1-exact",
+          "syn-p1-afternoon",
+          "syn-p1-late",
+          "syn-p1-no-place"
+        ],
+        "grantsInstant": false
+      },
+      "participation": {
+        "mode": "SELF"
+      },
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-floating"
+        ]
+      }
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [
+        {
+          "id": "syn-booking-multi-a",
+          "title": "Booking A",
+          "confirmationCode": "SYN-M1",
+          "visible": true
+        },
+        {
+          "id": "syn-booking-multi-b",
+          "title": "Booking B",
+          "confirmationCode": "SYN-M3",
+          "visible": true
+        }
+      ],
+      "ticketSummaries": [],
+      "id": "syn-p2-multi",
+      "title": "AKL → LAX → JFK → LHR",
+      "legs": [
+        {
+          "id": "syn-leg-full",
+          "flightNumberLiteral": "ZZ101",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "AKL",
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland",
+            "instant": "2027-01-16T07:00:00Z",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Auckland International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "LAX",
+            "date": "2027-01-16",
+            "time": "11:00",
+            "zone": "America/Los_Angeles",
+            "instant": "2027-01-16T19:00:00Z"
+          },
+          "services": [
+            {
+              "attribution": "MARKETING",
+              "literal": "ZZ101"
+            },
+            {
+              "attribution": "OPERATING",
+              "literal": "YY201"
+            }
+          ],
+          "codeshareEvidence": "SYNTHETIC_EXPLICIT_MAPPING",
+          "bookingSummaries": [
+            {
+              "id": "syn-booking-syn-leg-full",
+              "confirmationCode": "SYN-M1",
+              "visible": true
+            }
+          ],
+          "seatSummaries": [
+            {
+              "id": "syn-entitlement-syn-leg-full-0",
+              "seat": "12A",
+              "visible": true
+            }
+          ],
+          "documentSummaries": [
+            {
+              "id": "syn-document-syn-leg-full-0",
+              "contentVersion": 1,
+              "title": "ZZ101 · Flight confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Flight confirmation.txt\nFlight: ZZ101\nBooking reference: SYN-M1\nThis is a synthetic WebLab document, not a valid travel credential."
+            }
+          ]
+        },
+        {
+          "id": "syn-leg-2",
+          "flightNumberLiteral": "YY202",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "LAX",
+            "date": "2027-01-16",
+            "time": "14:00",
+            "zone": "America/Los_Angeles",
+            "instant": "2027-01-16T22:00:00Z",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Los Angeles International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "JFK",
+            "date": "2027-01-16",
+            "time": "22:00",
+            "zone": "America/New_York",
+            "instant": "2027-01-17T03:00:00Z"
+          },
+          "bookingSummaries": [
+            {
+              "id": "syn-booking-syn-leg-2",
+              "confirmationCode": "SYN-M1",
+              "visible": true
+            }
+          ],
+          "seatSummaries": [
+            {
+              "id": "syn-entitlement-syn-leg-2-0",
+              "seat": "14C",
+              "visible": true
+            }
+          ],
+          "documentSummaries": [
+            {
+              "id": "syn-document-syn-leg-2-0",
+              "contentVersion": 1,
+              "title": "YY202 · Flight confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Flight confirmation.txt\nFlight: YY202\nBooking reference: SYN-M1\nThis is a synthetic WebLab document, not a valid travel credential."
+            },
+            {
+              "id": "syn-document-syn-leg-2-1",
+              "contentVersion": 1,
+              "title": "YY202 · Travel information.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Travel information.txt\nFlight: YY202\nBooking reference: SYN-M1\nThis is a synthetic WebLab document, not a valid travel credential."
+            }
+          ]
+        },
+        {
+          "id": "syn-leg-3",
+          "flightNumberLiteral": "YY203",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "JFK",
+            "date": "2027-01-17",
+            "time": "01:00",
+            "zone": "America/New_York",
+            "instant": "2027-01-17T06:00:00Z",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "John F. Kennedy International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "LHR",
+            "date": "2027-01-17",
+            "time": "13:00",
+            "zone": "Europe/London",
+            "instant": "2027-01-17T13:00:00Z"
+          },
+          "bookingSummaries": [
+            {
+              "id": "syn-booking-syn-leg-3",
+              "confirmationCode": "SYN-M3",
+              "visible": true
+            }
+          ],
+          "seatSummaries": [],
+          "documentSummaries": []
+        }
+      ],
+      "groupEvidence": "SYNTHETIC_CONTINUOUS_JOURNEY",
+      "expected": "3 independently accessible fixture Items; 2 qualified intervals; endpoint-local dates/zones; no Booking inferred",
+      "participation": {
+        "mode": "SELF"
+      },
+      "linkedExpenseIds": [
+        "syn-journey-expense-syn-p2-multi-1",
+        "syn-journey-expense-multi-2"
+      ],
+      "linkedPhotoIds": [
+        "syn-journey-photo-multi-1",
+        "syn-journey-photo-multi-2"
+      ],
+      "note": "Meet at the departure airport. Keep the connection documents together.",
+      "documentSummaries": [
+        {
+          "id": "syn-journey-document-multi",
+          "title": "Journey information.txt",
+          "visible": true,
+          "contentVersion": 1,
+          "canOpenOriginal": true,
+          "previewText": "SYNTHETIC JOURNEY INFORMATION\nAKL → LAX → JFK → LHR\nWebLab fixture only. Not a valid travel credential."
+        }
+      ],
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-full",
+          "syn-leg-2",
+          "syn-leg-3"
+        ]
+      },
+      "expenseAssociations": [
+        {
+          "bookingId": "syn-booking-multi-a",
+          "expenseIds": [
+            "syn-journey-expense-syn-p2-multi-1"
+          ]
+        },
+        {
+          "bookingId": "syn-booking-multi-b",
+          "expenseIds": [
+            "syn-journey-expense-multi-2"
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [],
+      "ticketSummaries": [],
+      "id": "syn-p2-partial",
+      "title": "MDW → DTW → LAX → SYD → AKL",
+      "legs": [
+        {
+          "id": "syn-leg-partial-1",
+          "flightNumberLiteral": "ZZ301",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "MDW",
+            "date": "2027-01-16",
+            "time": "13:27",
+            "zone": "America/Chicago",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Chicago Midway International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "DTW"
+          }
+        },
+        {
+          "id": "syn-leg-partial-2",
+          "flightNumberLiteral": "ZZ302",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "DTW",
+            "date": "2027-01-16",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Detroit Metropolitan Wayne County Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "LAX"
+          }
+        },
+        {
+          "id": "syn-candidate-partial-3",
+          "flightNumberLiteral": "ZZ303",
+          "projection": "UNRESOLVED",
+          "origin": {
+            "airportCode": "LAX",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Los Angeles International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "SYD"
+          }
+        },
+        {
+          "id": "syn-candidate-partial-4",
+          "flightNumberLiteral": "ZZ304",
+          "projection": "UNRESOLVED",
+          "origin": {
+            "airportCode": "SYD",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Sydney Kingsford Smith International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "AKL",
+            "date": "2027-01-18",
+            "time": "15:10",
+            "zone": "Pacific/Auckland"
+          }
+        }
+      ],
+      "groupEvidence": "SYNTHETIC_SOURCE_ROUTE_ONLY",
+      "expected": "Known endpoints only; no intermediate dates/clocks inferred; unresolved legs have no Item destination",
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-partial-1",
+          "syn-leg-partial-2",
+          "syn-candidate-partial-3",
+          "syn-candidate-partial-4"
+        ]
+      }
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [
+        {
+          "id": "syn-booking-visible",
+          "title": "Flight reservation",
+          "confirmationCode": "SYN-ONLY",
+          "commercialStatus": "CONFIRMED",
+          "visible": true
+        },
+        {
+          "id": "syn-booking-private",
+          "title": "PRIVATE_SENTINEL",
+          "confirmationCode": "PRIVATE_PNR_SENTINEL",
+          "visible": false
+        }
+      ],
+      "ticketSummaries": [
+        {
+          "id": "syn-ticket-confirmation",
+          "title": "Confirmation document",
+          "class": "CONFIRMATION_ONLY",
+          "visible": true
+        },
+        {
+          "id": "syn-ticket-static",
+          "title": "Original boarding pass",
+          "class": "STATIC_ORIGINAL",
+          "deviceReadiness": "ABSENT",
+          "canRequestDownload": true,
+          "visible": true
+        },
+        {
+          "id": "syn-ticket-private",
+          "title": "PRIVATE_TICKET_SENTINEL",
+          "visible": false
+        }
+      ],
+      "id": "syn-p2-access",
+      "title": "ZZ101 · linked records",
+      "legs": [
+        {
+          "id": "syn-leg-full",
+          "flightNumberLiteral": "ZZ101",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "AKL",
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland",
+            "instant": "2027-01-16T07:00:00Z",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Auckland International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "LAX",
+            "date": "2027-01-16",
+            "time": "11:00",
+            "zone": "America/Los_Angeles",
+            "instant": "2027-01-16T19:00:00Z"
+          },
+          "services": [
+            {
+              "attribution": "MARKETING",
+              "literal": "ZZ101"
+            },
+            {
+              "attribution": "OPERATING",
+              "literal": "YY201"
+            }
+          ],
+          "codeshareEvidence": "SYNTHETIC_EXPLICIT_MAPPING"
+        }
+      ],
+      "expected": "Only visible summaries; confirmation is not boarding pass; no on-phone assertion or actual download",
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-full"
+        ]
+      }
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [],
+      "ticketSummaries": [],
+      "id": "syn-p2-names",
+      "title": "Auckland → Los Angeles",
+      "legs": [
+        {
+          "id": "syn-leg-names",
+          "flightNumberLiteral": "ZZ101",
+          "projection": "ITEM",
+          "origin": {
+            "date": "2027-01-16",
+            "time": "20:00",
+            "zone": "Pacific/Auckland",
+            "instant": "2027-01-16T07:00:00Z",
+            "airportName": "Auckland International Airport",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Auckland International Airport"
+            }
+          },
+          "destination": {
+            "date": "2027-01-16",
+            "time": "11:00",
+            "zone": "America/Los_Angeles",
+            "instant": "2027-01-16T19:00:00Z",
+            "airportName": "Los Angeles International Airport"
+          },
+          "services": [
+            {
+              "attribution": "MARKETING",
+              "literal": "ZZ101"
+            },
+            {
+              "attribution": "OPERATING",
+              "literal": "YY201"
+            }
+          ],
+          "codeshareEvidence": "SYNTHETIC_EXPLICIT_MAPPING",
+          "bookingSummaries": [
+            {
+              "id": "syn-booking-syn-leg-names",
+              "confirmationCode": "SYN-N2",
+              "visible": true
+            },
+            {
+              "id": "syn-private-book",
+              "confirmationCode": "PRIVATE_FOCUS_PNR_SENTINEL",
+              "visible": false
+            }
+          ],
+          "seatSummaries": [
+            {
+              "id": "syn-entitlement-syn-leg-names-0",
+              "seat": "22F",
+              "visible": true
+            },
+            {
+              "id": "syn-private-seat",
+              "seat": "PRIVATE_FOCUS_SEAT_SENTINEL",
+              "visible": false
+            }
+          ],
+          "documentSummaries": [
+            {
+              "id": "syn-document-syn-leg-names-0",
+              "contentVersion": 1,
+              "title": "ZZ101 · Flight confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Flight confirmation.txt\nFlight: ZZ101\nBooking reference: SYN-N2\nThis is a synthetic WebLab document, not a valid travel credential."
+            },
+            {
+              "id": "syn-document-syn-leg-names-1",
+              "contentVersion": 1,
+              "title": "ZZ101 · Travel information.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Travel information.txt\nFlight: ZZ101\nBooking reference: SYN-N2\nThis is a synthetic WebLab document, not a valid travel credential."
+            },
+            {
+              "id": "syn-private-doc",
+              "title": "PRIVATE_FOCUS_DOCUMENT_SENTINEL",
+              "visible": false,
+              "canOpenOriginal": true,
+              "previewText": "PRIVATE_BYTES_SENTINEL"
+            }
+          ]
+        }
+      ],
+      "expected": "Exact unique official airport names receive descriptive code labels from pinned display subset; no timezone enrichment",
+      "participation": {
+        "mode": "SELF"
+      },
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-names"
+        ]
+      }
+    },
+    {
+      "date": "2027-01-16",
+      "synthetic": true,
+      "family": "P2",
+      "availability": "AVAILABLE",
+      "bookingSummaries": [],
+      "ticketSummaries": [],
+      "id": "syn-p2-terminals",
+      "title": "AKL → NSN · terminals",
+      "legs": [
+        {
+          "id": "syn-leg-terminals",
+          "flightNumberLiteral": "ZZ5069",
+          "projection": "ITEM",
+          "origin": {
+            "airportCode": "AKL",
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "instant": "2027-01-15T20:00:00Z",
+            "terminal": "D",
+            "navigationTarget": {
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE",
+              "query": "Auckland International Airport"
+            }
+          },
+          "destination": {
+            "airportCode": "NSN",
+            "date": "2027-01-16",
+            "time": "10:35",
+            "zone": "Pacific/Auckland",
+            "instant": "2027-01-15T21:35:00Z",
+            "terminal": "A"
+          },
+          "bookingSummaries": [
+            {
+              "id": "syn-booking-syn-leg-terminals",
+              "confirmationCode": "SYN-NZ1",
+              "visible": true
+            }
+          ],
+          "seatSummaries": [
+            {
+              "id": "syn-entitlement-syn-leg-terminals-0",
+              "seat": "4A",
+              "visible": true
+            },
+            {
+              "id": "syn-entitlement-syn-leg-terminals-1",
+              "seat": "4B",
+              "visible": true
+            }
+          ],
+          "documentSummaries": [
+            {
+              "id": "syn-document-syn-leg-terminals-0",
+              "contentVersion": 1,
+              "title": "ZZ5069 · Flight confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "previewText": "SYNTHETIC DOCUMENT · Flight confirmation.txt\nFlight: ZZ5069\nBooking reference: SYN-NZ1\nThis is a synthetic WebLab document, not a valid travel credential."
+            }
+          ]
+        }
+      ],
+      "expected": "Synthetic Terminal D/A on row3; 09:00/10:35 stacked as P1; code/name from pinned descriptive reference",
+      "participation": {
+        "mode": "SELECTED_MEMBERS",
+        "personIds": [
+          "syn-person-a",
+          "syn-person-b"
+        ]
+      },
+      "linkedExpenseIds": [
+        "syn-journey-expense-syn-p2-terminals-1"
+      ],
+      "grouping": {
+        "basis": "SYNTHETIC_EXPLICIT_MANUAL",
+        "orderedLegIds": [
+          "syn-leg-terminals"
+        ]
+      }
+    }
+  ],
+  "airportDisplayReference": {
+    "version": "airport-ref-01-20261021-b529623d2a0b",
+    "catalogSha256": "83a4d98c345a9ffc00712acfd2f3ed802db37d1d1622884fc0fd858156672073",
+    "descriptionOnly": true,
+    "scope": "Eight scenario airport codes plus all colliding names in original catalog; code/name display only, no timezone/coordinates/terminal/validity/Core binding",
+    "attribution": "OurAirports contributors, Unlicense; original pinned snapshot b529623d2a0b09a9be78d37fc7a7a5e1e16e3451",
+    "sourceUrl": "https://github.com/davidmegginson/ourairports-data/tree/b529623d2a0b09a9be78d37fc7a7a5e1e16e3451",
+    "records": [
+      {
+        "sourceId": "ourairports:2434",
+        "iata": "LHR",
+        "name": "London Heathrow Airport"
+      },
+      {
+        "sourceId": "ourairports:3497",
+        "iata": "DTW",
+        "name": "Detroit Metropolitan Wayne County Airport"
+      },
+      {
+        "sourceId": "ourairports:3622",
+        "iata": "JFK",
+        "name": "John F. Kennedy International Airport"
+      },
+      {
+        "sourceId": "ourairports:3632",
+        "iata": "LAX",
+        "name": "Los Angeles International Airport"
+      },
+      {
+        "sourceId": "ourairports:3673",
+        "iata": "MDW",
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "sourceId": "ourairports:5023",
+        "iata": "AKL",
+        "name": "Auckland International Airport"
+      },
+      {
+        "sourceId": "ourairports:5044",
+        "iata": "NSN",
+        "name": "Nelson Airport"
+      },
+      {
+        "sourceId": "ourairports:12222",
+        "iata": null,
+        "name": "Nelson Airport"
+      },
+      {
+        "sourceId": "ourairports:22082",
+        "iata": null,
+        "name": "Nelson Airport"
+      },
+      {
+        "sourceId": "ourairports:27145",
+        "iata": "SYD",
+        "name": "Sydney Kingsford Smith International Airport"
+      },
+      {
+        "sourceId": "ourairports:349652",
+        "iata": null,
+        "name": "Nelson Airport"
+      },
+      {
+        "sourceId": "ourairports:537113",
+        "iata": null,
+        "name": "Nelson Airport"
+      }
+    ]
+  }
+}

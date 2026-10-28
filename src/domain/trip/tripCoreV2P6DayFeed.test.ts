@@ -41,3 +41,23 @@ it("keeps qualified P6 start in Timeline and unresolved planned clock in Core TN
   ).toHaveLength(1);
   expect(tns.unresolved.filter((row) => row.id.startsWith("e1000000-"))).toEqual([]);
 });
+
+it("accepted endpoint facts remain intact in a date-only Day without precise NOW", async () => {
+  const { composeDayStream } = await import("@/features/day-feed/composition");
+  const fixture = ticketedActivityContribution("FUTURE");
+  const zoned = fixture.query!(fixture.selectedDate, fixture.zone);
+  // Lab entry remains named-only; exercise its underlying production query context.
+  const civil = Reflect.apply(fixture.query!, undefined, [
+    fixture.selectedDate,
+    {
+      zone: null,
+      viewMode: "FLOATING",
+    },
+  ]);
+  expect(civil.coreRows).toEqual(zoned.coreRows);
+  expect(civil.timed).toEqual(zoned.timed);
+  const stream = composeDayStream(civil, "2026-10-16T10:00:00Z");
+  expect(stream.context).toBe("UNKNOWN");
+  expect(stream.now.mode).toBe("HIDDEN");
+  expect(stream.rows.length).toBeGreaterThan(0);
+});

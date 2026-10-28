@@ -1,6 +1,7 @@
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import {
   TextInput,
+  View,
   Pressable,
   Text,
   StyleSheet,
@@ -60,22 +61,60 @@ export function UiDatePicker(
   );
 }
 export function UiFormRow({
+  compact = false,
   label,
   value,
   onPress,
   disabled = false,
   stacked = false,
+  horizontalInset,
+  variant = "row",
+  leading,
+  trailing,
 }: {
+  compact?: boolean;
+  leading?: ReactNode;
+  trailing?: ReactNode;
   label: string;
   value: string;
   onPress: () => void;
   disabled?: boolean;
   stacked?: boolean;
+  horizontalInset?: number;
+  variant?: "row" | "field" | "action";
 }) {
   const styles = useThemedStyles(createStyles);
 
   const largeText = useWindowDimensions().fontScale > 2;
-  return (
+  if (variant === "action")
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={value}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.actionCard,
+          compact && styles.compactActionCard,
+          largeText && styles.rowLargeText,
+        ]}
+      >
+        {leading}
+        <View style={styles.actionCopy}>
+          <Text style={[styles.actionTitle, disabled && styles.disabledText]}>
+            {label}
+          </Text>
+          <Text style={[styles.actionHint, disabled && styles.disabledText]}>
+            {value}
+          </Text>
+        </View>
+        {trailing}
+      </Pressable>
+    );
+  const field = variant === "field";
+  const button = (
     <Pressable
       accessibilityLabel={`${label}, ${value}`}
       accessibilityRole="button"
@@ -83,31 +122,46 @@ export function UiFormRow({
       disabled={disabled}
       onPress={onPress}
       style={[
-        styles.row,
-        (largeText || stacked) && styles.rowLargeText,
+        field ? styles.input : styles.row,
+        field && styles.fieldButton,
+        field && !!trailing && styles.fieldWithAccessory,
+        !field && (largeText || stacked) && styles.rowLargeText,
         disabled && styles.disabledSurface,
+        !field && horizontalInset !== undefined && { paddingHorizontal: horizontalInset },
       ]}
     >
-      <Text
-        style={[
-          styles.rowLabel,
-          stacked && styles.rowLabelStacked,
-          disabled && styles.disabledText,
-        ]}
-      >
-        {label}
-      </Text>
+      {!field && (
+        <Text
+          style={[
+            styles.rowLabel,
+            stacked && styles.rowLabelStacked,
+            disabled && styles.disabledText,
+          ]}
+        >
+          {label}
+        </Text>
+      )}
       <Text
         numberOfLines={2}
         style={[
-          styles.rowValue,
-          (largeText || stacked) && styles.rowValueLargeText,
+          field ? styles.fieldValue : styles.rowValue,
+          field && !!trailing && styles.fieldAccessoryValue,
+          !field && (largeText || stacked) && styles.rowValueLargeText,
           disabled && styles.disabledText,
         ]}
       >
         {value}
       </Text>
+      {field ? trailing : null}
     </Pressable>
+  );
+  return field ? (
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      {button}
+    </View>
+  ) : (
+    button
   );
 }
 
@@ -152,6 +206,22 @@ export function UiChoiceChip({
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    actionCard: {
+      flexGrow: 1,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 12,
+      minHeight: 100,
+      padding: 12,
+      borderRadius: visual.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.separator,
+    },
+    compactActionCard: { flexGrow: 0, minHeight: 64, alignItems: "center" },
+    actionCopy: { flex: 1, minWidth: 0, gap: 5 },
+    actionTitle: { ...visual.type.row, color: colors.textPrimary },
+    actionHint: { ...visual.type.meta, color: colors.textSecondary },
     input: {
       backgroundColor: colors.surface,
       color: colors.textPrimary,
@@ -162,6 +232,16 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: 14,
       ...visual.type.row,
     },
+    fieldGroup: { gap: visual.space.heading },
+    fieldLabel: { ...visual.type.action, color: colors.textPrimary },
+    fieldButton: { justifyContent: "center", paddingVertical: visual.space.heading },
+    fieldValue: { ...visual.type.row, color: colors.textPrimary },
+    fieldWithAccessory: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.heading,
+    },
+    fieldAccessoryValue: { flex: 1 },
     bareInput: {
       backgroundColor: colors.background,
       borderWidth: 0,

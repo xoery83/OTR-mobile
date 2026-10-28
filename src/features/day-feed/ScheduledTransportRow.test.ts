@@ -6,10 +6,12 @@ import { scheduledTransportContribution } from "../day-feed-lab/scheduledTranspo
 import {
   ScheduledTransportRow,
   transportMapUrl,
+  transportDayOffset,
+  transportMode,
   type ScheduledTransportFacts,
 } from "./ScheduledTransportRow";
 import { knownTransportClock } from "./coreScheduledTransportRenderer";
-import { formatUiDate, getUiLocale, setUiLocale, t } from "@/ui/locale";
+import { getUiLocale, setUiLocale, t } from "@/ui/locale";
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -28,6 +30,37 @@ vi.mock("react-native", async () => {
     StyleSheet: { create: (value: unknown) => value, hairlineWidth: 0.5 },
     useWindowDimensions: () => ({ width: 375, height: 812, fontScale: 1 }),
     useColorScheme: () => "light",
+  };
+});
+vi.mock("@/features/day-feed/BookingReadUi", async () => {
+  const { createElement } = await import("react");
+  return {
+    BookingCard: ({ title, children }: { title?: string; children?: ReactNode }) =>
+      createElement(
+        "section",
+        { "data-card": title },
+        title ? createElement("h3", null, title) : null,
+        children,
+      ),
+    BookingGlyph: ({ kind }: { kind: string }) =>
+      createElement("i", {
+        "data-icon":
+          kind === "detail"
+            ? "arrow.up.left.and.arrow.down.right"
+            : kind === "navigate"
+              ? "location"
+              : kind === "contact"
+                ? "phone"
+                : "map",
+      }),
+    BookingInsert: ({ side }: { side: string }) =>
+      createElement("button", { "data-insert": side }),
+  };
+});
+vi.mock("@/components/AppIcon", async () => {
+  const { createElement } = await import("react");
+  return {
+    AppIcon: ({ name }: { name: string }) => createElement("i", { "data-icon": name }),
   };
 });
 vi.mock("@/features/ledger/MoneyText", async () => {
@@ -110,28 +143,28 @@ const render = (
   );
 };
 
-it("keeps independent Future Segment Browse sparse and maps both endpoints in Focus", () => {
+it("keeps final compact Future Browse and only departure map in Focus", () => {
   const browse = render("FUTURE", "B");
-  expect(browse).toContain("Train segment A");
-  expect(browse).toContain(t("p5.mode.train"));
+  expect(browse).not.toContain("Train segment A");
+  expect(browse).toContain("R1");
   expect(browse).toContain("Origin station");
   expect(browse).toContain("Destination station");
-  expect(browse).toContain(t("p5.bookingMarker", { name: "Shared booking" }));
+  expect(browse).not.toContain(t("p5.bookingMarker", { name: "Shared booking" }));
   expect(browse).not.toContain(t("p5.ticket"));
   expect(browse).not.toContain("Related segment B");
   expect(browse).not.toMatch(/connection|transfer gap/i);
   const focus = render("FUTURE", "F");
-  expect(focus.match(/View on Map/g)).toHaveLength(2);
+  expect(focus.match(/data-icon="map"/g)).toHaveLength(1);
   expect(focus).toContain(t("p5.ticket"));
   expect(focus).toContain(t("p5.booking"));
   expect(focus).not.toContain("Related segment B");
   expect(render("FUTURE", "I")).toContain("Related segment B");
 });
 
-it("shows one known boarding line in Today Browse and Ticket only after boarding in Focus", () => {
+it("omits boarding from Today Browse and places it before Ticket in Focus", () => {
   const browse = render("TODAY", "B");
-  expect(browse).toContain(t("p5.platform", { value: "4" }));
-  expect(browse).toContain(t("p5.coach", { value: "A" }));
+  expect(browse).not.toContain(t("p5.platform", { value: "4" }));
+  expect(browse).not.toContain(t("p5.coach", { value: "A" }));
   expect(browse).not.toContain(t("p5.showTicket"));
   const focus = render("TODAY", "F");
   expect(focus.indexOf(t("p5.boarding"))).toBeLessThan(focus.indexOf(t("p5.showTicket")));
@@ -173,7 +206,7 @@ it("keeps the synthetic platform value separate from its localized label", () =>
       onDepth: () => {},
     }),
   );
-  expect(html).toContain(t("p5.platform", { value: "4" }));
+  expect(html).not.toContain(t("p5.platform", { value: "4" }));
   expect(html).not.toContain("Platform Platform 4");
 });
 
@@ -181,7 +214,7 @@ it("retains scheduled Past route, conditional counts, collapsed people and curre
   const browse = render("PAST", "B");
   expect(browse).toContain("Origin station");
   expect(browse).toContain("Destination station");
-  expect(browse).toContain(t("p5.photoCount", { count: 4 }));
+  expect(browse).not.toContain(t("p5.photoCount", { count: 4 }));
   expect(browse).not.toContain("data:image/png");
   expect(browse).not.toMatch(/completed|travelled/i);
   const focus = render("PAST", "F", {
@@ -243,44 +276,49 @@ it("omits unowned private capabilities and refuses imprecise clocks or direction
   ).toBe("09:00");
 });
 
-it("keeps known overnight civil dates beside named Browse endpoints without adding missing clocks", () => {
-  const date = (value: string) =>
-    formatUiDate(new Date(`${value}T12:00:00Z`), {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    });
+it("uses authored calendar offsets without generating duration or fake clocks", () => {
   for (const period of ["TODAY", "FUTURE", "PAST"] as const) {
-    const overnight = render(period, "B");
-    expect(overnight).toContain(`Origin station · ${date("2027-01-15")} · 09:00`);
-    expect(overnight).toContain(`Destination station · ${date("2027-01-16")} · 11:00`);
-    expect(overnight).not.toContain(t("p5.showTicket"));
-    const unknownClock = render(period, "B", {
+    const html = render(period, "B");
+    expect(html).toContain("+1");
+    expect(html).toContain("09:00");
+    expect(html).toContain("11:00");
+    const noClock = render(period, "B", {
       ...facts,
+      origin: { ...facts.origin, time: undefined },
       destination: { ...facts.destination, time: undefined },
     });
-    expect(unknownClock).toContain(`Destination station · ${date("2027-01-16")}`);
-    expect(unknownClock).not.toContain("11:00");
-    expect(unknownClock).not.toContain("00:00");
-    const sameDay = render(period, "B", {
-      ...facts,
-      destination: { ...facts.destination, date: facts.origin.date },
-    });
-    expect(sameDay).toContain("Origin station · 09:00");
-    expect(sameDay).toContain("Destination station · 11:00");
-    expect(sameDay).not.toContain(date("2027-01-15"));
+    expect(noClock).toContain("Origin station");
+    expect(noClock).toContain("Destination station");
+    expect(noClock).not.toContain("00:00");
+  }
+  expect(transportDayOffset("2027-03-28", "2027-03-29")).toBe(1);
+  expect(transportDayOffset("2027-01-15", "2027-01-13")).toBe(-2);
+});
+it("uses sparse name-first layout if either place is absent without duplicating its name in Focus", () => {
+  for (const missing of ["origin", "destination"] as const) {
+    const value = { ...facts, [missing]: { ...facts[missing], place: undefined } };
+    for (const period of ["TODAY", "FUTURE", "PAST"] as const) {
+      const html = render(period, "F", value);
+      expect(html.match(/Train segment A/g)).toHaveLength(1);
+      expect(html).not.toContain("R1");
+      expect(html).not.toContain("undefined");
+    }
   }
 });
-
-it("preserves known planned endpoint minutes and labels unresolved ordering", () => {
-  const value = {
-    ...facts,
-    origin: { ...facts.origin, time: "09:15", plannedUnresolved: true },
-  };
-  const html = render("FUTURE", "B", value);
-  expect(html).toContain("09:15");
-  expect(html).toContain(t("p6.plannedUnresolved"));
+it("keeps all nine transport groups distinct, with neutral unknown fallback", () => {
+  const groups = [
+    "TRAIN",
+    "BUS",
+    "FERRY",
+    "WATER_TAXI",
+    "SHUTTLE",
+    "TRANSFER",
+    "TAXI",
+    "CABLE_CAR",
+    "OTHER",
+  ];
+  expect(new Set(groups.map((mode) => transportMode(mode).icon)).size).toBe(9);
+  expect(transportMode("unknown").icon).toBe(transportMode("OTHER").icon);
 });
 
 it("reviewer: unresolved Destination is labelled even when current Origin is comparable", () => {
@@ -315,4 +353,92 @@ it("each displayed planned endpoint keeps a natural qualifier in both locales wi
   } finally {
     setUiLocale(originalLocale);
   }
+});
+
+it("final Today Immersive gives heading, route and ordered conditional detail cards", () => {
+  const html = render("TODAY", "I", {
+    ...facts,
+    participants: ["Everyone"],
+    note: "A real saved note",
+    instructions: "Use the supplied boarding point",
+  });
+  const positions = [
+    "Train segment A",
+    "Origin station",
+    t("p5.boarding"),
+    t("p5.tickets"),
+    t("p5.departureScheduled"),
+    t("p5.passengers"),
+    t("p5.bookingDocuments"),
+    t("tripCreate.planParticipants"),
+    t("fidelity.note"),
+    t("fidelity.expensesTitle"),
+    t("fidelity.addExpense"),
+  ].map((value) => html.replaceAll("&amp;", "&").indexOf(value));
+  expect(positions.every((value) => value >= 0)).toBe(true);
+  expect(positions).toEqual([...positions].sort((a, b) => a - b));
+  expect(html).toContain("A real saved note");
+});
+it("final Future Immersive keeps endpoints with route before boarding and Ticket", () => {
+  const html = render("FUTURE", "I");
+  expect(html.indexOf(t("p5.departureScheduled"))).toBeLessThan(
+    html.indexOf(t("p5.boarding")),
+  );
+  expect(html.indexOf(t("p5.boarding"))).toBeLessThan(html.indexOf(t("p5.tickets")));
+});
+it("final Past Immersive lists each passenger once and keeps current-segment photos first", () => {
+  const html = render("PAST", "I");
+  expect(html.match(/Own passenger/g)).toHaveLength(1);
+  expect(html.match(/Other authorized passenger/g)).toHaveLength(1);
+  expect(html.indexOf("data:image/png")).toBeLessThan(html.indexOf("Origin station"));
+  expect(html).not.toContain('data-icon="map"');
+});
+it("detail endpoints retain both known place name and address without duplicating equal labels", () => {
+  const html = render("TODAY", "I", {
+    ...facts,
+    origin: {
+      ...facts.origin,
+      zone: "Pacific/Auckland",
+      place: {
+        qualification: "TEXT_ONLY",
+        authoredLabel: "Origin station",
+        authoredAddress: "1 Real authored Road",
+      },
+    },
+  });
+  expect(html).toContain("Origin station");
+  expect(html).toContain("1 Real authored Road");
+  expect(html).toContain("Pacific/Auckland");
+});
+it("sparse real detail omits empty information cards and unknown arrival", () => {
+  const html = render("TODAY", "I", {
+    family: "P5",
+    title: "Saved sparse transport",
+    origin: {
+      date: "2027-01-15",
+      place: { qualification: "TEXT_ONLY", authoredLabel: "A saved station" },
+    },
+    destination: {},
+  });
+  for (const key of [
+    "p5.boarding",
+    "p5.tickets",
+    "p5.passengers",
+    "p5.bookingDocuments",
+    "tripCreate.planParticipants",
+    "fidelity.note",
+    "fidelity.expensesTitle",
+  ] as const)
+    expect(html).not.toContain(`data-card="${t(key)}"`);
+  expect(html).not.toContain(t("p5.arrivalScheduled"));
+  expect(html).not.toContain("00:00");
+});
+it("known whole-group participation is localized without manufacturing Person names", () => {
+  const html = render("TODAY", "I", {
+    ...facts,
+    participationMode: "WHOLE_GROUP",
+    participants: undefined,
+  });
+  expect(html).toContain(`data-card="${t("tripCreate.planParticipants")}"`);
+  expect(html).toContain(t("tripCreate.planEveryone"));
 });

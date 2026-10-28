@@ -224,3 +224,90 @@ describe("Core2 supplemental read and deterministic Day, synthetic accepted fact
     });
   });
 });
+
+it("P1/P3 Notes project only with the existing Item read authority, retaining literal text and null", () => {
+  const note = "Meet by the garden gate";
+  const p1 = create(emptyCoreGraph(), "P1", "2026-10-20", undefined, {
+    core: { title: "Garden visit", description: note },
+  });
+  expect(projectCoreItem(p1.graph, actor, p1.id)).toMatchObject({ description: note });
+  const row = p1.graph.itinerary_events.find((r) => r.id === p1.id)!;
+  row.visibility = "PRIVATE";
+  const other = { ...actor, accountId: randomUUID(), canManageShared: false };
+  expect(projectCoreItem(p1.graph, other, p1.id)).toBeNull();
+  const empty = create(emptyCoreGraph(), "P1", "2026-10-20");
+  expect(projectCoreItem(empty.graph, actor, empty.id)).toHaveProperty(
+    "description",
+    null,
+  );
+  const stay = create(emptyCoreGraph(), "P3", "2026-10-20", "2026-10-21");
+  expect(projectCoreItem(stay.graph, actor, stay.id)).toHaveProperty("description", null);
+});
+
+it("P4 public Details maps Notes and independent vehicle/place facts without renaming Rental identity", () => {
+  const rental = create(emptyCoreGraph(), "P4", "2026-10-20", "2026-10-23", {
+    core: { title: "Family rental", description: "Keep the original contract" },
+    details: {
+      supplier: "Rental company",
+      reserved_category: "SUV",
+      or_similar: true,
+      actual_vehicle_model: "Actual model",
+      verified_plate: "TEST123",
+    },
+    places: { pickup: place("Airport counter"), return: place("City office") },
+  });
+  const item = projectCoreItem(rental.graph, actor, rental.id)!;
+  expect(item.title).toBe("Family rental");
+  expect(item.description).toBe("Keep the original contract");
+  expect(item.details).toMatchObject({
+    supplier: "Rental company",
+    reservedCategory: "SUV",
+    orSimilar: true,
+    actualVehicleModel: "Actual model",
+    verifiedPlate: "TEST123",
+    pickupPlace: { authoredLabel: "Airport counter" },
+    returnPlace: { authoredLabel: "City office" },
+  });
+  expect(item.bookingSummaries).toEqual([]);
+});
+
+it("P5 public Notes and endpoint DTO preserve unknown arrival without manufacturing service or Ticket", () => {
+  const segment = create(emptyCoreGraph(), "P5", "2026-10-20", undefined, {
+    core: { title: "Train segment", description: "Board at the signed entrance" },
+    endpoints: {
+      origin: { time: coreDateBoundary("2026-10-20"), place: place("Station") },
+      destination: {
+        time: { ...coreDateBoundary("2026-10-20"), local_date: null },
+        place: place(),
+      },
+    },
+    service: {
+      service_key: "manual.segment",
+      transport_subtype: "TRAIN",
+      attribution: "UNSPECIFIED",
+      operator_namespace: "NAME",
+      operator_issuer: "",
+      operator_value: "",
+      operator_literal: "",
+      service_number: "",
+      service_literal: "",
+      codeshare_operating_key: null,
+    },
+  });
+  const item = projectCoreItem(segment.graph, actor, segment.id)!;
+  expect(item.description).toBe("Board at the signed entrance");
+  expect(item.title).toBe("Train segment");
+  expect(item.schedule).toMatchObject({
+    shape: "TRANSPORT",
+    origin: { time: { localDate: "2026-10-20" } },
+    destination: { time: { comparable: false } },
+  });
+  expect(item.schedule).not.toHaveProperty("destination.time.localDate");
+  expect(item.entitlementSummaries).toEqual([]);
+  expect(item.bookingSummaries).toEqual([]);
+  expect(
+    projectCoreDay(segment.graph, actor, "2026-10-20", 1).map(
+      (r) => r.rowKey.projectionRole,
+    ),
+  ).toEqual(["ORIGIN"]);
+});

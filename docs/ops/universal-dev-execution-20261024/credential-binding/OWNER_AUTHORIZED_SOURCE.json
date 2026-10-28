@@ -1,0 +1,25 @@
+{
+  "utc": "2026-10-24T12:58:11.412Z",
+  "status": "OWNER_AUTHORIZED_CREDENTIAL_COPY_PREPARED",
+  "source": {
+    "project": "/Users/xoery/Project/otr",
+    "file": ".env.local",
+    "variable": "DEEPSEEK_API_KEY",
+    "readOnly": true
+  },
+  "target": {
+    "privateOperatorFile": "/private/tmp/otr-universal-provider-private-20261025/backend-provider.env",
+    "variable": "OTR_DEV_DEEPSEEK_API_KEY",
+    "mode": "0600",
+    "parentMode": "0700",
+    "exactCopyVerified": true
+  },
+  "sourceEndpoint": "https://api.deepseek.com/",
+  "sourceModelConfigured": false,
+  "scope": "Key reuse only; do not adopt Web default model/parser",
+  "secretValuesRecorded": false,
+  "nativeSecret": false,
+  "remoteProvisioned": false,
+  "providerCalls": 0,
+  "activation": false
+}

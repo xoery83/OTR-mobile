@@ -1,0 +1,9 @@
+# Focused Catalog V2 recovery
+
+Owner approved one new remote QA group and append16 Operator reads, shared paid total1/4096/USD1. Fresh complete Native Batch5bafa531 holds two files+submitted text, all3 saved and Source commands PREPARED. Earlier local failed intake543d13 and normal single-file continuation are retained separately; only5bafa531 was remotely scoped. No historical deletion.
+
+First exact Source bbefaeb5 is FINAL/APPLIED independently in Supabase, but Native binding remains OUTCOME_UNKNOWN after Catalog refresh. Normal verified Auth GET of source-import-catalogs V1 returned503 PUBLICATION_MEMBERSHIP_INTEGRITY. Existing V1 projection rejects retained old PENDING Run528ecbd1. Minimal explicit header2 reuses existing V2 snapshot and same owning Reader/Auth/Trip permission, preserving all old rows; Native calls existing applyUniversalCatalogs. V1 remains unchanged. Sealed Native facade/Swift also required explicit V2 support: old receive/header1 retained, receiveUniversal uses same bounded slot/TLS/cancellation; no generic-fetch fallback.
+
+Independent94 Backend/transport and35 Native facade tests PASS, Swift Foundation V1/V2 policy compile/run PASS, integrated TypeScript PASS; actual Expo Simulator SDK BUILD SUCCEEDED. These are local checks, not DEV V2 or AI Preview PASS. D11 window closed early CLOSED_VERIFIED; new Run/Task0 and paid0. Existing QA IDs preserved for continuation after reviewed closed Backend image deployment; no further object/budget authorization requested.
+
+Data path: Source originals Cloud-shared through existing C3/Source Repository and exact operations; transient selection URIs remain local. SQLite originals retained; Source immutable receipt independently read back. Task/Provider not dispatched; no Admission or Canonical business objects created. Remaining: actual V2 Reader/Native refresh, remaining2Source accept, one Run/Task, actual DeepSeek and App Results/recovery.

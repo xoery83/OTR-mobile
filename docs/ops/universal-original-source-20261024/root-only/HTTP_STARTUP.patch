@@ -1,0 +1,90 @@
+--- a/backend/src/app.ts
++++ b/backend/src/app.ts
+@@ -1,3 +1,4 @@
++import { universalOriginalSourceBoundary, createUniversalOriginalSourceConnection } from "./universalOriginalSource";
+ import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
+ import { universalBoundary, type UniversalPort } from "./universalImport";
+ import { captureCustodyBoundary } from "./captureCustodyHttp";
+@@ -614,6 +615,7 @@
+ 
+ export type BackendDependencies = {
+   universalImportPort?: UniversalPort;
++  universalOriginalSourcePort?: ReturnType<typeof createUniversalOriginalSourceConnection>;
+   captureMaterialCustody?: CaptureMaterialCustody;
+   tripCreatePort?: TripCreatePort;
+   tripMetadataPort?: TripMetadataPort;
+@@ -2361,6 +2363,7 @@
+ 
+ export function createDevBackendHandler({
+   universalImportPort,
++  universalOriginalSourcePort,
+   captureMaterialCustody,
+   tripCreatePort,
+   tripMetadataPort,
+@@ -2456,6 +2459,10 @@
+         route = "/v2/import-batches/:batchId/interpretations";
+         const actor = await authenticate(request, gateway);
+         response = await universalBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalImportPort);
++      } else if (/^\/v2\/trips\/[^/]+\/universal-source-originals\/(?:acquire|result)$/.test(url.pathname)) {
++        route = "/v2/trips/:tripId/universal-source-originals/:resource";
++        const actor = await authenticate(request, gateway);
++        response = await universalOriginalSourceBoundary(request, actor.id, (a,t)=>gateway.canReadTrip(a,t), universalOriginalSourcePort);
+       } else if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
+         route = "/v2/capture-inputs/:inputId/material";
+         const actor = await authenticate(request, gateway);
+--- a/backend/src/serverStartup.ts
++++ b/backend/src/serverStartup.ts
+@@ -52,6 +52,7 @@
+     | "documentOriginalReader"
+     | "captureMaterialCustody"
+     | "universalImportPort"
++    | "universalOriginalSourcePort"
+   > & {
+     publicationCatalogConnection?: PublicationCatalogConnection & {
+       close(): Promise<void>;
+@@ -106,6 +107,7 @@
+     coreConnection: startOptions.coreConnection,
+     documentOriginalReader: startOptions.documentOriginalReader,
+     universalImportPort: startOptions.universalImportPort,
++    universalOriginalSourcePort: startOptions.universalOriginalSourcePort,
+     log(event) {
+       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
+     },
+--- a/backend/src/serverCapture.ts
++++ b/backend/src/serverCapture.ts
+@@ -1,3 +1,4 @@
++import { loadDevUniversalOriginalSourceRuntime } from "./universalOriginalSourceRuntime";
+ import { loadDevTripMetadataV2Runtime } from "./tripMetadataRuntime";
+ import { loadDevCaptureCustody } from "./captureCustodyRuntime";
+ import { loadDevTripCreateRuntime } from "./tripCreateRuntime";
+@@ -12,6 +13,9 @@
+   } catch {
+     console.info("UNIVERSAL_RUNTIME_CLOSED");
+   }
++  let originals: Awaited<ReturnType<typeof loadDevUniversalOriginalSourceRuntime>>;
++  try { originals = await loadDevUniversalOriginalSourceRuntime(process.env, universal?.catalogConnection); }
++  catch { console.info("UNIVERSAL_SOURCE_RUNTIME_CLOSED"); }
+   let runtime: Awaited<ReturnType<typeof loadDevCaptureCustody>>;
+   try {
+     runtime = await loadDevCaptureCustody(process.env);
+@@ -38,9 +42,11 @@
+       tripCreatePort: trip?.tripCreatePort,
+       captureMaterialCustody: runtime?.captureMaterialCustody,
+       universalImportPort: universal?.universalImportPort,
+-      publicationCatalogConnection: universal?.catalogConnection,
++      universalOriginalSourcePort: originals?.universalOriginalSourcePort,
++      publicationCatalogConnection: universal?.catalogConnection ?? originals?.catalogConnection,
+     });
+   } catch (error) {
++    await originals?.close();
+     await universal?.close();
+     await metadata?.close();
+     await trip?.close();
+@@ -48,6 +54,7 @@
+     throw error;
+   }
+   server.once("close", () => {
++    void originals?.close();
+     void universal?.close();
+     void metadata?.close();
+     void trip?.close();

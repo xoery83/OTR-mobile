@@ -1,0 +1,11 @@
+# Bootstrap finding correction — resolved in follow-up candidate
+
+The earlier `089def2` diagnosis was incomplete: `readOwningLegacySourceCatalog()` is a READY-only Core Plan reader, but the existing **generic** `trip_source_read_import_catalogs(actor,trip)` includes PENDING Runs. Its approved dedicated principal/connector is `otr_trip_publication_catalog_reader` / `tripPublicationCatalogPgConnection.ts`; its owning cache application already exists in `tripImportAdmissionRepository.applyCatalogs()`.
+
+The follow-up uses those existing authorities. A V2 initial-interpretation snapshot permits PENDING/RUNNING while preserving strict V1 final-import parsing. The Source SQL candidate excludes its three internal Run binding columns from the existing V1 physical projection under two exact baseline/R3 function preimages. The same owning snapshot cross-row validator and cache transaction are reused by `applyUniversalCatalogs()`.
+
+Normal DEV Auth and existing Ledger bootstrap supply the authorized Actor cache, then the generic Source catalog hydrates a dedicated Backend-owned SQLite through its existing Repository. `bootstrapUniversalTask()` uses the original continuation Repository, `signalIntelligenceWake` and `createIntelligenceWakeQueue.claim`; no Source/Task/queue rows are manually fabricated. No App DB, adopted session or Keychain is copied.
+
+`universalFiniteRuntime.ts` is now an executable trusted startup loader, mounted by `serverCapture.ts`: missing private capability stays CLOSED; exact root/999/0440/single-link/no-follow/hash, DEV endpoint, <=900-second window, normal JWT Auth, actual retained Source read, exact approved Task/Attempt pins, owning generic catalog and Actor bootstrap, Backend Task SQLite, existing custody and protected CP14 gateway compose the runtime.
+
+Remaining gates are deployment/identity/Source intake inputs, not an absent loader: actual DEV reviewed SQL/profile/principal provisioning, a real authorized C3 mixed Batch and registered Sources/PENDING input Run, exact QA Task/Attempt/Operation/request hashes, finite Provider activation and independent watchdog. No DEV/Provider/Native execution occurred in this implementation. Actual isolated PG→catalog→existing SQLite cache→Task/WakeQueue→HTTP/custody cold recovery has its own receipt; local synthetic Auth/Provider witnesses are explicitly not real Auth/AI PASS.

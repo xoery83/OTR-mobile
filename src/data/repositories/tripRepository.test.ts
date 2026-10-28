@@ -29,7 +29,11 @@ import { createLedgerReadRepository } from "./ledgerReadRepository";
 import { createLedgerExpenseSyncWorker } from "../sync/ledgerExpenseSyncWorker";
 import { createSyncEngine } from "../sync/syncEngine";
 import { captureAccountScope } from "../auth/accountRequestContext";
-vi.mock("../files/tripPhotoFileStore", () => ({ retainTripPhoto: vi.fn(), resolveRetainedTripPhoto: vi.fn(), discardRetainedTripPhoto: vi.fn() }));
+vi.mock("../files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
@@ -550,7 +554,9 @@ it("Reference Trip v1 uses normal repositories and survives SQLite reopen/replay
   expect(pending.map((entry) => entry.command.target.id).sort()).toEqual(
     fixture.items.map((item) => item.itemId).sort(),
   );
-  expect(pending.every((entry) => entry.created_at === fixture.createdAt)).toBe(true);
+  expect(pending.map((entry) => entry.created_at)).toEqual(
+    pending.map((_, i) => new Date(Date.parse(fixture.createdAt) + i).toISOString()),
+  );
   expect(pending.every((entry) => entry.state === "BLOCKED")).toBe(true);
   expect(
     pending.every(
@@ -583,7 +589,9 @@ it("Reference Trip v1 uses normal repositories and survives SQLite reopen/replay
       (row) =>
         row.status === "DEPENDENCY_BLOCKED" &&
         row.attempt_count === 0 &&
-        row.created_at === fixture.createdAt,
+        (row.operation_type === "CREATE_TRIP"
+          ? row.created_at === fixture.createdAt
+          : pending.some((intent) => intent.created_at === row.created_at)),
     ),
   ).toBe(true);
   expect(await r.queue.listPending()).toEqual([]);
@@ -763,7 +771,9 @@ it("Reference full sixteen normal commands/receipts and owning cold collection p
   expect(intents).toHaveLength(16);
   expect(await seedReferenceTripV1Full(f.repo, f.core)).toEqual(saved);
   expect(await f.core.pending(context)).toEqual(intents);
-  expect(intents.every((row) => row.created_at === scenario.createdAt)).toBe(true);
+  expect(intents.map((row) => row.created_at)).toEqual(
+    intents.map((_, i) => new Date(Date.parse(scenario.createdAt) + i).toISOString()),
+  );
   const hash = async (bytes: Uint8Array) =>
     createHash("sha256").update(bytes).digest("hex");
   const producer = await createReferenceTripV1LocalProducer(accountA, hash, true);
@@ -2122,12 +2132,12 @@ it("accepts every registered cover in both direct selection and atomic metadata 
   });
   f.switchTo(accountB);
   expect(await f.repo.getTrip(saved.id)).toBeNull();
-  await expect(f.repo.selectBuiltInCover(saved.id, "city")).rejects.toThrow(
+  await expect(f.repo.selectBuiltInCover(saved.id, "gen-b1-001")).rejects.toThrow(
     "TRIP_LOCAL_RECORD_MISSING",
   );
   f.switchTo(accountA);
   f.abaNextAccept();
-  await expect(f.repo.selectBuiltInCover(saved.id, "coast")).rejects.toThrow(
+  await expect(f.repo.selectBuiltInCover(saved.id, "wc-142191115")).rejects.toThrow(
     "Account changed",
   );
   expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe(
@@ -2184,7 +2194,7 @@ it("distinguishes unknown stored IDs from AUTO and leaves them untouched on meta
     after: metadata,
   };
   await expect(
-    f.repo.updateMetadata(request, { before: null, after: "city" }),
+    f.repo.updateMetadata(request, { before: null, after: "gen-b1-001" }),
   ).rejects.toThrow("TRIP_COVER_LOCAL_CONFLICT");
   await expect(
     f.repo.updateMetadata(request, {
@@ -2193,22 +2203,22 @@ it("distinguishes unknown stored IDs from AUTO and leaves them untouched on meta
     }),
   ).rejects.toThrow("TRIP_COVER_INVALID");
   await expect(
-    f.repo.updateMetadata(request, { before: "../invalid", after: "city" }),
+    f.repo.updateMetadata(request, { before: "../invalid", after: "gen-b1-001" }),
   ).rejects.toThrow("TRIP_COVER_INVALID");
   await f.repo.updateMetadata(request, {
     before: "future-cover-v3",
-    after: "city",
+    after: "gen-b1-001",
   });
   expect(await f.repo.getTrip(saved.id)).toMatchObject({
-    selectedCoverAssetId: "city",
-    selectedCoverAssetIdRaw: "city",
+    selectedCoverAssetId: "gen-b1-001",
+    selectedCoverAssetIdRaw: "gen-b1-001",
   });
   await f.repo.updateMetadata(request, {
     before: "future-cover-v3",
-    after: "city",
+    after: "gen-b1-001",
   });
   await expect(
-    f.repo.updateMetadata(request, { before: "future-cover-v3", after: "coast" }),
+    f.repo.updateMetadata(request, { before: "future-cover-v3", after: "wc-142191115" }),
   ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
 });
 

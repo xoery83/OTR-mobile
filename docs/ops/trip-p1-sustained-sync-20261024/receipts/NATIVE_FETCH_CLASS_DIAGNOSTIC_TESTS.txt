@@ -1,0 +1,8 @@
+
+ RUN  v4.1.11 /private/tmp/otr-native-token-wake-candidate-20261024
+
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  17:47:46
+   Duration  667ms (transform 410ms, setup 0ms, import 647ms, tests 85ms, environment 0ms)

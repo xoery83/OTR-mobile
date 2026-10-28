@@ -85,13 +85,26 @@ export type DayItem = {
   occupancyBasis: "INSTANT_INTERVAL" | "NAMED_DAY" | "CALENDAR_NIGHTS" | null;
   anchor: string | null;
 };
-export type DayQuery = {
+// Read context only: floating civil dates carry no inferred named zone or Today authority.
+export type DayViewContext =
+  { zone: string; viewMode?: "NAMED_ZONE" } | { zone: null; viewMode: "FLOATING" };
+export type DayQuery = DayViewContext & {
   date: string;
-  zone: string;
   timed: DayItem[];
   nonComparable: DayItem[];
   unresolved: DayEvent[];
 };
+export function dayViewContext(input: string | DayViewContext): DayViewContext {
+  if (typeof input !== "string" && input.viewMode === "FLOATING") {
+    if (input.zone !== null) throw new Error("DAY_ZONE_INVALID");
+    return { zone: null, viewMode: "FLOATING" };
+  }
+  const zone = typeof input === "string" ? input : input.zone;
+  if (typeof zone !== "string" || !zone || zone !== zone.trim() || /^[+-]/.test(zone))
+    throw new Error("DAY_ZONE_INVALID");
+  localCalendarDate("2000-01-01T00:00:00Z", zone);
+  return { zone };
+}
 
 export function validateCalendarDate(date: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("DAY_DATE_INVALID");
@@ -243,6 +256,38 @@ export function itemsForLocalDate(
   zone: string,
 ): DayQuery {
   validateCalendarDate(date);
+  // An unknown viewing timezone keeps endpoint-local calendar facts; it grants no instant context.
+  if (!zone) {
+    const nonComparable: DayItem[] = [];
+    for (const event of projection.events) {
+      const roles = event.boundaries
+        .filter((b) => b.local_date === date)
+        .map((b) => b.role);
+      const [start, end] = interval(event);
+      const occupancy =
+        event.temporal_shape === "STAY" &&
+        !!start?.local_date &&
+        !!end?.local_date &&
+        start.local_date <= date &&
+        date < end.local_date;
+      if (roles.length || occupancy)
+        nonComparable.push({
+          event,
+          roles: roles.sort(),
+          anchor: null,
+          occupancy,
+          occupancyBasis: occupancy ? "CALENDAR_NIGHTS" : null,
+        });
+    }
+    nonComparable.sort((a, b) => authored(a.event, b.event));
+    return {
+      date,
+      zone,
+      timed: [],
+      nonComparable,
+      unresolved: unresolvedCandidates(projection),
+    };
+  }
   const [dayStart, dayEnd] = dayInterval(date, zone);
   const namedDays = new Map<string, [bigint, bigint]>();
   const timed: DayItem[] = [],

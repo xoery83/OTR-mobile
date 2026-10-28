@@ -1,0 +1,8 @@
+{
+  "activationId": "f3d540a7-5154-46e6-ae67-d6ef8be7d2d2",
+  "startsAt": "2026-10-25T01:02:12Z",
+  "innerExpiresAt": "2026-10-25T01:12:12Z",
+  "outerExpiresAt": "2026-10-25T01:17:12Z",
+  "operator": "Unified Coordinator",
+  "purpose": "same-published-result-cold-get-only"
+}

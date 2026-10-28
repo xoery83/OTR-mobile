@@ -1,0 +1,37 @@
+{
+  "status": "LOCAL_PREPARATION_OPERATOR_PASS",
+  "realAuth": "NOT_RUN_SYNTHETIC_LOCAL_CONTEXT",
+  "providerCalls": 0,
+  "hostedWrites": 0,
+  "sourceSql": {
+    "status": "ISOLATED_PG_SOURCE_PASS",
+    "schemaSha256": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
+    "fixture": "otr-universal-source-5ef49d86121e",
+    "checks": 11,
+    "originalContractsAndGatesPreserved": true
+  },
+  "operatorPositive": {
+    "mode": "RECOVER_ONLY",
+    "sourceReader": "actual owning reader against isolated-PG-produced rows; driver I/O synthetic",
+    "task": "actual existing SQLite Task Repository/WakeQueue bootstrap and context read",
+    "sourceWrites": 0,
+    "providerDispatch": 0
+  },
+  "sqliteCustodyHttp": {
+    "status": "LOCAL_CONTINUATION_CUSTODY_PASS",
+    "checks": 7,
+    "coldReplayWithoutRedispatch": true,
+    "currentSourceRevocationWithholdsResult": true
+  },
+  "closedExecutable": {
+    "container": "node:24-bookworm-slim",
+    "network": "none",
+    "readOnlyRoot": true,
+    "args": [
+      "--recover-only"
+    ],
+    "missingCapabilityResult": {
+      "status": "CLOSED"
+    }
+  }
+}

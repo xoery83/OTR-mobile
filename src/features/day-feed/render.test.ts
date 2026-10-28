@@ -1248,10 +1248,17 @@ it("P3 lower actions and management appear only when owning callbacks are suppli
 it("P3 accepted Core adapter uses only owned Stay dates/name and withholds unsupported actions", () => {
   const props = p3("2027-01-16");
   const projection = {
+    tripId: "c0000000-0000-4000-8000-000000000003",
     events: [stayContribution().projection.events[0]],
     items: [
       {
         itemId: props.row.item.event.id,
+        tripId: "c0000000-0000-4000-8000-000000000003",
+        itemRevision: stayContribution().projection.events[0].semantic_revision,
+        title: "Owned Lodge",
+        status: "planned",
+        participation: { mode: "SELF", personIds: [] },
+        documentSummaries: [],
         family: "P3",
         hidden: false,
         schedule: {
@@ -1275,7 +1282,17 @@ it("P3 accepted Core adapter uses only owned Stay dates/name and withholds unsup
   expect(
     createCoreStayRenderer({
       ...projection,
-      items: [{ ...projection.items[0], details: { nights: 0 } }],
+      items: [
+        {
+          ...projection.items[0],
+          schedule: {
+            shape: "STAY",
+            start: { localDate: "2027-01-16", comparable: false },
+            end: { localDate: "2027-01-15", comparable: false },
+          },
+          details: { nights: -1 },
+        },
+      ],
     })({ ...props, depth: "B", context: "TODAY" }),
   ).toBeNull();
 });

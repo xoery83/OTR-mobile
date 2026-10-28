@@ -1,0 +1,16 @@
+{
+  "sha": "6e01a465f5adc132871d0850abc6337461db6693",
+  "status": "PASS_FOCUSED_LOCAL_L2",
+  "findings": [],
+  "tests": 28,
+  "files": 1,
+  "verified": [
+    "Only P1 receives unlinked options from owning exact completed Person receipt roster, intersected with active local membership and current Core actor.personIds.",
+    "Local Creator/create-operation lineage and Person request/receipt pins reuse existing owning roster reader.",
+    "Selected unlinked Person remains unlinked with null linkedAccount; no Account claim/invitation/backend authority.",
+    "Inactive membership and missing completed Person receipt operation excluded. P3/P4 behavior unchanged."
+  ],
+  "DEV": false,
+  "NativeGUI": false,
+  "remaining": "Actual Native picker/Save/Queue/Backend accepted participation and readback remain Root acceptance."
+}

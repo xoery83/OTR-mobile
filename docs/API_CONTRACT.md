@@ -1,5 +1,43 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## Universal existing Task context and Native consumer candidate — 24 October 2026
+
+`GET /v2/import-batches/:batchId/interpretations?tripId=:tripId` is a read-only
+discovery of an already-bootstrapped owning Task. It returns
+`otr.backend.universal-context/1` with exact Actor/Account/Trip/Batch/Task IDs;
+it never creates a Task, Source, Run or Provider call. Normal Auth/Trip read,
+finite current capability, retained Source/request hash and current Task
+publication/cancellation fences must pass. Missing reader/capability is503,
+unavailable/mismatched identity404; response is `Cache-Control: no-store`.
+
+Native uses this returned Task ID for the existing strict POST/idempotency key
+or GET `/:taskId?tripId=...`. The existing authenticated Backend API transport
+provides bounded JSON, normal token refresh and Account-generation fencing;
+there is no Native Provider credential or new configuration source.
+`universalImportContracts.ts` validates the frozen enriched candidate wire,
+retaining temporary IDs, per-field Source evidence, readiness, optional Source
+observations, Booking observations and Ticket `authority: NONE`.
+
+`universalCaptureConsumer` requires all accepted C3 Batch inputs to be represented
+with their exact original hashes before exposing results. Reopen recovery is
+read-only; only an exact absent result allows initial explicit dispatch, and an
+uncertain send cannot be blindly repeated. This is a transient projection of the
+existing Backend Task, not a new queue, admission or local result authority.
+Current candidate requires a legal Trip-bound owning context; an unassigned
+Capture is retained but cannot invent a Trip/Task binding. UI installation,
+real DEV/Provider and formal Review/Admission are not proven by consumer tests.
+
+Settled-result recovery candidate (25 October): the same GET routes may be
+mounted with a finite settled-only Host. Its POST is always closed. Recovery
+requires the original retained raw response, exact Task/Attempt/Call/request
+hashes, an immutable successful owning COMPLETION receipt, current normal
+Auth/Trip access and current owning V2 Source qualification. It reuses existing
+Task CAS/result installation, including legitimately completed work after its
+original dispatch deadline; it never extends that deadline or calls Provider.
+The explicit trusted Host selection is mutually exclusive with paid transport,
+uses the fixed protected recovery config mount and expires within600seconds.
+This candidate does not imply deployment, Native Results or Admission PASS.
+
 ## Trip metadata update — local implementation, Hosted port CLOSED
 
 Authenticated `POST /v2/trips/:tripId/metadata` accepts strict
@@ -1007,7 +1045,7 @@ read-only SQL in the DEV runbook; no application grants are widened.
 ## Dormant authenticated Publication Catalog read — Owner-authorized Builder
 
 GET `/v2/trips/:tripId/source-import-catalogs` requires bearer Auth and
-`X-OTR-Publication-Catalog-Version: 1`. No body/query/pagination/actor parameter;
+`X-OTR-Publication-Catalog-Version: 1` or explicit `2`. V1 retains its READY/FAILED projection; V2 uses the existing Universal snapshot including PENDING/RUNNING, with identical verified Actor/Trip/owning Reader permission and bounds. No Task is required for this Source-only read. No body/query/pagination/actor parameter;
 unsupported method/UUID/request/version returns405/400/400/426 before SQL. Server
 actor comes only from verified Supabase Auth; definitive recognized invalid-session
 codes return401, transient or unknown Auth failure returns503. Existing Trip read
@@ -1201,3 +1239,8 @@ P2 publication/Admission/Core write activation remains subject to its separate e
 Owner Gate. Existing P1/P3 paths and their consumed windows are unchanged.
 
 Universal P2 publication metadata also pins `proposedPlanSha256` using the existing `otr-trip-core-source-plan-v2` digest. It binds the complete deterministic Sparse-only Source Plan before publication; the owning reader rebuilds both request and Plan. It is not an Admission grant.
+# Candidate: explicit authored Trip Person creation (24 October 2026)
+
+DEV candidate, default CLOSED and pending the precise Person SQL/ACL authorization. Normal authenticated `POST /v2/trips/:tripId/people` consumes `personCloudCreateSchema`, with an exact `Idempotency-Key` equal to `operationId`; `GET /v2/trips/:tripId/person-create-operations/:operationId` returns the immutable typed receipt or exact `PERSON_CREATE_NOT_FOUND`. Both require current Trip read authorization plus owning SQL creation/result qualification, have private/no-store responses, and bind Actor/Trip/Operation/Person without name-based identity inference. The 8 KiB request limit applies before Node buffers the body.
+
+Only a new explicit `CLOUD_SHARED_AUTHORED` intent can use this contract. Existing private name intents are not upgraded. The created Person is unlinked, has no Account, invitation or access grant, and retains its stable Person ID. This is an owning Person creation extension, not an extension of SET_PARTICIPATION, Invite or Claim. Receipt/readback validation and local SQLite74 qualification precede P1 dependency resolution. No endpoint or local receipt implies a DEV deployment or Cloud acceptance.

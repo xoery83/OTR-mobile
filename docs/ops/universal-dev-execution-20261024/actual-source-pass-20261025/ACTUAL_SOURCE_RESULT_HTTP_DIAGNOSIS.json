@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "contentEncoding": null,
+  "bodyLength": 778,
+  "jsonType": "object",
+  "jsonKeys": [
+    "command",
+    "outcome",
+    "source_id",
+    "error_code",
+    "completed_at",
+    "operation_id",
+    "operation_key",
+    "result_sha256",
+    "contract_version",
+    "operation_sha256",
+    "result_action_id",
+    "representation_id",
+    "result_verified_at",
+    "result_remote_state",
+    "result_retention_state",
+    "result_material_revision",
+    "result_source_row_revision",
+    "result_representation_row_revision"
+  ]
+}

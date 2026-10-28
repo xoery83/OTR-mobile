@@ -526,6 +526,7 @@ export function AnalysisTimeline({
             onResponderTerminationRequest={() => false}
           >
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               ref={scroll}
               horizontal
               scrollEnabled={zoom > 1 && !pinching}
@@ -693,7 +694,10 @@ export function AnalysisTimeline({
                     onPress={() => setSelected(null)}
                   />
                 </View>
-                <ScrollView style={styles.briefScroll}>
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  style={styles.briefScroll}
+                >
                   {period ? details(period) : null}
                 </ScrollView>
                 {period ? viewExpenses(period) : null}

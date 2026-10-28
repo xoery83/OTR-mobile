@@ -1,0 +1,849 @@
+{
+  "version": "p3-synthetic-v1",
+  "authority": "SYNTHETIC_WEBLAB_ONLY_NOT_SOURCE_PROOF_OR_ADMISSION",
+  "trip": {
+    "title": "Nelson summer journey"
+  },
+  "items": [
+    {
+      "id": "syn-stay-full",
+      "label": "Complete · 3 nights",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-19",
+      "checkinTime": "16:00",
+      "checkoutTime": "10:00",
+      "zone": "Pacific/Auckland",
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [
+        {
+          "id": "syn-booking-a",
+          "title": "Twin room",
+          "ref": "SYN-STAY-01",
+          "visible": true,
+          "confirmedEvidence": true,
+          "guests": [
+            "Alex Chen",
+            "Sam Lee"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        }
+      ],
+      "photos": [
+        {
+          "id": "syn-photo-1",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-2",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-3",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-4",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-5",
+          "visible": true
+        }
+      ],
+      "expenses": [
+        {
+          "id": "syn-expense-1",
+          "visible": true
+        },
+        {
+          "id": "syn-expense-2",
+          "visible": true
+        }
+      ],
+      "ledger": {
+        "visible": true,
+        "currency": "NZD",
+        "total": 60000,
+        "totalPerNight": 20000,
+        "myShare": 30000,
+        "mySharePerNight": 10000,
+        "denominator": 3,
+        "originals": [
+          {
+            "currency": "NZD",
+            "amount": 60000
+          }
+        ]
+      },
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-minimal",
+      "label": "Minimum · dates only",
+      "title": "Hill cottage",
+      "start": "2027-01-16",
+      "end": "2027-01-17",
+      "checkinTime": null,
+      "checkoutTime": null,
+      "zone": null,
+      "place": null,
+      "permittedCheckin": null,
+      "permittedCheckout": null,
+      "contact": null,
+      "participants": null,
+      "note": null,
+      "bookings": [],
+      "documents": [],
+      "photos": [],
+      "expenses": [],
+      "ledger": null,
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-name",
+      "label": "Name / area only · map search",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-19",
+      "checkinTime": null,
+      "checkoutTime": null,
+      "zone": null,
+      "place": {
+        "name": "Riverside lodge",
+        "area": "Nelson",
+        "qualification": "TEXT_ONLY"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        }
+      ],
+      "photos": [],
+      "expenses": [],
+      "ledger": null,
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-multi",
+      "label": "Multiple rooms / bookings",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-19",
+      "checkinTime": "16:00",
+      "checkoutTime": "10:00",
+      "zone": "Pacific/Auckland",
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [
+        {
+          "id": "syn-booking-a",
+          "title": "Twin room",
+          "ref": "SYN-ROOM-A",
+          "visible": true,
+          "confirmedEvidence": true,
+          "guests": [
+            "Alex Chen"
+          ]
+        },
+        {
+          "id": "syn-booking-b",
+          "title": "Family room",
+          "ref": "SYN-ROOM-B",
+          "visible": true,
+          "confirmedEvidence": false,
+          "guests": [
+            "Sam Lee",
+            "Taylor Kim"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        },
+        {
+          "id": "syn-confirmation-b",
+          "title": "Family room confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nSeparate Booking SYN-ROOM-B · same Stay."
+        }
+      ],
+      "photos": [
+        {
+          "id": "syn-photo-1",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-2",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-3",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-4",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-5",
+          "visible": true
+        }
+      ],
+      "expenses": [
+        {
+          "id": "syn-expense-1",
+          "visible": true
+        },
+        {
+          "id": "syn-expense-2",
+          "visible": true
+        }
+      ],
+      "ledger": {
+        "visible": true,
+        "currency": "NZD",
+        "total": 60000,
+        "totalPerNight": 20000,
+        "myShare": 30000,
+        "mySharePerNight": 10000,
+        "denominator": 3,
+        "originals": [
+          {
+            "currency": "NZD",
+            "amount": 60000
+          }
+        ]
+      },
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-change",
+      "label": "Same day · check-out A / check-in B",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-17",
+      "checkinTime": "16:00",
+      "checkoutTime": "10:00",
+      "zone": "Pacific/Auckland",
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [
+        {
+          "id": "syn-booking-a",
+          "title": "Twin room",
+          "ref": "SYN-STAY-01",
+          "visible": true,
+          "confirmedEvidence": true,
+          "guests": [
+            "Alex Chen",
+            "Sam Lee"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        }
+      ],
+      "photos": [
+        {
+          "id": "syn-photo-1",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-2",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-3",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-4",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-5",
+          "visible": true
+        }
+      ],
+      "expenses": [
+        {
+          "id": "syn-expense-1",
+          "visible": true
+        },
+        {
+          "id": "syn-expense-2",
+          "visible": true
+        }
+      ],
+      "ledger": {
+        "visible": true,
+        "currency": "NZD",
+        "total": 60000,
+        "totalPerNight": 20000,
+        "myShare": 30000,
+        "mySharePerNight": 10000,
+        "denominator": 3,
+        "originals": [
+          {
+            "currency": "NZD",
+            "amount": 60000
+          }
+        ]
+      },
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-dayuse",
+      "label": "Day use · zero nights",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-16",
+      "checkinTime": "16:00",
+      "checkoutTime": "19:00",
+      "zone": "Pacific/Auckland",
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [
+        {
+          "id": "syn-booking-a",
+          "title": "Twin room",
+          "ref": "SYN-STAY-01",
+          "visible": true,
+          "confirmedEvidence": true,
+          "guests": [
+            "Alex Chen",
+            "Sam Lee"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        }
+      ],
+      "photos": [],
+      "expenses": [
+        {
+          "id": "syn-expense-1",
+          "visible": true
+        },
+        {
+          "id": "syn-expense-2",
+          "visible": true
+        }
+      ],
+      "ledger": null,
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-floating",
+      "label": "Floating clock · original 16:00",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-19",
+      "checkinTime": "16:00",
+      "checkoutTime": "10:00",
+      "zone": null,
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [
+        {
+          "id": "syn-booking-a",
+          "title": "Twin room",
+          "ref": "SYN-STAY-01",
+          "visible": true,
+          "confirmedEvidence": true,
+          "guests": [
+            "Alex Chen",
+            "Sam Lee"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        }
+      ],
+      "photos": [
+        {
+          "id": "syn-photo-1",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-2",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-3",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-4",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-5",
+          "visible": true
+        }
+      ],
+      "expenses": [
+        {
+          "id": "syn-expense-1",
+          "visible": true
+        },
+        {
+          "id": "syn-expense-2",
+          "visible": true
+        }
+      ],
+      "ledger": {
+        "visible": true,
+        "currency": "NZD",
+        "total": 60000,
+        "totalPerNight": 20000,
+        "myShare": 30000,
+        "mySharePerNight": 10000,
+        "denominator": 3,
+        "originals": [
+          {
+            "currency": "NZD",
+            "amount": 60000
+          }
+        ]
+      },
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    },
+    {
+      "id": "syn-stay-readonly",
+      "label": "Visible Stay · restricted associations",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-19",
+      "checkinTime": "16:00",
+      "checkoutTime": "10:00",
+      "zone": "Pacific/Auckland",
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": null,
+      "participants": null,
+      "note": null,
+      "bookings": [
+        {
+          "id": "hidden-booking",
+          "title": "PRIVATE SHOULD NEVER RENDER",
+          "ref": "SECRET",
+          "visible": false,
+          "guests": [
+            "Private guest"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "hidden-document",
+          "title": "PRIVATE DOCUMENT",
+          "visible": false
+        }
+      ],
+      "photos": [
+        {
+          "id": "hidden-photo",
+          "visible": false
+        }
+      ],
+      "expenses": [
+        {
+          "id": "hidden-expense",
+          "visible": false
+        }
+      ],
+      "ledger": {
+        "visible": false
+      },
+      "capabilities": {}
+    },
+    {
+      "id": "syn-stay-multicurrency",
+      "label": "Past Ledger · multiple currencies",
+      "title": "Harbour House",
+      "start": "2027-01-16",
+      "end": "2027-01-19",
+      "checkinTime": "16:00",
+      "checkoutTime": "10:00",
+      "zone": "Pacific/Auckland",
+      "place": {
+        "name": "Harbour House, Nelson",
+        "area": "Nelson",
+        "address": "18 Example Quay, Port Nelson, Nelson 7010, New Zealand (synthetic)",
+        "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+      },
+      "permittedCheckin": "15:00–21:00",
+      "permittedCheckout": "11:00",
+      "contact": "Synthetic reception · +00 000 000",
+      "participants": {
+        "mode": "WHOLE_GROUP",
+        "visible": true
+      },
+      "note": "Meet in the lobby after the afternoon walk.",
+      "bookings": [
+        {
+          "id": "syn-booking-a",
+          "title": "Twin room",
+          "ref": "SYN-STAY-01",
+          "visible": true,
+          "confirmedEvidence": true,
+          "guests": [
+            "Alex Chen",
+            "Sam Lee"
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": "syn-confirmation",
+          "title": "Stay confirmation.txt",
+          "visible": true,
+          "kind": "confirmation",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nHarbour House · Jan 16–19, 2027\nBooking SYN-STAY-01 · Twin room\nThis is not source proof or a real reservation."
+        },
+        {
+          "id": "syn-instructions",
+          "title": "Check-in instructions.txt",
+          "visible": true,
+          "kind": "checkin",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect the key at reception. Contact reception using the supplied booking contact.\nThis demonstration is not real access information."
+        },
+        {
+          "id": "syn-checkout",
+          "title": "Check-out instructions.txt",
+          "visible": true,
+          "kind": "checkout",
+          "canOpenOriginal": true,
+          "text": "SYNTHETIC WEBLAB DOCUMENT\nReturn the key to reception before the supplied check-out deadline."
+        }
+      ],
+      "photos": [
+        {
+          "id": "syn-photo-1",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-2",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-3",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-4",
+          "visible": true
+        },
+        {
+          "id": "syn-photo-5",
+          "visible": true
+        }
+      ],
+      "expenses": [
+        {
+          "id": "syn-expense-1",
+          "visible": true
+        },
+        {
+          "id": "syn-expense-2",
+          "visible": true
+        }
+      ],
+      "ledger": {
+        "visible": true,
+        "currency": "NZD",
+        "total": 90000,
+        "totalPerNight": 30000,
+        "myShare": 45000,
+        "mySharePerNight": 15000,
+        "denominator": 3,
+        "originals": [
+          {
+            "currency": "USD",
+            "amount": 30000
+          },
+          {
+            "currency": "NZD",
+            "amount": 40000
+          }
+        ]
+      },
+      "capabilities": {
+        "edit": true,
+        "participants": true,
+        "addPhoto": true,
+        "addAttachment": true,
+        "addExpense": true,
+        "linkExpense": true
+      }
+    }
+  ]
+}

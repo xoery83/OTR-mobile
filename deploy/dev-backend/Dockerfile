@@ -5,7 +5,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 COPY backend ./backend
-COPY src/data/api ./src/data/api
+COPY src/data ./src/data
 COPY src/domain ./src/domain
 COPY scripts/source-pdf-v2-linux/profile.mjs ./scripts/source-pdf-v2-linux/profile.mjs
 COPY src/data/auth/accountGeneration.ts src/data/auth/accountRequestContext.ts ./src/data/auth/

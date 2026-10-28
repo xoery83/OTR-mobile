@@ -53,6 +53,32 @@ must not preempt NZ5069 1+2 or Trip Home R2 P0.
 
 Owning baseline: [approved V1.1](../trip/contracts/OTR_TIME_01_CONTEXTUAL_TIMEZONE_FLOATING_TIME_PRODUCT_DELTA_V1_1_2026-10-16.md). Coordinator owns registration/priority handoff; independent TIME-01 audit owns read-only P1–P6/TTR/Editor/Import/Today/NOW/notifications/actual consumers/offline propagation matrix. Existing owning teams retain their files. Deliver impact/conflict/ownership/staged retrofit/test–Native gap matrices; NOT IMPLEMENTED/DEFERRED must remain explicit. No automatic TIME-01A PASS from whole-module tests; no precise instant/reminder inferred from floating data. Main Product Chat reviews implementation priorities after audit.
 
+## Universal runtime qualification — 25 October 2026
+
+Actual C3 retains two FILE originals and submitted TEXT under one Batch; three existing local Source command identities/profiles/hashes are archived. No remote registration/Source proof/Run/Task/Provider result follows from local PREPARED. Native receiver uses existing contract1/normal Auth; no direct model credential. Existing CP14 admin/config/price/kill and Model Task admission remain owning; their absence/closed state is explicit in the [current activation request](../ops/universal-dev-execution-20261024/OWNER_ACTIVATION_GATE.md). Optional finite admin closure reuses the existing watcher, not a new permission authority. Formal Review/Admission remains separately unavailable.
+
+## Sustained Trip/P1 + authored Person — reviewed candidate, 24 October 2026
+
+Root1d0c979 +owning9c093e4: existing V2 Create/MetadataV3/Core MANUAL P1 contracts retained, new explicit current-action Person request/result and immutable receipts. POST `/v2/trips/:trip/people`, GET `/v2/trips/:trip/person-create-operations/:op`; normal Auth/Trip scope, no name/AKA Account linking. SQLite74 registered after Source73. Existing private runtime version3 mounts four fixed owning PG principals; new private revocable Account policy/capability helper requires exact DEV approval. No fixed Trip/op/expiry in normal service; historical finite configs and private name intents are separate. [Gate and contract details](../ops/trip-p1-sustained-sync-20261024/DEV_EXECUTION_GATE.md); Cloud NOT_RUN, no Claim/Invite/Profile feature scope.
+
+# People / Identity V1 owning gaps — 24 October 2026
+
+Latest approved presentation baseline and source/section mapping: [People intake and interface matrix](../people/design-v1-20261024/INTAKE_AND_GAPS.md). Reuse Trip Person identity and explicit local intent/owner bindings, normal Auth adoption, existing Core mutations and receipts. Person-create Cloud authority, atomic Claim/switch/reset, original Owner/delegated role grant/revoke, private Profile/AKA, immutable date cutoff and Entitlement remain separate owning qualifications. `coreCanManage()` non-PRIVATE/shared-manager predicate is not the new Everyone/Creator Item authorization rule. Trip/P1 may implement only its required existing Person/Creator dependencies; Universal keeps name/AKA observations without identity/access promotion. No duplicate ACL/Person/Invite authority or fresh execution Gate is introduced by this intake.
+
+## EXPERIENCE-REVIEW-02 interfaces / 2026-10-18
+
+Existing local repository commit is Edit success boundary, Hosted pending is nonblocking. Retain Account/Trip/version fencing for projection caches and semantic Day anchor identities. No new data model/API/schema authorized. File owners and field-level preflight: `../ops/experience-review02-20261018/PREFLIGHT.md`.
+
+# OTR Beta — Cross-Module Interface Register
+
+## Trip Home R2 current ownership — 2026-10-16
+
+- Baseline8ff1364; V1.2 +R2 contracts registered with attachment hashes. A owns Root/native Trip stack/Shell/insets; B owns local-manual Day/Today read projection; Coordinator alone owns shared TripScreen/LocalTripWorkspace/catalogs and integration. Existing Experience owns Host/Widget visual after bounded handoff.
+- Real Sky City is Auckland weekend, durable MANUAL pending command; it must not be reported as a Nelson accepted Item. Separate local-first read must retain pending identity and exclude imports/drafts. Missing trustworthy zone is not a free day.
+- Complete Trip metadata update/versioned reconciliation/permission port is absent; immutable CREATE payload and local creator binding cannot be rewritten to simulate an Editor. Existing cover selection alone is insufficient. No migration/Hosted expansion authorized.
+- Cover read-only discovery: six bundled images, four selectable, stable ID fallback; no destination classifier or new generation. Details and exact ownership: docs/ops/TRIP_HOME_R2_HANDOFF_20261016.md.
+
+
 ## Trip Home V1.1 active ownership — 2026-10-16
 
 - Baseline580a148; Coordinator owns Widget business readers, qualification, ordering and navigation. Preparation and Today builders have separate new-file ownership; shared LocalTripWorkspace/TripScreen/catalogs stay with Coordinator until functional handoff.
@@ -145,3 +171,8 @@ WP05 additivepurebridge edcbd exposes `createCoreP1P3DayFeedReader`/`projectCore
 WP04-U accepted UX58caf retains G2 lease/summaryonly/Immersive ownership; functional93PASS/ordinary6 newNativeimages are scopebounded, fullheld/armed/zeroPast notverified and UIadoptionnoteligible. No actualCore/privateAccount runtime claimed from syntheticLab.
 
 P3 incremental renderer intake (BD42, Delta10-13): Core accepted Stay UUID/revision and CHECKIN/BASE/TONIGHT/CHECKOUT rows remain sole projection inputs; reuse edcbd bridge. P3 content/intents use existing one Composer/Focus/NOW/Stay Immersive. Documents supplies authorized original handles/common viewer/chooser; Photos supplies permitted Stay links/count/top-three; Ledger supplies authorized currency/FX/share summary, unknown values stay absent. Source/Trip Member identity cannot synthesize registered guests. Finite Experience renderer contract must trace14Delta cases and actual port absence, no authority/schema/control framework duplication. Ordinary implementation authorized; protected runtime unchanged.
+
+
+## 24 October — Day Feed / P1 final UX approval
+
+Day Feed/P1 Native Fidelity consumes frozen design + existing behavior contracts; Golden Slice acceptance precedes remaining interactions. No new business/Source/ACL authority. [Intake and remaining file qualification](../ops/day-feed-p1-native-fidelity-v1-20261024/HANDOFF.md).

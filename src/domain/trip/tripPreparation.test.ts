@@ -86,3 +86,36 @@ it("keeps microsecond order and offers no arbitrary recent list for untimed data
   expect(selectTripPreparation(input).recent).toEqual([]);
   expect(selectTripPreparation([])).toEqual({ itemCount: 0, counts: [], recent: [] });
 });
+
+it("counts only explicit owning pending Item IDs without changing their local state", () => {
+  const input = entries();
+  input.forEach(({ item }) => {
+    item.localState = "PENDING";
+  });
+  expect(selectTripPreparation(input).itemCount).toBe(0);
+  const ids = new Set(input.slice(0, 2).map(({ item }) => item.itemId));
+  const result = selectTripPreparation(input, ids);
+  expect(result.itemCount).toBe(2);
+  expect(result.recent.every(({ item }) => item.localState === "PENDING")).toBe(true);
+  expect(input.every(({ item }) => item.localState === "PENDING")).toBe(true);
+  input[0].item.hidden = true;
+  input[1].item.status = "cancelled";
+  expect(selectTripPreparation(input, ids).itemCount).toBe(0);
+});
+
+it("does not resurrect an accepted duplicate after a verified pending hide or cancellation", () => {
+  const accepted = entries()[0];
+  const pending = {
+    ...accepted,
+    item: { ...accepted.item, localState: "PENDING" as const, hidden: true },
+  };
+  const ids = new Set([pending.item.itemId]);
+  expect(selectTripPreparation([accepted, pending], ids).itemCount).toBe(0);
+  expect(selectTripPreparation([accepted, pending]).itemCount).toBe(1);
+  pending.item.hidden = false;
+  pending.item.status = "cancelled";
+  expect(selectTripPreparation([accepted, pending], ids).itemCount).toBe(0);
+  expect(
+    selectTripPreparation([accepted, pending], new Set(["unknown-item"])).itemCount,
+  ).toBe(1);
+});

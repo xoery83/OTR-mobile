@@ -1,13 +1,16 @@
+import { DayReadSkeleton } from "./DayReadSkeleton";
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText as Text } from "@/ui/controls";
-import { formatUiDate, formatUiNumber } from "@/ui/locale";
+import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { snapshotItemDate } from "@/domain/trip/journeySnapshot";
 import type { PreparationFamily, TripPreparation } from "@/domain/trip/tripPreparation";
+import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { TripSetupRows, type TripSetupMetadata } from "./TripSetupRows";
 
 export type TripPreparationCopy = {
   title: string;
@@ -47,6 +50,11 @@ export function TripPreparationWidget({
   onBuildItinerary,
   onOpenDay,
   onOpenItem,
+  setup = null,
+  metadata,
+  onEdit,
+  onCurrency,
+  onCover,
 }: {
   value: TripPreparation | null;
   state: "LOADING" | "READY" | "UNAVAILABLE";
@@ -55,6 +63,11 @@ export function TripPreparationWidget({
   onBuildItinerary?: () => void;
   onOpenDay?: () => void;
   onOpenItem?: (itemId: string) => void;
+  setup?: TripPreparationSetup | null;
+  metadata?: TripSetupMetadata;
+  onEdit?: () => void;
+  onCurrency?: () => void;
+  onCover?: () => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
@@ -66,25 +79,51 @@ export function TripPreparationWidget({
         {copy.title}
       </Text>
       {!ready ? (
-        <Text style={styles.meta}>
-          {state === "LOADING" ? copy.loading : copy.unavailable}
-        </Text>
+        state === "LOADING" ? (
+          <DayReadSkeleton compact />
+        ) : (
+          <Text accessibilityRole="alert" style={styles.meta}>
+            {copy.unavailable}
+          </Text>
+        )
       ) : value.itemCount === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.meta}>{copy.empty}</Text>
           {onImport ? (
-            <View style={styles.startAction}>
-              <UiButton size="large" label={copy.importPlans} onPress={onImport} />
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.importPlans}
+              accessibilityHint={t("tripHome.preparation.importHint")}
+              onPress={onImport}
+              style={styles.startAction}
+            >
+              <View style={styles.startIcon}>
+                <AppIcon name="square.and.arrow.down" size={26} color={colors.accent} />
+              </View>
+              <View style={styles.itemText}>
+                <Text style={styles.row}>{copy.importPlans}</Text>
+                <Text style={styles.meta}>{t("tripHome.preparation.importHint")}</Text>
+              </View>
+              <AppIcon name="chevron.right" size={16} color={colors.textSecondary} />
+            </Pressable>
           ) : null}
           {onBuildItinerary ? (
-            <View style={styles.startAction}>
-              <UiButton
-                size="large"
-                label={copy.buildItinerary}
-                onPress={onBuildItinerary}
-              />
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.buildItinerary}
+              accessibilityHint={t("tripHome.preparation.buildHint")}
+              onPress={onBuildItinerary}
+              style={styles.startAction}
+            >
+              <View style={styles.startIcon}>
+                <AppIcon name="map" size={26} color={colors.accent} />
+              </View>
+              <View style={styles.itemText}>
+                <Text style={styles.row}>{copy.buildItinerary}</Text>
+                <Text style={styles.meta}>{t("tripHome.preparation.buildHint")}</Text>
+              </View>
+              <AppIcon name="chevron.right" size={16} color={colors.textSecondary} />
+            </Pressable>
           ) : null}
         </View>
       ) : (
@@ -150,20 +189,41 @@ export function TripPreparationWidget({
           </View>
         </>
       )}
+      {ready || setup ? (
+        <TripSetupRows
+          setup={setup}
+          metadata={metadata}
+          onEdit={onEdit}
+          onCurrency={onCurrency}
+          onCover={onCover}
+        />
+      ) : null}
     </View>
   );
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     widget: {
-      flex: 1,
       gap: visual.space.card,
     },
     heading: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
     metric: { ...visual.type.metric, color: c.textPrimary },
-    empty: { flexGrow: 1, justifyContent: "center", gap: visual.space.section },
-    startAction: { minHeight: 88, justifyContent: "center" },
+    empty: { gap: visual.space.card },
+    startAction: {
+      minHeight: 88,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.card,
+      padding: visual.space.card,
+      borderRadius: visual.radius.card,
+      backgroundColor: c.accentSurface,
+    },
+    startIcon: {
+      padding: visual.space.card,
+      borderRadius: visual.radius.control,
+      backgroundColor: c.surface,
+    },
     counts: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.section },
     count: { alignItems: "center", gap: 4, flexBasis: "28%", flexGrow: 1 },
     recent: { gap: visual.space.heading },
@@ -180,6 +240,5 @@ const createStyles = (c: UiColors) =>
       flexDirection: "row",
       flexWrap: "wrap",
       gap: visual.space.card,
-      marginTop: "auto",
     },
   });

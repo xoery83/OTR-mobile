@@ -14,6 +14,10 @@ const factory = vi.hoisted(() => ({
   legacyProjection: vi.fn(),
   listJourneys: vi.fn(),
 }));
+// This suite isolates accepted readers; local committed reads have real SQLite coverage separately.
+vi.mock("./tripLocalManualReadRepository", () => ({
+  createTripLocalManualReader: () => async () => null,
+}));
 vi.mock("./tripCoreV2Repository", () => ({ createTripCoreV2Repository: () => factory }));
 vi.mock("./tripDayReadRepository", () => ({
   createTripDayReadRepository: () => ({ getProjection: factory.legacyProjection }),
@@ -516,4 +520,20 @@ it("production P4–P6 consumer reads only installed coherent certificates acros
     sql.close();
     rmSync(folder, { recursive: true, force: true });
   }
+});
+
+it("local pin failure stays unavailable without revoking coherent accepted facts", async () => {
+  const read = createTripDayFeedReader({
+    account: async () => accountId,
+    projection: async () => observed,
+    localManual: async () => {
+      throw new Error("LOCAL_MANUAL_COMMIT_PIN");
+    },
+    candidates: async () => [],
+    services: async () => ({}),
+  });
+  const result = await read.trip(tripId);
+  expect(result.observed).toBe(observed);
+  expect(result.localManual).toBeNull();
+  expect(result.localManualStatus).toBe("UNAVAILABLE");
 });

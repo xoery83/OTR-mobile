@@ -1,0 +1,8 @@
+{
+  "status": "FIXED_IMAGE_LOADED",
+  "exitCode": 0,
+  "tarSHA256": "ab0eb1508b77c6fe4ae5959fdd26ccaf39460a318d4d57143814e0312f080531",
+  "candidateImage": "sha256:40e998c31815a77452dd52dbbd6d8789ea8a815a6d1afba068029e97e919bbaa",
+  "rebuiltOnDEV": false,
+  "serviceChanged": false
+}

@@ -1,0 +1,247 @@
+[
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.ts",
+    "hunk": 1,
+    "mainSha": "00de27ff383db4fea552889371ccbe5266c9b5af863c419960c8650957b767be",
+    "nativeSha": "587b7fe65ecd559fb3261fc23878964fac725fdab24bb44f550c6134f65c5d8d",
+    "reason": "Combine atomic Native manual/local journal and accepted snapshots with current main Source pending/resume; Queue wake only after commit"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.ts",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "af9aff49e3e1a8e99549b27feba7a1dde498c8f54eba177cc9b86a004ac1184d",
+    "reason": "Combine atomic Native manual/local journal and accepted snapshots with current main Source pending/resume; Queue wake only after commit"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.ts",
+    "hunk": 3,
+    "mainSha": "1de367ead27c47c2bcf0cb128c8cc39c1361e8ad9f17f874270f9fc84f30f754",
+    "nativeSha": "b6b08ade61aeda69da8775df09689484161af73b73ae1667015287a3d35cd9ef",
+    "reason": "Combine atomic Native manual/local journal and accepted snapshots with current main Source pending/resume; Queue wake only after commit"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.ts",
+    "hunk": 4,
+    "mainSha": "12ae46026a4b43ca3152dd9172ac9e06519920d26c9cf952d9beeb1b7a4aa4c2",
+    "nativeSha": "6e829413ace72ee4966d0e24030b5824080fbab5b1044a0d31459583e7383efc",
+    "reason": "Combine atomic Native manual/local journal and accepted snapshots with current main Source pending/resume; Queue wake only after commit"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.ts",
+    "hunk": 5,
+    "mainSha": "f32d22456fe4e2ef7c28ab6ee6531c9157fa2a77abb7d5c3e0a6db47c461d7aa",
+    "nativeSha": "8b14381c79eb6ed8064be5fc8fcb98aba6e75243dcd6ca3441bb13e494035e82",
+    "reason": "Combine atomic Native manual/local journal and accepted snapshots with current main Source pending/resume; Queue wake only after commit"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.test.ts",
+    "hunk": 1,
+    "mainSha": "05ab552204666373f84c9acc3605579e587208cd2748c414196460e20d5170f2",
+    "nativeSha": "dda2f64f05b44b69593c7c74a469f3ad1fed34ec21d23b37c8b1e0685960ec56",
+    "reason": "Union both independent Manual rollback/queue and formal reviewed family receipt recovery regressions"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.test.ts",
+    "hunk": 2,
+    "mainSha": "f75b1e97d150bd2e49c1be1469391df90e34783d969781a35e34a90ccb647cfc",
+    "nativeSha": "fd4bec6c1314bbf18291b938487dccc9029b4fd8d2514033fc8f5214015cb310",
+    "reason": "Union both independent Manual rollback/queue and formal reviewed family receipt recovery regressions"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.test.ts",
+    "hunk": 3,
+    "mainSha": "e45444cc31ba996af8efb47851e806b0a17263ab5deeeccd2d27dfe40ce69ef1",
+    "nativeSha": "52f5307c286377360124a40bb0844b2af4b6e796fe48625ac5b1f57e8b036b69",
+    "reason": "Union both independent Manual rollback/queue and formal reviewed family receipt recovery regressions"
+  },
+  {
+    "path": "src/data/repositories/tripCoreV2Repository.test.ts",
+    "hunk": 4,
+    "mainSha": "4bb22530673224f176f8207d31027ef8619c736660c5801c345d6a43bf16e07c",
+    "nativeSha": "3a43fcc0a422e6dd213192e4fc8e9f1270213eb887efe473f2233a81ebf5b6ba",
+    "reason": "Union both independent Manual rollback/queue and formal reviewed family receipt recovery regressions"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.ts",
+    "hunk": 1,
+    "mainSha": "b96bfe0b811069706682151e9f387001cf50c878c162626238c5e960eec74394",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Keep canonical people initialization and Native complete cover IDs"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.ts",
+    "hunk": 2,
+    "mainSha": "cd17ca11018b98d174d08315fee60cae47868030d1582c56d05c207202f9b607",
+    "nativeSha": "95d9932a5570d18b7a631d2210c1e72cb4277da669f44c0931c386971d071a7f",
+    "reason": "Keep canonical people initialization and Native complete cover IDs"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.test.ts",
+    "hunk": 1,
+    "mainSha": "a0020e528f45a80bfe8aedc742619e65d666f1fb8463be97358848efe6cce979",
+    "nativeSha": "49e80038ade2b011fb4d188760828bad5e4864df11fe5d541e70f51ae85ea707",
+    "reason": "Keep complete Native cover catalog regression values"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.test.ts",
+    "hunk": 2,
+    "mainSha": "22fccaef44b871a72cf270e8e6befc7d4b3dab76214801d14fd628cfbb224f71",
+    "nativeSha": "77f5ea3275b5cfb1bbb58d3b05003abd7856e8fda0a182bab3a3268c32ab7d52",
+    "reason": "Keep complete Native cover catalog regression values"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.test.ts",
+    "hunk": 3,
+    "mainSha": "3110b8e2527e77c0fbe3e3eb151bb25308d584c4fe4c75c3e76ea7d7b0bcd09a",
+    "nativeSha": "e39f1e84a660893daf6a006d839abd06fbc2f3917f5e86113da1df5a0e4c9bee",
+    "reason": "Keep complete Native cover catalog regression values"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.test.ts",
+    "hunk": 4,
+    "mainSha": "b41aa7268f5f34658471bfcba7ea929db1c5377be367a0bb90f15e3d9e645337",
+    "nativeSha": "5e117ac79f53bdf94dbdabb0c37e1a885db0620e2a39afd0b2f0be9955e65122",
+    "reason": "Keep complete Native cover catalog regression values"
+  },
+  {
+    "path": "src/data/repositories/tripRepository.test.ts",
+    "hunk": 5,
+    "mainSha": "323937da73a17124493d909fcd5831c2108d1c27d8373e5ad082a691d23b4d9a",
+    "nativeSha": "497b9f25851bb1516173d1fa9b7a8bd6356b77084df922ae499372055a186354",
+    "reason": "Keep complete Native cover catalog regression values"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 1,
+    "mainSha": "ea2867cdf8af72f9ea42943bfb0c2abc9660ad9d72c47005056bda2d377e9cb6",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 2,
+    "mainSha": "1e246421644688f2daea4f5b3682eac503ee7fce84ac087d96d57f92c19a7c92",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 3,
+    "mainSha": "eb84ca7d5d8560b44d9ac6bd25da1dfb8444be4017e3b2876761e4c34593ec3c",
+    "nativeSha": "6405c6372588182e40b8808dcd1a4f3a7199ae466e2cc0eadf9a9c1fb52768f2",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 4,
+    "mainSha": "7b50eb3cd0572e82d11a2ffaf90b3d7ed6d5e7e724ff469cbe9f51260c3e06b6",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 5,
+    "mainSha": "c7be60611023ee72428f39ee747165c2c0b1fc149ff41b56399332479d2a09f4",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 6,
+    "mainSha": "4a823535ac7a654b714df0bc513bcf1b96e401ced89ef13a7f9fe795a8bcc77b",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 7,
+    "mainSha": "6190272f87ef240fe86557a529fabfc64b198f17f2b27e02daae06bc4015f813",
+    "nativeSha": "35c5bee201b337fac6a2210851ec9493d10061a0195f45e39c77d2c35e6d4727",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 8,
+    "mainSha": "141899bb03b2ac0e8ad2de06525d91ad1f39b4865fb79212ab122ca5328e2c6a",
+    "nativeSha": "0af311f6e243dcfa1b5088bce3c137244c69860cffffb3991a4e1ca577139e70",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 9,
+    "mainSha": "d9c881d50d585b61b4a502c89b820367140276b92eced61f8d9839ad3a9a5c65",
+    "nativeSha": "ef097d2733e28f768d3dc44dc86332f8164dc03288116b98a63c7e11550a2506",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 10,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "892557039823490aca3950e891c11f03571bcfbb43f01e792bc8a4e7aeff323b",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.tsx",
+    "hunk": 11,
+    "mainSha": "7458208d2599b013736d828400e9c993c85a9cb4c9f70f1b63189cfb5657c147",
+    "nativeSha": "d9f7965a38fc4d48d36a509fd802a63561631db005694f9df904d7e89c3df3d9",
+    "reason": "Retain main guarded DEV sample API; use approved Native header, glass input, links/bullets and compact Trip list"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.test.ts",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "51fbc76020d36d9c43abbf46aa7fd4b8f67a0e295c73679eb4e6f0407055b908",
+    "reason": "Union DEV-only guarded sample and Native presentation/Trip chooser regressions"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.test.ts",
+    "hunk": 2,
+    "mainSha": "b01438d3bff46509e17e71dd6c805fc59f4461571f6d8a5d2d88bb7e52c5b311",
+    "nativeSha": "fa9d1a08328e2fac7964984512634fd1cc1c972e275835bcdff21f633c43479d",
+    "reason": "Union DEV-only guarded sample and Native presentation/Trip chooser regressions"
+  },
+  {
+    "path": "src/features/capture/CaptureComposer.test.ts",
+    "hunk": 3,
+    "mainSha": "6148c02c58bd036264bdf02464f4d922a34d9b011f564a7b532ce25c4b176d20",
+    "nativeSha": "8e5927ba0c42e74d9b59e5e345baff18e399b32916b0c572e75908003f7a297f",
+    "reason": "Union DEV-only guarded sample and Native presentation/Trip chooser regressions"
+  },
+  {
+    "path": "docs/API_CONTRACT.md",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "73415063c59eb57612f47262ac5de093ade6c1dcf2861869013f2a9bef3a6ce7",
+    "reason": "Retain both owning and Native delivery documentation; no permission activation implied"
+  },
+  {
+    "path": "docs/API_CONTRACT.md",
+    "hunk": 2,
+    "mainSha": "7bda085a9d66f65b9d267ba393930076e14c00aacd530b8fd9a84df2f57b1549",
+    "nativeSha": "af75d2f2a59e6710b3217ed2ddb2df686298c746ae2c568396c5f71ce85dd5b4",
+    "reason": "Retain both owning and Native delivery documentation; no permission activation implied"
+  },
+  {
+    "path": "docs/beta/BETA_DECISIONS.md",
+    "hunk": 1,
+    "mainSha": "68ad2a9d0a48cf247554ad376708b18a21d5d5032160aba19274b0c31b6aa541",
+    "nativeSha": "f437e71a021770c2658d4d7d6b4f8096a5c2989641a37eadd842cb54c8e42c9a",
+    "reason": "Retain both owning and Native delivery documentation; no permission activation implied"
+  },
+  {
+    "path": "docs/beta/BETA_INTERFACE_REGISTER.md",
+    "hunk": 1,
+    "mainSha": "847d9df96be2fd81b9de622a06c0353b05a29d785b22bdd6613e0c368784f8e7",
+    "nativeSha": "070c74a0f4d78c464ce04aa4df0dfeaaa38a6010383b608603649d1330484885",
+    "reason": "Retain both owning and Native delivery documentation; no permission activation implied"
+  },
+  {
+    "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "hunk": 1,
+    "mainSha": "8f6cc359c30230cd89bd8986354d6c1cf3dc0518a3b4eb1d5abeccf9b26dc49b",
+    "nativeSha": "287e140b336c3c1029d86e2c040fac636a6926f37919996d15d6329f808422dd",
+    "reason": "Temporary combined handoff until final concise integration acceptance replaces stale status"
+  }
+]

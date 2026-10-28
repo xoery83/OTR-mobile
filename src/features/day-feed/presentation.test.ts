@@ -5,10 +5,10 @@ import {
   explicitBoundaryZones,
   viewContext,
   flightPresentation,
-  flightNumber,
-  durationMinutes,
   eventClock,
   eventLocation,
+  flightNumber,
+  durationMinutes,
 } from "./presentation";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
 import { event, projection } from "./faroeNegative.test.fixtures";
@@ -93,23 +93,24 @@ it("retains authored minute plans and named places without qualifying an instant
   expect(eventLocation(e)).toBe("Authorized street");
 });
 
-it("keeps formal Sparse Flight identity and known literal/date without making transport facts", () => {
-  const e = event("formal-sparse", "POINT", null, null);
+it("renders only authoritative sparse flight facts without inventing route or comparable time", () => {
+  const e = event("sparse", "POINT", null, null);
   e.event_type = "flight";
   e.boundaries = [
     {
       ...e.boundaries[0],
       role: "ORIGIN",
-      local_date: "2026-11-02",
+      local_date: "2026-10-25",
       local_time: null,
-      zone_id: null,
       instant: null,
       source_instant: null,
+      zone_id: null,
     },
   ];
+  expect(flightPresentation(e, [])).toBeNull();
   const facts = {
     qualification: "SPARSE" as const,
-    flightNumberLiteral: "ZZ2701",
+    flightNumberLiteral: "ZZ2501",
     services: [],
     endpoints: {
       ORIGIN: { code: null, name: null, terminal: null },
@@ -117,41 +118,10 @@ it("keeps formal Sparse Flight identity and known literal/date without making tr
     },
   };
   const before = JSON.stringify([e, facts]);
-  const read = flightPresentation(e, [], facts);
-  expect(read).not.toBeNull();
-  expect(read!.canonical.id).toBe(e.id);
-  expect(flightNumber(read!)).toBe("ZZ2701");
-  expect(durationMinutes(read!)).toBeNull();
-  expect(read!.supplemental.endpoints).toEqual(facts.endpoints);
+  const flight = flightPresentation(e, [], facts)!;
+  expect(flightNumber(flight)).toBe("ZZ2501");
+  expect(flight.canonical).toBe(e);
+  expect(durationMinutes(flight)).toBeNull();
+  expect(flight.supplemental.endpoints).toEqual(facts.endpoints);
   expect(JSON.stringify([e, facts])).toBe(before);
-});
-
-it("reads Sparse then Qualified facts for the same owning Flight ID without upgrading the Sparse read", () => {
-  const e = event("same-flight", "POINT", null, null);
-  e.event_type = "flight";
-  const sparseFacts = {
-    qualification: "SPARSE" as const,
-    flightNumberLiteral: "ZZ2701",
-    services: [],
-    endpoints: {
-      ORIGIN: { code: null, name: null, terminal: null },
-      DESTINATION: { code: null, name: null, terminal: null },
-    },
-  };
-  const sparse = flightPresentation(e, [], sparseFacts)!;
-  const qualified = flightPresentation({ ...e, temporal_shape: "TRANSPORT" }, [], {
-    ...sparseFacts,
-    qualification: "QUALIFIED",
-    endpoints: {
-      ORIGIN: { code: "AKL", name: "Auckland", terminal: null },
-      DESTINATION: { code: "NSN", name: "Nelson", terminal: null },
-    },
-  })!;
-  expect(qualified.canonical.id).toBe(sparse.canonical.id);
-  expect(qualified.qualification).toBe("QUALIFIED");
-  expect(sparse.qualification).toBe("SPARSE");
-  expect(sparse.supplemental.endpoints.ORIGIN.code).toBeNull();
-  expect(qualified.supplemental.endpoints.ORIGIN.code).toBe("AKL");
-  expect(flightNumber(sparse)).toBe("ZZ2701");
-  expect(flightNumber(qualified)).toBe("ZZ2701");
 });

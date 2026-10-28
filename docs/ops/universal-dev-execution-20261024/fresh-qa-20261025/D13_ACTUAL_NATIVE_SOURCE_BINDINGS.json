@@ -1,0 +1,25 @@
+{
+  "accountId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+  "batchId": "5bafa531-7fd4-4b50-bb63-a016c55cb427",
+  "bindings": [
+    {
+      "inputId": "a2ac6c5a-180b-4d9d-a74c-6a5a97753f45",
+      "bindingId": "343721b8-03fb-446a-a95a-16c6021886da",
+      "state": "ADMITTED",
+      "revision": 3
+    },
+    {
+      "inputId": "de7e7e2c-5f39-4267-802e-22c35b1d82e5",
+      "bindingId": "c34a1510-08af-4313-8c99-11f709fad391",
+      "state": "ADMITTED",
+      "revision": 3
+    },
+    {
+      "inputId": "9c8f2b3c-4209-4465-bda1-e6131c3c1e17",
+      "bindingId": "4c44aea4-362e-43e2-a97b-688491d81c54",
+      "state": "ADMITTED",
+      "revision": 3
+    }
+  ]
+}

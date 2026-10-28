@@ -1,0 +1,9 @@
+{
+  "approvedAt": "2026-10-24T00:45:38.381542+00:00",
+  "source": "direct Owner reply to exact Gate question",
+  "reply": "\u6279\u51c6\u6b64 Gate\uff0c\u8fde\u7eed\u6267\u884c\u5b8c\u6574\u95ed\u73af",
+  "gateCommit": "5265f6d",
+  "code": "1d0c979",
+  "scope": "two fixed SQL migrations + four restricted sustained DEV roles + SyntheticA/B + AD5 E2E",
+  "gateSHA256": "0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0"
+}

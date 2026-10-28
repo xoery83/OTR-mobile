@@ -59,7 +59,8 @@ export function TripSearchEntry({
       <Stack.Toolbar placement="right">
         {showUnavailableTripEdit ? (
           <Stack.Toolbar.Button
-            icon="pencil"
+            tintColor={colors.accent}
+            icon="square.and.pencil"
             separateBackground
             disabled={!edit}
             accessibilityLabel={t(edit ? "tripHome.edit" : "tripHome.editUnavailable")}
@@ -76,7 +77,7 @@ export function TripSearchEntry({
         <Stack.Toolbar.Button
           tintColor={colors.accent}
           icon="magnifyingglass"
-          separateBackground={showUnavailableTripEdit}
+          separateBackground
           accessibilityLabel={t("comprehensiveSearch.title")}
           onPress={open}
         />

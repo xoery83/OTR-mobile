@@ -382,6 +382,7 @@ export function SettlementReadinessScreen({
           {settlementSectionNames.map((section) => (
             <View collapsable={false} key={section} style={styles.pagerPage}>
               <ScrollView
+                keyboardShouldPersistTaps="handled"
                 bounces={false}
                 contentInsetAdjustmentBehavior="never"
                 contentContainerStyle={{
@@ -423,6 +424,7 @@ export function SettlementReadinessScreen({
 
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       stickyHeaderIndices={showNavigation ? [0] : undefined}

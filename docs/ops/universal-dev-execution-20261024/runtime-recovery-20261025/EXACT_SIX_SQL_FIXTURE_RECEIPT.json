@@ -1,0 +1,31 @@
+{
+  "status": "LOCAL_EXACT_SIX_SQL_SYNTHETIC_SOURCE_PASS",
+  "fixtureSHA256": "5af0bcacae82acdbac0a9a0bf71b536b4b54150d417a89974d0f9d3099455db8",
+  "requestSHA256": "d9c71d62b16eba6f237d0c8bc50968d0421bc1308b02cf87822a61cd0e5d9ddb",
+  "owningInputSHA256": "35a252f6b372b33d741f6ba429c490f23f90518ebd07bb192094c768bf7b244d",
+  "installedCandidates": [
+    "backend/sql/universal_source_host_candidate.sql",
+    "backend/sql/universal_original_source_candidate.sql",
+    "backend/sql/universal_original_result_candidate.sql",
+    "backend/sql/universal_model_task_dependency_candidate.sql",
+    "backend/sql/universal_provider_admission_candidate.sql",
+    "backend/sql/universal_task_read_candidate.sql"
+  ],
+  "actualFunctionBodyMatches": {
+    "trip_source_begin_universal_inputs": "b580a1632266f61219e32ea24db93057",
+    "trip_source_read_universal_inputs": "ed8452095756c47eedb5dc1aa16ed280",
+    "trip_import_input_valid": "a3b36b0ece78733c45ced4e6918cc977",
+    "trip_import_run_input_hash": "d895f470545e6d8df0a1eabf1b6fdf86"
+  },
+  "checks": [
+    "three exact metadata rows/pins input_valid true",
+    "same owning input hash",
+    "PENDING Run plus three Inputs",
+    "retained read three materials",
+    "exact begin replay",
+    "observed PDF V4 roots preserved; private PDF dependencies CLOSED fixture sentinels"
+  ],
+  "notActualAuthOrRuntimePASS": true,
+  "hostedWrites": 0,
+  "providerCalls": 0
+}

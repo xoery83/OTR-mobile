@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import {
+  readTripPreparationSetupRepository,
+  type TripPreparationSetup,
+} from "@/data/repositories/tripPreparationSetupRepository";
+import type { TripSetupMetadata } from "./TripSetupRows";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -14,19 +22,35 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { TripPreparationWidget } from "./TripPreparationWidget";
 
 export function useTripPreparationWidget({
+  refreshKey = 0,
   tripId,
   undated,
   onImport,
   onBuild,
   onOpenDay,
   onOpenItem,
+  onOpenLocalItem,
+  metadata,
+  onEdit,
+  onCover,
+  onSetup,
 }: {
+  refreshKey?: number;
   tripId: string | null;
   undated: boolean;
   onImport?: () => void;
   onBuild?: () => void;
   onOpenDay?: () => void;
   onOpenItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
+  onOpenLocalItem?: (
+    tripId: string,
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => Promise<void>;
+  metadata?: TripSetupMetadata;
+  onEdit?: () => void;
+  onCover?: () => void;
+  onSetup?: (value: TripPreparationSetup | null) => void;
 }): TripHomeWidget | null {
   useUiLocale();
   const generation = useSyncExternalStore(
@@ -35,47 +59,144 @@ export function useTripPreparationWidget({
   );
   const [read, setRead] = useState<TripPreparationRead | null>(null);
   const [state, setState] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
+  const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
   const request = useRef(0);
   const load = useCallback(async () => {
     const ticket = ++request.current;
     if (!tripId) return;
-    setState("LOADING");
+    // Keep a scoped local projection visible during refresh; failure still clears it.
+    setState((previous) => (previous === "READY" ? previous : "LOADING"));
     try {
-      const value = await (await readTripPreparation()).read(tripId);
+      const [value, facts] = await Promise.all([
+        readTripPreparation()
+          .then((reader) => reader.read(tripId))
+          .catch(() => null),
+        readTripPreparationSetupRepository()
+          .then((reader) => reader.read(tripId))
+          .catch(() => null),
+      ]);
       if (request.current !== ticket || generation !== getAccountGeneration()) return;
       setRead(value);
+      const scopedFacts =
+        facts &&
+        facts.context.tripId === tripId &&
+        (!value || facts.context.accountId === value.scope.accountId) &&
+        facts.context.generation === generation
+          ? facts
+          : null;
+      setSetup(scopedFacts);
+      onSetup?.(scopedFacts);
       setState(value ? "READY" : "UNAVAILABLE");
     } catch {
       if (request.current === ticket && generation === getAccountGeneration()) {
         setRead(null);
+        setSetup(null);
+        onSetup?.(null);
         setState("UNAVAILABLE");
       }
     }
-  }, [tripId, generation]);
+    // A committed manual mutation invalidates this retained projection even while Home stays mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId, generation, onSetup, refreshKey]);
   const cancelPending = useCallback(() => {
     request.current++;
   }, []);
-  useEffect(() => {
-    let active = true;
-    void Promise.resolve().then(() => {
-      if (active) void load();
-    });
-    const sub = AppState.addEventListener("change", (value) => {
-      if (value === "active") void load();
-    });
-    return () => {
-      active = false;
-      cancelPending();
-      sub.remove();
-    };
-  }, [load, cancelPending]);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void Promise.resolve().then(() => {
+        if (active) void load();
+      });
+      const sub = AppState.addEventListener("change", (value) => {
+        if (value === "active") void load();
+      });
+      const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+        if (
+          active &&
+          event.generation === generation &&
+          generation === getAccountGeneration() &&
+          event.accountId === read?.scope.accountId &&
+          tripId &&
+          event.journeyIds.includes(tripId)
+        )
+          void load();
+      });
+      return () => {
+        stopSync();
+        active = false;
+        cancelPending();
+        sub.remove();
+      };
+    }, [load, cancelPending, generation, read?.scope.accountId, tripId]),
+  );
   const visible =
     read?.scope.tripId === tripId && read.scope.generation === generation ? read : null;
+  const visibleSetup =
+    setup?.context.tripId === tripId &&
+    (!visible || setup.context.accountId === visible.scope.accountId) &&
+    setup.context.generation === generation
+      ? setup
+      : null;
+  const openCurrency = async () => {
+    if (!tripId || !visibleSetup || generation !== getAccountGeneration()) return;
+    const ticket = request.current;
+    try {
+      const reader = await readTripPreparationSetupRepository();
+      const facts = await reader.read(tripId);
+      if (
+        request.current !== ticket ||
+        generation !== getAccountGeneration() ||
+        facts.context.tripId !== tripId ||
+        facts.context.accountId !== visibleSetup.context.accountId ||
+        facts.context.generation !== generation ||
+        facts.currency.state !== "AVAILABLE" ||
+        facts.currency.permission !== "OWNER" ||
+        facts.currency.lock !== "NOT_OBSERVED"
+      )
+        return;
+      router.push({ pathname: "/trip-currency", params: { journeyId: tripId } });
+    } catch {
+      // An unavailable Ledger authority cannot authorize a currency action.
+    }
+  };
   const act = async (callback: () => void, needsPlan = false, itemId?: string) => {
     if (!tripId || generation !== getAccountGeneration()) return;
     const ticket = request.current;
     try {
       const reader = await readTripPreparation();
+      if (itemId) {
+        const expected = visible?.sourceToken;
+        if (
+          !expected ||
+          expected.scope.tripId !== tripId ||
+          expected.scope.generation !== generation
+        )
+          return;
+        const resolved = await reader.resolveItemFromSource(tripId, itemId, expected);
+        if (
+          !resolved ||
+          request.current !== ticket ||
+          generation !== getAccountGeneration()
+        )
+          return;
+        if (
+          resolved.item.localState === "PENDING" &&
+          expected.kind !== "ACCEPTED" &&
+          onOpenLocalItem
+        ) {
+          await onOpenLocalItem(tripId, itemId, {
+            scope: expected.scope,
+            source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: expected.fingerprint },
+          });
+        } else if (
+          resolved.item.localState === "ACCEPTED" &&
+          resolved.epoch &&
+          onOpenItem
+        ) {
+          await onOpenItem(tripId, itemId, resolved.epoch);
+        }
+        return;
+      }
       const current = await reader.read(tripId);
       if (
         !current ||
@@ -86,11 +207,7 @@ export function useTripPreparationWidget({
       )
         return;
       if (request.current !== ticket || generation !== getAccountGeneration()) return;
-      if (itemId && current.epoch && onOpenItem) {
-        const item = await reader.resolveItem(tripId, itemId, current.epoch);
-        if (item && request.current === ticket && generation === getAccountGeneration())
-          await onOpenItem(tripId, itemId, current.epoch);
-      } else callback();
+      callback();
     } catch {
       if (request.current === ticket && generation === getAccountGeneration())
         setState("UNAVAILABLE");
@@ -98,13 +215,40 @@ export function useTripPreparationWidget({
   };
   if (!tripId) return null;
   const title = t(
-    undated ? "tripHome.preparation.undated" : "tripHome.preparation.title",
+    visible?.preparation.itemCount === 0
+      ? "tripForm.prepare"
+      : undated
+        ? "tripHome.preparation.undated"
+        : "tripHome.preparation.title",
   );
   return {
     id: "preparation",
     title,
     content: (
       <TripPreparationWidget
+        setup={visibleSetup}
+        metadata={metadata}
+        onEdit={
+          visible?.canPlan && onEdit
+            ? () => {
+                void act(onEdit, true);
+              }
+            : undefined
+        }
+        onCover={
+          visible && onCover
+            ? () => {
+                void act(onCover);
+              }
+            : undefined
+        }
+        onCurrency={
+          visibleSetup
+            ? () => {
+                void openCurrency();
+              }
+            : undefined
+        }
         value={visible?.preparation ?? null}
         state={visible ? state : state === "READY" ? "UNAVAILABLE" : state}
         copy={{
@@ -148,7 +292,7 @@ export function useTripPreparationWidget({
             : undefined
         }
         onOpenItem={
-          visible?.epoch && onOpenItem
+          visible?.sourceToken && (onOpenItem || onOpenLocalItem)
             ? (itemId) => {
                 void act(() => {}, false, itemId);
               }

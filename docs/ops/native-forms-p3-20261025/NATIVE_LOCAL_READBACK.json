@@ -1,0 +1,612 @@
+{
+  "udid": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "scope": "SYNTHETIC_LOCAL_FIXTURE_ONLY_NO_AUTH_NO_CLOUD",
+  "databaseFile": "otr-forms-p3-fixture.db",
+  "schemaVersion": 74,
+  "intents": [
+    {
+      "operation_id": "1595cd97-da47-4ade-873a-93e93dc038bb",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "command": "CREATE_ITEM",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "1595cd97-da47-4ade-873a-93e93dc038bb",
+        "payload": {
+          "acl": {
+            "people": [],
+            "visibility": "GROUP"
+          },
+          "core": {
+            "description": "Late arrival; keep original instructions separate.",
+            "title": "Forms QA Three Night Stay"
+          },
+          "details": {
+            "permitted_checkin_from": null,
+            "permitted_checkin_until": null,
+            "permitted_checkout_by": null,
+            "property_name": null
+          },
+          "family": "P3",
+          "participation": {
+            "mode": "SELECTED_MEMBERS",
+            "people": ["9c30d71c-c4a6-4713-ae13-cd8e1a0e0fb6"],
+            "selfPersonId": null
+          },
+          "place": {
+            "accepted_address": null,
+            "accepted_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_region": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "authored_address": null,
+            "authored_address_country": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_postal_code": null,
+            "authored_address_region": null,
+            "authored_label": "Queen Street, Auckland",
+            "authored_text": null,
+            "location_input_revision": null,
+            "spatial_provenance_refs": null
+          },
+          "rooms": [],
+          "schedule": {
+            "end": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-04",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            },
+            "start": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-01",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            }
+          }
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operation_id": "344a4bb0-d843-4b26-a225-ab2bbbeeb415",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 1
+          }
+        ],
+        "command": "SET_ITEM_TEXT",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "344a4bb0-d843-4b26-a225-ab2bbbeeb415",
+        "payload": {
+          "description": "Late arrival; keep original instructions separate.",
+          "title": "Forms QA Three Night Stay \u00b7 Edited"
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operation_id": "b37ec365-e05e-49f7-95da-8659a3617690",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 2
+          }
+        ],
+        "command": "SET_ITEM_SCHEDULE",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "b37ec365-e05e-49f7-95da-8659a3617690",
+        "payload": {
+          "schedule": {
+            "end": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-04",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            },
+            "start": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": -1,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-01",
+              "local_time": "16:35",
+              "provenance_refs": null,
+              "quality": "ESTIMATED",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            }
+          }
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operation_id": "6753de1b-da24-4900-a94c-129f9a0edd8b",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 3
+          }
+        ],
+        "command": "SET_STAY_DETAILS",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "6753de1b-da24-4900-a94c-129f9a0edd8b",
+        "payload": {
+          "details": {
+            "permitted_checkin_from": "15:35",
+            "permitted_checkin_until": null,
+            "permitted_checkout_by": null,
+            "property_name": null
+          },
+          "rooms": []
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    }
+  ],
+  "queue": [
+    {
+      "id": "f3c02500-0000-4000-8000-000000000003",
+      "entity_id": "f3c02500-0000-4000-8000-000000000002",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "1595cd97-da47-4ade-873a-93e93dc038bb",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "344a4bb0-d843-4b26-a225-ab2bbbeeb415",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "b37ec365-e05e-49f7-95da-8659a3617690",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "6753de1b-da24-4900-a94c-129f9a0edd8b",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    }
+  ],
+  "nativeHost": {
+    "bundleIdentifier": "com.xoery.otrmobile",
+    "hashes": {
+      "OTRMobile": "c3445bb51a2de92c1436fc16b3ca0f97a1edece80a2c786ea0b78fe10b0dbc1f",
+      "OTRMobile.debug.dylib": "62d92e7acf351395ab25d418543af8931189c6a979afae77a091c721cf193c3d",
+      "Info.plist": "2492755dfa31397ac03515e14520eb950243e182c3a9ae47f4a315f28052bd36"
+    }
+  },
+  "finalIntents": [
+    {
+      "operationId": "1595cd97-da47-4ade-873a-93e93dc038bb",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": null
+          }
+        ],
+        "command": "CREATE_ITEM",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "1595cd97-da47-4ade-873a-93e93dc038bb",
+        "payload": {
+          "acl": {
+            "people": [],
+            "visibility": "GROUP"
+          },
+          "core": {
+            "description": "Late arrival; keep original instructions separate.",
+            "title": "Forms QA Three Night Stay"
+          },
+          "details": {
+            "permitted_checkin_from": null,
+            "permitted_checkin_until": null,
+            "permitted_checkout_by": null,
+            "property_name": null
+          },
+          "family": "P3",
+          "participation": {
+            "mode": "SELECTED_MEMBERS",
+            "people": ["9c30d71c-c4a6-4713-ae13-cd8e1a0e0fb6"],
+            "selfPersonId": null
+          },
+          "place": {
+            "accepted_address": null,
+            "accepted_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_region": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "authored_address": null,
+            "authored_address_country": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_postal_code": null,
+            "authored_address_region": null,
+            "authored_label": "Queen Street, Auckland",
+            "authored_text": null,
+            "location_input_revision": null,
+            "spatial_provenance_refs": null
+          },
+          "rooms": [],
+          "schedule": {
+            "end": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-04",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            },
+            "start": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-01",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            }
+          }
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operationId": "344a4bb0-d843-4b26-a225-ab2bbbeeb415",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 1
+          }
+        ],
+        "command": "SET_ITEM_TEXT",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "344a4bb0-d843-4b26-a225-ab2bbbeeb415",
+        "payload": {
+          "description": "Late arrival; keep original instructions separate.",
+          "title": "Forms QA Three Night Stay \u00b7 Edited"
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operationId": "b37ec365-e05e-49f7-95da-8659a3617690",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 2
+          }
+        ],
+        "command": "SET_ITEM_SCHEDULE",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "b37ec365-e05e-49f7-95da-8659a3617690",
+        "payload": {
+          "schedule": {
+            "end": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": null,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-04",
+              "local_time": null,
+              "provenance_refs": null,
+              "quality": "UNKNOWN",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            },
+            "start": {
+              "basis": "DERIVED_CIVIL",
+              "civil_resolution": "PENDING",
+              "clock_precision": -1,
+              "instant": null,
+              "interpretation_input_sha256": null,
+              "interpretation_key": null,
+              "local_date": "2026-11-01",
+              "local_time": "16:35",
+              "provenance_refs": null,
+              "quality": "ESTIMATED",
+              "resolution_offset_seconds": null,
+              "source_instant": null,
+              "source_instant_precision": null,
+              "supplied_offset_seconds": null,
+              "zone_id": null
+            }
+          }
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operationId": "6753de1b-da24-4900-a94c-129f9a0edd8b",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 3
+          }
+        ],
+        "command": "SET_STAY_DETAILS",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "6753de1b-da24-4900-a94c-129f9a0edd8b",
+        "payload": {
+          "details": {
+            "permitted_checkin_from": "15:35",
+            "permitted_checkin_until": null,
+            "permitted_checkout_by": null,
+            "property_name": null
+          },
+          "rooms": []
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "operationId": "f04021d5-5c56-4c59-857d-7254911253e3",
+      "state": "BLOCKED",
+      "command": {
+        "admission": {
+          "mode": "MANUAL",
+          "policyVersion": null,
+          "sourceIntentId": null
+        },
+        "baseVector": [
+          {
+            "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+            "kind": "ITEM",
+            "revision": 4
+          }
+        ],
+        "command": "SET_ITEM_TEXT",
+        "contractVersion": 2,
+        "intentVersion": 2,
+        "operationId": "f04021d5-5c56-4c59-857d-7254911253e3",
+        "payload": {
+          "description": "Late arrival; keep original instructions separate.",
+          "title": "Forms QA Recovered Stay"
+        },
+        "target": {
+          "id": "c589ec18-ead0-4895-9939-9ccef2323361",
+          "kind": "ITEM"
+        },
+        "tripId": "f3c02500-0000-4000-8000-000000000002"
+      }
+    }
+  ],
+  "finalQueue": [
+    {
+      "id": "f3c02500-0000-4000-8000-000000000003",
+      "entity_id": "f3c02500-0000-4000-8000-000000000002",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "1595cd97-da47-4ade-873a-93e93dc038bb",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "344a4bb0-d843-4b26-a225-ab2bbbeeb415",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "b37ec365-e05e-49f7-95da-8659a3617690",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "6753de1b-da24-4900-a94c-129f9a0edd8b",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "f04021d5-5c56-4c59-857d-7254911253e3",
+      "entity_id": "c589ec18-ead0-4895-9939-9ccef2323361",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    }
+  ]
+}

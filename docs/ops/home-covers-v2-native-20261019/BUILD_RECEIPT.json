@@ -1,0 +1,26 @@
+{
+  "productSha": "21df3051d55cb7df6d2cdd803ee581da7002177a",
+  "status": "IOS_HERMES_EXPORT_PASS_NOT_NATIVE_BUILD_NOT_INSTALLED",
+  "command": "CI=1 EXPO_OFFLINE=1 EXPO_NO_TELEMETRY=1 TMPDIR=/private/tmp/otr-covers-export-final-cache-20261019 node node_modules/expo/bin/cli export --platform ios --max-workers 2 --dump-assetmap --output-dir /private/tmp/otr-covers-export-final-20261019",
+  "bundlePath": "/private/tmp/otr-covers-export-final-20261019/_expo/static/js/ios/entry-a767a9aba522f058c607e172d63482cb.hbc",
+  "bundleBytes": 11819565,
+  "bundleSha256": "ad115aac0d1738e96ba1a62bc7073da6ab3cddde2958d436a0462d18f57b0169",
+  "assetMapSha256": "fe105a7ca76c843f71bfff5778aa6028667ca576dad9dd6aebd9d0bff016b740",
+  "mappedCoverFiles": 52,
+  "mappedDistinctCoverHashes": 52,
+  "mappedNewCoverBytes": 12750269,
+  "mappedTotalCoverBytes": 15080493,
+  "allAppAssetRecords": 66,
+  "approvedPublicConfigFields": [
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL",
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY"
+  ],
+  "noAdditionalTransportOrBackendConfiguration": true,
+  "noAuthOrSessionWritten": true,
+  "limitations": [
+    "Not an IPA/resource delta",
+    "No Xcode/native build or Simulator install in this export",
+    "Native startup/index/memory/decode pending",
+    "Asset rights/human/crop review still pending"
+  ]
+}

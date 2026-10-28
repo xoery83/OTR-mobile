@@ -1,0 +1,28 @@
+{
+  "sha": "4fcb5068d1008a4da576cc80446dbf22ed4edeec",
+  "diagnosticParent": "3660538",
+  "status": "PASS_BOUNDED_LOCAL_L2",
+  "findings": [],
+  "tests": {
+    "nativeBudgetClientDiagnostic": 41,
+    "files": 4,
+    "operatorReservation": 3
+  },
+  "operatorHelperSHA256": "9338c81cc0a3e87421f5eebbb762a5d938f7ed5211e98e81f50b06c82336f355",
+  "verified": [
+    "Native run afdf5785-670b-44c1-951d-9864dc1307f6 / maximum72 exactly pinned.",
+    "Every ordinary/bounded GET send including 401 replay reserves synchronous ordinal before fetch and requires exact persistent readback; failed write cannot send.",
+    "Cold instance loads ledger; bad identity/max/corrupt/exhaustion refuses without reset; no await in reservation critical section.",
+    "Disabled env/non-GET never evaluates Native File module; no permission, Mutation or retry semantic expansion.",
+    "SDK error classifier outputs finite enum/name/domain/code only, not message/stack/token/URL/header.",
+    "Operator separate24 has exclusive local lock, durable atomic replacement and fixed run identity/purpose/maximum."
+  ],
+  "operatingAssumptions": [
+    "Root must retain the same dedicated Operator ledger directory and Native ledger across launch; do not delete/swap directory or ledger, reset run, or remove active QA budget environment to bypass allowance.",
+    "Actual Native File persistence and sent request count remain Root acceptance; tests use synchronous store fixtures.",
+    "Allowance accounting does not authorize new read identities/endpoints or mutations."
+  ],
+  "DEVOperations": 0,
+  "NativeGUI": false,
+  "ProviderCalls": 0
+}

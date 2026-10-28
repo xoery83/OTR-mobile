@@ -5,37 +5,38 @@ import { getDefaultLocalCaptureInboxRepository } from "../repositories/defaultLo
 import { createCaptureCustodyTransport } from "../api/captureCustodyTransport";
 import { createCaptureCustodyOperation } from "./captureCustody";
 import {
-  captureCustodyBatchSchema,
+  captureMaterialBatchSchema,
   captureCustodyBindingJson,
   assertCaptureCustodyBytes,
-  type CaptureCustodyBatch,
+  type CaptureMaterialBatch,
 } from "@/domain/capture/captureCustody";
 
 // Explicit calls only; GET verification never resubmits originals.
 export function runDefaultCaptureCustodyBatch(
-  raw: CaptureCustodyBatch,
+  raw: CaptureMaterialBatch,
   check: () => void = () => {},
 ) {
   return executeBatch(raw, true, check);
 }
 export function verifyDefaultCaptureCustodyBatch(
-  raw: CaptureCustodyBatch,
+  raw: CaptureMaterialBatch,
   check: () => void = () => {},
 ) {
   return executeBatch(raw, false, check);
 }
 async function executeBatch(
-  raw: CaptureCustodyBatch,
+  raw: CaptureMaterialBatch,
   write: boolean,
   check: () => void,
 ) {
   check();
-  const batch = captureCustodyBatchSchema.parse(raw);
+  const batch = captureMaterialBatchSchema.parse(raw);
   const context = await captureAccountRequestContext("", requireActiveUserId);
   if (batch.inputs[0].accountId !== context.accountId)
     throw new Error("CAPTURE_CUSTODY_SCOPE_INVALID");
   check();
   const operation = createCaptureCustodyOperation({
+    bindingVersion: "version" in batch ? 2 : 1,
     submissions: await getDefaultCaptureSubmissionRepository(),
     inbox: await getDefaultLocalCaptureInboxRepository(),
     getAccountId: requireActiveUserId,
@@ -44,18 +45,12 @@ async function executeBatch(
       assertRequestCurrent: check,
     }),
   });
-  // Check both original bindings before the first network write; each call rechecks.
+  // Check every original binding before the first network write; each call rechecks.
   for (const expected of batch.inputs) {
     check();
-    const actual = await operation.binding(
-      context,
-      batch.jobId,
-      expected.inputId,
-    );
+    const actual = await operation.binding(context, batch.jobId, expected.inputId);
     check();
-    if (
-      captureCustodyBindingJson(actual) !== captureCustodyBindingJson(expected)
-    )
+    if (captureCustodyBindingJson(actual) !== captureCustodyBindingJson(expected))
       throw new Error("CAPTURE_CUSTODY_INPUT_STALE");
   }
   const receipts = [];

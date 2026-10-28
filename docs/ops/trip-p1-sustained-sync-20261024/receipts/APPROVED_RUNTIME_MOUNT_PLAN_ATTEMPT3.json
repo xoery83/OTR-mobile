@@ -1,0 +1,194 @@
+{
+  "ownerAuthorized": true,
+  "runtimeKind": "SUSTAINED_TRIP_P1",
+  "approvedGateSHA256": "0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0",
+  "windowId": "d1a3c9cb5b837c4e8a09411d820ac7de1dd49f413b97764ee82bdcb1e2795936",
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "bundle": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9",
+  "startsAt": "2026-10-24T02:55:48.010161+00:00",
+  "expiresAt": "2026-10-24T03:10:48.010161+00:00",
+  "databaseCA": "-----BEGIN CERTIFICATE-----\nMIIDxDCCAqygAwIBAgIUbLxMod62P2ktCiAkxnKJwtE9VPYwDQYJKoZIhvcNAQEL\nBQAwazELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0RlbHdhcmUxEzARBgNVBAcMCk5l\ndyBDYXN0bGUxFTATBgNVBAoMDFN1cGFiYXNlIEluYzEeMBwGA1UEAwwVU3VwYWJh\nc2UgUm9vdCAyMDIxIENBMB4XDTIxMDQyODEwNTY1M1oXDTMxMDQyNjEwNTY1M1ow\nazELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0RlbHdhcmUxEzARBgNVBAcMCk5ldyBD\nYXN0bGUxFTATBgNVBAoMDFN1cGFiYXNlIEluYzEeMBwGA1UEAwwVU3VwYWJhc2Ug\nUm9vdCAyMDIxIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqQXW\nQyHOB+qR2GJobCq/CBmQ40G0oDmCC3mzVnn8sv4XNeWtE5XcEL0uVih7Jo4Dkx1Q\nDmGHBH1zDfgs2qXiLb6xpw/CKQPypZW1JssOTMIfQppNQ87K75Ya0p25Y3ePS2t2\nGtvHxNjUV6kjOZjEn2yWEcBdpOVCUYBVFBNMB4YBHkNRDa/+S4uywAoaTWnCJLUi\ncvTlHmMw6xSQQn1UfRQHk50DMCEJ7Cy1RxrZJrkXXRP3LqQL2ijJ6F4yMfh+Gyb4\nO4XajoVj/+R4GwywKYrrS8PrSNtwxr5StlQO8zIQUSMiq26wM8mgELFlS/32Uclt\nNaQ1xBRizkzpZct9DwIDAQABo2AwXjALBgNVHQ8EBAMCAQYwHQYDVR0OBBYEFKjX\nuXY32CztkhImng4yJNUtaUYsMB8GA1UdIwQYMBaAFKjXuXY32CztkhImng4yJNUt\naUYsMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAB8spzNn+4VU\ntVxbdMaX+39Z50sc7uATmus16jmmHjhIHz+l/9GlJ5KqAMOx26mPZgfzG7oneL2b\nVW+WgYUkTT3XEPFWnTp2RJwQao8/tYPXWEJDc0WVQHrpmnWOFKU/d3MqBgBm5y+6\njB81TU/RG2rVerPDWP+1MMcNNy0491CTL5XQZ7JfDJJ9CCmXSdtTl4uUQnSuv/Qx\nCea13BX2ZgJc7Au30vihLhub52De4P/4gonKsNHYdbWjg7OWKwNv/zitGDVDB9Y2\nCMTyZKG3XEu5Ghl1LEnI3QmEKsqaCLv12BnVjbkSeZsMnevJPs1Ye6TjjJwdik5P\no/bKiIz+Fq8=\n-----END CERTIFICATE-----\n",
+  "sustainedRuntimeSHA256": "98ea237397217c2c457f6f284adbfde9ea6657b8efbeb066ab54c8e054be5e91",
+  "baseline": {
+    "environmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+    "hostConfig": {
+      "Binds": null,
+      "ContainerIDFile": "",
+      "LogConfig": {
+        "Type": "json-file",
+        "Config": {
+          "max-file": "3",
+          "max-size": "10m"
+        }
+      },
+      "NetworkMode": "host",
+      "PortBindings": {},
+      "RestartPolicy": {
+        "Name": "unless-stopped",
+        "MaximumRetryCount": 0
+      },
+      "AutoRemove": false,
+      "VolumeDriver": "",
+      "VolumesFrom": null,
+      "ConsoleSize": [
+        0,
+        0
+      ],
+      "CapAdd": null,
+      "CapDrop": [
+        "ALL"
+      ],
+      "CgroupnsMode": "private",
+      "Dns": null,
+      "DnsOptions": null,
+      "DnsSearch": null,
+      "ExtraHosts": [],
+      "GroupAdd": null,
+      "IpcMode": "private",
+      "Cgroup": "",
+      "Links": null,
+      "OomScoreAdj": 0,
+      "PidMode": "",
+      "Privileged": false,
+      "PublishAllPorts": false,
+      "ReadonlyRootfs": true,
+      "SecurityOpt": [
+        "no-new-privileges:true"
+      ],
+      "Tmpfs": {
+        "/tmp": "size=16m,mode=1777"
+      },
+      "UTSMode": "",
+      "UsernsMode": "",
+      "ShmSize": 67108864,
+      "Runtime": "runc",
+      "Isolation": "",
+      "CpuShares": 0,
+      "Memory": 402653184,
+      "NanoCpus": 0,
+      "CgroupParent": "",
+      "BlkioWeight": 0,
+      "BlkioWeightDevice": null,
+      "BlkioDeviceReadBps": null,
+      "BlkioDeviceWriteBps": null,
+      "BlkioDeviceReadIOps": null,
+      "BlkioDeviceWriteIOps": null,
+      "CpuPeriod": 0,
+      "CpuQuota": 0,
+      "CpuRealtimePeriod": 0,
+      "CpuRealtimeRuntime": 0,
+      "CpusetCpus": "",
+      "CpusetMems": "",
+      "Devices": null,
+      "DeviceCgroupRules": null,
+      "DeviceRequests": null,
+      "MemoryReservation": 0,
+      "MemorySwap": 805306368,
+      "MemorySwappiness": null,
+      "OomKillDisable": null,
+      "PidsLimit": null,
+      "Ulimits": [
+        {
+          "Name": "core",
+          "Hard": 0,
+          "Soft": 0
+        }
+      ],
+      "CpuCount": 0,
+      "CpuPercent": 0,
+      "IOMaximumIOps": 0,
+      "IOMaximumBandwidth": 0,
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/otr/dev-backend/env/capture-custody.json",
+          "Target": "/run/otr/capture-custody.json",
+          "ReadOnly": true,
+          "BindOptions": {}
+        },
+        {
+          "Type": "bind",
+          "Source": "/run/otr-r3a5-catalog/catalog-reader.json",
+          "Target": "/run/otr/catalog-reader.json",
+          "ReadOnly": true,
+          "BindOptions": {}
+        },
+        {
+          "Type": "bind",
+          "Source": "/opt/otr/dev-backend/private/capture-custody",
+          "Target": "/var/lib/otr/capture-custody",
+          "BindOptions": {}
+        }
+      ],
+      "MaskedPaths": [
+        "/proc/acpi",
+        "/proc/asound",
+        "/proc/interrupts",
+        "/proc/kcore",
+        "/proc/keys",
+        "/proc/latency_stats",
+        "/proc/sched_debug",
+        "/proc/scsi",
+        "/proc/timer_list",
+        "/proc/timer_stats",
+        "/sys/devices/virtual/powercap",
+        "/sys/firmware"
+      ],
+      "ReadonlyPaths": [
+        "/proc/bus",
+        "/proc/fs",
+        "/proc/irq",
+        "/proc/sys",
+        "/proc/sysrq-trigger"
+      ]
+    },
+    "mounts": [
+      {
+        "source": "/opt/otr/dev-backend/env/capture-custody.json",
+        "destination": "/run/otr/capture-custody.json",
+        "rw": false
+      },
+      {
+        "source": "/opt/otr/dev-backend/private/capture-custody",
+        "destination": "/var/lib/otr/capture-custody",
+        "rw": true
+      },
+      {
+        "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+        "destination": "/run/otr/catalog-reader.json",
+        "rw": false
+      }
+    ],
+    "composeFiles": [
+      "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml",
+      "/opt/otr/dev-backend/env/backend-api-key.cutover.yml",
+      "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml",
+      "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml",
+      "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml",
+      "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml",
+      "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml",
+      "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml",
+      "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T005419Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/sustained-original-rollback-20261024T023716Z/compose.forward.closed.yml",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T025507Z/compose.forward.closed.yml"
+    ],
+    "configHashes": {
+      "/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29/deploy/dev-backend/compose.host.yml": "ee1867ae8fe5a378e7d747068bca729f195f289084c6ad345e59aca69d972d47",
+      "/opt/otr/dev-backend/env/backend-api-key.cutover.yml": "b849fcbf2680f7349da4fba6e4a6e7e030bc9577d0ddcb2978f025477698b465",
+      "/opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932/forward-image.yml": "813b731b2eba440d4b8ba5aaa6fbaa7135bb83d529ccaf175a44a07f3abfec49",
+      "/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml": "1834d961bc616dceea905a449f68cb965f9f549339f0df9e0a901bae2fdd0e76",
+      "/opt/otr/dev-backend/env/capture-c2-20261015/forward-image.yml": "89e8cc6afccb157f9e96196b6ffc2ddf00d616b81c6553e5e4ddaeefa0d77a24",
+      "/opt/otr/dev-backend/releases/capture-c2-83f575f/deploy/dev-backend/compose.capture-custody.closed.yml": "fbd5b1e05573335e9f68f2d37539de277299121c79fd826f83b0dc14ef752bba",
+      "/opt/otr/dev-backend/releases/nz5069-secret-header-89a3bf4-20261019/compose.rollback-closed.yml": "41026f94c644e3e1ba69e86df7d8c49bb43eef5a58ef76140f601923be9d1736",
+      "/opt/otr/dev-backend/releases/metadata-b677a90-20261022/compose.rollback.closed.yml": "6cc4bf28b90c7c36bd0812e2098f513fb509dd9cd47fd07f0a6eb69d4aec2873",
+      "/opt/otr/dev-backend/releases/metadata-recovery-12d6b2f-20261022/compose.forward.closed.yml": "ff48b999cb9f3474a07bfdf0264204b05103699e5ed25c60ca427ac21b8914c7",
+      "/opt/otr/dev-backend/releases/ad5-structured-73d518d4-20261023/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T005419Z/compose.forward.closed.yml": "109c50f6b4365258a69bed92662605c7e7b95153453891d8a69c575e364b5ba2",
+      "/opt/otr/dev-backend/releases/sustained-original-rollback-20261024T023716Z/compose.forward.closed.yml": "2df0803b81a85e1a8bda679099d58e682360cea0bb39902275ebf74eeccb47bc",
+      "/opt/otr/dev-backend/releases/trip-p1-sustained-1d0c979-20261024T025507Z/compose.forward.closed.yml": "109c50f6b4365258a69bed92662605c7e7b95153453891d8a69c575e364b5ba2"
+    },
+    "custodySHA256": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765"
+  }
+}

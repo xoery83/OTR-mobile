@@ -1,0 +1,130 @@
+# Import Native intake — 21 October 2026
+
+Base: `9a3fe87942b94bd36c2dbd1f1a597092eefb869b`. Branch:
+`codex/import-native-intake-20261021`. Source preparation only; independent
+Review and Coordinator-controlled Host build/device acceptance remain pending.
+
+## Consumer API
+
+`src/native/imagePaste.tsx` exports `ImagePasteControl`,
+`isImagePasteAvailable()` and `releaseImagePaste(tokens: readonly string[]): void`.
+The release callback catches asynchronous native failures internally. An optional
+`releaseImagePasteTokens` Promise API is also available for explicit cleanup checks.
+
+Props: `requestId: string`, `enabled: boolean`,
+`onImages({requestId, items})`, `onFailure({requestId, code})`, plus ordinary
+React Native `ViewProps`. Give the system control an accessible touch area using
+canonical composer layout (at least 44 points); it supplies its own system label,
+appearance and clipboard consent gesture. Render it inside the existing composer.
+The control uses system `iconOnly` display mode for a compact 44-point layout;
+UIKit retains its system accessibility label. Actual layout requires Native QA.
+The TextInput's native text editing menu remains unchanged. This does not implement
+an image `onPaste` event on TextInput.
+
+Each item is `{token, uri, byteSize, mimeType, source: "clipboard",
+representation: "item-provider"}`. There is no original filename, Photos/Files
+provenance, C3 acquisition kind or submission authority. Supported copied
+representations: PNG/JPEG/HEIC/HEIF/WebP, at most 10 and 20 MiB per batch; delivered
+items also have a process-wide 10-item/20-MiB retention cap. Header checks identify
+the representation, not full image validity, profile, original-media identity or
+canonical evidence. No bitmap decode, re-encoding or upload occurs.
+
+Native event emission registers `EMITTED_UNCLAIMED` files; it does not transfer
+ownership. Before invoking `onImages`, the wrapper calls synchronous Native
+`claim(requestId, tokens)`. Claim atomically requires every token to be unique,
+module-registered, unclaimed, still present and issued for that request. Success
+transfers the entire set to `CLAIMED`; failure never calls the consumer. Both states
+share the 10-item/20-MiB budget. Missing bridge claim support hides the control.
+
+Use a fresh printable ASCII request ID (1–80 characters) when the account/editor
+generation changes. `enabled=false`, request change, detach and unmount cancel and
+delete pending work and emitted-but-unclaimed files. Successfully claimed items
+survive panel closure;
+staging must call `releaseImagePaste` on remove, clear and account purge. A stale or
+malformed JS event discards only unclaimed tokens via `releaseUnclaimed`; keep the
+owning staging fence too. The release API can delete only files registered by this
+module, never an arbitrary URI. No submitted-file lifecycle is introduced.
+
+The JS gate records adoption or discard as terminal before invoking consumer code.
+Duplicate, stale, malformed and mixed repeat events cannot release or re-adopt a
+previously consumed token; only unseen tokens in a rejected event are released.
+If `onImages` throws, delivery may already have reached staging, so the gate retains
+that ownership conservatively. The staging owner must explicitly release it; the
+gate never deletes a possibly adopted draft as error recovery.
+
+The Native view retains emitted tokens until lifecycle cleanup, so a queued event
+that is never received cannot strand unclaimed files. Before each emission its
+token list retains only still-registered, unclaimed tokens, keeping that list within
+the same 10-item cap. Claim and cleanup share the store lock: detach first means
+claim fails; claim first means detach preserves the
+draft. There is no timeout that could delete a claimed file. Tokens are random
+module-issued opaque capabilities, exposed only through the Native callback to
+the owning JS adapter/staging. Holding a token authorizes explicit staging release;
+there is no arbitrary URI deletion or separate account/ACL authority in this local
+temporary-file API. Fresh request IDs on account/editor generation changes and
+staging's current-context fence remain mandatory.
+
+Provider URLs are copied during their callback into module-owned temporary
+process/batch directories. Per-file stream accounting bounds a pending batch;
+pending cancellation fences copying and delivery. One active batch reserves the
+remaining delivered-item byte/count budget, keeping the combined draft within
+20 MiB/10 items. Delivered registration is atomic. Files use 0600 permissions and
+iOS first-unlock protection. Explicit release
+removes them; next process initialization cleans only this module's previous UUID
+process directories. Cold-start draft restoration is not promised. No other cache
+or user folder is swept. Staging independently enforces its combined draft cap.
+
+## Voice diagnostics
+
+`readLocalDictation({ onDiagnostic })` preserves the existing `DictationNative`
+interface. Safe diagnostic fields are `phase`, allowlisted NSError `domain`,
+signed-32-bit `code`, and optional `sampleRateValid`/`channelCountValid` booleans.
+They are emitted on failure, fenced to sessions started by that adapter instance,
+and stripped of extra fields. Unknown domains become `OTHER`. No localized error,
+userInfo, transcript, audio, raw sample rate, business identifier or session ID is
+included in the diagnostic callback; no logs or persistence are added. Root may
+show these transiently in DEV for the current subscription. A `failed` state or
+NSError alone does not establish a Simulator cause.
+
+The private Native `start` bridge returns null on success or a sanitized failure
+envelope `{error, diagnostic?}`. The Engine uses the same sanitized diagnostic for
+its error event and this envelope; the Module catches failures without forwarding
+NSError, userInfo, descriptions or causes. The public `DictationNative.start`
+remains `Promise<void>` and rejects with the existing finite error code. Its wrapper
+publishes diagnostics for the current own session before rejecting, and terminal
+session removal deduplicates event-first and envelope-first orderings. Cancellation
+suppresses late diagnostics. Unexpected bridge errors remain rejections and yield
+only `phase: "unknown", domain: "OTHER"`; they never imply an audio/permission
+phase. No JSON is embedded in an Error description, and no diagnostic is persisted.
+
+The existing on-device-only requirement, permissions, session/owner/epoch fences,
+transcript bound, timers and functional state codes remain. The engine adds phases
+around permission, audio setup, recognition and lifecycle/deadline failures.
+
+## Validation and boundary
+
+- Vitest: native diagnostic, image delivery contract and existing dictation
+  controller: 3 suites / 24 tests PASS, including both early-failure delivery orders,
+  unknown bridge/cancelled-session diagnostics, duplicate/malformed image delivery,
+  claim/adoption/release reentrancy and callback-failure ownership regressions.
+- Foundation executable: metadata sanitization; pending cancellation/late callback;
+  claimed lifetime/explicit release; byte/count limits and foreign-token safety;
+  dropped event/cap recovery, both claim/detach orders, wrong request, invalid or
+  duplicate token, atomic claim failure and missing file PASS. Existing
+  session-fence executable PASS.
+- Typecheck, targeted ESLint and `npm run ui:guard` PASS.
+- Installed iOS SDK typecheck of engine/storage/diagnostic and a UIKit paste-target
+  API probe PASS; Expo module Swift syntax parse PASS. This is not a full Expo
+  bridge build or a device test.
+
+`expo-module.config.json` registers `ImagePasteModule` in the existing local module;
+the existing podspec includes Swift sources and UIKit. No package, framework, Pods,
+build settings, permission text or C3/Core/Admission/schema change is made.
+
+Coordinator owns composer/staging, diagnostics presentation and serial Host
+registration/build/install. Clipboard staging must remain a distinct draft source;
+prepareSubmit/send stays disabled for it. Native paste, actual provider behavior,
+audio diagnosis, cancellation while navigating, and delivered-draft preservation
+need independent Review followed by device acceptance. No Native acceptance is
+claimed here. Central current-state/Tracker updates belong to Root; this is the
+isolated slice's current-state handoff.

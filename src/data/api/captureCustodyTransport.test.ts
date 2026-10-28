@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import { createCaptureCustodyTransport } from "./captureCustodyTransport";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
-import { captureCustodyBindingJson } from "@/domain/capture/captureCustody";
+import { captureCustodyBindingHeader } from "@/domain/capture/captureCustody";
 vi.mock("expo/fetch", () => ({ fetch: vi.fn() }));
 vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 const bytes = new TextEncoder().encode("%PDF-1.4 synthetic");
@@ -27,7 +27,7 @@ const response = (body = bytes) =>
       "Content-Type": b.mediaType,
       "Content-Length": String(b.byteCount),
       ETag: `"${b.sha256}"`,
-      "X-OTR-Capture-Binding": captureCustodyBindingJson(b),
+      "X-OTR-Capture-Binding": captureCustodyBindingHeader(b),
       "Cache-Control": "private, no-store",
       Vary: "Authorization",
     },
@@ -52,22 +52,17 @@ it("uses exact tuple/bytes, bounded verified readback and one401 refresh", async
   const x = await setup(fetcher);
   expect(await x.t.put(x.context, b, bytes)).toEqual(bytes);
   expect(x.tokenProvider).toHaveBeenCalledTimes(2);
-  expect(
-    (fetcher.mock.calls[1] as unknown as [string, RequestInit])[1],
-  ).toMatchObject({
+  expect((fetcher.mock.calls[1] as unknown as [string, RequestInit])[1]).toMatchObject({
     method: "PUT",
     redirect: "error",
-    headers: { "X-OTR-Capture-Binding": captureCustodyBindingJson(b) },
+    headers: { "X-OTR-Capture-Binding": captureCustodyBindingHeader(b) },
   });
 });
 it("404 recovery is unavailable, not new upload; malformed bytes and overflow reject", async () => {
   const x = await setup(vi.fn(async () => new Response(null, { status: 404 })));
   expect(await x.t.read(x.context, b)).toBeNull();
   expect(x.fetcher).toHaveBeenCalledTimes(1);
-  for (const body of [
-    new Uint8Array(bytes.length),
-    new Uint8Array(bytes.length + 1),
-  ]) {
+  for (const body of [new Uint8Array(bytes.length), new Uint8Array(bytes.length + 1)]) {
     const y = await setup(vi.fn(async () => response(body)));
     await expect(y.t.read(y.context, b)).rejects.toThrow();
   }
@@ -108,9 +103,7 @@ it.each(["put", "read"] as const)(
       },
     });
     await expect(
-      method === "put"
-        ? transport.put(context, b, bytes)
-        : transport.read(context, b),
+      method === "put" ? transport.put(context, b, bytes) : transport.read(context, b),
     ).rejects.toThrow("DEV_EXPIRED");
     expect(fetcher).not.toHaveBeenCalled();
   },
@@ -135,9 +128,7 @@ it("preserves only safe non200 status and does not expose response bodies", asyn
   }
 });
 it("retains one401 refresh then reports the second rejection without further retry", async () => {
-  const x = await setup(
-    vi.fn(async () => new Response("private", { status: 401 })),
-  );
+  const x = await setup(vi.fn(async () => new Response("private", { status: 401 })));
   await expect(x.t.put(x.context, b, bytes)).rejects.toMatchObject({
     kind: "http",
     status: 401,
@@ -186,4 +177,41 @@ it("sanitizes the installed Expo FetchError prefix without retaining private URL
   expect(error.details).toBeUndefined();
   expect(JSON.stringify(error)).not.toContain("private.example");
   expect(JSON.stringify(error)).not.toContain("synthetic-private-token");
+});
+it("v2 text uses normal authenticated transport with exact provenance and verified original bytes", async () => {
+  const text = new TextEncoder().encode("Hello\n你好"),
+    pin = {
+      ...b,
+      version: 2 as const,
+      originalFilename: "行程✈️.txt",
+      kind: "FILE" as const,
+      acquisitionSource: "files" as const,
+      mediaType: "text/plain" as const,
+      byteCount: text.length,
+      sha256: createHash("sha256").update(text).digest("hex"),
+    };
+  const x = await setup(
+    vi.fn(
+      async () =>
+        new Response(Uint8Array.from(text).buffer, {
+          headers: {
+            "Content-Type": "text/plain",
+            "Content-Length": String(text.length),
+            ETag: `"${pin.sha256}"`,
+            "X-OTR-Capture-Binding": captureCustodyBindingHeader(pin),
+            "Cache-Control": "private, no-store",
+            Vary: "Authorization",
+          },
+        }),
+    ),
+  );
+  expect(await x.t.put(x.context, pin, text)).toEqual(text);
+  expect(x.tokenProvider).toHaveBeenCalledOnce();
+  expect(
+    (x.fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].headers,
+  ).toMatchObject({
+    Authorization: "Bearer synthetic",
+    "X-OTR-Capture-Binding": captureCustodyBindingHeader(pin),
+    "Content-Type": "text/plain",
+  });
 });

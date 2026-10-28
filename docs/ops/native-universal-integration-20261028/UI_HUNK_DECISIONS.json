@@ -1,0 +1,527 @@
+[
+  {
+    "path": "app/(tabs)/index.tsx",
+    "hunk": 1,
+    "mainSha": "da3ac105e969293dfaeb86629c0e1b1131654b567196efa2f948b43efe34236e",
+    "nativeSha": "7ed0baef6cd956ad91e6f94bf1a31a3b5968dda7bbb725e2b395c2a1153d4ab8",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "app/(tabs)/index.tsx",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "3b486d96fbade793a77686ee39193782a6efed9154d2453cd3d3e879b8c85589",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "app/(tabs)/index.tsx",
+    "hunk": 3,
+    "mainSha": "7cb7e24a085b76832f51d04390beb940e55b8b4d1a8f52274f20c87838d38681",
+    "nativeSha": "be92c947c154aebfed2fa3b92fb65e4db89757e2ce14550e47c697b169b9ff71",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "app/_layout.tsx",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "f3455db6116ebd893c5b78913397514a9594c5ee8c28090a7717fc7b01cacdcb",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 1,
+    "mainSha": "d977f061c9569828a35ca470ffd1396e86b1072e8061528c18d5fa6764c1d1e5",
+    "nativeSha": "c854f51ffd46da4bc420c4afcb3712b16ad6215b8134cd2f6104fa091eb6205b",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 2,
+    "mainSha": "eb4e958e8bc23aecca024a1439bdfc47a23443ebbb13f0c64bf11fee3b8df0d9",
+    "nativeSha": "89256a0d9e6eb665c4692459f91140958a734fff2488bb1bfe0aa2531b504991",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 3,
+    "mainSha": "31bd5ac8f9f521283a59ed13341b7d28e7d0949db8967a07e5fbefe5c4c82fb4",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 4,
+    "mainSha": "83ae35015cb2d59e83160a8dab095d1c0fff44dd79dffe3666176bde2a81b4be",
+    "nativeSha": "8d122d19afd319cba7fd3e1d1b903f75b25df02e0e17e4359f2d4685e1ddb3e1",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 5,
+    "mainSha": "f98a52cd3f4094d50b63369ce51eb664c655a8784ff021228fc60b092ca08d95",
+    "nativeSha": "b8b03347b01699b77b178b5143dff77aa5ad0637f20bbf15d42c2432b020a2b5",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 6,
+    "mainSha": "7cffb37174cdf5afc869f72c4a642b2428bf50903c1c0019cb94d4034cff8737",
+    "nativeSha": "61eac36931696aa744fe29da652f92290d9e72d1ce75d742d9957fde2f9415ac",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 7,
+    "mainSha": "6d6dbaf10802241665494c266229136dca336a1c862d8a4b6bcf77a056e90071",
+    "nativeSha": "e658903a172301e9bce99cf825e9f407ebbabbd9a48f85226797efca980a9aa0",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 8,
+    "mainSha": "96b70e91d74663e4ebfb1e5cdac5b5657e2a3ec8ed62a10c2831c3e112c63545",
+    "nativeSha": "3e78c12ce74c0015094522c4f103aaafb1ab4859942b549ed443b009f124a41f",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+    "hunk": 9,
+    "mainSha": "ce6fcc8335e9769489127806b2ca2ecc6c0486672537b8a58f0f76c279e99976",
+    "nativeSha": "07492b6f197ed905b89333a360827ce5743ad7f35b9d575a6e146179700ac950",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "1c0622aeb9fd51b03c5ee9f6c87cd197fcc7aa182c35608b1ecfaafa987d2e0b",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+    "hunk": 2,
+    "mainSha": "74a8472f41859fb38afef7306dadd235eb72e1ee092fe5b882b89a329199de48",
+    "nativeSha": "51f898e3296bfb9e86d7216121ec28c3ab30527f3249d91afe6c19d2ea543006",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+    "hunk": 3,
+    "mainSha": "0a32fe2e32d280c0b5a90342e91468c79fc4e98a5c67c2801646e0e5f379550f",
+    "nativeSha": "2b9ef89458b117919a622026568d7cb03a8efbb519f473099d337552bef7207f",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+    "hunk": 4,
+    "mainSha": "91570b0e55d5b0febfbb3bcf0f3684af2cfe85bc6b181e66f2841f721e383331",
+    "nativeSha": "08c096281f62060021af82983f47eebc2952786621deb5691d10555dcdad628c",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 1,
+    "mainSha": "e8aab7376d18a7c154c9346650442320d735b5b113d269761a3eaf27c17b9597",
+    "nativeSha": "959c2769498022e7eebfe56399c080a61a0c3e3af001518ad8c8e5c97d325f66",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 2,
+    "mainSha": "73a2419b43ae9bad6c09d33e711ad187dbff6703ee59a109efc8ade830dcbd5a",
+    "nativeSha": "6efd704f6b9451291fbfcc2b50ce43dc381a08886531749540da1eae6c660965",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 3,
+    "mainSha": "773e17b62a530f9269c37dcff54c68d747a06040250fc413d704a208c39e7889",
+    "nativeSha": "5890ca7fa2a2a95617f370d24c0832ac6bd6d9432eb82bf289fe57a415aedfaf",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 4,
+    "mainSha": "bcfe1b34f77ac354654f2629da6016c32a48a06334d1cf7d4243af56de5a006b",
+    "nativeSha": "1ae07e54b68423fa6044d7efb06d63f5465fcd095a02ef1fc9b654ffa7bd70ee",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 5,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "228d8c85c37be254aa443e709481e22a2437f96ac29ff1c27719f390b4b236bd",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 6,
+    "mainSha": "a46a5992104f8a220babbfa6b985e8b757772178bbc891c227d915c0a4d22d09",
+    "nativeSha": "e3c5c69249bfb7cc3dcb678f2af6a9064d77201eabd52d14f555dbfb019f6b08",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 7,
+    "mainSha": "7bad1396d7015ee06746d29e7105b14b9d78253505c7e343dca9e27fcef6f37f",
+    "nativeSha": "92fd549b9ea5a763339156b69001b56316d0be41abf704fc5de49c0cf9157b4d",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.tsx",
+    "hunk": 8,
+    "mainSha": "e02ccc1dab294df70e0f463d6d73a222f905bda4d9ec0e392ef76370ca01452f",
+    "nativeSha": "7ee961a04b1dd91a2f046485215f8f1d22cefe4caf1871df23eda6ae299ade85",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 1,
+    "mainSha": "a30b23ed3ff04c85a71473c11b51f020bdd073390d287c864c4ea183d6d08781",
+    "nativeSha": "e1ad1c5fea65cfd6f438236d4ea094e7f73f3910c53e0be9c719b560dc6c5b89",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 2,
+    "mainSha": "2bee442bda30b4221a948ba9b8d635eee9b0733d2605ebdaff1cf17c8e00a86c",
+    "nativeSha": "10ae107c7e93e08170b185fd1058e7c7f2b1657e6386c7754434fd42c969a4ca",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 3,
+    "mainSha": "c404d0b16d829931fbdc4c5d73c19b5ed4cf310b1536b69ec617692722bb9718",
+    "nativeSha": "028f24235d5da6e0ac545b261d5b17c504cd49f5de48027f4becf70c7b10e6dd",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 4,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "37ba73c287c6215855d7a6ebfbc98a673d70e9a8f32c3eda11e63b674e789a63",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 5,
+    "mainSha": "cca4b6010a93299830441dbc34a31359ea5ff010b8c2619bc55088dc66f5603a",
+    "nativeSha": "576877aa494fee89dbaaa3ff4fe7d74062cdfb102e873e8abfff0597dadd90c2",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 6,
+    "mainSha": "85d339507b7e45a5f95de72296f54c55c6f20061686822e86e629ee7653af32c",
+    "nativeSha": "b64ddecb6eb2544991214ef4dffdc96f9135e80c5fbcfba6c1b2fdf9749bc9ad",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 7,
+    "mainSha": "b18eeef2bb12f7179ede7b5242332a4572aee18af0b8e433e422320f481dba35",
+    "nativeSha": "4a44320fada219e306a9b65e0f4be9bcd6b67aa6f5311b36bde27b159ba95ac9",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 8,
+    "mainSha": "e92bed9b4e0eb5e93c8babc5e08206c68740efa8107c517b9a66eb2e81bfcd4d",
+    "nativeSha": "6096adae6aee89f224a3f138307d232f36e0872f1db17e0d59a3ef8435c7b345",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripBasicEditor.test.ts",
+    "hunk": 9,
+    "mainSha": "079187d17ec569548e0671819524401b94c7be50a2094122298a77f24114e8c1",
+    "nativeSha": "c9a6a2c211051291887ac5faaca7efb0dbf7403dc61c656f4f1993f121379d21",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "467767620f5f587caabb88ceaadca4d11e0c08d2c08545b5ad841e1cf04c1dd2",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 2,
+    "mainSha": "bf25e3d44466449439668be0e4128e849bf6ebe275836ff9466c1864e5682631",
+    "nativeSha": "8cd869a639531f285bc9ac62a4425510461a63c91754a623171d9ba75b3b42bf",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 3,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "cb6c841b3b1fe46e9258e69691f1752887f85cacd42d7489bc284c497aa72c77",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 4,
+    "mainSha": "df6d7918377df037d4611af07f2384ba1dbf4fa433c6cb6c7ef5391a821f52f1",
+    "nativeSha": "fff5d4fb3501d686cd0c7898d94bb40d42fe98d622f11a9bfa0f17c239435508",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 5,
+    "mainSha": "3ad310efc2aad389eee7614357b60a25e247d5f9f2ee4bd834e5eb195f8a5f41",
+    "nativeSha": "65c54d05a096b901a9d3ea0d71efa8c81308d68d9482bccdc0fbced0d026eb32",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 6,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "4353ac1f3fa4ea199b4c2d0c7901669189ea8ff6fadf5aa28b91569169a2e6f0",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 7,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "4353ac1f3fa4ea199b4c2d0c7901669189ea8ff6fadf5aa28b91569169a2e6f0",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripCalendarField.tsx",
+    "hunk": 8,
+    "mainSha": "5982056b66650daebfab88daa4d7db0e1d20a472a6336daf7e568c5d73fd3822",
+    "nativeSha": "ed6980c69682307a3199c19fa0ef5e7dc84f164ea2f11f954e2995bb8382a8f7",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+    "hunk": 1,
+    "mainSha": "7bfc94c15678904667532e3d0d412191da24dba9ac1236cd50b5b9677f6c0a11",
+    "nativeSha": "90f3bf1541a7f71b4b1baeb73be3bb8c2885e56f33734c62539d4cbe176f08f6",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+    "hunk": 2,
+    "mainSha": "7de847253dbebaf0f54ca147386355aa672482ca17005dd21aa31ea53e337ab0",
+    "nativeSha": "1c72e2f79eea3f132b7079c212c2b491b96f7d647a80046faa279635345d6bff",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+    "hunk": 3,
+    "mainSha": "3c58d779ff9a07ecf0dd7991816552dfb548cb2d72d6f9b0b09724df808a9365",
+    "nativeSha": "38c46cb36f941345f23677102f68725f6e3c37413c9d5f3cedc8cc4d6a9bf368",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripViewContext.tsx",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "674d3fa2233892585459add5b6aea45d71c00a1e1950a58574374f08ec1aa01d",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/manualItineraryTypes.ts",
+    "hunk": 1,
+    "mainSha": "0d7a18fe19c9d5b245264e54ced5771c934f1efd45b6319887317b6d523dbde9",
+    "nativeSha": "a0b20ff389cb913eed194e33a6d4d5634bed4bfe068160e1082d8a73ea025202",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/presentation.test.ts",
+    "hunk": 1,
+    "mainSha": "91c6fe68504ab3bd0bdd8784940c1e619d1f0e7c4fb059a738a817a8d0046bae",
+    "nativeSha": "70d657ef617774d4135a276a1a68c819522020dab4106efa09ff4eca3e81a8a0",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/presentation.test.ts",
+    "hunk": 2,
+    "mainSha": "5d4a322fb45b194916748a475d4d1fd4fd0c2fa5a5e4042225297ccac998dd20",
+    "nativeSha": "60bfcccfbeb4c76ee073efb2ff7b2e6b862f4d2eab88332e396487cf593ab4d3",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/presentation.test.ts",
+    "hunk": 3,
+    "mainSha": "bffae5b6219ec21f696933ac84ed63577d5938ce03ec97108fdb14f1a9920997",
+    "nativeSha": "8c40bf2fe9ee980b8d8f43d862f69bc0820f7b1708f4225d390daee8e4732571",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/trip/TripHomeFrame.tsx",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "00eadd719d47706852d47be79918382e9746d223af1e0b50037bd8733d69a198",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/trip/TripHomeFrame.tsx",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "59615499b65965e842241ec31ab72f2f779f5439303334c1948cf17c4e373211",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/trip/TripHomeFrame.tsx",
+    "hunk": 3,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "71261818dad43e273f39ef6a2942ea51cb15be0f266ba2576be7eba548aff1f4",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/trip/TripHomeWidgetHost.test.ts",
+    "hunk": 1,
+    "mainSha": "e3a0bb8a819d21b54a456341390a926419d858446ff4bbde4d8bb809f8695cb0",
+    "nativeSha": "e9739f1bef097c2f9298fecd745ce5ebf1b292e76297875da535af63ea8dfefb",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/trip/TripHomeWidgetHost.test.ts",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "4d30768883ee6e8dce04bdcfda146531ec53e509d09f7c08bba262458cfe0ddf",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/trip-search/TripSearchEntry.test.ts",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "c56d91f377d3e24361768a5d5a3a18a9a6a52b43673f1f0270a27041662f9ffa",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/domain/trip/tripCoverAssets.ts",
+    "hunk": 1,
+    "mainSha": "f3543d959318189a700334243ba68c46cd98c6fe4756d6275b530892e5bf9dc8",
+    "nativeSha": "7f2f643197f4b2c44f6b15203d95e59c2bdcac9c43a5d4b603e9eba872089818",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "metro.config.js",
+    "hunk": 1,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "63df0a12aa254906183a69b4e4afc3326c7b1f1efdb6b89b5c18389eea651189",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/components/appRootEntry.test.ts",
+    "hunk": 1,
+    "mainSha": "16c798b6b2692f409b87181abc686dacbf19dd784ae25d841cb97bddaa1f87b5",
+    "nativeSha": "715dbcdd7301997dad214dfd68b4dd3f1bdacfd3c891b8f5a99c5737b62ab4a8",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/components/appRootEntry.test.ts",
+    "hunk": 2,
+    "mainSha": "83b5c550bb4d07a3f53ddad8290ced2d418e7dccbde02d5995980022cc142954",
+    "nativeSha": "486e711ac2024ee6a0fa612c18070ff92d83db64a4adc712117331502b881bea",
+    "reason": "Preserve approved Native Form/Shell/Home/Calendar/theme/cover implementation and matching regressions; owning Source/Core handled separately"
+  },
+  {
+    "path": "src/features/day-feed/TripScreen.tsx",
+    "hunk": 1,
+    "mainSha": "f07cb764bc4401c19f449a3a24f78dbfb5306902f92a61baa5aa9a6f19b9eae9",
+    "nativeSha": "1df5416ba503faf891399f1f7bfbd000f4109949dd3317aaabdf97206cb8c9b6",
+    "reason": "Keep new main snapshot date adapter import and all Native Shell/Form imports; inspect resulting callers"
+  },
+  {
+    "path": "package.json",
+    "hunk": 1,
+    "mainSha": "e171414b61ad98ac29773fbdf1fdd45035234153fa18752e40346d0b0237e2e9",
+    "nativeSha": "47f06bb7f380ba102510b038686204487c40a722c11cd4dd005d7f34666f6d60",
+    "reason": "Keep current main capture build crypto headless alias; no dependency change"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 1,
+    "mainSha": "a41c6c930181bdf46ae7188f142e687adcfba5d9da7c1531a3609d4ef8d2379d",
+    "nativeSha": "ec9381500ee9f6d4672457fedaa96601dc0ba342edb11b300c7f1b8d4a8e339b",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 2,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "fc96c6b0b86d614a4e4ecc0fc28134721667ac025c01796c6c53fbe9409aa259",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 3,
+    "mainSha": "8bb3f9c455d62e7d517e0ba0cf8d8e9c0883c982c6067a03dcf67019fe3a426d",
+    "nativeSha": "017269790ad65f7a389da9088c7ef35127e49d85eb5904d34fff22625ba0cc33",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 4,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "bc6e42973e2ea048d89496a1a17e8b98dca0eb9ac76bf67422912dd86d75d790",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 5,
+    "mainSha": "bb558f38137e85e45b6d91cd97b640a566204e6f0e3e3b31b4a9c9147b2530de",
+    "nativeSha": "c08826ed3137d358a46618529a593bff8217743a151c9c820adea28a7e8515ff",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 6,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "1c0cedccf53ab06b1a685fafb6bf79e525b354ccd24288efdad0de0d10d542f5",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 7,
+    "mainSha": "ad85c2ba304a081f457bfb9226117865d3a9a8b15626f64bc6f8ca845cd37eae",
+    "nativeSha": "38a8de33e1c78d1cc0b609e8e71689989ad717af37e5a1105365fada63ab8564",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 8,
+    "mainSha": "082e125cbf8da7908c5fa3bb63e16c8fa55c3b47b4953d410b291ffa5153622b",
+    "nativeSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 9,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "304bf6d0f84ff88c63e57768922c47786a43d6ca66df62552f97473b8c4859a8",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 10,
+    "mainSha": "a35c9291652ad5bd81cd640cf62c3fc346019a0c6afb5bb6c951ecf846d9f21c",
+    "nativeSha": "5e7e0e1d01a09671ef79b36e7ba425f7dafd3e67b02ca2eb71a01e95f438d79b",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 11,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "57ed9511a27c00df43ff3a6b9239df06a4bb06a7114ddcd2a42a5a5207ce1a1f",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 12,
+    "mainSha": "4dff51467692e3f427f06f4d69e64fc2aa9b9db150e8f0eb452d541f0c9ab31e",
+    "nativeSha": "768b769edd6ee7e148d196956b6ca8dd0bfe1784c868804dddcca88f2f570355",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  },
+  {
+    "path": "src/ui/catalogs.ts",
+    "hunk": 13,
+    "mainSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeSha": "448aa77a0ad72b9790fa1f8cc6d5d09cbc917683b0685e7076d78c55fff257c3",
+    "reason": "Preserve current main formal Admission copy; retain Native UI keys and compact range parameters"
+  }
+]

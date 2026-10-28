@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-24T12:59:11.351999+00:00",
+  "ownerAuthorization": "Reuse existing Workbench/Web OTR API key; copy directly",
+  "scope": "Credential provisioning only; no SQL/deployment/Provider activation",
+  "sshExitCode": 0,
+  "result": {
+    "status": "DORMANT_BACKEND_CREDENTIAL_FILE_VERIFIED",
+    "path": "/opt/otr/dev-backend/env/universal-provider-20261025.env",
+    "mode": "0600",
+    "owner": "root",
+    "exactCopyVerified": true,
+    "serviceEnvironmentChanged": false,
+    "deployment": false,
+    "activation": false,
+    "providerCalls": 0
+  }
+}

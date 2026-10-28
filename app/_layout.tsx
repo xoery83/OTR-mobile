@@ -98,12 +98,31 @@ export default function RootLayout() {
                 gestureEnabled: false,
               }}
             />
+            <Stack.Screen
+              name="trip-home"
+              options={{
+                headerShown: true,
+                headerTransparent: true,
+                headerTitle: "",
+                headerBackVisible: false,
+                gestureEnabled: true,
+                fullScreenGestureEnabled: false,
+              }}
+            />
             {__DEV__ ? (
               <Stack.Screen
                 name="day-feed-lab"
                 options={{ headerShown: true, headerTitle: t("dayLab.title") }}
               />
             ) : null}
+            <Stack.Screen
+              name="trip-expense/[id]"
+              options={{ headerShown: true, headerTitle: t("common.expense") }}
+            />
+            <Stack.Screen
+              name="trip-currency"
+              options={{ headerShown: true, headerTitle: t("navigation.currency") }}
+            />
             <Stack.Screen
               name="trip-validation"
               options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}

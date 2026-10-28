@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
   effects: [] as (() => void | (() => void))[],
   cleanups: [] as (() => void)[],
   mount: false,
+  refreshEffects: false,
   buttons: [] as { label: string; disabled: boolean; onPress(): void }[],
   repository: vi.fn(),
   picker: vi.fn(),
@@ -24,7 +25,7 @@ vi.mock("react", async (original) => ({
   useSyncExternalStore: (_: unknown, snapshot: () => unknown) => snapshot(),
   useCallback: (callback: unknown) => callback,
   useEffect: (effect: () => void | (() => void)) => {
-    if (state.mount) state.effects.push(effect);
+    if (state.mount || state.refreshEffects) state.effects.push(effect);
   },
   useState: (initial: unknown) => {
     const index = state.cursor++,
@@ -59,6 +60,12 @@ vi.mock("@/ui/controls", () => ({
   },
   UiSection: (props: any) => createElement("section", null, props.title, props.children),
 }));
+vi.mock("@/ui/forms", () => ({
+  UiFormRow: (props: any) => {
+    state.buttons.push(props);
+    return createElement("button", null, props.label, props.value);
+  },
+}));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
@@ -68,8 +75,12 @@ const flush = async () => {
   for (let i = 0; i < 8; i++) await Promise.resolve();
 };
 let key: string | null;
-function render(id = tripId) {
-  const element = LocalTripPhotos({ tripId: id });
+function render(
+  id = tripId,
+  compact = false,
+  registerAdd?: (add: (() => void) | null) => void,
+) {
+  const element = LocalTripPhotos({ tripId: id, compact, registerAdd });
   const next = String(element.key);
   state.mount = next !== key;
   if (state.mount) {
@@ -95,6 +106,7 @@ beforeEach(() => {
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   key = null;
+  state.refreshEffects = false;
   state.hooks = [];
   state.refs = [];
   state.effects = [];
@@ -263,4 +275,36 @@ it("a partial multi-save failure reloads retained rows and reports failure rathe
   const html = render();
   expect(html).toContain("file:///one.jpg");
   expect(html).toContain("tripPhotos.addFailed");
+});
+
+it("keeps the real Photos capability mounted behind a compact More row", async () => {
+  state.repository.mockResolvedValue({
+    listTripPhotos: vi.fn(async () => []),
+    addTripPhoto: vi.fn(),
+  });
+  render(tripId, true);
+  await flush();
+  expect(render(tripId, true)).not.toContain("tripPhotos.choose");
+  state.buttons[0].onPress();
+  expect(render(tripId, true)).toContain("tripPhotos.choose");
+});
+
+it("shows ActionIsland picker failures even while the compact Photos row is collapsed", async () => {
+  const repo = { listTripPhotos: vi.fn(async () => []), addTripPhoto: vi.fn() };
+  state.repository.mockResolvedValue(repo);
+  let add: (() => void) | null = null;
+  const register = (value: (() => void) | null) => {
+    add = value;
+  };
+  render(tripId, true, register);
+  await flush();
+  state.refreshEffects = true;
+  expect(render(tripId, true, register)).not.toContain("tripPhotos.choose");
+  state.refreshEffects = false;
+  state.picker.mockRejectedValueOnce(new Error("PICKER_FAILED"));
+  expect(add).toBeTypeOf("function");
+  add!();
+  await flush();
+  expect(render(tripId, true, register)).toContain("tripPhotos.addFailed");
+  expect(repo.addTripPhoto).not.toHaveBeenCalled();
 });

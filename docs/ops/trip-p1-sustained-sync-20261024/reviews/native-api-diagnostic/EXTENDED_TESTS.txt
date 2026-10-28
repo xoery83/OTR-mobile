@@ -1,0 +1,13 @@
+
+> otr-mobile@0.1.0 test
+> vitest run --configLoader runner src/data/api/client.test.ts src/data/api/clientBounded.test.ts
+
+
+ RUN  v4.1.11 /private/tmp/otr-native-api-diagnostic-review-20261024/snapshot
+
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  17:23:50
+   Duration  287ms (transform 47ms, setup 0ms, import 141ms, tests 157ms, environment 0ms)
+

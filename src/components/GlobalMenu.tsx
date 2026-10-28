@@ -1,3 +1,8 @@
+import { TripMembersSheet } from "@/features/day-feed/TripMembersSheet";
+import {
+  readTripPreparationSetupRepository,
+  type TripPreparationSetup,
+} from "@/data/repositories/tripPreparationSetupRepository";
 import { shellShowsUpdates } from "./bottomBarVisibility";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -50,6 +55,12 @@ export function GlobalMenu({
     getAccountGeneration,
   );
   const { quickActions, workingTrip } = useTripView();
+  const [membersRead, setMembersRead] = useState<TripPreparationSetup | null>(null);
+  const [membersVisible, setMembersVisible] = useState<{
+    tripId: string;
+    generation: number;
+  } | null>(null);
+  const membersRequest = useRef(0);
   const returnLease = useMemo(
     () => ({
       quickActions,
@@ -63,8 +74,16 @@ export function GlobalMenu({
   const currentReturn = useRef<typeof returnLease | null>(returnLease);
   useLayoutEffect(() => {
     currentReturn.current = returnLease;
+    const requestLifetime = membersRequest;
+    // Clear only this still-mounted route; cleanup invalidates reads immediately.
+    queueMicrotask(() => {
+      if (currentReturn.current !== returnLease) return;
+      setMembersRead(null);
+      setMembersVisible(null);
+    });
     return () => {
       currentReturn.current = null;
+      requestLifetime.current++;
     };
   }, [returnLease]);
   const changeLanguage = () =>
@@ -153,8 +172,58 @@ export function GlobalMenu({
           : router.push(destination.path as never),
     }),
   );
+  const tripContextId = selectedTripMenuId(pathname, params);
+  const hasTripItems = module === "TRIP" && !!tripContextId;
+  const membersCurrent =
+    membersRead?.context.tripId === tripContextId &&
+    membersRead.context.generation === generation;
+  const openMembers = async () => {
+    const request = ++membersRequest.current;
+    const current = () =>
+      currentReturn.current === returnLease &&
+      generation === getAccountGeneration() &&
+      request === membersRequest.current;
+    if (!tripContextId || !current()) return;
+    try {
+      const repository = await readTripPreparationSetupRepository();
+      if (!current()) return;
+      const result = await repository.read(tripContextId);
+      if (
+        !current() ||
+        result.context.tripId !== tripContextId ||
+        result.context.generation !== generation
+      )
+        return;
+      setMembersRead(result);
+      setMembersVisible({ tripId: tripContextId, generation });
+    } catch {
+      if (current()) {
+        setMembersRead(null);
+        setMembersVisible({ tripId: tripContextId, generation });
+      }
+    }
+  };
+  const tripItems: AppNavigationMenuItem[] = hasTripItems
+    ? [
+        {
+          icon: "person.2",
+          label: t("tripHome.members"),
+          onPress: () => {
+            void openMembers();
+          },
+        },
+        {
+          icon: "doc.text",
+          label: t("tripHome.documents"),
+          disabled: true,
+          onPress: () => {},
+        },
+        { icon: "photo", label: t("tripHome.photos"), disabled: true, onPress: () => {} },
+      ]
+    : [];
   const returnTo = moduleReturnPath(module);
   const sections: AppNavigationMenuItem[][] = [
+    ...(hasTripItems ? [tripItems] : []),
     ...(contextItems.length ? [contextItems] : []),
     ...(pathname === "/trip" &&
     !selectedTripMenuId(pathname, params) &&
@@ -259,16 +328,32 @@ export function GlobalMenu({
     .join(" · ");
 
   return (
-    <AppNavigationMenu
-      nativeToolbar={nativeToolbar}
-      identity={{
-        primary: displayName ?? identity?.displayName ?? t("common.currentAccount"),
-        secondary: detail || null,
-      }}
-      onIdentityPress={() =>
-        router.push({ pathname: "/account", params: { returnTo } } as never)
-      }
-      sections={sections}
-    />
+    <>
+      <AppNavigationMenu
+        nativeToolbar={nativeToolbar}
+        identity={{
+          primary: displayName ?? identity?.displayName ?? t("common.currentAccount"),
+          secondary: detail || null,
+        }}
+        onIdentityPress={() =>
+          router.push({ pathname: "/account", params: { returnTo } } as never)
+        }
+        sections={sections}
+      />
+      <TripMembersSheet
+        visible={
+          membersVisible?.tripId === tripContextId &&
+          membersVisible?.generation === generation &&
+          hasTripItems &&
+          (membersRead === null || !!membersCurrent)
+        }
+        members={membersCurrent ? membersRead.members : null}
+        onClose={() => {
+          membersRequest.current++;
+          setMembersVisible(null);
+          setMembersRead(null);
+        }}
+      />
+    </>
   );
 }

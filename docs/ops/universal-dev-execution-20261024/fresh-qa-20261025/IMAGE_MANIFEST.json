@@ -1,0 +1,21 @@
+{
+  "status": "LOCAL_IMAGE_FIXED_NOT_DEPLOYED",
+  "sourceHead": "04a3197dcf0a86771858f24399ef00fe05d0620e",
+  "dockerfileSha256": "11ea0e3329ce5fe90828bd73f98c829c6e2c66a6ab7092ab9c1740f5c5a09d5e",
+  "baseImageId": "sha256:73d518d4aa573590a9fe43aa48b767b180d998d5cb6e341221ce2eed8e80ef30",
+  "imageId": "sha256:40e998c31815a77452dd52dbbd6d8789ea8a815a6d1afba068029e97e919bbaa",
+  "bundles": {
+    "server.mjs": "b45e3cb990d38b9e307ee23bb496257f5bf1047fbac8e77af131f8bcc425ab17",
+    "server-capture.mjs": "5cd029886934ba9b799e09654f85425b03d612ec91d34ca269500a9f1443b394",
+    "universal-prepare.mjs": "93af3b8b4bffaf0b7eb146ed2579d77f4c8d63b14cf74d41051157ab73ad40c0"
+  },
+  "sql": {
+    "backend/sql/universal_model_task_dependency_candidate.sql": "5366c24291c3df8426cb350e7c1b428630e2906d6629d8e64f35d0ce26695576",
+    "backend/sql/universal_original_result_candidate.sql": "06cfbfd5df167757aeaa3a4746fc5333df248fe4ba4316ccac3a82fea2ccea3b",
+    "backend/sql/universal_original_source_candidate.sql": "b93a6648f2831597c43e07e8c89bebd9f3c8d3832bf158d13752f95f1263ecf4",
+    "backend/sql/universal_provider_admission_candidate.sql": "365db344435020d52b397824bc8b03384d2c07360a61d978692dfcf0e785c372",
+    "backend/sql/universal_run_only_guard_candidate.sql": "511825eea1c1d601d49e243e68edab5bae07dcf8100cf64ea499e3a55d0838f5",
+    "backend/sql/universal_source_host_candidate.sql": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
+    "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95"
+  }
+}

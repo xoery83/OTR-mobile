@@ -253,3 +253,22 @@ it("requires approved scoped claim/finalization before selecting intelligence wa
   expect(worker.push).not.toHaveBeenCalled();
   expect(repository.markProcessing).not.toHaveBeenCalled();
 });
+
+// A manual generic retry must never expose an uninstalled Person writer.
+it("keeps local Person creation closed even with a permissive consumer", async () => {
+  const push = vi.fn();
+  const repository = {
+    listPending: async () => [{ ...operation, operationType: "TRIP_PERSON_CREATE" }],
+    markProcessing: vi.fn(),
+    markCompleted: vi.fn(),
+    markRetryable: vi.fn(),
+  };
+  expect(
+    (
+      await createSyncEngine(repository, { push }, undefined, () => true).run(
+        "AUTHENTICATED_ONLINE",
+      )
+    ).processedCount,
+  ).toBe(0);
+  expect(push).not.toHaveBeenCalled();
+});

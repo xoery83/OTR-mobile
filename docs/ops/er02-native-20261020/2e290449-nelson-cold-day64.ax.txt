@@ -1,0 +1,146 @@
+Window: "OTR MT Correction 01 QA", App: Device Hub.
+0 standard window OTR MT Correction 01 QA – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-2, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-2, SidebarNavigationSplitView
+			3 scroll area Secondary Actions: Scroll Up, Scroll Down
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					8 row (selected) Description: iphone.gen3, Value: OTR MT Correction 01 QA
+27.0
+Simulator
+					9 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					10 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					11 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - B
+27.0
+Simulator
+					12 row (selectable) Description: iphone.gen3, Value: OTR Apple Local Model Probe 26.5
+26.5
+Simulator
+					13 row (selectable) Description: iphone.gen3, Value: OTR Flexible CP02 Held QA
+27.0
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR 02 Anonymous
+27.0
+Simulator
+					15 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR Synthetic QA
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen3, Value: OTR Day Feed Lab DL1
+27.0
+Simulator
+					17 row (selectable) Description: iphone.gen3, Value: OTR Flight Native03 CLOSED
+27.0
+Simulator
+					18 row (selectable) Description: iphone.gen3, Value: OTR G2 FLEX Main Integration
+27.0
+Simulator
+					19 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro Max
+27.0
+Simulator
+					20 row (selectable) Description: iphone.gen1, Value: OTR N1 NOW Compact QA
+27.0
+Simulator
+					21 row (selectable) Description: iphone.gen3, Value: OTR N1 NOW Large QA
+27.0
+Simulator
+					22 row (selectable) Description: iphone.gen1, Value: OTR P1 V1R5 Compact QA
+27.0
+Simulator
+					23 row (selectable) Description: iphone.gen1, Value: OTR P2 Flight Small QA
+27.0
+Simulator
+					24 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - A
+27.0
+Simulator
+					25 row (selectable) Description: iphone.gen1, Value: OTR Capture C3 Small QA
+27.0
+Simulator
+					26 row (selectable) Description: iphone.gen3, Value: OTR Capture C3 Synthetic QA
+27.0
+Simulator
+					27 row (selectable) Description: Unavailable, Value: Collapsed
+				28 scroll bar (settable, float) 0
+					29 value indicator (settable, float) 0
+					30 increment arrow button
+					31 decrement arrow button
+					32 increment page button
+					33 decrement page button
+			34 search text field (settable) Search
+				35 button Search
+			36 splitter (disabled, settable, float) 248
+			37 container
+				38 container
+					39 button Description: Open app menu, Secondary Actions: Cancel
+					40 button Description: Choose a date, Secondary Actions: Cancel
+					41 button Description: Search, Secondary Actions: Cancel
+					42 heading Description: Day 64 · Dec 18, 2026, Secondary Actions: Cancel
+					43 text Description: No plans for today., Secondary Actions: Cancel
+					44 button Description: Home, Help: Open My Trips, Secondary Actions: Cancel
+					45 button (selected) Description: Day, Help: Open the selected Day, Secondary Actions: Cancel
+					46 button Description: Ledger, Secondary Actions: Cancel
+					47 button Description: Updates, Secondary Actions: Cancel
+					48 button Description: Add to this trip, Secondary Actions: Cancel
+				49 button Description: Home, ID: app.grid.3x3
+				50 button Description: Screenshot, ID: camera.viewfinder
+				51 button Description: Record, ID: record.circle
+				52 button Rotate Left
+		53 splitter (disabled, settable, float) 820
+		54 container
+			55 Inspector Subcategory
+				56 radio button Description: Info, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.info
+				57 radio button Description: Apps, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				58 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			59 scroll area Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+				60 container
+					61 text Name, Help: OTR MT Correction 01 QA, Value: OTR MT Correction 01 QA iOS 27.0, ID: info.inspector.item.name.value
+				62 container
+					63 text Model, Help: iPhone 18 Pro, Value: iPhone 18 Pro AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A
+				64 heading Paired Simulators
+				65 container
+					66 scroll area
+						67 list
+							68 row (selectable) No Paired Watch Simulators
+					69 button (disabled) Description: Add, Help: Pair Apple Watch
+					70 button (disabled) Description: Remove, Help: Unpair Apple Watch
+				71 button Edit Visibility
+			72 container Description: Info, ID: Inspector.com.apple.devicekit.inspector.info
+	73 toolbar
+		74 menu button Add, Help: Add Device, ID: plus
+		75 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		76 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		77 toggle button Description: Capture Keyboard, Value: off
+		78 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		79 Zoom
+			80 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			81 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 1
+			82 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 0, ID: 1.magnifyingglass
+			83 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		84 button Description: Switch to compact window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		85 menu button More, Help: More Actions, ID: ellipsis
+		86 Inspector Category
+			87 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			88 radio button Description: text.document, Help: Reports, Value: 0
+			89 radio button Description: Info, Value: 1, ID: info
+	90 close button
+	91 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	92 minimize button
+	93 text OTR MT Correction 01 QA iOS 27.0
+94 menu bar
+	95 Device Hub
+	96 File
+	97 Edit
+	98 View
+	99 Device
+	100 Controls
+	101 Window
+	102 Help

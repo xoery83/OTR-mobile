@@ -2,6 +2,8 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -11,17 +13,27 @@ import {
   validateCalendarDate,
   type DayEvent,
   type DayQuery,
+  type DayViewContext,
 } from "@/domain/trip/dayReadModel";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-export type TripView = { tripId: string; date: string; zone: string; generation: number };
+import {
+  dayNavigationBookmarkRepository,
+  type DayNavigationBookmark,
+} from "@/data/repositories/dayNavigationBookmarkRepository";
+export type TripView = DayViewContext & {
+  tripId: string;
+  date: string;
+  generation: number;
+};
 export type DayReading = {
   offset: number;
   focus: string | null;
   layout?: "WHOLE_TRIP";
   anchoredDate?: string;
+  anchor?: { key: string; date: string; within: number };
 };
 export type DayEntryKind =
   "RESUME" | "EXPLICIT_TODAY_HEADER" | "FIRST_VALID_PAST_DAY_HEADER";
@@ -40,6 +52,55 @@ export const emptyTripNavigation: TripNavigation = {
   bookmarks: {},
   lastTrip: null,
 };
+export function hydrateDayReadingHints(
+  state: TripNavigation,
+  hints: readonly DayNavigationBookmark[],
+  generation: number,
+): TripNavigation {
+  if (generation !== getAccountGeneration()) return state;
+  const bookmarks = { ...state.bookmarks };
+  for (const hint of hints) {
+    if (bookmarks[hint.tripId]?.view.generation === generation) continue;
+    bookmarks[hint.tripId] = {
+      view: {
+        tripId: hint.tripId,
+        date: hint.date,
+        generation,
+        ...(hint.zone === null
+          ? { zone: null, viewMode: "FLOATING" }
+          : { zone: hint.zone }),
+      },
+      reading: {
+        offset: 0,
+        focus: null,
+        layout: "WHOLE_TRIP",
+        anchoredDate: hint.date,
+        ...(hint.anchor ? { anchor: hint.anchor } : {}),
+      },
+    };
+  }
+  // Preferences never select a route, working Trip or an explicit Today entry.
+  return { ...state, bookmarks };
+}
+export function dayReadingHint(state: TripNavigation): DayNavigationBookmark | null {
+  if (state.entry.kind !== "RESUME" || !state.view) return null;
+  const saved = state.bookmarks[state.view.tripId];
+  if (
+    !saved ||
+    saved.view.generation !== state.view.generation ||
+    saved.reading.layout !== "WHOLE_TRIP" ||
+    !saved.reading.anchoredDate
+  )
+    return null;
+  return {
+    tripId: saved.view.tripId,
+    date: saved.reading.anchoredDate,
+    ...(saved.view.zone === null
+      ? { zone: null, viewMode: "FLOATING" as const }
+      : { zone: saved.view.zone }),
+    ...(saved.reading.anchor ? { anchor: saved.reading.anchor } : {}),
+  };
+}
 export function enterTripDay(
   state: TripNavigation,
   view: TripView | null,
@@ -51,7 +112,8 @@ export function enterTripDay(
     kind === "RESUME" &&
     saved?.view.generation === view.generation &&
     saved.view.date === view.date &&
-    saved.view.zone === view.zone
+    saved.view.zone === view.zone &&
+    (saved.view.viewMode ?? "NAMED_ZONE") === (view.viewMode ?? "NAMED_ZONE")
       ? saved.reading
       : { offset: 0, focus: null };
   return {
@@ -78,7 +140,8 @@ export function saveTripReading(
     state.view?.tripId !== view.tripId ||
     state.view.generation !== view.generation ||
     state.view.date !== view.date ||
-    state.view.zone !== view.zone
+    state.view.zone !== view.zone ||
+    (state.view.viewMode ?? "NAMED_ZONE") !== (view.viewMode ?? "NAMED_ZONE")
   )
     return state;
   let anchoredDate: string | undefined;
@@ -97,6 +160,15 @@ export function saveTripReading(
         reading: {
           offset: Number.isFinite(reading.offset) ? Math.max(0, reading.offset) : 0,
           focus: reading.focus,
+          ...(reading.anchor &&
+          typeof reading.anchor.key === "string" &&
+          reading.anchor.key.length > 0 &&
+          reading.anchor.key.length <= 512 &&
+          reading.anchor.date === anchoredDate &&
+          Number.isFinite(reading.anchor.within) &&
+          reading.anchor.within >= 0
+            ? { anchor: reading.anchor }
+            : {}),
           ...(reading.layout === "WHOLE_TRIP"
             ? { layout: reading.layout, ...(anchoredDate ? { anchoredDate } : {}) }
             : {}),
@@ -110,6 +182,8 @@ export function switchWorkingTrip(
   tripId: string,
   generation: number,
 ): TripNavigation {
+  if (state.workingTrip?.tripId === tripId && state.workingTrip.generation === generation)
+    return state;
   const saved = state.bookmarks[tripId];
   return {
     ...state,
@@ -127,6 +201,7 @@ export function switchWorkingTrip(
 }
 export type TripQuickActions = {
   editTrip?: () => void;
+  members?: () => void;
   backToTrips?: () => void;
   chooseDay?: () => void;
   tripName: string;
@@ -136,7 +211,17 @@ export type TripQuickActions = {
   itinerary(date: string | null): void;
   photos?: () => void;
 };
+export type DayShellChrome = {
+  tripId: string;
+  generation: number;
+  owner: symbol;
+  navigationVisible: boolean;
+};
 const Context = createContext<{
+  dayShellChrome: DayShellChrome | null;
+  publishDayShellChrome: (value: DayShellChrome | null, owner: symbol) => void;
+  manualOutcome: { tripId: string; generation: number; itemId: string } | null;
+  reportManualOutcome: (tripId: string, generation: number, itemId: string) => void;
   localOutcome: { tripId: string; generation: number; id: string } | null;
   reportLocalOutcome: (tripId: string, generation: number, id: string) => void;
   quickActions: TripQuickActions | null;
@@ -156,6 +241,10 @@ const Context = createContext<{
   resume: () => void;
   saveReading: (view: TripView, reading: DayReading) => void;
 }>({
+  dayShellChrome: null,
+  publishDayShellChrome: () => {},
+  manualOutcome: null,
+  reportManualOutcome: () => {},
   localOutcome: null,
   reportLocalOutcome: () => {},
   quickActions: null,
@@ -176,6 +265,86 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     getAccountGeneration,
   );
   const [state, setState] = useState(emptyTripNavigation);
+  const lastPersisted = useRef("");
+  useEffect(() => {
+    let cancelled = false;
+    lastPersisted.current = "";
+    void dayNavigationBookmarkRepository
+      .list()
+      .then((hints) => {
+        if (!cancelled && generation === getAccountGeneration())
+          setState((previous) => hydrateDayReadingHints(previous, hints, generation));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [generation]);
+  const hint = state.view?.generation === generation ? dayReadingHint(state) : null;
+  const hintJson = hint ? JSON.stringify(hint) : "";
+  const pendingHint = useRef<{
+    json: string;
+    tripId: string;
+    generation: number;
+    timer: ReturnType<typeof setTimeout> | null;
+  } | null>(null);
+  const flushHint = useCallback(() => {
+    const pending = pendingHint.current;
+    pendingHint.current = null;
+    if (!pending) return;
+    if (pending.timer !== null) clearTimeout(pending.timer);
+    if (pending.generation !== getAccountGeneration()) return;
+    void dayNavigationBookmarkRepository
+      .record(JSON.parse(pending.json))
+      .then((saved) => {
+        if (
+          pending.generation === getAccountGeneration() &&
+          saved.some((hint) => JSON.stringify(hint) === pending.json)
+        )
+          lastPersisted.current = pending.json;
+      })
+      .catch(() => {});
+  }, []);
+  useEffect(() => {
+    const previous = pendingHint.current;
+    if (previous) {
+      if (
+        previous.generation !== generation ||
+        !hintJson ||
+        JSON.parse(hintJson).tripId !== previous.tripId
+      )
+        flushHint();
+      else {
+        // Coalesce same-Trip reading frames; leaving the Trip must flush its last accepted hint.
+        if (previous.timer !== null) clearTimeout(previous.timer);
+        pendingHint.current = null;
+      }
+    }
+    if (!hintJson || hintJson === lastPersisted.current) return;
+    const pending = {
+      json: hintJson,
+      tripId: JSON.parse(hintJson).tripId as string,
+      generation,
+      timer: null as ReturnType<typeof setTimeout> | null,
+    };
+    pendingHint.current = pending;
+    pending.timer = setTimeout(() => {
+      if (pendingHint.current === pending) flushHint();
+    }, 350);
+  }, [generation, hintJson, flushHint]);
+  useEffect(() => () => flushHint(), [generation, flushHint]);
+  const [manualOutcome, setManualOutcome] = useState<{
+    tripId: string;
+    generation: number;
+    itemId: string;
+  } | null>(null);
+  const reportManualOutcome = useCallback(
+    (tripId: string, generation: number, itemId: string) => {
+      if (generation === getAccountGeneration())
+        setManualOutcome({ tripId, generation, itemId });
+    },
+    [],
+  );
   const [localOutcome, setLocalOutcome] = useState<{
     tripId: string;
     generation: number;
@@ -185,6 +354,16 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     (tripId: string, captured: number, id: string) => {
       if (captured === getAccountGeneration())
         setLocalOutcome({ tripId, generation: captured, id });
+    },
+    [],
+  );
+  const [dayShellChrome, setDayShellChrome] = useState<DayShellChrome | null>(null);
+  const publishDayShellChrome = useCallback(
+    (value: DayShellChrome | null, owner: symbol) => {
+      if (value && value.generation !== getAccountGeneration()) return;
+      setDayShellChrome(
+        (previous) => value ?? (previous?.owner === owner ? null : previous),
+      );
     },
     [],
   );
@@ -232,10 +411,14 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     if (captured !== getAccountGeneration() || !tripId) return;
     setState((previous) => switchWorkingTrip(previous, tripId, captured));
   }, []);
-  // One generation-fenced transient navigation owner; never canonical/business persistence.
+  // One navigation owner; bounded account preferences confer no business/read authority.
   return (
     <Context.Provider
       value={{
+        dayShellChrome: dayShellChrome?.generation === generation ? dayShellChrome : null,
+        publishDayShellChrome,
+        manualOutcome: manualOutcome?.generation === generation ? manualOutcome : null,
+        reportManualOutcome,
         localOutcome: localOutcome?.generation === generation ? localOutcome : null,
         reportLocalOutcome,
         quickActions: quickActions?.generation === generation ? quickActions : null,

@@ -1,3 +1,9 @@
+import { reserveNativeQaGet, QaReadBudgetError } from "./nativeQaReadBudget";
+import {
+  nativeFetchDiagnostic,
+  type NativeFetchDiagnostic,
+  type SafeFetchName,
+} from "./nativeFetchDiagnostic";
 import {
   createRequestBoundary,
   readBoundedJson,
@@ -32,6 +38,12 @@ export type ApiFailureDiagnostic = {
   code?: string;
   requestId?: string;
   at: string;
+  stage?: "AUTH" | "FETCH" | "READ" | "VALIDATE";
+  errorName?: SafeFetchName;
+  thrownType?: NativeFetchDiagnostic["thrownType"];
+  fetchClass?: NativeFetchDiagnostic["fetchClass"];
+  nativeDomain?: NativeFetchDiagnostic["nativeDomain"];
+  nativeCode?: number;
 };
 let lastFailure: ApiFailureDiagnostic | null = null;
 export function readLastApiFailure() {
@@ -71,6 +83,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
     const serializedBody = body === undefined ? undefined : JSON.stringify(body);
 
     async function send(accessToken?: string | null) {
+      reserveNativeQaGet(method, path, baseUrl);
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -161,7 +174,14 @@ export function createApiClient(options: ApiClientOptions = {}) {
       const failure =
         error instanceof ApiClientError
           ? error
-          : new ApiClientError("OTR API is unavailable.", "network");
+          : error instanceof QaReadBudgetError
+            ? new ApiClientError(
+                "OTR QA read budget is closed.",
+                "network",
+                undefined,
+                error.code,
+              )
+            : new ApiClientError("OTR API is unavailable.", "network");
       lastFailure = {
         method,
         route: path.split("?")[0].replace(/[0-9a-f]{8}-[0-9a-f-]{27}/gi, ":id"),
@@ -183,6 +203,8 @@ export function createApiClient(options: ApiClientOptions = {}) {
     body?: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
+    let diagnosticHttpCode: string | undefined;
+    let stage: "AUTH" | "FETCH" | "READ" | "VALIDATE" = "AUTH";
     const boundary = createRequestBoundary(
       timeoutMs,
       options.signal,
@@ -196,8 +218,10 @@ export function createApiClient(options: ApiClientOptions = {}) {
         ? await boundary.run(() => options.accessTokenProvider!(false))
         : options.accessToken;
       async function send() {
-        return boundary.run(() =>
-          fetchImplementation(`${baseUrl}${path}`, {
+        stage = "FETCH";
+        return boundary.run(() => {
+          reserveNativeQaGet(method, path, baseUrl);
+          return fetchImplementation(`${baseUrl}${path}`, {
             method,
             redirect: "error",
             signal: boundary.signal,
@@ -207,17 +231,19 @@ export function createApiClient(options: ApiClientOptions = {}) {
               ...headers,
             },
             body: body === undefined ? undefined : JSON.stringify(body),
-          }),
-        );
+          });
+        });
       }
       let response = await send();
       if (response.status === 401 && options.accessTokenProvider) {
         void response.body?.cancel().catch(() => undefined);
+        stage = "AUTH";
         token = await boundary.run(() =>
           options.accessTokenProvider!(true, token ?? undefined),
         );
         response = await send();
       }
+      stage = "READ";
       const payload = await readBoundedJson(
         response,
         response.ok ? maximum : 8192,
@@ -228,6 +254,24 @@ export function createApiClient(options: ApiClientOptions = {}) {
         const error = z
           .object({ error: z.object({ code: z.string() }) })
           .safeParse(payload);
+        if (
+          error.success &&
+          [
+            "NOT_VISIBLE",
+            "CORE_REPLAY_UNAVAILABLE",
+            "CORE_CAPABILITY_CLOSED",
+            "CORE_READ_UNAVAILABLE",
+            "CORE_EXECUTION_UNAVAILABLE",
+            "INVALID_PAYLOAD",
+            "UNSUPPORTED_CLIENT",
+            "OPERATION_REUSE_MISMATCH",
+            "REVISION_CONFLICT",
+            "GRAPH_CHANGED",
+            "INVALID_BASE_VECTOR",
+            "INVALID_TARGET_KIND",
+          ].includes(error.data.error.code)
+        )
+          diagnosticHttpCode = error.data.error.code;
         const code =
           error.success &&
           [
@@ -256,6 +300,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
           code,
         );
       }
+      stage = "VALIDATE";
       const parsed = schema.safeParse(payload);
       if (!parsed.success)
         throw new ApiClientError(
@@ -267,15 +312,44 @@ export function createApiClient(options: ApiClientOptions = {}) {
       boundary.assertCurrent();
       return parsed.data;
     } catch (error) {
-      if (error instanceof ApiClientError) throw error;
-      if (error instanceof RequestBoundaryError)
-        throw new ApiClientError(
-          "OTR API read is unavailable.",
-          error.code === "REQUEST_TIMEOUT" ? "timeout" : "validation",
-          undefined,
-          error.code,
-        );
-      throw new ApiClientError("OTR API read is unavailable.", "network");
+      const failure =
+        error instanceof ApiClientError
+          ? error
+          : error instanceof QaReadBudgetError
+            ? new ApiClientError(
+                "OTR QA read budget is closed.",
+                "network",
+                undefined,
+                error.code,
+              )
+            : error instanceof RequestBoundaryError
+              ? new ApiClientError(
+                  "OTR API read is unavailable.",
+                  error.code === "REQUEST_TIMEOUT" ? "timeout" : "validation",
+                  undefined,
+                  error.code,
+                )
+              : new ApiClientError("OTR API read is unavailable.", "network");
+      // Same metadata-only diagnostic as ordinary requests. Never retain payload, headers or error.details.
+      lastFailure = {
+        method,
+        route: path.split("?")[0].replace(/[0-9a-f]{8}-[0-9a-f-]{27}/gi, ":id"),
+        kind: failure.kind,
+        status: failure.status,
+        code: failure.code ?? diagnosticHttpCode,
+        stage,
+        errorName:
+          error instanceof Error &&
+          ["TypeError", "Error", "AbortError"].includes(error.name)
+            ? (error.name as "TypeError" | "Error" | "AbortError")
+            : undefined,
+        ...((stage as NonNullable<ApiFailureDiagnostic["stage"]>) === "FETCH"
+          ? nativeFetchDiagnostic(error)
+          : {}),
+        at: new Date().toISOString(),
+      };
+      console.info(JSON.stringify({ event: "api_request_failed", ...lastFailure }));
+      throw failure;
     } finally {
       boundary.close();
     }

@@ -46,13 +46,19 @@ const createStyles = (colors: UiColors) =>
     subtitle: { color: colors.textSecondary, fontSize: 11, fontWeight: "600" },
   });
 
-// The frame, not each scroll view or overlay, owns the native header inset.
+// Default screens reserve the inset here; Day underlap reserves it in its scroll header.
 export const navigationContentFrameOptions = { headerTransparent: true } as const;
-export function NavigationContentFrame({ children }: { children: ReactNode }) {
+export function NavigationContentFrame({
+  children,
+  underlapHeader = false,
+}: {
+  children: ReactNode;
+  underlapHeader?: boolean;
+}) {
   const headerHeight = useHeaderHeight();
   const styles = useThemedStyles(createContentFrameStyles);
   return (
-    <View style={[styles.frame, { paddingTop: headerHeight }]}>
+    <View style={[styles.frame, { paddingTop: underlapHeader ? 0 : headerHeight }]}>
       <View style={styles.viewport}>{children}</View>
     </View>
   );

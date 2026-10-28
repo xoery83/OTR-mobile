@@ -9,6 +9,7 @@ import type {
 import {
   suggestedManualExpenseDate,
   initialExpenseDraftDate,
+  initialExpenseDraftTitle,
   applyExpenseSharing,
   compactExpenseDate,
   exactSharingAllocation,
@@ -303,4 +304,18 @@ it("the real draft date initializer preserves edits and receipt/source dates bef
   expect(initialExpenseDraftDate(undefined, undefined, "unknown", true, fallback)).toBe(
     fallback,
   );
+});
+
+it("prefills the Item name only for a new manual Expense without replacing existing or source titles", () => {
+  expect(initialExpenseDraftTitle(undefined, undefined, "  Garden walk  ", true)).toBe(
+    "Garden walk",
+  );
+  expect(initialExpenseDraftTitle("Existing", undefined, "Garden walk", true)).toBe(
+    "Existing",
+  );
+  expect(initialExpenseDraftTitle(undefined, "Receipt title", "Garden walk", true)).toBe(
+    "Receipt title",
+  );
+  expect(initialExpenseDraftTitle(undefined, undefined, "Garden walk", false)).toBe("");
+  expect(initialExpenseDraftTitle(undefined, undefined, ["wrong"], true)).toBe("");
 });

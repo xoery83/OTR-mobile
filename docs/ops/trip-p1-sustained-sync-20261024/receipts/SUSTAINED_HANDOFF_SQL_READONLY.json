@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-10-24T03:15:41.009732+00:00",
+  "qualification": {
+    "oldGatesClosed": true,
+    "policies": [
+      {
+        "actor": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+        "cutoff": "2026-10-24T01:41:25.16+00:00",
+        "enabled": true
+      }
+    ],
+    "rolesActive": 4
+  }
+}

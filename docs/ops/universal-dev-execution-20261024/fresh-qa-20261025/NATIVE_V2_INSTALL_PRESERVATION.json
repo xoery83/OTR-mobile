@@ -1,0 +1,12 @@
+{
+  "status": "ACTUAL_AD5_V2_INSTALLED_DATA_HASHES_UNCHANGED",
+  "dataContainer": "/Users/xoery/Library/Developer/CoreSimulator/Devices/AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A/data/Containers/Data/Application/D06030D2-365B-4EFE-9D26-D601C27DCCF7",
+  "beforeFirstLaunch": true,
+  "unchanged": {
+    "Documents/SQLite/otr-mobile.db": true,
+    "Documents/SQLite/otr-mobile.db-wal": true,
+    "Documents/otr-native-qa-read-budget-v1.json": true
+  },
+  "simulatedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile",
+  "reset": false
+}

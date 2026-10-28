@@ -1,0 +1,38 @@
+The following is a diff from the previous accessibility tree for Window: "OTR MT Correction 01 QA" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 39
+~					6 row (selectable) Expanded
+~					7 row (selectable) OTR P2 Flight QA
+27.0
+Simulator
+~					8 row (selectable) OTR CP02 Native Host Recovery
+27.0
+Simulator
+~					9 row (selected) OTR MT Correction 01 QA
+27.0
+Simulator
+~					10 row (selectable) leon’s iPad
+26.0.1
+iPad Air (5th generation)
+~					11 row (selectable) iPhone 17 Pro
+26.5
+Simulator
+~					12 row (selectable) OTR Apple Local Model Probe 26.5
+26.5
+Simulator
+~					13 row (selectable) Expanded
+~					14 row (selectable) Leon's iPhone16pro
+27.0.1
+iPhone 16 Pro
+~			17 splitter (settable, float) 308
+~				21 button app.grid.3x3
+~				22 button camera.viewfinder
+~				23 button record.circle
+~				24 button
+~		25 splitter (settable, float) 820
+~							36 row (selectable) OTR Mobile
+0.1.0
+com.xoery.otrmobile
+~					38 button
+~			40 container Inspector.com.apple.devicekit.inspector.apps
+~				41 image magnifyingglass
+~		46 toggle button Help: Sort and Filter, Value: off

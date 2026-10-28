@@ -3,6 +3,7 @@ export function bottomBarVisible(pathname: string) {
   return (
     pathname === "/" ||
     pathname === "/trip" ||
+    pathname === "/trip-home" ||
     pathname === "/capture" ||
     pathname === "/updates" ||
     pathname === "/expenses" ||

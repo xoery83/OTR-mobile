@@ -1,0 +1,6 @@
+{
+  "backend/sql/universal_source_host_candidate.sql": "9d49b4940b882e9be4653d936fc6a1e9c1af1199834ffee3db506a4e63c6cda3",
+  "backend/sql/universal_provider_admission_candidate.sql": "365db344435020d52b397824bc8b03384d2c07360a61d978692dfcf0e785c372",
+  "backend/sql/universal_task_read_candidate.sql": "9f2ba602b96c5a6c9955d03703f59207c890b566e5cb2f9a326de02344998d95",
+  "scripts/import-workbench/universal-profile-vector.json": "992dc84b57cda638b707b50836bdc2d3d4709b28789681ecebbbd8fa5cfecb89"
+}

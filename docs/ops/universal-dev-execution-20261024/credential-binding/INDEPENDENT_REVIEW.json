@@ -1,0 +1,25 @@
+{
+  "status": "BOUNDED_AUTHORIZED_DORMANT_CREDENTIAL_COPY_REVIEW_PASS",
+  "findings": [],
+  "reviewedOnly": [
+    "Copy script",
+    "Nonsecret source provenance receipt",
+    "Nonsecret remote copy receipt"
+  ],
+  "confirmed": [
+    "Owner scope is reuse of the existing OTR key only; legacy project remains read-only and no Web model/parser adopted.",
+    "SSH uses known-host checking and stdin, not credential argv. Remote destination is exact DEV Backend file; trusted root-owned non-writable parent chain, exclusive/no-follow creation, root0600/single-link constraints and exact-byte comparison.",
+    "Existing different binding refuses replacement; copy failure emits fixed safe error only. Receipts contain paths/metadata, no key value or key-derived digest.",
+    "Recorded successful receipt is dormant file provisioning only; service env/deployment/SQL/activation are unchanged and recorded Provider calls0."
+  ],
+  "notProven": [
+    "Key validity, balance, model entitlement, model choice, real price schedule or future Provider success.",
+    "No additional deployment/SQL/config/kill/Provider Gate authority follows from credential copy."
+  ],
+  "reviewerBoundary": "No credential env file opened or read; no secret hash generated; no network/DEV command/test performed.",
+  "sha256NonsecretArtifacts": {
+    "/private/tmp/otr-copy-universal-provider-key-20261025.py": "7785f5ea078dbcf396e693887604820d302b0d6cd116602d6bd8d934277657fa",
+    "/private/tmp/otr-universal-provider-remote-copy-20261025.json": "c6e5990b7cdbb8ce7e28d2855317aee204f15718657ce8b1a46d2cb3c10d3822",
+    "/private/tmp/otr-universal-provider-credential-source-20261025.json": "53be0475f2710b6b6518881377516b4bcca2a40a6713e026900846a78f61b5f5"
+  }
+}

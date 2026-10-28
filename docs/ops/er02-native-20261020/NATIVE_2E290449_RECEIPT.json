@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-20",
+  "product_sha": "2e2904496b73bbacf9fb03c6a67b0f1b426dc257",
+  "source": "/private/tmp/otr-er02-closeout-20261020",
+  "simulator": {
+    "name": "OTR MT Correction 01 QA",
+    "udid": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+    "bundle_id": "com.xoery.otrmobile",
+    "native_install": "original Host unchanged; no install",
+    "metro": "http://localhost:8083",
+    "metro_session": 2037,
+    "metro_pid": 14549,
+    "cold_bundle_modules": 2109
+  },
+  "checks": {
+    "same_nelson_home_day": "PASS; b67d35d9-f338-45b9-9344-5038f86a22d1, baseline unavailable, candidate Day55-64",
+    "calendar_day1_day64": "PASS normal Calendar selection, visible Day1 then Day64",
+    "home_day_anchor": "PASS returns to Day64",
+    "cold_root_and_day": "PASS normal process close/reopen -> My Trips -> Nelson -> Day64",
+    "nelson_item_details": "NOT_VERIFIED; actual 64-day itinerary empty",
+    "home_widget_date": "observed first-return stale Dec9 after Day64; later read and cold show Dec18; investigate mounted refresh before full TH03 qualification",
+    "cover_auto_create": "PASS new QA Tokyo Winter/Tokyo -> actual automatic skyline Hero",
+    "cover_gallery": "PASS native Gallery paints, pending-rights notice visible",
+    "cover_manual": "PASS select gen-b1-016, Save, reopen; metadata-only rename Nelson Hiking/Nelson retains snow image",
+    "cover_auto_reset": "PASS Automatic + Save, raw null; normal cold MyTrips -> Home forest image",
+    "all52_http": "PASS all52 localhost asset bytes match source, 15080493 bytes; separate HTTP receipt",
+    "cover_other_cases": "NOT_VERIFIED Iceland/Bali/Kyoto/unknown/Springfield",
+    "cover_no_metro_offline": "NOT_VERIFIED; Metro-served old Host is not embedded Release acceptance"
+  },
+  "qa_trip": {
+    "id": "24617633-94fd-477d-bfc8-c7e974d6212e",
+    "account_id": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+    "name": "ER02 Cover QA · Nelson Hiking",
+    "destination": "Nelson",
+    "start_date": null,
+    "end_date": null,
+    "selected_cover_asset_id": null
+  },
+  "safety": {
+    "existing_trips_edited": false,
+    "other_simulator_input": false,
+    "hosted_window_opened": false,
+    "account_session_or_db_copied": false,
+    "fixtures_used": false,
+    "sync_flags_changed": false
+  },
+  "rollback": {
+    "product_sha": "23f8c78d71c22d3f36bb83b92687499091d7bba1",
+    "tree": "/private/tmp/otr-er02-compact-dates-20261019",
+    "method": "normal close only OTR; stop only owned8083 session; restart prior source with prior private cache; launch original icon; no DB rollback"
+  },
+  "evidence": [
+    {
+      "file": "23f8c78-cold-my-trips.ax.txt",
+      "sha256": "b867937c33eb0e0d82a08cb3265671fcbb23105168e4cf1d7fc60f028ecf7027"
+    },
+    {
+      "file": "23f8c78-cold-my-trips.png",
+      "sha256": "490b0631f9359bfaa286e959e0c0d54d3d5f9ae0787b78c91396b68202799dae"
+    },
+    {
+      "file": "23f8c78-nelson-day-before.ax.txt",
+      "sha256": "0ccf4f0fbfe97d73fbf834271add98d3451723884f2dd4b0035db0a09b59689b"
+    },
+    {
+      "file": "23f8c78-nelson-day-before.png",
+      "sha256": "7a78b8fde4d8e047c1ff1c8a1754fb99a27193573736e4ae9c223fb01fb8fd07"
+    },
+    {
+      "file": "2e290449-cover-cold-mytrips.png",
+      "sha256": "68e77a0c46231012420580d787a951f9ae1ffe3ff19a5a36246432565651e643"
+    },
+    {
+      "file": "2e290449-cover-gallery.png",
+      "sha256": "d700af2a80c7f376a647ea2460e34a38a537d501345453148dd8a44abb76fad0"
+    },
+    {
+      "file": "2e290449-cover-http-assets.json",
+      "sha256": "c561baf546821a64422d6c1a67806125c3bfca4a81c765e70ec256970e8a52d4"
+    },
+    {
+      "file": "2e290449-cover-manual-saved.png",
+      "sha256": "5310bd4bc424a1fa8de73d9882bc72b4a55b41e29c7457babd20e85c0c8b5010"
+    },
+    {
+      "file": "2e290449-cover-nelson-auto-restored.png",
+      "sha256": "dbeec5120eb333ef3e9ccb57d52cd17236f4ffeebfe60ec5bf91c60dcc5d4f63"
+    },
+    {
+      "file": "2e290449-cover-tokyo-auto-home.png",
+      "sha256": "4717e500a5db9be2ab2fbf596af29a61929908f8595c14a7e03c513b15e83d43"
+    },
+    {
+      "file": "2e290449-nelson-cold-day64.ax.txt",
+      "sha256": "c81509718cbe2b6c250f3f3791283669f762952cf9824b3a02d58f6f67377686"
+    },
+    {
+      "file": "2e290449-nelson-day-after.ax.txt",
+      "sha256": "d24b6c5e3c6ae00f58455dda4b13ce4afb0333345a51a7e7a244de3333146050"
+    },
+    {
+      "file": "2e290449-nelson-day-after.png",
+      "sha256": "3d380cb2516db6b66fb0d7438a09addd13cc88272947827e996a42b6503ca750"
+    },
+    {
+      "file": "2e290449-nelson-day64.png",
+      "sha256": "e23670716d82c59c63f384efea31cf6737618b5910aeb1356f80ab9ce181ebdc"
+    }
+  ]
+}

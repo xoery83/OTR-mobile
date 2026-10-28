@@ -1,0 +1,18 @@
+{
+  "maximum": 136,
+  "used": 122,
+  "newUniversalReads": [
+    {
+      "ordinal": 121,
+      "method": "GET",
+      "route": "/v2/:id/:id/:id",
+      "at": "2026-10-25T01:03:32.876Z"
+    },
+    {
+      "ordinal": 122,
+      "method": "GET",
+      "route": "/v2/:id/:id/:id/:id",
+      "at": "2026-10-25T01:03:45.764Z"
+    }
+  ]
+}

@@ -1,0 +1,417 @@
+--- a/src/features/day-feed/coreExperienceRenderer.ts
++++ b/src/features/day-feed/coreExperienceRenderer.ts
+@@ -9,19 +9,19 @@
+   createCoreRentalRenderer,
+   type CoreRentalPresentationActions,
+ } from "./coreRentalRenderer";
+-import { createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
++import { type CoreScheduledTransportPresentationActions, createCoreScheduledTransportRenderer } from "./coreScheduledTransportRenderer";
+ import { createCoreTicketedActivityRenderer } from "./coreTicketedActivityRenderer";
+ 
+ export function createCoreExperienceRenderer(
+   projection: CoreFlightDayProjection,
+   actions?: CoreP1PresentationActions &
+     CoreStayPresentationActions &
+-    CoreRentalPresentationActions,
++    CoreRentalPresentationActions & CoreScheduledTransportPresentationActions,
+ ): DayRowRenderer {
+   const p1 = createCoreP1Renderer(projection, actions);
+   const stay = createCoreStayRenderer(projection, actions);
+   const rental = createCoreRentalRenderer(projection, actions);
+-  const transport = createCoreScheduledTransportRenderer(projection);
++  const transport = createCoreScheduledTransportRenderer(projection, actions);
+   const activity = createCoreTicketedActivityRenderer(projection);
+   return (props) =>
+     p1(props) ?? stay(props) ?? rental(props) ?? transport(props) ?? activity(props);
+--- a/src/features/day-feed/LocalManualDayFeed.tsx
++++ b/src/features/day-feed/LocalManualDayFeed.tsx
+@@ -1,3 +1,5 @@
++import {ScheduledTransportContent} from "./ScheduledTransportRow";
++import {transportFactsFromItem} from "./transportReadPresentation";
+ import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
+ import { RentalContent } from "./RentalRow";
+ import { calendarDate } from "./TripCalendarField";
+@@ -288,6 +290,14 @@
+             />
+           );
+         }
++        if (item && row.family === "P5") {
++          const facts = transportFactsFromItem(item);
++          if (!facts) return null;
++          const focusKey = JSON.stringify(row.rowKey);
++          return <ScheduledTransportContent key={focusKey} facts={facts} depth={p1Focus === focusKey ? "F" : "B"} context={context} arrival={role === "DESTINATION"}
++            onInsert={onInsert ? side => onInsert(row.itemRef, role, date, side) : undefined}
++            onDepth={depth => depth === "I" ? onOpenItem?.(row.itemRef, read, {role,date}) : onP1Focus?.(depth === "F" ? focusKey : null)}/>;
++        }
+         if (item && row.family === "P3")
+           return (
+             <LocalStayRow
+--- a/src/features/day-feed/TripScreen.tsx
++++ b/src/features/day-feed/TripScreen.tsx
+@@ -611,7 +611,7 @@
+       local.items.some(
+         (item) =>
+           item.itemId === id &&
+-          ["P1", "P2", "P3", "P4"].includes(item.family) &&
++          ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
+           !item.hidden,
+       )
+     ) {
+@@ -638,6 +638,7 @@
+             ...(occurrence?.date ? { date: occurrence.date } : {}),
+           },
+         });
++      else if (item.family === "P5") router.push({pathname:"/p5-detail", params:{...params, occurrence:occurrence?.role ?? "ORIGIN", ...(occurrence?.date ? {date:occurrence.date}: {})}});
+       else
+         router.push({
+           pathname: "/p4-detail",
+@@ -690,6 +691,10 @@
+           occurrence: occurrence?.role === "RETURN" ? "RETURN" : "PICKUP",
+         },
+       });
++      return;
++    }
++    if (resolved.item.family === "P5") {
++      router.push({pathname:"/p5-detail",params:{tripId:requested,itemId:id,occurrence:occurrence?.role ?? "ORIGIN",...(occurrence?.date ? {date:occurrence.date}: {})}});
+       return;
+     }
+     setLocalItem(resolved);
+@@ -1741,6 +1746,13 @@
+               visibleTrip.observed?.projection.version === 2
+                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
+                     instant: new Date().toISOString(),
++                    onOpenTransport: (itemId, occurrence, date) => router.push({pathname:"/p5-detail",params:{tripId:requested,itemId,occurrence,date}}),
++                    onInsertTransport: (itemId, role, date, side) => {
++                      const projection = visibleTrip.observed!.projection;
++                      if (projection.version !== 2) return;
++                      const suggestion = localInsertionTime({items:projection.items,rows:day=>projection.query(day,dayContext).coreRows ?? []},itemId,role,date,side);
++                      setInsertion({date:suggestion.startDate,startTime:suggestion.startTime});
++                    },
+                     onOpenRental: (itemId, occurrence, date) =>
+                       router.push({
+                         pathname: "/p4-detail",
+--- a/app/day-feed-lab.tsx
++++ b/app/day-feed-lab.tsx
+@@ -3,6 +3,12 @@
+ export default function DayFeedLabRoute() {
+   const { fidelity } = useLocalSearchParams<{ fidelity?: string }>();
+   if (!__DEV__) return <Redirect href="/trip" />;
++  if (fidelity === "p5") {
++    const {P5FidelityPreview} =
++      // eslint-disable-next-line @typescript-eslint/no-require-imports
++      require("@/features/day-feed-lab/P5FidelityPreview") as typeof import("@/features/day-feed-lab/P5FidelityPreview");
++    return <P5FidelityPreview/>;
++  }
+   if (fidelity === "p2" || fidelity === "p3" || fidelity === "p4") {
+     const { FlightFidelityPreview } =
+       // eslint-disable-next-line @typescript-eslint/no-require-imports
+--- /dev/null
++++ b/app/p5-detail.tsx
+@@ -0,0 +1 @@
++export {P5Detail as default} from "@/features/day-feed/P5Detail";
+--- a/src/features/day-feed/TicketedActivityRow.tsx
++++ b/src/features/day-feed/TicketedActivityRow.tsx
+@@ -18,7 +18,7 @@
+ import { visual } from "@/ui/visual";
+ import type { DayRowRendererProps } from "./rendererContribution";
+ import { timeRailWidth } from "./visualTokens";
+-import { transportMapUrl } from "./ScheduledTransportRow";
++import { transportMapUrl } from "./transportReadPresentation";
+ 
+ type Clock = Readonly<{ date: string; time?: string; plannedUnresolved?: boolean }>;
+ type Openable = Readonly<{
+--- a/src/features/day-feed/DayFeed.tsx
++++ b/src/features/day-feed/DayFeed.tsx
+@@ -318,12 +318,12 @@
+           ?.rows(section.date)
+           .some(
+             (row) =>
+-              ["P1", "P2", "P3", "P4"].includes(row.family) &&
++              ["P1", "P2", "P3", "P4", "P5"].includes(row.family) &&
+               JSON.stringify(row.rowKey) === focus &&
+               localManual.items.some(
+                 (item) =>
+                   item.itemId === row.itemRef &&
+-                  ["P1", "P2", "P3", "P4"].includes(item.family) &&
++                  ["P1", "P2", "P3", "P4", "P5"].includes(item.family) &&
+                   !item.hidden &&
+                   !["cancelled", "skipped"].includes(String(item.status)),
+               ),
+--- /dev/null
++++ b/src/features/day-feed/P5MixedFocus.test.ts
+@@ -0,0 +1,275 @@
++import { createElement } from "react";
++import { createRequire } from "node:module";
++import { beforeEach, expect, it, vi } from "vitest";
++import { DayFeed } from "./DayFeed";
++import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
++import {
++  faroeNegativeFixtures,
++  syntheticDate,
++} from "./faroeNegative.test.fixtures";
++const { renderToStaticMarkup } = createRequire(import.meta.url)(
++  "react-dom/server",
++);
++const state = vi.hoisted(() => ({
++  hooks: [] as any[],
++  refs: [] as any[],
++  cursor: 0,
++  refCursor: 0,
++  nodes: [] as any[],
++  scrollTo: vi.fn(),
++  window: null as any,
++  anchor: null as any,
++}));
++vi.mock("react", async (original) => ({
++  ...(await original<typeof import("react")>()),
++  useLayoutEffect: (callback: () => void) => callback(),
++  useState: (initial: any) => {
++    const i = state.cursor++;
++    if (!(i in state.hooks))
++      state.hooks[i] = typeof initial === "function" ? initial() : initial;
++    return [
++      state.hooks[i],
++      (next: any) => {
++        state.hooks[i] =
++          typeof next === "function" ? next(state.hooks[i]) : next;
++      },
++    ];
++  },
++  useRef: (initial: any) =>
++    (state.refs[state.refCursor++] ??= { current: initial }),
++}));
++vi.mock("react-native", () => {
++  const primitive = (p: any) => {
++    state.nodes.push(p);
++    if (p.ref) p.ref.current = { scrollTo: state.scrollTo };
++    return createElement("div", {}, p.children);
++  };
++  return {
++    View: primitive,
++    Text: primitive,
++    ScrollView: (p: any) => primitive({ ...p, isScrollView: true }),
++    Pressable: primitive,
++    Modal: (p: any) => (p.visible ? primitive(p) : null),
++    Platform: { OS: "ios" },
++    StyleSheet: { create: (s: any) => s, hairlineWidth: 1 },
++  };
++});
++// Component navigation tests use an explicit list port double. Native windowing has its own tests.
++vi.mock("./WindowedDayList", () => ({
++  WindowedDayList: (p: any) => {
++    state.window = p;
++    state.anchor ??= p.initialAnchor;
++    const handle = {
++      saveAnchor: () => state.anchor,
++      restoreAnchor: (anchor: any) => {
++        state.anchor = anchor;
++        state.scrollTo(anchor);
++        return true;
++      },
++      jumpToDayHeader: (date: string) => {
++        state.anchor = { key: `day:${date}`, date, within: 0 };
++        state.scrollTo(state.anchor);
++        return true;
++      },
++    };
++    if (typeof p.listRef === "function") p.listRef(handle);
++    else if (p.listRef) p.listRef.current = handle;
++    state.nodes.push({
++      ...p,
++      isOwningList: true,
++      contentContainerStyle: [
++        p.contentContainerStyle,
++        { paddingBottom: p.bottomInset },
++      ],
++      scrollIndicatorInsets: { bottom: p.bottomInset },
++      onScroll: (event: any) => {
++        p.onOffsetChange?.(event.nativeEvent.contentOffset.y);
++        p.onAnchorChange?.(state.anchor);
++      },
++    });
++    return createElement(
++      "div",
++      {},
++      p.header,
++      p.rows.map((row: any) =>
++        createElement("div", { key: row.key }, p.renderRow(row)),
++      ),
++    );
++  },
++}));
++vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create({}) }));
++vi.mock("@/ui/locale", () => ({
++  t: (key: string) => key,
++  formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
++}));
++vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
++vi.mock("@/ui/controls", () => ({
++  UiButton: () => null,
++  UiText: (p: any) => createElement("span", {}, p.children),
++  UiSection: (p: any) => createElement("section", {}, p.children),
++}));
++vi.mock("./useMinuteClock", () => ({
++  useMinuteClock: () => ({ instant: `${syntheticDate}T09:30:00Z` }),
++}));
++vi.mock("./flexibleSnapshot", () => ({
++  useFlexibleSnapshot: () => ({ snapshot: null }),
++}));
++vi.mock("./FlexibleBlockRow", () => ({ FlexibleBlockRow: () => null }));
++vi.mock("./P1Row", () => ({
++  P1Row: (p: any) => {
++    state.nodes.push(p);
++    return createElement(
++      "div",
++      {},
++      `${p.event?.id ?? p.display?.id}:${p.depth} ${p.display?.title ?? ""}`,
++    );
++  },
++}));
++vi.mock("./FlightFidelityGrid", () => ({
++  FlightFidelityGrid: (p: any) => {
++    state.nodes.push(p);
++    return createElement(
++      "span",
++      {},
++      `FLIGHT ${p.flight?.authored?.flightNumberLiteral}:${p.focused ? "F" : "B"}`,
++    );
++  },
++}));
++vi.mock("./NowMarker", () => ({ NowMarker: () => null }));
++vi.mock("./TransitionRow", () => ({ TransitionRow: () => null }));
++const fixture = faroeNegativeFixtures();
++const render = (props: Record<string, unknown>) => {
++  state.cursor = state.refCursor = 0;
++  state.nodes = [];
++  return renderToStaticMarkup(
++    createElement(DayFeed, {
++      projection: fixture.day,
++      date: syntheticDate,
++      zone: "UTC",
++      services: {},
++      ...props,
++    }),
++  );
++};
++beforeEach(() => {
++  state.hooks = [];
++  state.refs = [];
++  state.scrollTo.mockClear();
++  state.window = null;
++  state.anchor = null;
++});
++vi.mock("./LocalManualDayFeed", () => ({
++  LocalManualDayFeed: () => null,
++  LocalManualDayRows: (p: any) => {
++    const row = p.onlyRow;
++    const focused = p.p1Focus === JSON.stringify(row.rowKey);
++    const props = {
++      ...p,
++      isP5Local: true,
++      focused,
++      onDepth: (depth: string) =>
++        depth === "I"
++          ? p.onOpenItem?.(row.itemRef, p.read, {
++              role: row.rowKey.projectionRole,
++              date: p.date,
++            })
++          : p.onP1Focus?.(depth === "F" ? JSON.stringify(row.rowKey) : null),
++    };
++    state.nodes.push(props);
++    return createElement(
++      "span",
++      {},
++      `P5 ${row.itemRef}:${focused ? "F" : "B"}`,
++    );
++  },
++}));
++function mixedP5() {
++  const id = fixture.before.id;
++  const rowKey = {
++    itemId: id,
++    projectionRole: "ORIGIN",
++    localDate: syntheticDate,
++  };
++  const item = {
++    itemId: id,
++    itemRevision: 1,
++    tripId: fixture.day.tripId,
++    family: "P5",
++    title: "Pending transport",
++    status: "planned",
++    hidden: false,
++    localState: "PENDING",
++  };
++  const row = {
++    itemRef: id,
++    rowKey,
++    family: "P5",
++    position: "TNS",
++    title: item.title,
++  };
++  const local = {
++    scope: {
++      accountId: fixture.day.accountId,
++      tripId: fixture.day.tripId,
++      generation: 1,
++    },
++    source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "p5-focus-read" },
++    items: [item],
++    rows: (date: string) => (date === syntheticDate ? [row] : []),
++  } as any;
++  const open = vi.fn();
++  const projection = {
++    ...fixture.day,
++    version: 2,
++    items: [{ ...item, localState: "ACCEPTED" }],
++    flightFacts: {},
++    query: (date: string, zone: string) =>
++      itemsForLocalDate(fixture.day, date, zone),
++  };
++  return {
++    id,
++    local,
++    open,
++    props: { projection, localManual: local, onOpenLocalItem: open },
++  };
++}
++it("mixed accepted v2 plus pending local P5 retains Focus through repeated renders and opens the original occurrence", () => {
++  const { id, local, open, props } = mixedP5();
++  render(props);
++  // Same-ID accepted Event is suppressed by pendingIds; it cannot preserve Focus.
++  expect(state.nodes.some((p) => p.event?.id === id)).toBe(false);
++  state.nodes.find((p) => p.isP5Local).onDepth("F");
++  expect(render(props)).toContain(`P5 ${id}:F`);
++  expect(render(props)).toContain(`P5 ${id}:F`);
++  state.nodes.find((p) => p.isP5Local).onDepth("I");
++  expect(open).toHaveBeenCalledWith(id, local, {
++    role: "ORIGIN",
++    date: syntheticDate,
++  });
++});
++it.each([{ hidden: true }, { status: "cancelled" }, { status: "skipped" }])(
++  "mixed local P5 cannot retain Focus after item becomes unavailable: %j",
++  (changes) => {
++    const { id, local, props } = mixedP5();
++    render(props);
++    state.nodes.find((p) => p.isP5Local).onDepth("F");
++    render(props);
++    render(props);
++    Object.assign(local.items[0], changes);
++    render(props);
++    expect(render(props)).toContain(`P5 ${id}:B`);
++  },
++);
++it("mixed local P5 row withdrawal clears Focus before that identity is shown again", () => {
++  const { id, local, props } = mixedP5();
++  render(props);
++  state.nodes.find((p) => p.isP5Local).onDepth("F");
++  render(props);
++  render(props);
++  const rows = local.rows;
++  local.rows = () => [];
++  render(props);
++  render(props);
++  local.rows = rows;
++  expect(render(props)).toContain(`P5 ${id}:B`);
++});

@@ -1,4 +1,3 @@
-import { initializeLocalTripPersons } from "./localTripPersonRepository";
 import { authoredCloudTravelersSchema } from "@/domain/trip/tripPersonCloudCreate";
 import { retainAuthoredCloudTravelerWithinTransaction } from "./tripPersonCloudCreateRepository";
 import { retainTripMetadataConfirmation } from "./tripMetadataConfirmation";
@@ -37,6 +36,7 @@ import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { createTripMetadataRepository } from "./tripMetadataRepository";
 import { mapLocalTripLedgerPerson } from "./tripLedgerAcceptance";
+import { initializeLocalTripPersons } from "./localTripPersonRepository";
 
 type Database = Pick<
   SQLite.SQLiteDatabase,
@@ -71,11 +71,6 @@ const originalCreateVersion = (row: Row): 2 | undefined => {
   if (request.tripId !== row.id) throw Error("TRIP_CREATE_LOCAL_MISMATCH");
   return "formatVersion" in request ? 2 : undefined;
 };
-const isBuiltInCover = (value: unknown): value is BuiltInTripCoverId =>
-  value === "city" ||
-  value === "coast" ||
-  value === "mountain" ||
-  value === "cultural-oldtown";
 const trip = (row: Row): Trip => ({
   syncFormatVersion: originalCreateVersion(row),
   id: row.id,
@@ -96,7 +91,7 @@ const trip = (row: Row): Trip => ({
   baseCurrency: null,
   ownerPersonId: row.owner_person_id,
   selectedCoverAssetIdRaw: row.selected_cover_asset_id ?? null,
-  selectedCoverAssetId: isBuiltInCover(row.selected_cover_asset_id)
+  selectedCoverAssetId: isTripCoverAssetId(row.selected_cover_asset_id)
     ? row.selected_cover_asset_id
     : null,
 });
@@ -265,7 +260,7 @@ export function createTripRepository(
     },
     async selectBuiltInCover(tripId: string, coverAssetId: BuiltInTripCoverId | null) {
       coreUuid.parse(tripId);
-      if (coverAssetId !== null && !isBuiltInCover(coverAssetId))
+      if (coverAssetId !== null && !isTripCoverAssetId(coverAssetId))
         throw new Error("TRIP_COVER_INVALID");
       const scope = await captureAccountScope(account);
       await withAccountApplyGate(async () => {

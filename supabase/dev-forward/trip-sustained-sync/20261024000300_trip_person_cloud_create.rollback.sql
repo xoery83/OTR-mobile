@@ -1,0 +1,6 @@
+BEGIN;SET LOCAL search_path=pg_catalog;DO $$BEGIN IF EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE enabled) OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname='otr_trip_person_command_gateway' AND rolcanlogin) THEN RAISE EXCEPTION 'PERSON_ROLLBACK_REQUIRES_CLOSED';END IF;END$$;
+DO $$BEGIN IF md5(pg_get_functiondef('public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb)'::regprocedure))<>'c7bfbffe0e2bdcb6acb365db34d576d5' THEN RAISE EXCEPTION 'PERSON_ROLLBACK_POSTIMAGE_MISMATCH';END IF;END$$;
+DO $$BEGIN IF md5(pg_get_functiondef('public.trip_person_cloud_create_result(uuid,uuid,uuid)'::regprocedure))<>'300baf9749d32863eb92b76d8fc9a17f' THEN RAISE EXCEPTION 'PERSON_ROLLBACK_POSTIMAGE_MISMATCH';END IF;END$$;
+DO $$BEGIN IF md5(pg_get_functiondef('public.trip_person_create_receipt_guard()'::regprocedure))<>'1d5ed7d68c5477647a624514a19ee847' THEN RAISE EXCEPTION 'PERSON_ROLLBACK_POSTIMAGE_MISMATCH';END IF;END$$;
+REVOKE EXECUTE ON FUNCTION public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb),public.trip_person_cloud_create_result(uuid,uuid,uuid) FROM otr_trip_person_command_gateway;DROP FUNCTION public.trip_person_cloud_create_command(uuid,uuid,uuid,jsonb),public.trip_person_cloud_create_result(uuid,uuid,uuid);-- Preserve canonical Persons and private immutable receipts/guards.
+COMMIT;

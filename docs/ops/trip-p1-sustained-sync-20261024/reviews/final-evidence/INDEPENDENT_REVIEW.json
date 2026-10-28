@@ -1,0 +1,26 @@
+{
+  "codeSha": "7253c128e2cc8fbc116ac6eec6cc2e0632748d69",
+  "matrixSHA256": "2926b9a63280e915ee7b3b88631b530f58421378fe1d4f778c57892862c72baa",
+  "status": "PASS_RECORDED_ACTUAL_SCOPED_EVIDENCE",
+  "hardBlockingUnprovenClaims": [],
+  "evidenceOwner": "Root actual AD5/DEV execution and independent SQL readback; reviewer only inspects saved receipts",
+  "confirmed": [
+    "Two original P1 CREATE operations remain original IDs, APPLIED/reconciled2/4 and queuesCOMPLETED.",
+    "Seven unique APPLIED Core receipts cover two CREATE and five setter commands; existing owning validator receipt verifies all7 stored hashes.",
+    "Final direct SQL Item491fb764 revision6 and Native cold Form agree on verified title, Nov2\u20133, manual place, exactly one selected unlinked Person.",
+    "Normal participation733 and text3334 completed automatically; final cold/home observation explicitly confirms direct accepted Source opening without workaround.",
+    "Trip1 full2 manual destination IDs/order and Trip2 add/remove list retained; Ledger sameTrip NZD\u2192USD revision2 direct readback and Native cold evidence.",
+    "Normal Auth B receives404 NOT_VISIBLE for A Core.",
+    "Final service remains intentionally sustained: only ActorA cutoff policy,4limited roles, finite gatesCLOSED, Backend6b11 healthy; final rawHostConfigdf2/environment/runtime hashes match saved ATTEMPT4 activation receipt. Original false comparison is preserved with exact reconciliation.",
+    "Read ledger Native42+Operator6=48/96, fixed run identity and ordinal sequence retained."
+  ],
+  "honestGaps": [
+    "Physical airplane mode NOT_TESTED; offline/duplicate/CAS negatives are L2, actual timeout/retained-operation/cold recovery separately L3.",
+    "First controlled-outage Person4d0b remains backoff/unrecovered; no all-history/all-queue-clean claim.",
+    "No Production/P2\u2013P6/Universal Source Provider/Review/Admission completion claim."
+  ],
+  "archiveNote": "Matrix was untracked when reviewed, not part of code7253c12; evidence is pinned here by byte SHA. Root should commit/archive matrix and receipts for final handoff.",
+  "newTests": 0,
+  "remoteOperations": 0,
+  "NativeGUI": false
+}

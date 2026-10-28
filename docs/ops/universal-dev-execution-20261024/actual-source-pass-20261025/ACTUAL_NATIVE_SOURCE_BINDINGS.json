@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-24T18:35:38.158923+00:00",
+  "status": "THREE_NATIVE_SOURCE_BINDINGS_ADMITTED",
+  "accountId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+  "batchId": "3665f191-1605-4365-92ca-30403d90b191",
+  "bindings": [
+    {
+      "inputId": "9c3d39c3-1ac7-4e2c-b554-2c568c0dd46b",
+      "bindingId": "0de870da-5ad0-45e5-902e-fc2c7b9b1de3",
+      "state": "ADMITTED",
+      "revision": 3
+    },
+    {
+      "inputId": "24dd338b-9568-4136-9b45-143540a794ac",
+      "bindingId": "a09f16ed-adf4-417b-953c-e5a4ab378d05",
+      "state": "ADMITTED",
+      "revision": 3
+    },
+    {
+      "inputId": "47a8cd86-c74a-43de-89eb-6bda99f32885",
+      "bindingId": "9bea5ea0-1ed8-46a7-928d-e1251774e7c2",
+      "state": "ADMITTED",
+      "revision": 3
+    }
+  ],
+  "notCanonicalItemAdmission": true
+}

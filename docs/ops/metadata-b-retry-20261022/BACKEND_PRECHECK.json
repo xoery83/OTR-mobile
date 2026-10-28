@@ -1,0 +1,34 @@
+{
+  "status": "READONLY_BACKEND_BASELINE_PASS",
+  "observedAt": "2026-10-22T09:18:27.255345+00:00",
+  "image": "sha256:012f2d06476af824a609f7e7b5f2985fa36ae960d903c30f8c3cd283bc4c129e",
+  "health": "healthy",
+  "entry": [
+    "node",
+    "server.mjs"
+  ],
+  "canonicalEnvironmentSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+  "mounts": [
+    {
+      "source": "/run/otr-r3a5-catalog/catalog-reader.json",
+      "destination": "/run/otr/catalog-reader.json",
+      "rw": false
+    },
+    {
+      "source": "/opt/otr/dev-backend/private/capture-custody",
+      "destination": "/var/lib/otr/capture-custody",
+      "rw": true
+    },
+    {
+      "source": "/opt/otr/dev-backend/env/capture-custody.json",
+      "destination": "/run/otr/capture-custody.json",
+      "rw": false
+    }
+  ],
+  "configHashesEqual": true,
+  "expiredCustodyHashEqual": true,
+  "providerFlagsClosed": true,
+  "user": "otr",
+  "hostConfigSHA256": "f07262129504a60512ee369db9ac89f3cc666c473f68e7128b4ecfa8c66142e0",
+  "bundleSHA256": "c1b851fb96bdd167d4597e9e2cc3266379c30998d49b9a639238789c574760f4"
+}

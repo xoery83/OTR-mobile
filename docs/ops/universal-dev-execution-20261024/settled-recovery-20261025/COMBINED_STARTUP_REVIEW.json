@@ -1,0 +1,34 @@
+{
+  "status": "PASS_FOCUSED_SHARED_STARTUP_AND_DURABLE_CLAIMS",
+  "patchSHA256": "fa999cfa734cac683f4aeeb5608c19e02d7a343c0028ab628f1fa2bcd14b33d2",
+  "findings": [],
+  "checks": [
+    "Settled runtime returns its existing Catalog connection; real shared startup reuses it and does not invoke duplicate fallback pool. Owner singleton guard unchanged.",
+    "Explicit recovery loader failure exits CLOSED before fallback; settled env suppresses paid and Source command loaders.",
+    "HOST and OPERATOR kinds are static in actual entrypoints. Anchored custody claim happens before Auth gateway, Task DB and Catalog pool.",
+    "O_EXCL/no-follow durable marker key binds kind+canonical UTC window, config hash only payload; changed hash/equivalent UTC do not create another allowance. Partial failures never unlink marker.",
+    "SQL/Auth/Provider authority unchanged; markers are local execution evidence, not Source proof or a business read allowance."
+  ],
+  "independentTests": {
+    "localLoopbackAndLoader": "4 PASS across2files with Auth/SQL mocks; initial sandbox EPERM resolved by approved local-only escalation.",
+    "actualLinux": {
+      "network": "none",
+      "image": "99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4",
+      "user": 10001,
+      "readOnly": true,
+      "capDrop": "ALL",
+      "tmpfsOnlyFixtureAndCustody": true,
+      "separateProcesses": 18,
+      "admittedReadSentinels": 2,
+      "hostRebootsDenied": 12,
+      "operatorRepeatsDenied": 3,
+      "changedConfigDenied": true,
+      "equivalentUTCWindowDenied": true,
+      "markerRetained": true,
+      "remoteQueries": 0
+    }
+  },
+  "previousRootPythonDelta": "Explicit sealed recovery mount-target allowlist reviewed separately in SEALED_MOUNT_TARGET_REVIEW.json,14 independent tests PASS.",
+  "remainingAuthority": "Existing actual startup read uncertainty is not erased. Any next recovery needs accurate bounded allowance and exact Owner-authorized execution/window/image; these claims alone do not grant extra reads or deployment.",
+  "limitations": "No Reviewer DEV/GUI/Provider/Auth or private credential reads; no actual business quota writes."
+}

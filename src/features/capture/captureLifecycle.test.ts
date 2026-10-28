@@ -137,6 +137,7 @@ beforeEach(() => {
   ui.focus = null;
   ui.focusCleanup = null;
   vi.resetAllMocks();
+  advanceAccountGeneration();
   ui.focused = true;
   ui.jobId = undefined;
   ui.tripId = undefined;
@@ -373,6 +374,7 @@ it("route blur clears historical deep-link params; next ordinary focus opens a f
   expect(renderRoute().props.jobId).toBeUndefined();
 });
 
+vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
 vi.mock("./CaptureComposer", () => ({ CaptureComposer: () => null }));
 
 it("mounted retained composer includes editor once, blocks unsupported submission, and Close restores the same authenticated draft", async () => {
@@ -799,4 +801,128 @@ it("reviewer: changing explicit Trip prior while Capture remains focused must no
   expect(old.props.isCurrent()).toBe(false);
   expect(renderRoute().props.draftStaging.getDraftSnapshot().editorText).toBe("");
   expect(ui.submit).not.toHaveBeenCalled();
+});
+
+it("explicit pre-submit target selection retains material/text and freezes the chosen prior for retries", async () => {
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files",
+        temporaryUri: "temp://one",
+        name: "one.pdf",
+        typeHint: "application/pdf",
+      },
+    ],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  await staging.pick("files");
+  staging.setEditorText("retain this text");
+  const validate = vi.fn(async () => true);
+  const render = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      accountId: "A",
+      draftStaging: staging,
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      validateTripPrior: validate,
+    }).props;
+  };
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  expect(await render().onTripTarget({ id: "B", name: "Trip B" }, () => true)).toBe(true);
+  expect(render().tripName).toBe("Trip B");
+  expect(staging.getDraftSnapshot().editorText).toBe("retain this text");
+  expect(staging.getDraftSnapshot().items).toHaveLength(1);
+  staging.setEditorText("");
+  await render().onSubmit();
+  expect(validate).toHaveBeenLastCalledWith("B");
+  await vi.waitFor(() =>
+    expect(ui.submit).toHaveBeenCalledWith(expect.any(Array), expect.any(Function), "B"),
+  );
+  expect(await render().onTripTarget(null, () => true)).toBe(false);
+});
+it("late selection from a closed target panel cannot change the draft", async () => {
+  const staging = createCaptureStaging(
+    async () => [],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  let done!: (value: boolean) => void;
+  let panelCurrent = true;
+  const render = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      accountId: "A",
+      draftStaging: staging,
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      validateTripPrior: () =>
+        new Promise((resolve) => {
+          done = resolve;
+        }),
+    }).props;
+  };
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  const selecting = render().onTripTarget(
+    { id: "B", name: "Trip B" },
+    () => panelCurrent,
+  );
+  panelCurrent = false;
+  done(true);
+  expect(await selecting).toBe(false);
+  expect(staging.getDraftSnapshot().tripTarget).toBeUndefined();
+});
+
+it("clipboard-only draft cannot bypass disabled UI and enter file submission", async () => {
+  const s = createCaptureStaging(
+    async () => [],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  s.stagePastedImages(
+    [
+      {
+        source: "clipboard",
+        representation: "item-provider",
+        token: "one",
+        uri: "file:///tmp/paste.png",
+        byteSize: 4,
+        mimeType: "image/png",
+      },
+    ],
+    vi.fn(),
+  );
+  const render = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      accountId: "A",
+      draftStaging: s,
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+    }).props;
+  };
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  render().onSubmit();
+  await Promise.resolve();
+  expect(ui.createSession).not.toHaveBeenCalled();
+  expect(ui.submit).not.toHaveBeenCalled();
+  expect(s.getDraftSnapshot().items[0].source).toBe("clipboard");
+});
+
+it("popping the root overlay does not dispatch SET_PARAMS to a removed route", async () => {
+  ui.session.mockResolvedValue({ identity: { userId: "A" } });
+  const render = () => {
+    ui.cursor = 0;
+    return CaptureRoute({ overlay: true }).props.children;
+  };
+  render();
+  await vi.waitFor(() => expect(render().type).toBe(CaptureContent));
+  ui.focused = false;
+  ui.setParams.mockClear();
+  ui.focusCleanup?.();
+  expect(ui.setParams).not.toHaveBeenCalled();
 });

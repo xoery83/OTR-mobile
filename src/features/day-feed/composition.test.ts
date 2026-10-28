@@ -579,3 +579,29 @@ it("whole-Trip occurrence keys keep one Focus for a repeated canonical Item on d
       .immersive,
   ).toBeNull();
 });
+
+it("unknown Day context preserves rows and blocks without absolute clock placement", () => {
+  const { query, scope, transition } = setup();
+  const stream = composeDayStream({ ...query, zone: "", viewMode: "NAMED_ZONE" }, now, {
+    scope,
+    transitions: [transition],
+    flexible: [
+      {
+        version: "g2-flexible/1",
+        synthetic: true,
+        id: "civil-block",
+        title: "Plan",
+        accountId: scope.accountId,
+        tripId: scope.tripId,
+        localDate: syntheticDate,
+        itemIds: [],
+        choices: [],
+        softWindow: { startMinute: 540, endMinute: 600 },
+      },
+    ],
+  });
+  expect(stream.context).toBe("UNKNOWN");
+  expect(stream.now.mode).toBe("HIDDEN");
+  expect(stream.rows.every((row) => !row.transition)).toBe(true);
+  expect(stream.entries.at(-1)?.kind).toBe("BLOCK");
+});

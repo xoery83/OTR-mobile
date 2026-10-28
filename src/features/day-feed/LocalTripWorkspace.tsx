@@ -1,8 +1,29 @@
+import {
+  filterNativeTripQaList,
+  nativeTripQaCreateFormat,
+  nativeTripAuthoredCloudTravelers,
+  kickNativeTripQaSync,
+} from "@/data/sync/nativeTripQaScope";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import type { StructuredTripMetadataSnapshot } from "@/domain/trip/tripStructuredDestinationContract";
+import { tripDestinationDisplay } from "./tripDestinationDisplay";
+import { readLocalSession } from "@/data/auth/authRepository";
+import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
+import { CreateTripDestinations } from "./CreateTripDestinations";
+import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
+import { CreateTripV2Fields } from "./CreateTripV2Fields";
+import { ManualItineraryContent } from "./ManualItineraryContent";
+import * as ImagePicker from "expo-image-picker";
+import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepository";
+import { TripCoverPicker } from "./TripCoverPicker";
+import { useTripPersonalCover } from "./useTripPersonalCover";
+import { isTripCoverAssetId, tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useTripPreparationWidget } from "./useTripPreparationWidget";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { SheetHeader } from "@/components/SheetHeader";
 import { useTripView } from "./TripViewContext";
 import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
@@ -14,14 +35,21 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Alert, AppState, Modal, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  AppState,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
+import type { LocalPersonNameSlot } from "@/domain/trip/localTripPerson";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
-import {
-  readLocalTripRepository,
-  type TripRepository,
-} from "@/data/repositories/tripRepository";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import {
   readLocalTripDiscoveryRepository,
   type TripListSummary,
@@ -30,8 +58,7 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiFormRow, UiTextInput } from "@/ui/forms";
+import { UiButton, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
@@ -41,12 +68,14 @@ import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
-import { CalendarField, calendarDate } from "./TripCalendarField";
+import { calendarDate } from "./TripCalendarField";
 import { TripBasicEditor } from "./TripBasicEditor";
+import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { TripMembersSummary } from "./TripSetupRows";
+import { TripMembersSheet } from "./TripMembersSheet";
 import { LocalTripPhotos } from "./LocalTripPhotos";
-import { tripCoverSource } from "./tripCovers";
+import { tripCoverId, tripCoverSource } from "./tripCovers";
 
-type Pending = Awaited<ReturnType<TripRepository["pendingItems"]>>;
 const displayDate = (value: string) =>
   formatUiDate(new Date(`${value}T12:00:00Z`), {
     year: "numeric",
@@ -64,11 +93,18 @@ const knownDate = (value: string | null) => {
 };
 
 type Props = {
+  refreshKey?: number;
   widgetsForHome?: (
     tripId: string,
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
+    planningDate?: string | null,
   ) => readonly TripHomeWidget[];
   onOpenHomeItem?: (tripId: string, itemId: string, epoch: string) => Promise<void>;
+  onOpenLocalHomeItem?: (
+    tripId: string,
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => Promise<void>;
   tripId: string | null;
   homePerspective?: { now: string; date: string; zone: string };
   mode?: "LIST" | "CREATE" | "PAST";
@@ -78,7 +114,8 @@ type Props = {
   onKnownTrip(kind: "LOCAL" | "CACHED" | "NONE"): void;
   onBackToTrips(): void;
   onHomeHeroHeight?: (height: number) => void;
-  onChooseDay?: () => void;
+  onChooseDay?: (date?: string | null) => void;
+  onManualItemSaved?: (tripId: string, generation: number) => void;
 };
 export function LocalTripWorkspace(props: Props) {
   const generation = useSyncExternalStore(
@@ -94,6 +131,7 @@ export function LocalTripWorkspace(props: Props) {
   );
 }
 function LocalTripContent({
+  refreshKey = 0,
   tripId,
   mode = "LIST",
   onOpen,
@@ -103,8 +141,10 @@ function LocalTripContent({
   onBackToTrips,
   onHomeHeroHeight,
   onChooseDay,
+  onManualItemSaved,
   widgetsForHome,
   onOpenHomeItem,
+  onOpenLocalHomeItem,
   homePerspective,
   generation,
 }: Props & { generation: number }) {
@@ -114,22 +154,71 @@ function LocalTripContent({
     [remoteTrips, setRemoteTrips] = useState<TripListSummary[]>([]),
     [selected, setSelected] = useState<Trip | null>(null),
     [remoteSelected, setRemoteSelected] = useState<TripListSummary | null>(null),
-    [pending, setPending] = useState<Pending>([]),
     [eligibleToday, setEligibleToday] = useState<Record<string, TodayEntry>>({});
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [name, setName] = useState(""),
-    [destination, setDestination] = useState(""),
     [start, setStart] = useState(""),
     [end, setEnd] = useState("");
+  const [travelers, setTravelers] = useState<LocalPersonNameSlot[]>([]);
+  const [selfNickname, setSelfNickname] = useState("");
+  const [knownSelfName, setKnownSelfName] = useState("");
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve()
+      .then(readLocalSession)
+      .then((session) => {
+        const identity = session?.identity,
+          value = identity?.displayName.trim();
+        if (
+          active &&
+          generation === getAccountGeneration() &&
+          value &&
+          value !== "Account" &&
+          value !== identity?.email?.split("@")[0]
+        )
+          setKnownSelfName(value);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [generation]);
+  const [createDraftId] = useState(createUuid);
+  const [destinations, setDestinations] = useState<
+    readonly TripDestinationDraftSelection[]
+  >([]);
+  const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
+  const [destinationBusy, setDestinationBusy] = useState(false);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [metadataBaseError, setMetadataBaseError] = useState(false);
+  const metadataEditBase = useRef<StructuredTripMetadataSnapshot | null>(null);
+  const deferredMetadataEditBase = useRef<
+    StructuredTripMetadataSnapshot["metadata"] | null
+  >(null);
+  const deferredMetadataActionId = useRef<string | null>(null);
+  const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
+  const personalCover = useTripPersonalCover(tripId);
+  const [editorSaving, setEditorSaving] = useState(false);
+  const editorBusy = useRef(false);
+  const editorDismiss = useRef<(() => void) | null>(null);
+  const [editorDirty, setEditorDirty] = useState(false);
   const [metadataEditable, setMetadataEditable] = useState(false);
-  const [family, setFamily] = useState<"P1" | "P3">("P1"),
-    [itemTitle, setItemTitle] = useState(""),
-    [itemStart, setItemStart] = useState(""),
-    [itemEnd, setItemEnd] = useState("");
+  const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
+  const receiveSetup = useCallback(
+    (value: TripPreparationSetup | null) => setSetup(value),
+    [],
+  );
+  const [itemStart, setItemStart] = useState("");
   const { publishQuickActions, localOutcome } = useTripView();
   const [quickActionsOwner] = useState(() => Symbol("mounted-trip-quick-actions"));
   const [itemFormOpen, setItemFormOpen] = useState(false);
+  const itemDismiss = useRef<(() => void) | null>(null);
+  const registerItemDismiss = (handler: () => void) => {
+    itemDismiss.current = handler;
+    return () => {
+      if (itemDismiss.current === handler) itemDismiss.current = null;
+    };
+  };
   const [photosReady, setPhotosReady] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
   const photoAdd = useRef<(() => void) | null>(null);
@@ -140,10 +229,10 @@ function LocalTripContent({
   const photosSaved = useCallback(() => setSavedNotice(true), []);
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(false);
+  const [menuMembersTrip, setMenuMembersTrip] = useState<string | null>(null);
   const request = useRef(0),
     busy = useRef(false),
-    tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() }),
-    itemOperation = useRef({ operationId: createUuid(), itemId: createUuid() });
+    tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() });
   const alive = useRef(true),
     saveOwner = useRef<symbol | null>(null);
   useLayoutEffect(() => {
@@ -160,12 +249,17 @@ function LocalTripContent({
     try {
       const repo = await readLocalTripRepository();
       const local = tripId ? await repo.getTrip(tripId) : null;
-      const list = tripId ? [] : await repo.listTrips();
+      const qaAccountId = (await readLocalSession())?.identity?.userId ?? null;
+      const list = tripId
+        ? []
+        : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
-      const intents = local ? await repo.pendingItems(local.id) : [];
-      const discovery = await readLocalTripDiscoveryRepository()
-        .then((reader) => reader.readMerged())
-        .catch(() => null);
+      // A local Repository result already wins; discovery is only needed for list/remote fallback.
+      const discovery = local
+        ? null
+        : await readLocalTripDiscoveryRepository()
+            .then((reader) => reader.readMerged())
+            .catch(() => null);
       const cached =
         tripId && !local
           ? (discovery?.trips.find(
@@ -184,14 +278,18 @@ function LocalTripContent({
       setRemoteTrips(
         tripId
           ? []
-          : (discovery?.trips.filter(
-              (trip) => trip.localStatus === null && !localIds.has(trip.id),
-            ) ?? []),
+          : [
+              ...filterNativeTripQaList(
+                qaAccountId,
+                discovery?.trips.filter(
+                  (trip) => trip.localStatus === null && !localIds.has(trip.id),
+                ) ?? [],
+              ),
+            ],
       );
       setEligibleToday({});
       setSelected(local);
       setRemoteSelected(cached);
-      setPending(intents);
       setStatus("READY");
       onKnownTrip(local ? "LOCAL" : cached ? "CACHED" : "NONE");
       if (!tripId && list.length) {
@@ -241,7 +339,6 @@ function LocalTripContent({
       setRemoteTrips([]);
       setSelected(null);
       setRemoteSelected(null);
-      setPending([]);
       setEligibleToday({});
       setStatus("UNAVAILABLE");
       onKnownTrip("NONE");
@@ -257,8 +354,14 @@ function LocalTripContent({
       sub.remove();
     };
   }, [load, generation]);
-  const save = async (item: boolean) => {
-    if (busy.current || !alive.current || generation !== getAccountGeneration()) return;
+  const save = async () => {
+    if (
+      busy.current ||
+      destinationBusy ||
+      !alive.current ||
+      generation !== getAccountGeneration()
+    )
+      return;
     busy.current = true;
     setSaving(true);
     setError(false);
@@ -270,36 +373,57 @@ function LocalTripContent({
     try {
       const repo = await readLocalTripRepository();
       if (!current()) return;
-      if (item && selected) {
-        await repo.addItem(selected.id, {
-          ...itemOperation.current,
-          family,
-          title: itemTitle,
-          startDate: itemStart,
-          ...(family === "P3" ? { endDate: itemEnd } : {}),
-        });
-        if (!current()) return;
-        itemOperation.current = { operationId: createUuid(), itemId: createUuid() };
-        setItemTitle("");
-        setItemStart("");
-        setItemEnd("");
-        await load();
-        if (current()) {
-          setItemFormOpen(false);
-          setSavedNotice(true);
-        }
-      } else {
-        const trip = await repo.createTrip({
-          ...tripOperation.current,
-          name,
-          destination,
-          startDate: start || null,
-          endDate: end || null,
-        });
-        if (!current()) return;
-        tripOperation.current = { operationId: createUuid(), tripId: createUuid() };
-        onOpen(trip.id);
-      }
+      const accountId = (await readLocalSession())?.identity?.userId ?? null;
+      if (!current()) return;
+      const syncFormatVersion = nativeTripQaCreateFormat(accountId);
+      const trip = await repo.createTrip({
+        ...(syncFormatVersion ? { syncFormatVersion } : {}),
+        ...tripOperation.current,
+        name,
+        destinations: destinations.map((item): LocalTripDestinationInput => {
+          if (item.source === "MANUAL")
+            return {
+              destinationId: item.localId,
+              displayLabel: item.text,
+              source: "MANUAL",
+            };
+          if (!item.match?.providerPlaceId) throw new Error("DESTINATION_NOT_CONFIRMED");
+          return {
+            destinationId: item.localId,
+            displayLabel: item.text,
+            source: "APPLE_PLACE_ID",
+            provider: "apple",
+            providerPlaceId: item.match.providerPlaceId,
+          };
+        }),
+        creatorDisplayName: selfNickname.trim(),
+        startDate: start || null,
+        endDate: end || null,
+        ...(travelers.some((slot) => slot.displayName.trim())
+          ? {
+              ...(nativeTripAuthoredCloudTravelers(accountId)
+                ? {
+                    cloudTravelers: {
+                      dataOwnership: "CLOUD_SHARED_AUTHORED" as const,
+                      slots: travelers
+                        .filter((slot) => slot.displayName.trim())
+                        .map((slot) => ({
+                          ...slot,
+                          displayName: slot.displayName.trim(),
+                        })),
+                    },
+                  }
+                : {
+                    travelers: travelers
+                      .filter((slot) => slot.displayName.trim())
+                      .map((slot) => ({ ...slot, displayName: slot.displayName.trim() })),
+                  }),
+            }
+          : {}),
+      });
+      if (!current()) return;
+      kickNativeTripQaSync();
+      onOpen(trip.id);
     } catch {
       if (current()) setError(true);
     } finally {
@@ -309,6 +433,32 @@ function LocalTripContent({
         if (alive.current && captured === getAccountGeneration()) setSaving(false);
       }
     }
+  };
+  const closeCreate = () => {
+    if (busy.current || !alive.current || generation !== getAccountGeneration()) return;
+    if (
+      !name.trim() &&
+      !destinations.length &&
+      !destinationQueryDirty &&
+      !start &&
+      !end &&
+      !selfNickname.trim() &&
+      !travelers.some((person) => person.displayName.trim())
+    ) {
+      onBackToTrips();
+      return;
+    }
+    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
+      { text: t("actionIsland.stay"), style: "cancel" },
+      {
+        text: t("actionIsland.discard"),
+        style: "destructive",
+        onPress: () => {
+          if (!busy.current && alive.current && generation === getAccountGeneration())
+            onBackToTrips();
+        },
+      },
+    ]);
   };
   const openToday = async (id: string) => {
     const prior = eligibleToday[id];
@@ -341,7 +491,7 @@ function LocalTripContent({
       // A stale or revoked Day action simply stays on My Trips.
     }
   };
-  const selectCover = async (id: BuiltInTripCoverId) => {
+  const selectCover = async (id: BuiltInTripCoverId | null) => {
     const trip = selected;
     if (!trip || !alive.current || generation !== getAccountGeneration()) return;
     const repo = await readLocalTripRepository();
@@ -349,9 +499,56 @@ function LocalTripContent({
     await repo.selectBuiltInCover(trip.id, id);
     if (alive.current && generation === getAccountGeneration()) await load();
   };
+  const openTripEditor = useCallback(async () => {
+    if (!selected || !alive.current || generation !== getAccountGeneration()) return;
+    metadataEditBase.current = null;
+    deferredMetadataEditBase.current = null;
+    deferredMetadataActionId.current = null;
+    setMetadataBaseError(false);
+    if (selected.syncFormatVersion === 2) {
+      try {
+        const repo = await readLocalTripRepository();
+        if (!alive.current || generation !== getAccountGeneration()) return;
+        const base = await repo.readMetadataEditBase(selected.id);
+        if (!alive.current || generation !== getAccountGeneration()) return;
+        const local = {
+          name: selected.name,
+          destination: selected.destination,
+          startDate: selected.startDate,
+          endDate: selected.endDate,
+          destinations:
+            selected.destinations?.map(({ ordinal: _ordinal, ...item }) => item) ?? [],
+        };
+        if (
+          !base.confirmed ||
+          base.pendingOperationIds.length ||
+          canonicalCoreJson(local as Json) !==
+            canonicalCoreJson(base.confirmed.metadata as Json)
+        ) {
+          const localBase = await repo.readDeferredMetadataEditBase(selected.id);
+          if (!alive.current || generation !== getAccountGeneration()) return;
+          if (
+            canonicalCoreJson(local as Json) !==
+            canonicalCoreJson(localBase.metadata as Json)
+          ) {
+            setMetadataBaseError(true);
+            return;
+          }
+          deferredMetadataEditBase.current = localBase.metadata;
+          deferredMetadataActionId.current = createUuid();
+        } else metadataEditBase.current = base.confirmed;
+      } catch {
+        if (alive.current && generation === getAccountGeneration())
+          setMetadataBaseError(true);
+        return;
+      }
+    }
+    setCoverOpen(true);
+  }, [selected, generation]);
+
   const leaveHome = useCallback(() => {
     if (!alive.current || generation !== getAccountGeneration()) return;
-    if (!itemTitle && !itemStart && !itemEnd) {
+    if (!itemStart) {
       onBackToTrips();
       return;
     }
@@ -363,80 +560,92 @@ function LocalTripContent({
         style: "destructive",
         onPress: () => {
           if (!alive.current || generation !== getAccountGeneration()) return;
-          setItemTitle("");
           setItemStart("");
-          setItemEnd("");
           onBackToTrips();
         },
       },
     ]);
-  }, [generation, itemTitle, itemStart, itemEnd, saving, onBackToTrips]);
-  const closeItemForm = () => {
-    if (saving) return;
-    if (!itemTitle && !itemStart && !itemEnd) {
-      setItemFormOpen(false);
-      return;
-    }
-    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
-      { text: t("actionIsland.stay"), style: "cancel" },
-      {
-        text: t("actionIsland.discard"),
-        style: "destructive",
-        onPress: () => {
-          setItemTitle("");
-          setItemStart("");
-          setItemEnd("");
-          setItemFormOpen(false);
+  }, [generation, itemStart, saving, onBackToTrips]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!selected || status !== "READY") return;
+      const owner = selected.id;
+      publishQuickActions(
+        {
+          tripName: selected.name,
+          tripId: owner,
+          generation,
+          owner: quickActionsOwner,
+          backToTrips: leaveHome,
+          ...(metadataEditable
+            ? {
+                editTrip: () => {
+                  if (alive.current && generation === getAccountGeneration())
+                    void openTripEditor();
+                },
+              }
+            : {}),
+          ...(setup?.context.tripId === owner &&
+          setup.context.generation === generation &&
+          setup.members.state === "AVAILABLE"
+            ? {
+                members: () => {
+                  if (alive.current && generation === getAccountGeneration())
+                    setMenuMembersTrip(owner);
+                },
+              }
+            : {}),
+          ...(onChooseDay ? { chooseDay: () => onChooseDay(selected.startDate) } : {}),
+          itinerary: (date) => {
+            if (!alive.current || generation !== getAccountGeneration()) return;
+            if (selected.id !== tripId) return;
+            setItemStart(date ?? "");
+            setItemFormOpen(true);
+          },
+          ...(photosReady
+            ? {
+                photos: () => {
+                  if (alive.current && generation === getAccountGeneration())
+                    photoAdd.current?.();
+                },
+              }
+            : {}),
         },
-      },
-    ]);
-  };
-  useEffect(() => {
-    if (!selected || status !== "READY") return;
-    const owner = selected.id;
-    publishQuickActions(
-      {
-        tripName: selected.name,
-        tripId: owner,
+        owner,
         generation,
-        owner: quickActionsOwner,
-        backToTrips: leaveHome,
-        editTrip: () => {
-          if (alive.current && generation === getAccountGeneration()) setCoverOpen(true);
-        },
-        ...(onChooseDay ? { chooseDay: onChooseDay } : {}),
-        itinerary: (date) => {
-          if (!alive.current || generation !== getAccountGeneration()) return;
-          if (date) setItemStart((previous) => previous || date);
-          setItemFormOpen(true);
-        },
-        ...(photosReady
-          ? {
-              photos: () => {
-                if (alive.current && generation === getAccountGeneration())
-                  photoAdd.current?.();
-              },
-            }
-          : {}),
-      },
-      owner,
+        quickActionsOwner,
+      );
+      return () => publishQuickActions(null, owner, generation, quickActionsOwner);
+    }, [
+      selected,
+      tripId,
+      status,
       generation,
+      metadataEditable,
+      photosReady,
+      setup,
+      publishQuickActions,
       quickActionsOwner,
-    );
-    return () => publishQuickActions(null, owner, generation, quickActionsOwner);
-  }, [
-    selected,
-    status,
-    generation,
-    photosReady,
-    publishQuickActions,
-    quickActionsOwner,
-    leaveHome,
-    onChooseDay,
-  ]);
+      leaveHome,
+      openTripEditor,
+      onChooseDay,
+    ]),
+  );
   const remoteStart = knownDate(remoteSelected?.startDate ?? null);
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
   const metadata = selected ?? remoteSelected;
+  const displayCover =
+    metadata && personalCover.selection
+      ? { ...metadata, selectedCoverAssetIdRaw: personalCover.selection.raw }
+      : metadata;
+  const openPersonalCover = personalCover.selection
+    ? async () => {
+        if (await personalCover.open()) {
+          if (alive.current && generation === getAccountGeneration())
+            setPersonalCoverOpen(true);
+        }
+      }
+    : undefined;
   const lifecycleGroups = metadata
     ? groupLocalTrips([metadata], homePerspective?.date ?? calendarDate(new Date()))
     : null;
@@ -450,27 +659,53 @@ function LocalTripContent({
           ? "Undated"
           : null;
   const preparation = useTripPreparationWidget({
-    tripId:
-      lifecycle === "Upcoming" || lifecycle === "Undated" ? (metadata?.id ?? null) : null,
+    refreshKey,
+    tripId: metadata?.id ?? null,
+    metadata: metadata
+      ? {
+          startDate: metadata.startDate,
+          endDate: metadata.endDate,
+          destination: metadata.destination,
+          destinations: "destinations" in metadata ? metadata.destinations : undefined,
+        }
+      : undefined,
+    onSetup: receiveSetup,
+    onEdit: selected && metadataEditable ? () => void openTripEditor() : undefined,
+    onCover: openPersonalCover,
     undated: lifecycle === "Undated",
     onImport: selected
       ? () => {
           if (generation === getAccountGeneration())
-            router.push({ pathname: "/capture", params: { tripId: selected.id } });
+            router.push({
+              pathname: "/import-plans",
+              params: {
+                tripId: selected.id,
+                origin: "TRIP",
+                originGeneration: String(generation),
+              },
+            });
         }
       : undefined,
     onBuild: selected
       ? () => {
-          if (generation === getAccountGeneration()) setItemFormOpen(true);
+          if (generation === getAccountGeneration()) {
+            setItemStart("");
+            setItemFormOpen(true);
+          }
         }
       : undefined,
-    onOpenDay: onChooseDay,
+    onOpenDay: onChooseDay ? () => onChooseDay(metadata?.startDate) : undefined,
     onOpenItem: onOpenHomeItem,
+    onOpenLocalItem: onOpenLocalHomeItem,
   });
   const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
   const pages = [
-    ...(preparation ? [preparation] : []),
-    ...(metadata && lifecycle ? (widgetsForHome?.(metadata.id, lifecycle) ?? []) : []),
+    ...(preparation && (lifecycle === "Upcoming" || lifecycle === "Undated")
+      ? [preparation]
+      : []),
+    ...(metadata && lifecycle
+      ? (widgetsForHome?.(metadata.id, lifecycle, metadata.startDate) ?? [])
+      : []),
     ...(finance ? [finance] : []),
   ];
   if (mode === "PAST")
@@ -495,6 +730,40 @@ function LocalTripContent({
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
+      {personalCoverOpen && displayCover && personalCover.selection ? (
+        <TripCoverPicker
+          key={displayCover.id}
+          presentation="standalone"
+          trip={displayCover}
+          selectedRaw={personalCover.selection.raw}
+          onClose={() => setPersonalCoverOpen(false)}
+          onSelect={personalCover.select}
+          onChoosePhoto={async (processing) => {
+            const current = () => alive.current && generation === getAccountGeneration();
+            if (!current() || !(await personalCover.open())) return false;
+            const choice = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ["images"],
+              allowsMultipleSelection: false,
+              quality: 1,
+              base64: false,
+              exif: false,
+            });
+            if (!current() || choice.canceled) return false;
+            await processing();
+            if (!current()) return false;
+            const uri = choice.assets[0]?.uri;
+            if (!uri?.startsWith("file://"))
+              throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
+            const repository = await readLocalTripPhotoRepository();
+            if (!current()) return false;
+            const photo = await repository.addTripPhoto(displayCover.id, uri);
+            if (!current()) return false;
+            if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
+            await personalCover.select(tripPhotoCoverRef(photo.assetId));
+            return true;
+          }}
+        />
+      ) : null}
       {error && !selected && !remoteSelected ? (
         <Text accessibilityRole="alert" style={styles.status}>
           {t("tripCreate.saveFailed")}
@@ -503,16 +772,24 @@ function LocalTripContent({
       {selected ? (
         <>
           <TripHomeFrame
-            onEdit={() => {
-              if (alive.current && generation === getAccountGeneration())
-                setCoverOpen(true);
-            }}
+            canChooseCover={!!personalCover.selection}
+            onChooseCover={openPersonalCover}
+            onEdit={
+              metadataEditable
+                ? () => {
+                    if (alive.current && generation === getAccountGeneration())
+                      void openTripEditor();
+                  }
+                : undefined
+            }
             onHeroHeight={onHomeHeroHeight}
             widgets={pages}
+            tripId={selected.id}
+            rawCoverSelection={displayCover?.selectedCoverAssetIdRaw}
             title={selected.name}
-            cover={tripCoverSource(selected)}
+            cover={tripCoverSource(displayCover ?? selected)}
+            coverAssetId={tripCoverId(displayCover ?? selected)}
             metadata={[
-              ...(selected.destination ? [selected.destination] : []),
               ...(selected.startDate && selected.endDate
                 ? [
                     t("myTrips.dateRange", {
@@ -525,36 +802,22 @@ function LocalTripContent({
                   : selected.endDate
                     ? [t("myTrips.ends", { date: displayDate(selected.endDate) })]
                     : [t("myTrips.datesToBeDecided")]),
+              ...(tripDestinationDisplay(selected)
+                ? [tripDestinationDisplay(selected)!]
+                : []),
             ]}
             modules={
               <View style={styles.root}>
-                <UiFormRow
-                  label={t("cleanup.documents")}
-                  value={t("cleanup.unavailable")}
-                  disabled
-                  onPress={() => {}}
-                />
-                <UiFormRow
-                  label={t("tripHome.members")}
-                  value={t("cleanup.unavailable")}
-                  disabled
-                  onPress={() => {}}
+                <TripMembersSummary
+                  tripId={selected.id}
+                  generation={generation}
+                  setup={setup?.context.tripId === selected.id ? setup : null}
                 />
                 <LocalTripPhotos
+                  compact
                   tripId={selected.id}
                   registerAdd={registerPhotos}
                   onSaved={photosSaved}
-                />
-                <UiFormRow
-                  label={t("tripHome.settings")}
-                  value={t("cleanup.unavailable")}
-                  disabled
-                  onPress={() => {}}
-                />
-                <UiFormRow
-                  label={t("tripHome.coverTools")}
-                  value=""
-                  onPress={() => setCoverOpen(true)}
                 />
               </View>
             }
@@ -582,142 +845,204 @@ function LocalTripContent({
               {t("tripCreate.saveFailed")}
             </Text>
           ) : null}
+          {metadataBaseError ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {t("tripMetadata.confirmedBaseUnavailable")}
+            </Text>
+          ) : null}
+          <TripMembersSheet
+            visible={
+              menuMembersTrip === selected.id &&
+              setup?.context.tripId === selected.id &&
+              setup.context.generation === generation &&
+              setup.members.state === "AVAILABLE"
+            }
+            members={
+              setup?.context.tripId === selected.id &&
+              setup.context.generation === generation
+                ? setup.members
+                : null
+            }
+            onClose={() => setMenuMembersTrip(null)}
+          />
           <Modal
             visible={coverOpen}
-            onRequestClose={() => setCoverOpen(false)}
+            presentationStyle="pageSheet"
+            allowSwipeDismissal={!editorSaving && !editorDirty}
+            onRequestClose={() => {
+              if (!editorBusy.current) {
+                if (editorDismiss.current) editorDismiss.current();
+                else setCoverOpen(false);
+              }
+            }}
             animationType="slide"
           >
             <SafeAreaProvider style={styles.modal}>
-              <SheetHeader
-                title={t("tripHome.edit")}
-                onLeft={() => setCoverOpen(false)}
-              />
-              <ScrollView contentContainerStyle={styles.form}>
+              {coverOpen ? (
                 <TripBasicEditor
-                  trip={selected}
+                  trip={{
+                    ...selected,
+                    selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
+                  }}
+                  onClose={() => {
+                    if (!editorBusy.current) setCoverOpen(false);
+                  }}
+                  registerDismiss={(handler) => {
+                    editorDismiss.current = handler;
+                  }}
+                  onDirtyChange={setEditorDirty}
+                  onSavingChange={(saving) => {
+                    editorBusy.current = saving;
+                    setEditorSaving(saving);
+                  }}
+                  setup={setup?.context.tripId === selected.id ? setup : null}
+                  currencyAvailable
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}
-                  onSaveMetadata={async (before, after) => {
+                  onSaveMetadata={async (
+                    before,
+                    after,
+                    cover,
+                    operationId,
+                    destinations,
+                  ) => {
                     if (!alive.current || generation !== getAccountGeneration())
                       throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
                     const repo = await readLocalTripRepository();
                     if (!alive.current || generation !== getAccountGeneration())
                       throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    await repo.updateMetadata({
-                      operationId: createUuid(),
-                      tripId: selected.id,
-                      before,
-                      after,
-                    });
-                    if (alive.current && generation === getAccountGeneration())
-                      await load();
+                    if (selected.syncFormatVersion === 2) {
+                      const deferred = deferredMetadataEditBase.current;
+                      const actionId = deferredMetadataActionId.current;
+                      const base = metadataEditBase.current;
+                      if (deferred && actionId) {
+                        await repo.deferMetadataUpdate({
+                          localActionVersion: 1,
+                          actionId,
+                          operationId,
+                          tripId: selected.id,
+                          before: deferred,
+                          after: {
+                            ...after,
+                            destination: null,
+                            destinations: [
+                              ...(destinations?.after ?? deferred.destinations),
+                            ],
+                          },
+                          ...(cover ? { cover } : {}),
+                        });
+                      } else {
+                        if (!base || base.tripId !== selected.id)
+                          throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+                        await repo.updateMetadata(
+                          {
+                            formatVersion: 3,
+                            operationId,
+                            tripId: selected.id,
+                            expectedMetadataRevision: base.metadataRevision,
+                            before: base.metadata,
+                            after: {
+                              ...after,
+                              destination: null,
+                              destinations: [
+                                ...(destinations?.after ?? base.metadata.destinations),
+                              ],
+                            },
+                          },
+                          cover,
+                        );
+                      }
+                    } else {
+                      await repo.updateMetadata(
+                        { operationId, tripId: selected.id, before, after },
+                        cover,
+                        destinations,
+                      );
+                    }
+                    kickNativeTripQaSync();
+                    const committed = await repo.getTrip(selected.id);
+                    if (alive.current && generation === getAccountGeneration()) {
+                      // Fence an older focus read that started before this local commit.
+                      request.current++;
+                      setSelected({
+                        ...selected,
+                        ...after,
+                        ...(committed ? { destinations: committed.destinations } : {}),
+                        ...(cover
+                          ? {
+                              selectedCoverAssetId: isTripCoverAssetId(cover.after)
+                                ? cover.after
+                                : null,
+                              selectedCoverAssetIdRaw: cover.after,
+                            }
+                          : {}),
+                      });
+                      setCoverOpen(false);
+                      // The committed value is visible now; normal focus reads refresh later.
+                    }
                   }}
                 />
-              </ScrollView>
+              ) : null}
             </SafeAreaProvider>
           </Modal>
-          {pending.length ? (
-            <UiSection title={t("tripCreate.pendingItems")}>
-              {pending.map((p) => {
-                return (
-                  <View key={p.command.operationId}>
-                    <Text style={styles.body}>{p.payload.core.title}</Text>
-                    {p.payload.schedule.start.local_date ? (
-                      <Text style={styles.body}>
-                        {displayDate(p.payload.schedule.start.local_date)}
-                      </Text>
-                    ) : null}
-                    {p.payload.schedule.end?.local_date ? (
-                      <Text style={styles.body}>
-                        {displayDate(p.payload.schedule.end.local_date)}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.status}>
-                      {t(
-                        ["FAILED", "CONFLICT", "DENIED"].includes(p.state)
-                          ? "tripCreate.itemNeedsAttention"
-                          : "tripCreate.itemPending",
-                      )}
-                    </Text>
-                  </View>
-                );
-              })}
-            </UiSection>
+          {itemFormOpen ? (
+            <Modal
+              visible
+              animationType="slide"
+              transparent
+              presentationStyle="overFullScreen"
+              onRequestClose={() => {
+                if (itemDismiss.current) itemDismiss.current();
+                else setItemFormOpen(false);
+              }}
+            >
+              <SafeAreaProvider style={styles.manualModal}>
+                <ManualItineraryContent
+                  key={`${selected.id}:${generation}:${itemStart}`}
+                  tripId={selected.id}
+                  generation={generation}
+                  registerDismissHandler={registerItemDismiss}
+                  initialDate={itemStart || null}
+                  tripStartDate={selected.startDate}
+                  tripEndDate={selected.endDate}
+                  onClose={() => {
+                    setItemFormOpen(false);
+                    setItemStart("");
+                  }}
+                  onSaved={() => {
+                    if (!alive.current || generation !== getAccountGeneration()) return;
+                    onManualItemSaved?.(selected.id, generation);
+                    setItemFormOpen(false);
+                    setItemStart("");
+                    setSavedNotice(true);
+                    void load();
+                  }}
+                />
+              </SafeAreaProvider>
+            </Modal>
           ) : null}
-          <Modal
-            visible={itemFormOpen}
-            onRequestClose={closeItemForm}
-            animationType="slide"
-          >
-            <View style={styles.modal}>
-              <SheetHeader
-                title={t("tripCreate.addItem")}
-                leftLabel={t("common.cancel")}
-                onLeft={closeItemForm}
-              />
-              <ScrollView contentContainerStyle={styles.form}>
-                {error ? (
-                  <Text accessibilityRole="alert" style={styles.status}>
-                    {t("tripCreate.saveFailed")}
-                  </Text>
-                ) : null}
-                <UiSection title={t("tripCreate.addItem")}>
-                  <UiChoiceChip
-                    label={t("tripCreate.activity")}
-                    selected={family === "P1"}
-                    onPress={() => setFamily("P1")}
-                  />
-                  <UiChoiceChip
-                    label={t("tripCreate.stay")}
-                    selected={family === "P3"}
-                    onPress={() => setFamily("P3")}
-                  />
-                  <UiTextInput
-                    accessibilityLabel={t("tripCreate.itemTitle")}
-                    placeholder={t("tripCreate.itemTitle")}
-                    value={itemTitle}
-                    onChangeText={setItemTitle}
-                    editable={!saving}
-                  />
-                  <CalendarField
-                    label={t(
-                      family === "P3" ? "tripCreate.checkin" : "tripCreate.itemDate",
-                    )}
-                    value={itemStart}
-                    onChange={setItemStart}
-                  />
-                  {family === "P3" ? (
-                    <CalendarField
-                      label={t("tripCreate.checkout")}
-                      value={itemEnd}
-                      onChange={setItemEnd}
-                    />
-                  ) : null}
-                  <UiButton
-                    label={t("tripCreate.saveItem")}
-                    disabled={
-                      saving ||
-                      !itemTitle.trim() ||
-                      !itemStart ||
-                      (family === "P3" && !itemEnd)
-                    }
-                    onPress={() => void save(true)}
-                  />
-                </UiSection>
-              </ScrollView>
-            </View>
-          </Modal>
         </>
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
+            canChooseCover={!!personalCover.selection}
+            onChooseCover={openPersonalCover}
             onHeroHeight={onHomeHeroHeight}
+            modules={
+              <TripMembersSummary
+                tripId={remoteSelected.id}
+                generation={generation}
+                setup={setup?.context.tripId === remoteSelected.id ? setup : null}
+              />
+            }
             widgets={pages}
+            tripId={remoteSelected.id}
+            rawCoverSelection={displayCover?.selectedCoverAssetIdRaw}
             title={remoteSelected.name}
-            cover={tripCoverSource(remoteSelected)}
+            cover={tripCoverSource(displayCover ?? remoteSelected)}
+            coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
             notice={t("myTrips.cachedDetails")}
             metadata={[
-              ...(remoteSelected.destination ? [remoteSelected.destination] : []),
               ...(remoteStart && remoteEnd
                 ? [
                     t("myTrips.dateRange", {
@@ -730,6 +1055,7 @@ function LocalTripContent({
                   : remoteEnd
                     ? [t("myTrips.ends", { date: displayDate(remoteEnd) })]
                     : [t("myTrips.datesToBeDecided")]),
+              ...(remoteSelected.destination ? [remoteSelected.destination] : []),
             ]}
           />
           {localOutcome?.tripId === remoteSelected.id &&
@@ -767,33 +1093,93 @@ function LocalTripContent({
         )
       ) : (
         <>
-          <UiSection title={t("tripCreate.newTrip")}>
-            <UiTextInput
-              accessibilityLabel={t("tripCreate.name")}
-              placeholder={t("tripCreate.name")}
-              value={name}
-              onChangeText={setName}
-              editable={!saving}
-            />
-            <UiTextInput
-              accessibilityLabel={t("tripCreate.destination")}
-              placeholder={t("tripCreate.destination")}
-              value={destination}
-              onChangeText={setDestination}
-              editable={!saving}
-            />
-            <CalendarField
-              label={t("tripCreate.start")}
-              value={start}
-              onChange={setStart}
-            />
-            <CalendarField label={t("tripCreate.end")} value={end} onChange={setEnd} />
-            <UiButton
-              label={t("tripCreate.saveTrip")}
-              disabled={saving || status !== "READY" || !name.trim()}
-              onPress={() => void save(false)}
-            />
-          </UiSection>
+          <MyTripsList
+            trips={trips}
+            remoteTrips={remoteTrips}
+            today={calendarDate(new Date())}
+            eligibleToday={eligibleToday}
+            onOpen={onOpen}
+            onOpenToday={(id) => void openToday(id)}
+            onCreate={onCreate}
+          />
+          <Modal
+            visible
+            presentationStyle="pageSheet"
+            animationType="slide"
+            onRequestClose={closeCreate}
+          >
+            <SafeAreaProvider style={styles.modal}>
+              <SafeAreaView edges={["bottom"]} style={styles.modal}>
+                <SheetHeader
+                  category="form"
+                  safeTop={false}
+                  title={t("createTripV2.title")}
+                  leftLabel={t("common.cancel")}
+                  onLeft={closeCreate}
+                  leftDisabled={saving}
+                  rightLabel={t("createTripV2.create")}
+                  rightDisabled={
+                    saving ||
+                    destinationBusy ||
+                    status !== "READY" ||
+                    !name.trim() ||
+                    name.trim().length > 256
+                  }
+                  onRight={() => {
+                    void save();
+                  }}
+                />
+                <KeyboardAvoidingView
+                  style={styles.modal}
+                  behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
+                  <ScrollView
+                    style={styles.modal}
+                    contentContainerStyle={styles.form}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="interactive"
+                  >
+                    <CreateTripV2Fields
+                      name={name}
+                      onName={setName}
+                      range={{ start, end }}
+                      onRange={(range) => {
+                        setStart(range.start);
+                        setEnd(range.end);
+                      }}
+                      selfNickname={selfNickname}
+                      knownSelfName={knownSelfName}
+                      onSelfNickname={(value) => {
+                        setSelfNickname(value);
+                      }}
+                      travelers={travelers}
+                      onTravelers={setTravelers}
+                      disabled={saving}
+                      destinationEntry={
+                        <CreateTripDestinations
+                          name={name}
+                          draftId={createDraftId}
+                          generation={generation}
+                          items={destinations}
+                          onChange={(items) => {
+                            setDestinations(items);
+                          }}
+                          onQueryDirty={setDestinationQueryDirty}
+                          onBusy={setDestinationBusy}
+                          disabled={saving}
+                        />
+                      }
+                    />
+                    {error ? (
+                      <Text accessibilityRole="alert" style={styles.status}>
+                        {t("tripCreate.saveFailed")}
+                      </Text>
+                    ) : null}
+                  </ScrollView>
+                </KeyboardAvoidingView>
+              </SafeAreaView>
+            </SafeAreaProvider>
+          </Modal>
         </>
       )}
     </View>
@@ -802,9 +1188,11 @@ function LocalTripContent({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     modal: { flex: 1, backgroundColor: colors.background },
+    manualModal: { flex: 1 },
     form: { padding: visual.space.page, gap: visual.space.card },
     pastRoot: { flex: 1, backgroundColor: colors.background, padding: visual.space.page },
     root: { gap: visual.space.section },
     body: { color: colors.textPrimary, ...visual.type.row },
     status: { color: colors.textSecondary, ...visual.type.meta },
+    travelers: { gap: visual.space.heading },
   });

@@ -1,0 +1,9 @@
+# Same-operation P1 lost-response recovery candidate
+
+Remote recovery is GET-only: same legally scoped Operation receipt and full hashed Core collection. No submit/capability path is exposed to the method. Normal adopted-Trip coordinator uses its existing readback continuation, lease/backoff and cold trigger; no new timer/engine or global-history retry.
+
+Only attempted MANUAL P1 CREATE_ITEM / four existing edits are selected, Account/Trip/queue/intent/hash pinned, non-AUTH, nonterminal and no live claim. Missing404, STATUS_ONLY or unqualified outcomes preserve the original retry deadline. FULL accepted receipt is applied through the existing repository, then the actual full collection is validated/installed. Only reconciled receipt target revisions, unchanged immutable payload/identity, current Account and still-unclaimed eligible queue rows may become COMPLETED. A later claim or failed collection cannot be acknowledged; no premature POST and no clearing the future retry to force a send.
+
+Coordinator includes attempted Core status/attempt count in the existing readback trigger; unchanged work does not create an endless read loop. A failed remote read uses the existing readback continuation retry. Recovered optimistic intents disappear only after the real collection proves them. Other families/Source admissions, AUTH-paused rows and never-dispatched requests are excluded.
+
+41 targeted Core repository/normal wake tests PASS, including real SQLite future-backoff recovery with actual generated Core receipt/collection, no repeated completed reads, missing/status-only preservation, failed collection, newer lease, Account switch, tampered queue and auth/never-dispatched exclusions. Typecheck and scoped lint PASS. This is L2 only; actual Native/DEV remains Root execution and must not be inferred from these tests. Earlier server APPLIED receipts are not yet proof of successful Native recovery.

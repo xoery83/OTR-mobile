@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-24T05:10:12.657639+00:00",
+  "source": "actual AD5 private QA ledger; read-only copy",
+  "ledger": {
+    "version": 1,
+    "runId": "afdf5785-670b-44c1-951d-9864dc1307f6",
+    "maximum": 72,
+    "entries": [
+      {
+        "ordinal": 1,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:03.444Z"
+      },
+      {
+        "ordinal": 2,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:09.589Z"
+      },
+      {
+        "ordinal": 3,
+        "method": "GET",
+        "route": "/v2/trips/:id/metadata",
+        "at": "2026-10-24T05:09:24.666Z"
+      },
+      {
+        "ordinal": 4,
+        "method": "GET",
+        "route": "/v2/trips/:id/core/operations/:id",
+        "at": "2026-10-24T05:09:30.033Z"
+      }
+    ]
+  }
+}

@@ -343,3 +343,24 @@ it("shows all four Upcoming and undated rows, two heroes, and full long CJK/Engl
   expect(state.buttons.some((b) => b.label.includes("seeAll"))).toBe(false);
   expect(state.texts.find((p) => p.children === upcoming[0].name)?.numberOfLines).toBe(2);
 });
+
+it("opens empty My Trips Import over its invoking screen instead of navigating to the Capture tab", () => {
+  state.buttons = [];
+  state.push.mockReset();
+  renderToStaticMarkup(
+    createElement(MyTripsList, {
+      trips: [],
+      remoteTrips: [],
+      today: "2026-10-23",
+      eligibleToday: {},
+      onOpen: vi.fn(),
+      onOpenToday: vi.fn(),
+      onCreate: vi.fn(),
+    }),
+  );
+  state.buttons.find((p) => p.label === "actionIsland.importPlans")!.onPress();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/import-plans",
+    params: { origin: "TRIPS", originGeneration: expect.any(String) },
+  });
+});

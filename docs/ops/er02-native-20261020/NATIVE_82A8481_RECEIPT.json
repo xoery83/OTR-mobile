@@ -1,0 +1,129 @@
+{
+  "scope": "ER02 TH05 bounded pending Preparation read/navigation fix; not whole ER02 acceptance",
+  "product_sha": "82a8481725c7f17c313ae3194473498448ae5b05",
+  "worktree": "/private/tmp/otr-er02-pending-preparation-20261020",
+  "branch": "codex/er02-pending-preparation-20261020",
+  "previous_preview_sha": "e59b88495ff5228bb8efabb98c15793da4862f9e",
+  "owning_core_sha": "9d0f8d94694b264ce718a4114a1d725d8d717f10",
+  "core_pick": "4b248336",
+  "core_manifest_sha256": "e6f9f0e43ad131d6b06d32d023e43d0c263c9175dd9f805f50cb0736ff449d3a",
+  "core_six_file_hashes_verified": true,
+  "consumer_files": [
+    "src/features/day-feed/useTripPreparationWidget.tsx",
+    "src/features/day-feed/LocalTripWorkspace.tsx",
+    "src/features/day-feed/TripScreen.tsx",
+    "src/features/day-feed/useTripPreparationWidget.test.ts",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts"
+  ],
+  "behavior": "Use visible exact sourceToken with owning resolver; Pending retains null epoch and existing local-detail fingerprint path; accepted retains actual epoch. Current Repository revalidation, generation/request/unmount fences remain. No new admission, model, financial state or persistence implementation.",
+  "preview": {
+    "simulator": "OTR MT Correction 01 QA",
+    "udid": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+    "bundle_id": "com.xoery.otrmobile",
+    "native_host_reinstalled": false,
+    "js_binding": "original App icon cold launch, localhost8083, new private cache",
+    "metro_pid": 6462,
+    "metro_cwd": "/private/tmp/otr-er02-pending-preparation-20261020",
+    "metro_log": "/private/tmp/otr-er02-native-20261020/82a8481-metro.log",
+    "final_ui": "English Home, ER02 Cover QA · Iceland Winter, Preparation 1 Plans / original Recent item",
+    "gui_lease_released": true
+  },
+  "same_records": {
+    "qa_trip_id": "24617633-94fd-477d-bfc8-c7e974d6212e",
+    "item_id": "cd1d8549-4cb8-4166-8d79-c1adc10391e7",
+    "operation_id": "12709234-da8d-4854-b8dc-48ee4022eee5",
+    "state": "BLOCKED manual pending, not admitted/server-synced",
+    "date": "2026-10-20",
+    "clock": null,
+    "zone": null,
+    "instant": null,
+    "trip_bounds": [
+      "2026-12-30",
+      "2027-04-28"
+    ],
+    "new_business_saves_this_pass": 0,
+    "date_moved": false,
+    "existing_user_cover_selection_preserved": "raw null/automatic at read-only receipt; no cover action in this pass"
+  },
+  "validation": {
+    "author_consumer": "3 suites / 80 tests PASS",
+    "independent_consumer": "3 suites / 80 tests PASS, no P1/P2",
+    "core_independent": "3 suites / 22 PASS; one previously established inherited Floating case excluded, not counted PASS",
+    "typecheck": "PASS",
+    "ui_guard": "PASS, 473 legacy occurrences / 124 files, no baseline forgiveness",
+    "scoped_lint": "PASS",
+    "prettier_diff": "PASS",
+    "first_attempt_notes": "Sandbox Vite cache write EPERM resolved with authorized test execution. One new fixture function-identity assertion failed, corrected to assert scoped source fields; product behavior unchanged. No failing result counted PASS."
+  },
+  "native_verified": [
+    "Same original Trip Preparation count1/Plans and actual original Recent title/date",
+    "Recent normal tap opens existing local readonly details, Saved · waiting to sync, Oct20 2026",
+    "Close returns same Home, count1 and Recent remain",
+    "Normal App close/icon cold reopen, same Trip count1 and Recent remain",
+    "Same item detail opens again after cold, Close returns same Home"
+  ],
+  "tracker_increment": [
+    {
+      "id": "TH-05",
+      "subcase_status": "NATIVE_VERIFIED / READY_FOR_OWNER_VQA",
+      "subcase": "Real lawful MANUAL Pending count/recent/detail/Close/cold read",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "remaining": "Broader category/recent/mixed and unmet setup actions qualification, Owner visual acceptance"
+    },
+    {
+      "id": "TH-02",
+      "subcase_status": "NATIVE_VERIFIED / READY_FOR_OWNER_VQA",
+      "subcase": "Real locally saved pending visible from Home and legal details after cold, no cloud receipt",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "remaining": "Day outlying-date discoverability, Today/stay checkout qualification"
+    }
+  ],
+  "other_24_clause_states": "Retain preceding 26-clause receipt and Coordinator unified Tracker; no automatic upgrade. DS06 full120-mount FAIL and five owning gaps unchanged. No Owner Accepted granted.",
+  "not_native_verified": [
+    "Range-outside Day/Calendar discoverability",
+    "Native mixed same-ID hide/cancel and account revoke/ABA (covered in isolated owning/consumer tests only)",
+    "Hosted sync/accepted receipt",
+    "Independent Release/embedded/no-Metro (previous e59 build failure, not attempted here)",
+    "Full visual matrix or whole ER02 UX acceptance"
+  ],
+  "rollback": {
+    "source_sha": "e59b88495ff5228bb8efabb98c15793da4862f9e",
+    "worktree": "/private/tmp/otr-er02-cover70-20261020",
+    "procedure": "Normal close only OTR on AD5, stop only owned8083 session5619/PID6462, serve old frozen tree with prior/private cache on8083, open original App icon. Preserve SQLite/Keychain/account; no install or data rollback. Known TH05 empty pending read returns on old source.",
+    "current_policy": "Keep qualified82 preview available; rollback only for binding/runtime fault."
+  },
+  "evidence": [
+    {
+      "path": "82a8481-preparation-count-recent.png",
+      "sha256": "7a9922e086b8aa9bbb299b5cbabdd0479e4d6650f88b6bd2a9ebd754de3a34b1"
+    },
+    {
+      "path": "82a8481-pending-detail.png",
+      "sha256": "ae097fd2a6b940eee5032796048b909f28cc3394879bb22779bcbf57d1f2fc88"
+    },
+    {
+      "path": "82a8481-pending-detail.ax.txt",
+      "sha256": "538e81c547cd58e11efbb3c10a74f8f27fcd0f7dd6a37b991f5b9e8cd053e658"
+    },
+    {
+      "path": "82a8481-detail-close-home.ax.txt",
+      "sha256": "f8065ae8c654a25fef84b9e8f8dd9356680fd58e279dc41d08cee9db9dab46fb"
+    },
+    {
+      "path": "82a8481-preparation-cold-home.ax.txt",
+      "sha256": "f8065ae8c654a25fef84b9e8f8dd9356680fd58e279dc41d08cee9db9dab46fb"
+    },
+    {
+      "path": "82a8481-pending-cold-detail.ax.txt",
+      "sha256": "538e81c547cd58e11efbb3c10a74f8f27fcd0f7dd6a37b991f5b9e8cd053e658"
+    },
+    {
+      "path": "82a8481-final-home.ax.txt",
+      "sha256": "f8065ae8c654a25fef84b9e8f8dd9356680fd58e279dc41d08cee9db9dab46fb"
+    },
+    {
+      "path": "82a8481-readonly-qa-record.json",
+      "sha256": "04862920479b501519c4bdf73956863334ee28447afd4f73e2af22fc3726c157"
+    }
+  ]
+}

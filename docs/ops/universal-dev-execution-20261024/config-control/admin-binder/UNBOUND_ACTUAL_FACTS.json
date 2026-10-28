@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "actorId": null,
+  "outerStartsAt": null,
+  "outerExpiresAt": null,
+  "environmentBaseline": {
+    "config_version": null,
+    "kill_switch": null
+  },
+  "connection": null,
+  "verifiedAuthorityReceiptSHA256": null,
+  "normalAuthReceiptSHA256": null,
+  "authSessionExpiresAt": null,
+  "authContextBase": {
+    "auth_config_version": null,
+    "auth_session_reference": null,
+    "auth_source": null,
+    "expires_at": null,
+    "principal_kind": null,
+    "revoked": null,
+    "verified_account_id": null,
+    "verified_actor_id": null,
+    "verified_at": null,
+    "verified_client_identity": null,
+    "verified_environment": null,
+    "verified_external_subject": null,
+    "version": null
+  },
+  "commandIdentities": {
+    "configure": {
+      "requestId": null,
+      "auditId": null
+    },
+    "providerConfig": {
+      "requestId": null,
+      "auditId": null
+    },
+    "price": {
+      "requestId": null,
+      "auditId": null
+    },
+    "openIntegration": {
+      "requestId": null,
+      "auditId": null
+    },
+    "openEnvironment": {
+      "requestId": null,
+      "auditId": null
+    },
+    "restoreEnvironment": {
+      "requestId": null,
+      "auditId": null
+    },
+    "restoreIntegration": {
+      "requestId": null,
+      "auditId": null
+    }
+  },
+  "grantIdentities": {
+    "CONFIG_ADMIN": null,
+    "SECURITY_ADMIN": null
+  },
+  "grantorActorId": null,
+  "reasonCode": null,
+  "integrationRow": {
+    "admin_label": null,
+    "auth_config_reference": null,
+    "capabilities": null,
+    "category": null,
+    "config_sha256": null,
+    "config_version": null,
+    "created_at": null,
+    "created_by": null,
+    "credential_reference": null,
+    "enabled": null,
+    "environment": null,
+    "health_observation_id": null,
+    "health_observed_at": null,
+    "health_state": null,
+    "integration_id": null,
+    "kill_switch": null,
+    "quota_limit": null,
+    "quota_window_seconds": null,
+    "rate_per_minute": null,
+    "updated_at": null,
+    "updated_by": null,
+    "vendor_namespace": null
+  },
+  "providerRow": {
+    "adapter_version": null,
+    "capabilities": null,
+    "config_version": null,
+    "configuration_sha256": null,
+    "created_at": null,
+    "created_by": null,
+    "data_region": null,
+    "expected_completion_cost_nanos": null,
+    "expected_cost_currency": null,
+    "input_byte_limit": null,
+    "input_count_limit": null,
+    "integration_id": null,
+    "latency_estimate_ms": null,
+    "max_complexity": null,
+    "max_risk": null,
+    "modalities": null,
+    "model_id": null,
+    "model_version": null,
+    "network_required": null,
+    "output_byte_limit": null,
+    "privacy_policy": null,
+    "provider_class": null,
+    "provider_config_id": null,
+    "provider_id": null,
+    "quality_observation_reference": null,
+    "quality_policy_reference": null,
+    "quality_policy_sha256": null,
+    "replay_support": null,
+    "routing_class": null,
+    "routing_eligibility": null,
+    "routing_priority": null,
+    "schema_contracts": null,
+    "schema_output": null
+  },
+  "priceRow": {
+    "created_at": null,
+    "created_by": null,
+    "currency": null,
+    "effective_from": null,
+    "effective_until": null,
+    "integration_id": null,
+    "model_id": null,
+    "price_schedule_id": null,
+    "provider_id": null,
+    "rounding_policy": null,
+    "schedule_sha256": null,
+    "schedule_version": null,
+    "source_reference": null,
+    "source_version": null,
+    "supersedes_schedule_id": null
+  },
+  "priceUnits": [
+    {
+      "price_schedule_id": null,
+      "unit_key": "input_tokens",
+      "measurement_unit": "input_tokens",
+      "unit_quantity": null,
+      "price_per_quantity": null,
+      "unit_definition": {
+        "version": 1,
+        "relationship": "DISJOINT",
+        "included_in": null,
+        "billable": true
+      }
+    },
+    {
+      "price_schedule_id": null,
+      "unit_key": "cached_input_tokens",
+      "measurement_unit": "cached_input_tokens",
+      "unit_quantity": null,
+      "price_per_quantity": null,
+      "unit_definition": {
+        "version": 1,
+        "relationship": "DISJOINT",
+        "included_in": null,
+        "billable": true
+      }
+    },
+    {
+      "price_schedule_id": null,
+      "unit_key": "output_tokens",
+      "measurement_unit": "output_tokens",
+      "unit_quantity": null,
+      "price_per_quantity": null,
+      "unit_definition": {
+        "version": 1,
+        "relationship": "DISJOINT",
+        "included_in": null,
+        "billable": true
+      }
+    }
+  ]
+}

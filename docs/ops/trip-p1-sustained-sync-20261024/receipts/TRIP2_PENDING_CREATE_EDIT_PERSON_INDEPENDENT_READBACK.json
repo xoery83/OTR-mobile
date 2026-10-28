@@ -1,0 +1,86 @@
+{
+  "at": "2026-10-24T03:45:53.667861+00:00",
+  "scope": "Synthetic A exact Trip2; independent Supabase read-only query",
+  "status": "SERVER_VERIFIED",
+  "evidence": {
+    "createReceipt": {
+      "actor_account_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "created_at": "2026-10-24T03:37:14.500966+00:00",
+      "operation_id": "594bf2ae-e84b-48b9-9ce9-898400aea224",
+      "request_payload": {
+        "destination": null,
+        "destinations": [],
+        "endDate": null,
+        "formatVersion": 2,
+        "name": "AD5 Sustained 20261024 Auto Second",
+        "startDate": null,
+        "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab"
+      },
+      "trip_id": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab"
+    },
+    "people": [
+      {
+        "id": "68462bef-7dca-4c33-b4fc-80977b43deda",
+        "name": "AD5 Sustained QA A",
+        "role": "owner",
+        "status": "linked",
+        "userId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424"
+      },
+      {
+        "id": "0954dff9-a064-4763-8f7b-ec59fce9f521",
+        "name": "Synthetic Traveler Two",
+        "role": "group_member",
+        "status": "unlinked",
+        "userId": null
+      }
+    ],
+    "personReceipt": {
+      "accepted_at": "2026-10-24T03:37:31.715226+00:00",
+      "actor_account_id": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "operation_id": "bee6f91d-bfa5-4408-aa57-085a9b58f60a",
+      "person_id": "0954dff9-a064-4763-8f7b-ec59fce9f521",
+      "request_payload": {
+        "dataOwnership": "CLOUD_SHARED_AUTHORED",
+        "displayName": "Synthetic Traveler Two",
+        "operationId": "bee6f91d-bfa5-4408-aa57-085a9b58f60a",
+        "personId": "0954dff9-a064-4763-8f7b-ec59fce9f521",
+        "tripCreateOperationId": "594bf2ae-e84b-48b9-9ce9-898400aea224",
+        "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+        "version": 1
+      },
+      "result_payload": {
+        "acceptedAt": "2026-10-24T03:37:31.715226+00:00",
+        "actorAccountId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+        "person": {
+          "displayName": "Synthetic Traveler Two",
+          "participationActive": true,
+          "participationRevision": 0,
+          "personId": "0954dff9-a064-4763-8f7b-ec59fce9f521",
+          "status": "unlinked",
+          "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+          "userId": null
+        },
+        "receiptVersion": 1,
+        "request": {
+          "dataOwnership": "CLOUD_SHARED_AUTHORED",
+          "displayName": "Synthetic Traveler Two",
+          "operationId": "bee6f91d-bfa5-4408-aa57-085a9b58f60a",
+          "personId": "0954dff9-a064-4763-8f7b-ec59fce9f521",
+          "tripCreateOperationId": "594bf2ae-e84b-48b9-9ce9-898400aea224",
+          "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+          "version": 1
+        }
+      },
+      "trip_id": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab"
+    },
+    "trip": {
+      "createdBy": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+      "destinations": [],
+      "endDate": null,
+      "id": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+      "metadataRevision": 1,
+      "name": "AD5 Sustained 20261024 Auto Second Edited",
+      "startDate": null
+    }
+  }
+}

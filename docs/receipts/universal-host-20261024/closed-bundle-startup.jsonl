@@ -1,0 +1,4 @@
+{"level":"info","event":"listening","port":8787,"environment":"development"}
+{"level":"error","event":"historical_rate_scan","sequence":1,"durationMs":118,"usefulWork":false,"claimedRateDemands":null,"personalPaymentFxWork":null,"autoReferenceDemands":null,"autoReferenceWork":null,"nextIntervalMs":60000,"failureCount":1,"failureClass":"Error","wakeups":0,"coalescedWakeups":0}
+{"level":"info","event":"request","requestId":"0efba35f-0471-498c-aa16-d1d2e795ba6f","route":"health","status":200,"durationMs":23}
+{"status":"CLOSED_BUNDLE_HEALTH_PASS","health":{"status":"ok","environment":"development"},"realProviderCalls":0,"network":"none","privateCapabilities":"ABSENT_CLOSED"}

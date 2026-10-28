@@ -1,0 +1,258 @@
+{
+  "kind": "Incremental evidence for Coordinator unified tracker, not a replacement tracker or whole ER02 acceptance",
+  "product_sha": "e59b88495ff5228bb8efabb98c15793da4862f9e",
+  "branch": "codex/er02-cover70-20261020",
+  "worktree": "/private/tmp/otr-er02-cover70-20261020",
+  "preview": {
+    "device": "OTR MT Correction 01 QA",
+    "udid": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+    "bundle_id": "com.xoery.otrmobile",
+    "host_reinstalled": false,
+    "delivery": "Original dev Host cold loads fixed JS through localhost8083",
+    "metro_pid": 23824,
+    "metro_workdir": "/private/tmp/otr-er02-cover70-20261020",
+    "metro_log": "/private/tmp/otr-er02-native-20261020/e59b884-metro.log",
+    "account_actor": "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
+    "final_visible_state": "English Trip Home: ER02 Cover QA · Iceland Winter. Original Host/account retained; DeviceHub GUI can be yielded after receipt."
+  },
+  "qa_data": {
+    "only_mutated_trip": "24617633-94fd-477d-bfc8-c7e974d6212e",
+    "name": "ER02 Cover QA · Iceland Winter",
+    "destination": "Iceland",
+    "range": [
+      "2026-12-30",
+      "2027-04-28"
+    ],
+    "selected_cover_asset_id": "owner-photo-dbfdcd6ae067",
+    "path": "Normal UI existing repositories; SQLite only read-only corroboration",
+    "hosted_sync_pass": false,
+    "no_session_or_database_copy": true,
+    "additional_normal_ui_pending_item": {
+      "item_id": "cd1d8549-4cb8-4166-8d79-c1adc10391e7",
+      "operation_id": "12709234-da8d-4854-b8dc-48ee4022eee5",
+      "title": "ER02 local pending walk",
+      "family": "P1",
+      "admission": "MANUAL",
+      "local_date": "2026-10-20",
+      "local_time": null,
+      "zone_id": null,
+      "instant": null,
+      "state": "BLOCKED",
+      "outside_explicit_trip_bounds": true,
+      "bounds_unchanged": true,
+      "path": "Existing LocalTripWorkspace Add Itinerary → tripRepository.addItem → Core.enqueue; no direct table writes",
+      "cold_preparation": "Still empty; not Native PASS",
+      "day_outlying_discoverability": "NOT VERIFIED; current remembered Dec31 empty is not proof of missing item",
+      "no_69_authority_receipt_claim": true
+    }
+  },
+  "static_cover_sources": {
+    "resource_sha": "6ea7217a869b08fe8cbf2d6889b20add1e79f551",
+    "core_sha": "5664facd30be68072ad009d4aeaebf20e8be0061",
+    "core_pick": "f7ad4364",
+    "new_owner_assets": 22,
+    "candidate_assets": 70,
+    "finite_registry_including_legacy": 74,
+    "existing_48_records_unchanged": true,
+    "iceberg_native_verified": false,
+    "all22_native_paint_verified": false,
+    "embedded_no_metro_verified": false
+  },
+  "checks": {
+    "author": "8 suites / 108 tests PASS; typecheck; ui:guard; scoped ESLint; Prettier; git diff --check PASS",
+    "independent_review": "/private/tmp/otr-er02-cover70-review-20261020.md; no P1/P2; separate reviewer test result 7 suites / 63 PASS",
+    "native_verified_subcases": [
+      "One new Owner photo actual paint/normal Save",
+      "Metadata-only name/destination retain manual cover",
+      "Normal App close/cold reopen retains same raw selected cover",
+      "Chinese cross-year title full single line",
+      "Real local member identity panel",
+      "Same Trip Currency authority read and Back",
+      "Range draft Cancel restores persisted bounds"
+    ],
+    "known_failures": [
+      "DS06 120-day full mounting remains FAIL",
+      "TH05 Preparation acceptedSnapshot-only fallback shows empty despite lawful locally saved MANUAL Pending Item; owning Repository integration requested"
+    ],
+    "unverified": [
+      "Iceberg full-subject rendering",
+      "All22 Native paint",
+      "Embedded/no-Metro",
+      "Large font/dark matrix",
+      "New Owner acceptance"
+    ]
+  },
+  "clauses": [
+    {
+      "id": "TH-01",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal local metadata Save closes; same new QA Trip Hero and cold reread update. Failure/error Native case remains."
+    },
+    {
+      "id": "TH-02",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal UI saved one real MANUAL P1 DateOnly pending item; cold pending intent persisted. Day/details and checkout still NOT VERIFIED. No TH02 PASS."
+    },
+    {
+      "id": "TH-03",
+      "whole_clause_status": "BLOCKED_BY_OWNING_INTERFACE",
+      "native_scope": "Owner manual horizontal Widget switching previously confirmed; no new cache invalidation proof.",
+      "missing_interface": "Cross-remount permission/version invalidation DTO"
+    },
+    {
+      "id": "TH-04",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Empty new QA Trip has lawful Open Day/build/import affordances; unavailable/TZ-state qualification remains."
+    },
+    {
+      "id": "TH-05",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Cold Preparation still empty despite one persisted legal MANUAL pending item. Exact read seam tripPreparationRepository.read acceptedSnapshot-null branch returns selectTripPreparation([]); owning integration request, not a fixture or authority bypass."
+    },
+    {
+      "id": "TH-06",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Real local creator named people=1, Members panel identity agrees; invitations explicitly unavailable, no fabricated connection."
+    },
+    {
+      "id": "TH-07",
+      "whole_clause_status": "BLOCKED_BY_OWNING_INTERFACE",
+      "native_scope": "Existing Trip Edit/Members/Day callbacks usable; Documents route remains blocked.",
+      "missing_interface": "Documents owning route"
+    },
+    {
+      "id": "TH-08",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal Trip Currency opens existing same-Trip NZD Currency authority and Back returns Home; settled lock not exercised."
+    },
+    {
+      "id": "TH-09",
+      "whole_clause_status": "BLOCKED_BY_OWNING_INTERFACE",
+      "native_scope": "New static Owner photograph selected, Save, metadata-only rename/destination preserve manual choice, normal cold Home retains. Iceberg contain Native and all22 paint not verified. User-photo persistence remains blocked.",
+      "missing_interface": "User-photo persistence and owning photo interface"
+    },
+    {
+      "id": "TH-10",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "No new populated spending widget evidence in this pass; previous fixed implementation retained."
+    },
+    {
+      "id": "TH-11",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Home name/date/destination order and full-bleed Hero observed; collapsed scroll threshold not requalified."
+    },
+    {
+      "id": "TH-12",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Reviewed native semantic toolbar retained; no new complete contrast/dynamic-type qualification."
+    },
+    {
+      "id": "TH-13",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Default Home/Edit user copy has no internal diagnostics; Debug ON/OFF regression remains."
+    },
+    {
+      "id": "ET-01",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal top Save/Cancel, local Save closes and updates Hero/cold data; Native failure/draft retry not exercised."
+    },
+    {
+      "id": "ET-02",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Existing saved 120-day cross-year range reopened; choose Jan1 draft then Cancel restores Dec30-Apr28 and disabled Save. Earlier Done/save persistence evidence retained; outlying Item bounds not exercised. Real Oct20 item save leaves explicit Dec30-Apr28 metadata unchanged; outlying Calendar navigation not qualified."
+    },
+    {
+      "id": "ET-03",
+      "whole_clause_status": "BLOCKED_BY_OWNING_INTERFACE",
+      "native_scope": "Normal single text destination Iceland and manual name persisted through cold read; multi-identity owning gap remains.",
+      "missing_interface": "Confirmed multiple-location identity"
+    },
+    {
+      "id": "ET-04",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal Editor has no duplicate bottom Save/member editor/technical sync debug copy; user-photo owning gap linked to TH09."
+    },
+    {
+      "id": "DS-01",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal new candidate cold MyTrips then Day direct, no legacy Today route observed; exhaustive offline warm/cold not claimed."
+    },
+    {
+      "id": "DS-02",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Calendar date-row and date header available; explicit title fallback and no route-name label inherited verified fix; scrolling jitter/material full gate remains."
+    },
+    {
+      "id": "DS-03",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Chinese full cross-year header 2026年12月31日 – 2027年1月8日 visibly fits single line, normal Calendar selection. Same/cross-month fd2911b evidence retained. Large text/dark blur gate not complete."
+    },
+    {
+      "id": "DS-04",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Previously Nelson Day64 Home/tab/cold restoration scoped PASS; not all Immersive anchors on current candidate."
+    },
+    {
+      "id": "DS-05",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Current Calendar Dec31 single tap anchors corresponding Day2. Prior Nelson Day64 far anchor retained. Outlying Item gate remains."
+    },
+    {
+      "id": "DS-06",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Actual 120-day full mounted rows FAIL remains. Experimental MVCP mutation excluded; original maintain-visible behavior retained."
+    },
+    {
+      "id": "DS-07",
+      "whole_clause_status": "BLOCKED_BY_OWNING_INTERFACE",
+      "native_scope": "Real whole-trip month calendar, selected Dec31/grey outside bounds observed; no fake location labels/category dots on empty Trip.",
+      "missing_interface": "Trusted major location-change labels"
+    },
+    {
+      "id": "DS-08",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "No new reliable forward/reverse/rest gesture evidence; automation drag unreliable, not counted PASS."
+    },
+    {
+      "id": "DS-09",
+      "whole_clause_status": "INTEGRATED_NOT_NATIVE_VERIFIED",
+      "native_scope": "Normal current App cold root MyTrips; Day/Home returns same Trip. Previous Owner Hero edge gesture confirmation retained; no new Owner acceptance."
+    }
+  ],
+  "evidence": [
+    {
+      "path": "e59b884-owner-photo-cold-home.png",
+      "sha256": "205fe0363a804301476d8888c5a5c2ed087d288f9f84e9a66354b3ce8b6fffe7"
+    },
+    {
+      "path": "e59b884-zh-cross-year-fit.png",
+      "sha256": "bb5f8158c029bb981d09888f819c680f05592c4849cef56abcb729904923ab3e"
+    },
+    {
+      "path": "e59b884-qa-currency.ax.txt",
+      "sha256": "c852c1166b94106e9d4c18013855dfb315045e81265bf3697aee131214533abf"
+    },
+    {
+      "path": "e59b884-range-cancel.ax.txt",
+      "sha256": "cdfacce4fa83b98e81df0314d6892648498abca5e42f7a9624534fa5fa4ae1eb"
+    },
+    {
+      "path": "e59b884-pending-cold-home.ax.txt",
+      "sha256": "c74baebea069d72fc89ebdd8504cc2153b5f11ea941716fd10c8c78590442056"
+    }
+  ],
+  "rollback": {
+    "js_source_sha": "fd2911b4eb3bf2521aa8ae1960e2e4fcd22a6953",
+    "worktree": "/private/tmp/otr-er02-day-native-fixes-20261020",
+    "procedure": "Normal close only AD5 OTR, stop only owned8083, start previous frozen source on8083/private cache, open original App icon. Preserve SQLite/Keychain/account. No reinstall or data rollback."
+  },
+  "acceptance": "No whole-clause Owner Accepted. ER02 remains active.",
+  "release_gate": {
+    "result": "No installable Release artifact",
+    "reported_by": "Coordinator",
+    "failure": "Standard isolated build exit65 missing folly/dynamic.h after bounded same-lock SwiftUIIntrospect path restoration",
+    "spare_63A5_booted": false,
+    "ad5_changed": false,
+    "embedded_no_metro": "INTEGRATED_NOT_NATIVE_VERIFIED"
+  }
+}

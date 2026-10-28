@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { assertAccountRequestGeneration } from "@/data/auth/accountRequestContext";
 import {
@@ -21,7 +21,6 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
 import { createLatestRequest } from "./latestRequest";
 import { MoneyText } from "./MoneyText";
-import { formatExpenseCount } from "./searchFilters";
 import {
   readSharedSettlementProjection,
   readSavedSettlementProjection,
@@ -131,9 +130,6 @@ export function TripHomeFinanceWidget({
     });
   return (
     <View style={styles.content}>
-      <UiText accessibilityRole="header" style={styles.heading}>
-        {t("ledger.spending")}
-      </UiText>
       <View style={styles.metrics}>
         {[
           { label: t("ui.groupSpending"), summary: group },
@@ -154,9 +150,6 @@ export function TripHomeFinanceWidget({
             ) : (
               <UiText style={styles.body}>{t("ui.spendingTotalUnavailable")}</UiText>
             )}
-            <UiText style={styles.secondary}>
-              {t("analysis.includedCount", { count: summary.expenseCount })}
-            </UiText>
           </View>
         ))}
       </View>
@@ -175,29 +168,31 @@ export function TripHomeFinanceWidget({
       {group.openConflictCount ? (
         <UiText style={styles.secondary}>{t("ui.changesNeedReview")}</UiText>
       ) : null}
-      <UiText style={styles.heading}>{formatExpenseCount(data.expenseCount)}</UiText>
-      {data.categories.map(({ category, count }) => (
+      {data.categories.map(({ category }) => (
         <View key={category} style={styles.category}>
           <UiText style={styles.body}>{categoryLabel(category)}</UiText>
-          <UiText style={styles.secondary}>{formatExpenseCount(count)}</UiText>
         </View>
       ))}
       {lifecycle !== "Past" && data.recent.length ? (
         <View style={styles.section}>
           <UiText style={styles.heading}>{t("ledger.recentExpenses")}</UiText>
           {data.recent.map((expense) => (
-            <View key={expense.id} style={styles.recentRow}>
+            <Pressable
+              key={expense.id}
+              accessibilityRole="button"
+              onPress={() =>
+                open({
+                  pathname: "/trip-expense/[id]",
+                  params: { id: expense.id },
+                })
+              }
+              style={styles.recentRow}
+            >
               <View style={[styles.recentTitle, fontScale > 1 && { flexBasis: "100%" }]}>
-                <UiButton
-                  label={expense.title}
-                  variant="text"
-                  onPress={() =>
-                    open({
-                      pathname: "/expenses/expense/[id]",
-                      params: { id: expense.id },
-                    })
-                  }
-                />
+                <UiText style={styles.body}>{expense.title}</UiText>
+                <UiText style={styles.secondary}>
+                  {categoryLabel(expense.category)}
+                </UiText>
               </View>
               <MoneyText
                 minor={expense.originalMinor}
@@ -205,7 +200,7 @@ export function TripHomeFinanceWidget({
                 scale={expense.originalScale}
                 variant="standard"
               />
-            </View>
+            </Pressable>
           ))}
         </View>
       ) : null}
@@ -257,7 +252,7 @@ export function TripHomeFinanceWidget({
         ) : null}
         <UiButton
           label={t("ledger.seeAnalysis")}
-          variant="text"
+          variant="secondary"
           onPress={() =>
             open({
               pathname: "/expenses/analysis",
@@ -275,9 +270,8 @@ export function TripHomeFinanceWidget({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    content: { flex: 1, gap: visual.space.card },
+    content: { gap: visual.space.card },
     actions: {
-      marginTop: "auto",
       paddingTop: visual.space.card,
       flexDirection: "row",
       flexWrap: "wrap",
@@ -287,6 +281,7 @@ const createStyles = (colors: UiColors) =>
     metrics: { gap: visual.space.card, flexDirection: "row", flexWrap: "wrap" },
     metric: { gap: visual.space.heading, minWidth: 0, flexBasis: "45%", flexGrow: 1 },
     recentRow: {
+      minHeight: 44,
       gap: visual.space.heading,
       flexDirection: "row",
       flexWrap: "wrap",

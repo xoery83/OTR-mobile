@@ -50,6 +50,11 @@ vi.mock("../../components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("../../features/day-feed/useMinuteClock", () => ({
   useMinuteClock: () => ({ instant: "2026-01-01T00:00:00Z" }),
 }));
+vi.mock("react-native-safe-area-context", () => ({
+  SafeAreaView: (p: any) => createElement("div", {}, p.children),
+  SafeAreaProvider: (p: any) => createElement("div", {}, p.children),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
 vi.mock("react-native", async () => {
   const { createElement } = await import("react");
@@ -60,9 +65,24 @@ vi.mock("react-native", async () => {
       p.children,
     );
   return {
+    Platform: { OS: "ios", Version: "27.0" },
     View: primitive,
     Text: primitive,
     ScrollView: primitive,
+    FlatList: (p: Record<string, any>) =>
+      primitive({
+        ...p,
+        children: [
+          p.ListHeaderComponent,
+          ...p.data.map((item: any, index: number) =>
+            createElement(
+              "div",
+              { key: p.keyExtractor(item) },
+              p.renderItem({ item, index }),
+            ),
+          ),
+        ],
+      }),
     Pressable: primitive,
     Modal: (p: Record<string, any>) => (p.visible ? primitive(p) : null),
     StyleSheet: { create: (s: unknown) => s, hairlineWidth: 0.5 },
@@ -372,7 +392,7 @@ it("accepted Canonical commands → authenticated collection2 → SQLite54 → G
       }),
     );
     expect(html).toContain(i ? "NZ0290A" : "NZ0289A");
-    expect(html.match(/data-testid="flight-browse-geometry"/g)).toHaveLength(1);
+    expect(html.match(new RegExp(i ? ">NZ0290A<" : ">NZ0289A<", "g"))).toHaveLength(1);
     expect(html).not.toContain('data-testid="flight-row-3"');
     expect(html).not.toContain("00:00");
   }

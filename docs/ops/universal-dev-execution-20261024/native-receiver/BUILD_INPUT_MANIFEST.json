@@ -1,0 +1,34 @@
+{
+  "installedBaselineDebugBinarySHA256": "62d92e7acf351395ab25d418543af8931189c6a979afae77a091c721cf193c3d",
+  "existingModuleSources": {
+    "modules/local-dictation/expo-module.config.json": "9ea9372d7924ba3fcb52101f261937bbbd7da9aaa5a465f9b672763cea020a56",
+    "modules/local-dictation/ios/DictationDiagnostic.swift": "b45c2eb395cf00f98aec0e69eaaddfdd75349b3ad7dfc7ced8eb8294008a1524",
+    "modules/local-dictation/ios/DictationSessionFence.swift": "0908356a20fc52291af9575e52a943320987b6947fb8aad11f21965a7bc338a2",
+    "modules/local-dictation/ios/ImagePasteModule.swift": "d9a2e4e0750563be363bc41b9694ab3e34e57e32301ca9f474a72f47a03627b5",
+    "modules/local-dictation/ios/ImagePasteStorage.swift": "ecf5dc00f450ff54e794b64991a30c255a4695f129eba452603767a27e41a474",
+    "modules/local-dictation/ios/LocalDictation.podspec": "a55441242f926d45d86ed7aad3105de2b7ae26704a0e529004244eca6bfc60eb",
+    "modules/local-dictation/ios/LocalDictationEngine.swift": "fb0e8c880e48b1565ca2e1b46358b239243f578f93034b45c103d989ce5b54f8",
+    "modules/local-dictation/ios/LocalDictationModule.swift": "0bc59159ac52ab3c3f26c3ef8a310a559f084f5cb0693db829a15c44f949107a",
+    "modules/local-dictation/tests/main.swift": "18af48d40a0c2ee1d4a81ff99182f86942bd80f582a68203bbef83ca161b5b78",
+    "modules/place-search/diagnostic/PlaceProbeApp.swift": "88de19c8db8f05661e3d7c9b83e5349c9002dde1f7411dcb65742530ead4f749",
+    "modules/place-search/expo-module.config.json": "dd831bf13aca5d995669019c365d3a639cef83af16339fa6f98edfee59f7acfc",
+    "modules/place-search/ios/ApplePlaceSearchEngine.swift": "44e98536c4d81bdbca3ee6ad871d5adf2ec0d4551fce60e63823e0dd19f6acb9",
+    "modules/place-search/ios/PlaceSearch.podspec": "150169beebe68c7f87d4d2e0b766ee62f4b319b5a4086faee7fdf228441e8fa0",
+    "modules/place-search/ios/PlaceSearchModule.swift": "24649615038d1b9dd65421ed694e0828a80879f1758544f03376077c16f487ad",
+    "modules/place-search/tests/main.swift": "1091efd1815afcf4648bc4a9d61d79803e90f4cee87b0b93edfe620ed52dafb6",
+    "modules/receipt-ocr/expo-module.config.json": "75d3d6e2944d8516be5877d1d30208c7466738f9cdf6d79060d8b9c065f09b27",
+    "modules/receipt-ocr/ios/FlightPdfExtractor.swift": "80d8189285a7c181c4653052e850805f1eeacd9e48ab2232527c3e28d97c58b0",
+    "modules/receipt-ocr/ios/ReceiptOcr.podspec": "a8a6828399ecb39eb9526ef3efa1f505fcd89091ee35d3b525c59c848f066cc4",
+    "modules/receipt-ocr/ios/ReceiptOcrModule.swift": "d65f374131ef596dcc08493f49e854ef98667166eb199afec7652709d1048a5e",
+    "modules/receipt-ocr/tests/main.swift": "3911a95911c5361b27926310c0a58539548525c76761c90fae6917a48f5c031e"
+  },
+  "addedModuleSources": {
+    "modules/publication-catalog-receive/expo-module.config.json": "407e1edce6165536247d1ffdf2a7867262b4eeeee8295781cb00421b32ea22f3",
+    "modules/publication-catalog-receive/ios/PublicationCatalogReceive.podspec": "55b8b4db9090e7061025b1226b4e7e2edfa530e05d1a2c054e719a11fe315e49",
+    "modules/publication-catalog-receive/ios/PublicationCatalogReceiveModule.swift": "95316d4b888242ebe66ae1cabebfa9e6975c890d0c7a5e20613a0eecde88d751",
+    "modules/publication-catalog-receive/ios/PublicationCatalogReceiver.swift": "c48e669591f99407e51e2147e17efd7a8942e0834dd95450e92b5582db1166d4",
+    "modules/publication-catalog-receive/tests/main.swift": "33e544fddec792516841fbd5623586f9370aea83f31f43d213cd9a55b99e6fb1"
+  },
+  "dataCopied": false,
+  "backendChanged": false
+}

@@ -1,0 +1,30 @@
+{
+  "status": "PARTIAL_PROVISION_CLOSURE_AND_INPUT_MAPPING_BOUNDED_REVIEW_PASS",
+  "closureCandidate": "8798a8b",
+  "sealerBinding": "Root dirty two-file delta pinned below",
+  "findings": [],
+  "independentTests": {
+    "fixedClosureLocal": 47,
+    "fixedClosureActualIsolatedPG": 8,
+    "RootSealer": 11,
+    "PGnegativeOutput": "ADMIN_GRANT_DRIFT and ADMIN_FOREIGN_GRANT are expected negative-denial outputs; test exits0"
+  },
+  "confirmed": [
+    "Never-provisioned empty integration+grants+NOLOGIN can confirm read-only closed without creating authority. Partial target grants may be absent, exact active original, or exact once-revoked successor; only active exact rows are changed.",
+    "Missing new integration requires no known integration command audit; config1/killtrue requires exact configure receipt. State/audit disagreement, foreigngrant/role/session drift remain RECONCILE.",
+    "No change to activation permission, Source/Provider authority, immutable receipt retention or UNKNOWN no-retry semantics.",
+    "Root sealer requires runInputIds equal exact real C3 input IDs then sorts representations/input aliases by ID, matching owning SQL reader ORDER BY id. Bytes/profiles/evidence binding retained, no new IDs fabricated for C3.",
+    "Output remains PROPOSED and Source/Run/Task validation required; no old random RunInputIDs submitted based on recorded Root statement."
+  ],
+  "limits": [
+    "Tests run locally with mocked runtime and isolated network-none PG synthetic authority/rates only. No DEV/GUI/Provider action by reviewer.",
+    "Sealer does not claim preexisting Run; actual owning begin/readback must establish it.",
+    "Actual partial close/runtime closure must be independently receipted before declaring real CLOSED."
+  ],
+  "sha256": {
+    "fixed/scripts/import/universal_config_control.py": "4ac0e98efba073fa653d1059b763fd764707a1371c4aab6747fe13dfd8f21958",
+    "fixed/scripts/import/universal_config_control_test.py": "23257199537065a00efbdadb6c3471f9a593f5d0f347c16826648cb6167b28ae",
+    "Root/backend/src/universalExecutionProposal.ts": "52a10983ba50d3f8151719be2f2fe362a3b9612b0b10b5def9333f9cff730f70",
+    "Root/backend/src/universalExecutionProposal.test.ts": "10fc333c863288b212202acbc08c065c50640043d9bfa7bd894fe1e2fadf3a00"
+  }
+}

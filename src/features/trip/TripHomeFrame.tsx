@@ -1,3 +1,4 @@
+import type { TripCoverAssetId } from "@/domain/trip/tripCoverAssets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ReactNode } from "react";
 import {
@@ -18,22 +19,32 @@ import { TripHomeWidgetHost, type TripHomeWidget } from "./TripHomeWidgetHost";
 
 export function TripHomeFrame({
   title,
+  tripId,
+  rawCoverSelection,
   metadata,
   cover,
+  coverAssetId,
   widgets = [],
   modules,
   notice,
   onHeroHeight,
   onEdit,
+  canChooseCover = false,
+  onChooseCover,
 }: {
   title: string;
+  tripId?: string;
+  rawCoverSelection?: string | null;
   metadata: readonly string[];
   cover: ImageSourcePropType;
+  coverAssetId?: TripCoverAssetId;
   widgets?: readonly TripHomeWidget[];
   modules?: ReactNode;
   notice?: string;
   onHeroHeight?: (height: number) => void;
   onEdit?: () => void;
+  canChooseCover?: boolean;
+  onChooseCover?: () => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -47,9 +58,22 @@ export function TripHomeFrame({
             ? (event) => onHeroHeight(event.nativeEvent.layout.height)
             : undefined
         }
+        tripId={tripId}
+        rawSelection={rawCoverSelection}
         source={cover}
+        assetId={coverAssetId}
         style={[styles.hero, { width, minHeight: height * 0.32 }]}
       >
+        <Pressable
+          onPress={canChooseCover ? onChooseCover : undefined}
+          disabled={!canChooseCover || !onChooseCover}
+          accessible={canChooseCover && !!onChooseCover}
+          accessibilityRole={canChooseCover && onChooseCover ? "button" : undefined}
+          accessibilityLabel={
+            canChooseCover && onChooseCover ? t("myTrips.chooseCover") : undefined
+          }
+          style={[styles.imageAction, { minHeight: insets.top + 60 }]}
+        />
         <Pressable
           onPress={onEdit}
           disabled={!onEdit}
@@ -65,7 +89,7 @@ export function TripHomeFrame({
             {
               paddingLeft: Math.max(visual.space.page, insets.left),
               paddingRight: Math.max(visual.space.page, insets.right),
-              paddingTop: insets.top + 60,
+              paddingTop: 0,
             },
           ]}
         >
@@ -73,10 +97,7 @@ export function TripHomeFrame({
             {title}
           </UiText>
           {metadata.map((line, index) => (
-            <UiText
-              key={index}
-              style={index === metadata.length - 1 ? styles.date : styles.meta}
-            >
+            <UiText key={index} style={index === 0 ? styles.date : styles.meta}>
               {line}
             </UiText>
           ))}
@@ -101,6 +122,7 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     frame: { gap: visual.space.section },
     hero: { alignSelf: "center", borderRadius: 0 },
+    imageAction: { flexGrow: 1, minHeight: 44 },
     copy: {
       paddingHorizontal: visual.space.page,
       paddingVertical: visual.space.card,

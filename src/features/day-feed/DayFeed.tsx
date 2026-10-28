@@ -1,4 +1,14 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { localDayDisplayOrder } from "./localDayDisplayOrder";
+import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { WindowedDayList, type DayListHandle } from "./WindowedDayList";
+import {
+  summarizeDay,
+  type DayScrollAnchor,
+  type DayWindowRow,
+  type DaySummary,
+} from "./dayFeedWindow";
 import {
   Modal,
   Platform,
@@ -7,8 +17,10 @@ import {
   StyleSheet,
   Text,
   View,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
-import type { DayProjection } from "@/domain/trip/dayReadModel";
+import type { DayProjection, DayViewContext } from "@/domain/trip/dayReadModel";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import type {
@@ -34,9 +46,9 @@ import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { P1Row } from "./P1Row";
+import { P1Row, type P1MoveInteraction } from "./P1Row";
 import { TransitionRow, type ComposedTransition } from "./TransitionRow";
-import { FlightRows } from "./FlightRows";
+import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
 import { flightPresentation, type Depth } from "./presentation";
@@ -57,14 +69,94 @@ function BlockSlot({
   return <Renderer {...props} />;
 }
 
-export function DayFeed({
+function ImmersiveHeaderSlot({
+  renderHeader,
+  onClose,
+}: {
+  renderHeader: (onClose: () => void) => ReactNode;
+  onClose: () => void;
+}) {
+  return renderHeader(onClose);
+}
+
+export type DayFeedPresentation = {
+  p1Move?: P1MoveInteraction;
+  localContextForDate?: (
+    date: string,
+  ) => import("./bookingReadPresentation").BookingContext;
+  onLocalInsert?(
+    itemId: string,
+    role: string,
+    date: string,
+    side: "BEFORE" | "AFTER",
+  ): void;
+  scrollEnabled?: boolean;
+  // Optional presentation-only integration seams; composition and Reader authority stay unchanged.
+  renderDayHeading?: (date: string, empty: boolean) => ReactNode;
+  wrapDayRow?: (date: string, content: ReactNode) => ReactNode;
+  listStyle?: StyleProp<ViewStyle>;
+  listContentStyle?: StyleProp<ViewStyle>;
+  showTimeUnspecified?: boolean;
+  immersiveContentStyle?: StyleProp<ViewStyle>;
+  renderImmersiveHeader?: (onClose: () => void) => ReactNode;
+  listRef?: (value: DayListHandle | null) => void;
+  header?: ReactNode;
+  formatDayHeading?: (date: string) => string;
+  topInset?: number;
+  onViewportChange?: (viewport: {
+    firstVisibleDate: string;
+    lastVisibleDate: string;
+    scrollOffset: number;
+    originIndex: number;
+  }) => void;
+  onInteraction?: () => void;
+  onOffsetChange?: (offset: number) => void;
+  onReadingMotion?: (delta: number) => void;
+  onReadingStopped?: () => void;
+  onSummaries?: (summaries: DaySummary[]) => void;
+  onMountedRowsChange?: (count: number) => void;
+};
+
+type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & {
+  projection?: DayProjection | CoreFlightDayProjection;
+  localManual?: LocalManualRead | null;
+  onOpenAcceptedP1?: (itemId: string, revision: number) => void;
+  onOpenLocalItem?: (
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
+  ) => void;
+};
+export function DayFeed(props: DayFeedProps) {
+  if (!props.projection && props.localManual)
+    return (
+      <LocalManualDayFeed
+        read={props.localManual}
+        date={props.date}
+        dates={props.dates}
+        onOpenItem={props.onOpenLocalItem}
+        emptyMessage={props.emptyMessage}
+        bottomInset={props.bottomInset}
+        presentation={props.presentation}
+        entry={props.entry}
+        onReadingChange={props.onReadingChange}
+      />
+    );
+  if (!props.projection) return null;
+  return <AcceptedDayFeed {...props} projection={props.projection} />;
+}
+
+function AcceptedDayFeed({
   projection,
   date,
   dates,
   zone,
+  viewMode,
   services,
   instant,
   emptyMessage,
+  bottomInset = 0,
+  presentation,
   query: contributedQuery,
   renderer,
   flexibleRenderer,
@@ -75,14 +167,27 @@ export function DayFeed({
   entry,
   onReadingChange,
   directItem,
+  localManual,
+  onOpenLocalItem,
+  onOpenAcceptedP1,
 }: {
+  localManual?: LocalManualRead | null;
+  onOpenAcceptedP1?: (itemId: string, revision: number) => void;
+  onOpenLocalItem?: (
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+    occurrence?: { role: string; date: string },
+  ) => void;
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
   dates?: readonly string[];
-  zone: string;
+  zone: string | null;
+  viewMode?: DayViewContext["viewMode"];
   services: Record<string, FlightService[]>;
   instant?: string;
   emptyMessage?: string;
+  bottomInset?: number;
+  presentation?: DayFeedPresentation;
   query?: (date: string, zone: string) => DayFeedQuery;
   renderer?: DayRowRenderer;
   flexibleRenderer?: FlexibleBlockRenderer;
@@ -99,12 +204,30 @@ export function DayFeed({
 }) {
   const styles = useThemedStyles(createStyles);
   const continuous = Boolean(dates);
-  const queryForDate = (day: string) =>
-    contributedQuery
-      ? contributedQuery(day, zone)
+  const pendingIds = new Set(localManual?.items.map((item) => item.itemId) ?? []);
+  const queryForDate = (day: string): DayFeedQuery => {
+    if (zone === null && (viewMode !== "FLOATING" || projection.version !== 2))
+      throw new Error("DAY_ZONE_INVALID");
+    if (zone === null && contributedQuery) throw new Error("DAY_ZONE_INVALID");
+    const query: DayFeedQuery = contributedQuery
+      ? contributedQuery(day, zone!)
       : projection.version === 2
-        ? projection.query(day, zone)
-        : itemsForLocalDate(projection, day, zone);
+        ? projection.query(
+            day,
+            zone === null ? { zone: null, viewMode: "FLOATING" } : zone,
+          )
+        : itemsForLocalDate(projection, day, zone!);
+    if (!pendingIds.size) return query;
+    return {
+      ...query,
+      timed: query.timed.filter((item) => !pendingIds.has(item.event.id)),
+      nonComparable: query.nonComparable.filter((item) => !pendingIds.has(item.event.id)),
+      unresolved: query.unresolved.filter((event) => !pendingIds.has(event.id)),
+      ...(query.coreRows
+        ? { coreRows: query.coreRows.filter((row) => !pendingIds.has(row.itemRef)) }
+        : {}),
+    };
+  };
   const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
   const query = queryForDate(date);
   const clock = useMinuteClock(zone);
@@ -119,6 +242,7 @@ export function DayFeed({
     continuous,
     date,
     zone,
+    viewMode,
     entry?.revision,
     directItem?.itemId,
     flexiblePublication?.scope?.generation,
@@ -151,7 +275,6 @@ export function DayFeed({
       focus: navigationContext === viewContext ? focus : null,
       immersive: navigationContext === viewContext ? immersive : null,
     });
-  // shortcut: existing ScrollView renders the owned calendar; virtualize this same stream for long-Trip scale.
   const sections = calendar.map((day) => {
     const query = queryForDate(day);
     return { date: day, query, stream: compose(query) };
@@ -189,6 +312,22 @@ export function DayFeed({
       focus &&
       !sections.some(
         ({ stream }) => focus === stream.focus || focus === stream.suspendedFocus,
+      ) &&
+      !sections.some((section) =>
+        localManual
+          ?.rows(section.date)
+          .some(
+            (row) =>
+              ["P1", "P2", "P3", "P4", "P5", "P6"].includes(row.family) &&
+              JSON.stringify(row.rowKey) === focus &&
+              localManual.items.some(
+                (item) =>
+                  item.itemId === row.itemRef &&
+                  ["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) &&
+                  !item.hidden &&
+                  !["cancelled", "skipped"].includes(String(item.status)),
+              ),
+          ),
       )
     )
       setFocus(null);
@@ -215,47 +354,49 @@ export function DayFeed({
     return () => bridge.dispose();
   }, [ttrBridge]);
   const rows = allRows;
-  const scroll = useRef<ScrollView>(null),
+  const scroll = useRef<DayListHandle>(null),
     offset = useRef(entry?.reading.offset ?? 0),
-    returnOffset = useRef(0),
-    sectionOffsets = useRef<Record<string, number>>({});
-  const restoredContext = useRef<string | null>(null);
-  const readingOffset = entry?.reading.offset ?? 0;
-  const wholeTripReading = entry?.reading.layout === "WHOLE_TRIP";
-  const restoreReading = () => {
-    if (restoredContext.current === viewContext || !scroll.current) return;
-    const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
-    if (anchor === undefined) return;
-    restoredContext.current = viewContext;
-    offset.current = anchor + readingOffset;
-    scroll.current?.scrollTo({ y: offset.current, animated: false });
-  };
+    returnAnchor = useRef<DayScrollAnchor | null>(null);
+  const interactedContext = useRef<string | null>(null);
+  const savedEntryAnchor =
+    entry?.reading.anchor ??
+    (entry &&
+    (entry.kind !== "RESUME" || entry.reading.offset > 0 || entry.reading.anchoredDate)
+      ? { key: `day:${date}`, date, within: entry.reading.offset }
+      : null);
+  // Tab/Home resume restores the browsed Day below navigation; Focus/Immersive keeps its Item anchor.
+  const initialAnchor =
+    dates && entry?.kind === "RESUME" && !entry.reading.focus && savedEntryAnchor
+      ? { key: `day:${savedEntryAnchor.date}`, date: savedEntryAnchor.date, within: 0 }
+      : savedEntryAnchor;
   useLayoutEffect(() => {
-    restoredContext.current = null;
-    const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
-    if (anchor !== undefined && scroll.current) {
-      offset.current = anchor + readingOffset;
-      scroll.current.scrollTo({ y: offset.current, animated: false });
-      restoredContext.current = viewContext;
-    }
-  }, [viewContext, continuous, wholeTripReading, date, readingOffset]);
-  const remember = (nextFocus: string | null, nextOffset = offset.current) => {
-    if (!entry || entry.kind === "RESUME") {
-      const anchoredDate =
-        [...calendar]
-          .reverse()
-          .find(
-            (day) =>
-              sectionOffsets.current[day] !== undefined &&
-              sectionOffsets.current[day] <= nextOffset,
-          ) ?? date;
+    interactedContext.current = null;
+    if (initialAnchor) scroll.current?.restoreAnchor(initialAnchor);
+    // Explicit entry/date changes may reposition; ordinary scroll updates must not.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewContext]);
+  const remember = (nextFocus: string | null, anchor = scroll.current?.saveAnchor()) => {
+    if (!entry || entry.kind === "RESUME")
       onReadingChange?.({
-        offset: nextOffset,
+        offset: offset.current,
         focus: nextFocus,
-        ...(dates ? { layout: "WHOLE_TRIP" as const, anchoredDate } : {}),
+        ...(dates
+          ? { layout: "WHOLE_TRIP" as const, anchoredDate: anchor?.date ?? date }
+          : {}),
+        ...(anchor ? { anchor } : {}),
       });
-    }
   };
+  const summaries = sections.map((section) =>
+    summarizeDay(
+      section.query,
+      localDayDisplayOrder(localManual?.rows(section.date) ?? []),
+    ),
+  );
+  const summariesKey = JSON.stringify(summaries);
+  const reportSummaries = presentation?.onSummaries;
+  useLayoutEffect(() => {
+    reportSummaries?.(JSON.parse(summariesKey));
+  }, [summariesKey, reportSummaries]);
   const depth = (id: string): Depth =>
     sections.some(({ stream }) => stream.immersive === id)
       ? "I"
@@ -263,8 +404,24 @@ export function DayFeed({
         ? "F"
         : "B";
   const change = (id: string, next: Depth) => {
+    interactedContext.current = viewContext;
+    if (next === "I" && projection.version === 2 && onOpenAcceptedP1) {
+      const eventId = rows.find((row) => row.focusKey === id)?.item.event.id;
+      const item = projection.items.find(
+        (item) => item.itemId === eventId && item.family === "P1",
+      );
+      if (
+        item &&
+        typeof item.itemRevision === "number" &&
+        Number.isSafeInteger(item.itemRevision) &&
+        item.itemRevision > 0
+      ) {
+        onOpenAcceptedP1(item.itemId, item.itemRevision);
+        return;
+      }
+    }
     if (next === "I") {
-      returnOffset.current = offset.current;
+      returnAnchor.current = scroll.current?.saveAnchor() ?? null;
       setImmersive(id);
     } else {
       setImmersive(null);
@@ -277,8 +434,8 @@ export function DayFeed({
     directItem?.onClose();
     // Android does not deliver Modal.onDismiss.
     if (Platform.OS !== "ios")
-      requestAnimationFrame(() =>
-        scroll.current?.scrollTo({ y: returnOffset.current, animated: false }),
+      requestAnimationFrame(
+        () => returnAnchor.current && scroll.current?.restoreAnchor(returnAnchor.current),
       );
   };
   const render = (
@@ -287,6 +444,11 @@ export function DayFeed({
     withinMarker?: React.ReactNode,
   ) => {
     const ownerStream = rowSections.get(row.key)!.stream;
+    const entryIndex = ownerStream.entries.findIndex(
+      (entry) => entry.kind === "ITEM" && entry.row.key === row.key,
+    );
+    const nextEntry = entryIndex >= 0 ? ownerStream.entries[entryIndex + 1] : undefined;
+    const nextFocused = nextEntry?.kind === "ITEM" && nextEntry.row.focused;
     const event = row.item.event;
     const flight = flightPresentation(
       event,
@@ -299,6 +461,13 @@ export function DayFeed({
         depth={mode}
         onDepth={(next) => (mode === "I" ? close() : change(row.focusKey, next))}
         withinMarker={withinMarker}
+        hideDivider={nextFocused}
+        occurrence={
+          row.item.roles.includes("END") && !row.item.roles.includes("START")
+            ? "END"
+            : "START"
+        }
+        context={ownerStream.context}
       />
     ) : (
       <View style={styles.flight}>
@@ -310,15 +479,19 @@ export function DayFeed({
           accessibilityHint={
             mode === "I"
               ? undefined
-              : t(mode === "F" ? "p1r.immersiveHint" : "p1r.focusHint")
+              : t(mode === "F" ? "flight.immersiveHint" : "flight.focusHint")
           }
           onPress={() => change(row.focusKey, mode === "F" ? "I" : "F")}
         >
-          <FlightRows
-            fixture={flight}
+          <FlightFidelityGrid
+            flight={flight}
             focused={mode === "F"}
             immersive={mode === "I"}
             withinMarker={withinMarker}
+            pending={
+              projection.version === 2 &&
+              !!projection.source.localTargetIds?.includes(event.id)
+            }
           />
         </Pressable>
         {mode === "F" ? (
@@ -338,6 +511,7 @@ export function DayFeed({
         renderer={renderer}
         fallback={fallback}
         row={row}
+        nextFocused={nextFocused}
         container={ownerStream.containers.find((entry) => entry.id === row.containerId)}
         context={ownerStream.context}
         depth={mode}
@@ -393,6 +567,112 @@ export function DayFeed({
   const choiceScope = (id: string, scope: "MY" | "GROUP") => {
     setChoiceScopes((current) => ({ ...current, [id]: scope }));
   };
+  const windowRows: DayWindowRow<() => ReactNode>[] = [];
+  if (unplaced.length)
+    windowRows.push({
+      key: "unplaced:heading",
+      date: calendar[0],
+      value: () => <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>,
+    });
+  for (const event of unplaced)
+    windowRows.push({
+      key: `unplaced:${event.id}`,
+      date: calendar[0],
+      value: () => <Text style={styles.meta}>{event.title}</Text>,
+    });
+  for (const section of sections) {
+    windowRows.push({
+      key: `day:${section.date}`,
+      isDayHeader: true,
+      date: section.date,
+      value: () =>
+        presentation?.renderDayHeading ? (
+          presentation.renderDayHeading(
+            section.date,
+            !section.stream.entries.length &&
+              !localDayDisplayOrder(localManual?.rows(section.date) ?? []).length,
+          )
+        ) : (
+          <View>
+            {dates ? (
+              <Text accessibilityRole="header" style={styles.dateHeading}>
+                {presentation?.formatDayHeading?.(section.date) ?? section.date}
+              </Text>
+            ) : null}
+            {!section.stream.entries.length &&
+            !localDayDisplayOrder(localManual?.rows(section.date) ?? []).length ? (
+              <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+            ) : null}
+          </View>
+        ),
+    });
+    for (const entry of section.stream.entries)
+      windowRows.push({
+        key: entry.kind === "ITEM" ? entry.row.key : entry.block.key,
+        date: section.date,
+        value: () =>
+          entry.kind === "ITEM" ? (
+            renderItem(entry.row)
+          ) : (
+            <BlockSlot
+              renderer={flexibleRenderer}
+              block={entry.block}
+              immersive={false}
+              nestedItems={
+                <>
+                  {rows
+                    .filter((row) => row.containerId === entry.block.id)
+                    .map(renderItem)}
+                </>
+              }
+              onBlockImmersiveIntent={() => change(entry.block.id, "I")}
+              onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
+              onChoiceScopeIntent={(scope) => choiceScope(entry.block.id, scope)}
+              onClose={close}
+              flexibleSnapshot={publication.snapshot}
+              onReplaceFlexibleSnapshot={publication.replace}
+            />
+          ),
+      });
+    for (const row of localDayDisplayOrder(localManual?.rows(section.date) ?? []))
+      windowRows.push({
+        key: `local:${JSON.stringify(row.rowKey)}`,
+        date: section.date,
+        value: () => (
+          <LocalManualDayRows
+            read={localManual!}
+            context={section.stream.context}
+            date={section.date}
+            onlyRow={row}
+            p1Focus={focus}
+            onP1Focus={setFocus}
+            move={presentation?.p1Move}
+            onInsert={presentation?.onLocalInsert}
+            onOpenItem={onOpenLocalItem}
+          />
+        ),
+      });
+    if (
+      section.stream.nowAfter ||
+      (presentation?.showTimeUnspecified !== false &&
+        section.stream.rows.some((row) => row.position === "TNS"))
+    )
+      windowRows.push({
+        key: `footer:${section.date}`,
+        date: section.date,
+        value: () => (
+          <View>
+            {section.stream.nowAfter ? (
+              <NowMarker placement={section.stream.now} />
+            ) : null}
+            {presentation?.showTimeUnspecified !== false &&
+            section.stream.rows.some((row) => row.position === "TNS") ? (
+              <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
+            ) : null}
+          </View>
+        ),
+      });
+  }
   return (
     <>
       {!directItem ? (
@@ -404,117 +684,105 @@ export function DayFeed({
             selectedBlock || ttrSession?.sheetOpen ? "no-hide-descendants" : "auto"
           }
         >
-          <ScrollView
-            ref={scroll}
-            style={styles.root}
-            contentContainerStyle={styles.content}
-            scrollEventThrottle={16}
-            onContentSizeChange={restoreReading}
-            onScroll={(e) => {
-              offset.current = e.nativeEvent.contentOffset.y;
-              remember(sections.find(({ stream }) => stream.focus)?.stream.focus ?? null);
+          <WindowedDayList
+            scrollEnabled={presentation?.scrollEnabled}
+            listRef={(value) => {
+              scroll.current = value;
+              presentation?.listRef?.(value);
             }}
-          >
-            {unplaced.length ? (
-              <View>
-                <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
-                {unplaced.map((event) => (
-                  <Text key={event.id} style={styles.meta}>
-                    {event.title}
-                  </Text>
-                ))}
-              </View>
-            ) : null}
-            {sections.map((section) => (
-              <View
-                key={section.date}
-                onLayout={({ nativeEvent }) => {
-                  sectionOffsets.current[section.date] = nativeEvent.layout.y;
-                  restoreReading();
-                }}
-              >
-                {dates ? (
-                  <Text accessibilityRole="header" style={styles.dateHeading}>
-                    {section.date}
-                  </Text>
-                ) : null}
-                {!section.stream.entries.length ? (
-                  <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
-                ) : null}
-                {section.stream.entries.map((entry) =>
-                  entry.kind === "ITEM" ? (
-                    renderItem(entry.row)
-                  ) : (
-                    <View key={entry.block.key}>
-                      <BlockSlot
-                        renderer={flexibleRenderer}
-                        block={entry.block}
-                        immersive={false}
-                        nestedItems={
-                          <>
-                            {rows
-                              .filter((row) => row.containerId === entry.block.id)
-                              .map(renderItem)}
-                          </>
-                        }
-                        onBlockImmersiveIntent={() => change(entry.block.id, "I")}
-                        onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
-                        onChoiceScopeIntent={(scope) =>
-                          choiceScope(entry.block.id, scope)
-                        }
-                        onClose={close}
-                        flexibleSnapshot={publication.snapshot}
-                        onReplaceFlexibleSnapshot={publication.replace}
-                      />
-                    </View>
-                  ),
-                )}
-                {section.stream.nowAfter ? (
-                  <NowMarker placement={section.stream.now} />
-                ) : null}
-                {section.stream.rows.some((row) => row.position === "TNS") ? (
-                  <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
-                ) : null}
-              </View>
-            ))}
-          </ScrollView>
+            rows={windowRows}
+            renderRow={({ value, date: rowDate }) =>
+              presentation?.wrapDayRow ? (
+                presentation.wrapDayRow(rowDate, value())
+              ) : presentation?.header ? (
+                <View style={styles.rowInset}>{value()}</View>
+              ) : (
+                value()
+              )
+            }
+            scopeKey={JSON.stringify([projection.accountId, projection.tripId])}
+            layoutRevision={JSON.stringify([
+              projection.version === 2 ? projection.source : null,
+              localManual?.source.fingerprint,
+              focus,
+              immersive,
+              choiceScopes,
+            ])}
+            initialAnchor={initialAnchor}
+            topInset={presentation?.topInset ?? 0}
+            bottomInset={visual.space.section + bottomInset}
+            header={presentation?.header}
+            style={[styles.root, presentation?.listStyle]}
+            contentContainerStyle={[
+              styles.content,
+              presentation?.header ? styles.withIntroduction : undefined,
+              presentation?.listContentStyle,
+            ]}
+            onViewportChange={presentation?.onViewportChange}
+            onReadingMotion={presentation?.onReadingMotion}
+            onReadingStopped={presentation?.onReadingStopped}
+            onMountedRowsChange={presentation?.onMountedRowsChange}
+            onInteraction={() => {
+              interactedContext.current = viewContext;
+              presentation?.onInteraction?.();
+            }}
+            onOffsetChange={(value) => {
+              offset.current = value;
+              presentation?.onOffsetChange?.(value);
+            }}
+            onAnchorChange={(anchor) =>
+              remember(
+                sections.find(({ stream }) => stream.focus)?.stream.focus ?? null,
+                anchor,
+              )
+            }
+          />
         </View>
       ) : null}
       <Modal
         visible={!!selected || !!selectedBlock}
         onRequestClose={close}
         onDismiss={() =>
-          scroll.current?.scrollTo({ y: returnOffset.current, animated: false })
+          returnAnchor.current && scroll.current?.restoreAnchor(returnAnchor.current)
         }
         animationType="slide"
       >
-        <ScrollView
-          style={styles.root}
-          contentContainerStyle={styles.content}
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          {selected ? render(selected, "I") : null}
-          {selectedBlock ? (
-            <BlockSlot
-              renderer={flexibleRenderer}
-              block={selectedBlock}
-              immersive
-              nestedItems={
-                <>
-                  {rows
-                    .filter((row) => row.containerId === selectedBlock.id)
-                    .map(renderItem)}
-                </>
-              }
-              onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
-              onChoiceFocusIntent={() => {}}
-              onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
+        <View style={styles.root}>
+          {presentation?.renderImmersiveHeader ? (
+            <ImmersiveHeaderSlot
+              renderHeader={presentation.renderImmersiveHeader}
               onClose={close}
-              flexibleSnapshot={publication.snapshot}
-              onReplaceFlexibleSnapshot={publication.replace}
             />
           ) : null}
-        </ScrollView>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            style={styles.root}
+            contentContainerStyle={[styles.content, presentation?.immersiveContentStyle]}
+            contentInsetAdjustmentBehavior="automatic"
+          >
+            {selected ? render(selected, "I") : null}
+            {selectedBlock ? (
+              <BlockSlot
+                renderer={flexibleRenderer}
+                block={selectedBlock}
+                immersive
+                nestedItems={
+                  <>
+                    {rows
+                      .filter((row) => row.containerId === selectedBlock.id)
+                      .map(renderItem)}
+                  </>
+                }
+                onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
+                onChoiceFocusIntent={() => {}}
+                onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
+                onClose={close}
+                flexibleSnapshot={publication.snapshot}
+                onReplaceFlexibleSnapshot={publication.replace}
+              />
+            ) : null}
+          </ScrollView>
+        </View>
       </Modal>
     </>
   );
@@ -527,6 +795,8 @@ const createStyles = (c: UiColors) =>
       paddingVertical: visual.space.row,
     },
     root: { flex: 1, backgroundColor: c.background },
+    rowInset: { paddingHorizontal: visual.space.page },
+    withIntroduction: { paddingTop: 0, paddingHorizontal: 0 },
     content: {
       paddingHorizontal: visual.space.page,
       paddingBottom: visual.space.section,

@@ -1,0 +1,22 @@
+{
+  "code": "1d0c979",
+  "scope": "Root integrated Trip/P1/Person candidate; isolated tests only",
+  "testRun": {
+    "files": 11,
+    "passed": 222,
+    "failed": 2,
+    "total": 224,
+    "knownBaselineFailures": [
+      "tripRepository Reference Trip v1 created_at equality",
+      "tripRepository Reference full sixteen created_at equality"
+    ],
+    "newProjection": "PASS actual SQLite; no Server claim"
+  },
+  "typecheck": "PASS",
+  "uiGuard": "PASS 473/139",
+  "scopedLint": "0 errors; 13 existing import-order warnings in LocalTripWorkspace.test.ts",
+  "bundle": "PASS both Backend bundles",
+  "remoteWrites": 0,
+  "AD5Updated": false,
+  "realCloudE2E": "NOT_RUN"
+}

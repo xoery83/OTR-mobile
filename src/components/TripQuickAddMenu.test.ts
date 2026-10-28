@@ -1,3 +1,13 @@
+vi.mock("@/features/day-feed/ManualItineraryContent", () => ({
+  ManualItineraryContent: (props: any) => {
+    state.manualProps = props;
+    return null;
+  },
+}));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => state.generation,
+  subscribeAccountGeneration: () => () => {},
+}));
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -12,12 +22,17 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   nodes: [] as any[],
   actor: vi.fn(),
-  ref: { current: 0 },
+  refs: [] as { current: any }[],
+  refCursor: 0,
+  generation: 1,
+  manualProps: null as any,
+  modalProps: null as any,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useLayoutEffect: () => {},
-  useRef: () => state.ref,
+  useSyncExternalStore: (_: unknown, get: () => unknown) => get(),
+  useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.hooks)) state.hooks[i] = initial;
@@ -30,7 +45,11 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
-  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
+  useWindowDimensions: () => ({ fontScale: 1 }),
+  Modal: (p: any) => {
+    state.modalProps = p;
+    return p.visible ? createElement("div", null, p.children) : null;
+  },
   Pressable: (p: any) => {
     state.nodes.push(p);
     return createElement("button", null, p.children);
@@ -88,8 +107,11 @@ const itinerary = vi.fn(),
   expense = vi.fn(),
   photos = vi.fn();
 let initialDate: string | undefined;
+let useManual = false;
+const manualSaved = vi.fn();
 function render() {
   state.cursor = 0;
+  state.refCursor = 0;
   state.nodes = [];
   return renderToStaticMarkup(
     createElement(TripQuickAddMenu, {
@@ -97,19 +119,25 @@ function render() {
       date: initialDate,
       showDate: true,
       itinerary,
+      onManualSaved: useManual ? manualSaved : undefined,
       expense,
       photos,
       triggerStyle: {},
     }),
   );
 }
-const button = (label: string) => state.nodes.find((n) => n.label === label)!;
+const button = (label: string) =>
+  state.nodes.find((n) => (n.label ?? n.accessibilityLabel) === label)!;
 const flush = async () => {
   for (let i = 0; i < 10; i++) await Promise.resolve();
 };
 beforeEach(() => {
   state.hooks = [];
-  state.ref.current = 0;
+  state.refs = [];
+  state.generation = 1;
+  useManual = false;
+  state.manualProps = null;
+  manualSaved.mockReset();
   state.actor.mockResolvedValue({ memberId: "m", role: "owner" });
   initialDate = "2026-12-31";
   itinerary.mockReset();
@@ -123,8 +151,19 @@ it("arrows change only weak menu date and pass it into the existing create callb
   render();
   button("actionIsland.nextDate").onPress();
   render();
-  expect(button("actionIsland.suggestedDate").value).toBe("2027-01-01");
-  button("actionIsland.itinerary").onPress();
+  expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("2027-01-01");
+  expect(render()).not.toContain("actionIsland.weakDate");
+  expect(render()).not.toContain("quickAdd.selectedDay");
+  for (const label of [
+    "actionIsland.importPlans",
+    "quickAdd.itinerary",
+    "quickAdd.expense",
+    "quickAdd.member",
+    "quickAdd.photos",
+  ]) {
+    expect(button(label).compact).toBe(true);
+  }
+  button("quickAdd.itinerary").onPress();
   expect(itinerary).toHaveBeenCalledWith("2027-01-01");
   expect(expense).not.toHaveBeenCalled();
   expect(photos).not.toHaveBeenCalled();
@@ -137,16 +176,16 @@ it("missing anchored date stays unknown and blocks dated flows until explicit se
   const html = render();
   expect(html).toContain("actionIsland.selectDate");
   expect(button("actionIsland.previousDate").disabled).toBe(true);
-  expect(button("actionIsland.itinerary").disabled).toBe(true);
-  expect(button("actionIsland.importCapture").disabled).toBe(true);
-  expect(button("actionIsland.member").disabled).toBe(true);
+  expect(button("quickAdd.itinerary").disabled).toBe(true);
+  expect(button("actionIsland.importPlans").disabled).toBe(true);
+  expect(button("quickAdd.member").disabled).toBe(true);
   initialDate = "2026-02-30";
   button("common.cancel").onPress();
   render();
   state.nodes[0].onPress();
   await flush();
   render();
-  expect(button("actionIsland.itinerary").disabled).toBe(true);
+  expect(button("quickAdd.itinerary").disabled).toBe(true);
 });
 it("current denied Expense access remains disabled", async () => {
   state.actor.mockResolvedValue({ memberId: "m", role: "denied" });
@@ -154,7 +193,7 @@ it("current denied Expense access remains disabled", async () => {
   state.nodes[0].onPress();
   await flush();
   render();
-  expect(button("ledger.addExpense").disabled).toBe(true);
+  expect(button("quickAdd.expense").disabled).toBe(true);
 });
 it("civil arrows preserve explicit dates across leap boundaries without inferring today", () => {
   expect(shiftSuggestedDate("2028-02-28", 1)).toBe("2028-02-29");
@@ -182,11 +221,11 @@ it("the open Modal protects header and actions with viewport safe areas and Canc
   expect(html.indexOf("data-modal-inset-provider")).toBeLessThan(
     html.indexOf("data-safe-area"),
   );
-  expect(html).toContain('data-safe-area="top,bottom,left,right"');
-  expect(html).toContain("actionIsland.itinerary");
+  expect(html).toContain('data-safe-area="bottom,left,right"');
+  expect(html).toContain("quickAdd.itinerary");
   button("common.cancel").onPress();
   const closed = render();
-  expect(closed).not.toContain("actionIsland.itinerary");
+  expect(closed).not.toContain("quickAdd.itinerary");
   expect(closed).not.toContain("data-modal-inset-provider");
   expect(itinerary).not.toHaveBeenCalled();
   expect(expense).not.toHaveBeenCalled();
@@ -199,8 +238,8 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   state.nodes[0].onPress();
   await flush();
   render();
-  expect(button("actionIsland.itinerary").disabled).toBe(true);
-  button("actionIsland.suggestedDate").onPress();
+  expect(button("quickAdd.itinerary").disabled).toBe(true);
+  button("quickAdd.selectedDay").onPress();
   render();
   state.nodes
     .find((node) => node.mode === "date")
@@ -208,9 +247,51 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   render();
   button("common.done").onPress();
   render();
-  expect(button("actionIsland.suggestedDate").value).toBe("2027-02-09");
+  expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("2027-02-09");
   expect(itinerary).not.toHaveBeenCalled();
   expect(expense).not.toHaveBeenCalled();
-  button("actionIsland.itinerary").onPress();
+  button("quickAdd.itinerary").onPress();
   expect(itinerary).toHaveBeenCalledWith("2027-02-09");
+});
+
+it("expands the same native host into the shared type chooser without routing Home", async () => {
+  useManual = true;
+  render();
+  state.nodes.find((p) => p.accessibilityLabel === "actionIsland.addToTrip").onPress();
+  await flush();
+  render();
+  button("quickAdd.itinerary").onPress();
+  render();
+  expect(state.modalProps.visible).toBe(true);
+  expect(state.manualProps).toMatchObject({
+    tripId: "a",
+    generation: 1,
+    initialDate: "2026-12-31",
+  });
+  expect(button("quickAdd.itinerary")).toBeUndefined();
+  expect(itinerary).not.toHaveBeenCalled();
+  const guardedDismiss = vi.fn();
+  state.manualProps.registerDismissHandler(guardedDismiss);
+  state.modalProps.onRequestClose();
+  expect(guardedDismiss).toHaveBeenCalledOnce();
+  expect(manualSaved).not.toHaveBeenCalled();
+  state.manualProps.onSaved("item-a");
+  render();
+  expect(manualSaved).toHaveBeenCalledWith("item-a");
+  expect(state.modalProps.visible).toBe(false);
+});
+it("does not rebind an open manual chooser to the next account generation", async () => {
+  useManual = true;
+  render();
+  state.nodes.find((p) => p.accessibilityLabel === "actionIsland.addToTrip").onPress();
+  await flush();
+  render();
+  button("quickAdd.itinerary").onPress();
+  render();
+  const staleSave = state.manualProps.onSaved;
+  state.generation = 2;
+  render();
+  expect(state.modalProps.visible).toBe(false);
+  staleSave("late-item");
+  expect(manualSaved).not.toHaveBeenCalled();
 });

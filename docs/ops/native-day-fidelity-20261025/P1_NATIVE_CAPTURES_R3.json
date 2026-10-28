@@ -1,0 +1,96 @@
+{
+  "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "status": "NINE_STATES_NATIVE_REPLAYED_OWNER_VISUAL_REVIEW_PENDING",
+  "fixtureOnly": true,
+  "scope": "Same approved P1 synthetic Item, nine contexts; no business writes, real Reader/Cloud not established.",
+  "captures": [
+    {
+      "context": "future",
+      "depth": "B",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/future-browse.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "37f53f9424b60e83f725e8c7e2290f1c29d79b616a7dbc5294a67dd3e9b18a8f",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=future&depth=B&item=syn-p1-exact"
+    },
+    {
+      "context": "future",
+      "depth": "F",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/future-focus.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "872d69ba298b37eeb18b35a2d29e78ca4d1dc06bdd1e69d8ad2de56d77bf38be",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=future&depth=F&item=syn-p1-exact"
+    },
+    {
+      "context": "future",
+      "depth": "I",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/future-immersive.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "ac3fd7ed8293790b1de030198ea72a013af0ad5825423720717029f943c553cb",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=future&depth=I&item=syn-p1-exact"
+    },
+    {
+      "context": "today",
+      "depth": "B",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/today-browse.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "0df94d52abe2ba990e16e194f69486eed111d15939fb90e2020de369681e5232",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=today&depth=B&item=syn-p1-exact"
+    },
+    {
+      "context": "today",
+      "depth": "F",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/today-focus.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "4245b5b98d05b1251f4357afbbcf707154b47b722ea34936d16821e7195c5259",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=today&depth=F&item=syn-p1-exact"
+    },
+    {
+      "context": "today",
+      "depth": "I",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/today-immersive.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "ac3fd7ed8293790b1de030198ea72a013af0ad5825423720717029f943c553cb",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=today&depth=I&item=syn-p1-exact"
+    },
+    {
+      "context": "past",
+      "depth": "B",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/past-browse.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "a949419f206da477aa28d5a0dfe2a7e220d83333ad404b1ab03d0f3512ded4e7",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=past&depth=B&item=syn-p1-exact"
+    },
+    {
+      "context": "past",
+      "depth": "F",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/past-focus.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "1937daaf1626b165ced289d338a5eb203f8eb614756e24e2faaf4ee9426aa626",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=past&depth=F&item=syn-p1-exact"
+    },
+    {
+      "context": "past",
+      "depth": "I",
+      "path": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/past-immersive.png",
+      "sourceSHA": "60e09c6fe64e804994360133981d09dc71129799",
+      "sha256": "5e188273ac879c9ada1b431cb3247d32af9552dfdd342d332b3bb912cbb55a66",
+      "url": "otrmobile://day-feed-lab?fidelity=p1&clock=past&depth=I&item=syn-p1-exact"
+    }
+  ],
+  "comparisonGrid": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/P1_NATIVE_MATRIX.png",
+  "supplemental": [
+    {
+      "file": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/P1_NATIVE_MATRIX.png",
+      "sha256": "c8b4b8e11a077208d91620119b32aa06b5a21a718ecfa186fb208760f6ff17e3"
+    },
+    {
+      "file": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/deep-title-end-empty.png",
+      "sha256": "d738ba690b7324cd4e2b9af0338e02df397524d124c6b992a3efe67c5bf8ff22"
+    },
+    {
+      "file": "/Users/xoery/.codex/visualizations/2026/10/25/01a17101-8b2d-7240-ab67-f4c34a5d90d9/native-day-fidelity/p1-r3/back-restores-focus.png",
+      "sha256": "594a75c70826dbcb0f0631b0d5a9a93b94854f81eb05ad6c4371e8df887453d7"
+    }
+  ]
+}

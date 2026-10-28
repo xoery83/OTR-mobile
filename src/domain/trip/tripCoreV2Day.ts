@@ -20,6 +20,14 @@ export type CorePlaceView = {
   authoredText?: string;
   authoredAddress?: string;
   acceptedAddress?: string;
+  authoredAddressLocality?: string;
+  authoredAddressRegion?: string;
+  authoredAddressCountry?: string;
+  acceptedAddressLocality?: string;
+  acceptedAddressRegion?: string;
+  acceptedAddressCountry?: string;
+  spatialProvenanceRefs?: Record<string, string>;
+  locationInputRevision?: number;
   placeId?: string;
   latitude?: number;
   longitude?: number;
@@ -39,7 +47,8 @@ export type CoreDayRow = {
   rowKey: { itemId: string; projectionRole: string; localDate: string };
   itemRevision: number;
   projectionVersion: 2;
-  certificateGeneration: number;
+  certificateGeneration: number | null;
+  localReadGeneration?: number;
   family: string;
   title: string;
   status: string;
@@ -86,6 +95,14 @@ export function corePlaceView(row: CoreRow): CorePlaceView | undefined {
     authored_text: "authoredText",
     authored_address: "authoredAddress",
     accepted_address: "acceptedAddress",
+    authored_address_locality: "authoredAddressLocality",
+    authored_address_region: "authoredAddressRegion",
+    authored_address_country: "authoredAddressCountry",
+    accepted_address_locality: "acceptedAddressLocality",
+    accepted_address_region: "acceptedAddressRegion",
+    accepted_address_country: "acceptedAddressCountry",
+    spatial_provenance_refs: "spatialProvenanceRefs",
+    location_input_revision: "locationInputRevision",
     accepted_place_id: "placeId",
     accepted_latitude: "latitude",
     accepted_longitude: "longitude",

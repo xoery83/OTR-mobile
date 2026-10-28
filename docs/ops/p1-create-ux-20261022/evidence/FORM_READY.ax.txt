@@ -1,0 +1,22 @@
+The following is a diff from the previous accessibility tree for Window: "OTR MT Correction 01 QA" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~				183 container
++					184 button Cancel
++					185 button Description: Create, Secondary Actions: Cancel
++					186 heading Description: New plan, Secondary Actions: Cancel
++					187 text Description: Plan name, Secondary Actions: Cancel
++					188 text field (settable) Description: Plan name, Value: P1 Create UX QA 20261022, Secondary Actions: Cancel
++					189 button Description: Find a place, Secondary Actions: Cancel
++					190 text Description: Location (optional), Secondary Actions: Cancel
++					191 text field (settable) Description: Location (optional), Value: Lower Domain Dr, Parnell, Auckland 1010, New Zealand, Secondary Actions: Cancel
++					192 button Description: Clear location, Secondary Actions: Cancel
++					193 text Description: Activity date, Secondary Actions: Cancel
++					194 button Description: Activity date, Dec 29, 2026 – Dec 31, 2026, Secondary Actions: Cancel
++					195 text Description: Start time (optional), Secondary Actions: Cancel
++					196 text Description: End time (optional), Secondary Actions: Cancel
++					197 button Description: Start time (optional), 16:15, Secondary Actions: Cancel
++					198 button Description: End time (optional), 16:17, Secondary Actions: Cancel
++					199 text Description: Description (optional), Secondary Actions: Cancel
++					200 Group Description: Description (optional) Add a note…, Secondary Actions: Cancel, Scroll Right
++					201 text Description: Participants, Secondary Actions: Cancel
++					202 button Description: 1 selected, Help: R3-A6 disposable Catalog HTTP acceptance, Secondary Actions: Cancel
++					203 element Description: !, Open debugger to view warnings., Secondary Actions: Cancel

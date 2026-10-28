@@ -132,3 +132,14 @@ it("opens only the matching generation's owning Editor action and fences stale c
     })!.props.children[0].props.disabled,
   ).toBe(true);
 });
+
+it.each(["MY_TRIPS", "HOME", "DAY"] as const)(
+  "keeps native Search on its separate system background for %s",
+  (entry) => {
+    state.view = { tripId: "target", generation: 1 };
+    const toolbar = TripSearchEntry({ entry, tripId: "target", nativeToolbar: true })!;
+    const search = toolbar.props.children[2];
+    expect(search.type).toBe("NativeButton");
+    expect(search.props.separateBackground).toBe(true);
+  },
+);

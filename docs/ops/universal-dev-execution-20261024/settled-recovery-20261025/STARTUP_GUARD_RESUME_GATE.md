@@ -1,0 +1,26 @@
+# Exact startup-guard Results resume authorization
+
+Status: READY_FOR_OWNER_AUTHORIZATION — not executed.
+
+## Why a new boundary is required
+
+The approved33272c recovery attempt failed before recovery/Results publication. Docker restarted it12 times; only one startup read had been reserved after42 prior requests. Exact query consumption is UNKNOWN. Preserve all original ledger entries and the UNKNOWN execution receipt; never refund/reset or describe the12 starts as12 verified reads. Existing remaining allowance cannot safely be used. Final40e rollback is health/config verified, finite SQL/roles closed and runtime mount removed.
+
+The underlying failure is repaired: reuse the owning Catalog connection; explicitly selected recovery load failure terminates before fallback; anchored atomic HOST and OPERATOR startup claims are burned before Auth/TaskDB/Catalog, each at most once per normalized window, even after restart/config-hash changes. Independent review PASS. Root15 tests/1Linuxskip,19closure tests and TypeScript PASS; independent18-process Linux claim test PASS. Fixed local image network-none/read-only Health200, protected401 and default CLOSED PASS. These are local evidence, not real DEV recovery PASS.
+
+## Exact requested authority
+
+1. One DEV image replacement only: code `6748100469cabaadf00d934eee04ccdc1bed1b74`; image `sha256:8d9a81d58c0d2fb4cb888315b30db066065ad6785c813fba791585e62516ba67`. Exact four Bundle hashes are in STARTUP_GUARD_manifest.json. Preserve service configuration, user, existing mounts/data/permissions; trusted SSH image transport, no DEV rebuild. Closed deployment preflight and rollback guards unchanged. Rollback image remains `sha256:40e998c31815a77452dd52dbbd6d8789ea8a815a6d1afba068029e97e919bbaa`.
+2. Same original Synthetic Account/Trip/Batch/3Sources/Run/Task/Attempt/Call as OWNER_RECOVERY_GATE.md. Task `cd36d6f4-a09b-41ef-977e-bb4127920d7f`; Batch `5bafa531-7fd4-4b50-bb63-a016c55cb427`. Only consume original immutable successful completion/raw SHA7c1022a36e52df4d0db38bb7446b18b031f8feef2c1f9ade8d970543a2e3b6c6. No new Provider request, Auth identity, Source/Run/Task or canonical object; no Task deadline change.
+3. One finite original-reader recovery window, Host <=600seconds, independent close <=900seconds. Root records actual UTC start/end before any activation. Only existing Source/call principals and exact accepted3pins SourceScope; no ProviderScope/CP14/admin opening, no SQL/schema/ACL/GRANT/RLS expansion. Same original D13 custody/private Task DB. Same existing Task CAS/install only, normal Auth and original owning Source qualification required.
+4. A new **maximum16 individually reserved Operator business-read requests** for this exact recovery scope, independently hard-capped while retaining the old ledger/prefix and UNKNOWN historical consumption. No claim of unused older allowance. Expected:1Host cache +6recovery CLI reads +up to4independent result/source/readback checks; up to5contingency reads, stop at16. Exact local allowance helper SHA582f8da4ebef72de6ccb46d0b56540fbb9587d69562d29bb3555681fe1a27f76 requires explicit execution plus exact ledger/Gate SHA. It preserves43 entries and original amendments, maximum56→72 solely for the new independent16 policy; final reservation ordinal59. Both old helpers reject the amended ledger, so old allowance cannot be reused. Fixture18 concurrent workers admit16 and reject2. HOST/OPERATOR startup markers additionally prevent automatic restart consumption; no marker deletion or automatic replacement window. Existing Native allowance136 total remains unchanged (last recorded116); no automatic polling beyond its hard cap.
+5. Same-Task Native context/Results display and cold reopen. Native paid POST disabled. HIGH means interpretation only; no Admission/Review/Booking/Ticket entitlement authority is created. Explicit closed/unavailable Reader status remains truthful.
+6. Independent watchdog must arm before finite activation. Sealed runtime mount target is exactly `/run/otr/universal-recovery.json`, bound to configSHA/window and unchanged container/config/HostConfig/mount/identity guards. The reviewed mount-target repair is in6748100. End or failure: close original finite SQL/roles, remove temporary runtime mount, restore closed service; runtime failure restores40e. If closure cannot be verified, stop RECONCILE_REQUIRED; no blind retry.
+
+## Stop conditions / excluded authority
+
+Stop on Source/identity/hash/config drift, missing/raw mismatch, revoked Auth, stale/cancelled Task, conflicting result installation, unknown write outcome without legal same-Task reconciliation, read cap, or inability to guarantee close. Preserve originals, receipts and prior failures. No Production, real user/history, new paid calls, new schemas/permissions, other Sync Queues or formal Admission. No upload/long-term cloud-backup success claim.
+
+Final narrow review: startup/once-claim, exact sealed mount copy and new16 ledger supplement each independently PASS; no actual ledger/DEV operation performed by preparation.
+
+Approval of this exact Gate authorizes the one fixed deployment + one bounded same-Task Results recovery, not additional coding scope. Original one paid call/US$1 cap remains consumed once atUS$0.00099012.

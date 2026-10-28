@@ -1,0 +1,9 @@
+{
+  "closureAttempts": 1,
+  "planSHA256": "e63680157bfcee522d7612b355d6b90d925435efffbe3f34d7213f25a2a3ce74",
+  "runtimeClosed": false,
+  "sqlClosed": true,
+  "sqlWriteDisposition": "ACKNOWLEDGED",
+  "status": "RECONCILE_REQUIRED",
+  "windowId": "59be98eab62ca2f59d4f9ba30e197ca0eab526fd058696a492f2c988ae04e8ec"
+}

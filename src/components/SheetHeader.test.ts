@@ -4,7 +4,7 @@ import { expect, it, vi } from "vitest";
 
 import { SheetHeader } from "./SheetHeader";
 
-const ui = vi.hoisted(() => ({ fontScale: 1 }));
+const ui = vi.hoisted(() => ({ fontScale: 1, header: null as any }));
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(element: ReactNode): string;
@@ -28,17 +28,24 @@ vi.mock("react-native", async () => {
       }),
     StyleSheet: { create: (styles: unknown) => styles },
     useColorScheme: () => "light",
-    Text: "span",
+    Text: ({ style, ...props }: any) =>
+      createElement("span", {
+        ...props,
+        style: Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
+      }),
     View: ({
       style,
       ...props
     }: {
       style?: Record<string, unknown> | (Record<string, unknown> | false)[];
-    }) =>
-      createElement("div", {
+      [key: string]: any;
+    }) => {
+      if (props.onTouchStart) ui.header = props;
+      return createElement("div", {
         ...props,
         style: Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
-      }),
+      });
+    },
     useWindowDimensions: () => ({ fontScale: ui.fontScale }),
   };
 });
@@ -132,3 +139,94 @@ it("uses undecorated actions with adequate targets and equal title flanks", () =
   }
   expect(html.match(/width:112px/g)).toHaveLength(2);
 });
+
+it("keeps the left action enabled by default", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, { title: "Header", onLeft: () => undefined }),
+  );
+  expect(html.match(/<button[^>]*>/g)).toHaveLength(1);
+  expect(html).toContain('aria-disabled="false"');
+  expect(html).not.toContain('disabled=""');
+});
+it("disables the canonical left action without disabling the right", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, {
+      title: "Header",
+      onLeft: () => undefined,
+      leftDisabled: true,
+      onRight: () => undefined,
+    }),
+  );
+  const actions = html.match(/<button[^>]*>/g)!;
+  expect(actions[0]).toContain('aria-disabled="true"');
+  expect(actions[0]).toContain('disabled=""');
+  expect(actions[1]).toContain('aria-disabled="false"');
+  expect(actions[1]).not.toContain('disabled=""');
+});
+
+it.each([false, true])(
+  "honors leftDisabled=%s for the header dismissal gesture",
+  (leftDisabled) => {
+    const onLeft = vi.fn();
+    renderToStaticMarkup(
+      createElement(SheetHeader, { title: "Header", onLeft, leftDisabled }),
+    );
+    ui.header.onTouchStart({ nativeEvent: { pageY: 10 } });
+    ui.header.onTouchEnd({ nativeEvent: { pageY: 100 } });
+    expect(onLeft).toHaveBeenCalledTimes(leftDisabled ? 0 : 1);
+  },
+);
+
+it("uses a neutral close action, grabber and equal flanks for lightweight sheets", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, {
+      title: "Add to this trip",
+      category: "action",
+      onLeft: () => undefined,
+      safeTop: false,
+    }),
+  );
+  expect(html.match(/<button/g)).toHaveLength(1);
+  expect(html).toContain('accessibilityLabel="Close"');
+  expect(html).not.toContain("Cancel");
+  expect(html.match(/width:80px/g)).toHaveLength(2);
+  expect(html).toContain("width:36px;height:5px");
+  expect(html).toContain("padding-horizontal:20px");
+});
+
+it("defaults editing sheets to Cancel and keeps submission text only", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, {
+      title: "Create Trip",
+      category: "form",
+      onLeft: () => undefined,
+      rightLabel: "Create",
+      onRight: () => undefined,
+    }),
+  );
+  expect(html).toContain("Cancel");
+  expect(html).toContain("Create");
+  expect(html.match(/<button/g)).toHaveLength(2);
+  for (const action of html.match(/<button[^>]*>/g)!)
+    expect(action).not.toMatch(/background|border|shadow/);
+});
+
+it.each(["action", "composer"] as const)(
+  "keeps %s close on the right at accessibility text sizes",
+  (category) => {
+    ui.fontScale = 2.1;
+    try {
+      const html = renderToStaticMarkup(
+        createElement(SheetHeader, {
+          title: "Import Travel Plans",
+          category,
+          onLeft: () => undefined,
+        }),
+      );
+      expect(html.match(/<button/g)).toHaveLength(1);
+      expect(html).toContain("justify-content:flex-end");
+    } finally {
+      ui.fontScale = 1;
+    }
+  },
+);

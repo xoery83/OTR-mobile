@@ -1,3 +1,4 @@
+import { tripCoverAssetIds } from "@/domain/trip/tripCoverAssets";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -78,12 +79,15 @@ it("caches a complete actor snapshot without inventing a local CREATE, and merge
           createdAt: created,
           localStatus: "PENDING_CREATE",
           selectedCoverAssetId: "city",
+          selectedCoverAssetIdRaw: "city",
+          personalCoverRevision: 1,
           remoteListed: true,
         },
         {
           ...remote(idB, "Shared Trip"),
           localStatus: null,
           selectedCoverAssetId: null,
+          selectedCoverAssetIdRaw: null,
           remoteListed: true,
         },
       ],
@@ -97,6 +101,29 @@ it("caches a complete actor snapshot without inventing a local CREATE, and merge
       (await repo.readMerged()).trips.find((trip) => trip.id === idA)
         ?.selectedCoverAssetId,
     ).toBe("cultural-oldtown");
+    for (const id of tripCoverAssetIds) {
+      sql
+        .prepare(
+          "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+        )
+        .run(id, accountA, idA);
+      expect(
+        (await repo.readMerged()).trips.find((trip) => trip.id === idA),
+      ).toMatchObject({ selectedCoverAssetId: id, selectedCoverAssetIdRaw: id });
+    }
+    sql
+      .prepare(
+        "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+      )
+      .run("future-cover-v3", accountA, idA);
+    expect((await repo.readMerged()).trips.find((trip) => trip.id === idA)).toMatchObject(
+      { selectedCoverAssetId: null, selectedCoverAssetIdRaw: "future-cover-v3" },
+    );
+    sql.close();
+    sql = new DatabaseSync(path);
+    expect((await repo.readMerged()).trips.find((trip) => trip.id === idA)).toMatchObject(
+      { selectedCoverAssetId: null, selectedCoverAssetIdRaw: "future-cover-v3" },
+    );
     sql
       .prepare(
         "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",

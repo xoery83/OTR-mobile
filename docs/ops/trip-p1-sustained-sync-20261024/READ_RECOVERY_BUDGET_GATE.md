@@ -1,0 +1,9 @@
+# Exact read-only recovery allowance — Owner decision
+
+The original Gate caps initial acceptance at 192 application/business reads and 48 mutation attempts. Both actual P1 creates have immutable APPLIED receipts but Native FETCH fails before receipt recovery. Native automatic calls before the latest diagnostics were not durably counted per request; their remaining original read allowance cannot be proved exactly. AD5 has been stopped to prevent more uncounted retries. No original allowance is silently reset.
+
+Requested: at most **96 additional application/business read attempts** for the original Synthetic A/B, two already authored QA Trips and two existing P1 Items, including exact operation result, authenticated collection/readback, independent SQL readback and recovery verification. These are additional to all historical calls, including failures. No additional Trip/Person/P1 object allocation; original total 48 mutation-attempt cap stays unchanged. P1 edits remain the existing approved commands, not a new mutation grant.
+
+Execution: record a fresh bounded read ledger before resuming. Assign each Native run an explicit maximum allocation; fail closed at its allocation, include HTTP retries, and retain the ledger across cold starts. Stop the App when diagnosing; leave the already authorized sustained Backend service healthy. Do not add SQL, Schema, RLS, roles, grants, Provider activation or a second Sync Engine.
+
+Use the added reads only to diagnose Native FETCH, reconcile the existing operation/hash/Actor, recover canonical collections, finish original Edit P1/offline/idempotency/account-switch evidence, and independently verify results. No blind write replay and no history migration. If the added allowance is exhausted, stop remote acceptance and retain pending state. All local engineering remains authorized and continues while this narrow read boundary is pending.

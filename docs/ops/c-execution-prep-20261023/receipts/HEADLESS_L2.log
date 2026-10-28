@@ -1,0 +1,20 @@
+✔ budget pins window/actors, never refunds throws, immutable snapshots (4.728125ms)
+✔ dedicated SQLite rejects App path and restores real migrations on reopen (96.900334ms)
+✔ actual loopback password login + server getUser + ordinary selfprofile + adoptedAccount; rejects identity mismatch (370.075375ms)
+{"event":"api_request_failed","method":"GET","route":"/v2/trip-create-operations/:id","kind":"http","status":404,"code":"TRIP_CREATE_RECEIPT_NOT_FOUND","at":"2026-10-22T19:25:33.423Z"}
+{"event":"api_request_failed","method":"POST","route":"/v2/trips","kind":"network","at":"2026-10-22T19:25:33.425Z"}
+{"event":"api_request_failed","method":"GET","route":"/v2/trip-metadata-operations/:id","kind":"http","status":404,"code":"TRIP_METADATA_RECEIPT_NOT_FOUND","at":"2026-10-22T19:26:15.567Z"}
+{"event":"api_request_failed","method":"POST","route":"/v2/trips/:id/metadata","kind":"http","status":409,"code":"TRIP_METADATA_COLLISION","at":"2026-10-22T19:26:15.578Z"}
+{"event":"api_request_failed","method":"POST","route":"/v2/trips/:id/metadata","kind":"http","status":403,"code":"TRIP_METADATA_FORBIDDEN","at":"2026-10-22T19:26:15.581Z"}
+{"event":"api_request_failed","method":"GET","route":"/v2/trip-create-operations/:id","kind":"network","at":"2026-10-22T19:26:15.612Z"}
+✔ real HTTP + existing SQLite/targeted workers: offline create/edit, receipt-first recovery, scoped denials, currency owning client recovery (42314.466458ms)
+✔ canonical readback refuses missing counts instead of assuming zero (3.650542ms)
+✔ Auth provisioning refuses malformed window/hash before any outbound attempt (163.157209ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43352.893208

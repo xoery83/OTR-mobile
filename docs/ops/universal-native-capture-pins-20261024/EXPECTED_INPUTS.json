@@ -1,0 +1,20 @@
+[
+  {
+    "kind": "FILE",
+    "originalFilename": "universal-mixed-bookings-utf8.txt",
+    "byteCount": 1598,
+    "sha256": "5db86cb62b681cc69eeee224f4af940cf10de5df6daa165102b3a37454a35592"
+  },
+  {
+    "kind": "FILE",
+    "originalFilename": "lodging-supplement.txt",
+    "byteCount": 433,
+    "sha256": "6a1ee8c1d59b603926523315563174f49cefc066ea96a45c8e028fc21e0a6af2"
+  },
+  {
+    "kind": "TEXT",
+    "originalFilename": null,
+    "byteCount": 172,
+    "sha256": "e2fc3cf6fae139733cd7cf00fb1b058385870e33c6612b21b9ab1762bfe0e071"
+  }
+]

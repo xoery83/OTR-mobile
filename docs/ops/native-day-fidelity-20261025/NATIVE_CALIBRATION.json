@@ -1,0 +1,91 @@
+{
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "runtime": "iOS27.0",
+  "measurements": [
+    {
+      "event": "day_fidelity_measurement",
+      "window": {
+        "fontScale": 1,
+        "width": 402,
+        "height": 874,
+        "scale": 3
+      },
+      "insets": {
+        "top": 62,
+        "right": 0,
+        "bottom": 34,
+        "left": 0
+      },
+      "font": "platform-default",
+      "bodyRole": {
+        "fontSize": 16,
+        "fontWeight": "600"
+      },
+      "captionRole": {
+        "fontSize": 13,
+        "fontWeight": "400"
+      }
+    },
+    {
+      "event": "day_fidelity_font_measurement",
+      "role": "row",
+      "lines": [
+        {
+          "text": "Synthetic ridge walk",
+          "x": 0,
+          "y": 0,
+          "width": 154.00013732910156,
+          "height": 19.09375,
+          "descender": 3.859375,
+          "capHeight": 11.2734375,
+          "ascender": 15.234375,
+          "xHeight": 8.5390625
+        }
+      ]
+    },
+    {
+      "event": "day_fidelity_font_measurement",
+      "role": "meta",
+      "lines": [
+        {
+          "text": "P3, P4, P5, P6, Flexible and TTR are synthetic Lab proofs. ",
+          "x": 0,
+          "y": 0,
+          "width": 350.48583984375,
+          "height": 15.513671875,
+          "descender": 3.1357421875,
+          "capHeight": 9.15966796875,
+          "ascender": 12.3779296875,
+          "xHeight": 6.8427734375
+        },
+        {
+          "text": "Real accepted Day is not shown here.",
+          "x": 0,
+          "y": 15.513671875,
+          "width": 226.59228515625,
+          "height": 15.513671875,
+          "descender": 3.1357421875,
+          "capHeight": 9.15966796875,
+          "ascender": 12.3779296875,
+          "xHeight": 6.8427734375
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "WebLabPoints": [
+      402,
+      874
+    ],
+    "WebLabProvisionalInsets": {
+      "top": 59,
+      "bottom": 34
+    },
+    "actualNativeInsets": {
+      "top": 62,
+      "bottom": 34
+    },
+    "topDifferencePoints": 3
+  },
+  "fontIdentity": "React Native platform-default; metrics measured from native onTextLayout, font family name not independently queried"
+}

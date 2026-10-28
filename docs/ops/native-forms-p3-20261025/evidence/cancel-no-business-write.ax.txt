@@ -1,0 +1,17 @@
+The following is a diff from the previous accessibility tree for Window: "OTR Forms QA" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 153-156
+~					93 heading
+~					108 heading
+~					95 text field (settable) Description: Accommodation name, Secondary Actions: Cancel
+~					109 text
+~					110 text
+~					115 button Secondary Actions: Cancel
+~					116 button Secondary Actions: Cancel
+~					117 button Secondary Actions: Cancel
+~					150 element
+~					151 button Description: Next keyboard, Help: Double-tap and hold, then drag up to select another keyboard, Value: 简体拼音
+~					152 button Description: Dictate, Help: Double-tap to start dictation. Double-tap with two fingers when finished., ID: dictation
+Selected:
+	7 row (selected)
+
+Note: Pay special attention to the content selected by the user. If the user asks a question or refers to the content they are looking at on-screen, they might be referring to the selected content (but they might be referring to something else that's visible, too).

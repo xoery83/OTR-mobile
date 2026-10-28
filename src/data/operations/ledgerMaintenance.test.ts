@@ -1,4 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
+import { migrations } from "../db/migrations";
 import { describe, expect, it, vi } from "vitest";
 
 const files = vi.hoisted(() => new Set<string>());
@@ -363,4 +364,39 @@ describe("Ledger operational maintenance", () => {
     expect(output).not.toMatch(/token-canary|name-canary|note-canary|amount-canary/);
     expect(sql.join("\n")).not.toMatch(/payload_json|title|notes|original_amount/);
   });
+});
+
+it("retains device-local cover consumed identities during ordinary completed history cleanup", async () => {
+  const sqlite = new DatabaseSync(":memory:");
+  try {
+    for (const migration of migrations) sqlite.exec(migration.sql);
+    for (const [id, kind] of [
+      ["cover", "TRIP_COVER_LOCAL_SAVE"],
+      ["destinations", "TRIP_DESTINATIONS_LOCAL_SAVE"],
+      ["old", "ORDINARY_COMPLETED"],
+    ]) {
+      sqlite
+        .prepare(
+          `INSERT INTO sync_operations(id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,created_at,updated_at)
+        VALUES(?,'TRIP_LOCAL_PREFERENCE','trip',?,?, '{}','actor','COMPLETED','2026-01-01','2026-01-01')`,
+        )
+        .run(id, kind, id);
+    }
+    const result = await cleanupReconstructibleLedgerData(
+      {
+        runAsync: async (query: string, ...args: unknown[]) =>
+          sqlite.prepare(query).run(...(args as never[])) as never,
+        getAllAsync: async () => [] as never,
+        getFirstAsync: async () => null,
+      },
+      "2026-10-01",
+    );
+    expect(result.deletedSyncOperations).toBe(1);
+    expect(sqlite.prepare("SELECT id FROM sync_operations").all()).toEqual([
+      { id: "cover" },
+      { id: "destinations" },
+    ]);
+  } finally {
+    sqlite.close();
+  }
 });

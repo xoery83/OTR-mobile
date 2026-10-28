@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-24T01:16:57.449190+00:00",
+  "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+  "health": "healthy",
+  "mounts": [
+    [
+      "/run/otr-r3a5-catalog/catalog-reader.json",
+      "/run/otr/catalog-reader.json",
+      false
+    ],
+    [
+      "/opt/otr/dev-backend/private/capture-custody",
+      "/var/lib/otr/capture-custody",
+      true
+    ],
+    [
+      "/opt/otr/dev-backend/env/capture-custody.json",
+      "/run/otr/capture-custody.json",
+      false
+    ]
+  ],
+  "runtimeRootExists": false,
+  "runtimeFileExists": false,
+  "environmentMatches": true,
+  "hostConfigSemanticallyMatches": true,
+  "rawMountOrderSame": false,
+  "composeFilesMatch": true
+}

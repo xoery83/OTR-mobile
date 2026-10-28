@@ -1,0 +1,1261 @@
+{
+  "version": "p4-rental-synthetic-v1",
+  "authority": "SYNTHETIC_NOT_SOURCE_PROOF_ADMISSION_OR_ACL",
+  "trip": {
+    "title": "Nelson summer journey"
+  },
+  "scenarios": [
+    {
+      "id": "full",
+      "label": "Complete · 5 billed days / different depots",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne independent Rental · Vehicle 1\nQuote and deposit do not prove payment."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-rental-exp-1",
+              "title": "Rental · final charge",
+              "visible": true,
+              "canEdit": true
+            },
+            {
+              "id": "syn-rental-exp-2",
+              "title": "Rental · additional charge",
+              "visible": true,
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "currency": "NZD",
+            "total": 62000,
+            "myShare": 31000,
+            "billingDays": 5,
+            "dayBasis": "SYNTHETIC_SUPPLIER_BILLING",
+            "totalPerDay": 12400,
+            "myPerDay": 6200,
+            "originals": [
+              {
+                "currency": "AUD",
+                "amount": 56000
+              }
+            ]
+          },
+          "relatedRentalIds": [],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "actual",
+      "label": "Known actual model / plate",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": {
+            "model": "Toyota RAV4",
+            "plate": "SYN-123",
+            "visible": true,
+            "basis": "SYNTHETIC_MANUAL_ATTESTATION"
+          },
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne independent Rental · Vehicle 1\nQuote and deposit do not prove payment."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-rental-exp-1",
+              "title": "Rental · final charge",
+              "visible": true,
+              "canEdit": true
+            },
+            {
+              "id": "syn-rental-exp-2",
+              "title": "Rental · additional charge",
+              "visible": true,
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "currency": "NZD",
+            "total": 62000,
+            "myShare": 31000,
+            "billingDays": 5,
+            "dayBasis": "SYNTHETIC_SUPPLIER_BILLING",
+            "totalPerDay": 12400,
+            "myPerDay": 6200,
+            "originals": [
+              {
+                "currency": "AUD",
+                "amount": 56000
+              }
+            ]
+          },
+          "relatedRentalIds": [],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "minimal",
+      "label": "Sparse imported · pickup date only",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Rental car",
+          "label": "Vehicle 1",
+          "supplier": null,
+          "bookedClass": null,
+          "pickup": {
+            "date": "2027-01-16"
+          },
+          "holder": null,
+          "drivers": [],
+          "actual": null,
+          "booking": null,
+          "contact": null,
+          "documents": [],
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "relatedRentalIds": [],
+          "note": null,
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": false
+          },
+          "return": null,
+          "participants": null
+        }
+      ]
+    },
+    {
+      "id": "multi",
+      "label": "Two vehicles · one Booking",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne Booking covers Vehicle 1 and Vehicle 2. Each has an independent Rental identity and return."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            },
+            {
+              "id": "syn-rental-addendum",
+              "kind": "confirmation",
+              "title": "Rental booking addendum.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nBooking addendum covers both independent vehicles."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-rental-exp-1",
+              "title": "Rental · final charge",
+              "visible": true,
+              "canEdit": true
+            },
+            {
+              "id": "syn-rental-exp-2",
+              "title": "Rental · additional charge",
+              "visible": true,
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "currency": "NZD",
+            "total": 62000,
+            "myShare": 31000,
+            "billingDays": 5,
+            "dayBasis": "SYNTHETIC_SUPPLIER_BILLING",
+            "totalPerDay": 12400,
+            "myPerDay": 6200,
+            "originals": [
+              {
+                "currency": "AUD",
+                "amount": 56000
+              }
+            ]
+          },
+          "relatedRentalIds": [
+            "syn-rental-b"
+          ],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        },
+        {
+          "id": "syn-rental-b",
+          "visible": true,
+          "name": "Second family rental",
+          "label": "Vehicle 2",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": {
+            "model": "Toyota Corolla",
+            "plate": "SYN-456",
+            "visible": true,
+            "basis": "SYNTHETIC_MANUAL_ATTESTATION"
+          },
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne Booking covers Vehicle 1 and Vehicle 2. Each has an independent Rental identity and return."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            },
+            {
+              "id": "syn-rental-addendum",
+              "kind": "confirmation",
+              "title": "Rental booking addendum.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nBooking addendum covers both independent vehicles."
+            }
+          ],
+          "photos": [],
+          "expenses": [],
+          "ledger": null,
+          "relatedRentalIds": [
+            "syn-rental-a"
+          ],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-21",
+            "time": "10:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "floating",
+      "label": "Original clocks · zones unknown",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": null,
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne independent Rental · Vehicle 1\nQuote and deposit do not prove payment."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-rental-exp-1",
+              "title": "Rental · final charge",
+              "visible": true,
+              "canEdit": true
+            },
+            {
+              "id": "syn-rental-exp-2",
+              "title": "Rental · additional charge",
+              "visible": true,
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "currency": "NZD",
+            "total": 62000,
+            "myShare": 31000,
+            "billingDays": 5,
+            "dayBasis": "SYNTHETIC_SUPPLIER_BILLING",
+            "totalPerDay": 12400,
+            "myPerDay": 6200,
+            "originals": [
+              {
+                "currency": "AUD",
+                "amount": 56000
+              }
+            ]
+          },
+          "relatedRentalIds": [],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": null,
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown-days",
+      "label": "Ledger known · billed-day denominator unknown",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne independent Rental · Vehicle 1\nQuote and deposit do not prove payment."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-rental-exp-1",
+              "title": "Rental · final charge",
+              "visible": true,
+              "canEdit": true
+            },
+            {
+              "id": "syn-rental-exp-2",
+              "title": "Rental · additional charge",
+              "visible": true,
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "currency": "NZD",
+            "total": 62000,
+            "myShare": 31000,
+            "billingDays": null,
+            "dayBasis": null,
+            "totalPerDay": null,
+            "myPerDay": null,
+            "originals": [
+              {
+                "currency": "AUD",
+                "amount": 56000
+              }
+            ]
+          },
+          "relatedRentalIds": [],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "quote",
+      "label": "Quote / deposit only · no Expense",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne independent Rental · Vehicle 1\nQuote and deposit do not prove payment."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [],
+          "ledger": null,
+          "relatedRentalIds": [],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "quote": {
+            "currency": "NZD",
+            "amount": 999000
+          },
+          "deposit": {
+            "currency": "NZD",
+            "amount": 250000
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "restricted",
+      "label": "Rental visible · associations restricted",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Nelson Airport rental desk",
+              "address": "18 Example Airport Road, Nelson 7010, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "holder": {
+            "name": "PRIVATE HOLDER",
+            "visible": false
+          },
+          "drivers": [
+            {
+              "name": "PRIVATE DRIVER",
+              "visible": false
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "hidden-booking",
+            "ref": "SECRET",
+            "visible": false
+          },
+          "contact": null,
+          "documents": [
+            {
+              "id": "hidden-file",
+              "title": "PRIVATE DOCUMENT",
+              "kind": "confirmation",
+              "visible": false,
+              "canOpenOriginal": false,
+              "text": "SECRET"
+            }
+          ],
+          "photos": [
+            {
+              "id": "hidden-photo",
+              "visible": false
+            }
+          ],
+          "expenses": [
+            {
+              "id": "hidden-expense",
+              "title": "PRIVATE EXPENSE",
+              "visible": false
+            }
+          ],
+          "ledger": {
+            "visible": false
+          },
+          "relatedRentalIds": [],
+          "note": null,
+          "capabilities": {
+            "manageParticipation": false
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Wellington return depot",
+              "address": "42 Example Quay, Wellington 6011, New Zealand (synthetic)",
+              "qualification": "SYNTHETIC_QUALIFIED_PLACE"
+            }
+          },
+          "participants": null
+        }
+      ]
+    },
+    {
+      "id": "name-only",
+      "label": "Location names only · external search",
+      "rentals": [
+        {
+          "id": "syn-rental-a",
+          "visible": true,
+          "name": "Nelson road trip car",
+          "label": "Vehicle 1",
+          "supplier": "Example Rentals",
+          "bookedClass": "Compact SUV or similar",
+          "pickup": {
+            "date": "2027-01-16",
+            "time": "09:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Example Rentals airport desk",
+              "area": "Nelson",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "holder": {
+            "name": "Alex Chen",
+            "visible": true
+          },
+          "drivers": [
+            {
+              "name": "Sam Lee",
+              "visible": true
+            }
+          ],
+          "actual": null,
+          "booking": {
+            "id": "syn-booking-rental-a",
+            "ref": "SYN-RENT-01",
+            "visible": true
+          },
+          "contact": "Synthetic rental desk · +00 000 000",
+          "documents": [
+            {
+              "id": "syn-rental-confirm",
+              "kind": "confirmation",
+              "title": "Rental confirmation.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nOne independent Rental · Vehicle 1\nQuote and deposit do not prove payment."
+            },
+            {
+              "id": "syn-rental-pickup",
+              "kind": "pickup",
+              "title": "Pickup instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nCollect keys at the rental counter in the arrivals area."
+            },
+            {
+              "id": "syn-rental-return",
+              "kind": "return",
+              "title": "Return instructions.txt",
+              "visible": true,
+              "canOpenOriginal": true,
+              "text": "SYNTHETIC WEBLAB DOCUMENT\nUse the supplied return depot. Return keys to reception."
+            }
+          ],
+          "photos": [
+            {
+              "id": "syn-rental-photo-1",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-2",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-3",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-4",
+              "visible": true
+            },
+            {
+              "id": "syn-rental-photo-5",
+              "visible": true
+            }
+          ],
+          "expenses": [
+            {
+              "id": "syn-rental-exp-1",
+              "title": "Rental · final charge",
+              "visible": true,
+              "canEdit": true
+            },
+            {
+              "id": "syn-rental-exp-2",
+              "title": "Rental · additional charge",
+              "visible": true,
+              "canEdit": true
+            }
+          ],
+          "ledger": {
+            "visible": true,
+            "currency": "NZD",
+            "total": 62000,
+            "myShare": 31000,
+            "billingDays": 5,
+            "dayBasis": "SYNTHETIC_SUPPLIER_BILLING",
+            "totalPerDay": 12400,
+            "myPerDay": 6200,
+            "originals": [
+              {
+                "currency": "AUD",
+                "amount": 56000
+              }
+            ]
+          },
+          "relatedRentalIds": [],
+          "note": "Collect the car after breakfast.",
+          "capabilities": {
+            "edit": true,
+            "addPhoto": true,
+            "addAttachment": true,
+            "linkExpense": true,
+            "addExpense": true,
+            "manageParticipation": true
+          },
+          "return": {
+            "date": "2027-01-20",
+            "time": "17:00",
+            "zone": "Pacific/Auckland",
+            "place": {
+              "name": "Example Rentals city depot",
+              "area": "Wellington",
+              "qualification": "TEXT_ONLY"
+            }
+          },
+          "participants": {
+            "visible": true,
+            "mode": "SELECTED_MEMBERS",
+            "personIds": [
+              "syn-member-alex",
+              "syn-member-taylor"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

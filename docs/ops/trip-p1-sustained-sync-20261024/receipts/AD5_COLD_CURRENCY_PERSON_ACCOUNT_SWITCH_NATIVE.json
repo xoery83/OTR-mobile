@@ -1,0 +1,27 @@
+{
+  "observedAt": "2026-10-24T04:56:56.747429+00:00",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "appIdentity": "com.xoery.otrmobile",
+  "normalUiOnly": true,
+  "coldTrip2": {
+    "name": "AD5 Sustained 20261024 Auto Second Edited",
+    "destinations": [
+      "Queenstown"
+    ],
+    "homeCurrency": "USD \u00b7 Change",
+    "members": [
+      "AD5 Sustained QA A",
+      "Synthetic Traveler Two"
+    ],
+    "coverVisible": true
+  },
+  "accountSwitch": {
+    "syntheticB": "normal Add/Login another account; password not saved in system Passwords",
+    "bMyTripsEmpty": true,
+    "aTripsNotVisibleAsB": true,
+    "oldAccountAndARemembered": true,
+    "switchBackToA": "normal Switch button; no Session copied"
+  },
+  "zeroTripImport": "My Trips empty-state Import opens sheet with actual My Trips hero/backdrop; no submission or Source operation created",
+  "p1": "still waiting to sync locally despite independent APPLIED receipts; not full PASS"
+}

@@ -1,0 +1,64 @@
+{
+  "reviewer": "/root/form_entry_01",
+  "candidateSHA": "5db9a0da5771f2a9b22f21967a3b740f133d572c",
+  "baseSHA": "86285528ac24e146f830b4f8d75b1b3967cc095c",
+  "status": "PASS_FOR_EXACT_FUTURE_OWNER_C_GATE_PREPARATION",
+  "unresolvedP0P1": [],
+  "executionAuthorized": false,
+  "manifestSHA256": "d9d0845aed8917c2a7ae27fd572aacd3fe6811bbd80e87b0aadacb2311abeaaa",
+  "verifiedManifestFiles": 27,
+  "independentValidation": {
+    "nodeHeadless": {
+      "passed": 6,
+      "scope": "actual local loopback HTTP using real SDK; synthetic Auth/server responses; actual SQLite migrations/repositories/target workers/offline/reopen/receipt-only recovery"
+    },
+    "pythonControllerService": {
+      "passed": 15,
+      "scope": "controller projection and local simulated Docker/SSH service; actual OS flock race tests"
+    },
+    "postgresProcess": {
+      "passed": 3,
+      "scope": "actual uniquely named cached network-none PG container, real dedicated-role session/FOR SHARE close, stale-window rejection, detached child survives parent kill; service return is state-file simulation"
+    }
+  },
+  "writerValidationNotIndependentlyRerun": {
+    "existingScopedTests": "82 PASS; 2 unchanged baseline Reference timestamp exclusions",
+    "static": "TS/scoped lint/UI guard reported PASS"
+  },
+  "resolvedFindings": [
+    "Pin original account generation before lazy imports and assert after awaits.",
+    "Immutable window/actor copy, private bounded counters, fixed dedicated QA database path.",
+    "Fixed readback and owning ledger recovery; no unmetered generic read/afterCommit API in runner.",
+    "Strict exact closed result and typed canonical readback; no missing count inferred zero.",
+    "Provision gate finite UTC/hash, exact new synthetic emails, retained partial receipts, no takeover/profile admin upsert.",
+    "Exact actual runtime mounts/content/permissions and full execution manifest pinned across independent processes.",
+    "Exact denial status/code and worker receipt/queue/cold local assertions.",
+    "Remote global OS flock serializes whole activation/restore; waiting activation rechecks UTC before mutation.",
+    "Stopped/exited candidate can restore baseline without pre-restore docker exec; healthy post-restore bundle required.",
+    "Sanitized pre-replacement diagnostic atomically persisted0600 with file+directory fsync before compose; evidence failure still attempts restoration but cannot PASS.",
+    "Timeout nesting bounded and errors remain RECONCILE; SQL termination precedes gate update to avoid FOR SHARE blocking."
+  ],
+  "limits": [
+    "No real DEV/Auth/admin provisioning/gate/SQL/business/deployment/GUI/Native operation by reviewer or candidate validation.",
+    "Fake Auth protocol is not actual server identity authority.",
+    "Service Docker/SSH/restart/restoration tests are simulated, not actual current B restart proof.",
+    "SQLite close/reopen retains lawful memory-only session; not process-cold or Native Auth recovery.",
+    "Network/operator host total failure may prevent physical remote cleanup; finite SQL/credential expiry does not prove service restoration; require actual CLOSED_VERIFIED or RECONCILE.",
+    "Trusted fixed wrapper/credential custody boundary remains; arbitrary malicious SQL credential holders excluded as previously accepted.",
+    "New exact <=900s Owner Gate, actual fresh B baseline, real provision responses and normal getUser/profile qualification remain required; no automatic reuse of old window.",
+    "L3 four-path receipt/readback/client recovery and actual return to current B remain NOT_RUN."
+  ],
+  "evidenceLevels": {
+    "L1": "NOT_RUN/NOT_APPLICABLE to operator-only preparation",
+    "L2": "ISOLATED_CONTRACT_PASS within listed fixtures",
+    "L3": "NOT_RUN; CLOUD_PENDING"
+  },
+  "dataPathChecklist": {
+    "dataOwnership": "Existing Cloud Trip/Metadata/Ledger contracts; Auth secrets transient; QA SQLite/evidence local-private.",
+    "localStorage": "Existing repositories/migrations/queue; dedicated0700 QA dir/0600 DB; no Native DB or new schema.",
+    "syncBackendContract": "Existing fixed targeted workers/transports/DTO/receipts; no global dispatch or new business authority.",
+    "conflictOfflineBehavior": "CAS/replay/collision/account-switch/receipt-first bounded recovery; no V1 auto-upgrade/repost.",
+    "requiredEvidence": "L2 isolated complete; real DEV L3 and actual closure pending exact authorization.",
+    "remainingIntegrationDelta": "Owner fixed window/identity-bound Gate plus authorized actual four-path execution/readback/client recovery and current-B closed restoration."
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "observedAtUTC": "2026-10-24T11:04:18.158256+00:00",
+  "codeSigningAllowed": true,
+  "sdkBuild": "PASS",
+  "actualSessionAndMyTrips": "RESTORED_WITHOUT_LOGIN",
+  "actualFactoryProbe": {
+    "event": "publication_receiver_local_only_probe",
+    "state": "READY",
+    "networkCalls": 0
+  },
+  "sourceCommands": "NOT_YET_VERIFIED",
+  "providerCalls": 0,
+  "providerGate": "CLOSED",
+  "binaryHashes": {
+    "Info.plist": "2492755dfa31397ac03515e14520eb950243e182c3a9ae47f4a315f28052bd36",
+    "OTRMobile": "865a91647aeb561e7b4955643f41549a056fcec5148c7f8bd6770f3558355513",
+    "OTRMobile.debug.dylib": "55b938c02b14908133eb77a70b397d8ad827b1e881a12185ba851797b8457432",
+    "__preview.dylib": "3c7b877aac0418019fe9da3dbbd48f7b5e31b1540bafaf3793c3b09636c7c52e"
+  },
+  "registrySHA256": "2d0a51b973a2f650602dc315e331eebd1552c6b04e01b7ece372f57618164dcd",
+  "registryContainsReceiver": true,
+  "temporaryBootstrapDiagnosticsRemoved": true,
+  "nativeGetAllowance": {
+    "consumed": 72,
+    "maximum": 72,
+    "reset": false
+  },
+  "operatorGetAllowance": {
+    "consumed": 6,
+    "maximum": 24
+  },
+  "realSourceOrAIResults": "NOT_RUN"
+}

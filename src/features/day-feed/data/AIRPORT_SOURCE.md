@@ -1,0 +1,13 @@
+# Offline airport suggestions and timezone prefills
+
+Existing Workbench source: AIRPORT-REF-01 airport-ref-01-20261021-b529623d2a0b, catalog SHA25683a4d98c345a9ffc00712acfd2f3ed802db37d1d1622884fc0fd858156672073. OurAirports contributors, Unlicense (retained). Original airports.csv commit b529623d2a0b09a9be78d37fc7a7a5e1e16e3451, SHA2560499dbd88de2fc735ac5c09f59796ccc3af544e17ffda807f793c0c6fe6c3d75.
+
+9298 records retain explicit IATA/ICAO/name/ISO-country; exclude source-marked CLOSED and records without a code. STATUS_NOT_VERIFIED is not a live operational-status claim. No Source identity, terminal, coordinates, inferred airport code or navigation permission is granted. Duplicate names remain separate suggestions; user explicitly selects. Not a full global registry.
+
+Owner requests automatic timezone as primary and manual fallback only when unknown. Build-time geo-tz8.1.10 comprehensive polygon lookup uses the original airport coordinates; 9241 unique named IANA zones,57 unresolved (including25 retained-airport-zone conflicts). Existing trusted airport timezone is a conflict check, not silently overridden. Overlap/missing/ocean-only/invalid/runtime-unsupported zones fall back to manual. No country default or nearest-airport rule.
+
+Only the compact ~945KB resulting table is bundled. geo-tz71MB boundary files and29 packages are temporary build tools, absent from Native dependencies. Exact package integrity, boundary hashes, source/output hashes and counts are in AIRPORT_BUILD.json. Reproduce with scripts/native-forms/build-airport-suggestions.cjs SOURCE_CATALOG_JSON GEO_TZ_PACKAGE_DIR. No network/runtime update.
+
+Attribution: OurAirports contributors (Unlicense); timezone-boundary-builder and OpenStreetMap contributors (ODbL1.0); geo-tz author Evan Siroky (MIT). Airport-zone derivative is made available under ODbL1.0 with retained TIMEZONE_DATA_LICENSE; geo-tz license retained. Sources: https://github.com/evansiroky/node-geo-tz and https://github.com/evansiroky/timezone-boundary-builder .
+
+DST: prefills store IANA IDs, never today's UTC offset. They are editable draft context, not an admitted resolver/proof. Existing Core rejects pending/gap/fold as comparable instants. Full manual endpoint write/civil resolver remain the owning-interface gap; no new reverse time resolver or false duration is introduced. Future legitimate resolver must consume endpoint date+minute+IANA and require clarification on gap/fold. Runtime/OS tzdb controls forward formatting; pinned boundary geometry determines geographic zone only, not clock rules. Refresh the pinned table deliberately when geography changes.

@@ -1,0 +1,18 @@
+{
+  "status": "ACTUAL_LOCAL_NETWORK_NONE_SQLITE_ANCHORED_CUSTODY_PASS",
+  "executedCommand": "docker run --rm -i --platform linux/amd64 --network none --read-only --tmpfs /custody-tests:rw,mode=700,uid=10001,gid=10001 --entrypoint node sha256:99966a4069268e8f0bc4c200d08b7ac8443e35aa4858fac03cec1869c46091e4 --input-type=module < /private/tmp/otr-universal-settled-recovery-20261025/recovery-fixture.mjs",
+  "execSession": 65322,
+  "bundleSHA256": "653cddb713d985ceb0efa5899463cfbb5d2422e14862f3525bed1d3448d5525a",
+  "stdout": {
+    "status": "LOCAL_SETTLED_RECOVERY_PASS",
+    "provider": "SYNTHETIC_TERMINAL_EVIDENCE",
+    "realProviderCalls": 0,
+    "checks": [
+      "real SQLite owning observe/install accepts already-settled result after immutable deadline, no new Task/Attempt",
+      "anchored retained raw/result and actual SQLite reopen idempotent replay, zero Provider port",
+      "existing authenticated GET context/results reads settled result; POST remains CLOSED without Provider",
+      "revoked current Auth/Source withholds recovery"
+    ]
+  },
+  "scope": "Core recovery/GET; SQL/Auth completion/source ports are synthetic. Does not establish actual DEV Source qualification or Provider acceptance. Subsequent Source composition replacement does not change this core/fixture bundle."
+}

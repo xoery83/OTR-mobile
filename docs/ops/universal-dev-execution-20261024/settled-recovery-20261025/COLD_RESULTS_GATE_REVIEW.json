@@ -1,0 +1,17 @@
+{
+  "status": "PASS_STATIC_READY_FOR_OWNER_WINDOW_AUTHORIZATION",
+  "gateSHA256": "0d9439eb27b5826e0996c74691d0574c1ee4ff3195aae0acfccb7689324bb796",
+  "findings": [],
+  "scope": [
+    "Same image8d9/code6748100, exact Account/Trip/Batch/Task/three Source pins/raw/custody.",
+    "Only finite existing-reader duration; no recoveryCLI/republish/CAS/Provider/CP14/admin/newobjects/SQLschemaACLGRANT.",
+    "No new allowance: Operator9 of16 remaining and Native16 of136 remaining; reserve before each request and keep historicalUNKNOWN/no refunds.",
+    "HOST startup claim, authorized-network watchdog preflight before role activation, early explicit close and independent verification.",
+    "Cold Native action must be recover/read-only GET only, never explicitStart/paidPOST."
+  ],
+  "supplementalClosureReceipt": {
+    "sha256": "9e2458263a319bced41c1a91b2006d4ab14b7cc21ae0314f2ba94e39da23103c",
+    "observed": "Same watchdog recover_only returns CLOSED_VERIFIED, sqlWriteDispositionREAD_ONLY, sqlClosed/runtimeClosed true. Earlier automatic transport failure remains immutable."
+  },
+  "limitations": "Static Gate and named public receipt inspection only; no Reviewer DEV/GUI/network or business reads. Review is not authorization or cold Results PASS."
+}

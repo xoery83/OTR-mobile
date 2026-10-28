@@ -2,6 +2,8 @@ import {
   acceptedBoundaryAnchor,
   instantMicroseconds,
   localCalendarDate,
+  dayViewContext,
+  type DayViewContext,
   validateCalendarDate,
   type DayEvent,
   type DayProjection,
@@ -107,13 +109,9 @@ export function boundaryZone(projection: Pick<DayProjection, "events">) {
     return null;
   }
 }
-export function viewContext(date: string, zone: string) {
+export function viewContext(date: string, context: string | DayViewContext) {
   validateCalendarDate(date);
-  // An explicit named query zone is mandatory; an offset or empty value is not a view context.
-  if (!zone.trim() || zone !== zone.trim() || /^[+-]/.test(zone))
-    throw new Error("DAY_ZONE_INVALID");
-  localCalendarDate("2000-01-01T00:00:00Z", zone);
-  return { date, zone };
+  return { date, ...dayViewContext(context) };
 }
 // Explicit presentation choices only: an authored named zone is not a Trip-time authority.
 export function explicitBoundaryZones(projection: Pick<DayProjection, "events">) {

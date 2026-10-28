@@ -1,0 +1,10 @@
+{
+  "rollbackApp": "/private/tmp/otr-local-dictation-host-20261021/derived-dictation/Build/Products/Debug-iphonesimulator/OTRMobile.app",
+  "installedFourArtifactsEqual": {
+    "Info.plist": true,
+    "OTRMobile": true,
+    "OTRMobile.debug.dylib": true,
+    "__preview.dylib": true
+  },
+  "appDataCopied": false
+}

@@ -37,7 +37,7 @@ describe("SQLite migrations", () => {
     await runMigrations(database);
     await runMigrations(database);
 
-    expect(executedSql).toHaveLength(migrations.length + 2);
+    expect(executedSql).toHaveLength(migrations.length + 4);
     expect(appliedMigrationIds).toEqual(
       new Set(migrations.map((migration) => migration.id)),
     );
@@ -58,55 +58,28 @@ describe("SQLite migrations", () => {
       "trip_canonical_event_read_only_mirror",
     );
     expect(migrations.map(({ id }) => id)).toEqual(
-      Array.from({ length: 62 }, (_, i) => i + 1),
+      Array.from({ length: 74 }, (_, i) => i + 1),
     );
     await runMigrations(database);
     await runMigrations(database);
+    const upgradeSql = migrations
+      .filter(({ id }) => id >= 45)
+      .flatMap((m) =>
+        m.id === 73
+          ? [
+              expect.stringContaining("PRAGMA foreign_keys=OFF"),
+              m.sql,
+              expect.stringContaining("PRAGMA foreign_keys=OFF"),
+            ]
+          : [m.sql],
+      );
     expect(executedSql).toEqual([
       expect.stringContaining("schema_migrations"),
-      participation.sql,
-      migrations.find(({ id }) => id === 46)!.sql,
-      migrations.find(({ id }) => id === 47)!.sql,
-      migrations.find(({ id }) => id === 48)!.sql,
-      migrations.find(({ id }) => id === 49)!.sql,
-      migrations.find(({ id }) => id === 50)!.sql,
-      migrations.find(({ id }) => id === 51)!.sql,
-      migrations.find(({ id }) => id === 52)!.sql,
-      migrations.find(({ id }) => id === 53)!.sql,
-      migrations.find(({ id }) => id === 54)!.sql,
-      migrations.find(({ id }) => id === 55)!.sql,
-      migrations.find(({ id }) => id === 56)!.sql,
-      migrations.find(({ id }) => id === 57)!.sql,
-      migrations.find(({ id }) => id === 58)!.sql,
-      migrations.find(({ id }) => id === 59)!.sql,
-      migrations.find(({ id }) => id === 60)!.sql,
-      migrations.find(({ id }) => id === 61)!.sql,
-      migrations.find(({ id }) => id === 62)!.sql,
+      ...upgradeSql,
       expect.stringContaining("schema_migrations"),
     ]);
     expect(appliedMigrationIds).toEqual(
-      new Set([
-        ...prior,
-        44,
-        45,
-        46,
-        47,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-        55,
-        56,
-        57,
-        58,
-        59,
-        60,
-        61,
-        62,
-      ]),
+      new Set(Array.from({ length: 74 }, (_, i) => i + 1)),
     );
   });
 
@@ -188,24 +161,34 @@ describe("SQLite migrations", () => {
         )
         .all()
         .map((row) => String(row.name));
+      const oldColumns = new Map(
+        oldTables.map((table) => [
+          table,
+          sqlite
+            .prepare(`PRAGMA table_info("${table}")`)
+            .all()
+            .map((column) => String(column.name)),
+        ]),
+      );
+      // Later reviewed migrations add columns/indexes; every pre-existing field value must survive.
       const existing = () =>
         JSON.stringify(
           oldTables.map((table) => [
             table,
-            sqlite.prepare(`SELECT * FROM "${table}"`).all(),
             sqlite
               .prepare(
-                "SELECT type,name,sql FROM sqlite_master WHERE tbl_name=? AND name NOT LIKE 'intelligence_%' ORDER BY type,name",
+                `SELECT ${oldColumns
+                  .get(table)!
+                  .map((name) => `"${name}"`)
+                  .join(",")} FROM "${table}"`,
               )
-              .all(table),
+              .all(),
           ]),
         );
       const priorData = existing();
       sqlite.exec("PRAGMA foreign_keys=ON");
       await runMigrations(adapter());
-      expect(applied).toEqual([
-        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62,
-      ]);
+      expect(applied).toEqual(Array.from({ length: 31 }, (_, i) => 44 + i));
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
       expect(() =>
@@ -223,18 +206,16 @@ describe("SQLite migrations", () => {
         .run("account", "trip", "person", "operation", "receipt", "digest", "{}");
       const before = sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
       expect(before.at(-1)).toMatchObject({
-        id: 62,
-        name: "trip_local_photos",
+        id: 74,
+        name: "trip_person_cloud_create_receipts",
       });
       expect(before.map((row) => row.id)).toEqual(
-        Array.from({ length: 62 }, (_, i) => i + 1),
+        Array.from({ length: 74 }, (_, i) => i + 1),
       );
       sqlite.close();
       sqlite = new DatabaseSync(path);
       await runMigrations(adapter());
-      expect(applied).toEqual([
-        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62,
-      ]);
+      expect(applied).toEqual(Array.from({ length: 31 }, (_, i) => 44 + i));
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
       expect(sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all()).toEqual(
@@ -259,7 +240,7 @@ describe("SQLite migrations", () => {
 
     await runMigrations(database);
 
-    expect(executedSql).toHaveLength(migrations.length - 2);
+    expect(executedSql).toHaveLength(migrations.length);
     expect(executedSql[1]).toContain("CREATE TABLE IF NOT EXISTS itinerary_items");
     expect(appliedMigrationIds).toContain(4);
     expect(appliedMigrationIds).toContain(6);
@@ -287,7 +268,7 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(62);
+    expect(latest.id).toBe(74);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );
@@ -772,11 +753,17 @@ it.each([0, 55])(
           .run(m.id, m.name, "synthetic");
       }
       await runMigrations(adapter());
-      expect(applied.slice(-7)).toEqual([56, 57, 58, 59, 60, 61, 62]);
-      if (priorVersion === 55) expect(applied).toEqual([56, 57, 58, 59, 60, 61, 62]);
+      expect(applied.filter((id) => id >= 56 && id <= 62)).toEqual([
+        56, 57, 58, 59, 60, 61, 62,
+      ]);
+      expect(applied.at(-1)).toBe(74);
+      if (priorVersion === 55)
+        expect(applied).toEqual(Array.from({ length: 19 }, (_, i) => 56 + i));
       const state = () => ({
         versions: sql
-          .prepare("SELECT id,name FROM schema_migrations WHERE id>=56 ORDER BY id")
+          .prepare(
+            "SELECT id,name FROM schema_migrations WHERE id>=56 AND id<=62 ORDER BY id",
+          )
           .all(),
         objects: sql
           .prepare(

@@ -1,0 +1,51 @@
+{
+  "version": "otr.native.universal-pin-proposal/1",
+  "qualification": "LOCAL_C3_AND_EXISTING_COMMANDS_ONLY_NOT_SOURCE_PROOF",
+  "accountId": "1f65e932-b6d8-4ea4-9cc9-fe9da331b424",
+  "tripId": "9a5b7ef6-db4c-4b33-be42-406cdfd292ab",
+  "batchId": "3665f191-1605-4365-92ca-30403d90b191",
+  "jobId": "e8085c43-fb11-46e6-aaed-7d14c3c806be",
+  "createdAt": "2026-10-24T08:37:09.370Z",
+  "submissionSha256": "37ba0e4c8b235d14a1729dc041b41f51252576b0c97692a5e8733197e774e4be",
+  "inputs": [
+    {
+      "inputId": "9c3d39c3-1ac7-4e2c-b554-2c568c0dd46b",
+      "ordinal": 0,
+      "kind": "FILE",
+      "acquisitionSource": "files",
+      "originalFilename": "universal-mixed-bookings-utf8.txt",
+      "byteCount": 1598,
+      "sha256": "5db86cb62b681cc69eeee224f4af940cf10de5df6daa165102b3a37454a35592",
+      "bindingId": null,
+      "sourceState": "SOURCE_OPERATION_NOT_PREPARED",
+      "queueOperationId": null,
+      "sourceCommandPin": null
+    },
+    {
+      "inputId": "24dd338b-9568-4136-9b45-143540a794ac",
+      "ordinal": 1,
+      "kind": "FILE",
+      "acquisitionSource": "files",
+      "originalFilename": "lodging-supplement.txt",
+      "byteCount": 433,
+      "sha256": "6a1ee8c1d59b603926523315563174f49cefc066ea96a45c8e028fc21e0a6af2",
+      "bindingId": null,
+      "sourceState": "SOURCE_OPERATION_NOT_PREPARED",
+      "queueOperationId": null,
+      "sourceCommandPin": null
+    },
+    {
+      "inputId": "47a8cd86-c74a-43de-89eb-6bda99f32885",
+      "ordinal": 2,
+      "kind": "TEXT",
+      "acquisitionSource": "magic_input",
+      "originalFilename": null,
+      "byteCount": 172,
+      "sha256": "e2fc3cf6fae139733cd7cf00fb1b058385870e33c6612b21b9ab1762bfe0e071",
+      "bindingId": null,
+      "sourceState": "SOURCE_OPERATION_NOT_PREPARED",
+      "queueOperationId": null,
+      "sourceCommandPin": null
+    }
+  ]
+}

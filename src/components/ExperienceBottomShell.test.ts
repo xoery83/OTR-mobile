@@ -1,15 +1,38 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
+import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
-import { lightPalette } from "@/ui/palette";
+import { lightPalette, darkPalette, type UiColors } from "@/ui/palette";
 import { ExperienceBottomShell } from "./ExperienceBottomShell";
-vi.mock("expo-modules-core", () => ({ requireOptionalNativeModule: () => null }));
+vi.mock("expo-modules-core", () => ({
+  requireOptionalNativeModule: () => state.glassCapability,
+}));
 
 const state = vi.hoisted(() => ({
-  view: null as null | { tripId: string; date: string; zone: string; generation: number },
+  dark: false,
+  glassCapability: null as null | {
+    isLiquidGlassAvailable: boolean;
+    isGlassEffectAPIAvailable: boolean;
+  },
+  dayShellChrome: null as null | {
+    tripId: string;
+    generation: number;
+    owner: symbol;
+    navigationVisible: boolean;
+  },
+  view: null as null | {
+    tripId: string;
+    date: string;
+    zone: string | null;
+    viewMode?: "FLOATING";
+    generation: number;
+  },
   navigate: vi.fn(),
   setParams: vi.fn(),
   fontScale: 1,
   reduced: false,
+  startTripTarget: null as symbol | null,
+  refCalls: 0,
+  startTripRef: { current: null as symbol | null },
   resolveReduced: null as null | ((value: boolean) => void),
   reducedListener: null as null | ((value: boolean) => void),
   effectCleanup: null as null | (() => void),
@@ -37,16 +60,25 @@ vi.mock("@/features/updates/useUpdatesSignal", () => ({
   useUpdatesSignal: () => state.signal,
 }));
 vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
+vi.mock("./StartTripSheet", () => ({ StartTripSheet: "StartTripSheet" }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: () => state.targetRef,
+  useRef: () => (state.refCalls++ % 2 === 0 ? state.targetRef : state.startTripRef),
   useContext: () => state.reportHeight,
-  useState: () => [
-    state.reduced,
-    (value: boolean) => {
-      state.reduced = value;
-    },
-  ],
+  useState: (initial: unknown) =>
+    initial === null
+      ? [
+          state.startTripTarget,
+          (value: symbol | null) => {
+            state.startTripTarget = value;
+          },
+        ]
+      : [
+          state.reduced,
+          (value: boolean) => {
+            state.reduced = value;
+          },
+        ],
   useEffect: (effect: () => () => void) => {
     state.effectCleanup?.();
     state.effectCleanup = effect();
@@ -110,6 +142,7 @@ vi.mock("@/features/day-feed/TripViewContext", () => ({
     workingTrip: state.workingTrip,
     resume: state.resume,
     quickActions: state.quickActions,
+    dayShellChrome: state.dayShellChrome,
   }),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
@@ -119,9 +152,9 @@ vi.mock("@/ui/locale", () => ({
   formatUiNumber: (value: number) => String(value),
 }));
 vi.mock("@/ui/theme", () => ({
-  useUiTheme: () => lightPalette,
-  useThemedStyles: (create: (colors: typeof lightPalette) => unknown) =>
-    create(lightPalette),
+  useUiTheme: () => (state.dark ? darkPalette : lightPalette),
+  useThemedStyles: (create: (colors: UiColors) => unknown) =>
+    create(state.dark ? darkPalette : lightPalette),
 }));
 
 type ShellElement = ReactElement<{
@@ -141,8 +174,32 @@ function pressables(node: ReactNode): ShellElement[] {
   ];
 }
 
+type StartSheetElement = ReactElement<{
+  visible: boolean;
+  onClose(): void;
+  onImport(): void;
+  onCreate(): void;
+}>;
+function startSheet(node: ReactNode): StartSheetElement {
+  const queue = Children.toArray(node);
+  while (queue.length) {
+    const current = queue.shift();
+    if (!isValidElement(current)) continue;
+    const element = current as ShellElement;
+    if (element.type === "StartTripSheet") return element as unknown as StartSheetElement;
+    queue.push(...Children.toArray(element.props.children));
+  }
+  throw new Error("Start Trip Sheet is absent");
+}
+
 beforeEach(() => {
+  state.refCalls = 0;
+  state.startTripTarget = null;
+  state.startTripRef.current = null;
+  state.glassCapability = null;
+  state.dark = false;
   state.view = null;
+  state.dayShellChrome = null;
   state.quickActions = null;
   state.navigate.mockReset();
   state.setParams.mockReset();
@@ -181,15 +238,17 @@ it("My Trips keeps only the real Start Trip action without redundant left naviga
   ]);
   expect(buttons).toHaveLength(1);
   buttons[0].props.onPress?.();
-  const choices = state.alerts.mock.calls[0][2];
-  expect(choices.map((choice: { text: string }) => choice.text)).toEqual([
-    "actionIsland.importPlans",
-    "actionIsland.createManually",
-    "common.cancel",
-  ]);
-  choices[0].onPress();
+  let sheet = startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(sheet.props.visible).toBe(true);
+  sheet.props.onImport();
   expect(state.navigate).toHaveBeenCalledWith("/capture");
-  choices[1].onPress();
+  sheet.props.onCreate();
+  expect(state.setParams).not.toHaveBeenCalled();
+  const closed = ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  expect(startSheet(closed).props.visible).toBe(false);
+  pressables(closed)[0].props.onPress?.();
+  sheet = startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  sheet.props.onCreate();
   expect(state.setParams).toHaveBeenCalledWith({
     tripId: "",
     date: "",
@@ -199,7 +258,7 @@ it("My Trips keeps only the real Start Trip action without redundant left naviga
   expect(ExperienceBottomShell({ visible: false, pathname: "/trip" })).toBeNull();
 });
 
-it("opens the actual Trip list from another tab and only exposes a selected Day", () => {
+it("keeps Home, Day and Ledger available for the generation-scoped accepted Day", () => {
   state.view = {
     tripId: "accepted-trip",
     date: "2026-10-13",
@@ -210,25 +269,67 @@ it("opens the actual Trip list from another tab and only exposes a selected Day"
     ExperienceBottomShell({ visible: true, pathname: "/expenses" }),
   );
   expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual([
-    "dayFeed.myTrips",
+    "shell.home",
     "shell.day",
-  ]);
-  expect(buttons.map((button) => button.props.accessibilityState)).toEqual([
-    { selected: false },
-    { selected: false },
+    "navigation.ledger",
+    "updates.title",
   ]);
   buttons[0].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith({
-    pathname: "/trip",
-    params: { view: "trips" },
+  expect(state.navigate).toHaveBeenCalledWith("/trip");
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: { tripId: "accepted-trip", view: "home" },
   });
   buttons[1].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith("/");
-  expect(
-    pressables(ExperienceBottomShell({ visible: true, pathname: "/" }))[1].props
-      .accessibilityState,
-  ).toEqual({ selected: true });
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: {
+      tripId: "accepted-trip",
+      view: "day",
+      date: "2026-10-13",
+      zone: "UTC",
+      viewMode: "NAMED_ZONE",
+    },
+  });
 });
+
+it.each(["/trip-home", "/trip", "/expenses", "/updates"])(
+  "resumes floating Day through the native Trip host from %s, replacing stale Home params",
+  (pathname) => {
+    state.params = {
+      tripId: "a",
+      view: "home",
+      date: "2027-03-01",
+      zone: "Asia/Tokyo",
+      viewMode: "NAMED_ZONE",
+    };
+    state.workingTrip = { tripId: "a", generation: 1 };
+    state.view = {
+      tripId: "a",
+      date: "2026-10-31",
+      zone: null,
+      viewMode: "FLOATING",
+      generation: 1,
+    };
+    const day = pressables(ExperienceBottomShell({ visible: true, pathname })).find(
+      (button) => button.props.accessibilityLabel === "shell.day",
+    )!;
+    day.props.onPress?.();
+    expect(state.resume).toHaveBeenCalledOnce();
+    expect(state.navigate).toHaveBeenCalledExactlyOnceWith({
+      pathname: "/trip-home",
+      params: {
+        tripId: "a",
+        view: "day",
+        date: "2026-10-31",
+        zone: "",
+        viewMode: "FLOATING",
+      },
+    });
+    expect(state.setParams).not.toHaveBeenCalled();
+    expect(state.quickActions).toBeNull();
+  },
+);
 
 it("uses the explicit working Trip for Home and Ledger while Day resumes its own bookmark", () => {
   state.workingTrip = { tripId: "a", generation: 1 };
@@ -243,14 +344,18 @@ it("uses the explicit working Trip for Home and Ledger while Day resumes its own
     "updates.title",
   ]);
   buttons[0].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith({
-    pathname: "/trip",
+  expect(state.navigate).toHaveBeenCalledWith("/trip");
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/trip-home",
     params: { tripId: "a", view: "home" },
   });
   buttons[1].props.onPress?.();
   expect(state.resume).toHaveBeenCalledOnce();
   buttons[2].props.onPress?.();
-  expect(state.navigate).toHaveBeenCalledWith("/expenses");
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/expenses",
+    params: { journeyId: "a" },
+  });
 });
 it("does not offer Start or navigation over the active Create form", () => {
   state.params = { view: "create" };
@@ -508,21 +613,261 @@ it("hidden and Create routes release the previous overlay height", () => {
   expect(state.reportHeight).toHaveBeenCalledTimes(2);
 });
 
-it("iOS Start Trip uses the system Action Sheet and ignores a stale account callback", () => {
-  state.platform = "ios";
-  pressables(
-    ExperienceBottomShell({ visible: true, pathname: "/trip" }),
-  )[0].props.onPress?.();
-  expect(state.alerts).not.toHaveBeenCalled();
-  const [options, invoke] = state.sheet.mock.calls[0];
-  expect(options.cancelButtonIndex).toBe(2);
-  expect(options.options).toEqual([
-    "actionIsland.importPlans",
-    "actionIsland.createManually",
-    "common.cancel",
-  ]);
-  state.navigate.mockClear();
-  state.generation++;
-  invoke(0);
+it("Start Trip cancellation and a stale account cannot execute a sheet action", () => {
+  const open = () => {
+    pressables(
+      ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+    )[0].props.onPress?.();
+    return startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  };
+  const cancelled = open();
+  cancelled.props.onClose();
+  cancelled.props.onImport();
   expect(state.navigate).not.toHaveBeenCalled();
+  const stale = open();
+  state.generation++;
+  stale.props.onImport();
+  stale.props.onCreate();
+  expect(state.navigate).not.toHaveBeenCalled();
+  expect(state.setParams).not.toHaveBeenCalled();
+  expect(state.alerts).not.toHaveBeenCalled();
+  expect(state.sheet).not.toHaveBeenCalled();
 });
+
+it("a later module target or hidden Shell invalidates the open Start Trip callbacks", () => {
+  const open = () => {
+    pressables(
+      ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+    )[0].props.onPress?.();
+    return startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  };
+  const stale = open();
+  ExperienceBottomShell({ visible: true, pathname: "/search" });
+  stale.props.onImport();
+  expect(state.navigate).not.toHaveBeenCalled();
+  const hidden = open();
+  ExperienceBottomShell({ visible: false, pathname: "/trip" });
+  hidden.props.onCreate();
+  expect(state.setParams).not.toHaveBeenCalled();
+  expect(
+    startSheet(ExperienceBottomShell({ visible: true, pathname: "/trip" })).props.visible,
+  ).toBe(false);
+});
+
+it("an authorized empty Trip keeps Home Day Ledger without accepted data or a bookmark", () => {
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.params = { tripId: "a", view: "home" };
+  const buttons = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).toEqual([
+    "shell.home",
+    "shell.day",
+    "navigation.ledger",
+    "updates.title",
+  ]);
+  buttons[1].props.onPress?.();
+  expect(state.navigate).toHaveBeenCalledWith({
+    pathname: "/trip-home",
+    params: { tripId: "a", view: "day" },
+  });
+});
+it("raw URL parameters do not manufacture a selected Trip authority", () => {
+  state.params = { tripId: "forged", view: "home" };
+  const buttons = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain("shell.day");
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain(
+    "navigation.ledger",
+  );
+});
+
+it("a direct Trip link cannot reuse another Trip's navigation scope", () => {
+  state.workingTrip = { tripId: "b", generation: 1 };
+  state.params = { tripId: "a", view: "home" };
+  const buttons = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain(
+    "navigation.ledger",
+  );
+  expect(buttons.map((b) => b.props.accessibilityLabel)).not.toContain("shell.day");
+});
+
+it.each([0, 1])(
+  "Ledger uses the authorized current Trip rather than old working scope generation %s",
+  (generation) => {
+    state.workingTrip = { tripId: "old", generation };
+    state.params = { tripId: "current", view: "home" };
+    state.quickActions = { tripId: "current", generation: 1, chooseDay: vi.fn() };
+    const ledger = pressables(
+      ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
+    ).find((button) => button.props.accessibilityLabel === "navigation.ledger")!;
+    expect(ledger.props.onPress).toBeTypeOf("function");
+    ledger.props.onPress!();
+    expect(state.navigate).toHaveBeenCalledWith({
+      pathname: "/expenses",
+      params: { journeyId: "current" },
+    });
+    state.navigate.mockClear();
+    state.generation = 2;
+    ledger.props.onPress!();
+    expect(state.navigate).not.toHaveBeenCalled();
+  },
+);
+
+it("Day chrome hides both navigation and quick add without changing layout", () => {
+  state.view = { tripId: "a", date: "2026-10-16", zone: "", generation: 1 };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.params = { view: "day", tripId: "a" };
+  state.dayShellChrome = {
+    tripId: "a",
+    generation: 1,
+    owner: Symbol(),
+    navigationVisible: false,
+  };
+  const tree = ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  const hidden: ReactElement<any>[] = [];
+  function walk(node: ReactNode) {
+    if (!isValidElement(node)) return;
+    const element = node as ReactElement<any>;
+    if (element.props.accessibilityElementsHidden) hidden.push(element);
+    Children.toArray(element.props.children).forEach(walk);
+  }
+  walk(tree);
+  expect(hidden).toHaveLength(1);
+  expect(hidden[0].props.pointerEvents).toBe("none");
+  expect(pressables(hidden[0]).map((x) => x.props.accessibilityLabel)).toContain(
+    "shell.day",
+  );
+  expect(hidden[0].props.importantForAccessibility).toBe("no-hide-descendants");
+  expect(JSON.stringify(hidden[0])).toContain("TripQuickAddMenu");
+  expect(isValidElement(tree)).toBe(true);
+  state.dayShellChrome = { ...state.dayShellChrome!, generation: 0 };
+  hidden.length = 0;
+  walk(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(hidden).toHaveLength(0);
+  state.dayShellChrome = { ...state.dayShellChrome!, tripId: "other" };
+  hidden.length = 0;
+  walk(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(hidden).toHaveLength(0);
+});
+
+it("selects clear native glass for each island branch and retains reduced-transparency surfaces", async () => {
+  const require = createRequire(import.meta.url);
+  const path = require.resolve("expo-glass-effect");
+  const previous = require.cache[path];
+  // The optional loader intentionally uses CJS; replace only that native boundary.
+  require.cache[path] = { exports: { GlassView: "NativeGlassView" } } as NodeModule;
+  state.glassCapability = {
+    isLiquidGlassAvailable: true,
+    isGlassEffectAPIAvailable: true,
+  };
+  try {
+    vi.resetModules();
+    const { ExperienceBottomShell: NativeShell } =
+      await import("./ExperienceBottomShell");
+    const materials = (node: ReactNode): ShellElement[] => {
+      if (!isValidElement(node)) return [];
+      const element = node as ShellElement;
+      return [
+        ...(element.type === "NativeGlassView" ? [element] : []),
+        ...Children.toArray(element.props.children).flatMap(materials),
+      ];
+    };
+    state.workingTrip = { tripId: "a", generation: 1 };
+    for (const [pathname, params, count] of [
+      ["/trip-home", { tripId: "a", view: "home" }, 2],
+      ["/expenses", { journeyId: "a" }, 2],
+      ["/trip", { view: "trips" }, 1],
+    ] as const) {
+      state.params = params;
+      const nodes = materials(NativeShell({ visible: true, pathname }));
+      expect(nodes).toHaveLength(count);
+      for (const node of nodes) {
+        expect(node.props).toMatchObject({
+          glassEffectStyle: "clear",
+          isInteractive: true,
+          tintColor: lightPalette.floatingSurface,
+        });
+      }
+    }
+    state.reduced = true;
+    const reduced = materials(NativeShell({ visible: true, pathname: "/trip" }));
+    expect(reduced[0].props.style).toEqual(
+      expect.arrayContaining([{ backgroundColor: lightPalette.surface }]),
+    );
+    expect(reduced[0].props).toMatchObject({ tintColor: lightPalette.surface });
+    state.dark = true;
+    const dark = materials(NativeShell({ visible: true, pathname: "/trip" }));
+    expect(dark[0].props).toMatchObject({ tintColor: darkPalette.surface });
+    expect(dark[0].props.style).toEqual(
+      expect.arrayContaining([{ backgroundColor: darkPalette.surface }]),
+    );
+  } finally {
+    if (previous) require.cache[path] = previous;
+    else delete require.cache[path];
+    state.glassCapability = null;
+  }
+});
+
+it.each([
+  { isLiquidGlassAvailable: false, isGlassEffectAPIAvailable: true },
+  { isLiquidGlassAvailable: true, isGlassEffectAPIAvailable: false },
+])(
+  "keeps the existing surface fallback when either native capability is unavailable",
+  async (capability) => {
+    state.glassCapability = capability;
+    vi.resetModules();
+    const { ExperienceBottomShell: FallbackShell } =
+      await import("./ExperienceBottomShell");
+    state.params = { view: "trips" };
+    const tree = FallbackShell({ visible: true, pathname: "/trip" });
+    expect(pressables(tree).map((node) => node.props.accessibilityLabel)).toEqual([
+      "actionIsland.startTrip",
+    ]);
+    const nodes: ShellElement[] = [];
+    const visit = (node: ReactNode) => {
+      if (!isValidElement(node)) return;
+      const element = node as ShellElement;
+      if (
+        element.props.style &&
+        Array.isArray(element.props.style) &&
+        element.props.style.some(
+          (style: any) => style?.backgroundColor === lightPalette.surface,
+        )
+      )
+        nodes.push(element);
+      Children.toArray(element.props.children).forEach(visit);
+    };
+    visit(tree);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].type).toBe("View");
+  },
+);
+
+it.each([false, true])(
+  "keeps canonical label colors with a glyph halo and no island fill (dark=%s)",
+  (dark) => {
+    state.dark = dark;
+    state.workingTrip = { tripId: "a", generation: 1 };
+    state.params = { tripId: "a", view: "home" };
+    const palette = dark ? darkPalette : lightPalette;
+    const labels: any[] = [];
+    const visit = (node: ReactNode) => {
+      if (!isValidElement(node)) return;
+      const element = node as ReactElement<any>;
+      for (const style of Array.isArray(element.props.style) ? element.props.style : [])
+        if (style?.textShadowRadius === 1) labels.push(style);
+      Children.toArray(element.props.children).forEach(visit);
+    };
+    visit(ExperienceBottomShell({ visible: true, pathname: "/trip-home" }));
+    expect(labels.length).toBeGreaterThan(0);
+    for (const style of labels) {
+      expect(style.color).toBe(palette.textSecondary);
+      expect(style.textShadowColor).toBe(palette.background);
+      expect(style.backgroundColor).toBeUndefined();
+    }
+  },
+);

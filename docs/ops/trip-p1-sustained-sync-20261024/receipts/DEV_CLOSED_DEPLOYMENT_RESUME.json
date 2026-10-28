@@ -1,0 +1,70 @@
+{
+  "phase": "TRIP_P1_SUSTAINED_CLOSED_DEPLOY",
+  "phaseCExecuted": false,
+  "diagnosticsCapturedBeforeRollback": true,
+  "healthDeadlineSeconds": 40,
+  "httpHealth": {
+    "status": "ok",
+    "environment": "development"
+  },
+  "bundleSHA256": "a221ab978039fad46f7eb69914153692228c467ee2cd559280da1463b3ee02d9",
+  "secondaryBundleSHA256": "7c304662e9864e0e41488bcd0c510d5740f9eba1753f5368cf00b3ce45b93fff",
+  "protectedRoutes": {
+    "/v2/trips/11111111-1111-4111-8111-111111111111/metadata": 401,
+    "/v2/trip-metadata-operations/11111111-1111-4111-8111-111111111111": 401,
+    "/v2/trip-create-operations/11111111-1111-4111-8111-111111111111": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/source-import-catalogs": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/ledger/bootstrap": 401,
+    "/v2/trips/11111111-1111-4111-8111-111111111111/person-create-operations/11111111-1111-4111-8111-111111111111": 401
+  },
+  "candidate": {
+    "image": "sha256:6b11b6ba350cdf0cf72a9776c4420f129cc51bcab1a74a82456994588738cc95",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Error": "",
+      "StartedAt": "2026-10-24T02:55:13.810622786Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "health": {
+      "status": "healthy",
+      "failingStreak": 0,
+      "log": [
+        {
+          "Start": "2026-10-24T02:55:18.910445259Z",
+          "End": "2026-10-24T02:55:19.048934675Z",
+          "ExitCode": 0,
+          "Output": ""
+        }
+      ]
+    },
+    "logs": "CAPTURE_RUNTIME_CLOSED\n{\"level\":\"info\",\"event\":\"listening\",\"port\":8787,\"environment\":\"development\"}\n{\"level\":\"info\",\"event\":\"historical_rate_scan\",\"sequence\":1,\"durationMs\":2626,\"usefulWork\":false,\"claimedRateDemands\":0,\"personalPaymentFxWork\":0,\"autoReferenceDemands\":0,\"autoReferenceWork\":0,\"nextIntervalMs\":30000,\"failureCount\":0,\"failureClass\":null,\"wakeups\":0,\"coalescedWakeups\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"49310c45-cf0e-4900-8848-492bf3d032b5\",\"route\":\"health\",\"status\":200,\"durationMs\":2}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"98471602-7a3a-4326-8e31-2def3267e0fe\",\"route\":\"health\",\"status\":200,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"1e69db6e-526e-4e13-a199-51b34a2e2039\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"2cf1ef24-1a9a-46a2-a5d7-989cda6d1b91\",\"route\":\"/v2/trips/:tripId/metadata\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"16e69359-ee6e-4c0f-941b-9e7fc20f6203\",\"route\":\"/v2/trips:create\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"423375d1-0483-48a7-8965-f7091d0d76a2\",\"route\":\"/v2/trips/:tripId/source-import-catalogs\",\"status\":401,\"durationMs\":0}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"147b0223-cea4-4884-9fa8-cd86827e041b\",\"route\":\"/v2/trips/:id/ledger/bootstrap\",\"status\":401,\"durationMs\":1}\n{\"level\":\"info\",\"event\":\"request\",\"requestId\":\"685fbb87-0b48-4ac3-8238-d18d5e7948d6\",\"route\":\"/v2/trips/:tripId/people/:resource\",\"status\":401,\"durationMs\":0}\n",
+    "environment": {
+      "equal": true,
+      "changedKeys": [],
+      "beforeCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterCanonicalSHA256": "cf397ec1ef52c1960f2dfc2a13dd45f4f4a43309d95a3254fe429dde05f9854f",
+      "afterKeyedHashes": {
+        "NODE_ENV": "ec76e6bc463add23fdd388b2f8cff575101783daea5bfdf1c8aced05db5df77f",
+        "NODE_VERSION": "272e3aa36569b25919159cb681c1b16d7902131f8919f8672a68393dd5aa568e",
+        "OTR_DEV_BACKEND_BIND_ADDRESS": "38f5f8b9d9f0403e4f12218a79a5e242fb7541765553d023c5999b32f1d90781",
+        "OTR_DEV_BACKEND_NETWORK_MODE": "83a41f0d3c3d8038912ae135b1d5a670a4863b043d9630e0373b6bafadecf797",
+        "OTR_DEV_BACKEND_PORT": "e5fc2af99c9eaf99bf21879bd10bd5cf0cfae2263a9e41131f8f9c0ec273b7b3",
+        "OTR_DEV_FLIGHT_ONE_SHOT": "0171d5c204df55366fb5d348066716d118944936334e8ad809e92b33e9511a76",
+        "OTR_DEV_FLIGHT_REMOTE_TRANSPORT": "0171d5c204df55366fb5d348066716d118944936334e8ad809e92b33e9511a76",
+        "OTR_DEV_SOURCE_PDF2_TRANSPORT": "7ced3cf4ecbf88968f2f2168caea5d1de2d1611e6975bd8bcea59e12882f12ea",
+        "OTR_DEV_SUPABASE_PUBLISHABLE_KEY": "2ab96bb9f1d5f9593fba378ccfbc8e8f399235ee2bb5e1c40bde1b5312005c9d",
+        "OTR_DEV_SUPABASE_SECRET_KEY": "5c84955493c56f22c7a13166dd255ae9c189923c0a9044b0078d9564ba4914c5",
+        "OTR_DEV_SUPABASE_URL": "883289369ef094840d8f13931532ecd015c247d3dfd209fea9bf533305ae2d27",
+        "PATH": "482566a47882591bd1c213d1b1d2ae7c6e68da9e1ff21a6dea83777a31757a33",
+        "YARN_VERSION": "33f86f2f82f0f702e8553e88d9039a9657954c596e086e3abd2ee5d935fd44ff"
+      }
+    }
+  },
+  "logReadExit": 0,
+  "status": "CLOSED_DEPLOY_PASS",
+  "ownerGateSHA256": "0f6c8bf72e41c17a939424cbf821770ac355b7b235ce300abbb7eb6e46058bf0",
+  "actualUTCCompletedAt": "2026-10-24T02:55:20.328605+00:00"
+}

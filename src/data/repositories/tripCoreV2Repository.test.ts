@@ -1,4 +1,4 @@
-import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
+import { subscribeLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import {
   ordinaryFixture,
   ordinaryTime,
@@ -39,6 +39,7 @@ import {
   emptyCoreGraph,
   type CoreActor,
 } from "../../domain/trip/tripCoreV2Mutation";
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
 const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
@@ -263,7 +264,19 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
       "COMPLETED",
     );
     const next = await f.repo.captureContext(trip);
+    // A valid receipt completes delivery before the accepted collection arrives.
+    expect((await f.repo.pending(next))[0].state).toBe("APPLIED");
+    const waitingForCollection = await f.repo.manualReadSnapshot(next, actor);
+    expect(waitingForCollection.predictedIds.has(item)).toBe(true);
+    expect(waitingForCollection.graph.itinerary_events).toHaveLength(1);
+    expect(waitingForCollection.operations[0].receiptSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(await f.repo.day(next, actor, "2026-12-14")).toHaveLength(1);
+    expect((await f.repo.day(next, actor, "2026-12-14"))[0].localState).toBe("PENDING");
     await f.repo.refresh(next, { collection: async () => collection(true, server) });
+    const reconciled = await f.repo.manualReadSnapshot(next, actor, true);
+    expect(reconciled.operations).toEqual([]);
+    expect(reconciled.predictedIds.size).toBe(0);
+    expect(await f.repo.day(next, actor, "2026-12-14")).toHaveLength(1);
     expect((await f.repo.item(next, actor, item))?.localState).toBe("ACCEPTED");
     expect((await f.repo.day(next, actor, "2026-12-14"))[0].localState).toBe("ACCEPTED");
   });
@@ -858,6 +871,223 @@ it("Core publication denies a queued Account transition and wrong Trip without t
   expect(a.sql.prepare("PRAGMA table_info(ttr_selections)").all()).toHaveLength(9);
   a.selection();
 });
+
+it("finite Forms batch admits P4/Rental and P6 Create while Activity details stay P6-only", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const create = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P4",
+      core: { title: "Rental" },
+      schedule: {
+        start: coreDateBoundary("2026-10-20"),
+        end: coreDateBoundary("2026-10-22"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const details = {
+    ...create,
+    operationId: randomUUID(),
+    command: "SET_RENTAL_DETAILS",
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    payload: { details: { actual_vehicle_model: "Authored model" }, places: {} },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [create, details],
+      result: async () => true,
+    })),
+  ).resolves.toBe(true);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    2,
+  );
+  const other = randomUUID();
+  const activity = {
+    ...create,
+    operationId: randomUUID(),
+    target: { kind: "ITEM", id: other },
+    baseVector: [{ kind: "ITEM", id: other, revision: null }],
+    payload: { ...create.payload, family: "P6" },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [activity],
+      result: async () => true,
+    })),
+  ).resolves.toBe(true);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    3,
+  );
+  const wrongFamilyDetails = {
+    ...details,
+    operationId: randomUUID(),
+    command: "SET_ACTIVITY_DETAILS",
+    baseVector: [{ kind: "ITEM", id, revision: 2 }],
+    payload: { details: { admission_note: "Activity instruction" }, entryPlace: null },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [wrongFamilyDetails],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    3,
+  );
+});
+it("finite Forms batch refuses Rental detail mutation on an actual P3 target", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P3",
+      core: { title: "Stay" },
+      schedule: {
+        start: coreDateBoundary("2026-10-20"),
+        end: coreDateBoundary("2026-10-22"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const graph = applyCoreCommand(emptyCoreGraph(), command, actor, stamp).graph;
+  const bundle = await collection(true, graph);
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  const invalid = {
+    ...command,
+    command: "SET_RENTAL_DETAILS",
+    operationId: randomUUID(),
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    payload: { details: {}, places: {} },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [invalid],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    0,
+  );
+});
+
+it("finite Forms batch adds P5 with transport endpoint commands but refuses them on actual P4", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const blankPlace = ordinaryPlace();
+  const service = {
+    service_key: "segment.1",
+    transport_subtype: "TRAIN",
+    attribution: "UNSPECIFIED",
+    operator_namespace: "NAME",
+    operator_issuer: "",
+    operator_value: "",
+    operator_literal: "",
+    service_number: "",
+    service_literal: "",
+    codeshare_operating_key: null,
+  };
+  const create = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P5",
+      core: { title: "Single segment" },
+      endpoints: {
+        origin: { time: coreDateBoundary("2026-10-20"), place: blankPlace },
+        destination: {
+          time: { ...coreDateBoundary("2026-10-20"), local_date: null },
+          place: blankPlace,
+        },
+      },
+      service,
+      ...coreDefaults("member"),
+    },
+  };
+  const detail = {
+    ...create,
+    operationId: randomUUID(),
+    command: "SET_TRANSPORT_DETAILS",
+    baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    payload: {
+      annotations: {
+        origin: { airport_code: null, terminal: null, platform: "2", pier: null },
+      },
+    },
+  };
+  await expect(
+    f.repo.commitManualBatch(ctx, async () => ({
+      commands: [create, detail],
+      result: async () => true,
+    })),
+  ).resolves.toBe(true);
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    2,
+  );
+  const g = fixture(),
+    gctx = await g.repo.captureContext(trip),
+    rental = randomUUID();
+  const rentalCommand = {
+    ...create,
+    operationId: randomUUID(),
+    target: { kind: "ITEM", id: rental },
+    baseVector: [{ kind: "ITEM", id: rental, revision: null }],
+    payload: {
+      family: "P4",
+      core: { title: "Rental" },
+      schedule: {
+        start: coreDateBoundary("2026-10-20"),
+        end: coreDateBoundary("2026-10-21"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const graph = applyCoreCommand(emptyCoreGraph(), rentalCommand, actor, stamp).graph,
+    bundle = await collection(true, graph);
+  await g.repo.install(await g.repo.beginRefresh(gctx, 1), bundle.manifest, bundle.pages);
+  await expect(
+    g.repo.commitManualBatch(gctx, async () => ({
+      commands: [
+        {
+          ...detail,
+          operationId: randomUUID(),
+          target: { kind: "ITEM", id: rental },
+          baseVector: [{ kind: "ITEM", id: rental, revision: 1 }],
+        },
+      ],
+      result: async () => true,
+    })),
+  ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  expect(g.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    0,
+  );
+});
+
 async function lostP1RecoveryFixture(
   reviewed = false,
   family: "P1" | "P2" | "P3" | "P5" | "P6" = "P1",
@@ -1209,3 +1439,68 @@ it.each(["MANUAL", "missingReceipt", "changedReceipt"])(
     ).toBe("DEPENDENCY_BLOCKED");
   },
 );
+
+it("manual batch wakes the existing queue only after durable commit, never for rollback or an empty replay", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-postcommit-"));
+  folders.push(folder);
+  const path = join(folder, "core.db"),
+    f = fixture(path),
+    ctx = await f.repo.captureContext(trip),
+    id = randomUUID();
+  const command = {
+    ...sparse(),
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    payload: {
+      family: "P1",
+      core: { title: "Postcommit plan" },
+      schedule: {
+        start: coreDateBoundary("2026-11-02"),
+        end: coreDateBoundary("2026-11-03"),
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  const observations: number[] = [];
+  const unsubscribe = subscribeLedgerQueueWorkAvailable(() => {
+    const reader = new DatabaseSync(path, { readOnly: true });
+    try {
+      observations.push(
+        Number(
+          reader
+            .prepare("SELECT count(*) n FROM sync_operations WHERE id=?")
+            .get(command.operationId)!.n,
+        ),
+      );
+    } finally {
+      reader.close();
+    }
+  });
+  try {
+    await expect(
+      f.repo.commitManualBatch(ctx, async () => ({
+        commands: [command],
+        result: async () => {
+          throw Error("QA_ROLLBACK");
+        },
+      })),
+    ).rejects.toThrow("QA_ROLLBACK");
+    expect(observations).toEqual([]);
+    expect(
+      f.sql.prepare("SELECT count(*) n FROM trip_core_pending_intents").get()!.n,
+    ).toBe(0);
+    await f.repo.commitManualBatch(ctx, async () => ({
+      commands: [command],
+      result: async () => true,
+    }));
+    expect(observations).toEqual([1]);
+    await f.repo.commitManualBatch(ctx, async () => ({
+      commands: [],
+      result: async () => true,
+    }));
+    expect(observations).toEqual([1]);
+  } finally {
+    unsubscribe();
+  }
+});

@@ -19,7 +19,12 @@ vi.mock("react", async (importOriginal) => ({
   useState: (initial: any) => {
     const at = state.cursor++;
     if (!(at in state.values)) state.values[at] = initial;
-    return [state.values[at], (value: any) => (state.values[at] = value)];
+    return [
+      state.values[at],
+      (value: any) =>
+        (state.values[at] =
+          typeof value === "function" ? value(state.values[at]) : value),
+    ];
   },
   useRef: () => ({ current: { scrollTo: state.scrollTo } }),
   useEffect: (fn: () => void) => state.effects.push(fn),
@@ -58,7 +63,7 @@ vi.mock("@/ui/forms", () => ({
     return createElement("button", { "aria-pressed": p.selected }, p.label);
   },
 }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create({}) }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("react-native-safe-area-context", () => ({
@@ -93,6 +98,13 @@ it("has a plain truthful zero-widget fallback without tags, pager or invented mo
   expect(state.nodes).toHaveLength(0);
   expect(state.scrollTo).not.toHaveBeenCalled();
 });
+it("renders one widget directly without a selector or a pager", () => {
+  const html = render([{ id: "only", title: "Only widget", content: "Actual content" }]);
+  expect(html).toContain("Actual content");
+  expect(html).not.toContain("Only widget");
+  expect(state.nodes.some((p) => p.pagingEnabled || p.horizontal)).toBe(false);
+  expect(state.nodes[0].style.minHeight).toBeUndefined();
+});
 it("keeps named tag selection synchronized with manual swipe and stable qualified IDs", () => {
   const pages = [
     { id: "a", title: "Approved A", content: "Content A" },
@@ -116,9 +128,50 @@ it("keeps named tag selection synchronized with manual swipe and stable qualifie
   render([...pages].reverse());
   expect(state.nodes.find((p) => p.label === "Approved A").selected).toBe(true);
   render([pages[1]]);
-  expect(state.nodes.find((p) => p.label === "Approved B").selected).toBe(true);
+  expect(state.nodes.some((p) => p.label)).toBe(false);
   render(pages);
   expect(state.nodes.find((p) => p.label === "Approved B").selected).toBe(true);
+});
+it("fits each selected page to its natural height and remeasures after width or text changes", () => {
+  const pages = [
+    { id: "rich", title: "Preparation", content: "Rich real content" },
+    { id: "short", title: "Spending", content: "One expense" },
+  ];
+  const pager = () => state.nodes.find((p) => p.pagingEnabled);
+  const page = (index: number) =>
+    state.nodes.filter((p) => p.importantForAccessibility)[index];
+  const height = () => pager().style.find((s: any) => s?.height !== undefined)?.height;
+  render(pages);
+  pager().onLayout({ nativeEvent: { layout: { width: 380 } } });
+  render(pages);
+  page(0).onLayout({ nativeEvent: { layout: { height: 610 } } });
+  page(1).onLayout({ nativeEvent: { layout: { height: 210 } } });
+  render(pages);
+  expect(height()).toBe(610);
+  expect(page(0).accessibilityElementsHidden).toBe(false);
+  expect(page(1).accessibilityElementsHidden).toBe(true);
+  state.nodes.find((p) => p.label === "Spending").onPress();
+  render(pages);
+  expect(height()).toBe(210);
+  page(1).onLayout({ nativeEvent: { layout: { height: 245 } } });
+  render(pages);
+  expect(height()).toBe(245);
+  state.window.fontScale = 2;
+  render(pages);
+  expect(height()).toBeUndefined();
+  page(1).onLayout({ nativeEvent: { layout: { height: 410 } } });
+  render(pages);
+  expect(height()).toBe(410);
+  pager().onLayout({ nativeEvent: { layout: { width: 640 } } });
+  render(pages);
+  expect(height()).toBeUndefined();
+  page(1).onLayout({ nativeEvent: { layout: { height: 300 } } });
+  render(pages);
+  expect(height()).toBe(300);
+  pager().onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: 0 } } });
+  render(pages);
+  expect(state.nodes.find((p) => p.label === "Preparation").selected).toBe(true);
+  expect(height()).toBeUndefined();
 });
 it("renders truthful hero metadata and only actual supplied module/edit capabilities", () => {
   const html = renderToStaticMarkup(
@@ -166,7 +219,7 @@ it("keeps one full-bleed identity with untruncated metadata under enlargement an
   }
 });
 
-it("uses the supplied Editor for the whole Hero identity and never invents an editing capability", () => {
+it("uses the supplied Editor for Hero text identity and never invents an editing capability", () => {
   const edit = vi.fn();
   renderToStaticMarkup(
     createElement(TripHomeFrame, {
@@ -184,4 +237,61 @@ it("uses the supplied Editor for the whole Hero identity and never invents an ed
   expect(target.disabled).toBe(false);
   target.onPress();
   expect(edit).toHaveBeenCalledOnce();
+});
+
+it("separates image and metadata actions into sibling hit regions", () => {
+  const edit = vi.fn(),
+    chooseCover = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Trip",
+      metadata: ["Auckland"],
+      cover: 1,
+      onEdit: edit,
+      canChooseCover: true,
+      onChooseCover: chooseCover,
+    }),
+  );
+  const image = state.nodes.find((n) => n.accessibilityLabel === "myTrips.chooseCover");
+  const identity = state.nodes.find(
+    (n) => n.accessibilityLabel === "tripHome.edit: Trip, Auckland",
+  );
+  expect(image.disabled).toBe(false);
+  expect(image.children).toBeUndefined();
+  expect(html).not.toMatch(/<button[^>]*>[^<]*<button/);
+  image.onPress();
+  expect(chooseCover).toHaveBeenCalledOnce();
+  expect(edit).not.toHaveBeenCalled();
+  identity.onPress();
+  expect(edit).toHaveBeenCalledOnce();
+  expect(chooseCover).toHaveBeenCalledOnce();
+});
+it("allows independent cover capability without inventing metadata authority", () => {
+  const chooseCover = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Member Trip",
+      metadata: [],
+      cover: 1,
+      canChooseCover: true,
+      onChooseCover: chooseCover,
+    }),
+  );
+  const image = state.nodes.find((n) => n.accessibilityLabel === "myTrips.chooseCover");
+  image.onPress();
+  expect(chooseCover).toHaveBeenCalledOnce();
+  expect(html).not.toContain("tripHome.edit");
+});
+it("does not enable cover merely because a callback was provided", () => {
+  renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Trip",
+      metadata: [],
+      cover: 1,
+      onChooseCover: vi.fn(),
+    }),
+  );
+  expect(state.nodes.some((n) => n.accessibilityLabel === "myTrips.chooseCover")).toBe(
+    false,
+  );
 });

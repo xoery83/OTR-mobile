@@ -133,6 +133,7 @@ import {
   expenseSharingSummary,
   remainingExpenseAttachmentCapacity,
   initialExpenseDraftDate,
+  initialExpenseDraftTitle,
 } from "./expenseEntryPresentation";
 import { ExpenseSettlementTag } from "./ExpenseSettlementTag";
 
@@ -225,6 +226,7 @@ export function LedgerExpenseEntryScreen() {
     receiptId?: string;
     focusDate?: string;
     suggestedDate?: string;
+    suggestedTitle?: string;
     correctionRootId?: string;
     correctionReason?: string;
   }>();
@@ -335,6 +337,7 @@ export function LedgerExpenseEntryScreen() {
       Boolean(params.correctionRootId),
       params.suggestedDate,
       params.mode === undefined || params.mode === "manual",
+      params.suggestedTitle,
     )
       .then(async (value) => {
         if (!active) return;
@@ -445,6 +448,7 @@ export function LedgerExpenseEntryScreen() {
     params.receiptId,
     params.focusDate,
     params.suggestedDate,
+    params.suggestedTitle,
     params.mode,
     params.correctionRootId,
     discardPendingScan,
@@ -1170,6 +1174,7 @@ export function LedgerExpenseEntryScreen() {
         />
         <SafeAreaView edges={["bottom"]} style={styles.scanSourcePanel}>
           <ScrollView
+            keyboardShouldPersistTaps="handled"
             style={{ flexGrow: 0 }}
             contentContainerStyle={styles.scanSourceContent}
           >
@@ -1997,7 +2002,11 @@ export function LedgerExpenseEntryScreen() {
         visible={categorySheet}
       >
         <SheetHeader onLeft={() => setCategorySheet(false)} title={t("ui.category")} />
-        <ScrollView contentContainerStyle={styles.categoryContent} style={styles.flex}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.categoryContent}
+          style={styles.flex}
+        >
           {categoryGroups.map((group) => (
             <View key={t(group.titleKey)}>
               <Text style={styles.categoryHeading}>{t(group.titleKey)}</Text>
@@ -2103,6 +2112,7 @@ async function loadEntry(
   correction = false,
   suggestedDate?: string,
   manual = true,
+  suggestedTitle?: string,
 ) {
   const expenseRepository = await getDefaultLedgerExpenseRepository();
   const existing = expenseId ? await expenseRepository.getExpense(expenseId) : null;
@@ -2171,7 +2181,12 @@ async function loadEntry(
         ? formatMinorInput(suggestion.amountMinor, scale)
         : "",
     currency,
-    title: existing?.title ?? suggestion?.title ?? "",
+    title: initialExpenseDraftTitle(
+      existing?.title,
+      suggestion?.title,
+      suggestedTitle,
+      manual && !receiptId,
+    ),
     date: initialExpenseDraftDate(
       existing ? proposedExpenseDate(existing) : undefined,
       suggestion?.occurredAt,

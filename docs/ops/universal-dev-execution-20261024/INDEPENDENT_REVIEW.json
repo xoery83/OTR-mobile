@@ -1,0 +1,40 @@
+{
+  "fixedSha": "bf080ba7939cba0082557801f1b6e36537fa51e0",
+  "sharedBase": "ce3a44b",
+  "executableSource": "157bb95879836d8d06a2d7d93dc29a5d6a0c262f",
+  "review": "PASS_BOUNDED_LOCAL_CLOSED_PACKAGE",
+  "executionReadiness": "BLOCKED_REAL_INPUTS_AND_ACTIVATION",
+  "findings": [],
+  "localEvidence": {
+    "pythonTests": 1,
+    "operatorTests": 6,
+    "threeBundlesIndependentlyRebuiltExact": true,
+    "fiveSqlHashesMatch": true,
+    "image": "sha256:68f362ce956769bbd89f5859b2803a6558892c3628db935d2deb76bc71a461c2",
+    "actualLocalContainer": {
+      "network": "none",
+      "rootFilesystem": "read-only",
+      "uid": 10001,
+      "health": "development/ok",
+      "protectedRoutes401": 4,
+      "operatorRecoverOnly": "CLOSED",
+      "runtimeMounts": 0,
+      "containerRemoved": true
+    }
+  },
+  "scope": {
+    "tripP1SharedBootstrapChanges": false,
+    "sqlChanges": false,
+    "providerCalls": 0,
+    "DEVOperations": 0,
+    "NativeOperations": 0
+  },
+  "remaining": [
+    "Actual retained Native C3 Batch/inputs/submission/source operation pins required; null proposal identities are not valid execution inputs.",
+    "Normal synthetic Auth/Actor/Trip owning Reader and catalog/session credentials require current qualification.",
+    "Universal-specific CP14 config/price/kill/budget reservation and Backend-only Provider credential require exact authorized scope, not Flight profile reuse.",
+    "Independent Universal-specific close/watchdog executable packet and actual mount/role/config preimages absent. Old Trip/Phase C close is not valid substitute.",
+    "Five candidate SQL actual DEV preimages/ACL/install and matching deployment/Provider Gate not verified or authorized by package review.",
+    "L3 Source/Task/Provider/Native Results and formal Review/Admission are not PASS."
+  ]
+}

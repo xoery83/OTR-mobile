@@ -1,4 +1,11 @@
-import { validateCoreGraph } from "./tripCoreV2Graph";
+import {
+  isVerifiedLocalOperation,
+  localBookedFlightPayloadSchema,
+  localAuthoredFlightPayloadSchema,
+  type VerifiedLocalOperation,
+  type LocalMutationCommand,
+} from "./localCoreAuthority";
+import { validateCoreGraph, validateLocalCoreGraph } from "./tripCoreV2Graph";
 import * as f from "./tripCoreV2";
 import { validateCoreCommand } from "./tripCoreV2Commands";
 import {
@@ -104,7 +111,54 @@ export function applyCoreCommand(
   actorProjection = false,
   privateDocumentCustody?: VerifiedPrivateDocumentCustody,
 ): CoreMutation {
-  const q = validateCoreCommand(input);
+  return executeCoreMutation(
+    given,
+    validateCoreCommand(input),
+    actor,
+    now,
+    sourceAuthorized,
+    lifecycleGraphHash,
+    actorProjection,
+    privateDocumentCustody,
+    false,
+  );
+}
+export function applyLocalCoreOperation(
+  given: CoreGraph,
+  operation: VerifiedLocalOperation,
+  actor: CoreActor,
+  now: string,
+): CoreMutation {
+  if (
+    !isVerifiedLocalOperation(operation) ||
+    operation.command.tripId !== actor.tripId ||
+    canonicalCoreJson(operation.actor as unknown as Json) !==
+      canonicalCoreJson(actor as unknown as Json)
+  )
+    throw new Error("LOCAL_CAPABILITY_REQUIRED");
+  return executeCoreMutation(
+    given,
+    operation.command,
+    actor,
+    now,
+    true,
+    undefined,
+    false,
+    undefined,
+    true,
+  );
+}
+function executeCoreMutation(
+  given: CoreGraph,
+  q: ReturnType<typeof validateCoreCommand> | LocalMutationCommand,
+  actor: CoreActor,
+  now: string,
+  sourceAuthorized: boolean,
+  lifecycleGraphHash: string | undefined,
+  actorProjection: boolean,
+  privateDocumentCustody: VerifiedPrivateDocumentCustody | undefined,
+  local: boolean,
+): CoreMutation {
   if (!actor.active || q.tripId !== actor.tripId) throw new Error("TRIP_NOT_AUTHORIZED");
   if (q.admission.mode !== "MANUAL" && !sourceAuthorized)
     throw new Error("INVALID_PROVENANCE");
@@ -563,6 +617,99 @@ export function applyCoreCommand(
     r.event_type = "transport";
   };
   switch (q.command) {
+    case "SAVE_AUTHORED_FLIGHT_LOCAL": {
+      if (!local || q.admission.mode !== "MANUAL")
+        throw new Error("LOCAL_CAPABILITY_REQUIRED");
+      const b = localAuthoredFlightPayloadSchema.parse(p);
+      const existing = g.itinerary_events.find((x) => x.id === q.target.id);
+      const intent = g.trip_flight_intents.find((x) => x.event_id === q.target.id);
+      if (
+        existing &&
+        (existing.experience_family !== "P2" || intent?.qualification !== "SPARSE")
+      )
+        throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+      const r = existing
+        ? root("ITEM", q.target.id, true)
+        : newItem("P2", b.flightNumberLiteral);
+      if (existing) touch("ITEM", r);
+      setParticipants(r, b.participation);
+      if (!existing) setAcl("ITEM", r, b.acl);
+      mark("ITEM", r, { title: b.flightNumberLiteral });
+      for (const [input, role] of [
+        ["origin", "ORIGIN"],
+        ["destination", "DESTINATION"],
+      ] as const) {
+        detail(
+          "itinerary_transport_endpoints",
+          r.id as string,
+          {
+            ...b[input].time,
+            authored_label: b[input].name,
+          },
+          role,
+        );
+        detail(
+          "trip_endpoint_details",
+          r.id as string,
+          {
+            airport_code: b[input].airportCode,
+            terminal: b[input].terminal,
+          },
+          role,
+        );
+      }
+      // Authored structure is unresolved; it does not qualify a physical or commercial flight.
+      r.temporal_shape = "TRANSPORT";
+      r.event_type = "flight";
+      for (const key of Object.keys(r))
+        if (
+          key.startsWith("start_") ||
+          key.startsWith("end_") ||
+          key === "planned_start" ||
+          key === "planned_end"
+        )
+          r[key] = null;
+      if (intent) intent.flight_number_literal = b.flightNumberLiteral;
+      else
+        g.trip_flight_intents.push({
+          trip_id: actor.tripId,
+          event_id: r.id,
+          flight_number_literal: b.flightNumberLiteral,
+          qualification: "SPARSE",
+        });
+      break;
+    }
+    case "CREATE_BOOKING_EVIDENCED_FLIGHT_LOCAL": {
+      if (!local || q.admission.mode !== "LOCAL_REVIEWED_SOURCE")
+        throw new Error("LOCAL_CAPABILITY_REQUIRED");
+      const b = localBookedFlightPayloadSchema.parse(p);
+      const r = newItem("P2", b.core.title);
+      setParticipants(r, b.participation);
+      setAcl("ITEM", r, b.acl);
+      mark("ITEM", r, { title: r.title });
+      for (const [input, role] of [
+        ["origin", "ORIGIN"],
+        ["destination", "DESTINATION"],
+      ] as const) {
+        detail("itinerary_transport_endpoints", r.id, b[input].time, role);
+        detail(
+          "trip_endpoint_details",
+          r.id,
+          { airport_code: b[input].airportCode },
+          role,
+        );
+      }
+      r.temporal_shape = "TRANSPORT";
+      r.event_type = "flight";
+      g.trip_flight_intents.push({
+        trip_id: actor.tripId,
+        event_id: r.id,
+        flight_number_literal: b.flightNumberLiteral,
+        qualification: "BOOKING_EVIDENCED_ROUTE_TIME",
+        qualification_basis: "BOOKING_EVIDENCED_ROUTE_TIME_LOCAL/1",
+      });
+      break;
+    }
     case "CREATE_SPARSE_FLIGHT": {
       const r = newItem("P2", p.core?.title ?? p.flightNumberLiteral);
       setParticipants(r, p.participation);
@@ -1233,7 +1380,10 @@ export function applyCoreCommand(
   }
   for (const [t, rows] of Object.entries(g))
     for (const row of rows) {
-      f.coreTableSchemas[t as f.CoreTable].parse(row);
+      (local && t === "trip_flight_intents"
+        ? f.localFlightIntentSchema
+        : f.coreTableSchemas[t as f.CoreTable]
+      ).parse(row);
       if ((t === "expense_links" ? row.journey_id : row.trip_id) !== actor.tripId)
         throw new Error("CROSS_TRIP_REFERENCE");
       if (
@@ -1313,6 +1463,6 @@ export function applyCoreCommand(
   }
   if (q.baseVector.some((v) => !usedBases.has(v.kind + ":" + v.id)))
     throw new Error("UNUSED_BASE_VECTOR");
-  validateCoreGraph(g, actor.tripId, actorProjection);
+  (local ? validateLocalCoreGraph : validateCoreGraph)(g, actor.tripId, actorProjection);
   return { graph: g, changed: [...changed.values()] };
 }

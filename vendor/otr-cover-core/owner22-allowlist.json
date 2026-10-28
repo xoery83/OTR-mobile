@@ -1,0 +1,1813 @@
+{
+  "version": "otr-native-owner22-increment/1",
+  "baseFreezeCommit": "9555ed42197bb0c955f12146317d2889757a7fd8",
+  "count": 22,
+  "imageBytes": 5579363,
+  "authorization": {
+    "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+    "authorship": "Owner asserts own photography",
+    "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+    "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+    "formalCatalogApproved": false,
+    "humanReview": "pending"
+  },
+  "sourceManifest": {
+    "path": "public/owner-photos/manifest.json",
+    "sha256": "49b14675f836630418e46275e527b042fbf439c68110f57455d7cfac61680d55"
+  },
+  "privacy": "Only existing stripped HeroJPEGs; no Owner originals, HEIC, source EXIF/GPS or private metadata files",
+  "items": [
+    {
+      "id": "owner-photo-a348f66b8ca5",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-a348f66b8ca5.jpg",
+      "sha256": "226fa015a60badb71a02ac49063b01fae634a56560a49fb13e86d88075ac2ecf",
+      "bytes": 269448,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-a348f66b8ca5-hero.jpg",
+      "sourceSha256": "226fa015a60badb71a02ac49063b01fae634a56560a49fb13e86d88075ac2ecf",
+      "sourceOriginalSha256": "a348f66b8ca511b4f9524f943da7af8227e7c85d7da149671b53ff326ac5a9c6",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-a348f66b8ca5",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_4380.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:glacier",
+        "scene:forest",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:adventure"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.52,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-5e628170d2d6",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-5e628170d2d6.jpg",
+      "sha256": "f3a110eed319d5c3b477f2133dace9de17bc92966bde0512f6d8d6f804f1631a",
+      "bytes": 82084,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-5e628170d2d6-hero.jpg",
+      "sourceSha256": "f3a110eed319d5c3b477f2133dace9de17bc92966bde0512f6d8d6f804f1631a",
+      "sourceOriginalSha256": "5e628170d2d635e885f90e304e2ded8dcd60216ff15be4f961df65b74777d72f",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-5e628170d2d6",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_1435.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:warm",
+        "palette:dark"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:unknown",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.66,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 14,
+          "top": 4,
+          "width": 3520,
+          "height": 1980
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-50aad6a676e3",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-50aad6a676e3.jpg",
+      "sha256": "7b68790a2180076cdd6df157f6f22a170979e21cde467fa73464ead6a0e177af",
+      "bytes": 294358,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-50aad6a676e3-hero.jpg",
+      "sourceSha256": "7b68790a2180076cdd6df157f6f22a170979e21cde467fa73464ead6a0e177af",
+      "sourceOriginalSha256": "50aad6a676e356fb87d05314f0aaef9a16633f4298caed2ce468c2c5b107f66e",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-50aad6a676e3",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_1970.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:lake",
+        "scene:forest",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.35,
+        "focalY": 0.49,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 331,
+          "width": 3824,
+          "height": 2151
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-2fce9bae87de",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-2fce9bae87de.jpg",
+      "sha256": "ea0a9406cbf460743618b49335b12b2a101ce2bee5344aa199ee07f8558ee667",
+      "bytes": 328189,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-2fce9bae87de-hero.jpg",
+      "sourceSha256": "ea0a9406cbf460743618b49335b12b2a101ce2bee5344aa199ee07f8558ee667",
+      "sourceOriginalSha256": "2fce9bae87de28472be6e515f5783284c14b7b941cce9bb7df7f5887f8393975",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-2fce9bae87de",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_1964.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:romantic"
+      ],
+      "paletteTags": [
+        "palette:warm",
+        "palette:dark"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:unknown",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.45,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-dc3432ce914a",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-dc3432ce914a.jpg",
+      "sha256": "5cd12ef78f82054bbf5730f3c9f5876cc05f946647abccc511c839110d32f6ac",
+      "bytes": 370950,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-dc3432ce914a-hero.jpg",
+      "sourceSha256": "5cd12ef78f82054bbf5730f3c9f5876cc05f946647abccc511c839110d32f6ac",
+      "sourceOriginalSha256": "dc3432ce914a1343b30c148e6087b6ea44824f9e6d1b74dc9060db6eb499ca9b",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-dc3432ce914a",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_0251.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:mountain",
+        "scene:snow",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:adventure"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:neutral"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.55,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 14,
+          "top": 347,
+          "width": 3648,
+          "height": 2052
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-00b85fe9d39f",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-00b85fe9d39f.jpg",
+      "sha256": "99d12e569436d43fc9064faa08b093a250cfd596ba943e05df9e5102541b3e89",
+      "bytes": 180170,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-00b85fe9d39f-hero.jpg",
+      "sourceSha256": "99d12e569436d43fc9064faa08b093a250cfd596ba943e05df9e5102541b3e89",
+      "sourceOriginalSha256": "00b85fe9d39f71c929e6bda85c56ee78fac59972036146ab84aabff9115e0ead",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-00b85fe9d39f",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_4232.HEIC",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:coast",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:sailing"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:unknown",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.42,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-ad070c44ed0d",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-ad070c44ed0d.jpg",
+      "sha256": "6d28242cfb4b24f49c9664675de9e6d6c16fcb92f3ac5c4a6545c4727bc2c75b",
+      "bytes": 533398,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-ad070c44ed0d-hero.jpg",
+      "sourceSha256": "6d28242cfb4b24f49c9664675de9e6d6c16fcb92f3ac5c4a6545c4727bc2c75b",
+      "sourceOriginalSha256": "ad070c44ed0d46ff2069f6a2a1e871b8e9a76bafa4b1d38117049b36681578db",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-ad070c44ed0d",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_2977.HEIC",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:forest",
+        "scene:garden"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:slow_travel"
+      ],
+      "paletteTags": [
+        "palette:warm",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.55,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-8c2f49c1c398",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-8c2f49c1c398.jpg",
+      "sha256": "6340ee6112e6d1de1fdefd9254921af4bdb23263094d7b6f6cd7e2f011413346",
+      "bytes": 110392,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-8c2f49c1c398-hero.jpg",
+      "sourceSha256": "6340ee6112e6d1de1fdefd9254921af4bdb23263094d7b6f6cd7e2f011413346",
+      "sourceOriginalSha256": "8c2f49c1c398fa0b833b5a58f0b2c9f94923ffde5fb5ba2401bdbbae7eba31b5",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-8c2f49c1c398",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_6711.HEIC",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:architecture",
+        "scene:trail"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:neutral",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.6,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 5712,
+          "height": 3213
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-04647dfa363b",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-04647dfa363b.jpg",
+      "sha256": "9f3817f42c20e9667e03d69faa02bb15ae4f43a590119e3451c064c923e40c2b",
+      "bytes": 390330,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-04647dfa363b-hero.jpg",
+      "sourceSha256": "9f3817f42c20e9667e03d69faa02bb15ae4f43a590119e3451c064c923e40c2b",
+      "sourceOriginalSha256": "04647dfa363b73f3737073784486d79fca9ef47ce97c7507c5d9f284fea92681",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-04647dfa363b",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_2591.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:countryside",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:slow_travel"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:vibrant"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.48,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 232,
+          "width": 4464,
+          "height": 2511
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-d2ee69b2dc93",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-d2ee69b2dc93.jpg",
+      "sha256": "ca3daf276d5d4c976ea2b9c69f77ccc68a268319ef43ed5d58c685cc5a838e68",
+      "bytes": 316734,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-d2ee69b2dc93-hero.jpg",
+      "sourceSha256": "ca3daf276d5d4c976ea2b9c69f77ccc68a268319ef43ed5d58c685cc5a838e68",
+      "sourceOriginalSha256": "d2ee69b2dc9316e2e1f2af5d9190e3c8badc3ab933bed669f6f5a434d07a82d1",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-d2ee69b2dc93",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_2603.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:mountain",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:hiking",
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:adventure"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.52,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 232,
+          "width": 4464,
+          "height": 2511
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-09ff913a4afd",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-09ff913a4afd.jpg",
+      "sha256": "63376b724e74ff3dbb39815ddd4a3b7eed821336b7f206d3c1eebc5fb1367aa3",
+      "bytes": 161959,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-09ff913a4afd-hero.jpg",
+      "sourceSha256": "63376b724e74ff3dbb39815ddd4a3b7eed821336b7f206d3c1eebc5fb1367aa3",
+      "sourceOriginalSha256": "09ff913a4afd91dbe31c48344eec0d66ee77c0371844669414ca1adec1ea556c",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-09ff913a4afd",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_1326.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:mountain",
+        "scene:forest",
+        "scene:countryside",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:hiking",
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:adventure"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:warm",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.45,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 232,
+          "width": 4464,
+          "height": 2511
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-06bfb201f85e",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-06bfb201f85e.jpg",
+      "sha256": "31ad25683f602a3077bc540a027a9eb16b4762153f3b79377f976a581b995274",
+      "bytes": 85137,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-06bfb201f85e-hero.jpg",
+      "sourceSha256": "31ad25683f602a3077bc540a027a9eb16b4762153f3b79377f976a581b995274",
+      "sourceOriginalSha256": "06bfb201f85e3f77898d3d2cf619e8fab677be62ed120b60b52a379befc7712b",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-06bfb201f85e",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_9719.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:mountain",
+        "scene:forest",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:neutral",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.5,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 2,
+          "top": 176,
+          "width": 3360,
+          "height": 1890
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-e3829c69b852",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-e3829c69b852.jpg",
+      "sha256": "16ff7ff4b04e40d9e8b9f15c6331044142ae212afbc108b5eaf66290b3df3d55",
+      "bytes": 390016,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-e3829c69b852-hero.jpg",
+      "sourceSha256": "16ff7ff4b04e40d9e8b9f15c6331044142ae212afbc108b5eaf66290b3df3d55",
+      "sourceOriginalSha256": "e3829c69b8524daa7fbae560c105cd6928ceddfaeb5c68b21da6a2928cc7ff1b",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-e3829c69b852",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_6934.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:glacier",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:adventure"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:neutral"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.55,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 232,
+          "width": 4464,
+          "height": 2511
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-593487a64e45",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-593487a64e45.jpg",
+      "sha256": "fffc435eb4ba025100001d231c38865b96b4aba4a521d486f789e487d01345c3",
+      "bytes": 318652,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-593487a64e45-hero.jpg",
+      "sourceSha256": "fffc435eb4ba025100001d231c38865b96b4aba4a521d486f789e487d01345c3",
+      "sourceOriginalSha256": "593487a64e4598cb8c0a9d8fcbc5d000d41b1efb64afb620472c50bd9f30a831",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-593487a64e45",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_6678.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:vibrant"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.46,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 232,
+          "width": 4464,
+          "height": 2511
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending. Fullbleed mobile unsuitable; uncropped contain preview preserves iceberg.",
+        "mobileFit": "contain",
+        "mobileFullbleedPolicy": "UNSUITABLE: use contain or explicit review; never silently clip essential subject",
+        "note": "UNSUITABLE_FULLBLEED: wide iceberg cannot fit4:5 without cutting principal body; provide uncropped contain preview."
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-ac283d3eb13a",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-ac283d3eb13a.jpg",
+      "sha256": "a1e2f5835f987bfcc8c53c97886e5ee04c5765f63f9b6faa80dbc285b6437855",
+      "bytes": 244876,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-ac283d3eb13a-hero.jpg",
+      "sourceSha256": "a1e2f5835f987bfcc8c53c97886e5ee04c5765f63f9b6faa80dbc285b6437855",
+      "sourceOriginalSha256": "ac283d3eb13af8c6095571eedd3463381440b5537c274417f2c93b99077fdec3",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-ac283d3eb13a",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_2329.JPG",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:mountain",
+        "scene:trail",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:hiking"
+      ],
+      "moodTags": [
+        "mood:adventure"
+      ],
+      "paletteTags": [
+        "palette:neutral",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.34,
+        "focalY": 0.46,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 113,
+          "width": 4464,
+          "height": 2511
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-4c2b29ed6902",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-4c2b29ed6902.jpg",
+      "sha256": "727882d4fa35f2e4165e9e94348c9004dac318332aebb1f247ef8970f3d15360",
+      "bytes": 211148,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-4c2b29ed6902-hero.jpg",
+      "sourceSha256": "727882d4fa35f2e4165e9e94348c9004dac318332aebb1f247ef8970f3d15360",
+      "sourceOriginalSha256": "4c2b29ed6902088f5fcfa2f4e514f9628c102c71e03bc85f849375ec3be5b55b",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-4c2b29ed6902",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_9462.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:stargazing",
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:dark"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:night",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.61,
+        "focalY": 0.62,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 741,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-dbfdcd6ae067",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-dbfdcd6ae067.jpg",
+      "sha256": "8d852b9c84f8e8af51aabd3a733d4d54a867a509bd8e4b05cc306bced07cb794",
+      "bytes": 151074,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-dbfdcd6ae067-hero.jpg",
+      "sourceSha256": "8d852b9c84f8e8af51aabd3a733d4d54a867a509bd8e4b05cc306bced07cb794",
+      "sourceOriginalSha256": "dbfdcd6ae067569a491d6a9df4c522191ffe74d7ab62d69d60b8ca74b21d648c",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-dbfdcd6ae067",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_7208.HEIC",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:romantic"
+      ],
+      "paletteTags": [
+        "palette:warm",
+        "palette:vibrant"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:unknown",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.6,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-f3bd568e51b0",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-f3bd568e51b0.jpg",
+      "sha256": "1f4f13aa83bbf8c6f51ba48737040dbe2311e5213517c08d223ef0777bdd8ee9",
+      "bytes": 128529,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-f3bd568e51b0-hero.jpg",
+      "sourceSha256": "1f4f13aa83bbf8c6f51ba48737040dbe2311e5213517c08d223ef0777bdd8ee9",
+      "sourceOriginalSha256": "f3bd568e51b0a32525ea6aa0cfcc6bf3ef9c04a2b13b8c1bef2d154aca37e326",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-f3bd568e51b0",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_1978.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:culture"
+      ],
+      "activityTags": [
+        "activity:festival"
+      ],
+      "moodTags": [
+        "mood:celebration"
+      ],
+      "paletteTags": [
+        "palette:warm",
+        "palette:dark",
+        "palette:vibrant"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:unknown",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.52,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-294588f753cc",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-294588f753cc.jpg",
+      "sha256": "23a0e6bbb6dfb457995f2333e495dbf6286502b64615e13cadc0532d794058c3",
+      "bytes": 263075,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-294588f753cc-hero.jpg",
+      "sourceSha256": "23a0e6bbb6dfb457995f2333e495dbf6286502b64615e13cadc0532d794058c3",
+      "sourceOriginalSha256": "294588f753cc28a3a9b348694ec69556b163342fb7080bfefc3588f828b935fc",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-294588f753cc",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_1736.jpg",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "incidental",
+      "landmarkAssessment": "Generic high-rise grouping at agent review; no obvious singled-out landmark. Owner may identify/quarantine; actual city remains unknown.",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:urban",
+        "scene:architecture",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:slow_travel"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.52,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-c52bee97d049",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-c52bee97d049.jpg",
+      "sha256": "7cc9fec454565f5a1b980c95f09737ec429551a19a1a7eb70e339327c281c7f0",
+      "bytes": 97611,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-c52bee97d049-hero.jpg",
+      "sourceSha256": "7cc9fec454565f5a1b980c95f09737ec429551a19a1a7eb70e339327c281c7f0",
+      "sourceOriginalSha256": "c52bee97d0497006b369dd6cb1210fbeed583db23a5e6cf665067c576d2bc8ba",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-c52bee97d049",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_4211.heic",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:coast",
+        "scene:landscape"
+      ],
+      "activityTags": [
+        "activity:sailing",
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:muted"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:unknown",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.48,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-4ce2b7680dde",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-4ce2b7680dde.jpg",
+      "sha256": "960a5cdc37611bca915ab72479a5c6f13839c5d0d48538e312d9219786b39750",
+      "bytes": 262277,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-4ce2b7680dde-hero.jpg",
+      "sourceSha256": "960a5cdc37611bca915ab72479a5c6f13839c5d0d48538e312d9219786b39750",
+      "sourceOriginalSha256": "4ce2b7680dde88b0e5bd14189cab34d153bffe2ad8de56f3c36f6f5a93f7d7b6",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-4ce2b7680dde",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_7945.heic",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "incidental",
+      "landmarkAssessment": "Generic high-rise grouping at agent review; no obvious singled-out landmark. Owner may identify/quarantine; actual city remains unknown.",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:urban",
+        "scene:architecture"
+      ],
+      "activityTags": [
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:romantic"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:warm",
+        "palette:dark"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:night",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.52,
+        "focalY": 0.5,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    },
+    {
+      "id": "owner-photo-80dc5b807b13",
+      "kind": "owner_photograph",
+      "path": "images/owner-photo-80dc5b807b13.jpg",
+      "sha256": "f0246f0d7befe825688fb8d7780819b0b2abe1fc6dd33130937ace3ab877a676",
+      "bytes": 388956,
+      "width": 1440,
+      "height": 810,
+      "sourcePath": "public/owner-photos/derivatives/owner-photo-80dc5b807b13-hero.jpg",
+      "sourceSha256": "f0246f0d7befe825688fb8d7780819b0b2abe1fc6dd33130937ace3ab877a676",
+      "sourceOriginalSha256": "80dc5b807b136b24c7f6b0339cccb8ce4ebc3d8ed6ec684cbba6d299762042a3",
+      "transformation": "Exact byte copy of frozen EXIF-stripped HeroJPEG; no recrop/recompression",
+      "author": "Owner提供",
+      "license": "Owner原创声明 · 本次明确授权Native静态测试使用；非CC",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "sourceRecord": "public/owner-photos/manifest.json#owner-photo-80dc5b807b13",
+      "sourceEvidence": "Owner asserts authorship and authorizes this local Lab use; no CC license claimed",
+      "attribution": "Owner / IMG_6001.heic",
+      "actualCaptureGeo": null,
+      "geoSpecificity": "generic",
+      "landmarkVisibility": "none",
+      "landmarkAssessment": "agent_provisional_visual_review; Owner confirmation pending",
+      "rightsReview": "Owner-authorized Native static test candidate; formal redistribution/person/property review pending",
+      "humanReview": "pending",
+      "heroCropVerified": false,
+      "sceneTags": [
+        "scene:wildlife",
+        "scene:coast"
+      ],
+      "activityTags": [
+        "activity:wildlife_watching",
+        "activity:photography"
+      ],
+      "moodTags": [
+        "mood:peaceful"
+      ],
+      "paletteTags": [
+        "palette:cool",
+        "palette:vibrant"
+      ],
+      "seasonTags": [
+        "season:unknown"
+      ],
+      "timeOfDay": "time:day",
+      "composition": {
+        "kind": "composition:wide",
+        "focalX": 0.44,
+        "focalY": 0.55,
+        "textSafeArea": "none",
+        "heroCropVerified": false
+      },
+      "cropQA": {
+        "hero": {
+          "left": 0,
+          "top": 0,
+          "width": 4032,
+          "height": 2268
+        },
+        "agentQA": "Agent reviewed actual16:9 and4:5; principal-subject focal adjustments applied. Owner review pending.",
+        "mobileFit": "focal_crop_agent_previewed",
+        "mobileFullbleedPolicy": "Owner crop review pending",
+        "note": "Existing focal metadata retained; no new mobile cropping performed"
+      },
+      "nativePreviewAuthorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      },
+      "rightsScope": "Owner explicitly authorized static Native test candidate; formal publication/person/property review pending",
+      "authorization": {
+        "source": "Owner explicit authorization, 2026-10-20, to append the22already-selected own photographs to the Native static candidate pool",
+        "authorship": "Owner asserts own photography",
+        "allowedUse": "Static built-in Native test resources; not upload, personal-photo persistence or a new persisted cover model",
+        "notALicense": "No Creative Commons license claimed; no fabricated publication/third-party-property/personality/human review clearance",
+        "formalCatalogApproved": false,
+        "humanReview": "pending"
+      }
+    }
+  ]
+}

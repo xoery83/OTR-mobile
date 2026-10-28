@@ -394,3 +394,47 @@ describe("exact ordering and next uncertainty", () => {
     expect(() => instantMicroseconds(instant)).toThrow(),
   );
 });
+
+describe("date-only viewing context", () => {
+  it("preserves endpoint-local dates and clocks without an invented viewing zone", () => {
+    const flight = event("flight", "TRANSPORT");
+    flight.boundaries = [
+      boundary("ORIGIN", "2026-10-16T22:00:00Z", {
+        local_date: "2026-10-17",
+        local_time: "11:00:00",
+        zone_id: "Pacific/Auckland",
+      }),
+      boundary("DESTINATION", "2026-10-17T10:00:00Z", {
+        local_date: "2026-10-17",
+        local_time: "03:00:00",
+        zone_id: "America/Los_Angeles",
+      }),
+    ];
+    const query = itemsForLocalDate(projection(flight), "2026-10-17", "");
+    expect(query.zone).toBe("");
+    expect(query.timed).toEqual([]);
+    expect(query.nonComparable[0].roles).toEqual(["DESTINATION", "ORIGIN"]);
+    expect(query.nonComparable[0].event).toBe(flight);
+    expect(itemsForLocalDate(projection(flight), "2026-10-16", "").nonComparable).toEqual(
+      [],
+    );
+  });
+  it("includes a date-only stay through its checkout and excludes missing-date events", () => {
+    const stay = event("stay", "STAY");
+    stay.boundaries = [
+      boundary("START", null, { local_date: "2026-10-16" }),
+      boundary("END", null, { local_date: "2026-10-18" }),
+    ];
+    const p = projection(stay, event("undated"));
+    expect(ids(itemsForLocalDate(p, "2026-10-17", ""))).toEqual(["stay"]);
+    expect(itemsForLocalDate(p, "2026-10-17", "").nonComparable[0].occupancyBasis).toBe(
+      "CALENDAR_NIGHTS",
+    );
+    expect(itemsForLocalDate(p, "2026-10-18", "").nonComparable[0].roles).toEqual([
+      "END",
+    ]);
+    expect(ids(itemsForLocalDate(p, "2026-10-19", ""))).toEqual([]);
+    expect(() => itemsForLocalDate(p, "", "")).toThrow();
+    expect(() => itemsForLocalDate(p, "2026-10-17", "Not/AZone")).toThrow();
+  });
+});

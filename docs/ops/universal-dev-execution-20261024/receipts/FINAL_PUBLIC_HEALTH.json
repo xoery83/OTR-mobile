@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-24T11:55:42.984922+00:00",
+  "url": "https://api-dev.xoery.art/health",
+  "readOnly": true,
+  "authenticated": false,
+  "businessRead": false,
+  "httpStatus": 200,
+  "environment": "development",
+  "status": "ok"
+}

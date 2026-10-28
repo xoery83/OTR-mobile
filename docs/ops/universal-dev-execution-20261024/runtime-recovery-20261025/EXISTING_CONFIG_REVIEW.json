@@ -1,0 +1,37 @@
+{
+  "status": "BOUNDED_EXISTING_CONFIGURATION_RESUME_REVIEW_PASS_AFTER_FIXES",
+  "findings": [
+    {
+      "id": "EXISTING_AUTHORITY_ZERO_ROW",
+      "priority": "P1",
+      "status": "FIXED",
+      "original": "authority_sql still required no DEV integration; existing mode always refused",
+      "verifiedFix": "NEW retains zero rows; existing requires exactly one matching closed integration/version/creator/vendor/category/enabled/configSHA and immutable Provider ID/configSHA/schema/privacy."
+    },
+    {
+      "id": "EXISTING_BASELINE_AUDIT_CONTRADICTION",
+      "priority": "P2",
+      "status": "FIXED",
+      "original": "integration baseline version could skip contradictory same-window kill audit",
+      "verifiedFix": "Kill audit with unchanged integration baseline reconciles as failure; price-only audit is allowed."
+    }
+  ],
+  "independentTests": 29,
+  "confirmed": [
+    "Existing mode omits configure/provider append, only legal new price append and exact integration/environment kill CAS; NEW path retained.",
+    "Baseline restore versions derive independently from their observed integration/environment revisions; foreign drift no overwrite, UNKNOWN no retry.",
+    "Trusted retained configuration identity sealed and verified in read-only preflight; legitimate actual price source/period/overlap still owned by existing price command.",
+    "No new Schema/RLS/GRANT authority or business scope."
+  ],
+  "limits": [
+    "This run was local unit/control SQL inspection, not actual existing-mode DEV activation. Prior isolated NEW config receipts not extrapolated.",
+    "Caller must bind real nonoverlapping immutable price schedule, normal Auth/finite grants and actual postimages; this review creates none."
+  ],
+  "diffSHA256": "85abdba45614e32fee39e5506c0ae9cc11ca9e6fcb22945751f2b615af760dfa",
+  "sha256": {
+    "scripts/import/universal_config_control.py": "46b6874e6a3986667db45ccdf386b784539f7eb6c3b450b0d949789f783c04b5",
+    "scripts/import/build_universal_admin_plan.py": "cc0c90fa8631e3467782bdb7da268cbd56e6b488944a3d64425ded4dc2ed99d1",
+    "scripts/import/universal_config_control_test.py": "2cc8c35d5bf834b1a4c37f8a597cb492b86b7d4b871307fea51974bbf4042e39",
+    "scripts/import/build_universal_admin_plan_test.py": "8a8023d2d63761aff06ffc5e261afbc00dbf0ae20d455afdc76404f7386d2465"
+  }
+}

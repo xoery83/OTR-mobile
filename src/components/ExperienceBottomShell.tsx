@@ -1,3 +1,5 @@
+import { openTripHome } from "./openTripHome";
+import { isTripWorkspacePath } from "./tripShellNavigation";
 import { shellShowsUpdates } from "./bottomBarVisibility";
 import { useUpdatesSignal } from "@/features/updates/useUpdatesSignal";
 import { requireOptionalNativeModule } from "expo-modules-core";
@@ -8,6 +10,7 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { TripQuickAddMenu } from "./TripQuickAddMenu";
+import { StartTripSheet } from "./StartTripSheet";
 import {
   useContext,
   useEffect,
@@ -30,8 +33,6 @@ import { router, useGlobalSearchParams } from "expo-router";
 import {
   AccessibilityInfo,
   Alert,
-  ActionSheetIOS,
-  Platform,
   Pressable,
   StyleSheet,
   View,
@@ -79,6 +80,7 @@ export function ExperienceBottomShell({
   const largeText = useWindowDimensions().fontScale > 1.5;
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [reducedTransparency, setReducedTransparency] = useState(false);
+  const [startTripTarget, setStartTripTarget] = useState<symbol | null>(null);
   useEffect(() => {
     let active = true,
       eventObserved = false;
@@ -100,7 +102,15 @@ export function ExperienceBottomShell({
       subscription?.remove();
     };
   }, []);
-  const { view, workingTrip, resumeView, resume, quickActions } = useTripView();
+  const {
+    view,
+    workingTrip,
+    resumeView,
+    resume,
+    quickActions,
+    dayShellChrome,
+    reportManualOutcome,
+  } = useTripView();
   const params = useGlobalSearchParams<{
     journeyId?: string;
     view?: string;
@@ -110,22 +120,36 @@ export function ExperienceBottomShell({
     typeof params.journeyId === "string"
       ? params.journeyId
       : (workingTrip?.tripId ?? null);
-  const isDay = pathname === "/" || (pathname === "/trip" && params.view === "day");
+  const isDay =
+    pathname === "/" || (isTripWorkspacePath(pathname) && params.view === "day");
   const contextualTripId = isDay
-    ? view?.tripId
-    : pathname === "/trip" &&
+    ? (view?.tripId ??
+      (workingTrip?.generation === getAccountGeneration() ? workingTrip.tripId : null))
+    : isTripWorkspacePath(pathname) &&
         !["trips", "create"].includes(params.view ?? "") &&
         typeof params.tripId === "string"
       ? params.tripId
       : null;
   const activeQuickActions =
-    quickActions?.tripId === contextualTripId ? quickActions : null;
+    quickActions?.tripId === contextualTripId &&
+    quickActions.generation === getAccountGeneration()
+      ? quickActions
+      : null;
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
   );
+  const matchesRoute = (tripId: string) =>
+    !isTripWorkspacePath(pathname) || !params.tripId || params.tripId === tripId;
+  const shellTripId =
+    activeQuickActions?.tripId ??
+    (workingTrip?.generation === generation && matchesRoute(workingTrip.tripId)
+      ? workingTrip.tripId
+      : view?.generation === generation && matchesRoute(view.tripId)
+        ? view.tripId
+        : null);
   const unreadActionable = useUpdatesSignal(
-    workingTrip?.generation === generation ? workingTrip.tripId : null,
+    shellTripId ?? null,
     pathname,
     visible && params.view !== "create" && workingTrip?.generation === generation,
   );
@@ -135,9 +159,12 @@ export function ExperienceBottomShell({
     workingTrip?.tripId,
     contextualTripId,
     generation,
+    visible,
+    params.view,
   ]);
   const renderedTarget = useMemo(() => Symbol(targetKey), [targetKey]);
   const currentTarget = useRef<symbol | null>(null);
+  const startTripLease = useRef<symbol | null>(null);
   useLayoutEffect(() => {
     currentTarget.current = renderedTarget;
     return () => {
@@ -145,43 +172,42 @@ export function ExperienceBottomShell({
     };
   }, [renderedTarget]);
   useLayoutEffect(() => {
-    if (!visible || params.view === "create") onHeightChange?.(0);
+    if (!visible || params.view === "create") {
+      startTripLease.current = null;
+      onHeightChange?.(0);
+    }
   }, [visible, params.view, onHeightChange]);
   const tripList =
     pathname === "/trip" &&
     (!params.tripId || params.view === "trips" || params.view === "create");
   const ledger = pathname.startsWith("/expenses") && Boolean(journeyId);
   const startTrip = () => {
-    const invoke = (index: number) => {
-      if (
-        generation !== getAccountGeneration() ||
-        renderedTarget !== currentTarget.current
-      )
-        return;
-      if (index === 0) router.navigate("/capture");
-      if (index === 1)
-        router.setParams({ tripId: "", date: "", zone: "", view: "create" });
-    };
-    if (Platform.OS === "ios")
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          title: t("actionIsland.startTrip"),
-          options: [
-            t("actionIsland.importPlans"),
-            t("actionIsland.createManually"),
-            t("common.cancel"),
-          ],
-          cancelButtonIndex: 2,
-        },
-        invoke,
-      );
-    else
-      Alert.alert(t("actionIsland.startTrip"), undefined, [
-        { text: t("actionIsland.importPlans"), onPress: () => invoke(0) },
-        { text: t("actionIsland.createManually"), onPress: () => invoke(1) },
-        { text: t("common.cancel"), style: "cancel" },
-      ]);
+    if (generation !== getAccountGeneration() || renderedTarget !== currentTarget.current)
+      return;
+    startTripLease.current = renderedTarget;
+    setStartTripTarget(renderedTarget);
   };
+  const closeStartTrip = () => {
+    if (startTripLease.current !== renderedTarget) return;
+    startTripLease.current = null;
+    setStartTripTarget(null);
+  };
+  const invokeStartTrip = (index: 0 | 1) => {
+    if (
+      generation !== getAccountGeneration() ||
+      renderedTarget !== currentTarget.current ||
+      startTripLease.current !== renderedTarget
+    )
+      return;
+    closeStartTrip();
+    if (index === 0)
+      router.push({
+        pathname: "/import-plans",
+        params: { origin: "TRIPS", originGeneration: String(generation) },
+      });
+    else router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+  };
+
   const openExpense = async (
     targetId = journeyId,
     suggestedDate: string | null = null,
@@ -221,16 +247,20 @@ export function ExperienceBottomShell({
   };
   if (!visible || params.view === "create") return null;
   const openMyTrips = () => {
-    if (workingTrip) {
-      router.navigate({
-        pathname: "/trip",
-        params: { tripId: workingTrip.tripId, view: "home" },
-      });
+    if (generation !== getAccountGeneration() || renderedTarget !== currentTarget.current)
+      return;
+    if (shellTripId) {
+      openTripHome(shellTripId, pathname, params.view);
       return;
     }
     if (pathname === "/trip") router.setParams({ view: "trips" });
     else router.navigate({ pathname: "/trip", params: { view: "trips" } });
   };
+  const chromeHidden =
+    isDay &&
+    dayShellChrome?.tripId === shellTripId &&
+    dayShellChrome.generation === generation &&
+    !dayShellChrome.navigationVisible;
   return (
     <SafeAreaView
       edges={["bottom", "left", "right"]}
@@ -239,13 +269,26 @@ export function ExperienceBottomShell({
       style={styles.safe}
     >
       <View
-        pointerEvents="box-none"
-        style={[styles.row, tripList && styles.actionsOnly, largeText && styles.largeRow]}
+        pointerEvents={chromeHidden ? "none" : "box-none"}
+        accessibilityElementsHidden={chromeHidden}
+        importantForAccessibility={chromeHidden ? "no-hide-descendants" : "auto"}
+        style={[
+          styles.row,
+          tripList && styles.actionsOnly,
+          largeText && styles.largeRow,
+          chromeHidden && { opacity: 0 },
+        ]}
       >
         {!tripList ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              ? {
+                  glassEffectStyle: "clear" as const,
+                  isInteractive: true,
+                  tintColor: reducedTransparency
+                    ? colors.surface
+                    : colors.floatingSurface,
+                }
               : {})}
             style={[
               styles.navigationIsland,
@@ -256,46 +299,71 @@ export function ExperienceBottomShell({
           >
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t(workingTrip ? "shell.home" : "dayFeed.myTrips")}
+              accessibilityLabel={t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
               accessibilityHint={t("shell.openMyTrips")}
-              accessibilityState={{ selected: pathname === "/trip" && !isDay }}
+              accessibilityState={{ selected: isTripWorkspacePath(pathname) && !isDay }}
               onPress={openMyTrips}
               style={[
                 styles.destination,
                 largeText && styles.largeDestination,
-                pathname === "/trip" && !isDay && styles.selectedDestination,
+                isTripWorkspacePath(pathname) && !isDay && styles.selectedDestination,
               ]}
             >
               <AppIcon
                 size={visual.bottomShell.icon}
                 name="house"
                 color={
-                  pathname === "/trip" && !isDay ? colors.accent : colors.textPrimary
+                  isTripWorkspacePath(pathname) && !isDay
+                    ? colors.accent
+                    : colors.textPrimary
                 }
               />
               <Text
                 numberOfLines={largeText ? undefined : 1}
                 style={[
                   styles.label,
-                  pathname === "/trip" && !isDay && styles.activeLabel,
+                  isTripWorkspacePath(pathname) && !isDay && styles.activeLabel,
                 ]}
               >
-                {t(workingTrip ? "shell.home" : "dayFeed.myTrips")}
+                {t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
               </Text>
             </Pressable>
-            {resumeView || view || activeQuickActions?.chooseDay ? (
+            {shellTripId ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("shell.day")}
                 accessibilityHint={t("shell.openSelectedDay")}
                 accessibilityState={{ selected: isDay }}
                 onPress={() => {
-                  if (generation !== getAccountGeneration()) return;
-                  if (resumeView || view) {
+                  if (
+                    generation !== getAccountGeneration() ||
+                    renderedTarget !== currentTarget.current
+                  )
+                    return;
+                  const savedDay = resumeView ?? view;
+                  if (
+                    savedDay?.tripId === shellTripId &&
+                    savedDay.generation === generation
+                  ) {
                     resume();
-                    router.navigate("/");
+                    // The legacy root Tab has JS header actions; resume in the native Trip Stack.
+                    router.navigate({
+                      pathname: "/trip-home",
+                      params: {
+                        tripId: savedDay.tripId,
+                        view: "day",
+                        date: savedDay.date,
+                        zone: savedDay.zone ?? "",
+                        viewMode: savedDay.zone === null ? "FLOATING" : "NAMED_ZONE",
+                      },
+                    });
+                  } else if (activeQuickActions?.chooseDay) {
+                    activeQuickActions.chooseDay();
                   } else {
-                    activeQuickActions?.chooseDay?.();
+                    router.navigate({
+                      pathname: "/trip-home",
+                      params: { tripId: shellTripId, view: "day" },
+                    });
                   }
                 }}
                 style={[
@@ -317,12 +385,22 @@ export function ExperienceBottomShell({
                 </Text>
               </Pressable>
             ) : null}
-            {workingTrip ? (
+            {shellTripId ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("navigation.ledger")}
                 accessibilityState={{ selected: pathname.startsWith("/expenses") }}
-                onPress={() => router.navigate("/expenses")}
+                onPress={() => {
+                  if (
+                    generation !== getAccountGeneration() ||
+                    renderedTarget !== currentTarget.current
+                  )
+                    return;
+                  router.navigate({
+                    pathname: "/expenses",
+                    params: { journeyId: shellTripId },
+                  });
+                }}
                 style={[
                   styles.destination,
                   largeText && styles.largeDestination,
@@ -347,7 +425,7 @@ export function ExperienceBottomShell({
                 </Text>
               </Pressable>
             ) : null}
-            {shellShowsUpdates(pathname, params, Boolean(workingTrip)) ? (
+            {shellShowsUpdates(pathname, params, Boolean(shellTripId)) ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("updates.title")}
@@ -397,7 +475,13 @@ export function ExperienceBottomShell({
         {!tripList && !ledger && contextualTripId ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              ? {
+                  glassEffectStyle: "clear" as const,
+                  isInteractive: true,
+                  tintColor: reducedTransparency
+                    ? colors.surface
+                    : colors.floatingSurface,
+                }
               : {})}
             style={[
               styles.actionIsland,
@@ -406,7 +490,7 @@ export function ExperienceBottomShell({
             ]}
           >
             <TripQuickAddMenu
-              key={contextualTripId}
+              key={`${targetKey}:${generation}`}
               tripId={contextualTripId}
               date={
                 isDay
@@ -418,22 +502,19 @@ export function ExperienceBottomShell({
               }
               showDate={isDay}
               triggerStyle={styles.action}
-              itinerary={
-                activeQuickActions
-                  ? (date) => {
-                      router.navigate({
-                        pathname: "/trip",
-                        params: { tripId: contextualTripId, view: "home" },
-                      });
-                      activeQuickActions.itinerary(date);
-                    }
-                  : undefined
-              }
+              onManualSaved={(id) => {
+                if (
+                  generation !== getAccountGeneration() ||
+                  renderedTarget !== currentTarget.current
+                )
+                  return;
+                reportManualOutcome(contextualTripId, generation, id);
+              }}
               photos={
                 activeQuickActions?.photos
                   ? () => {
                       router.navigate({
-                        pathname: "/trip",
+                        pathname: "/trip-home",
                         params: { tripId: contextualTripId, view: "home" },
                       });
                       activeQuickActions.photos?.();
@@ -447,8 +528,12 @@ export function ExperienceBottomShell({
                 )
                   return;
                 router.navigate({
-                  pathname: "/capture",
-                  params: { tripId: contextualTripId },
+                  pathname: "/import-plans",
+                  params: {
+                    tripId: contextualTripId,
+                    origin: "TRIP",
+                    originGeneration: String(generation),
+                  },
                 });
               }}
               expense={(date) => {
@@ -460,7 +545,13 @@ export function ExperienceBottomShell({
         {tripList || ledger ? (
           <Material
             {...(Glass
-              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              ? {
+                  glassEffectStyle: "clear" as const,
+                  isInteractive: true,
+                  tintColor: reducedTransparency
+                    ? colors.surface
+                    : colors.floatingSurface,
+                }
               : {})}
             style={[
               styles.actionIsland,
@@ -487,6 +578,12 @@ export function ExperienceBottomShell({
           </Material>
         ) : null}
       </View>
+      <StartTripSheet
+        visible={tripList && startTripTarget === renderedTarget}
+        onClose={closeStartTrip}
+        onImport={() => invokeStartTrip(0)}
+        onCreate={() => invokeStartTrip(1)}
+      />
     </SafeAreaView>
   );
 }
@@ -520,7 +617,7 @@ const createStyles = (c: UiColors) =>
       shadowOpacity: 0.08,
       shadowRadius: visual.space.heading,
       shadowOffset: { width: 0, height: 2 },
-      backgroundColor: c.floatingSurface,
+      backgroundColor: c.surface,
       borderColor: c.separator,
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: visual.radius.pill,
@@ -537,7 +634,7 @@ const createStyles = (c: UiColors) =>
       shadowOpacity: 0.08,
       shadowRadius: visual.space.heading,
       shadowOffset: { width: 0, height: 2 },
-      backgroundColor: c.floatingSurface,
+      backgroundColor: c.surface,
       borderColor: c.separator,
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: visual.radius.pill,
@@ -581,6 +678,9 @@ const createStyles = (c: UiColors) =>
     label: {
       ...visual.type.navigation,
       color: c.textSecondary,
+      textShadowColor: c.background,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 1,
       textAlign: "center",
       flexShrink: 1,
     },

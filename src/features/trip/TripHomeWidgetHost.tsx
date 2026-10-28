@@ -13,9 +13,12 @@ export type TripHomeWidget = Readonly<{ id: string; title: string; content: Reac
 export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidget[] }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const { height, fontScale } = useWindowDimensions();
+  const { fontScale } = useWindowDimensions();
   const [selectedId, setSelectedId] = useState<string | null>(widgets[0]?.id ?? null);
   const [width, setWidth] = useState(0);
+  const [sizes, setSizes] = useState<
+    Record<string, { width: number; fontScale: number; height: number }>
+  >({});
   const scroll = useRef<ScrollView>(null);
   const index = Math.max(
     0,
@@ -28,9 +31,16 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
   }, [index, width]);
   if (!widgets.length)
     return <UiText style={styles.fallback}>{t("tripHome.noQualifiedWork")}</UiText>;
+  if (widgets.length === 1) return <View style={styles.page}>{widgets[0].content}</View>;
+  const measured = currentId ? sizes[currentId] : undefined;
+  const pageHeight =
+    measured?.width === width && measured.fontScale === fontScale
+      ? measured.height
+      : undefined;
   return (
     <View style={styles.host}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tags}
@@ -48,9 +58,12 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
         ))}
       </ScrollView>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         ref={scroll}
         horizontal
         pagingEnabled
+        style={[styles.pager, pageHeight !== undefined && { height: pageHeight }]}
+        contentContainerStyle={styles.pages}
         showsHorizontalScrollIndicator={false}
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
         onMomentumScrollEnd={(event) => {
@@ -68,14 +81,22 @@ export function TripHomeWidgetHost({ widgets }: { widgets: readonly TripHomeWidg
         {widgets.map((widget) => (
           <View
             key={widget.id}
-            style={[
-              styles.page,
-              {
-                width,
-                minHeight: Math.max(420, Math.min(550, height * 0.65)),
-                ...(fontScale > 1 ? { minHeight: 420 * fontScale } : {}),
-              },
-            ]}
+            accessibilityElementsHidden={widget.id !== currentId}
+            importantForAccessibility={
+              widget.id === currentId ? "auto" : "no-hide-descendants"
+            }
+            style={[styles.page, { width }]}
+            onLayout={(event) => {
+              if (!width) return;
+              const height = Math.ceil(event.nativeEvent.layout.height);
+              setSizes((previous) =>
+                previous[widget.id]?.width === width &&
+                previous[widget.id]?.fontScale === fontScale &&
+                previous[widget.id]?.height === height
+                  ? previous
+                  : { ...previous, [widget.id]: { width, fontScale, height } },
+              );
+            }}
           >
             {widget.content}
           </View>
@@ -88,6 +109,8 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     host: { gap: visual.space.card },
     tags: { gap: visual.space.heading, alignItems: "center" },
+    pager: { flexGrow: 0 },
+    pages: { alignItems: "flex-start" },
     page: {
       padding: visual.space.page,
       backgroundColor: colors.surface,

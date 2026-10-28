@@ -1,0 +1,16 @@
+{
+  "status": "BOUNDED_PREPARATION_STAGE_DIAGNOSTIC_REVIEW_PASS",
+  "findings": [],
+  "independentTests": 8,
+  "confirmed": [
+    "Whitelist exact owning messages/SQLSTATE/transport codes only; unknownUNCLASSIFIED; CLI emits bounded diagnostic without SQL/auth/secret/raw errors.",
+    "PREPARE_ONCE at most one begin; all modes one owning read, UNKNOWN unreconciled remains failure; READ_ONLY does not begin.",
+    "No route, authority, Provider, retry or success semantics changed."
+  ],
+  "readOnlyExecutionBoundary": "SHA-bound diagnostic stdin CLI with --recover-only is compatible with approved same candidate finite window, no begin. Future begin remains gated on confirmed pre-DB failure/quiescence and authoritative sameRun absence; unresolvedUNKNOWN is not retry authority.",
+  "sha256": {
+    "backend/src/universalPreparationOperator.ts": "0e22a713090db3ae298615a53f458d776712b1c2d48b4c9250c9eccdcf239a06",
+    "backend/src/universalPreparationMain.ts": "c3ac37685e8dc3f77f137f232c865ef2b7268957c515d10842ad72ee5f9b3a8e",
+    "backend/src/universalPreparationOperator.test.ts": "83ade87c1ba9e2b4a3b0d00543fefb2eb468c2542fa35941458b1cbe49dd7e9f"
+  }
+}
