@@ -90,6 +90,14 @@ describe("Core v2 Flight mutation acceptance after owning source verification", 
     expect(g.itinerary_transport_services).toHaveLength(0);
     expect(g.trip_flight_intents[0].qualification).toBe("SPARSE");
   });
+  it("rejects manual qualification even with a complete valid Source proof payload", () => {
+    const graph = sparse();
+    const before = structuredClone(graph);
+    expect(() =>
+      applyCoreCommand(graph, command("QUALIFY_FLIGHT", full(), 1), actor, now, true),
+    ).toThrow("INVALID_PROVENANCE");
+    expect(graph).toEqual(before);
+  });
   it("qualifies the same UUID atomically without moving participation/visibility or unrelated objects", () => {
     const g = sparse();
     const before = structuredClone(g);
