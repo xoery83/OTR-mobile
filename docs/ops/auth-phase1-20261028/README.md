@@ -44,8 +44,10 @@ SQLite integrityOK; only sqlite_stat1 is newly materialized. No Keychain read/co
 Real native branded Google control → system accounts.google.com prompt → Cancel
 preserved the QA Account; repeating reaches Google's official "Sign in to continue
 to OnTheRoad" email page. These are **entry/cancel observations, not Google login**.
-Owner QA interaction is requested precisely once; actual ID-token exchange,
-Google Session cold/logout/account-isolation E2E remain NOT_TESTED.
+Owner interaction returned Google credentials, but two real Supabase exchanges
+failed HTTP400 on nonce presence mismatch; original QA Account retained. Auth nonce
+bridge repair is independently reviewed; see GOOGLE_NONCE_REPAIR.md. Native45 and
+Google Session/cold/logout/account-isolation E2E remain pending.
 
 The original dependency tree has an existing optional Expo/worklets peer conflict;
 installation used legacy peer resolution in this independent dependency directory.

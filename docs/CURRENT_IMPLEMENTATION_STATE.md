@@ -16,13 +16,15 @@ same source with own embedded Debug JS, standard simulator identity sections and
 Google SDK. In-place Forms QA cold restore retains its QA identity/four Trips and
 all original row hashes across148 tables, integrityOK. Real native Google control
 opens system prompt; Cancel preserves Account, repeat opens official OnTheRoad
-Google email page. This does not prove Google login. Owner QA interaction requested;
-no password/Token requested in chat. Actual Google Session/cold/logout/isolation
-remains pending. Receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
+Google email page. This does not prove Google login. Owner completed Google interaction, but actual ID-token exchange was rejected
+HTTP400 for missing matching caller nonce (DEV Auth18:09/18:19NZ). Original QA
+Account retained. Auth local Expo nonce bridge repair is reviewed (16 suites132
+tests); Native unified45 type/link/runtime acceptance and Google Session E2E
+remain pending. See `ops/auth-phase1-20261028/GOOGLE_NONCE_REPAIR.md`. Receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
 Google ADR: `adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/
 RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
 
-Next: actual Google QA interaction→own Account readback/cold/logout/isolation.
+Next: fixed nonce native Build45→Google retry→own Account readback/cold/logout/isolation.
 Email OTP needs a usable mailbox; Apple console/identity remains pending. Phase1
 CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
 Auth cannot silently claim Guest datasets or Trip People.
