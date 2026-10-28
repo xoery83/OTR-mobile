@@ -240,13 +240,13 @@ it("navigates Home picker to Trip Start without selecting it, then saves authore
   await open(p, repo);
   node("tripCreate.planName").onChangeText("Visit the museum");
   expect(render(p)).toContain("tripCreate.planStartRequired");
-  expect(node("tripCreate.createPlan").disabled).toBe(true);
+  expect(node("ui.save").disabled).toBe(true);
   expect(node("tripCreate.itemDate").initialNavigationDate).toBe("2027-12-30");
   expect(node("tripCreate.itemDate").value).toEqual({ start: "", end: "" });
   node("tripCreate.itemDate").onChange({ start: "2027-12-29", end: "" });
   render(p);
-  expect(node("tripCreate.createPlan").disabled).toBe(false);
-  node("tripCreate.createPlan").onPress();
+  expect(node("ui.save").disabled).toBe(false);
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
@@ -279,17 +279,17 @@ it("keeps the same draft and fields after an unknown save result; conflict disab
   render(p);
   node("tripCreate.itemDate").onChange({ start: "2027-12-29", end: "" });
   render(p);
-  node("tripCreate.createPlan").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   render(p);
   expect(node("tripCreate.planName").editable).toBe(false);
-  expect(node("tripCreate.createPlan").disabled).toBe(false);
-  node("tripCreate.createPlan").onPress();
+  expect(node("ui.save").disabled).toBe(false);
+  node("ui.save").onPress();
   await Promise.resolve();
   render(p);
   expect(repo.save).toHaveBeenCalledTimes(2);
   expect(repo.save.mock.calls[1]).toEqual(repo.save.mock.calls[0]);
-  expect(node("tripCreate.createPlan").disabled).toBe(true);
+  expect(node("ui.save").disabled).toBe(true);
   expect(p.onSaved).not.toHaveBeenCalled();
   node("common.cancel").onPress();
   expect(p.onClose).not.toHaveBeenCalled();
@@ -322,7 +322,7 @@ it("blocks old same-turn handlers and retries only the first submitted fields", 
   node("tripCreate.itemDate").onChange({ start: "2027-12-29", end: "" });
   render(p);
   const oldNameChange = node("tripCreate.planName").onChangeText;
-  const oldSave = node("tripCreate.createPlan").onPress;
+  const oldSave = node("ui.save").onPress;
   const oldCancel = node("common.cancel").onPress;
   oldSave();
   oldNameChange("Changed after Save");
@@ -370,7 +370,7 @@ it("edits an existing P1 through its original repository draft and preserves the
   render(p);
   node("tripCreate.planLocation").onChangeText("Museum entrance");
   render(p);
-  node("tripCreate.saveChanges").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repository.save).toHaveBeenCalledWith(
     draft,
@@ -397,7 +397,7 @@ it("ignores a queued Discard confirmation after P1 Save starts", async () => {
   node("tripCreate.planName").onChangeText("Changed plan");
   render(p);
   const oldCancel = node("common.cancel").onPress;
-  const oldSave = node("tripCreate.createPlan").onPress;
+  const oldSave = node("ui.save").onPress;
   oldCancel();
   const discard = state.alert.mock.lastCall![2][1].onPress;
   oldSave();
@@ -452,7 +452,7 @@ it("rejects an old P1 Save after Discard closes a dirty draft", async () => {
   });
   node("tripCreate.planName").onChangeText("Changed plan");
   render(p);
-  const oldSave = node("tripCreate.createPlan").onPress;
+  const oldSave = node("ui.save").onPress;
   const oldChange = node("tripCreate.planName").onChangeText;
   node("common.cancel").onPress();
   state.alert.mock.lastCall![2][1].onPress();
@@ -477,7 +477,7 @@ it("rejects an old P1 Save after a clean sibling transition", async () => {
     })),
     save,
   });
-  const oldSave = node("tripCreate.createPlan").onPress;
+  const oldSave = node("ui.save").onPress;
   node("tripCreate.rental").onPress();
   oldSave();
   expect(p.onChooseRental).toHaveBeenCalledOnce();
@@ -533,7 +533,7 @@ it("P1 searches authored Name but always fills only Location using immediate sel
   render(p);
   expect(node("tripCreate.planName").value).toBe("Dinner with Friends");
   expect(node("tripCreate.planLocation").value).toBe("Victoria Street West, Auckland");
-  node("tripCreate.createPlan").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     expect.anything(),
@@ -598,7 +598,7 @@ it("selected P1 location saves through the existing same-ID Edit writer without 
   const sheet = await search(p, "placeSearch.searchLocation");
   sheet.onConfirm(placeResult());
   render(p);
-  node("tripCreate.saveChanges").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,
@@ -641,7 +641,7 @@ it("prefills a new P1 date and advisory start time and saves the authored value"
   expect(node("tripCreate.itemDate").value.start).toBe("2027-01-16");
   node("tripCreate.planName").onChangeText("Lunch");
   render(p);
-  node("tripCreate.createPlan").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     draft,

@@ -371,7 +371,7 @@ export function P1PlanEditor({
         <SheetHeader
           category="form"
           title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}
-          rightLabel={t(itemId ? "tripCreate.saveChanges" : "tripCreate.createPlan")}
+          rightLabel={t("ui.save")}
           rightDisabled={!!preview || !valid || saving || (frozen && status !== "ERROR")}
           onRight={() => void save()}
           leftLabel={t("common.cancel")}
