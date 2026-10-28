@@ -76,3 +76,9 @@ Activity inventory now projects existing Backend context Task states through seq
 ## Import-owned Documents navigation
 
 Composer now offers separate Personal Inbox and Trip Documents subviews via the existing attachment menu. Detail returns to its own scoped list, and a retained document's real Job link reopens existing Activity/Results. TripPrior is only a read-scope choice; no Capture trip assignment, sharing or all-Batch Item link is created. Normal Auth and repository loading are lazy until the document view is opened. Public Navigation/Session/DayFeed/Sync files remain untouched. Twenty-eight targeted menu/component/lifecycle tests, TypeScript/UIguard and scoped lint pass (one existing require-style warning); independent Review NO_BLOCKER. Real AD5 navigation/QuickLook remains pending Build42.
+
+## Activity repair and current Native compatibility
+
+`8881d093` separates authorized Task context from original-byte reads; Results still require original validation. Red→green and logger failure identity checks PASS, independent NO_BLOCKER. `fee149c2` corrects received-input/private-Inbox captions (27 directed tests). Temporary shared startup logs removed at71606178 after simulator identity repair. AD5 My Trips/QA Trip cold launch and private Inbox text-original navigation PASS; PDF/image and sustained Save remain pending.
+
+Joined Native P4/Auth source4ea0202 passes49 directed tests, types and both Backend builds. Software-only image61b0dd3f deployed with unchanged Envab5/six mounts/HC; independently verified healthy, NativeP4 e624/41aa retained. Read-only Source connection and persisted Task mirror PASS; this is not a normal QA API503 retest. No SQL activation/model calls/new objects. Native's separately approved P4 read-state f1378 supersedes c8d64; old fixed activation must abort, and exact one-hash compatibility is being qualified independently. Auth/Owner still hold GUI; local product work continues.

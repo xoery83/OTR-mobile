@@ -1,0 +1,53 @@
+{
+  "sourceCommit": "4ea0202f35f81a90f70b6892bd5dd3ac1bec16a5",
+  "repairCommit": "8881d093",
+  "uiCopyCommit": "fee149c2",
+  "deployment": {
+    "status": "P3_DEPLOYED",
+    "containerId": "2cc885989987992e09d0a3234c28409ff0ec316d510cafc7353b286c74bd08af",
+    "retainedContainerId": "e624864800feabec0e53300a6ac09450cca11150d28d3c82ab5a071c98c73a2a",
+    "image": "sha256:61b0dd3ffa57716622745459edc139ca0a1281725eef83ad9ea5782ab201c7d7",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "health": "healthy"
+  },
+  "independentVerification": {
+    "containerId": "2cc885989987992e09d0a3234c28409ff0ec316d510cafc7353b286c74bd08af",
+    "image": "sha256:61b0dd3ffa57716622745459edc139ca0a1281725eef83ad9ea5782ab201c7d7",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "bundleSHA256": "fd3eaddb7a76e9eedd2621f3acd7786a9ada5fc600ff42afdf76fcb0b765a380",
+    "mountCount": 6,
+    "health": "healthy",
+    "rollback": "RETAINED_PREVIOUS_NATIVE_P4",
+    "businessAuthorityChange": false
+  },
+  "readOnlyDiagnostic": {
+    "config": "VALID",
+    "tasks": [
+      {
+        "state": "PENDING",
+        "count": 1
+      },
+      {
+        "state": "PUBLISHED",
+        "count": 7
+      },
+      {
+        "state": "RUNNING",
+        "count": 1
+      }
+    ],
+    "sourceConnection": "VALID",
+    "connectionMs": 3300
+  },
+  "protectedSqlChanged": false,
+  "importSave": "CLOSED",
+  "providerCallsAdded": 0,
+  "normalQaReadback": "PENDING_GUI_RETURN",
+  "validation": {
+    "joinedDirectedTests": 49,
+    "uiDirectedTests": 27,
+    "typecheck": "PASS",
+    "backendBundles": "PASS",
+    "review": "NO_BLOCKER"
+  }
+}
