@@ -19,7 +19,7 @@
     "offlineHomeP1P4P5P6LatestPending": true,
     "offlineDayP3LatestPending": true,
     "onlineHomeP1P4P5P6LatestNoPending": true,
-    "onlineDayP3LatestNoPending": "PENDING_FINAL_VISUAL"
+    "onlineDayP3LatestNoPending": true
   },
   "items": [
     {

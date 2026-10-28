@@ -1,0 +1,158 @@
+{
+  "status": "APPROVED_P2_BACKEND_SQL_INSTALLED_NATIVE_E2E_PENDING",
+  "ownerApprovalCommit": "a718c83e",
+  "candidateCommit": "16644f85",
+  "runtime": {
+    "status": "INDEPENDENT_RUNTIME_VERIFIED",
+    "source": "curated-e973ffe0-p2-16644f85",
+    "image": "sha256:dab8df27d38d042588b01f388cbd638c13993fb8802241f67169c73cf50e4eed",
+    "containerId": "0f9c4b6f97ca6c282836d7e9478ce4a54f4ba8d49591d720ab8754548491b8a0",
+    "bundleSHA256": "36fa9f8d78df5a9bb8d0b26ef34ec01433d3fbbbe81bae7b01e9cb9b09e990ac",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "mountCount": 6,
+    "hostConfigAndFilesPreserved": true,
+    "httpStatuses": [
+      200,
+      401
+    ],
+    "retainedContainerId": "71da63a9ceba2a4ed33828cc5a3cbcb8376eae2f35fd4bc54fd447b52c8bc0c0"
+  },
+  "codeArtifact": {
+    "source": "curated-e973ffe0-p2-16644f85",
+    "baseCommit": "e973ffe0b2eb4cf67a6abd09980c44bf25dca0a9",
+    "sourceArtifactSHA256": "1f8e1b5e436f7a53d5c3f1d3c37c0147735e2db66b16a7dbf700bb05cc3cee72",
+    "bundleSHA256": "36fa9f8d78df5a9bb8d0b26ef34ec01433d3fbbbe81bae7b01e9cb9b09e990ac",
+    "serverSHA256": "6ce96342fabc18f2a93f9911c49bfb49a45c9f36f7a54c27fa1f68c0d202e284"
+  },
+  "sql": {
+    "status": "P2_APPROVED_FIVE_FUNCTIONS_INSTALLED_INDEPENDENTLY_VERIFIED",
+    "installSHA256": "b19a0257471cad173533c1c6b2f81cfa3fe38cbccbfb252d77496469540bb733",
+    "functions": [
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "ef17d1618d87006e8379164244a7645f",
+        "oid": "65713",
+        "owner": "postgres",
+        "signature": "public.trip_core_finite_read_state_guard()"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "fb315854dee6942f552a647fb851abfb",
+        "oid": "65660",
+        "owner": "postgres",
+        "signature": "public.trip_core_guard_historical_source_association()"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "3c58afd4336449f895f03dd141eaab32",
+        "oid": "65263",
+        "owner": "postgres",
+        "signature": "public.trip_core_guard_write()"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "6ff1c65d9389341e889eb8258c6659af",
+        "oid": "65649",
+        "owner": "postgres",
+        "signature": "public.trip_core_publication_guard()"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_gateway=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "40f537b189fd972423e63b2be4023a12",
+        "oid": "65546",
+        "owner": "postgres",
+        "signature": "public.trip_core_resolve_airport(text,text,text,date)"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres",
+          "otr_trip_event_semantic_writer=X/postgres"
+        ],
+        "md5": "5ba5af84c52b81bea3d2dc78caadd634",
+        "oid": "65415",
+        "owner": "postgres",
+        "signature": "public.trip_core_service_statement_guard()"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_gateway=X/postgres"
+        ],
+        "md5": "d20961b9f9ce6da6f6991b81cd0e2bf5",
+        "oid": "66181",
+        "owner": "postgres",
+        "signature": "public.trip_sustained_core_capabilities(uuid,uuid)"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "7f4a84cb4f4141e5c11f284a1e8f29d1",
+        "oid": "66180",
+        "owner": "postgres",
+        "signature": "public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_gateway=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "9f01606ec37c03662c7d9d828cae9ef9",
+        "oid": "66408",
+        "owner": "postgres",
+        "signature": "public.trip_sustained_import_p1_capabilities(uuid,uuid)"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "115bc244cd9ccd196936828739187531",
+        "oid": "66410",
+        "owner": "postgres",
+        "signature": "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "82eb172c0e6cab2a44995e36a5c3087e",
+        "oid": "65418",
+        "owner": "postgres",
+        "signature": "public.assert_trip_core_v2_aggregate(uuid)"
+      }
+    ],
+    "sourceClosed": {
+      "enabledAirports": 0,
+      "flag": false,
+      "scope": null
+    },
+    "newSchemaRolesRLSGRANTChecks": false,
+    "nativeP2Cloud": "NOT_YET_TESTED_FLAG_NOT_IN_PHONE60"
+  },
+  "sourceCompatibility": "Owner-approved fa8df199 single readstate literal; not activated by Native",
+  "hostSqlWindow": "RETURNED_TO_UNIVERSAL",
+  "native": "Phone60 remains oldJS/flag absent; prepare JS-only P2 formal scoped build before actual E2E",
+  "providerCalls": 0,
+  "note": "Reusable clone operator legacy status P3_DEPLOYED is historical text; runtime/SQL/identity proofs here identify P2 precisely."
+}
