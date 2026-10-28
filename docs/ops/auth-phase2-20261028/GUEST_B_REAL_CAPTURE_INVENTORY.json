@@ -1,0 +1,31 @@
+{
+  "status": "ACTUAL_GUEST_A_VAULT_CAPTURE_FAMILY_READ_ONLY_NOT_NATIVE_FILE_E2E",
+  "source": "Accepted GuestQA63 normal Native Trip/P1/Day/cold A vault; no file producer exercised",
+  "mode": "Node sqlite readOnly=true with accepted file binding; no Native SecureStore/Session read",
+  "schema": 74,
+  "census": {
+    "schemaId": "otr.auth.guest-capture-inventory/1",
+    "coverage": "CAPTURE_ONLY",
+    "scope": {
+      "kind": "GUEST",
+      "localId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+      "generation": 0
+    },
+    "status": "CAPTURE_COMPLETE",
+    "sqliteVersion": 74,
+    "entries": [],
+    "orphanPayloads": 0,
+    "totalPayloads": 0,
+    "verifiedBytes": 0,
+    "blockers": [],
+    "inventorySha256": "f92fdfeb02c85c76a26653e816a0bac7de7f43f06c87e41071c2db66d36cf20d"
+  },
+  "claims": {
+    "nativeCaptureProduction": false,
+    "nativeScopeConsumer": false,
+    "allFilesInventoryComplete": false,
+    "physicalDiskEmpty": false,
+    "adoption": false,
+    "cloud": false
+  }
+}

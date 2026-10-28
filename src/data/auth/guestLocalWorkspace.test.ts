@@ -572,3 +572,148 @@ it.each(["foreign trip", "non-P1 create", "unregistered P1 command"] as const)(
     }
   },
 );
+
+// Synthetic disk fixtures validate only this reader, never Native Guest file production/adoption.
+async function captureFixture(
+  f: ReturnType<typeof fixture>,
+  options: {
+    owner?: string;
+    tripId?: string | null;
+    captureId?: string;
+    payloadId?: string;
+    bytes?: Uint8Array;
+    sha256?: string;
+    orphan?: boolean;
+  } = {},
+) {
+  const owner = options.owner ?? f.guestId,
+    captureId = options.captureId ?? randomUUID(),
+    payloadId = options.payloadId ?? randomUUID();
+  const bytes = options.bytes ?? new TextEncoder().encode("Guest original 旅程");
+  const sha256 = options.sha256 ?? (await tripCoreSha256Hex(bytes));
+  const sql = f.opened[0].sql;
+  if (
+    !sql
+      .prepare("SELECT 1 FROM local_capture_payloads WHERE account_id=? AND id=?")
+      .get(owner, payloadId)
+  )
+    sql
+      .prepare(
+        "INSERT INTO local_capture_payloads(account_id,id,byte_count,sha256,bytes) VALUES(?,?,CAST(? AS INTEGER),?,?)",
+      )
+      .run(owner, payloadId, bytes.byteLength, sha256, bytes);
+  const tripId = options.tripId ?? null;
+  if (!options.orphan)
+    sql
+      .prepare(
+        "INSERT INTO local_capture_inbox(account_id,id,payload_id,kind,original_filename,declared_content_type,created_at,trip_id,state,revision) VALUES(?,?,?,'TEXT',NULL,'text/plain','2026-10-29T00:00:00.000Z',?,?,1)",
+      )
+      .run(owner, captureId, payloadId, tripId, tripId === null ? "INBOX" : "ASSIGNED");
+  return { captureId, payloadId, bytes, sha256 };
+}
+
+it("reports an empty Capture family without claiming all Guest files or disk directories are empty", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const result = await workspace.readCaptureInventory();
+  expect(result).toMatchObject({
+    coverage: "CAPTURE_ONLY",
+    status: "CAPTURE_COMPLETE",
+    totalPayloads: 0,
+    verifiedBytes: 0,
+    entries: [],
+  });
+  expect((await workspace.readCensus()).readyForServerPreflight).toBe(false);
+});
+
+it("verifies Guest originals through the owning load seam and retains revisions/metadata hashes without exposing raw bytes", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    trip = tripInput();
+  await workspace.trips.createTrip(trip);
+  const first = await captureFixture(f, {
+    tripId: trip.tripId,
+    payloadId: "opaque/payload:id",
+    captureId: "opaque-capture",
+  });
+  await captureFixture(f, { payloadId: first.payloadId });
+  const before = f.opened[0].sql
+    .prepare("SELECT count(*) AS n FROM sync_operations")
+    .get();
+  const result = await workspace.readCaptureInventory();
+  expect(result.status).toBe("CAPTURE_COMPLETE");
+  expect(result.entries).toHaveLength(1);
+  expect(result.verifiedBytes).toBe(first.bytes.byteLength);
+  expect(result.entries[0]).toMatchObject({
+    id: first.payloadId,
+    sha256: first.sha256,
+    bytes: first.bytes.byteLength,
+  });
+  expect(result.entries[0].references).toHaveLength(2);
+  expect(
+    result.entries[0].references.find(
+      (reference) => reference.captureId === first.captureId,
+    ),
+  ).toMatchObject({
+    captureId: first.captureId,
+    tripId: trip.tripId,
+    revision: 1,
+    kind: "TEXT",
+  });
+  expect(JSON.stringify(result)).not.toContain("Guest original");
+  expect((await workspace.readCaptureInventory()).inventorySha256).toBe(
+    result.inventorySha256,
+  );
+  expect(
+    f.opened[0].sql.prepare("SELECT count(*) AS n FROM sync_operations").get(),
+  ).toEqual(before);
+  const full = await workspace.readCensus(completeExternalInventory(workspace));
+  expect(full.blockers).toContain("UNSUPPORTED_TABLE:local_capture_payloads");
+  expect(full.readyForServerPreflight).toBe(false);
+});
+
+it("blocks orphan Guest payloads and retains their exact bytes without adopting a partial file selection", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const original = await captureFixture(f, { orphan: true });
+  const result = await workspace.readCaptureInventory();
+  expect(result).toMatchObject({
+    status: "BLOCKED",
+    orphanPayloads: 1,
+    totalPayloads: 1,
+    inventorySha256: null,
+    blockers: ["ORPHAN_CAPTURE_PAYLOAD"],
+  });
+  expect(
+    f.opened[0].sql.prepare("SELECT bytes FROM local_capture_payloads").get()?.bytes,
+  ).toEqual(original.bytes);
+});
+
+it.each(["foreign owner", "foreign trip", "wrong hash", "invalid UTF8"] as const)(
+  "rejects %s before qualifying the Capture family",
+  async (variant) => {
+    const f = fixture(),
+      workspace = await f.newOpener()();
+    await captureFixture(f, {
+      ...(variant === "foreign owner" ? { owner: randomUUID() } : {}),
+      ...(variant === "foreign trip" ? { tripId: randomUUID() } : {}),
+      ...(variant === "wrong hash" ? { sha256: "b".repeat(64) } : {}),
+      ...(variant === "invalid UTF8" ? { bytes: new Uint8Array([255]) } : {}),
+    });
+    await expect(workspace.readCaptureInventory()).rejects.toThrow();
+  },
+);
+
+it("rejects a stale Guest reader when the same UUID is now an Account, without returning file metadata", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  await captureFixture(f);
+  f.afterRead(() => {
+    f.setPrincipal({ kind: "ACCOUNT", accountId: f.guestId });
+    advanceAccountGeneration();
+  });
+  await expect(workspace.readCaptureInventory()).rejects.toThrow();
+  f.setPrincipal({ kind: "GUEST", localId: f.guestId });
+  const rebound = await f.newOpener()();
+  expect((await rebound.readCaptureInventory()).entries).toHaveLength(1);
+});

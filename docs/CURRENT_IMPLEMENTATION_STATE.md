@@ -182,6 +182,21 @@ reusing TripCreatePort/CoreCommandStorage, explicit Person mappings and final
 whole-dataset rollback/receipt checks. No intercepting COMMIT, stripping principal
 checks or borrowing QA scope; exact protected changes stay unexecuted.
 
+B Capture-only inventory now reuses the Source Writer-confirmed transactionStore
+load on the isolated Guest DB, never the Account lifecycle factory. Checks every
+owner/assigned Trip creator before bytes, validates originals with the owning
+SHA/length/UTF8 rules, retains all Capture revision+metadata hashes and blocks
+orphan payloads without writes. GuestWorkspace adds readCaptureInventory only;
+no producer/UI or global census unblock. Opaque Capture IDs retain owning semantics.
+6 directed suites168/types/UIguard/lint and independent27 real disk tests PASS.
+Actual accepted A vault read with a Node readOnly adapter has Capture payload0/ref0;
+this is not Native file production, fresh SecureStore proof or physical-disk/all-
+file absence. GUEST_B_REAL_CAPTURE_INVENTORY.json and
+GUEST_B_CAPTURE_INVENTORY_REVIEW.json record exact boundaries. Full files, draft/
+source freeze and atomic publication remain pending; Core Writer defers its shared
+transaction extraction until the active private P2 repair is fixed. Auth has no
+shared Core/Bootstrap/GUI/main lease and continues private approved work meanwhile.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
