@@ -1,3 +1,4 @@
+import { ApiClientError } from "../api/client";
 import { universalPreparedText } from "../../domain/capture/universalPreparedText";
 import { universalP1Identity } from "../../domain/trip/universalImportIdentity";
 import {
@@ -344,7 +345,24 @@ export async function readUniversalAcceptedItems(
       prefix + "operation",
     );
     const itemId = universalP1Identity(result.taskId, candidate.token, prefix + "item");
-    const read = await deps.transport.receipt(context, operationId);
+    let read: Awaited<ReturnType<typeof deps.transport.receipt>>;
+    try {
+      read = await deps.transport.receipt(context, operationId);
+    } catch (error) {
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+      if (
+        error instanceof ApiClientError &&
+        (error.kind === "network" ||
+          error.kind === "timeout" ||
+          (error.kind === "http" &&
+            error.status !== undefined &&
+            error.status >= 500 &&
+            error.status < 600))
+      )
+        continue;
+      throw error;
+    }
     current();
     await assertAccountRequestContext(context, deps.getAccountId);
     if (!read) continue;
