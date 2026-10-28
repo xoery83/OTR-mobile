@@ -13,6 +13,29 @@
   "googleNonceBridgeCompiled": true,
   "appUninstalled": false,
   "dataOrSessionCopied": false,
-  "runtimeSmoke": "PENDING_SHARED_CORE_WINDOW",
-  "manualCloudFullL3": "NOT_CLAIMED"
+  "runtimeSmoke": "PASS_BOUNDED_READ_ONLY",
+  "manualCloudFullL3": "NOT_CLAIMED",
+  "sessionRecovery": "NORMAL_RETAINED_NO_RELOGIN",
+  "tripsRetained": [
+    "Nelson summer trip",
+    "FormsQA1027"
+  ],
+  "observed": [
+    "Home widget uses October 28 local day",
+    "Day calendar rectangular selected block and abbreviated range",
+    "Existing P1/P2/P3/P4 Day rows retained",
+    "P1 Focus/Immersive/Edit field recovery/Cancel/native Back",
+    "P3 Focus/Immersive existing date/time/address/note/participants",
+    "Process terminate/relaunch retains same two Trips"
+  ],
+  "historicalItemSavePerformed": false,
+  "newModelCalls": 0,
+  "remaining": [
+    "P2/P4/P5/P6 full physical Form smoke",
+    "Physical gestures/performance measurements",
+    "Manual Cloud new Create/Edit/offline/permission cases"
+  ],
+  "observedPresentationIssue": [
+    "P1 Edit header Save changes truncates on phone"
+  ]
 }
