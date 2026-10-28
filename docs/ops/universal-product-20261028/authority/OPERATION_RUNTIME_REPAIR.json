@@ -15,5 +15,6 @@
   "operationId": "6590fee8-5310-8995-b5ab-72310aa3e2c4",
   "currentItemOrReceipt": "NONE independently verified",
   "providerCalls": 0,
-  "schemaOrRightsChanges": []
+  "schemaOrRightsChanges": [],
+  "independentReview": "NO_BLOCKER"
 }

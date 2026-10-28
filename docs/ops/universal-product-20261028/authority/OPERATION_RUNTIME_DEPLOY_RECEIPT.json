@@ -1,0 +1,30 @@
+{
+  "status": "SOFTWARE_HEALTHY_NOT_SAVE_PASS",
+  "sourceCommit": "0821fb521d4e1dd1a28e1cd3c551f690d418b297",
+  "image": "sha256:865854878bc4b2fbf659acdf63ee229ab5d2d745760af5c9725ac42937266a02",
+  "actualService": "DEV otr-dev-backend",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "containerId": "37505d7b89783590f29d573c72b25806a82abb2143a46b993b9cadcfb13c3cb4",
+  "retainedContainerId": "8addef254d8e02fc2840ce249bcbec45ab54d8c0e99d822eb49a30da8801b9c0",
+  "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+  "independentReadback": {
+    "containerId": "37505d7b89783590f29d573c72b25806a82abb2143a46b993b9cadcfb13c3cb4",
+    "image": "sha256:865854878bc4b2fbf659acdf63ee229ab5d2d745760af5c9725ac42937266a02",
+    "captureBundleSHA256": "d5e02daf2d078d4952034133d1237c789d933925916da5b9f684205383f61680",
+    "envHostConfigAndSixFullMountsUnchanged": true,
+    "existingSourceCompositionEnabled": true,
+    "healthy": true,
+    "rollbackImage": "sha256:01debabedbf3fc081c4aba60be0b05bb3507db5cc51e260f4d55de99dbb362f3",
+    "oldContainerStopped": true
+  },
+  "schemaOrRightsChanges": [],
+  "independentReview": "NO_BLOCKER (dedicated reviewer and Native interface Writer)",
+  "appBuild": 57,
+  "appSourceCommit": "7129bbbe2b2789c7acde2529af22426f3cbc2a5c",
+  "appRebuildRequired": false,
+  "totalProviderCallsUnchanged": 10,
+  "utcDayProviderCallsUnchanged": 2,
+  "oldUnknownPreserved": true,
+  "businessScope": "CLOSED before normal QA read/activation",
+  "rollbackStatus": "NOT_NEEDED; previous healthy image/container retained"
+}
