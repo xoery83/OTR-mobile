@@ -239,7 +239,7 @@ export async function verifySupabaseDevEmailOtp(
 export async function authenticateSupabaseDevProvider(
   input:
     | { provider: "apple"; idToken: string; nonce: string }
-    | { provider: "google"; idToken: string; nonce?: string },
+    | { provider: "google"; idToken: string; nonce: string },
   options: DevAuthOptions = {},
 ) {
   const credential = z
@@ -252,7 +252,7 @@ export async function authenticateSupabaseDevProvider(
       z.strictObject({
         provider: z.literal("google"),
         idToken: z.string().min(1),
-        nonce: z.string().min(1).optional(),
+        nonce: z.string().min(1),
       }),
     ])
     .parse(input);

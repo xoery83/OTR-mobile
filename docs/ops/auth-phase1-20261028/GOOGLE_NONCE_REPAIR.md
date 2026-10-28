@@ -34,3 +34,10 @@ cancel/missing credential/errors, overlap and no raw nonce/Token logging checked
 Native Swift type/link/runtime and actual Google → Session/cold/logout/isolation
 remain PENDING. Native owns one unified Build45 retaining approved P4/Import and
 this fixed Auth SHA;44 stays uninstalled because it lacks the nonce bridge.
+
+Supplemental boundary review: Google nonce is also required by the Auth DTO and
+Zod validator, preventing accidental no-nonce callers before any request. All
+product callers use the nonce bridge; Apple remains required. Independent2 suites55
+checks PASS; root final16 suites133 tests/typecheck/scoped lint/diff PASS. This
+supplement changes JS only; Native applies it after current Swift compilation and
+before the final Build45 embedded bundle. Native runtime acceptance is still pending.
