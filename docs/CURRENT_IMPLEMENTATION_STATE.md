@@ -105,6 +105,21 @@ normal Account login/adoption. Boundary census GUEST_DATA_BOUNDARIES.json record
 automatic Ledger/Person state and live P1 drafts; do not inventory only SQLite.
 No adoption/upload/conversion/Cloud acceptance or commercial quota policy yet.
 
+B preparation now adds Auth-owned `GuestLocalWorkspace.readCensus` using the same
+Guest vault/apply gate/transaction. Whole SQLite table counts and stable supported
+row hashes retain automatic Ledger/Person/cover state; unknown nonempty families,
+unknown entity/operation tuples, foreign owner/Trip, non-P1 intents and stale scope
+fail closed. Actual accepted A vault read through a read-only headless adapter
+confirms Trip1/Person1/P1=1/queue3 and explicit missing-file/live-draft blocker;
+this is not Native census-consumer or Cloud evidence. Receipt:
+ops/auth-phase2-20261028/GUEST_B_READ_ONLY_CENSUS.json. 5 directed suites61 tests,
+types/UIguard/scopedlint and independent disk19 PASS. External COMPLETE inputs
+remain metadata attestations only; actual collectors need a controlled revision/
+snapshot and same-Guest edit recheck. No Session installation, upload, adoption,
+Backend/Schema/RLS/GRANT or Native consumer activation. Next: coordinate owning
+live P1 fields/file inventory; prepare server atomic publication candidate without
+borrowing Manual/Source authority. ADR:2026-10-29-guest-adoption-census.md.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.

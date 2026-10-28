@@ -1,0 +1,81 @@
+{
+  "status": "REAL_NATIVE_CREATED_VAULT_READ_ONLY_CENSUS_NOT_NATIVE_ADOPTION_OR_CLOUD_E2E",
+  "source": "Auth-owned GuestQA63 normal Native Trip/P1/Day/cold accepted A vault",
+  "mode": "node:sqlite readOnly=true, explicit file Guest binding; no SecureStore or Session read",
+  "nativeCensusConsumerInstalled": false,
+  "actualFileAndLiveDraftCollectors": false,
+  "census": {
+    "schemaId": "otr.auth.guest-census/1",
+    "scope": {
+      "kind": "GUEST",
+      "localId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+      "generation": 0
+    },
+    "sqliteVersion": 74,
+    "tables": [
+      {
+        "name": "account_trip_cover_preferences",
+        "rows": 1,
+        "sha256": "426e236bbf3a938fe65a5f5bbc48a07a06086d7874b736bb6b12e7137f5d6eef"
+      },
+      {
+        "name": "ledger_actor_context",
+        "rows": 1,
+        "sha256": "8d969d351070f04626bc486a69cb04c48557b7e6149779ac3932acbf9e4e1785"
+      },
+      {
+        "name": "ledger_journeys",
+        "rows": 1,
+        "sha256": "cf27f4cc6ad653a21c93adc0d0ae3ee4e74e23b4ae971a3e065410ac4942091e"
+      },
+      {
+        "name": "ledger_members",
+        "rows": 1,
+        "sha256": "f86c34740c2f3a2f5398218222d2502b1a3c41de2636c2854679002b89b04884"
+      },
+      {
+        "name": "local_trip_containers",
+        "rows": 1,
+        "sha256": "5362410b12ce851b199a00556db77f8a164ef69bbf345c5cebc9125dd06c4c38"
+      },
+      {
+        "name": "local_trip_ledger_bindings",
+        "rows": 1,
+        "sha256": "f45ee67135b1fed3b2c360e3da4e59adf33a6f33f51c20a4a423353096ed529d"
+      },
+      {
+        "name": "schema_migrations",
+        "rows": 74,
+        "sha256": null
+      },
+      {
+        "name": "sqlite_sequence",
+        "rows": 2,
+        "sha256": null
+      },
+      {
+        "name": "sync_operations",
+        "rows": 3,
+        "sha256": "7f42aa2081c57201c77fbd600757db92f5b055c939cb87c78ed671253783585a"
+      },
+      {
+        "name": "trip_core_pending_intents",
+        "rows": 1,
+        "sha256": "9ed58e5a568a22e4a2c80a0b16c1f7c84fabb38d0be55386e22bec4cbe732753"
+      }
+    ],
+    "blockers": [
+      "FILE_AND_LIVE_DRAFT_COLLECTORS_REQUIRED"
+    ],
+    "readyForServerPreflight": false,
+    "inventorySha256": null,
+    "totals": {
+      "trips": 1,
+      "people": 1,
+      "p1Items": 1,
+      "files": null,
+      "fileBytes": null,
+      "liveDrafts": null
+    }
+  }
+}
