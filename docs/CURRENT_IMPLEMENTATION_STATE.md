@@ -199,6 +199,11 @@ GUEST_B_CAPTURE_INVENTORY_REVIEW.json record exact boundaries. Full files, draft
 source freeze and atomic publication remain pending; Core Writer defers its shared
 transaction extraction until the active private P2 repair is fixed. Auth has no
 shared Core/Bootstrap/GUI/main lease and continues private approved work meanwhile.
+Preflight/Capture sources98c4e0c2/11b3ee56 retained latest Import2ded and
+were serially FF-integrated as main48d0a5b4; joined6 suites159/types/UIguard and
+actual primary6 suites101 Smoke PASS, original6 dirty files/full diff unchanged.
+Historical pre-push receipt: GUEST_B_PREFLIGHT_CAPTURE_INTEGRATION.json. No Host/
+SQL/Native activation; verify final normal push refs before subsequent integration.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
