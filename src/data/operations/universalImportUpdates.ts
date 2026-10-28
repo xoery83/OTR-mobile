@@ -19,14 +19,21 @@ export type UniversalImportUpdate = Readonly<{
   state: "RESULTS_READY" | "FAILED" | "UNKNOWN" | "STALE";
   updatedAt: string;
   rowRevision: number;
+  savedItemCount?: number;
 }>;
 
-// Current owning Task observations, not another notification journal or Save receipt.
+type SavedOutcome = Pick<
+  UniversalImportUpdate,
+  "accountId" | "tripId" | "batchId" | "updatedAt"
+> & { savedItemCount: number };
+
+// Owning Task and completed Source receipts projected into the existing Batch identity.
 export function projectUniversalImportUpdates(
   accountId: string,
   tripId: string | null,
   jobs: readonly CaptureJobReadModel[],
   observations: Readonly<Record<string, UniversalTaskActivity>>,
+  saved: Readonly<Record<string, SavedOutcome>> = {},
 ): UniversalImportUpdate[] {
   const updates = new Map<string, UniversalImportUpdate>();
   for (const job of jobs) {
@@ -49,6 +56,17 @@ export function projectUniversalImportUpdates(
       state !== "STALE"
     )
       continue;
+    const outcome = saved[batch.batchId];
+    const complete =
+      state === "RESULTS_READY" &&
+      outcome &&
+      outcome.accountId === accountId &&
+      outcome.tripId === prior &&
+      outcome.batchId === batch.batchId &&
+      Number.isInteger(outcome.savedItemCount) &&
+      outcome.savedItemCount > 0 &&
+      outcome.savedItemCount <= 64 &&
+      Number.isFinite(Date.parse(outcome.updatedAt));
     updates.set(batch.batchId, {
       id: `universal-import:${batch.batchId}`,
       accountId,
@@ -58,6 +76,14 @@ export function projectUniversalImportUpdates(
       state,
       updatedAt,
       rowRevision,
+      ...(complete
+        ? {
+            savedItemCount: outcome.savedItemCount,
+            updatedAt: new Date(
+              Math.max(Date.parse(updatedAt), Date.parse(outcome.updatedAt)),
+            ).toISOString(),
+          }
+        : {}),
     });
   }
   return [...updates.values()].sort(
@@ -93,18 +119,69 @@ export async function readDefaultUniversalImportUpdates(
   if (!current()) return;
   const { readDefaultUniversalActivities } = await import("./universalActivityReader");
   const observations: Record<string, UniversalTaskActivity> = {};
-  await readDefaultUniversalActivities(jobs, current, (batchId, activity) => {
-    if (!current()) return;
-    observations[batchId] = activity;
-    onObservation(
-      projectUniversalImportUpdates(context.accountId, tripId, jobs, observations),
-      context,
-    );
-  });
+  const saved: Record<string, SavedOutcome> = {};
+  const emit = () => {
+    if (current())
+      onObservation(
+        projectUniversalImportUpdates(
+          context.accountId,
+          tripId,
+          jobs,
+          observations,
+          saved,
+        ),
+        context,
+      );
+  };
+  await readDefaultUniversalActivities(
+    jobs,
+    current,
+    (batchId, activity) => {
+      if (!current()) return;
+      observations[batchId] = activity;
+      emit();
+    },
+    async (job, result) => {
+      if (!current()) return;
+      const [
+        { requireAdoptedUserId },
+        { tripCoreSha256Hex },
+        { createCoreV2Transport },
+        { readUniversalAcceptedItems },
+      ] = await Promise.all([
+        import("../auth/authRepository"),
+        import("../repositories/tripCoreSha256"),
+        import("../api/tripCoreV2Transport"),
+        import("./universalP1AdmissionConsumer"),
+      ]);
+      if (!current()) return;
+      const accepted = await readUniversalAcceptedItems(job, result, {
+        getAccountId: requireAdoptedUserId,
+        isCurrent: current,
+        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+          timeoutMs: 60000,
+        }),
+      });
+      const completed = Object.values(accepted).filter(
+        (item) => item.sourceComplete === true,
+      );
+      if (!current() || !completed.length) return;
+      saved[job.batch.batchId] = {
+        accountId: result.accountId,
+        tripId: result.tripId,
+        batchId: result.batchId,
+        savedItemCount: new Set(completed.map((item) => item.itemId)).size,
+        updatedAt: new Date(
+          Math.max(...completed.map((item) => Date.parse(item.committedAt))),
+        ).toISOString(),
+      };
+      emit();
+    },
+  );
   await assertAccountRequestContext(context, requireActiveUserId);
   if (current())
     onObservation(
-      projectUniversalImportUpdates(context.accountId, tripId, jobs, observations),
+      projectUniversalImportUpdates(context.accountId, tripId, jobs, observations, saved),
       context,
     );
 }

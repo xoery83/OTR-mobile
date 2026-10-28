@@ -87,12 +87,14 @@ export function ImportUpdatesSection({
       if (current(ticket)) setBusy(false);
     }
   };
+  const label = (card: UniversalImportUpdate) =>
+    card.savedItemCount
+      ? t("updates.importSaved", { count: card.savedItemCount })
+      : t(`capture.ai.task.${card.state}`);
   const query = filter.query.trim().toLocaleLowerCase();
   const cards =
     loaded?.cards.filter((card) =>
-      `${t("updates.importActivity")} ${t(`capture.ai.task.${card.state}`)}`
-        .toLocaleLowerCase()
-        .includes(query),
+      `${t("updates.importActivity")} ${label(card)}`.toLocaleLowerCase().includes(query),
     ) ?? [];
   return (
     <UiSection title={t("updates.importActivity")}>
@@ -114,7 +116,7 @@ export function ImportUpdatesSection({
             })}
           </UiText>
           <UiButton
-            label={t(`capture.ai.task.${card.state}`)}
+            label={label(card)}
             variant="text"
             disabled={busy}
             onPress={() => void open(card)}

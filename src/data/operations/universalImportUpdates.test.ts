@@ -14,9 +14,11 @@ const source = vi.hoisted(() => ({
   list: vi.fn(),
   read: vi.fn(),
   reopen: vi.fn(),
+  accepted: vi.fn(),
 }));
 vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => source.account,
+  requireAdoptedUserId: async () => source.account,
 }));
 vi.mock("./defaultCaptureSubmission", () => ({
   listDefaultCaptureJobs: source.list,
@@ -24,6 +26,11 @@ vi.mock("./defaultCaptureSubmission", () => ({
 }));
 vi.mock("./universalActivityReader", () => ({
   readDefaultUniversalActivities: source.read,
+}));
+vi.mock("../repositories/tripCoreSha256", () => ({ tripCoreSha256Hex: vi.fn() }));
+vi.mock("../api/tripCoreV2Transport", () => ({ createCoreV2Transport: () => ({}) }));
+vi.mock("./universalP1AdmissionConsumer", () => ({
+  readUniversalAcceptedItems: source.accepted,
 }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -197,4 +204,86 @@ it("closed view does not emit or fetch any Task and open never crosses a late Ac
     return f.job;
   });
   await expect(reopenDefaultUniversalImportUpdate(context, card)).rejects.toThrow();
+});
+
+it("projects completed Source saves into the same Batch event, never cross-account or incomplete records", () => {
+  const f = fixture(),
+    completed = {
+      accountId: f.accountId,
+      tripId: f.tripId,
+      batchId: f.batchId,
+      savedItemCount: 1,
+      updatedAt: "2026-10-28T00:05:00Z",
+    };
+  const read = (value: unknown) =>
+    projectUniversalImportUpdates(f.accountId, f.tripId, [f.job, f.job], f.observations, {
+      [f.batchId]: value,
+    } as never);
+  const cards = read(completed);
+  expect(cards).toHaveLength(1);
+  expect(cards[0]).toMatchObject({
+    id: `universal-import:${f.batchId}`,
+    savedItemCount: 1,
+    updatedAt: new Date(completed.updatedAt).toISOString(),
+  });
+  for (const altered of [
+    { ...completed, accountId: randomUUID() },
+    { ...completed, tripId: randomUUID() },
+    { ...completed, batchId: randomUUID() },
+    { ...completed, savedItemCount: 0 },
+    { ...completed, savedItemCount: 65 },
+    { ...completed, updatedAt: "invalid" },
+  ])
+    expect(read(altered)[0]).not.toHaveProperty("savedItemCount");
+  expect(read(completed)[0]).not.toHaveProperty("unread");
+});
+
+it("only completed Source receipts upgrade the same observed Batch, with stable server time", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  source.list.mockResolvedValue([f.job]);
+  source.accepted.mockResolvedValue({
+    i1: { itemId: "one", committedAt: "2026-10-28T00:05:00Z", sourceComplete: true },
+    i2: { itemId: "two", committedAt: "2026-10-28T00:06:00Z" },
+  });
+  source.read.mockImplementation(async (_jobs, _current, emit, result) => {
+    emit(f.batchId, f.activity);
+    await result(f.job, { accountId: f.accountId, tripId: f.tripId, batchId: f.batchId });
+  });
+  const observed = vi.fn();
+  await readDefaultUniversalImportUpdates(f.tripId, () => true, observed);
+  const cards = observed.mock.calls.at(-1)![0];
+  expect(cards).toHaveLength(1);
+  expect(cards[0]).toMatchObject({
+    id: `universal-import:${f.batchId}`,
+    savedItemCount: 1,
+    updatedAt: "2026-10-28T00:05:00.000Z",
+  });
+  source.accepted.mockResolvedValue({
+    i1: { itemId: "one", committedAt: "2026-10-28T00:05:00Z" },
+  });
+  observed.mockClear();
+  await readDefaultUniversalImportUpdates(f.tripId, () => true, observed);
+  expect(observed.mock.calls.at(-1)![0][0]).not.toHaveProperty("savedItemCount");
+});
+it("a late completed receipt cannot escape the Account generation fence", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  source.list.mockResolvedValue([f.job]);
+  source.read.mockImplementation(async (_jobs, _current, emit, result) => {
+    emit(f.batchId, f.activity);
+    await result(f.job, { accountId: f.accountId, tripId: f.tripId, batchId: f.batchId });
+  });
+  source.accepted.mockImplementation(async () => {
+    advanceAccountGeneration();
+    return {
+      i1: { itemId: "one", committedAt: "2026-10-28T00:05:00Z", sourceComplete: true },
+    };
+  });
+  const observed = vi.fn();
+  await expect(
+    readDefaultUniversalImportUpdates(f.tripId, () => true, observed),
+  ).rejects.toThrow();
+  expect(observed.mock.calls).toHaveLength(1);
+  expect(observed.mock.calls[0][0][0]).not.toHaveProperty("savedItemCount");
 });

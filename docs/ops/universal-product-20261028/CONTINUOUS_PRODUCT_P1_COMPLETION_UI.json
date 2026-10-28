@@ -1,0 +1,24 @@
+{
+  "status": "NATIVE_E2E_PASS_READ_ONLY_SOURCE_COMPLETION",
+  "sourceCommit": "1513f44e68ab5fdea88229b87cce9a330e084c3b",
+  "nativeBuild": 59,
+  "batchId": "adc06db4-c06e-432a-b866-d4165f4c06f5",
+  "taskId": "859445fb-12b7-8267-91c0-e0c09baf4bfb",
+  "itemId": "9c8fe13e-0675-8795-acd7-c96561dccbd3",
+  "operationId": "6590fee8-5310-8995-b5ab-72310aa3e2c4",
+  "businessSaveScope": "CLOSED",
+  "observed": {
+    "coldLaunchMyTrips": true,
+    "sameBatchResultsRestored": true,
+    "originalReadable": true,
+    "originalAndTripReviewed": true,
+    "newSelected": true,
+    "completedSourceFinalConfirmDisabled": true,
+    "newProviderCalls": 0,
+    "newBusinessWrites": 0
+  },
+  "limitations": [
+    "This is completed Source read/recovery, not another Save or another family acceptance.",
+    "PDF/image ingestion and full Beta remain pending."
+  ]
+}

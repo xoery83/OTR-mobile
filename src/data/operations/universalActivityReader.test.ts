@@ -132,3 +132,27 @@ it("does not emit late observations after account invalidation", async () => {
   expect(await readUniversalActivities(f.jobs, { ...f, onObservation })).toEqual({});
   expect(onObservation).not.toHaveBeenCalled();
 });
+
+it("reads completion details only after a valid READY observation and preserves it when details fail", async () => {
+  const f = fixture(),
+    onObservation = vi.fn(),
+    onReady = vi.fn().mockRejectedValue(Error("OFFLINE"));
+  const pending = await f.context({}, f.jobs[1].batch.batchId);
+  f.context
+    .mockResolvedValueOnce({ ...pending, batchId: f.jobs[0].batch.batchId })
+    .mockResolvedValueOnce({
+      ...pending,
+      activity: { ...f.activity, state: "PROCESSING" },
+    });
+  const observed = await readUniversalActivities(f.jobs, {
+    ...f,
+    onObservation,
+    onReady,
+  });
+  expect(onReady).toHaveBeenCalledOnce();
+  expect(onObservation).toHaveBeenCalledTimes(2);
+  expect(observed[f.jobs[0].batch.batchId].state).toBe("RESULTS_READY");
+  expect(onObservation.mock.invocationCallOrder[0]).toBeLessThan(
+    onReady.mock.invocationCallOrder[0],
+  );
+});

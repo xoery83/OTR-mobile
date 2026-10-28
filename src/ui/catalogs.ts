@@ -2,6 +2,7 @@ export const en = {
   "importDocuments.importedItems": "Saved items linked through this Import Batch: {count}",
   "importDocuments.itemLinksUnavailable": "Related saved items could not be checked.",
   "updates.importActivity": "Recent Import activity",
+  "updates.importSaved": "Saved items: {count} · Open results",
   "updates.importCoverage":
     "Open a processing record to check its current results. These records do not have read or unread status.",
   "importDocuments.trip": "Trip Documents",
@@ -3013,6 +3014,7 @@ export const zhHans: Record<MessageKey, string> = {
   "importDocuments.importedItems": "通过本次导入关联的已保存事项：{count}",
   "importDocuments.itemLinksUnavailable": "暂时无法核对关联的已保存事项。",
   "updates.importActivity": "近期导入动态",
+  "updates.importSaved": "已保存 {count} 项 · 查看结果",
   "updates.importCoverage": "打开解析记录可查看当前结果。这些记录暂不区分已读和未读。",
   "importDocuments.trip": "行程文档",
   "importDocuments.inbox": "个人收件箱",
