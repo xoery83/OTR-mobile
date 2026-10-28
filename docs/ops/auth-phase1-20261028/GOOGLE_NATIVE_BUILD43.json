@@ -14,7 +14,7 @@
   "businessAdmissionEnabled": false,
   "nativeCompile": "PASS",
   "installed": "FORMS_QA_IN_PLACE_PASS",
-  "realGoogleLogin": "NOT_TESTED",
+  "realGoogleLogin": "FAILED_SUPABASE_NONCE_VALIDATION",
   "udid": "C0C23E00-5016-4289-B806-92C5484BD5BA",
   "googlePodVersion": "9.2.0",
   "podLockSha256": "cb25c32c2301739166c990cdb266a9ae1f5cd581f5b88998642d6f3f5b143f96",
@@ -28,10 +28,23 @@
   "googleCancelKeepsOriginalAccount": "PASS",
   "googleRepeatAfterCancel": "PASS",
   "googleOfficialPage": "Sign in to continue to OnTheRoad",
-  "googleHumanInteraction": "IN_PROGRESS_OWNER_HANDOFF",
+  "googleHumanInteraction": "COMPLETED_PROVIDER_TOKEN_RETURNED_SUPABASE_REJECTED",
   "googleSessionColdLogoutIsolation": "NOT_TESTED",
   "otherDeviceSessionOrKeychainRead": false,
   "ad5Operated": false,
   "observedAt": "2026-10-28T05:06:55.714019+00:00",
-  "newRuntimeStatisticsTable": "sqlite_stat1"
+  "newRuntimeStatisticsTable": "sqlite_stat1",
+  "failedIdTokenExchanges": [
+    {
+      "utc": "2026-10-28T05:09:07Z",
+      "status": 400,
+      "reason": "NONCE_REQUEST_TOKEN_PRESENCE_MISMATCH"
+    },
+    {
+      "utc": "2026-10-28T05:19:01Z",
+      "status": 400,
+      "reason": "NONCE_REQUEST_TOKEN_PRESENCE_MISMATCH"
+    }
+  ],
+  "originalQaAccountAfterFailure": "OBSERVED_RETAINED"
 }

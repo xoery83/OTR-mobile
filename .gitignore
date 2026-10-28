@@ -47,3 +47,8 @@ expo-env.d.ts
 # Retained source for the scoped local PDFKit capability; generated app ios stays ignored.
 !modules/receipt-ocr/ios/
 !modules/receipt-ocr/ios/FlightPdfExtractor.swift
+
+# Auth-owned nonce bridge; generated app ios/ remains ignored.
+!modules/otr-google-signin/ios/
+!modules/otr-google-signin/ios/*.swift
+!modules/otr-google-signin/ios/*.podspec
