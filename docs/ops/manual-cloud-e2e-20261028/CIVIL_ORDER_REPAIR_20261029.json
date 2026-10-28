@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_PASS_NATIVE_PENDING",
+  "status": "LOCAL_PASS_PHYSICAL_ACCEPTED_CIVIL_ORDER_PASS",
   "baseCommit": "86b41d55",
   "deviceBaseline": {
     "bundleId": "com.xoery.otrmobile.formsqa",
@@ -18,7 +18,7 @@
     "typecheck": "PASS",
     "uiGuard": "PASS",
     "scopedLint": "PASS",
-    "independentReview": "PRELIMINARY_NO_BLOCKER; independent 4 suites54 PASS, caller checks in progress"
+    "independentReview": "NO_BLOCKER; independent 7 suites75 checks PASS"
   },
   "unchanged": [
     "Core or Reader authority",
@@ -28,9 +28,29 @@
     "DEV business gates"
   ],
   "remaining": [
-    "Install and verify the repair on physical phone; source is not installed yet.",
     "P1 Focus quick-add still absent when context is UNKNOWN: eligibility/context separately unresolved.",
     "Manual P1/P3/P4 offline/replay/live permission L3 negatives remain pending.",
     "P2 full authored Flight formal Cloud proof port missing; P5/P6 sustained DEV capability not approved."
-  ]
+  ],
+  "physical": {
+    "build": 58,
+    "source": "4ce1067f",
+    "jsSHA256": "58326dfe326195705fb1f56a904c6069353c2500188e5abe53b5d0ce07754498",
+    "install": "IN_PLACE_PASS",
+    "bundleId": "com.xoery.otrmobile.formsqa",
+    "sameDeveloperTeamProfileEntitlements": true,
+    "nativeBaseline": "Same phone56/54 native code; JS-only update; not a full new Import native binary claim",
+    "recovery": [
+      "Existing Account session, Nelson summer trip, FormsQA1027 and phone Cloud trip retained.",
+      "Same Trip657b9bed Oct29-Nov3, accepted P4 01:16 then P1 03:28 then P3 17:00 on DayFeed.",
+      "P1 Focus retains latest note Phone P1 timed edit, Everyone, no pending dot.",
+      "Tomorrow shows one retained P3 Daily base."
+    ],
+    "cloudWritesInVerification": 0,
+    "dataReset": false,
+    "remaining": [
+      "UNKNOWN-context P1 Focus quick-add absent remains a separate issue.",
+      "Mixed pending order has directed tests, not live offline proof."
+    ]
+  }
 }
