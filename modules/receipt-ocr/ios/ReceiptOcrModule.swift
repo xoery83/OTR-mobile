@@ -111,8 +111,9 @@ public class ReceiptOcrModule: Module {
         }
         self.importPreview = (token, preview)
         presenter.present(preview, animated: true) { preview.didPresent() }
-        DispatchQueue.main.async {
-          if preview.presentingViewController == nil { preview.presentationFailed() }
+        // UIKit presentation completion, not the next run-loop turn, owns readiness.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+          preview.failIfPresentationPending()
         }
       }
     }
@@ -301,7 +302,11 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
     file as NSURL
   }
-  func presentationFailed() { complete(true) }
+  func failIfPresentationPending() {
+    guard !presented, finish != nil else { return }
+    closeRequested = true
+    complete(true)
+  }
   func didPresent() {
     presented = true
     if closeRequested { closePrivateOriginal() }

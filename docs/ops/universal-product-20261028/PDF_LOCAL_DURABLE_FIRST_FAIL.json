@@ -44,5 +44,19 @@
     "kind": "ERROR",
     "uniqueNativeCause": "NOT_PROVEN"
   },
-  "nextProbe": "Equivalent fixed Native guard reasons plus boolean JS bridge presence; same original, no guard relaxation."
+  "nextProbe": "Equivalent fixed Native guard reasons plus boolean JS bridge presence; same original, no guard relaxation.",
+  "directedNativeFailure": {
+    "build": 67,
+    "sourceCommit": "9b63ac55",
+    "sameCaptureId": "26adbb36-b330-4b77-82d3-4da34b2f0598",
+    "samePayloadId": "4f65bc54-51fb-4637-9025-7102524dbc0d",
+    "previewMethod": true,
+    "closeMethod": true,
+    "nativeReason": "PRESENTATION_REJECTED",
+    "site": "next main-queue presentingViewController nil check",
+    "uikitRejectionLogObserved": false,
+    "expected": "Native PDF preview visible",
+    "actual": "Original unavailable",
+    "newObjectsOrModelCalls": 0
+  }
 }
