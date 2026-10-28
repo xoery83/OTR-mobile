@@ -178,6 +178,10 @@ it("recognizes exact additive P5/P6 Manual union without widening Source or Flig
       enabled_commands: gate.enabled_commands.filter((c) => c !== "SET_ACTIVITY_DETAILS"),
     },
     { ...gate, enabled_commands: [...gate.enabled_commands, "QUALIFY_FLIGHT"] },
+    {
+      ...gate,
+      enabled_commands: [...gate.enabled_commands, "SET_AUTHORED_FLIGHT_DETAILS"],
+    },
     { ...gate, enabled_commands: [...gate.enabled_commands, "CREATE_SPARSE_FLIGHT"] },
     {
       ...gate,

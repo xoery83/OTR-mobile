@@ -55,8 +55,15 @@
       "title": "Forms QA Simulator Train 1029 Edited",
       "semantic_revision": 2
     },
-    "coldDetailsVisual": "PENDING_GUI_RETURN",
-    "dayFeed": "PENDING"
+    "coldDetailsVisual": true,
+    "dayFeed": "PENDING",
+    "coldDetailsObserved": {
+      "title": "Forms QA Simulator Train 1029 Edited",
+      "departureDate": "Oct 29, 2026",
+      "departureLabel": "Forms QA Departure",
+      "participants": "Everyone",
+      "pendingDot": false
+    }
   },
   "notPassed": [
     "real offline/replay/permission negatives",
