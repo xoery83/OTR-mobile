@@ -1,0 +1,28 @@
+{
+  "status": "DEFENSIVE_DORMANT_CANDIDATE_VALIDATED_NOT_APPROVED_NOT_INSTALLED",
+  "supersedesBlockedInstall": "379c3f1dc7cd53197c6bf7a2b4a125032de843a91df81ddab68b8d23ead30c6a",
+  "changedVsBlocked": [
+    "trip_core_guard_write()"
+  ],
+  "changedFunctions": 5,
+  "identityPins": 11,
+  "newAuthority": false,
+  "DEV": false,
+  "sharedTreeWrites": false,
+  "schemaRoleRLSGRANTCheckChanges": false,
+  "verification": "Actual owned network-none PG normalCreate/Edit/receipt-firstReplay/Reader/initialselectedchildren/fixeddenychecks/data-retainingexactrollback PASS",
+  "files": {
+    "install.full.sql": "b19a0257471cad173533c1c6b2f81cfa3fe38cbccbfb252d77496469540bb733",
+    "install.full.rollback.sql": "03e65a9e640322784f0364a3404a733af8aa4aa834e88639a4e42fbdc1f3821c",
+    "final-preimages.json": "ab200ac596f694963e7027eaafa4db24595072be4f70a103b17151d5db769b75",
+    "final-postimages.json": "e4b218b794325beb7e325cda0fc60d1594f88e9052d5c9179bced91e3d9f791c",
+    "DEFENSIVE_DIFF.txt": "1c8bfae7805c3b0f895461302f796983e3221fb670fcb6c1f447b5841b71eb69",
+    "HANDOFF.md": "97aaa565a57506fa9de902eb933463d0a3307d7e49700cb953d1e819886211e3",
+    "prepare.py": "8e7670e79d125fec76bc10cf99e9e2fc279707f2b9ecdf56ec9930e9512fb997",
+    "owned-atomic-run.py": "bbfd8b67cbf807f7d6183605b7e3db2c44f0a595d6a058213c26818f8395c58d",
+    "fixture-atomic.mts": "37e13abf0ef28a4d7b2be9dbe50c7c96cbfb0a330747341b08dd75a5648643e7",
+    "isolated-atomic.log": "0facf9d61ee8bb5f182f821f28976a2b9bbbb36b6b16ce3ddd98102377401971",
+    "fixture-identity-map.json": "1159397a980fbb50c4f90ebc4585e22643f6996e9ee0c72e00fa5b53366dcbc1",
+    "fixture-catalog-before.json": "41e69c31eb371e85050ff151bd920df8da32c09154e684f3da349285ac077455"
+  }
+}

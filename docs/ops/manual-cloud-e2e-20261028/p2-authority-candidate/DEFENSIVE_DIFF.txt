@@ -1,0 +1,43 @@
+--- blocked-old-guard
++++ insert-only-guard
+@@ -25,6 +25,40 @@
+     or (current_setting('otr.core.command',true) IN ('CREATE_SPARSE_FLIGHT','SET_AUTHORED_FLIGHT_DETAILS') AND current_setting('otr.core.family',true) IS DISTINCT FROM 'P2')
+     or (current_setting('otr.core.family',true)='P2' AND coalesce(current_setting('otr.core.command',true),'') NOT IN ('CREATE_SPARSE_FLIGHT','SET_AUTHORED_FLIGHT_DETAILS','SET_ITEM_PARTICIPATION'))
+     or (current_setting('otr.core.family',true)='P2' AND current_setting('otr.core.command',true) IS DISTINCT FROM 'CREATE_SPARSE_FLIGHT' AND NOT public.trip_sustained_dev_scope_allowed(actor,trip,null,'CORE_P2_DETAILS'))
++    -- Initial Manual Sparse creation cannot be reused as an Edit or attached to an old aggregate.
++    or (current_setting('otr.core.family',true)='P2' AND current_setting('otr.core.command',true)='CREATE_SPARSE_FLIGHT' AND (
++      tg_op<>'INSERT'
++      OR tg_table_name NOT IN ('itinerary_events','trip_flight_intents','trip_item_participants','trip_item_visibility_people','trip_core_command_receipts')
++      OR (tg_table_name='itinerary_events' AND (new_json->>'semantic_revision' IS DISTINCT FROM '1' OR new_json->>'temporal_shape' IS DISTINCT FROM 'CALENDAR'))
++      OR (tg_table_name<>'itinerary_events' AND NOT EXISTS (
++        SELECT 1 FROM public.itinerary_events initial
++        WHERE initial.id=nullif(current_setting('otr.core.target_item',true),'')::uuid AND initial.trip_id=trip
++        AND initial.owner_account_id=actor AND initial.experience_family='P2' AND initial.business_contract_version=2
++        AND initial.semantic_revision=1 AND initial.temporal_shape='CALENDAR'
++        AND initial.xmin::text::bigint=(txid_current()%4294967296)
++      ))
++      OR EXISTS(SELECT 1 FROM public.trip_core_command_receipts previous WHERE previous.trip_id=trip AND previous.body#>'{result,created}' @> jsonb_build_array(jsonb_build_object('kind','ITEM','id',current_setting('otr.core.target_item',true))))
++      OR (tg_table_name='trip_core_command_receipts' AND (
++        new_json->>'operation_id' IS DISTINCT FROM nullif(current_setting('otr.core.operation',true),'')
++        OR new_json->>'outcome' IS DISTINCT FROM 'APPLIED'
++        OR new_json#>>'{body,command}' IS DISTINCT FROM 'CREATE_SPARSE_FLIGHT'
++        OR new_json#>>'{body,actorAccountId}' IS DISTINCT FROM actor::text
++        OR new_json#>>'{body,tripId}' IS DISTINCT FROM trip::text
++        OR new_json#>>'{body,operationId}' IS DISTINCT FROM new_json->>'operation_id'
++        OR new_json#>>'{body,intentSha256}' IS DISTINCT FROM new_json->>'intent_sha256'
++        OR new_json#>>'{body,receiptSha256}' IS DISTINCT FROM new_json->>'receipt_sha256'
++        OR new_json#>>'{body,outcome}' IS DISTINCT FROM 'APPLIED'
++        OR new_json#>'{body,result,created}' IS DISTINCT FROM jsonb_build_array(jsonb_build_object('kind','ITEM','id',current_setting('otr.core.target_item',true)))
++        OR new_json#>'{body,targetVector}' IS DISTINCT FROM jsonb_build_array(jsonb_build_object('kind','ITEM','id',current_setting('otr.core.target_item',true),'baseRevision',null,'committedRevision',1))
++        OR (new_json->>'canonical_intent_text')::jsonb->>'command' IS DISTINCT FROM 'CREATE_SPARSE_FLIGHT'
++        OR (new_json->>'canonical_intent_text')::jsonb->>'tripId' IS DISTINCT FROM trip::text
++        OR (new_json->>'canonical_intent_text')::jsonb->>'operationId' IS DISTINCT FROM new_json->>'operation_id'
++        OR (new_json->>'canonical_intent_text')::jsonb#>'{target}' IS DISTINCT FROM jsonb_build_object('kind','ITEM','id',current_setting('otr.core.target_item',true))
++        OR (new_json->>'canonical_intent_text')::jsonb#>'{baseVector}' IS DISTINCT FROM jsonb_build_array(jsonb_build_object('kind','ITEM','id',current_setting('otr.core.target_item',true),'revision',null))
++        OR (new_json->>'canonical_intent_text')::jsonb#>'{admission}' IS DISTINCT FROM jsonb_build_object('mode','MANUAL','sourceIntentId',null,'policyVersion',null)
++        OR new_json->>'intent_sha256' IS DISTINCT FROM encode(sha256(convert_to('otr-trip-core-intent-v2'||E'\n'||(new_json->>'canonical_intent_text'),'UTF8')),'hex')
++      ))
++    ))
+     or nullif(current_setting('otr.core.target_item',true),'') is null
+     or tg_table_name not in ('itinerary_events','trip_stay_details','trip_stay_rooms','trip_rental_details','trip_rental_places','trip_activity_details','trip_activity_entry_places','itinerary_transport_endpoints','itinerary_transport_services','trip_flight_intents','trip_endpoint_details','trip_item_participants','trip_item_visibility_people','trip_core_command_receipts')
+     or tg_op='DELETE' and not ((tg_table_name='trip_item_participants' and current_setting('otr.core.command',true)='SET_ITEM_PARTICIPATION') or (tg_table_name='trip_stay_rooms' and current_setting('otr.core.family',true)='P3' and current_setting('otr.core.command',true)='SET_STAY_DETAILS') or (tg_table_name='trip_rental_places' and current_setting('otr.core.family',true)='P4' and current_setting('otr.core.command',true)='SET_RENTAL_DETAILS'))
