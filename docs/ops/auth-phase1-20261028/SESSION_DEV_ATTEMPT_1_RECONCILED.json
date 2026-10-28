@@ -1,0 +1,18 @@
+{
+  "scope": "HOST_SESSION_ATTEMPT_1_FAILED_REVOKED_REFRESH_CHECK",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "ownSessionId": "5ce209ae-ce27-4397-85e4-3bbf0d68f62e",
+  "failedStep": "REVOKED_REFRESH_NEGATIVE",
+  "logoutAcknowledged": true,
+  "independentOwnSessionAbsent": true,
+  "baselineSessionsPreserved": 11,
+  "logoutResent": false,
+  "outcome": "RECONCILED_CLOSED_NOT_E2E_PASS",
+  "reconciledAt": "2026-10-28T03:59:28.310Z",
+  "formatProbe": {
+    "status": 400,
+    "code": 400,
+    "error_code": "validation_failed"
+  },
+  "oldRevokedRefreshErrorCode": "NOT_RETAINED_NOT_RECONSTRUCTED"
+}

@@ -30,6 +30,8 @@ export const en = {
     "The processing outcome is unknown. Check status before trying again.",
 
   "auth.emailTitle": "Sign in or create an account",
+  "auth.continueGoogle": "Continue with Google",
+  "auth.nativeUpdateRequired": "Update the app to use Google sign-in on this device.",
   "auth.sendCode": "Send verification code",
   "auth.code": "Verification code",
   "auth.codeSent": "Enter the code sent to {email}.",
@@ -3029,6 +3031,8 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.task.UNKNOWN": "尚无法确认处理结果，请先查询状态再继续。",
 
   "auth.emailTitle": "登录或创建账户",
+  "auth.continueGoogle": "使用 Google 继续",
+  "auth.nativeUpdateRequired": "请更新 App，以在此设备使用 Google 登录。",
   "auth.sendCode": "发送验证码",
   "auth.code": "验证码",
   "auth.codeSent": "请输入发送至 {email} 的验证码。",

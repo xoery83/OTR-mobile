@@ -87,9 +87,10 @@ async function tokenRequest(
 
 async function authRequest(
   path: string,
-  body: Record<string, unknown>,
+  body: Record<string, unknown> | null,
   options: DevAuthOptions,
   refreshing = false,
+  accessToken?: string,
 ) {
   const config = configuration(options);
   const controller = new AbortController();
@@ -109,11 +110,13 @@ async function authRequest(
     response = await Promise.race([
       config.fetchImplementation(`${config.url}/auth/v1${path}`, {
         method: "POST",
+        redirect: "error",
         headers: {
           apikey: config.publishableKey,
           "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify(body),
+        body: body === null ? undefined : JSON.stringify(body),
         signal: controller.signal,
       }),
       canceled,
@@ -124,17 +127,30 @@ async function authRequest(
         response.json().catch(() => null),
         canceled,
       ]);
-      const code = z.object({ code: z.string() }).safeParse(failure);
+      const parsed = z
+        .object({
+          code: z.union([z.string(), z.number()]).optional(),
+          error_code: z.string().optional(),
+        })
+        .safeParse(failure);
+      const codes = parsed.success
+        ? [
+            typeof parsed.data.code === "string" ? parsed.data.code : undefined,
+            parsed.data.error_code,
+          ].filter((value): value is string => value !== undefined)
+        : [];
       const rejectedRefresh =
-        code.success &&
-        [
-          "refresh_token_not_found",
-          "refresh_token_already_used",
-          "session_not_found",
-          "session_expired",
-          "user_banned",
-          "user_not_found",
-        ].includes(code.data.code);
+        codes.length > 0 &&
+        codes.every((code) =>
+          [
+            "refresh_token_not_found",
+            "refresh_token_already_used",
+            "session_not_found",
+            "session_expired",
+            "user_banned",
+            "user_not_found",
+          ].includes(code),
+        );
       throw new SupabaseDevAuthError(
         "Supabase Dev authentication failed.",
         response.status === 429
@@ -147,6 +163,7 @@ async function authRequest(
         response.status,
       );
     }
+    if (response.status === 204 || path === "/logout?scope=local") return null;
     const value: unknown = await Promise.race([response.json(), canceled]);
     if (controller.signal.aborted) throw new Error("AUTH_REQUEST_ABORTED");
     return value;
@@ -220,15 +237,24 @@ export async function verifySupabaseDevEmailOtp(
 }
 
 export async function authenticateSupabaseDevProvider(
-  input: { provider: "apple" | "google"; idToken: string; nonce: string },
+  input:
+    | { provider: "apple"; idToken: string; nonce: string }
+    | { provider: "google"; idToken: string; nonce?: string },
   options: DevAuthOptions = {},
 ) {
   const credential = z
-    .strictObject({
-      provider: z.enum(["apple", "google"]),
-      idToken: z.string().min(1),
-      nonce: z.string().min(1),
-    })
+    .discriminatedUnion("provider", [
+      z.strictObject({
+        provider: z.literal("apple"),
+        idToken: z.string().min(1),
+        nonce: z.string().min(1),
+      }),
+      z.strictObject({
+        provider: z.literal("google"),
+        idToken: z.string().min(1),
+        nonce: z.string().min(1).optional(),
+      }),
+    ])
     .parse(input);
   return sessionFromToken(
     await authRequest(
@@ -288,6 +314,20 @@ export async function revalidateStoredSupabaseDevSession(options: DevAuthOptions
 }
 
 export const signOutOfSupabaseDev = clearLocalSession;
+
+// Revoke only this login's refresh session; local data removal stays with the coordinator.
+export async function revokeSupabaseDevSession(
+  accessToken: string,
+  options: DevAuthOptions = {},
+) {
+  await authRequest(
+    "/logout?scope=local",
+    null,
+    options,
+    true,
+    z.string().min(1).parse(accessToken),
+  );
+}
 
 function identityFromToken(
   token: z.infer<typeof tokenResponseSchema>,

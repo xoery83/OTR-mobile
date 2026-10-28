@@ -2,7 +2,11 @@ import { randomUUID, createHash } from "node:crypto";
 import { it, expect, vi } from "vitest";
 import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
-import { normalP1Commands, normalP3Commands } from "./tripNormalP1Policy";
+import {
+  normalP1Commands,
+  normalP3Commands,
+  normalP4Commands,
+} from "./tripNormalP1Policy";
 import { emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
@@ -159,7 +163,7 @@ it("scope expiry after receipt lookup rolls back current replay without deleting
 });
 
 it.each(
-  ["P1", "P3"].flatMap((family) =>
+  ["P1", "P3", "P4"].flatMap((family) =>
     ["PRIVATE", "SELECTED_PERSONS", "GROUP"].map((visibility) => ({
       family,
       visibility,
@@ -180,8 +184,17 @@ it.each(
             {
               runtime_enabled: true,
               enabled_commands:
-                family === "P3" ? [...normalP3Commands] : [...normalP1Commands],
-              enabled_families: family === "P3" ? ["P1", "P3"] : ["P1"],
+                family === "P4"
+                  ? [...normalP4Commands]
+                  : family === "P3"
+                    ? [...normalP3Commands]
+                    : [...normalP1Commands],
+              enabled_families:
+                family === "P4"
+                  ? ["P1", "P3", "P4"]
+                  : family === "P3"
+                    ? ["P1", "P3"]
+                    : ["P1"],
               enabled_admission_modes: ["MANUAL"],
             },
           ],

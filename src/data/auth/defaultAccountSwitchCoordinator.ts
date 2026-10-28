@@ -15,6 +15,10 @@ import {
   writeLocalSession,
 } from "./authRepository";
 import { createAccountSwitchCoordinator } from "./accountSwitchCoordinator";
+import { assertAccountRequestGeneration } from "./accountRequestContext";
+import { sessionAccessToken } from "./sessionAccessToken";
+import { revokeSupabaseDevSession, SupabaseDevAuthError } from "./devSupabaseAuth";
+import { ApiClientError } from "@/data/api/client";
 
 export function createDefaultAccountSwitchCoordinator(input: {
   clearInMemoryState(): void | Promise<void>;
@@ -28,6 +32,24 @@ export function createDefaultAccountSwitchCoordinator(input: {
         throw new Error("LOGOUT_REQUIRES_ONLINE");
     },
     restartSync: restartOperationalSync,
+    revokeSession: async (_session, context) => {
+      try {
+        const { token } = await sessionAccessToken({ expectedUserId: context.accountId });
+        assertAccountRequestGeneration(context);
+        await revokeSupabaseDevSession(token);
+      } catch (error) {
+        // An explicitly invalid session is already unusable; transient failures retain local access.
+        if (
+          !(error instanceof SupabaseDevAuthError && error.kind === "invalid_session") &&
+          !(
+            error instanceof ApiClientError &&
+            error.code === "AUTH_REQUIRED" &&
+            error.status === 401
+          )
+        )
+          throw error;
+      }
+    },
     readSession: readLocalSession,
     writeSession: writeLocalSession,
     clearSession: clearLocalSession,

@@ -23,18 +23,22 @@ export function isNormalP1Gate(gate: Record<string, unknown> | undefined): boole
 
 // Explicit normal Manual profiles; recognizing a profile never enables its SQL policy.
 export const normalP3Commands = [...normalP1Commands, "SET_STAY_DETAILS"] as const;
+export const normalP4Commands = [...normalP3Commands, "SET_RENTAL_DETAILS"] as const;
 export function normalManualCapabilities(gate: Record<string, unknown> | undefined) {
   if (isNormalP1Gate(gate)) return { commands: [...normalP1Commands], families: ["P1"] };
+  const rental = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4"]';
+  const commands = rental ? normalP4Commands : normalP3Commands;
+  const families = rental ? ["P1", "P3", "P4"] : ["P1", "P3"];
   if (
     gate?.runtime_enabled !== true ||
-    JSON.stringify(gate.enabled_families) !== '["P1","P3"]' ||
+    JSON.stringify(gate.enabled_families) !== JSON.stringify(families) ||
     JSON.stringify(gate.enabled_admission_modes) !== '["MANUAL"]' ||
     !Array.isArray(gate.enabled_commands) ||
-    gate.enabled_commands.length !== normalP3Commands.length ||
-    !normalP3Commands.every((name) => (gate.enabled_commands as unknown[]).includes(name))
+    gate.enabled_commands.length !== commands.length ||
+    !commands.every((name) => (gate.enabled_commands as unknown[]).includes(name))
   )
     return null;
-  return { commands: [...normalP3Commands], families: ["P1", "P3"] };
+  return { commands: [...commands], families };
 }
 
 // Additive owning Import qualification; Manual permission never enables this mode.

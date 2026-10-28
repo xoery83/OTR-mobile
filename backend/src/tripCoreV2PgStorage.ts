@@ -429,7 +429,8 @@ export function createCorePgStorage(
                       !(manual!.commands as readonly string[]).includes(
                         command.command,
                       ) ||
-                      (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3")
+                      (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
+                      (command.command === "SET_RENTAL_DETAILS" && finiteFamily !== "P4")
                     : command.command !== "CREATE_ITEM" ||
                       command.admission.mode !== "MANUAL" ||
                       (finiteFamily !== "P1" && finiteFamily !== "P3")

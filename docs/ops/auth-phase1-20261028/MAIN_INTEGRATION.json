@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "cfae2b18",
+  "mainHead": "cfae2b18d97798e7850a55b506b067578c5b1c75",
+  "merge": "FAST_FORWARD",
+  "preexistingDirtyPaths": 6,
+  "preexistingFileHashesUnchanged": true,
+  "runtimeDeployment": false,
+  "deviceInstall": false,
+  "normalPushCompleted": true,
+  "remoteMainAtPush": "cfae2b18d97798e7850a55b506b067578c5b1c75"
+}

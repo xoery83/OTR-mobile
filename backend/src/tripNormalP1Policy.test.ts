@@ -4,6 +4,7 @@ import {
   isReviewedP1Gate,
   normalManualCapabilities,
   normalP3Commands,
+  normalP4Commands,
 } from "./tripNormalP1Policy";
 it("requires a separately matching single-family reviewed capability for P3", () => {
   const gate = {
@@ -80,6 +81,27 @@ it("recognizes only exact Manual P1/P3 capabilities without borrowing reviewed o
     { ...gate, enabled_commands: [...normalP3Commands, "QUALIFY_FLIGHT"] },
     { ...gate, enabled_commands: [...normalP3Commands, "CREATE_DOCUMENT"] },
     { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+  ])
+    expect(normalManualCapabilities(altered)).toBeNull();
+});
+
+it("recognizes exact P4 Manual profile only with Rental command and no Flight or Source extension", () => {
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: [...normalP4Commands],
+    enabled_families: ["P1", "P3", "P4"],
+    enabled_admission_modes: ["MANUAL"],
+  };
+  expect(normalManualCapabilities(gate)).toEqual({
+    commands: [...normalP4Commands],
+    families: ["P1", "P3", "P4"],
+  });
+  for (const altered of [
+    { ...gate, runtime_enabled: false },
+    { ...gate, enabled_commands: [...normalP3Commands] },
+    { ...gate, enabled_commands: [...normalP4Commands, "QUALIFY_FLIGHT"] },
+    { ...gate, enabled_families: ["P1", "P3", "P4", "P5"] },
+    { ...gate, enabled_admission_modes: ["REVIEWED_SOURCE"] },
   ])
     expect(normalManualCapabilities(altered)).toBeNull();
 });

@@ -220,7 +220,7 @@ it("isolates an ordinary failed Trip without poisoning another eligible Trip", a
   expect(f.deps.recoverTripReadback).toHaveBeenCalledWith(trip2, op2);
 });
 
-it.each(["P3", "P4"])(
+it.each(["P3", "P4"] as const)(
   "normal wake qualifies only the current Manual %s checkpoint",
   async (family) => {
     const f = fixture(),
@@ -237,6 +237,7 @@ it.each(["P3", "P4"])(
       admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
       payload: {
         family,
+        ...(family === "P4" ? { details: {}, places: {} } : {}),
         core: { title: "Manual Stay" },
         schedule: {
           start: coreDateBoundary("2026-11-02"),
@@ -262,7 +263,7 @@ it.each(["P3", "P4"])(
         },
       ]);
     await f.run();
-    expect(f.deps.runP1).toHaveBeenCalledTimes(family === "P3" ? 1 : 0);
+    expect(f.deps.runP1).toHaveBeenCalledTimes(1);
   },
 );
 it.each([true, false])(
@@ -293,6 +294,47 @@ it.each([true, false])(
         },
         rooms: [],
       },
+    };
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValue([])
+      .mockResolvedValueOnce([f.create])
+      .mockResolvedValueOnce([
+        {
+          ...f.create,
+          id: operationId,
+          entity_id: itemId,
+          idempotency_key: operationId,
+          entity_type: "TRIP_CORE_V2",
+          operation_type: "CORE_V2_COMMAND",
+          payload_json: JSON.stringify(command),
+        },
+      ]);
+    await f.run();
+    expect(f.deps.runP1).toHaveBeenCalledTimes(matching ? 1 : 0);
+  },
+);
+
+it.each([true, false])(
+  "P4 SET_RENTAL_DETAILS dispatch requires verified target family (%s)",
+  async (matching) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    f.deps.isManualItem.mockImplementation(
+      async (_trip, _item, family) => matching && family === "P4",
+    );
+    f.deps.participantsReady.mockResolvedValue(true);
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "SET_RENTAL_DETAILS",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: { details: { supplier: "QA Rental" }, places: {} },
     };
     f.deps.database.getAllAsync
       .mockReset()

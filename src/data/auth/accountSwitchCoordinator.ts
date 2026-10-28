@@ -6,11 +6,13 @@ import {
   beginAccountTransition,
   endAccountTransition,
   type AccountTransitionLease,
+  type AccountScope,
 } from "./accountRequestContext";
 
 export type AccountSwitchDependencies = {
   pauseSync(): Promise<void>;
   assertLogoutAllowed?(): Promise<void>;
+  revokeSession?(session: LocalSession, context: AccountScope): Promise<void>;
   restartSync(): Promise<unknown>;
   readSession(): Promise<LocalSession | null>;
   writeSession(session: LocalSession): Promise<void>;
@@ -161,11 +163,20 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
       let paused = false;
       try {
         const generation = getAccountGeneration();
-        const accountId = await readAccountId();
+        const session = await dependencies.readSession();
+        const accountId = session?.identity?.userId ?? null;
         await dependencies.assertLogoutAllowed?.();
         paused = true;
         await dependencies.pauseSync();
         await dependencies.assertLogoutAllowed?.();
+        if (session && accountId && dependencies.revokeSession) {
+          const context = { accountId, generation };
+          assertAccountRequestGeneration(context);
+          if (accountId !== (await readAccountId()))
+            throw new Error("AUTH_CONTEXT_CHANGED");
+          assertAccountRequestGeneration(context);
+          await dependencies.revokeSession(session, context);
+        }
         lease = await beginAccountTransition({
           generation,
           accountId,

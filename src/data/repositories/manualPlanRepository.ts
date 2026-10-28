@@ -276,7 +276,7 @@ function editable(
   if (
     !row ||
     (!snapshot.predictedIds.has(itemId) &&
-      !(["P1", "P3"].includes(family) && snapshot.cert)) ||
+      !(["P1", "P3", "P4"].includes(family) && snapshot.cert)) ||
     row.experience_family !== family ||
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
@@ -435,7 +435,7 @@ export function createManualItemRepository(
               p.command.admission.mode === "MANUAL",
           ) &&
           !(
-            ["P1", "P3"].includes(family) &&
+            ["P1", "P3", "P4"].includes(family) &&
             snapshot.cert &&
             (await acceptedManualCreate(context, itemId!))
           )

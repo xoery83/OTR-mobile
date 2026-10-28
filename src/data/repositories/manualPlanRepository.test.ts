@@ -1,3 +1,4 @@
+import { createManualRentalRepository } from "./manualRentalRepository";
 import { createManualStayRepository } from "./manualStayRepository";
 import { p1CivilMoveItem, p1CivilProposal } from "@/features/day-feed/p1CivilMove";
 import { createHash, randomUUID } from "node:crypto";
@@ -662,16 +663,28 @@ it("retains Account/generation/creator fences with a qualified local Person rost
 async function acceptedPlanFixture(
   foreignOwner = false,
   withPerson = false,
-  stay = false,
+  family: "P1" | "P3" | "P4" = "P1",
 ) {
   const f = await fixture(true);
-  const repo = stay
-      ? createManualStayRepository(f.coreDatabase, f.identity, f.core)
-      : f.repo(),
+  const repo =
+      family === "P4"
+        ? createManualRentalRepository(f.coreDatabase, f.identity, f.core)
+        : family === "P3"
+          ? createManualStayRepository(f.coreDatabase, f.identity, f.core)
+          : f.repo(),
     draft = await repo.createDraft(f.tripId);
   const saved = await repo.save(draft, {
     ...values(draft.fields),
-    ...(stay ? { endDate: "2026-12-31" } : {}),
+    ...(family !== "P1" ? { endDate: "2026-12-31" } : {}),
+    ...(family === "P4"
+      ? {
+          location: null,
+          startTime: "09:00",
+          endTime: "10:00",
+          pickupLocation: "QA Pickup",
+          returnLocation: "QA Return",
+        }
+      : {}),
   } as never);
   const context = await f.core.captureContext(f.tripId);
   const { readLocalManualSnapshotWithinTransaction } =
@@ -797,7 +810,7 @@ async function acceptedPlanFixture(
   };
 }
 it("reopens a receipted accepted P3 for same-Creator Edit and rejects missing provenance or another Creator", async () => {
-  const f = await acceptedPlanFixture(false, false, true);
+  const f = await acceptedPlanFixture(false, false, "P3");
   const repo = createManualStayRepository(f.coreDatabase, f.identity, f.core);
   const draft = await repo.read(f.tripId, f.itemId, f.revision);
   await repo.save(draft, {
@@ -809,14 +822,14 @@ it("reopens a receipted accepted P3 for same-Creator Edit and rejects missing pr
   const pending = await f.core.pending(await f.core.captureContext(f.tripId));
   expect(pending.map((p) => p.command.command)).toContain("SET_ITEM_TEXT");
   expect(pending.map((p) => p.command.command)).toContain("SET_ITEM_SCHEDULE");
-  const foreign = await acceptedPlanFixture(true, false, true);
+  const foreign = await acceptedPlanFixture(true, false, "P3");
   await expect(
     createManualStayRepository(foreign.coreDatabase, foreign.identity, foreign.core).read(
       foreign.tripId,
       foreign.itemId,
     ),
   ).rejects.toThrow("MANUAL_PLAN_UNAVAILABLE");
-  const unproven = await acceptedPlanFixture(false, false, true);
+  const unproven = await acceptedPlanFixture(false, false, "P3");
   unproven.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
   unproven.sql.exec(
     "UPDATE trip_core_pending_intents SET canonical_intent_text='{}' WHERE reconciled_revision IS NOT NULL",
@@ -966,4 +979,56 @@ it("real civil move persists the same local P1 and a cancelled frozen attempt ca
   });
   expect(restored.items[0].place?.authoredLabel).toBe("Nelson gardens");
   expect(count(f.sql)).toBe(2);
+});
+
+it("reopens receipted accepted P4 at the same ID, preserves rental facts, and rejects foreign Creator/provenance loss", async () => {
+  const f = await acceptedPlanFixture(false, false, "P4");
+  const repo = createManualRentalRepository(f.coreDatabase, f.identity, f.core);
+  const draft = await repo.read(f.tripId, f.itemId, f.revision);
+  await repo.save(draft, {
+    ...draft.fields,
+    title: "Accepted rental edited",
+    startTime: "11:00",
+    pickupLocation: "Other Pickup",
+    rentalDetails: { ...draft.fields.rentalDetails, supplier: "QA Supplier" },
+  });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending.map((p) => p.command.command)).toEqual([
+    "SET_ITEM_TEXT",
+    "SET_ITEM_SCHEDULE",
+    "SET_RENTAL_DETAILS",
+  ]);
+  const cold = await createManualRentalRepository(
+    f.coreDatabase,
+    f.identity,
+    f.core,
+  ).read(f.tripId, f.itemId);
+  expect(cold.itemId).toBe(f.itemId);
+  expect(cold.fields).toMatchObject({
+    title: "Accepted rental edited",
+    pickupLocation: "Other Pickup",
+    returnLocation: "QA Return",
+    startTime: "11:00",
+    rentalDetails: { supplier: "QA Supplier" },
+  });
+  const foreign = await acceptedPlanFixture(true, false, "P4");
+  await expect(
+    createManualRentalRepository(
+      foreign.coreDatabase,
+      foreign.identity,
+      foreign.core,
+    ).read(foreign.tripId, foreign.itemId),
+  ).rejects.toThrow("MANUAL_PLAN_UNAVAILABLE");
+  const unproven = await acceptedPlanFixture(false, false, "P4");
+  unproven.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+  unproven.sql.exec(
+    "UPDATE trip_core_pending_intents SET canonical_intent_text='{}' WHERE reconciled_revision IS NOT NULL",
+  );
+  await expect(
+    createManualRentalRepository(
+      unproven.coreDatabase,
+      unproven.identity,
+      unproven.core,
+    ).read(unproven.tripId, unproven.itemId),
+  ).rejects.toThrow();
 });

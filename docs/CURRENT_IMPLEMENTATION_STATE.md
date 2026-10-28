@@ -8,26 +8,29 @@ Earlier historical handoff follows unchanged; its integration-pending entries ar
 
 # Current implementation state — 28 October 2026
 
-## Auth / Identity independent source slice — 28 October
+## Auth / Identity Phase1 — 28 October
 
-Owner authorizes continuous Auth→Guest→People→Invite→Settings→Usage delivery. Auth
-worktree/branch `auth-identity-delivery-20261028` starts at main1c7e7fc8. First source
-candidate adds provisional Email OTP and Apple/Google ID-token exchange, rejects
-cross-Account stored/refresh identity, reuses reviewed historical Guest/provisional
-and online-logout safeguards, and connects canonical OTP Account UI with focus
-cancellation. Guest snapshot is exported but Native bootstrap/business consumption
-and whole-dataset adoption remain separate owning deltas. SQLite74/Backend/schema/
-business permissions and existing QA sessions are unchanged.
+Independent Auth lane starts at main1c7e7fc8. Source cfae2b18 is integrated/pushed;
+remote current-Session logout/hosted error recovery6b4bc3c5 is independently reviewed.
+Its exact host-only DEV receipt proves normal Synthetic password login, self-read,
+repository reconstruction, concurrent refresh single-flight, wrong-Account denial,
+current-Session revoke/independent absence and14 baseline Sessions preserved.
+It does not prove OTP delivery or native Keychain cold start.
 
-Independent Auth/Domain13 suites104 tests, TypeScript/UI guard/diff PASS. Actual DEV
-settings200 and invalid OTP403 only: Email on, Apple/Google off. No positive OTP,
-OAuth, Native UI, new cold-device restore or remote Session revocation PASS. Owner
-will supply a usable mailbox/provider setup later; safe Session work continues.
-Scope, data checklist and review: `ops/auth-phase1-20261028/README.md` and
-`INDEPENDENT_REVIEW.md`; approved exact Auth/Lang originals:
-`auth/design-v1-20261018/`. Next is a fresh host-only normal Synthetic Session
-with self-read/refresh/own-session revocation, followed by coordinated Native
-observation; keep actual Provider E2E pending until obtained.
+Google Provider now enabled; Apple remains disabled. Owner supplied canonical iOS
+and Web Client IDs. Google SDK16.1.5/Expo scheme/server audience/native branded
+control and provisional Supabase exchange are connected in the Auth candidate.
+Auth/Domain16 suites128 tests/typecheck/UIguard/plugin introspection PASS; independent
+review and coordinated native binary/Google interaction are pending. Exact scope:
+`ops/auth-phase1-20261028/README.md`, `SESSION_DEV_E2E.json`, Google ADR
+`adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/RLS/GRANT,
+SQLite74 or other QA Session changed. Old binaries lacking Google module stay usable.
+
+Next: finish independent Review/serial integration, coordinated canonical-bundle
+native build and real Google login→cold→logout/isolation; positive Email OTP needs a
+usable mailbox, Apple configuration/interactive identity remains pending. Phase1
+CLOUD_PENDING. Guest business bootstrap/adoption remains a separate owning delta;
+normal Auth cannot silently claim Guest datasets or Trip People.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
@@ -62,3 +65,5 @@ Enrichment latest finite window2210 configured/read back successfully but normal
 Other remaining scope: sustained Import authority, qualified Journey/Booking/Ticket, unsupported Transport subtypes, advanced Activity/Contact/Instructions/Documents/Media/Item-expense association, full visual/gesture matrix, Auth/Invite/Updates/Flexible/TTR/NOW. Participants-only visibility is only a discussion, not implemented. Do not expand this integration into those features.
 
 Manual P3 follow-through: normal Sync wake/activity and Accepted same-Creator provenance now prepared; typed street address retains legacy label. Eight directed suites103PASS, types/default-CLOSED buildPASS and owned isolated PostgreSQL Create/Edit/receipt/replay/read/NULL-negatives/exact rollback/ACL PASS. Owner approved and installed the exact four-function sustained QA-only SQL. Actual P3 Create/text/schedule/place/participation produced five APPLIED receipts and one Item at revision5; Native cold recovery and retry/replay passed. See ops/manual-cloud-e2e-20261028/P3_DEV_RECEIPT.json for precise remaining L3 negatives and deployment recovery. Next P4; other families remain unenabled. Auth independently advanced main to cfae2b18 after the original1c7e7 Push; do not overwrite it.
+
+P4 candidate now extends existing normal queue/wake/activity and same-Creator Accepted Edit, exact P1/P3/P4 capability profile and Rental command fence.6suites84PASS/types/lint/build/owned network-none PG PASS. Independent SQL Review repaired Rental child event_id/role reparenting; real raw-writer negatives and rollback/OID/ACL passed. Four-function SQL is NOT_INSTALLED, requires precise approval in ops/manual-cloud-e2e-20261028/P4_AUTHORITY_REVIEW.md. Universal independently deployed current Import host imagee482e6ed retaining P3 source/config and installed read-state c8d64; P4 must use that actual source/postimage, not old Compose/SQL. P3 full L3 negative gaps remain explicit.
