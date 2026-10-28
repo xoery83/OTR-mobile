@@ -1,0 +1,15 @@
+{
+  "status": "PREVIOUS_NATIVE_SAVE_NOW_INDEPENDENT_SERVER_VERIFIED",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "itemId": "1c0486a8-8265-4b4d-8b5a-7849c7fbd4ac",
+  "title": "Forms QA Phone Train 1029",
+  "revision": 1,
+  "operationId": "10351074-58b3-4c6f-9268-67aed4ff1e8f",
+  "receiptSHA256": "d65e450120f18d39eeae51120d97ffd0a69c43fa30ccebc0ea6f79178f29d80c",
+  "outcome": "APPLIED",
+  "readSHA256": "c245f94ec78a8a2d919c0512f15b20f87f5636a24d45a8fb1e9943bcf70a7172",
+  "deviceTouchedThisStage": false,
+  "phoneLocalQueueDetailsColdRecovery": "NOT_REVERIFIED_PHONE_UNAVAILABLE",
+  "previousRead": "earlier read saw no P5 object; this is reconciliation, no resubmit or duplicate Create"
+}
