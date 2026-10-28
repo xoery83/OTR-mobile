@@ -135,11 +135,15 @@ export function createSustainedDevTripPorts(
               guard(args[0]);
               return r;
             },
-            async capabilities(actor: string, trip: string) {
-              guard(actor);
+            async capabilities(
+              ...args: Parameters<
+                NonNullable<NonNullable<CoreHttpConnection["read"]>["capabilities"]>
+              >
+            ) {
+              guard(args[0]);
               if (!ports.core.read!.capabilities) throw Error("CORE_CAPABILITY_CLOSED");
-              const r = await ports.core.read!.capabilities(actor, trip);
-              guard(actor);
+              const r = await ports.core.read!.capabilities(...args);
+              guard(args[0]);
               return r;
             },
           },

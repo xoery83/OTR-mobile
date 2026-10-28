@@ -1,3 +1,5 @@
+import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
+import { coreHttpBoundary } from "./tripCoreV2Http";
 import { createCorePgReader } from "./tripCoreV2PgRead";
 import { appendFileSync, readFileSync } from "node:fs";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
@@ -664,27 +666,43 @@ it
           sustainedDev: true,
           reviewedP1: true,
         });
-        expect((await reader.capabilities(actor, trip)).sourceEvidenceAvailable).toBe(
-          false,
-        );
-        expect(await reader.capabilities(actor, trip, command.operationId)).toMatchObject(
+        const runtime = createSustainedDevTripPorts(
           {
-            enabledCommands: ["CREATE_ITEM"],
-            enabledFamilies: [family],
-            enabledAdmissionModes: ["REVIEWED_SOURCE"],
-            sourceEvidenceAvailable: true,
+            create: {} as never,
+            metadata: {} as never,
+            core: { hash: f.deps.hash, read: reader } as never,
           },
+          true,
+        )!;
+        const capabilities = runtime.coreConnection.read!.capabilities!;
+        const response = await coreHttpBoundary(
+          new Request(
+            `http://owned/v2/trips/${trip}/core/capabilities?operationId=${command.operationId}`,
+          ),
+          actor,
+          async () => true,
+          runtime.coreConnection,
         );
+        expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({
+          enabledFamilies: [family],
+          sourceEvidenceAvailable: true,
+        });
+        expect((await capabilities(actor, trip)).sourceEvidenceAvailable).toBe(false);
+        expect(await capabilities(actor, trip, command.operationId)).toMatchObject({
+          enabledCommands: ["CREATE_ITEM"],
+          enabledFamilies: [family],
+          enabledAdmissionModes: ["REVIEWED_SOURCE"],
+          sourceEvidenceAvailable: true,
+        });
         expect(
-          (await reader.capabilities(actor, trip, randomUUID())).sourceEvidenceAvailable,
+          (await capabilities(actor, trip, randomUUID())).sourceEvidenceAvailable,
         ).toBe(false);
         expect(
-          (await reader.capabilities(randomUUID(), trip, command.operationId))
-            .activationState,
+          (await capabilities(randomUUID(), trip, command.operationId)).activationState,
         ).toBe("CLOSED");
         expect(
-          (await reader.capabilities(actor, randomUUID(), command.operationId))
-            .activationState,
+          (await capabilities(actor, randomUUID(), command.operationId)).activationState,
         ).toBe("CLOSED");
       }
       publicationReads = 0;

@@ -1,3 +1,4 @@
+import { createSustainedDevTripPorts } from "../../../backend/src/tripSustainedRuntime";
 import { coreClosedCapabilities } from "../../domain/trip/tripCoreV2Commands";
 import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRead";
 import { publicationFixture } from "../../../backend/src/__fixtures__/tripCoreV2CandidatePublication";
@@ -336,13 +337,21 @@ it("sends only the validated operation capability context; Manual URL is unchang
   const urls: string[] = [],
     operation = randomUUID();
   const capabilities = vi.fn(async () => coreClosedCapabilities);
+  const runtime = createSustainedDevTripPorts(
+    {
+      create: {} as never,
+      metadata: {} as never,
+      core: { hash, read: { capabilities } } as never,
+    },
+    true,
+  )!;
   const handler = createDevBackendHandler({
     gateway: {
       validateAccessToken: async (value: string) =>
         value === "valid" ? { id: actor } : null,
       canReadTrip: async () => true,
     } as unknown as DevBackendGateway,
-    coreConnection: { hash, read: { capabilities } } as never,
+    coreConnection: runtime.coreConnection,
   });
   const transport = createCoreV2Transport(
     async () => actor,

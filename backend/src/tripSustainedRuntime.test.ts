@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
+import { coreClosedCapabilities } from "../../src/domain/trip/tripCoreV2Commands";
 import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
 function fixture() {
   const create = vi.fn().mockResolvedValue({}),
@@ -13,6 +14,11 @@ function fixture() {
       hash: vi.fn(),
       commands: { withLockedCommand: vi.fn() },
       readOperation: vi.fn(),
+      read: {
+        collection: vi.fn(),
+        item: vi.fn(),
+        capabilities: vi.fn(async () => coreClosedCapabilities),
+      },
     },
   };
   return { ports, create, receipt };
@@ -62,4 +68,25 @@ it("refuses old scalar Create and Metadata without upgrading their payload", asy
     }),
   ).rejects.toMatchObject({ code: "TRIP_SUSTAINED_V2_REQUIRED" });
   expect(f.create).not.toHaveBeenCalled();
+});
+
+it("retains all capability context through the deployed sustained adapter and fences closure", async () => {
+  const f = fixture(),
+    runtime = createSustainedDevTripPorts(f.ports, true)!,
+    actor = randomUUID(),
+    trip = randomUUID(),
+    operation = randomUUID();
+  await runtime.coreConnection.read!.capabilities!(actor, trip);
+  await runtime.coreConnection.read!.capabilities!(actor, trip, operation);
+  expect(f.ports.core.read.capabilities.mock.calls).toEqual([
+    [actor, trip],
+    [actor, trip, operation],
+  ]);
+  f.ports.core.read.capabilities.mockImplementation(async () => {
+    runtime.close();
+    return coreClosedCapabilities;
+  });
+  await expect(
+    runtime.coreConnection.read!.capabilities!(actor, trip, operation),
+  ).rejects.toThrow("CLOSED");
 });

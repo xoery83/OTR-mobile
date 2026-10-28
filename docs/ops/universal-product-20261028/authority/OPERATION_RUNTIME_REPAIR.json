@@ -1,0 +1,19 @@
+{
+  "status": "LOCAL_PASS_NOT_DEV",
+  "actualFailureAfter7129": "Both trip Runtime capability wrappers still forwarded only Actor/Trip and dropped operation. Same queue dependency-blocked; no Core Item/Receipt.",
+  "implementation": "Preserve all typed capability parameters using the existing adjacent collection/item rest pattern; before/after guards unchanged.",
+  "redFailures": 2,
+  "directedTests": 89,
+  "types": "PASS",
+  "lint": "PASS",
+  "backendBuilds": "PASS",
+  "actualIsolatedPg": "PASS HTTP -> SustainedRuntime -> PgReader -> original SQL, exact/foreign operation/Actor/Trip, full Source/Core closed replay. Network none/256MiB.",
+  "appBuild": 57,
+  "appRebuildRequired": false,
+  "scope": "CLOSED independently verified",
+  "itemId": "9c8fe13e-0675-8795-acd7-c96561dccbd3",
+  "operationId": "6590fee8-5310-8995-b5ab-72310aa3e2c4",
+  "currentItemOrReceipt": "NONE independently verified",
+  "providerCalls": 0,
+  "schemaOrRightsChanges": []
+}

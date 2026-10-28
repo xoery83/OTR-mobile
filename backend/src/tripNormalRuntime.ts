@@ -122,12 +122,16 @@ export function createNormalDevTripPorts(
               guard(args[0]);
               return result;
             },
-            async capabilities(actor: string, trip: string) {
-              guard(actor);
+            async capabilities(
+              ...args: Parameters<
+                NonNullable<NonNullable<CoreHttpConnection["read"]>["capabilities"]>
+              >
+            ) {
+              guard(args[0]);
               if (!ports.core.read!.capabilities)
                 throw new TripCreateError(503, "CORE_CAPABILITY_CLOSED");
-              const result = await ports.core.read!.capabilities(actor, trip);
-              guard(actor);
+              const result = await ports.core.read!.capabilities(...args);
+              guard(args[0]);
               return result;
             },
           },
