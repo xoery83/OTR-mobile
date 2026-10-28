@@ -141,6 +141,11 @@ it("creates one normal MANUAL Stay with required dates, optional clocks and Note
   const result = await repo.save(draft, input);
   expect(result).toMatchObject({ localStatus: "PENDING", itemId: draft.itemId });
   expect(result.operationIds).toHaveLength(1);
+  const create = (await f.core.pending(await f.core.captureContext(f.tripId)))[0].command;
+  expect((create.payload as { place: unknown }).place).toMatchObject({
+    authored_label: input.location,
+    authored_address: input.location,
+  });
   const cold = await f.repo().read(f.tripId, draft.itemId);
   expect(cold.fields).toEqual(input);
   expect(cold.fields.stayDetails.propertyName).toBeNull();

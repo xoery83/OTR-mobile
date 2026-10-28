@@ -1,5 +1,5 @@
 import { readReviewedP1Gate, readCoreGate, type CoreGateMode } from "./tripSustainedGate";
-import { isReviewedP1Gate, isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
+import { isReviewedP1Gate, normalManualCapabilities } from "./tripNormalP1Policy";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import {
@@ -198,7 +198,8 @@ export function createCorePgReader(
           const gate = enabled
             ? await readCoreGate(lease, actorAccountId, tripId, gateMode)
             : undefined;
-          const normal = isNormalP1Gate(gate);
+          const manual = normalManualCapabilities(gate);
+          const normal = manual !== null;
           const reviewedGate =
             enabled && gateMode?.sustainedDev && gateMode.reviewedP1
               ? await readReviewedP1Gate(lease, actorAccountId, tripId)
@@ -225,7 +226,7 @@ export function createCorePgReader(
                 enabledCommands: reviewedP2
                   ? ["CREATE_SPARSE_FLIGHT"]
                   : normal && !reviewedP3 && !reviewedP4 && !reviewedP5 && !reviewedP6
-                    ? [...normalP1Commands]
+                    ? manual!.commands
                     : ["CREATE_ITEM"],
                 enabledFamilies: reviewedP2
                   ? ["P2"]
@@ -238,7 +239,7 @@ export function createCorePgReader(
                         : reviewedP3
                           ? ["P3"]
                           : normal
-                            ? ["P1"]
+                            ? manual!.families
                             : ["P1", "P3"],
                 enabledAdmissionModes:
                   reviewedP2 || reviewedP3 || reviewedP4 || reviewedP5 || reviewedP6

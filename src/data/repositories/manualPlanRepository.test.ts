@@ -1,3 +1,4 @@
+import { createManualStayRepository } from "./manualStayRepository";
 import { p1CivilMoveItem, p1CivilProposal } from "@/features/day-feed/p1CivilMove";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
@@ -658,11 +659,20 @@ it("retains Account/generation/creator fences with a qualified local Person rost
   expect(count(h.sql)).toBe(0);
 });
 
-async function acceptedPlanFixture(foreignOwner = false, withPerson = false) {
+async function acceptedPlanFixture(
+  foreignOwner = false,
+  withPerson = false,
+  stay = false,
+) {
   const f = await fixture(true);
-  const repo = f.repo(),
+  const repo = stay
+      ? createManualStayRepository(f.coreDatabase, f.identity, f.core)
+      : f.repo(),
     draft = await repo.createDraft(f.tripId);
-  const saved = await repo.save(draft, values(draft.fields));
+  const saved = await repo.save(draft, {
+    ...values(draft.fields),
+    ...(stay ? { endDate: "2026-12-31" } : {}),
+  } as never);
   const context = await f.core.captureContext(f.tripId);
   const { readLocalManualSnapshotWithinTransaction } =
     await import("./tripLocalManualReadRepository");
@@ -786,6 +796,39 @@ async function acceptedPlanFixture(foreignOwner = false, withPerson = false) {
     revision: Number(graph.itinerary_events[0].semantic_revision),
   };
 }
+it("reopens a receipted accepted P3 for same-Creator Edit and rejects missing provenance or another Creator", async () => {
+  const f = await acceptedPlanFixture(false, false, true);
+  const repo = createManualStayRepository(f.coreDatabase, f.identity, f.core);
+  const draft = await repo.read(f.tripId, f.itemId, f.revision);
+  await repo.save(draft, {
+    ...draft.fields,
+    title: "Accepted Stay edited",
+    startTime: "17:00",
+    endTime: "10:00",
+  });
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(pending.map((p) => p.command.command)).toContain("SET_ITEM_TEXT");
+  expect(pending.map((p) => p.command.command)).toContain("SET_ITEM_SCHEDULE");
+  const foreign = await acceptedPlanFixture(true, false, true);
+  await expect(
+    createManualStayRepository(foreign.coreDatabase, foreign.identity, foreign.core).read(
+      foreign.tripId,
+      foreign.itemId,
+    ),
+  ).rejects.toThrow("MANUAL_PLAN_UNAVAILABLE");
+  const unproven = await acceptedPlanFixture(false, false, true);
+  unproven.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+  unproven.sql.exec(
+    "UPDATE trip_core_pending_intents SET canonical_intent_text='{}' WHERE reconciled_revision IS NOT NULL",
+  );
+  await expect(
+    createManualStayRepository(
+      unproven.coreDatabase,
+      unproven.identity,
+      unproven.core,
+    ).read(unproven.tripId, unproven.itemId),
+  ).rejects.toThrow();
+});
 it("reopens reconciled accepted self-Creator P1 at its actual revision and saves a normal edit", async () => {
   const f = await acceptedPlanFixture(),
     repo = f.repo();

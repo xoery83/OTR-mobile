@@ -1,8 +1,8 @@
 # Current implementation state — 28 October 2026
 
-## Active checkpoint: unified Native + Universal integration delivery
+## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
-Owner authorizes actual code integration, directed regression, Native smoke, serial main merge, then in-place Forms QA → AD5 → physical iPhone updates. This supersedes the earlier pause only for this bounded integration. Do not activate Enrichment, paid DeepSeek/Admission, Manual Cloud or Production. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
+Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
 
 Input main817583e0 contains the independently accepted Universal P1–P6 limited formal Import Save slices. Nativee18b8e05 contains P1–P6 local Forms, Browse/Focus/Immersive, Day Shell/Home/navigation/retention, Calendar/place/keyboard/Expense-prefill and related tests. The independent Host0f222171 is retained on codex/flight-enrichment-host; it has no real paid-query E2E. All original branches, six unrelated primary-checkout dirty entries and private QA data are preserved.
 
@@ -31,3 +31,5 @@ Forms QA CreateTrip has real Server Accepted/independent readback. Existing Manu
 Enrichment latest finite window2210 configured/read back successfully but normal capability stayedfalse. No paid lookup occurred. Business/runtime/admin/token were all safely closed/restored/removed. Host0f222171 adds safe diagnostic stages,38tests/typesPASS, not deployed here. Public cache remains MISS/no-write. Next Enrichment activation requires a separately authorized coordinated fresh window and must not restore obsolete service images.
 
 Other remaining scope: sustained Import authority, qualified Journey/Booking/Ticket, unsupported Transport subtypes, advanced Activity/Contact/Instructions/Documents/Media/Item-expense association, full visual/gesture matrix, Auth/Invite/Updates/Flexible/TTR/NOW. Participants-only visibility is only a discussion, not implemented. Do not expand this integration into those features.
+
+Manual P3 follow-through: normal Sync wake/activity and Accepted same-Creator provenance now prepared; typed street address retains legacy label. Eight directed suites103PASS, types/default-CLOSED buildPASS and owned isolated PostgreSQL Create/Edit/receipt/replay/read/NULL-negatives/exact rollback/ACL PASS. Four-function sustained QA-only SQL candidate is NOT_INSTALLED; precise authorization in ops/manual-cloud-e2e-20261028/P3_AUTHORITY_REVIEW.md. No Manual Cloud L3 PASS or DEV deployment. Other Manual families remain queued.

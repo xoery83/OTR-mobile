@@ -159,19 +159,28 @@ export async function getNormalTripQueueActivity(
               create.trip_id,
               c.target.id,
             );
-            const p1 =
+            const manual =
               isReviewedSourceCreate(c) ||
               (c.command === "CREATE_ITEM"
-                ? (c.payload as { family: string }).family === "P1"
+                ? ["P1", "P3"].includes((c.payload as { family: string }).family)
                 : item?.experience_family === "P1" &&
                   [
                     "SET_ITEM_TEXT",
                     "SET_ITEM_SCHEDULE",
                     "SET_ITEM_PLACE",
                     "SET_ITEM_PARTICIPATION",
-                  ].includes(c.command));
+                  ].includes(c.command)) ||
+              (item?.experience_family === "P3" &&
+                c.admission.mode === "MANUAL" &&
+                [
+                  "SET_ITEM_TEXT",
+                  "SET_ITEM_SCHEDULE",
+                  "SET_ITEM_PLACE",
+                  "SET_ITEM_PARTICIPATION",
+                  "SET_STAY_DETAILS",
+                ].includes(c.command));
             eligible =
-              !!p1 &&
+              !!manual &&
               p1SharedParticipantsReady(c, await roster.listTripPersons(create.trip_id));
           }
           if (!eligible) continue;
