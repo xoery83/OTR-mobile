@@ -1,0 +1,18 @@
+{
+  "status": "ACCEPTED_SERIAL_MAIN_CODE_MERGE_AND_SMOKE_PRE_PUSH_SNAPSHOT",
+  "before": "a82ab46bd6fa725bbb937691037b22d2b9fbf190",
+  "after": "f62e5bf7089e880616179374c833ec1824d1a360",
+  "preservedFiles": 6,
+  "trackedDiffUnchanged": true,
+  "schemaRlsGrantOrBackendChanged": false,
+  "codeEvidenceMainCommit": "f62e5bf7089e880616179374c833ec1824d1a360",
+  "postMergeSmoke": {
+    "suites": 5,
+    "tests": 28,
+    "status": "PASS_MAIN_CHECKOUT"
+  },
+  "independentNativeEvidenceReview": "PASS_INSTALLED_IDENTITY_COLD_JSON_ROOT149_LOGICAL_TABLES",
+  "mainLease": "Native and Import both explicitly not writing main; no Native P2 dormant or Source branch merged",
+  "push": "Normal non-force push follows this documentation commit; verify actual remote refs before next work",
+  "productionAccess": false
+}

@@ -96,6 +96,29 @@ public-port memory/gate checks pass. This does not wire Native Guest business
 access or implement adoption. Next: typed local Guest repository scope/full census;
 shared startup/Core/migration writers coordinate before any consumer changes.
 
+Owner29 October splits AUTH-02 into A Guest Local Foundation, then B adoption.
+A is now actual Native/local PASS: independently signed GuestQA63 (source7e35baf6),
+fresh no-Session empty My Trips → normal Trip create/edit → minimum P1 → Day →
+real same-version terminate/relaunch retains same Trip/P1/Person/queue IDs/content.
+SQLite74 independent readback confirms no canonical Account DB and no Cloud
+certificates/receipts; original FormsQA root logical-table hashes are identical.
+No fixture insertion, Session/Keychain/database copying, new simulator or cloud
+Guest authority. Receipt: ops/auth-phase2-20261028/GUEST_A_NATIVE_RECEIPT.json.
+Source6fe6f3c0/cbace1f0 + native-found QuickAdd repair7e35baf6 reuse existing
+repositories/migrations; Guest startup pauses the existing global worker before
+opening the Guest vault. Account widgets/photos/currency/Account bookmarks remain
+unassembled in A; actual local Day/P1 works.14 suites279 regression +repair20,
+types/UIguard, independent218 +repair20 PASS; lint0errors, old import warnings.
+GUI and bounded consumer Writer returned to Native. A code/evidencef62e5bf7
+was serially fast-forwarded into main froma82ab46b; post-merge5 suites28 PASS and
+all six primary dirty files remain byte-identical. Normal remote refs must be
+freshly verified; integration snapshot is GUEST_A_MAIN_INTEGRATION.json.
+Next B: complete real owning-repository/full live draft/file inventory, then lawful
+server-authoritative full-dataset preflight/staging/publish/status/UNKNOWN and
+normal Account login/adoption. Boundary census GUEST_DATA_BOUNDARIES.json records
+automatic Ledger/Person state and live P1 drafts; do not inventory only SQLite.
+No adoption/upload/conversion/Cloud acceptance or commercial quota policy yet.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.

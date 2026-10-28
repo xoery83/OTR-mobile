@@ -13,6 +13,17 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
   renderToStaticMarkup(node: ReactNode): string;
 };
 
+const startup = vi.hoisted(() => ({ ready: true }));
+// Route registration is checked after startup; the pending state is tested below.
+vi.mock("react", async (original) => {
+  const react = await original<typeof import("react")>();
+  return {
+    ...react,
+    useState: (initial: unknown) =>
+      react.useState(initial === false ? startup.ready : initial),
+  };
+});
+
 const screens = vi.hoisted(
   () => [] as { name: string; options?: Record<string, unknown> }[],
 );
@@ -52,6 +63,7 @@ vi.mock("@/data/bootstrap/defaultBootstrapDependencies", () => ({
   subscribeOperationalSyncLifecycle: vi.fn(),
 }));
 beforeEach(() => {
+  startup.ready = true;
   screens.length = 0;
   vi.stubGlobal("__DEV__", false);
 });
@@ -102,4 +114,10 @@ it("reproduces a settings-only nested Ledger stack having no native Back target"
   );
   expect(nested.index).toBe(0);
   expect(router.getStateForAction(nested, { type: "GO_BACK" }, options)).toBeNull();
+});
+
+it("does not mount Trip consumers before principal and database startup completes", () => {
+  startup.ready = false;
+  expect(renderToStaticMarkup(createElement(RootLayout))).toBe("");
+  expect(screens).toEqual([]);
 });

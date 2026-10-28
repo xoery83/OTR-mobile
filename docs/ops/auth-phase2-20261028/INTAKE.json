@@ -1,5 +1,5 @@
 {
-  "status": "FOCUSED_INTAKE_AND_READ_ONLY_PRINCIPAL_FOUNDATION_NOT_ADOPTION_ACCEPTANCE",
+  "status": "GOLDEN_A_NATIVE_LOCAL_ACCEPTED_B_ADOPTION_PENDING",
   "approvedContract": "docs/auth/design-v1-20261018/01_AUTH.md:12",
   "reused": [
     "Supabase sole formal Auth and existing secure Session repository",
@@ -55,7 +55,7 @@
       "constraint": "No upload or ownership conversion until authorized; retain originals until verified; no partial visible migration or same-name Trip merge"
     }
   ],
-  "nextSlice": "Define the minimum typed local Guest repository scope and complete inventory with owning repositories, then coordinate Native startup and consumer wiring; never route Guest through formal Account authority",
+  "nextSlice": "B after A serial main integration: full-dataset owning inventory, normal provisional OTP/Google verification, exact server-authoritative preflight/staging/all-or-nothing publish and readback; preserve Guest originals.",
   "singleWriters": {
     "authPortsAndRepository": "Auth lane",
     "startupNavigationAndManualConsumers": "Native lane",
@@ -65,7 +65,7 @@
   "protectedOperations": "Prepare/test exact candidates first; new Hosted RLS/GRANT/roles or sensitive authority execution still requires the existing precise gate",
   "commercialPolicy": "No prices, quota numbers, reset cycles or paid interception invented",
   "currentRuntimeChanges": {
-    "bootstrapWiring": false,
+    "bootstrapWiring": "GUESTQA_NATIVE_A_ACCEPTED_SERIAL_MAIN_FF_CODE_F62E5BF7",
     "businessDataConversion": false,
     "guestCloudUpload": false,
     "schemaRlsGrant": false
@@ -77,5 +77,37 @@
     "uiGuard": "PASS",
     "scopedLint": "PASS",
     "independentReview": "THREE_SUITES_38_TESTS_AND_PUBLIC_PORT_MEMORY_GATE_CHECKS_PASS"
+  },
+  "guestLocalFoundation": {
+    "status": "GOLDEN_A_NATIVE_LOCAL_ACCEPTED_NOT_ADOPTION",
+    "decision": "docs/adr/2026-10-29-guest-local-vault.md",
+    "port": "openGuestLocalWorkspace/v1",
+    "implementation": "src/data/auth/guestLocalWorkspace.ts",
+    "reuse": "Existing migrations74, transaction serializer and Trip/Core/P1/local Day repositories; separate Guest SQLite filename; no Session or transport assembly",
+    "validation": {
+      "directedSuites": 6,
+      "directedTests": 139,
+      "diskGuestTests": 8,
+      "typecheck": "PASS",
+      "scopedLint": "PASS",
+      "uiGuard": "PASS",
+      "independentReview": "NO_BLOCKER_8_DISK_TESTS_INDEPENDENTLY_PASS"
+    },
+    "native": "PASS: fresh unauthenticated normal UI Trip create/edit + P1/Day + same-version terminate/relaunch, independent SQLite + original root logical hash preservation",
+    "remaining": "B full real inventory + server-authoritative preflight/publication/UNKNOWN and formal login; no Guest conversion yet. A source/evidence serial main merged and smoke PASS; remote verification follows normal push.",
+    "consumerValidation": {
+      "directedSuites": 14,
+      "directedTests": 279,
+      "independentReview": "10_SUITES_218_PASS_NO_BLOCKER",
+      "realGlobalQueueDefaultPause": "PASS_ACCOUNT_OPENER_ZERO",
+      "accountBookmarkGuestIO": "ZERO_LIST_AND_RECORD",
+      "guestPhotosCurrencyAndAccountWidgets": "DISABLED_FOR_A",
+      "typecheck": "PASS",
+      "uiGuard": "PASS",
+      "lint": "NO_ERRORS_EXISTING_IMPORT_FIRST_WARNINGS"
+    },
+    "singleWriter": "Native explicitly transferred bounded bootstrap/Trip/P1 consumers, TripViewContext and TripBasicEditor to Auth until candidate handback; no Core/Trip/Manual factories, Backend or Sync implementation modified",
+    "receipt": "GUEST_A_NATIVE_RECEIPT.json",
+    "nativeEvidenceReview": "INDEPENDENT_INSTALLED_HASHES_COLD_JSON_ROOT149_TABLES_MATCH_NO_BLOCKER"
   }
 }

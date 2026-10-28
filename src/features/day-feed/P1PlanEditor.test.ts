@@ -674,3 +674,9 @@ it("never applies insertion defaults over an existing P1 edit", async () => {
   expect(node("tripCreate.itemDate").value.start).toBe("2027-02-08");
   expect(state.hooks.some((value: any) => value?.startTime === "09:15")).toBe(true);
 });
+
+vi.mock("@/data/auth/localTripAccess", async () => ({
+  readLocalTripPrincipal: vi.fn(async () => ({ kind: "ACCOUNT", accountId: "test-account" })),
+  ...await import("@/data/repositories/manualPlanRepository"),
+  kickLocalTripSync: vi.fn(async () => {}),
+}));

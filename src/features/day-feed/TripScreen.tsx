@@ -4,7 +4,10 @@ import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
 import { useP1CivilMove } from "./useP1CivilMove";
 import { P1MeasuredMoveRegion } from "./useP1Move";
-import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import {
+  readLocalTripRepository,
+  readLocalTripPrincipal,
+} from "@/data/auth/localTripAccess";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
@@ -34,7 +37,9 @@ import {
   createDefaultManualPlanRepository,
   type ManualPlanDraft,
   type ManualPlanRepository,
-} from "@/data/repositories/manualPlanRepository";
+  readTripDayFeed,
+  type createTripDayFeedReader,
+} from "@/data/auth/localTripAccess";
 import {
   createDefaultManualStayRepository,
   type ManualStayDraft,
@@ -90,10 +95,6 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import {
-  readTripDayFeed,
-  type createTripDayFeedReader,
-} from "@/data/repositories/tripDayFeedRepository";
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
@@ -229,6 +230,7 @@ function TripContent({
     view?: string;
     homeQaScenario?: string;
   }>();
+  const [guest, setGuest] = useState(false);
   const [dayTripFacts, setDayTripFacts] = useState<{
     generation: number;
     trip: TripListSummary & Pick<Trip, "destinations">;
@@ -386,26 +388,42 @@ function TripContent({
     await Promise.resolve();
     setStatus((previous) => (previous === "READY" ? previous : "LOADING"));
     try {
+      const principal = await readLocalTripPrincipal();
+      if (getAccountGeneration() !== captured || ticket !== request.current) return;
+      const isGuest = principal?.kind === "GUEST";
+      setGuest(isGuest);
       if (requested) {
         const reader = await readTripDayFeed();
         const result = await reader.trip(requested);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         const [rootFacts, localMetadata] = await Promise.all([
-          readLocalTripDiscoveryRepository()
-            .then((reader) => reader.readMerged())
-            .then((read) => read.trips.find((row) => row.id === requested))
-            .catch(() => undefined),
+          isGuest
+            ? Promise.resolve(undefined)
+            : readLocalTripDiscoveryRepository()
+                .then((reader) => reader.readMerged())
+                .then((read) => read.trips.find((row) => row.id === requested))
+                .catch(() => undefined),
           readLocalTripRepository()
             .then((reader) => reader.getTrip(requested))
             .catch(() => null),
         ]);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
+        const facts =
+          rootFacts ??
+          (isGuest && localMetadata
+            ? {
+                ...localMetadata,
+                localStatus: "PENDING_CREATE" as const,
+                selectedCoverAssetId: localMetadata.selectedCoverAssetId ?? null,
+                remoteListed: false,
+              }
+            : undefined);
         setDayTripFacts(
-          rootFacts
+          facts
             ? {
                 generation: captured,
                 trip: {
-                  ...rootFacts,
+                  ...facts,
                   ...(localMetadata ? { destinations: localMetadata.destinations } : {}),
                 },
               }
@@ -938,6 +956,7 @@ function TripContent({
     lifecycle: "Upcoming" | "Active" | "Past" | "Undated",
     tripStartDate?: string | null,
   ) => {
+    if (guest) return [];
     if (id !== requested) return [];
     if (lifecycle === "Active")
       return [
@@ -1987,6 +2006,7 @@ function TripContent({
           <SafeAreaProvider style={{ flex: 1 }}>
             {insertion ? (
               <ManualItineraryContent
+                localOnly={guest}
                 tripId={requested}
                 generation={generation}
                 initialDate={insertion.date}

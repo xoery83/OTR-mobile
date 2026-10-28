@@ -100,14 +100,16 @@ function resetProvider() {
   lifecycle.effects = [];
   lifecycle.pending = [];
 }
-function renderProvider() {
+function renderProvider(persistReading = true) {
   lifecycle.stateCursor =
     lifecycle.refCursor =
     lifecycle.memoCursor =
     lifecycle.effectCursor =
       0;
   lifecycle.pending = [];
-  renderToStaticMarkup(createElement(TripViewProvider, null, createElement(Probe)));
+  renderToStaticMarkup(
+    createElement(TripViewProvider, { persistReading }, createElement(Probe)),
+  );
   // React runs old passive cleanups before the corresponding new setups.
   for (const effect of lifecycle.pending) lifecycle.effects[effect.index]?.cleanup?.();
   for (const effect of lifecycle.pending)
@@ -535,4 +537,18 @@ it("preserves confirmed Floating anchor through Home/resume and rejects old revi
     zone: null,
     viewMode: "FLOATING",
   });
+});
+
+it("Guest keeps navigation in memory without any Account bookmark list or record", async () => {
+  resetProvider();
+  renderProvider(false);
+  await Promise.resolve();
+  renderProvider(false);
+  provider.select(a);
+  renderProvider(false);
+  provider.saveReading(a, { offset: 12, focus: null });
+  renderProvider(false);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(dayNavigationBookmarkRepository.list).not.toHaveBeenCalled();
+  expect(dayNavigationBookmarkRepository.record).not.toHaveBeenCalled();
 });

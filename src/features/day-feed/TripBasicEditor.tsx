@@ -46,6 +46,7 @@ export function TripBasicEditor({
   metadataEditable,
   setup = null,
   currencyAvailable = false,
+  coverAvailable = true,
   onSavingChange,
   registerDismiss,
   onDirtyChange,
@@ -73,6 +74,7 @@ export function TripBasicEditor({
   ): Promise<void>;
   setup?: TripPreparationSetup | null;
   currencyAvailable?: boolean;
+  coverAvailable?: boolean;
   onSavingChange?(saving: boolean): void;
   registerDismiss?(handler: (() => void) | null): void;
   onDirtyChange?(dirty: boolean): void;
@@ -325,69 +327,73 @@ export function TripBasicEditor({
             }}
           />
         </UiSection>
-        <UiSection title={t("tripHome.coverTools")}>
-          <TripCoverPicker
-            trip={{
-              ...trip,
-              name: after.name,
-              destinations: destinationItems.map((item) => ({ displayLabel: item.text })),
-              destination: destinationItems.length
-                ? destinationItems.map((item) => item.text).join(" · ")
-                : after.destination,
-            }}
-            selectedRaw={
-              metadataEditable
-                ? coverChanged
-                  ? draftCover
-                  : beforeCover
-                : rawTripCover(trip)
-            }
-            onSelect={async (id) => {
-              if (metadataEditable) {
-                if (beforeCover === undefined)
-                  throw new Error("TRIP_COVER_STATE_UNAVAILABLE");
-                if (!busy.current) {
-                  setDraftCover(id);
-                  setCoverChanged(true);
-                  setSaved(false);
-                }
-              } else if (id === null || isTripCoverAssetId(id)) {
-                await onSelectCover(id);
-              } else throw new Error("TRIP_COVER_NOT_EDITABLE");
-            }}
-            onChoosePhoto={
-              metadataEditable && beforeCover !== undefined
-                ? async (processing) => {
-                    const current = () =>
-                      alive.current && generation === getAccountGeneration();
-                    if (!current() || busy.current) return false;
-                    const choice = await ImagePicker.launchImageLibraryAsync({
-                      mediaTypes: ["images"],
-                      allowsMultipleSelection: false,
-                      quality: 1,
-                      base64: false,
-                      exif: false,
-                    });
-                    if (!current() || choice.canceled) return false;
-                    await processing?.();
-                    if (!current()) return false;
-                    const repo = await readLocalTripPhotoRepository();
-                    if (!current()) return false;
-                    const uri = choice.assets[0]?.uri;
-                    if (!uri?.startsWith("file://"))
-                      throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
-                    const photo = await repo.addTripPhoto(trip.id, uri);
-                    if (!current()) return false;
-                    if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
-                    setDraftCover(tripPhotoCoverRef(photo.assetId));
+        {coverAvailable ? (
+          <UiSection title={t("tripHome.coverTools")}>
+            <TripCoverPicker
+              trip={{
+                ...trip,
+                name: after.name,
+                destinations: destinationItems.map((item) => ({
+                  displayLabel: item.text,
+                })),
+                destination: destinationItems.length
+                  ? destinationItems.map((item) => item.text).join(" · ")
+                  : after.destination,
+              }}
+              selectedRaw={
+                metadataEditable
+                  ? coverChanged
+                    ? draftCover
+                    : beforeCover
+                  : rawTripCover(trip)
+              }
+              onSelect={async (id) => {
+                if (metadataEditable) {
+                  if (beforeCover === undefined)
+                    throw new Error("TRIP_COVER_STATE_UNAVAILABLE");
+                  if (!busy.current) {
+                    setDraftCover(id);
                     setCoverChanged(true);
                     setSaved(false);
-                    return true;
                   }
-                : undefined
-            }
-          />
-        </UiSection>
+                } else if (id === null || isTripCoverAssetId(id)) {
+                  await onSelectCover(id);
+                } else throw new Error("TRIP_COVER_NOT_EDITABLE");
+              }}
+              onChoosePhoto={
+                metadataEditable && beforeCover !== undefined
+                  ? async (processing) => {
+                      const current = () =>
+                        alive.current && generation === getAccountGeneration();
+                      if (!current() || busy.current) return false;
+                      const choice = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ["images"],
+                        allowsMultipleSelection: false,
+                        quality: 1,
+                        base64: false,
+                        exif: false,
+                      });
+                      if (!current() || choice.canceled) return false;
+                      await processing?.();
+                      if (!current()) return false;
+                      const repo = await readLocalTripPhotoRepository();
+                      if (!current()) return false;
+                      const uri = choice.assets[0]?.uri;
+                      if (!uri?.startsWith("file://"))
+                        throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
+                      const photo = await repo.addTripPhoto(trip.id, uri);
+                      if (!current()) return false;
+                      if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
+                      setDraftCover(tripPhotoCoverRef(photo.assetId));
+                      setCoverChanged(true);
+                      setSaved(false);
+                      return true;
+                    }
+                  : undefined
+              }
+            />
+          </UiSection>
+        ) : null}
         <TripCurrencyRow
           setup={currencySetup ?? setup}
           onOpen={saving || !currencyAvailable ? undefined : () => setCurrencyOpen(true)}
