@@ -1032,3 +1032,68 @@ it("reopens receipted accepted P4 at the same ID, preserves rental facts, and re
     ).read(unproven.tripId, unproven.itemId),
   ).rejects.toThrow();
 });
+
+it.each(["P1", "P3", "P4"] as const)(
+  "retains two unsent accepted %s edits across repository recreation without duplicate operations or stale overwrite",
+  async (family) => {
+    const f = await acceptedPlanFixture(false, false, family);
+    const hash = async (bytes: Uint8Array) =>
+      createHash("sha256").update(bytes).digest("hex");
+    const open = (core = f.core) =>
+      family === "P4"
+        ? createManualRentalRepository(f.coreDatabase, f.identity, core)
+        : family === "P3"
+          ? createManualStayRepository(f.coreDatabase, f.identity, core)
+          : createManualPlanRepository(f.coreDatabase, f.identity, core);
+    const repo = open();
+    const firstDraft = await repo.read(f.tripId, f.itemId, f.revision);
+    const staleDraft = await repo.read(f.tripId, f.itemId, f.revision);
+    const firstFields = {
+      ...firstDraft.fields,
+      title: `${family} pending title`,
+      description: "First unsent note",
+    };
+    const first = await repo.save(firstDraft, firstFields);
+    const freshCore = createTripCoreV2Repository(f.coreDatabase, f.identity, hash);
+    const freshRepo = open(freshCore);
+    const secondDraft = await freshRepo.read(f.tripId, f.itemId);
+    expect(secondDraft.fields).toMatchObject({
+      title: firstFields.title,
+      description: "First unsent note",
+    });
+    const second = await freshRepo.save(secondDraft, {
+      ...secondDraft.fields,
+      description: "Latest unsent note",
+    });
+    const beforeRetry = await freshCore.pending(await freshCore.captureContext(f.tripId));
+    expect(beforeRetry.map((intent) => intent.command.operationId)).toEqual([
+      ...first.operationIds,
+      ...second.operationIds,
+    ]);
+    expect(beforeRetry.map((intent) => intent.command.baseVector[0].revision)).toEqual([
+      f.revision,
+      f.revision + 1,
+    ]);
+    expect(await repo.save(firstDraft, firstFields)).toEqual(first);
+    await expect(
+      repo.save(staleDraft, { ...staleDraft.fields, title: "Stale overwrite" }),
+    ).rejects.toThrow("MANUAL_PLAN_CONFLICT");
+    const reopened = await open(
+      createTripCoreV2Repository(f.coreDatabase, f.identity, hash),
+    ).read(f.tripId, f.itemId);
+    expect(reopened.fields).toMatchObject({
+      title: firstFields.title,
+      description: "Latest unsent note",
+    });
+    const afterRetry = await freshCore.pending(await freshCore.captureContext(f.tripId));
+    expect(afterRetry.map((intent) => intent.command.operationId)).toEqual(
+      beforeRetry.map((intent) => intent.command.operationId),
+    );
+    const snapshot = await freshCore.combinedSnapshot(
+      await freshCore.captureContext(f.tripId),
+    );
+    expect(
+      snapshot?.graph.itinerary_events.filter((item) => item.id === f.itemId),
+    ).toHaveLength(1);
+  },
+);
