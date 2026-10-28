@@ -469,3 +469,47 @@ it("reuses Trip reference dates and keeps an opted-in return address aligned wit
   render(p);
   expect(node("tripCreate.rentalReturnPlace").value).toBe("Custom depot");
 });
+
+it.each([
+  ["Depot A", "Depot A", true],
+  ["Depot A", "Depot B", false],
+  ["", "", false],
+])(
+  "restores same-return selection from saved pickup %s and return %s",
+  async (pickup, destination, checked) => {
+    const p = { ...props(), itemId: "rental-edit" };
+    await open(p, {
+      read: vi.fn(async () => ({
+        mode: "EDIT",
+        itemId: p.itemId,
+        fields: { ...fields(), pickupLocation: pickup, returnLocation: destination },
+      })),
+    });
+    expect(node("tripCreate.rentalSameLocation").accessibilityState.checked).toBe(
+      checked,
+    );
+    expect(node("tripCreate.rentalReturnPlace").editable).toBe(!checked);
+    node("tripCreate.rentalPickupPlace").onChangeText("Updated depot");
+    render(p);
+    expect(node("tripCreate.rentalReturnPlace").value).toBe(
+      checked ? "Updated depot" : destination,
+    );
+  },
+);
+
+it("restores same-return selection in an already opened rental draft", () => {
+  const p = {
+    ...props(),
+    opened: {
+      repository: {} as any,
+      draft: {
+        mode: "EDIT" as const,
+        itemId: "rental-opened",
+        fields: { ...fields(), pickupLocation: "Depot", returnLocation: "Depot" },
+      },
+    },
+  };
+  render(p);
+  expect(node("tripCreate.rentalSameLocation").accessibilityState.checked).toBe(true);
+  expect(node("tripCreate.rentalReturnPlace").editable).toBe(false);
+});
