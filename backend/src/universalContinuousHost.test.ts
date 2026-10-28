@@ -268,6 +268,12 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     };
     expect((await host.prepare(prepare)).status).toBe("QUEUED");
     expect((await host.prepare(prepare)).status).toBe("EXISTING");
+    expect((await host.readContext(batch)).activity).toMatchObject({
+      state: "PENDING",
+      attemptCount: 0,
+      rowRevision: 2,
+      recordedAt: now,
+    });
     expect(await host.readResult(batch, taskId)).toBeNull();
     expect(await host.readPublished(batch, taskId)).toBeNull();
     expect(sends).not.toHaveBeenCalled();
@@ -299,6 +305,11 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     });
     expect(result?.providerOutcome).toBe("SETTLED");
     await queue.settle(context, first);
+    expect(sends).toHaveBeenCalledTimes(1);
+    // A fresh Host reads the owning persisted state, not elapsed screen time.
+    expect(
+      (await createUniversalContinuousHost(hostDeps).readContext(batch)).activity,
+    ).toMatchObject({ state: "RESULTS_READY", attemptCount: 1 });
     expect(sends).toHaveBeenCalledTimes(1);
     const published = await host.readPublished(batch, taskId);
     expect(published?.result).toEqual(result);

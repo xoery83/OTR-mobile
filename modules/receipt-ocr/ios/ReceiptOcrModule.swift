@@ -1,5 +1,6 @@
 import ExpoModulesCore
 import Foundation
+import PDFKit
 import ImageIO
 import QuickLook
 import UIKit
@@ -11,9 +12,20 @@ public class ReceiptOcrModule: Module {
   private var running: [String: VNRecognizeTextRequest] = [:]
   private var cancelled: Set<String> = []
   private var previewSource: DraftPreviewSource?
+  private var importPreview: (token: String, controller: ImportOriginalPreviewController)?
+  private var cancelledImportPreviews: Set<String> = []
 
   public func definition() -> ModuleDefinition {
     Name("ReceiptOcr")
+
+    OnCreate {
+      // Remove only this preview adapter's disposable copies left by process termination.
+      let directory = FileManager.default.temporaryDirectory
+      for file in (try? FileManager.default.contentsOfDirectory(at: directory,
+        includingPropertiesForKeys: nil)) ?? [] where file.lastPathComponent.hasPrefix("otr-import-") {
+        try? FileManager.default.removeItem(at: file)
+      }
+    }
 
     AsyncFunction("recognize") { (uri: String, requestId: String) -> [String: Any] in
       return self.recognize(uri: uri, requestId: requestId)
@@ -57,6 +69,57 @@ public class ReceiptOcrModule: Module {
         "engineRevision": request.revision,
         "supportedLanguages": (try? request.supportedRecognitionLanguages()) ?? []
       ]
+    }
+
+    AsyncFunction("previewImportOriginal") { (data: Data, token: String, promise: Promise) in
+      DispatchQueue.main.async {
+        if self.cancelledImportPreviews.remove(token) != nil { promise.resolve(nil); return }
+        guard UUID(uuidString: token) != nil, self.importPreview == nil,
+          !data.isEmpty, data.count <= 50 * 1024 * 1024,
+          let root = UIApplication.shared.connectedScenes
+            .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController
+        else { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable"); return }
+        var presenter = root
+        while let shown = presenter.presentedViewController { presenter = shown }
+        guard presenter.viewIfLoaded?.window != nil, !presenter.isBeingDismissed,
+          !presenter.isBeingPresented, presenter.transitionCoordinator == nil
+        else { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable"); return }
+        let suffix: String
+        if data.starts(with: Data("%PDF-".utf8)), PDFDocument(data: data) != nil {
+          suffix = "pdf"
+        } else if let image = CGImageSourceCreateWithData(data as CFData, nil),
+          let type = CGImageSourceGetType(image) as String?,
+          let ext = [UTType.jpeg.identifier: "jpg", UTType.png.identifier: "png",
+            UTType.heic.identifier: "heic", UTType.heif.identifier: "heif"][type] {
+          suffix = ext
+        } else { promise.reject("IMPORT_PREVIEW_UNSUPPORTED", "Unsupported original"); return }
+        let file = FileManager.default.temporaryDirectory
+          .appendingPathComponent("otr-import-" + token).appendingPathExtension(suffix)
+        do { try data.write(to: file, options: [.atomic, .completeFileProtection]) }
+        catch { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable"); return }
+        let preview = ImportOriginalPreviewController(file: file) { failed in
+          try? FileManager.default.removeItem(at: file)
+          if self.importPreview?.token == token { self.importPreview = nil }
+          if failed { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable") }
+          else { promise.resolve(nil) }
+        }
+        self.importPreview = (token, preview)
+        presenter.present(preview, animated: true) { preview.didPresent() }
+        DispatchQueue.main.async {
+          if preview.presentingViewController == nil { preview.presentationFailed() }
+        }
+      }
+    }
+
+    AsyncFunction("closeImportOriginal") { (token: String) in
+      DispatchQueue.main.async {
+        guard UUID(uuidString: token) != nil else { return }
+        guard let preview = self.importPreview, preview.token == token else {
+          self.cancelledImportPreviews.insert(token)
+          return
+        }
+        preview.controller.closePrivateOriginal()
+      }
     }
 
     Function("previewDraft") { (uri: String) -> Bool in
@@ -211,4 +274,47 @@ private final class DraftPreviewController: QLPreviewController {
   @objc private func closePreview() {
     navigationController?.dismiss(animated: true)
   }
+}
+
+// Owns only the disposable preview copy; the durable Capture original remains in its repository.
+private final class ImportOriginalPreviewController: QLPreviewController, QLPreviewControllerDataSource {
+  private let file: URL
+  private var finish: ((Bool) -> Void)?
+  private var presented = false
+  private var closeRequested = false
+  init(file: URL, finish: @escaping (Bool) -> Void) {
+    self.file = file
+    self.finish = finish
+    super.init(nibName: nil, bundle: nil)
+    dataSource = self
+    NotificationCenter.default.addObserver(self, selector: #selector(hidePrivateOriginal),
+      name: UIApplication.willResignActiveNotification, object: nil)
+  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+  func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
+  func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+    file as NSURL
+  }
+  func presentationFailed() { complete(true) }
+  func didPresent() {
+    presented = true
+    if closeRequested { closePrivateOriginal() }
+  }
+  func closePrivateOriginal() {
+    closeRequested = true
+    guard presented else { return }
+    dismiss(animated: false) { self.complete() }
+  }
+  private func complete(_ failed: Bool = false) {
+    let cleanup = finish
+    finish = nil
+    cleanup?(failed)
+  }
+  @objc private func hidePrivateOriginal() { closePrivateOriginal() }
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    guard isBeingDismissed || presentingViewController == nil else { return }
+    complete()
+  }
+  deinit { NotificationCenter.default.removeObserver(self) }
 }

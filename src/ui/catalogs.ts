@@ -1,4 +1,51 @@
 export const en = {
+  "importDocuments.trip": "Trip Documents",
+  "importDocuments.inbox": "Personal Inbox",
+  "importDocuments.loading": "Loading documents…",
+  "importDocuments.unavailable": "Documents are unavailable. Try refreshing.",
+  "importDocuments.empty": "No documents in this scope yet.",
+  "importDocuments.private": "Private",
+  "importDocuments.originalUnavailable": "The original is unavailable on this device.",
+  "importDocuments.localRecorded": "Local original recorded",
+  "importDocuments.details": "View document details",
+  "importDocuments.openOriginal": "Open original",
+  "importDocuments.openBatch": "View Import Batch",
+  "importDocuments.custodyExplanation":
+    "The original is checked when opened. Cloud backup is not confirmed.",
+  "importDocuments.format.TEXT": "Text",
+  "importDocuments.format.FILE": "File",
+  "importDocuments.format.IMAGE": "Image",
+
+  "capture.ai.task.PENDING": "Waiting for processing.",
+  "capture.ai.task.WAITING":
+    "Processing is waiting for an available connection or permission.",
+  "capture.ai.task.PROCESSING": "Reading travel information.",
+  "capture.ai.task.RESULTS_READY":
+    "Interpretation finished. Choose which suggestions to save.",
+  "capture.ai.task.FAILED": "Processing failed. Check the details before retrying.",
+  "capture.ai.task.CANCELED": "Processing was canceled.",
+  "capture.ai.task.STALE":
+    "The source or permission changed. Check the current source before continuing.",
+  "capture.ai.task.UNKNOWN":
+    "The processing outcome is unknown. Check status before trying again.",
+
+  "auth.emailTitle": "Sign in or create an account",
+  "auth.sendCode": "Send verification code",
+  "auth.code": "Verification code",
+  "auth.codeSent": "Enter the code sent to {email}.",
+  "auth.verify": "Verify and continue",
+  "auth.resend": "Send another code",
+  "auth.changeEmail": "Use another email address",
+  "auth.requestFailed": "Check your email address and connection, then try again.",
+  "auth.invalidCode":
+    "This code is incorrect or has expired. Check the code or request another.",
+  "auth.rateLimited": "Please wait before trying again.",
+  "auth.adoptionPending":
+    "Your local data must be checked before sign-in can finish. Your data has been kept.",
+  "auth.logoutWarning":
+    "Unsynced changes will remain on this device for this account. Sign out requires an internet connection.",
+  "auth.logoutOffline":
+    "Connect to the internet to sign out. Your current account and local data have been kept.",
   "capture.ai.p6ReviewValues": "Activity: {title}. Date: {raw} → {date}.",
   "capture.ai.p6SelectNew": "Choose NEW: create a separate activity",
   "capture.ai.p6Confirm": "Confirm activity name and date and add item",
@@ -2956,6 +3003,44 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "importDocuments.trip": "行程文档",
+  "importDocuments.inbox": "个人收件箱",
+  "importDocuments.loading": "正在读取文档…",
+  "importDocuments.unavailable": "暂时无法读取文档，请刷新重试。",
+  "importDocuments.empty": "此范围内暂无文档。",
+  "importDocuments.private": "私密",
+  "importDocuments.originalUnavailable": "此设备上无法访问原件。",
+  "importDocuments.localRecorded": "已记录本机原件",
+  "importDocuments.details": "查看文档详情",
+  "importDocuments.openOriginal": "查看原件",
+  "importDocuments.openBatch": "查看导入批次",
+  "importDocuments.custodyExplanation": "打开时会校验原件。尚未确认云端备份。",
+  "importDocuments.format.TEXT": "文字",
+  "importDocuments.format.FILE": "文件",
+  "importDocuments.format.IMAGE": "图片",
+
+  "capture.ai.task.PENDING": "等待处理。",
+  "capture.ai.task.WAITING": "正在等待可用连接或权限。",
+  "capture.ai.task.PROCESSING": "正在读取旅行资料。",
+  "capture.ai.task.RESULTS_READY": "解析已完成，请选择要保存的候选。",
+  "capture.ai.task.FAILED": "处理失败，请先查看详情，再决定是否重试。",
+  "capture.ai.task.CANCELED": "处理已取消。",
+  "capture.ai.task.STALE": "原件或权限已变化，请核对当前原件后继续。",
+  "capture.ai.task.UNKNOWN": "尚无法确认处理结果，请先查询状态再继续。",
+
+  "auth.emailTitle": "登录或创建账户",
+  "auth.sendCode": "发送验证码",
+  "auth.code": "验证码",
+  "auth.codeSent": "请输入发送至 {email} 的验证码。",
+  "auth.verify": "验证并继续",
+  "auth.resend": "重新发送验证码",
+  "auth.changeEmail": "使用其他邮箱",
+  "auth.requestFailed": "请检查邮箱地址和网络连接后重试。",
+  "auth.invalidCode": "验证码不正确或已过期，请核对或重新获取。",
+  "auth.rateLimited": "请稍后再试。",
+  "auth.adoptionPending": "完成登录前需要检查本地数据，你的数据已保留。",
+  "auth.logoutWarning": "未同步的更改会为此账户保留在本机。退出登录需要网络连接。",
+  "auth.logoutOffline": "请连接网络后退出登录。当前账户和本地数据已保留。",
   "capture.ai.title": "AI 候选预览",
   "capture.ai.queued": "AI 处理已进入队列。请检查结果以继续，尚未保存任何行程项目。",
   "capture.ai.suggestionsStatus":

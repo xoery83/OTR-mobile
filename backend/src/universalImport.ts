@@ -10,10 +10,7 @@ import {
   COMPACT_PROMPT_VERSION,
   compactSchema,
 } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
-import {
-  universalInstruction,
-  universalAdvisoryInstruction,
-} from "./universalPrompt";
+import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
 import {
   advisorySources,
   envelopeSchema,
@@ -22,11 +19,9 @@ import {
 import { projectUniversalMinimumFacts } from "./universalReadiness";
 import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
 
-export const UNIVERSAL_IMPORT_VERSION =
-  "otr.backend.universal-interpretation/1" as const;
+export const UNIVERSAL_IMPORT_VERSION = "otr.backend.universal-interpretation/1" as const;
 export const UNIVERSAL_IMPORT_SCHEMA_ID = "UNIVERSAL_IMPORT_V1" as const;
-const sha = (bytes: Buffer | string) =>
-  createHash("sha256").update(bytes).digest("hex");
+const sha = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
 const uuid = z.string().uuid();
 export const universalRequestSchema = z.strictObject({
   version: z.literal(UNIVERSAL_IMPORT_VERSION),
@@ -142,13 +137,10 @@ export type UniversalPort = {
     batchId: string,
     request: UniversalRequest,
   ): Promise<UniversalResult>;
-  read(
-    actorId: string,
-    batchId: string,
-    taskId: string,
-  ): Promise<UniversalResult | null>;
+  read(actorId: string, batchId: string, taskId: string): Promise<UniversalResult | null>;
 };
 export type UniversalExecutionContext = {
+  activity?: import("../../src/data/api/universalImportContracts").UniversalTaskActivity;
   version: "otr.backend.universal-context/1";
   actorId: string;
   accountId: string;
@@ -182,8 +174,7 @@ const COVERAGE_GAPS = [
   },
   {
     field: "P5.dynamic_provider_label_value",
-    reason:
-      "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED",
+    reason: "FINITE_OPTIONAL_PATHS_ONLY; SOURCE-LABELLED_DYNAMIC_KEYS_NOT_SUPPORTED",
   },
   {
     field: "P5.dynamic_boarding_or_meeting_labels",
@@ -240,9 +231,7 @@ function pinManifest(
         mime: s.mime,
         bytes: s.bytes,
         prepared: s.prepared,
-        ...(s.mime === "text/plain"
-          ? { preparedText: s.bytes.toString("utf8") }
-          : {}),
+        ...(s.mime === "text/plain" ? { preparedText: s.bytes.toString("utf8") } : {}),
       },
       "B_PREPARED",
       {
@@ -260,9 +249,7 @@ function pinManifest(
     mime: s.mime,
     originalSha256: s.originalSha256,
     submittedSha256:
-      prepared[index].status === "READY"
-        ? prepared[index].submittedSha256
-        : null,
+      prepared[index].status === "READY" ? prepared[index].submittedSha256 : null,
     status: prepared[index].status,
   }));
   const requestSha256 = sha(
@@ -402,22 +389,17 @@ export function projectUniversalResponse(
       fields: o.fields,
       authority: "SOURCE_OBSERVATION_ONLY",
     }));
-  const permitted = new Set([
-    ...quality.acceptedTokens,
-    ...quality.reviewableTokens,
-  ]);
+  const permitted = new Set([...quality.acceptedTokens, ...quality.reviewableTokens]);
   const selectedCandidates = (inspection.proposals?.objects ?? []).filter((o) =>
     permitted.has(o.token),
   );
   const bookingObservations = (inspection.proposals?.bookings ?? []).filter(
-    (b) =>
-      b.objectTokens.length && b.objectTokens.every((t) => permitted.has(t)),
+    (b) => b.objectTokens.length && b.objectTokens.every((t) => permitted.has(t)),
   );
   const ticketObservations = (inspection.proposals?.tickets ?? [])
     .filter(
       (t) =>
-        t.objectTokens.length &&
-        t.objectTokens.every((token) => permitted.has(token)),
+        t.objectTokens.length && t.objectTokens.every((token) => permitted.has(token)),
     )
     .map((t) => ({ ...t, authority: "NONE" }));
   const keptBookings = new Set(bookingObservations.map((b) => b.token));
@@ -428,8 +410,7 @@ export function projectUniversalResponse(
     presentationTier:
       factsByToken.get(o.token)?.minimumFacts === "INCOMPLETE"
         ? "INCOMPLETE"
-        : (quality.decisions.find((d) => d.token === o.token)?.tier ??
-          "ABSTAIN"),
+        : (quality.decisions.find((d) => d.token === o.token)?.tier ?? "ABSTAIN"),
     bookingTokens: o.bookingTokens.filter((token) => keptBookings.has(token)),
     ticketTokens: o.ticketTokens.filter((token) => keptTickets.has(token)),
   }));
@@ -487,20 +468,13 @@ export function createUniversalPort(
 ): UniversalPort {
   return {
     async execute(actorId, batchId, request) {
-      const {
-        manifest,
-        prepared,
-        bindings,
-        requestSha256,
-        ready,
-        base,
-        dispatchMarker,
-      } = prepareUniversalDispatch(
-        actorId,
-        batchId,
-        request,
-        await host.readManifest(actorId, request.tripId, batchId),
-      );
+      const { manifest, prepared, bindings, requestSha256, ready, base, dispatchMarker } =
+        prepareUniversalDispatch(
+          actorId,
+          batchId,
+          request,
+          await host.readManifest(actorId, request.tripId, batchId),
+        );
       const assertCurrent = async () => {
         const current = pinManifest(
           actorId,
@@ -656,37 +630,24 @@ export async function universalBoundary(
   port?: UniversalPort,
 ) {
   if (!port)
-    return Response.json(
-      { error: { code: "UNIVERSAL_IMPORT_CLOSED" } },
-      { status: 503 },
-    );
+    return Response.json({ error: { code: "UNIVERSAL_IMPORT_CLOSED" } }, { status: 503 });
   const url = new URL(request.url);
-  const match =
-    /^\/v2\/import-batches\/([^/]+)\/interpretations(?:\/([^/]+))?$/.exec(
-      url.pathname,
-    );
+  const match = /^\/v2\/import-batches\/([^/]+)\/interpretations(?:\/([^/]+))?$/.exec(
+    url.pathname,
+  );
   if (
     !match ||
     !uuid.safeParse(match[1]).success ||
     (match[2] && !uuid.safeParse(match[2]).success)
   )
-    return Response.json(
-      { error: { code: "INVALID_IMPORT_ID" } },
-      { status: 400 },
-    );
+    return Response.json({ error: { code: "INVALID_IMPORT_ID" } }, { status: 400 });
   const batchId = match[1];
   if (request.method === "GET" && !match[2]) {
     const tripId = url.searchParams.get("tripId");
     if (!tripId || !uuid.safeParse(tripId).success)
-      return Response.json(
-        { error: { code: "INVALID_TRIP_ID" } },
-        { status: 400 },
-      );
+      return Response.json({ error: { code: "INVALID_TRIP_ID" } }, { status: 400 });
     if (!(await canReadTrip(actorId, tripId)))
-      return Response.json(
-        { error: { code: "TRIP_READ_FORBIDDEN" } },
-        { status: 403 },
-      );
+      return Response.json({ error: { code: "TRIP_READ_FORBIDDEN" } }, { status: 403 });
     if (!port.readContext)
       return Response.json(
         { error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } },
@@ -703,10 +664,7 @@ export async function universalBoundary(
         binding.batchId !== batchId ||
         !uuid.safeParse(binding.taskId).success
       )
-        return Response.json(
-          { error: { code: "TASK_NOT_FOUND" } },
-          { status: 404 },
-        );
+        return Response.json({ error: { code: "TASK_NOT_FOUND" } }, { status: 404 });
       return Response.json(binding, {
         headers: { "Cache-Control": "no-store" },
       });
@@ -720,32 +678,17 @@ export async function universalBoundary(
   if (request.method === "POST" && !match[2]) {
     const body = await request.text();
     if (Buffer.byteLength(body) > 2048)
-      return Response.json(
-        { error: { code: "REQUEST_TOO_LARGE" } },
-        { status: 413 },
-      );
+      return Response.json({ error: { code: "REQUEST_TOO_LARGE" } }, { status: 413 });
     let parsed: ReturnType<typeof universalRequestSchema.safeParse>;
     try {
       parsed = universalRequestSchema.safeParse(JSON.parse(body));
     } catch {
-      return Response.json(
-        { error: { code: "INVALID_REQUEST" } },
-        { status: 400 },
-      );
+      return Response.json({ error: { code: "INVALID_REQUEST" } }, { status: 400 });
     }
-    if (
-      !parsed.success ||
-      request.headers.get("Idempotency-Key") !== parsed.data.taskId
-    )
-      return Response.json(
-        { error: { code: "INVALID_REQUEST" } },
-        { status: 400 },
-      );
+    if (!parsed.success || request.headers.get("Idempotency-Key") !== parsed.data.taskId)
+      return Response.json({ error: { code: "INVALID_REQUEST" } }, { status: 400 });
     if (!(await canReadTrip(actorId, parsed.data.tripId)))
-      return Response.json(
-        { error: { code: "TRIP_READ_FORBIDDEN" } },
-        { status: 403 },
-      );
+      return Response.json({ error: { code: "TRIP_READ_FORBIDDEN" } }, { status: 403 });
     try {
       return Response.json(await port.execute(actorId, batchId, parsed.data), {
         status: 200,
@@ -761,22 +704,13 @@ export async function universalBoundary(
   if (request.method === "GET" && match[2]) {
     const tripId = url.searchParams.get("tripId");
     if (!tripId || !uuid.safeParse(tripId).success)
-      return Response.json(
-        { error: { code: "INVALID_TRIP_ID" } },
-        { status: 400 },
-      );
+      return Response.json({ error: { code: "INVALID_TRIP_ID" } }, { status: 400 });
     if (!(await canReadTrip(actorId, tripId)))
-      return Response.json(
-        { error: { code: "TRIP_READ_FORBIDDEN" } },
-        { status: 403 },
-      );
+      return Response.json({ error: { code: "TRIP_READ_FORBIDDEN" } }, { status: 403 });
     const result = await port.read(actorId, batchId, match[2]);
     return result?.tripId === tripId
       ? Response.json(result, { headers: { "Cache-Control": "no-store" } })
       : Response.json({ error: { code: "TASK_NOT_FOUND" } }, { status: 404 });
   }
-  return Response.json(
-    { error: { code: "METHOD_NOT_ALLOWED" } },
-    { status: 405 },
-  );
+  return Response.json({ error: { code: "METHOD_NOT_ALLOWED" } }, { status: 405 });
 }

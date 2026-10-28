@@ -13,6 +13,7 @@ import {
   readUniversalP1Catalog,
   publishUniversalP1Candidate,
   assertUniversalP1Capability,
+  hasAcceptedUniversalSourceReceipt,
   setUniversalP1WriteContext,
   type PublishedUniversalP1Reader,
   type UniversalP1QualificationContext,
@@ -685,11 +686,13 @@ async function putPlan(
   if (firstP1) {
     if (plan.slots.length !== 1 || !plan.slots.every((s) => s.p1))
       throw Error("CONTRACT_UNSUPPORTED");
-    await assertUniversalP1Capability(
-      lease,
-      scope,
-      (firstP1.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
-    );
+    if (!(await hasAcceptedUniversalSourceReceipt(lease, scope, firstP1))) {
+      await assertUniversalP1Capability(
+        lease,
+        scope,
+        (firstP1.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" }).family,
+      );
+    }
     await setUniversalP1WriteContext(
       lease,
       firstP1.proposed.target.id,
@@ -1170,12 +1173,14 @@ export function createCoreSourcePgAuthority(
             )
               throw new Error("RECEIPT_TARGET_MISMATCH");
             if (slot.p1) {
-              await assertUniversalP1Capability(
-                lease,
-                own,
-                (slot.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" })
-                  .family,
-              );
+              if (!(await hasAcceptedUniversalSourceReceipt(lease, own, slot))) {
+                await assertUniversalP1Capability(
+                  lease,
+                  own,
+                  (slot.proposed.payload as { family: "P1" | "P3" | "P4" | "P5" | "P6" })
+                    .family,
+                );
+              }
               await setUniversalP1WriteContext(
                 lease,
                 slot.proposed.target.id,

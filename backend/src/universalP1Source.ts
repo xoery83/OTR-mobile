@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { universalP1Identity } from "../../src/domain/trip/universalImportIdentity";
 import { z } from "zod";
 import {
   assertAccountRequestContext,
@@ -37,17 +37,7 @@ const selectionSchema = z.strictObject({
   resultSha256: digest,
   sourceReview: universalItemSourceReviewSchema.optional(),
 });
-export function universalP1Identity(task: string, token: string, purpose: string) {
-  z.uuid().parse(task);
-  const bytes = createHash("sha256")
-    .update(JSON.stringify(["otr.universal.p1-source/1", task, token, purpose]))
-    .digest()
-    .subarray(0, 16);
-  bytes[6] = (bytes[6] & 15) | 128;
-  bytes[8] = (bytes[8] & 63) | 128;
-  const h = bytes.toString("hex");
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-}
+export { universalP1Identity } from "../../src/domain/trip/universalImportIdentity";
 // Typed adapter only. Callers supply owning current Source/Task/custody/Actor reads.
 export async function projectUniversalP1Selection(
   input: {

@@ -4,6 +4,34 @@ const uuid = z.uuid(),
   sha = z.string().regex(/^[a-f0-9]{64}$/);
 const text = z.string().max(65536),
   token = z.string().min(1).max(2048);
+// Observation of the existing owning Task, never a new Activity or Admission authority.
+export const universalTaskActivitySchema = z.strictObject({
+  state: z.enum([
+    "PENDING",
+    "WAITING",
+    "PROCESSING",
+    "RESULTS_READY",
+    "FAILED",
+    "CANCELED",
+    "STALE",
+    "UNKNOWN",
+  ]),
+  recordedAt: z.iso.datetime({ offset: true }),
+  updatedAt: z.iso.datetime({ offset: true }),
+  completedAt: z.iso.datetime({ offset: true }).nullable(),
+  rowRevision: z.number().int().positive().safe(),
+  attemptCount: z.number().int().nonnegative().max(1),
+  waitReason: z
+    .enum([
+      "WAITING_FOR_NETWORK",
+      "WAITING_FOR_REMOTE_INTELLIGENCE",
+      "WAITING_FOR_ENRICHMENT",
+      "WAITING_FOR_AUTH",
+      "POLICY_BLOCKED",
+    ])
+    .nullable(),
+});
+export type UniversalTaskActivity = z.infer<typeof universalTaskActivitySchema>;
 export const universalContextSchema = z.strictObject({
   version: z.literal("otr.backend.universal-context/1"),
   actorId: uuid,
@@ -11,6 +39,7 @@ export const universalContextSchema = z.strictObject({
   tripId: uuid,
   batchId: uuid,
   taskId: uuid,
+  activity: universalTaskActivitySchema.optional(),
 });
 export type UniversalExecutionContext = z.infer<typeof universalContextSchema>;
 // Observed owning Source pins only; Backend qualifies them and owns Run/Task identity.

@@ -1,0 +1,65 @@
+{
+  "status": "INSTALLED_DEFAULT_CLOSED_INDEPENDENTLY_VERIFIED",
+  "verifiedAt": "2026-10-28T04:07:02.745662+00:00",
+  "approvedPacketCommit": "091fb547",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "service": {
+    "containerId": "6ab4b65789215a8c3142fbc15bd6f7be17ac3c855319dfe29627c7f81a853e14",
+    "image": "sha256:248ddc050d6aff410a4adb1edd3b023b943e5c6baea50b08ffb2ddd5563e2b26",
+    "environmentSHA256": "345601e98e82374846ad9ddb23b154ce6f2b197e59f4fdd62c6b63a30f84b182",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountCount": 6,
+    "health": "healthy"
+  },
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "9f01606ec37c03662c7d9d828cae9ef9",
+      "oid": "66408",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_import_p1_capabilities(uuid,uuid)"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "488f5fe1537d450b610ef7c5e22eb53b",
+      "oid": "66410",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "fb315854dee6942f552a647fb851abfb",
+      "oid": "65660",
+      "owner": "postgres",
+      "signature": "public.trip_core_guard_historical_source_association()"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "6ff1c65d9389341e889eb8258c6659af",
+      "oid": "65649",
+      "owner": "postgres",
+      "signature": "public.trip_core_publication_guard()"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "c8d64a12edd7e92a738a536e34071fb4",
+      "oid": "65713",
+      "owner": "postgres",
+      "signature": "public.trip_core_finite_read_state_guard()"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "40f537b189fd972423e63b2be4023a12",
+      "oid": "65546",
+      "owner": "postgres",
+      "signature": "public.trip_core_resolve_airport(text,text,text,date)"
+    }
+  ],
+  "unchangedOidsOwnerAcl": true,
+  "unchangedQaPolicy": true,
+  "saveEnabled": false,
+  "reviewScope": null,
+  "activated": false,
+  "providerCalls": 0,
+  "nativeE2e": "NOT_RUN"
+}

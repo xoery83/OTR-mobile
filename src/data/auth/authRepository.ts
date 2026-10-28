@@ -1,11 +1,13 @@
 import { createAuthRepository, type SecureSessionStorage } from "./authSessionRepository";
+import { withAccountApplyGate } from "./accountRequestContext";
+import { createUuid } from "@/domain/localId";
 
 export type { AccountIdentity, LocalSession } from "@/domain/auth/localSession";
 export { createAuthRepository, type SecureSessionStorage } from "./authSessionRepository";
 
 // Metro must bundle this dependency; defer evaluation for the headless host.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const secureStore = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("expo-secure-store") as typeof import("expo-secure-store");
 
 const secureStoreAdapter: SecureSessionStorage = {
@@ -14,7 +16,15 @@ const secureStoreAdapter: SecureSessionStorage = {
   deleteItem: async (key) => (await secureStore()).deleteItemAsync(key),
 };
 
-const authRepository = createAuthRepository(secureStoreAdapter);
+const authRepository = createAuthRepository(secureStoreAdapter, createUuid);
+
+export function readLocalAuthSnapshot() {
+  return withAccountApplyGate(authRepository.readLocalAuthSnapshot);
+}
+
+export async function readLaunchIdentity() {
+  return (await readLocalAuthSnapshot()).principal;
+}
 
 export const readAdoptedLocalSession = authRepository.readAdoptedLocalSession;
 export const readLocalSession = authRepository.readLocalSession;

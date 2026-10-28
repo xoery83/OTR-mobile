@@ -1,3 +1,4 @@
+import { universalP1Identity } from "../../domain/trip/universalImportIdentity";
 import {
   universalP2SourceReviewSchema,
   type UniversalP2SourceReview,
@@ -298,4 +299,67 @@ export async function readUniversalP1ReviewOriginal(
   );
   await current();
   return text;
+}
+
+// Receipt GET only: reopening Results must never republish, enqueue or pay for interpretation.
+export async function readUniversalAcceptedItems(
+  model: CaptureJobReadModel,
+  result: UniversalImportResult,
+  deps: {
+    getAccountId(): Promise<string>;
+    isCurrent(): boolean;
+    transport: Pick<ReturnType<typeof createCoreV2Transport>, "receipt">;
+  },
+) {
+  const current = () => {
+    if (!deps.isCurrent()) throw Error("UNIVERSAL_CAPTURE_STALE");
+  };
+  current();
+  assertUniversalCaptureResult(model, result);
+  const context = await captureAccountRequestContext(result.tripId, deps.getAccountId);
+  if (context.accountId !== result.accountId) throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+  const accepted: Record<
+    string,
+    { itemId: string; operationId: string; committedAt: string }
+  > = {};
+  for (const candidate of result.candidates) {
+    if (!["P1", "P2", "P3", "P4", "P5", "P6"].includes(candidate.kind)) continue;
+    current();
+    await assertAccountRequestContext(context, deps.getAccountId);
+    const prefix = candidate.kind === "P2" ? "p2-" : "";
+    const operationId = universalP1Identity(
+      result.taskId,
+      candidate.token,
+      prefix + "operation",
+    );
+    const itemId = universalP1Identity(result.taskId, candidate.token, prefix + "item");
+    const read = await deps.transport.receipt(context, operationId);
+    current();
+    await assertAccountRequestContext(context, deps.getAccountId);
+    if (!read) continue;
+    if (read.projection !== "FULL") continue;
+    const receipt = read.receipt;
+    if (
+      receipt.operationId !== operationId ||
+      receipt.tripId !== result.tripId ||
+      receipt.actorAccountId !== result.accountId ||
+      receipt.command !==
+        (candidate.kind === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM")
+    )
+      throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+    if (!["APPLIED", "NO_CHANGE"].includes(receipt.outcome)) continue;
+    if (
+      !receipt.targetVector.some(
+        (v) => v.kind === "ITEM" && v.id === itemId && v.committedRevision !== null,
+      )
+    )
+      throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+    accepted[candidate.token] = {
+      itemId,
+      operationId,
+      committedAt: receipt.committedAt,
+    };
+  }
+  current();
+  return accepted;
 }

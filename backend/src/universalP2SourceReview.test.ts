@@ -244,7 +244,11 @@ async function owningPublicationFixture() {
     text: f.material.text,
     afterHash: owning.task.result_sha256,
   };
-  const query = vi.fn(async (sql: string) => {
+  const query = vi.fn(async (sql: string, params?: readonly unknown[]) => {
+    if (sql === "SELECT set_config('otr.universal.requested_family',$1,true)") {
+      expect(params).toEqual(["P2"]);
+      return { rows: [] };
+    }
     if (sql.includes("trip_sustained_import_p1_capabilities"))
       return {
         rows: [

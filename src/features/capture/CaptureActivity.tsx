@@ -1,3 +1,4 @@
+import type { UniversalTaskActivity } from "@/data/api/universalImportContracts";
 import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -54,6 +55,9 @@ export function CaptureActivity({
   onHide: () => void;
   expectedAccountId?: string;
 }) {
+  const [taskActivities, setTaskActivities] = useState<
+    Record<string, UniversalTaskActivity>
+  >({});
   const [jobs, setJobs] = useState<CaptureJobReadModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -83,6 +87,14 @@ export function CaptureActivity({
       const next = older ? [...jobs, ...page] : page;
       inventory.current = next;
       setJobs(next);
+      setTaskActivities({});
+      void import("@/data/operations/universalActivityReader")
+        .then(async (reader) => {
+          if (!current()) return;
+          const observations = await reader.readDefaultUniversalActivities(next, current);
+          if (current()) setTaskActivities(observations);
+        })
+        .catch(() => {});
       setHasMore(page.length === pageSize);
     } catch {
       if (current()) setError(true);
@@ -119,6 +131,7 @@ export function CaptureActivity({
     <CaptureActivityList
       isCurrent={() => active.current && isCurrent()}
       expectedAccountId={expectedAccountId}
+      taskActivities={taskActivities}
       jobs={jobs}
       loading={loading}
       error={error}
@@ -135,6 +148,7 @@ export function CaptureActivity({
 }
 
 export function CaptureActivityList({
+  taskActivities = {},
   jobs,
   loading,
   error,
@@ -148,6 +162,7 @@ export function CaptureActivityList({
   isCurrent = () => false,
 }: {
   isCurrent?: () => boolean;
+  taskActivities?: Readonly<Record<string, UniversalTaskActivity>>;
   jobs: readonly CaptureJobReadModel[];
   loading: boolean;
   error: boolean;
@@ -228,6 +243,11 @@ export function CaptureActivityList({
           ) : null}
           {job.inputs?.some((item) => item.continuesFromJobId) ? (
             <Text style={styles.secondary}>{t("capture.continuedSelection")}</Text>
+          ) : null}
+          {isCurrent() && taskActivities[job.batch.batchId] ? (
+            <Text style={styles.secondary}>
+              {t(`capture.ai.task.${taskActivities[job.batch.batchId].state}`)}
+            </Text>
           ) : null}
           {captureProcessingSummary(job) ? (
             <Text style={styles.secondary}>

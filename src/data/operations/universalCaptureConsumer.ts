@@ -2,7 +2,10 @@ import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { createUniversalImportTransport } from "../api/universalImportTransport";
 import { ApiClientError } from "../api/client";
-import type { UniversalImportResult } from "../api/universalImportContracts";
+import type {
+  UniversalTaskActivity,
+  UniversalImportResult,
+} from "../api/universalImportContracts";
 
 export function assertUniversalCaptureResult(
   model: CaptureJobReadModel,
@@ -48,6 +51,7 @@ export function createUniversalCaptureConsumer(dependencies: {
 }) {
   let dispatchUncertain = false;
   let queued = false;
+  let activity: UniversalTaskActivity | null = null;
   const current = () => {
     if (!dependencies.isCurrent()) throw Error("UNIVERSAL_CAPTURE_STALE");
   };
@@ -109,6 +113,7 @@ export function createUniversalCaptureConsumer(dependencies: {
       }
     }
     current();
+    activity = binding.activity ?? null;
     let result: UniversalImportResult;
     try {
       result = await dependencies.transport.result(context, binding);
@@ -165,6 +170,9 @@ export function createUniversalCaptureConsumer(dependencies: {
     return result;
   }
   return {
+    get activity() {
+      return dependencies.isCurrent() ? activity : null;
+    },
     get queued() {
       return queued;
     },

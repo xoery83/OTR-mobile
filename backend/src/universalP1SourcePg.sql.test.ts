@@ -267,7 +267,22 @@ it
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         family !== "P1" ? "OWNING_REVIEW_REQUIRED" : "CORE_CAPABILITY_CLOSED",
       );
-      if (family === "P5" || family === "P6") {
+      if (process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE) {
+        // New owning policy mode: no Source/Candidate/target/operation pins or per-Batch activation.
+        await admin.lease.query(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
+          [
+            actor,
+            JSON.stringify({
+              mode: "CONTINUOUS_MINIMUMS",
+              version: 1,
+              tripId: trip,
+              families: ["P1", "P3", "P4", "P5", "P6"],
+              expiresAt: new Date(Date.now() + 900000).toISOString(),
+            }),
+          ],
+        );
+      } else if (family === "P5" || family === "P6") {
         const packet = new URL(
           family === "P6"
             ? "../../docs/ops/universal-p6-formal-save-20261028/"
@@ -761,11 +776,13 @@ it
         );
         const rollback = readFileSync(
             new URL(
-              family === "P6"
-                ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
-                : family === "P5"
-                  ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                  : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+                ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
+                : family === "P6"
+                  ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                  : family === "P5"
+                    ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                    : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",
@@ -773,14 +790,34 @@ it
           isolatedControl = session(container!);
         try {
           await expect(isolatedControl.lease.query(rollback)).rejects.toThrow(
-            family === "P6"
-              ? "P6_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
-              : family === "P5"
-                ? "P5_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
-                : "P4_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
+            process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+              ? "CONTINUOUS_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
+              : family === "P6"
+                ? "P6_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
+                : family === "P5"
+                  ? "P5_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
+                  : "P4_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
           );
         } finally {
           isolatedControl.close();
+        }
+        if (process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE) {
+          // A committed Item must finish its exact Source journal after the Create policy closes.
+          expect(
+            (
+              await authority.finalizeUniversalP1Operation(actor, trip, {
+                captureVersion: 2,
+                slotId: publication.proposedPlan.slots[0].slotId,
+                operationId: command.operationId,
+                intentSha256: saved.receipt.intentSha256,
+                domainReceiptId: saved.domainReceiptId,
+                receiptSha256: saved.receipt.receiptSha256,
+              })
+            ).state,
+          ).toBe("COMPLETE");
+          await expect(
+            authority.publishUniversalP1(actor, trip, request),
+          ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
         }
         await admin.lease.query(
           "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=$2::jsonb WHERE actor_account_id=$1::uuid",
@@ -878,11 +915,13 @@ it
         await admin.lease.query(
           readFileSync(
             new URL(
-              family === "P6"
-                ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
-                : family === "P5"
-                  ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                  : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+                ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
+                : family === "P6"
+                  ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                  : family === "P5"
+                    ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                    : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",

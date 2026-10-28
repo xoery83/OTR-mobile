@@ -3,7 +3,7 @@ import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { systemMessage } from "@/ui/domainLabels";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -26,6 +26,7 @@ import {
 } from "@/data/auth/authRepository";
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
 import { authenticateDevAccount } from "@/data/auth/devAccountAuthentication";
+import { EmailOtpSignIn } from "@/features/auth/EmailOtpSignIn";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 
 import { UiTextInput as TextInput } from "@/ui/forms";
@@ -39,9 +40,17 @@ export function AccountManagementScreen({ authBoundary = false }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const scrollRef = useRef<ScrollView>(null);
+  const screenScope = useRef(new AbortController());
+  useFocusEffect(
+    useCallback(() => {
+      const scope = new AbortController();
+      screenScope.current = scope;
+      return () => scope.abort();
+    }, []),
+  );
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
-  const devSelector = params.mode === "dev";
+  const devSelector = __DEV__ && params.mode === "dev";
   const returnTo = safeReturnPath(params.returnTo);
   const [accounts, setAccounts] = useState<LocalAccount[]>([]);
   const [actorDisplayName, setActorDisplayName] = useState<string | null>(null);
@@ -160,7 +169,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
   };
 
   const logout = () =>
-    Alert.alert(t("account.signoutQuestion"), t("account.localData"), [
+    Alert.alert(t("account.signoutQuestion"), t("auth.logoutWarning"), [
       { style: "cancel", text: t("account.cancel") },
       {
         style: "destructive",
@@ -170,7 +179,15 @@ export function AccountManagementScreen({ authBoundary = false }) {
           void accountSwitch
             .logout()
             .then(() => router.replace("/foundation"))
-            .catch(() => setError(t("account.signoutFailed")))
+            .catch((caught: unknown) =>
+              setError(
+                t(
+                  caught instanceof Error && caught.message === "LOGOUT_REQUIRES_ONLINE"
+                    ? "auth.logoutOffline"
+                    : "account.signoutFailed",
+                ),
+              ),
+            )
             .finally(() => setBusy(false));
         },
       },
@@ -213,41 +230,61 @@ export function AccountManagementScreen({ authBoundary = false }) {
           </AccountSection>
         ) : null}
 
-        <AccountSection
-          title={devSelector ? t("account.approved") : t("account.remembered")}
-        >
-          {remembered.length ? (
-            remembered.map((account) => (
-              <AccountRow
-                account={account}
-                disabled={busy}
-                key={account.userId}
-                onPress={() => void switchAccount(account)}
-                onRemove={() => removeAccount(account)}
-              />
-            ))
-          ) : (
-            <Text style={styles.empty}>{t("account.empty")}</Text>
-          )}
-        </AccountSection>
+        {__DEV__ ? (
+          <AccountSection
+            title={devSelector ? t("account.approved") : t("account.remembered")}
+          >
+            {remembered.length ? (
+              remembered.map((account) => (
+                <AccountRow
+                  account={account}
+                  disabled={busy}
+                  key={account.userId}
+                  onPress={() => void switchAccount(account)}
+                  onRemove={() => removeAccount(account)}
+                />
+              ))
+            ) : (
+              <Text style={styles.empty}>{t("account.empty")}</Text>
+            )}
+          </AccountSection>
+        ) : null}
 
         <View style={styles.actions}>
           <ActionRow
             icon="person.badge.plus"
             label={t("account.addLogin")}
-            onPress={() => setShowLogin((visible) => !visible)}
+            onPress={() => {
+              if (!busy) setShowLogin((visible) => !visible);
+            }}
           />
           {active ? (
             <ActionRow
               destructive
               icon="arrow.right"
               label={t("account.signout")}
-              onPress={logout}
+              onPress={() => {
+                if (!busy) logout();
+              }}
             />
           ) : null}
         </View>
 
-        {showLogin ? (
+        {showLogin && !devSelector ? (
+          <EmailOtpSignIn
+            onBusyChange={setBusy}
+            onCancel={() => setShowLogin(false)}
+            onAuthenticated={async (session, generation) => {
+              const signal = screenScope.current.signal;
+              await accountSwitch.activateSession(session, generation, signal);
+              if (signal.aborted) return;
+              if (router.canGoBack()) router.back();
+              else router.replace(returnTo as never);
+            }}
+          />
+        ) : null}
+
+        {showLogin && devSelector ? (
           <View style={styles.login}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {t("account.loginAnother")}

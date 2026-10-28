@@ -1,22 +1,35 @@
 import { readFileSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { captureAccountRequestContext } from "../../../src/data/auth/accountRequestContext";
 import { universalResultSchema } from "../../../src/data/api/universalImportContracts";
 import { projectUniversalP2SourceProposal } from "../universalP2SourceReview";
 
 // Retained synthetic result; the catalog digest and publication decision are unit-fixture inputs.
-export async function universalP2SourceFixture() {
+export async function universalP2SourceFixture(freshIdentity = false) {
   const packet = new URL(
     "../../../docs/ops/universal-p2-formal-save-20261027/",
     import.meta.url,
   );
-  const result = universalResultSchema.parse(
+  let result = universalResultSchema.parse(
     JSON.parse(readFileSync(new URL("P2_BATCH9_SETTLED_RESULTS.json", packet), "utf8"))
       .results,
   );
   const owning = JSON.parse(
     readFileSync(new URL("P2_BATCH9_OWNING_TASK_RECEIPT.json", packet), "utf8"),
   );
+  if (freshIdentity) {
+    const previous = result.sourceBindings[0];
+    let wire = JSON.stringify(result);
+    for (const id of [
+      result.batchId,
+      result.taskId,
+      previous.inputId,
+      previous.sourceId,
+      previous.representationId,
+    ])
+      wire = wire.replaceAll(id, randomUUID());
+    result = universalResultSchema.parse(JSON.parse(wire));
+  }
   const b = result.sourceBindings[0];
   const deps = {
     hash: async (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex"),
@@ -32,12 +45,15 @@ export async function universalP2SourceFixture() {
     originalReviewed: true as const,
     tripReviewed: true as const,
   };
+  const resultSha256 = freshIdentity
+    ? await deps.hash(Buffer.from(JSON.stringify(result)))
+    : owning.task.result_sha256;
   const input = {
     context,
     result,
-    resultSha256: owning.task.result_sha256,
-    selection: { token: "i1", resultSha256: owning.task.result_sha256, sourceReview },
-    runId: "8af82103-55f2-84ea-8e6f-445a15321cf6",
+    resultSha256,
+    selection: { token: "i1", resultSha256, sourceReview },
+    runId: freshIdentity ? randomUUID() : "8af82103-55f2-84ea-8e6f-445a15321cf6",
     inputCatalogSha256: "a".repeat(64),
     material: {
       pin: {

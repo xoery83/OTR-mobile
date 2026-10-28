@@ -494,3 +494,35 @@ it("offers P6 only under its own opt-in, with explicit original and Trip Review 
   expect(confirm).not.toHaveBeenCalled();
   expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
 });
+
+it.each([
+  "PENDING",
+  "WAITING",
+  "PROCESSING",
+  "RESULTS_READY",
+  "FAILED",
+  "UNKNOWN",
+] as const)(
+  "shows owning %s separately from the screen request and queue hint",
+  (status) => {
+    const f = fixture();
+    const html = renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        result: null,
+        queued: true,
+        activity: {
+          state: status,
+          recordedAt: "2026-10-28T00:00:00Z",
+          updatedAt: "2026-10-28T00:00:01Z",
+          completedAt: null,
+          rowRevision: 2,
+          attemptCount: 0,
+          waitReason: null,
+        },
+      }),
+    );
+    expect(html).toContain(t(`capture.ai.task.${status}`));
+    expect(html).not.toContain(t("capture.ai.queued"));
+  },
+);

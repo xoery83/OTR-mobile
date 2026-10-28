@@ -283,3 +283,26 @@ it("keeps finite UNKNOWN and continuous GET recovery read-only", async () => {
   expect(prepare).not.toHaveBeenCalled();
   expect(f.transport.execute).not.toHaveBeenCalled();
 });
+
+it("retains actual Task observation even when no Result exists; recovery never prepares or sends", async () => {
+  const prepare = vi.fn(async () => {}),
+    f = fixture(prepare, true);
+  const binding = await f.transport.context();
+  const activity = {
+    state: "WAITING" as const,
+    recordedAt: "2026-10-28T00:00:00Z",
+    updatedAt: "2026-10-28T00:00:01Z",
+    completedAt: null,
+    rowRevision: 2,
+    attemptCount: 0,
+    waitReason: "WAITING_FOR_NETWORK" as const,
+  };
+  f.transport.context.mockResolvedValue({ ...binding, activity });
+  f.transport.result.mockRejectedValue(absent());
+  expect(await f.consumer.recover(f.model)).toBeNull();
+  expect(f.consumer.activity).toEqual(activity);
+  expect(prepare).not.toHaveBeenCalled();
+  expect(f.transport.execute).not.toHaveBeenCalled();
+  f.close();
+  expect(f.consumer.activity).toBeNull();
+});

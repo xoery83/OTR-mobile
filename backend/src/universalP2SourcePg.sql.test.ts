@@ -14,7 +14,8 @@ const container = process.env.OTR_UNIVERSAL_P2_OWNED_SQL_FIXTURE;
 it.skipIf(!container)(
   "creates one Sparse P2 through owning Source and recovers the same accepted receipt after closure",
   async () => {
-    const f = await universalP2SourceFixture(),
+    const continuous = !!process.env.OTR_UNIVERSAL_CONTINUOUS_P2_SQL_FIXTURE;
+    const f = await universalP2SourceFixture(continuous),
       actor = f.input.context.accountId,
       trip = f.input.context.tripId;
     const admin = session(container!),
@@ -221,6 +222,19 @@ it.skipIf(!container)(
       await admin.lease.query("COMMIT");
       f.input.inputCatalogSha256 = String(inputHash);
       const expected = await projectUniversalP2SourceProposal(f.input, f.deps);
+      if (continuous)
+        Object.assign(pinned, {
+          sourceId,
+          runId: f.input.runId,
+          batchId: request.batchId,
+          taskId: request.taskId,
+          candidateId: expected.publication.candidates[0].candidateId,
+          targetId: expected.plan.slots[0].target.id,
+          slotId: expected.plan.slots[0].slotId,
+          operationId: expected.plan.slots[0].operationId,
+          planId: expected.plan.planId,
+          proposedPlanSha256: expected.binding.proposedPlanSha256,
+        });
       expect(expected.binding.proposedPlanSha256).toBe(pinned.proposedPlanSha256);
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         "CORE_CAPABILITY_CLOSED",
@@ -243,16 +257,33 @@ it.skipIf(!container)(
           s.close();
         }
       }
-      await expect(
-        packageSql(
-          activateTemplate.replace(
-            "__P2_FIXED_WINDOW_DEADLINE__",
-            new Date(Date.now() + 3700000).toISOString(),
+      if (continuous) {
+        await packageSql(
+          "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=true,universal_p1_review_scope=" +
+            "'" +
+            JSON.stringify({
+              mode: "CONTINUOUS_MINIMUMS",
+              version: 1,
+              tripId: trip,
+              families: ["P1", "P2", "P3", "P4", "P5", "P6"],
+              expiresAt: new Date(Date.now() + 3300000).toISOString(),
+            }) +
+            "'::jsonb WHERE actor_account_id='" +
+            actor +
+            "'::uuid;UPDATE public.trip_core_airport_identities SET enabled=true WHERE registry_version='otr-dev-universal-p2-airports/20261027/1';",
+        );
+      } else {
+        await expect(
+          packageSql(
+            activateTemplate.replace(
+              "__P2_FIXED_WINDOW_DEADLINE__",
+              new Date(Date.now() + 3700000).toISOString(),
+            ),
           ),
-        ),
-      ).rejects.toThrow("P2_INVALID_DEADLINE");
-      await packageSql(activation);
-      await expect(packageSql(activation)).rejects.toThrow("P2_REQUIRES_CLOSED_POLICY");
+        ).rejects.toThrow("P2_INVALID_DEADLINE");
+        await packageSql(activation);
+        await expect(packageSql(activation)).rejects.toThrow("P2_REQUIRES_CLOSED_POLICY");
+      }
       // Expiry alone must deny new business writes even if a closer process is unavailable.
       await packageSql(
         "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=jsonb_set(universal_p1_review_scope,'{expiresAt}',to_jsonb((clock_timestamp()-interval '1 second')::text)) WHERE actor_account_id='" +
@@ -262,6 +293,16 @@ it.skipIf(!container)(
       await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
         "CORE_CAPABILITY_CLOSED",
       );
+      if (continuous) {
+        expect(
+          (
+            await protectedWrite(
+              "SELECT public.trip_core_resolve_airport('IATA_AIRPORT','IATA','AKL','2026-11-02'::date) AS identity",
+              [],
+            )
+          ).rows,
+        ).toEqual([{ identity: null }]);
+      }
       await packageSql(
         "UPDATE public.trip_sustained_dev_policy SET universal_p1_review_scope=jsonb_set(universal_p1_review_scope,'{expiresAt}',to_jsonb((clock_timestamp()+interval '55 minutes')::text)) WHERE actor_account_id='" +
           actor +
@@ -280,29 +321,48 @@ it.skipIf(!container)(
       );
       phase = "";
       expect(prepared.readyCommands).toHaveLength(1);
-      // Recover the exact retained READY operation after closure, never a replacement.
-      const readyCloseSql = readFileSync(new URL("P2_REVIEW_CLOSE.sql", packet), "utf8");
-      await packageSql(readyCloseSql);
-      const readyTemplate = readFileSync(
-        new URL("P2_READY_ACTIVATE.sql", packet),
-        "utf8",
-      );
-      const readyActivation = readyTemplate.replace(
-        "__P2_FIXED_WINDOW_DEADLINE__",
-        new Date(Date.now() + 3300000).toISOString(),
-      );
-      await expect(
-        packageSql(
-          readyActivation.replace(
-            "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
-            "0".repeat(64),
+      if (!continuous) {
+        // Recover the exact retained READY operation after closure, never a replacement.
+        const readyCloseSql = readFileSync(
+          new URL("P2_REVIEW_CLOSE.sql", packet),
+          "utf8",
+        );
+        await packageSql(readyCloseSql);
+        const readyTemplate = readFileSync(
+          new URL("P2_READY_ACTIVATE.sql", packet),
+          "utf8",
+        );
+        const readyActivation = readyTemplate.replace(
+          "__P2_FIXED_WINDOW_DEADLINE__",
+          new Date(Date.now() + 3300000).toISOString(),
+        );
+        await expect(
+          packageSql(
+            readyActivation.replace(
+              "7c23367514eac08ed381287c53db4767b6c77ef58eef9d3bceda1f58b21c04dd",
+              "0".repeat(64),
+            ),
           ),
-        ),
-      ).rejects.toThrow("P2_READY_SLOTS_DRIFT");
-      await packageSql(readyActivation);
-      await expect(packageSql(readyActivation)).rejects.toThrow(
-        "P2_REQUIRES_CLOSED_POLICY",
-      );
+        ).rejects.toThrow("P2_READY_SLOTS_DRIFT");
+        await packageSql(readyActivation);
+        await expect(packageSql(readyActivation)).rejects.toThrow(
+          "P2_REQUIRES_CLOSED_POLICY",
+        );
+      } else {
+        const live = (
+          await control(
+            "SELECT universal_p1_review_scope AS scope FROM public.trip_sustained_dev_policy WHERE actor_account_id=$1::uuid",
+            [actor],
+          )
+        ).rows[0].scope as Record<string, unknown>;
+        expect(Object.keys(live).sort()).toEqual([
+          "expiresAt",
+          "families",
+          "mode",
+          "tripId",
+          "version",
+        ]);
+      }
       const command = prepared.readyCommands[0];
       expect(command.command).toBe("CREATE_SPARSE_FLIGHT");
       expect(command.target.id).toBe(pinned.targetId);
@@ -367,12 +427,30 @@ it.skipIf(!container)(
           ),
         ).rejects.toThrow("CORE_V2_CAPABILITY_CLOSED");
       }
-      const closeSql = readFileSync(new URL("P2_REVIEW_CLOSE.sql", packet), "utf8");
+      const closeSql = continuous
+        ? "UPDATE public.trip_sustained_dev_policy SET universal_p1_import_enabled=false,universal_p1_review_scope=NULL WHERE actor_account_id='" +
+          actor +
+          "'::uuid;UPDATE public.trip_core_airport_identities SET enabled=false WHERE registry_version='otr-dev-universal-p2-airports/20261027/1';"
+        : readFileSync(new URL("P2_REVIEW_CLOSE.sql", packet), "utf8");
       await packageSql(closeSql);
       await packageSql(closeSql);
       await expect(
-        packageSql(readFileSync(new URL("P2_REVIEW_DEV_ROLLBACK.sql", packet), "utf8")),
-      ).rejects.toThrow("P2_ACCEPTED_SOURCE_RECOVERY_REQUIRED");
+        packageSql(
+          readFileSync(
+            continuous
+              ? new URL(
+                  "../../docs/ops/universal-product-20261028/authority/CONTINUOUS_REVIEW_ROLLBACK_CANDIDATE.sql",
+                  import.meta.url,
+                )
+              : new URL("P2_REVIEW_DEV_ROLLBACK.sql", packet),
+            "utf8",
+          ),
+        ),
+      ).rejects.toThrow(
+        continuous
+          ? "CONTINUOUS_ACCEPTED_SOURCE_RECOVERY_REQUIRED"
+          : "P2_ACCEPTED_SOURCE_RECOVERY_REQUIRED",
+      );
       await expect(
         protectedWrite(
           "UPDATE public.trip_source_core_v2_slots SET domain_receipt_id=$2::uuid WHERE output_slot_id=$1::uuid",
