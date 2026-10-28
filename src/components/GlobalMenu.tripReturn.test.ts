@@ -1,7 +1,10 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { readLocalAuthSnapshot } from "@/data/auth/authRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { GlobalMenu } from "./GlobalMenu";
 import type { GlobalMenuModule } from "./globalMenuModel";
 const state = vi.hoisted(() => ({
+  effects: [] as { run: () => (() => void) | void; deps: readonly unknown[] }[],
   generation: 1,
   params: { tripId: "a", view: "home" },
   path: "/trip",
@@ -24,7 +27,9 @@ vi.mock("react", async (original) => ({
     const i = state.stateCursor++;
     return [value, (state.setters[i] ??= vi.fn())];
   },
-  useEffect: () => {},
+  useEffect: (run: () => (() => void) | void, deps: readonly unknown[]) => {
+    state.effects.push({ run, deps });
+  },
   useLayoutEffect: (effect: () => (() => void) | void) => {
     state.cleanup?.();
     state.cleanup = effect() ?? null;
@@ -53,7 +58,7 @@ vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
   subscribeAccountGeneration: () => () => {},
 }));
-vi.mock("@/data/auth/authRepository", () => ({ readLocalSession: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({ readLocalAuthSnapshot: vi.fn() }));
 vi.mock("@/data/auth/defaultAccountSwitchCoordinator", () => ({
   createDefaultAccountSwitchCoordinator: () => ({ logout: vi.fn() }),
 }));
@@ -81,6 +86,11 @@ const back = () =>
     .flat()
     .find((item) => item.label === "navigation.allTrips");
 beforeEach(() => {
+  state.effects = [];
+  vi.mocked(readLocalAuthSnapshot)
+    .mockReset()
+    .mockResolvedValue({ session: null, principal: { kind: "SIGNED_OUT" } });
+  vi.mocked(getDefaultLedgerReportingRepository).mockClear();
   state.generation = 1;
   state.params = { tripId: "a", view: "home" };
   state.path = "/trip";
@@ -279,4 +289,35 @@ it("closing or unmounting invalidates an in-flight member read", async () => {
     await Promise.resolve();
     for (const setter of state.setters) expect(setter).not.toHaveBeenCalled();
   }
+});
+
+it("reloads gated menu identity by generation without opening Ledger on My Trips", async () => {
+  const identity = { userId: "b", displayName: "Account B", email: "b@example.invalid" };
+  vi.mocked(readLocalAuthSnapshot).mockResolvedValue({
+    session: { identity },
+    principal: { kind: "SIGNED_OUT" },
+  } as never);
+  render();
+  const effect = state.effects.at(-1)!;
+  expect(effect.deps).toEqual([undefined, 1]);
+  effect.run();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(state.setters[2]).toHaveBeenCalledWith({ generation: 1, identity });
+  expect(getDefaultLedgerReportingRepository).not.toHaveBeenCalled();
+});
+it("ignores a late identity snapshot from a superseded account generation", async () => {
+  let finish!: (value: any) => void;
+  vi.mocked(readLocalAuthSnapshot).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  render();
+  state.effects.at(-1)!.run();
+  state.generation = 2;
+  finish({ session: { identity: { userId: "a" } } });
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(state.setters[2]).not.toHaveBeenCalled();
 });
