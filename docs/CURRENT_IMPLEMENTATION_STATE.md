@@ -18,13 +18,26 @@ all original row hashes across148 tables, integrityOK. Real native Google contro
 opens system prompt; Cancel preserves Account, repeat opens official OnTheRoad
 Google email page. This does not prove Google login. Owner completed Google interaction, but actual ID-token exchange was rejected
 HTTP400 for missing matching caller nonce (DEV Auth18:09/18:19NZ). Original QA
-Account retained. Auth local Expo nonce bridge repair is reviewed (16 suites132
-tests); Native unified45 type/link/runtime acceptance and Google Session E2E
-remain pending. See `ops/auth-phase1-20261028/GOOGLE_NONCE_REPAIR.md`. Receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
+Account retained. The reviewed local Expo bridge passes a fresh secure nonce digest
+to official Google SDK9.2.0 and the original nonce to Supabase; server nonce checks
+remain enabled. Native46 real ID-token exchange returned200 at19:20:04NZ;
+independent readback verified its canonical Google Account/Session. Cold restart
+restored that Account with an empty Trip list, excluding A's four Trips.
+Immediate menu/list activation exposed a consumer race; Auth258f50de includes the
+reviewed generation guards and read-only committed Session port (no Guest creation).
+18 suites187 tests/types/UIguard pass; independent5 suites76 plus real public-port
+gate/fresh/legacy checks pass. Native49 immediate A↔B switching passes: correct
+menu and four-vs-zero Trip lists without restart. Normal B logout is independently
+verified by an empty server Session list; A is restored through remembered-account
+UI with four Trips retained. SQLite integrityOK;147/149 tables retain original row
+hashes, with local_trip_containers/sync_operations changes, so no full unchanged-DB
+claim. See `ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json` and
+`ops/auth-phase1-20261028/GOOGLE_NONCE_REPAIR.md`. Historical failed43 receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
 Google ADR: `adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/
 RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
 
-Next: fixed nonce native Build45→Google retry→own Account readback/cold/logout/isolation.
+Next: integrate Google nonce/consumer slice; repair the signed-out My Trips generic
+read-failure state without creating Guest identity. Forms QA is returned to Native.
 Email OTP needs a usable mailbox; Apple console/identity remains pending. Phase1
 CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
 Auth cannot silently claim Guest datasets or Trip People.

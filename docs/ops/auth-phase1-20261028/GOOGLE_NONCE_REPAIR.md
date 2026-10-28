@@ -58,3 +58,23 @@ Auth therefore exposes readCommittedLocalSession: apply-gated, adopted Session
 only, no Guest choice or legacy migration. Native consumes this port while keeping
 generation fences. Genuine Guest adoption rules remain unchanged.48 stays held
 until the port replacement; no account/ledger role is fabricated for B.
+
+Final consumer source258f50de replaces both UI consumers with that read-only port.
+18 directed suites187 tests, types, UI guard and scoped lint pass. Independent
+5 suites76 tests and a real public-port in-memory integration confirm fresh reads
+write nothing, transition-gated reads see only the committed B Session, and legacy
+credentials remain unchanged. Review found no blocker. Native49 must still verify
+the immediate already-rendered A→B menu/list transition, then normal B logout and
+independent Session absence before restoring the original Synthetic QA Account.
+See `GOOGLE_DEV_E2E.json` for the current evidence and explicit pending checks.
+
+Native49 source6710a380 / JS f88a843f37723783fd9da1f871d5f8b953054b717a98f21d4ea774d9339463cc
+is installed in place with standard identity preserved. Normal remembered-account
+B→A restores A's menu/four Trips, and immediate A→B shows B's menu/empty list with
+no restart or unavailable error. Normal B logout removes it from remembered
+accounts; independent read-only Auth query returns its Google identity with zero
+Sessions. Normal UI restores A/four Trips, then Forms QA is returned to Native.
+IntegrityOK across149 tables;147 retain original row hashes, while local Trip and
+sync-operation tables changed. No database reset/copy or Keychain read occurred.
+Signed-out My Trips still shows its generic read-failure state; this needs a
+separate minimal consumer fix and does not represent an accepted Guest flow.
