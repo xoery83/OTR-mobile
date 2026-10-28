@@ -1,0 +1,19 @@
+{
+  "source": "ea09a9f1fca6f6ca6f2ae669cc2c1d9e9ff0f72b",
+  "image": "sha256:251ab67f70942adb27786c059e024331dcf0937e9e9d6758675415a1946d87ff",
+  "container": "d833f499",
+  "bundlePrefix": "fbf77316",
+  "environmentPrefix": "ab5dc0e7",
+  "evidenceSource": "Universal thread01a1753a-2837-7d20-89c8-d8c1476b0ed8 deployment handoff; not independently rerun by Native",
+  "reportedChecks": [
+    "health PASS",
+    "unauthenticated401 PASS",
+    "independent bundle check PASS",
+    "original six mounts/HostConfig/environment preserved"
+  ],
+  "reportedScope": "TEXT CRLF evidence reanchor software only; Manual/Core/Reader/Auth/SQL/RLS/Authority unchanged",
+  "rollback": "0821fb52/image86585487/container37505d7b retained",
+  "lease": "Host returned; Import AD5 same-scope Synthetic TEXT validation pending. Native coordinates before business writes.",
+  "nativeDevice": "phone60 remains sourceb1106689; do not confuse app source with DEV source",
+  "protectedCandidates": "P2/P5/P6 Cloud authority remain unapproved/uninstalled"
+}
