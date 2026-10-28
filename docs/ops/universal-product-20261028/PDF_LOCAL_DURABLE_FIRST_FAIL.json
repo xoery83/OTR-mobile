@@ -35,5 +35,14 @@
   },
   "serverQualification": "NOT_READY",
   "nativePreviewQualification": "FIRST_FAIL_UNDER_DIAGNOSIS",
-  "existingGoldenSliceReexecuted": false
+  "existingGoldenSliceReexecuted": false,
+  "firstLayerDiagnostic": {
+    "build": 65,
+    "sourceCommit": "c1dc05ea",
+    "phase": "NATIVE_PREVIEW",
+    "code": "IMPORT_PREVIEW_UNAVAILABLE",
+    "kind": "ERROR",
+    "uniqueNativeCause": "NOT_PROVEN"
+  },
+  "nextProbe": "Equivalent fixed Native guard reasons plus boolean JS bridge presence; same original, no guard relaxation."
 }

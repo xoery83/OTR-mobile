@@ -74,16 +74,22 @@ public class ReceiptOcrModule: Module {
     AsyncFunction("previewImportOriginal") { (data: Data, token: String, promise: Promise) in
       DispatchQueue.main.async {
         if self.cancelledImportPreviews.remove(token) != nil { promise.resolve(nil); return }
-        guard UUID(uuidString: token) != nil, self.importPreview == nil,
-          !data.isEmpty, data.count <= 50 * 1024 * 1024,
-          let root = UIApplication.shared.connectedScenes
-            .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController
-        else { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable"); return }
+        let reject: (String) -> Void = { reason in
+          NSLog("import_original_preview_native %@", reason)
+          promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable")
+        }
+        guard UUID(uuidString: token) != nil else { reject("TOKEN"); return }
+        guard self.importPreview == nil else { reject("BUSY"); return }
+        guard !data.isEmpty, data.count <= 50 * 1024 * 1024 else { reject("PAYLOAD"); return }
+        guard let root = UIApplication.shared.connectedScenes
+          .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController
+        else { reject("ROOT"); return }
         var presenter = root
         while let shown = presenter.presentedViewController { presenter = shown }
-        guard presenter.viewIfLoaded?.window != nil, !presenter.isBeingDismissed,
-          !presenter.isBeingPresented, presenter.transitionCoordinator == nil
-        else { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable"); return }
+        guard presenter.viewIfLoaded?.window != nil else { reject("PRESENTER_ATTACHED"); return }
+        guard !presenter.isBeingDismissed else { reject("DISMISSING"); return }
+        guard !presenter.isBeingPresented else { reject("PRESENTING"); return }
+        guard presenter.transitionCoordinator == nil else { reject("TRANSITION"); return }
         let suffix: String
         if data.starts(with: Data("%PDF-".utf8)), PDFDocument(data: data) != nil {
           suffix = "pdf"
@@ -96,11 +102,11 @@ public class ReceiptOcrModule: Module {
         let file = FileManager.default.temporaryDirectory
           .appendingPathComponent("otr-import-" + token).appendingPathExtension(suffix)
         do { try data.write(to: file, options: [.atomic, .completeFileProtection]) }
-        catch { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable"); return }
+        catch { reject("WRITE"); return }
         let preview = ImportOriginalPreviewController(file: file) { failed in
           try? FileManager.default.removeItem(at: file)
           if self.importPreview?.token == token { self.importPreview = nil }
-          if failed { promise.reject("IMPORT_PREVIEW_UNAVAILABLE", "Original preview unavailable") }
+          if failed { reject("PRESENTATION_REJECTED") }
           else { promise.resolve(nil) }
         }
         self.importPreview = (token, preview)
