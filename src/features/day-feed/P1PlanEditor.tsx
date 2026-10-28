@@ -6,7 +6,7 @@ import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -19,6 +19,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { guestP1DraftInventory } from "@/data/auth/guestP1DraftInventory";
 import {
   createDefaultManualPlanRepository,
   type ManualPlanDraft,
@@ -160,6 +161,7 @@ export function P1PlanEditor({
   const alive = useRef(true);
   const closedRef = useRef(false);
   const [source, setSource] = useState<Opened | null>(opened ?? null);
+  const sourceRef = useRef(opened ? { value: opened, tripId, itemId, generation } : null);
   const [fields, setFields] = useState<ManualPlanFields | null>(
     opened
       ? structuredClone(opened.draft.fields)
@@ -174,6 +176,8 @@ export function P1PlanEditor({
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
   const firstAttemptRef = useRef<ManualPlanFields | null>(null);
+  const handoffRef = useRef<symbol | null>(null);
+  const [handoffFrozen, setHandoffFrozen] = useState(false);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened || preview ? "READY" : "LOADING",
   );
@@ -184,9 +188,11 @@ export function P1PlanEditor({
     target: "FIND_PLACE" | "LOCATION";
     fields: ManualPlanFields;
   } | null>(null);
+  const placeSearchRef = useRef(placeSearch);
   const [placeError, setPlaceError] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [frozen, setFrozen] = useState(false);
+  const [saveFrozen, setFrozen] = useState(false);
+  const frozen = saveFrozen || handoffFrozen;
   useEffect(() => {
     const placeRequests = placeRequest.current;
     alive.current = true;
@@ -206,7 +212,9 @@ export function P1PlanEditor({
             /^([01]\d|2[0-3]):[0-5]\d$/.test(initialStartTime)
           )
             value.startTime = initialStartTime;
-          setSource({ repository, draft });
+          const valueSource = { repository, draft };
+          sourceRef.current = { value: valueSource, tripId, itemId, generation };
+          setSource(valueSource);
           fieldsRef.current = value;
           setFields(value);
           initialRef.current = JSON.stringify(value);
@@ -222,21 +230,90 @@ export function P1PlanEditor({
       placeRequests.ticket++;
     };
   }, [tripId, itemId, initialDate, initialStartTime, opened, generation, preview]);
-  const current = () =>
-    alive.current && !closedRef.current && generation === getAccountGeneration();
+  const current = useCallback(
+    () =>
+      alive.current &&
+      !closedRef.current &&
+      generation === getAccountGeneration() &&
+      (!sourceRef.current || sourceRef.current.generation === generation),
+    [generation],
+  );
+  useEffect(() => {
+    if (preview) return;
+    return guestP1DraftInventory.register({
+      freeze() {
+        const openedSource = sourceRef.current;
+        if (
+          !current() ||
+          !openedSource ||
+          openedSource.tripId !== tripId ||
+          openedSource.itemId !== itemId ||
+          openedSource.generation !== generation ||
+          !fieldsRef.current ||
+          busyRef.current ||
+          frozenRef.current ||
+          firstAttemptRef.current ||
+          handoffRef.current ||
+          placeSearchRef.current
+        )
+          throw Error("GUEST_P1_DRAFT_NOT_READY");
+        const snapshot = {
+          schemaId: "otr.auth.guest-p1-draft/1" as const,
+          tripId,
+          itemId: openedSource.value.draft.itemId,
+          mode: openedSource.value.draft.mode,
+          fields: structuredClone(fieldsRef.current),
+          initialFields: JSON.parse(initialRef.current) as ManualPlanFields,
+          firstAttempt: null,
+          placeSelection: null,
+        };
+        const ticket = Symbol("guest-p1-draft");
+        handoffRef.current = ticket;
+        placeRequest.current.ticket++;
+        setHandoffFrozen(true);
+        return {
+          snapshot,
+          isCurrent: () =>
+            current() &&
+            handoffRef.current === ticket &&
+            sourceRef.current === openedSource,
+          resume() {
+            if (handoffRef.current !== ticket) return;
+            handoffRef.current = null;
+            if (alive.current) setHandoffFrozen(false);
+          },
+        };
+      },
+    });
+  }, [tripId, itemId, generation, preview, current]);
   const change = (next: Partial<ManualPlanFields>) => {
-    if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
+    if (
+      !current() ||
+      handoffRef.current ||
+      frozenRef.current ||
+      busyRef.current ||
+      !fieldsRef.current
+    )
+      return;
     const value = { ...fieldsRef.current, ...next };
     fieldsRef.current = value;
     setFields(value);
   };
   const closePlaceSearch = () => {
     placeRequest.current.ticket++;
+    placeSearchRef.current = null;
     setPlaceSearch(null);
   };
   const openPlaceSearch = async (target: "FIND_PLACE" | "LOCATION") => {
     const snapshot = fieldsRef.current;
-    if (!snapshot || !source || !current() || busyRef.current || frozenRef.current)
+    if (
+      !snapshot ||
+      !source ||
+      !current() ||
+      handoffRef.current ||
+      busyRef.current ||
+      frozenRef.current
+    )
       return;
     const ticket = ++placeRequest.current.ticket;
     setPlaceError(false);
@@ -247,6 +324,7 @@ export function P1PlanEditor({
         account.generation !== generation ||
         ticket !== placeRequest.current.ticket ||
         fieldsRef.current !== snapshot ||
+        handoffRef.current ||
         busyRef.current ||
         frozenRef.current
       )
@@ -260,15 +338,18 @@ export function P1PlanEditor({
           current() &&
           ticket === placeRequest.current.ticket &&
           fieldsRef.current === snapshot &&
+          !handoffRef.current &&
           !busyRef.current &&
           !frozenRef.current,
       });
-      setPlaceSearch({
+      const selection = {
         binding,
         target,
         query: snapshot.location || snapshot.title,
         fields: snapshot,
-      });
+      };
+      placeSearchRef.current = selection;
+      setPlaceSearch(selection);
     } catch {
       if (current() && ticket === placeRequest.current.ticket) setPlaceError(true);
     }
@@ -288,7 +369,7 @@ export function P1PlanEditor({
     }
   };
   const close = (then = onClose) => {
-    if (!current() || busyRef.current) return;
+    if (!current() || handoffRef.current || busyRef.current) return;
     const dirty =
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
@@ -303,7 +384,7 @@ export function P1PlanEditor({
         text: t("actionIsland.discard"),
         style: "destructive",
         onPress: () => {
-          if (current() && !busyRef.current) {
+          if (current() && !handoffRef.current && !busyRef.current) {
             closedRef.current = true;
             then();
           }
@@ -312,7 +393,14 @@ export function P1PlanEditor({
     ]);
   };
   const save = async () => {
-    if (!source || !fieldsRef.current || busyRef.current || !current()) return;
+    if (
+      !source ||
+      !fieldsRef.current ||
+      handoffRef.current ||
+      busyRef.current ||
+      !current()
+    )
+      return;
     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
     firstAttemptRef.current = attempt;
     busyRef.current = true;
@@ -372,10 +460,16 @@ export function P1PlanEditor({
           category="form"
           title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}
           rightLabel={t(itemId ? "tripCreate.saveChanges" : "tripCreate.createPlan")}
-          rightDisabled={!!preview || !valid || saving || (frozen && status !== "ERROR")}
+          rightDisabled={
+            !!preview ||
+            !valid ||
+            saving ||
+            handoffFrozen ||
+            (frozen && status !== "ERROR")
+          }
           onRight={() => void save()}
           leftLabel={t("common.cancel")}
-          leftDisabled={saving}
+          leftDisabled={saving || handoffFrozen}
           onLeft={() => close()}
         />
         <ScrollView
@@ -409,7 +503,7 @@ export function P1PlanEditor({
                 <UiButton
                   label={t("tripCreate.stay")}
                   variant="text"
-                  disabled={saving}
+                  disabled={saving || handoffFrozen}
                   onPress={() => close(onChooseStay)}
                 />
               ) : null}
@@ -417,7 +511,7 @@ export function P1PlanEditor({
                 <UiButton
                   label={t("tripCreate.rental")}
                   variant="text"
-                  disabled={saving}
+                  disabled={saving || handoffFrozen}
                   onPress={() => close(onChooseRental)}
                 />
               ) : null}
@@ -425,7 +519,7 @@ export function P1PlanEditor({
                 <UiButton
                   label={t("tripCreate.transport")}
                   variant="text"
-                  disabled={saving}
+                  disabled={saving || handoffFrozen}
                   onPress={() => close(onChooseTransport)}
                 />
               ) : null}

@@ -344,3 +344,231 @@ it("uses the existing structured Trip deferred edit without manufacturing a clou
     }),
   ).toThrow("GUEST_PHOTO_STORAGE_NOT_AVAILABLE");
 });
+
+const completeExternalInventory = (
+  workspace: Awaited<ReturnType<ReturnType<typeof createGuestLocalWorkspaceOpener>>>,
+) => ({
+  sourceGuestLocalId: workspace.scope.localId,
+  generation: workspace.scope.generation,
+  files: { status: "COMPLETE" as const, entries: [] },
+  liveDrafts: { status: "COMPLETE" as const, entries: [] },
+});
+
+it("censuses the real Trip/P1 closure including automatic Ledger and cover rows, without treating missing collectors as empty", async () => {
+  const f = fixture();
+  const workspace = await f.newOpener()();
+  const trip = tripInput();
+  await workspace.trips.createTrip(trip);
+  const draft = await workspace.plan.createDraft(trip.tripId);
+  await workspace.plan.save(draft, {
+    ...draft.fields,
+    title: "Inventory P1",
+    startDate: trip.startDate,
+  });
+  const partial = await workspace.readCensus();
+  expect(partial.readyForServerPreflight).toBe(false);
+  expect(partial.inventorySha256).toBeNull();
+  expect(partial.totals.files).toBeNull();
+  expect(partial.blockers).toContain("FILE_AND_LIVE_DRAFT_COLLECTORS_REQUIRED");
+  const complete = await workspace.readCensus(completeExternalInventory(workspace));
+  expect(complete.readyForServerPreflight).toBe(true);
+  expect(complete.inventorySha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(complete.totals).toEqual({
+    trips: 1,
+    people: 1,
+    p1Items: 1,
+    files: 0,
+    fileBytes: 0,
+    liveDrafts: 0,
+  });
+  expect(
+    complete.tables.find((table) => table.name === "account_trip_cover_preferences")
+      ?.rows,
+  ).toBe(1);
+  expect(
+    complete.tables.find((table) => table.name === "ledger_actor_context")?.rows,
+  ).toBe(1);
+  expect(
+    (await workspace.readCensus(completeExternalInventory(workspace))).inventorySha256,
+  ).toBe(complete.inventorySha256);
+});
+
+it("preserves unknown nonempty data as an explicit whole-dataset blocker", async () => {
+  const f = fixture();
+  const workspace = await f.newOpener()();
+  f.opened[0].sql.exec(
+    "CREATE TABLE unregistered_guest_data(value TEXT); INSERT INTO unregistered_guest_data VALUES('retain original');",
+  );
+  const census = await workspace.readCensus(completeExternalInventory(workspace));
+  expect(census.readyForServerPreflight).toBe(false);
+  expect(census.inventorySha256).toBeNull();
+  expect(census.blockers).toContain("UNSUPPORTED_TABLE:unregistered_guest_data");
+  expect(census.tables.find((table) => table.name === "unregistered_guest_data")).toEqual(
+    { name: "unregistered_guest_data", rows: 1, sha256: null },
+  );
+  expect(
+    f.opened[0].sql.prepare("SELECT value FROM unregistered_guest_data").get(),
+  ).toEqual({ value: "retain original" });
+});
+
+it("refuses a foreign owner row rather than relabeling it as Guest data", async () => {
+  const f = fixture();
+  const workspace = await f.newOpener()();
+  f.opened[0].sql
+    .prepare(
+      "INSERT INTO local_trip_containers(account_id,id,create_operation_id,name,created_at,updated_at) VALUES(?,?,?,'Foreign private Trip','2026-10-29','2026-10-29')",
+    )
+    .run(randomUUID(), randomUUID(), randomUUID());
+  await expect(
+    workspace.readCensus(completeExternalInventory(workspace)),
+  ).rejects.toThrow("GUEST_CENSUS_FOREIGN_OWNER");
+});
+
+it("requires live draft and file attestations from the exact Guest scope and preserves concrete external counts", async () => {
+  const f = fixture();
+  const workspace = await f.newOpener()();
+  const external = completeExternalInventory(workspace);
+  await expect(
+    workspace.readCensus({ ...external, sourceGuestLocalId: randomUUID() }),
+  ).rejects.toThrow("GUEST_CENSUS_EXTERNAL_SCOPE");
+  await expect(
+    workspace.readCensus({ ...external, generation: external.generation + 1 }),
+  ).rejects.toThrow("GUEST_CENSUS_EXTERNAL_SCOPE");
+  const file = { id: randomUUID(), sha256: "a".repeat(64), bytes: 125 };
+  const draft = { id: randomUUID(), sha256: "b".repeat(64), bytes: 32 };
+  const census = await workspace.readCensus({
+    ...external,
+    files: { status: "COMPLETE", entries: [file] },
+    liveDrafts: { status: "COMPLETE", entries: [draft] },
+  });
+  expect(census.totals).toMatchObject({ files: 1, fileBytes: 125, liveDrafts: 1 });
+  await expect(
+    workspace.readCensus({
+      ...external,
+      files: { status: "COMPLETE", entries: [file, file] },
+    }),
+  ).rejects.toThrow("GUEST_CENSUS_DUPLICATE_EXTERNAL_ID");
+});
+
+it("keeps the data digest stable across a new runtime generation but changes it for actual Guest edits", async () => {
+  const f = fixture();
+  const open = f.newOpener();
+  const workspace = await open();
+  const trip = { ...tripInput(), syncFormatVersion: 2 as const, destinations: [] };
+  await workspace.trips.createTrip(trip);
+  const original = await workspace.readCensus(completeExternalInventory(workspace));
+  advanceAccountGeneration();
+  await expect(
+    workspace.readCensus(completeExternalInventory(workspace)),
+  ).rejects.toThrow();
+  const rebound = await open();
+  expect(
+    (await rebound.readCensus(completeExternalInventory(rebound))).inventorySha256,
+  ).toBe(original.inventorySha256);
+  const base = await rebound.trips.readDeferredMetadataEditBase(trip.tripId);
+  await rebound.trips.deferMetadataUpdate({
+    localActionVersion: 1,
+    actionId: randomUUID(),
+    operationId: randomUUID(),
+    tripId: trip.tripId,
+    before: base.metadata,
+    after: { ...base.metadata, name: "Changed before preflight" },
+  });
+  expect(
+    (await rebound.readCensus(completeExternalInventory(rebound))).inventorySha256,
+  ).not.toBe(original.inventorySha256);
+});
+
+it.each(["operation", "entity"] as const)(
+  "blocks an unsupported queue %s without silently dropping it",
+  async (variant) => {
+    const f = fixture();
+    const workspace = await f.newOpener()();
+    await workspace.trips.createTrip(tripInput());
+    const sql = f.opened[0].sql;
+    const row = sql.prepare("SELECT * FROM sync_operations").get()!;
+    const columns = Object.keys(row);
+    const next = {
+      ...row,
+      id: randomUUID(),
+      idempotency_key: randomUUID(),
+      ...(variant === "operation"
+        ? { operation_type: "UNREGISTERED_MUTATION" }
+        : { entity_type: "FUTURE_ENTITY" }),
+    };
+    sql
+      .prepare(
+        `INSERT INTO sync_operations(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`,
+      )
+      .run(...(columns.map((key) => next[key as keyof typeof next]) as never[]));
+    const census = await workspace.readCensus(completeExternalInventory(workspace));
+    expect(census.blockers).toContain("UNSUPPORTED_OPERATION");
+    expect(census.inventorySha256).toBeNull();
+    expect(census.tables.find((table) => table.name === "sync_operations")?.rows).toBe(2);
+  },
+);
+
+it("rejects a same-Guest preference that points outside its owned Trip set", async () => {
+  const f = fixture();
+  const workspace = await f.newOpener()();
+  f.opened[0].sql
+    .prepare(
+      "INSERT INTO account_trip_cover_preferences(account_id,trip_id,updated_at) VALUES(?,?,'2026-10-29')",
+    )
+    .run(f.guestId, randomUUID());
+  await expect(
+    workspace.readCensus(completeExternalInventory(workspace)),
+  ).rejects.toThrow("GUEST_CENSUS_FOREIGN_TRIP");
+});
+
+it.each(["foreign trip", "non-P1 create", "unregistered P1 command"] as const)(
+  "does not qualify a %s Core intent for whole-dataset preflight",
+  async (variant) => {
+    const f = fixture();
+    const workspace = await f.newOpener()();
+    const trip = tripInput();
+    await workspace.trips.createTrip(trip);
+    const draft = await workspace.plan.createDraft(trip.tripId);
+    await workspace.plan.save(draft, {
+      ...draft.fields,
+      title: "Original",
+      startDate: trip.startDate,
+    });
+    const sql = f.opened[0].sql;
+    const row = sql.prepare("SELECT * FROM trip_core_pending_intents").get()!;
+    const intent = JSON.parse(row.canonical_intent_text as string);
+    if (variant === "foreign trip") intent.tripId = randomUUID();
+    else if (variant === "non-P1 create") intent.payload.family = "P6";
+    else {
+      intent.command = "SET_ITEM_STATUS";
+      intent.payload = { status: "completed" };
+    }
+    // Retain the real schema's immutable UPDATE guard; insert a separate malformed fixture.
+    intent.operationId = randomUUID();
+    const columns = Object.keys(row);
+    const next = {
+      ...row,
+      operation_id: intent.operationId,
+      queue_operation_id: intent.operationId,
+      canonical_intent_text: JSON.stringify(intent),
+    };
+    sql
+      .prepare(
+        `INSERT INTO trip_core_pending_intents(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`,
+      )
+      .run(...(columns.map((key) => next[key as keyof typeof next]) as never[]));
+    const read = workspace.readCensus(completeExternalInventory(workspace));
+    if (variant === "foreign trip")
+      await expect(read).rejects.toThrow("GUEST_CENSUS_INTENT_SCOPE");
+    else {
+      const census = await read;
+      expect(census.readyForServerPreflight).toBe(false);
+      expect(census.inventorySha256).toBeNull();
+      expect(census.blockers).toContain(
+        variant === "non-P1 create"
+          ? "UNSUPPORTED_CORE_FAMILY"
+          : "UNSUPPORTED_CORE_INTENT",
+      );
+    }
+  },
+);

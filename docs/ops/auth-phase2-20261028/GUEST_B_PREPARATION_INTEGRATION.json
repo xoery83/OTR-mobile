@@ -1,0 +1,55 @@
+{
+  "status": "HISTORICAL_POST_FF_SMOKE_SNAPSHOT_BEFORE_FINAL_DOC_COMMIT_AND_PUSH",
+  "mainBefore": "0e6e2d4ede384d2a2e6e3f0243788b0d6b10bdbc",
+  "sourceMergeMain": "e18e5b633e49a0468af1fd63fea9e023b509fcc4",
+  "sourceCommits": [
+    "0281a32db4bb7015acc632cfbb2b10a7906c9964",
+    "54c6289488f3c41db122cd387463b1ac52b9cbb5"
+  ],
+  "scope": "B preparation only: read-only whole SQLite census and in-memory mounted P1 draft freeze/cancel port; not adoption authority",
+  "sourceValidation": {
+    "directedSuites": 7,
+    "directedTests": 92,
+    "joinedSuites": 7,
+    "joinedTests": 132,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "0 errors, 4 pre-existing test import/first warnings"
+  },
+  "independentReview": {
+    "censusDiskTests": 19,
+    "draftRegistryAndEditorTests": 31,
+    "status": "NO_REMAINING_BLOCKER",
+    "fixedFindings": [
+      "unknown entity/operation tuple blocker",
+      "concurrent resume released once and old lease cannot release a new lease",
+      "stale UI lock release with source generation fence"
+    ]
+  },
+  "postMainSmoke": {
+    "suites": 5,
+    "tests": 103,
+    "status": "PASS",
+    "executedInActualPrimaryMain": true
+  },
+  "preservation": {
+    "originalSixDirtyFilesByteIdentical": true,
+    "fullTrackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffUnchanged": true
+  },
+  "runtime": {
+    "newNativeInstallation": false,
+    "realGuestCensusRead": "GUEST_B_READ_ONLY_CENSUS.json; read-only headless adapter on actual Native-created A vault",
+    "actualAllFamilyFileDraftCollector": false,
+    "provisionalSessionInstallation": false,
+    "uploadOrOwnershipConversion": false,
+    "backendSchemaRlsGrantRoleOrDeploymentChanges": false
+  },
+  "remaining": [
+    "complete owning Guest file and all-live-draft snapshot/revision collector",
+    "durable transfer/cancel/UNKNOWN recovery",
+    "server-authoritative whole-dataset preflight/staging/atomic publish/status candidate and precise protected execution Gate",
+    "normal Email OTP / legal target Account plus Backend/Supabase readback and Native recovery E2E"
+  ],
+  "remoteVerification": "This is a pre-push historical snapshot. Recheck current main/origin/ls-remote; final verification is also saved privately as GUEST_B_MAIN_VERIFIED.json without tokens or payloads."
+}
