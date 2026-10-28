@@ -1,5 +1,5 @@
 {
-  "status": "BUILD_VERIFIED_NOT_INSTALLED",
+  "status": "INSTALLED_DATA_RETAINED_STARTUP_FAILED",
   "build": "45",
   "sourceCommit": "14a644516931601db886655aa39ed567c14c7826",
   "bundleId": "com.xoery.otrmobile",
@@ -8,8 +8,12 @@
   "googleSDK": "9.2.0",
   "nonceModule": "OtrGoogleSignIn",
   "nativeCompileLink": "PASS",
-  "authLiveE2E": "PENDING",
+  "authLiveE2E": "NOT_STARTED",
   "p4NativeE2E": "PENDING",
   "ownerApprovedInPlaceUpdate": true,
-  "deviceHandoff": "AUTH_INSTALL_AND_E2E_AUTHORIZED"
+  "deviceHandoff": "AUTH_INSTALL_AND_E2E_AUTHORIZED",
+  "startupFailure": "EXPO_EAGER_DEVTOOLS_SOCKET_IN_EMBEDDED_ENVIRONMENT",
+  "originalTablesCompared": 149,
+  "originalTableHashesPreserved": true,
+  "supersededByBuild": 46
 }
