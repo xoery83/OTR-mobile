@@ -1,0 +1,12 @@
+{
+  "actualService": "otr-dev-backend",
+  "sourceCommit": "ea09a9f1fca6f6ca6f2ae669cc2c1d9e9ff0f72b",
+  "image": "sha256:251ab67f70942adb27786c059e024331dcf0937e9e9d6758675415a1946d87ff",
+  "containerId": "d833f49940a80b4e2d68c1e0abde667f9a8151f1dff5a30fa9fef12e7a7ac955",
+  "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+  "mountCount": 6,
+  "bundleSHA256": "fbf773169752bb8cf89e8b1d399a35766af061d02e27e6d8db0d6ffa53e859e6",
+  "health": "healthy",
+  "permissionChange": false,
+  "rollbackContainer": "37505d7b89783590f29d573c72b25806a82abb2143a46b993b9cadcfb13c3cb4"
+}

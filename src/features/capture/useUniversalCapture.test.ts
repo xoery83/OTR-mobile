@@ -149,3 +149,21 @@ it("resumes GET polling after hide, request completion and showing the same moun
   expect(h.recover).toHaveBeenCalledTimes(2);
   expect(h.start).not.toHaveBeenCalled();
 });
+
+
+it("keeps owning GET recovery alive when Results arrive before terminal Task activity", async () => {
+  const result = { status: "CANDIDATES_READY" };
+  h.recover.mockResolvedValueOnce(result).mockImplementationOnce(async () => {
+    h.consumer.activity = { state: "RESULTS_READY" };
+    return result;
+  });
+  Harness();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(Harness().result).toBe(result);
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(h.recover).toHaveBeenCalledTimes(2);
+  expect(Harness().activity).toEqual({ state: "RESULTS_READY" });
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(h.recover).toHaveBeenCalledTimes(2);
+  expect(h.start).not.toHaveBeenCalled();
+});

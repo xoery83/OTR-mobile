@@ -133,7 +133,8 @@ export function useUniversalCapture(
       const state = current() ? consumer.current?.activity?.state : activity?.state;
       return state && ["PENDING", "WAITING", "PROCESSING"].includes(state);
     };
-    if (result || !pending()) return;
+    // A sealed Result can arrive before the owning Task publishes its terminal activity.
+    if (!pending()) return;
     let canceled = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
