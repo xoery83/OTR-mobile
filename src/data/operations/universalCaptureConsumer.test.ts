@@ -306,3 +306,42 @@ it("retains actual Task observation even when no Result exists; recovery never p
   f.close();
   expect(f.consumer.activity).toBeNull();
 });
+
+it.each(["PENDING", "WAITING", "PROCESSING"] as const)(
+  "keeps the running %s Task receipt marker pending without prepare or paid retry",
+  async (state) => {
+    const prepare = vi.fn(async () => {}),
+      f = fixture(prepare, true),
+      binding = await f.transport.context();
+    Object.assign(f.result, {
+      status: "EXECUTION_OUTCOME_UNKNOWN",
+      providerOutcome: "UNKNOWN",
+    });
+    const activity = {
+      state,
+      recordedAt: "2026-10-28T00:00:00Z",
+      updatedAt: "2026-10-28T00:00:01Z",
+      completedAt: null,
+      rowRevision: 2,
+      attemptCount: 1,
+      waitReason: null,
+    };
+    f.transport.context.mockResolvedValue({ ...binding, activity });
+    expect(await f.consumer.recover(f.model)).toBeNull();
+    expect(f.consumer.queued).toBe(true);
+    expect(f.consumer.activity).toEqual(activity);
+    expect(await f.consumer.start(f.model)).toBeNull();
+    expect(prepare).not.toHaveBeenCalled();
+    expect(f.transport.execute).not.toHaveBeenCalled();
+    f.transport.context.mockResolvedValue({
+      ...binding,
+      activity: { ...activity, state: "UNKNOWN", rowRevision: 3 },
+    });
+    expect(await f.consumer.recover(f.model)).toBe(f.result);
+    expect(f.consumer.queued).toBe(false);
+    Object.assign(f.result, { status: "CANDIDATES_READY", providerOutcome: "SETTLED" });
+    expect(await f.consumer.recover(f.model)).toBe(f.result);
+    expect(prepare).not.toHaveBeenCalled();
+    expect(f.transport.execute).not.toHaveBeenCalled();
+  },
+);

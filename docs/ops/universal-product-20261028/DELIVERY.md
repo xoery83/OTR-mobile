@@ -117,3 +117,21 @@ metadata stays separate from original viewing. Repository-selected Batch only.
 35 joined directed tests, TypeScript, scoped lint/UIguard and independent
 NO_BLOCKER PASS. No Backend/Schema/authority change. Actual Hosted closed-policy
 Plan read and Native association display remain pending; not SERVER_VERIFIED.
+
+
+## First normal continuous preparation and pending-marker repair
+
+Build50 AD5 Trip Documents/original/exact accepted Source Plan Item count1 and
+same retained Results/receipt NATIVE_E2E_PASS. Exact approved native-P4-compatible
+scope activation independently verified unchanged six function OID/Owner/ACL;
+then safely CLOSED/scopeNULL/two airportsfalse, independently verified.
+Normal App accepted Batchbb571a30 and Task0d4a0592. Source/Task Prepare and actual
+Task PUBLISHED/Attempt SUCCEEDED, INSTALLED, metering COMPLETE verified. Initial
+running GET returned the immutable UNKNOWN request marker; it was provisional,
+not final Provider failure. Three RED checks reproduced premature client result
+installation; minimal continuous-only pending-state branch retains queued/null for
+existing GET polling. True owning UNKNOWN stays visible.54 joined tests/types/lint
+and independent NO_BLOCKER PASS. No Provider retry, budget reset or Task mutation.
+Actual retained original ends in a Chinese-IME residual R. Model conservatively
+retained unresolved content; no forced Review/Save or Item created. Original and
+result remain intact. Next clean Native input must be verified before dispatch.

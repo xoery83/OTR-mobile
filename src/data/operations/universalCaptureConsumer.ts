@@ -143,6 +143,17 @@ export function createUniversalCaptureConsumer(dependencies: {
     current();
     assertUniversalCaptureResult(model, result);
     if (
+      dependencies.continuous &&
+      result.status === "EXECUTION_OUTCOME_UNKNOWN" &&
+      result.providerOutcome === "UNKNOWN" &&
+      activity &&
+      ["PENDING", "WAITING", "PROCESSING"].includes(activity.state)
+    ) {
+      // The retained request marker is provisional while the owning Task is running.
+      queued = true;
+      return null;
+    }
+    if (
       allowDispatch &&
       dependencies.continuous &&
       !preparedThisAction &&
