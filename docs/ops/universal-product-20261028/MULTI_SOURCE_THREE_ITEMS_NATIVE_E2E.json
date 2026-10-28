@@ -1,0 +1,93 @@
+{
+  "status": "PARTIAL_MULTI_SOURCE_NORMAL_IMPORT_NATIVE_E2E_PASS",
+  "batchId": "3bdff8ee-9bef-4c7e-a1b6-5f0d22f29539",
+  "taskId": "a180447c-001d-8036-9af3-9518d06cc3e9",
+  "input": "Five normal Files inputs, one model call, individual original/Trip/NEW/confirmation through normal Native",
+  "deployedSourceCommit": "e126eabfc1d538f7db722f6f2dca75088a8a595c",
+  "deployedImage": "sha256:6c5c9a6f380f538392832abda7eb4afe434f9fa689dbf6f150c134ed903c755f",
+  "clientBuild": 79,
+  "items": [
+    {
+      "title": "Coastal QA Beta Train",
+      "itemId": "dd0cd3d9-5cf3-87eb-b386-d52618b178c6",
+      "operationId": "bb59d3a2-2256-89a3-a876-2d1ea28bc269",
+      "receiptId": "7c2dc0f8-52b4-4347-936c-00d066f5e402",
+      "outcome": "APPLIED",
+      "sourceId": "1b9a6be1-7874-415b-bb32-3bf5d3f57278",
+      "originalFilename": "P5-Coastal-Beta-Train.txt",
+      "sourceSlot": "COMPLETE",
+      "independentReadback": "SERVER_VERIFIED",
+      "nativeDayAndCold": "NATIVE_E2E_PASS"
+    },
+    {
+      "title": "COASTLINE QA BETA RENTALS",
+      "itemId": "58bfec07-f95f-8704-9a3b-706112e3b488",
+      "operationId": "d176dc4d-83bb-8f47-ab84-6039c9359701",
+      "receiptId": "5ad0f272-9e30-4c19-b471-79bbc833d454",
+      "outcome": "APPLIED",
+      "sourceId": "50cebb95-7ffc-4d92-baea-ab141aebcc8e",
+      "originalFilename": "P4-Coastline-Beta-Rental.txt",
+      "sourceSlot": "COMPLETE",
+      "independentReadback": "SERVER_VERIFIED",
+      "nativeDayAndCold": "NATIVE_E2E_PASS"
+    },
+    {
+      "title": "Harbour QA Beta Experience",
+      "itemId": "7005d254-e404-883c-8d4d-77b613df1e57",
+      "operationId": "2d5be77e-36d6-835c-9b59-a8f208857c12",
+      "receiptId": "5a8ff71d-5082-4ce4-b69f-84959df38b17",
+      "outcome": "APPLIED",
+      "sourceId": "705f53ad-d905-4932-a6ad-81b2b3ac92d6",
+      "originalFilename": "P6-Harbour-Beta-Activity.txt",
+      "sourceSlot": "COMPLETE",
+      "independentReadback": "SERVER_VERIFIED",
+      "nativeDayAndCold": "NATIVE_E2E_PASS"
+    }
+  ],
+  "coldRecovery": {
+    "status": "COLD_NATIVE_READER_PASS",
+    "launchRoot": "My Trips",
+    "sameTripOpened": true,
+    "day2RentalAndTrainVisible": true,
+    "day3ActivityAndRentalReturnVisible": true,
+    "sameBusinessRowIdsAndContents": true,
+    "businessRowsSha256": "630ca3a8bb577e61d7a84e8883764a3eab0a2100b6f0b569ffc4cfa3a54b9a2f",
+    "itemIds": [
+      "58bfec07-f95f-8704-9a3b-706112e3b488",
+      "7005d254-e404-883c-8d4d-77b613df1e57",
+      "dd0cd3d9-5cf3-87eb-b386-d52618b178c6"
+    ],
+    "sourceClosed": true,
+    "notClaimed": [
+      "P2 Save",
+      "P3 Save",
+      "P5 booking or entitlement",
+      "Binary Source ingress"
+    ]
+  },
+  "sourceScopeClosed": true,
+  "airportsDisabled": true,
+  "temporaryGrantsOrRolesAdded": false,
+  "unknownsPreserved": [
+    "P2 i5 / operation00453802-c736-8dff-a849-93fcd84bc931 / Item39d99271-3c89-846c-9574-6454e9f3879f",
+    "P3 i1 / Plan3729d32a-7881-8dfd-8365-309c1ccad972 / no Candidate or Slot observed"
+  ],
+  "repairCommit": "0d579007fa845ec1ea4312fa336546f6488d0481",
+  "repairStatus": "LOCAL_PASS_NOT_DEPLOYED",
+  "provider": {
+    "callId": "4713443f-7a8a-8236-aded-357b1dbedd87",
+    "callCount": 1,
+    "inputTokens": 1858,
+    "outputTokens": 413,
+    "totalTokens": 2271,
+    "cachedInputTokens": 1280,
+    "estimatedUsd": "0.000676680",
+    "notInvoice": true
+  },
+  "notClaimed": [
+    "P2/P3 Save for this Batch",
+    "Complete ordinary-user Beta",
+    "Documents saved-link UI and Updates saved3 cold projection",
+    "Binary Source/OCR/Admission"
+  ]
+}
