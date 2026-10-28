@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
-import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "@/domain/trip/tripCoreV2";
 import { createNormalTripSyncWake } from "./tripNormalSync";
 function fixture() {
   const accountId = randomUUID(),
@@ -353,5 +353,162 @@ it.each([true, false])(
       ]);
     await f.run();
     expect(f.deps.runP1).toHaveBeenCalledTimes(matching ? 1 : 0);
+  },
+);
+
+it.each([true, false])(
+  "P5 dispatch requires matching family and exact edit commands (%s)",
+  async (matching) => {
+    for (const name of [
+      "SET_ITEM_TEXT",
+      "SET_ITEM_PARTICIPATION",
+      "SET_TRANSPORT_DETAILS",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+    ]) {
+      const f = fixture(),
+        operationId = randomUUID(),
+        itemId = randomUUID();
+      f.deps.isManualItem.mockImplementation(
+        async (_trip, _item, family) => matching && family === "P5",
+      );
+      f.deps.participantsReady.mockResolvedValue(true);
+      const payload =
+        name === "SET_ITEM_TEXT"
+          ? { title: "Updated" }
+          : name === "SET_ITEM_PARTICIPATION"
+            ? { participation: coreDefaults("organizer").participation }
+            : name === "SET_TRANSPORT_DETAILS"
+              ? {
+                  service: {
+                    service_key: "a".repeat(32),
+                    transport_subtype: "TRAIN",
+                    attribution: "UNSPECIFIED",
+                    operator_namespace: "NAME",
+                    operator_issuer: "",
+                    operator_value: "",
+                    operator_literal: "",
+                    service_number: "",
+                    service_literal: "",
+                    codeshare_operating_key: null,
+                  },
+                }
+              : name === "SET_ITEM_SCHEDULE"
+                ? {
+                    schedule: {
+                      start: coreDateBoundary("2026-11-02"),
+                      end: coreDateBoundary("2026-11-03"),
+                    },
+                  }
+                : { place: {} };
+      const command = {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId,
+        tripId: f.tripId,
+        command: name,
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
+        payload,
+      };
+      f.deps.database.getAllAsync
+        .mockReset()
+        .mockResolvedValue([])
+        .mockResolvedValueOnce([f.create])
+        .mockResolvedValueOnce([
+          {
+            ...f.create,
+            id: operationId,
+            entity_id: itemId,
+            idempotency_key: operationId,
+            entity_type: "TRIP_CORE_V2",
+            operation_type: "CORE_V2_COMMAND",
+            payload_json: JSON.stringify(command),
+          },
+        ]);
+      await f.run();
+      expect(f.deps.runP1).toHaveBeenCalledTimes(
+        matching &&
+          [
+            "SET_ITEM_TEXT",
+            "SET_ITEM_PARTICIPATION",
+            "SET_TRANSPORT_DETAILS",
+          ].includes(name)
+          ? 1
+          : 0,
+      );
+    }
+  },
+);
+
+it.each(["TRAIN", "BUS", "FERRY", "WATER_TAXI", "SHUTTLE", "TRANSFER"])(
+  "normal P5 %s Create reuses exact existing Core worker",
+  async (transportType) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    const place = Object.fromEntries(
+      Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+    );
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P5",
+        core: { title: "Transport" },
+        endpoints: {
+          origin: {
+            time: coreDateBoundary("2026-11-02"),
+            place: { ...place, authored_label: "Station" },
+          },
+          destination: {
+            time: { ...coreDateBoundary("2026-11-02"), local_date: null },
+            place,
+          },
+        },
+        service: {
+          service_key: "a".repeat(32),
+          transport_subtype: transportType,
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "",
+          operator_value: "",
+          operator_literal: "",
+          service_number: "",
+          service_literal: "",
+          codeshare_operating_key: null,
+        },
+        ...coreDefaults("organizer"),
+      },
+    };
+    f.deps.participantsReady.mockResolvedValue(true);
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValue([])
+      .mockResolvedValueOnce([f.create])
+      .mockResolvedValueOnce([
+        {
+          ...f.create,
+          id: operationId,
+          entity_id: itemId,
+          idempotency_key: operationId,
+          entity_type: "TRIP_CORE_V2",
+          operation_type: "CORE_V2_COMMAND",
+          payload_json: JSON.stringify(command),
+        },
+      ]);
+    await f.run();
+    expect(f.deps.runP1).toHaveBeenCalledOnce();
   },
 );

@@ -1,5 +1,5 @@
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
-import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "@/domain/trip/tripCoreV2";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
@@ -371,3 +371,165 @@ it.each(["P3", "P4"])(
     ).toBe(1);
   },
 );
+
+it.each(["P5", "P4"])(
+  "P5 queue activity uses exact family, retains backoff and rejects root schedule/place: %s",
+  async (family) => {
+    const f = fixture(),
+      itemId = randomUUID();
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(f.createId);
+    const db = {
+      ...f.db,
+      getFirstAsync: async <T>(query: string, ...args: unknown[]) =>
+        query.startsWith("SELECT experience_family")
+          ? ({ experience_family: family } as T)
+          : f.db.getFirstAsync<T>(query, ...args),
+    };
+    for (const name of [
+      "SET_ITEM_TEXT",
+      "SET_TRANSPORT_DETAILS",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+    ]) {
+      const operationId = randomUUID();
+      const payload =
+        name === "SET_ITEM_TEXT"
+          ? { title: "Updated" }
+          : name === "SET_TRANSPORT_DETAILS"
+            ? {
+                service: {
+                  service_key: "a".repeat(32),
+                  transport_subtype: "TRAIN",
+                  attribution: "UNSPECIFIED",
+                  operator_namespace: "NAME",
+                  operator_issuer: "",
+                  operator_value: "",
+                  operator_literal: "",
+                  service_number: "",
+                  service_literal: "",
+                  codeshare_operating_key: null,
+                },
+              }
+            : name === "SET_ITEM_SCHEDULE"
+              ? {
+                  schedule: {
+                    start: coreDateBoundary("2026-11-02"),
+                    end: coreDateBoundary("2026-11-03"),
+                  },
+                }
+              : { place: {} };
+      f.operation(
+        operationId,
+        "CORE_V2_COMMAND",
+        "TRIP_CORE_V2",
+        {
+          contractVersion: 2,
+          intentVersion: 2,
+          operationId,
+          tripId: f.tripId,
+          command: name,
+          target: { kind: "ITEM", id: itemId },
+          baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+          admission: {
+            mode: "MANUAL",
+            sourceIntentId: null,
+            policyVersion: null,
+          },
+          payload,
+        },
+        "RETRYABLE",
+        itemId,
+      );
+      f.sql
+        .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
+        .run(new Date(f.now + 15000).toISOString(), operationId);
+      const allowed =
+        (family === "P5" &&
+          ["SET_ITEM_TEXT", "SET_TRANSPORT_DETAILS"].includes(name)) ||
+        (family === "P4" &&
+          ["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE"].includes(name));
+      expect(await getNormalTripQueueActivity(db, f.scope, f.now)).toEqual({
+        actionableNow: 0,
+        nextActionableAt: allowed ? f.now + 15000 : null,
+      });
+      expect(
+        (await getNormalTripQueueActivity(db, f.scope, f.now + 15001))
+          .actionableNow,
+      ).toBe(allowed ? 1 : 0);
+      f.sql
+        .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+        .run(operationId);
+    }
+  },
+);
+
+it("P5 Create wakes existing normal scheduler without borrowing Import admission", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    itemId = randomUUID();
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(f.createId);
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_members(id,journey_id,display_name,status,updated_at) VALUES(?,?,'QA member','linked',?)",
+    )
+    .run(randomUUID(), f.tripId, new Date(f.now).toISOString());
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(journey_id,user_id,capabilities_json,updated_at) VALUES(?,?,'{}',?)",
+    )
+    .run(f.tripId, f.scope.accountId, new Date(f.now).toISOString());
+  const place = Object.fromEntries(
+    Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+  );
+  f.operation(
+    operationId,
+    "CORE_V2_COMMAND",
+    "TRIP_CORE_V2",
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P5",
+        core: { title: "Transport" },
+        endpoints: {
+          origin: {
+            time: coreDateBoundary("2026-11-02"),
+            place: { ...place, authored_label: "Station" },
+          },
+          destination: {
+            time: { ...coreDateBoundary("2026-11-02"), local_date: null },
+            place,
+          },
+        },
+        service: {
+          service_key: "a".repeat(32),
+          transport_subtype: "TRAIN",
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "",
+          operator_value: "",
+          operator_literal: "",
+          service_number: "",
+          service_literal: "",
+          codeshare_operating_key: null,
+        },
+        ...coreDefaults("organizer"),
+      },
+    },
+    "PENDING",
+    itemId,
+  );
+  expect(
+    (await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow,
+  ).toBe(1);
+});

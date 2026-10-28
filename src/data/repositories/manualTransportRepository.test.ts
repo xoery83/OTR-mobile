@@ -24,7 +24,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
 }));
 const opened: DatabaseSync[] = [];
 afterEach(() => opened.splice(0).forEach((s) => s.close()));
-async function fixture() {
+async function fixture(structured = false) {
   const sql = new DatabaseSync(":memory:");
   opened.push(sql);
   sql.exec("PRAGMA foreign_keys=ON");
@@ -77,6 +77,7 @@ async function fixture() {
     tripId,
     operationId: randomUUID(),
     name: "Winter trip",
+    ...(structured ? { syncFormatVersion: 2 as const, destinations: [] } : {}),
     destination: null,
     startDate: "2026-12-30",
     endDate: "2027-04-28",
@@ -574,3 +575,160 @@ it("serializes competing saves of one opaque draft without acknowledging differe
   expect(count(f.sql)).toBe(2);
   expect((await f.repo().read(f.tripId, d.itemId)).fields.title).toBe(first.title);
 });
+
+async function acceptedTransportFixture(foreignOwner = false) {
+  const f = await fixture(true),
+    repo = f.repo(),
+    draft = await repo.createDraft(f.tripId);
+  const saved = await repo.save(draft, inputFor(draft.fields));
+  const context = await f.core.captureContext(f.tripId);
+  const { readLocalManualSnapshotWithinTransaction } =
+    await import("./tripLocalManualReadRepository");
+  const snapshot = (await readLocalManualSnapshotWithinTransaction(
+    f.coreDatabase,
+    f.identity,
+    f.core,
+    context,
+    null,
+  ))!;
+  const command = (await f.core.pending(context))[0].command;
+  const { executeCoreCommandV2 } =
+    await import("../../../backend/src/tripCoreV2Commands");
+  const { emptyCoreGraph } = await import("@/domain/trip/tripCoreV2Mutation");
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  let graph = emptyCoreGraph();
+  const result = await executeCoreCommandV2(
+    {
+      withLockedCommand: async (_scope, work) =>
+        work({
+          actor: snapshot.actor,
+          readReceipt: async () => null,
+          hasLegacyOperation: async () => false,
+          canReadReceipt: async () => true,
+          enabledCommands: async () => ["CREATE_ITEM"],
+          readLockedGraph: async () => graph,
+          verifyAdmission: async () => {},
+          lifecycleGraphHash: async () => undefined,
+          commit: async (mutation) => {
+            if (mutation) graph = mutation.graph;
+            return randomUUID();
+          },
+        }),
+    },
+    f.originalAccount,
+    f.tripId,
+    command,
+    hash,
+    () => "2026-10-20T00:00:00.000Z",
+  );
+  if (result.projection !== "FULL") throw new Error("TEST_RECEIPT");
+  await f.core.applyReceipt(context, result.receipt);
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(saved.operationIds[0]);
+  if (foreignOwner) graph.itinerary_events[0].owner_account_id = randomUUID();
+
+  const bundle = await buildCoreActorCollection(
+    graph,
+    snapshot.actor,
+    {
+      epoch: randomUUID(),
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-20T00:00:00.000Z",
+    },
+    [
+      {
+        person_id: snapshot.actor.personId!,
+        account_id: f.originalAccount,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+    ],
+    hash,
+  );
+  await f.core.refresh(context, { collection: async () => bundle });
+  return { ...f, itemId: draft.itemId };
+}
+it("reopens receipted accepted P5 at the same ID/revision and saves normal transport details", async () => {
+  const f = await acceptedTransportFixture(),
+    repo = f.repo(),
+    draft = await repo.read(f.tripId, f.itemId, 1);
+  expect(draft.itemId).toBe(f.itemId);
+  const saved = await repo.save(draft, {
+    ...draft.fields,
+    title: "Accepted train edited",
+    departureTime: "10:20",
+  });
+  expect(saved.itemId).toBe(f.itemId);
+  const pending = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(
+    pending
+      .filter((p) => p.state !== "APPLIED")
+      .map((p) => [
+        p.command.command,
+        p.command.target.id,
+        p.command.baseVector[0].revision,
+      ]),
+  ).toEqual([
+    ["SET_ITEM_TEXT", f.itemId, 1],
+    ["SET_TRANSPORT_DETAILS", f.itemId, 2],
+  ]);
+});
+it.each([
+  "owner",
+  "receipt",
+  "payload",
+  "hash",
+  "queue",
+  "mode",
+  "stale",
+  "account",
+] as const)(
+  "denies accepted P5 with changed %s without new intents",
+  async (kind) => {
+    const f = await acceptedTransportFixture(kind === "owner"),
+      before = count(f.sql);
+    if (kind === "receipt")
+      f.sql.exec("DROP TRIGGER trip_core_receipt_immutable");
+    if (["hash", "mode"].includes(kind))
+      f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+    if (kind === "receipt")
+      f.sql
+        .prepare(
+          "UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=?",
+        )
+        .run("0".repeat(64));
+    if (kind === "payload")
+      f.sql
+        .prepare(
+          "UPDATE sync_operations SET payload_json='{}' WHERE entity_type='TRIP_CORE_V2'",
+        )
+        .run();
+    if (kind === "hash")
+      f.sql
+        .prepare("UPDATE trip_core_pending_intents SET intent_sha256=?")
+        .run("0".repeat(64));
+    if (kind === "queue")
+      f.sql
+        .prepare(
+          "UPDATE sync_operations SET status='RETRYABLE' WHERE entity_type='TRIP_CORE_V2'",
+        )
+        .run();
+    if (kind === "mode")
+      f.sql
+        .prepare(
+          "UPDATE trip_core_pending_intents SET canonical_intent_text=json_set(canonical_intent_text,'$.admission.mode','REVIEWED_SOURCE')",
+        )
+        .run();
+    if (kind === "account") f.switchAccount();
+    await expect(
+      f.repo().read(f.tripId, f.itemId, kind === "stale" ? 99 : 1),
+    ).rejects.toThrow();
+    expect(count(f.sql)).toBe(before);
+  },
+);
