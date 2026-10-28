@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "1072af7d5f2094696c3e98277926501f8f14ba1a",
+  "observedFailure": {
+    "event": "universal_task_binding_read_failed",
+    "stage": "BINDING",
+    "category": "BUSY",
+    "normalNativeBatch": "retained 2026-10-28T11:41:07 local submission",
+    "providerCalled": false
+  },
+  "repair": "One runtime-wide Source principal connection with FIFO bounded wait; no role quota increase",
+  "deployment": {
+    "status": "P3_DEPLOYED",
+    "containerId": "43c4f20a87adc8433d72bb522e85ed7059d26f7ddcf66e64b6eb3d5348dd25ee",
+    "retainedContainerId": "2cc885989987992e09d0a3234c28409ff0ec316d510cafc7353b286c74bd08af",
+    "image": "sha256:5e551e2cbbc7f11efc4e8027f27fe111c9d701225467e2e059fd97c8e1b03128",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "health": "healthy"
+  },
+  "independentReadback": {
+    "containerId": "43c4f20a87adc8433d72bb522e85ed7059d26f7ddcf66e64b6eb3d5348dd25ee",
+    "image": "sha256:5e551e2cbbc7f11efc4e8027f27fe111c9d701225467e2e059fd97c8e1b03128",
+    "bundleSHA256": "de487d4e71986ddf12bfe2615756315cbabf5fe9f6edce18d2a570903f9c9408",
+    "environmentEqual": true,
+    "mountsEqual": true,
+    "health": "healthy",
+    "retainedPrevious": "exited"
+  },
+  "validation": {
+    "focusedTests": 17,
+    "actualIsolatedPgTests": 7,
+    "pgSourceRoleConnectionLimit": 1,
+    "pgNetwork": "none",
+    "pgMemory": "256m",
+    "typecheck": "PASS_WITH_PRIVATE_DEPENDENCY_CLONE",
+    "lint": "PASS",
+    "review": "NO_BLOCKER"
+  },
+  "nativeRetest": "PENDING_GUI_RETURN",
+  "importSave": "CLOSED",
+  "sqlAuthorityChanged": false,
+  "newProviderCalls": 0
+}
