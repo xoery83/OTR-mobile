@@ -1,0 +1,101 @@
+{
+  "status": "FIVE_FUNCTION_L2_PASS_FORM_CLOUD_BLOCKED_NOT_APPROVED_NOT_INSTALLED",
+  "nativeCommit": "a25ef176",
+  "backendCommit": "23a2dcfe",
+  "actualDevWrites": 0,
+  "globalGateChanged": false,
+  "functionCount": 5,
+  "installSHA256": "fa16c2fc575543c1184101e3187b3dc999c95212e933504c1d713543b4b5df04",
+  "rollbackSHA256": "e3531ac758edd2806b7704932848acdce1a91a5840debab54c02dde3ddcdaa3d",
+  "preimages": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "24ebd53b031765b518cc9f253d1fc5b1",
+      "oid": "65263",
+      "owner": "postgres",
+      "signature": "trip_core_guard_write()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "f1378cb07c1f1882651a558dbe612909",
+      "oid": "65713",
+      "owner": "postgres",
+      "signature": "trip_core_finite_read_state_guard()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "a443a587d0d590e705a4252f679fa2af",
+      "oid": "66180",
+      "owner": "postgres",
+      "signature": "trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "fa26e9d043f4f059dcf05824759215c8",
+      "oid": "66181",
+      "owner": "postgres",
+      "signature": "trip_sustained_core_capabilities(uuid,uuid)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "md5": "114c66014850ca45c288752f39a11370",
+      "oid": "65415",
+      "owner": "postgres",
+      "signature": "trip_core_service_statement_guard()"
+    }
+  ],
+  "independentFunctionReview": "NO_BLOCKER_FIVE_FUNCTION_PRE_POST_CAS_ATTRIBUTES_SOURCE_LEGACY_PRESERVED",
+  "isolatedPostgres": {
+    "result": "PASS_WITH_EXPLICIT_SYNTHETIC_OPERATOR_AND_SERVICE_FACTS",
+    "network": "none",
+    "manualFormCloudPass": false,
+    "checks": [
+      {
+        "status": "ISOLATED_PG_P5_PASS_NOT_DEV_OR_NATIVE",
+        "itemId": "0473d280-a51b-42dd-80bf-e8307b146150",
+        "checks": [
+          "actual Person PgPort create + result readback + immutable replay",
+          "current formal SQL rejects unknown operator/service fields from existing manual form; owning gap retained",
+          "each of five unknown operator/service fields is independently rejected by inherited SQL constraints",
+          "CREATE_ITEM actual PG mutation + immutable replay",
+          "SET_ITEM_TEXT actual PG mutation + immutable replay",
+          "SET_TRANSPORT_DETAILS actual PG mutation + immutable replay",
+          "SET_ITEM_PARTICIPATION actual PG mutation + immutable replay",
+          "validated P5 Reader preserves same ID, latest revision, independent endpoints and supported subtype edit",
+          "raw writer rejects endpoint/service reparenting and role/service-key mutation, P5 root schedule and missing family/admission"
+        ]
+      },
+      {
+        "checks": [
+          "existing Source Review early branch preserved",
+          "candidate installs dormant with no active gate",
+          "normal V2 Create accepts future Trip/op without exact-request gate",
+          "exact replay receipt immutable",
+          "P5 exact replay, same-ID edits, Accepted Reader and cross-Account denial",
+          "rollback retains P5 accepted facts",
+          "function OID owner ACL preserved"
+        ],
+        "network": "none",
+        "devTouched": false
+      }
+    ]
+  },
+  "hardBlocker": "Inherited service table requires nonempty operator_issuer/operator_value/operator_literal/service_number/service_literal; existing approved Manual P5 Form intentionally leaves unknown facts blank. All five individual negative cases reproduced. No invented operator/service or constraint relaxation applied.",
+  "next": "Owning Core/Backend must prepare exact version-dispatched unknown-value persistence delta and data-preserving rollback; any Schema/Authority expansion still needs precise Owner approval. Do not deploy this five-function candidate as sufficient for current Manual P5 Form."
+}
