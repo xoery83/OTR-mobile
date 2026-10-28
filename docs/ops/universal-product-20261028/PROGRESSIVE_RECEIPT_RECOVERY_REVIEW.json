@@ -15,6 +15,14 @@
     "uiGuard": "PASS",
     "scopedLint": "PASS"
   },
-  "nativeProgressiveObservation": "PENDING_QA83",
+  "nativeProgressiveObservation": {
+    "status": "NATIVE_E2E_PASS",
+    "build": 83,
+    "savedCountVisibleWhileLaterReadsPending": 3,
+    "finalAcceptedCandidates": 5,
+    "sameBatch": true,
+    "p2RepeatConfirmation": "FINAL_CONFIRM_DISABLED_AFTER_ORIGINAL_TRIP_NEW_REVIEW",
+    "newProviderCall": false
+  },
   "authorityChanges": false
 }

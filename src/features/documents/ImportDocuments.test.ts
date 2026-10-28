@@ -184,3 +184,33 @@ it("keeps binary original opening disabled without explicit qualified Native con
     vi.unstubAllEnvs();
   }
 });
+
+it("shows pending associations and offers a scoped readonly retry after failure", () => {
+  const { doc } = fixture();
+  const retry = vi.fn();
+  let current = true;
+  const props = {
+    document: doc,
+    accountId: doc.accountId,
+    tripId: doc.tripId,
+    opening: false,
+    error: false,
+    isCurrent: () => current,
+    onOpenOriginal: vi.fn(),
+    onRetryLinks: retry,
+  };
+  const pending = renderToStaticMarkup(
+    createElement(ImportDocumentDetail, { ...props, linksLoading: true }),
+  );
+  expect(pending).toContain(t("common.loading"));
+  expect(pending).not.toContain(t("importDocuments.importedItems", { count: 0 }));
+  renderToStaticMarkup(
+    createElement(ImportDocumentDetail, { ...props, linksUnavailable: true }),
+  );
+  const button = ui.buttons.find((b) => b.label === t("capture.activityRefresh"))!;
+  button.onPress();
+  expect(retry).toHaveBeenCalledOnce();
+  current = false;
+  button.onPress();
+  expect(retry).toHaveBeenCalledOnce();
+});

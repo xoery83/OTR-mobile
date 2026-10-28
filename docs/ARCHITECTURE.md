@@ -316,3 +316,11 @@ Real dispatch/credentials/secrets, public ChatGPT/Claude/MCP, production OAuth/J
 Admin Portal, billing, participant/member augmentation, booking persistence,
 CXE adaptive runtime, Product Intelligence/training and notification sending remain
 unimplemented or unactivated. Independent final closure review is the next checkpoint.
+
+## PDF V2 Source adapter preparation
+
+A default-closed HTTP adapter reuses the existing PDF V2 original verification,
+derived registration and seal authorities. It adds no independent Source, Task,
+Auth or worker authority. Startup composition remains absent until the bounded
+worker/custody/profile path and exact protected eligibility are qualified. The
+adapter handles scoped metadata only; originals retain their existing custody.
