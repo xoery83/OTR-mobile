@@ -1,0 +1,44 @@
+{
+  "status": "NORMAL_PREVIEW_COLD_FIRST_OPEN_FAIL_RETRY_RECOVERS",
+  "implementationCommit": "882b5587",
+  "artifact": {
+    "build": 91,
+    "sourceCommit": "882b55871123b383894e1ab55d22d938f4d5daba",
+    "newNativeBuild": true,
+    "nativeBuild": 91,
+    "nativePreviewContractVersion": 2,
+    "nativeSHA256": "a3c0f08318ade57d1444a181e6131ac0630f88cf3abcd515e37d41eacf9297c6",
+    "nativeModuleSHA256": "f3cf3f222219772d6c8173dc57cb2b9aecbb2bebc219ef095578c892cb6d6755",
+    "binaryPreviewExplicitQaEnabled": false,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "901f184f80903d6142f4d66cf5fe5fd7680d659aad12d910156f9058bd9712b1",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "capturedSource": {
+    "captureId": "26adbb36-b330-4b77-82d3-4da34b2f0598",
+    "payloadId": "4f65bc54-51fb-4637-9025-7102524dbc0d",
+    "bytes": 950,
+    "sha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+  },
+  "exactProtocolDetected": true,
+  "qaPreviewFallback": false,
+  "coldFirstOpenFailures": 2,
+  "nativeFixedFailureCategory": "PRESENTATION_REJECTED",
+  "explicitSameOriginalRetry": "PDF_RENDERED_WITH_RETAINED_FILENAME",
+  "background": {
+    "nativeBuild": 91,
+    "qaPreviewFlag": false,
+    "afterNormalBackground": true,
+    "disposablePreviewCopies": 0,
+    "durablePdfBytes": 950,
+    "durablePdfSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+  },
+  "coldRoot": "My Trips",
+  "notClaimed": [
+    "Normal preview cold-first-open PASS",
+    "PDF interpretation/Source/Admission",
+    "Alternate-Account device privacy PASS"
+  ],
+  "next": "Native93 identical ordinary JS; simulator-only7boolean pending-presentation diagnostic; no algorithm change yet"
+}
