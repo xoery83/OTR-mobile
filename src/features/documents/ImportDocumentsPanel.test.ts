@@ -415,3 +415,35 @@ it("carries the scoped original filename to native display, never a temporary ID
   await settle();
   expect(h.preview.mock.calls[0][2]).toBe("synthetic-roundtrip.pdf");
 });
+
+it("shows pending links and retries only their readonly lookup on the same document", async () => {
+  h.read.mockResolvedValue({ ...doc, tripId: "trip-a" });
+  let finish!: (items: unknown[]) => void;
+  h.associations.mockRejectedValueOnce(Error("SOURCE_LOOKUP_UNAVAILABLE"));
+  Harness(doc.captureId, () => true, "TRIP");
+  await settle();
+  Harness(doc.captureId, () => true, "TRIP");
+  await settle();
+  const failed = Harness(doc.captureId, () => true, "TRIP");
+  expect(failed.props.linksUnavailable).toBe(true);
+  h.associations.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  (failed.props.onRetryLinks as () => void)();
+  Harness(doc.captureId, () => true, "TRIP");
+  await settle();
+  const pending = Harness(doc.captureId, () => true, "TRIP");
+  expect(pending.props.linksLoading).toBe(true);
+  expect(pending.props.linksUnavailable).toBe(false);
+  finish([{ itemId: "same-owning-item" }]);
+  await settle();
+  const recovered = Harness(doc.captureId, () => true, "TRIP");
+  expect(recovered.props.linkedItems).toBe(1);
+  expect(recovered.props.linksLoading).toBe(false);
+  expect(h.associations).toHaveBeenCalledTimes(2);
+  expect(h.read).toHaveBeenCalledOnce();
+  expect(h.original).not.toHaveBeenCalled();
+});
