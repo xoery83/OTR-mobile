@@ -312,6 +312,13 @@ export async function readUniversalP1ReviewOriginal(
   return text;
 }
 
+type AcceptedImportItem = {
+  itemId: string;
+  operationId: string;
+  committedAt: string;
+  sourceComplete?: true;
+};
+
 // Receipt GET only: reopening Results must never republish, enqueue or pay for interpretation.
 export async function readUniversalAcceptedItems(
   model: CaptureJobReadModel,
@@ -321,6 +328,7 @@ export async function readUniversalAcceptedItems(
     isCurrent(): boolean;
     transport: Pick<ReturnType<typeof createCoreV2Transport>, "receipt"> &
       Partial<Pick<ReturnType<typeof createCoreV2Transport>, "sourcePlan">>;
+    onAccepted?(token: string, item: AcceptedImportItem): void;
   },
 ) {
   const current = () => {
@@ -330,10 +338,7 @@ export async function readUniversalAcceptedItems(
   assertUniversalCaptureResult(model, result);
   const context = await captureAccountRequestContext(result.tripId, deps.getAccountId);
   if (context.accountId !== result.accountId) throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
-  const accepted: Record<
-    string,
-    { itemId: string; operationId: string; committedAt: string; sourceComplete?: true }
-  > = {};
+  const accepted: Record<string, AcceptedImportItem> = {};
   for (const candidate of result.candidates) {
     if (!["P1", "P2", "P3", "P4", "P5", "P6"].includes(candidate.kind)) continue;
     current();
@@ -457,6 +462,7 @@ export async function readUniversalAcceptedItems(
       committedAt: receipt.committedAt,
       ...(sourceComplete ? { sourceComplete: true as const } : {}),
     };
+    deps.onAccepted?.(candidate.token, { ...accepted[candidate.token] });
   }
   current();
   return accepted;

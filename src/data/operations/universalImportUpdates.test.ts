@@ -287,3 +287,40 @@ it("a late completed receipt cannot escape the Account generation fence", async 
   expect(observed.mock.calls).toHaveLength(1);
   expect(observed.mock.calls[0][0][0]).not.toHaveProperty("savedItemCount");
 });
+
+it("projects each completed saved receipt while later candidates are still reading", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  source.list.mockResolvedValue([f.job]);
+  const observed = vi.fn();
+  source.read.mockImplementation(async (_jobs, _current, emit, result) => {
+    emit(f.batchId, f.activity);
+    await result(f.job, { accountId: f.accountId, tripId: f.tripId, batchId: f.batchId });
+  });
+  source.accepted.mockImplementation(async (_job, _result, deps) => {
+    const first = {
+      itemId: "one",
+      operationId: "op-one",
+      committedAt: "2026-10-28T00:05:00Z",
+      sourceComplete: true,
+    };
+    deps.onAccepted("i1", first);
+    expect(observed.mock.calls.at(-1)![0][0]).toMatchObject({
+      id: `universal-import:${f.batchId}`,
+      savedItemCount: 1,
+    });
+    deps.onAccepted("i2", {
+      itemId: "two",
+      operationId: "op-two",
+      committedAt: "2026-10-28T00:06:00Z",
+    });
+    expect(observed.mock.calls.at(-1)![0][0].savedItemCount).toBe(1);
+    advanceAccountGeneration();
+    deps.onAccepted("i3", { ...first, itemId: "other-account-late" });
+    expect(observed.mock.calls.at(-1)![0][0].savedItemCount).toBe(1);
+    return { i1: first };
+  });
+  await expect(
+    readDefaultUniversalImportUpdates(f.tripId, () => true, observed),
+  ).rejects.toThrow();
+});

@@ -757,3 +757,55 @@ it.each(["forbidden", "stale"])(
     expect(f.transport.receipt).toHaveBeenCalledTimes(1);
   },
 );
+
+it("emits each scope-checked accepted item before a later receipt GET settles", async () => {
+  const f = await fixture();
+  const first = f.result.candidates[0];
+  f.result.candidates.push({ ...first, token: "slow-sibling", id: "f".repeat(24) });
+  const operationId = universalP1Identity(f.result.taskId, first.token, "operation");
+  const itemId = universalP1Identity(f.result.taskId, first.token, "item");
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const onAccepted = vi.fn();
+  f.transport.receipt.mockImplementation(async (_context, operation) => {
+    if (operation !== operationId) {
+      await pending;
+      return null;
+    }
+    return {
+      projection: "FULL",
+      domainReceiptId: randomUUID(),
+      receipt: {
+        operationId,
+        tripId: f.result.tripId,
+        actorAccountId: f.result.accountId,
+        command: "CREATE_ITEM",
+        outcome: "APPLIED",
+        committedAt: "2026-10-28T00:00:00Z",
+        targetVector: [{ kind: "ITEM", id: itemId, committedRevision: 1 }],
+      },
+    };
+  });
+  const read = readUniversalAcceptedItems(f.model, f.result, {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => true,
+    transport: f.transport as never,
+    onAccepted,
+  });
+  try {
+    await vi.waitFor(() =>
+      expect(onAccepted).toHaveBeenCalledExactlyOnceWith(first.token, {
+        itemId,
+        operationId,
+        committedAt: "2026-10-28T00:00:00Z",
+      }),
+    );
+  } finally {
+    release();
+    await read;
+  }
+  expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+});

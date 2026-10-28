@@ -81,29 +81,35 @@ export function useUniversalP1Admission(
         import("@/data/api/tripCoreV2Transport"),
         import("@/data/operations/universalP1AdmissionConsumer"),
       ]);
+      const apply = (
+        accepted: Awaited<ReturnType<typeof readUniversalAcceptedItems>>,
+      ) => {
+        if (!canceled && current()) {
+          setCompleted((previous) => ({
+            ...previous,
+            ...Object.fromEntries(
+              Object.entries(accepted)
+                .filter(([, item]) => item.sourceComplete === true)
+                .map(([token]) => [token, true]),
+            ),
+          }));
+          setStatuses((previous) => ({
+            ...previous,
+            ...Object.fromEntries(
+              Object.keys(accepted).map((token) => [token, "SERVER_ACCEPTED" as const]),
+            ),
+          }));
+        }
+      };
       const accepted = await readUniversalAcceptedItems(model, result, {
         getAccountId: requireAdoptedUserId,
         isCurrent: () => !canceled && current(),
         transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
           timeoutMs: 60000,
         }),
+        onAccepted: (token, item) => apply({ [token]: item }),
       });
-      if (!canceled && current()) {
-        setCompleted((previous) => ({
-          ...previous,
-          ...Object.fromEntries(
-            Object.entries(accepted)
-              .filter(([, item]) => item.sourceComplete === true)
-              .map(([token]) => [token, true]),
-          ),
-        }));
-        setStatuses((previous) => ({
-          ...previous,
-          ...Object.fromEntries(
-            Object.keys(accepted).map((token) => [token, "SERVER_ACCEPTED" as const]),
-          ),
-        }));
-      }
+      apply(accepted);
     };
     // A failed GET is not a failed Save; explicit confirm/recovery retains its original identity.
     void recover().catch(() => {});

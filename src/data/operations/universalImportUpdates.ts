@@ -155,27 +155,35 @@ export async function readDefaultUniversalImportUpdates(
         import("./universalP1AdmissionConsumer"),
       ]);
       if (!current()) return;
+      const recovered: Awaited<ReturnType<typeof readUniversalAcceptedItems>> = {};
+      const observe = (accepted: typeof recovered) => {
+        const completed = Object.values(accepted).filter(
+          (item) => item.sourceComplete === true,
+        );
+        if (!current() || !completed.length) return;
+        saved[job.batch.batchId] = {
+          accountId: result.accountId,
+          tripId: result.tripId,
+          batchId: result.batchId,
+          savedItemCount: new Set(completed.map((item) => item.itemId)).size,
+          updatedAt: new Date(
+            Math.max(...completed.map((item) => Date.parse(item.committedAt))),
+          ).toISOString(),
+        };
+        emit();
+      };
       const accepted = await readUniversalAcceptedItems(job, result, {
         getAccountId: requireAdoptedUserId,
         isCurrent: current,
         transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
           timeoutMs: 60000,
         }),
+        onAccepted: (token, item) => {
+          recovered[token] = item;
+          observe(recovered);
+        },
       });
-      const completed = Object.values(accepted).filter(
-        (item) => item.sourceComplete === true,
-      );
-      if (!current() || !completed.length) return;
-      saved[job.batch.batchId] = {
-        accountId: result.accountId,
-        tripId: result.tripId,
-        batchId: result.batchId,
-        savedItemCount: new Set(completed.map((item) => item.itemId)).size,
-        updatedAt: new Date(
-          Math.max(...completed.map((item) => Date.parse(item.committedAt))),
-        ).toISOString(),
-      };
-      emit();
+      observe(accepted);
     },
   );
   await assertAccountRequestContext(context, requireActiveUserId);
