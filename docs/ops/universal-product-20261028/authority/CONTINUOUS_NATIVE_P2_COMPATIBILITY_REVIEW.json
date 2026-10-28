@@ -51,6 +51,12 @@
     "logSha256": "f6dd70b3203e156273efbf64babbbdcea632190da3f06a11ff00247539190920",
     "wrapperSha256": "8616c5998d134c4083203e8c357ff8240a8674b2b07104682b1081e8b526b4c3"
   },
-  "independentReview": "PENDING",
+  "independentReview": {
+    "result": "NO_BLOCKER",
+    "reviewer": "p1_source_review_independent",
+    "candidateCommit": "2347e2e5",
+    "verified": "Single MD5 substitution; activation/close/body/isolated-log hashes; full preimage equality after removing exactly two Manual P2 arms",
+    "executionBoundary": "Same Native precise Owner Gate required; fresh live body/OID/Owner/ACL recheck; no DEV execution authorized by local review"
+  },
   "approval": "Must be included in the same precise Native P2 protected Owner Gate; no separate activation approval inferred"
 }
