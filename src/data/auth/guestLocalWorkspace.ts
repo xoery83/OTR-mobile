@@ -1,4 +1,5 @@
 import { createGuestDatasetCensus } from "./guestDatasetCensus";
+import { createGuestCaptureInventory } from "./guestCaptureInventory";
 import type { LaunchIdentity } from "./guestPrincipalRepository";
 import { getAccountGeneration } from "./accountGeneration";
 import { assertAccountRequestGeneration } from "./accountRequestContext";
@@ -93,6 +94,7 @@ export function createGuestLocalWorkspaceOpener(deps: {
       scope,
       syncAllowed: false as const,
       readCensus: createGuestDatasetCensus(database, localOwner, scope),
+      readCaptureInventory: createGuestCaptureInventory(database, localOwner, scope),
       trips,
       plan: createManualPlanRepository(database, localOwner, core),
       days: createTripDayFeedReader({

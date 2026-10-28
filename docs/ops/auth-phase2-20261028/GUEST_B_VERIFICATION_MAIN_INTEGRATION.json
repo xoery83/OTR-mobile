@@ -1,0 +1,33 @@
+{
+  "snapshotStage": "AFTER_CODE_MAIN_ACCEPTANCE_BEFORE_FINAL_DOCUMENTATION_PUSH",
+  "source": "b8c2987d87aa587d8eab48b23e297d39e8b55093",
+  "baseMain": "b7e5c51e1874660eaa072753d87f851a584ff858",
+  "codeMain": {
+    "phase": "after",
+    "main": "b8c2987d87aa587d8eab48b23e297d39e8b55093",
+    "status": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+    ],
+    "originalFileHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "actualPrimaryRegression": "8 suites111 tests PASS",
+  "independentReview": "8 suites111 tests PASS",
+  "typecheckScopedLintDiff": "PASS",
+  "activated": "none: no Native/Provider/UI/SQL/Host/business publication changes",
+  "excluded": "Core focused ab33fc9f and unaccepted Native P2 parent history are not part of this main integration",
+  "remoteVerification": "Normal non-force push and actual refs checked separately after documentation commit; this snapshot does not claim future remote state"
+}

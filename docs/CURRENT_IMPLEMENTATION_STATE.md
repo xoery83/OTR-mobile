@@ -176,6 +176,59 @@ actual primary5 suites113 Smoke PASS and original six dirty files/full diff unch
 GUEST_B_RECOVERY_INTEGRATION.json is the historical pre-push snapshot; verify final
 remote refs after the normal docs+source push. No new Native/Host deployment.
 
+B closed preflight DTO/boundary candidate now accepts only IDs/digest/resource
+counts, binds target to the existing authenticated Backend Account before awaits,
+checks returned grant pins/counts/expiry, bounds bytes/time and forwards Abort.
+Missing owning adapter stays503closed; no names/files/token body or new commercial
+rules. 21 new/3 suites44 directed/types/UIguard/lint and independent21 PASS.
+Not mounted in app/bootstrap, no PG reservation/authority or real preflight/Cloud
+receipt. GUEST_B_CLOSED_PREFLIGHT_REVIEW.json records fake-port evidence boundaries.
+GUEST_B_ATOMIC_PORT_CANDIDATE.md gives Core Writer a minimal one-transaction seam
+reusing TripCreatePort/CoreCommandStorage, explicit Person mappings and final
+whole-dataset rollback/receipt checks. No intercepting COMMIT, stripping principal
+checks or borrowing QA scope; exact protected changes stay unexecuted.
+
+B Capture-only inventory now reuses the Source Writer-confirmed transactionStore
+load on the isolated Guest DB, never the Account lifecycle factory. Checks every
+owner/assigned Trip creator before bytes, validates originals with the owning
+SHA/length/UTF8 rules, retains all Capture revision+metadata hashes and blocks
+orphan payloads without writes. GuestWorkspace adds readCaptureInventory only;
+no producer/UI or global census unblock. Opaque Capture IDs retain owning semantics.
+6 directed suites168/types/UIguard/lint and independent27 real disk tests PASS.
+Actual accepted A vault read with a Node readOnly adapter has Capture payload0/ref0;
+this is not Native file production, fresh SecureStore proof or physical-disk/all-
+file absence. GUEST_B_REAL_CAPTURE_INVENTORY.json and
+GUEST_B_CAPTURE_INVENTORY_REVIEW.json record exact boundaries. Full files, draft/
+source freeze and atomic publication remain pending; Core Writer defers its shared
+transaction extraction until the active private P2 repair is fixed. Auth has no
+shared Core/Bootstrap/GUI/main lease and continues private approved work meanwhile.
+Preflight/Capture sources98c4e0c2/11b3ee56 retained latest Import2ded and
+were serially FF-integrated as main48d0a5b4; joined6 suites159/types/UIguard and
+actual primary6 suites101 Smoke PASS, original6 dirty files/full diff unchanged.
+Historical pre-push receipt: GUEST_B_PREFLIGHT_CAPTURE_INTEGRATION.json. No Host/
+SQL/Native activation; verify final normal push refs before subsequent integration.
+
+B provisional credentials now have default-unwired Auth-repository store/read ports,
+using the existing secure per-Account key and Guest/adoption/target metadata only.
+Canonical current/previous credential hashes bind crash/refresh recovery to the
+actual verified Session; matching Account IDs alone are insufficient. No Account
+index/legacy/launch installation; Guest login/switch guards remain. Gate/generation,
+previous-refresh-token CAS, exact pending retry and fixed error codes fail closed.
+8 suites103 tests, types/scopedlint and independent8 suites103 PASS after credential
+pin/error propagation findings were repaired. These are memory-adapter source tests,
+not real Keychain/cold Provider recovery; Provider/refresh/business-cancel/activation callers remain unwired. Internal
+trusted-adapter revoke now coalesces duplicate requests, retains UNKNOWN, persists
+ACK before exact-slot deletion and resumes cleanup without re-revoking. 8 suites111
+directed and independently111 PASS; no real Provider/Keychain revoke evidence. Complete those and publication-status recovery before use.
+Core transaction composition was separately fixed as focusedab33fc9f on Native's
+frozen parent, independently6 suites122 PASS + isolated real PG rollback; handed
+back to unique Core Writer for review/integration. Do not merge that whole branch.
+No SQL/Host/publisher or Native consumer activation; Adoption still NOT_READY.
+Auth-only store/read/revoke sourceb8c2987d was serially fast-forwarded from mainb7e;
+actual primary8 suites111 PASS. Six original dirty files and full tracked/cached
+diff hashes are unchanged. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is the
+pre-final-push snapshot; independently verify actual remote refs after normal push.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
