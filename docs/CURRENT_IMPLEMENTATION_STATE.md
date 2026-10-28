@@ -205,6 +205,21 @@ actual primary6 suites101 Smoke PASS, original6 dirty files/full diff unchanged.
 Historical pre-push receipt: GUEST_B_PREFLIGHT_CAPTURE_INTEGRATION.json. No Host/
 SQL/Native activation; verify final normal push refs before subsequent integration.
 
+B provisional credentials now have default-unwired Auth-repository store/read ports,
+using the existing secure per-Account key and Guest/adoption/target metadata only.
+Canonical current/previous credential hashes bind crash/refresh recovery to the
+actual verified Session; matching Account IDs alone are insufficient. No Account
+index/legacy/launch installation; Guest login/switch guards remain. Gate/generation,
+previous-refresh-token CAS, exact pending retry and fixed error codes fail closed.
+8 suites103 tests, types/scopedlint and independent8 suites103 PASS after credential
+pin/error propagation findings were repaired. These are memory-adapter source tests,
+not real Keychain/cold Provider recovery; Provider/refresh/revoke/cancel/activation
+callers remain unwired. Complete those and publication-status recovery before use.
+Core transaction composition was separately fixed as focusedab33fc9f on Native's
+frozen parent, independently6 suites122 PASS + isolated real PG rollback; handed
+back to unique Core Writer for review/integration. Do not merge that whole branch.
+No SQL/Host/publisher or Native consumer activation; Adoption still NOT_READY.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.

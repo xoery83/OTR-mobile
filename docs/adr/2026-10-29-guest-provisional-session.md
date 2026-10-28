@@ -1,6 +1,6 @@
 # Guest verification credentials remain in the existing Session authority
 
-Status: design constraint only; Session runtime code is not changed by this ADR.
+Status: default-unwired persistence candidate; no Provider or launch consumer activation.
 
 AUTH requires provisional verification before adoption and restart recovery during
 transfer. A verified Provider Session must not make the Guest an active Account or
@@ -15,7 +15,7 @@ Guest installation guard remains. Existing unbound credential slots are collisio
 not credentials to reuse or overwrite. Refreshed writes need the previous refresh
 token CAS; scope/generation and JWT subject must match before/after persistence.
 
-Cancellation marks credentials for normal current-session server revocation; it
+Required next step, not implemented by this persistence slice: cancellation marks credentials for normal current-session server revocation; it
 does not cancel a protected business publication. The adoption coordinator must
 still query server commit status once publication was requested. Only after the
 normal revocation acknowledgment may the repository clear the bound credential;
@@ -26,3 +26,14 @@ This source slice supplies secure persistence ports only, not the Provider/refre
 revocation caller or adoption activation. It stores real normal Provider results
 when wired; unit JWT fixtures certify binding logic only, never real login. No
 normal Account session behavior or business permission/entitlement is changed.
+
+Implemented ports are store/read only, with PERSISTING and READY metadata. They
+are exposed by the existing Auth repository for internal composition, not by the
+default Native Auth module. No caller may enable this flow until revocation and
+publication-status recovery are wired and independently accepted.
+
+Metadata pins the canonical credential SHA256, plus the explicitly bound previous
+SHA256 only while a refresh write is PERSISTING. READY accepts only the current
+pin; a pending empty slot cannot accept an unrelated new same-Account Session.
+Recovering a matching cached credential is not server validation or permission to
+publish. The normal Provider/refresh path must establish that authority separately.

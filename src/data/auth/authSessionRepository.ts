@@ -1,3 +1,4 @@
+import { createGuestVerificationSession } from "./guestVerificationSession";
 import {
   createGuestPrincipalRepository,
   type LaunchIdentity,
@@ -206,6 +207,22 @@ export function createAuthRepository(
         throw new Error("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
       return stored ?? (index ? { kind: "SIGNED_OUT" } : null);
     },
+    guestVerification: createGuestVerificationSession({
+      storage,
+      accountSessionKey: accountSessionStorageKey,
+      async assertGuest(localId) {
+        const index = await readPrincipalIndex();
+        const legacy = await storage.getItem(legacySessionStorageKey);
+        const principal = await launch.readStoredIdentity();
+        if (
+          index !== null ||
+          legacy !== null ||
+          principal?.kind !== "GUEST" ||
+          principal.localId !== localId
+        )
+          throw Error("GUEST_LOCAL_SCOPE_REQUIRED");
+      },
+    }),
     async readLocalAuthSnapshot() {
       const session = await repository.readLocalSession();
       return { session, principal: await launch.readLaunchIdentity(session) };
