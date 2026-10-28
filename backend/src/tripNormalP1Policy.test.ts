@@ -128,3 +128,27 @@ it("recognizes only the exact normal P5 profile, retaining separate Flight and S
   ])
     expect(normalManualCapabilities(changed)).toBeNull();
 });
+
+it("recognizes an independent P6 Manual profile without opening blocked P5", () => {
+  const commands = [...normalP4Commands, "SET_ACTIVITY_DETAILS"];
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: commands,
+    enabled_families: ["P1", "P3", "P4", "P6"],
+    enabled_admission_modes: ["MANUAL"],
+  };
+  expect(normalManualCapabilities(gate)).toEqual({
+    commands,
+    families: gate.enabled_families,
+  });
+  for (const changed of [
+    { ...gate, runtime_enabled: false },
+    { ...gate, enabled_commands: [...normalP4Commands] },
+    { ...gate, enabled_commands: [...commands, "SET_TRANSPORT_DETAILS"] },
+    { ...gate, enabled_families: ["P1", "P3", "P4", "P5", "P6"] },
+    { ...gate, enabled_families: ["P6"] },
+    { ...gate, enabled_families: [...gate.enabled_families, "P2"] },
+    { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+  ])
+    expect(normalManualCapabilities(changed)).toBeNull();
+});

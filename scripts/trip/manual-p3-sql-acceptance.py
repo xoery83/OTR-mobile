@@ -7,7 +7,7 @@ import tempfile
 import sys
 
 FAMILY = sys.argv[1] if len(sys.argv) > 1 else 'P3'
-assert FAMILY in ('P3','P4','P5'), 'SUPPORTED_MANUAL_FIXTURE_ONLY'
+assert FAMILY in ('P3','P4','P5','P6'), 'SUPPORTED_MANUAL_FIXTURE_ONLY'
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='otr-manual-p3-pg-') as folder:
     private = pathlib.Path(folder)
@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix='otr-manual-p3-pg-') as folder:
     prefix = source[:source.index(" changed={**req,'name':'collision'}")]
     prefix = prefix.replace("ROOT=pathlib.Path(__file__).resolve().parents[2]", 'ROOT=pathlib.Path(' + repr(str(ROOT)) + ')')
     prefix = prefix.replace("packet=ROOT/'docs/ops/trip-p1-sustained-sync-20261024'", 'packet=pathlib.Path(' + repr(str(private)) + ')')
-    install = ROOT / 'supabase/dev-forward/manual-cloud' / {'P3': '20261028000100_manual_p3_dev.sql', 'P4': '20261028000200_manual_p4_dev.sql', 'P5': '20261029000100_manual_p5_dev.sql'}[FAMILY]
+    install = ROOT / 'supabase/dev-forward/manual-cloud' / {'P3': '20261028000100_manual_p3_dev.sql', 'P4': '20261028000200_manual_p4_dev.sql', 'P5': '20261029000100_manual_p5_dev.sql', 'P6': '20261029000200_manual_p6_dev.sql'}[FAMILY]
     # Original definitions are retained inside the rollback; use them to align the disposable clone only.
     rollback = install.with_name(install.stem+'.rollback.sql').read_text()
     originals = rollback[rollback.index('CREATE OR REPLACE FUNCTION'):rollback.rindex('COMMIT;')]
@@ -83,9 +83,9 @@ checks.push("raw writer cannot reparent another Rental endpoint or alter Pickup/
 const wrong = await reader.capabilities""")
         fixture = fixture.replace('ISOLATED_PG_P3_PASS_NOT_DEV_OR_NATIVE', 'ISOLATED_PG_P4_PASS_NOT_DEV_OR_NATIVE')
         fixture = fixture.replace('edited P3 revision 6', 'edited P4 revision 6').replace('cross-Account P3', 'cross-Account P4')
-    if FAMILY == 'P5':
+    if FAMILY in ('P5','P6'):
         fixture = (ROOT / 'scripts/trip/sustained-p1-owned-fixture.mts').read_text().split('const capabilities = await reader.capabilities')[0]
-        fixture += (ROOT / 'scripts/trip/manual-p5-owned-fixture-tail.mts').read_text()
+        fixture += (ROOT / ('scripts/trip/manual-'+FAMILY.lower()+'-owned-fixture-tail.mts')).read_text()
         fixture = fixture.replace('"../../', '"' + str(ROOT) + '/')
     fixture_path = private / (FAMILY.lower()+'.mts')
     fixture_path.write_text(fixture)

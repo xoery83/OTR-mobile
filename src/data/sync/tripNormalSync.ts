@@ -77,7 +77,7 @@ type Deps = {
   isManualItem(
     tripId: string,
     itemId: string,
-    family: "P1" | "P3" | "P4" | "P5",
+    family: "P1" | "P3" | "P4" | "P5" | "P6",
   ): Promise<boolean>;
   participantsReady(tripId: string, command: CoreCommand): Promise<boolean>;
 };
@@ -217,7 +217,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             const manual =
               isReviewedSourceCreate(command) ||
               (command.command === "CREATE_ITEM"
-                ? ["P1", "P3", "P4", "P5"].includes(
+                ? ["P1", "P3", "P4", "P5", "P6"].includes(
                     (command.payload as { family: string }).family,
                   )
                 : [
@@ -250,7 +250,16 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                 "SET_TRANSPORT_DETAILS",
               ].includes(command.command) &&
                 command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P5")));
+                (await deps.isManualItem(row.trip_id, command.target.id, "P5"))) ||
+              ([
+                "SET_ITEM_TEXT",
+                "SET_ITEM_SCHEDULE",
+                "SET_ITEM_PLACE",
+                "SET_ITEM_PARTICIPATION",
+                "SET_ACTIVITY_DETAILS",
+              ].includes(command.command) &&
+                command.admission.mode === "MANUAL" &&
+                (await deps.isManualItem(row.trip_id, command.target.id, "P6")));
             await guard();
             if (manual) {
               const ready = await deps.participantsReady(row.trip_id, command);

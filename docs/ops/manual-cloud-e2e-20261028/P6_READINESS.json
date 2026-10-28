@@ -1,0 +1,109 @@
+{
+  "status": "LOCAL_L2_CANDIDATE_NOT_APPROVED_NOT_INSTALLED",
+  "profile": "P1/P3/P4/P6 independently of P5",
+  "nativePatchSHA256": "3b666e726f2a59a816801ff8fda0462f2391bd67f45bf391be9801b21371b492",
+  "nativeAgentTests": {
+    "suites": 7,
+    "tests": 128,
+    "result": "PASS"
+  },
+  "backendChecks": 37,
+  "newSchemaRolesRlsGrant": 0,
+  "actualDevWrites": 0,
+  "functionCount": 4,
+  "installSHA256": "f4d007aeb8d43518ca883110da137288e6dae4109266b99e974f5d5b2ef9bff5",
+  "rollbackSHA256": "453f25967fbdf1b287239856a310994ec5dd275e3b391837f16c0a6d6b975684",
+  "functionReview": "INDEPENDENT_NO_BLOCKER",
+  "preimages": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "24ebd53b031765b518cc9f253d1fc5b1",
+      "oid": "65263",
+      "owner": "postgres",
+      "signature": "trip_core_guard_write()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "f1378cb07c1f1882651a558dbe612909",
+      "oid": "65713",
+      "owner": "postgres",
+      "signature": "trip_core_finite_read_state_guard()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "a443a587d0d590e705a4252f679fa2af",
+      "oid": "66180",
+      "owner": "postgres",
+      "signature": "trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "fa26e9d043f4f059dcf05824759215c8",
+      "oid": "66181",
+      "owner": "postgres",
+      "signature": "trip_sustained_core_capabilities(uuid,uuid)"
+    }
+  ],
+  "isolatedPostgres": {
+    "result": "PASS",
+    "network": "none",
+    "devTouched": false,
+    "checks": [
+      {
+        "status": "ISOLATED_PG_P6_PASS_NOT_DEV_OR_NATIVE",
+        "itemId": "87033411-d677-46b8-81f5-f46b9250d17a",
+        "checks": [
+          "actual Person PgPort create + result readback + immutable replay",
+          "CREATE_ITEM actual PG mutation + immutable replay",
+          "SET_ITEM_TEXT actual PG mutation + immutable replay",
+          "SET_ITEM_SCHEDULE actual PG mutation + immutable replay",
+          "SET_ITEM_PLACE actual PG mutation + immutable replay",
+          "SET_ACTIVITY_DETAILS actual PG mutation + immutable replay",
+          "SET_ITEM_PARTICIPATION actual PG mutation + immutable replay",
+          "SET_ACTIVITY_DETAILS actual PG mutation + immutable replay",
+          "same P6 ID latest clocks/place/details/participation and explicit cleared ENTRY survive full validated Reader",
+          "raw P6 writer rejects child reparent/ENTRY identity/DELETE/wrong command and missing context; P5 remains closed"
+        ]
+      },
+      {
+        "checks": [
+          "existing Source Review early branch preserved",
+          "candidate installs dormant with no active gate",
+          "normal V2 Create accepts future Trip/op without exact-request gate",
+          "exact replay receipt immutable",
+          "P6 exact replay, same-ID edits, Accepted Reader and cross-Account denial",
+          "rollback retains P6 accepted facts",
+          "function OID owner ACL preserved"
+        ],
+        "network": "none",
+        "devTouched": false
+      }
+    ]
+  },
+  "cloudAcceptance": "NOT_RUN_AUTHORITY_CLOSED",
+  "remaining": [
+    "Precise Owner approval for sustained QA-only MANUAL P6 capability",
+    "Fresh coordinated DEV CAS/deployment and real Native Create/Edit/SERVER_ACCEPTED/independent readback/cold/offline/replay/permissions"
+  ],
+  "joinedParentChecks": {
+    "suites": 9,
+    "tests": 165,
+    "result": "PASS",
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS"
+  },
+  "repositoryP6PgHarness": "PASS_network_none_not_DEV"
+}

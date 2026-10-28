@@ -512,3 +512,122 @@ it.each(["TRAIN", "BUS", "FERRY", "WATER_TAXI", "SHUTTLE", "TRANSFER"])(
     expect(f.deps.runP1).toHaveBeenCalledOnce();
   },
 );
+
+const p6DispatchPayloads = {
+  SET_ITEM_TEXT: { title: "Updated activity" },
+  SET_ITEM_SCHEDULE: {
+    schedule: {
+      start: coreDateBoundary("2026-11-02"),
+      end: coreDateBoundary("2026-11-03"),
+    },
+  },
+  SET_ITEM_PLACE: {
+    place: Object.fromEntries(
+      Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+    ),
+  },
+  SET_ITEM_PARTICIPATION: {
+    participation: coreDefaults("organizer").participation,
+  },
+  SET_ACTIVITY_DETAILS: {
+    details: { session_label: "Morning", admission_note: null },
+    entryPlace: null,
+  },
+  SET_TRANSPORT_DETAILS: { annotations: {} },
+  SET_RENTAL_DETAILS: { details: {}, places: {} },
+};
+const p6DispatchCommands = [
+  "SET_ITEM_TEXT",
+  "SET_ITEM_SCHEDULE",
+  "SET_ITEM_PLACE",
+  "SET_ITEM_PARTICIPATION",
+  "SET_ACTIVITY_DETAILS",
+];
+
+it.each([true, false])(
+  "P6 exact normal edit selection requires target family (%s)",
+  async (matching) => {
+    for (const [name, payload] of Object.entries(p6DispatchPayloads)) {
+      const f = fixture(),
+        operationId = randomUUID(),
+        itemId = randomUUID();
+      f.deps.isManualItem.mockImplementation(
+        async (_trip, _item, family) => matching && family === "P6",
+      );
+      f.deps.participantsReady.mockResolvedValue(true);
+      const command = {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId,
+        tripId: f.tripId,
+        command: name,
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
+        payload,
+      };
+      f.deps.database.getAllAsync
+        .mockReset()
+        .mockResolvedValue([])
+        .mockResolvedValueOnce([f.create])
+        .mockResolvedValueOnce([
+          {
+            ...f.create,
+            id: operationId,
+            entity_id: itemId,
+            idempotency_key: operationId,
+            entity_type: "TRIP_CORE_V2",
+            operation_type: "CORE_V2_COMMAND",
+            payload_json: JSON.stringify(command),
+          },
+        ]);
+      await f.run();
+      expect(f.deps.runP1).toHaveBeenCalledTimes(
+        matching && p6DispatchCommands.includes(name) ? 1 : 0,
+      );
+    }
+  },
+);
+it("P6 minimum Create uses existing formal Core worker without Source evidence", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    itemId = randomUUID();
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId,
+    tripId: f.tripId,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id: itemId },
+    baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family: "P6",
+      core: { title: "Museum" },
+      schedule: { start: coreDateBoundary("2026-11-02") },
+      ...coreDefaults("organizer"),
+    },
+  };
+  f.deps.participantsReady.mockResolvedValue(true);
+  f.deps.database.getAllAsync
+    .mockReset()
+    .mockResolvedValue([])
+    .mockResolvedValueOnce([f.create])
+    .mockResolvedValueOnce([
+      {
+        ...f.create,
+        id: operationId,
+        entity_id: itemId,
+        idempotency_key: operationId,
+        entity_type: "TRIP_CORE_V2",
+        operation_type: "CORE_V2_COMMAND",
+        payload_json: JSON.stringify(command),
+      },
+    ]);
+  await f.run();
+  expect(f.deps.runP1).toHaveBeenCalledOnce();
+});

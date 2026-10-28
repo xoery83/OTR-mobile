@@ -433,7 +433,9 @@ export function createCorePgStorage(
                       (command.command === "SET_RENTAL_DETAILS" &&
                         finiteFamily !== "P4") ||
                       (command.command === "SET_TRANSPORT_DETAILS" &&
-                        finiteFamily !== "P5")
+                        finiteFamily !== "P5") ||
+                      (command.command === "SET_ACTIVITY_DETAILS" &&
+                        finiteFamily !== "P6")
                     : command.command !== "CREATE_ITEM" ||
                       command.admission.mode !== "MANUAL" ||
                       (finiteFamily !== "P1" && finiteFamily !== "P3")
