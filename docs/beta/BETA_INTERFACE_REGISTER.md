@@ -49,6 +49,16 @@ Account bookmark persistence are outside A. See
 B full-dataset inventory/preflight/staging/atomic publish/UNKNOWN remains pending;
 no local identity reassignment, database/Session copying or early upload.
 
+B read-only preparation: `readCensus(external?)` schema`otr.auth.guest-census/1`
+counts/hashes supported Guest vault rows, blocks foreign/unknown data and requires
+explicit file/live-draft collectors. `guestP1DraftInventory.freeze(scope)` schema
+`otr.auth.guest-p1-drafts/1` returns current P1 canonical text/hash/bytes with
+`assertCurrent/resume`; only that mounted family is covered, not all drafts/files.
+The editor keeps its original repository/input, blocks Save/Discard during lease,
+and refuses UNKNOWN saves/open Place selection. Actual A vault was independently
+read only; missing collectors stay blocked. No server publication or Native
+handoff E2E claim. ADRs: guest-adoption-census / guest-p1-draft-handoff 2026-10-29.
+
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17
 
 - FP-02A builder owns new adjacent sparse-proof modules/tests in an isolated

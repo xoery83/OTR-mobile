@@ -120,6 +120,21 @@ Backend/Schema/RLS/GRANT or Native consumer activation. Next: coordinate owning
 live P1 fields/file inventory; prepare server atomic publication candidate without
 borrowing Manual/Source authority. ADR:2026-10-29-guest-adoption-census.md.
 
+P1-only live draft handoff now freezes the actual editor refs/initial dirty
+baseline, not the repository WeakMap initial draft. Auth registry returns canonical
+text/hash/bytes and a revision+identity-fenced lease; cancellation resumes the same
+repository/draft/input. Open place selection, busy/UNKNOWN firstAttempt and stale
+sources block; preview does not participate. Concurrent resume and old cleanup
+cannot release a new lease. 7 directed suites92 tests/types/UIguard PASS;
+independent2 suites31 PASS after its two race/UI-lock findings were repaired.
+Scopedlint has0errors/4 pre-existing test import warnings. Native confirmed bounded
+P1 seam compatibility; no other Forms/Core/Trip factory changed. This is an
+in-memory P1 port, not durable draft recovery, a complete Guest collector or real
+Native/Adoption/Cloud E2E. Source-only activation; no login/upload consumer.
+Import confirms no accepted Guest file inventory port exists; Account Documents/
+Capture ports must not be borrowed. Next: lawful full source snapshot/owning file
+collector, durable transfer recovery and atomic server publication candidate.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
