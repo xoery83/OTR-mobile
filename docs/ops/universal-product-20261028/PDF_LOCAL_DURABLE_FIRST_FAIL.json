@@ -58,5 +58,13 @@
     "expected": "Native PDF preview visible",
     "actual": "Original unavailable",
     "newObjectsOrModelCalls": 0
+  },
+  "nativeStateChecksBeforeFix": {
+    "build": 71,
+    "nativeSourceCommit": "953494ff",
+    "debugSimulatorOnly": true,
+    "LOADED_TIMEOUT": "FAIL",
+    "TIMEOUT_LATE_LOAD": "FAIL",
+    "captureBytesOrBusinessWrites": 0
   }
 }

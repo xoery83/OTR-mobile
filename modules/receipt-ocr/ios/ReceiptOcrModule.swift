@@ -86,11 +86,8 @@ public class ReceiptOcrModule: Module {
         guard UUID(uuidString: token) != nil else { reject("TOKEN"); return }
         guard self.importPreview == nil else { reject("BUSY"); return }
         guard !data.isEmpty, data.count <= 50 * 1024 * 1024 else { reject("PAYLOAD"); return }
-        guard let root = UIApplication.shared.connectedScenes
-          .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController
+        guard let presenter = self.appContext?.utilities?.currentViewController()
         else { reject("ROOT"); return }
-        var presenter = root
-        while let shown = presenter.presentedViewController { presenter = shown }
         guard presenter.viewIfLoaded?.window != nil else { reject("PRESENTER_ATTACHED"); return }
         guard !presenter.isBeingDismissed else { reject("DISMISSING"); return }
         guard !presenter.isBeingPresented else { reject("PRESENTING"); return }
@@ -309,7 +306,7 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   }
   func failIfPresentationPending() {
     guard !presented, finish != nil else { return }
-    closeRequested = true
+    closePrivateOriginal()
     complete(true)
   }
   func didPresent() {
@@ -318,6 +315,7 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   }
   func closePrivateOriginal() {
     closeRequested = true
+    viewIfLoaded?.isHidden = true
     guard presented else { return }
     dismiss(animated: false) { self.complete() }
   }
@@ -327,6 +325,10 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
     cleanup?(failed)
   }
   @objc private func hidePrivateOriginal() { closePrivateOriginal() }
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    if closeRequested { view.isHidden = true }
+  }
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
     guard isBeingDismissed || presentingViewController == nil else { return }
@@ -336,7 +338,7 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
 }
 
 #if DEBUG && targetEnvironment(simulator)
-// Exercises the actual controller offscreen; no Capture data, file IO or public test port.
+// Exercises the actual controller offscreen; no Capture bytes, file writes or public test port.
 private func runImportPreviewPrivateCloseChecks() {
   for loadedBeforeTimeout in [true, false] {
     var finishes = 0
@@ -349,13 +351,15 @@ private func runImportPreviewPrivateCloseChecks() {
       hiddenAtFinish = subject?.viewIfLoaded?.isHidden ?? true
     }
     subject = controller
+    let startedUnloaded = !controller.isViewLoaded
     if loadedBeforeTimeout { controller.loadViewIfNeeded() }
+    let fixtureReady = loadedBeforeTimeout ? controller.isViewLoaded : startedUnloaded
     controller.failIfPresentationPending()
     controller.loadViewIfNeeded()
     let hiddenAfterLateLoad = controller.view.isHidden
     controller.didPresent()
     controller.failIfPresentationPending()
-    let passed = finishes == 1 && hiddenAtFinish && hiddenAfterLateLoad
+    let passed = fixtureReady && finishes == 1 && hiddenAtFinish && hiddenAfterLateLoad
     NSLog("import_original_preview_state %@ %@",
       loadedBeforeTimeout ? "LOADED_TIMEOUT" : "TIMEOUT_LATE_LOAD", passed ? "PASS" : "FAIL")
   }
