@@ -58,3 +58,15 @@ it("uses the selected Stay role clock and the existing 70-minute advisory defaul
     localInsertionTime(read(), "base", "TONIGHT", date, "AFTER").startTime,
   ).toBeNull();
 });
+
+it("uses visible civil order even when the Reader retains creation order", () => {
+  const source = read();
+  const rows = source.rows();
+  source.rows = () => [rows[2], rows[1], rows[0], rows[3]];
+  expect(localInsertionTime(source, "stay", "CHECKIN", date, "BEFORE").startTime).toBe(
+    "09:45",
+  );
+  expect(localInsertionTime(source, "stay", "CHECKIN", date, "AFTER").startTime).toBe(
+    "10:50",
+  );
+});

@@ -1,0 +1,36 @@
+{
+  "status": "LOCAL_PASS_NATIVE_PENDING",
+  "baseCommit": "86b41d55",
+  "deviceBaseline": {
+    "bundleId": "com.xoery.otrmobile.formsqa",
+    "build": 56,
+    "unchanged": true
+  },
+  "trigger": "Phone56 formal accepted P3 17:00 preceded P4 01:16 and P1 03:28 on the same civil day.",
+  "change": [
+    "Reuse civil clock presentation ordering for unambiguous accepted TNS rows.",
+    "Weave pending civil rows into the same rendered TNS band; retain qualified order and Base tail.",
+    "Keep occurrence identities and the existing advisory insertion algorithm; accepted P1 quick-add now uses the same ordered Core rows."
+  ],
+  "validation": {
+    "directedSuites": 6,
+    "directedTests": 68,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "PRELIMINARY_NO_BLOCKER; independent 4 suites54 PASS, caller checks in progress"
+  },
+  "unchanged": [
+    "Core or Reader authority",
+    "Backend and Supabase",
+    "temporal qualification and instant/zone facts",
+    "device data and Session",
+    "DEV business gates"
+  ],
+  "remaining": [
+    "Install and verify the repair on physical phone; source is not installed yet.",
+    "P1 Focus quick-add still absent when context is UNKNOWN: eligibility/context separately unresolved.",
+    "Manual P1/P3/P4 offline/replay/live permission L3 negatives remain pending.",
+    "P2 full authored Flight formal Cloud proof port missing; P5/P6 sustained DEV capability not approved."
+  ]
+}

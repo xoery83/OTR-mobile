@@ -605,3 +605,43 @@ it("unknown Day context preserves rows and blocks without absolute clock placeme
   expect(stream.rows.every((row) => !row.transition)).toBe(true);
   expect(stream.entries.at(-1)?.kind).toBe("BLOCK");
 });
+
+it("orders accepted floating P3/P4/P1 occurrences by displayed civil clock, not creation order", () => {
+  const { query } = setup();
+  const members = query.timed.slice(0, 3).map((item) => ({
+    ...item,
+    anchor: null,
+    roles: ["START" as const],
+  }));
+  expect(members).toHaveLength(3);
+  const coreRows: CoreDayRow[] = members.map((item, index) => ({
+    rowKey: {
+      itemId: item.event.id,
+      projectionRole: index === 1 ? "PICKUP" : "START",
+      localDate: syntheticDate,
+    },
+    itemRevision: 1,
+    projectionVersion: 2,
+    certificateGeneration: 1,
+    family: ["P3", "P4", "P1"][index],
+    title: item.event.title,
+    status: "planned",
+    position: "TNS",
+    itemRef: item.event.id,
+    displayTime: {
+      comparable: false,
+      localTime: ["17:00:00", "01:16:00", "03:28:00"][index],
+    },
+    capabilities: closedItemCapabilities,
+  }));
+  const input = { ...query, timed: [], nonComparable: members, coreRows };
+  const before = JSON.stringify(input);
+  const stream = composeDayStream(input, now);
+  expect(stream.rows.map((row) => row.item.event.id)).toEqual([
+    members[1].event.id,
+    members[2].event.id,
+    members[0].event.id,
+  ]);
+  expect(stream.rows.every((row) => row.position === "TNS")).toBe(true);
+  expect(JSON.stringify(input)).toBe(before);
+});

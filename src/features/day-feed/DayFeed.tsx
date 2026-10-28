@@ -1,4 +1,4 @@
-import { localDayDisplayOrder } from "./localDayDisplayOrder";
+import { localDayDisplayOrder, mixedDayDisplayOrder } from "./localDayDisplayOrder";
 import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -21,6 +21,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import type { DayProjection, DayViewContext } from "@/domain/trip/dayReadModel";
+import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import type {
@@ -606,8 +607,25 @@ function AcceptedDayFeed({
           </View>
         ),
     });
-    for (const entry of section.stream.entries)
-      windowRows.push({
+    const itemRows: (DayWindowRow<() => ReactNode> & {
+      position?: CoreDayRow["position"];
+      owningRow?: CoreDayRow;
+    })[] = [];
+    for (const entry of section.stream.entries) {
+      const owningRows =
+        entry.kind === "ITEM"
+          ? (section.query.coreRows ?? []).filter((row) =>
+              entry.row.coreRowKeys.some(
+                (key) =>
+                  key.itemId === row.rowKey.itemId &&
+                  key.projectionRole === row.rowKey.projectionRole &&
+                  key.localDate === row.rowKey.localDate,
+              ),
+            )
+          : [];
+      itemRows.push({
+        position: entry.kind === "ITEM" ? entry.row.position : undefined,
+        owningRow: owningRows.length === 1 ? owningRows[0] : undefined,
         key: entry.kind === "ITEM" ? entry.row.key : entry.block.key,
         date: section.date,
         value: () =>
@@ -634,8 +652,11 @@ function AcceptedDayFeed({
             />
           ),
       });
+    }
     for (const row of localDayDisplayOrder(localManual?.rows(section.date) ?? []))
-      windowRows.push({
+      itemRows.push({
+        position: row.position,
+        owningRow: row,
         key: `local:${JSON.stringify(row.rowKey)}`,
         date: section.date,
         value: () => (
@@ -652,6 +673,13 @@ function AcceptedDayFeed({
           />
         ),
       });
+    windowRows.push(
+      ...mixedDayDisplayOrder(
+        itemRows,
+        (row) => row.position,
+        (row) => row.owningRow,
+      ),
+    );
     if (
       section.stream.nowAfter ||
       (presentation?.showTimeUnspecified !== false &&

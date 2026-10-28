@@ -1,3 +1,4 @@
+import { civilClockDisplayOrder } from "./localDayDisplayOrder";
 import { localCalendarDate, type DayQuery } from "@/domain/trip/dayReadModel";
 import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
@@ -136,9 +137,9 @@ export function composeDayStream(
   instant: string,
   ports: DayStreamPorts = {},
 ) {
-  const members = [...query.timed, ...query.nonComparable];
-  const owningRows = members.map(
-    (item) =>
+  const grouped = [...query.timed, ...query.nonComparable].map((item) => ({
+    item,
+    coreRows:
       query.coreRows?.filter(
         (row) =>
           row.itemRef === item.event.id &&
@@ -150,7 +151,12 @@ export function composeDayStream(
               row.rowKey.projectionRole ===
                 (item.roles[0] === "END" ? "RETURN" : "PICKUP"))),
       ) ?? [],
+  }));
+  const ordered = civilClockDisplayOrder(grouped, (pair) =>
+    pair.coreRows.length === 1 ? pair.coreRows[0] : undefined,
   );
+  const members = ordered.map((pair) => pair.item);
+  const owningRows = ordered.map((pair) => pair.coreRows);
   const keys = members.map((item, index) => {
     const owningKeys = owningRows[index].map((row) => [
       row.rowKey.itemId,

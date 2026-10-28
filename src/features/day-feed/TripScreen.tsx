@@ -10,7 +10,6 @@ import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import { TripDayHeading } from "./TripDayHeading";
 import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
-import { p1InsertionTime } from "./p1InsertionTime";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import {
   DayFeedIntroduction,
@@ -1920,11 +1919,16 @@ function TripContent({
                     onInsert: (itemId, side, date) => {
                       const projection = visibleTrip.observed!.projection;
                       if (projection.version !== 2) return;
-                      const query = projection.query(date, dayContext);
-                      const rows = [...query.timed, ...query.nonComparable].map(
-                        (item) => item.event,
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        "START",
+                        date,
+                        side,
                       );
-                      const suggestion = p1InsertionTime(rows, itemId, side, date);
                       setInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,
