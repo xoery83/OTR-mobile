@@ -1,0 +1,37 @@
+{
+  "build": 56,
+  "sourceCommit": "e60af84e",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "jsSHA256": "a5c9b1ebe1fed0bbfe50abb4bc7ee4c549d937d980b2a02cecacd1ab980c5316",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "tripCreate": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "itemId": "a575f6a9-c9f8-447f-9a25-101a40fde474",
+  "family": "P3",
+  "itemRevision": 1,
+  "title": "Forms QA Phone Stay",
+  "dates": [
+    "2026-10-29",
+    "2026-10-31"
+  ],
+  "clocks": [
+    null,
+    null
+  ],
+  "participation": "WHOLE_GROUP",
+  "receipts": [
+    {
+      "command": "CREATE_ITEM",
+      "operationId": "eabd4f56-9f42-431d-b4b7-47ac33a9bdff",
+      "outcome": "APPLIED",
+      "receiptSHA256": "6903b2add94f50374ca8dd328b17b3b0dd45f95b8e66e53ea41baf0a6b67caab"
+    }
+  ],
+  "create": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "nativeRecovery": "HOME_WIDGET_SAME_TITLE_NO_PENDING_DOT",
+  "edit": "NOT_RUN_ON_THIS_PHONE_ITEM",
+  "coldRecovery": "NOT_RUN_ON_THIS_PHONE_ITEM",
+  "fullCloudL3": "PENDING_OFFLINE_PERMISSION_NEGATIVES",
+  "historicalDataPreserved": true,
+  "normalCoreWindow": "RETURNED_NO_DRAFT_OR_UNKNOWN_WRITE"
+}
