@@ -170,6 +170,18 @@ actual primary5 suites113 Smoke PASS and original six dirty files/full diff unch
 GUEST_B_RECOVERY_INTEGRATION.json is the historical pre-push snapshot; verify final
 remote refs after the normal docs+source push. No new Native/Host deployment.
 
+B closed preflight DTO/boundary candidate now accepts only IDs/digest/resource
+counts, binds target to the existing authenticated Backend Account before awaits,
+checks returned grant pins/counts/expiry, bounds bytes/time and forwards Abort.
+Missing owning adapter stays503closed; no names/files/token body or new commercial
+rules. 21 new/3 suites44 directed/types/UIguard/lint and independent21 PASS.
+Not mounted in app/bootstrap, no PG reservation/authority or real preflight/Cloud
+receipt. GUEST_B_CLOSED_PREFLIGHT_REVIEW.json records fake-port evidence boundaries.
+GUEST_B_ATOMIC_PORT_CANDIDATE.md gives Core Writer a minimal one-transaction seam
+reusing TripCreatePort/CoreCommandStorage, explicit Person mappings and final
+whole-dataset rollback/receipt checks. No intercepting COMMIT, stripping principal
+checks or borrowing QA scope; exact protected changes stay unexecuted.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
