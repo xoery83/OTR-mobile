@@ -1,5 +1,5 @@
 {
-  "status": "DEV_AUTHORITY_INSTALLED_NATIVE_PENDING",
+  "status": "CREATE_EDIT_SERVER_VERIFIED_NATIVE_COLD_RECOVERY_PASS",
   "sourceCommit": "a78ed2ee5d4045b5ac9e64a68615f1e868a177fe",
   "fixedP4Candidate": "776c98f0",
   "approvedInstallSHA256": "5eb86f885e799d8fd77c736fb5c189d54b73f2e9e274519154f21d73f3453e35",
@@ -170,19 +170,68 @@
     "ownProbeSessionRevoked": true
   },
   "native": {
-    "build": 44,
-    "state": "BUILD_VERIFIED_WAITING_OWNER_AUTH_DEVICE_HANDOFF",
-    "create": "NOT_RUN",
-    "edit": "NOT_RUN",
-    "independentItemReadback": "NOT_RUN",
-    "coldRecovery": "NOT_RUN",
-    "bundleId": "com.xoery.otrmobile",
-    "sourceCommit": "a78ed2ee5d4045b5ac9e64a68615f1e868a177fe",
-    "simulatedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile",
-    "embeddedBundleSHA256": "f7ed1ff8a99d459f855b9168d6d2b1a30dcbe22246b248c195050badb8d724c5",
-    "installed": false
+    "build": 49,
+    "sourceCommit": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+    "create": "SERVER_ACCEPTED_SERVER_VERIFIED",
+    "edit": "SERVER_ACCEPTED_SERVER_VERIFIED",
+    "coldRecovery": "PASS_SAME_ID_LATEST_FIELDS",
+    "queue": "FIVE_COMPLETED_APPLIED",
+    "reader": "REAL_DAY_FOCUS_IMMERSIVE_PASS",
+    "staleDraft": "REJECTED_INPUT_RETAINED_DISCARD_REOPEN_RECOVERED",
+    "nativeCrossAccountMutationNegative": "NOT_RUN",
+    "offlineReconnect": "NOT_RUN",
+    "realOperationReplay": "NOT_RUN"
   },
   "cloudL3": "PENDING",
   "noNewTablesRolesRLSGrants": true,
-  "providerImportActivation": false
+  "providerImportActivation": false,
+  "fullCloudL3": "PENDING_NATIVE_OFFLINE_REPLAY_PERMISSION_NEGATIVES",
+  "item": {
+    "itemId": "32117276-df49-4c2d-a260-6a210ff2b625",
+    "revision": 5,
+    "title": "Forms QA Cloud Rental 1028 Edited",
+    "notes": "p4 manual cloud edited",
+    "startTime": "10:17:00",
+    "endTime": "17:22:00",
+    "supplier": "QA Supplier",
+    "model": "QA Compact",
+    "pickup": "Forms QA Pickup Edited",
+    "return": "Forms QA Return",
+    "receipts": [
+      {
+        "operationId": "00758b87-a215-4e67-bf42-38cbf80d43f4",
+        "command": "CREATE_ITEM",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "3006e6f8-ca0c-4a10-8633-87f5ab3e3bb5",
+        "command": "SET_ITEM_TEXT",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "827f7fcd-3221-43db-9eef-1ead3fad041e",
+        "command": "SET_ITEM_SCHEDULE",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "92f606d7-6488-4a0e-8cc4-9ae14ebfab5c",
+        "command": "SET_RENTAL_DETAILS",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "c87250dd-a88d-43f9-9c47-a3ca7f1ca5cf",
+        "command": "SET_ITEM_TEXT",
+        "outcome": "APPLIED"
+      }
+    ],
+    "coldRecoveryObserved": true,
+    "pendingDotAbsentAfterCold": true
+  },
+  "remaining": [
+    "Native offline pending/reconnect",
+    "Real repeated dispatch/idempotent receipt readback",
+    "Live account/creator/trip mutation negatives; capability exclusion and isolated PG negatives already passed",
+    "No unsupported Booking/Contact/Instructions/media claim"
+  ],
+  "privateEvidenceDirectory": "/private/tmp/otr-manual-p4-cloud-20261028"
 }

@@ -16,3 +16,5 @@ Use the current unified Forms QA build, normal Synthetic account and independent
 | Cold recovery and presentation | Same Item/latest fields/sync state; date/calendar/keyboard/Safe Area, EN/ZH and light/dark representative checks | PENDING_NATIVE |
 
 Reuse existing manualPlanRepository, tripNormalSync, QueueActivity and Core worker tests; directed results are L2, never Native/Cloud evidence. Independently record Create, Edit, SERVER_ACCEPTED, SERVER_VERIFIED, recovery and negative results. Existing historical P1 E2E remains historical until this pass runs. No unsupported photo/document/expense-link or participants-only visibility implementation is added to this test task.
+
+Directed baseline on unified6710a380: manualPlanRepository, tripNormalSync, tripNormalQueueActivity and tripCoreV2SyncWorker —4suites95PASS. These shared checks do not complete any P1 Native row above.
