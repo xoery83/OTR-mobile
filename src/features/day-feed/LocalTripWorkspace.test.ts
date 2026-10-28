@@ -1,4 +1,4 @@
-import { readLocalSession, readLocalAuthSnapshot } from "@/data/auth/authRepository";
+import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
   CreateTripDestinations: (props: any) => {
     state.nodes.push({ destinations: props });
@@ -233,7 +233,7 @@ vi.mock("@/data/auth/authRepository", () => ({
   writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
   readLocalSession: vi.fn(),
-  readLocalAuthSnapshot: vi.fn(),
+  readCommittedLocalSession: vi.fn(),
 }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: () => state.repo(),
@@ -367,15 +367,9 @@ function input(label: string, value: string) {
 beforeEach(() => {
   vi.unstubAllEnvs();
   vi.mocked(readLocalSession).mockReset();
-  vi.mocked(readLocalAuthSnapshot)
+  vi.mocked(readCommittedLocalSession)
     .mockReset()
-    .mockImplementation(
-      async () =>
-        ({
-          session: await readLocalSession(),
-          principal: { kind: "SIGNED_OUT" },
-        }) as never,
-    );
+    .mockImplementation(async () => (await readLocalSession()) ?? null);
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   state.effects = [];
@@ -1634,7 +1628,7 @@ it("forwards the saved-item revision to Preparation without remounting the works
 
 it("waits for the account apply snapshot before opening the new account Trip repository", async () => {
   let finish!: (value: any) => void;
-  vi.mocked(readLocalAuthSnapshot).mockReturnValue(
+  vi.mocked(readCommittedLocalSession).mockReturnValue(
     new Promise((resolve) => {
       finish = resolve;
     }),
@@ -1644,7 +1638,7 @@ it("waits for the account apply snapshot before opening the new account Trip rep
   render();
   await flush();
   expect(state.repo).not.toHaveBeenCalled();
-  finish({ session: null, principal: { kind: "SIGNED_OUT" } });
+  finish(null);
   await flush();
   expect(repo.listTrips).toHaveBeenCalledOnce();
   expect(render()).not.toContain("localTrip.unavailable");

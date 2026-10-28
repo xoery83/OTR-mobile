@@ -7,7 +7,7 @@ import {
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import type { StructuredTripMetadataSnapshot } from "@/domain/trip/tripStructuredDestinationContract";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
-import { readLocalSession, readLocalAuthSnapshot } from "@/data/auth/authRepository";
+import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
 import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
 import { CreateTripDestinations } from "./CreateTripDestinations";
 import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
@@ -165,8 +165,8 @@ function LocalTripContent({
   useEffect(() => {
     let active = true;
     void Promise.resolve()
-      .then(readLocalAuthSnapshot)
-      .then(({ session }) => {
+      .then(readCommittedLocalSession)
+      .then((session) => {
         const identity = session?.identity,
           value = identity?.displayName.trim();
         if (
@@ -247,7 +247,7 @@ function LocalTripContent({
     const captured = generation,
       ticket = ++request.current;
     try {
-      const { session } = await readLocalAuthSnapshot();
+      const session = await readCommittedLocalSession();
       if (
         !alive.current ||
         captured !== getAccountGeneration() ||

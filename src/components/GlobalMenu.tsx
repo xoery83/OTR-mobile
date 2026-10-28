@@ -24,7 +24,7 @@ import {
 } from "@/data/auth/accountGeneration";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { readLocalAuthSnapshot } from "@/data/auth/authRepository";
+import { readCommittedLocalSession } from "@/data/auth/authRepository";
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { AccountIdentity } from "@/domain/auth/localSession";
@@ -135,8 +135,8 @@ export function GlobalMenu({
   useEffect(() => {
     let active = true;
     const current = () => active && generation === getAccountGeneration();
-    void readLocalAuthSnapshot()
-      .then(async ({ session }) => {
+    void readCommittedLocalSession()
+      .then(async (session) => {
         if (!current()) return;
         setIdentityRead({ generation, identity: session?.identity ?? null });
         if (!session?.identity) return;
