@@ -1,0 +1,18 @@
+{
+  "build": 54,
+  "sourceCommit": "d612ff1e30997d648635029c0825eae609f3ffc9",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "team": "U9D5C58Z94",
+  "jsSHA256": "126a55db8afb0db3c5d0e7427e1b1761316d55bfbc8357d2674de6feebf4063e",
+  "sqliteExpected": 74,
+  "backend": "https://api-dev.xoery.art",
+  "device": "00008140-001C2980269B001C",
+  "install": "IN_PLACE_INSTALLED_INDEPENDENT_VERSION_VERIFIED",
+  "strictCodeSign": "PASS",
+  "embeddedSocketAbsent": true,
+  "googleNonceBridgeCompiled": true,
+  "appUninstalled": false,
+  "dataOrSessionCopied": false,
+  "runtimeSmoke": "PENDING_SHARED_CORE_WINDOW",
+  "manualCloudFullL3": "NOT_CLAIMED"
+}
