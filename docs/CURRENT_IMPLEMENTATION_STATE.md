@@ -36,7 +36,9 @@ claim. See `ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json` and
 Google ADR: `adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/
 RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
 
-Next: integrate Google nonce/consumer slice; repair the signed-out My Trips generic
+Google nonce/consumer slice is integrated/pushed on main76d05522, remote verified,
+with original six dirty files and tracked diff byte-preserved; no P4 parent commits.
+Next: repair the signed-out My Trips generic
 read-failure state without creating Guest identity. Forms QA is returned to Native.
 Email OTP needs a usable mailbox; Apple console/identity remains pending. Phase1
 CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
