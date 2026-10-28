@@ -1,0 +1,89 @@
+{
+  "status": "PREPARE_AND_RESULTS_SERVER_VERIFIED_SAVE_NOT_ATTEMPTED",
+  "build": 50,
+  "batch": {
+    "account_id": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+    "batch_id": "bb571a30-bcbe-4577-8455-3c4872ae274b",
+    "job_id": "3978e151-b949-485f-95ee-156a416475e1",
+    "created_at": "2026-10-28T08:04:15.019Z",
+    "context": {
+      "id": "a8d718f7-239e-4035-8d91-301dd7de921c",
+      "version": 1,
+      "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+      "batchId": "bb571a30-bcbe-4577-8455-3c4872ae274b",
+      "observedAt": "2026-10-28T08:04:15.019Z",
+      "clock": "DEVICE_WALL",
+      "entrySurface": "CAPTURE",
+      "tripPrior": {
+        "id": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+        "origin": "PRIOR",
+        "observedAt": "2026-10-28T08:04:15.019Z"
+      }
+    },
+    "inputs": [
+      {
+        "input_id": "000cc0a3-8ad5-429d-ae99-bccf79b72464",
+        "content_sha256": "7ce621f730266ad7ab936f79eee939d4f33dc10431c33f5ceddecdd75c7ef07c",
+        "content_byte_count": 58,
+        "acceptance_state": "ACCEPTED",
+        "capture_id": "87d5be7b-841a-4de9-aa74-e74495c5d8bf"
+      }
+    ]
+  },
+  "task": {
+    "tasks": [
+      {
+        "task_id": "0d4a0592-8c0c-870f-8a87-c12804a89e18",
+        "work_disposition": "PUBLISHED",
+        "wait_reason": null,
+        "safe_reason": null,
+        "result_sha256": "edf2eb51fc29d359e7b5f47c2d93bcabdcc531ae8dbe2baff6d1025d4f770cb0",
+        "updated_at": "2026-10-28T08:12:06.814Z"
+      }
+    ],
+    "attempts": [
+      {
+        "attempt_id": "406fae5c-af5d-81b7-a320-fbcecd42846f",
+        "execution_observation": "TERMINAL",
+        "execution_outcome": "SUCCEEDED",
+        "result_install_disposition": "INSTALLED",
+        "metering_disposition": "COMPLETE",
+        "safe_failure_code": null,
+        "started_at": "2026-10-28T08:09:01.787Z",
+        "ended_at": null,
+        "reported_usage_summary": null,
+        "updated_at": "2026-10-28T08:12:06.815Z"
+      }
+    ]
+  },
+  "normalNativeResults": "CANDIDATES_READY; conservative unresolved candidate retained",
+  "actualOriginalEndsWith": "\\nR",
+  "intendedBytes": 57,
+  "actualBytes": 58,
+  "unselectedCoreItems": 0,
+  "callsAdded": 1,
+  "dailyCalls": 1,
+  "totalCalls": 9,
+  "callStates": [
+    {
+      "count": 1,
+      "dispatch_state": "MAY_HAVE_STARTED",
+      "execution_certainty": "RUNNING"
+    },
+    {
+      "count": 8,
+      "dispatch_state": "TERMINAL",
+      "execution_certainty": "TERMINAL"
+    }
+  ],
+  "oldUnknownRetained": true,
+  "paidRetry": false,
+  "scopeActivation": "EXACT_OWNER_APPROVED_NATIVE_P4_COMPATIBLE_PACKAGE",
+  "independentClose": "PASS_SAVE_FALSE_SCOPE_NULL_AIRPORTS_FALSE",
+  "functionsOidOwnerAclUnchanged": true,
+  "documentsAcceptedOriginalItemAssociation": "NATIVE_E2E_PASS_1_COMPLETED_ITEM",
+  "pendingMarkerRepairCommit": "7136d81a",
+  "pendingMarkerTests": 54,
+  "pendingMarkerIndependentReview": "NO_BLOCKER",
+  "next": "clean original verified before any dispatch; no overwrite of this Batch/Task"
+}
