@@ -9,20 +9,23 @@ repository reconstruction, concurrent refresh single-flight, wrong-Account denia
 current-Session revoke/independent absence and14 baseline Sessions preserved.
 It does not prove OTP delivery or native Keychain cold start.
 
-Google Provider now enabled; Apple remains disabled. Owner supplied canonical iOS
-and Web Client IDs. Google SDK16.1.5/Expo scheme/server audience/native branded
-control and provisional Supabase exchange are connected in the Auth candidate.
-Auth/Domain16 suites128 tests/typecheck/UIguard/plugin introspection PASS; independent
-review and coordinated native binary/Google interaction are pending. Exact scope:
-`ops/auth-phase1-20261028/README.md`, `SESSION_DEV_E2E.json`, Google ADR
-`adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/RLS/GRANT,
-SQLite74 or other QA Session changed. Old binaries lacking Google module stay usable.
+Google Provider enabled; Apple disabled. Source48d0c53e and reviewed remote logout
+are integrated/pushed on unified main453de9c3, retaining accepted P3;18 suites153
+tests/typecheck PASS. Original main six dirty entries preserved. Build43 is the
+same source with own embedded Debug JS, standard simulator identity sections and
+Google SDK. In-place Forms QA cold restore retains its QA identity/four Trips and
+all original row hashes across148 tables, integrityOK. Real native Google control
+opens system prompt; Cancel preserves Account, repeat opens official OnTheRoad
+Google email page. This does not prove Google login. Owner QA interaction requested;
+no password/Token requested in chat. Actual Google Session/cold/logout/isolation
+remains pending. Receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
+Google ADR: `adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/
+RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
 
-Next: finish independent Review/serial integration, coordinated canonical-bundle
-native build and real Google login→cold→logout/isolation; positive Email OTP needs a
-usable mailbox, Apple configuration/interactive identity remains pending. Phase1
-CLOUD_PENDING. Guest business bootstrap/adoption remains a separate owning delta;
-normal Auth cannot silently claim Guest datasets or Trip People.
+Next: actual Google QA interaction→own Account readback/cold/logout/isolation.
+Email OTP needs a usable mailbox; Apple console/identity remains pending. Phase1
+CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
+Auth cannot silently claim Guest datasets or Trip People.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 

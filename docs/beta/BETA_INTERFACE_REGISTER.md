@@ -8,7 +8,9 @@ ports install no Session themselves; existing fenced account activation owns it.
 Native owns startup consumer/Navigation integration; Import released catalog
 editing after75de43cc. No business schema/permission or runtime Gate is changed.
 Independent source review PASS; actual OTP negative/configuration evidence only,
-Apple/Google configuration and positive Native/Provider E2E pending. Exact scope
+Google native SDK/Expo wiring is integrated on main453de9c3; Forms QA Build43
+retains prior identity/data and reaches the official Google page. Positive Google
+login awaits QA human interaction; Email OTP and Apple positive E2E pending. Exact scope
 and six-point data checklist: `../ops/auth-phase1-20261028/README.md`.
 
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17
