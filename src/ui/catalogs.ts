@@ -1,4 +1,17 @@
 export const en = {
+  "capture.ai.task.PENDING": "Waiting for processing.",
+  "capture.ai.task.WAITING":
+    "Processing is waiting for an available connection or permission.",
+  "capture.ai.task.PROCESSING": "Reading travel information.",
+  "capture.ai.task.RESULTS_READY":
+    "Interpretation finished. Choose which suggestions to save.",
+  "capture.ai.task.FAILED": "Processing failed. Check the details before retrying.",
+  "capture.ai.task.CANCELED": "Processing was canceled.",
+  "capture.ai.task.STALE":
+    "The source or permission changed. Check the current source before continuing.",
+  "capture.ai.task.UNKNOWN":
+    "The processing outcome is unknown. Check status before trying again.",
+
   "capture.ai.p6ReviewValues": "Activity: {title}. Date: {raw} → {date}.",
   "capture.ai.p6SelectNew": "Choose NEW: create a separate activity",
   "capture.ai.p6Confirm": "Confirm activity name and date and add item",
@@ -2956,6 +2969,15 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.ai.task.PENDING": "等待处理。",
+  "capture.ai.task.WAITING": "正在等待可用连接或权限。",
+  "capture.ai.task.PROCESSING": "正在读取旅行资料。",
+  "capture.ai.task.RESULTS_READY": "解析已完成，请选择要保存的候选。",
+  "capture.ai.task.FAILED": "处理失败，请先查看详情，再决定是否重试。",
+  "capture.ai.task.CANCELED": "处理已取消。",
+  "capture.ai.task.STALE": "原件或权限已变化，请核对当前原件后继续。",
+  "capture.ai.task.UNKNOWN": "尚无法确认处理结果，请先查询状态再继续。",
+
   "capture.ai.title": "AI 候选预览",
   "capture.ai.queued": "AI 处理已进入队列。请检查结果以继续，尚未保存任何行程项目。",
   "capture.ai.suggestionsStatus":

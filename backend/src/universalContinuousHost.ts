@@ -1,3 +1,4 @@
+import { projectUniversalTaskActivity } from "./universalTaskActivity";
 import { buildUniversalDeepSeekRequest } from "./universalProviderRequest";
 import { universalInstruction, universalAdvisoryInstruction } from "./universalPrompt";
 import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
@@ -291,6 +292,7 @@ export function createUniversalContinuousHost(deps: {
         tripId: trip,
         batchId: batch,
         taskId: state.task.task_id,
+        activity: projectUniversalTaskActivity(state.task, state.attempts.length),
       };
     },
     readResult,

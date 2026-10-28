@@ -1,3 +1,11 @@
+# Active Universal Import product completion — 2026-10-28
+
+Owner resumed product delivery from unified main1c7e7fc8 / Build40 / SQLite74, in independent `universal-product-20261028` worktree. Previous six minimum formal saves remain accepted; they are not continuous-user acceptance. Native owns shared normal Core policy/Reader/Sync and Manual Cloud work; Import holds no DEV/main/GUI lease.
+
+First bounded delta: additive context DTO exposes persisted owning Task status/revision/times/attempt count to existing Results; GET never prepares work or calls Provider. New multi-operation Source/Admission Authority is not installed: existing SQL remains single-object scoped, with additional object-specific P2 publication/registry constraints. Documents/Updates/product lifecycle still pending. Delivery plan/status: `ops/universal-product-20261028/DELIVERY.md`. New-path SERVER_VERIFIED and NATIVE_E2E_PASS are not claimed. No new permissions, budget, Schema/RLS/GRANT or production use.
+
+Earlier historical handoff follows unchanged; its integration-pending entries are superseded by main1c7e7fc8.
+
 # Current implementation state — 28 October 2026
 
 ## Active checkpoint: unified Native + Universal integration delivery

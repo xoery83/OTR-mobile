@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
-import type { UniversalImportResult } from "@/data/api/universalImportContracts";
+import type {
+  UniversalTaskActivity,
+  UniversalImportResult,
+} from "@/data/api/universalImportContracts";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { createUniversalImportTransport } from "@/data/api/universalImportTransport";
@@ -10,6 +13,7 @@ export function useUniversalCapture(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
 ) {
+  const [activity, setActivity] = useState<UniversalTaskActivity | null>(null);
   const [result, setResult] = useState<UniversalImportResult | null>(null);
   const [busy, setBusy] = useState(false),
     [unavailable, setUnavailable] = useState(false);
@@ -101,12 +105,14 @@ export function useUniversalCapture(
     } finally {
       running.current = false;
       if (current()) {
+        setActivity(consumer.current?.activity ?? null);
         setBusy(false);
         setCanStart(consumer.current?.canDispatch ?? true);
       }
     }
   }
   return {
+    activity,
     result,
     busy,
     unavailable,

@@ -5,7 +5,10 @@ import {
 } from "./useUniversalP1Admission";
 import { StyleSheet, View } from "react-native";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
-import type { UniversalImportResult } from "@/data/api/universalImportContracts";
+import type {
+  UniversalTaskActivity,
+  UniversalImportResult,
+} from "@/data/api/universalImportContracts";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -49,6 +52,7 @@ export function UniversalResultView({
   recover,
   admission,
   queued = false,
+  activity,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
@@ -62,6 +66,7 @@ export function UniversalResultView({
   recover(): void;
   admission?: P1AdmissionActions;
   queued?: boolean;
+  activity?: UniversalTaskActivity | null;
 }) {
   useUiLocale();
   const s = useThemedStyles(styles);
@@ -79,7 +84,13 @@ export function UniversalResultView({
   return (
     <UiSection title={t("capture.ai.title")}>
       <UiText style={s.meta}>{t("capture.ai.previewOnly")}</UiText>
-      {queued ? <UiText style={s.meta}>{t("capture.ai.queued")}</UiText> : null}
+      {activity ? (
+        <UiText accessibilityLiveRegion="polite" style={s.meta}>
+          {t(`capture.ai.task.${activity.state}`)}
+        </UiText>
+      ) : queued ? (
+        <UiText style={s.meta}>{t("capture.ai.queued")}</UiText>
+      ) : null}
       {result ? (
         <>
           <UiText style={s.heading}>{t("capture.ai.originals")}</UiText>
