@@ -24,6 +24,18 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/data/auth/authRepository", () => ({
   readLocalSession: mocks.readLocalSession,
+  readLocalAuthSnapshot: async () => {
+    const session = await mocks.readLocalSession();
+    return {
+      session,
+      principal: session?.identity?.userId
+        ? { kind: "ACCOUNT", accountId: session.identity.userId }
+        : { kind: "SIGNED_OUT" },
+    };
+  },
+  requireCommittedGuestPrincipal: async () => {
+    throw Error("UNEXPECTED_GUEST_IN_ACCOUNT_BOOTSTRAP_TEST");
+  },
   requireActiveUserId: async () => mocks.userId,
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
