@@ -1,0 +1,62 @@
+{
+  "status": "DRIFT_BLOCKED",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "queryMode": "BEGIN READ ONLY; statement_timeout15s; ROLLBACK",
+  "constraints": [
+    {
+      "name": "itinerary_transport_services_operator_issuer_check",
+      "definitionMatches": false,
+      "expressionMatches": false,
+      "validatedMatches": true,
+      "liveOid": "59489"
+    },
+    {
+      "name": "itinerary_transport_services_operator_literal_check",
+      "definitionMatches": false,
+      "expressionMatches": false,
+      "validatedMatches": true,
+      "liveOid": "59490"
+    },
+    {
+      "name": "itinerary_transport_services_operator_value_check",
+      "definitionMatches": false,
+      "expressionMatches": false,
+      "validatedMatches": true,
+      "liveOid": "59492"
+    },
+    {
+      "name": "itinerary_transport_services_service_literal_check",
+      "definitionMatches": false,
+      "expressionMatches": false,
+      "validatedMatches": true,
+      "liveOid": "59495"
+    },
+    {
+      "name": "itinerary_transport_services_service_number_check",
+      "definitionMatches": false,
+      "expressionMatches": false,
+      "validatedMatches": true,
+      "liveOid": "59496"
+    }
+  ],
+  "allFiveNotNull": true,
+  "allNineUserTriggersEnabled": true,
+  "table": {
+    "acl": [
+      "postgres=arwdDxtm/postgres",
+      "otr_trip_event_receipt_reader=r/postgres",
+      "otr_trip_event_semantic_writer=r/postgres",
+      "otr_trip_core_v2_gateway=r/postgres",
+      "otr_trip_core_v2_writer=arwd/postgres"
+    ],
+    "name": "itinerary_transport_services",
+    "oid": "59481",
+    "owner": "postgres"
+  },
+  "catalogSHA256": "bc19024cee3a195e03314f78b1dac55c0cbe323d3e72ff939b3148b54bfbfbd2",
+  "schemaChanges": 0,
+  "businessRowReads": 0,
+  "authorityChanges": 0,
+  "deployment": "UNAPPROVED_NOT_INSTALLED",
+  "limit": "This read-only preflight does not approve installation; recheck live CAS/table identity/ACL/NOTNULL/triggers at an eventual authorized serial install."
+}

@@ -1,0 +1,120 @@
+{
+  "columns": [
+    {
+      "name": "operator_issuer",
+      "notNull": true
+    },
+    {
+      "name": "operator_literal",
+      "notNull": true
+    },
+    {
+      "name": "operator_value",
+      "notNull": true
+    },
+    {
+      "name": "service_literal",
+      "notNull": true
+    },
+    {
+      "name": "service_number",
+      "notNull": true
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK (((char_length(operator_issuer) >= 1) AND (char_length(operator_issuer) <= 128) AND (btrim(operator_issuer) <> ''::text)))",
+      "expression": "((char_length(operator_issuer) >= 1) AND (char_length(operator_issuer) <= 128) AND (btrim(operator_issuer) <> ''::text))",
+      "name": "itinerary_transport_services_operator_issuer_check",
+      "oid": "59489",
+      "validated": true
+    },
+    {
+      "definition": "CHECK (((char_length(operator_literal) >= 1) AND (char_length(operator_literal) <= 255) AND (btrim(operator_literal) <> ''::text)))",
+      "expression": "((char_length(operator_literal) >= 1) AND (char_length(operator_literal) <= 255) AND (btrim(operator_literal) <> ''::text))",
+      "name": "itinerary_transport_services_operator_literal_check",
+      "oid": "59490",
+      "validated": true
+    },
+    {
+      "definition": "CHECK (((char_length(operator_value) >= 1) AND (char_length(operator_value) <= 128) AND (btrim(operator_value) <> ''::text)))",
+      "expression": "((char_length(operator_value) >= 1) AND (char_length(operator_value) <= 128) AND (btrim(operator_value) <> ''::text))",
+      "name": "itinerary_transport_services_operator_value_check",
+      "oid": "59492",
+      "validated": true
+    },
+    {
+      "definition": "CHECK (((char_length(service_literal) >= 1) AND (char_length(service_literal) <= 255) AND (btrim(service_literal) <> ''::text)))",
+      "expression": "((char_length(service_literal) >= 1) AND (char_length(service_literal) <= 255) AND (btrim(service_literal) <> ''::text))",
+      "name": "itinerary_transport_services_service_literal_check",
+      "oid": "59495",
+      "validated": true
+    },
+    {
+      "definition": "CHECK (((char_length(service_number) >= 1) AND (char_length(service_number) <= 64) AND (btrim(service_number) <> ''::text)))",
+      "expression": "((char_length(service_number) >= 1) AND (char_length(service_number) <= 64) AND (btrim(service_number) <> ''::text))",
+      "name": "itinerary_transport_services_service_number_check",
+      "oid": "59496",
+      "validated": true
+    }
+  ],
+  "relation": {
+    "acl": [
+      "postgres=arwdDxtm/postgres",
+      "otr_trip_event_receipt_reader=r/postgres",
+      "otr_trip_event_semantic_writer=r/postgres",
+      "otr_trip_core_v2_gateway=r/postgres",
+      "otr_trip_core_v2_writer=arwd/postgres"
+    ],
+    "name": "itinerary_transport_services",
+    "oid": "59481",
+    "owner": "postgres"
+  },
+  "triggers": [
+    {
+      "definition": "CREATE CONSTRAINT TRIGGER core_v2_service_aggregate AFTER INSERT OR DELETE OR UPDATE ON public.itinerary_transport_services DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION validate_trip_core_v2_aggregate()",
+      "enabled": "O",
+      "name": "core_v2_service_aggregate"
+    },
+    {
+      "definition": "CREATE TRIGGER core_v2_write_guard BEFORE INSERT OR DELETE OR UPDATE ON public.itinerary_transport_services FOR EACH ROW EXECUTE FUNCTION trip_core_guard_write()",
+      "enabled": "O",
+      "name": "core_v2_write_guard"
+    },
+    {
+      "definition": "CREATE CONSTRAINT TRIGGER flight_service_aggregate_check_delete_v1 AFTER DELETE ON public.itinerary_transport_services DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN ((old.trip_id IS NULL)) EXECUTE FUNCTION validate_trip_flight_services()",
+      "enabled": "O",
+      "name": "flight_service_aggregate_check_delete_v1"
+    },
+    {
+      "definition": "CREATE CONSTRAINT TRIGGER flight_service_aggregate_check_insert_v1 AFTER INSERT ON public.itinerary_transport_services DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN ((new.trip_id IS NULL)) EXECUTE FUNCTION validate_trip_flight_services()",
+      "enabled": "O",
+      "name": "flight_service_aggregate_check_insert_v1"
+    },
+    {
+      "definition": "CREATE CONSTRAINT TRIGGER flight_service_aggregate_check_update_v1 AFTER UPDATE ON public.itinerary_transport_services DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN ((new.trip_id IS NULL)) EXECUTE FUNCTION validate_trip_flight_services()",
+      "enabled": "O",
+      "name": "flight_service_aggregate_check_update_v1"
+    },
+    {
+      "definition": "CREATE TRIGGER transport_service_row_guard_delete_v1 BEFORE DELETE ON public.itinerary_transport_services FOR EACH ROW WHEN ((old.trip_id IS NULL)) EXECUTE FUNCTION guard_trip_import_services()",
+      "enabled": "O",
+      "name": "transport_service_row_guard_delete_v1"
+    },
+    {
+      "definition": "CREATE TRIGGER transport_service_row_guard_insert_v1 BEFORE INSERT ON public.itinerary_transport_services FOR EACH ROW WHEN ((new.trip_id IS NULL)) EXECUTE FUNCTION guard_trip_import_services()",
+      "enabled": "O",
+      "name": "transport_service_row_guard_insert_v1"
+    },
+    {
+      "definition": "CREATE TRIGGER transport_service_row_guard_update_v1 BEFORE UPDATE ON public.itinerary_transport_services FOR EACH ROW WHEN (((old.trip_id IS NULL) OR (new.trip_id IS NULL))) EXECUTE FUNCTION guard_trip_import_services()",
+      "enabled": "O",
+      "name": "transport_service_row_guard_update_v1"
+    },
+    {
+      "definition": "CREATE TRIGGER transport_service_statement_guard BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.itinerary_transport_services FOR EACH STATEMENT EXECUTE FUNCTION trip_core_service_statement_guard()",
+      "enabled": "O",
+      "name": "transport_service_statement_guard"
+    }
+  ]
+}
