@@ -321,6 +321,9 @@ unimplemented or unactivated. Independent final closure review is the next check
 
 A default-closed HTTP adapter reuses the existing PDF V2 original verification,
 derived registration and seal authorities. It adds no independent Source, Task,
-Auth or worker authority. Startup composition remains absent until the bounded
+Auth or worker authority. The parent Backend owns normal bearer authentication
+and delegates only the three exact PDF metadata routes; its optional port is
+absent by default and therefore fails closed. Worker/runtime composition remains
+absent until the bounded
 worker/custody/profile path and exact protected eligibility are qualified. The
 adapter handles scoped metadata only; originals retain their existing custody.

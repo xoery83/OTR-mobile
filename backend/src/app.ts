@@ -1,3 +1,4 @@
+import { sourcePdfV2Boundary } from "./sourcePdfV2Http";
 import {
   captureRemoteProcessingBoundary,
   type CaptureRemoteProcessingPort,
@@ -629,6 +630,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   universalImportPort?: UniversalPort;
@@ -2403,6 +2405,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  sourcePdfV2Port,
   captureRemoteProcessing,
   tripPersonCloudCreatePort,
   universalImportPort,
@@ -2552,6 +2555,19 @@ export function createDevBackendHandler({
               (a, t) => gateway.canReadTrip(a, t),
               runtime?.universalImportPort ?? universalImportPort,
             );
+      } else if (
+        /^\/v2\/trips\/[^/]+\/sources\/pdf-v2\/(?:verify-original|register-derived|seal)$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/sources/pdf-v2/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await sourcePdfV2Boundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          sourcePdfV2Port,
+        );
       } else if (
         /^\/v2\/trips\/[^/]+\/universal-source-originals\/(?:acquire|result)$/.test(
           url.pathname,
