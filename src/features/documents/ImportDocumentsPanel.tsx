@@ -1,8 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
-import { requireActiveUserId } from "@/data/auth/authRepository";
-import { getDefaultImportDocumentsRepository } from "@/data/operations/defaultImportDocuments";
 import type {
   ImportDocument,
   ImportDocumentScope,
@@ -58,6 +56,12 @@ function ScopedDocuments(props: Props) {
     alive.current && generation.current === getAccountGeneration();
   const current = () => scopeCurrent() && view.current();
   async function reader() {
+    if (!current()) throw Error("DOCUMENTS_STALE");
+    const [{ requireActiveUserId }, { getDefaultImportDocumentsRepository }] =
+      await Promise.all([
+        import("@/data/auth/authRepository"),
+        import("@/data/operations/defaultImportDocuments"),
+      ]);
     if (!current()) throw Error("DOCUMENTS_STALE");
     const context = await captureAccountRequestContext(
       props.scope === "TRIP" ? (props.tripId ?? "") : "",

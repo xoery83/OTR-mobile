@@ -53,6 +53,7 @@ type Props = {
   onClear(): void;
   onSubmit(): void;
   onActivity(): void;
+  onDocuments?(scope: "PERSONAL_INBOX" | "TRIP"): void;
 };
 
 export function CaptureComposer({
@@ -76,6 +77,7 @@ export function CaptureComposer({
   onQaSample,
   onSubmit,
   onActivity,
+  onDocuments,
 }: Props) {
   const locale = useUiLocale();
   const voice = useImportDictation(onText);
@@ -562,9 +564,27 @@ export function CaptureComposer({
                   label: t("capture.activity"),
                   press: onActivity,
                 },
+                ...(onDocuments
+                  ? [
+                      {
+                        icon: "paperclip" as const,
+                        label: t("importDocuments.inbox"),
+                        press: () => onDocuments("PERSONAL_INBOX"),
+                      },
+                      ...(tripName
+                        ? [
+                            {
+                              icon: "paperclip" as const,
+                              label: t("importDocuments.trip"),
+                              press: () => onDocuments("TRIP"),
+                            },
+                          ]
+                        : []),
+                    ]
+                  : []),
               ].map((item) => (
                 <Pressable
-                  key={item.icon}
+                  key={item.label}
                   accessibilityRole="button"
                   disabled={!item.press || locked}
                   onPress={() => {

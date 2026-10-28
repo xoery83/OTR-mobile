@@ -1,3 +1,5 @@
+import { ImportDocumentsPanel } from "@/features/documents/ImportDocumentsPanel";
+import type { ImportDocumentScope } from "@/data/repositories/importDocumentsRepository";
 import { universalQaFixture } from "@/data/operations/universalQaFixture";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -86,6 +88,10 @@ export function CaptureContent({
   >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
+  const [documents, setDocuments] = useState<{
+    scope: ImportDocumentScope;
+    captureId?: string;
+  } | null>(null);
   const [reading, setReading] = useState(!!jobId);
   const [readError, setReadError] = useState(false);
   const readEpoch = useRef(0);
@@ -124,6 +130,7 @@ export function CaptureContent({
     setSubmittedSelections(null);
     session.current = null;
     recoveryActions.current.clear();
+    setDocuments(null);
     setActivity(false);
     setModel(null);
     setReopening(true);
@@ -434,9 +441,15 @@ export function CaptureContent({
         }
         duplicate={duplicate}
         title={
-          accountId && (activity || attempted || reopening || model)
-            ? t(activity ? "capture.progress.activeImports" : "capture.progress.title")
-            : undefined
+          documents
+            ? t(
+                documents.scope === "TRIP"
+                  ? "importDocuments.trip"
+                  : "importDocuments.inbox",
+              )
+            : accountId && (activity || attempted || reopening || model)
+              ? t(activity ? "capture.progress.activeImports" : "capture.progress.title")
+              : undefined
         }
         contextLabel={
           accountId && (activity || attempted || reopening || model)
@@ -445,7 +458,33 @@ export function CaptureContent({
         }
         content={
           accountId ? (
-            activity ? (
+            documents ? (
+              <>
+                <UiButton
+                  label={t("capture.activityReturn")}
+                  variant="text"
+                  onPress={() => {
+                    if (current())
+                      setDocuments(
+                        documents.captureId ? { scope: documents.scope } : null,
+                      );
+                  }}
+                />
+                <ImportDocumentsPanel
+                  accountId={accountId}
+                  tripId={documents.scope === "TRIP" ? selectedTripPrior : null}
+                  scope={documents.scope}
+                  captureId={documents.captureId}
+                  isCurrent={current}
+                  onOpenDocument={(captureId) => {
+                    if (current()) setDocuments({ ...documents, captureId });
+                  }}
+                  onOpenActivity={(id) => {
+                    if (current()) void openJob(id);
+                  }}
+                />
+              </>
+            ) : activity ? (
               <CaptureActivity
                 isCurrent={current}
                 expectedAccountId={accountId}
@@ -485,6 +524,20 @@ export function CaptureContent({
               />
             ) : undefined
           ) : undefined
+        }
+        onDocuments={
+          accountId
+            ? (scope) => {
+                if (
+                  !current() ||
+                  running.current ||
+                  draft.selecting ||
+                  (scope === "TRIP" && !selectedTripPrior)
+                )
+                  return;
+                setDocuments({ scope });
+              }
+            : undefined
         }
         onClose={hide}
         onFiles={() => void pick("files")}

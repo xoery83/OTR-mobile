@@ -133,7 +133,9 @@ it("busy source actions are disabled; content retains font scaling, wrapping and
   expect(state.buttons.filter((button) => button.disabled)).toHaveLength(3);
   const source = readFileSync("src/features/capture/CaptureContent.tsx", "utf8");
   expect(source).not.toMatch(/allowFontScaling=\{false\}|numberOfLines|height:/);
-  expect(source).not.toMatch(/tripId|Guest|readLocalSession|requireActiveUserId/);
+  expect(source).not.toMatch(
+    /Guest|readLocalSession|requireActiveUserId|supabase|executeSql/,
+  );
 });
 
 it("truthful partial and complete intake keep Hide enabled across palettes/locales without fake processing", () => {

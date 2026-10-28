@@ -523,3 +523,19 @@ it("Trip context lists only Trips while preserving the normal target action and 
     expect.any(Function),
   );
 });
+
+it("keeps Personal Inbox and Trip Documents as separate Import menu destinations", () => {
+  const onDocuments = vi.fn();
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  button("capture.composer.addAttachments").onPress();
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  const row = (key: "importDocuments.inbox" | "importDocuments.trip") =>
+    state.buttons.find((b) => b.children?.[1]?.props?.children === t(key));
+  row("importDocuments.inbox").onPress();
+  expect(onDocuments).toHaveBeenLastCalledWith("PERSONAL_INBOX");
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  button("capture.composer.addAttachments").onPress();
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  row("importDocuments.trip").onPress();
+  expect(onDocuments).toHaveBeenLastCalledWith("TRIP");
+});

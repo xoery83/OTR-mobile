@@ -1,0 +1,30 @@
+{
+  "recordedAt": "2026-10-28T04:19:46.138910+00:00",
+  "sourceCommit": "3a7ab13ca87998d18a3687bfd503a7d250f6165b",
+  "image": {
+    "sourceCommit": "3a7ab13ca87998d18a3687bfd503a7d250f6165b",
+    "image": "sha256:e482e6edff53520dfa11d9a31ce011d62ff31c28195b1424040d889d8b0e7471",
+    "baseImage": "sha256:248ddc050d6aff410a4adb1edd3b023b943e5c6baea50b08ffb2ddd5563e2b26",
+    "bundleHashes": {
+      "server.mjs": "4bf4ff9c85ea9dd6fca02d4afa2a663b9974427226cd94d2abfb68ec778f7cb9",
+      "server-capture.mjs": "7ca4c8b038f075859672108c147c4a57956182ca3fdc304ffecec086489cee28",
+      "Dockerfile": "9f65f6730be77f396c3d081b79e5ea2e41524efaf4df56e78ce7f122d20a2bc4"
+    },
+    "deployed": false
+  },
+  "deployment": {
+    "status": "P3_DEPLOYED",
+    "containerId": "9a75e4200ce59bf484a478e235dd6a76f5fab9ca5d1c72de69a40057cf664a5d",
+    "retainedContainerId": "6ab4b65789215a8c3142fbc15bd6f7be17ac3c855319dfe29627c7f81a853e14",
+    "image": "sha256:e482e6edff53520dfa11d9a31ce011d62ff31c28195b1424040d889d8b0e7471",
+    "environmentSHA256": "345601e98e82374846ad9ddb23b154ce6f2b197e59f4fdd62c6b63a30f84b182",
+    "health": "healthy"
+  },
+  "retainedHealthyRollback": "sha256:248ddc050d6aff410a4adb1edd3b023b943e5c6baea50b08ffb2ddd5563e2b26",
+  "health": "PASS",
+  "unauthenticatedProtectedRoutes401": "PASS",
+  "authorityExpandedByDeployment": false,
+  "schemaRlsGrantDiff": "NONE",
+  "qaSavePolicy": "CLOSED",
+  "providerCalls": 0
+}
