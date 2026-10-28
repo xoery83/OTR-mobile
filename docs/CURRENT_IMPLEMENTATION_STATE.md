@@ -92,6 +92,14 @@ exclude Account openers and all normalSync/transport (global queue notifications
 still exist), then verify a fresh unauthenticated QA app's normal Trip/P1 UI and
 cold recovery. No Native Guest or adoption acceptance, cloud upload or conversion.
 See `adr/2026-10-29-guest-local-vault.md` and Phase2 INTAKE.
+Consumer wiring is now source-reviewed under Native's bounded writer transfer:
+startup chooses principal before SQLite, pauses the existing global worker before
+Guest, and mounts consumers after readiness. Guest uses the same Trip/P1/Day UI,
+without Account discovery/widgets/photos/currency or Account bookmark I/O. Existing
+Account/signout paths remain. 14 suites279 checks/types/UIguard pass; independent
+10 suites218 NO_BLOCKER. Independent GuestQA native identity is linked/verified,
+but no Guest Native UI or cold acceptance yet. Complete actual A before B.
+
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 

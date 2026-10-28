@@ -259,7 +259,13 @@ const Context = createContext<{
   resume: () => {},
   saveReading: () => {},
 });
-export function TripViewProvider({ children }: { children: ReactNode }) {
+export function TripViewProvider({
+  children,
+  persistReading = true,
+}: {
+  children?: ReactNode;
+  persistReading?: boolean;
+}) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
@@ -269,6 +275,7 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     lastPersisted.current = "";
+    if (!persistReading) return;
     void dayNavigationBookmarkRepository
       .list()
       .then((hints) => {
@@ -279,7 +286,7 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [generation]);
+  }, [generation, persistReading]);
   const hint = state.view?.generation === generation ? dayReadingHint(state) : null;
   const hintJson = hint ? JSON.stringify(hint) : "";
   const pendingHint = useRef<{
@@ -291,7 +298,7 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
   const flushHint = useCallback(() => {
     const pending = pendingHint.current;
     pendingHint.current = null;
-    if (!pending) return;
+    if (!pending || !persistReading) return;
     if (pending.timer !== null) clearTimeout(pending.timer);
     if (pending.generation !== getAccountGeneration()) return;
     void dayNavigationBookmarkRepository
@@ -304,8 +311,9 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
           lastPersisted.current = pending.json;
       })
       .catch(() => {});
-  }, []);
+  }, [persistReading]);
   useEffect(() => {
+    if (!persistReading) return;
     const previous = pendingHint.current;
     if (previous) {
       if (
@@ -331,7 +339,7 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     pending.timer = setTimeout(() => {
       if (pendingHint.current === pending) flushHint();
     }, 350);
-  }, [generation, hintJson, flushHint]);
+  }, [generation, hintJson, flushHint, persistReading]);
   useEffect(() => () => flushHint(), [generation, flushHint]);
   const [manualOutcome, setManualOutcome] = useState<{
     tripId: string;

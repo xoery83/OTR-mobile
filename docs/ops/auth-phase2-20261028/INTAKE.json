@@ -65,7 +65,7 @@
   "protectedOperations": "Prepare/test exact candidates first; new Hosted RLS/GRANT/roles or sensitive authority execution still requires the existing precise gate",
   "commercialPolicy": "No prices, quota numbers, reset cycles or paid interception invented",
   "currentRuntimeChanges": {
-    "bootstrapWiring": false,
+    "bootstrapWiring": "SOURCE_CANDIDATE_ONLY_NOT_INSTALLED",
     "businessDataConversion": false,
     "guestCloudUpload": false,
     "schemaRlsGrant": false
@@ -79,7 +79,7 @@
     "independentReview": "THREE_SUITES_38_TESTS_AND_PUBLIC_PORT_MEMORY_GATE_CHECKS_PASS"
   },
   "guestLocalFoundation": {
-    "status": "SOURCE_HEADLESS_REVIEWED_NATIVE_WIRING_PENDING_NOT_ADOPTION",
+    "status": "SOURCE_AND_NATIVE_CONSUMERS_REVIEWED_NATIVE_E2E_PENDING_NOT_ADOPTION",
     "decision": "docs/adr/2026-10-29-guest-local-vault.md",
     "port": "openGuestLocalWorkspace/v1",
     "implementation": "src/data/auth/guestLocalWorkspace.ts",
@@ -93,7 +93,19 @@
       "uiGuard": "PASS",
       "independentReview": "NO_BLOCKER_8_DISK_TESTS_INDEPENDENTLY_PASS"
     },
-    "native": "PENDING; no normalSync/transport or global Account opener; syncAllowed flag alone is not a dispatch gate",
-    "remaining": "Native startup/consumers by sole Native Writer; independent GuestQA bundle actual UI + cold recovery; full data inventory and legal adoption later"
+    "native": "Independent GuestQA native linkage and MachO XML/DER identity verified; not installed; fixed consumer JS and actual UI/cold E2E pending",
+    "remaining": "Native startup/consumers by sole Native Writer; independent GuestQA bundle actual UI + cold recovery; full data inventory and legal adoption later",
+    "consumerValidation": {
+      "directedSuites": 14,
+      "directedTests": 279,
+      "independentReview": "10_SUITES_218_PASS_NO_BLOCKER",
+      "realGlobalQueueDefaultPause": "PASS_ACCOUNT_OPENER_ZERO",
+      "accountBookmarkGuestIO": "ZERO_LIST_AND_RECORD",
+      "guestPhotosCurrencyAndAccountWidgets": "DISABLED_FOR_A",
+      "typecheck": "PASS",
+      "uiGuard": "PASS",
+      "lint": "NO_ERRORS_EXISTING_IMPORT_FIRST_WARNINGS"
+    },
+    "singleWriter": "Native explicitly transferred bounded bootstrap/Trip/P1 consumers, TripViewContext and TripBasicEditor to Auth until candidate handback; no Core/Trip/Manual factories, Backend or Sync implementation modified"
   }
 }

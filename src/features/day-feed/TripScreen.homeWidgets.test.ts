@@ -1,3 +1,4 @@
+import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
 // TEMP QA-tool caller test: explicit mocked normal-reader inputs, not certificate/Auth evidence.
 import { Children, isValidElement, type ReactNode, type ReactElement } from "react";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
@@ -317,6 +318,9 @@ async function loaded(contentFrameManaged = false) {
   return render(contentFrameManaged);
 }
 beforeEach(() => {
+  vi.mocked(readLocalTripPrincipal)
+    .mockReset()
+    .mockResolvedValue({ kind: "ACCOUNT", accountId: "test-account" });
   state.platform = "ios";
   state.platformVersion = "25.0";
   state.observeShellScroll.mockClear();
@@ -1867,4 +1871,28 @@ it("routes pending P6 Home to the same native Activity detail", async () => {
     params: { tripId: reference, itemId: activity.itemId, occurrence: "START" },
   });
   expect(find(render(), "LocalItemPreview")).toBeNull();
+});
+
+vi.mock("@/data/auth/localTripAccess", async () => ({
+  readLocalTripPrincipal: vi.fn(async () => ({
+    kind: "ACCOUNT",
+    accountId: "test-account",
+  })),
+  ...(await import("@/data/repositories/tripRepository")),
+  ...(await import("@/data/repositories/tripDayFeedRepository")),
+  ...(await import("@/data/repositories/manualPlanRepository")),
+  kickLocalTripSync: vi.fn(async () => {}),
+}));
+
+it("Guest retains its actual local Day reader without constructing the Account Today widget", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.result.localManualStatus = "AVAILABLE";
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  expect(workspace.widgetsForHome(reference, "Active")).toEqual([]);
+  expect(workspace.onChooseDay).toBeTypeOf("function");
 });

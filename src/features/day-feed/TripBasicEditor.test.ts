@@ -103,10 +103,15 @@ const render = (
   onSaveMetadata = vi.fn().mockResolvedValue(undefined),
   onSelectCover = vi.fn().mockResolvedValue(undefined),
   tripOverride: Parameters<typeof TripBasicEditor>[0]["trip"] = trip,
+  capabilities: Pick<
+    Parameters<typeof TripBasicEditor>[0],
+    "currencyAvailable" | "coverAvailable"
+  > = {},
 ) => {
   state.cursor = state.refCursor = 0;
   return elements(
     TripBasicEditor({
+      ...capabilities,
       trip: tripOverride,
       metadataEditable: true,
       onSaveMetadata,
@@ -118,6 +123,8 @@ const flush = async () => {
   for (let i = 0; i < 5; i++) await Promise.resolve();
 };
 beforeEach(() => {
+  vi.mocked(ImagePicker.launchImageLibraryAsync).mockClear();
+  vi.mocked(readLocalTripPhotoRepository).mockClear();
   state.alert.mockReset();
   state.values = [];
   state.refs = [];
@@ -621,4 +628,33 @@ it("clean query cancellation closes directly while clearing a pending query remo
   expect(close).toHaveBeenCalledOnce();
   expect(state.alert).not.toHaveBeenCalled();
   expect(save).not.toHaveBeenCalled();
+});
+
+it("Guest metadata editing has no photo callback or Account currency navigation while local name editing stays available", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const view = render(save, vi.fn(), trip, {
+    currencyAvailable: false,
+    coverAvailable: false,
+  });
+  expect(view.find((node) => node.type === TripCoverPicker)).toBeUndefined();
+  expect(
+    view.find((node) => node.type === TripCurrencyRow)?.props.onOpen,
+  ).toBeUndefined();
+  expect(view.find((node) => node.type === CurrencySettingsScreen)).toBeUndefined();
+  const fields = view.find((node) => node.type === TripMetadataFields)!;
+  (fields.props.onName as (name: string) => void)("Guest edited name");
+  const edited = render(save, vi.fn(), trip, {
+    currencyAvailable: false,
+    coverAvailable: false,
+  });
+  (edited.find((node) => node.type === SheetHeader)!.props.onRight as () => void)();
+  await flush();
+  expect(save).toHaveBeenCalledWith(
+    before,
+    { ...before, name: "Guest edited name" },
+    undefined,
+    expect.any(String),
+  );
+  expect(ImagePicker.launchImageLibraryAsync).not.toHaveBeenCalled();
+  expect(readLocalTripPhotoRepository).not.toHaveBeenCalled();
 });

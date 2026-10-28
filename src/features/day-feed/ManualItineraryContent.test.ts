@@ -97,6 +97,7 @@ vi.mock("./P6ActivityEditor", () => ({
   },
 }));
 const props = {
+  localOnly: false,
   tripId: "trip-a",
   generation: 1,
   initialDate: "2027-02-08",
@@ -112,6 +113,7 @@ function render() {
   return renderToStaticMarkup(createElement(ManualItineraryContent, props));
 }
 beforeEach(() => {
+  props.localOnly = false;
   state.hooks = [];
   state.generation = 1;
   props.onSaved.mockReset();
@@ -200,4 +202,34 @@ it("dismissing the chooser backdrop closes without starting or saving an editor"
   expect(state.editor).toBeNull();
   expect(state.read).not.toHaveBeenCalled();
   expect(props.onSaved).not.toHaveBeenCalled();
+});
+
+vi.mock("@/data/auth/localTripAccess", async () => ({
+  readLocalTripPrincipal: vi.fn(async () => ({
+    kind: "ACCOUNT",
+    accountId: "test-account",
+  })),
+  ...(await import("@/data/repositories/tripRepository")),
+  kickLocalTripSync: vi.fn(async () => {}),
+}));
+
+it("Guest local slice exposes only the existing P1 writer and preserves normal Account chooser capabilities", () => {
+  props.localOnly = true;
+  render();
+  const plan = state.buttons.find(
+    (button) => button.accessibilityLabel === "formEntry.plan",
+  );
+  const stay = state.buttons.find(
+    (button) => button.accessibilityLabel === "formEntry.stay",
+  );
+  expect(plan.disabled).toBe(false);
+  expect(stay.disabled).toBe(true);
+  stay.onPress();
+  render();
+  expect(state.editor).toBeNull();
+  state.buttons
+    .find((button) => button.accessibilityLabel === "formEntry.plan")
+    .onPress();
+  render();
+  expect(state.editor.family).toBe("P1");
 });

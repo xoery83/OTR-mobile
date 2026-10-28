@@ -7,8 +7,10 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
-import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
+import {
+  readTripDayFeed,
+  createDefaultManualPlanRepository,
+} from "@/data/auth/localTripAccess";
 import { loadP1Detail, type P1DetailState } from "./p1DetailRead";
 import { UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
