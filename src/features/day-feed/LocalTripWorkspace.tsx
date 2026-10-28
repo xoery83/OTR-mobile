@@ -333,9 +333,18 @@ function LocalTripContent({
       }
     } catch (failure) {
       // Only controlled codes: never log paths, SQL, session values or business payloads.
-      const code =
-        failure instanceof Error && /^[A-Z][A-Z0-9_]{2,95}$/.test(failure.message)
-          ? failure.message
+      const nativeCode =
+        typeof failure === "object" &&
+        failure !== null &&
+        "code" in failure &&
+        typeof failure.code === "string"
+          ? failure.code
+          : "";
+      const messageCode = failure instanceof Error ? failure.message : "";
+      const code = /^[A-Z][A-Z0-9_]{2,95}$/.test(nativeCode)
+        ? nativeCode
+        : /^[A-Z][A-Z0-9_]{2,95}$/.test(messageCode)
+          ? messageCode
           : "UNCLASSIFIED_READ_FAILURE";
       console.warn("OTR_TRIP_READ_FAILED", readStage, code);
       if (
