@@ -1,0 +1,15 @@
+{
+  "status": "BUILD_VERIFIED_NOT_INSTALLED",
+  "build": "45",
+  "sourceCommit": "14a644516931601db886655aa39ed567c14c7826",
+  "bundleId": "com.xoery.otrmobile",
+  "simulatedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile",
+  "embeddedBundleSHA256": "3ab4dcd71028046b487e669c08ddfcbb8ac7c3d76f17413c6d13f1fc50fab840",
+  "googleSDK": "9.2.0",
+  "nonceModule": "OtrGoogleSignIn",
+  "nativeCompileLink": "PASS",
+  "authLiveE2E": "PENDING",
+  "p4NativeE2E": "PENDING",
+  "ownerApprovedInPlaceUpdate": true,
+  "deviceHandoff": "AUTH_INSTALL_AND_E2E_AUTHORIZED"
+}
