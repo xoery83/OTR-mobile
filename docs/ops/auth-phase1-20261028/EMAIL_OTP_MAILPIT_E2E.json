@@ -1,0 +1,24 @@
+{
+  "runId": "837812ec-21ad-4445-9b48-89b9170171c8",
+  "observedAt": "2026-10-28T07:35:21.052Z",
+  "scope": "ISOLATED_LOCAL_SUPABASE_MAILPIT_NOT_HOSTED_DEV_OR_NATIVE",
+  "serverGeneratedOtp": true,
+  "secretsOrOtpRecorded": false,
+  "status": "PASS",
+  "runnerSHA256": "ece1b88582321153f0350fe7659ff9909daceec8d93118a71a6df8040789b666",
+  "newUserOtpDelivery": "PASS",
+  "wrongCodeRejected": "PASS",
+  "normalOtpVerificationAndSelfRead": "PASS",
+  "usedOtpReplayRejected": "PASS",
+  "memoryRepositoryReconstruction": "PASS_NOT_NATIVE_KEYCHAIN_COLD_START",
+  "distinctAccountIdsAndPrivateSessionSelection": "PASS",
+  "refresh": "PASS",
+  "logoutRefreshRejectionAndRememberedAccountRestore": "PASS",
+  "otherAccountSessionPreservedAndOwnTestSessionCleanup": "PASS",
+  "existingUserOtpReturnsSameCanonicalAccount": "PASS",
+  "ownSessionCleanup": "PASS_NORMAL_CURRENT_SESSION_LOGOUT",
+  "localSyntheticAccountIds": [
+    "7fcfc2c0-ee45-4645-94eb-0dbafbd0d5e5",
+    "0e7c9ec7-1ee8-4cea-bed2-cd8ce1d742d8"
+  ]
+}

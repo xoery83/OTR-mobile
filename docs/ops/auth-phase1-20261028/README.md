@@ -92,3 +92,45 @@ removal; UNKNOWN retains access. Tokens stay memory-only in the host DEV runner.
 6. **Integration delta:** Native snapshot consumer/Guest business principal and
    whole-dataset adoption; native OAuth credentials/configuration; actual mailbox;
    coordinated Native restore and serial main integration.
+
+## Email OTP follow-through — 28 October
+
+Owner paused Apple until further notice. No Apple package/config/console candidate
+is committed or enabled. Google actual native Session/switch/cold/logout evidence
+and main integration are in GOOGLE_DEV_E2E.json / GOOGLE_MAIN_INTEGRATION.json.
+
+The Hosted Free DEV project has custom SMTP off and a ConfirmationURL Magic Link
+template. Its supported template-edit menu requires Pro, custom SMTP or a Send
+Email Hook. Default delivery is team-only; do not add a mailbox to the project
+team merely to bypass recipient restrictions, pay for Pro or report a link as OTP.
+No Hosted OTP was sent and no SMTP Secret was read or saved by this lane.
+
+Local acceptance uses an isolated Supabase project `otr-auth-mailpit-20261028`:
+API54331, database54332, Mailpit54334, SMTP54335. Existing canonical local stack
+is unchanged. Business migrations/seeds and unrelated services are disabled;
+email confirmations enabled, six-digit OTP, one-hour expiry, local request interval
+one second. Both confirmation and magic_link templates use the supplied HTML
+with `{{ .Token }}` and no link. Template content_path must be the repository HTML
+absolute path: this Docker host cannot serve an unshared /private/tmp bind mount.
+Confirm the Auth container's template endpoint actually serves that file.
+
+Run `node --import tsx scripts/auth/mailpit-otp-e2e.ts` with isolated CLI status
+in `/private/tmp/otr-auth-mailpit-20261028/status.private.json` (mode0600). The runner
+uses only its public client key for normal /otp, /verify, self-read, refresh and
+current-session logout; admin/service-role credentials never authenticate users.
+Its injected transport maps the fixed nominal DEV origin exclusively to the local
+loopback project; the production DEV-project guard is unchanged. Generated codes
+are read from this project's actual Mailpit messages, used transiently, never
+recorded. EMAIL_OTP_MAILPIT_E2E.json proves new registration, wrong/used code
+rejection, existing-user canonical ID stability, memory Repository reconstruction,
+Account selection, refresh, scoped logout/revoked refresh and other-account
+Session preservation. This is local acceptance, not Hosted delivery or Native
+Keychain/cold-start proof. Actual expired-code timing is not exercised here.
+
+Minimal free proposal: Resend Free, proposed auth.xoery.art subdomain and
+noreply@auth.xoery.art sender; SMTP smtp.resend.com:465 / implicit TLS / username
+resend. A domain-scoped Sending key belongs only in Supabase's secure SMTP password
+field. Do not put it in Native, environment examples, logs or Git. Owner approval
+of service/subdomain, account terms, exact generated DNS records and credential
+creation remains pending. No purchase, sender registration or DNS change occurred.
+See EMAIL_SMTP_CANDIDATE.json for the dated allowance and official references.

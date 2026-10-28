@@ -38,10 +38,25 @@ RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
 
 Google nonce/consumer slice is integrated/pushed on main76d05522, remote verified,
 with original six dirty files and tracked diff byte-preserved; no P4 parent commits.
-Next: repair the signed-out My Trips generic
-read-failure state without creating Guest identity. Forms QA is returned to Native.
-Email OTP needs a usable mailbox; Apple console/identity remains pending. Phase1
-CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
+Signed-out My Trips repair e3bdeef4 skips account repositories, clears stale lists
+and keeps direct Trip routes unavailable;18 suites189 tests/types/UIguard and
+independent4 suites71 pass. Native runtime follow-up remains pending; Forms QA
+is returned to Native and Auth does not install over its active Form tests.
+
+Owner paused Apple until further notice because the Developer account is not open;
+uncommitted Apple dependency/config candidates were withdrawn. Email OTP has real
+isolated Local Supabase/Mailpit PASS: new signup, wrong/used-code denial,
+existing-user canonical Account stability, self-read, in-memory Repository restore,
+distinct Account Session selection, refresh, scoped logout and other Session
+preservation. Exact finite runner/hash/run receipt: EMAIL_OTP_MAILPIT_E2E.json in
+ops/auth-phase1-20261028. This does not prove Hosted delivery or Native OTP restore.
+Hosted DEV custom SMTP is off and its current email is a Magic Link. Dashboard
+allows customization through Pro/custom SMTP/Send Email Hook; no paid upgrade or
+team-membership workaround. Free Resend SMTP/subdomain/template proposal is
+EMAIL_SMTP_CANDIDATE.json, not applied. Owner approves external service/account/DNS
+and saves Secrets directly in secure configuration. No email sent to a real inbox.
+Next: await that precise SMTP setup while continuing independent Session/Guest
+work. Phase1 CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
 Auth cannot silently claim Guest datasets or Trip People.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
