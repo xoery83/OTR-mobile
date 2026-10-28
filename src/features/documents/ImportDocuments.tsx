@@ -127,6 +127,8 @@ export function ImportDocumentsList({
 
 export function ImportDocumentDetail({
   document,
+  linkedItems,
+  linksUnavailable = false,
   accountId,
   tripId,
   original,
@@ -137,6 +139,8 @@ export function ImportDocumentDetail({
   onOpenActivity,
 }: {
   document: ImportDocument;
+  linkedItems?: number | null;
+  linksUnavailable?: boolean;
   accountId: string;
   tripId: string | null;
   original?: { captureId: string; sha256: string; text: string } | null;
@@ -189,6 +193,13 @@ export function ImportDocumentDetail({
           </UiText>
         ) : null}
       </UiSection>
+      {linksUnavailable ? (
+        <UiText style={s.meta}>{t("importDocuments.itemLinksUnavailable")}</UiText>
+      ) : linkedItems !== null && linkedItems !== undefined ? (
+        <UiText style={s.meta}>
+          {t("importDocuments.importedItems", { count: linkedItems })}
+        </UiText>
+      ) : null}
       {document.jobId && document.batchId && document.inputId && onOpenActivity ? (
         <UiButton
           label={t("importDocuments.openBatch")}

@@ -439,6 +439,16 @@ Response shape:
 
 ## Documents / Tickets
 
+Import Documents reads existing `GET /v2/trips/:tripId/core/source-plans/:planId`
+through the authenticated Core transport. The strict read DTO binds plan/status,
+Actor Account/Trip, Source/revision, slot/operation/target and completed receipt.
+Only a COMPLETE owning slot links a saved Item to the exact retained input; a
+preview, READY slot or another Source in the same Batch does not. The current
+surface follows the repository-selected Batch and reports unavailable metadata
+separately from original access. Personal Inbox does not infer Trip associations.
+This adds no document mutation, cloud-custody claim or business authority.
+
+
 `GET /trips/:id/documents?since=:cursor` - `NEW`
 
 `POST /trips/:id/documents` - `NEW`

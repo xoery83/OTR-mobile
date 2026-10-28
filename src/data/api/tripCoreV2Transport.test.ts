@@ -1,3 +1,4 @@
+import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRead";
 import { publicationFixture } from "../../../backend/src/__fixtures__/tripCoreV2CandidatePublication";
 import { candidatePublicationRequestHash } from "../../domain/trip/tripCoreV2CandidatePublication";
 import { createHash, randomUUID } from "node:crypto";
@@ -266,4 +267,66 @@ it("fences a long normal Core receipt after an account generation change", async
   } finally {
     vi.useRealTimers();
   }
+});
+
+it("reads the existing Source Plan endpoint with exact Actor/Trip/Plan and status bindings, without POST", async () => {
+  const response = sourcePlanReadFixture(actor, trip),
+    calls: Request[] = [];
+  const context = await captureAccountRequestContext(trip, async () => actor);
+  const transport = createCoreV2Transport(
+    async () => actor,
+    hash,
+    {
+      baseUrl: "http://core.local",
+      fetchImplementation: async (input, init) => {
+        calls.push(new Request(input, init));
+        return new Response(JSON.stringify(response));
+      },
+    },
+    token,
+  );
+  expect(await transport.sourcePlan(context, response.plan.planId)).toEqual(response);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].method).toBe("GET");
+  expect(calls[0].url).toBe(
+    `http://core.local/v2/trips/${trip}/core/source-plans/${response.plan.planId}`,
+  );
+  const foreign = randomUUID();
+  response.plan.accountId = foreign;
+  const purpose = response.plan.slots[0].outputPurpose;
+  if ("accountId" in purpose) purpose.accountId = foreign;
+  await expect(transport.sourcePlan(context, response.plan.planId)).rejects.toThrow(
+    "CORE_SOURCE_PLAN_SCOPE_MISMATCH",
+  );
+});
+it("does not treat unavailable, forged target/status or foreign Plan as a completed Source association", async () => {
+  let response = sourcePlanReadFixture(actor, trip),
+    code = 200;
+  const context = await captureAccountRequestContext(trip, async () => actor);
+  const transport = createCoreV2Transport(
+    async () => actor,
+    hash,
+    {
+      baseUrl: "http://core.local",
+      fetchImplementation: async () =>
+        new Response(
+          JSON.stringify(code === 200 ? response : { error: { code: "NOT_VISIBLE" } }),
+          { status: code },
+        ),
+    },
+    token,
+  );
+  const planId = response.plan.planId;
+  response.status.slots[0].targetId = randomUUID();
+  await expect(transport.sourcePlan(context, planId)).rejects.toThrow();
+  response = sourcePlanReadFixture(actor, trip);
+  await expect(transport.sourcePlan(context, planId)).rejects.toThrow(
+    "CORE_SOURCE_PLAN_SCOPE_MISMATCH",
+  );
+  code = 503;
+  await expect(transport.sourcePlan(context, planId)).rejects.toMatchObject({
+    status: 503,
+  });
+  code = 404;
+  await expect(transport.sourcePlan(context, planId)).resolves.toBeNull();
 });

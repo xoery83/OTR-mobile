@@ -13,6 +13,7 @@ const h = vi.hoisted(() => ({
   list: vi.fn(),
   read: vi.fn(),
   original: vi.fn(),
+  associations: vi.fn(),
 }));
 vi.mock("react", () => ({
   useState(initial: unknown) {
@@ -44,6 +45,9 @@ vi.mock("react", () => ({
       });
   },
 }));
+vi.mock("@/data/operations/importDocumentItems", () => ({
+  readDefaultImportDocumentItems: h.associations,
+}));
 vi.mock("@/native/importOriginalPreview", () => ({
   previewImportOriginal: vi.fn(async () => {
     throw Error("IMPORT_PREVIEW_UNAVAILABLE");
@@ -74,13 +78,17 @@ const doc = {
   sha256: "a".repeat(64),
   recordedAt: "2026-10-28T00:00:00Z",
 } as ImportDocument;
-function Harness(captureId?: string, isCurrent = () => true) {
+function Harness(
+  captureId?: string,
+  isCurrent = () => true,
+  scope: "TRIP" | "PERSONAL_INBOX" = "PERSONAL_INBOX",
+) {
   h.cursor = 0;
   h.effects = [];
   const element = ImportDocumentsPanel({
     accountId: "qa",
-    tripId: null,
-    scope: "PERSONAL_INBOX",
+    tripId: scope === "TRIP" ? "trip-a" : null,
+    scope,
     captureId,
     isCurrent,
     onOpenDocument: vi.fn(),
@@ -106,6 +114,7 @@ beforeEach(() => {
   h.accountId = "qa";
   h.list.mockResolvedValue([doc]);
   h.read.mockResolvedValue(doc);
+  h.associations.mockReset().mockResolvedValue([]);
   h.original.mockResolvedValue({
     document: doc,
     bytes: new TextEncoder().encode("retained original"),
@@ -258,4 +267,49 @@ it("releases an old original request after hide, show and a newer list read", as
     sha256: doc.sha256,
     text: "retained original",
   });
+});
+
+it("hiding a document discards a late Source association without disabling original access", async () => {
+  const tripDoc = { ...doc, tripId: "trip-a" };
+  h.read.mockResolvedValue(tripDoc);
+  let finish!: (items: unknown[]) => void;
+  h.associations.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  let visible = true;
+  const current = () => visible;
+  Harness(doc.captureId, current, "TRIP");
+  await settle();
+  Harness(doc.captureId, current, "TRIP");
+  await settle();
+  expect(h.associations).toHaveBeenCalledOnce();
+  visible = false;
+  Harness(doc.captureId, current, "TRIP");
+  finish([{ itemId: "item" }]);
+  await settle();
+  expect(Harness(doc.captureId, current, "TRIP").props.linkedItems).toBeNull();
+});
+it("a Source link lookup failure leaves the retained original reader usable", async () => {
+  const tripDoc = { ...doc, tripId: "trip-a" };
+  h.read.mockResolvedValue(tripDoc);
+  h.original.mockResolvedValue({
+    document: tripDoc,
+    bytes: new TextEncoder().encode("retained original"),
+  });
+  h.associations.mockRejectedValueOnce(Error("SOURCE_LOOKUP_UNAVAILABLE"));
+  Harness(doc.captureId, () => true, "TRIP");
+  await settle();
+  Harness(doc.captureId, () => true, "TRIP");
+  await settle();
+  let detail = Harness(doc.captureId, () => true, "TRIP");
+  expect(detail.props.linksUnavailable).toBe(true);
+  expect(detail.props.error).toBe(false);
+  (detail.props.onOpenOriginal as (id: string) => void)(doc.captureId);
+  await settle();
+  detail = Harness(doc.captureId, () => true, "TRIP");
+  expect(detail.props.original).toMatchObject({ text: "retained original" });
+  expect(detail.props.error).toBe(false);
 });

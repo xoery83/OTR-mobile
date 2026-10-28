@@ -94,3 +94,26 @@ Actual software5e551e2c/container43c4f20a is healthy; Envab5/six mounts and Nati
 At19:14 AD5 normally reopened the same11:41:07 Batch: actual RESULTS_READY, Harbour QA Gallery Visit/2026-11-03 and Submitted text source appeared. No Analyze/new Provider/Save. Source BUSY default-closed recovery is NATIVE_READ_RECOVERY_PASS. Existing Core receipt recovery subsequently hit ApiClient default15-second timeout; the same hook confirmation already allows60s over Backend's fixed30s lease. Minimal Import-only budget alignment has47 directed tests/types and independent NO_BLOCKER; actual receipt test awaits JS-only Import47, preserving existing native identity/data. No shared Core Reader/Schema/permissions changed.
 
 Activity partial rendering25148a8d has29 directed tests/types/UIguard. Two Import Updates keys6b09a319 were added during Auth-granted dictionary Writer window then returned. Source projection/section/old-route adapterfa28eb2b has43 directed tests/types/UIguard/independent NO_BLOCKER; latest20 processing records only, no fake unread/Save/Review state or database. Native product acceptance pending.
+
+
+## Import47 actual cold recovery
+
+Source c7db4852, JS cb78d822, unchanged native42 code with original simulator
+identity: AD5 cold My Trips/QA Trip and same retained P6 Results plus server-accepted
+receipt PASS at20:08. No Analyze, new model call, reconfirm or Create. All prior
+rows across31 business tables remain preserved; no Session/Keychain copy.
+Native subsequently received GUI/normal Core window for P4 Edit. This is retained
+read recovery, not continuous new-Batch Save acceptance; SourceSave remains CLOSED.
+
+
+## Documents exact Source association — LOCAL_PASS
+
+Authenticated existing Source Plan GET now has a strict Mobile read DTO and a
+Documents adapter. Only the exact retained input/Source revision and completed
+owning slot with receipt/committed revision yields the stable saved Item. READY,
+Evidence Pending and other Sources in the same Batch never count as saved.
+Personal Inbox remains private with no inferred Trip association; missing link
+metadata stays separate from original viewing. Repository-selected Batch only.
+35 joined directed tests, TypeScript, scoped lint/UIguard and independent
+NO_BLOCKER PASS. No Backend/Schema/authority change. Actual Hosted closed-policy
+Plan read and Native association display remain pending; not SERVER_VERIFIED.
