@@ -1,0 +1,158 @@
+diff --git a/backend/src/tripCoreV2PgRead.test.ts b/backend/src/tripCoreV2PgRead.test.ts
+index a544a239..0fcf0629 100644
+--- a/backend/src/tripCoreV2PgRead.test.ts
++++ b/backend/src/tripCoreV2PgRead.test.ts
+@@ -266,3 +266,53 @@ it.each(["P2", "P3", "P4", "P5", "P6"] as const)(
+     expect(c.sourceEvidenceAvailable).toBe(true);
+   },
+ );
++
++it.each([["P1", "P2", "P3", "P4", "P5", "P6"], ["P1", "P6"], []])(
++  "reads continuous reviewed capabilities with owning family context: %j",
++  async ({ permitted }) => {
++    const f = fixture();
++    f.actor.personId = randomUUID();
++    let requested = "";
++    const base = f.lease.query.getMockImplementation()!;
++    const query = vi.fn(async (sql: string, values?: readonly unknown[]) => {
++      if (sql.includes("set_config('otr.universal.requested_family'")) {
++        requested = String(values?.[0] ?? "");
++        return { rows: [] };
++      }
++      if (sql.includes("trip_sustained_import_p1_capabilities"))
++        return {
++          rows: [
++            {
++              runtime_enabled: permitted.includes(requested),
++              enabled_commands: permitted.includes(requested)
++                ? [requested === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM"]
++                : [],
++              enabled_families: permitted.includes(requested) ? [requested] : [],
++              enabled_admission_modes: permitted.includes(requested)
++                ? ["REVIEWED_SOURCE"]
++                : [],
++            },
++          ],
++        };
++      return base(sql);
++    });
++    const reader = createCorePgReader(
++      { withLease: (work) => work({ ...f.lease, query } as never) },
++      async (value) => createHash("sha256").update(value).digest("hex"),
++      undefined,
++      { sustainedDev: true, reviewedP1: true },
++    );
++    const c = await reader.capabilities(f.actor.accountId, f.actor.tripId);
++    expect(c.sourceEvidenceAvailable).toBe(permitted.length > 0);
++    if (permitted.length) {
++      expect(c.enabledFamilies).toEqual(permitted);
++      expect(c.enabledCommands).toEqual(
++        permitted.includes("P2")
++          ? ["CREATE_ITEM", "CREATE_SPARSE_FLIGHT"]
++          : ["CREATE_ITEM"],
++      );
++      expect(c.enabledAdmissionModes).toEqual(["REVIEWED_SOURCE"]);
++    }
++    expect(requested).toBe("");
++  },
++);
+diff --git a/backend/src/tripCoreV2PgRead.ts b/backend/src/tripCoreV2PgRead.ts
+index 31564234..879a2bf9 100644
+--- a/backend/src/tripCoreV2PgRead.ts
++++ b/backend/src/tripCoreV2PgRead.ts
+@@ -200,54 +200,53 @@ export function createCorePgReader(
+             : undefined;
+           const manual = normalManualCapabilities(gate);
+           const normal = manual !== null;
+-          const reviewedGate =
+-            enabled && gateMode?.sustainedDev && gateMode.reviewedP1
+-              ? await readReviewedP1Gate(lease, actorAccountId, tripId)
+-              : undefined;
+-          const reviewedP2 = isReviewedP1Gate(reviewedGate, "P2");
+-          const reviewedP3 = isReviewedP1Gate(reviewedGate, "P3");
+-          const reviewedP4 = isReviewedP1Gate(reviewedGate, "P4");
+-          const reviewedP5 = isReviewedP1Gate(reviewedGate, "P5");
+-          const reviewedP6 = isReviewedP1Gate(reviewedGate, "P6");
+-          const reviewed =
+-            enabled &&
+-            gateMode?.sustainedDev &&
+-            gateMode.reviewedP1 &&
+-            (isReviewedP1Gate(reviewedGate) ||
+-              reviewedP2 ||
+-              reviewedP3 ||
+-              reviewedP4 ||
+-              reviewedP5 ||
+-              reviewedP6);
++          const reviewedFamilies: ("P1" | "P2" | "P3" | "P4" | "P5" | "P6")[] = [];
++          if (enabled && gateMode?.sustainedDev && gateMode.reviewedP1) {
++            // Continuous SQL requires a family even for read-only negotiation.
++            for (const family of ["P1", "P2", "P3", "P4", "P5", "P6"] as const) {
++              await lease.query(
++                "SELECT set_config('otr.universal.requested_family',$1,true)",
++                [family],
++              );
++              if (
++                isReviewedP1Gate(
++                  await readReviewedP1Gate(lease, actorAccountId, tripId),
++                  family,
++                )
++              )
++                reviewedFamilies.push(family);
++            }
++            await lease.query(
++              "SELECT set_config('otr.universal.requested_family',$1,true)",
++              [""],
++            );
++          }
++          const reviewed = reviewedFamilies.length > 0;
+           const result = enabled
+             ? coreCapabilitiesSchema.parse({
+                 ...coreClosedCapabilities,
+                 activationState: "ENABLED",
+-                enabledCommands: reviewedP2
+-                  ? ["CREATE_SPARSE_FLIGHT"]
+-                  : normal && !reviewedP3 && !reviewedP4 && !reviewedP5 && !reviewedP6
++                enabledCommands: reviewed
++                  ? [
++                      ...new Set([
++                        ...(manual?.commands ?? []),
++                        ...reviewedFamilies.map((family) =>
++                          family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM",
++                        ),
++                      ]),
++                    ]
++                  : normal
+                     ? manual!.commands
+                     : ["CREATE_ITEM"],
+-                enabledFamilies: reviewedP2
+-                  ? ["P2"]
+-                  : reviewedP6
+-                    ? ["P6"]
+-                    : reviewedP5
+-                      ? ["P5"]
+-                      : reviewedP4
+-                        ? ["P4"]
+-                        : reviewedP3
+-                          ? ["P3"]
+-                          : normal
+-                            ? manual!.families
+-                            : ["P1", "P3"],
+-                enabledAdmissionModes:
+-                  reviewedP2 || reviewedP3 || reviewedP4 || reviewedP5 || reviewedP6
+-                    ? ["REVIEWED_SOURCE"]
+-                    : reviewed
+-                      ? ["MANUAL", "REVIEWED_SOURCE"]
+-                      : ["MANUAL"],
+-                sourceEvidenceAvailable: !!reviewed,
++                enabledFamilies: reviewed
++                  ? [...new Set([...(manual?.families ?? []), ...reviewedFamilies])]
++                  : normal
++                    ? manual!.families
++                    : ["P1", "P3"],
++                enabledAdmissionModes: reviewed
++                  ? [...(normal ? ["MANUAL"] : []), "REVIEWED_SOURCE"]
++                  : ["MANUAL"],
++                sourceEvidenceAvailable: reviewed,
+               })
+             : coreClosedCapabilities;
+           await lease.query("COMMIT");

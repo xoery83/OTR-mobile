@@ -345,10 +345,13 @@ export function createCoreV2Transport(
       await assertAccountRequestContext(ctx, getAccountId);
       return result;
     },
-    async capabilities(ctx) {
+    async capabilities(ctx, operationId) {
       await assertAccountRequestContext(ctx, getAccountId);
+      if (operationId !== undefined) coreUuid.parse(operationId);
       const result = await api(ctx).get(
-        path(ctx) + "/capabilities",
+        path(ctx) +
+          "/capabilities" +
+          (operationId === undefined ? "" : "?operationId=" + operationId),
         coreCapabilitiesSchema,
         headers,
       );

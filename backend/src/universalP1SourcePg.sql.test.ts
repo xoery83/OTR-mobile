@@ -1,3 +1,4 @@
+import { createCorePgReader } from "./tripCoreV2PgRead";
 import { appendFileSync, readFileSync } from "node:fs";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import { universalP1Identity } from "./universalP1Source";
@@ -658,6 +659,34 @@ it
           },
           { sustainedDev: true, reviewedP1: true },
         );
+      if (process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container) {
+        const reader = createCorePgReader(connection, f.deps.hash, undefined, {
+          sustainedDev: true,
+          reviewedP1: true,
+        });
+        expect((await reader.capabilities(actor, trip)).sourceEvidenceAvailable).toBe(
+          false,
+        );
+        expect(await reader.capabilities(actor, trip, command.operationId)).toMatchObject(
+          {
+            enabledCommands: ["CREATE_ITEM"],
+            enabledFamilies: [family],
+            enabledAdmissionModes: ["REVIEWED_SOURCE"],
+            sourceEvidenceAvailable: true,
+          },
+        );
+        expect(
+          (await reader.capabilities(actor, trip, randomUUID())).sourceEvidenceAvailable,
+        ).toBe(false);
+        expect(
+          (await reader.capabilities(randomUUID(), trip, command.operationId))
+            .activationState,
+        ).toBe("CLOSED");
+        expect(
+          (await reader.capabilities(actor, randomUUID(), command.operationId))
+            .activationState,
+        ).toBe("CLOSED");
+      }
       publicationReads = 0;
       corruptOnRead = 3;
       await expect(

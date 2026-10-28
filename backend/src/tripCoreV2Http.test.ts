@@ -367,3 +367,26 @@ it("does not put arbitrary schema path keys or error messages into diagnostics",
     log.mockRestore();
   }
 });
+
+it("passes only one validated operation to capabilities after Trip access", async () => {
+  const operation = randomUUID(),
+    capabilities = vi.fn(async () => coreClosedCapabilities);
+  const connection = { read: { capabilities }, hash } as unknown as CoreHttpConnection;
+  const get = (query: string, allowed = true) =>
+    coreHttpBoundary(
+      request("capabilities" + query),
+      actor,
+      async () => allowed,
+      connection,
+    );
+  expect((await get("?operationId=" + operation)).status).toBe(200);
+  expect(capabilities).toHaveBeenCalledExactlyOnceWith(actor, trip, operation);
+  for (const query of [
+    "?operationId=bad",
+    "?operationId=" + operation + "&operationId=" + operation,
+    "?operationId=" + operation + "&actor=" + actor,
+  ])
+    expect((await get(query)).status).toBe(400);
+  expect((await get("?operationId=" + operation, false)).status).toBe(404);
+  expect(capabilities).toHaveBeenCalledTimes(1);
+});

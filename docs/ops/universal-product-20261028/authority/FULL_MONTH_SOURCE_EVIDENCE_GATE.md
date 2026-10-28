@@ -1,6 +1,6 @@
 # FULL_MONTH_SOURCE_EVIDENCE_GATE — exact DEV repair
 
-Status: LOCAL_PASS / INDEPENDENT_NO_BLOCKER / OWNER_APPROVAL_REQUIRED. Not installed.
+Status: OWNER_APPROVED / INSTALLED_DEFAULT_CLOSED / SERVER_VERIFIED.
 
 The normal clean Batch `adc06db4-c06e-432a-b866-d4165f4c06f5`, Task
 `859445fb-12b7-8267-91c0-e0c09baf4bfb`, is already PUBLISHED/SUCCEEDED.
@@ -34,7 +34,7 @@ CONTINUOUS_MINIMUMS scope, QA boundaries, six existing minimum types, P5 TRAIN,
 Sparse P2 AKL/CHC/2026-11-02 constraints and expiry2026-11-01T08:48:56Z. Other five
 function hashes, including Native P4 f1378, are unchanged. Continue the same sealed
 Candidate through normal user original/Trip/NEW/name/date confirmation and one
-PRIVATE/SELF P6 Save. Existing standing DEV Gate execution applies to subsequent
+PRIVATE/SELF Item Save. The sealed result is actually P1/ACTIVITY; it uses the original approved continuous P1 authority, not a coerced P6 interpretation. Existing standing DEV Gate execution applies to subsequent
 unchanged-scope normal tests; no per-Batch rights or temporary administrator role.
 
 No new tables/columns/RLS/GRANT/Role/Secret scope/Provider calls/budget. The two

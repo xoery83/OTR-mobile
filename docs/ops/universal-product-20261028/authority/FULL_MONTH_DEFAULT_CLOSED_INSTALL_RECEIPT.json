@@ -1,0 +1,18 @@
+{
+  "status": "INSTALLED_DEFAULT_CLOSED_SERVER_VERIFIED",
+  "approvedCommit": "8731e1e3",
+  "softwareCommit": "e19dca136fbec4c8d96427e8d1fd7d97976c0619",
+  "image": "sha256:a5cb597222f4b05855239478f8610b000e92ca79efaea8c1bc2802b029dd6b9a",
+  "changedFunctions": [
+    [
+      "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)",
+      "488f5fe1537d450b610ef7c5e22eb53b",
+      "115bc244cd9ccd196936828739187531"
+    ]
+  ],
+  "sixOidOwnerAclUnchanged": true,
+  "policyAndAirportsUnchangedClosed": true,
+  "nativeReadStatePreserved": "f1378cb07c1f1882651a558dbe612909",
+  "businessWrites": 0,
+  "providerCalls": 0
+}

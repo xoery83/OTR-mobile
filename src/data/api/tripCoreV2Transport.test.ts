@@ -1,3 +1,4 @@
+import { coreClosedCapabilities } from "../../domain/trip/tripCoreV2Commands";
 import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRead";
 import { publicationFixture } from "../../../backend/src/__fixtures__/tripCoreV2CandidatePublication";
 import { candidatePublicationRequestHash } from "../../domain/trip/tripCoreV2CandidatePublication";
@@ -329,4 +330,27 @@ it("does not treat unavailable, forged target/status or foreign Plan as a comple
   });
   code = 404;
   await expect(transport.sourcePlan(context, planId)).resolves.toBeNull();
+});
+
+it("sends only the validated operation capability context; Manual URL is unchanged", async () => {
+  const urls: string[] = [],
+    operation = randomUUID();
+  const transport = createCoreV2Transport(
+    async () => actor,
+    hash,
+    {
+      baseUrl: "http://core.local",
+      fetchImplementation: async (input) => {
+        urls.push(String(input));
+        return new Response(JSON.stringify(coreClosedCapabilities));
+      },
+    },
+    token,
+  );
+  const context = await captureAccountRequestContext(trip, async () => actor);
+  await transport.capabilities(context);
+  await transport.capabilities(context, operation);
+  expect(urls.map((u) => new URL(u).search)).toEqual(["", "?operationId=" + operation]);
+  await expect(transport.capabilities(context, "bad")).rejects.toThrow();
+  expect(urls).toHaveLength(2);
 });

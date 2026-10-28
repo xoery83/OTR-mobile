@@ -180,7 +180,17 @@ export async function coreHttpBoundary(
     return failure(400, "INVALID_PAYLOAD");
   const trip = match[1],
     path = match[2];
-  if (url.search) return failure(400, "INVALID_PAYLOAD");
+  const capabilityOperation =
+    path === "capabilities" && request.method === "GET"
+      ? url.searchParams.get("operationId")
+      : null;
+  if (
+    url.search &&
+    (capabilityOperation === null ||
+      !coreUuid.safeParse(capabilityOperation).success ||
+      [...url.searchParams.keys()].length !== 1)
+  )
+    return failure(400, "INVALID_PAYLOAD");
   const version = request.headers.get("X-OTR-Core-Contract-Version");
   if (version !== null && version !== "2") return failure(426, "UNSUPPORTED_CLIENT");
   try {
@@ -199,7 +209,11 @@ export async function coreHttpBoundary(
       return reply(
         200,
         connection?.read?.capabilities
-          ? coreCapabilitiesSchema.parse(await connection.read.capabilities(actor, trip))
+          ? coreCapabilitiesSchema.parse(
+              await (capabilityOperation === null
+                ? connection.read.capabilities(actor, trip)
+                : connection.read.capabilities(actor, trip, capabilityOperation)),
+            )
           : coreClosedCapabilities,
       );
     if (path === "commands" && request.method === "POST") {

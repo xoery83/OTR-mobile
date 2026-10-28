@@ -1,3 +1,10 @@
+<!-- Import capability context repair, 28 October 2026 -->
+Reviewed Source dispatch may read existing `GET /v2/trips/:tripId/core/capabilities?operationId=<uuid>`
+for its exact durable operation. The normal authenticated Actor and Trip remain authoritative;
+unknown/duplicate query keys and invalid UUIDs are rejected. The existing SQL resolves family
+only from that Actor/Trip/operation slot. This read grants no Admission, READY status or Mutation;
+all existing Source/Core guards still run. Manual requests omit operationId and are unchanged.
+
 # OTR Mobile 2.0 API Contract Draft
 
 ## Universal existing Task context and Native consumer candidate — 24 October 2026

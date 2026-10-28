@@ -414,3 +414,13 @@ it("identifies command submission errors even when the client calls them read er
   expect(error.message).toContain("CORE_SUBMIT [http/400]");
   expect(f.transport.submit).toHaveBeenCalledTimes(1);
 });
+
+it("negotiates Reviewed Source against its exact durable operation", async () => {
+  const f = await sourceFixture("P1");
+  vi.mocked(f.transport.receipt).mockResolvedValue(null);
+  await expect(f.worker.push(f.operation)).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  expect(f.transport.capabilities).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId: actor, tripId: trip }),
+    op,
+  );
+});

@@ -153,9 +153,10 @@ export function createCorePgReader(
     });
   }
   return {
-    async capabilities(actorAccountId: string, tripId: string) {
+    async capabilities(actorAccountId: string, tripId: string, operationId?: string) {
       coreUuid.parse(actorAccountId);
       coreUuid.parse(tripId);
+      if (operationId !== undefined) coreUuid.parse(operationId);
       return connection.withLease(async (lease) => {
         let began = false;
         try {
@@ -173,6 +174,10 @@ export function createCorePgReader(
             "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
             [actorAccountId, tripId],
           );
+          if (operationId !== undefined)
+            await lease.query("SELECT set_config('otr.core.operation',$1,true)", [
+              operationId,
+            ]);
           const allowed = async () =>
             (
               await lease.query(
