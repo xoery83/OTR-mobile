@@ -541,6 +541,11 @@ function p1UnselectedAdvisory(reason: string, family: "P1" | "P3" | "P4" | "P5" 
     )
       return true;
   }
+  if (
+    family === "P5" &&
+    reason === "Transport type TRAIN stated but no origin/destination place given"
+  )
+    return true;
   return (
     /^(?:TEXT_MISSING_OR_AMBIGUOUS:(?:activity.time|check_in.date|check_out.time)|BUSINESS_ROLE_UNVERIFIED:(?:activity.venue|booking.supplier|booking.reference)|BOOKING_EVIDENCE_UNVERIFIED)$/.test(
       reason,
