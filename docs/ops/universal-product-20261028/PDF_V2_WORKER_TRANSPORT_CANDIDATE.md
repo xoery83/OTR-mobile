@@ -35,3 +35,17 @@ Provider use or Native PDF Task/Admission. A concrete protected deployment packe
 must first qualify the service/image/uid/private socket ownership/read-only mount,
 process-exit cleanup and rollback, plus original custody and PDF eligibility. No
 standing image/Gate authorization is inferred for that new execution boundary.
+
+Focused next safety delta: a Host-owned persistent exclusive worker marker, acquired
+before invoking the same frozen worker. Known termination releases only this marker;
+termination UNKNOWN or process loss retains it. Reconstructing the server cannot
+clear that marker. No automatic stale-lock cleanup, directory creation, listener,
+Host install or Source permission is introduced. Host-owned private-directory
+permissions and deliberate orphan reconciliation remain deployment prerequisites.
+
+Persistent-marker delta:5RED→6suites59PASS, types/scoped lint PASS, independent
+NO_BLOCKER for the unbound candidate. Actual file exclusivity across reconstructed
+instances, retained UNKNOWN/unclassified failures, known-terminated explicit retry
+and missing-directory refusal are tested. No real process-kill/orphan Host test
+is claimed; private-directory permissions and no manual in-flight marker deletion
+remain required in the protected Host deployment packet.
