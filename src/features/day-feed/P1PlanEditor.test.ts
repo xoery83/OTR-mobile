@@ -1,3 +1,4 @@
+import { createGuestP1DraftInventory } from "@/data/auth/guestP1DraftInventory";
 vi.mock("./TripCalendarRangeField", () => ({
   TripCalendarRangeField: (p: any) => {
     state.nodes.push(p);
@@ -29,6 +30,22 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { P1PlanEditor } from "./P1PlanEditor";
 
+vi.mock("@/data/auth/guestP1DraftInventory", async (original) => ({
+  ...(await original<typeof import("@/data/auth/guestP1DraftInventory")>()),
+  guestP1DraftInventory: {
+    register(
+      participant: import("@/data/auth/guestP1DraftInventory").GuestP1DraftParticipant,
+    ) {
+      state.draftParticipants.push(participant);
+      return () => {
+        state.draftParticipants = state.draftParticipants.filter(
+          (value) => value !== participant,
+        );
+      };
+    },
+  },
+}));
+
 const state = vi.hoisted(() => ({
   hooks: [] as unknown[],
   refs: [] as { current: unknown }[],
@@ -40,6 +57,8 @@ const state = vi.hoisted(() => ({
   generation: 1,
   repository: vi.fn(),
   alert: vi.fn(),
+  draftParticipants:
+    [] as import("@/data/auth/guestP1DraftInventory").GuestP1DraftParticipant[],
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -188,6 +207,7 @@ beforeEach(() => {
   state.generation = 1;
   state.repository.mockReset();
   state.alert.mockReset();
+  state.draftParticipants = [];
 });
 
 it("opens the sibling Rental form without changing a clean P1 draft", async () => {
@@ -676,7 +696,120 @@ it("never applies insertion defaults over an existing P1 edit", async () => {
 });
 
 vi.mock("@/data/auth/localTripAccess", async () => ({
-  readLocalTripPrincipal: vi.fn(async () => ({ kind: "ACCOUNT", accountId: "test-account" })),
-  ...await import("@/data/repositories/manualPlanRepository"),
+  readLocalTripPrincipal: vi.fn(async () => ({
+    kind: "ACCOUNT",
+    accountId: "test-account",
+  })),
+  ...(await import("@/data/repositories/manualPlanRepository")),
   kickLocalTripSync: vi.fn(async () => {}),
 }));
+
+function liveInventory() {
+  const inventory = createGuestP1DraftInventory(async (scope) => {
+    if (scope.generation !== state.generation) throw Error("GUEST_SCOPE_CHANGED");
+  });
+  state.draftParticipants.forEach((participant) => inventory.register(participant));
+  return inventory;
+}
+const guestScope = () => ({
+  kind: "GUEST" as const,
+  localId: "00000000-0000-4000-8000-000000000088",
+  generation: state.generation,
+});
+
+it("freezes actual typed P1 fields, rejects queued Save/Discard, and resumes the same original draft without saving", async () => {
+  const { p, repo } = await withPlace("Original title");
+  node("tripCreate.planName").onChangeText("输入尚未保存");
+  render(p);
+  const oldChange = node("tripCreate.planName").onChangeText;
+  const oldSave = node("tripCreate.createPlan").onPress;
+  node("common.cancel").onPress();
+  const oldDiscard = state.alert.mock.lastCall![2][1].onPress;
+  const lease = await liveInventory().freeze(guestScope());
+  const snapshot = JSON.parse(lease.entries[0].canonicalText);
+  expect(snapshot.fields.title).toBe("输入尚未保存");
+  expect(snapshot.initialFields.title).toBe("Original title");
+  oldChange("Late edit");
+  oldSave();
+  oldDiscard();
+  render(p);
+  expect(node("tripCreate.planName").value).toBe("输入尚未保存");
+  expect(node("tripCreate.createPlan").disabled).toBe(true);
+  expect(repo.save).not.toHaveBeenCalled();
+  expect(p.onClose).not.toHaveBeenCalled();
+  await lease.resume();
+  render(p);
+  node("tripCreate.planName").onChangeText("Resumed title");
+  render(p);
+  node("tripCreate.createPlan").onPress();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledWith(
+    expect.objectContaining({ itemId: snapshot.itemId }),
+    expect.objectContaining({ title: "Resumed title" }),
+  );
+});
+
+it("keeps unresolved P1 Save attempts out of adoption without unfreezing their retry contract", async () => {
+  const { p, repo } = await withPlace();
+  repo.save.mockRejectedValue(new Error("NETWORK_UNKNOWN"));
+  node("tripCreate.createPlan").onPress();
+  await Promise.resolve();
+  render(p);
+  await expect(liveInventory().freeze(guestScope())).rejects.toThrow(
+    "GUEST_P1_DRAFT_NOT_READY",
+  );
+  expect(repo.save).toHaveBeenCalledOnce();
+  expect(node("tripCreate.planName").editable).toBe(false);
+  expect(p.onClose).not.toHaveBeenCalled();
+});
+
+it("preserves open Place selection and only snapshots after its explicit cancellation", async () => {
+  const { p, repo } = await withPlace("Original", "Original address");
+  const sheet = await search(p);
+  await expect(liveInventory().freeze(guestScope())).rejects.toThrow(
+    "GUEST_P1_DRAFT_NOT_READY",
+  );
+  expect(repo.save).not.toHaveBeenCalled();
+  sheet.onCancel();
+  render(p);
+  const lease = await liveInventory().freeze(guestScope());
+  await lease.resume();
+  sheet.onConfirm(placeResult());
+  render(p);
+  expect(node("tripCreate.planLocation").value).toBe("Original address");
+});
+
+it.each(["account change", "unmount"])(
+  "invalidates the P1 snapshot on %s and rejects its old Save callback",
+  async (reason) => {
+    const p = props();
+    const draft = {
+      mode: "CREATE",
+      itemId: "00000000-0000-4000-8000-000000000011",
+      fields: { ...fields(), title: "Keep draft", startDate: "2027-02-08" },
+      participantOptions: [],
+    };
+    const repo = { createDraft: vi.fn(async () => draft), save: vi.fn() };
+    const cleanup = await open(p, repo);
+    const oldSave = node("tripCreate.createPlan").onPress;
+    const oldChange = node("tripCreate.planName").onChangeText;
+    const lease = await liveInventory().freeze(guestScope());
+    if (reason === "unmount") cleanup();
+    else state.generation++;
+    await expect(lease.assertCurrent()).rejects.toThrow();
+    await expect(lease.resume()).rejects.toThrow();
+    oldChange("Late old-identity change");
+    oldSave();
+    if (reason === "account change") {
+      render(p);
+      expect(node("tripCreate.planName").editable).toBe(true);
+      expect(node("tripCreate.planName").value).toBe("Keep draft");
+      node("tripCreate.planName").onChangeText("New-generation stale-source edit");
+      node("tripCreate.createPlan").onPress();
+      render(p);
+      expect(node("tripCreate.planName").value).toBe("Keep draft");
+    }
+    expect(repo.save).not.toHaveBeenCalled();
+    expect(p.onClose).not.toHaveBeenCalled();
+  },
+);

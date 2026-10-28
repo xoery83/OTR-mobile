@@ -116,6 +116,41 @@ normal Account login/adoption. Boundary census GUEST_DATA_BOUNDARIES.json record
 automatic Ledger/Person state and live P1 drafts; do not inventory only SQLite.
 No adoption/upload/conversion/Cloud acceptance or commercial quota policy yet.
 
+B preparation now adds Auth-owned `GuestLocalWorkspace.readCensus` using the same
+Guest vault/apply gate/transaction. Whole SQLite table counts and stable supported
+row hashes retain automatic Ledger/Person/cover state; unknown nonempty families,
+unknown entity/operation tuples, foreign owner/Trip, non-P1 intents and stale scope
+fail closed. Actual accepted A vault read through a read-only headless adapter
+confirms Trip1/Person1/P1=1/queue3 and explicit missing-file/live-draft blocker;
+this is not Native census-consumer or Cloud evidence. Receipt:
+ops/auth-phase2-20261028/GUEST_B_READ_ONLY_CENSUS.json. 5 directed suites61 tests,
+types/UIguard/scopedlint and independent disk19 PASS. External COMPLETE inputs
+remain metadata attestations only; actual collectors need a controlled revision/
+snapshot and same-Guest edit recheck. No Session installation, upload, adoption,
+Backend/Schema/RLS/GRANT or Native consumer activation. Next: coordinate owning
+live P1 fields/file inventory; prepare server atomic publication candidate without
+borrowing Manual/Source authority. ADR:2026-10-29-guest-adoption-census.md.
+
+P1-only live draft handoff now freezes the actual editor refs/initial dirty
+baseline, not the repository WeakMap initial draft. Auth registry returns canonical
+text/hash/bytes and a revision+identity-fenced lease; cancellation resumes the same
+repository/draft/input. Open place selection, busy/UNKNOWN firstAttempt and stale
+sources block; preview does not participate. Concurrent resume and old cleanup
+cannot release a new lease. 7 directed suites92 tests/types/UIguard PASS;
+independent2 suites31 PASS after its two race/UI-lock findings were repaired.
+Scopedlint has0errors/4 pre-existing test import warnings. Native confirmed bounded
+P1 seam compatibility; no other Forms/Core/Trip factory changed. This is an
+in-memory P1 port, not durable draft recovery, a complete Guest collector or real
+Native/Adoption/Cloud E2E. Source-only activation; no login/upload consumer.
+Import confirms no accepted Guest file inventory port exists; Account Documents/
+Capture ports must not be borrowed. Next: lawful full source snapshot/owning file
+collector, durable transfer recovery and atomic server publication candidate.
+B preparation source0281a32d/54c62894 retained latest accepted Import0e6 and
+was serially FF-integrated to actual main e18e5b63. Joined7 suites132/types and
+actual primary-main5 suites103 Smoke PASS; original six dirty files/full diff
+unchanged. No Host/SQL/Native deployment. Historical pre-push snapshot is
+GUEST_B_PREPARATION_INTEGRATION.json; verify current remote refs after final push.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
