@@ -5,8 +5,8 @@
   "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
   "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
   "itemId": "c7a7d517-e5ce-4633-bdc5-cab2cc488faf",
-  "revision": 1,
-  "title": "Forms QA Phone Rental",
+  "revision": 2,
+  "title": "Forms QA Phone Rental Edited",
   "dates": [
     "2026-10-29",
     "2026-10-31"
@@ -37,9 +37,27 @@
   "firstReadback": "PENDING_NO_SERVER_ITEM_OR_RECEIPT",
   "eventualReadback": "APPLIED_WITHOUT_NEW_ITEM_OR_QUEUE_PATCH",
   "nativeQueueFailureReason": "NOT_READ_NO_RETRY_CAUSE_CLAIM",
-  "edit": "NOT_RUN_ON_THIS_PHONE_ITEM",
-  "coldRecovery": "NOT_RUN_ON_THIS_PHONE_ITEM",
+  "edit": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "coldRecovery": "NATIVE_PROCESS_RELAUNCH_SAME_TRIP_ITEM_LATEST_TITLE_DATES_CLOCKS_PLACES_NO_PENDING_DOT",
   "fullCloudL3": "PENDING_OFFLINE_REPLAY_PERMISSION_NEGATIVES",
   "diagnosticDatabaseCopy": "REJECTED_NOT_EXECUTED_SERVER_READBACK_USED_INSTEAD",
-  "normalCoreWindow": "RETURNED_SHORT_IMPORT_READ_ONLY_CHECKPOINT"
+  "normalCoreWindow": "RETURNED_TO_IMPORT_AFTER_EDIT_AND_COLD_CHECKPOINT",
+  "editReceipt": {
+    "command": "SET_ITEM_TEXT",
+    "operationId": "dd167736-c519-40d2-9edd-642bce595cbd",
+    "outcome": "APPLIED",
+    "receiptSHA256": "b0ed3261d58295be665ebde348ca076ee9c557ee67be473cc89f3698862b3898"
+  },
+  "preservedOnEdit": [
+    "2026-10-29/01:16",
+    "2026-10-31/01:19",
+    "PICKUP/RETURN Forms QA Pickup",
+    "same Item ID and QA Account"
+  ],
+  "remainingNativeCheck": [
+    "offline reconnect",
+    "duplicate dispatch",
+    "live account/creator permission negatives",
+    "same-return checkbox reopens unchecked despite equal saved places"
+  ]
 }
