@@ -1,0 +1,12 @@
+{
+  "status": "OWNER_APPROVED_EXACT_SOURCE_SINGLE_HASH_COMPATIBILITY",
+  "nativeCandidateCommit": "16644f85",
+  "sourceCandidateCommit": "2347e2e5",
+  "sourceReviewCommit": "6478fc3a",
+  "approvalThread": "01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "humanReplyMessageId": "01a1848c-8a94-78b0-a762-5406d00a5894",
+  "answer": "\u6279\u51c6\u8be5\u7cbe\u786e DEV P2 \u6301\u7eed\u80fd\u529b\u53ca\u5355\u54c8\u5e0c\u517c\u5bb9",
+  "sourceActivationSha256": "fa8df1999e40e211ea5e9eb4627bb546345aba84e0a8877c4d7b9e2dc6527c61",
+  "sourceScopeExpiryBudgetCommandsUnchanged": true,
+  "newPdfOcrExecutionAuthorized": false
+}
