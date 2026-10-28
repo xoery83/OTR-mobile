@@ -33,6 +33,30 @@ runtime, deployment, business policy, database permission or QA device changed.
 
 ## Evidence and remaining qualification
 
+First source slice is fixed at `cfae2b18` and fast-forward integrated/pushed to main;
+all six pre-existing primary-checkout dirty entries remain unchanged. Exact local
+integration evidence is in `MAIN_INTEGRATION.json`; no DEV deployment or device
+operation accompanies it.
+
+The next candidate adds normal authenticated `/logout?scope=local`, outside the
+Account apply gate and before local removal. Only the captured Account/generation
+can supply a token. Network/UNKNOWN keeps local access; explicit invalid-session
+rejection permits the requested online local logout. No global logout is used.
+Independent remote-logout source review:15 Auth/Domain suites115 tests/types/diff
+PASS before the subsequent hosted-error-envelope compatibility repair.
+
+First finite real host Session attempt reached revoked-refresh negative, then
+failed the negative check. Its exact failure cause was not retained; it did not resend Logout. Independent SQL proves the exact
+new Session absent and all11 original QA Sessions preserved; the run is reconciled
+closed, **not E2E PASS** (`SESSION_DEV_ATTEMPT_1_RECONCILED.json`). A safe nonexistent
+token probe independently demonstrates hosted numeric `code` plus string
+`error_code`; the old attempt's unretained error is not reconstructed. The adapter
+now accepts both finite rejection-code envelopes while unknown/conflicting codes
+retain offline continuity. A fresh pinned-source run is required for full scoped
+Session evidence. The runner refuses unresolved prior work and dirty Auth source,
+pins the new Session across refresh/cleanup, rejects redirects and never retries
+uncertain Logout. Tokens stay in process memory, never copied from QA devices.
+
 Independent review: Auth/Domain 13 suites / 104 tests, TypeScript, UI guard and diff
 check PASS. Root also ran adjacent startup/Person/Capture checks: 17 suites / 162
 tests including the final cancellation case. No blanket full-repo test

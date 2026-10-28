@@ -4,6 +4,7 @@ import {
   requestSupabaseDevEmailOtp,
   verifySupabaseDevEmailOtp,
   refreshSupabaseDevSession,
+  revokeSupabaseDevSession,
 } from "./devSupabaseAuth";
 
 vi.mock("./authRepository", () => ({
@@ -33,6 +34,32 @@ function options(response = Response.json(token)) {
 }
 
 describe("passwordless DEV authentication", () => {
+  it.each([200, 204])(
+    "revokes only the current session and accepts an empty HTTP %i response",
+    async (status) => {
+      const config = options(new Response(null, { status }));
+      await revokeSupabaseDevSession("own-session-token", config);
+      expect(config.fetchImplementation).toHaveBeenCalledWith(
+        `${config.url}/auth/v1/logout?scope=local`,
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ Authorization: "Bearer own-session-token" }),
+          body: undefined,
+        }),
+      );
+      expect(config.persistSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not resend or clear credentials on an unknown remote logout outcome", async () => {
+    const config = options();
+    config.fetchImplementation.mockRejectedValueOnce(new Error("response lost"));
+    await expect(
+      revokeSupabaseDevSession("own-session-token", config),
+    ).rejects.toMatchObject({ kind: "network" });
+    expect(config.fetchImplementation).toHaveBeenCalledOnce();
+    expect(config.persistSession).not.toHaveBeenCalled();
+  });
   it("requests a code without a redirect, password, session install or business upload", async () => {
     const config = options(Response.json({}));
     await requestSupabaseDevEmailOtp(" qa@example.test ", config);
@@ -40,6 +67,7 @@ describe("passwordless DEV authentication", () => {
       `${config.url}/auth/v1/otp`,
       expect.objectContaining({
         method: "POST",
+        redirect: "error",
         body: JSON.stringify({ email: identity.email, create_user: true }),
       }),
     );
@@ -241,6 +269,35 @@ describe("passwordless DEV authentication", () => {
     ).rejects.toMatchObject({ kind: "invalid_session" });
     expect(config.persistSession).not.toHaveBeenCalled();
   });
+
+  it.each([
+    { error_code: "refresh_token_not_found" },
+    { code: 400, error_code: "refresh_token_not_found" },
+  ])("recognizes the hosted Auth error_code envelope: %j", async (body) => {
+    await expect(
+      refreshSupabaseDevSession(
+        "revoked",
+        options(Response.json(body, { status: 400 })),
+        identity,
+      ),
+    ).rejects.toMatchObject({ kind: "invalid_session" });
+  });
+
+  it.each([
+    { code: 400, error_code: "validation_failed" },
+    { code: "unknown_failure", error_code: "refresh_token_not_found" },
+  ])(
+    "preserves local continuity for unrecognized or conflicting Auth codes: %j",
+    async (body) => {
+      await expect(
+        refreshSupabaseDevSession(
+          "unavailable",
+          options(Response.json(body, { status: 400 })),
+          identity,
+        ),
+      ).rejects.toMatchObject({ kind: "temporary" });
+    },
+  );
 
   it.each([
     "http://tuqigdxrvrerfewsxqgm.supabase.co",
