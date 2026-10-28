@@ -1,0 +1,18 @@
+{
+  "build": 49,
+  "sourceCommit": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+  "itemId": "1a0f631a-91c7-402a-a202-a5a3f99419b8",
+  "operationId": "c7879eb1-c281-4e72-b24b-ea438e6f6f2c",
+  "revision": 1,
+  "create": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "title": "Forms QA Cloud Plan 1028",
+  "startDate": "2026-11-02",
+  "startTime": null,
+  "participation": "WHOLE_GROUP",
+  "receiptSHA256": "dcc3103bfe0311220855b7b39301560d69d0546cab0a1b076ef161ae58a9e5da",
+  "fullP1Regression": "IN_PROGRESS",
+  "edit": "NOT_RUN_THIS_PASS",
+  "coldRecovery": "NOT_RUN_THIS_PASS"
+}
