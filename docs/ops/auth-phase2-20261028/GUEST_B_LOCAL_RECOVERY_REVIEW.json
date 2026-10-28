@@ -1,0 +1,59 @@
+{
+  "status": "LOCAL_RECOVERY_SOURCE_PREPARATION_NOT_NATIVE_ADOPTION_OR_CLOUD_PASS",
+  "scope": "Auth-private immutable Guest recovery material; no Session/token store or business repository/queue replacement",
+  "namespace": "Documents/auth-guest-adoption/<GuestLocalUUID>/<AdoptionUUID>/",
+  "sourceBaseline": "7ea7a83ba9487df3f7ea2ed919e5d4f4de9651b7",
+  "checkpoints": [
+    "prepared",
+    "publish-requested",
+    "cancelled"
+  ],
+  "recoveryActions": [
+    "RESUME_PREFLIGHT",
+    "QUERY_SERVER_STATUS",
+    "REMAIN_GUEST"
+  ],
+  "noLocalSuccessState": true,
+  "noCancellationAfterPublishRequest": true,
+  "validation": {
+    "newRealDiskTests": 18,
+    "directedSuites": 5,
+    "directedTests": 56,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS, no errors or warnings",
+    "independentReview": "18 tests PASS; NO_REMAINING_BLOCKER after repair"
+  },
+  "fixedReviewFindings": [
+    "empty committed checkpoint must fail closed, not look absent",
+    "pin deep-copied preparation before first await and use checked binding for all paths"
+  ],
+  "evidenceBoundary": "Real Node filesystem with Expo-shaped adapter, plus installed Expo iOS move implementation source read. Not actual Native bridge/crash/power-loss acceptance.",
+  "covered": [
+    "immutable same-input retry",
+    "source kind and target UUID isolation",
+    "default boundary real generation guard before file access and after identity await",
+    "fresh-generation reopen",
+    "retained Unicode unsaved draft",
+    "kill before immutable move",
+    "publish marker before request transmission forces authoritative status",
+    "no concurrent unfinished second attempt",
+    "cancel/publication serialization",
+    "unknown future checkpoint and corrupt/zero-byte files blocked",
+    "no SQLite/Session copy or original deletion"
+  ],
+  "activation": {
+    "nativeConsumer": false,
+    "serverPreflight": false,
+    "upload": false,
+    "ownershipConversion": false,
+    "schemaRlsGrantRoleChanges": false,
+    "hostDeployment": false
+  },
+  "remaining": [
+    "complete owning Guest file/all-family draft collector and consistent source snapshot",
+    "lawful server-authoritative whole-dataset preflight/private staging/atomic publication/status",
+    "protected exact authority candidate review and applicable Owner execution Gate",
+    "normal Provider login and actual Native/Backend/Supabase Adoption E2E"
+  ]
+}

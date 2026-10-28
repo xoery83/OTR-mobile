@@ -153,6 +153,25 @@ actual primary-main5 suites103 Smoke PASS; original six dirty files/full diff
 unchanged. No Host/SQL/Native deployment. Historical pre-push snapshot is
 GUEST_B_PREPARATION_INTEGRATION.json; verify current remote refs after final push.
 
+B local recovery source now uses immutable Auth-only Guest namespace checkpoints,
+retaining exact P1 draft text/hash/bytes, source/target UUID and inventory digest.
+Publish-request presence always returns QUERY_SERVER_STATUS after restart; no
+local success or post-publication local cancel. One uncancelled attempt per Guest;
+unknown/corrupt/zero-byte committed files block, matching retry retains bytes.
+Scope/generation fences and existing apply gate remain. 5 directed suites56 tests,
+types/UIguard/scopedlint and independent18 real Node-disk tests PASS after empty-
+file and mutable-input pin findings were repaired. Receipt:
+GUEST_B_LOCAL_RECOVERY_REVIEW.json. No actual Native filesystem/crash E2E, consumer,
+Session installation, file collector, server preflight, upload or SQL activation.
+Import confirms persistent Capture originals are Account-scoped SQLite BLOBs with
+no accepted Guest producer/collector. Do not inspect Account bytes or reclassify
+files by directory prefix. Full files/all-drafts remain blocked; next coordinate
+single-transaction owning Core/Trip port and prepare exact closed server candidate.
+Local recovery source95b62895 was serially FF-integrated from main7ea7a83b;
+actual primary5 suites113 Smoke PASS and original six dirty files/full diff unchanged.
+GUEST_B_RECOVERY_INTEGRATION.json is the historical pre-push snapshot; verify final
+remote refs after the normal docs+source push. No new Native/Host deployment.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
