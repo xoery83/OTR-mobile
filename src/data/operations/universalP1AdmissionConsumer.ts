@@ -6,7 +6,10 @@ import {
 import type { CaptureJobReadModel } from "../../domain/capture/captureSubmission";
 import { validateCoreCommand } from "../../domain/trip/tripCoreV2Commands";
 import { canonicalCoreJson, type Json } from "../../domain/trip/tripCoreV2Json";
-import { coreUniversalP1PublishResultSchema } from "../../domain/trip/tripCoreV2SourceContract";
+import {
+  coreSourcePlanReadV2Schema,
+  coreUniversalP1PublishResultSchema,
+} from "../../domain/trip/tripCoreV2SourceContract";
 import type { UniversalImportResult } from "../api/universalImportContracts";
 import type { createCoreV2Transport } from "../api/tripCoreV2Transport";
 import type { createTripCoreV2Repository } from "../repositories/tripCoreV2Repository";
@@ -308,7 +311,8 @@ export async function readUniversalAcceptedItems(
   deps: {
     getAccountId(): Promise<string>;
     isCurrent(): boolean;
-    transport: Pick<ReturnType<typeof createCoreV2Transport>, "receipt">;
+    transport: Pick<ReturnType<typeof createCoreV2Transport>, "receipt"> &
+      Partial<Pick<ReturnType<typeof createCoreV2Transport>, "sourcePlan">>;
   },
 ) {
   const current = () => {
@@ -320,7 +324,7 @@ export async function readUniversalAcceptedItems(
   if (context.accountId !== result.accountId) throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
   const accepted: Record<
     string,
-    { itemId: string; operationId: string; committedAt: string }
+    { itemId: string; operationId: string; committedAt: string; sourceComplete?: true }
   > = {};
   for (const candidate of result.candidates) {
     if (!["P1", "P2", "P3", "P4", "P5", "P6"].includes(candidate.kind)) continue;
@@ -354,10 +358,79 @@ export async function readUniversalAcceptedItems(
       )
     )
       throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+    let sourceComplete = false;
+    if (deps.transport.sourcePlan) {
+      try {
+        const planId = universalP1Identity(
+          result.taskId,
+          candidate.token,
+          prefix + "plan",
+        );
+        const raw = await deps.transport.sourcePlan(context, planId);
+        current();
+        await assertAccountRequestContext(context, deps.getAccountId);
+        const parsed = coreSourcePlanReadV2Schema.safeParse(raw);
+        if (parsed.success) {
+          const { plan, status } = parsed.data;
+          const candidateId = universalP1Identity(
+            result.taskId,
+            candidate.token,
+            prefix + "candidate",
+          );
+          const slotId = universalP1Identity(
+            result.taskId,
+            candidate.token,
+            prefix + "slot",
+          );
+          const slot = plan.slots[0],
+            outcome = status.slots[0];
+          const aliases = new Set(candidate.fields.map((field) => field.sourceId));
+          sourceComplete =
+            plan.accountId === context.accountId &&
+            plan.tripId === context.tripId &&
+            plan.planId === planId &&
+            plan.mode === "REVIEWED_SOURCE" &&
+            plan.policyVersion === null &&
+            plan.candidateIds.length === 1 &&
+            plan.candidateIds[0] === candidateId &&
+            plan.slots.length === 1 &&
+            status.slots.length === 1 &&
+            status.status === "COMPLETE" &&
+            result.sourceBindings.some(
+              (b) =>
+                aliases.has(b.alias) &&
+                b.sourceId === plan.sourceId &&
+                b.revision === plan.sourceRevision,
+            ) &&
+            slot.slotId === slotId &&
+            slot.candidateId === candidateId &&
+            slot.operationId === operationId &&
+            slot.command === receipt.command &&
+            slot.targetKind === "ITEM" &&
+            slot.target.existingId === itemId &&
+            slot.state === "COMPLETE" &&
+            slot.intentSha256 === receipt.intentSha256 &&
+            outcome.outcome === "COMPLETE" &&
+            outcome.domainReceiptId === read.domainReceiptId &&
+            outcome.errorCode === null &&
+            receipt.targetVector.some(
+              (v) =>
+                v.kind === "ITEM" &&
+                v.id === itemId &&
+                v.committedRevision === outcome.committedRevision,
+            );
+        }
+      } catch {
+        // Receipt acceptance survives unavailable completion metadata; keep Source recovery open.
+      }
+      current();
+      await assertAccountRequestContext(context, deps.getAccountId);
+    }
     accepted[candidate.token] = {
       itemId,
       operationId,
       committedAt: receipt.committedAt,
+      ...(sourceComplete ? { sourceComplete: true as const } : {}),
     };
   }
   current();

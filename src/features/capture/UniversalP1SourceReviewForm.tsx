@@ -14,6 +14,7 @@ export function UniversalP1SourceReviewForm({
   candidate,
   readTripTargets,
   disabled,
+  complete = false,
   isCurrent,
   onConfirm,
   readOriginal,
@@ -22,6 +23,7 @@ export function UniversalP1SourceReviewForm({
   candidate: UniversalImportResult["candidates"][number];
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   disabled: boolean;
+  complete?: boolean;
   isCurrent(): boolean;
   readOriginal(): Promise<string>;
   onConfirm(review: UniversalItemSourceReview | UniversalP2SourceReview): void;
@@ -224,6 +226,7 @@ export function UniversalP1SourceReviewForm({
       <UiButton
         disabled={
           disabled ||
+          complete ||
           !isCurrent() ||
           !tripName ||
           original === null ||
@@ -245,6 +248,7 @@ export function UniversalP1SourceReviewForm({
         )}
         onPress={() => {
           if (
+            complete ||
             !isCurrent() ||
             !tripName ||
             original === null ||

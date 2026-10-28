@@ -213,6 +213,7 @@ export function UniversalResultView({
                     candidate={candidate}
                     readTripTargets={readTripTargets}
                     disabled={busy || admission.busyToken !== null || !isCurrent()}
+                    complete={admission.completed?.[candidate.token] === true}
                     isCurrent={isCurrent}
                     readOriginal={() => admission.readOriginal(result, candidate.token)}
                     onConfirm={(review) =>

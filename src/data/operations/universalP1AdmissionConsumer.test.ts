@@ -1,3 +1,5 @@
+import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRead";
+import { universalP1Identity } from "@/domain/trip/universalImportIdentity";
 import { universalP2SourceFixture } from "../../../backend/src/__fixtures__/universalP2Source";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
@@ -517,4 +519,115 @@ it("does not call a rejected or unknown operation a saved Item", async () => {
   expect(await readUniversalAcceptedItems(f.model, f.result, deps)).toEqual({});
   f.transport.receipt.mockResolvedValue({ projection: "REDACTED" });
   expect(await readUniversalAcceptedItems(f.model, f.result, deps)).toEqual({});
+});
+
+it("distinguishes a complete exact Source from Core acceptance and keeps incomplete/unavailable recovery open", async () => {
+  const f = await fixture(),
+    candidate = f.result.candidates[0],
+    source = f.result.sourceBindings[0];
+  const id = (purpose: string) =>
+    universalP1Identity(f.result.taskId, candidate.token, purpose);
+  const raw = sourcePlanReadFixture(f.result.accountId, f.result.tripId),
+    slot = raw.plan.slots[0],
+    receiptId = randomUUID();
+  raw.plan.planId = id("plan");
+  raw.plan.sourceId = source.sourceId;
+  raw.plan.sourceRevision = source.revision;
+  raw.plan.candidateIds = [id("candidate")];
+  Object.assign(slot, {
+    slotId: id("slot"),
+    candidateId: id("candidate"),
+    operationId: id("operation"),
+    target: { kind: "ITEM", candidateSlotId: null, existingId: id("item") },
+  });
+  Object.assign(slot.outputPurpose, {
+    planId: id("plan"),
+    sourceId: source.sourceId,
+    sourceRevision: source.revision,
+    slotId: id("slot"),
+    candidateId: id("candidate"),
+    operationId: id("operation"),
+    targetId: id("item"),
+  });
+  raw.status.planId = id("plan");
+  Object.assign(raw.status.slots[0], {
+    slotId: id("slot"),
+    operationId: id("operation"),
+    targetId: id("item"),
+    domainReceiptId: receiptId,
+  });
+  const sourcePlan = vi.fn(async () => raw);
+  let active = true;
+  f.transport.receipt.mockResolvedValue({
+    projection: "FULL",
+    domainReceiptId: receiptId,
+    receipt: {
+      operationId: id("operation"),
+      tripId: f.result.tripId,
+      actorAccountId: f.result.accountId,
+      command: "CREATE_ITEM",
+      outcome: "APPLIED",
+      committedAt: "2026-10-28T00:00:00Z",
+      intentSha256: slot.intentSha256,
+      targetVector: [{ kind: "ITEM", id: id("item"), committedRevision: 1 }],
+    },
+  });
+  const read = () =>
+    readUniversalAcceptedItems(f.model, f.result, {
+      getAccountId: async () => f.result.accountId,
+      isCurrent: () => active,
+      transport: { ...f.transport, sourcePlan } as never,
+    });
+  expect((await read())[candidate.token]).toHaveProperty("sourceComplete", true);
+  const complete = structuredClone(raw);
+  for (const field of [
+    "accountId",
+    "sourceId",
+    "sourceRevision",
+    "operationId",
+    "targetId",
+  ] as const) {
+    const altered = structuredClone(complete),
+      own = altered.plan.slots[0];
+    if (field === "accountId" || field === "sourceId") {
+      const value = randomUUID();
+      altered.plan[field] = value;
+      Object.assign(own.outputPurpose, { [field]: value });
+    } else if (field === "sourceRevision") {
+      altered.plan.sourceRevision++;
+      own.outputPurpose.sourceRevision = altered.plan.sourceRevision;
+    } else if (field === "operationId") {
+      const value = randomUUID();
+      own.operationId = value;
+      Object.assign(own.outputPurpose, { operationId: value });
+      altered.status.slots[0].operationId = value;
+    } else {
+      const value = randomUUID();
+      own.target.existingId = value;
+      own.outputPurpose.targetId = value;
+      altered.status.slots[0].targetId = value;
+    }
+    sourcePlan.mockResolvedValue(altered);
+    expect((await read())[candidate.token].sourceComplete, field).not.toBe(true);
+  }
+  sourcePlan.mockResolvedValue(raw);
+
+  raw.status.slots[0].domainReceiptId = randomUUID();
+  expect((await read())[candidate.token].sourceComplete).not.toBe(true);
+  raw.status.slots[0].domainReceiptId = receiptId;
+  raw.plan.slots[0].state = "EVIDENCE_PENDING";
+  raw.status.slots[0].outcome = "EVIDENCE_PENDING";
+  expect((await read())[candidate.token].sourceComplete).not.toBe(true);
+  sourcePlan.mockRejectedValue(Error("OFFLINE") as never);
+  expect((await read())[candidate.token]).toMatchObject({
+    itemId: id("item"),
+    operationId: id("operation"),
+  });
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+  expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+  sourcePlan.mockImplementation(async () => {
+    active = false;
+    return complete;
+  });
+  await expect(read()).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
 });
