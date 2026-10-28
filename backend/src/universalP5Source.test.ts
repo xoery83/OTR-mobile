@@ -163,3 +163,38 @@ it("keeps one operator proof after alias agreement and rejects conflicting liter
   candidate.fields[candidate.fields.length - 1].raw = "Different operator";
   await expect(f.run()).rejects.toThrow("INCOMPLETE_SOURCE_EVIDENCE");
 });
+
+it("keeps actual optional train endpoint observations without blocking minimum Source Save", async () => {
+  const f = await fixture();
+  f.input.result.unresolved.push({
+    sourceId: "S0",
+    reason: "Transport type TRAIN stated but no origin/destination place given",
+  });
+  const r = await f.run();
+  expect(r.qualification.eligibleNewRecords).toHaveLength(1);
+  expect(r.body.reviewedAdvisories).toEqual(f.input.result.unresolved);
+  expect(
+    (r.body.plan.slots[0].payload as any).endpoints.origin.place.authored_label,
+  ).toBeNull();
+});
+
+it.each(["cancellation", "missing-operator"])(
+  "still rejects %s with optional endpoint observations",
+  async (kind) => {
+    const f = await fixture();
+    f.input.result.unresolved.push({
+      sourceId: "S0",
+      reason: "Transport type TRAIN stated but no origin/destination place given",
+    });
+    if (kind === "cancellation")
+      f.input.result.unresolved.push({
+        sourceId: "S0",
+        reason: "Cancellation target unknown",
+      });
+    else
+      (f.input.result.candidates[0] as any).fields = (
+        f.input.result.candidates[0] as any
+      ).fields.filter((v: any) => v.path !== "operator.name");
+    await expect(f.run()).rejects.toThrow();
+  },
+);

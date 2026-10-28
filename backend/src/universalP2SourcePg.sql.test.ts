@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import { readFileSync, writeFileSync } from "node:fs";
 import { expect, it } from "vitest";
@@ -131,6 +132,18 @@ it.skipIf(!container)(
       await admin.lease.query("SET ROLE postgres");
       return admin.lease.query(sql, args);
     };
+    const insertInput = (input: typeof pin) =>
+      admin.lease.query(
+        "INSERT INTO public.trip_source_inputs(id,run_id,source_id,material_revision,representation_id,payload_sha256,byte_count,observed_source_row_revision,historical_selection) VALUES($1::uuid,$2::uuid,$3::uuid,1,$4::uuid,$5,$6,1,false)",
+        [
+          input.id,
+          f.input.runId,
+          input.source_id,
+          input.representation_id,
+          input.payload_sha256,
+          input.byte_count,
+        ],
+      );
     async function protectedWrite(
       sql: string,
       args?: unknown[],
@@ -186,36 +199,58 @@ it.skipIf(!container)(
           material.text,
         ],
       );
+      const inputs = [pin];
+      if (continuous && process.env.OTR_UNIVERSAL_P2_MULTI_SOURCE_SQL === "1") {
+        const text = "Synthetic QA unrelated note only.\n";
+        const sibling = {
+          ...pin,
+          id: randomUUID(),
+          source_id: randomUUID(),
+          representation_id: randomUUID(),
+          payload_sha256: await f.deps.hash(Buffer.from(text)),
+          byte_count: Buffer.byteLength(text),
+        };
+        await admin.lease.query(
+          "INSERT INTO public.trip_sources(id,trip_id,acquired_by,acquisition_key,acquisition_sha256,source_kind,acquisition_channel,capture_time_basis,created_at,current_material_revision,row_revision) VALUES($1::uuid,$2::uuid,$3::uuid,$1,$4,'TEXT','PASTE','UNKNOWN',clock_timestamp(),1,1)",
+          [sibling.source_id, trip, actor, sibling.payload_sha256],
+        );
+        await admin.lease.query(
+          "INSERT INTO public.trip_source_revisions(source_id,material_revision,created_at,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES($1::uuid,1,clock_timestamp(),$2::uuid,$1,$4,ARRAY[$3::uuid],'AS_SUPPLIED','ACQUISITION')",
+          [sibling.source_id, actor, sibling.representation_id, sibling.payload_sha256],
+        );
+        await admin.lease.query(
+          "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,encoding,payload_sha256,byte_count,text_content,regenerability,created_at,remote_state) VALUES($1::uuid,1,$2::uuid,1,'ORIGINAL','TEXT','UTF-8',$3,$4,$5,'NOT_APPLICABLE',clock_timestamp(),'NOT_APPLICABLE')",
+          [
+            sibling.representation_id,
+            sibling.source_id,
+            sibling.payload_sha256,
+            sibling.byte_count,
+            text,
+          ],
+        );
+        inputs.push(sibling);
+        inputs.sort((a, b) => a.id.localeCompare(b.id));
+      }
       const inputHash = (
         await admin.lease.query(
           "SELECT public.trip_import_run_input_hash($1::jsonb) AS hash",
-          [JSON.stringify([pin])],
+          [JSON.stringify(inputs)],
         )
       ).rows[0].hash;
       await admin.lease.query(
-        "INSERT INTO public.trip_source_runs(id,row_revision,trip_id,actor_account_id,operation_key,scope_source_ids,scope_sha256,generation,input_sha256,extractor_key,extractor_version,extractor_options_sha256,created_at,capture_batch_id,interpretation_task_id,capture_submission_sha256) VALUES($1::uuid,1,$2::uuid,$3::uuid,$1,ARRAY[$4::uuid],$8,1,$5,'otr-universal-interpretation-v1','1',repeat('b',64),clock_timestamp(),$6::uuid,$7::uuid,repeat('c',64))",
+        "INSERT INTO public.trip_source_runs(id,row_revision,trip_id,actor_account_id,operation_key,scope_source_ids,scope_sha256,generation,input_sha256,extractor_key,extractor_version,extractor_options_sha256,created_at,capture_batch_id,interpretation_task_id,capture_submission_sha256) VALUES($1::uuid,1,$2::uuid,$3::uuid,$1,ARRAY(SELECT jsonb_array_elements_text($4::jsonb)::uuid),$8,1,$5,'otr-universal-interpretation-v1','1',repeat('b',64),clock_timestamp(),$6::uuid,$7::uuid,repeat('c',64))",
         [
           f.input.runId,
           trip,
           actor,
-          sourceId,
+          JSON.stringify(inputs.map((p) => p.source_id).sort()),
           inputHash,
           request.batchId,
           request.taskId,
           await f.deps.hash(Buffer.from(sourceId)),
         ],
       );
-      await admin.lease.query(
-        "INSERT INTO public.trip_source_inputs(id,run_id,source_id,material_revision,representation_id,payload_sha256,byte_count,observed_source_row_revision,historical_selection) VALUES($1::uuid,$2::uuid,$3::uuid,1,$4::uuid,$5,$6,1,false)",
-        [
-          pin.id,
-          f.input.runId,
-          sourceId,
-          pin.representation_id,
-          pin.payload_sha256,
-          pin.byte_count,
-        ],
-      );
+      for (const input of inputs) await insertInput(input);
       await admin.lease.query("SET CONSTRAINTS ALL IMMEDIATE");
       for (const t of tables)
         await admin.lease.query(`ALTER TABLE public.${t} ENABLE TRIGGER USER`);
@@ -308,6 +343,44 @@ it.skipIf(!container)(
           actor +
           "'::uuid",
       );
+      const sibling = inputs.find((input) => input.source_id !== sourceId);
+      if (sibling) {
+        for (const fault of [
+          {
+            id: sibling.id,
+            column: "observed_source_row_revision",
+            value: 2,
+            original: 1,
+          },
+        ]) {
+          await control(
+            `ALTER TABLE public.trip_source_inputs DISABLE TRIGGER USER; UPDATE public.trip_source_inputs SET ${fault.column}=$1 WHERE id=$2::uuid; ALTER TABLE public.trip_source_inputs ENABLE TRIGGER USER;`,
+            [fault.value, fault.id],
+          );
+          await expect(
+            authority.publishUniversalP1(actor, trip, request),
+          ).rejects.toThrow("INPUT_STALE");
+          await control(
+            `ALTER TABLE public.trip_source_inputs DISABLE TRIGGER USER; UPDATE public.trip_source_inputs SET ${fault.column}=$1 WHERE id=$2::uuid; ALTER TABLE public.trip_source_inputs ENABLE TRIGGER USER;`,
+            [fault.original, fault.id],
+          );
+        }
+        await expect(
+          packageSql(
+            `BEGIN; ALTER TABLE public.trip_source_inputs DISABLE TRIGGER USER; UPDATE public.trip_source_inputs SET representation_id='${sibling.representation_id}'::uuid WHERE id='${pin.id}'::uuid; ALTER TABLE public.trip_source_inputs ENABLE TRIGGER USER; COMMIT;`,
+          ),
+        ).rejects.toThrow("trip_source_inputs_source_id_representation_id_fkey");
+        await control(
+          "ALTER TABLE public.trip_source_inputs DISABLE TRIGGER USER; DELETE FROM public.trip_source_inputs WHERE id=$1::uuid; ALTER TABLE public.trip_source_inputs ENABLE TRIGGER USER;",
+          [pin.id],
+        );
+        await expect(authority.publishUniversalP1(actor, trip, request)).rejects.toThrow(
+          "INPUT_STALE",
+        );
+        await control("ALTER TABLE public.trip_source_inputs DISABLE TRIGGER USER");
+        await insertInput(pin);
+        await control("ALTER TABLE public.trip_source_inputs ENABLE TRIGGER USER");
+      }
       const publication = await authority.publishUniversalP1(actor, trip, request);
       expect(publication.status).toBe("CANDIDATE_SEALED");
       expect(publication.proposedPlan).toEqual(expected.plan);

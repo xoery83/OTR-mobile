@@ -1,0 +1,103 @@
+{
+  "status": "LOCAL_PASS_NOT_ACTIVATED",
+  "nativeCommit": "081198f01eef32cba96f0311ad66ca46d5e67050",
+  "activationSha256": "3078313e03d4aaef0e72d0ab2a7bdcb4ca90bbe3a3bc410558938d7a7d41ab59",
+  "onlyChangedWitness": {
+    "function": "trip_core_finite_read_state_guard()",
+    "beforeMd5": "f1378cb07c1f1882651a558dbe612909",
+    "afterMd5": "20c7bc156f4d80aac889b7ed8f52ce0a"
+  },
+  "controlChecks": [
+    "existing Source Review early branch preserved",
+    "candidate installs dormant with no active gate",
+    "exact three-function reverse-hash rollback restores actual DEV preimages",
+    "P6 candidate preserves all three OIDs owners and ACLs",
+    "Native four-function approved P3 dependency postimage loaded for compatibility",
+    "failed postimage check rolls back all function replacements",
+    "closed installer verifies full preimages postimages owner ACL and unchanged OIDs; repeated install fails closed",
+    "P2 registry defaults disabled",
+    "exact separately approved Native P4 package applies over continuous default-closed postimage",
+    "original approved activation aborts on Native P4 hash drift",
+    "compatible activation changes only read-state CAS; scope expiry commands and close unchanged",
+    "accepted additive Native P5/P6 read-state retains OID Owner ACL",
+    "activation changes only read-state CAS; all scope limits and close remain unchanged",
+    "exact continuous activation is one CAS from closed, not a repeated rearm",
+    "close is idempotent, disables Save/airports, and preserves existing Source intake",
+    "close does not overwrite a different owning scope",
+    "Native fixed P3 read-state arm retained",
+    "fresh non-Batch9 P2 uses normal reviewed Source Plan Core receipt closed recovery and replay",
+    "reviewed Source P5 Save receipt closed recovery replay with accepted Native union",
+    "reviewed Source P6 Save receipt closed recovery replay with accepted Native union"
+  ],
+  "actualSourceSqlChains": [
+    "P2 PASS",
+    "P5 PASS",
+    "P6 PASS"
+  ],
+  "logSha256": "aedfcf517302ab05312ba5e206864dc4188be5cb26d5f431dd23ebca014d8a47",
+  "network": "none",
+  "memory": "256m",
+  "permissionsChanged": false,
+  "hostedWrites": false,
+  "independentReview": "NO_BLOCKER; exact compatibility confirmation still required",
+  "recovery": "Same Batch3bdff8ee/Taska180447c; no model retry or replacement IDs. Close packet unchanged; preserve Native functions and accepted facts.",
+  "independentHostedPreflight": {
+    "status": "MATCH_CLOSED",
+    "sourceOnlyExpectedReadStateChanged": true,
+    "allSixOidOwnerAclUnchanged": true,
+    "airportsDisabled": 2,
+    "receiptSha256": "538c1b0d007de01281a7ef18bbe923cfc5b67de49e44b453c99e78d37b795b36",
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "9f01606ec37c03662c7d9d828cae9ef9",
+        "oid": "66408",
+        "owner": "postgres",
+        "signature": "public.trip_sustained_import_p1_capabilities(uuid,uuid)"
+      },
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "115bc244cd9ccd196936828739187531",
+        "oid": "66410",
+        "owner": "postgres",
+        "signature": "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)"
+      },
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "fb315854dee6942f552a647fb851abfb",
+        "oid": "65660",
+        "owner": "postgres",
+        "signature": "public.trip_core_guard_historical_source_association()"
+      },
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "6ff1c65d9389341e889eb8258c6659af",
+        "oid": "65649",
+        "owner": "postgres",
+        "signature": "public.trip_core_publication_guard()"
+      },
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "20c7bc156f4d80aac889b7ed8f52ce0a",
+        "oid": "65713",
+        "owner": "postgres",
+        "signature": "public.trip_core_finite_read_state_guard()"
+      },
+      {
+        "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+        "md5": "40f537b189fd972423e63b2be4023a12",
+        "oid": "65546",
+        "owner": "postgres",
+        "signature": "public.trip_core_resolve_airport(text,text,text,date)"
+      }
+    ]
+  },
+  "actualCompatibleImage": {
+    "sourceCommit": "e126eabfc1d538f7db722f6f2dca75088a8a595c",
+    "digest": "sha256:6c5c9a6f380f538392832abda7eb4afe434f9fa689dbf6f150c134ed903c755f",
+    "containerPrefix": "7931b617d892",
+    "retainsSourceRepair": "612361f2",
+    "retainsNativeCombinedProfile": "081198f0",
+    "bomDeployed": false
+  }
+}

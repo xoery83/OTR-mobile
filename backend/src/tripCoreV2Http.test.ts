@@ -390,3 +390,72 @@ it("passes only one validated operation to capabilities after Trip access", asyn
   expect((await get("?operationId=" + operation, false)).status).toBe(404);
   expect(capabilities).toHaveBeenCalledTimes(1);
 });
+
+it.each([
+  {
+    message: "CORE_CONNECTION_TIMEOUT",
+    category: "CORE_CONNECTION_TIMEOUT",
+    brokenLog: false,
+  },
+  {
+    message: "P1_SOURCE_EVIDENCE_INVALID",
+    category: "P1_SOURCE_EVIDENCE_INVALID",
+    brokenLog: false,
+  },
+  {
+    message: "PRIVATE_ORIGINAL_AND_TOKEN_NEVER_LOG",
+    category: "FAILED",
+    brokenLog: false,
+  },
+  {
+    message: "CORE_CONNECTION_TIMEOUT",
+    category: "CORE_CONNECTION_TIMEOUT",
+    brokenLog: true,
+  },
+])(
+  "keeps publication failures bounded and preserves the response: $category / $brokenLog",
+  async ({ message, category, brokenLog }) => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (brokenLog) throw Error("logger unavailable");
+    });
+    try {
+      const response = await coreHttpBoundary(
+        request(
+          "universal-p1-candidates",
+          JSON.stringify({
+            captureVersion: 2,
+            sourceId: randomUUID(),
+            batchId: randomUUID(),
+            taskId: randomUUID(),
+            token: "i1",
+            requestSha256: "a".repeat(64),
+          }),
+        ),
+        actor,
+        async () => true,
+        {
+          hash,
+          publishUniversalP1: async () => {
+            throw Error(message);
+          },
+        } as unknown as CoreHttpConnection,
+      );
+      expect(response?.status).toBe(503);
+      expect(await response?.json()).toMatchObject({
+        error: { code: "CORE_EXECUTION_UNAVAILABLE" },
+      });
+      expect(log).toHaveBeenCalled();
+      if (!brokenLog) {
+        const event = JSON.parse(String(log.mock.calls[0][0]));
+        expect(event).toEqual({ event: "core_source_publication_failed", category });
+        expect(JSON.stringify(log.mock.calls)).not.toContain(
+          "PRIVATE_ORIGINAL_AND_TOKEN_NEVER_LOG",
+        );
+        expect(JSON.stringify(event)).not.toContain(actor);
+        expect(JSON.stringify(event)).not.toContain(trip);
+      }
+    } finally {
+      log.mockRestore();
+    }
+  },
+);

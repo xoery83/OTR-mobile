@@ -1,0 +1,46 @@
+{
+  "status": "FIXTURES_ONLY_NOT_INTERPRETED_OR_ADMITTED",
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "files": [
+    {
+      "name": "P2-Sparse-NZ502.txt",
+      "bytes": 27,
+      "sha256": "ef351c055fd062ebb61197c5cc73d3ad8c177a52b164246284f3f44124f99e7d",
+      "expectedFamily": "P2"
+    },
+    {
+      "name": "P3-Harbour-Beta-Hotel.txt",
+      "bytes": 93,
+      "sha256": "a8606e596966709b999b28720d7428a14c97e05a80347666034036e4f75dfbce",
+      "expectedFamily": "P3"
+    },
+    {
+      "name": "P4-Coastline-Beta-Rental.txt",
+      "bytes": 108,
+      "sha256": "df23abfb3076ad0550d5808cdbb042ccf0d83dcb5ad612b8a7c5d9365a4db079",
+      "expectedFamily": "P4"
+    },
+    {
+      "name": "P5-Coastal-Beta-Train.txt",
+      "bytes": 146,
+      "sha256": "fe30037884d999ed28847422a0efb745cca13bf878e38d3a2fb42222865e70e9",
+      "expectedFamily": "P5"
+    },
+    {
+      "name": "P6-Harbour-Beta-Activity.txt",
+      "bytes": 83,
+      "sha256": "71726c3289091568935f1aa188689cf57fc7ca56dde0c1e144739db0c30cdb5f",
+      "expectedFamily": "P6"
+    }
+  ],
+  "archiveSHA256": "040402979a4024fd914f7f2d34997958e7a3f233e932903a1205bf451b51920c",
+  "qualification": "Existing OTR_UTF8_TEXT_FILE_V1 only; actual model family/evidence must qualify before any Save.",
+  "providerPlan": "One normal multi-Source Batch and at most one new existing DeepSeek call; unchanged approved limits.",
+  "excludes": [
+    "Binary Source ingress",
+    "Qualified Flight/Journey/Booking/Ticket",
+    "Native Manual P5/P6 candidate changes",
+    "Fake or forced result kinds"
+  ]
+}
