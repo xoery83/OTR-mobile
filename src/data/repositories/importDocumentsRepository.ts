@@ -149,18 +149,18 @@ export function createImportDocumentsRepository(
       captureId: string,
     ) {
       const document = await read(context, scope, captureId);
-      if (scope !== "TRIP") return [];
       const rows = await db.getAllAsync(
-        `SELECT DISTINCT b.source_id AS sourceId,b.representation_id AS representationId,b.material_revision AS sourceRevision
+        `SELECT DISTINCT b.source_id AS sourceId,b.representation_id AS representationId,b.material_revision AS sourceRevision,b.trip_id AS tripId
        FROM local_capture_source_bindings b JOIN trip_sources s ON s.cache_account_id=b.account_id AND s.trip_id=b.trip_id AND s.id=b.source_id
        JOIN trip_source_representations r ON r.cache_account_id=b.account_id AND r.source_id=b.source_id AND r.id=b.representation_id
-       WHERE b.account_id=? AND b.trip_id=? AND b.capture_id=? AND b.capture_payload_id=? AND b.state='ADMITTED'
+       JOIN ledger_actor_context a ON a.user_id=b.account_id AND a.journey_id=b.trip_id
+       WHERE b.account_id=? ${scope === "TRIP" ? "AND b.trip_id=?" : ""} AND b.capture_id=? AND b.capture_payload_id=? AND b.state='ADMITTED'
        AND b.material_sha256=? AND b.byte_count=? AND s.acquired_by=b.account_id
        AND s.registration_state='REGISTERED' AND s.lifecycle='ACTIVE' AND s.retention_state='RETAINED' AND s.current_material_revision=b.material_revision
        AND r.registration_state='REGISTERED' AND r.role='ORIGINAL' AND r.retention_state='RETAINED' AND r.introduced_revision=b.material_revision
        AND r.payload_sha256=b.material_sha256 AND r.byte_count=b.byte_count ORDER BY b.source_id,b.representation_id LIMIT 65`,
         context.accountId,
-        context.tripId,
+        ...(scope === "TRIP" ? [context.tripId] : []),
         captureId,
         document.payloadId,
         document.sha256,
@@ -173,6 +173,7 @@ export function createImportDocumentsRepository(
             sourceId: z.uuid(),
             representationId: z.uuid(),
             sourceRevision: z.number().int().positive(),
+            tripId: z.uuid(),
           })
           .parse(row),
       );

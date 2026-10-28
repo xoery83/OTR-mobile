@@ -73,6 +73,7 @@ it("explicit lawful assignment changes only document scope and retains real Batc
       sourceId: catalog.trip_sources[0].id,
       representationId: catalog.trip_source_representations[0].id,
       sourceRevision: 1,
+      tripId: catalog.trip_id,
     },
   ]);
   expect(await docs.sourceLinks(context, "PERSONAL_INBOX", inbox[0].captureId)).toEqual(
@@ -174,4 +175,31 @@ it("same Batch and identical retained bytes do not link a sibling to another inp
   await f.captures.assign(sibling.captureId, catalog.trip_id, retained.capture.revision);
   expect(await docs.list(context, "TRIP")).toHaveLength(2);
   expect(await docs.sourceLinks(context, "TRIP", sibling.captureId)).toEqual([]);
+});
+
+it("retains a private original while resolving only its admitted Source in an accessible Trip", async () => {
+  const f = fixture(),
+    request = await f.submit(2),
+    catalog = await f.publish(request);
+  const captureId = (await f.submissions.reopen(request.jobId)).inputs[0].captureId!;
+  const prior = await f.captures.getForSourceHandoff(captureId);
+  await f.captures.assign(captureId, null, prior.capture.revision);
+  const docs = createImportDocumentsRepository(f.db, f.getAccount, f.captures);
+  const context = await captureAccountRequestContext("", f.getAccount);
+  expect(await docs.sourceLinks(context, "PERSONAL_INBOX", captureId)).toEqual([
+    {
+      sourceId: catalog.trip_sources[0].id,
+      representationId: catalog.trip_source_representations[0].id,
+      sourceRevision: 1,
+      tripId: catalog.trip_id,
+    },
+  ]);
+  expect((await docs.read(context, "PERSONAL_INBOX", captureId)).tripId).toBeNull();
+  f.sql
+    .prepare("DELETE FROM ledger_actor_context WHERE user_id=? AND journey_id=?")
+    .run(context.accountId, catalog.trip_id);
+  expect(await docs.sourceLinks(context, "PERSONAL_INBOX", captureId)).toEqual([]);
+  expect(
+    (await docs.original(context, "PERSONAL_INBOX", captureId)).document.visibility,
+  ).toBe("PRIVATE");
 });
