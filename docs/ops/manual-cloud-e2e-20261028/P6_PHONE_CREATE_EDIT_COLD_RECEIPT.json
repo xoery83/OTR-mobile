@@ -1,0 +1,55 @@
+{
+  "status": "PHONE_NORMAL_CREATE_EDIT_SERVER_ACCEPTED_INDEPENDENT_SERVER_VERIFIED_COLD_RECOVERY_PASS",
+  "fullE2E": "NEGATIVES_PENDING",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "build": 60,
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "itemId": "da8f50a9-29da-4528-8b1e-69b28447bbe3",
+  "revision": 3,
+  "title": "Forms QA Phone Activity 1029 Edited",
+  "activityDetails": [
+    {
+      "admission_note": "Use the synthetic east entrance",
+      "event_id": "da8f50a9-29da-4528-8b1e-69b28447bbe3",
+      "session_label": "Synthetic morning session",
+      "trip_id": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+    }
+  ],
+  "receipts": [
+    {
+      "command": "CREATE_ITEM",
+      "operationId": "8349fc1b-b0f3-42b1-8506-ad9b1d18d97d",
+      "outcome": "APPLIED",
+      "receiptSHA256": "e5fa3cb57086d2eb6cd5236b33e07ab246bc2db059c1d7d243fa1745f0cea9f9"
+    },
+    {
+      "command": "SET_ITEM_TEXT",
+      "operationId": "dfbace63-589e-426f-8da7-4eb41d2cba2b",
+      "outcome": "APPLIED",
+      "receiptSHA256": "69f5ce701ceef5d7f1ff7b63867aa15711d3d8dfc40c78a6cb520aab12d5eb7c"
+    },
+    {
+      "command": "SET_ACTIVITY_DETAILS",
+      "operationId": "7b8e8957-55a7-42b1-904f-e5125bc868a7",
+      "outcome": "APPLIED",
+      "receiptSHA256": "dd17e4e190c485234dee6bbaf22ec60b9dcaae5ce9b5f48dc61fa3d3977f785d"
+    }
+  ],
+  "readSHA256": "49da32e3d861e3470fe25af46e119e563f18db0495779fc6a297d7aa410223b9",
+  "native": {
+    "normalFormCreate": true,
+    "normalFormEdit": true,
+    "coldHomeLatestTitle": true,
+    "coldDetailsLatestTitleSessionAdmissionEveryone": true,
+    "pendingDot": false
+  },
+  "pendingColdBoundary": "Edit was locally saved; first independent server read still revision1. Process terminated/relaunched then server final revision3, latest UI retained. Server acceptance time relative to process termination not proven; not a guaranteed unsent-at-kill claim.",
+  "preservation": "No install/uninstall, Session/container/SQLite copying or Queue patch. Same Trip and old Items retained.",
+  "remaining": [
+    "True offline/reconnect",
+    "Live repeated dispatch",
+    "Cross-account/Creator permission negatives",
+    "Ticket/Voucher/media and full optional field matrix"
+  ]
+}
