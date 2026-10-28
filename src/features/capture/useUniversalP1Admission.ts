@@ -82,7 +82,9 @@ export function useUniversalP1Admission(
       const accepted = await readUniversalAcceptedItems(model, result, {
         getAccountId: requireAdoptedUserId,
         isCurrent: () => !canceled && current(),
-        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex),
+        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+          timeoutMs: 60000,
+        }),
       });
       if (!canceled && current())
         setStatuses((previous) => ({
