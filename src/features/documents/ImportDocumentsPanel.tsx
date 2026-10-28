@@ -121,6 +121,7 @@ function ScopedDocuments(props: Props) {
     setOpening(true);
     setError(false);
     setOriginal(null);
+    let phase = "REPOSITORY_READ";
     try {
       const { context, repository } = await reader();
       const retained = await repository.original(context, props.scope, captureId);
@@ -143,13 +144,38 @@ function ScopedDocuments(props: Props) {
         if (current() && request === sequence.current && retained.document.sha256)
           setOriginal({ captureId, sha256: retained.document.sha256, text });
       } else {
+        phase = "NATIVE_PREVIEW";
         const preview =
           props.previewOriginal ??
           (await import("@/native/importOriginalPreview")).previewImportOriginal;
         if (!current() || request !== sequence.current) return;
         await preview(retained, () => current() && request === sequence.current);
       }
-    } catch {
+    } catch (error) {
+      if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true") {
+        const code =
+          typeof error === "object" && error !== null && "code" in error
+            ? error.code
+            : error instanceof Error
+              ? error.message
+              : null;
+        console.info(
+          JSON.stringify({
+            event: "import_original_preview_failure",
+            phase,
+            code:
+              typeof code === "string" && /^[A-Z][A-Z0-9_]{0,79}$/.test(code)
+                ? code
+                : "UNCLASSIFIED",
+            kind:
+              error instanceof TypeError
+                ? "TYPE"
+                : error instanceof Error
+                  ? "ERROR"
+                  : "UNKNOWN",
+          }),
+        );
+      }
       if (current() && request === sequence.current) setError(true);
     } finally {
       if (scopeCurrent()) setOpening(false);

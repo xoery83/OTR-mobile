@@ -313,3 +313,31 @@ it("a Source link lookup failure leaves the retained original reader usable", as
   expect(detail.props.original).toMatchObject({ text: "retained original" });
   expect(detail.props.error).toBe(false);
 });
+
+it("QA preview diagnostics identify the failing port without original or error details", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const pdf = { ...doc, kind: "FILE", declaredContentType: "application/pdf" };
+    h.read.mockResolvedValue(pdf);
+    h.original.mockRejectedValue(
+      new Error("private original or token must never be logged"),
+    );
+    Harness(doc.captureId);
+    await settle();
+    (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(doc.captureId);
+    await settle();
+    expect(info).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: "import_original_preview_failure",
+        phase: "REPOSITORY_READ",
+        code: "UNCLASSIFIED",
+        kind: "ERROR",
+      }),
+    );
+    expect(info.mock.calls.flat().join()).not.toContain("private original");
+  } finally {
+    info.mockRestore();
+    vi.unstubAllEnvs();
+  }
+});

@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_DURABLE_NATIVE_INPUT_PASS_PREVIEW_FIRST_FAIL",
+  "artifact": {
+    "build": 63,
+    "sourceCommit": "d2dc5205c005a8b1462323f467478ad7c2aac15d",
+    "newNativeBuild": true,
+    "nativeSHA256": "8d7cdd00434f82b04242f192cd4427129b0e1ce37455225cf30d1d2bcfb6ed9a",
+    "nativeModuleSHA256": "fd981bee9874044a9a0d62f9c80848df7f9b49ad8b63acd63b3a0ac691743265",
+    "binaryPreviewExplicitQaEnabled": true,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "c44f30bee633f5b00fce0ff6c5b5d81f6a23f2605b987f591deb52d5f56baae8",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "fixture": {
+    "path": "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf",
+    "sha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+    "byteCount": 950,
+    "pageCount": 2
+  },
+  "captureId": "26adbb36-b330-4b77-82d3-4da34b2f0598",
+  "payloadId": "4f65bc54-51fb-4637-9025-7102524dbc0d",
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": null,
+  "observed": {
+    "normalSafariToFiles": true,
+    "normalNativeFilePicker": true,
+    "normalSubmitBatch": true,
+    "localDurableMetadataExact": true,
+    "personalInboxDetails": true,
+    "cloudBackupAsserted": false,
+    "openOriginal": "UNAVAILABLE_FIRST_FAIL",
+    "analyzeClicked": false,
+    "saveClicked": false
+  },
+  "serverQualification": "NOT_READY",
+  "nativePreviewQualification": "FIRST_FAIL_UNDER_DIAGNOSIS",
+  "existingGoldenSliceReexecuted": false
+}
