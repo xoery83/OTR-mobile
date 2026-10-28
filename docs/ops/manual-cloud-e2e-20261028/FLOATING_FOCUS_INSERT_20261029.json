@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_PASS_PHONE_PENDING",
+  "status": "LOCAL_PASS_PHYSICAL_FOCUS_INSERT_PASS",
   "base": "c552713b",
   "rootCause": "Accepted P1 quick-add eligibility rejected UNKNOWN Reader context when Trip had no zone, although the same screen had an explicit civil appearance date.",
   "repair": "Pass existing appearanceToday as insertionToday solely to P1 Focus affordance; validate dates and preserve START/status/Past/known-ended restrictions. Reader context, clock facts, map/navigation, NOW, transitions, Core/Backend Authority unchanged.",
@@ -19,7 +19,25 @@
     "newCloudWrites": 0
   },
   "remaining": [
-    "Physical floating P1 Focus plus and quick-add prefilled date/time verification.",
     "P1/P3/P4 live offline/replay/permission negatives remain pending."
-  ]
+  ],
+  "phone60": {
+    "source": "b1106689",
+    "build": 60,
+    "bundleId": "com.xoery.otrmobile.formsqa",
+    "jsSHA256": "c5b87f55514cd3b35cd1bfe7a028beb026ec265d5e5d53c838656bfe8ef0095d",
+    "install": "IN_PLACE_PASS_SAME_PROFILE_NATIVE_BASELINE_56_54",
+    "accountAndOldTrips": "RETAINED",
+    "item": "30a5b3e4-ba22-48d3-9cac-aa65b67aa32a",
+    "checks": [
+      "Real accepted P1 Focus now shows upper and lower plus, latest03:28/note/Everyone/no pending dot retained.",
+      "Lower plus \u2192 Add itinerary \u2192 Plan opens normal P1 form with Oct29,2026/04:18, unknown end retained.",
+      "Cancel returns to same Focus.",
+      "Upper plus \u2192 Plan opens same date/02:28. Cancel returns without saving.",
+      "Existing accepted P4 01:16/P1 03:28/P3 17:00 order remains correct."
+    ],
+    "newCloudWrites": 0,
+    "newItemSaves": 0,
+    "scope": "UI defaults and Cancel only; no offline/replay/permission or full Cloud claim"
+  }
 }
