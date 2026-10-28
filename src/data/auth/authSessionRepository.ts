@@ -1,3 +1,4 @@
+import { createGuestPrincipalRepository } from "./guestPrincipalRepository";
 import {
   identityFromAccessToken,
   type AccountIdentity,
@@ -19,7 +20,13 @@ export type SecureSessionStorage = {
   deleteItem(key: string): Promise<void>;
 };
 
-export function createAuthRepository(storage: SecureSessionStorage) {
+export function createAuthRepository(
+  storage: SecureSessionStorage,
+  createGuestId: () => string = () => {
+    throw new Error("Guest creation belongs to the launch boundary.");
+  },
+) {
+  const launch = createGuestPrincipalRepository(storage, createGuestId);
   async function readIndex(): Promise<AccountIndex> {
     const raw = await storage.getItem(accountIndexStorageKey);
     if (!raw) return { activeUserId: null, accounts: [] };
@@ -37,9 +44,24 @@ export function createAuthRepository(storage: SecureSessionStorage) {
     await storage.setItem(accountIndexStorageKey, JSON.stringify(index));
   }
 
+  async function readAccountSession(userId: string): Promise<LocalSession | null> {
+    const raw = await storage.getItem(accountSessionStorageKey(userId));
+    if (!raw) return null;
+    const session = JSON.parse(raw) as LocalSession;
+    const claims = identityFromAccessToken(session.accessToken);
+    if (session.identity?.userId !== userId || (claims && claims.userId !== userId))
+      throw new Error("SESSION_IDENTITY_MISMATCH");
+    return session;
+  }
+
   async function storeAccountSession(
     session: LocalSession & { identity: AccountIdentity },
   ) {
+    const claims = identityFromAccessToken(session.accessToken);
+    if (!session.identity.userId || (claims && claims.userId !== session.identity.userId))
+      throw new Error("SESSION_IDENTITY_MISMATCH");
+    await launch.assertNoGuestAdoption();
+    await launch.markPreviouslySignedIn();
     const index = await readIndex();
     const accounts = index.accounts.filter(
       (account) => account.userId !== session.identity.userId,
@@ -53,17 +75,14 @@ export function createAuthRepository(storage: SecureSessionStorage) {
     await storage.deleteItem(legacySessionStorageKey);
   }
 
-  return {
+  const repository = {
     // Diagnostics may observe only an already adopted active v2 session.
     // Startup/auth owns legacy adoption; this boundary never installs or deletes.
     async readAdoptedLocalSession(): Promise<LocalSession | null> {
       const index = await readIndex();
       if (index.activeUserId) {
-        const raw = await storage.getItem(accountSessionStorageKey(index.activeUserId));
-        if (!raw) throw new Error("SESSION_NOT_ADOPTED");
-        const session = JSON.parse(raw) as LocalSession;
-        if (session.identity?.userId !== index.activeUserId)
-          throw new Error("SESSION_IDENTITY_MISMATCH");
+        const session = await readAccountSession(index.activeUserId);
+        if (!session) throw new Error("SESSION_NOT_ADOPTED");
         return session;
       }
       if (await storage.getItem(legacySessionStorageKey))
@@ -74,8 +93,9 @@ export function createAuthRepository(storage: SecureSessionStorage) {
     async readLocalSession(): Promise<LocalSession | null> {
       const index = await readIndex();
       if (index.activeUserId) {
-        const raw = await storage.getItem(accountSessionStorageKey(index.activeUserId));
-        if (raw) return JSON.parse(raw) as LocalSession;
+        const session = await readAccountSession(index.activeUserId);
+        if (!session) throw new Error("SESSION_NOT_ADOPTED");
+        return session;
       }
 
       const raw = await storage.getItem(legacySessionStorageKey);
@@ -91,6 +111,7 @@ export function createAuthRepository(storage: SecureSessionStorage) {
     },
 
     async writeLocalSession(session: LocalSession) {
+      await launch.assertNoGuestAdoption();
       if (session.identity)
         return storeAccountSession({ ...session, identity: session.identity });
       await storage.setItem(legacySessionStorageKey, JSON.stringify(session));
@@ -98,6 +119,8 @@ export function createAuthRepository(storage: SecureSessionStorage) {
 
     async clearLocalSession() {
       const index = await readIndex();
+      if (index.activeUserId || (await storage.getItem(legacySessionStorageKey)))
+        await launch.markPreviouslySignedIn();
       if (!index.activeUserId) {
         await storage.deleteItem(legacySessionStorageKey);
         return;
@@ -120,9 +143,10 @@ export function createAuthRepository(storage: SecureSessionStorage) {
     },
 
     async selectAccount(userId: string) {
+      await launch.assertNoGuestAdoption();
       const [index, session] = await Promise.all([
         readIndex(),
-        storage.getItem(accountSessionStorageKey(userId)),
+        readAccountSession(userId),
       ]);
       if (!session || !index.accounts.some((account) => account.userId === userId))
         return false;
@@ -137,6 +161,13 @@ export function createAuthRepository(storage: SecureSessionStorage) {
         activeUserId: index.activeUserId === userId ? null : index.activeUserId,
         accounts: index.accounts.filter((account) => account.userId !== userId),
       });
+    },
+  };
+  return {
+    ...repository,
+    async readLocalAuthSnapshot() {
+      const session = await repository.readLocalSession();
+      return { session, principal: await launch.readLaunchIdentity(session) };
     },
   };
 }

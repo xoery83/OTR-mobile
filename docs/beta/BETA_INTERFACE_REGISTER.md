@@ -1,3 +1,16 @@
+# Auth / Identity Phase 1 — source candidate, 28 October 2026
+
+Auth owns adapter, secure Session/principal and Account UI files on its independent
+`codex/auth-identity-delivery-20261028` branch. Existing Supabase Auth/session
+authority is retained. Provisional Email OTP and Apple/Google ID-token exchange
+ports install no Session themselves; existing fenced account activation owns it.
+`readLocalAuthSnapshot` is apply-gated, with Guest kept outside Account identity.
+Native owns startup consumer/Navigation integration; Import released catalog
+editing after75de43cc. No business schema/permission or runtime Gate is changed.
+Independent source review PASS; actual OTP negative/configuration evidence only,
+Apple/Google configuration and positive Native/Provider E2E pending. Exact scope
+and six-point data checklist: `../ops/auth-phase1-20261028/README.md`.
+
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17
 
 - FP-02A builder owns new adjacent sparse-proof modules/tests in an isolated

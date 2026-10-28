@@ -1,4 +1,5 @@
 import { openDatabase } from "@/data/db/database";
+import * as Network from "expo-network";
 import type { LocalSession } from "@/domain/auth/localSession";
 import {
   pauseOperationalSync,
@@ -21,6 +22,11 @@ export function createDefaultAccountSwitchCoordinator(input: {
 }) {
   return createAccountSwitchCoordinator({
     pauseSync: pauseOperationalSync,
+    assertLogoutAllowed: async () => {
+      const network = await Network.getNetworkStateAsync();
+      if (network.isConnected !== true || network.isInternetReachable !== true)
+        throw new Error("LOGOUT_REQUIRES_ONLINE");
+    },
     restartSync: restartOperationalSync,
     readSession: readLocalSession,
     writeSession: writeLocalSession,

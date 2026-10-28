@@ -2,11 +2,32 @@
 
 Owner resumed product delivery from unified main1c7e7fc8 / Build40 / SQLite74, in independent `universal-product-20261028` worktree. Previous six minimum formal saves remain accepted; they are not continuous-user acceptance. Native owns shared normal Core policy/Reader/Sync and Manual Cloud work; Import holds no DEV/main/GUI lease.
 
-Local checkpoints: a0d660d1 exposes persisted Task lifecycle through existing context GET; 75de43cc adds private local Documents metadata/detail components and registered Source links; 3c39f2a3 fixes continuous six-function candidate and accepted-only closed recovery with isolated PG and independent NO_BLOCKER. Candidate remains NOT_INSTALLED; latest Native P3 function postimage must be live-CAS checked after its exclusive DEV recovery/deploy window. Existing roles/ACL/Schema stay unchanged; new persistent multi-operation Authority requires one exact Owner Gate. Results receipt-only cold recovery and pending Task GET polling are LOCAL_PASS, not Native PASS. The Import-owned Documents list/detail controller, private text original and Batch link are LOCAL_PASS; PDF/image viewer, shared route integration, Import Updates and complete lifecycle remain pending. Continuous Authority install/activate/close package is fixed offline and protected approval is pending after Native DEV handoff. Delivery plan/status: `ops/universal-product-20261028/DELIVERY.md`. New-path SERVER_VERIFIED and NATIVE_E2E_PASS are not claimed. No new permissions, budget, Schema/RLS/GRANT or production use.
+Local checkpoints: a0d660d1 exposes persisted Task lifecycle through existing context GET; 75de43cc adds private local Documents metadata/detail components and registered Source links; 3c39f2a3 fixes continuous six-function candidate and accepted-only closed recovery with isolated PG and independent NO_BLOCKER. Candidate remains NOT_INSTALLED; latest Native P3 function postimage must be live-CAS checked after its exclusive DEV recovery/deploy window. Existing roles/ACL/Schema stay unchanged; new persistent multi-operation Authority requires one exact Owner Gate. Results receipt-only cold recovery and pending Task GET polling are LOCAL_PASS, not Native PASS. The Import-owned Documents list/detail controller, private text original and Batch link are LOCAL_PASS; PDF/image viewer, shared route integration, Import Updates and complete lifecycle remain pending. Continuous Authority packet 091fb547 is explicitly Owner-approved (record ae1f1128); installation/activation remain pending Native DEV release and exact live preimage/configuration checks. No Hosted activation has occurred. Delivery plan/status: `ops/universal-product-20261028/DELIVERY.md`. New-path SERVER_VERIFIED and NATIVE_E2E_PASS are not claimed. No new permissions, budget, Schema/RLS/GRANT or production use.
 
 Earlier historical handoff follows unchanged; its integration-pending entries are superseded by main1c7e7fc8.
 
 # Current implementation state — 28 October 2026
+
+## Auth / Identity independent source slice — 28 October
+
+Owner authorizes continuous Auth→Guest→People→Invite→Settings→Usage delivery. Auth
+worktree/branch `auth-identity-delivery-20261028` starts at main1c7e7fc8. First source
+candidate adds provisional Email OTP and Apple/Google ID-token exchange, rejects
+cross-Account stored/refresh identity, reuses reviewed historical Guest/provisional
+and online-logout safeguards, and connects canonical OTP Account UI with focus
+cancellation. Guest snapshot is exported but Native bootstrap/business consumption
+and whole-dataset adoption remain separate owning deltas. SQLite74/Backend/schema/
+business permissions and existing QA sessions are unchanged.
+
+Independent Auth/Domain13 suites104 tests, TypeScript/UI guard/diff PASS. Actual DEV
+settings200 and invalid OTP403 only: Email on, Apple/Google off. No positive OTP,
+OAuth, Native UI, new cold-device restore or remote Session revocation PASS. Owner
+will supply a usable mailbox/provider setup later; safe Session work continues.
+Scope, data checklist and review: `ops/auth-phase1-20261028/README.md` and
+`INDEPENDENT_REVIEW.md`; approved exact Auth/Lang originals:
+`auth/design-v1-20261018/`. Next is a fresh host-only normal Synthetic Session
+with self-read/refresh/own-session revocation, followed by coordinated Native
+observation; keep actual Provider E2E pending until obtained.
 
 ## Active checkpoint: unified Native + Universal integration delivery
 
