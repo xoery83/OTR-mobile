@@ -80,6 +80,26 @@ describe.skipIf(process.platform === "win32")(
       await first;
       expect(run).toHaveBeenCalledOnce();
     });
+    it("quarantines an unproven worker termination instead of releasing another slot", async () => {
+      const run = vi
+        .fn()
+        .mockRejectedValueOnce(Error("PDF_V2_WORKER_TERMINATION_UNKNOWN"))
+        .mockResolvedValue({ testOnlyTransportResult: true });
+      const f = await listen(createSourcePdfV2WorkerServer(run));
+      await expect(f.read(retained)).rejects.toThrow("PDF_V2_WORKER_UNAVAILABLE");
+      await expect(f.read(retained)).rejects.toThrow("PDF_V2_WORKER_UNAVAILABLE");
+      expect(run).toHaveBeenCalledOnce();
+    });
+    it("releases a known terminated failure without making quarantine a general retry lock", async () => {
+      const run = vi
+        .fn()
+        .mockRejectedValueOnce(Error("PDF_V2_WORKER_FAILED"))
+        .mockResolvedValue({ testOnlyTransportResult: true });
+      const f = await listen(createSourcePdfV2WorkerServer(run));
+      await expect(f.read(retained)).rejects.toThrow("PDF_V2_WORKER_UNAVAILABLE");
+      expect(await f.read(retained)).toEqual({ testOnlyTransportResult: true });
+      expect(run).toHaveBeenCalledTimes(2);
+    });
     it("does not pass worker exceptions or socket paths to callers", async () => {
       const f = await listen(
         createSourcePdfV2WorkerServer(async () => {

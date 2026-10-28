@@ -12,7 +12,8 @@ import { runSourcePdfV2LinuxWorker } from "./sourcePdfV2LinuxWorker";
 // Parse only: no DB, credentials, caller-selected image or Source authority.
 // No startup/listen binding; socket ownership and mounting need a separate host gate.
 export function createSourcePdfV2WorkerServer(run = runSourcePdfV2LinuxWorker) {
-  let busy = false;
+  let busy = false,
+    quarantined = false;
   const server = createServer((incoming, outgoing) => {
     const reply = (status: number, value: unknown) => {
       if (outgoing.destroyed) return;
@@ -36,7 +37,7 @@ export function createSourcePdfV2WorkerServer(run = runSourcePdfV2LinuxWorker) {
         incoming.headers["content-encoding"]
       )
         return reply(400, { error: "PDF_V2_WORKER_INPUT_INVALID" });
-      if (busy) return reply(503, { error: "PDF_V2_WORKER_BUSY" });
+      if (busy || quarantined) return reply(503, { error: "PDF_V2_WORKER_BUSY" });
       busy = true;
       try {
         const boundary = createRequestBoundary(15000);
@@ -52,6 +53,13 @@ export function createSourcePdfV2WorkerServer(run = runSourcePdfV2LinuxWorker) {
         }
         if (!bytes.length) return reply(400, { error: "PDF_V2_WORKER_INPUT_INVALID" });
         reply(200, await run(bytes));
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message === "PDF_V2_WORKER_TERMINATION_UNKNOWN"
+        )
+          quarantined = true;
+        throw error;
       } finally {
         busy = false;
       }
