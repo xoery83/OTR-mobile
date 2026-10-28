@@ -1,4 +1,7 @@
 export const en = {
+  "updates.importActivity": "Recent Import activity",
+  "updates.importCoverage":
+    "Open a processing record to check its current results. These records do not have read or unread status.",
   "importDocuments.trip": "Trip Documents",
   "importDocuments.inbox": "Personal Inbox",
   "importDocuments.loading": "Loading documents…",
@@ -3005,6 +3008,8 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "updates.importActivity": "近期导入动态",
+  "updates.importCoverage": "打开解析记录可查看当前结果。这些记录暂不区分已读和未读。",
   "importDocuments.trip": "行程文档",
   "importDocuments.inbox": "个人收件箱",
   "importDocuments.loading": "正在读取文档…",
