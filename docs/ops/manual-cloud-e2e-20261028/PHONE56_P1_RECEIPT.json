@@ -1,0 +1,77 @@
+{
+  "build": 56,
+  "sourceCommit": "e60af84e",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "itemId": "30a5b3e4-ba22-48d3-9cac-aa65b67aa32a",
+  "revision": 3,
+  "title": "Forms QA Phone Plan",
+  "create": "NATIVE_DATE_ONLY_CREATE_SERVER_ACCEPTED_SERVER_VERIFIED",
+  "edit": "NATIVE_SAME_ITEM_NOTE_AND_CIVIL_CLOCK_EDIT_SERVER_ACCEPTED_SERVER_VERIFIED",
+  "date": "2026-10-29",
+  "clock": "03:28:00",
+  "note": "Phone P1 timed edit",
+  "participation": "WHOLE_GROUP",
+  "noInventedZoneOrInstant": true,
+  "receipts": [
+    {
+      "command": "CREATE_ITEM",
+      "operationId": "7f819974-e719-4f8e-b917-22ff805fd53c",
+      "outcome": "APPLIED",
+      "receiptSHA256": "d8b9bf1ddca902a5536a5a3b4a19e830da5df364824d0a82a1f611e92bf4522f"
+    },
+    {
+      "command": "SET_ITEM_TEXT",
+      "operationId": "e849f57f-9dde-44aa-983b-563edb2de35b",
+      "outcome": "APPLIED",
+      "receiptSHA256": "c194aa1dff373ea8480afab7565c78b69596e41e140742afcb6362d8b9ee80c6"
+    },
+    {
+      "command": "SET_ITEM_SCHEDULE",
+      "operationId": "bbebc8aa-9e06-4f80-8754-e19239f7d064",
+      "outcome": "APPLIED",
+      "receiptSHA256": "e6a3f2de3571721835cd25a358b321cd034b3e7fc000876f7118ea09e051c437"
+    }
+  ],
+  "coldRecovery": "NATIVE_SAME_SESSION_TRIP_ITEM_LATEST_0328_NOTE_EVERYONE_NO_PENDING_DOT",
+  "partialReadBeforeCold": {
+    "revision": 2,
+    "noteAccepted": true,
+    "scheduleNotYetInReadback": true,
+    "nativeLatestFieldsAndPendingDotObserved": true
+  },
+  "pendingAtExactProcessTermination": "NOT_PROVEN_TOOL_APPROVAL_DELAY_NO_INTERRUPTED_WRITE_CLAIM",
+  "duplicateDispatch": "NOT_EXERCISED_SINGLE_FINAL_ITEM_ONLY",
+  "itemCount": 1,
+  "uiObserved": [
+    "short Save label fits",
+    "rectangular Today cell and Trip reference range",
+    "date-only Details before Edit",
+    "updated clock/note immediately",
+    "cold Widget/Details latest fields without pending point"
+  ],
+  "dayFeedSort": {
+    "status": "FAIL_OBSERVED_ON_PHONE56",
+    "date": "2026-10-29",
+    "observed": [
+      "P3 17:00",
+      "P4 01:16",
+      "P1 03:28"
+    ],
+    "expected": [
+      "P4 01:16",
+      "P1 03:28",
+      "P3 17:00"
+    ],
+    "next": "repair accepted non-comparable civil presentation; preserve canonical Core/qualified instant order"
+  },
+  "remaining": [
+    "offline/reconnect",
+    "explicit duplicate dispatch/transient retry",
+    "live wrong-account/creator/conflict negatives",
+    "complete cross-day/EN-ZH/dark/gesture matrix"
+  ],
+  "fullCloudL3": "IN_PROGRESS_NOT_COMPLETE",
+  "normalCoreWindow": "RETURNED_TO_IMPORT_NO_PENDING_NEW_INTENTS"
+}
