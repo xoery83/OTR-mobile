@@ -71,11 +71,24 @@
   "airportsDisabled": true,
   "sixFunctionsUnchanged": true,
   "newProviderCalls": 1,
-  "reportedCost": "Not yet independently invoiced; existing $0.05 single-call cap and unchanged approved budget.",
+  "reportedCost": "USD 0.000209880 estimated ledger cost; not an invoice.",
   "limitations": [
     "Only normal line-end whitespace normalization was exercised in this real call; CRLF/blank-line/Unicode and ambiguous literals have directed local tests.",
     "Normal Task prepare-to-publication took approximately six minutes; latency remains a Beta concern.",
     "Actual Activity displayed stale Processing after Results; independent follow-up software fix is locally tested, not yet Native verified.",
     "This does not qualify binary Source ingress, BOM inputs or P2 changed-hash."
-  ]
+  ],
+  "providerUsage": {
+    "cached_input_tokens": 1280,
+    "cost_nanos": "209880",
+    "cost_quality": "ESTIMATED",
+    "currency": "USD",
+    "input_tokens": 1514,
+    "observation_kind": "COMPLETION",
+    "output_tokens": 110,
+    "reasoning_tokens": null,
+    "status": "SUCCEEDED",
+    "total_tokens": 1624,
+    "usage_quality": "ACTUAL_REPORTED"
+  }
 }
