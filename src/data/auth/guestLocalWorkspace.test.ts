@@ -717,3 +717,89 @@ it("rejects a stale Guest reader when the same UUID is now an Account, without r
   const rebound = await f.newOpener()();
   expect((await rebound.readCaptureInventory()).entries).toHaveLength(1);
 });
+
+it("freezes real Guest Trip/P1 writes while its owning inventory stays readable; release resumes the same draft", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const input = tripInput();
+  await workspace.trips.createTrip(input);
+  const draft = await workspace.plan.createDraft(input.tripId);
+  const lease = await workspace.freezeForInventory();
+  const before = (await lease.readCensus()).tables;
+  await expect(workspace.trips.createTrip(tripInput())).rejects.toThrow(
+    "GUEST_INVENTORY_FROZEN",
+  );
+  await expect(workspace.trips.selectBuiltInCover(input.tripId, null)).rejects.toThrow(
+    "GUEST_INVENTORY_FROZEN",
+  );
+  await expect(
+    workspace.plan.save(draft, {
+      ...draft.fields,
+      title: "Held draft",
+      startDate: input.startDate,
+    }),
+  ).rejects.toThrow("GUEST_INVENTORY_FROZEN");
+  expect((await lease.readCensus()).tables).toEqual(before);
+  expect((await lease.readCaptureInventory()).coverage).toBe("CAPTURE_ONLY");
+  await expect(workspace.freezeForInventory()).rejects.toThrow(
+    "GUEST_INVENTORY_FREEZE_ACTIVE",
+  );
+  expect(await lease.release()).toBe(true);
+  expect(await lease.release()).toBe(false);
+  const saved = await workspace.plan.save(draft, {
+    ...draft.fields,
+    title: "Held draft",
+    startDate: input.startDate,
+  });
+  expect(saved.localStatus).toBe("PENDING");
+  await expect(lease.readCensus()).rejects.toThrow("GUEST_INVENTORY_FREEZE_RELEASED");
+});
+it("shares the write fence across two workspace openers of the same Guest", async () => {
+  const f = fixture(),
+    a = await f.newOpener()(),
+    b = await f.newOpener()();
+  const first = await a.freezeForInventory();
+  await expect(b.trips.createTrip(tripInput())).rejects.toThrow("GUEST_INVENTORY_FROZEN");
+  await expect(b.freezeForInventory()).rejects.toThrow("GUEST_INVENTORY_FREEZE_ACTIVE");
+  await first.release();
+  const second = await b.freezeForInventory();
+  expect(await first.release()).toBe(false);
+  await expect(a.trips.createTrip(tripInput())).rejects.toThrow("GUEST_INVENTORY_FROZEN");
+  await second.release();
+  await a.trips.createTrip(tripInput());
+});
+it("waits for the currently committing Guest write before taking its inventory freeze", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  let pending!: ReturnType<typeof workspace.freezeForInventory>;
+  f.afterTripInsert(() => {
+    pending = workspace.freezeForInventory();
+  });
+  await workspace.trips.createTrip(tripInput());
+  const lease = await pending;
+  expect((await lease.readCensus()).totals.trips).toBe(1);
+  await lease.release();
+});
+it("rejects a stale freeze after the principal changes without opening an Account vault", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    lease = await workspace.freezeForInventory();
+  f.setPrincipal({ kind: "ACCOUNT", accountId: randomUUID() });
+  await expect(lease.readCensus()).rejects.toThrow("GUEST_LOCAL_SCOPE_CHANGED");
+  await expect(lease.release()).rejects.toThrow("GUEST_LOCAL_SCOPE_CHANGED");
+});
+
+it("recovers an obsolete prepublication freeze only through a new current Guest scope", async () => {
+  const f = fixture(),
+    original = await f.newOpener()(),
+    old = await original.freezeForInventory();
+  advanceAccountGeneration();
+  const current = await f.newOpener()(),
+    lease = await current.freezeForInventory();
+  await expect(old.release()).rejects.toThrow("Account changed");
+  await expect(current.trips.createTrip(tripInput())).rejects.toThrow(
+    "GUEST_INVENTORY_FROZEN",
+  );
+  await lease.release();
+  await current.trips.createTrip(tripInput());
+});

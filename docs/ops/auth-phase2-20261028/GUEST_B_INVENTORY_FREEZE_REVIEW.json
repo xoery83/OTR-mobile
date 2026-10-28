@@ -1,0 +1,22 @@
+{
+  "status": "SOURCE_REVIEW_PASS_PREPUBLICATION_ONLY",
+  "directed": "5 suites88 tests PASS",
+  "independent": "32 real Node SQLite file tests PASS; no blocker",
+  "safety": [
+    "same apply gate acquisition waits prior commit",
+    "same Guest process-wide fence across workspace openers",
+    "original repository getters reject queued/late Trip/P1/cover access while frozen",
+    "census and owning Capture inventory retain read-only original identity scope",
+    "before/after lease token and scope checks",
+    "idempotent release cannot unlock a later lease",
+    "current legitimate Guest opener clears only obsolete-generation inventory fence"
+  ],
+  "preserved": "Blocked writes leave actual SQLite table inventory unchanged; release resumes same P1 draft/repository",
+  "unverified": [
+    "Native freeze UX/consumer",
+    "live draft and all files combined snapshot",
+    "durable PUBLISH_REQUESTED write fence/cold recovery",
+    "server manifest/publication/Adoption E2E"
+  ],
+  "authority": "No publisher activation, second repository/sync engine, Account reassignment, SQL or Session change"
+}

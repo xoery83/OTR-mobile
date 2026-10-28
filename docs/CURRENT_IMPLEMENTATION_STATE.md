@@ -226,6 +226,16 @@ actual primary8 suites111 PASS. Six original dirty files and full tracked/cached
 diff hashes are unchanged. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is the
 pre-final-push snapshot; independently verify actual remote refs after normal push.
 
+B read-only inventory now has a process-local freeze lease on the existing Guest
+workspace. Original Trip/Core/P1 getters reject writes/access while frozen; owning
+census/Capture reads retain raw identity scope and verify lease pins before/after.
+Same Guest openers share the fence, acquisition waits previous commits, release
+resumes the same draft and cannot unlock a newer token; a newly verified current
+Guest scope clears only obsolete-generation inventory fences. 5 suites88 directed
+and independent32 real SQLite file tests PASS. Default Native consumer not wired;
+not a durable publication lock or full file/draft collector. PUBLISH_REQUESTED cold
+write fencing and authoritative server status remain required before activation.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
