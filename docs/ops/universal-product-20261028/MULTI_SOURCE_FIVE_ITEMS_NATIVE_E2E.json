@@ -83,8 +83,7 @@
   "notClaimed": [
     "Complete ordinary-user Beta",
     "Binary Source ingress",
-    "P2 Qualified/Journey/Booking/Ticket",
-    "P4/P5/P6 Documents original and saved-link UI pending"
+    "P2 Qualified/Journey/Booking/Ticket"
   ],
   "coldRecovery": {
     "launchRoot": "My Trips",
@@ -147,6 +146,20 @@
       "sameDocumentReadonlyReopen": "RECOVERED",
       "failureCause": "NOT_OBSERVED"
     },
-    "P4_P5_P6": "PENDING"
+    "P4": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "P5": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "P6": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "status": "FIVE_ORIGINALS_AND_OWN_ITEM_ASSOCIATION_NATIVE_E2E_PASS",
+    "privateLocalCustodyWithNoCloudBackupClaim": true,
+    "sourceScopeClosedDuringRead": true
   }
 }
