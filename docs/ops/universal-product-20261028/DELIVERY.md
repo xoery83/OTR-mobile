@@ -20,3 +20,10 @@ Native owns shared Navigation/Session/DayFeed/Sync and backend tripNormalP1Polic
 - Documents / Review / Updates / new-path input regression: pending. No new SERVER_VERIFIED or NATIVE_E2E_PASS claimed.
 
 Temporary business permissions remain closed. No DEV/Provider/Production call made by this product lane checkpoint.
+
+## Fixed local checkpoints
+
+- `a0d660d1`: existing context GET now includes optional persisted Task lifecycle; old Hosts remain compatible. Six affected suites75PASS, typecheck/UIguardPASS; lint0errors (two pre-existing duplicate-import warnings in continuous Host). No deployment or paid calls.
+- Documents private original reader: Account-fenced metadata cursor30, separate Personal Inbox/explicitly assigned Trip. Historical Trip prior does not assign. Opens existing verified payload and rechecks scope after bytes; no cloud-original claim, sharing, new Document IDs or Item links. Six isolated SQLite testsPASS including file-backed restart, missing original, late account change and Trip revocation. UI and Source/Item relation projection remain pending.
+- Actual DEV readonly metadata2026-10-28T02:06:02Z: policy.enabled=true, universal_import_enabled=true, universal_p1_import_enabled=false, review_scope=NULL. Existing Source intake already has a sustained path; exact single-operation Save guard remains the protected bottleneck. Snapshot `/private/tmp/otr-universal-product-preflight/functions.json`; no hosted writes.
+- Auth lane announced exclusive Auth/Session work. Import only calls unchanged Auth APIs; no Auth file edited.
