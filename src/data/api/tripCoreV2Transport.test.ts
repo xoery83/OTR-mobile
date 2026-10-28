@@ -335,14 +335,23 @@ it("does not treat unavailable, forged target/status or foreign Plan as a comple
 it("sends only the validated operation capability context; Manual URL is unchanged", async () => {
   const urls: string[] = [],
     operation = randomUUID();
+  const capabilities = vi.fn(async () => coreClosedCapabilities);
+  const handler = createDevBackendHandler({
+    gateway: {
+      validateAccessToken: async (value: string) =>
+        value === "valid" ? { id: actor } : null,
+      canReadTrip: async () => true,
+    } as unknown as DevBackendGateway,
+    coreConnection: { hash, read: { capabilities } } as never,
+  });
   const transport = createCoreV2Transport(
     async () => actor,
     hash,
     {
       baseUrl: "http://core.local",
-      fetchImplementation: async (input) => {
+      fetchImplementation: async (input, init) => {
         urls.push(String(input));
-        return new Response(JSON.stringify(coreClosedCapabilities));
+        return handler(new Request(input, init));
       },
     },
     token,
@@ -353,4 +362,8 @@ it("sends only the validated operation capability context; Manual URL is unchang
   expect(urls.map((u) => new URL(u).search)).toEqual(["", "?operationId=" + operation]);
   await expect(transport.capabilities(context, "bad")).rejects.toThrow();
   expect(urls).toHaveLength(2);
+  expect(capabilities.mock.calls).toEqual([
+    [actor, trip],
+    [actor, trip, operation],
+  ]);
 });
