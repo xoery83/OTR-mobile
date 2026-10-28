@@ -41,3 +41,9 @@ product callers use the nonce bridge; Apple remains required. Independent2 suite
 checks PASS; root final16 suites133 tests/typecheck/scoped lint/diff PASS. This
 supplement changes JS only; Native applies it after current Swift compilation and
 before the final Build45 embedded bundle. Native runtime acceptance is still pending.
+
+First real Swift compile found only the imported GIDSignInErrorCode type name
+unavailable. Use the cancellation value from the pinned9.2.0 public header
+(kGIDSignInErrorCodeCanceled=-5), still gated by kGIDSignInErrorDomain. No nonce or
+Session behavior changes. Recompile is required; syntax parsing alone was never
+claimed as native type/link acceptance.
