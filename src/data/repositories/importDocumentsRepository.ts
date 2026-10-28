@@ -43,6 +43,7 @@ const select = `SELECT c.id AS captureId,c.account_id AS accountId,c.trip_id AS 
  LEFT JOIN capture_submission_inputs i ON i.account_id=c.account_id AND i.input_id=(
  SELECT si.input_id FROM capture_submission_inputs si WHERE si.account_id=c.account_id
  AND si.capture_id=c.id AND si.acceptance_state='ACCEPTED' AND si.accepted_payload_id=c.payload_id
+ AND (p.id IS NULL OR (si.content_sha256=p.sha256 AND si.content_byte_count=p.byte_count))
  ORDER BY si.input_id LIMIT 1)
  LEFT JOIN capture_submission_batches h ON h.account_id=i.account_id AND h.batch_id=i.batch_id`;
 
@@ -141,6 +142,44 @@ export function createImportDocumentsRepository(
       const documents = rows.map((row) => project(row, context, scope));
       await authorize(context, scope);
       return documents;
+    },
+    async sourceLinks(
+      context: AccountRequestContext,
+      scope: ImportDocumentScope,
+      captureId: string,
+    ) {
+      const document = await read(context, scope, captureId);
+      if (scope !== "TRIP") return [];
+      const rows = await db.getAllAsync(
+        `SELECT DISTINCT b.source_id AS sourceId,b.representation_id AS representationId,b.material_revision AS sourceRevision
+       FROM local_capture_source_bindings b JOIN trip_sources s ON s.cache_account_id=b.account_id AND s.trip_id=b.trip_id AND s.id=b.source_id
+       JOIN trip_source_representations r ON r.cache_account_id=b.account_id AND r.source_id=b.source_id AND r.id=b.representation_id
+       WHERE b.account_id=? AND b.trip_id=? AND b.capture_id=? AND b.capture_payload_id=? AND b.state='ADMITTED'
+       AND b.material_sha256=? AND b.byte_count=? AND s.acquired_by=b.account_id
+       AND s.registration_state='REGISTERED' AND s.lifecycle='ACTIVE' AND s.retention_state='RETAINED' AND s.current_material_revision=b.material_revision
+       AND r.registration_state='REGISTERED' AND r.role='ORIGINAL' AND r.retention_state='RETAINED' AND r.introduced_revision=b.material_revision
+       AND r.payload_sha256=b.material_sha256 AND r.byte_count=b.byte_count ORDER BY b.source_id,b.representation_id LIMIT 65`,
+        context.accountId,
+        context.tripId,
+        captureId,
+        document.payloadId,
+        document.sha256,
+        document.byteCount,
+      );
+      if (rows.length > 64) throw Error("DOCUMENTS_SOURCE_LIMIT");
+      const links = rows.map((row) =>
+        z
+          .strictObject({
+            sourceId: z.uuid(),
+            representationId: z.uuid(),
+            sourceRevision: z.number().int().positive(),
+          })
+          .parse(row),
+      );
+      const after = await read(context, scope, captureId);
+      if (JSON.stringify(after) !== JSON.stringify(document))
+        throw Error("DOCUMENTS_ORIGINAL_CHANGED");
+      return links;
     },
     async original(
       context: AccountRequestContext,

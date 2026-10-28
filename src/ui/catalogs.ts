@@ -1,4 +1,21 @@
 export const en = {
+  "importDocuments.trip": "Trip Documents",
+  "importDocuments.inbox": "Personal Inbox",
+  "importDocuments.loading": "Loading documents…",
+  "importDocuments.unavailable": "Documents are unavailable. Try refreshing.",
+  "importDocuments.empty": "No documents in this scope yet.",
+  "importDocuments.private": "Private",
+  "importDocuments.originalUnavailable": "The original is unavailable on this device.",
+  "importDocuments.localRecorded": "Local original recorded",
+  "importDocuments.details": "View document details",
+  "importDocuments.openOriginal": "Open original",
+  "importDocuments.openBatch": "View Import Batch",
+  "importDocuments.custodyExplanation":
+    "The original is checked when opened. Cloud backup is not confirmed.",
+  "importDocuments.format.TEXT": "Text",
+  "importDocuments.format.FILE": "File",
+  "importDocuments.format.IMAGE": "Image",
+
   "capture.ai.task.PENDING": "Waiting for processing.",
   "capture.ai.task.WAITING":
     "Processing is waiting for an available connection or permission.",
@@ -2969,6 +2986,22 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "importDocuments.trip": "行程文档",
+  "importDocuments.inbox": "个人收件箱",
+  "importDocuments.loading": "正在读取文档…",
+  "importDocuments.unavailable": "暂时无法读取文档，请刷新重试。",
+  "importDocuments.empty": "此范围内暂无文档。",
+  "importDocuments.private": "私密",
+  "importDocuments.originalUnavailable": "此设备上无法访问原件。",
+  "importDocuments.localRecorded": "已记录本机原件",
+  "importDocuments.details": "查看文档详情",
+  "importDocuments.openOriginal": "查看原件",
+  "importDocuments.openBatch": "查看导入批次",
+  "importDocuments.custodyExplanation": "打开时会校验原件。尚未确认云端备份。",
+  "importDocuments.format.TEXT": "文字",
+  "importDocuments.format.FILE": "文件",
+  "importDocuments.format.IMAGE": "图片",
+
   "capture.ai.task.PENDING": "等待处理。",
   "capture.ai.task.WAITING": "正在等待可用连接或权限。",
   "capture.ai.task.PROCESSING": "正在读取旅行资料。",

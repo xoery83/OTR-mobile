@@ -1,3 +1,4 @@
+import type { SQLiteBindValue } from "expo-sqlite";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { fixture } from "./__fixtures__/captureBatchAssessment";
@@ -67,6 +68,16 @@ it("explicit lawful assignment changes only document scope and retains real Batc
   const trip = await docs.list(context, "TRIP"),
     inbox = await docs.list(context, "PERSONAL_INBOX");
   expect(trip).toHaveLength(1);
+  expect(await docs.sourceLinks(context, "TRIP", trip[0].captureId)).toEqual([
+    {
+      sourceId: catalog.trip_sources[0].id,
+      representationId: catalog.trip_source_representations[0].id,
+      sourceRevision: 1,
+    },
+  ]);
+  expect(await docs.sourceLinks(context, "PERSONAL_INBOX", inbox[0].captureId)).toEqual(
+    [],
+  );
   expect(inbox).toHaveLength(1);
   expect(trip[0].captureId).not.toBe(inbox[0].captureId);
   expect(trip[0]).toMatchObject({
@@ -135,13 +146,13 @@ it("validates bounded paging and keeps unavailable material distinct from cloud 
   const context = await captureAccountRequestContext("", f.getAccount);
   const db = {
     ...f.db,
-    getAllAsync: vi.fn(async (q: string, ...p: unknown[]) => {
+    getAllAsync: vi.fn(async (q: string, ...p: SQLiteBindValue[]) => {
       const rows = await f.db.getAllAsync<Record<string, unknown>>(q, ...p);
       return rows.map((row) => ({ ...row, sha256: null, byteCount: null }));
     }),
   };
   const docs = createImportDocumentsRepository(
-    db as typeof f.db,
+    db as unknown as typeof f.db,
     f.getAccount,
     f.captures,
   );
@@ -150,4 +161,17 @@ it("validates bounded paging and keeps unavailable material distinct from cloud 
     cloudOriginal: "NOT_ASSERTED",
   });
   await expect(docs.list(context, "PERSONAL_INBOX", { limit: 101 })).rejects.toThrow();
+});
+
+it("same Batch and identical retained bytes do not link a sibling to another input's Source", async () => {
+  const f = fixture(),
+    request = await f.submit(2),
+    catalog = await f.publish(request);
+  const context = await captureAccountRequestContext(catalog.trip_id, f.getAccount);
+  const docs = createImportDocumentsRepository(f.db, f.getAccount, f.captures);
+  const [sibling] = await docs.list(context, "PERSONAL_INBOX");
+  const retained = await f.captures.getForSourceHandoff(sibling.captureId);
+  await f.captures.assign(sibling.captureId, catalog.trip_id, retained.capture.revision);
+  expect(await docs.list(context, "TRIP")).toHaveLength(2);
+  expect(await docs.sourceLinks(context, "TRIP", sibling.captureId)).toEqual([]);
 });

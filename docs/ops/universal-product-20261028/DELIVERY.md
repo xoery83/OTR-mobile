@@ -27,3 +27,19 @@ Temporary business permissions remain closed. No DEV/Provider/Production call ma
 - Documents private original reader: Account-fenced metadata cursor30, separate Personal Inbox/explicitly assigned Trip. Historical Trip prior does not assign. Opens existing verified payload and rechecks scope after bytes; no cloud-original claim, sharing, new Document IDs or Item links. Six isolated SQLite testsPASS including file-backed restart, missing original, late account change and Trip revocation. UI and Source/Item relation projection remain pending.
 - Actual DEV readonly metadata2026-10-28T02:06:02Z: policy.enabled=true, universal_import_enabled=true, universal_p1_import_enabled=false, review_scope=NULL. Existing Source intake already has a sustained path; exact single-operation Save guard remains the protected bottleneck. Snapshot `/private/tmp/otr-universal-product-preflight/functions.json`; no hosted writes.
 - Auth lane announced exclusive Auth/Session work. Import only calls unchanged Auth APIs; no Auth file edited.
+
+## Sustained reviewed Source candidate
+
+Candidate only: `authority/FIVE_FAMILY_POSTIMAGES_CANDIDATE.json`, generated from actual DEV preimages by `scripts/import/build_continuous_review_candidate.py`. Five-family mode (P1/P3/P4/P5/P6) keeps all existing Source/evidence/Plan/receipt checks, replaces operator-pinned object values with the existing owning candidate's immutable Plan, and still requires explicit opt-in policy, exact QA Account/Trip and outer expiry. P2 remains CLOSED in this candidate. No installer/activation is provided.
+
+Existing `isReviewedP1Gate` remains byte-identical and single-family strict. Source's own capability assertion narrows requested family; Core command capability must instead derive it from an already sealed Source Slot by the existing operation ID. Native sole Writer has the three-line operation-context adapter request; isolated test emulates it and is not proof of integrated runtime.
+
+Real network-none/256MiB/1CPU PG:24 policy/default-off/isolation/expiry/type/forged-row/kill checks plus actual new-mode Source Plan→Admission→Core→receipt/finalize/replay and reverse-hash rollback PASS (one P6 fixture, 59.98seconds). No Hosted Golden Slice replay or Provider call. Own candidate rollback rejects accepted unfinished Source, then restores current P6-compatible preimages after completion, preserving Item/details. This does not yet prove closed-policy accepted-only finalization; that and P2 publication/registry are remaining Gate-readiness blockers.
+
+## Shared writer handoff
+
+Native fixed `eb77fc08` includes the requested initial `otr.core.operation` transaction context. Import ports only those exact two changed lines, verified against the Native fixed file; no Manual policy/Reader/Sync changes are authored here. The local PG fixture can now use the actual adapter rather than emulate it. Native remains the owning Writer for its Manual P3 changes.
+
+Documents isolated components now cover private list/detail, verified-text identity, same Activity Job link and scope-invalid rendering;14 UI/SQLite checks, typecheck, scoped lint and UIguard157 representative files PASS. Source/Representation links use existing registered retained pins; same Batch and same bytes do not link a sibling. No Item link is invented.
+
+Central `src/ui/catalogs.ts` editing for the current Import Task/Document keys is COMPLETE. Import releases the central dictionary edit window after this fixed checkpoint; later Import messages will use an Import-owned dictionary export and minimal serial integration, avoiding concurrent central edits with Auth. Auth messages may remain an independent export until integration. This records file ownership, not any authorization to send new-thread messages.
