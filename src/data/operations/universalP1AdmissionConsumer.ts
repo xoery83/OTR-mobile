@@ -1,3 +1,4 @@
+import { universalPreparedText } from "../../domain/capture/universalPreparedText";
 import { universalP1Identity } from "../../domain/trip/universalImportIdentity";
 import {
   universalP2SourceReviewSchema,
@@ -293,13 +294,19 @@ export async function readUniversalP1ReviewOriginal(
     retained.bytes.length !== input.contentByteCount ||
     retained.bytes.length > 65536 ||
     (await deps.hash(retained.bytes)) !== source.originalSha256 ||
-    source.originalSha256 !== input.contentSha256 ||
-    source.submittedSha256 !== source.originalSha256
+    source.originalSha256 !== input.contentSha256
   )
     throw Error("IMPORT_EVIDENCE_INVALID");
   const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
     retained.bytes,
   );
+  if (
+    source.submittedSha256 !== source.originalSha256 &&
+    (candidates[0].kind === "P2" ||
+      (await deps.hash(new TextEncoder().encode(universalPreparedText(text)))) !==
+        source.submittedSha256)
+  )
+    throw Error("IMPORT_EVIDENCE_INVALID");
   await current();
   return text;
 }

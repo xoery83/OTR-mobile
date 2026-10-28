@@ -1,3 +1,4 @@
+import { universalPreparedText } from "../../src/domain/capture/universalPreparedText";
 import { universalP1Identity } from "../../src/domain/trip/universalImportIdentity";
 import { z } from "zod";
 import {
@@ -89,7 +90,52 @@ export async function projectUniversalP1Selection(
       : !["HIGH_CONFIDENCE", "REVIEWABLE"].includes(quality[0].tier))
   )
     throw Error("OWNING_REVIEW_REQUIRED");
-  const candidate = candidates[0];
+  const candidate = structuredClone(candidates[0]);
+  // Only changed prepared text needs re-anchoring; ambiguous original literals remain unresolved.
+  for (const field of candidate.fields) {
+    const bindings = result.sourceBindings.filter(
+      (b) =>
+        b.alias === field.sourceId &&
+        b.sourceId === catalog.sourceId &&
+        b.status === "READY",
+    );
+    if (bindings.length !== 1) throw Error("SOURCE_RELATION_QUALIFICATION_REQUIRED");
+    const binding = bindings[0];
+    if (binding.submittedSha256 === binding.originalSha256) continue;
+    const materials = snapshot.materials.filter(
+      (m) =>
+        m.pin.id === binding.inputId &&
+        m.pin.source_id === binding.sourceId &&
+        m.pin.material_revision === binding.revision &&
+        m.pin.representation_id === binding.representationId &&
+        m.pin.payload_sha256 === binding.originalSha256,
+    );
+    if (
+      materials.length !== 1 ||
+      materials[0].form !== "TEXT" ||
+      materials[0].media_type !== "text/plain"
+    )
+      throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+    const bytes = Buffer.from(materials[0].text),
+      prepared = Buffer.from(universalPreparedText(materials[0].text));
+    if (
+      (await deps.hash(bytes)) !== binding.originalSha256 ||
+      (await deps.hash(prepared)) !== binding.submittedSha256 ||
+      !("start" in field) ||
+      field.end <= field.start ||
+      field.end > prepared.length ||
+      new TextDecoder("utf-8", { fatal: true }).decode(
+        prepared.subarray(field.start, field.end),
+      ) !== field.raw
+    )
+      throw Error("IMPORT_EVIDENCE_INVALID");
+    const literal = Buffer.from(field.raw),
+      start = bytes.indexOf(literal);
+    if (start < 0 || bytes.indexOf(literal, start + 1) !== -1)
+      throw Error("IMPORT_EVIDENCE_INVALID");
+    field.start = start;
+    field.end = start + literal.length;
+  }
   const family = candidate.kind as "P1" | "P3" | "P4" | "P5" | "P6";
   if (["P4", "P5", "P6"].includes(family) && !selection.sourceReview)
     throw Error("OWNING_REVIEW_REQUIRED");
@@ -243,8 +289,7 @@ export async function projectUniversalP1Selection(
             m.pin.representation_id === b.representationId &&
             m.pin.payload_sha256 === b.originalSha256,
         );
-      if (materials.length !== 1 || b.submittedSha256 !== b.originalSha256)
-        throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+      if (materials.length !== 1) throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
       const bytes = Buffer.from(materials[0].text);
       if (
         field.end <= field.start ||
