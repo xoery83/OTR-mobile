@@ -102,8 +102,14 @@ reading it. Real inbox delivery, native signup/Session/cold restore, Account
 isolation, resend/throttling, actual elapsed-expiry rejection and normal logout/
 server Session absence are recorded in EMAIL_OTP_HOSTED_DEV_E2E.json. The stricter
 temporary expiry is restored to3600 seconds/eight digits. Expired-code error text
-was below the visible long form; source repaird3d334d4 is reviewed/tested, with
-focused Native visibility acceptance pending. No Apple activation or business
+was below the visible long form; source repaird3d334d4 is reviewed/tested. Native52
+source9c818005/JS2bb56d528ddc564f431a58e2f4b1fef2597641ad5daa749d0a866ec7b189dffe
+now passes real guaranteed-wrong-code rejection with the alert visible above the
+input, keyboard dismissed, challenge cancelled and A/four Trips preserved.
+Its native code/identity sections match49 byte-for-byte; signature is verified.
+Independent readback confirms no Email Account Session was created by the
+negative. Device returned to Native; no other QA device operated by Auth.
+No Apple activation or business
 permission change. The following paragraphs retain the earlier preparation facts.
 
 Owner paused Apple until further notice. No Apple package/config/console candidate

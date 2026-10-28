@@ -1,5 +1,5 @@
 {
-  "status": "REAL_EMAIL_REGISTRATION_SESSION_COLD_RESTORE_AND_SERVER_NEGATIVES_PASS_ERROR_VISIBILITY_REPAIR_PENDING_NATIVE",
+  "status": "PASS_HOSTED_EMAIL_OTP_REGISTRATION_SESSION_COLD_RESTORE_NEGATIVES_AND_NATIVE_ERROR_VISIBILITY",
   "projectRef": "tuqigdxrvrerfewsxqgm",
   "smtp": {
     "host": "smtp.resend.com",
@@ -104,7 +104,20 @@
     "ownerReport": "LOGIN_REJECTED_WITHOUT_VISIBLE_ERROR",
     "repair": "MOVE_EXISTING_ALERT_BEFORE_INPUT_AND_DISMISS_KEYBOARD_ON_FAILURE",
     "componentRegression": "TWO_TESTS_PASS",
-    "nativeRepairAcceptance": "PENDING",
+    "nativeRepairAcceptance": {
+      "status": "PASS_ERROR_BEFORE_INPUT_VISIBLE_ON_SCREEN_KEYBOARD_DISMISSED",
+      "build": 52,
+      "sourceCommit": "9c81800559e93fde58337167d49f13dc17462f7d",
+      "jsSHA256": "2bb56d528ddc564f431a58e2f4b1fef2597641ad5daa749d0a866ec7b189dffe",
+      "native49RawSectionsUnchanged": true,
+      "strictCodeSign": "PASS",
+      "negative": "SIX_DIGITS_WHILE_SERVER_POLICY_REMAINS_EIGHT",
+      "challengeCancelled": true,
+      "qaAccountUnchanged": true,
+      "qaTripCount": 4,
+      "emailAccountSessionIdsAfterNegative": [],
+      "otherQaDeviceOperated": false
+    },
     "repairCommit": "d3d334d4",
     "independentReview": "NO_BLOCKER_3_SUITES_11_TESTS"
   },
