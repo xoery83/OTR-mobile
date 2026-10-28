@@ -5,6 +5,7 @@ import type {
   UniversalImportResult,
 } from "@/data/api/universalImportContracts";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { ApiClientError } from "@/data/api/client";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { createUniversalImportTransport } from "@/data/api/universalImportTransport";
 import { createUniversalCaptureConsumer } from "@/data/operations/universalCaptureConsumer";
@@ -23,14 +24,18 @@ export function useUniversalCapture(
   const generation = useRef(getAccountGeneration());
   const alive = useRef(true),
     running = useRef(false);
+  const initialScope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
+  const scope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
   const currentRef = useRef(isCurrent);
   useLayoutEffect(() => {
+    scope.current = `${model.batch.accountId}:${model.batch.batchId}`;
     currentRef.current = isCurrent;
-  }, [isCurrent]);
+  }, [isCurrent, model.batch.accountId, model.batch.batchId]);
   const controller = useRef<AbortController | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const current = () =>
     alive.current &&
+    initialScope.current === scope.current &&
     currentRef.current() &&
     generation.current === getAccountGeneration();
   useEffect(() => {
@@ -100,8 +105,15 @@ export function useUniversalCapture(
         setQueued(consumer.current.queued);
         setUnavailable(next === null && !consumer.current.queued);
       }
-    } catch {
-      if (current()) setUnavailable(true);
+    } catch (error) {
+      if (current())
+        setUnavailable(
+          !(
+            error instanceof ApiClientError &&
+            error.status === 404 &&
+            error.code === "TASK_NOT_FOUND"
+          ),
+        );
     } finally {
       running.current = false;
       if (current()) {
@@ -111,6 +123,32 @@ export function useUniversalCapture(
       }
     }
   }
+  useEffect(() => {
+    if (model.allInputsAccepted && model.batch.context.tripPrior) void run(false);
+    // One read on reopen; only explicit Start may prepare or dispatch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    const pending = () => {
+      const state = consumer.current?.activity?.state;
+      return state && ["PENDING", "WAITING", "PROCESSING"].includes(state);
+    };
+    if (result || !pending()) return;
+    let canceled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      if (canceled || !current()) return;
+      await run(false);
+      if (!canceled && current() && pending()) timer = setTimeout(poll, 5000);
+    };
+    timer = setTimeout(poll, 5000);
+    return () => {
+      canceled = true;
+      clearTimeout(timer);
+    };
+    // This timer only schedules an owning GET; it never invents progress or retries a paid call.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, activity?.state]);
   return {
     activity,
     result,

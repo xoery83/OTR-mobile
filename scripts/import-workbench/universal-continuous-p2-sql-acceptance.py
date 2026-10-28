@@ -9,7 +9,16 @@ start=source.index(' import os\n env=')
 end=source.index("\n'''+source[source.index",start)
 body=r'''
  candidate=json.loads((MAIN_ROOT/'docs/ops/universal-product-20261028/authority/CONTINUOUS_REVIEW_POSTIMAGES_CANDIDATE.json').read_text())
- sql('set role postgres;'+';\\n'.join(candidate.values())+';')
+ native=(MAIN_ROOT/'docs/ops/universal-product-20261028/authority/NATIVE_READ_STATE_BASELINE.sql').read_text()
+ sql('set role postgres;'+native+';')
+ installer=(MAIN_ROOT/'docs/ops/universal-product-20261028/authority/CONTINUOUS_REVIEW_INSTALL_CANDIDATE.sql').read_text()
+ bad_installer=installer.replace('9f01606ec37c03662c7d9d828cae9ef9','0'*32,1)
+ assert bad_installer!=installer
+ sql('set role postgres;'+bad_installer,failure='CONTINUOUS_POSTIMAGE_DRIFT')
+ check('failed postimage check rolls back all function replacements')
+ sql('set role postgres;'+installer)
+ sql('set role postgres;'+installer,failure='CONTINUOUS_PREIMAGE_DRIFT')
+ check('closed installer verifies full preimages postimages owner ACL and unchanged OIDs; repeated install fails closed')
  # No new airport records or date/issuer scope; only original two disabled identities exist.
  check('P2 registry defaults disabled',sql("SELECT count(*) FROM public.trip_core_airport_identities WHERE registry_version='otr-dev-universal-p2-airports/20261027/1' AND enabled;")=='0')
  native=(MAIN_ROOT/'docs/ops/universal-product-20261028/authority/NATIVE_READ_STATE_BASELINE.sql').read_text()

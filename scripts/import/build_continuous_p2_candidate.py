@@ -114,6 +114,22 @@ def build_p2(preimages, additional):
     return post
 
 
+
+def install_sql(preimages, post):
+    rows = {row['signature']: row for row in preimages['functions']}
+    checks = []
+    after = []
+    for signature, definition in post.items():
+        row = rows[signature]
+        proc = literal('public.' + signature) + '::regprocedure'
+        metadata = " OR (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=" + proc + ") IS DISTINCT FROM " + literal(row['owner']) + " OR (SELECT proacl::text FROM pg_proc WHERE oid=" + proc + ") IS DISTINCT FROM " + literal(row['acl'])
+        checks.append("IF md5(pg_get_functiondef(" + proc + ")) IS DISTINCT FROM " + literal(row['md5']) + metadata + " THEN RAISE EXCEPTION 'CONTINUOUS_PREIMAGE_DRIFT';END IF;")
+        after.append("IF md5(pg_get_functiondef(" + proc + ")) IS DISTINCT FROM " + literal(hashlib.md5(definition.encode()).hexdigest()) + metadata + " OR " + proc + "::oid::text IS DISTINCT FROM current_setting('otr.universal.install_oids')::jsonb->>" + literal(signature) + " THEN RAISE EXCEPTION 'CONTINUOUS_POSTIMAGE_DRIFT';END IF;")
+    pins = ','.join(literal(sig) + ',' + literal('public.' + sig) + '::regprocedure::oid::text' for sig in post)
+    assert len(post) == 6 and len(rows) >= 6
+    return "BEGIN; SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(714028,1);\nDO $guard$ BEGIN\nIF current_database()<>'postgres' OR NOT EXISTS(SELECT 1 FROM public.trip_sustained_dev_policy WHERE actor_account_id='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND enabled AND revoked_at IS NULL AND NOT universal_p1_import_enabled AND universal_p1_review_scope IS NULL) THEN RAISE EXCEPTION 'CONTINUOUS_REQUIRES_CLOSED_POLICY';END IF;\n" + '\n'.join(checks) + "\nPERFORM set_config('otr.universal.install_oids',jsonb_build_object(" + pins + ")::text,true);\nEND $guard$;\n" + ';\n'.join(post.values()) + ';\nDO $guard$ BEGIN\n' + '\n'.join(after) + "\nEND $guard$;\nCOMMIT;\n"
+
+
 def main():
     pre = json.loads((PACKET/'DEV_PREIMAGES.json').read_text())
     additional = json.loads((PACKET/'P2_ADDITIONAL_PREIMAGES.json').read_text())
@@ -125,6 +141,7 @@ def main():
     post = build_p2(pre, additional)
     (PACKET/'CONTINUOUS_REVIEW_POSTIMAGES_CANDIDATE.json').write_text(json.dumps(post,indent=2)+'\n')
     merged = {**pre,'functions':pre['functions']+additional+[json.loads((PACKET/'AIRPORT_RESOLVER_PREIMAGE.json').read_text())]}
+    (PACKET/'CONTINUOUS_REVIEW_INSTALL_CANDIDATE.sql').write_text(install_sql(merged,post))
     rollback = rollback_sql(merged,post).replace("'P5_ITEM','P6_ITEM')","'P5_ITEM','P6_ITEM','FLIGHT_OCCURRENCE')")
     (PACKET/'CONTINUOUS_REVIEW_ROLLBACK_CANDIDATE.sql').write_text(rollback)
     print(json.dumps({'status':'SIX_FAMILY_CANDIDATE_NOT_GATE_READY','functions':{sig:hashlib.md5(body.encode()).hexdigest() for sig,body in post.items()},'activated':False}))
