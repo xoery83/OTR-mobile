@@ -5,6 +5,7 @@ import {
   normalManualCapabilities,
   normalP3Commands,
   normalP4Commands,
+  normalP5P6Commands,
 } from "./tripNormalP1Policy";
 it("requires a separately matching single-family reviewed capability for P3", () => {
   const gate = {
@@ -151,4 +152,44 @@ it("recognizes an independent P6 Manual profile without opening blocked P5", () 
     { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
   ])
     expect(normalManualCapabilities(changed)).toBeNull();
+});
+
+it("recognizes exact additive P5/P6 Manual union without widening Source or Flight", () => {
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: [...normalP5P6Commands],
+    enabled_families: ["P1", "P3", "P4", "P5", "P6"],
+    enabled_admission_modes: ["MANUAL"],
+  };
+  expect(normalManualCapabilities(gate)).toEqual({
+    commands: [...normalP5P6Commands],
+    families: gate.enabled_families,
+  });
+  for (const change of [
+    { ...gate, runtime_enabled: false },
+    {
+      ...gate,
+      enabled_commands: gate.enabled_commands.filter(
+        (c) => c !== "SET_TRANSPORT_DETAILS",
+      ),
+    },
+    {
+      ...gate,
+      enabled_commands: gate.enabled_commands.filter((c) => c !== "SET_ACTIVITY_DETAILS"),
+    },
+    { ...gate, enabled_commands: [...gate.enabled_commands, "QUALIFY_FLIGHT"] },
+    { ...gate, enabled_commands: [...gate.enabled_commands, "CREATE_SPARSE_FLIGHT"] },
+    {
+      ...gate,
+      enabled_commands: gate.enabled_commands.map((c) =>
+        c === "SET_ACTIVITY_DETAILS" ? "CREATE_ITEM" : c,
+      ),
+    },
+    { ...gate, enabled_families: ["P1", "P2", "P3", "P4", "P5", "P6"] },
+    { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+    { ...gate, enabled_admission_modes: ["REVIEWED_SOURCE"] },
+  ])
+    expect(normalManualCapabilities(change)).toBeNull();
+  for (const family of ["P1", "P2", "P3", "P4", "P5", "P6"] as const)
+    expect(isReviewedP1Gate(gate, family)).toBe(false);
 });

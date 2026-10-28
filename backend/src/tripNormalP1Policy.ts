@@ -26,25 +26,32 @@ export const normalP3Commands = [...normalP1Commands, "SET_STAY_DETAILS"] as con
 export const normalP4Commands = [...normalP3Commands, "SET_RENTAL_DETAILS"] as const;
 export const normalP5Commands = [...normalP4Commands, "SET_TRANSPORT_DETAILS"] as const;
 export const normalP6Commands = [...normalP4Commands, "SET_ACTIVITY_DETAILS"] as const;
+export const normalP5P6Commands = [...normalP5Commands, "SET_ACTIVITY_DETAILS"] as const;
 export function normalManualCapabilities(gate: Record<string, unknown> | undefined) {
   if (isNormalP1Gate(gate)) return { commands: [...normalP1Commands], families: ["P1"] };
   const rental = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4"]';
   const transport = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P5"]';
   const activity = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P6"]';
-  const commands = activity
-    ? normalP6Commands
-    : transport
-      ? normalP5Commands
-      : rental
-        ? normalP4Commands
-        : normalP3Commands;
-  const families = activity
-    ? ["P1", "P3", "P4", "P6"]
-    : transport
-      ? ["P1", "P3", "P4", "P5"]
-      : rental
-        ? ["P1", "P3", "P4"]
-        : ["P1", "P3"];
+  const combined =
+    JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P5","P6"]';
+  const commands = combined
+    ? normalP5P6Commands
+    : activity
+      ? normalP6Commands
+      : transport
+        ? normalP5Commands
+        : rental
+          ? normalP4Commands
+          : normalP3Commands;
+  const families = combined
+    ? ["P1", "P3", "P4", "P5", "P6"]
+    : activity
+      ? ["P1", "P3", "P4", "P6"]
+      : transport
+        ? ["P1", "P3", "P4", "P5"]
+        : rental
+          ? ["P1", "P3", "P4"]
+          : ["P1", "P3"];
   if (
     gate?.runtime_enabled !== true ||
     JSON.stringify(gate.enabled_families) !== JSON.stringify(families) ||

@@ -1,0 +1,10 @@
+{
+  "status": "OWNER_APPROVED_PREFLIGHT_PENDING_NOT_INSTALLED",
+  "independentReview": "NO_BLOCKER; independently reran3suites56checks and verified all artifact hashes",
+  "parentMergedTests": "8suites155checks/types/UIguard/captureBackendbuild/scopedlint PASS",
+  "authority": "Same approved QA account/cutoff; P5+P6 union only; P2/Source scope expansion excluded",
+  "mutation": "Four functions only; fifth P5 statement guard is unchanged CAS witness",
+  "rollback": "Exact P5 function definitions and capabilities retained; no CHECK or accepted-data mutation",
+  "livePreflight": "Must compare expected post-P5 OID/owner/ACL/definition immediately before install",
+  "devTouched": false
+}
