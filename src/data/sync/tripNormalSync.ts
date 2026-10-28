@@ -74,7 +74,11 @@ type Deps = {
   /** Existing Core worker must still enforce capabilities, Actor, Person and receipt contracts. */
   runP1(target: TripCreateTarget): Promise<unknown>;
   runPerson(target: TripCreateTarget): Promise<unknown>;
-  isManualItem(tripId: string, itemId: string, family: "P1" | "P3"): Promise<boolean>;
+  isManualItem(
+    tripId: string,
+    itemId: string,
+    family: "P1" | "P3" | "P4",
+  ): Promise<boolean>;
   participantsReady(tripId: string, command: CoreCommand): Promise<boolean>;
 };
 // One wake composes existing exact-target runners; no timer, retry loop or historical replay.
@@ -213,7 +217,9 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             const manual =
               isReviewedSourceCreate(command) ||
               (command.command === "CREATE_ITEM"
-                ? ["P1", "P3"].includes((command.payload as { family: string }).family)
+                ? ["P1", "P3", "P4"].includes(
+                    (command.payload as { family: string }).family,
+                  )
                 : [
                     "SET_ITEM_TEXT",
                     "SET_ITEM_SCHEDULE",
@@ -229,7 +235,15 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                 "SET_STAY_DETAILS",
               ].includes(command.command) &&
                 command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P3")));
+                (await deps.isManualItem(row.trip_id, command.target.id, "P3"))) ||
+              ([
+                "SET_ITEM_TEXT",
+                "SET_ITEM_SCHEDULE",
+                "SET_ITEM_PARTICIPATION",
+                "SET_RENTAL_DETAILS",
+              ].includes(command.command) &&
+                command.admission.mode === "MANUAL" &&
+                (await deps.isManualItem(row.trip_id, command.target.id, "P4")));
             await guard();
             if (manual) {
               const ready = await deps.participantsReady(row.trip_id, command);

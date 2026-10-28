@@ -162,7 +162,7 @@ export async function getNormalTripQueueActivity(
             const manual =
               isReviewedSourceCreate(c) ||
               (c.command === "CREATE_ITEM"
-                ? ["P1", "P3"].includes((c.payload as { family: string }).family)
+                ? ["P1", "P3", "P4"].includes((c.payload as { family: string }).family)
                 : item?.experience_family === "P1" &&
                   [
                     "SET_ITEM_TEXT",
@@ -178,6 +178,14 @@ export async function getNormalTripQueueActivity(
                   "SET_ITEM_PLACE",
                   "SET_ITEM_PARTICIPATION",
                   "SET_STAY_DETAILS",
+                ].includes(c.command)) ||
+              (item?.experience_family === "P4" &&
+                c.admission.mode === "MANUAL" &&
+                [
+                  "SET_ITEM_TEXT",
+                  "SET_ITEM_SCHEDULE",
+                  "SET_ITEM_PARTICIPATION",
+                  "SET_RENTAL_DETAILS",
                 ].includes(c.command));
             eligible =
               !!manual &&
