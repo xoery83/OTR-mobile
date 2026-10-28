@@ -264,6 +264,22 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
         throw Error("NO_UNSETTLED_RECOVERY_FIXTURE");
       },
     };
+    const unprepared = createUniversalContinuousHost({
+      ...hostDeps,
+      publishedSource: {
+        lookup: async () => null,
+        readManifest: async () => {
+          throw Error("UNPREPARED_MATERIAL_READ");
+        },
+      },
+    });
+    await expect(unprepared.readContext(batch)).rejects.toThrow(
+      "UNIVERSAL_BATCH_NOT_PREPARED",
+    );
+    expect(sends).not.toHaveBeenCalled();
+    expect(
+      sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
+    ).toEqual({ n: 0 });
     const host = createUniversalContinuousHost(hostDeps);
     const prepare = {
       batchId: batch,

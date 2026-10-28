@@ -66,3 +66,26 @@ it("a revoked or unavailable reader exposes no private diagnostics", async () =>
   expect(r.status).toBe(503);
   expect(await r.text()).not.toContain("private-source-secret");
 });
+
+it("reports an authorized unprepared Batch as missing, not an unavailable service", async () => {
+  const f = setup();
+  vi.mocked(f.port.readContext!).mockRejectedValue(Error("UNIVERSAL_BATCH_NOT_PREPARED"));
+  const r = await universalBoundary(f.request, actor, f.allowed, f.port);
+  expect(r.status).toBe(404);
+  expect(await r.json()).toEqual({ error: { code: "TASK_NOT_FOUND" } });
+  expect(r.headers.get("cache-control")).toBe("no-store");
+  expect(f.port.execute).not.toHaveBeenCalled();
+  expect(f.port.read).not.toHaveBeenCalled();
+});
+it.each([
+  "CORE_CONNECTION_BUSY",
+  "UNIVERSAL_AUTH_REJECTED",
+  "OWNING_TASK_READER_UNAVAILABLE",
+])("does not disguise %s as a normal unprepared Batch", async (failure) => {
+  const f = setup();
+  vi.mocked(f.port.readContext!).mockRejectedValue(Error(failure));
+  const r = await universalBoundary(f.request, actor, f.allowed, f.port);
+  expect(r.status).toBe(503);
+  expect(await r.json()).toEqual({ error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } });
+  expect(f.port.execute).not.toHaveBeenCalled();
+});

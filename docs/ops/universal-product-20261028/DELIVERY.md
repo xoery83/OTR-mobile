@@ -135,3 +135,16 @@ and independent NO_BLOCKER PASS. No Provider retry, budget reset or Task mutatio
 Actual retained original ends in a Chinese-IME residual R. Model conservatively
 retained unresolved content; no forced Review/Save or Item created. Original and
 result remain intact. Next clean Native input must be verified before dispatch.
+
+
+## Fresh Batch initial status — LOCAL_PASS, not deployed
+
+Actual fresh Batches showed an unavailable-service message before the first Start:
+Source lookup had no binding, while generic context catch translated that normal
+absence into503. A dedicated authenticated unprepared-Batch outcome now maps only
+that case to404/no-store, using the existing Native not-found path. BUSY, Auth and
+an existing binding with missing Task mirror stay503; GET creates no Task/send.
+Two RED assertions→54 joined tests, types, both Backend builds and independent
+NO_BLOCKER PASS; lint has0 errors/4 pre-existing duplicate-import warnings.
+Current clean Task859445fb remains on original1072 Host; no live deployment or
+restart while it is running, and Save scope remains independently CLOSED.

@@ -439,6 +439,11 @@ Response shape:
 
 ## Documents / Tickets
 
+A normal authorized Universal context GET for a Batch not yet prepared returns
+404 `TASK_NOT_FOUND` with `Cache-Control: no-store`; it does not prepare work.
+Missing existing Task mirrors, Auth failures and busy/unavailable services retain
+503. Explicit Start remains the only Native action that may prepare/dispatch.
+
 Import Documents reads existing `GET /v2/trips/:tripId/core/source-plans/:planId`
 through the authenticated Core transport. The strict read DTO binds plan/status,
 Actor Account/Trip, Source/revision, slot/operation/target and completed receipt.

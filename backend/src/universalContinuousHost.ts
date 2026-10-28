@@ -171,8 +171,8 @@ export function createUniversalContinuousHost(deps: {
       await current();
       stage = "BINDING";
       const binding = await (deps.publishedSource ?? source).lookup(actor, trip, batch);
-      if (!binding || (taskId && binding.taskId !== taskId))
-        throw Error("UNIVERSAL_TASK_UNAVAILABLE");
+      if (!binding) throw Error("UNIVERSAL_BATCH_NOT_PREPARED");
+      if (taskId && binding.taskId !== taskId) throw Error("UNIVERSAL_TASK_UNAVAILABLE");
       stage = "TASK";
       const state = await existing(binding);
       if (!state) throw Error("OWNING_TASK_READER_UNAVAILABLE");
@@ -184,6 +184,7 @@ export function createUniversalContinuousHost(deps: {
         message === "CORE_CONNECTION_BUSY"
           ? "BUSY"
           : [
+                "UNIVERSAL_BATCH_NOT_PREPARED",
                 "UNIVERSAL_TASK_UNAVAILABLE",
                 "OWNING_TASK_READER_UNAVAILABLE",
                 "UNIVERSAL_SOURCE_RUN_UNAVAILABLE",
