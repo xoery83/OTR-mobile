@@ -1,0 +1,18 @@
+{
+  "status": "HISTORICAL_POST_FF_SMOKE_SNAPSHOT_BEFORE_FINAL_DOC_COMMIT_AND_PUSH",
+  "mainBefore": "7ea7a83ba9487df3f7ea2ed919e5d4f4de9651b7",
+  "sourceMain": "95b62895d74e1fab3a411ccd8cb23e2e86367d97",
+  "scope": "Auth-private immutable recovery checkpoints only; no consumer, Session, upload, server or business authority activation",
+  "sourceValidation": "18 new Node-disk / 5 suites56 directed / types / UIguard / lint PASS; independent18 NO_REMAINING_BLOCKER",
+  "actualPrimaryPostFFSmoke": {
+    "suites": 5,
+    "tests": 113,
+    "result": "PASS"
+  },
+  "mainWindow": "Native and Import explicitly released; current remote/HEAD checked before FF; original six dirty files and full tracked/cached diff retained",
+  "preservedTrackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+  "backendSchemaRlsGrantRoleOrDeploymentChanges": false,
+  "nativeOrProviderE2E": "NOT_RUN_FOR_THIS_LOCAL_PREPARATION",
+  "remaining": "complete file/all-draft consistent source inventory, owned atomic server preflight/staging/publish/status, exact protected authority Gate, actual Provider/Native/Supabase Adoption E2E",
+  "remoteVerification": "Snapshot precedes final docs commit/push. Fresh final main/origin/ls-remote verification retained privately in GUEST_B_RECOVERY_MAIN_VERIFIED.json; do not treat this historical snapshot as current remote state."
+}

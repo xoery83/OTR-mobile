@@ -165,6 +165,10 @@ Import confirms persistent Capture originals are Account-scoped SQLite BLOBs wit
 no accepted Guest producer/collector. Do not inspect Account bytes or reclassify
 files by directory prefix. Full files/all-drafts remain blocked; next coordinate
 single-transaction owning Core/Trip port and prepare exact closed server candidate.
+Local recovery source95b62895 was serially FF-integrated from main7ea7a83b;
+actual primary5 suites113 Smoke PASS and original six dirty files/full diff unchanged.
+GUEST_B_RECOVERY_INTEGRATION.json is the historical pre-push snapshot; verify final
+remote refs after the normal docs+source push. No new Native/Host deployment.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
