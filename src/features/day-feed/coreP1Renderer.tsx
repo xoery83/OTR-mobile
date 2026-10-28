@@ -7,6 +7,7 @@ import type { P1ReadFacts } from "./p1ReadPresentation";
 // Consume the existing actor-filtered Core projection; missing associations grant no actions.
 export type CoreP1PresentationActions = {
   instant?: string;
+  insertionToday?: string | null;
   onInsert?(itemId: string, side: "BEFORE" | "AFTER", date: string): void;
 };
 export function createCoreP1Renderer(
@@ -60,6 +61,7 @@ export function createCoreP1Renderer(
         context,
         facts,
         instant: actions?.instant,
+        insertionToday: actions?.insertionToday,
         onInsert: actions?.onInsert
           ? (side) => {
               const date = row.item.event.boundaries.find(

@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_PASS_PHONE_PENDING",
+  "base": "c552713b",
+  "rootCause": "Accepted P1 quick-add eligibility rejected UNKNOWN Reader context when Trip had no zone, although the same screen had an explicit civil appearance date.",
+  "repair": "Pass existing appearanceToday as insertionToday solely to P1 Focus affordance; validate dates and preserve START/status/Past/known-ended restrictions. Reader context, clock facts, map/navigation, NOW, transitions, Core/Backend Authority unchanged.",
+  "validation": {
+    "redBeforeFix": true,
+    "directedSuites": 8,
+    "directedTests": 93,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER; 6 suites42 checks PASS"
+  },
+  "phone58P4": {
+    "sameReturnRestoration": "PASS",
+    "actualSavedItem": "c7a7d517-e5ce-4633-bdc5-cab2cc488faf",
+    "check": "Existing accepted Rental opened via DayFeed\u2192Focus\u2192Immersive\u2192Edit. Same as pickup location checked; both Forms QA Pickup and saved dates/clocks retained; Cancel without changes.",
+    "newCloudWrites": 0
+  },
+  "remaining": [
+    "Physical floating P1 Focus plus and quick-add prefilled date/time verification.",
+    "P1/P3/P4 live offline/replay/permission negatives remain pending."
+  ]
+}

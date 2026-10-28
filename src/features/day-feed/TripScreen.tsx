@@ -1824,6 +1824,7 @@ function TripContent({
               visibleTrip.observed?.projection.version === 2
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
+                    insertionToday: appearanceToday,
                     onOpenActivity: (itemId, occurrence, date) =>
                       router.push({
                         pathname: "/p6-detail",

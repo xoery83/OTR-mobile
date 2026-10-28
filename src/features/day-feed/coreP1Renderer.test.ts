@@ -122,7 +122,11 @@ it("forwards the owning insert callback with the actual Item/date and clock", ()
   const { projection, row } = read();
   const onInsert = vi.fn(),
     instant = "2027-01-01T12:00:00Z";
-  const element = createCoreP1Renderer(projection, { instant, onInsert })({
+  const element = createCoreP1Renderer(projection, {
+    instant,
+    onInsert,
+    insertionToday: date,
+  })({
     row,
     container: undefined,
     context: "FUTURE",
@@ -131,6 +135,7 @@ it("forwards the owning insert callback with the actual Item/date and clock", ()
   }) as any;
   const props = element.type(element.props).props;
   expect(props.instant).toBe(instant);
+  expect(props.insertionToday).toBe(date);
   props.onInsert("AFTER");
   expect(onInsert).toHaveBeenCalledWith(projection.items[0].itemId, "AFTER", date);
 });
