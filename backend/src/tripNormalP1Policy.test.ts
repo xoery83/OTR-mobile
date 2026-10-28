@@ -1,5 +1,10 @@
 import { expect, it } from "vitest";
-import { isNormalP1Gate, isReviewedP1Gate } from "./tripNormalP1Policy";
+import {
+  isNormalP1Gate,
+  isReviewedP1Gate,
+  normalManualCapabilities,
+  normalP3Commands,
+} from "./tripNormalP1Policy";
 it("requires a separately matching single-family reviewed capability for P3", () => {
   const gate = {
     runtime_enabled: true,
@@ -55,4 +60,26 @@ it("keeps reviewed P4 separate from Manual, P1, P3 and multi-family gates", () =
     { ...p4, runtime_enabled: false },
   ])
     expect(isReviewedP1Gate(changed, "P4")).toBe(false);
+});
+
+it("recognizes only exact Manual P1/P3 capabilities without borrowing reviewed or Flight authority", () => {
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: [...normalP3Commands],
+    enabled_families: ["P1", "P3"],
+    enabled_admission_modes: ["MANUAL"],
+  };
+  expect(normalManualCapabilities(gate)).toEqual({
+    commands: [...normalP3Commands],
+    families: ["P1", "P3"],
+  });
+  for (const altered of [
+    { ...gate, runtime_enabled: false },
+    { ...gate, enabled_families: ["P3"] },
+    { ...gate, enabled_families: ["P1", "P3", "P4"] },
+    { ...gate, enabled_commands: [...normalP3Commands, "QUALIFY_FLIGHT"] },
+    { ...gate, enabled_commands: [...normalP3Commands, "CREATE_DOCUMENT"] },
+    { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+  ])
+    expect(normalManualCapabilities(altered)).toBeNull();
 });

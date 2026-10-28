@@ -1,0 +1,146 @@
+{
+  "sourceSHA": "eb77fc08b1876503bd94db289fbbfc75fe42915e",
+  "nativeBuild": 41,
+  "sqliteSchema": 74,
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+  "itemId": "5ef0404c-c8f7-436f-b9dd-e7495905a887",
+  "status": "CREATE_EDIT_SERVER_VERIFIED_NATIVE_COLD_RECOVERY_PASS",
+  "fullCloudL3": "PENDING_NATIVE_OFFLINE_NEGATIVE",
+  "createEdit": {
+    "itemId": "5ef0404c-c8f7-436f-b9dd-e7495905a887",
+    "revision": 4,
+    "title": "Forms QA Cloud Stay 1028 Edited",
+    "address": "20 Test Road, Nelson",
+    "startTime": "18:00:00",
+    "endTime": "10:00:00",
+    "receipts": [
+      {
+        "command": "CREATE_ITEM",
+        "outcome": "APPLIED",
+        "operationId": "9b066649-eb69-4b6a-bf85-3a0885df803a"
+      },
+      {
+        "command": "SET_ITEM_TEXT",
+        "outcome": "APPLIED",
+        "operationId": "cbb9523a-59e7-488a-b6d7-6c6549b02d7f"
+      },
+      {
+        "command": "SET_ITEM_SCHEDULE",
+        "outcome": "APPLIED",
+        "operationId": "eee019c5-5865-4822-9867-147c6beae48a"
+      },
+      {
+        "command": "SET_ITEM_PLACE",
+        "outcome": "APPLIED",
+        "operationId": "6ff51029-9d4b-4cbe-aca7-4d31ea03fca4"
+      }
+    ],
+    "singleItem": true
+  },
+  "participation": "SELECTED_MEMBERS",
+  "finalSemanticRevision": 5,
+  "finalParticipantCount": 1,
+  "finalReceiptCount": 5,
+  "allQueueCommandsCompleted": true,
+  "nativeColdFieldsVerified": [
+    "sameId",
+    "title",
+    "notes",
+    "authoredAddress",
+    "startTime18:00",
+    "endTime10:00",
+    "selectedParticipant"
+  ],
+  "repeatDispatch": {
+    "initialStatuses": [
+      200,
+      503
+    ],
+    "retryStatuses": [
+      200,
+      200
+    ],
+    "sameImmutableReceipt": true,
+    "singleItemAfterReplay": true
+  },
+  "permissionEvidence": {
+    "normalPasswordLoginOwnIdentity": true,
+    "oldTripP3CapabilityClosed": true,
+    "unrelatedTrip404": true,
+    "foreignCreatorAndMissingContext": "ISOLATED_PG_L2_PASS"
+  },
+  "remaining": [
+    "Native device offline pending/reconnect not yet exercised",
+    "Live cross-account Creator-negative not claimed; isolated owning PG negative passed",
+    "Contact/Instructions owning delta excluded",
+    "No live SET_STAY_DETAILS Form edit claim"
+  ],
+  "sqlFunctions": [
+    {
+      "name": "trip_core_finite_read_state_guard",
+      "oid": "65713",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "postMD5": "f770b4366f8d3be85ea0274a1af982cd",
+      "postSHA256": "569bfbd9beb88d964df5dbae3b41c28b8cf066e4090ba7141cf55f1c669cdac4"
+    },
+    {
+      "name": "trip_core_guard_write",
+      "oid": "65263",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "postMD5": "92333be93ed94bd613d8d784f54c9230",
+      "postSHA256": "85d734902135eff61ce20e9880f3c6aa94f49976b439696cc1345f4342e2d6c1"
+    },
+    {
+      "name": "trip_sustained_core_capabilities",
+      "oid": "66181",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "postMD5": "f83725016237148f110d06ed5cc26bc6",
+      "postSHA256": "1c38298ac26f520ac56ad7d62066811e46c207114a5eb5c0aaeeed61955f4c06"
+    },
+    {
+      "name": "trip_sustained_dev_scope_allowed",
+      "oid": "66180",
+      "owner": "postgres",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "postMD5": "9242ec5456b5c7bddd6364fa921ce9a4",
+      "postSHA256": "b125e08131f9a2d5c93633f9b60e8b0d2e18455f85381a5a1e9a992c7423d0c8"
+    }
+  ],
+  "service": {
+    "containerId": "6ab4b65789215a8c3142fbc15bd6f7be17ac3c855319dfe29627c7f81a853e14",
+    "image": "sha256:248ddc050d6aff410a4adb1edd3b023b943e5c6baea50b08ffb2ddd5563e2b26",
+    "configSHA256": "9609fa17ef9a45c18fa67d16bf2e21ef65aae824da548f1288dbad2351b7e420",
+    "environmentSHA256": "345601e98e82374846ad9ddb23b154ce6f2b197e59f4fdd62c6b63a30f84b182",
+    "environmentArraySHA256": "378c2a978808749938b38c8646db86543c800c69c07dddf7dc97f7a681b1d576",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "mountCount": 6,
+    "health": "healthy",
+    "bundleSHA256": "645a162ec4c01b37dacbf5a1e0e92aff9b0b2139be70e2c147e0b14fdc7dc858"
+  },
+  "deploymentRecovery": {
+    "composeAttempt": "STOPPED_OR_ROLLED_BACK_NOT_PASS",
+    "exactOriginalEnvironmentRestored": true,
+    "originalSixMountsRestored": true,
+    "finalDeployMethod": "EXACT_DOCKER_CONFIG_CLONE_RETAINED_BASELINE",
+    "retainedBaseline": "49a11187744f5213af27a25f1a93daad5831010013e1fcdcd54a4986f85f0375",
+    "newRolesTablesRlsGrants": 0
+  },
+  "privateEvidenceDirectory": "/private/tmp/otr-manual-cloud-20261028"
+}

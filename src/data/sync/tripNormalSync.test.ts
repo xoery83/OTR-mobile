@@ -40,7 +40,7 @@ function fixture() {
     runMetadata: vi.fn().mockResolvedValue({}),
     runPerson: vi.fn().mockResolvedValue({}),
     runP1: vi.fn().mockResolvedValue({}),
-    isP1Item: vi.fn().mockResolvedValue(false),
+    isManualItem: vi.fn().mockResolvedValue(false),
     participantsReady: vi.fn().mockResolvedValue(false),
   };
   const run = () =>
@@ -219,3 +219,97 @@ it("isolates an ordinary failed Trip without poisoning another eligible Trip", a
   expect(f.deps.runCreate).toHaveBeenCalledTimes(2);
   expect(f.deps.recoverTripReadback).toHaveBeenCalledWith(trip2, op2);
 });
+
+it.each(["P3", "P4"])(
+  "normal wake qualifies only the current Manual %s checkpoint",
+  async (family) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family,
+        core: { title: "Manual Stay" },
+        schedule: {
+          start: coreDateBoundary("2026-11-02"),
+          end: coreDateBoundary("2026-11-04"),
+        },
+        ...coreDefaults("member"),
+      },
+    };
+    f.deps.participantsReady.mockResolvedValue(true);
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValue([])
+      .mockResolvedValueOnce([f.create])
+      .mockResolvedValueOnce([
+        {
+          ...f.create,
+          id: operationId,
+          entity_id: itemId,
+          idempotency_key: operationId,
+          entity_type: "TRIP_CORE_V2",
+          operation_type: "CORE_V2_COMMAND",
+          payload_json: JSON.stringify(command),
+        },
+      ]);
+    await f.run();
+    expect(f.deps.runP1).toHaveBeenCalledTimes(family === "P3" ? 1 : 0);
+  },
+);
+it.each([true, false])(
+  "P3 SET_STAY_DETAILS dispatch requires verified target family (%s)",
+  async (matching) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    f.deps.isManualItem.mockImplementation(
+      async (_trip, _item, family) => matching && family === "P3",
+    );
+    f.deps.participantsReady.mockResolvedValue(true);
+    const command = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "SET_STAY_DETAILS",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        details: {
+          property_name: "QA Hotel",
+          permitted_checkin_from: null,
+          permitted_checkin_until: null,
+          permitted_checkout_by: null,
+        },
+        rooms: [],
+      },
+    };
+    f.deps.database.getAllAsync
+      .mockReset()
+      .mockResolvedValue([])
+      .mockResolvedValueOnce([f.create])
+      .mockResolvedValueOnce([
+        {
+          ...f.create,
+          id: operationId,
+          entity_id: itemId,
+          idempotency_key: operationId,
+          entity_type: "TRIP_CORE_V2",
+          operation_type: "CORE_V2_COMMAND",
+          payload_json: JSON.stringify(command),
+        },
+      ]);
+    await f.run();
+    expect(f.deps.runP1).toHaveBeenCalledTimes(matching ? 1 : 0);
+  },
+);

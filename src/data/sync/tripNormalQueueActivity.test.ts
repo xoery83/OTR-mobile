@@ -1,3 +1,5 @@
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
+import { coreDefaults } from "@/domain/trip/tripCoreV2";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
@@ -300,4 +302,68 @@ it("late old ACK cannot complete a newer claim after lease expiry", async () => 
       )
       .get(),
   ).toMatchObject({ status: "COMPLETED", version: "v2" });
+});
+
+it("retains P3 retry backoff and expired processing lease as normal queue work", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    itemId = randomUUID();
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(f.createId);
+  f.operation(
+    operationId,
+    "CORE_V2_COMMAND",
+    "TRIP_CORE_V2",
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P3",
+        core: { title: "Retry Stay" },
+        schedule: {
+          start: coreDateBoundary("2026-11-02"),
+          end: coreDateBoundary("2026-11-04"),
+        },
+        ...coreDefaults("organizer"),
+      },
+    },
+    "RETRYABLE",
+    itemId,
+  );
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_members(id,journey_id,display_name,status,updated_at) VALUES(?,?,'QA member','linked',?)",
+    )
+    .run(randomUUID(), f.tripId, new Date(f.now).toISOString());
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(journey_id,user_id,capabilities_json,updated_at) VALUES(?,?,'{}',?)",
+    )
+    .run(f.tripId, f.scope.accountId, new Date(f.now).toISOString());
+  f.sql
+    .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
+    .run(new Date(f.now + 15000).toISOString(), operationId);
+  expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+    actionableNow: 0,
+    nextActionableAt: f.now + 15000,
+  });
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET status='PROCESSING',lease_expires_at=? WHERE id=?",
+    )
+    .run(new Date(f.now + 30000).toISOString(), operationId);
+  expect(await getNormalTripQueueActivity(f.db, f.scope, f.now)).toEqual({
+    actionableNow: 0,
+    nextActionableAt: f.now + 30000,
+  });
+  expect(
+    (await getNormalTripQueueActivity(f.db, f.scope, f.now + 30001)).actionableNow,
+  ).toBe(1);
 });
