@@ -116,6 +116,9 @@ public class ReceiptOcrModule: Module {
         presenter.present(preview, animated: true) { preview.didPresent() }
         // UIKit presentation completion, not the next run-loop turn, owns readiness.
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+#if DEBUG && targetEnvironment(simulator)
+          preview.logPendingPresentation(presenter: presenter)
+#endif
           preview.failIfPresentationPending()
         }
       }
@@ -315,6 +318,17 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
     item
   }
+#if DEBUG && targetEnvironment(simulator)
+  func logPendingPresentation(presenter: UIViewController) {
+    guard !presented, finish != nil else { return }
+    let flags = [isViewLoaded, viewIfLoaded?.window != nil,
+      presentingViewController != nil, presenter.presentedViewController === self,
+      isBeingPresented, presenter.viewIfLoaded?.window?.isKeyWindow == true,
+      UIApplication.shared.applicationState == .active]
+      .map { $0 ? "1" : "0" }.joined(separator: ",")
+    NSLog("import_original_preview_pending %@", flags)
+  }
+#endif
   func failIfPresentationPending() {
     guard !presented, finish != nil else { return }
     closePrivateOriginal()
