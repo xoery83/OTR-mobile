@@ -1,0 +1,22 @@
+{
+  "scope": "PUBLIC_DEV_SETTINGS_AND_NORMAL_OTP_NEGATIVE_ONLY",
+  "observedAt": "2026-10-28T02:35:53.203Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "settingsStatus": 200,
+  "providers": {
+    "email": true,
+    "apple": false,
+    "google": false
+  },
+  "signupAllowed": true,
+  "emailConfirmationRequired": true,
+  "normalOtpNegative": {
+    "status": 403,
+    "kind": "invalid_code"
+  },
+  "otpDelivery": "NOT_TESTED",
+  "positiveLogin": "NOT_TESTED",
+  "sessionInstallation": "NOT_ATTEMPTED",
+  "providerConfiguration": "APPLE_GOOGLE_PENDING",
+  "adminCredentialUsed": false
+}

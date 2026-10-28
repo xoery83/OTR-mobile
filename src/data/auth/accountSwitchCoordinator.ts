@@ -1,5 +1,8 @@
 import type { LocalSession } from "@/domain/auth/localSession";
+import { getAccountGeneration } from "./accountGeneration";
 import {
+  assertAccountRequestGeneration,
+  withAccountApplyGate,
   beginAccountTransition,
   endAccountTransition,
   type AccountTransitionLease,
@@ -7,6 +10,7 @@ import {
 
 export type AccountSwitchDependencies = {
   pauseSync(): Promise<void>;
+  assertLogoutAllowed?(): Promise<void>;
   restartSync(): Promise<unknown>;
   readSession(): Promise<LocalSession | null>;
   writeSession(session: LocalSession): Promise<void>;
@@ -21,6 +25,30 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
   let switching = false;
   const readAccountId = async () =>
     (await dependencies.readSession())?.identity?.userId ?? null;
+
+  async function resumeRetainedAccount() {
+    const generation = getAccountGeneration();
+    let resumed: Promise<unknown> | undefined;
+    try {
+      // Another transition owns its pause/restart; never resume through its lease.
+      assertAccountRequestGeneration({ accountId: "", generation });
+      await withAccountApplyGate(
+        async () => {
+          const accountId = await readAccountId();
+          assertAccountRequestGeneration({ accountId: accountId ?? "", generation });
+          return accountId !== null;
+        },
+        (hasAccount) => {
+          // Default restart releases the pause synchronously before async read work.
+          assertAccountRequestGeneration({ accountId: "", generation });
+          if (hasAccount) resumed = dependencies.restartSync();
+        },
+      );
+      await resumed;
+    } catch {
+      // Retain the pause on a superseding transition or failed recovery.
+    }
+  }
 
   async function recover(
     previous: LocalSession | null,
@@ -48,16 +76,26 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
     return "recovered";
   }
 
-  async function activate(install: () => Promise<LocalSession>) {
+  async function activate(
+    install: () => Promise<LocalSession>,
+    expectedGeneration = getAccountGeneration(),
+  ) {
     if (switching) throw new Error("An account transition is already in progress.");
     switching = true;
     let lease: AccountTransitionLease | null = null;
     let previous: LocalSession | null = null;
     let failed: { accountId: string | null; generation: number } | null = null;
+    let paused = false;
     try {
       // Draining existing sync may wait for network; it must not hold the gate.
+      paused = true;
       await dependencies.pauseSync();
-      lease = await beginAccountTransition();
+      lease = await beginAccountTransition({
+        accountId: await readAccountId(),
+        generation: expectedGeneration,
+        getAccountId: readAccountId,
+      });
+      if (!lease) throw new Error("The account changed before authentication completed.");
       previous = await dependencies.readSession();
       failed = {
         accountId: previous?.identity?.userId ?? null,
@@ -83,6 +121,7 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
         lease = null;
       }
       if (failed) await recover(previous, failed).catch(() => undefined);
+      else if (paused) await resumeRetainedAccount();
       throw error;
     } finally {
       if (lease) endAccountTransition(lease);
@@ -101,27 +140,50 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
         return session;
       });
     },
-    activateSession(session: LocalSession) {
+    activateSession(
+      session: LocalSession,
+      expectedGeneration?: number,
+      signal?: AbortSignal,
+    ) {
       return activate(async () => {
+        if (signal?.aborted) throw new Error("AUTH_ACTIVATION_CANCELED");
         await dependencies.writeSession(session);
         const stored = await dependencies.readSession();
         if (!stored || stored.identity?.userId !== session.identity?.userId)
           throw new Error("The new account session could not be verified.");
         return stored;
-      });
+      }, expectedGeneration);
     },
     async logout() {
       if (switching) throw new Error("An account transition is already in progress.");
       switching = true;
       let lease: AccountTransitionLease | null = null;
+      let paused = false;
       try {
+        const generation = getAccountGeneration();
+        const accountId = await readAccountId();
+        await dependencies.assertLogoutAllowed?.();
+        paused = true;
         await dependencies.pauseSync();
-        lease = await beginAccountTransition();
+        await dependencies.assertLogoutAllowed?.();
+        lease = await beginAccountTransition({
+          generation,
+          accountId,
+          getAccountId: readAccountId,
+        });
+        if (!lease) throw new Error("AUTH_CONTEXT_CHANGED");
         await dependencies.clearInMemoryState();
         await dependencies.clearSession();
         endAccountTransition(lease);
         lease = null;
         await dependencies.bootstrapAccount(null);
+      } catch (error) {
+        if (lease) {
+          endAccountTransition(lease);
+          lease = null;
+        }
+        if (paused) await resumeRetainedAccount();
+        throw error;
       } finally {
         if (lease) endAccountTransition(lease);
         switching = false;

@@ -6,9 +6,144 @@ import {
   captureAccountRequestContext,
   assertAccountRequestGeneration,
   withAccountApplyGate,
+  beginAccountTransition,
+  endAccountTransition,
 } from "./accountRequestContext";
-import { getAccountGeneration } from "./accountGeneration";
+import { getAccountGeneration, advanceAccountGeneration } from "./accountGeneration";
+import { createAuthRepository } from "./authSessionRepository";
 import { createAccountSwitchCoordinator } from "./accountSwitchCoordinator";
+
+describe("voluntary logout online boundary", () => {
+  it.each(["initial", "after-pause"])(
+    "retains session when offline at %s check",
+    async (stage) => {
+      let checks = 0;
+      const clearSession = vi.fn();
+      const pauseSync = vi.fn();
+      const restartSync = vi.fn(async () => undefined);
+      const coordinator = createAccountSwitchCoordinator({
+        assertLogoutAllowed: async () => {
+          checks++;
+          if (stage === "initial" || checks === 2)
+            throw new Error("LOGOUT_REQUIRES_ONLINE");
+        },
+        pauseSync,
+        restartSync,
+        readSession: async () => session("user-a"),
+        writeSession: vi.fn(),
+        clearSession,
+        selectAccount: vi.fn(),
+        adoptLocalState: vi.fn(),
+        clearInMemoryState: vi.fn(),
+        bootstrapAccount: vi.fn(),
+      });
+      await expect(coordinator.logout()).rejects.toThrow("LOGOUT_REQUIRES_ONLINE");
+      expect(clearSession).not.toHaveBeenCalled();
+      expect(pauseSync).toHaveBeenCalledTimes(stage === "initial" ? 0 : 1);
+      expect(restartSync).toHaveBeenCalledTimes(stage === "initial" ? 0 : 1);
+    },
+  );
+});
+
+it("does not log out a different account selected during online preflight", async () => {
+  let active = session("user-a");
+  const clearSession = vi.fn();
+  let paused = false;
+  const restartSync = vi.fn(async () => {
+    paused = false;
+  });
+  const coordinator = createAccountSwitchCoordinator({
+    assertLogoutAllowed: async () => {
+      active = session("user-b");
+    },
+    pauseSync: async () => {
+      paused = true;
+    },
+    restartSync,
+    readSession: async () => active,
+    writeSession: vi.fn(),
+    clearSession,
+    selectAccount: vi.fn(),
+    adoptLocalState: vi.fn(),
+    clearInMemoryState: vi.fn(),
+    bootstrapAccount: vi.fn(),
+  });
+  await expect(coordinator.logout()).rejects.toThrow("AUTH_CONTEXT_CHANGED");
+  expect(clearSession).not.toHaveBeenCalled();
+  expect(paused).toBe(false);
+  expect(restartSync).toHaveBeenCalledOnce();
+});
+
+it("does not resume synchronization through another active transition", async () => {
+  let checks = 0;
+  let lease!: Awaited<ReturnType<typeof beginAccountTransition>>;
+  const restartSync = vi.fn(async () => undefined);
+  const clearSession = vi.fn();
+  const coordinator = createAccountSwitchCoordinator({
+    assertLogoutAllowed: async () => {
+      if (++checks === 2) {
+        lease = await beginAccountTransition();
+        throw new Error("LOGOUT_REQUIRES_ONLINE");
+      }
+    },
+    pauseSync: async () => undefined,
+    restartSync,
+    readSession: async () => session("user-a"),
+    writeSession: vi.fn(),
+    clearSession,
+    selectAccount: vi.fn(),
+    adoptLocalState: vi.fn(),
+    clearInMemoryState: vi.fn(),
+    bootstrapAccount: vi.fn(),
+  });
+  try {
+    await expect(coordinator.logout()).rejects.toThrow("LOGOUT_REQUIRES_ONLINE");
+    expect(restartSync).not.toHaveBeenCalled();
+    expect(clearSession).not.toHaveBeenCalled();
+  } finally {
+    if (lease) endAccountTransition(lease);
+  }
+});
+
+it("restores retained account sync after secure marker write failure", async () => {
+  const entries = new Map<string, string>();
+  let failMarker = false;
+  const repository = createAuthRepository({
+    getItem: async (key) => entries.get(key) ?? null,
+    setItem: async (key, value) => {
+      if (failMarker && key === "otr.mobile.launch.v1")
+        throw new Error("SECURE_STORAGE_UNAVAILABLE");
+      entries.set(key, value);
+    },
+    deleteItem: async (key) => {
+      entries.delete(key);
+    },
+  });
+  await repository.writeLocalSession(session("user-a"));
+  failMarker = true;
+  let paused = false;
+  const restartSync = vi.fn(async () => {
+    paused = false;
+  });
+  const coordinator = createAccountSwitchCoordinator({
+    assertLogoutAllowed: async () => undefined,
+    pauseSync: async () => {
+      paused = true;
+    },
+    restartSync,
+    readSession: repository.readLocalSession,
+    writeSession: repository.writeLocalSession,
+    clearSession: repository.clearLocalSession,
+    selectAccount: repository.selectAccount,
+    adoptLocalState: vi.fn(),
+    clearInMemoryState: vi.fn(),
+    bootstrapAccount: vi.fn(),
+  });
+  await expect(coordinator.logout()).rejects.toThrow("SECURE_STORAGE_UNAVAILABLE");
+  expect((await repository.readLocalSession())?.identity?.userId).toBe("user-a");
+  expect(paused).toBe(false);
+  expect(restartSync).toHaveBeenCalledOnce();
+});
 
 const session = (userId: string): LocalSession => ({
   accessToken: `${userId}-access`,
@@ -18,6 +153,58 @@ const session = (userId: string): LocalSession => ({
 });
 
 describe("account switch boundary", () => {
+  it("does not install a verified session if the login page leaves while old sync drains", async () => {
+    const cancel = new AbortController();
+    let release!: () => void;
+    const draining = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const writeSession = vi.fn();
+    const restartSync = vi.fn();
+    const coordinator = createAccountSwitchCoordinator({
+      pauseSync: () => draining,
+      restartSync,
+      readSession: async () => session("user-a"),
+      writeSession,
+      clearSession: vi.fn(),
+      selectAccount: async () => true,
+      adoptLocalState: vi.fn(),
+      clearInMemoryState: vi.fn(),
+      bootstrapAccount: vi.fn(),
+    });
+    const pending = coordinator.activateSession(
+      session("user-b"),
+      getAccountGeneration(),
+      cancel.signal,
+    );
+    cancel.abort();
+    release();
+    await expect(pending).rejects.toThrow("AUTH_ACTIVATION_CANCELED");
+    expect(writeSession).not.toHaveBeenCalled();
+    expect(restartSync).toHaveBeenCalledOnce();
+  });
+  it("rejects late OTP activation after sync pause and resumes only the retained account", async () => {
+    const writeSession = vi.fn();
+    const restartSync = vi.fn();
+    const coordinator = createAccountSwitchCoordinator({
+      pauseSync: async () => {
+        advanceAccountGeneration();
+      },
+      restartSync,
+      readSession: async () => session("user-a"),
+      writeSession,
+      clearSession: vi.fn(),
+      selectAccount: vi.fn(),
+      adoptLocalState: vi.fn(),
+      clearInMemoryState: vi.fn(),
+      bootstrapAccount: vi.fn(),
+    });
+    await expect(
+      coordinator.activateSession(session("user-b"), getAccountGeneration()),
+    ).rejects.toThrow("account changed");
+    expect(writeSession).not.toHaveBeenCalled();
+    expect(restartSync).toHaveBeenCalledOnce();
+  });
   it("waits for old sync before changing identity, then bootstraps before restart", async () => {
     const events: string[] = [];
     let active = session("user-a");

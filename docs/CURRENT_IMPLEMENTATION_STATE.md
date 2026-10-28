@@ -1,5 +1,26 @@
 # Current implementation state — 28 October 2026
 
+## Auth / Identity independent source slice — 28 October
+
+Owner authorizes continuous Auth→Guest→People→Invite→Settings→Usage delivery. Auth
+worktree/branch `auth-identity-delivery-20261028` starts at main1c7e7fc8. First source
+candidate adds provisional Email OTP and Apple/Google ID-token exchange, rejects
+cross-Account stored/refresh identity, reuses reviewed historical Guest/provisional
+and online-logout safeguards, and connects canonical OTP Account UI with focus
+cancellation. Guest snapshot is exported but Native bootstrap/business consumption
+and whole-dataset adoption remain separate owning deltas. SQLite74/Backend/schema/
+business permissions and existing QA sessions are unchanged.
+
+Independent Auth/Domain13 suites104 tests, TypeScript/UI guard/diff PASS. Actual DEV
+settings200 and invalid OTP403 only: Email on, Apple/Google off. No positive OTP,
+OAuth, Native UI, new cold-device restore or remote Session revocation PASS. Owner
+will supply a usable mailbox/provider setup later; safe Session work continues.
+Scope, data checklist and review: `ops/auth-phase1-20261028/README.md` and
+`INDEPENDENT_REVIEW.md`; approved exact Auth/Lang originals:
+`auth/design-v1-20261018/`. Next is a fresh host-only normal Synthetic Session
+with self-read/refresh/own-session revocation, followed by coordinated Native
+observation; keep actual Provider E2E pending until obtained.
+
 ## Active checkpoint: unified Native + Universal integration delivery
 
 Owner authorizes actual code integration, directed regression, Native smoke, serial main merge, then in-place Forms QA → AD5 → physical iPhone updates. This supersedes the earlier pause only for this bounded integration. Do not activate Enrichment, paid DeepSeek/Admission, Manual Cloud or Production. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.

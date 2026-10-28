@@ -1,0 +1,16 @@
+{
+  "scope": "IOS_JS_HERMES_EXPORT_ONLY",
+  "bundleSha256": "b9f4acf726eecf50fb32388b47b2368973f8e146ffceccca218801f0b245d1fe",
+  "bundleBytes": 14179783,
+  "metadataSha256": "8076e2c5ee1025485bf6b5dc6001e2a85f7d6cd360b441d4faeb393900213a33",
+  "nativeCompile": false,
+  "deviceInstall": false,
+  "nativeVisualQA": false,
+  "sourceSha256": {
+    "src/features/auth/EmailOtpSignIn.tsx": "fe508c76aaf4f2a8601c637eba1cd9c314c3ccf573e6c2db7e0ec6e374fe080a",
+    "src/components/AccountManagementScreen.tsx": "336da4f3c5735b0b0f9754342f466838d3980a29a906504571a648565d49f9cd",
+    "src/data/auth/devSupabaseAuth.ts": "4459be7078088e819a7a404cc0d2fc8dffa8ef648963f24eebffa30696cd2f17",
+    "src/data/auth/authSessionRepository.ts": "a203963e7625510245fc8a0ab868b55e3b6eb80ab951429fca53950b01a2f71b",
+    "src/data/auth/accountSwitchCoordinator.ts": "99d04d9f15cfeb9a56e527dbf5e3c9c0625b99fdde015bf386eed9d9a087f156"
+  }
+}
