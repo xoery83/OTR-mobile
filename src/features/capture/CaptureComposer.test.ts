@@ -346,7 +346,12 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
     const html = renderToStaticMarkup(createElement(CaptureComposer, props));
     expect(html).toContain(t("capture.activityRefresh"));
     expect(html).toContain(t("capture.activityReturn"));
-    expect(html).toContain(t("capture.jobView", { summary: captureJobTitle(job) }));
+    expect(html).not.toContain(captureJobTitle(job));
+    expect(html).toContain(
+      t("capture.jobView", {
+        summary: t("capture.progress.batchTitle", { count: job.counts.selected }),
+      }),
+    );
     expect(state.nodes.filter((node) => node.visible === true)).toHaveLength(1);
     expect(
       state.buttons.some((button) => button.label === t("capture.composer.submit")),
@@ -354,7 +359,10 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
     state.buttons
       .find(
         (button) =>
-          button.label === t("capture.jobView", { summary: captureJobTitle(job) }),
+          button.label ===
+          t("capture.jobView", {
+            summary: t("capture.progress.batchTitle", { count: job.counts.selected }),
+          }),
       )
       .onPress();
     expect(onOpenJob).toHaveBeenLastCalledWith(request.jobId);

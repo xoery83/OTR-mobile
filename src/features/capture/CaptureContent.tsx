@@ -452,9 +452,13 @@ export function CaptureContent({
               : undefined
         }
         contextLabel={
-          accountId && (activity || attempted || reopening || model)
-            ? t("capture.progress.accountScope")
-            : undefined
+          documents
+            ? documents.scope === "TRIP" && selectedTripName
+              ? `${t("importDocuments.private")} · ${selectedTripName}`
+              : t("importDocuments.private")
+            : accountId && (activity || attempted || reopening || model)
+              ? t("capture.progress.accountScope")
+              : undefined
         }
         content={
           accountId ? (
