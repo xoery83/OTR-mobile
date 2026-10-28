@@ -1,0 +1,119 @@
+{
+  "status": "REAL_EMAIL_REGISTRATION_SESSION_COLD_RESTORE_AND_SERVER_NEGATIVES_PASS_ERROR_VISIBILITY_REPAIR_PENDING_NATIVE",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "smtp": {
+    "host": "smtp.resend.com",
+    "port": 465,
+    "username": "resend",
+    "sender": "OTR <noreply@auth.xoery.art>",
+    "saveConfirmedByDashboard": true,
+    "existingEncryptedPasswordPreserved": true,
+    "secretValueReadOrLoggedOrCommitted": false
+  },
+  "templates": {
+    "confirmation": "SAVED_TOKEN_TEMPLATE_NO_CONFIRMATION_URL",
+    "magicLinkOrOtp": "SAVED_TOKEN_TEMPLATE_NO_CONFIRMATION_URL",
+    "bodyFile": "email-otp-template.html",
+    "subject": "Your OTR verification code"
+  },
+  "baselinePolicy": {
+    "otpLength": 8,
+    "otpExpirySeconds": 3600,
+    "resendMinimumSeconds": 60
+  },
+  "normalRequest": {
+    "atUTC": "2026-10-28T08:36:53.658Z",
+    "httpStatus": 200,
+    "normalApplicationCode": true,
+    "mailbox": "OWNER_AUTHORIZED_QA_MAILBOX",
+    "providerDelivery": "DELIVERED",
+    "providerMessageId": "01a181a7-b1f4-7ef8-8855-2c9b55ae2d92",
+    "recipientInboxConfirmation": "OWNER_CONFIRMED_EIGHT_DIGITS_NO_LOGIN_LINK"
+  },
+  "negativeEvidence": {
+    "immediateResend": {
+      "httpStatus": 429,
+      "errorCode": "over_email_send_rate_limit",
+      "result": "PASS_NO_AUTOMATIC_RETRY"
+    },
+    "wrongCode": {
+      "httpStatus": 403,
+      "errorCode": "otp_expired",
+      "result": "PASS_WRONG_LENGTH_CODE_REJECTED_WHILE_POLICY_EIGHT_DIGITS"
+    },
+    "actualElapsedExpiry": {
+      "status": "PASS_REAL_NATIVE_UNUSED_LATEST_OTP_AFTER_CONFIRMED_60_SECONDS",
+      "nativeOtpRequestAtUTC": "2026-10-28T08:50:46Z",
+      "providerAcceptedAtUTC": "2026-10-28T08:50:50.397000Z",
+      "nativeFirstExpiredVerifyAtUTC": "2026-10-28T08:52:39Z",
+      "elapsedFromRequestSeconds": 113,
+      "httpStatus": 403,
+      "ownerInput": "OWNER_ENTERED_RECEIVED_CODE_NO_CODE_RECORDED",
+      "nativeBuild": 49,
+      "noNewLogin": "LAST_SIGN_IN_REMAINS_2026-10-28T08:45:34.807186Z"
+    }
+  },
+  "independentAuthReadbackAfterRequestAndWrongCode": {
+    "accountExistedBeforeRequest": false,
+    "canonicalAccountId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+    "emailIdentityPresent": true,
+    "emailConfirmed": false,
+    "lastSignInAt": null,
+    "sessionIds": []
+  },
+  "nativeLoginAndSession": {
+    "status": "PASS_OWNER_NORMAL_EIGHT_DIGIT_OTP_INPUT",
+    "accountId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+    "emailConfirmed": true,
+    "signedInAtUTC": "2026-10-28T08:45:34.807186Z",
+    "sessionId": "385eea8b-bcd0-4d96-a5d9-ea2412a01b5d",
+    "independentReadback": "READ_ONLY_AUTH_USERS_AND_AUTH_SESSIONS"
+  },
+  "coldRestart": "PASS_REAL_TERMINATE_LAUNCH_RETAINS_EMAIL_ACCOUNT_AND_EMPTY_TRIPS",
+  "accountIsolation": "EMAIL_ACCOUNT_NO_QA_A_TRIPS_A_REMAINS_REMEMBERED",
+  "normalLogoutAndRestoreQa": {
+    "status": "PASS_NORMAL_CURRENT_SESSION_LOGOUT_AND_A_UI_RESTORE",
+    "independentEmailAccountSessionIds": [],
+    "emailConfirmedRemainsTrue": true,
+    "originalQaTripCount": 4,
+    "otherQaDeviceOperated": false,
+    "deviceSessionOrKeychainCopied": false
+  },
+  "schemaRlsGrantChanges": false,
+  "apple": "PAUSED_BY_OWNER",
+  "temporaryExpiryTest": {
+    "baselineSeconds": 3600,
+    "testSeconds": 60,
+    "scope": "DEV_EMAIL_OTP_ONLY_NO_JWT_TTL_CHANGE",
+    "status": "COMPLETE_STRICTER_TEST_ONLY",
+    "restore": "CONFIRMED_SAVED_3600_SECONDS_EIGHT_DIGITS",
+    "initialAttempt": "NOT_PERSISTED_DO_NOT_COUNT_EARLIER_SUCCESS_AS_EXPIRY"
+  },
+  "nativeBuild": 49,
+  "nativeSourceCommit": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+  "resendAfterMinimumInterval": {
+    "status": "PASS_SUBSEQUENT_NATIVE_REQUEST_SAME_MAILBOX_AND_CANONICAL_ACCOUNT",
+    "nativeRequestAtUTC": "2026-10-28T08:44:51Z",
+    "providerMessageId": "01a181af-0900-71ad-94be-7181158e481c",
+    "delivery": "DELIVERED",
+    "nativeVerifyAtUTC": "2026-10-28T08:45:34Z",
+    "httpStatus": 200
+  },
+  "errorVisibility": {
+    "observed": "EXPIRED_CODE_ALERT_PRESENT_IN_AX_BUT_BELOW_VISIBLE_ACCOUNT_FORM_VIEWPORT",
+    "ownerReport": "LOGIN_REJECTED_WITHOUT_VISIBLE_ERROR",
+    "repair": "MOVE_EXISTING_ALERT_BEFORE_INPUT_AND_DISMISS_KEYBOARD_ON_FAILURE",
+    "componentRegression": "TWO_TESTS_PASS",
+    "nativeRepairAcceptance": "PENDING",
+    "repairCommit": "d3d334d4",
+    "independentReview": "NO_BLOCKER_3_SUITES_11_TESTS"
+  },
+  "directedChecks": {
+    "suites": 19,
+    "tests": 191,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS"
+  },
+  "headlessRequestSourceCommit": "0a6e7a9a698965af72c11d869599bc0258996bac"
+}

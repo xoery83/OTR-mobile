@@ -50,13 +50,28 @@ existing-user canonical Account stability, self-read, in-memory Repository resto
 distinct Account Session selection, refresh, scoped logout and other Session
 preservation. Exact finite runner/hash/run receipt: EMAIL_OTP_MAILPIT_E2E.json in
 ops/auth-phase1-20261028. This does not prove Hosted delivery or Native OTP restore.
-Hosted DEV custom SMTP is off and its current email is a Magic Link. Dashboard
-allows customization through Pro/custom SMTP/Send Email Hook; no paid upgrade or
-team-membership workaround. Free Resend SMTP/subdomain/template proposal is
-EMAIL_SMTP_CANDIDATE.json, not applied. Owner approves external service/account/DNS
-and saves Secrets directly in secure configuration. No email sent to a real inbox.
-Next: await that precise SMTP setup while continuing independent Session/Guest
-work. Phase1 CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
+Owner completed Resend auth.xoery.art verification/DNS and authorized DEV SMTP.
+SMTP smtp.resend.com:465/resend, sender OTR <noreply@auth.xoery.art>, existing
+encrypted credential preserved without reading/logging its value. Both signup and
+login templates now use Token, without ConfirmationURL. Real authorized inbox
+confirmed eight-digit delivery; normal native49 signup/verify200, independent
+confirmed Account/Session readback, real terminate/launch restore and zero private
+QA Trips pass. Immediate resend429 and wrong-code403 pass; subsequent normal
+request/verification returns the same Account. A temporary stricter60-second OTP
+policy was independently read back; a new delivered code at08:50:46Z was rejected
+403 at08:52:39Z (113 seconds). Final policy independently restored3600 seconds/
+eight digits; Session/JWT TTL and business permissions unchanged. Normal email
+Session logout has independent server absence; original QA A/four Trips restored.
+No Keychain/Session copying or other QA device operation. Exact L3 evidence:
+EMAIL_OTP_HOSTED_DEV_E2E.json; EMAIL_SMTP_CANDIDATE.json now records applied config.
+
+Owner found expired-code text below the visible long Account form. Authd3d334d4
+moves the existing alert before inputs and dismisses keyboard on alive failure.
+19 suites191 tests/types/UIguard/scopedlint pass; independent3 suites11/no blocker.
+Native visibility acceptance for this UI repair remains pending next unified JS
+package; no heavyweight build or interruption of current Import/Form flow.
+Next: close that focused Native visibility repair, then continue Session/Guest
+work. Apple remains explicitly deferred by Owner. Guest bootstrap/adoption remains a separate owning delta; ordinary
 Auth cannot silently claim Guest datasets or Trip People.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6

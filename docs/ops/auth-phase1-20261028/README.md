@@ -95,6 +95,17 @@ removal; UNKNOWN retains access. Tokens stay memory-only in the host DEV runner.
 
 ## Email OTP follow-through — 28 October
 
+**Latest authorized execution supersedes the preparation status below.** Owner
+verified auth.xoery.art in Resend and completed Wix DNS. DEV Custom SMTP and both
+Token-only templates are saved, preserving the existing encrypted Key without
+reading it. Real inbox delivery, native signup/Session/cold restore, Account
+isolation, resend/throttling, actual elapsed-expiry rejection and normal logout/
+server Session absence are recorded in EMAIL_OTP_HOSTED_DEV_E2E.json. The stricter
+temporary expiry is restored to3600 seconds/eight digits. Expired-code error text
+was below the visible long form; source repaird3d334d4 is reviewed/tested, with
+focused Native visibility acceptance pending. No Apple activation or business
+permission change. The following paragraphs retain the earlier preparation facts.
+
 Owner paused Apple until further notice. No Apple package/config/console candidate
 is committed or enabled. Google actual native Session/switch/cold/logout evidence
 and main integration are in GOOGLE_DEV_E2E.json / GOOGLE_MAIN_INTEGRATION.json.
