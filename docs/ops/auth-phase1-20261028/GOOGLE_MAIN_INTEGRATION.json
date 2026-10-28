@@ -1,0 +1,24 @@
+{
+  "previousMain": "c6b052b7a90dd17159d996c7951295fadc302c92",
+  "integratedMain": "453de9c3dd9b9a235ace35531267d65d98a28fa9",
+  "sourceGoogleCommit": "48d0c53e",
+  "sessionCommit": "6b4bc3c5",
+  "method": "FAST_FORWARD",
+  "normalPush": "PASS",
+  "remoteShaVerified": true,
+  "originalDirtyEntries": 6,
+  "originalDirtyContentsBytePreserved": true,
+  "nativeP3Retained": true,
+  "nativeP4Included": false,
+  "backendDeploymentByAuth": false,
+  "schemaRlsGrantChangeByAuth": false,
+  "realGoogleLogin": "PASS_NATIVE46_ID_TOKEN_AND_NATIVE49_SWITCH_COLD_LOGOUT_READBACK",
+  "nonceRepairIntegration": {
+    "previousMain": "d77f34d638e58a7d3631cebc072072582f862a74",
+    "integratedMain": "76d05522f1dbba73353f5e7d625e6341bc504f12",
+    "method": "FAST_FORWARD_NORMAL_PUSH",
+    "remoteShaVerified": true,
+    "originalSixFilesAndTrackedDiffBytePreserved": true,
+    "nativeP4ParentCommitsIncluded": false
+  }
+}

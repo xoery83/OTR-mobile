@@ -1,0 +1,57 @@
+{
+  "status": "GOOGLE_NATIVE_SESSION_SWITCH_COLD_LOGOUT_VERIFIED",
+  "environment": "DEV",
+  "bundleId": "com.xoery.otrmobile",
+  "authSourceCommit": "258f50de",
+  "realLogin": {
+    "nativeBuild": 46,
+    "unifiedSourceCommit": "4875dc6fbf32e68a832ccbf5d9ee601ab513ebc5",
+    "embeddedBundleSHA256": "a76f23271fd78ad167c5d7a1aa3197f13ad1d82b17b63c8e200f68999c8f5b93",
+    "provider": "google",
+    "flow": "NATIVE_ID_TOKEN_WITH_CALLER_NONCE_TO_SUPABASE",
+    "serverNonceCheckEnabled": true,
+    "exchangeAtUTC": "2026-10-28T06:20:04Z",
+    "exchangeHTTPStatus": 200,
+    "canonicalAccountId": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+    "sessionId": "cfae3eeb-3f7b-4405-ac33-ca8886c5eb2e",
+    "independentReadback": "READ_ONLY_AUTH_USERS_GOOGLE_IDENTITY_AND_AUTH_SESSIONS",
+    "coldRestart": "PASS",
+    "coldTripList": "EMPTY_WITHOUT_ACCOUNT_A_FOUR_TRIPS",
+    "cancelBeforeLogin": "PASS_ORIGINAL_ACCOUNT_RETAINED"
+  },
+  "consumerRepair": {
+    "cause": "MENU_IDENTITY_NOT_GENERATION_SCOPED_AND_TRIP_REPOSITORY_READ_BEFORE_ACCOUNT_APPLY",
+    "repair": "GENERATION_FENCES_AND_READ_ONLY_COMMITTED_SESSION_GATE",
+    "targetedSuites": 18,
+    "targetedTests": 187,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "independentReview": "PASS_5_SUITES_76_TESTS_AND_PUBLIC_PORT_GATE_FRESH_LEGACY_CHECKS",
+    "nativeImmediateSwitch": "PASS_A_MENU_FOUR_TRIPS_TO_B_MENU_EMPTY_WITHOUT_RESTART",
+    "nativeBuild": 49,
+    "unifiedSourceCommit": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+    "embeddedBundleSHA256": "f88a843f37723783fd9da1f871d5f8b953054b717a98f21d4ea774d9339463cc"
+  },
+  "logoutIndependentAbsence": "PASS_NORMAL_UI_LOGOUT_THEN_AUTH_SESSIONS_EMPTY_FOR_B",
+  "originalSyntheticAccountRestored": "PASS_NORMAL_UI_REMEMBERED_ACCOUNT_A_FOUR_TRIPS_RESTORED_B_REMOVED",
+  "boundaries": {
+    "providerSecretWrittenToNativeOrGit": false,
+    "nonceValidationDisabled": false,
+    "schemaOrRlsOrGrantChanged": false,
+    "deviceKeychainOrSessionCopied": false,
+    "otherQaDeviceOperated": false
+  },
+  "remainingPhase1": [
+    "EMAIL_OTP_POSITIVE_DELIVERY_AND_NATIVE_E2E_PENDING_USABLE_MAILBOX",
+    "APPLE_PROVIDER_CONFIGURATION_AND_REAL_IDENTITY_E2E_PENDING"
+  ],
+  "dataPreservation": {
+    "integrity": "ok",
+    "tablesChecked": 149,
+    "originalRowHashesRetainedTables": 147,
+    "changedTables": ["local_trip_containers", "sync_operations"],
+    "fullUnchangedDatabaseClaim": false,
+    "keychainRead": false
+  },
+  "knownIssue": "SIGNED_OUT_MY_TRIPS_SHOWS_GENERIC_READ_FAILURE_WITH_ACCOUNT_RESTORE_STILL_AVAILABLE"
+}

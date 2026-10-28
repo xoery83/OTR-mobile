@@ -4,7 +4,8 @@ Owner continuous delivery authorization applies to this independent lane. Base m
 `1c7e7fc8`; worktree `auth-identity-delivery-20261028`, branch
 `codex/auth-identity-delivery-20261028`. Native owns Manual/Core/Navigation consumers;
 Import released the central catalog editing window after `75de43cc`. No shared
-runtime, deployment, business policy, database permission or QA device changed.
+backend deployment, business policy or database permission changed. Forms QA alone
+was updated in its coordinated window; AD5 was not operated.
 
 ## Current qualification
 
@@ -26,22 +27,39 @@ Supabase remains the Session authority. No Secret is stored in Native or Git.
 A binary lacking the native module stays launchable and reports unavailable.
 Cancellation, missing token, SDK/cleanup errors never install a Session.
 
-Google source: Auth/Domain16 suites128 tests, TypeScript/UI guard and Expo plugin
-introspection PASS before independent review. Introspection confirms the exact
-bundle and reversed URL scheme. This does **not** qualify an installed binary.
+Google source48d0c53e passed independent Review; unified main453de9c3 retains P3
+and is fast-forward integrated/pushed, remote SHA verified. Original primary six
+dirty entries remain byte-identical. Joined18 suites153 tests/typecheck PASS;
+Google-only independent16 suites128 tests/UIguard/format/default-loader checks PASS.
+Expo introspection and release JS export2210 modules PASS.
+
+`GOOGLE_NATIVE_BUILD43.json` pins the actual Debug embedded2371-module binary,
+source/JS hash, Google SDK16.1.5/GoogleSignIn9.2.0 and Pod-lock hash. Native compile,
+canonical Bundle ID, exact IDs/reversed scheme, linked native module and standard
+simulator MachO identity sections PASS; no new Keychain access group. Own Debug
+embedding was explicitly enabled; this binary does not require shared Metro.
+Forms QA was updated in place without logout/reset. Cold start retained its QA
+identity and four Trips. All original row hashes across148 tables are retained;
+SQLite integrityOK; only sqlite_stat1 is newly materialized. No Keychain read/copy.
+Real native branded Google control → system accounts.google.com prompt → Cancel
+preserved the QA Account; repeating reaches Google's official "Sign in to continue
+to OnTheRoad" email page. These are **entry/cancel observations, not Google login**.
+Owner interaction returned Google credentials, but two real Supabase exchanges
+failed HTTP400 on nonce presence mismatch; original QA Account retained. Auth nonce
+bridge repair is independently reviewed; see GOOGLE_NONCE_REPAIR.md. Native45 and
+Google Session/cold/logout/account-isolation E2E remain pending.
+
 The original dependency tree has an existing optional Expo/worklets peer conflict;
 installation used legacy peer resolution in this independent dependency directory.
 The committed lock preserves every existing package entry/version and adds only
 Google SDK (no runtime dependencies); shared node_modules is untouched.
 
-Remaining: independent Google review, serial main integration, coordinated unified
-native rebuild and actual Google interaction → cold start → logout → Account
-isolation. Use the canonical bundle; retained physical `.formsqa` needs another iOS
-client and is not a substitute. No Google test identity or personal interaction has
-yet been supplied. Email positive OTP delivery remains pending a usable mailbox;
-Apple Provider remains disabled/PROVIDER_CONFIGURATION_PENDING. No JWT/OTP bypass,
-admin login, device Session/Keychain copying, business write or privilege change.
-Phase1 remains CLOUD_PENDING until real Provider/native evidence exists.
+Remaining: Owner's authorized Google QA login, then normal Session readback,
+cold/refresh/logout and cross-Account negative. Retained physical `.formsqa` needs
+another iOS client and is not a substitute. Email positive OTP delivery needs a
+usable mailbox; Apple remains disabled/PROVIDER_CONFIGURATION_PENDING. No JWT/OTP
+bypass, admin login, device credentials copying, business write or privilege change.
+Phase1 remains CLOUD_PENDING until real Provider evidence exists.
 
 ## Preserved implementation boundaries
 
@@ -74,3 +92,45 @@ removal; UNKNOWN retains access. Tokens stay memory-only in the host DEV runner.
 6. **Integration delta:** Native snapshot consumer/Guest business principal and
    whole-dataset adoption; native OAuth credentials/configuration; actual mailbox;
    coordinated Native restore and serial main integration.
+
+## Email OTP follow-through — 28 October
+
+Owner paused Apple until further notice. No Apple package/config/console candidate
+is committed or enabled. Google actual native Session/switch/cold/logout evidence
+and main integration are in GOOGLE_DEV_E2E.json / GOOGLE_MAIN_INTEGRATION.json.
+
+The Hosted Free DEV project has custom SMTP off and a ConfirmationURL Magic Link
+template. Its supported template-edit menu requires Pro, custom SMTP or a Send
+Email Hook. Default delivery is team-only; do not add a mailbox to the project
+team merely to bypass recipient restrictions, pay for Pro or report a link as OTP.
+No Hosted OTP was sent and no SMTP Secret was read or saved by this lane.
+
+Local acceptance uses an isolated Supabase project `otr-auth-mailpit-20261028`:
+API54331, database54332, Mailpit54334, SMTP54335. Existing canonical local stack
+is unchanged. Business migrations/seeds and unrelated services are disabled;
+email confirmations enabled, six-digit OTP, one-hour expiry, local request interval
+one second. Both confirmation and magic_link templates use the supplied HTML
+with `{{ .Token }}` and no link. Template content_path must be the repository HTML
+absolute path: this Docker host cannot serve an unshared /private/tmp bind mount.
+Confirm the Auth container's template endpoint actually serves that file.
+
+Run `node --import tsx scripts/auth/mailpit-otp-e2e.ts` with isolated CLI status
+in `/private/tmp/otr-auth-mailpit-20261028/status.private.json` (mode0600). The runner
+uses only its public client key for normal /otp, /verify, self-read, refresh and
+current-session logout; admin/service-role credentials never authenticate users.
+Its injected transport maps the fixed nominal DEV origin exclusively to the local
+loopback project; the production DEV-project guard is unchanged. Generated codes
+are read from this project's actual Mailpit messages, used transiently, never
+recorded. EMAIL_OTP_MAILPIT_E2E.json proves new registration, wrong/used code
+rejection, existing-user canonical ID stability, memory Repository reconstruction,
+Account selection, refresh, scoped logout/revoked refresh and other-account
+Session preservation. This is local acceptance, not Hosted delivery or Native
+Keychain/cold-start proof. Actual expired-code timing is not exercised here.
+
+Minimal free proposal: Resend Free, proposed auth.xoery.art subdomain and
+noreply@auth.xoery.art sender; SMTP smtp.resend.com:465 / implicit TLS / username
+resend. A domain-scoped Sending key belongs only in Supabase's secure SMTP password
+field. Do not put it in Native, environment examples, logs or Git. Owner approval
+of service/subdomain, account terms, exact generated DNS records and credential
+creation remains pending. No purchase, sender registration or DNS change occurred.
+See EMAIL_SMTP_CANDIDATE.json for the dated allowance and official references.

@@ -4,11 +4,18 @@ Auth owns adapter, secure Session/principal and Account UI files on its independ
 `codex/auth-identity-delivery-20261028` branch. Existing Supabase Auth/session
 authority is retained. Provisional Email OTP and Apple/Google ID-token exchange
 ports install no Session themselves; existing fenced account activation owns it.
-`readLocalAuthSnapshot` is apply-gated, with Guest kept outside Account identity.
+Startup `readLocalAuthSnapshot` is apply-gated, with Guest outside Account identity.
+UI consumers use `readCommittedLocalSession(): Promise<LocalSession|null>`: apply-gated
+adopted credentials only, no Guest choice or legacy migration. Generation-tagged
+menu/list results reject superseded Account reads.
 Native owns startup consumer/Navigation integration; Import released catalog
 editing after75de43cc. No business schema/permission or runtime Gate is changed.
 Independent source review PASS; actual OTP negative/configuration evidence only,
-Apple/Google configuration and positive Native/Provider E2E pending. Exact scope
+Google nonce/consumer repair is integrated/pushed on main76d05522. Real native46
+Google exchange200, independent Account/Session readback and cold restore pass;
+Native49 immediate A↔B menu/four-vs-zero Trip isolation, normal B logout/server
+Session absence and A restore pass. Signed-out list presentation needs a minimal
+consumer fix. Email OTP and Apple positive E2E remain pending. Exact scope
 and six-point data checklist: `../ops/auth-phase1-20261028/README.md`.
 
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17

@@ -24,7 +24,7 @@ import {
 } from "@/data/auth/accountGeneration";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readCommittedLocalSession } from "@/data/auth/authRepository";
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { AccountIdentity } from "@/domain/auth/localSession";
@@ -113,12 +113,17 @@ export function GlobalMenu({
       { text: t("common.cancel"), style: "cancel" },
     ]);
   const queryClient = useQueryClient();
-  const [identity, setIdentity] = useState<AccountIdentity | null>(null);
+  const [identityRead, setIdentityRead] = useState<{
+    generation: number;
+    identity: AccountIdentity | null;
+  } | null>(null);
+  const identity = identityRead?.generation === generation ? identityRead.identity : null;
   const [actor, setActor] = useState<{
+    generation: number;
     displayName: string | null;
     journeyId: string | null;
     role: string | null;
-  }>({ displayName: null, journeyId: null, role: null });
+  }>({ generation: -1, displayName: null, journeyId: null, role: null });
   const accountSwitch = useMemo(
     () =>
       createDefaultAccountSwitchCoordinator({
@@ -129,34 +134,42 @@ export function GlobalMenu({
 
   useEffect(() => {
     let active = true;
-    void readLocalSession()
+    const current = () => active && generation === getAccountGeneration();
+    void readCommittedLocalSession()
       .then(async (session) => {
-        if (!active) return;
-        setIdentity(session?.identity ?? null);
+        if (!current()) return;
+        setIdentityRead({ generation, identity: session?.identity ?? null });
         if (!session?.identity) return;
         try {
-          const repository = await getDefaultLedgerReportingRepository();
           const actorContext = journeyId
-            ? await repository.getActorContext(journeyId)
+            ? await (
+                await getDefaultLedgerReportingRepository()
+              ).getActorContext(journeyId)
             : null;
-          if (!active) return;
+          if (!current()) return;
           setActor({
+            generation,
             displayName: actorContext?.displayName ?? null,
             journeyId: journeyId ?? null,
             role: actorContext?.role ?? null,
           });
         } catch {
-          if (active)
-            setActor({ displayName: null, journeyId: journeyId ?? null, role: null });
+          if (current())
+            setActor({
+              generation,
+              displayName: null,
+              journeyId: journeyId ?? null,
+              role: null,
+            });
         }
       })
       .catch(() => {
-        if (active) setIdentity(null);
+        if (current()) setIdentityRead({ generation, identity: null });
       });
     return () => {
       active = false;
     };
-  }, [journeyId]);
+  }, [journeyId, generation]);
 
   const contextItems = contextualMenuDestinations(module).map<AppNavigationMenuItem>(
     (destination) => ({
@@ -318,8 +331,14 @@ export function GlobalMenu({
       },
     ],
   ];
-  const role = actor.journeyId === (journeyId ?? null) ? actor.role : null;
-  const displayName = actor.journeyId === (journeyId ?? null) ? actor.displayName : null;
+  const role =
+    actor.generation === generation && actor.journeyId === (journeyId ?? null)
+      ? actor.role
+      : null;
+  const displayName =
+    actor.generation === generation && actor.journeyId === (journeyId ?? null)
+      ? actor.displayName
+      : null;
   const detail = [
     role ? t(role === "owner" ? "role.organizer" : "role.member") : null,
     maskEmail(identity?.email ?? null),

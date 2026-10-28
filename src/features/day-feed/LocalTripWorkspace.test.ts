@@ -1,4 +1,4 @@
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
   CreateTripDestinations: (props: any) => {
     state.nodes.push({ destinations: props });
@@ -233,6 +233,7 @@ vi.mock("@/data/auth/authRepository", () => ({
   writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
   readLocalSession: vi.fn(),
+  readCommittedLocalSession: vi.fn(),
 }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: () => state.repo(),
@@ -366,6 +367,18 @@ function input(label: string, value: string) {
 beforeEach(() => {
   vi.unstubAllEnvs();
   vi.mocked(readLocalSession).mockReset();
+  vi.mocked(readCommittedLocalSession)
+    .mockReset()
+    .mockImplementation(
+      async () =>
+        (await readLocalSession()) ??
+        ({
+          identity: {
+            userId: "10000000-0000-4000-8000-000000000001",
+            displayName: "Account",
+          },
+        } as never),
+    );
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   state.effects = [];
@@ -1620,4 +1633,49 @@ it("forwards the saved-item revision to Preparation without remounting the works
   expect(state.preparation.refreshKey).toBe(1);
   expect(state.refs).toBe(initial);
   delete (props as any).refreshKey;
+});
+
+it("waits for the account apply snapshot before opening the new account Trip repository", async () => {
+  let finish!: (value: any) => void;
+  vi.mocked(readCommittedLocalSession).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  render();
+  await flush();
+  expect(state.repo).not.toHaveBeenCalled();
+  finish({ identity: { userId: "b", displayName: "B" } });
+  await flush();
+  expect(repo.listTrips).toHaveBeenCalledOnce();
+  expect(render()).not.toContain("localTrip.unavailable");
+});
+
+it("signed-out My Trips does not open account repositories or retain the previous account list", async () => {
+  const repo = repository([trip("old-a", "Private Account A Trip")]);
+  state.repo.mockResolvedValue(repo);
+  render();
+  await flush();
+  expect(render()).toContain("Private Account A Trip");
+  state.repo.mockClear();
+  state.discovery.mockClear();
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  advanceAccountGeneration();
+  render();
+  await flush();
+  expect(state.repo).not.toHaveBeenCalled();
+  expect(state.discovery).not.toHaveBeenCalled();
+  expect(render()).not.toContain("Private Account A Trip");
+  expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
+});
+it("a signed-out direct Trip route cannot read the previous account cache", async () => {
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  props.tripId = "old-a";
+  render();
+  await flush();
+  expect(state.repo).not.toHaveBeenCalled();
+  expect(state.discovery).not.toHaveBeenCalled();
+  expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });

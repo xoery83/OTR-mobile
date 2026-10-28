@@ -23,20 +23,55 @@ repository reconstruction, concurrent refresh single-flight, wrong-Account denia
 current-Session revoke/independent absence and14 baseline Sessions preserved.
 It does not prove OTP delivery or native Keychain cold start.
 
-Google Provider now enabled; Apple remains disabled. Owner supplied canonical iOS
-and Web Client IDs. Google SDK16.1.5/Expo scheme/server audience/native branded
-control and provisional Supabase exchange are connected in the Auth candidate.
-Auth/Domain16 suites128 tests/typecheck/UIguard/plugin introspection PASS; independent
-review and coordinated native binary/Google interaction are pending. Exact scope:
-`ops/auth-phase1-20261028/README.md`, `SESSION_DEV_E2E.json`, Google ADR
-`adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/RLS/GRANT,
-SQLite74 or other QA Session changed. Old binaries lacking Google module stay usable.
+Google Provider enabled; Apple disabled. Source48d0c53e and reviewed remote logout
+are integrated/pushed on unified main453de9c3, retaining accepted P3;18 suites153
+tests/typecheck PASS. Original main six dirty entries preserved. Build43 is the
+same source with own embedded Debug JS, standard simulator identity sections and
+Google SDK. In-place Forms QA cold restore retains its QA identity/four Trips and
+all original row hashes across148 tables, integrityOK. Real native Google control
+opens system prompt; Cancel preserves Account, repeat opens official OnTheRoad
+Google email page. This does not prove Google login. Owner completed Google interaction, but actual ID-token exchange was rejected
+HTTP400 for missing matching caller nonce (DEV Auth18:09/18:19NZ). Original QA
+Account retained. The reviewed local Expo bridge passes a fresh secure nonce digest
+to official Google SDK9.2.0 and the original nonce to Supabase; server nonce checks
+remain enabled. Native46 real ID-token exchange returned200 at19:20:04NZ;
+independent readback verified its canonical Google Account/Session. Cold restart
+restored that Account with an empty Trip list, excluding A's four Trips.
+Immediate menu/list activation exposed a consumer race; Auth258f50de includes the
+reviewed generation guards and read-only committed Session port (no Guest creation).
+18 suites187 tests/types/UIguard pass; independent5 suites76 plus real public-port
+gate/fresh/legacy checks pass. Native49 immediate A↔B switching passes: correct
+menu and four-vs-zero Trip lists without restart. Normal B logout is independently
+verified by an empty server Session list; A is restored through remembered-account
+UI with four Trips retained. SQLite integrityOK;147/149 tables retain original row
+hashes, with local_trip_containers/sync_operations changes, so no full unchanged-DB
+claim. See `ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json` and
+`ops/auth-phase1-20261028/GOOGLE_NONCE_REPAIR.md`. Historical failed43 receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
+Google ADR: `adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/
+RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
 
-Next: finish independent Review/serial integration, coordinated canonical-bundle
-native build and real Google login→cold→logout/isolation; positive Email OTP needs a
-usable mailbox, Apple configuration/interactive identity remains pending. Phase1
-CLOUD_PENDING. Guest business bootstrap/adoption remains a separate owning delta;
-normal Auth cannot silently claim Guest datasets or Trip People.
+Google nonce/consumer slice is integrated/pushed on main76d05522, remote verified,
+with original six dirty files and tracked diff byte-preserved; no P4 parent commits.
+Signed-out My Trips repair e3bdeef4 skips account repositories, clears stale lists
+and keeps direct Trip routes unavailable;18 suites189 tests/types/UIguard and
+independent4 suites71 pass. Native runtime follow-up remains pending; Forms QA
+is returned to Native and Auth does not install over its active Form tests.
+
+Owner paused Apple until further notice because the Developer account is not open;
+uncommitted Apple dependency/config candidates were withdrawn. Email OTP has real
+isolated Local Supabase/Mailpit PASS: new signup, wrong/used-code denial,
+existing-user canonical Account stability, self-read, in-memory Repository restore,
+distinct Account Session selection, refresh, scoped logout and other Session
+preservation. Exact finite runner/hash/run receipt: EMAIL_OTP_MAILPIT_E2E.json in
+ops/auth-phase1-20261028. This does not prove Hosted delivery or Native OTP restore.
+Hosted DEV custom SMTP is off and its current email is a Magic Link. Dashboard
+allows customization through Pro/custom SMTP/Send Email Hook; no paid upgrade or
+team-membership workaround. Free Resend SMTP/subdomain/template proposal is
+EMAIL_SMTP_CANDIDATE.json, not applied. Owner approves external service/account/DNS
+and saves Secrets directly in secure configuration. No email sent to a real inbox.
+Next: await that precise SMTP setup while continuing independent Session/Guest
+work. Phase1 CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
+Auth cannot silently claim Guest datasets or Trip People.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 

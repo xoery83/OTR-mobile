@@ -1,0 +1,54 @@
+{
+  "status": "PROPOSAL_ONLY_NOT_APPLIED",
+  "checkedOn": "2026-10-28",
+  "hostedDev": {
+    "projectRef": "tuqigdxrvrerfewsxqgm",
+    "customSmtpEnabled": false,
+    "currentTemplate": "MAGIC_LINK_WITH_CONFIRMATION_URL_NOT_OTP",
+    "defaultService": "TEAM_RECIPIENTS_ONLY",
+    "currentDashboardTemplateEditing": "UPGRADE_TO_PRO_OR_CUSTOM_SMTP_OR_SEND_EMAIL_HOOK",
+    "teamOtpTest": "NOT_RUN_CURRENT_FREE_TEMPLATE_NOT_OTP",
+    "teamMembershipExpandedForTesting": false
+  },
+  "proposedProvider": "Resend Free",
+  "freeAllowanceSnapshot": { "monthlyEmails": 3000, "dailyEmails": 100 },
+  "proposedSendingDomain": "auth.xoery.art",
+  "domainVerified": false,
+  "smtp": {
+    "host": "smtp.resend.com",
+    "port": 465,
+    "security": "IMPLICIT_TLS",
+    "username": "resend",
+    "password": "OWNER_CONFIGURES_DOMAIN_SCOPED_SENDING_KEY_DIRECTLY_IN_SUPABASE",
+    "proposedSenderName": "OTR DEV",
+    "proposedSenderEmail": "noreply@auth.xoery.art"
+  },
+  "template": {
+    "subject": "Your OTR verification code",
+    "bodyFile": "email-otp-template.html",
+    "placeholder": "{{ .Token }}",
+    "applyTo": ["Confirm sign up", "Magic link or OTP"],
+    "confirmationUrlIncluded": false,
+    "expiryAndRateLimitChanges": false
+  },
+  "ownerOnlyPending": [
+    "APPROVE_PROVIDER_AND_PROPOSED_SENDING_SUBDOMAIN",
+    "COMPLETE_SERVICE_ACCOUNT_AND_REQUIRED_TERMS",
+    "APPROVE_EXACT_PROVIDER_GENERATED_DNS_RECORDS_BEFORE_APPLYING",
+    "GENERATE_SCOPED_KEY_AND_SAVE_ONLY_THROUGH_SECURE_PROVIDER_AND_SUPABASE_CHANNELS"
+  ],
+  "appliedActions": {
+    "purchase": false,
+    "newSendingIdentity": false,
+    "dns": false,
+    "smtpSecretCreatedOrRead": false,
+    "hostedTemplateChanged": false
+  },
+  "sources": [
+    "https://resend.com/pricing",
+    "https://resend.com/docs/send-with-smtp",
+    "https://resend.com/docs/dashboard/domains/introduction",
+    "https://supabase.com/docs/guides/auth/auth-smtp",
+    "https://supabase.com/docs/guides/auth/auth-email-passwordless"
+  ]
+}
