@@ -21,6 +21,7 @@ export type P1AdmissionActions = {
 export function useUniversalP1Admission(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
+  result?: UniversalImportResult | null,
 ): P1AdmissionActions {
   const enabledFamilies: ("P1" | "P2" | "P3" | "P4" | "P5" | "P6")[] = [];
   if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_P1_ADMISSION_ENABLED === "true")
@@ -63,6 +64,42 @@ export function useUniversalP1Admission(
       alive.current = false;
     };
   }, []);
+  useEffect(() => {
+    if (!result || !current()) return;
+    let canceled = false;
+    const recover = async () => {
+      const [
+        { requireAdoptedUserId },
+        { tripCoreSha256Hex },
+        { createCoreV2Transport },
+        { readUniversalAcceptedItems },
+      ] = await Promise.all([
+        import("@/data/auth/authRepository"),
+        import("@/data/repositories/tripCoreSha256"),
+        import("@/data/api/tripCoreV2Transport"),
+        import("@/data/operations/universalP1AdmissionConsumer"),
+      ]);
+      const accepted = await readUniversalAcceptedItems(model, result, {
+        getAccountId: requireAdoptedUserId,
+        isCurrent: () => !canceled && current(),
+        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex),
+      });
+      if (!canceled && current())
+        setStatuses((previous) => ({
+          ...previous,
+          ...Object.fromEntries(
+            Object.keys(accepted).map((token) => [token, "SERVER_ACCEPTED" as const]),
+          ),
+        }));
+    };
+    // A failed GET is not a failed Save; explicit confirm/recovery retains its original identity.
+    void recover().catch(() => {});
+    return () => {
+      canceled = true;
+    };
+    // Owning Batch scope is frozen for this mounted view; current() fences later scope changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
   return {
     enabled,
     enabledFamilies,

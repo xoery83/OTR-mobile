@@ -29,7 +29,7 @@ export function UniversalCaptureResults({
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
-  const admission = useUniversalP1Admission(model, isCurrent);
+  const admission = useUniversalP1Admission(model, isCurrent, state.result);
   return (
     <UniversalResultView
       model={model}

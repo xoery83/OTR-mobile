@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
   readUniversalP1ReviewOriginal,
+  readUniversalAcceptedItems,
   createUniversalP1AdmissionConsumer,
 } from "./universalP1AdmissionConsumer";
 import { universalP1SourceFixture } from "../../../backend/src/__fixtures__/universalP1Source";
@@ -425,4 +426,95 @@ it("uses P6 owning Review and same durable operation, never Manual Save", async 
   });
   expect(f.command.admission.mode).toBe("REVIEWED_SOURCE");
   expect(f.core.enqueue).toHaveBeenCalledExactlyOnceWith(expect.anything(), f.command);
+});
+
+it.each(["P1", "P2", "P3", "P4", "P5", "P6"] as const)(
+  "reopens %s from its existing receipt without any write or paid send",
+  async (family) => {
+    const f = await fixture(family);
+    f.transport.receipt.mockResolvedValue({
+      projection: "FULL",
+      domainReceiptId: randomUUID(),
+      receipt: {
+        operationId: f.slot.operationId,
+        tripId: f.result.tripId,
+        actorAccountId: f.result.accountId,
+        command: f.command.command,
+        outcome: "APPLIED",
+        committedAt: "2026-10-28T00:00:00Z",
+        targetVector: [{ kind: "ITEM", id: f.slot.target.id, committedRevision: 1 }],
+      },
+    });
+    const read = () =>
+      readUniversalAcceptedItems(f.model, f.result, {
+        getAccountId: async () => f.result.accountId,
+        isCurrent: () => true,
+        transport: f.transport as never,
+      });
+    expect(await read()).toEqual({
+      [f.result.candidates[0].token]: {
+        itemId: f.slot.target.id,
+        operationId: f.slot.operationId,
+        committedAt: "2026-10-28T00:00:00Z",
+      },
+    });
+    expect(f.transport.receipt).toHaveBeenCalledWith(
+      expect.anything(),
+      f.slot.operationId,
+    );
+    expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+    expect(f.transport.prepareSourcePlan).not.toHaveBeenCalled();
+    expect(f.core.enqueue).not.toHaveBeenCalled();
+    expect(f.transport.finalizeSourceSlot).not.toHaveBeenCalled();
+    f.transport.receipt.mockResolvedValue(null);
+    expect(await read()).toEqual({});
+  },
+);
+it("withholds receipt recovery on scope mismatch and late view invalidation", async () => {
+  const f = await fixture();
+  const deps = {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => true,
+    transport: f.transport as never,
+  };
+  f.transport.receipt.mockResolvedValue({
+    projection: "FULL",
+    receipt: { operationId: randomUUID() },
+  });
+  await expect(readUniversalAcceptedItems(f.model, f.result, deps)).rejects.toThrow(
+    "CORE_RECEIPT_SCOPE_MISMATCH",
+  );
+  let active = true;
+  f.transport.receipt.mockImplementation(async () => {
+    active = false;
+    return null;
+  });
+  await expect(
+    readUniversalAcceptedItems(f.model, f.result, { ...deps, isCurrent: () => active }),
+  ).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
+  expect(f.core.enqueue).not.toHaveBeenCalled();
+});
+
+it("does not call a rejected or unknown operation a saved Item", async () => {
+  const f = await fixture();
+  const deps = {
+    getAccountId: async () => f.result.accountId,
+    isCurrent: () => true,
+    transport: f.transport as never,
+  };
+  f.transport.receipt.mockResolvedValue({
+    projection: "FULL",
+    domainReceiptId: randomUUID(),
+    receipt: {
+      operationId: f.slot.operationId,
+      tripId: f.result.tripId,
+      actorAccountId: f.result.accountId,
+      command: f.command.command,
+      outcome: "REJECTED",
+      targetVector: [{ kind: "ITEM", id: f.slot.target.id, committedRevision: null }],
+    },
+  });
+  expect(await readUniversalAcceptedItems(f.model, f.result, deps)).toEqual({});
+  f.transport.receipt.mockResolvedValue({ projection: "REDACTED" });
+  expect(await readUniversalAcceptedItems(f.model, f.result, deps)).toEqual({});
 });
