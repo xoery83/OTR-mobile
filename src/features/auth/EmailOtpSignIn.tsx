@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Keyboard, StyleSheet, View } from "react-native";
 import type { LocalSession } from "@/domain/auth/localSession";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { createDevProvisionalSignIn } from "@/data/auth/devProvisionalSignIn";
@@ -100,7 +100,8 @@ export function EmailOtpSignIn({
     } catch (caught) {
       if (caught instanceof Error && caught.message === "GOOGLE_SIGN_IN_CANCELLED")
         return;
-      if (alive.current)
+      if (alive.current) {
+        Keyboard.dismiss();
         setErrorKey(
           caught instanceof SupabaseDevAuthError && caught.kind === "rate_limited"
             ? "auth.rateLimited"
@@ -113,6 +114,7 @@ export function EmailOtpSignIn({
                   ? "account.loginFailed"
                   : "auth.requestFailed",
         );
+      }
     } finally {
       pending.current = false;
       if (alive.current) {
@@ -131,6 +133,15 @@ export function EmailOtpSignIn({
 
   return (
     <UiSection title={t("auth.emailTitle")}>
+      {errorKey ? (
+        <UiText
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          style={styles.error}
+        >
+          {t(errorKey)}
+        </UiText>
+      ) : null}
       {!challenge ? (
         <GoogleSignInButton disabled={busy} onPress={() => void submit(true, "google")} />
       ) : null}
@@ -190,15 +201,6 @@ export function EmailOtpSignIn({
           />
         </>
       )}
-      {errorKey ? (
-        <UiText
-          accessibilityRole="alert"
-          accessibilityLiveRegion="polite"
-          style={styles.error}
-        >
-          {t(errorKey)}
-        </UiText>
-      ) : null}
       <View>
         <UiButton
           label={t("account.cancel")}

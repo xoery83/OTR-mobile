@@ -1,26 +1,29 @@
 {
-  "status": "PROPOSAL_ONLY_NOT_APPLIED",
+  "status": "APPLIED_OWNER_AUTHORIZED_DEV_SMTP_AND_TOKEN_TEMPLATES",
   "checkedOn": "2026-10-28",
   "hostedDev": {
     "projectRef": "tuqigdxrvrerfewsxqgm",
-    "customSmtpEnabled": false,
-    "currentTemplate": "MAGIC_LINK_WITH_CONFIRMATION_URL_NOT_OTP",
-    "defaultService": "TEAM_RECIPIENTS_ONLY",
+    "customSmtpEnabled": true,
+    "currentTemplate": "TOKEN_OTP_NO_CONFIRMATION_URL",
+    "defaultService": "REPLACED_BY_RESEND_CUSTOM_SMTP",
     "currentDashboardTemplateEditing": "UPGRADE_TO_PRO_OR_CUSTOM_SMTP_OR_SEND_EMAIL_HOOK",
-    "teamOtpTest": "NOT_RUN_CURRENT_FREE_TEMPLATE_NOT_OTP",
+    "teamOtpTest": "NOT_NEEDED_CUSTOM_SMTP_NORMAL_MAILBOX_VERIFIED",
     "teamMembershipExpandedForTesting": false
   },
   "proposedProvider": "Resend Free",
-  "freeAllowanceSnapshot": { "monthlyEmails": 3000, "dailyEmails": 100 },
+  "freeAllowanceSnapshot": {
+    "monthlyEmails": 3000,
+    "dailyEmails": 100
+  },
   "proposedSendingDomain": "auth.xoery.art",
-  "domainVerified": false,
+  "domainVerified": true,
   "smtp": {
     "host": "smtp.resend.com",
     "port": 465,
     "security": "IMPLICIT_TLS",
     "username": "resend",
     "password": "OWNER_CONFIGURES_DOMAIN_SCOPED_SENDING_KEY_DIRECTLY_IN_SUPABASE",
-    "proposedSenderName": "OTR DEV",
+    "proposedSenderName": "OTR",
     "proposedSenderEmail": "noreply@auth.xoery.art"
   },
   "template": {
@@ -29,20 +32,16 @@
     "placeholder": "{{ .Token }}",
     "applyTo": ["Confirm sign up", "Magic link or OTP"],
     "confirmationUrlIncluded": false,
-    "expiryAndRateLimitChanges": false
+    "permanentExpiryOrRateLimitChanges": false,
+    "temporaryStricterExpiryTest": "60_SECONDS_THEN_INDEPENDENTLY_RESTORED_TO_3600_SECONDS"
   },
-  "ownerOnlyPending": [
-    "APPROVE_PROVIDER_AND_PROPOSED_SENDING_SUBDOMAIN",
-    "COMPLETE_SERVICE_ACCOUNT_AND_REQUIRED_TERMS",
-    "APPROVE_EXACT_PROVIDER_GENERATED_DNS_RECORDS_BEFORE_APPLYING",
-    "GENERATE_SCOPED_KEY_AND_SAVE_ONLY_THROUGH_SECURE_PROVIDER_AND_SUPABASE_CHANNELS"
-  ],
+  "ownerOnlyPending": [],
   "appliedActions": {
     "purchase": false,
     "newSendingIdentity": false,
     "dns": false,
     "smtpSecretCreatedOrRead": false,
-    "hostedTemplateChanged": false
+    "hostedTemplateChanged": true
   },
   "sources": [
     "https://resend.com/pricing",
@@ -50,5 +49,13 @@
     "https://resend.com/docs/dashboard/domains/introduction",
     "https://supabase.com/docs/guides/auth/auth-smtp",
     "https://supabase.com/docs/guides/auth/auth-email-passwordless"
-  ]
+  ],
+  "domainVerificationEvidence": "OWNER_CONFIRMED_RESEND_VERIFIED_AND_WIX_DNS_COMPLETE",
+  "ownerCompleted": {
+    "serviceAndDomainAuthorized": true,
+    "dnsCompletedByOwner": true,
+    "keyPresentInEncryptedSupabaseField": true,
+    "keyValueReadByAuth": false
+  },
+  "realEvidenceFile": "EMAIL_OTP_HOSTED_DEV_E2E.json"
 }

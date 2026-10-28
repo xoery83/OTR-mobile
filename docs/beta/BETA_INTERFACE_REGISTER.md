@@ -10,12 +10,19 @@ adopted credentials only, no Guest choice or legacy migration. Generation-tagged
 menu/list results reject superseded Account reads.
 Native owns startup consumer/Navigation integration; Import released catalog
 editing after75de43cc. No business schema/permission or runtime Gate is changed.
-Independent source review PASS; actual OTP negative/configuration evidence only,
+Independent source review PASS;
 Google nonce/consumer repair is integrated/pushed on main76d05522. Real native46
 Google exchange200, independent Account/Session readback and cold restore pass;
 Native49 immediate A↔B menu/four-vs-zero Trip isolation, normal B logout/server
-Session absence and A restore pass. Signed-out list presentation needs a minimal
-consumer fix. Email OTP and Apple positive E2E remain pending. Exact scope
+Session absence and A restore pass. Signed-out list repair is integrated on
+main0a6e7a9a. Owner-authorized Resend Custom SMTP/Token templates now have real
+native49 Email signup/Session readback/cold restore, resend/rate-limit and actual
+elapsed-expiry rejection evidence; final OTP policy is restored3600 seconds/eight
+digits and normal logout/server Session absence/A restoration pass. Existing
+expired-code alert was below the visible Account form; fixd3d334d4 moves it before
+inputs and dismisses keyboard. Native52 focused real-server rejection/visible
+error/keyboard dismissal/cancel/A-four-Trips acceptance passes. Apple
+is explicitly paused by Owner until Developer enrollment. Exact scope
 and six-point data checklist: `../ops/auth-phase1-20261028/README.md`.
 
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17
