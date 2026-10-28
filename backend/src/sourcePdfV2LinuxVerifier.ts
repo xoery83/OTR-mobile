@@ -36,7 +36,10 @@ const extractionSchema = flightPdfExtractionSchema.extend({
     .max(32),
 });
 // A verified producer result is not a Source registration or Canonical proof.
-export function createSourcePdfV2LinuxVerifier(readOriginal: SourcePdfCustodyReader) {
+export function createSourcePdfV2LinuxVerifier(
+  readOriginal: SourcePdfCustodyReader,
+  runWorker = runSourcePdfV2LinuxWorker,
+) {
   return async (supplied: Parameters<SourcePdfCustodyReader>[0]) => {
     const scope = Object.freeze(scopeSchema.parse(supplied));
     async function read() {
@@ -54,7 +57,7 @@ export function createSourcePdfV2LinuxVerifier(readOriginal: SourcePdfCustodyRea
         throw new Error("PDF_V2_ORIGINAL_MISMATCH");
       return new Uint8Array(bytes);
     }
-    const decoded = extractionSchema.parse(await runSourcePdfV2LinuxWorker(await read()));
+    const decoded = extractionSchema.parse(await runWorker(await read()));
     const { toleratedUnreferencedZeroOffsetObjects, ...extraction } = decoded;
     const result = await validatePdfExtractionContent(extraction, scope, async (b) =>
       hash(b),

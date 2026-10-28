@@ -334,3 +334,11 @@ methods exist. Older unversioned binaries remain closed in ordinary builds; the
 explicit paired QA fallback is retained for already-qualified lifecycle fixtures.
 This is local scoped custody reading, not PDF/OCR interpretation, cloud retention,
 sharing or Source authority.
+
+PDF execution preparation reuses the fixed qpdf-poppler worker through a private
+Unix-socket, parse-only transport candidate. The Backend image cannot currently
+launch Docker; the candidate does not expose the Docker socket to Backend or add
+Source/Task authority. Only bytes and bounded producer output cross this port;
+existing original rereads, output validation and owning SQL still decide proof.
+No listener/startup, host mount or service activation is installed. A future host
+execution/mount change requires its exact protected deployment review and approval.

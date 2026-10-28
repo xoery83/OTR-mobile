@@ -27,8 +27,9 @@ export function createSourcePdfV2Registration(
   connection: CorePgConnection,
   hash: ImportHash,
   readOriginal: SourcePdfCustodyReader,
+  runWorker?: Parameters<typeof createSourcePdfV2LinuxVerifier>[1],
 ) {
-  const verify = createSourcePdfV2LinuxVerifier(readOriginal);
+  const verify = createSourcePdfV2LinuxVerifier(readOriginal, runWorker);
   async function transaction<T>(work: (lease: CorePgLease) => Promise<T>) {
     return connection.withLease(async (lease) => {
       let began = false;
