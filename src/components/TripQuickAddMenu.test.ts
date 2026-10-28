@@ -1,3 +1,5 @@
+import { readCaptureTripPrior } from "@/features/capture/captureTripPrior";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 vi.mock("@/features/day-feed/ManualItineraryContent", () => ({
   ManualItineraryContent: (props: any) => {
     state.manualProps = props;
@@ -18,6 +20,7 @@ import {
 } from "./TripQuickAddMenu";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
+  guest: false,
   hooks: [] as unknown[],
   cursor: 0,
   nodes: [] as any[],
@@ -98,10 +101,10 @@ vi.mock("@/data/auth/accountRequestContext", () => ({
   assertAccountRequestGeneration: vi.fn(),
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
-  getDefaultLedgerReportingRepository: async () => ({
+  getDefaultLedgerReportingRepository: vi.fn(async () => ({
     listJourneys: async () => [{ journeyId: "a" }],
     getActorContext: () => state.actor(),
-  }),
+  })),
 }));
 const itinerary = vi.fn(),
   expense = vi.fn(),
@@ -132,6 +135,10 @@ const flush = async () => {
   for (let i = 0; i < 10; i++) await Promise.resolve();
 };
 beforeEach(() => {
+  state.guest = false;
+  state.actor.mockClear();
+  vi.mocked(readCaptureTripPrior).mockClear();
+  vi.mocked(getDefaultLedgerReportingRepository).mockClear();
   state.hooks = [];
   state.refs = [];
   state.generation = 1;
@@ -203,7 +210,7 @@ it("civil arrows preserve explicit dates across leap boundaries without inferrin
 });
 
 vi.mock("@/features/capture/captureTripPrior", () => ({
-  readCaptureTripPrior: async () => ({ id: "a", name: "A" }),
+  readCaptureTripPrior: vi.fn(async () => ({ id: "a", name: "A" })),
 }));
 
 vi.mock("react-native-safe-area-context", () => ({
@@ -294,4 +301,27 @@ it("does not rebind an open manual chooser to the next account generation", asyn
   expect(state.modalProps.visible).toBe(false);
   staleSave("late-item");
   expect(manualSaved).not.toHaveBeenCalled();
+});
+
+vi.mock("@/data/auth/localTripAccess", () => ({
+  readLocalTripPrincipal: async () =>
+    state.guest
+      ? { kind: "GUEST", localId: "guest" }
+      : { kind: "ACCOUNT", accountId: "account" },
+}));
+it("Guest Quick Add passes P1-only scope to the shared chooser without Account Capture or Ledger reads", async () => {
+  state.guest = true;
+  useManual = true;
+  render();
+  state.nodes
+    .find((node) => node.accessibilityLabel === "actionIsland.addToTrip")
+    .onPress();
+  await flush();
+  render();
+  button("quickAdd.itinerary").onPress();
+  render();
+  expect(state.manualProps.localOnly).toBe(true);
+  expect(readCaptureTripPrior).not.toHaveBeenCalled();
+  expect(getDefaultLedgerReportingRepository).not.toHaveBeenCalled();
+  expect(state.actor).not.toHaveBeenCalled();
 });

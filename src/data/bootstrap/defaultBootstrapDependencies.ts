@@ -1,5 +1,9 @@
 import { ApiClientError } from "@/data/api/client";
-import { readLocalSession, requireActiveUserId } from "@/data/auth/authRepository";
+import {
+  readLocalAuthSnapshot,
+  readLocalSession,
+  requireActiveUserId,
+} from "@/data/auth/authRepository";
 import { adoptLegacyAccountState } from "@/data/auth/accountLocalState";
 import {
   captureAccountScope,
@@ -7,6 +11,7 @@ import {
   type AccountScope,
 } from "@/data/auth/accountRequestContext";
 import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
+import { openGuestLocalWorkspace } from "../auth/guestLocalWorkspace";
 import { openDatabase } from "@/data/db/database";
 import {
   allowLedgerOperationalSync,
@@ -36,8 +41,11 @@ import type { FoundationBootstrapDependencies } from "./bootstrapApplication";
 export const defaultBootstrapDependencies: FoundationBootstrapDependencies = {
   openDatabase,
   readLocalSession,
+  readAuthSnapshot: readLocalAuthSnapshot,
+  openGuestWorkspace: openGuestLocalWorkspace,
   adoptLegacyState: async (userId) =>
     adoptLegacyAccountState(await openDatabase(), userId),
+  pauseSync: pauseOperationalSync,
   resumeSync: resumeOperationalSync,
   scheduleHealth: () => scheduleAutomaticDataHealth("COLD_START"),
 };
@@ -142,12 +150,12 @@ export function resumeOperationalSync() {
 
 export async function pauseOperationalSync() {
   syncPaused = true;
-  scheduleOperationalReadRetry(null);
   // Read callbacks are generation-fenced; only durable mutation work must drain.
   await pauseLedgerOperationalSync();
 }
 
 export async function restartOperationalSync() {
+  if (!(await readLocalSession())?.identity?.userId) return;
   allowLedgerOperationalSync();
   syncPaused = false;
   void reactivateLongLivedLedgerFailures()
@@ -168,7 +176,7 @@ async function scheduleAutomaticDataHealth(
   journeyIds: readonly string[] = [],
   expected?: LedgerOperationalSyncCompletion,
 ) {
-  if (hasNativeTripQaScope()) return;
+  if (hasNativeTripQaScope() || !(await readLocalSession())?.identity?.userId) return;
   if (expected) {
     if (expected.generation !== getAccountGeneration()) return;
     const session = await readLocalSession();

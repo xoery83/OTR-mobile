@@ -1,0 +1,152 @@
+{
+  "status": "GOLDEN_A_NATIVE_LOCAL_ACCEPTED_NOT_ADOPTION",
+  "clientDate": "2026-10-29",
+  "timezone": "Pacific/Auckland",
+  "scope": "Completely unauthenticated normal Native UI Trip create/edit/save + minimum P1 + Day + actual process cold recovery",
+  "sourceCommits": {
+    "principalFoundation": "ad8873ee",
+    "guestVault": "6fe6f3c0",
+    "consumers": "cbace1f0",
+    "boundaryCensus": "c504fa86",
+    "nativeFoundQuickAddRepair": "7e35baf6633b8310a41e6220cbacfb47d5d7b2e1"
+  },
+  "nativeArtifact": {
+    "status": "FIXED_REVIEWED_ARTIFACT_VERIFIED_NOT_INSTALLED_NATIVE_E2E_PENDING",
+    "bundleId": "com.xoery.otrmobile.guestqa",
+    "nativeBaseVersion": 43,
+    "applicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile.guestqa",
+    "machOXMLIdentity": "PASS",
+    "machODERIdentity": "PASS",
+    "noExplicitSharedKeychainGroup": true,
+    "rootOAuthSchemesAbsent": true,
+    "allCloudAdmissionClosed": true,
+    "strictCodeSign": "PASS",
+    "nativeExecutableSHA256": "7cd3949515370338794debefd970c2e24109c0da94f3ab5dcb774bc83fa14753",
+    "nativeBaseCommit": "6fe6f3c09d812b97e9594b54641ad244f372cd2f",
+    "consumerSourceCommit": "7e35baf6633b8310a41e6220cbacfb47d5d7b2e1",
+    "artifactVersion": "63",
+    "embeddedJSSHA256": "47805965e0c0978b5b6ea33ed4db277ba1f673add0d7f881205724be9f483d36",
+    "jsDevMode": false,
+    "nativeSections": {
+      "__entitlements": "49d2c033ae93928a0d8bc402c73cf808ab15217ea2e4e5d1e1fe8607156e35cd",
+      "__ents_der": "a2b4893cc85ce8882421e65db8490f573d052e30c3344fab5593a37bdf79cc54"
+    },
+    "consumerJS": "FIXED_REVIEWED_7E35BAF6",
+    "newSimulator": false,
+    "copiedSessionOrKeychainOrDatabase": false
+  },
+  "installedIdentity": {
+    "status": "INSTALLED_FIXED_IDENTITY_VERIFIED",
+    "bundleId": "com.xoery.otrmobile.guestqa",
+    "version": "63",
+    "source": "7e35baf6633b8310a41e6220cbacfb47d5d7b2e1",
+    "jsSHA256": "47805965e0c0978b5b6ea33ed4db277ba1f673add0d7f881205724be9f483d36"
+  },
+  "device": {
+    "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+    "existingFormsQA": true,
+    "newSimulatorCreated": false,
+    "rootAppOverwrittenOrUninstalled": false,
+    "copiedSessionKeychainOrDatabase": false
+  },
+  "uiFlow": [
+    "Fresh independently signed GuestQA first launch: empty My Trips, no sign-in wall or remembered Account trips",
+    "Normal Create Trip Manually: Guest A 20261029, no required Profile",
+    "Normal Quick Add → Itinerary → Plan: Guest A Walk, Activity date2026-10-29, Create",
+    "Normal Day: Guest A Walk displayed on2026-10-29",
+    "Normal Trip Edit → name Guest A 20261029 Edited → Save",
+    "First real terminate/relaunch plus normal in-place GuestQA source update retained exact same data",
+    "Fixed Quick Add: P1 enabled, Flight/Stay/Rental/Transport/Activity/Flexible disabled; cancelled without writing",
+    "Second real terminate/relaunch of same installed Build63 → My Trips shows edited name → same Trip → Day shows same P1/date"
+  ],
+  "processes": {
+    "initial": 58675,
+    "updated63": 63340,
+    "sameVersionCold": 63780
+  },
+  "L1": "PASS_NORMAL_NATIVE_UI_AND_INDEPENDENT_READ_ONLY_SQLITE_COLD_NOT_FIXTURE",
+  "L3": "NOT_APPLICABLE_TO_OFFLINE_GUEST_A; NO_CLOUD_OR_ADOPTION_PASS",
+  "rootAccountPreservation": {
+    "status": "PASS_LOGICAL_TABLES_IDENTICAL_DURING_GUEST_WINDOW",
+    "tableCount": 149,
+    "beforeDigest": "cff8246f83ab03a46f0e51447eec5f2a127436e25026de94e0f0e4f5b77ffebc",
+    "afterDigest": "cff8246f83ab03a46f0e51447eec5f2a127436e25026de94e0f0e4f5b77ffebc",
+    "changedTables": [],
+    "sessionOrKeychainRead": false,
+    "rawCacheContentsExported": false
+  },
+  "safetyNegatives": [
+    "Same-UUID Guest/Account file-isolation headless negative PASS",
+    "Actual Native flow: canonical Account DB file was never created. Zero Account opener/sync/health calls are separately established by headless spies, not Native call instrumentation.",
+    "Real default sync pause and global queue-listener test: no Account opens after Guest notification",
+    "Guest Account bookmark list/record0",
+    "Guest photos/currency/Account widgets not assembled in A",
+    "No formal Session, Account connection or server Accepted fabricated"
+  ],
+  "validation": {
+    "consumerRegression": "14_suites_279_PASS",
+    "nativeFoundRepair": "2_suites_20_PASS",
+    "independentConsumerReview": "10_suites_218_PASS_NO_BLOCKER",
+    "independentRepairReview": "2_suites_20_PASS_NO_BLOCKER",
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "lint": "0_ERRORS_EXISTING_IMPORT_FIRST_WARNINGS"
+  },
+  "knownLimits": [
+    "Guest Home Account-context widgets unavailable; actual local Day/P1 remains readable",
+    "P2-P6/Ledger UI/Capture/Documents/Profile not certified by A; source-boundary census retained",
+    "Guest Day reading-position hint is in memory, not an Account SecureStore bookmark",
+    "Adoption and Cloud publication remain closed; Guest originals retained"
+  ],
+  "next": "Serial main integration of A, then B full-dataset inventory and lawful server preflight/staging/publication/UNKNOWN recovery. No new prices, quotas or commercial interception.",
+  "nativeArtifactSnapshotTiming": "PRE_INSTALL_VERIFICATION_SNAPSHOT; historical NOT_INSTALLED label retained verbatim; installedIdentity and actual UI/cold evidence below describe final installed state.",
+  "localPersistenceReadback": {
+    "status": "PASS_NATIVE_LOCAL_READ_ONLY_SQLITE_COLD",
+    "schema": 74,
+    "guestLocalId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+    "tripId": "f8975f1d-fec6-43c1-bae9-2b84c908e552",
+    "itemId": "ec0056a0-61e5-40fd-b095-9760dafedf94",
+    "personId": "8371d7f0-3a8f-4f30-8262-8119083c59ee",
+    "tripCreateOperationId": "4f03f3ef-f1c1-4126-8552-f250d725f60c",
+    "p1OperationId": "141bfd71-c1ee-4ec3-9b58-91dc6fdc1369",
+    "beforeAfterIdentical": [
+      "Guest local ID",
+      "Trip ID and edited metadata",
+      "P1 intent ID, canonical command and date",
+      "Person/creator local binding",
+      "Queue IDs, ownership and blocked state"
+    ],
+    "canonicalAccountDatabasePresent": false,
+    "tripAcceptedAt": null,
+    "cloudReadCertificates": 0,
+    "cloudCommandReceipts": 0,
+    "privateReadbackFiles": [
+      "GUEST_SQLITE_CREATED.json",
+      "GUEST_SQLITE_EDITED.json",
+      "GUEST_SQLITE_COLD.json"
+    ],
+    "readbackDirectory": "/private/tmp/otr-auth-guestqa-20261029",
+    "noFixtureSeedOrDatabaseWrites": true
+  },
+  "L2": {
+    "status": "PASS_DETERMINISTIC_CONTRACT_AND_SCOPE_TESTS",
+    "consumerRegression": "14_suites_279_PASS",
+    "nativeFoundRepair": "2_suites_20_PASS",
+    "independentConsumerReview": "10_suites_218_PASS",
+    "independentRepairReview": "2_suites_20_PASS",
+    "queueListenerDefaultPause": "HEADLESS_REAL_GLOBAL_LISTENER_AND_DEFAULT_PAUSE_ZERO_ACCOUNT_OPENER_AND_SYNC_SPIES",
+    "sameUUIDGuestAccountVaultIsolation": "HEADLESS_REAL_SQLITE_PASS",
+    "notClaimed": "Native all-factory call instrumentation or Cloud authority acceptance"
+  },
+  "evidenceReview": {
+    "status": "INDEPENDENT_NO_DATA_OR_ARTIFACT_BLOCKER_AFTER_REPORT_WORDING_CORRECTION",
+    "checks": [
+      "Installed/artifact bundle, version, source and JS SHA exactly match",
+      "EDITED/COLD whole JSON except phase exactly equal",
+      "Root149 tables exactly equal; canonical table digest independently recomputed",
+      "Readback script only read-only SQLite; no fixture writes or Keychain access",
+      "Public receipt contains no Secret/Token/OTP"
+    ],
+    "guiRepeatedByReviewer": false
+  }
+}

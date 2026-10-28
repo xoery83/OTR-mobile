@@ -13,7 +13,7 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import { readLocalTripRepository } from "@/data/auth/localTripAccess";
 import { ManualFlightEditor } from "./ManualFlightForm";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { P3StayEditor } from "./P3StayEditor";
@@ -24,6 +24,7 @@ import { P6ActivityEditor } from "./P6ActivityEditor";
 import { manualItineraryTypes } from "./manualItineraryTypes";
 type Family = "P2" | "P1" | "P3" | "P4" | "P5" | "P6";
 export function ManualItineraryContent({
+  localOnly = false,
   tripId,
   generation,
   initialDate,
@@ -34,6 +35,7 @@ export function ManualItineraryContent({
   registerDismissHandler,
   onSaved,
 }: {
+  localOnly?: boolean;
   tripId: string;
   generation: number;
   initialDate: string | null;
@@ -101,15 +103,18 @@ export function ManualItineraryContent({
   if (editor) return <View style={styles.body}>{editor}</View>;
   return (
     <ManualItineraryChooser
+      localOnly={localOnly}
       onClose={onClose}
       onChoose={(id) => {
-        if (generation === getAccountGeneration()) setFamily(id as Family);
+        if (generation === getAccountGeneration() && (!localOnly || id === "P1"))
+          setFamily(id as Family);
       }}
     />
   );
 }
 
 export function ManualItineraryChooser({
+  localOnly = false,
   onClose,
   onChoose,
   contextLabel,
@@ -117,11 +122,13 @@ export function ManualItineraryChooser({
   onClose(): void;
   onChoose(id: string): void;
   contextLabel?: string;
+  localOnly?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const choice = (type: (typeof manualItineraryTypes)[number], compact: boolean) => {
+    const enabled = type.enabled && (!localOnly || type.id === "P1");
     const hint =
       "reasonKey" in type
         ? t(type.reasonKey)
@@ -134,15 +141,15 @@ export function ManualItineraryChooser({
         accessibilityRole="button"
         accessibilityLabel={t(type.labelKey)}
         accessibilityHint={hint}
-        accessibilityState={{ disabled: !type.enabled }}
-        disabled={!type.enabled}
+        accessibilityState={{ disabled: !enabled }}
+        disabled={!enabled}
         onPress={() => {
-          if (type.enabled) onChoose(type.id);
+          if (enabled) onChoose(type.id);
         }}
         style={[
           styles.choice,
           compact ? styles.compact : styles.large,
-          !type.enabled && styles.disabled,
+          !enabled && styles.disabled,
         ]}
       >
         {compact ? (

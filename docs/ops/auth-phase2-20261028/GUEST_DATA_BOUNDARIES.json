@@ -1,0 +1,73 @@
+{
+  "status": "SOURCE_BOUNDARY_CENSUS_ONLY_NOT_NATIVE_INVENTORY_OR_ADOPTION",
+  "contract": "docs/auth/design-v1-20261018/01_AUTH.md:12",
+  "sourceCommit": "cbace1f0ec85b28aee2d2854e36a191e1b1538bb",
+  "scope": "Golden A commits only normal Guest Trip/P1/Day. B must inventory the entire legal Guest dataset before upload or ownership conversion.",
+  "families": [
+    {
+      "family": "Trip, destinations and metadata actions",
+      "owner": "Existing Trip/TripMetadata/TripDeferredMetadata repositories",
+      "localBinding": "Guest vault file plus local_trip_containers.account_id / local_trip_destinations.account_id / sync_operations.owner_user_id",
+      "A": "Wired through existing normal UI; actual Native counts pending",
+      "B": "Retain create operation, distinct Trip identity, deferred edit/dependency lineage and ordered destinations; no same-name merge or early remote shell"
+    },
+    {
+      "family": "P1 and Core local creator state",
+      "owner": "Existing ManualPlan/TripCore/local Core commit repositories",
+      "localBinding": "Guest vault and trip_core_pending_intents/local Core authority records",
+      "A": "Existing P1 save/read/local Day only; no Accepted projection",
+      "B": "Inventory complete operation/commit graph, Person/Creator references, fingerprints/revisions and recovery status; preserve idempotency"
+    },
+    {
+      "family": "Local Person and automatically initialized Ledger",
+      "owner": "Existing Trip initializer and Ledger owning repositories",
+      "localBinding": "local_trip_ledger_bindings links Guest local owner to ledger_journeys, ledger_members and ledger_actor_context; other Ledger rows need owning scope proof",
+      "A": "Trip initializer creates local creator Person and default Ledger state even though Ledger UI is not wired in A",
+      "B": "Do not omit automatic Ledger/Person state. Reconcile all stable references and actual financial rows per owning contract; never infer Guest ownership for unscoped canonical Account rows"
+    },
+    {
+      "family": "P2-P6",
+      "owner": "Existing Manual Flight/Stay/Rental/Transport/Activity and Core repositories",
+      "A": "Chooser disabled for Guest in A; existing Account behavior retained",
+      "B": "Obtain owning-family inventory before activation; do not assume empty or discard any retained records; do not rebuild Forms"
+    },
+    {
+      "family": "Capture, Documents, sources, reviews and attachments",
+      "owner": "Universal Import Capture/Source/Documents lane and existing file stores",
+      "localBinding": "Existing account-scoped inbox/payload/submission/source records and explicit owning file references; Guest access not assembled in A",
+      "A": "Not wired; no Guest photo/capture file-store access or cloud upload",
+      "B": "Inventory batches/candidates/reviews/originals/receipts and exact file hashes/byte counts with owning port; no Account cache reclassification, no SQLite/Keychain/Token copying, no uploads before complete server preflight"
+    },
+    {
+      "family": "Draft and Pending Intent",
+      "owner": "Owning forms/repositories and existing durable queues",
+      "localBinding": "Manual P1 draft is currently bound to the owning repository instance via WeakMap; committed intents live in existing SQLite queues",
+      "A": "Unsaved draft is not a durable business save; normal Cancel guards retained; committed Trip/P1 cold recovery still requires actual Native evidence",
+      "B": "Inventory both live drafts and durable pending intents; preserve originating screen/intent on failed or cancelled login. A SQLite-only census is insufficient; never silently clear live drafts at handoff"
+    },
+    {
+      "family": "Guest Profile and Account-private settings",
+      "owner": "Auth/Profile lane and existing device preferences",
+      "A": "Guest local marker and optional Trip creator nickname are not an Account profile. Profile/AKA editing remains later approved work",
+      "B": "Inventory any supported local Guest profile through owning ports; never infer connection from name/email/AKA. Device language/theme and temporary UI state are not all Account-cloud sync data"
+    },
+    {
+      "family": "Day navigation hints",
+      "owner": "Existing TripViewContext and Account bookmark repository",
+      "A": "Guest Day context remains in memory; no Account SecureStore bookmark list or record and no Guest UUID in Account keys",
+      "B": "Guest cold reading-position persistence is not claimed. Preserve actual business Trip/P1 data independently of this temporary UI hint"
+    }
+  ],
+  "nonGuestExclusions": [
+    "otr-mobile.db and remembered Account caches",
+    "Any Session/Keychain/token material",
+    "Other Account files or unscoped legacy records without explicit ownership proof"
+  ],
+  "retention": "Keep Guest originals until verified atomic whole-dataset publication. No two editable workspaces, partial visible migration or data deletion on cancellation/failure/UNKNOWN.",
+  "beforeB": [
+    "Complete Golden A normal Native Trip/P1/Day/cold acceptance",
+    "Build real full-dataset inventory through owning repositories, including live UI drafts and files",
+    "Define/review missing server-authoritative full-dataset preflight, staging/publish receipt and UNKNOWN status ports; keep protected authority closed until exact applicable Gate is satisfied",
+    "No commercial quota, pricing or paid interception invented"
+  ]
+}

@@ -1,3 +1,4 @@
+import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
 import { ManualItineraryContent } from "@/features/day-feed/ManualItineraryContent";
 import {
   getAccountGeneration,
@@ -78,6 +79,7 @@ export function TripQuickAddMenu({
     getAccountGeneration,
   );
   const [manual, setManual] = useState(false);
+  const [localOnly, setLocalOnly] = useState(true);
   const [openedScope, setOpenedScope] = useState<{
     tripId: string;
     generation: number;
@@ -123,8 +125,13 @@ export function TripQuickAddMenu({
     setSuggested(validSuggestedDate(date ?? "") ?? "");
     setExpenseReady(false);
     setCaptureReady(false);
+    setLocalOnly(true);
     setVisible(true);
     try {
+      const principal = await readLocalTripPrincipal();
+      if (ticket !== request.current || !current()) return;
+      if (principal?.kind !== "ACCOUNT") return;
+      setLocalOnly(false);
       const scope = await captureAccountScope(requireActiveUserId);
       const prior = await readCaptureTripPrior(tripId, scope);
       if (ticket !== request.current) return;
@@ -192,6 +199,7 @@ export function TripQuickAddMenu({
           openedScope?.tripId === tripId &&
           openedScope?.generation === generation ? (
             <ManualItineraryContent
+              localOnly={localOnly}
               key={`${tripId}:${generation}`}
               tripId={tripId}
               generation={generation}

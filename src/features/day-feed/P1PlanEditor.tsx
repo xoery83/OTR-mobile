@@ -24,7 +24,7 @@ import {
   type ManualPlanDraft,
   type ManualPlanFields,
   type ManualPlanRepository,
-} from "@/data/repositories/manualPlanRepository";
+} from "@/data/auth/localTripAccess";
 import { UiButton, UiText as Text } from "@/ui/controls";
 import { UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";

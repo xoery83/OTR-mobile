@@ -150,23 +150,24 @@ async function materials(
   ).rows[0];
   if (!revision || revision.retention_state !== "RETAINED")
     throw new Error("SOURCE_INTEGRITY_FAILURE");
-  const originals = revision.original_representation_ids as string[],
-    selected = catalog.inputs.map(
-      (p) => (p as { representation_id: string }).representation_id,
-    );
+  // Keep the full Run hash; another Source's pins cannot be this Source's material.
+  const inputs = catalog.inputs
+      .map((input) => flightInputSchema.parse(input))
+      .filter((pin) => pin.source_id === catalog.sourceId),
+    originals = revision.original_representation_ids as string[],
+    selected = inputs.map((pin) => pin.representation_id);
   const direct =
     originals.length === selected.length &&
     [...originals].sort().join("|") === selected.sort().join("|");
   if (!direct && (originals.length !== 1 || selected.length !== 1))
     throw new Error("CONTRACT_UNSUPPORTED");
-  for (const input of catalog.inputs) {
-    const pin = flightInputSchema.parse(input),
-      row = (
-        await lease.query(
-          "SELECT role,material_kind,text_content,payload_sha256,byte_count,retention_state FROM public.trip_source_representations WHERE source_id=$1::uuid AND id=$2::uuid",
-          [pin.source_id, pin.representation_id],
-        )
-      ).rows[0];
+  for (const pin of inputs) {
+    const row = (
+      await lease.query(
+        "SELECT role,material_kind,text_content,payload_sha256,byte_count,retention_state FROM public.trip_source_representations WHERE source_id=$1::uuid AND id=$2::uuid",
+        [pin.source_id, pin.representation_id],
+      )
+    ).rows[0];
     if (
       !row ||
       row.retention_state !== "RETAINED" ||
@@ -394,11 +395,12 @@ async function catalogForCandidates(
   )
     throw new Error("INPUT_STALE");
   const mixed =
-    catalog.runScopeSourceIds?.length !== 1 ||
-    catalog.runScopeSourceIds[0] !== scope.sourceId ||
-    catalog.inputs.some(
-      (pin) => (pin as { source_id?: string }).source_id !== scope.sourceId,
-    );
+    !universal &&
+    (catalog.runScopeSourceIds?.length !== 1 ||
+      catalog.runScopeSourceIds[0] !== scope.sourceId ||
+      catalog.inputs.some(
+        (pin) => (pin as { source_id?: string }).source_id !== scope.sourceId,
+      ));
   if (mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED"))
     throw new Error("INVALID_PROVENANCE");
   if (!mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED")) {
@@ -1301,11 +1303,12 @@ export function createCoreSourcePgAuthority(
       let extracted: Awaited<ReturnType<typeof extractCoreFlightPublication>>;
       try {
         if (
-          catalog.runScopeSourceIds?.length !== 1 ||
-          catalog.runScopeSourceIds[0] !== request.sourceId ||
-          catalog.inputs.some(
-            (pin) => (pin as { source_id?: string }).source_id !== request.sourceId,
-          )
+          !universal &&
+          (catalog.runScopeSourceIds?.length !== 1 ||
+            catalog.runScopeSourceIds[0] !== request.sourceId ||
+            catalog.inputs.some(
+              (pin) => (pin as { source_id?: string }).source_id !== request.sourceId,
+            ))
         )
           throw new Error("CONTRACT_UNSUPPORTED");
         extracted = await extractCoreFlightPublication(
@@ -1353,8 +1356,14 @@ export function createCoreSourcePgAuthority(
           )
         ).rows[0].original_representation_ids as string[];
         const seals: { representationId: string; sealSha256: string }[] = [];
-        for (const pin of catalog.inputs as { representation_id: string }[])
-          if (!originalIds.includes(pin.representation_id)) {
+        for (const pin of catalog.inputs as {
+          source_id: string;
+          representation_id: string;
+        }[])
+          if (
+            pin.source_id === catalog.sourceId &&
+            !originalIds.includes(pin.representation_id)
+          ) {
             const proof = await readSourcePdfCoreProof(
               lease,
               catalog,

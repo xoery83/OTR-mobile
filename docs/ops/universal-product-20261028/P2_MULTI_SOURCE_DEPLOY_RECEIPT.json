@@ -1,0 +1,44 @@
+{
+  "status": "DEPLOYED_HEALTHY_SOURCE_REPAIR_NOT_SAVE_PASS",
+  "image": {
+    "sourceCommit": "e973ffe0b2eb4cf67a6abd09980c44bf25dca0a9",
+    "image": "sha256:98f93661522206c249a8e187f0f89802b912f66f8624c107f601841ea0ed5df7",
+    "baseImage": "sha256:6c5c9a6f380f538392832abda7eb4afe434f9fa689dbf6f150c134ed903c755f",
+    "bundleHashes": {
+      "server.mjs": "e47e1d9e38948827ba25be882888f465e05caa118735ae4290957e2230eb73c2",
+      "server-capture.mjs": "69f1138f6cea72b1e8f96253d75e78860c245ac873b6c8489d5aa479b303f42a",
+      "Dockerfile": "fa7b21da85f8e0ebac76dde02726014eca9fb1ab1490cfd3fceefb80d397d7e4"
+    },
+    "deployed": false
+  },
+  "host": {
+    "status": "INDEPENDENT_HOST_HANDOFF_VERIFIED",
+    "container": "71da63a9ceba2a4ed33828cc5a3cbcb8376eae2f35fd4bc54fd447b52c8bc0c0",
+    "image": "sha256:98f93661522206c249a8e187f0f89802b912f66f8624c107f601841ea0ed5df7",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "health": "healthy",
+    "bundleHashes": {
+      "server.mjs": "e47e1d9e38948827ba25be882888f465e05caa118735ae4290957e2230eb73c2",
+      "server-capture.mjs": "69f1138f6cea72b1e8f96253d75e78860c245ac873b6c8489d5aa479b303f42a"
+    },
+    "sameEnvMountsHostConfig": true,
+    "retainedHealthyRollback": "7931b617d892e4974b1820541ed8d02783567b48f39130cd938efc1d7bd01ada"
+  },
+  "databaseIdentity": "tuqigdxrvrerfewsxqgm",
+  "sqlPolicyFunctionsAirportsUnchanged": true,
+  "sourceScopeClosedAtHandoff": true,
+  "permissionsExpanded": false,
+  "schemaRlsGrantRoleChanges": false,
+  "providerCallsAdded": 0,
+  "retainsNativeCombinedProfile": "081198f0",
+  "retainsSourceWarningRepair": "612361f2",
+  "excludes": [
+    "BOM repair",
+    "UI deduplication"
+  ],
+  "health": "200",
+  "unauthenticatedProtectedRoutes": "401",
+  "rollbackTriggered": false,
+  "rollbackImage": "sha256:6c5c9a6f380f538392832abda7eb4afe434f9fa689dbf6f150c134ed903c755f",
+  "remaining": "Normal same Batch P2/P3 DEV confirm after readback and review readiness."
+}

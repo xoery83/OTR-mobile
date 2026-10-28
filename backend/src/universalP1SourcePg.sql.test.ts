@@ -610,6 +610,9 @@ it
             await lease.query("BEGIN");
             try {
               await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+              await lease.query(
+                "SELECT set_config('otr.universal.requested_family','P5',true)",
+              );
               const context = {
                 actor,
                 trip,

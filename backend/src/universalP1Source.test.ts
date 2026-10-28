@@ -192,14 +192,16 @@ it.each([
   await expect(f.run()).rejects.toThrow();
 });
 
-async function normalizedTextFixture(suffix = "") {
+async function normalizedTextFixture(suffix = "", bom = false) {
   const f = await fixture();
   const text =
+    (bom ? "\uFEFF" : "") +
     "中文😀\r\n\r\n\r\n" +
     f.input.snapshot.materials[0].text.replace(/\n/g, " \t\r\n") +
     suffix;
   const sha = createHash("sha256").update(text).digest("hex");
   const submitted = text
+    .replace(/^\uFEFF/, "")
     .replace(/\r\n/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n");
@@ -232,19 +234,22 @@ async function normalizedTextFixture(suffix = "") {
   return { ...f, candidate };
 }
 
-it("reanchors normalized CRLF model evidence to exact original UTF8 bytes", async () => {
-  const f = await normalizedTextFixture(),
-    text = f.input.snapshot.materials[0].text;
-  const before = structuredClone(f.input.result);
-  const r = await f.run();
-  for (const e of r.body.evidence) {
-    expect(Buffer.from(text).subarray(e.locator.start!, e.locator.end!).toString()).toBe(
-      e.raw,
-    );
-    expect(e.locator.start).toBe(Buffer.from(text).indexOf(e.raw));
-  }
-  expect(f.input.result).toEqual(before);
-});
+it.each([false, true])(
+  "reanchors CRLF/BOM=%s model evidence to exact original UTF8 bytes",
+  async (bom) => {
+    const f = await normalizedTextFixture("", bom),
+      text = f.input.snapshot.materials[0].text;
+    const before = structuredClone(f.input.result);
+    const r = await f.run();
+    for (const e of r.body.evidence) {
+      expect(
+        Buffer.from(text).subarray(e.locator.start!, e.locator.end!).toString(),
+      ).toBe(e.raw);
+      expect(e.locator.start).toBe(Buffer.from(text).indexOf(e.raw));
+    }
+    expect(f.input.result).toEqual(before);
+  },
+);
 
 it.each(["duplicate", "wrong-submitted-hash", "wrong-span", "cross-line-literal"])(
   "rejects %s instead of guessing original evidence",

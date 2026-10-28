@@ -28,6 +28,14 @@ export function readCommittedLocalPrincipal() {
   return withAccountApplyGate(authRepository.readCommittedLocalPrincipal);
 }
 
+// Internal local-repository identity getter; callers already use the apply gate.
+// Do not acquire it again: existing repository transactions hold the same gate.
+export async function requireCommittedGuestPrincipal() {
+  const principal = await authRepository.readCommittedLocalPrincipal();
+  if (principal?.kind !== "GUEST") throw new Error("GUEST_LOCAL_SCOPE_REQUIRED");
+  return principal;
+}
+
 export function readLocalAuthSnapshot() {
   return withAccountApplyGate(authRepository.readLocalAuthSnapshot);
 }

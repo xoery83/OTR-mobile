@@ -6,8 +6,13 @@ import { useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { t } from "@/ui/locale";
 import { hydrateUiLocale } from "@/native/uiLocalePreference";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { readCommittedLocalPrincipal } from "@/data/auth/authRepository";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 import { bootstrapApplication } from "@/data/bootstrap/bootstrapApplication";
 import {
   defaultBootstrapDependencies,
@@ -48,17 +53,50 @@ export default function RootLayout() {
       }),
   );
 
+  const [ready, setReady] = useState(false);
+  const [readingOwner, setReadingOwner] = useState<number | null>(null);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+    getAccountGeneration,
+  );
   useEffect(() => {
-    void bootstrapApplication(defaultBootstrapDependencies).catch(() => {
-      // The shell remains available while durable operations wait for a later retry.
-    });
+    let active = true;
+    void bootstrapApplication(defaultBootstrapDependencies)
+      .catch(() => {
+        // Recovery remains available without opening a different principal's database.
+      })
+      .finally(() => {
+        if (active) setReady(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
-    const subscription = subscribeOperationalSyncLifecycle();
-    return () => subscription.remove();
-  }, []);
+    if (!ready) return;
+    let cancelled = false;
+    let subscription: ReturnType<typeof subscribeOperationalSyncLifecycle> | undefined;
+    void readCommittedLocalPrincipal()
+      .then((principal) => {
+        if (!cancelled && generation === getAccountGeneration())
+          setReadingOwner(principal?.kind === "ACCOUNT" ? generation : null);
+        if (
+          !cancelled &&
+          principal?.kind === "ACCOUNT" &&
+          generation === getAccountGeneration()
+        )
+          subscription = subscribeOperationalSyncLifecycle();
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+    };
+  }, [ready, generation]);
 
+  if (!ready) return null;
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
@@ -75,7 +113,7 @@ export default function RootLayout() {
           },
         }}
       >
-        <TripViewProvider>
+        <TripViewProvider persistReading={readingOwner === generation}>
           <Stack
             screenOptions={{
               headerBackButtonDisplayMode: "minimal",

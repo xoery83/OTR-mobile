@@ -1,3 +1,4 @@
+import { ApiClientError } from "../api/client";
 import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRead";
 import { universalP1Identity } from "@/domain/trip/universalImportIdentity";
 import { universalP2SourceFixture } from "../../../backend/src/__fixtures__/universalP2Source";
@@ -632,39 +633,179 @@ it("distinguishes a complete exact Source from Core acceptance and keeps incompl
   await expect(read()).rejects.toThrow("UNIVERSAL_CAPTURE_STALE");
 });
 
-it("shows retained original when frozen text preparation changes its submitted hash", async () => {
+it.each(["line-ends", "BOM"])(
+  "shows retained original after %s preparation changes its submitted hash",
+  async (kind) => {
+    const f = await fixture();
+    if (!("snapshot" in f.f.input)) throw Error("P1 fixture required");
+    const text =
+      kind === "BOM"
+        ? "\uFEFF" + f.f.input.snapshot.materials[0].text
+        : f.f.input.snapshot.materials[0].text.replace(/\n/g, " \t\r\n");
+    const bytes = Buffer.from(text),
+      sha = await f.f.deps.hash(bytes),
+      payloadId = randomUUID();
+    Object.assign(f.model.inputs[0], {
+      captureId: randomUUID(),
+      payloadId,
+      contentByteCount: bytes.length,
+      contentSha256: sha,
+    });
+    f.result.sourceBindings[0].originalSha256 = sha;
+    const deps = {
+      getAccountId: async () => f.result.accountId,
+      isCurrent: () => true,
+      hash: f.f.deps.hash,
+      readCapture: async () => ({
+        capture: { accountId: f.result.accountId, payloadId },
+        bytes,
+      }),
+    };
+    expect(
+      await readUniversalP1ReviewOriginal(
+        f.model,
+        f.result,
+        f.result.candidates[0].token,
+        deps,
+      ),
+    ).toBe(text);
+    f.result.sourceBindings[0].submittedSha256 = "0".repeat(64);
+    await expect(
+      readUniversalP1ReviewOriginal(
+        f.model,
+        f.result,
+        f.result.candidates[0].token,
+        deps,
+      ),
+    ).rejects.toThrow("IMPORT_EVIDENCE_INVALID");
+  },
+);
+
+it.each([
+  new ApiClientError("offline", "network"),
+  new ApiClientError("timed out", "timeout"),
+  new ApiClientError("busy", "http", 503),
+])(
+  "recovers other accepted candidates after one receipt GET is unavailable: %s",
+  async (failure) => {
+    const f = await fixture();
+    const second = {
+      ...f.result.candidates[0],
+      id: "f".repeat(24),
+      token: "saved-sibling",
+    };
+    f.result.candidates.push(second);
+    const operationId = universalP1Identity(f.result.taskId, second.token, "operation");
+    const itemId = universalP1Identity(f.result.taskId, second.token, "item");
+    f.transport.receipt.mockImplementation(async (_context, operation) => {
+      if (operation !== operationId) throw failure;
+      return {
+        projection: "FULL",
+        domainReceiptId: randomUUID(),
+        receipt: {
+          operationId,
+          tripId: f.result.tripId,
+          actorAccountId: f.result.accountId,
+          command: "CREATE_ITEM",
+          outcome: "APPLIED",
+          committedAt: "2026-10-28T00:00:00Z",
+          targetVector: [{ kind: "ITEM", id: itemId, committedRevision: 1 }],
+        },
+      };
+    });
+    expect(
+      await readUniversalAcceptedItems(f.model, f.result, {
+        getAccountId: async () => f.result.accountId,
+        isCurrent: () => true,
+        transport: f.transport as never,
+      }),
+    ).toEqual({
+      [second.token]: { itemId, operationId, committedAt: "2026-10-28T00:00:00Z" },
+    });
+    expect(f.transport.receipt).toHaveBeenCalledTimes(2);
+    expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+    expect(f.core.enqueue).not.toHaveBeenCalled();
+  },
+);
+
+it.each(["forbidden", "stale"])(
+  "does not continue receipt recovery after %s",
+  async (kind) => {
+    const f = await fixture();
+    f.result.candidates.push({
+      ...f.result.candidates[0],
+      id: "f".repeat(24),
+      token: "saved-sibling",
+    });
+    let active = true;
+    const error = new ApiClientError(
+      "read unavailable",
+      kind === "forbidden" ? "http" : "network",
+      kind === "forbidden" ? 403 : undefined,
+    );
+    f.transport.receipt.mockImplementation(async () => {
+      if (kind === "stale") active = false;
+      throw error;
+    });
+    await expect(
+      readUniversalAcceptedItems(f.model, f.result, {
+        getAccountId: async () => f.result.accountId,
+        isCurrent: () => active,
+        transport: f.transport as never,
+      }),
+    ).rejects.toThrow(kind === "stale" ? "UNIVERSAL_CAPTURE_STALE" : error);
+    expect(f.transport.receipt).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("emits each scope-checked accepted item before a later receipt GET settles", async () => {
   const f = await fixture();
-  if (!("snapshot" in f.f.input)) throw Error("P1 fixture required");
-  const text = f.f.input.snapshot.materials[0].text.replace(/\n/g, " \t\r\n");
-  const bytes = Buffer.from(text),
-    sha = await f.f.deps.hash(bytes),
-    payloadId = randomUUID();
-  Object.assign(f.model.inputs[0], {
-    captureId: randomUUID(),
-    payloadId,
-    contentByteCount: bytes.length,
-    contentSha256: sha,
+  const first = f.result.candidates[0];
+  f.result.candidates.push({ ...first, token: "slow-sibling", id: "f".repeat(24) });
+  const operationId = universalP1Identity(f.result.taskId, first.token, "operation");
+  const itemId = universalP1Identity(f.result.taskId, first.token, "item");
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
   });
-  f.result.sourceBindings[0].originalSha256 = sha;
-  const deps = {
+  const onAccepted = vi.fn();
+  f.transport.receipt.mockImplementation(async (_context, operation) => {
+    if (operation !== operationId) {
+      await pending;
+      return null;
+    }
+    return {
+      projection: "FULL",
+      domainReceiptId: randomUUID(),
+      receipt: {
+        operationId,
+        tripId: f.result.tripId,
+        actorAccountId: f.result.accountId,
+        command: "CREATE_ITEM",
+        outcome: "APPLIED",
+        committedAt: "2026-10-28T00:00:00Z",
+        targetVector: [{ kind: "ITEM", id: itemId, committedRevision: 1 }],
+      },
+    };
+  });
+  const read = readUniversalAcceptedItems(f.model, f.result, {
     getAccountId: async () => f.result.accountId,
     isCurrent: () => true,
-    hash: f.f.deps.hash,
-    readCapture: async () => ({
-      capture: { accountId: f.result.accountId, payloadId },
-      bytes,
-    }),
-  };
-  expect(
-    await readUniversalP1ReviewOriginal(
-      f.model,
-      f.result,
-      f.result.candidates[0].token,
-      deps,
-    ),
-  ).toBe(text);
-  f.result.sourceBindings[0].submittedSha256 = "0".repeat(64);
-  await expect(
-    readUniversalP1ReviewOriginal(f.model, f.result, f.result.candidates[0].token, deps),
-  ).rejects.toThrow("IMPORT_EVIDENCE_INVALID");
+    transport: f.transport as never,
+    onAccepted,
+  });
+  try {
+    await vi.waitFor(() =>
+      expect(onAccepted).toHaveBeenCalledExactlyOnceWith(first.token, {
+        itemId,
+        operationId,
+        committedAt: "2026-10-28T00:00:00Z",
+      }),
+    );
+  } finally {
+    release();
+    await read;
+  }
+  expect(f.transport.publishUniversalP1).not.toHaveBeenCalled();
+  expect(f.core.enqueue).not.toHaveBeenCalled();
 });

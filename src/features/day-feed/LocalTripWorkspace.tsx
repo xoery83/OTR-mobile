@@ -2,7 +2,6 @@ import {
   filterNativeTripQaList,
   nativeTripQaCreateFormat,
   nativeTripAuthoredCloudTravelers,
-  kickNativeTripQaSync,
 } from "@/data/sync/nativeTripQaScope";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import type { StructuredTripMetadataSnapshot } from "@/domain/trip/tripStructuredDestinationContract";
@@ -49,7 +48,12 @@ import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import type { LocalPersonNameSlot } from "@/domain/trip/localTripPerson";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
-import { readLocalTripRepository } from "@/data/repositories/tripRepository";
+import {
+  readLocalTripRepository,
+  readLocalTripPrincipal,
+  kickLocalTripSync,
+  readTripDayFeed,
+} from "@/data/auth/localTripAccess";
 import {
   readLocalTripDiscoveryRepository,
   type TripListSummary,
@@ -64,7 +68,6 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
@@ -155,6 +158,7 @@ function LocalTripContent({
     [selected, setSelected] = useState<Trip | null>(null),
     [remoteSelected, setRemoteSelected] = useState<TripListSummary | null>(null),
     [eligibleToday, setEligibleToday] = useState<Record<string, TodayEntry>>({});
+  const [guest, setGuest] = useState<boolean | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [name, setName] = useState(""),
     [start, setStart] = useState(""),
@@ -197,7 +201,7 @@ function LocalTripContent({
   >(null);
   const deferredMetadataActionId = useRef<string | null>(null);
   const [personalCoverOpen, setPersonalCoverOpen] = useState(false);
-  const personalCover = useTripPersonalCover(tripId);
+  const personalCover = useTripPersonalCover(guest === false ? tripId : null);
   const [editorSaving, setEditorSaving] = useState(false);
   const editorBusy = useRef(false);
   const editorDismiss = useRef<(() => void) | null>(null);
@@ -248,13 +252,16 @@ function LocalTripContent({
       ticket = ++request.current;
     try {
       const session = await readCommittedLocalSession();
+      const principal = await readLocalTripPrincipal();
       if (
         !alive.current ||
         captured !== getAccountGeneration() ||
         ticket !== request.current
       )
         return;
-      if (!session?.identity) {
+      const isGuest = principal?.kind === "GUEST";
+      setGuest(isGuest);
+      if (!session?.identity && !isGuest) {
         setMetadataEditable(false);
         setTrips([]);
         setRemoteTrips([]);
@@ -270,14 +277,17 @@ function LocalTripContent({
       const qaAccountId = session?.identity?.userId ?? null;
       const list = tripId
         ? []
-        : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
+        : isGuest
+          ? await repo.listTrips()
+          : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
       const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
       // A local Repository result already wins; discovery is only needed for list/remote fallback.
-      const discovery = local
-        ? null
-        : await readLocalTripDiscoveryRepository()
-            .then((reader) => reader.readMerged())
-            .catch(() => null);
+      const discovery =
+        local || isGuest
+          ? null
+          : await readLocalTripDiscoveryRepository()
+              .then((reader) => reader.readMerged())
+              .catch(() => null);
       const cached =
         tripId && !local
           ? (discovery?.trips.find(
@@ -393,7 +403,7 @@ function LocalTripContent({
       if (!current()) return;
       const accountId = (await readLocalSession())?.identity?.userId ?? null;
       if (!current()) return;
-      const syncFormatVersion = nativeTripQaCreateFormat(accountId);
+      const syncFormatVersion = guest ? 2 : nativeTripQaCreateFormat(accountId);
       const trip = await repo.createTrip({
         ...(syncFormatVersion ? { syncFormatVersion } : {}),
         ...tripOperation.current,
@@ -440,7 +450,7 @@ function LocalTripContent({
           : {}),
       });
       if (!current()) return;
-      kickNativeTripQaSync();
+      void kickLocalTripSync().catch(() => undefined);
       onOpen(trip.id);
     } catch {
       if (current()) setError(true);
@@ -678,7 +688,7 @@ function LocalTripContent({
           : null;
   const preparation = useTripPreparationWidget({
     refreshKey,
-    tripId: metadata?.id ?? null,
+    tripId: guest === false ? (metadata?.id ?? null) : null,
     metadata: metadata
       ? {
           startDate: metadata.startDate,
@@ -716,7 +726,10 @@ function LocalTripContent({
     onOpenItem: onOpenHomeItem,
     onOpenLocalItem: onOpenLocalHomeItem,
   });
-  const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
+  const finance = useTripHomeFinanceWidget(
+    guest === false ? (metadata?.id ?? null) : null,
+    lifecycle,
+  );
   const pages = [
     ...(preparation && (lifecycle === "Upcoming" || lifecycle === "Undated")
       ? [preparation]
@@ -825,19 +838,21 @@ function LocalTripContent({
                 : []),
             ]}
             modules={
-              <View style={styles.root}>
-                <TripMembersSummary
-                  tripId={selected.id}
-                  generation={generation}
-                  setup={setup?.context.tripId === selected.id ? setup : null}
-                />
-                <LocalTripPhotos
-                  compact
-                  tripId={selected.id}
-                  registerAdd={registerPhotos}
-                  onSaved={photosSaved}
-                />
-              </View>
+              guest === false ? (
+                <View style={styles.root}>
+                  <TripMembersSummary
+                    tripId={selected.id}
+                    generation={generation}
+                    setup={setup?.context.tripId === selected.id ? setup : null}
+                  />
+                  <LocalTripPhotos
+                    compact
+                    tripId={selected.id}
+                    registerAdd={registerPhotos}
+                    onSaved={photosSaved}
+                  />
+                </View>
+              ) : null
             }
           />
           {savedNotice ||
@@ -914,7 +929,8 @@ function LocalTripContent({
                     setEditorSaving(saving);
                   }}
                   setup={setup?.context.tripId === selected.id ? setup : null}
-                  currencyAvailable
+                  currencyAvailable={guest === false}
+                  coverAvailable={guest === false}
                   metadataEditable={metadataEditable}
                   onSelectCover={selectCover}
                   onSaveMetadata={async (
@@ -977,7 +993,7 @@ function LocalTripContent({
                         destinations,
                       );
                     }
-                    kickNativeTripQaSync();
+                    void kickLocalTripSync().catch(() => undefined);
                     const committed = await repo.getTrip(selected.id);
                     if (alive.current && generation === getAccountGeneration()) {
                       // Fence an older focus read that started before this local commit.
@@ -1016,6 +1032,7 @@ function LocalTripContent({
             >
               <SafeAreaProvider style={styles.manualModal}>
                 <ManualItineraryContent
+                  localOnly={guest === true}
                   key={`${selected.id}:${generation}:${itemStart}`}
                   tripId={selected.id}
                   generation={generation}

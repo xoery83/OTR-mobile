@@ -303,12 +303,20 @@ export function UniversalResultView({
           {result.unresolved.length ? (
             <UiText style={s.meta}>{t("capture.ai.unresolved")}</UiText>
           ) : null}
-          {result.unresolved.map((item, index) => (
-            <View key={index} style={s.group}>
-              <UiText style={s.copy}>{reasonCopy(item.reason)}</UiText>
-              <UiText style={s.meta}>{sourceName(item.sourceId)}</UiText>
-            </View>
-          ))}
+          {result.unresolved
+            .filter(
+              (item, index, items) =>
+                items.findIndex(
+                  (other) =>
+                    other.sourceId === item.sourceId && other.reason === item.reason,
+                ) === index,
+            )
+            .map((item, index) => (
+              <View key={index} style={s.group}>
+                <UiText style={s.copy}>{reasonCopy(item.reason)}</UiText>
+                <UiText style={s.meta}>{sourceName(item.sourceId)}</UiText>
+              </View>
+            ))}
           {result.status !== "EXECUTION_OUTCOME_UNKNOWN" &&
           result.candidates.length === 0 ? (
             <UiText style={s.copy}>{t("capture.ai.noCandidates")}</UiText>

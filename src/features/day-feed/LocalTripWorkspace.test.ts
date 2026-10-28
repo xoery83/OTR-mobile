@@ -1,3 +1,4 @@
+import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
 import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
   CreateTripDestinations: (props: any) => {
@@ -365,6 +366,9 @@ function input(label: string, value: string) {
   state.nodes.find((node) => node.accessibilityLabel === label)!.onChangeText(value);
 }
 beforeEach(() => {
+  vi.mocked(readLocalTripPrincipal)
+    .mockReset()
+    .mockResolvedValue({ kind: "ACCOUNT", accountId: "test-account" });
   vi.unstubAllEnvs();
   vi.mocked(readLocalSession).mockReset();
   vi.mocked(readCommittedLocalSession)
@@ -1678,4 +1682,59 @@ it("a signed-out direct Trip route cannot read the previous account cache", asyn
   expect(state.repo).not.toHaveBeenCalled();
   expect(state.discovery).not.toHaveBeenCalled();
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
+});
+
+vi.mock("@/data/auth/localTripAccess", async () => ({
+  readLocalTripPrincipal: vi.fn(async () => ({
+    kind: "ACCOUNT",
+    accountId: "test-account",
+  })),
+  ...(await import("@/data/repositories/tripRepository")),
+  ...(await import("@/data/repositories/tripDayFeedRepository")),
+  kickLocalTripSync: vi.fn(async () => {}),
+}));
+
+it("opens a genuine Guest principal without a formal Session and skips Account discovery and modules", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  vi.mocked(readLocalSession).mockResolvedValue(null);
+  const local = trip("guest-trip", "Guest local trip");
+  state.repo.mockResolvedValue(repository([local]));
+  props.tripId = local.id;
+  render();
+  await flush();
+  const html = render();
+  expect(props.onKnownTrip).toHaveBeenCalledWith("LOCAL");
+  expect(state.discovery).not.toHaveBeenCalled();
+  expect(state.preparation.tripId).toBeNull();
+  expect(html).not.toContain("data-trip-photos");
+  expect(state.nodes.find((node) => node.frame)?.frame.title).toBe("Guest local trip");
+});
+
+it("Guest normal Create retains a structured local intent without borrowing an Account QA format", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  vi.mocked(readLocalSession).mockResolvedValue(null);
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  props.mode = "CREATE";
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "Guest created Trip");
+  render();
+  button("createTripV2.create").onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledOnce();
+  expect(vi.mocked(repo.createTrip).mock.calls[0][0]).toMatchObject({
+    name: "Guest created Trip",
+    syncFormatVersion: 2,
+  });
+  expect(state.discovery).not.toHaveBeenCalled();
 });

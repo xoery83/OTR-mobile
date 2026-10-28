@@ -1,0 +1,28 @@
+{
+  "status": "LOCAL_PASS_NOT_DEPLOYED",
+  "firstFailure": "UTF8 BOM is retained by Buffer.toString but stripped by frozen prepare TextDecoder; valid UTF8 originals became PREPARED_SOURCE_MISMATCH.",
+  "repair": [
+    "Decode preparedText at the caller using the same default UTF8 BOM handling; frozen fatal UTF8 verification remains authoritative.",
+    "Retained original bytes/hash remain unchanged; shared reconstruction strips exactly one leading BOM before frozen layout compaction.",
+    "Empty prepared bytes stay UNSUPPORTED; BOM-only HTTP fixture ABSTAINS with no Provider call."
+  ],
+  "validation": {
+    "directedRed": "5 FAIL / 50 PASS",
+    "affectedRegression": "9 suites / 142 PASS",
+    "types": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "unchanged": [
+    "Frozen Interpreter",
+    "SQL/RLS/GRANT/roles/authority",
+    "P2 changed-hash rejection",
+    "Original bytes and identity",
+    "DEV image and current five-Source running Task"
+  ],
+  "remaining": [
+    "DEV deployment after current real Task completes, avoiding restart of in-flight work.",
+    "No live paid BOM test claimed."
+  ]
+}

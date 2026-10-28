@@ -3,11 +3,11 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   createDefaultManualPlanRepository,
   type ManualPlanFields,
-} from "@/data/repositories/manualPlanRepository";
+  readTripDayFeed,
+} from "@/data/auth/localTripAccess";
 import { createDefaultManualStayRepository } from "@/data/repositories/manualStayRepository";
 import { localStayMoveItem } from "./localStayPresentation";
 import { stayMoveProposal } from "./bookingReadPresentation";
-import type { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import type { DayListHandle } from "./WindowedDayList";
 import { useP1Move } from "./useP1Move";
 import { p1CivilMoveItem, p1CivilDuration, p1CivilProposal } from "./p1CivilMove";

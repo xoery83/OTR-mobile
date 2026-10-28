@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
 import {
+  prepareUniversalDispatch,
   createUniversalPort,
   UNIVERSAL_IMPORT_VERSION,
   type UniversalHost,
@@ -348,4 +349,74 @@ it("prunes quality-withheld Booking links from retained candidate graph", async 
         u.reason === "BOOKING_OBSERVATION_WITHHELD_BY_QUALITY:b1",
     ),
   ).toBe(true);
+});
+
+it("prepares valid BOM UTF8 bytes with the frozen decoded-text contract", () => {
+  const original = source("\uFEFFActivity: BOM QA\r\nDate: 2026-11-02\r\n", 0);
+  const d = prepareUniversalDispatch(
+    actor,
+    batch,
+    { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId: task },
+    { accountId: account, tripId: trip, batchId: batch, representations: [original] },
+  );
+  expect(d.ready).toHaveLength(1);
+  expect(d.ready[0].bytes.toString()).toBe("Activity: BOM QA\nDate: 2026-11-02\n");
+  expect(d.bindings[0].originalSha256).toBe(sha(original.bytes));
+  expect(d.bindings[0].submittedSha256).toBe(sha(d.ready[0].bytes));
+  expect(original.bytes.subarray(0, 3).toString("hex")).toBe("efbbbf");
+});
+
+it("keeps malformed UTF8 unsupported without replacing the original bytes", () => {
+  const original = source("valid", 0);
+  original.bytes = Buffer.from([0xef, 0xbb, 0xbf, 0xc3, 0x28]);
+  original.originalSha256 = sha(original.bytes);
+  const d = prepareUniversalDispatch(
+    actor,
+    batch,
+    { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId: task },
+    { accountId: account, tripId: trip, batchId: batch, representations: [original] },
+  );
+  expect(d.ready).toHaveLength(0);
+  expect(d.prepared[0]).toMatchObject({
+    status: "UNSUPPORTED",
+    reason: "SOURCE_UTF8_INVALID",
+  });
+  expect(d.bindings[0].originalSha256).toBe(sha(original.bytes));
+});
+
+it("keeps a BOM-only original without dispatching empty prepared material", () => {
+  const original = source("\uFEFF", 0);
+  const d = prepareUniversalDispatch(
+    actor,
+    batch,
+    { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId: task },
+    { accountId: account, tripId: trip, batchId: batch, representations: [original] },
+  );
+  expect(d.ready).toHaveLength(0);
+  expect(d.prepared[0]).toMatchObject({
+    status: "UNSUPPORTED",
+    reason: "PREPARED_SOURCE_EMPTY",
+  });
+  expect(original.bytes.toString("hex")).toBe("efbbbf");
+});
+
+it("retains a BOM-only original as ABSTAIN without a Provider call", async () => {
+  const original = source("\uFEFF", 0);
+  const x = fixture(null, {
+    accountId: account,
+    tripId: trip,
+    batchId: batch,
+    representations: [original],
+  });
+  const response = await x.post();
+  expect(response.status).toBe(200);
+  const body = await response.json();
+  expect(body).toMatchObject({
+    status: "ABSTAIN",
+    providerOutcome: "NOT_RUN",
+    candidates: [],
+  });
+  expect(body.sourceBindings[0].originalSha256).toBe(sha(original.bytes));
+  expect(body.unresolved[0].reason).toBe("PREPARED_SOURCE_EMPTY");
+  expect(x.provider.interpret).not.toHaveBeenCalled();
 });

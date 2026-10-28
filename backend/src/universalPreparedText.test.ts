@@ -4,6 +4,9 @@ import { prepare } from "../frozen-workbench/scripts/import-workbench/llm-first"
 
 it.each([
   "plain",
+  "\uFEFFActivity: BOM QA\r\n",
+  "\uFEFF\uFEFFDouble BOM remains one literal BOM",
+  "middle\uFEFFliteral",
   "中文😀\r\nnext",
   "a \t\r\nb",
   "a\n\n\n\nb",
@@ -16,7 +19,7 @@ it.each([
       name: "fixture",
       mime: "text/plain",
       bytes: Buffer.from(text),
-      preparedText: text,
+      preparedText: new TextDecoder("utf-8", { fatal: true }).decode(Buffer.from(text)),
     },
     "B_PREPARED",
     { mimes: ["text/plain"], modalities: ["TEXT"] },
@@ -38,5 +41,5 @@ it("does not silently qualify the separate BOM dispatch mismatch", () => {
     { mimes: ["text/plain"], modalities: ["TEXT"] },
   );
   expect(r).toMatchObject({ status: "UNSUPPORTED", reason: "PREPARED_SOURCE_MISMATCH" });
-  expect(universalPreparedText(text)).toBe(text);
+  expect(universalPreparedText(text)).toBe("Activity: QA");
 });

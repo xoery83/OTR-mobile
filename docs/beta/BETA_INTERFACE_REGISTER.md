@@ -1,4 +1,4 @@
-# Auth / Identity Phase 1 — source candidate, 28 October 2026
+# Auth / Identity — Email/Google and Guest A, Adoption pending
 
 Auth owns adapter, secure Session/principal and Account UI files on its independent
 `codex/auth-identity-delivery-20261028` branch. Existing Supabase Auth/session
@@ -31,7 +31,23 @@ state. It reuses the same secure repository/apply gate. No Guest selection,
 legacy credential adoption, Session installation, database reassignment or upload
 is allowed through this read port. Existing Account-only consumers keep
 `readCommittedLocalSession`; Native owns subsequent startup/consumer wiring.
-This is a headless foundation candidate, not Guest/adoption runtime acceptance.
+The read port remains unchanged. Golden A now has normal Native/local acceptance;
+this does not authorize adoption or Cloud access.
+
+`openGuestLocalWorkspace` v1 returns `kind:GUEST_LOCAL`,
+`scope:{kind:GUEST,localId,generation}`, `syncAllowed:false`, local Trip/P1/Day
+capabilities only. It reuses SQLite74 and existing factories in an isolated Guest
+vault; SQL owner UUIDs inside this vault are not Supabase Accounts. No Core
+Accepted/receipt/dispatch port is exposed. `localTripAccess` selects the committed
+principal for existing Native consumers; startup alone selects a fresh Guest.
+Native's bounded consumer Writer lease was returned after actual GuestQA63
+Trip create/edit→P1→Day→same-version cold recovery. Independent SQLite and original
+root149-table preservation pass. Existing global queue worker is explicitly paused
+for Guest; a flag alone is insufficient. Account widgets/photos/currency and
+Account bookmark persistence are outside A. See
+[Golden A receipt](../ops/auth-phase2-20261028/GUEST_A_NATIVE_RECEIPT.json).
+B full-dataset inventory/preflight/staging/atomic publish/UNKNOWN remains pending;
+no local identity reassignment, database/Session copying or early upload.
 
 # FP-02A / FP-03A isolated implementation ownership — 2026-10-17
 
