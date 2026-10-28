@@ -1,6 +1,6 @@
 # Current implementation state — 28 October 2026
 
-## Active checkpoint: unified Native + Universal integration candidate
+## Active checkpoint: unified Native + Universal integration delivery
 
 Owner authorizes actual code integration, directed regression, Native smoke, serial main merge, then in-place Forms QA → AD5 → physical iPhone updates. This supersedes the earlier pause only for this bounded integration. Do not activate Enrichment, paid DeepSeek/Admission, Manual Cloud or Production. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
 
@@ -18,9 +18,9 @@ Integration uses `codex/native-universal-integration-20261028` in the dedicated 
 
 ## Current validation and device state
 
-Joined directed checks:55 suites917 assertions PASS; TypeScript/UIguard/scoped lint/default-CLOSED Backend build PASS. Independent protected review109PASS and Core review were completed; its Floating Today finding is fixed and covered by directed tests. Repaired stale Schema62/mock/UI-test expectations retain real data/identity/foreign-key/cold-recovery assertions through existing schema74. Build/smoke is pending at this candidate commit; final source/build/JS hashes and installation receipts must be read from the eventual delivery, not inferred here.
+Joined directed checks:55 suites917 assertions PASS; TypeScript/UIguard/scoped lint/default-CLOSED Backend build PASS. Independent protected review109PASS and Core review were completed; its Floating Today finding is fixed and covered by directed tests. Repaired stale Schema62/mock/UI-test expectations retain real data/identity/foreign-key/cold-recovery assertions through existing schema74. Forms QA real local P1–P6 Create/Edit/Cancel and Details readback passed on the integrated build; cold startup retains the session and all three Trips. Smoke found valid P6 commands blocking local P2 identity coverage: minimal Manual-only whitelist repair c6886504 plus 35 directed checks and independent15/15 review PASS. AD5 in-place update/cold startup retains its account, 22 local Trips,88 accepted Core Items and all original row hashes; real Reader shows six accepted families. Existing Batch history and recovered Source suggestions read without Analyze/paid calls. Final delivery build40, schema74, DEV API; exact source/JS identities are pinned in the private build-identity receipt.
 
-Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA and AD5 AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A retain their own app/account/data. Pre-update integrityOK/schema74 for both; AD5 has88 accepted Core Items, Forms has local journal-backed items. Separate local rollback artifacts retained, no Keychain/session copying or reset. Physical phone must pass existing Bundle/Team/profile compatibility before any in-place update; leave intact on failure. One heavy build at a time, no new simulator or shared Metro.
+Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA and AD5 AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A retain their own app/account/data. Pre-update integrityOK/schema74 for both; AD5 has88 accepted Core Items, Forms has local journal-backed items. Separate local rollback artifacts retained, no Keychain/session copying or reset. Physical phone read-only signing check found the existing independent formsqa bundle/Team/profile; it is currently unreachable. Owner explicitly deferred it on28 October (先完成模拟器). No phone install/uninstall or data change; no physical PASS. One heavy build at a time, no new simulator or shared Metro.
 
 ## DEV and independent uncompleted business
 
