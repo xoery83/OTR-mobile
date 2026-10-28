@@ -35,7 +35,19 @@
     "lint": "PASS",
     "review": "NO_BLOCKER"
   },
-  "nativeRetest": "PENDING_GUI_RETURN",
+  "nativeRetest": {
+    "status": "NATIVE_READ_RECOVERY_PASS",
+    "batchLocalCreatedAt": "2026-10-28T11:41:07",
+    "observedAtLocal": "2026-10-28T19:14 Pacific/Auckland",
+    "activity": "RESULTS_READY",
+    "candidate": "Harbour QA Gallery Visit",
+    "civilDate": "2026-11-03",
+    "source": "Submitted text",
+    "analyzeClicked": false,
+    "newProviderCalls": 0,
+    "savePerformed": false,
+    "coreReceiptRecovery": "REQUEST_TIMEOUT_DEFAULT_15_SECONDS_PENDING_IMPORT_CLIENT_REPAIR"
+  },
   "importSave": "CLOSED",
   "sqlAuthorityChanged": false,
   "newProviderCalls": 0
