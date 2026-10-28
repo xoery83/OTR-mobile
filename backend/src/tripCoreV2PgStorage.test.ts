@@ -163,7 +163,7 @@ it("scope expiry after receipt lookup rolls back current replay without deleting
 });
 
 it.each(
-  ["P1", "P3", "P4"].flatMap((family) =>
+  ["P1", "P3", "P4", "P5"].flatMap((family) =>
     ["PRIVATE", "SELECTED_PERSONS", "GROUP"].map((visibility) => ({
       family,
       visibility,
@@ -184,17 +184,21 @@ it.each(
             {
               runtime_enabled: true,
               enabled_commands:
-                family === "P4"
-                  ? [...normalP4Commands]
-                  : family === "P3"
-                    ? [...normalP3Commands]
-                    : [...normalP1Commands],
+                family === "P5"
+                  ? [...normalP4Commands, "SET_TRANSPORT_DETAILS"]
+                  : family === "P4"
+                    ? [...normalP4Commands]
+                    : family === "P3"
+                      ? [...normalP3Commands]
+                      : [...normalP1Commands],
               enabled_families:
-                family === "P4"
-                  ? ["P1", "P3", "P4"]
-                  : family === "P3"
-                    ? ["P1", "P3"]
-                    : ["P1"],
+                family === "P5"
+                  ? ["P1", "P3", "P4", "P5"]
+                  : family === "P4"
+                    ? ["P1", "P3", "P4"]
+                    : family === "P3"
+                      ? ["P1", "P3"]
+                      : ["P1"],
               enabled_admission_modes: ["MANUAL"],
             },
           ],
@@ -303,3 +307,46 @@ it("accepts a reviewed Sparse P2 only through its exact source capability and ow
   );
   expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(false);
 });
+
+it.each(["P1", "P3", "P4", "P5"])(
+  "normal transport-details command is fenced to P5, target %s",
+  async (family) => {
+    const f = fixture(),
+      query = f.lease.query;
+    f.lease.query = async (sql, params) =>
+      sql.includes("FROM public.trip_core_activation_gate WHERE singleton")
+        ? {
+            rows: [
+              {
+                runtime_enabled: true,
+                enabled_commands: [...normalP4Commands, "SET_TRANSPORT_DETAILS"],
+                enabled_families: ["P1", "P3", "P4", "P5"],
+                enabled_admission_modes: ["MANUAL"],
+              },
+            ],
+          }
+        : query(sql, params);
+    const graph = emptyCoreGraph();
+    graph.itinerary_events = [
+      { id, trip_id: trip, experience_family: family, owner_account_id: actor } as never,
+    ];
+    const c = validateCoreCommand({
+      ...command(),
+      command: "SET_TRANSPORT_DETAILS",
+      payload: { annotations: {} },
+      baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    });
+    const result = f.storage.withLockedCommand(
+      {
+        actorAccountId: actor,
+        tripId: trip,
+        operationId: operation,
+        baseVector: c.baseVector,
+      },
+      (tx) => tx.verifyAdmission(c, "a".repeat(64), graph),
+    );
+    if (family === "P5") await expect(result).resolves.toBeUndefined();
+    else await expect(result).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+    expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(false);
+  },
+);

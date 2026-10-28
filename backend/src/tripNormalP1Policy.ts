@@ -24,11 +24,21 @@ export function isNormalP1Gate(gate: Record<string, unknown> | undefined): boole
 // Explicit normal Manual profiles; recognizing a profile never enables its SQL policy.
 export const normalP3Commands = [...normalP1Commands, "SET_STAY_DETAILS"] as const;
 export const normalP4Commands = [...normalP3Commands, "SET_RENTAL_DETAILS"] as const;
+export const normalP5Commands = [...normalP4Commands, "SET_TRANSPORT_DETAILS"] as const;
 export function normalManualCapabilities(gate: Record<string, unknown> | undefined) {
   if (isNormalP1Gate(gate)) return { commands: [...normalP1Commands], families: ["P1"] };
   const rental = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4"]';
-  const commands = rental ? normalP4Commands : normalP3Commands;
-  const families = rental ? ["P1", "P3", "P4"] : ["P1", "P3"];
+  const transport = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P5"]';
+  const commands = transport
+    ? normalP5Commands
+    : rental
+      ? normalP4Commands
+      : normalP3Commands;
+  const families = transport
+    ? ["P1", "P3", "P4", "P5"]
+    : rental
+      ? ["P1", "P3", "P4"]
+      : ["P1", "P3"];
   if (
     gate?.runtime_enabled !== true ||
     JSON.stringify(gate.enabled_families) !== JSON.stringify(families) ||

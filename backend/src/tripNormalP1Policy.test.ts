@@ -105,3 +105,26 @@ it("recognizes exact P4 Manual profile only with Rental command and no Flight or
   ])
     expect(normalManualCapabilities(altered)).toBeNull();
 });
+
+it("recognizes only the exact normal P5 profile, retaining separate Flight and Source authority", () => {
+  const commands = [...normalP4Commands, "SET_TRANSPORT_DETAILS"];
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: commands,
+    enabled_families: ["P1", "P3", "P4", "P5"],
+    enabled_admission_modes: ["MANUAL"],
+  };
+  expect(normalManualCapabilities(gate)).toEqual({
+    commands,
+    families: gate.enabled_families,
+  });
+  for (const changed of [
+    { ...gate, runtime_enabled: false },
+    { ...gate, enabled_commands: [...normalP4Commands] },
+    { ...gate, enabled_commands: [...commands, "CREATE_SPARSE_FLIGHT"] },
+    { ...gate, enabled_families: ["P5"] },
+    { ...gate, enabled_families: [...gate.enabled_families, "P2"] },
+    { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+  ])
+    expect(normalManualCapabilities(changed)).toBeNull();
+});
