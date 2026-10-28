@@ -33,208 +33,61 @@ Earlier historical handoff follows unchanged; its integration-pending entries ar
 
 # Current implementation state — 28 October 2026
 
-## Auth / Identity Phase1 — Email and Google L3; Apple Owner-paused
+## Auth / Identity — Phase2 preparation, Adoption NOT_READY
 
-Use existing Supabase Auth, secure Account Session storage, generation/apply gate,
-Account switch coordinator and normal Sync. No second identity/session authority,
-Schema/RLS/GRANT change, business Gate expansion, Secret logging or device Session/
-Keychain copying. Auth worktree has normal own-root read/write permission.
+Use existing Supabase Auth, secure per-Account Session, generation/apply gate and
+repositories/Sync. Own worktree writes work normally. No copied Session/Keychain/DB,
+second authority, invented pricing or unapproved Schema/RLS/GRANT. Apple Owner-paused.
 
-Google native nonce repair and consumer generation fences are integrated on
-main76d05522; signed-out repository guard/local Mailpit acceptance on main0a6e7a9a.
-Real native46 Google ID-token exchange200, independent Account/Session readback,
-cold restore, native49 immediate A↔B four-vs-zero Trip isolation, normal current
-Session logout/server absence and A restoration pass. Keep caller nonce validation
-enabled. Exact history and build identities: ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json
-and GOOGLE_NONCE_REPAIR.md. Failed43 nonce exchange is historical, never login PASS.
+Phase1 Email/Google L3 accepted: normal Provider login, independent Account/Session
+readback, cold restore, A/B cache isolation and current-login server logout. Token-
+only eight-digit Email OTP through Verified Resend auth.xoery.art; wrong403/resend429
+and expiry PASS. Temporary60-second expiry test restored3600 seconds; JWT unchanged.
+Native52 visible-error repair accepted. Finite evidence/limits:
+ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json and EMAIL_OTP_HOSTED_DEV_E2E.json.
 
-Owner verified Resend auth.xoery.art/DNS and authorized DEV SMTP. Saved
-smtp.resend.com:465/resend, OTR <noreply@auth.xoery.art>, retaining the existing
-Supabase encrypted password without reading its value. Both signup and login
-email templates use Token without ConfirmationURL. Owner received real eight-digit
-OTP and entered it normally in native49. New canonical Account/email confirmation/
-Session has independent database evidence; terminate/launch retains this Account
-with no private QA Trips. Immediate resend429, wrong-code403, subsequent normal
-request/verification and distinct Account Session/cache selection pass.
+Golden A accepted: GuestQA63/source7e35baf6, fresh no-Session normal Trip create/edit →
+P1 → Day → same-version cold restore, SQLite74 independent readback. No Account DB,
+Cloud/Accepted receipt, fixture insertion or copied credentials; original FormsQA
+root unchanged. Sourcef62e5bf7 integrated. GUEST_A_NATIVE_RECEIPT.json is authoritative.
+Guest workspace exposes Trip/P1/Day/built-in cover; other Guest fronts unassembled.
 
-Actual expiry is separate from the wrong-code error name: independently confirmed
-stricter60-second policy, new native OTP08:50:46Z, delivered08:50:50Z, Owner input
-rejected403 at08:52:39Z (113 seconds). Final policy independently restored3600
-seconds/eight digits; JWT TTL unchanged. Normal current Session logout leaves no
-server Session; original QA A/four Trips restored. Exact finite L3 evidence and
-all limitations: ops/auth-phase1-20261028/EMAIL_OTP_HOSTED_DEV_E2E.json. Local real
-Mailpit proof (not Hosted/Native) remains separately recorded; its isolated test
-stack is stopped, canonical local stack unchanged.
+Golden B default-closed preparation (ops/auth-phase2-20261028):
 
-Owner found expired-code text below the visible long Account form. Authd3d334d4
-moves the existing alert before inputs and dismisses keyboard on alive failure.
-19 suites191 tests/types/UIguard/scopedlint and independent3 suites11 pass.
-Unified JS-only native52 source9c818005/JS2bb56d528ddc564f431a58e2f4b1fef2597641ad5daa749d0a866ec7b189dffe
-passes real guaranteed-wrong rejection with alert visible above input, keyboard
-closed, challenge cancelled and A/four Trips preserved. Native49 code/identity
-sections remain byte-identical, strict signing verified; no new Native modules.
-Email Account still has zero Sessions after that negative. Forms QA/GUI returned
-to Native for P1; AD5 not operated. Import reserves build53.
+- Full SQLite census hashes/counts; foreign scope rejects, unknown/nonempty families
+  block whole dataset. External metadata is not an actual files/drafts collector.
+- P1 live-ref freeze/resume and immutable draft recovery checkpoints accepted locally.
+  Publish-request always requires server status; no local success/post-request cancel.
+- Preflight DTO/HTTP boundary unmounted, missing adapter503; no real grant/reservation.
+- Capture-only owning BLOB inventory validates owner/creator/hash/length/UTF8; global
+  census still blocks nonempty Capture. It is not full-files COMPLETE.
+- Auth provisional store/read/revoke reuses canonical secure slot, binds actual
+  Session current/previous fingerprints, refresh CAS and Guest/adoption/target.
+  No index/launch activation. UNKNOWN retained, duplicates coalesced, ACK persisted
+  before exact-slot deletion. Directed/independent111 tests PASS; real Keychain/
+  Provider refresh/revoke/Native caller unverified.
+- Latest local28e705ab: process-local inventory freeze on existing workspace; queued
+  writes blocked, lease pins checked, old cleanup cannot unlock new scope. Current
+  Guest can clear obsolete-generation fences. Directed88/independent32 real SQLite
+  tests/types/lint PASS. No durable publication lock/Native activation.
 
-Apple is explicitly paused until Owner Developer enrollment; its uncommitted SDK/
-configuration candidates were withdrawn. Phase1 Email/Google evidence is complete
-within the scopes above; this does not certify Apple or Guest adoption. Next
-approved work: Phase2 Guest→Account. Guest marker/Guest-install guard exists;
-adoptLegacyAccountState is not Guest conversion. Preserve full-dataset authoritative
-preflight, no early Guest upload or partial visible ownership conversion, stable
-operation identities and UNKNOWN recovery. No new quota/pricing policy is invented.
-Main integration remains serial and must preserve concurrent Native/Import work
-and the six unrelated dirty primary-checkout files.
+Source confirms current Capture/Documents producers Account-only; originals are
+registered SQLite BLOBs. This excludes physical-disk absence and Photo/Ledger proof.
+Never inspect/reclassify Account files by prefix.
 
-Phase2 focused intake is recorded in ops/auth-phase2-20261028/INTAKE.json.
-The read-only readCommittedLocalPrincipal/v1 candidate distinguishes persisted
-Guest, committed Account, prior SIGNED_OUT and genuinely unchosen null. Existing
-corrupt/contradictory Account indexes and legacy states fail closed without writes;
-cached valid Account access remains independent of Guest marker corruption.
-19 suites205 tests/types/UIguard/scopedlint and independent3 suites38 plus real
-public-port memory/gate checks pass. This does not wire Native Guest business
-access or implement adoption. Next: typed local Guest repository scope/full census;
-shared startup/Core/migration writers coordinate before any consumer changes.
+Last independently verified main/origin/remote74c6403027e13824be020f483915526d4136c998:
+Auth-only sourceb8c2987d normal-pushed; actual primary111 tests PASS; six dirty files/
+full diff preserved. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is pre-final-push
+snapshot. Freeze28e705ab remains local. Main/Push returned; reacquire/verify before
+integration. Core focusedab33fc9f independently122 tests + isolated real PG rollback
+PASS, handed back to Native; do NOT whole-merge its Native-parent branch. No public
+Core/Trip/SQL/Host/GUI lease held. Native TripCreate DI/live-Trip-draft seams requested.
 
-Owner29 October splits AUTH-02 into A Guest Local Foundation, then B adoption.
-A is now actual Native/local PASS: independently signed GuestQA63 (source7e35baf6),
-fresh no-Session empty My Trips → normal Trip create/edit → minimum P1 → Day →
-real same-version terminate/relaunch retains same Trip/P1/Person/queue IDs/content.
-SQLite74 independent readback confirms no canonical Account DB and no Cloud
-certificates/receipts; original FormsQA root logical-table hashes are identical.
-No fixture insertion, Session/Keychain/database copying, new simulator or cloud
-Guest authority. Receipt: ops/auth-phase2-20261028/GUEST_A_NATIVE_RECEIPT.json.
-Source6fe6f3c0/cbace1f0 + native-found QuickAdd repair7e35baf6 reuse existing
-repositories/migrations; Guest startup pauses the existing global worker before
-opening the Guest vault. Account widgets/photos/currency/Account bookmarks remain
-unassembled in A; actual local Day/P1 works.14 suites279 regression +repair20,
-types/UIguard, independent218 +repair20 PASS; lint0errors, old import warnings.
-GUI and bounded consumer Writer returned to Native. A code/evidencef62e5bf7
-was serially fast-forwarded into main froma82ab46b; post-merge5 suites28 PASS and
-all six primary dirty files remain byte-identical. Normal remote refs must be
-freshly verified; integration snapshot is GUEST_A_MAIN_INTEGRATION.json.
-Next B: complete real owning-repository/full live draft/file inventory, then lawful
-server-authoritative full-dataset preflight/staging/publish/status/UNKNOWN and
-normal Account login/adoption. Boundary census GUEST_DATA_BOUNDARIES.json records
-automatic Ledger/Person state and live P1 drafts; do not inventory only SQLite.
-No adoption/upload/conversion/Cloud acceptance or commercial quota policy yet.
-
-B preparation now adds Auth-owned `GuestLocalWorkspace.readCensus` using the same
-Guest vault/apply gate/transaction. Whole SQLite table counts and stable supported
-row hashes retain automatic Ledger/Person/cover state; unknown nonempty families,
-unknown entity/operation tuples, foreign owner/Trip, non-P1 intents and stale scope
-fail closed. Actual accepted A vault read through a read-only headless adapter
-confirms Trip1/Person1/P1=1/queue3 and explicit missing-file/live-draft blocker;
-this is not Native census-consumer or Cloud evidence. Receipt:
-ops/auth-phase2-20261028/GUEST_B_READ_ONLY_CENSUS.json. 5 directed suites61 tests,
-types/UIguard/scopedlint and independent disk19 PASS. External COMPLETE inputs
-remain metadata attestations only; actual collectors need a controlled revision/
-snapshot and same-Guest edit recheck. No Session installation, upload, adoption,
-Backend/Schema/RLS/GRANT or Native consumer activation. Next: coordinate owning
-live P1 fields/file inventory; prepare server atomic publication candidate without
-borrowing Manual/Source authority. ADR:2026-10-29-guest-adoption-census.md.
-
-P1-only live draft handoff now freezes the actual editor refs/initial dirty
-baseline, not the repository WeakMap initial draft. Auth registry returns canonical
-text/hash/bytes and a revision+identity-fenced lease; cancellation resumes the same
-repository/draft/input. Open place selection, busy/UNKNOWN firstAttempt and stale
-sources block; preview does not participate. Concurrent resume and old cleanup
-cannot release a new lease. 7 directed suites92 tests/types/UIguard PASS;
-independent2 suites31 PASS after its two race/UI-lock findings were repaired.
-Scopedlint has0errors/4 pre-existing test import warnings. Native confirmed bounded
-P1 seam compatibility; no other Forms/Core/Trip factory changed. This is an
-in-memory P1 port, not durable draft recovery, a complete Guest collector or real
-Native/Adoption/Cloud E2E. Source-only activation; no login/upload consumer.
-Import confirms no accepted Guest file inventory port exists; Account Documents/
-Capture ports must not be borrowed. Next: lawful full source snapshot/owning file
-collector, durable transfer recovery and atomic server publication candidate.
-B preparation source0281a32d/54c62894 retained latest accepted Import0e6 and
-was serially FF-integrated to actual main e18e5b63. Joined7 suites132/types and
-actual primary-main5 suites103 Smoke PASS; original six dirty files/full diff
-unchanged. No Host/SQL/Native deployment. Historical pre-push snapshot is
-GUEST_B_PREPARATION_INTEGRATION.json; verify current remote refs after final push.
-
-B local recovery source now uses immutable Auth-only Guest namespace checkpoints,
-retaining exact P1 draft text/hash/bytes, source/target UUID and inventory digest.
-Publish-request presence always returns QUERY_SERVER_STATUS after restart; no
-local success or post-publication local cancel. One uncancelled attempt per Guest;
-unknown/corrupt/zero-byte committed files block, matching retry retains bytes.
-Scope/generation fences and existing apply gate remain. 5 directed suites56 tests,
-types/UIguard/scopedlint and independent18 real Node-disk tests PASS after empty-
-file and mutable-input pin findings were repaired. Receipt:
-GUEST_B_LOCAL_RECOVERY_REVIEW.json. No actual Native filesystem/crash E2E, consumer,
-Session installation, file collector, server preflight, upload or SQL activation.
-Import confirms persistent Capture originals are Account-scoped SQLite BLOBs with
-no accepted Guest producer/collector. Do not inspect Account bytes or reclassify
-files by directory prefix. Full files/all-drafts remain blocked; next coordinate
-single-transaction owning Core/Trip port and prepare exact closed server candidate.
-Local recovery source95b62895 was serially FF-integrated from main7ea7a83b;
-actual primary5 suites113 Smoke PASS and original six dirty files/full diff unchanged.
-GUEST_B_RECOVERY_INTEGRATION.json is the historical pre-push snapshot; verify final
-remote refs after the normal docs+source push. No new Native/Host deployment.
-
-B closed preflight DTO/boundary candidate now accepts only IDs/digest/resource
-counts, binds target to the existing authenticated Backend Account before awaits,
-checks returned grant pins/counts/expiry, bounds bytes/time and forwards Abort.
-Missing owning adapter stays503closed; no names/files/token body or new commercial
-rules. 21 new/3 suites44 directed/types/UIguard/lint and independent21 PASS.
-Not mounted in app/bootstrap, no PG reservation/authority or real preflight/Cloud
-receipt. GUEST_B_CLOSED_PREFLIGHT_REVIEW.json records fake-port evidence boundaries.
-GUEST_B_ATOMIC_PORT_CANDIDATE.md gives Core Writer a minimal one-transaction seam
-reusing TripCreatePort/CoreCommandStorage, explicit Person mappings and final
-whole-dataset rollback/receipt checks. No intercepting COMMIT, stripping principal
-checks or borrowing QA scope; exact protected changes stay unexecuted.
-
-B Capture-only inventory now reuses the Source Writer-confirmed transactionStore
-load on the isolated Guest DB, never the Account lifecycle factory. Checks every
-owner/assigned Trip creator before bytes, validates originals with the owning
-SHA/length/UTF8 rules, retains all Capture revision+metadata hashes and blocks
-orphan payloads without writes. GuestWorkspace adds readCaptureInventory only;
-no producer/UI or global census unblock. Opaque Capture IDs retain owning semantics.
-6 directed suites168/types/UIguard/lint and independent27 real disk tests PASS.
-Actual accepted A vault read with a Node readOnly adapter has Capture payload0/ref0;
-this is not Native file production, fresh SecureStore proof or physical-disk/all-
-file absence. GUEST_B_REAL_CAPTURE_INVENTORY.json and
-GUEST_B_CAPTURE_INVENTORY_REVIEW.json record exact boundaries. Full files, draft/
-source freeze and atomic publication remain pending; Core Writer defers its shared
-transaction extraction until the active private P2 repair is fixed. Auth has no
-shared Core/Bootstrap/GUI/main lease and continues private approved work meanwhile.
-Preflight/Capture sources98c4e0c2/11b3ee56 retained latest Import2ded and
-were serially FF-integrated as main48d0a5b4; joined6 suites159/types/UIguard and
-actual primary6 suites101 Smoke PASS, original6 dirty files/full diff unchanged.
-Historical pre-push receipt: GUEST_B_PREFLIGHT_CAPTURE_INTEGRATION.json. No Host/
-SQL/Native activation; verify final normal push refs before subsequent integration.
-
-B provisional credentials now have default-unwired Auth-repository store/read ports,
-using the existing secure per-Account key and Guest/adoption/target metadata only.
-Canonical current/previous credential hashes bind crash/refresh recovery to the
-actual verified Session; matching Account IDs alone are insufficient. No Account
-index/legacy/launch installation; Guest login/switch guards remain. Gate/generation,
-previous-refresh-token CAS, exact pending retry and fixed error codes fail closed.
-8 suites103 tests, types/scopedlint and independent8 suites103 PASS after credential
-pin/error propagation findings were repaired. These are memory-adapter source tests,
-not real Keychain/cold Provider recovery; Provider/refresh/business-cancel/activation callers remain unwired. Internal
-trusted-adapter revoke now coalesces duplicate requests, retains UNKNOWN, persists
-ACK before exact-slot deletion and resumes cleanup without re-revoking. 8 suites111
-directed and independently111 PASS; no real Provider/Keychain revoke evidence. Complete those and publication-status recovery before use.
-Core transaction composition was separately fixed as focusedab33fc9f on Native's
-frozen parent, independently6 suites122 PASS + isolated real PG rollback; handed
-back to unique Core Writer for review/integration. Do not merge that whole branch.
-No SQL/Host/publisher or Native consumer activation; Adoption still NOT_READY.
-Auth-only store/read/revoke sourceb8c2987d was serially fast-forwarded from mainb7e;
-actual primary8 suites111 PASS. Six original dirty files and full tracked/cached
-diff hashes are unchanged. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is the
-pre-final-push snapshot; independently verify actual remote refs after normal push.
-
-B read-only inventory now has a process-local freeze lease on the existing Guest
-workspace. Original Trip/Core/P1 getters reject writes/access while frozen; owning
-census/Capture reads retain raw identity scope and verify lease pins before/after.
-Same Guest openers share the fence, acquisition waits previous commits, release
-resumes the same draft and cannot unlock a newer token; a newly verified current
-Guest scope clears only obsolete-generation inventory fences. 5 suites88 directed
-and independent32 real SQLite file tests PASS. Default Native consumer not wired;
-not a durable publication lock or full file/draft collector. PUBLISH_REQUESTED cold
-write fencing and authoritative server status remain required before activation.
+Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
+ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
+Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.
+TripCreate/Core principal guards differ: do not fake atomic authority. No Owner OTP
+needed before runnable slice. Phase3–6 queued; continue safe preparation meanwhile.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
