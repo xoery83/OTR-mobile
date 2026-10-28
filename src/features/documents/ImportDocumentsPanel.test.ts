@@ -31,10 +31,17 @@ vi.mock("react", () => ({
     return h.slots[i];
   },
   useLayoutEffect(effect: () => void) {
+    h.cursor++;
     effect();
   },
-  useEffect(effect: () => void) {
-    if (!h.mounted) h.effects.push(effect);
+  useEffect(effect: () => void | (() => void), deps: unknown[]) {
+    const i = h.cursor++;
+    const old = h.slots[i] as { deps: unknown[]; cleanup?: () => void } | undefined;
+    if (!old || deps.some((dep, j) => !Object.is(dep, old.deps[j])))
+      h.effects.push(() => {
+        old?.cleanup?.();
+        h.slots[i] = { deps, cleanup: effect() };
+      });
   },
 }));
 vi.mock("./ImportDocuments", () => ({
@@ -62,7 +69,7 @@ const doc = {
   sha256: "a".repeat(64),
   recordedAt: "2026-10-28T00:00:00Z",
 } as ImportDocument;
-function Harness(captureId?: string) {
+function Harness(captureId?: string, isCurrent = () => true) {
   h.cursor = 0;
   h.effects = [];
   const element = ImportDocumentsPanel({
@@ -70,7 +77,7 @@ function Harness(captureId?: string) {
     tripId: null,
     scope: "PERSONAL_INBOX",
     captureId,
-    isCurrent: () => true,
+    isCurrent,
     onOpenDocument: vi.fn(),
     onOpenActivity: vi.fn(),
   });
@@ -155,4 +162,94 @@ it("does not decode a PDF as text or pretend a viewer exists", async () => {
   const detail = Harness(doc.captureId);
   expect(detail.props.original).toBeNull();
   expect(detail.props.error).toBe(true);
+});
+
+it("clears busy state when an original finishes hidden, then retries on the same mounted view", async () => {
+  let visible = true;
+  const current = () => visible;
+  Harness(doc.captureId, current);
+  await settle();
+  let finish!: (value: unknown) => void;
+  h.original.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  (Harness(doc.captureId, current).props.onOpenOriginal as (id: string) => void)(
+    doc.captureId,
+  );
+  await settle();
+  visible = false;
+  finish({ document: doc, bytes: new TextEncoder().encode("hidden original") });
+  await settle();
+  visible = true;
+  const reopened = Harness(doc.captureId, current);
+  expect(reopened.props.opening).toBe(false);
+  expect(reopened.props.original).toBeNull();
+  (reopened.props.onOpenOriginal as (id: string) => void)(doc.captureId);
+  await settle();
+  expect(Harness(doc.captureId, current).props.original).toEqual({
+    captureId: doc.captureId,
+    sha256: doc.sha256,
+    text: "retained original",
+  });
+});
+
+it("reloads list after a hidden GET completes on the same mounted view", async () => {
+  let visible = true;
+  const current = () => visible;
+  let finish!: (value: ImportDocument[]) => void;
+  h.list.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  Harness(undefined, current);
+  await settle();
+  visible = false;
+  Harness(undefined, current);
+  finish([doc]);
+  await settle();
+  visible = true;
+  expect(Harness(undefined, current).props.loading).toBe(false);
+  await settle();
+  expect(Harness(undefined, current).props.documents).toEqual([doc]);
+  expect(h.list).toHaveBeenCalledTimes(2);
+});
+
+it("releases an old original request after hide, show and a newer list read", async () => {
+  let visible = true;
+  const current = () => visible;
+  Harness(doc.captureId, current);
+  await settle();
+  let finish!: (value: unknown) => void;
+  h.original.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  (Harness(doc.captureId, current).props.onOpenOriginal as (id: string) => void)(
+    doc.captureId,
+  );
+  await settle();
+  visible = false;
+  Harness(doc.captureId, current);
+  visible = true;
+  Harness(doc.captureId, current);
+  await settle();
+  finish({ document: doc, bytes: new TextEncoder().encode("stale original") });
+  await settle();
+  const reopened = Harness(doc.captureId, current);
+  expect(reopened.props.opening).toBe(false);
+  expect(reopened.props.original).toBeNull();
+  (reopened.props.onOpenOriginal as (id: string) => void)(doc.captureId);
+  await settle();
+  expect(Harness(doc.captureId, current).props.original).toEqual({
+    captureId: doc.captureId,
+    sha256: doc.sha256,
+    text: "retained original",
+  });
 });

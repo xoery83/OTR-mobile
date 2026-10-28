@@ -134,3 +134,18 @@ it("does not overlap an outstanding recovery or let a hidden view poll", async (
   await vi.advanceTimersByTimeAsync(10000);
   expect(h.recover).toHaveBeenCalledOnce();
 });
+
+it("resumes GET polling after hide, request completion and showing the same mounted Batch", async () => {
+  let visible = true;
+  Harness("batch-a", () => visible);
+  await vi.advanceTimersByTimeAsync(0);
+  Harness("batch-a", () => visible);
+  visible = false;
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(h.recover).toHaveBeenCalledOnce();
+  visible = true;
+  Harness("batch-a", () => visible);
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(h.recover).toHaveBeenCalledTimes(2);
+  expect(h.start).not.toHaveBeenCalled();
+});

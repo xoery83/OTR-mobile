@@ -48,12 +48,15 @@ function ScopedDocuments(props: Props) {
   const generation = useRef(getAccountGeneration()),
     alive = useRef(true),
     sequence = useRef(0);
+  const visible = props.isCurrent();
+  const wasVisible = useRef(visible);
   const view = useRef(props.isCurrent);
   useLayoutEffect(() => {
     view.current = props.isCurrent;
   }, [props.isCurrent]);
-  const current = () =>
-    alive.current && view.current() && generation.current === getAccountGeneration();
+  const scopeCurrent = () =>
+    alive.current && generation.current === getAccountGeneration();
+  const current = () => scopeCurrent() && view.current();
   async function reader() {
     if (!current()) throw Error("DOCUMENTS_STALE");
     const context = await captureAccountRequestContext(
@@ -103,7 +106,7 @@ function ScopedDocuments(props: Props) {
     } catch {
       if (current() && request === sequence.current) setError(true);
     } finally {
-      if (current() && request === sequence.current) setLoading(false);
+      if (scopeCurrent() && request === sequence.current) setLoading(false);
     }
   }
   async function openOriginal(captureId: string) {
@@ -143,7 +146,7 @@ function ScopedDocuments(props: Props) {
     } catch {
       if (current() && request === sequence.current) setError(true);
     } finally {
-      if (current() && request === sequence.current) setOpening(false);
+      if (scopeCurrent()) setOpening(false);
     }
   }
   useEffect(() => {
@@ -155,6 +158,12 @@ function ScopedDocuments(props: Props) {
     // Identity changes remount the keyed private surface.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (visible && !wasVisible.current) void Promise.resolve().then(() => load());
+    wasVisible.current = visible;
+    // A retained view reloads only when it becomes visible again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
   if (props.captureId && document)
     return (
       <ImportDocumentDetail

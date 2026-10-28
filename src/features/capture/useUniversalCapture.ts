@@ -33,11 +33,11 @@ export function useUniversalCapture(
   }, [isCurrent, model.batch.accountId, model.batch.batchId]);
   const controller = useRef<AbortController | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
-  const current = () =>
+  const scopeCurrent = () =>
     alive.current &&
     initialScope.current === scope.current &&
-    currentRef.current() &&
     generation.current === getAccountGeneration();
+  const current = () => scopeCurrent() && currentRef.current();
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -116,9 +116,9 @@ export function useUniversalCapture(
         );
     } finally {
       running.current = false;
+      if (scopeCurrent()) setBusy(false);
       if (current()) {
         setActivity(consumer.current?.activity ?? null);
-        setBusy(false);
         setCanStart(consumer.current?.canDispatch ?? true);
       }
     }
@@ -130,16 +130,16 @@ export function useUniversalCapture(
   }, []);
   useEffect(() => {
     const pending = () => {
-      const state = consumer.current?.activity?.state;
+      const state = current() ? consumer.current?.activity?.state : activity?.state;
       return state && ["PENDING", "WAITING", "PROCESSING"].includes(state);
     };
     if (result || !pending()) return;
     let canceled = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
-      if (canceled || !current()) return;
-      await run(false);
-      if (!canceled && current() && pending()) timer = setTimeout(poll, 5000);
+      if (canceled || !scopeCurrent()) return;
+      if (current()) await run(false);
+      if (!canceled && scopeCurrent() && pending()) timer = setTimeout(poll, 5000);
     };
     timer = setTimeout(poll, 5000);
     return () => {
