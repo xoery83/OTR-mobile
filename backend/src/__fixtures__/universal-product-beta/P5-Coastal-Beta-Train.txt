@@ -1,0 +1,6 @@
+Synthetic QA only
+Service: Coastal QA Beta Train
+Operator: Coastal QA Rail
+Service number: CQ102
+Transport type: TRAIN
+Departure date: 2026-11-02
