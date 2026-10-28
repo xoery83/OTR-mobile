@@ -1,5 +1,5 @@
 {
-  "status": "FOCUSED_INTAKE_AND_READ_ONLY_PRINCIPAL_FOUNDATION_NOT_ADOPTION_ACCEPTANCE",
+  "status": "GOLDEN_A_NATIVE_LOCAL_ACCEPTED_B_ADOPTION_PENDING",
   "approvedContract": "docs/auth/design-v1-20261018/01_AUTH.md:12",
   "reused": [
     "Supabase sole formal Auth and existing secure Session repository",
@@ -55,7 +55,7 @@
       "constraint": "No upload or ownership conversion until authorized; retain originals until verified; no partial visible migration or same-name Trip merge"
     }
   ],
-  "nextSlice": "Owner A first: Native fresh Guest normal UI Trip + minimal P1 + Day Feed + SQLite cold restore; only then B legal Account adoption.",
+  "nextSlice": "B after A serial main integration: full-dataset owning inventory, normal provisional OTP/Google verification, exact server-authoritative preflight/staging/all-or-nothing publish and readback; preserve Guest originals.",
   "singleWriters": {
     "authPortsAndRepository": "Auth lane",
     "startupNavigationAndManualConsumers": "Native lane",
@@ -65,7 +65,7 @@
   "protectedOperations": "Prepare/test exact candidates first; new Hosted RLS/GRANT/roles or sensitive authority execution still requires the existing precise gate",
   "commercialPolicy": "No prices, quota numbers, reset cycles or paid interception invented",
   "currentRuntimeChanges": {
-    "bootstrapWiring": "SOURCE_CANDIDATE_ONLY_NOT_INSTALLED",
+    "bootstrapWiring": "GUESTQA_NATIVE_A_ACCEPTED_MAIN_PENDING",
     "businessDataConversion": false,
     "guestCloudUpload": false,
     "schemaRlsGrant": false
@@ -79,7 +79,7 @@
     "independentReview": "THREE_SUITES_38_TESTS_AND_PUBLIC_PORT_MEMORY_GATE_CHECKS_PASS"
   },
   "guestLocalFoundation": {
-    "status": "SOURCE_AND_NATIVE_CONSUMERS_REVIEWED_NATIVE_E2E_PENDING_NOT_ADOPTION",
+    "status": "GOLDEN_A_NATIVE_LOCAL_ACCEPTED_NOT_ADOPTION",
     "decision": "docs/adr/2026-10-29-guest-local-vault.md",
     "port": "openGuestLocalWorkspace/v1",
     "implementation": "src/data/auth/guestLocalWorkspace.ts",
@@ -93,8 +93,8 @@
       "uiGuard": "PASS",
       "independentReview": "NO_BLOCKER_8_DISK_TESTS_INDEPENDENTLY_PASS"
     },
-    "native": "Independent GuestQA native linkage and MachO XML/DER identity verified; not installed; fixed consumer JS and actual UI/cold E2E pending",
-    "remaining": "Native startup/consumers by sole Native Writer; independent GuestQA bundle actual UI + cold recovery; full data inventory and legal adoption later",
+    "native": "PASS: fresh unauthenticated normal UI Trip create/edit + P1/Day + same-version terminate/relaunch, independent SQLite + original root logical hash preservation",
+    "remaining": "Serial A main integration, then B full real inventory + server-authoritative preflight/publication/UNKNOWN and formal login; no Guest conversion yet",
     "consumerValidation": {
       "directedSuites": 14,
       "directedTests": 279,
@@ -106,6 +106,8 @@
       "uiGuard": "PASS",
       "lint": "NO_ERRORS_EXISTING_IMPORT_FIRST_WARNINGS"
     },
-    "singleWriter": "Native explicitly transferred bounded bootstrap/Trip/P1 consumers, TripViewContext and TripBasicEditor to Auth until candidate handback; no Core/Trip/Manual factories, Backend or Sync implementation modified"
+    "singleWriter": "Native explicitly transferred bounded bootstrap/Trip/P1 consumers, TripViewContext and TripBasicEditor to Auth until candidate handback; no Core/Trip/Manual factories, Backend or Sync implementation modified",
+    "receipt": "GUEST_A_NATIVE_RECEIPT.json",
+    "nativeEvidenceReview": "INDEPENDENT_INSTALLED_HASHES_COLD_JSON_ROOT149_TABLES_MATCH_NO_BLOCKER"
   }
 }

@@ -82,24 +82,25 @@ public-port memory/gate checks pass. This does not wire Native Guest business
 access or implement adoption. Next: typed local Guest repository scope/full census;
 shared startup/Core/migration writers coordinate before any consumer changes.
 
-Owner29 October requires AUTH-02 A Guest Local Foundation before B adoption.
-The separate `openGuestLocalWorkspace/v1` candidate reuses migrations74 and the
-existing Trip/Core/P1/Day factories in `otr-guest-<UUID>.db`, bound to Guest kind,
-UUID and transition generation. It exposes no Accepted/Cloud dispatch or photos.
-6 suites139 checks/types/scopedlint/UIguard pass; independent disk8/8 NO_BLOCKER.
-This is headless evidence only: Native sole Writer must wire startup/consumers,
-exclude Account openers and all normalSync/transport (global queue notifications
-still exist), then verify a fresh unauthenticated QA app's normal Trip/P1 UI and
-cold recovery. No Native Guest or adoption acceptance, cloud upload or conversion.
-See `adr/2026-10-29-guest-local-vault.md` and Phase2 INTAKE.
-Consumer wiring is now source-reviewed under Native's bounded writer transfer:
-startup chooses principal before SQLite, pauses the existing global worker before
-Guest, and mounts consumers after readiness. Guest uses the same Trip/P1/Day UI,
-without Account discovery/widgets/photos/currency or Account bookmark I/O. Existing
-Account/signout paths remain. 14 suites279 checks/types/UIguard pass; independent
-10 suites218 NO_BLOCKER. Independent GuestQA native identity is linked/verified,
-but no Guest Native UI or cold acceptance yet. Complete actual A before B.
-
+Owner29 October splits AUTH-02 into A Guest Local Foundation, then B adoption.
+A is now actual Native/local PASS: independently signed GuestQA63 (source7e35baf6),
+fresh no-Session empty My Trips → normal Trip create/edit → minimum P1 → Day →
+real same-version terminate/relaunch retains same Trip/P1/Person/queue IDs/content.
+SQLite74 independent readback confirms no canonical Account DB and no Cloud
+certificates/receipts; original FormsQA root logical-table hashes are identical.
+No fixture insertion, Session/Keychain/database copying, new simulator or cloud
+Guest authority. Receipt: ops/auth-phase2-20261028/GUEST_A_NATIVE_RECEIPT.json.
+Source6fe6f3c0/cbace1f0 + native-found QuickAdd repair7e35baf6 reuse existing
+repositories/migrations; Guest startup pauses the existing global worker before
+opening the Guest vault. Account widgets/photos/currency/Account bookmarks remain
+unassembled in A; actual local Day/P1 works.14 suites279 regression +repair20,
+types/UIguard, independent218 +repair20 PASS; lint0errors, old import warnings.
+GUI and bounded consumer Writer returned to Native. Serial A main merge pending.
+Next B: complete real owning-repository/full live draft/file inventory, then lawful
+server-authoritative full-dataset preflight/staging/publish/status/UNKNOWN and
+normal Account login/adoption. Boundary census GUEST_DATA_BOUNDARIES.json records
+automatic Ledger/Person state and live P1 drafts; do not inventory only SQLite.
+No adoption/upload/conversion/Cloud acceptance or commercial quota policy yet.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
