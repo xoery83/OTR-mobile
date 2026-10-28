@@ -459,3 +459,36 @@ it.each([
     }
   },
 );
+
+it("does not advertise authored Flight commands to older clients without explicit parser support", async () => {
+  const produced = {
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["CREATE_ITEM", "SET_AUTHORED_FLIGHT_DETAILS"],
+    enabledFamilies: ["P1", "P2"],
+    enabledAdmissionModes: ["MANUAL"],
+  };
+  const connection = {
+    read: { capabilities: async () => produced },
+    hash,
+  } as unknown as CoreHttpConnection;
+  for (const support of [undefined, "true", "1"]) {
+    const response = await coreHttpBoundary(
+      request(
+        "capabilities",
+        undefined,
+        support ? { "X-OTR-Core-Authored-Flight": support } : {},
+      ),
+      actor,
+      async () => true,
+      connection,
+    );
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(result.enabledCommands).toEqual(
+      support === "1" ? produced.enabledCommands : ["CREATE_ITEM"],
+    );
+    expect(response.headers.get("vary")).toContain("X-OTR-Core-Authored-Flight");
+  }
+  expect(produced.enabledCommands).toContain("SET_AUTHORED_FLIGHT_DETAILS");
+});

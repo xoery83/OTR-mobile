@@ -722,7 +722,7 @@ it("freezes actual typed P1 fields, rejects queued Save/Discard, and resumes the
   node("tripCreate.planName").onChangeText("输入尚未保存");
   render(p);
   const oldChange = node("tripCreate.planName").onChangeText;
-  const oldSave = node("tripCreate.createPlan").onPress;
+  const oldSave = node("ui.save").onPress;
   node("common.cancel").onPress();
   const oldDiscard = state.alert.mock.lastCall![2][1].onPress;
   const lease = await liveInventory().freeze(guestScope());
@@ -734,14 +734,14 @@ it("freezes actual typed P1 fields, rejects queued Save/Discard, and resumes the
   oldDiscard();
   render(p);
   expect(node("tripCreate.planName").value).toBe("输入尚未保存");
-  expect(node("tripCreate.createPlan").disabled).toBe(true);
+  expect(node("ui.save").disabled).toBe(true);
   expect(repo.save).not.toHaveBeenCalled();
   expect(p.onClose).not.toHaveBeenCalled();
   await lease.resume();
   render(p);
   node("tripCreate.planName").onChangeText("Resumed title");
   render(p);
-  node("tripCreate.createPlan").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   expect(repo.save).toHaveBeenCalledWith(
     expect.objectContaining({ itemId: snapshot.itemId }),
@@ -752,7 +752,7 @@ it("freezes actual typed P1 fields, rejects queued Save/Discard, and resumes the
 it("keeps unresolved P1 Save attempts out of adoption without unfreezing their retry contract", async () => {
   const { p, repo } = await withPlace();
   repo.save.mockRejectedValue(new Error("NETWORK_UNKNOWN"));
-  node("tripCreate.createPlan").onPress();
+  node("ui.save").onPress();
   await Promise.resolve();
   render(p);
   await expect(liveInventory().freeze(guestScope())).rejects.toThrow(
@@ -791,7 +791,7 @@ it.each(["account change", "unmount"])(
     };
     const repo = { createDraft: vi.fn(async () => draft), save: vi.fn() };
     const cleanup = await open(p, repo);
-    const oldSave = node("tripCreate.createPlan").onPress;
+    const oldSave = node("ui.save").onPress;
     const oldChange = node("tripCreate.planName").onChangeText;
     const lease = await liveInventory().freeze(guestScope());
     if (reason === "unmount") cleanup();
@@ -805,7 +805,7 @@ it.each(["account change", "unmount"])(
       expect(node("tripCreate.planName").editable).toBe(true);
       expect(node("tripCreate.planName").value).toBe("Keep draft");
       node("tripCreate.planName").onChangeText("New-generation stale-source edit");
-      node("tripCreate.createPlan").onPress();
+      node("ui.save").onPress();
       render(p);
       expect(node("tripCreate.planName").value).toBe("Keep draft");
     }
