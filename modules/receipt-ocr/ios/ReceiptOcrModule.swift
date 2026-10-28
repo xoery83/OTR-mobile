@@ -19,6 +19,11 @@ public class ReceiptOcrModule: Module {
     Name("ReceiptOcr")
 
     OnCreate {
+#if DEBUG && targetEnvironment(simulator)
+      if ProcessInfo.processInfo.environment["OTR_QA_IMPORT_PREVIEW_STATE_TEST"] == "1" {
+        DispatchQueue.main.async { runImportPreviewPrivateCloseChecks() }
+      }
+#endif
       // Remove only this preview adapter's disposable copies left by process termination.
       let directory = FileManager.default.temporaryDirectory
       for file in (try? FileManager.default.contentsOfDirectory(at: directory,
@@ -329,3 +334,30 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   }
   deinit { NotificationCenter.default.removeObserver(self) }
 }
+
+#if DEBUG && targetEnvironment(simulator)
+// Exercises the actual controller offscreen; no Capture data, file IO or public test port.
+private func runImportPreviewPrivateCloseChecks() {
+  for loadedBeforeTimeout in [true, false] {
+    var finishes = 0
+    var hiddenAtFinish = false
+    weak var subject: ImportOriginalPreviewController?
+    let controller = ImportOriginalPreviewController(
+      file: FileManager.default.temporaryDirectory.appendingPathComponent("otr-import-qa-state-test.pdf")
+    ) { _ in
+      finishes += 1
+      hiddenAtFinish = subject?.viewIfLoaded?.isHidden ?? true
+    }
+    subject = controller
+    if loadedBeforeTimeout { controller.loadViewIfNeeded() }
+    controller.failIfPresentationPending()
+    controller.loadViewIfNeeded()
+    let hiddenAfterLateLoad = controller.view.isHidden
+    controller.didPresent()
+    controller.failIfPresentationPending()
+    let passed = finishes == 1 && hiddenAtFinish && hiddenAfterLateLoad
+    NSLog("import_original_preview_state %@ %@",
+      loadedBeforeTimeout ? "LOADED_TIMEOUT" : "TIMEOUT_LATE_LOAD", passed ? "PASS" : "FAIL")
+  }
+}
+#endif
