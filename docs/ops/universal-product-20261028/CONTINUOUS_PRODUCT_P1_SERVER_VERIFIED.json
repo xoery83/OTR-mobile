@@ -1,5 +1,5 @@
 {
-  "status": "SERVER_VERIFIED_NATIVE_RECOVERY_PENDING",
+  "status": "NATIVE_E2E_PASS_ONE_NORMAL_P1_NOT_FULL_BETA",
   "softwareCommit": "0821fb521d4e1dd1a28e1cd3c551f690d418b297",
   "image": "sha256:865854878bc4b2fbf659acdf63ee229ab5d2d745760af5c9725ac42937266a02",
   "appBuild": 57,
@@ -202,8 +202,29 @@
   "receiptCount": 1,
   "modelCallsAddedBySave": 0,
   "nativeServerAcceptedObserved": true,
-  "repeatConfirmation": "IN_PROGRESS same operation",
-  "dayFeed": "PENDING",
-  "coldRecovery": "PENDING",
-  "scopeClose": "PENDING"
+  "repeatConfirmation": "PASS normal Native duplicate confirmation; one exact Item/Receipt; Source COMPLETE",
+  "dayFeed": "PASS warm and cold Day2 2026-11-02; no pending marker",
+  "coldRecovery": "PASS My Trips root -> same Trip -> same Day Feed Item and exact local business row hash",
+  "scopeClose": "PASS independent Savefalse/scopeNULL/two airportsfalse",
+  "nativeColdReadback": {
+    "status": "NATIVE_COLD_RECOVERY_PASS_SCOPE_CLOSED",
+    "item": {
+      "id": "9c8fe13e-0675-8795-acd7-c96561dccbd3",
+      "title": "Harbour QA Gallery Tour",
+      "experience_family": "P1",
+      "start_local_date": "2026-11-02",
+      "start_local_time": null,
+      "start_zone_id": null,
+      "visibility": "PRIVATE",
+      "participation_mode": "SELF"
+    },
+    "itemSHA256": "9f0260d84413b47496e065e7a3f00f52a7b619dd4786ba68f7f019370f349b69",
+    "localItemCount": 1,
+    "myTripsRootObserved": true,
+    "dayFeedDateObserved": "2026-11-02",
+    "pendingMarkerObserved": false,
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "repeatCloudReadbackSHA256": "4b054616c6120111ef97e714061260d1f249b91d641c8cf78a77847aa592923c",
+  "closedReadbackSHA256": "d8bb52e6a8ad5bfbf346f536f5ec9a4059845781a841ac89d249eca9496a7ee3"
 }
