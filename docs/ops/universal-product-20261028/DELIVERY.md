@@ -43,3 +43,13 @@ Native fixed `eb77fc08` includes the requested initial `otr.core.operation` tran
 Documents isolated components now cover private list/detail, verified-text identity, same Activity Job link and scope-invalid rendering;14 UI/SQLite checks, typecheck, scoped lint and UIguard157 representative files PASS. Source/Representation links use existing registered retained pins; same Batch and same bytes do not link a sibling. No Item link is invented.
 
 Central `src/ui/catalogs.ts` editing for the current Import Task/Document keys is COMPLETE. Import releases the central dictionary edit window after this fixed checkpoint; later Import messages will use an Import-owned dictionary export and minimal serial integration, avoiding concurrent central edits with Auth. Auth messages may remain an independent export until integration. This records file ownership, not any authorization to send new-thread messages.
+
+## Continuous six-family candidate — local validation
+
+The fixed six-function candidate preserves current Native P3 read-state code from eb77fc08. Source capability is narrowed by requested family or the sealed operation slot; exact QA Actor/Trip, evidence, NEW decision, immutable Plan and receipt remain mandatory. P2 derives its object identities from the owning publication/Task rather than historical Batch9. Airport identity remains the existing AKL/CHC registry and service day 2026-11-02; this is not arbitrary-airport/date readiness.
+
+After policy close, only an existing exact accepted receipt can finalize its Source journals/association. New Create remains denied. Rollback refuses accepted unfinished Source, preserving Item and receipt until lawful recovery completes. The special airport resolver also denies expired policy even if a process exits before disabling its rows.
+
+Validation: actual isolated network-none/256MiB/1CPU PostgreSQL passed 24 policy negatives plus a continuous P6 full Source→Core chain, close/recovery/replay/reverse-hash rollback; a separate fresh-identity Sparse P2 chain passed, including expired resolver, closed finalization, forged receipt/lineage negatives and same-ID replay. Independent review: NO_BLOCKER; six generated function bodies reproduced exactly, Native P3 arm retained. This does not mean all six families individually ran on Hosted DEV.
+
+No installation, activation, new Provider call or Hosted mutation by this checkpoint. Native owns the current serial DEV recovery/deploy window. Actual installed Native function postimage must be independently checked before installation; local baseline metadata explicitly remains unobserved. New continuous multi-operation authority still requires one precise Owner Gate, not the earlier one-operation authorization.

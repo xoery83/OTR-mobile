@@ -96,6 +96,10 @@ export async function assertUniversalP1Capability(
   scope: Pick<Scope, "actorAccountId" | "tripId">,
   family: "P1" | "P2" | "P3" | "P4" | "P5" | "P6" = "P1",
 ) {
+  // A requested family narrows capability negotiation; owning SQL still authorizes it.
+  await lease.query("SELECT set_config('otr.universal.requested_family',$1,true)", [
+    family,
+  ]);
   const c = (
     await lease.query(
       "SELECT runtime_enabled,enabled_commands,enabled_families,enabled_admission_modes FROM public.trip_sustained_import_p1_capabilities($1::uuid,$2::uuid)",
@@ -103,6 +107,46 @@ export async function assertUniversalP1Capability(
     )
   ).rows[0];
   if (!isReviewedP1Gate(c, family)) throw Error("CORE_CAPABILITY_CLOSED");
+}
+// This grants no Create capability: only an existing exact accepted receipt may finish its Source journal.
+export async function hasAcceptedUniversalSourceReceipt(
+  lease: CorePgLease,
+  scope: CoreSourceScopeV2,
+  slot: import("./tripCoreV2Source").CoreSourceStoredSlotV2,
+) {
+  if (
+    !slot.receipt ||
+    !slot.domainReceiptId ||
+    !slot.intentSha256 ||
+    !["DOMAIN_SUCCEEDED", "EVIDENCE_PENDING", "COMPLETE"].includes(slot.state) ||
+    !["APPLIED", "NO_CHANGE"].includes(slot.receipt.outcome)
+  )
+    return false;
+  const row = (
+    await lease.query(
+      `SELECT EXISTS(SELECT 1 FROM public.trip_source_core_v2_slots s
+     JOIN public.trip_core_command_receipts r ON r.actor_account_id=s.account_id AND r.trip_id=s.trip_id AND r.operation_id=s.operation_id AND r.intent_sha256=s.intent_sha256
+     WHERE s.account_id=$1::uuid AND s.trip_id=$2::uuid AND s.source_id=$3::uuid
+     AND s.output_slot_id=$4::uuid AND s.operation_id=$5::uuid AND s.target_kind='ITEM' AND s.target_id=$6::uuid
+     AND s.intent_sha256=$7 AND r.id=$8::uuid AND r.receipt_sha256=$9 AND r.body=$10::jsonb
+     AND (s.domain_receipt_id IS NULL OR s.domain_receipt_id=r.id)
+     AND r.outcome IN ('APPLIED','NO_CHANGE') AND r.body->>'command'=s.command
+     AND EXISTS(SELECT 1 FROM jsonb_array_elements(r.body->'targetVector') v WHERE v->>'kind'='ITEM' AND v->>'id'=s.target_id::text AND (v->>'committedRevision')::bigint>0)) AS accepted`,
+      [
+        scope.actorAccountId,
+        scope.tripId,
+        scope.sourceId,
+        slot.proposed.slotId,
+        slot.proposed.operationId,
+        slot.proposed.target.id,
+        slot.intentSha256,
+        slot.domainReceiptId,
+        slot.receipt.receiptSha256,
+        json(slot.receipt),
+      ],
+    )
+  ).rows[0];
+  return row?.accepted === true;
 }
 export async function setUniversalP1WriteContext(
   lease: CorePgLease,
