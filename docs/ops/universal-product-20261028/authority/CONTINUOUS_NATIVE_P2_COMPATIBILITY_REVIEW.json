@@ -1,0 +1,56 @@
+{
+  "status": "LOCAL_PASS_NOT_AUTHORIZED_NOT_EXECUTED",
+  "onlyChangedWitness": {
+    "function": "trip_core_finite_read_state_guard()",
+    "beforeMd5": "20c7bc156f4d80aac889b7ed8f52ce0a",
+    "afterMd5": "ef17d1618d87006e8379164244a7645f",
+    "preBodySha256": "04fff5dedd1e74c8b511ea03e84be5c8221cec5a4f89ea82234e3d6a9a9718b8",
+    "postBodySha256": "abd71a273c13629460c1f9e89e0cee97fc315c1d5d773cb3bfd312363a501154"
+  },
+  "priorApprovedActivationSha256": "3078313e03d4aaef0e72d0ab2a7bdcb4ca90bbe3a3bc410558938d7a7d41ab59",
+  "candidateSha256": "fa8df1999e40e211ea5e9eb4627bb546345aba84e0a8877c4d7b9e2dc6527c61",
+  "unchangedCloseSha256": "ea7c0d33d0d244ec34e9c9b752e8ee68933fe2faf70b04d768e1e7a6440d0df6",
+  "nativePostimageFileSha256": "e4b218b794325beb7e325cda0fc60d1594f88e9052d5c9179bced91e3d9f791c",
+  "staticProof": "Removing only the two explicit new Manual P2 arms yields the entire previous read-state definition byte-for-byte, including Source qualification",
+  "nativeMetadata": "isolated identity only; not a new live OID/Owner/ACL certificate",
+  "scopeExpiryProviderCommandsClose": "BYTE_IDENTICAL",
+  "sqlExecutedOnDev": false,
+  "activationExecuted": false,
+  "isolatedPg": {
+    "status": "CONTINUOUS_P2_PG_PASS_NOT_DEV",
+    "network": "none",
+    "memory": "256m",
+    "checks": [
+      "existing Source Review early branch preserved",
+      "candidate installs dormant with no active gate",
+      "exact three-function reverse-hash rollback restores actual DEV preimages",
+      "P6 candidate preserves all three OIDs owners and ACLs",
+      "Native four-function approved P3 dependency postimage loaded for compatibility",
+      "failed postimage check rolls back all function replacements",
+      "closed installer verifies full preimages postimages owner ACL and unchanged OIDs; repeated install fails closed",
+      "P2 registry defaults disabled",
+      "exact separately approved Native P4 package applies over continuous default-closed postimage",
+      "original approved activation aborts on Native P4 hash drift",
+      "compatible activation changes only read-state CAS; scope expiry commands and close unchanged",
+      "accepted additive Native P5/P6 read-state retains OID Owner ACL",
+      "Native P2 dormant read-state preserves metadata; old activation rejects drift; single literal candidate retains Source scope",
+      "activation changes only read-state CAS; all scope limits and close remain unchanged",
+      "exact continuous activation is one CAS from closed, not a repeated rearm",
+      "close is idempotent, disables Save/airports, and preserves existing Source intake",
+      "close does not overwrite a different owning scope",
+      "Native fixed P3 read-state arm retained",
+      "fresh non-Batch9 P2 uses normal reviewed Source Plan Core receipt closed recovery and replay",
+      "reviewed Source P5 Save receipt closed recovery replay with accepted Native union",
+      "reviewed Source P6 Save receipt closed recovery replay with accepted Native union"
+    ],
+    "actualSourceChains": [
+      "P2 PASS",
+      "P5 PASS",
+      "P6 PASS"
+    ],
+    "logSha256": "f6dd70b3203e156273efbf64babbbdcea632190da3f06a11ff00247539190920",
+    "wrapperSha256": "8616c5998d134c4083203e8c357ff8240a8674b2b07104682b1081e8b526b4c3"
+  },
+  "independentReview": "PENDING",
+  "approval": "Must be included in the same precise Native P2 protected Owner Gate; no separate activation approval inferred"
+}
