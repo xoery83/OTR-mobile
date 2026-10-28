@@ -137,11 +137,11 @@ function ScopedDocuments(props: Props) {
         if (current() && request === sequence.current && retained.document.sha256)
           setOriginal({ captureId, sha256: retained.document.sha256, text });
       } else {
-        if (!props.previewOriginal) throw Error("DOCUMENT_PREVIEW_UNAVAILABLE");
-        await props.previewOriginal(
-          retained,
-          () => current() && request === sequence.current,
-        );
+        const preview =
+          props.previewOriginal ??
+          (await import("@/native/importOriginalPreview")).previewImportOriginal;
+        if (!current() || request !== sequence.current) return;
+        await preview(retained, () => current() && request === sequence.current);
       }
     } catch {
       if (current() && request === sequence.current) setError(true);

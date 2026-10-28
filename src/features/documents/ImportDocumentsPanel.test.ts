@@ -44,6 +44,11 @@ vi.mock("react", () => ({
       });
   },
 }));
+vi.mock("@/native/importOriginalPreview", () => ({
+  previewImportOriginal: vi.fn(async () => {
+    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
+  }),
+}));
 vi.mock("./ImportDocuments", () => ({
   ImportDocumentsList: vi.fn(),
   ImportDocumentDetail: vi.fn(),
@@ -161,7 +166,7 @@ it("does not decode a PDF as text or pretend a viewer exists", async () => {
   await settle();
   const detail = Harness(doc.captureId);
   expect(detail.props.original).toBeNull();
-  expect(detail.props.error).toBe(true);
+  await vi.waitFor(() => expect(Harness(doc.captureId).props.error).toBe(true));
 });
 
 it("clears busy state when an original finishes hidden, then retries on the same mounted view", async () => {
