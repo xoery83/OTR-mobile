@@ -15,6 +15,9 @@ export async function previewImportOriginal(
   isCurrent: () => boolean,
 ): Promise<void> {
   if (!isCurrent()) return;
+  // Keep the new Native adapter closed until its actual binary lifecycle is qualified.
+  if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED !== "true")
+    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
   const { bytes, document } = original;
   if (
     !bytes.length ||

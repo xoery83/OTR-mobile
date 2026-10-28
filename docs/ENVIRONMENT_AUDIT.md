@@ -96,3 +96,10 @@ Import simulator QA may explicitly set `EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING=true`
 to expose the existing bounded Progress paging controls in a minified bundle.
 Default is hidden outside DEV; this affects only scroll position and grants no
 Auth, Source, Admission, storage or business authority.
+
+Binary Documents preview stays unavailable by default. Only explicit
+`EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED=true` enables the Native adapter
+for qualified build/device testing; both UI and adapter enforce this default.
+This flag grants no Source/Upload/Admission/remote-read authority. Actual new
+Native PDF/image, hide and Account-close acceptance remains required before
+normal release activation; TEXT and UTF8 text-file reading is unchanged.

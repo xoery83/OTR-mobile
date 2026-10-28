@@ -159,3 +159,28 @@ it("preserves verified text and local/cloud distinction in both supported locale
     expect(html).toContain(t("importDocuments.custodyExplanation"));
   }
 });
+
+it("keeps binary original opening disabled without explicit qualified Native configuration", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", undefined);
+  try {
+    const f = fixture(),
+      onOpenOriginal = vi.fn();
+    renderToStaticMarkup(
+      createElement(ImportDocumentDetail, {
+        document: { ...f.doc, kind: "FILE", declaredContentType: "application/pdf" },
+        accountId: f.doc.accountId,
+        tripId: null,
+        opening: false,
+        error: false,
+        isCurrent: () => true,
+        onOpenOriginal,
+      }),
+    );
+    const open = ui.buttons.find((b) => b.label === t("importDocuments.openOriginal"))!;
+    expect(open.disabled).toBe(true);
+    open.onPress();
+    expect(onOpenOriginal).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
