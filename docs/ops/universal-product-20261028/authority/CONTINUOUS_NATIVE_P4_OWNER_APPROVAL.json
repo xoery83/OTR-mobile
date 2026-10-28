@@ -1,0 +1,11 @@
+{
+  "approvedCommit": "fdd2730d",
+  "approval": "OWNER_EXPLICIT_COMPATIBLE_PRECONDITION",
+  "answer": "\u6279\u51c6\u8be5\u7cbe\u786e\u517c\u5bb9\u524d\u63d0",
+  "activationSHA256": "624c7c933064c4be8dedebf472ba6479e4a505abf892c8c98ab938707e95ff9b",
+  "precondition": "f1378cb07c1f1882651a558dbe612909",
+  "scopeChanged": false,
+  "functionReinstall": false,
+  "closeSHA256": "ea7c0d33d0d244ec34e9c9b752e8ee68933fe2faf70b04d768e1e7a6440d0df6",
+  "activated": false
+}
