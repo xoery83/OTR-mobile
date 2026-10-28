@@ -69,7 +69,6 @@ export async function reviewUniversalP2Selection(
     candidates[0].subtype !== "FLIGHT" ||
     candidates[0].bookingTokens.length ||
     candidates[0].ticketTokens.length ||
-    result.unresolved.length ||
     result.advisoryStatus === "INVALID"
   )
     throw Error("OWNING_REVIEW_REQUIRED");
@@ -84,7 +83,33 @@ export async function reviewUniversalP2Selection(
       b.submittedSha256 === material.sha256 &&
       b.status === "READY",
   );
-  if (bindings.length !== 1) throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+  if (
+    bindings.length !== 1 ||
+    candidate.fields.some((f) => f.sourceId !== bindings[0].alias)
+  )
+    throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+  // Missing optional clocks/labels are not Flight qualification; other issues remain blocking.
+  if (
+    result.unresolved.some((issue) => {
+      if (issue.sourceId === bindings[0].alias)
+        return issue.reason !== "Flight date only; no times or place labels";
+      return !(
+        issue.reason ===
+          "Transport type TRAIN stated but no origin/destination place given" &&
+        result.sourceBindings.some(
+          (b) => b.alias === issue.sourceId && b.status === "READY",
+        ) &&
+        result.candidates.some(
+          (c) =>
+            c.kind === "P5" &&
+            c.subtype === "TRAIN" &&
+            c.fields.length > 0 &&
+            c.fields.every((f) => f.sourceId === issue.sourceId),
+        )
+      );
+    })
+  )
+    throw Error("OWNING_REVIEW_REQUIRED");
   const fields = (paths: string[], raw: string) => {
     const selected = candidate.fields.filter((f) => paths.includes(f.path));
     if (!selected.length || selected.some((f) => f.raw !== raw || f.uncertainty))

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import { assertUniversalP2Publication } from "./tripCoreV2SourcePgAuthority";
@@ -434,3 +434,74 @@ it.each(["changed-hash", "changed-plan-id"])(
     ).rejects.toThrow("INVALID_PROVENANCE");
   },
 );
+
+it("does not turn the actual sparse-flight missing-time observation into a mandatory field", async () => {
+  const f = await fixture();
+  f.result.unresolved.push({
+    sourceId: f.result.sourceBindings[0].alias,
+    reason: "Flight date only; no times or place labels",
+  });
+  const r = await reviewUniversalP2Selection(f, {
+    hash,
+    getAccountId: async () => f.result.accountId,
+  });
+  expect(r.flightNumberLiteral).toBe("NZ501");
+  expect(r.requiresOwningFlightProof).toBe(true);
+  expect(r.grantsAdmission).toBe(false);
+});
+
+function addTrainObservation(f: Awaited<ReturnType<typeof fixture>>) {
+  const b = f.result.sourceBindings[0];
+  f.result.sourceBindings.push({
+    ...b,
+    alias: "S1",
+    sourceId: randomUUID(),
+    inputId: randomUUID(),
+    representationId: randomUUID(),
+  });
+  f.result.candidates.push({
+    ...structuredClone(f.result.candidates[0]),
+    token: "train",
+    kind: "P5",
+    subtype: "TRAIN",
+    fields: [
+      { sourceId: "S1", path: "service", raw: "Coastal QA Train", start: 0, end: 16 },
+    ],
+  });
+  f.result.unresolved.push({
+    sourceId: "S1",
+    reason: "Transport type TRAIN stated but no origin/destination place given",
+  });
+}
+it("does not let a known optional observation on a separate Train source block Sparse Flight", async () => {
+  const f = await fixture();
+  addTrainObservation(f);
+  expect(
+    (
+      await reviewUniversalP2Selection(f, {
+        hash,
+        getAccountId: async () => f.result.accountId,
+      })
+    ).flightNumberLiteral,
+  ).toBe("NZ501");
+});
+it.each([
+  "own-cancellation",
+  "other-cancellation",
+  "unknown-source",
+  "wrong-family",
+  "mixed-fields",
+])("keeps %s blocking despite optional-field handling", async (kind) => {
+  const f = await fixture();
+  addTrainObservation(f);
+  if (kind === "own-cancellation")
+    f.result.unresolved.push({ sourceId: "S0", reason: "Cancellation target unknown" });
+  if (kind === "other-cancellation")
+    f.result.unresolved[0].reason = "Cancellation target unknown";
+  if (kind === "unknown-source") f.result.sourceBindings.pop();
+  if (kind === "wrong-family") f.result.candidates[1].subtype = "TAXI";
+  if (kind === "mixed-fields") f.result.candidates[0].fields[0].sourceId = "S1";
+  await expect(
+    reviewUniversalP2Selection(f, { hash, getAccountId: async () => f.result.accountId }),
+  ).rejects.toThrow();
+});
