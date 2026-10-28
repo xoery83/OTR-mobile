@@ -1,3 +1,4 @@
+import { flightDisplayOwningRow } from "./flightDisplayOwningRow";
 import { localDayDisplayOrder, mixedDayDisplayOrder } from "./localDayDisplayOrder";
 import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
@@ -625,7 +626,7 @@ function AcceptedDayFeed({
           : [];
       itemRows.push({
         position: entry.kind === "ITEM" ? entry.row.position : undefined,
-        owningRow: owningRows.length === 1 ? owningRows[0] : undefined,
+        owningRow: flightDisplayOwningRow(owningRows),
         key: entry.kind === "ITEM" ? entry.row.key : entry.block.key,
         date: section.date,
         value: () =>

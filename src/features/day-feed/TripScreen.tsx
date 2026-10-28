@@ -1844,6 +1844,11 @@ function TripContent({
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
                     insertionToday: appearanceToday,
+                    onOpenFlight: (itemId) =>
+                      router.push({
+                        pathname: "/p2-detail",
+                        params: { tripId: requested, itemId },
+                      }),
                     onOpenActivity: (itemId, occurrence, date) =>
                       router.push({
                         pathname: "/p6-detail",
