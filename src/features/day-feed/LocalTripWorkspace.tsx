@@ -246,10 +246,13 @@ function LocalTripContent({
   const load = useCallback(async () => {
     const captured = generation,
       ticket = ++request.current;
+    let readStage = "REPOSITORY";
     try {
       const repo = await readLocalTripRepository();
+      readStage = "SESSION";
       const local = tripId ? await repo.getTrip(tripId) : null;
       const qaAccountId = (await readLocalSession())?.identity?.userId ?? null;
+      readStage = "LOCAL_LIST";
       const list = tripId
         ? []
         : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];
@@ -328,7 +331,13 @@ function LocalTripContent({
           })();
         }
       }
-    } catch {
+    } catch (failure) {
+      // Only controlled codes: never log paths, SQL, session values or business payloads.
+      const code =
+        failure instanceof Error && /^[A-Z][A-Z0-9_]{2,95}$/.test(failure.message)
+          ? failure.message
+          : "UNCLASSIFIED_READ_FAILURE";
+      console.warn("OTR_TRIP_READ_FAILED", readStage, code);
       if (
         !alive.current ||
         captured !== getAccountGeneration() ||
