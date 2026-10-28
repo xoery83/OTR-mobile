@@ -7,7 +7,7 @@ import {
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import type { StructuredTripMetadataSnapshot } from "@/domain/trip/tripStructuredDestinationContract";
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readLocalSession, readLocalAuthSnapshot } from "@/data/auth/authRepository";
 import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
 import { CreateTripDestinations } from "./CreateTripDestinations";
 import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
@@ -165,8 +165,8 @@ function LocalTripContent({
   useEffect(() => {
     let active = true;
     void Promise.resolve()
-      .then(readLocalSession)
-      .then((session) => {
+      .then(readLocalAuthSnapshot)
+      .then(({ session }) => {
         const identity = session?.identity,
           value = identity?.displayName.trim();
         if (
@@ -247,9 +247,16 @@ function LocalTripContent({
     const captured = generation,
       ticket = ++request.current;
     try {
+      const { session } = await readLocalAuthSnapshot();
+      if (
+        !alive.current ||
+        captured !== getAccountGeneration() ||
+        ticket !== request.current
+      )
+        return;
       const repo = await readLocalTripRepository();
       const local = tripId ? await repo.getTrip(tripId) : null;
-      const qaAccountId = (await readLocalSession())?.identity?.userId ?? null;
+      const qaAccountId = session?.identity?.userId ?? null;
       const list = tripId
         ? []
         : [...filterNativeTripQaList(qaAccountId, await repo.listTrips())];

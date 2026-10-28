@@ -1,4 +1,4 @@
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readLocalSession, readLocalAuthSnapshot } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
   CreateTripDestinations: (props: any) => {
     state.nodes.push({ destinations: props });
@@ -233,6 +233,7 @@ vi.mock("@/data/auth/authRepository", () => ({
   writeLocalSession: vi.fn(),
   requireActiveUserId: vi.fn(),
   readLocalSession: vi.fn(),
+  readLocalAuthSnapshot: vi.fn(),
 }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: () => state.repo(),
@@ -366,6 +367,15 @@ function input(label: string, value: string) {
 beforeEach(() => {
   vi.unstubAllEnvs();
   vi.mocked(readLocalSession).mockReset();
+  vi.mocked(readLocalAuthSnapshot)
+    .mockReset()
+    .mockImplementation(
+      async () =>
+        ({
+          session: await readLocalSession(),
+          principal: { kind: "SIGNED_OUT" },
+        }) as never,
+    );
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   state.effects = [];
@@ -1620,4 +1630,22 @@ it("forwards the saved-item revision to Preparation without remounting the works
   expect(state.preparation.refreshKey).toBe(1);
   expect(state.refs).toBe(initial);
   delete (props as any).refreshKey;
+});
+
+it("waits for the account apply snapshot before opening the new account Trip repository", async () => {
+  let finish!: (value: any) => void;
+  vi.mocked(readLocalAuthSnapshot).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  render();
+  await flush();
+  expect(state.repo).not.toHaveBeenCalled();
+  finish({ session: null, principal: { kind: "SIGNED_OUT" } });
+  await flush();
+  expect(repo.listTrips).toHaveBeenCalledOnce();
+  expect(render()).not.toContain("localTrip.unavailable");
 });
