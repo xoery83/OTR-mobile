@@ -12,6 +12,7 @@ export async function readUniversalActivities(
   dependencies: {
     getAccountId(): Promise<string>;
     isCurrent(): boolean;
+    onObservation?(batchId: string, activity: UniversalTaskActivity): void;
     context(
       context: Awaited<ReturnType<typeof captureAccountRequestContext>>,
       batchId: string,
@@ -41,7 +42,10 @@ export async function readUniversalActivities(
         binding.batchId !== job.batch.batchId
       )
         continue;
-      if (binding.activity) observed[job.batch.batchId] = binding.activity;
+      if (binding.activity) {
+        observed[job.batch.batchId] = binding.activity;
+        dependencies.onObservation?.(job.batch.batchId, binding.activity);
+      }
     } catch {
       // Older/offline Hosts and unprepared Batches have no Task observation, never a fabricated failure.
     }
@@ -51,6 +55,7 @@ export async function readUniversalActivities(
 export async function readDefaultUniversalActivities(
   jobs: readonly CaptureJobReadModel[],
   isCurrent: () => boolean,
+  onObservation?: (batchId: string, activity: UniversalTaskActivity) => void,
 ) {
   const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
   if (!baseUrl || !isCurrent()) return {};
@@ -68,5 +73,6 @@ export async function readDefaultUniversalActivities(
     getAccountId: requireActiveUserId,
     isCurrent,
     context: transport.context,
+    onObservation,
   });
 }
