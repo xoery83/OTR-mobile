@@ -2,8 +2,8 @@ import { expect, it } from "vitest";
 import { universalP1SourceFixture } from "./__fixtures__/universalP1Source";
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 
-async function fixture() {
-  const f = await universalP1SourceFixture(undefined, undefined, "2026-11-03", "P6");
+async function fixture(dateRaw = "2026-11-03") {
+  const f = await universalP1SourceFixture(undefined, undefined, dateRaw, "P6");
   Object.assign(f.input, { owningLifecycleRelationships: undefined });
   Object.assign(f.input.selection, {
     sourceReview: {
@@ -73,4 +73,15 @@ it.each([
   if (kind === "booking") c.bookingTokens = ["b1"];
   if (kind === "ticket") c.ticketTokens = ["t1"];
   await expect(f.run()).rejects.toThrow();
+});
+
+it("qualifies the same minimum P6 with a full-month evidenced date and explicit owning Review", async () => {
+  const f = await fixture("November 3, 2026"),
+    r = await f.run();
+  expect(r.body.plan.slots[0].payload).toMatchObject({
+    family: "P6",
+    schedule: { start: { local_date: "2026-11-03", local_time: null, zone_id: null } },
+  });
+  expect(r.body.plan.slots[0].selectedFields).toEqual(["ROOT.title", "START.local_date"]);
+  expect(r.grantsAdmission).toBe(false);
 });

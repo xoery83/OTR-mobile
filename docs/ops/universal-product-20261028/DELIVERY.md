@@ -148,3 +148,20 @@ Two RED assertions→54 joined tests, types, both Backend builds and independent
 NO_BLOCKER PASS; lint has0 errors/4 pre-existing duplicate-import warnings.
 Current clean Task859445fb remains on original1072 Host; no live deployment or
 restart while it is running, and Save scope remains independently CLOSED.
+
+
+## Full English month evidence — exact protected delta pending approval
+
+The same clean Task859445fb is PUBLISHED/SUCCEEDED; normal Native Results expose
+name and November2 date. Existing shared Review parser accepts only ISO/Nov, so
+Form returnsnull.13 RED software checks→121 joined tests/types/UIguard PASS for
+explicit full English months, preserving strict calendar/year/no-timezone rules.
+Independent review identified the actual SQL guard has the same abbreviated-only
+evidence check. Actual current six-function+NativeP4 isolated PG reproduced INSERT
+P1_SOURCE_EVIDENCE_INVALID, then one scoped predicate repair passed Source Review,
+Plan, Admission, Core receipt, finalization/replay/closed recovery and protected
+rollback.21 checks, OID/Owner/ACL and Nativef137 unchanged. Candidate/Source/Task
+unchanged, no new model calls. Precise default-CLOSED install/compatible activation/
+rollback packet: authority/FULL_MONTH_SOURCE_EVIDENCE_GATE.md. NOT_INSTALLED;
+Owner approval required, ordinary code/DEV image authorization does not install
+this protected evidence function. Source Save remains independently CLOSED.

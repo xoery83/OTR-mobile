@@ -1,0 +1,74 @@
+{
+  "calls": [
+    {
+      "admitted_at": "2026-10-28T08:08:53.777099+00:00",
+      "attempt_id": "406fae5c-af5d-81b7-a320-fbcecd42846f",
+      "call_id": "2e1bedc3-281e-8877-8633-e06f4b337b12",
+      "dispatch_state": "TERMINAL",
+      "execution_certainty": "TERMINAL",
+      "request_id": "86c01232-1212-886b-bc88-58f67ff035f4",
+      "request_sha256": "5d4d3818e67a3837c20c7e578a8f005eb4a7abac404b0adea6052d1b05a9f823",
+      "task_id": "0d4a0592-8c0c-870f-8a87-c12804a89e18"
+    },
+    {
+      "admitted_at": "2026-10-28T08:40:41.902828+00:00",
+      "attempt_id": "185ff5f7-a395-8fb4-a034-147796864b32",
+      "call_id": "63f86aba-3a75-8c6a-906b-1faea8f0dca4",
+      "dispatch_state": "TERMINAL",
+      "execution_certainty": "TERMINAL",
+      "request_id": "3c108ba1-7dd0-810c-9596-f49e73fb18d3",
+      "request_sha256": "857094f53f1623f4a63c94d9819ab807e0049ae33638a8316e0b2ba8c54ee13f",
+      "task_id": "859445fb-12b7-8267-91c0-e0c09baf4bfb"
+    }
+  ],
+  "usage": [
+    {
+      "callId": "2e1bedc3-281e-8877-8633-e06f4b337b12",
+      "costNanos": null,
+      "costQuality": "UNKNOWN",
+      "currency": "USD",
+      "inputTokens": null,
+      "kind": "START",
+      "outcome": null,
+      "outputTokens": null,
+      "totalTokens": null,
+      "usageQuality": "UNKNOWN"
+    },
+    {
+      "callId": "2e1bedc3-281e-8877-8633-e06f4b337b12",
+      "costNanos": 231180,
+      "costQuality": "ESTIMATED",
+      "currency": "USD",
+      "inputTokens": 1509,
+      "kind": "COMPLETION",
+      "outcome": null,
+      "outputTokens": 129,
+      "totalTokens": 1638,
+      "usageQuality": "ACTUAL_REPORTED"
+    },
+    {
+      "callId": "63f86aba-3a75-8c6a-906b-1faea8f0dca4",
+      "costNanos": null,
+      "costQuality": "UNKNOWN",
+      "currency": "USD",
+      "inputTokens": null,
+      "kind": "START",
+      "outcome": null,
+      "outputTokens": null,
+      "totalTokens": null,
+      "usageQuality": "UNKNOWN"
+    },
+    {
+      "callId": "63f86aba-3a75-8c6a-906b-1faea8f0dca4",
+      "costNanos": 247080,
+      "costQuality": "ESTIMATED",
+      "currency": "USD",
+      "inputTokens": 1510,
+      "kind": "COMPLETION",
+      "outcome": null,
+      "outputTokens": 142,
+      "totalTokens": 1652,
+      "usageQuality": "ACTUAL_REPORTED"
+    }
+  ]
+}

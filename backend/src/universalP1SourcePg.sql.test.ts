@@ -42,7 +42,13 @@ it
       f = await universalP1SourceFixture(
         actor,
         trip,
-        family !== "P1" ? "2026-11-03" : reviewed ? "Nov 1, 2026" : "2026-11-03",
+        process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container && family === "P6"
+          ? "November 3, 2026"
+          : family !== "P1"
+            ? "2026-11-03"
+            : reviewed
+              ? "Nov 1, 2026"
+              : "2026-11-03",
         family,
       ),
       admin = session(container!);
@@ -277,7 +283,10 @@ it
               mode: "CONTINUOUS_MINIMUMS",
               version: 1,
               tripId: trip,
-              families: ["P1", "P3", "P4", "P5", "P6"],
+              families:
+                process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container
+                  ? ["P1", "P2", "P3", "P4", "P5", "P6"]
+                  : ["P1", "P3", "P4", "P5", "P6"],
               expiresAt: new Date(Date.now() + 900000).toISOString(),
             }),
           ],
@@ -776,13 +785,15 @@ it
         );
         const rollback = readFileSync(
             new URL(
-              process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
-                ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
-                : family === "P6"
-                  ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
-                  : family === "P5"
-                    ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                    : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container
+                ? "../../docs/ops/universal-product-20261028/authority/FULL_MONTH_REVIEW_ROLLBACK_CANDIDATE.sql"
+                : process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+                  ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
+                  : family === "P6"
+                    ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                    : family === "P5"
+                      ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                      : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",
@@ -915,13 +926,15 @@ it
         await admin.lease.query(
           readFileSync(
             new URL(
-              process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
-                ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
-                : family === "P6"
-                  ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
-                  : family === "P5"
-                    ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                    : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container
+                ? "../../docs/ops/universal-product-20261028/authority/FULL_MONTH_REVIEW_ROLLBACK_CANDIDATE.sql"
+                : process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+                  ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
+                  : family === "P6"
+                    ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                    : family === "P5"
+                      ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                      : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",

@@ -37,14 +37,14 @@ export const universalItemSourceReviewSchema = z.discriminatedUnion("version", [
 ]);
 export type UniversalItemSourceReview = z.infer<typeof universalItemSourceReviewSchema>;
 
-// shortcut: ISO or English abbreviated month only; add formats only with source fixtures.
+// Explicit ISO or English month/day/year only; never guess a year, locale or timezone.
 export function sourceReviewCivilDate(raw: string): string {
   const match =
-    /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([1-9]|[12]\d|3[01]), (\d{4})$/.exec(
+    /^(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?) ([1-9]|[12]\d|3[01]), (\d{4})$/.exec(
       raw,
     );
   const date = match
-    ? `${match[3]}-${String(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(match[1]) + 1).padStart(2, "0")}-${match[2].padStart(2, "0")}`
+    ? `${match[3]}-${String(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(match[1].slice(0, 3)) + 1).padStart(2, "0")}-${match[2].padStart(2, "0")}`
     : raw;
   validateCalendarDate(date);
   return date;
