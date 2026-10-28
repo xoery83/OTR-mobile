@@ -31,3 +31,5 @@ Common build: existing DEV API `https://api-dev.xoery.art`, normal Auth to proje
 Manual P2–P6 Cloud E2E; Enrichment real DEV E2E; sustained Import authority; qualified multi-leg Journey/Booking/Ticket; unsupported P5 subtypes; P6 advanced ports; Contact/Instructions/Documents/Media/Expense linking; complete gesture/visual matrices; Auth/Invite/Updates/Flexible/TTR/NOW. These do not block lawful code integration and are not PASS.
 
 No backend deployment, protected database privilege or new business permission is required or performed for the integration. No Push is authorized/implied by a local main merge.
+
+Forms QA smoke repair: verified pending P6 Create/Edit previously made local P2 identity coverage fail closed. Extended the existing Manual-only coverage whitelist to P6 schedule/place/activity commands, retaining all queue/hash/account/admission checks. SQLite regression covers P6 Create + same-ID Edit alongside P2 save/recovery: 3 suites35 checks PASS; typecheck PASS. No Cloud/Source capability was expanded.

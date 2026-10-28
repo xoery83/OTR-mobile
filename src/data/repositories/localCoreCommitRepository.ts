@@ -205,7 +205,8 @@ export function createLocalCoreCommitRepository(
         ...(family === "P3" ? ["SET_STAY_DETAILS"] : []),
         ...(family === "P4" ? ["SET_RENTAL_DETAILS"] : []),
         ...(family === "P5" ? ["SET_TRANSPORT_DETAILS"] : []),
-        ...(["P1", "P3", "P4"].includes(String(family))
+        ...(family === "P6" ? ["SET_ACTIVITY_DETAILS"] : []),
+        ...(["P1", "P3", "P4", "P6"].includes(String(family))
           ? ["SET_ITEM_SCHEDULE", "SET_ITEM_PLACE"]
           : []),
       ];
@@ -214,7 +215,7 @@ export function createLocalCoreCommitRepository(
         q.admission.mode !== "MANUAL" ||
         q.target.kind !== "ITEM" ||
         (!item && !creation) ||
-        !["P1", "P3", "P4", "P5"].includes(String(family)) ||
+        !["P1", "P3", "P4", "P5", "P6"].includes(String(family)) ||
         !allowed.includes(q.command) ||
         (q.command === "CREATE_ITEM" &&
           (q.payload as { family: string }).family !== family) ||

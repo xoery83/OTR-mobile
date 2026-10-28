@@ -8,6 +8,7 @@ import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
 import { createManualStayRepository } from "./manualStayRepository";
 import { createManualRentalRepository } from "./manualRentalRepository";
+import { createManualActivityRepository } from "./manualActivityRepository";
 import { createManualTransportRepository } from "./manualTransportRepository";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
@@ -349,6 +350,48 @@ it("fills the real 68+70 registry gap transactionally, preserving photos and fou
   expect(
     (await createCoreP6DayFeedReader(cold.core)(d.tripId))?.projection.items[0].itemId,
   ).toBe(d.itemId);
+});
+it("saves a Flight beside verified pending P6 activity commands without changing the activity", async () => {
+  const f = fixture(),
+    d = await draft(f);
+  const activity = createManualActivityRepository(
+    f.db,
+    f.account,
+    f.core,
+    () => localTestStamp,
+  );
+  const a = await activity.createDraft(d.tripId);
+  await activity.save(a, {
+    ...a.fields,
+    title: "Museum",
+    startDate: fields.departureDate,
+    startTime: "09:00",
+    endDate: fields.departureDate,
+    endTime: "11:00",
+    location: "Museum entrance",
+  });
+  const edit = await activity.read(d.tripId, a.itemId);
+  await activity.save(edit, {
+    ...edit.fields,
+    title: "Museum edited",
+    activityDetails: { ...edit.fields.activityDetails, sessionLabel: "Morning" },
+  });
+  const before = f.sql
+    .prepare(
+      "SELECT canonical_intent_text FROM trip_core_pending_intents ORDER BY operation_id",
+    )
+    .all();
+  expect(before.length).toBeGreaterThan(0);
+  const result = await f.repo.save(d, fields, () => true);
+  expect(result.status).toBe("LOCAL_COMMITTED");
+  expect(
+    f.sql
+      .prepare(
+        "SELECT canonical_intent_text FROM trip_core_pending_intents ORDER BY operation_id",
+      )
+      .all(),
+  ).toEqual(before);
+  expect(await f.repo.recover(d)).toEqual(result);
 });
 it("does not infer non-Flight coverage from an unpinned SET or corrupted Manual creation", async () => {
   for (const corruption of ["queue", "set-only"] as const) {
