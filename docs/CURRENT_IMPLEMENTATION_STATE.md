@@ -221,6 +221,10 @@ Core transaction composition was separately fixed as focusedab33fc9f on Native's
 frozen parent, independently6 suites122 PASS + isolated real PG rollback; handed
 back to unique Core Writer for review/integration. Do not merge that whole branch.
 No SQL/Host/publisher or Native consumer activation; Adoption still NOT_READY.
+Auth-only store/read/revoke sourceb8c2987d was serially fast-forwarded from mainb7e;
+actual primary8 suites111 PASS. Six original dirty files and full tracked/cached
+diff hashes are unchanged. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is the
+pre-final-push snapshot; independently verify actual remote refs after normal push.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
