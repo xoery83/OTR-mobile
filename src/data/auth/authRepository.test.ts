@@ -46,6 +46,131 @@ function jwt(payload: Record<string, unknown>) {
 }
 
 describe("auth repository", () => {
+  const readonlyStorage = (storage: SecureSessionStorage): SecureSessionStorage => ({
+    ...storage,
+    setItem: async () => {
+      throw new Error("READ_MUST_NOT_WRITE");
+    },
+    deleteItem: async () => {
+      throw new Error("READ_MUST_NOT_DELETE");
+    },
+  });
+  it("observes an unchosen principal without selecting Guest or blocking formal sign-in", async () => {
+    const storage = createMemoryStorage();
+    await expect(
+      createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+    ).resolves.toBeNull();
+    await createAuthRepository(storage).writeLocalSession(session(accountA));
+    await expect(
+      createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+    ).resolves.toEqual({ kind: "ACCOUNT", accountId: accountA.userId });
+  });
+  it("restores a previously chosen Guest without promoting it to an Account or adopting data", async () => {
+    const storage = createMemoryStorage();
+    const writer = createAuthRepository(storage, () => "guest-local-id");
+    const chosen = await writer.readLocalAuthSnapshot();
+    expect(chosen.principal).toEqual({ kind: "GUEST", localId: "guest-local-id" });
+    const before = await storage.getItem("otr.mobile.launch.v1");
+    const reader = createAuthRepository(readonlyStorage(storage));
+    await expect(reader.readCommittedLocalPrincipal()).resolves.toEqual(chosen.principal);
+    await expect(reader.readAdoptedLocalSession()).resolves.toBeNull();
+    await expect(writer.writeLocalSession(session(accountB))).rejects.toThrow(
+      "GUEST_ADOPTION_PREFLIGHT_REQUIRED",
+    );
+    expect(await storage.getItem("otr.mobile.launch.v1")).toBe(before);
+    expect(await storage.getItem("otr.mobile.accounts.v2")).toBeNull();
+  });
+  it("does not turn explicit logout into a fresh Guest", async () => {
+    const storage = createMemoryStorage();
+    const writer = createAuthRepository(storage);
+    await writer.writeLocalSession(session(accountA));
+    await writer.clearLocalSession();
+    await expect(
+      createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+    ).resolves.toEqual({ kind: "SIGNED_OUT" });
+  });
+  it.each([null, JSON.stringify({ version: 1, kind: "GUEST", localId: "guest" })])(
+    "cannot hide a broken Account index behind an unchosen or Guest state",
+    async (marker) => {
+      const storage = createMemoryStorage();
+      await storage.setItem("otr.mobile.accounts.v2", "broken");
+      if (marker) await storage.setItem("otr.mobile.launch.v1", marker);
+      await expect(
+        createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+      ).rejects.toThrow("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
+      expect(await storage.getItem("otr.mobile.accounts.v2")).toBe("broken");
+      expect(await storage.getItem("otr.mobile.launch.v1")).toBe(marker);
+    },
+  );
+  it.each([
+    {},
+    { activeUserId: null, accounts: [null] },
+    { activeUserId: accountA.userId, accounts: [] },
+    { activeUserId: null, accounts: [accountA, accountA] },
+  ])(
+    "rejects malformed or contradictory index routing fields without changing them",
+    async (value) => {
+      const storage = createMemoryStorage();
+      const raw = JSON.stringify(value);
+      await storage.setItem("otr.mobile.accounts.v2", raw);
+      await expect(
+        createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+      ).rejects.toThrow("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
+      expect(await storage.getItem("otr.mobile.accounts.v2")).toBe(raw);
+    },
+  );
+  it("keeps prior Account evidence distinct from an unchosen or Guest workspace", async () => {
+    const storage = createMemoryStorage();
+    await storage.setItem(
+      "otr.mobile.accounts.v2",
+      JSON.stringify({ activeUserId: null, accounts: [accountA] }),
+    );
+    const reader = createAuthRepository(readonlyStorage(storage));
+    await expect(reader.readCommittedLocalPrincipal()).resolves.toEqual({
+      kind: "SIGNED_OUT",
+    });
+    await storage.setItem(
+      "otr.mobile.launch.v1",
+      JSON.stringify({ version: 1, kind: "GUEST", localId: accountA.userId }),
+    );
+    await expect(reader.readCommittedLocalPrincipal()).rejects.toThrow(
+      "LOCAL_PRINCIPAL_RECOVERY_REQUIRED",
+    );
+  });
+  it("keeps cached Account access independent from a corrupt Guest marker", async () => {
+    const storage = createMemoryStorage();
+    await createAuthRepository(storage).writeLocalSession(session(accountA));
+    await storage.setItem("otr.mobile.launch.v1", "broken");
+    await expect(
+      createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+    ).resolves.toEqual({ kind: "ACCOUNT", accountId: accountA.userId });
+    expect(await storage.getItem("otr.mobile.launch.v1")).toBe("broken");
+  });
+  it.each([
+    "broken",
+    JSON.stringify({ version: 1, kind: "ACCOUNT", accountId: accountB.userId }),
+  ])(
+    "rejects an unreadable or Account-shaped Guest marker without overwriting it",
+    async (raw) => {
+      const storage = createMemoryStorage();
+      await storage.setItem("otr.mobile.launch.v1", raw);
+      await expect(
+        createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+      ).rejects.toThrow("LOCAL_PRINCIPAL_RECOVERY_REQUIRED");
+      expect(await storage.getItem("otr.mobile.launch.v1")).toBe(raw);
+      expect(await storage.getItem("otr.mobile.accounts.v2")).toBeNull();
+    },
+  );
+  it("leaves legacy credential adoption to startup before observing any principal", async () => {
+    const storage = createMemoryStorage();
+    const raw = JSON.stringify(session(accountA));
+    await storage.setItem("otr.mobile.session.v1", raw);
+    await expect(
+      createAuthRepository(readonlyStorage(storage)).readCommittedLocalPrincipal(),
+    ).rejects.toThrow("SESSION_NOT_ADOPTED");
+    expect(await storage.getItem("otr.mobile.session.v1")).toBe(raw);
+    expect(await storage.getItem("otr.mobile.launch.v1")).toBeNull();
+  });
   it("account-only observation does not create a Guest or block fresh formal login", async () => {
     const storage = createMemoryStorage();
     const repository = createAuthRepository(storage);
@@ -131,6 +256,9 @@ describe("auth repository", () => {
       "SESSION_IDENTITY_MISMATCH",
     );
     await expect(repository.readAdoptedLocalSession()).rejects.toThrow(
+      "SESSION_IDENTITY_MISMATCH",
+    );
+    await expect(repository.readCommittedLocalPrincipal()).rejects.toThrow(
       "SESSION_IDENTITY_MISMATCH",
     );
     await expect(repository.selectAccount(accountA.userId)).rejects.toThrow(

@@ -4,6 +4,7 @@ import { createUuid } from "@/domain/localId";
 
 export type { AccountIdentity, LocalSession } from "@/domain/auth/localSession";
 export { createAuthRepository, type SecureSessionStorage } from "./authSessionRepository";
+export type { LaunchIdentity, GuestPrincipal } from "./guestPrincipalRepository";
 
 // Metro must bundle this dependency; defer evaluation for the headless host.
 const secureStore = () =>
@@ -21,6 +22,10 @@ const authRepository = createAuthRepository(secureStoreAdapter, createUuid);
 // UI account readers must not choose Guest identity or adopt legacy credentials.
 export function readCommittedLocalSession() {
   return withAccountApplyGate(authRepository.readAdoptedLocalSession);
+}
+
+export function readCommittedLocalPrincipal() {
+  return withAccountApplyGate(authRepository.readCommittedLocalPrincipal);
 }
 
 export function readLocalAuthSnapshot() {
