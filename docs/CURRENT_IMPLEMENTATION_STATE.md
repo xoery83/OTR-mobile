@@ -145,6 +145,11 @@ Native/Adoption/Cloud E2E. Source-only activation; no login/upload consumer.
 Import confirms no accepted Guest file inventory port exists; Account Documents/
 Capture ports must not be borrowed. Next: lawful full source snapshot/owning file
 collector, durable transfer recovery and atomic server publication candidate.
+B preparation source0281a32d/54c62894 retained latest accepted Import0e6 and
+was serially FF-integrated to actual main e18e5b63. Joined7 suites132/types and
+actual primary-main5 suites103 Smoke PASS; original six dirty files/full diff
+unchanged. No Host/SQL/Native deployment. Historical pre-push snapshot is
+GUEST_B_PREPARATION_INTEGRATION.json; verify current remote refs after final push.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
