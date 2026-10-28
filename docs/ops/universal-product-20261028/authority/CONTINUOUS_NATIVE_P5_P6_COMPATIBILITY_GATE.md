@@ -1,6 +1,6 @@
 # Continuous Import — accepted Native P5/P6 CAS compatibility
 
-Status: LOCAL_PASS / INDEPENDENT_NO_BLOCKER; OWNER_COMPATIBILITY_CONFIRMATION_REQUIRED; NOT ACTIVATED.
+Status: OWNER_APPROVED / EXECUTED / INDEPENDENTLY_CLOSED. Direct Owner reply approved exact fe8baf10 CAS; three normal multi-Source Items were accepted and recovered. Same-scope retests retain the original standing execution authorization.
 
 Original approved CONTINUOUS_AUTHORITY_GATE.md requires “Any drift aborts; this packet is not a rebase permission.” Native separately obtained approval for its additive Manual P5/P6 installation. This request accepts that installation's exact shared read-state postimage, without installing/replacing any function or changing Import Authority.
 
@@ -14,3 +14,5 @@ Original approved CONTINUOUS_AUTHORITY_GATE.md requires “Any drift aborts; thi
 Focused validation uses `scripts/import-workbench/universal-continuous-native-p5-p6-sql-acceptance.py`: fixed Native package SHA/postimages, existing network-none/256MiB PG, old activation refusal, one-hash compatible activation/repeat refusal, idempotent close/foreign-scope denial, and P2/P5/P6 Source→Core/receipt/closed recovery/replay. A P5 statement-negative test helper now sets the same requested-family context used by normal Source runtime; no business code is changed by that helper correction. Independent compatibility diff Review: NO_BLOCKER; exact Owner CAS confirmation still required. Completed: 20 control checks plus three actual P2/P5/P6 Source SQL chain tests PASS. Scoped lint/format and diff checks PASS. No Hosted operation was performed by this test.
 
 Actual handoff is complete: Native image `sha256:6c5c9a6f380f538392832abda7eb4afe434f9fa689dbf6f150c134ed903c755f`, source `e126eabfc1d538f7db722f6f2dca75088a8a595c`, includes Source fix612361f2 and combined profile081198f0, excludes BOM. Independent Hosted readback confirms exactly the expected20c7 witness, unchanged other five definitions and all six OID/Owner/ACL; Savefalse/scopeNULL/two airportsfalse. Metadata and receipt hashes: CONTINUOUS_NATIVE_P5_P6_COMPATIBILITY_REVIEW.json. Fresh checks remain mandatory at actual activation.
+
+Executed outcome: P4/P5TRAIN/P6 each APPLIED, Source COMPLETE, independent readback and native cold Day recovery PASS. P2/P3 unresolved operations remain without Candidate/Slot, unchanged IDs and retained originals. Scope was independently closed before further repair: Savefalse/scopeNULL/airports0, no function or role rollback. Evidence: ../MULTI_SOURCE_THREE_ITEMS_NATIVE_E2E.json.

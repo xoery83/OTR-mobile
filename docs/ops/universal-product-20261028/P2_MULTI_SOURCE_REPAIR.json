@@ -1,0 +1,30 @@
+{
+  "status": "LOCAL_PASS_IMAGE_BUILDING_NOT_DEPLOYED",
+  "sourceCommit": "0d579007fa845ec1ea4312fa336546f6488d0481",
+  "hostPortCommit": "e973ffe0b2eb4cf67a6abd09980c44bf25dca0a9",
+  "hostWorktree": "/Users/xoery/.codex/worktrees/universal-product-p2-host/otr-mobile-canonical",
+  "base": "e126eabfc1d538f7db722f6f2dca75088a8a595c",
+  "firstRed": "Same Run with a second valid Source fails at materials() CONTRACT_UNSUPPORTED; follow-on legacy blanket fence and sibling misclassified as PDF derivative were separately reproduced.",
+  "repair": "Only current Source material/seals are selected. Full Run hash/all pins/current Actor/Trip and independent owning Flight reconstruction are retained. Legacy non-Universal strict behavior unchanged.",
+  "validation": {
+    "ownedPostgres": "PASS full double-Source Save / closed recovery / replay",
+    "negatives": [
+      "stale sibling INPUT_STALE",
+      "missing own pin INPUT_STALE",
+      "foreign representation composite FK rejection"
+    ],
+    "ownerBranchUnitContracts": 86,
+    "hostBranchIncludingNativeCombinedProfile": 94,
+    "types": "PASS",
+    "lint": "PASS",
+    "bundles": "PASS",
+    "independentReview": "NO_BLOCKER; no new Authority or SQL rights"
+  },
+  "diagnostics": "Only fourteen fixed categories or FAILED; no request values/IDs/originals/Token; logger failure preserves response.",
+  "unrelatedChangesExcluded": [
+    "BOM repair",
+    "UI observation deduplication",
+    "Native pending consumers"
+  ],
+  "remaining": "Await Native mutation-safe service replacement window; same Batch3bd/Taska180 P2/P3 DEV retry, no model call or new IDs."
+}
