@@ -95,7 +95,10 @@ repositories/migrations; Guest startup pauses the existing global worker before
 opening the Guest vault. Account widgets/photos/currency/Account bookmarks remain
 unassembled in A; actual local Day/P1 works.14 suites279 regression +repair20,
 types/UIguard, independent218 +repair20 PASS; lint0errors, old import warnings.
-GUI and bounded consumer Writer returned to Native. Serial A main merge pending.
+GUI and bounded consumer Writer returned to Native. A code/evidencef62e5bf7
+was serially fast-forwarded into main froma82ab46b; post-merge5 suites28 PASS and
+all six primary dirty files remain byte-identical. Normal remote refs must be
+freshly verified; integration snapshot is GUEST_A_MAIN_INTEGRATION.json.
 Next B: complete real owning-repository/full live draft/file inventory, then lawful
 server-authoritative full-dataset preflight/staging/publish/status/UNKNOWN and
 normal Account login/adoption. Boundary census GUEST_DATA_BOUNDARIES.json records

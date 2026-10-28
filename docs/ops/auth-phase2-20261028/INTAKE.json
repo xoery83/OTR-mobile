@@ -65,7 +65,7 @@
   "protectedOperations": "Prepare/test exact candidates first; new Hosted RLS/GRANT/roles or sensitive authority execution still requires the existing precise gate",
   "commercialPolicy": "No prices, quota numbers, reset cycles or paid interception invented",
   "currentRuntimeChanges": {
-    "bootstrapWiring": "GUESTQA_NATIVE_A_ACCEPTED_MAIN_PENDING",
+    "bootstrapWiring": "GUESTQA_NATIVE_A_ACCEPTED_SERIAL_MAIN_FF_CODE_F62E5BF7",
     "businessDataConversion": false,
     "guestCloudUpload": false,
     "schemaRlsGrant": false
@@ -94,7 +94,7 @@
       "independentReview": "NO_BLOCKER_8_DISK_TESTS_INDEPENDENTLY_PASS"
     },
     "native": "PASS: fresh unauthenticated normal UI Trip create/edit + P1/Day + same-version terminate/relaunch, independent SQLite + original root logical hash preservation",
-    "remaining": "Serial A main integration, then B full real inventory + server-authoritative preflight/publication/UNKNOWN and formal login; no Guest conversion yet",
+    "remaining": "B full real inventory + server-authoritative preflight/publication/UNKNOWN and formal login; no Guest conversion yet. A source/evidence serial main merged and smoke PASS; remote verification follows normal push.",
     "consumerValidation": {
       "directedSuites": 14,
       "directedTests": 279,
