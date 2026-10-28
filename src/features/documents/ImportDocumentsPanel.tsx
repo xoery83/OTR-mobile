@@ -153,28 +153,42 @@ function ScopedDocuments(props: Props) {
       }
     } catch (error) {
       if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true") {
-        const code =
-          typeof error === "object" && error !== null && "code" in error
-            ? error.code
-            : error instanceof Error
-              ? error.message
-              : null;
-        console.info(
-          JSON.stringify({
-            event: "import_original_preview_failure",
-            phase,
-            code:
-              typeof code === "string" && /^[A-Z][A-Z0-9_]{0,79}$/.test(code)
-                ? code
-                : "UNCLASSIFIED",
-            kind:
-              error instanceof TypeError
-                ? "TYPE"
-                : error instanceof Error
-                  ? "ERROR"
-                  : "UNKNOWN",
-          }),
-        );
+        try {
+          const code =
+            typeof error === "object" && error !== null && "code" in error
+              ? error.code
+              : error instanceof Error
+                ? error.message
+                : null;
+          console.info(
+            JSON.stringify({
+              event: "import_original_preview_failure",
+              phase,
+              code:
+                typeof code === "string" &&
+                [
+                  "IMPORT_ORIGINAL_INTEGRITY",
+                  "IMPORT_PREVIEW_UNAVAILABLE",
+                  "IMPORT_PREVIEW_UNSUPPORTED",
+                  "DOCUMENTS_ORIGINAL_CHANGED",
+                  "DOCUMENTS_NOT_FOUND",
+                  "DOCUMENTS_SCOPE_MISMATCH",
+                  "DOCUMENTS_TRIP_ACCESS",
+                  "DOCUMENTS_STALE",
+                ].includes(code)
+                  ? code
+                  : "UNCLASSIFIED",
+              kind:
+                error instanceof TypeError
+                  ? "TYPE"
+                  : error instanceof Error
+                    ? "ERROR"
+                    : "UNKNOWN",
+            }),
+          );
+        } catch {
+          // Diagnostics must not suppress original-unavailable recovery.
+        }
       }
       if (current() && request === sequence.current) setError(true);
     } finally {

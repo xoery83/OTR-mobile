@@ -27,13 +27,17 @@ export async function previewImportOriginal(
   )
     throw Error("IMPORT_ORIGINAL_INTEGRITY");
   const native = requireNativeModule<Preview>("ReceiptOcr");
-  console.info(
-    JSON.stringify({
-      event: "import_original_preview_bridge",
-      previewMethod: typeof native.previewImportOriginal === "function",
-      closeMethod: typeof native.closeImportOriginal === "function",
-    }),
-  );
+  try {
+    console.info(
+      JSON.stringify({
+        event: "import_original_preview_bridge",
+        previewMethod: typeof native.previewImportOriginal === "function",
+        closeMethod: typeof native.closeImportOriginal === "function",
+      }),
+    );
+  } catch {
+    // Diagnostics must not change preview behavior.
+  }
   if (
     typeof native.previewImportOriginal !== "function" ||
     typeof native.closeImportOriginal !== "function"

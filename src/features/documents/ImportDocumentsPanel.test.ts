@@ -341,3 +341,57 @@ it("QA preview diagnostics identify the failing port without original or error d
     vi.unstubAllEnvs();
   }
 });
+
+it("failed QA diagnostics never suppress original-unavailable recovery", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+  const info = vi.spyOn(console, "info").mockImplementation(() => {
+    throw Error("LOG_SINK_FAILED");
+  });
+  try {
+    h.original.mockRejectedValue(Error("DOCUMENTS_ORIGINAL_CHANGED"));
+    Harness(doc.captureId);
+    await settle();
+    (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(doc.captureId);
+    await settle();
+    expect(Harness(doc.captureId).props.error).toBe(true);
+    expect(Harness(doc.captureId).props.opening).toBe(false);
+  } finally {
+    info.mockRestore();
+    vi.unstubAllEnvs();
+  }
+});
+
+it.each([
+  new Error("PASSPORTAB12345"),
+  Object.assign(new Error("unclassified"), { code: "PRIVATE_ORIGINAL_NAME" }),
+])(
+  "QA diagnostics never log arbitrary uppercase messages or custom codes",
+  async (error) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      h.original.mockRejectedValue(error);
+      Harness(doc.captureId);
+      await settle();
+      (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(
+        doc.captureId,
+      );
+      await settle();
+      expect(info).toHaveBeenCalledWith(
+        JSON.stringify({
+          event: "import_original_preview_failure",
+          phase: "REPOSITORY_READ",
+          code: "UNCLASSIFIED",
+          kind: "ERROR",
+        }),
+      );
+      expect(Harness(doc.captureId).props.error).toBe(true);
+      expect(info.mock.calls.flat().join()).not.toMatch(
+        /PASSPORTAB12345|PRIVATE_ORIGINAL_NAME/,
+      );
+    } finally {
+      info.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  },
+);

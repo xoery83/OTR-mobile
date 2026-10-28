@@ -81,3 +81,22 @@ it("keeps unverified native binary preview closed by default", async () => {
   );
   expect(bridge.previewImportOriginal).not.toHaveBeenCalled();
 });
+
+it("a failed QA logger neither blocks the native preview nor replaces a missing bridge error", async () => {
+  const info = vi.spyOn(console, "info").mockImplementation(() => {
+    throw Error("LOG_SINK_FAILED");
+  });
+  const preview = bridge.previewImportOriginal;
+  try {
+    preview.mockResolvedValueOnce(undefined);
+    await expect(previewImportOriginal(original, () => true)).resolves.toBeUndefined();
+    expect(preview).toHaveBeenCalledOnce();
+    Reflect.set(bridge, "previewImportOriginal", undefined);
+    await expect(previewImportOriginal(original, () => true)).rejects.toThrow(
+      "IMPORT_PREVIEW_UNAVAILABLE",
+    );
+  } finally {
+    Reflect.set(bridge, "previewImportOriginal", preview);
+    info.mockRestore();
+  }
+});
