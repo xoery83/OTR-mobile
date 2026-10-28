@@ -66,3 +66,9 @@ No installation, activation, new Provider call or Hosted mutation by this checkp
 Authority packet091fb547 is explicitly Owner-approved and recorded at ae1f1128; it remains NOT_INSTALLED/NOT_ACTIVATED pending Native DEV release, exact live function/configuration CAS and closure preflight. Auth main cfae2b18 is merged into the Import branch at d747070e; 108 directed tests, TypeScript/UIguard and independent dual-parent review pass. Both dictionaries and account boundaries are retained.
 
 Documents original preview candidate uses existing iOS QuickLook with verified hash/length bytes, bounded private disposable copies, account-generation/page invalidation close and background close. It preserves Ledger's original preview paths. Old binaries report capability unavailable. Ten JS controller/bridge tests and Swift syntax parse pass; full iOS compile, real close-before-registration/presentation race checks and native PDF/image viewing remain pending. No device install or Native E2E PASS is claimed.
+
+## Continuous authority installed CLOSED
+
+Native explicitly released DEV. Actual container6ab4/image248ddc05, full Env SHA345601e9, HostConfig SHAe89fe490 and six mounts matched the handoff. All six actual function preimages matched the approved packet; fixed SQL installed atomically and independent GET verified six full postimages plus unchanged OID/Owner/ACL and unchanged CLOSED policy. Fixed receipt: authority/CONTINUOUS_AUTHORITY_INSTALL_RECEIPT.json. No activation, new Task or Provider call.
+
+Activity inventory now projects existing Backend context Task states through sequential GETs over the current page. It never fetches Results or dispatches/creates tasks. Missing/offline/old-Host observations remain absent, with no invented failure/completion. Account/Trip/Batch/generation/request-epoch guards retained. Ten reader/UI lifecycle tests, types/UIguard/scoped lint and independent NO_BLOCKER pass. Native device acceptance remains pending.
