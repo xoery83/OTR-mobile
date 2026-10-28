@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createAuthRepository, type SecureSessionStorage } from "./authSessionRepository";
+import { withAccountApplyGate } from "./accountRequestContext";
 import { advanceAccountGeneration } from "./accountGeneration";
 
 const guest = "10000000-0000-4000-8000-000000000001";
@@ -283,5 +284,152 @@ describe("Guest verification in the existing secure Account slot", () => {
       status: "SESSION",
       session: session(),
     });
+  });
+  it("revokes only the bound login outside the gate before deleting credentials", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    let calls = 0;
+    await f.repo.guestVerification.revoke(binding, async (value) => {
+      calls++;
+      expect(value).toEqual(session());
+      expect(f.entries.has(slot)).toBe(true);
+      await withAccountApplyGate(async () => undefined);
+    });
+    expect(calls).toBe(1);
+    expect(f.entries.has(slot)).toBe(false);
+    expect(await f.repo.guestVerification.read(binding)).toEqual({ status: "REVOKED" });
+    expect(await f.repo.readCommittedLocalPrincipal()).toEqual({
+      kind: "GUEST",
+      localId: guest,
+    });
+    await expect(f.repo.guestVerification.store(binding, session())).rejects.toThrow(
+      "GUEST_VERIFICATION_REVOKED",
+    );
+  });
+  it("keeps failed/UNKNOWN revocation pending and blocks refresh until acknowledged", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    await expect(
+      f.repo.guestVerification.revoke(binding, async () => {
+        throw Error("SECRET_NETWORK_ERROR");
+      }),
+    ).rejects.toThrow("GUEST_VERIFICATION_REVOCATION_PENDING");
+    expect(f.entries.has(slot)).toBe(true);
+    expect(await f.repo.guestVerification.read(binding)).toEqual({
+      status: "REVOCATION_PENDING",
+    });
+    await expect(
+      f.repo.guestVerification.store(
+        binding,
+        session(account, "next"),
+        "synthetic-refresh",
+      ),
+    ).rejects.toThrow("GUEST_VERIFICATION_REVOCATION_PENDING");
+    await createAuthRepository(f.storage).guestVerification.revoke(
+      binding,
+      async () => undefined,
+    );
+    expect(f.entries.has(slot)).toBe(false);
+  });
+  it("does not repeat server revocation after a durable acknowledgment and failed deletion", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    const original = f.storage.deleteItem;
+    f.storage.deleteItem = async () => {
+      throw Error("SECRET_DELETE_ERROR");
+    };
+    let calls = 0;
+    await expect(
+      f.repo.guestVerification.revoke(binding, async () => {
+        calls++;
+      }),
+    ).rejects.toThrow("GUEST_VERIFICATION_STORAGE_UNAVAILABLE");
+    expect(JSON.parse(f.entries.get(metadata)!).phase).toBe("REVOKED");
+    f.storage.deleteItem = original;
+    await createAuthRepository(f.storage).guestVerification.revoke(binding, async () => {
+      calls++;
+    });
+    expect(calls).toBe(1);
+    expect(f.entries.has(slot)).toBe(false);
+  });
+  it("refuses to delete a different same-Account Session that appeared during revocation", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    await expect(
+      f.repo.guestVerification.revoke(binding, async () => {
+        f.entries.set(slot, JSON.stringify(session(account, "unrelated")));
+      }),
+    ).rejects.toThrow("GUEST_VERIFICATION_CREDENTIAL_MISMATCH");
+    expect(JSON.parse(f.entries.get(slot)!).refreshToken).toBe("unrelated");
+  });
+  it("rejects stale post-network cleanup and retains recovery metadata", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    await expect(
+      f.repo.guestVerification.revoke(binding, async () => {
+        advanceAccountGeneration();
+      }),
+    ).rejects.toThrow("GUEST_VERIFICATION_STALE");
+    expect(JSON.parse(f.entries.get(metadata)!).phase).toBe("REVOKING");
+    expect(f.entries.has(slot)).toBe(true);
+  });
+  it("permits a new adoption attempt only after acknowledged cleanup", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    await f.repo.guestVerification.revoke(binding, async () => undefined);
+    const next = { ...binding, adoptionId: "30000000-0000-4000-8000-000000000002" };
+    await f.repo.guestVerification.store(next, session(account, "new-login"));
+    await expect(
+      f.repo.guestVerification.revoke(binding, async () => undefined),
+    ).rejects.toThrow("GUEST_VERIFICATION_BINDING_MISMATCH");
+    expect(await f.repo.guestVerification.read(next)).toEqual({
+      status: "SESSION",
+      session: session(account, "new-login"),
+    });
+  });
+  it("does not overwrite remaining acknowledged credentials with a new attempt", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    f.storage.deleteItem = async () => {
+      throw Error("DELETE_FAILED");
+    };
+    await expect(
+      f.repo.guestVerification.revoke(binding, async () => undefined),
+    ).rejects.toThrow("GUEST_VERIFICATION_STORAGE_UNAVAILABLE");
+    await expect(
+      f.repo.guestVerification.store(
+        { ...binding, adoptionId: "30000000-0000-4000-8000-000000000002" },
+        session(account, "next"),
+      ),
+    ).rejects.toThrow("GUEST_VERIFICATION_REVOCATION_PENDING");
+  });
+  it("coalesces in-flight revocation across repository instances using the same secure storage", async () => {
+    const f = await fixture();
+    await f.repo.guestVerification.store(binding, session());
+    let release!: () => void,
+      entered!: () => void,
+      calls = 0;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const ready = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const first = f.repo.guestVerification.revoke(binding, async () => {
+      calls++;
+      entered();
+      await waiting;
+    });
+    await ready;
+    const second = createAuthRepository(f.storage).guestVerification.revoke(
+      binding,
+      async () => {
+        calls++;
+      },
+    );
+    release();
+    await Promise.all([first, second]);
+    expect(calls).toBe(1);
+    expect(f.entries.has(slot)).toBe(false);
   });
 });

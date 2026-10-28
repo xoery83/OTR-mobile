@@ -15,7 +15,7 @@ const bindingSchema = z.strictObject({
 export type GuestVerificationBinding = z.infer<typeof bindingSchema>;
 const recordSchema = bindingSchema.extend({
   version: z.literal(1),
-  phase: z.enum(["PERSISTING", "READY"]),
+  phase: z.enum(["PERSISTING", "READY", "REVOKING", "REVOKED"]),
   credentialSha256: z.string().regex(/^[0-9a-f]{64}$/),
   previousCredentialSha256: z
     .string()
@@ -33,6 +33,8 @@ const sessionSchema = z.strictObject({
   }),
 });
 const metadataKey = (guestId: string) => `otr.mobile.guest-verification.v1.${guestId}`;
+
+const revocations = new WeakMap<SecureSessionStorage, Map<string, Promise<void>>>();
 
 // Credentials use the existing per-Account secure slot; this never installs a launch Account.
 export function createGuestVerificationSession(deps: {
@@ -55,13 +57,17 @@ export function createGuestVerificationSession(deps: {
       throw Error("GUEST_VERIFICATION_IDENTITY_MISMATCH");
     return session;
   }
-  function parseRecord(raw: string, binding: GuestVerificationBinding) {
+  function decodeRecord(raw: string) {
     let record: z.infer<typeof recordSchema>;
     try {
       record = recordSchema.parse(JSON.parse(raw));
     } catch {
       throw Error("GUEST_VERIFICATION_METADATA_INVALID");
     }
+    return record;
+  }
+  function parseRecord(raw: string, binding: GuestVerificationBinding) {
+    const record = decodeRecord(raw);
     if (
       record.sourceGuestLocalId !== binding.sourceGuestLocalId ||
       record.adoptionId !== binding.adoptionId ||
@@ -120,6 +126,8 @@ export function createGuestVerificationSession(deps: {
         "GUEST_VERIFICATION_SLOT_OCCUPIED",
         "GUEST_VERIFICATION_REFRESH_CAS",
         "GUEST_VERIFICATION_SESSION_MISSING",
+        "GUEST_VERIFICATION_REVOCATION_PENDING",
+        "GUEST_VERIFICATION_REVOKED",
       ]);
       if (error instanceof Error && safe.has(error.message)) throw Error(error.message);
       throw Error("GUEST_VERIFICATION_STORAGE_UNAVAILABLE");
@@ -140,11 +148,28 @@ export function createGuestVerificationSession(deps: {
         const key = metadataKey(binding.sourceGuestLocalId);
         const raw = await deps.storage.getItem(key);
         await check();
-        const priorRecord = raw !== null ? parseRecord(raw, binding) : null;
+        let priorRecord = raw !== null ? decodeRecord(raw) : null;
+        if (
+          priorRecord?.phase === "REVOKED" &&
+          priorRecord.sourceGuestLocalId === binding.sourceGuestLocalId &&
+          priorRecord.adoptionId !== binding.adoptionId
+        ) {
+          const oldSlot = await deps.storage.getItem(
+            deps.accountSessionKey(priorRecord.targetAccountId),
+          );
+          await check();
+          if (oldSlot !== null) throw Error("GUEST_VERIFICATION_REVOCATION_PENDING");
+          priorRecord = null;
+        } else if (raw !== null) {
+          parseRecord(raw, binding);
+          if (priorRecord?.phase === "REVOKING")
+            throw Error("GUEST_VERIFICATION_REVOCATION_PENDING");
+          if (priorRecord?.phase === "REVOKED") throw Error("GUEST_VERIFICATION_REVOKED");
+        }
         const slot = deps.accountSessionKey(binding.targetAccountId);
         const existing = await deps.storage.getItem(slot);
         await check();
-        if (raw === null && existing !== null)
+        if (priorRecord === null && existing !== null)
           throw Error("GUEST_VERIFICATION_SLOT_OCCUPIED");
         let previousCredentialSha256: string | null = null;
         if (existing !== null) {
@@ -196,7 +221,7 @@ export function createGuestVerificationSession(deps: {
     async read(
       input: GuestVerificationBinding,
     ): Promise<
-      | { status: "ABSENT" | "PENDING_WRITE" }
+      | { status: "ABSENT" | "PENDING_WRITE" | "REVOCATION_PENDING" | "REVOKED" }
       | { status: "SESSION"; session: LocalSession }
     > {
       return pinned(input, async (binding, check) => {
@@ -204,6 +229,8 @@ export function createGuestVerificationSession(deps: {
         await check();
         if (raw === null) return { status: "ABSENT" };
         const record = parseRecord(raw, binding);
+        if (record.phase === "REVOKING") return { status: "REVOCATION_PENDING" };
+        if (record.phase === "REVOKED") return { status: "REVOKED" };
         const credential = await deps.storage.getItem(
           deps.accountSessionKey(binding.targetAccountId),
         );
@@ -223,6 +250,110 @@ export function createGuestVerificationSession(deps: {
         await check();
         return { status: "SESSION", session };
       });
+    },
+    async revoke(
+      input: GuestVerificationBinding,
+      revokeSession: (session: LocalSession) => Promise<void>,
+    ) {
+      const binding = Object.freeze(bindingSchema.parse(input));
+      const key = canonicalCoreJson(binding as Json);
+      let inflight = revocations.get(deps.storage);
+      if (!inflight) {
+        inflight = new Map();
+        revocations.set(deps.storage, inflight);
+      }
+      const existing = inflight.get(key);
+      if (existing) return existing;
+      const run = async () => {
+        const generation = getAccountGeneration();
+        const sameGeneration = () => {
+          if (generation !== getAccountGeneration())
+            throw Error("GUEST_VERIFICATION_STALE");
+        };
+        const staged = await pinned(binding, async (binding, check) => {
+          sameGeneration();
+          const key = metadataKey(binding.sourceGuestLocalId);
+          const raw = await deps.storage.getItem(key);
+          await check();
+          if (raw === null) return null;
+          const record = parseRecord(raw, binding);
+          const slot = deps.accountSessionKey(binding.targetAccountId);
+          const credential = await deps.storage.getItem(slot);
+          await check();
+          if (credential === null) {
+            if (record.phase === "REVOKED") return null;
+            throw Error("GUEST_VERIFICATION_SESSION_MISSING");
+          }
+          let session: ReturnType<typeof validateSession>;
+          try {
+            session = validateSession(JSON.parse(credential), binding.targetAccountId);
+          } catch {
+            throw Error("GUEST_VERIFICATION_SESSION_INVALID");
+          }
+          const sha = await assertCredential(record, session);
+          await check();
+          if (record.phase === "REVOKED") {
+            await deps.storage.deleteItem(slot);
+            return null;
+          }
+          const revoking = {
+            ...record,
+            phase: "REVOKING" as const,
+            credentialSha256: sha,
+            previousCredentialSha256: null,
+          };
+          await deps.storage.setItem(key, JSON.stringify(revoking));
+          return { binding, record: revoking, session };
+        });
+        if (!staged) return;
+        sameGeneration();
+        // Network stays outside the apply gate; only this exact login is revoked.
+        try {
+          await revokeSession(staged.session);
+        } catch {
+          throw Error("GUEST_VERIFICATION_REVOCATION_PENDING");
+        }
+        await pinned(staged.binding, async (binding, check) => {
+          sameGeneration();
+          const key = metadataKey(binding.sourceGuestLocalId);
+          const raw = await deps.storage.getItem(key);
+          await check();
+          if (raw === null) throw Error("GUEST_VERIFICATION_BINDING_MISMATCH");
+          const record = parseRecord(raw, binding);
+          if (
+            record.credentialSha256 !== staged.record.credentialSha256 ||
+            !["REVOKING", "REVOKED"].includes(record.phase)
+          )
+            throw Error("GUEST_VERIFICATION_CREDENTIAL_MISMATCH");
+          const slot = deps.accountSessionKey(binding.targetAccountId);
+          const credential = await deps.storage.getItem(slot);
+          await check();
+          if (credential !== null) {
+            let session: ReturnType<typeof validateSession>;
+            try {
+              session = validateSession(JSON.parse(credential), binding.targetAccountId);
+            } catch {
+              throw Error("GUEST_VERIFICATION_SESSION_INVALID");
+            }
+            await assertCredential(record, session);
+            await check();
+          }
+          // Persist the server acknowledgment before deletion, so cold cleanup never re-revokes.
+          await deps.storage.setItem(
+            key,
+            JSON.stringify({ ...record, phase: "REVOKED" }),
+          );
+          await check();
+          await deps.storage.deleteItem(slot);
+        });
+      };
+      const pending = run();
+      inflight.set(key, pending);
+      try {
+        await pending;
+      } finally {
+        if (inflight.get(key) === pending) inflight.delete(key);
+      }
     },
   };
 }

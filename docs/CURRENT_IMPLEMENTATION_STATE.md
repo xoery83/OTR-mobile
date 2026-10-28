@@ -213,8 +213,10 @@ index/legacy/launch installation; Guest login/switch guards remain. Gate/generat
 previous-refresh-token CAS, exact pending retry and fixed error codes fail closed.
 8 suites103 tests, types/scopedlint and independent8 suites103 PASS after credential
 pin/error propagation findings were repaired. These are memory-adapter source tests,
-not real Keychain/cold Provider recovery; Provider/refresh/revoke/cancel/activation
-callers remain unwired. Complete those and publication-status recovery before use.
+not real Keychain/cold Provider recovery; Provider/refresh/business-cancel/activation callers remain unwired. Internal
+trusted-adapter revoke now coalesces duplicate requests, retains UNKNOWN, persists
+ACK before exact-slot deletion and resumes cleanup without re-revoking. 8 suites111
+directed and independently111 PASS; no real Provider/Keychain revoke evidence. Complete those and publication-status recovery before use.
 Core transaction composition was separately fixed as focusedab33fc9f on Native's
 frozen parent, independently6 suites122 PASS + isolated real PG rollback; handed
 back to unique Core Writer for review/integration. Do not merge that whole branch.

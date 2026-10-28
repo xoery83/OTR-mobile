@@ -1,0 +1,24 @@
+{
+  "status": "REVIEW_PASS_DEFAULT_UNWIRED",
+  "directed": "8 suites111 tests PASS; typecheck/scopedlint/diff PASS",
+  "independent": "8 suites111 tests PASS; no remaining blocker",
+  "semantics": [
+    "normal trusted current-session revocation outside apply gate",
+    "same-storage cross-repository in-flight coalescing",
+    "UNKNOWN retains REVOKING; blocks credential refresh",
+    "server acknowledgment persisted before exact bound credential deletion",
+    "REVOKED cold cleanup does not dispatch Provider again",
+    "stale generation/binding/fingerprint cannot clean a different Session",
+    "new attempt only after acknowledged cleanup"
+  ],
+  "unchanged": [
+    "Account activation/index/launch",
+    "business cancellation and publication status",
+    "DEV roles, Schema, RLS, GRANT, Host deployment"
+  ],
+  "unverified": [
+    "real Provider revocation adapter",
+    "actual Keychain or Native cold recovery",
+    "real cancellation or Adoption E2E"
+  ]
+}
