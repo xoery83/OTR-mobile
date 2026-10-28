@@ -1,0 +1,36 @@
+{
+  "status": "LOCAL_MERGE_VERIFIED_NOT_DEPLOYED",
+  "nativeParent": "3b158e32",
+  "incomingMain": "d2dc5205c005a8b1462323f467478ad7c2aac15d",
+  "sourceOperationCommitsRetained": [
+    "7129bbbe",
+    "0821fb52"
+  ],
+  "manualCandidatesRetained": [
+    "6c60d5c8",
+    "e4f6327e",
+    "a25ef176",
+    "23a2dcfe",
+    "a8c3f06f",
+    "3b158e32"
+  ],
+  "parentChecks": {
+    "suites": 14,
+    "tests": 245,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "backendBuild": "PASS"
+  },
+  "independentReview": {
+    "status": "NO_BLOCKER",
+    "suites": 7,
+    "tests": 115,
+    "scope": "Manual candidate files equal Native parent; exact-operation Runtime/PgRead/HTTP/Worker/Transport and Auth equal incoming main"
+  },
+  "mainChanged": false,
+  "remoteChanged": false,
+  "devChanged": false,
+  "deviceUpdated": false,
+  "p5P6Authority": "CLOSED_NOT_APPROVED",
+  "sqliteSchema": 74
+}

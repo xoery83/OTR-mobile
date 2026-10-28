@@ -1,0 +1,44 @@
+{
+  "status": "NATIVE_E2E_PASS_READ_ONLY_SAVED_UPDATES",
+  "sourceCommit": "2bbe7395",
+  "nativeBuild": 61,
+  "artifact": {
+    "build": 61,
+    "sourceCommit": "2bbe7395",
+    "nativeBaseBuild": 49,
+    "nativeSectionsUnchanged": true,
+    "javascriptSHA256": "9e0285369e8dcce9dbcd6316e10d4da1bb7f60ca4b16b067c5f9285a6cc2a4d7",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "batchId": "adc06db4-c06e-432a-b866-d4165f4c06f5",
+  "taskId": "859445fb-12b7-8267-91c0-e0c09baf4bfb",
+  "itemId": "9c8fe13e-0675-8795-acd7-c96561dccbd3",
+  "operationId": "6590fee8-5310-8995-b5ab-72310aa3e2c4",
+  "preflight": {
+    "saveEnabled": false,
+    "scope": null,
+    "airportsEnabled": [
+      false,
+      false
+    ]
+  },
+  "observed": {
+    "coldLaunchMyTrips": true,
+    "updatesSavedItemCount": 1,
+    "displayedCommitTimeLocal": "2026-10-29T00:37:24+13:00",
+    "sameBatchActivityOpened": true,
+    "sameRetainedResultsRecovered": true,
+    "title": "Harbour QA Gallery Tour",
+    "rawDate": "November 2, 2026",
+    "unconfirmedBatchRemainsInterpretationFinished": true,
+    "saveClicked": false,
+    "analyzeClicked": false,
+    "providerCallsAdded": 0
+  },
+  "limits": [
+    "Read-only projection and reopen; not a new Save or new family acceptance.",
+    "Initial completed Source metadata read is asynchronous and can be slow on cold DEV.",
+    "No unread, push or independent Review notification authority."
+  ]
+}

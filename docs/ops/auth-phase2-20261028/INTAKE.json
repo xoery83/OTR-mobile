@@ -1,0 +1,81 @@
+{
+  "status": "FOCUSED_INTAKE_AND_READ_ONLY_PRINCIPAL_FOUNDATION_NOT_ADOPTION_ACCEPTANCE",
+  "approvedContract": "docs/auth/design-v1-20261018/01_AUTH.md:12",
+  "reused": [
+    "Supabase sole formal Auth and existing secure Session repository",
+    "Persisted Guest marker and Guest installation preflight guard",
+    "Account generation/apply gate and existing queue/receipt/CAS recovery",
+    "Existing local repositories and Trip Person/Creator identities"
+  ],
+  "focusedFindings": [
+    {
+      "capability": "Observe committed local principal without choosing identity",
+      "status": "IMPLEMENTED_HEADLESS_REVIEWED_NOT_CONSUMER_WIRED",
+      "port": "readCommittedLocalPrincipal/v1",
+      "result": "Persisted Guest, committed Account, prior SIGNED_OUT, or null genuinely unchosen",
+      "safety": "Strict existing-index validation; no writes, legacy adoption, Session installation or authority promotion"
+    },
+    {
+      "capability": "Guest local business access",
+      "status": "GAP",
+      "current": "bootstrapApplication reads formal Session; readLocalTripRepository requiresActiveUserId",
+      "constraint": "Guest local scope must remain distinguishable from Account; do not fabricate a Session or reuse Account authority"
+    },
+    {
+      "capability": "Whole-dataset inventory and safe conversion",
+      "status": "GAP",
+      "current": "Guest marker exists; adoptLegacyAccountState is legacy Account repair, not Guest adoption",
+      "requiredFamilies": [
+        "Trips",
+        "Items",
+        "Ledger",
+        "Documents",
+        "Capture",
+        "Reviews",
+        "Receipts",
+        "Files",
+        "Queues",
+        "Profile",
+        "Drafts",
+        "Pending intents"
+      ],
+      "constraint": "Never classify unscoped legacy or another Account data as Guest"
+    },
+    {
+      "capability": "Server-authoritative full preflight and atomic publication",
+      "status": "NO_REGISTERED_GUEST_ADOPTION_PORT_IN_CURRENT_AUTH_API",
+      "required": [
+        "Explicit existing-target confirmation",
+        "Complete inventory binding",
+        "Private staging",
+        "Whole-dataset publish receipt",
+        "Authoritative UNKNOWN status readback",
+        "Idempotent retry and cold recovery"
+      ],
+      "constraint": "No upload or ownership conversion until authorized; retain originals until verified; no partial visible migration or same-name Trip merge"
+    }
+  ],
+  "nextSlice": "Define the minimum typed local Guest repository scope and complete inventory with owning repositories, then coordinate Native startup and consumer wiring; never route Guest through formal Account authority",
+  "singleWriters": {
+    "authPortsAndRepository": "Auth lane",
+    "startupNavigationAndManualConsumers": "Native lane",
+    "captureSourceDocumentsConsumers": "Universal Import lane",
+    "sharedCoreBootstrapAndMigrationRegistry": "Coordinate unique writer before edits"
+  },
+  "protectedOperations": "Prepare/test exact candidates first; new Hosted RLS/GRANT/roles or sensitive authority execution still requires the existing precise gate",
+  "commercialPolicy": "No prices, quota numbers, reset cycles or paid interception invented",
+  "currentRuntimeChanges": {
+    "bootstrapWiring": false,
+    "businessDataConversion": false,
+    "guestCloudUpload": false,
+    "schemaRlsGrant": false
+  },
+  "validation": {
+    "directedSuites": 19,
+    "directedTests": 205,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "THREE_SUITES_38_TESTS_AND_PUBLIC_PORT_MEMORY_GATE_CHECKS_PASS"
+  }
+}

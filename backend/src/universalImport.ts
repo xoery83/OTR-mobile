@@ -664,11 +664,19 @@ export async function universalBoundary(
         binding.batchId !== batchId ||
         !uuid.safeParse(binding.taskId).success
       )
-        return Response.json({ error: { code: "TASK_NOT_FOUND" } }, { status: 404 });
+        return Response.json(
+          { error: { code: "TASK_NOT_FOUND" } },
+          { status: 404, headers: { "Cache-Control": "no-store" } },
+        );
       return Response.json(binding, {
         headers: { "Cache-Control": "no-store" },
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.message === "UNIVERSAL_BATCH_NOT_PREPARED")
+        return Response.json(
+          { error: { code: "TASK_NOT_FOUND" } },
+          { status: 404, headers: { "Cache-Control": "no-store" } },
+        );
       return Response.json(
         { error: { code: "UNIVERSAL_CONTEXT_UNAVAILABLE" } },
         { status: 503 },

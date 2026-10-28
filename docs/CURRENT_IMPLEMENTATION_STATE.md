@@ -1,41 +1,84 @@
-# Active Universal Import product completion — 2026-10-28
+# Active Universal Import product completion — 2026-10-29
 
-Owner resumed product delivery from unified main1c7e7fc8 / Build40 / SQLite74, in independent `universal-product-20261028` worktree. Previous six minimum formal saves remain accepted; they are not continuous-user acceptance. Native owns shared normal Core policy/Reader/Sync and Manual Cloud work; Import holds no DEV/main/GUI lease.
+Owner resumed Beta delivery in stable `universal-product-20261028`. Six historical minimal P1–P6 Golden Slices remain accepted; they do not certify continuous-user Beta. Import owns Source/Task/Admission/Documents/Activity; Native owns shared Core/Reader/Sync/Navigation; Auth owns identity. Serial Import integration retains current Auth main ad8873ee; code head2f06a107 is now fast-forwarded to local main. Pre-merge128 directed tests/types/backend build/UIguard, binary default-close25 tests/types/lint/UIguard and independent NO_BLOCKER; post-merge five-suite36-test Smoke PASS. Original primary six dirty entries/files are byte-identical and disjoint. Native unmerged Manual P5/phone evidence candidates remain on their own branch. Integration receipt MAIN_PRODUCT_INTEGRATION.json; final push and refs verified separately after this record commit. Recheck latest refs and serial leases for any later update.
 
-Local checkpoints: a0d660d1 exposes persisted Task lifecycle through existing context GET; 75de43cc adds private local Documents metadata/detail components and registered Source links; 3c39f2a3 fixes continuous six-function candidate and accepted-only closed recovery with isolated PG and independent NO_BLOCKER. Approved six-function packet091fb547 is now INSTALLED_DEFAULT_CLOSED with independent full postimage/OID/Owner/ACL verification after Native DEV handoff; Save remains false/scopeNULL. Current healthy Native image248ddc05/configuration is preserved. Existing roles/ACL/Schema stay unchanged; new persistent multi-operation Authority requires one exact Owner Gate. Results receipt-only cold recovery and pending Task GET polling are LOCAL_PASS, not Native PASS. The Import-owned Documents list/detail controller, private text original and Batch link are LOCAL_PASS; PDF/image QuickLook candidatee23ea332 and Activity list context-GET projection are LOCAL_PASS; whole Expo compile, device viewing, shared route integration, Import Updates and complete lifecycle remain pending. Continuous Authority packet 091fb547 is explicitly Owner-approved (record ae1f1128); installation is independently verified; activation awaits a compatible normal Backend/QA preflight. No Hosted activation has occurred. Delivery plan/status: `ops/universal-product-20261028/DELIVERY.md`. New-path SERVER_VERIFIED and NATIVE_E2E_PASS are not claimed. No new permissions, budget, Schema/RLS/GRANT or production use.
+- Actual DEV source0821fb52, image865854878bc4b2fbf659acdf63ee229ab5d2d745760af5c9725ac42937266a02/container37505d7b; unchanged Env SHAab5dc0e7, full six mounts and HostConfig; health/auth negative and independent bundle readback PASS. Previous healthy image01debabe/container8addef25 retained. Exact receipt: authority/OPERATION_RUNTIME_DEPLOY_RECEIPT.json.
+- Owner-approved continuous091fb547, Native read-state compatibilityfdd2730d and full-month evidence repair8731e1e3 are installed. Six function OIDs/Owner/ACL retained, Native read-statef1378cb0 and guard115bc244. Current Source Save independently CLOSED: flagfalse/scopeNULL/two airportsfalse. Use exact FULL_MONTH_POLICY_ACTIVATE_CANDIDATE.sql / CONTINUOUS_POLICY_CLOSE_CANDIDATE.sql for already approved same QA scope; old activation/rollback must not overwrite Native. Continuous types P1/P3/P4/P6 minima, P5TRAIN, SparseP2 AKL/CHC2026-11-02 only, expiry2026-11-01T08:48:56Z. New protected authority/profile/Schema/RLS/GRANT differences still require precise approval; independent coding continues meanwhile.
+- First normal product P1 NATIVE_E2E_PASS: retained Batchadc06db4/Task859445fb/i1, actual model familyP1/ACTIVITY, original57bytes; normal original/Trip/NEW/name/date Review→Plan→Admission→Core created Item9c8fe13e, operation6590fee8, APPLIED receipta3a1aac6 and SourceSlot COMPLETE. Independent readback exact title Harbour QA Gallery Tour/date2026-11-02/PRIVATE/SELF, unknown clocks/zones preserved. Normal repeated confirmation left one Item/Receipt. Under CLOSED, AD5 Day2 displays same Item without pending; cold launch restores My Trips→same Trip→Day2 and identical local Item SHA9f0260d8. Receipt CONTINUOUS_PRODUCT_P1_SERVER_VERIFIED.json; fixed evidencee55b8b94.
+- Actual Source capability context repairs7129bbbe/0821fb52 are deployed: only Reviewed Source supplies exact existing operationId through HTTP/runtime/PgReader to original SQL family binding. Manual old calls unchanged. Two RED→89 directed tests/types/lint/build, network-none256MiB real PG and independent/Native interface review PASS. Rejected Cartesian capability aggregate was never shipped; preserved patch in authority directory. No new SQL rights from these software changes.
+- Completed Source recovery1513f44e: existing receipt+SourcePlan GET qualifies exact Actor/Trip/SourceRev/Plan/Candidate/Slot/operation/Item, same domainReceipt/intent/revision and COMPLETE. Unavailable metadata retains accepted Item/recovery. Actual UI59 cold read under CLOSED PASS: retained original readable; after original/Trip and NEW selection, final confirm remains disabled. Receipt CONTINUOUS_PRODUCT_P1_COMPLETION_UI.json. 72 directed/types/lint/UIguard and independent NO_BLOCKER. No new storage/API/rights/shared files.
+- Documents private Local Durable inventory/detail and exact completed Source→Item association are implemented; actual text original/one legal saved link and Results recovery PASS. No all-Batch→all-Item linking or cloud-backup claim. Existing Task-based Activity, pending-only GET polling and bounded QA paging work through normal Auth; original bytes are not read by context GET. Eight product recovery suites70PASS cover text/multi UTF8 files, pin identity, recovery, Documents isolation and Activity/Updates, not binary ingestion.
+- Updates saved-event slice: explicit read-only READY Result→existing completed Source receipts, unique Item count, same Batch event identity and actual committedAt. Partial Save says saved count/open Results, never all-completed/unread/Review authority. 66 affected tests plus4 UI foundation tests/types/UIguard/lint and independent NO_BLOCKER. Fixed2bbe7395/UI61 actual CLOSED-scope cold My Trips→Updates saved1 at committedAt→same Batch Activity→same retained Results PASS; no Analyze/Save/new Provider call. Receipt CONTINUOUS_PRODUCT_UPDATES_NATIVE.json. Cold completion metadata remains asynchronous. Original Task-only projection still used for unconfirmed candidate. Auth Writer returned for saved key; short second lease corrects only stale updates.coverage EN/ZH.
+- Current DEV Source and Provider budget unchanged. Last new model calls were the two normal product inputs: total3290tokens/estimated$0.00047826 (not invoice); old UNKNOWN hold retained. Save/UI59/Updates have no new Provider calls. Malformed IME-tail Batchbb571a30 remains unconfirmed, not reset or silently repaired.
+- Next: existing Source PDF/image ingress and lifecycle gaps; UI61 Updates cold/reopen is accepted. Current normal ingress accepts TEXT/UTF8 FILE only. Native PDFKit/Vision extractor, Source PDF seal/upload/custody ports already exist; wire them narrowly. Do not relabel binary as text or infer confirmed Place/Person/Booking. Binary QuickLook is explicitly default-closed pending actual new Native binary PDF/image/hide/account-close acceptance (EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED; UI and adapter both reject by default). Two RED→25 directed Documents/native tests/types/UIguard/lint and independent NO_BLOCKER. PDF/photo/mixed binary and full Beta remain NOT_READY; protected function/profile deltas get one precise candidate while UI/recovery coding continues.
+- Native phone56 P3 and P4 Edit/cold receipts are independent lane results, not Import PASS; normalCore returned after P4 evidence6c60d5c8. Native is sole Writer for its local Manual P5 tripNormalP1Policy / tripCoreV2PgStorage candidate; Import does not edit those files. AD5 Import / Phone+FormsQA Native, GUI short coordination only. Build61 reserved Import,58 Native. No Session/Keychain copy, Production or real-user data.
 
 Earlier historical handoff follows unchanged; its integration-pending entries are superseded by main1c7e7fc8.
 
 # Current implementation state — 28 October 2026
 
-## Auth / Identity Phase1 — 28 October
+## Auth / Identity Phase1 — Email and Google L3; Apple Owner-paused
 
-Independent Auth lane starts at main1c7e7fc8. Source cfae2b18 is integrated/pushed;
-remote current-Session logout/hosted error recovery6b4bc3c5 is independently reviewed.
-Its exact host-only DEV receipt proves normal Synthetic password login, self-read,
-repository reconstruction, concurrent refresh single-flight, wrong-Account denial,
-current-Session revoke/independent absence and14 baseline Sessions preserved.
-It does not prove OTP delivery or native Keychain cold start.
+Use existing Supabase Auth, secure Account Session storage, generation/apply gate,
+Account switch coordinator and normal Sync. No second identity/session authority,
+Schema/RLS/GRANT change, business Gate expansion, Secret logging or device Session/
+Keychain copying. Auth worktree has normal own-root read/write permission.
 
-Google Provider enabled; Apple disabled. Source48d0c53e and reviewed remote logout
-are integrated/pushed on unified main453de9c3, retaining accepted P3;18 suites153
-tests/typecheck PASS. Original main six dirty entries preserved. Build43 is the
-same source with own embedded Debug JS, standard simulator identity sections and
-Google SDK. In-place Forms QA cold restore retains its QA identity/four Trips and
-all original row hashes across148 tables, integrityOK. Real native Google control
-opens system prompt; Cancel preserves Account, repeat opens official OnTheRoad
-Google email page. This does not prove Google login. Owner completed Google interaction, but actual ID-token exchange was rejected
-HTTP400 for missing matching caller nonce (DEV Auth18:09/18:19NZ). Original QA
-Account retained. Auth local Expo nonce bridge repair is reviewed (16 suites132
-tests); Native unified45 type/link/runtime acceptance and Google Session E2E
-remain pending. See `ops/auth-phase1-20261028/GOOGLE_NONCE_REPAIR.md`. Receipt: `ops/auth-phase1-20261028/GOOGLE_NATIVE_BUILD43.json`;
-Google ADR: `adr/2026-10-28-google-native-id-token.md`. No Secret, business/schema/
-RLS/GRANT, SQLite74 or other QA Session changed; AD5 not operated.
+Google native nonce repair and consumer generation fences are integrated on
+main76d05522; signed-out repository guard/local Mailpit acceptance on main0a6e7a9a.
+Real native46 Google ID-token exchange200, independent Account/Session readback,
+cold restore, native49 immediate A↔B four-vs-zero Trip isolation, normal current
+Session logout/server absence and A restoration pass. Keep caller nonce validation
+enabled. Exact history and build identities: ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json
+and GOOGLE_NONCE_REPAIR.md. Failed43 nonce exchange is historical, never login PASS.
 
-Next: fixed nonce native Build45→Google retry→own Account readback/cold/logout/isolation.
-Email OTP needs a usable mailbox; Apple console/identity remains pending. Phase1
-CLOUD_PENDING. Guest bootstrap/adoption remains a separate owning delta; ordinary
-Auth cannot silently claim Guest datasets or Trip People.
+Owner verified Resend auth.xoery.art/DNS and authorized DEV SMTP. Saved
+smtp.resend.com:465/resend, OTR <noreply@auth.xoery.art>, retaining the existing
+Supabase encrypted password without reading its value. Both signup and login
+email templates use Token without ConfirmationURL. Owner received real eight-digit
+OTP and entered it normally in native49. New canonical Account/email confirmation/
+Session has independent database evidence; terminate/launch retains this Account
+with no private QA Trips. Immediate resend429, wrong-code403, subsequent normal
+request/verification and distinct Account Session/cache selection pass.
+
+Actual expiry is separate from the wrong-code error name: independently confirmed
+stricter60-second policy, new native OTP08:50:46Z, delivered08:50:50Z, Owner input
+rejected403 at08:52:39Z (113 seconds). Final policy independently restored3600
+seconds/eight digits; JWT TTL unchanged. Normal current Session logout leaves no
+server Session; original QA A/four Trips restored. Exact finite L3 evidence and
+all limitations: ops/auth-phase1-20261028/EMAIL_OTP_HOSTED_DEV_E2E.json. Local real
+Mailpit proof (not Hosted/Native) remains separately recorded; its isolated test
+stack is stopped, canonical local stack unchanged.
+
+Owner found expired-code text below the visible long Account form. Authd3d334d4
+moves the existing alert before inputs and dismisses keyboard on alive failure.
+19 suites191 tests/types/UIguard/scopedlint and independent3 suites11 pass.
+Unified JS-only native52 source9c818005/JS2bb56d528ddc564f431a58e2f4b1fef2597641ad5daa749d0a866ec7b189dffe
+passes real guaranteed-wrong rejection with alert visible above input, keyboard
+closed, challenge cancelled and A/four Trips preserved. Native49 code/identity
+sections remain byte-identical, strict signing verified; no new Native modules.
+Email Account still has zero Sessions after that negative. Forms QA/GUI returned
+to Native for P1; AD5 not operated. Import reserves build53.
+
+Apple is explicitly paused until Owner Developer enrollment; its uncommitted SDK/
+configuration candidates were withdrawn. Phase1 Email/Google evidence is complete
+within the scopes above; this does not certify Apple or Guest adoption. Next
+approved work: Phase2 Guest→Account. Guest marker/Guest-install guard exists;
+adoptLegacyAccountState is not Guest conversion. Preserve full-dataset authoritative
+preflight, no early Guest upload or partial visible ownership conversion, stable
+operation identities and UNKNOWN recovery. No new quota/pricing policy is invented.
+Main integration remains serial and must preserve concurrent Native/Import work
+and the six unrelated dirty primary-checkout files.
+
+Phase2 focused intake is recorded in ops/auth-phase2-20261028/INTAKE.json.
+The read-only readCommittedLocalPrincipal/v1 candidate distinguishes persisted
+Guest, committed Account, prior SIGNED_OUT and genuinely unchosen null. Existing
+corrupt/contradictory Account indexes and legacy states fail closed without writes;
+cached valid Account access remains independent of Guest marker corruption.
+19 suites205 tests/types/UIguard/scopedlint and independent3 suites38 plus real
+public-port memory/gate checks pass. This does not wire Native Guest business
+access or implement adoption. Next: typed local Guest repository scope/full census;
+shared startup/Core/migration writers coordinate before any consumer changes.
 
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
@@ -106,3 +149,5 @@ P5 Backend LOCAL candidate now recognizes exact cumulative Manual P1/P3/P4/P5 an
 P5 actual isolated PostgreSQL follow-through: five-function candidate (the existing service statement guard is additionally required) passes real Core Create/Edit/Receipt/full Reader/replay/raw-writer and function OID/ACL/data-preserving rollback, with explicit Synthetic known service facts. Current Manual Form is still BLOCKED: all five inherited operator/service nonempty CHECKs reject its intentionally unknown empty values. No fake facts or constraint changes applied. Candidate SQL/rollback and reproducible P5 network-none fixture are retained; P5_SQL_READINESS.json separates Core L2 from Form Cloud. Any version-dispatched constraint delta needs precise Owner Schema approval and a rollback policy preserving accepted unknown facts. No DEV business/permission/config/write or phone update performed.
 
 P6 independent candidate now ready for precise approval, NOT_INSTALLED/NOT_DEPLOYED: Native complete accepted-MANUAL provenance/revision Edit and exact Queue selection, independent P1/P3/P4/P6 Backend profile (P5 remains closed), four-function QA-only SQL/CAS/rollback. Parent9suites165PASS/types/UIguard/scoped lint/build; independent Backend37PASS/function review NO_BLOCKER. Real network-none PG Create/Edit/full Reader/ENTRY clear/replay/raw identity+context negatives/wrongAccount/data-preserving OID/ACL rollback PASS. No new Schema/roles/RLS/GRANT; sustained P6 business capability still requires exact Owner approval. See P6_AUTHORITY_REVIEW.md/P6_READINESS.json. Native phone remains56 with its original data/Session; no Cloud P6 PASS claimed.
+
+Native branch compatibility merge: accepted origin/main d2dc5205 safely merged into private Native parent3b158e32 without conflicts or main/remote writes. Retains0821/7129 exact-operation/Auth and all Manual candidates;14suites245checks/types/UIguard/defaultBackendbuild PASS, independent narrow review7suites115PASS/NO_BLOCKER. Not deployed or installed, P5/P6 Authority still closed. See MAIN_COMPATIBILITY_20261029.json. Phone56 normal P1 regression has a coordinated10min window on sameTrip657b; do not mistake its installed e60af84e source for this newer local merge.

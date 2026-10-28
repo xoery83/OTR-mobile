@@ -12,6 +12,7 @@ export type P1AdmissionActions = {
   readOriginal(result: UniversalImportResult, token: string): Promise<string>;
   busyToken: string | null;
   statuses: Record<string, P1AdmissionStatus>;
+  completed?: Readonly<Record<string, boolean>>;
   confirm(
     result: UniversalImportResult,
     token: string,
@@ -43,6 +44,7 @@ export function useUniversalP1Admission(
     );
   const [statuses, setStatuses] = useState<Record<string, P1AdmissionStatus>>({}),
     [busyToken, setBusyToken] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const alive = useRef(true),
     running = useRef(false),
     generation = useRef(getAccountGeneration()),
@@ -82,15 +84,26 @@ export function useUniversalP1Admission(
       const accepted = await readUniversalAcceptedItems(model, result, {
         getAccountId: requireAdoptedUserId,
         isCurrent: () => !canceled && current(),
-        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex),
+        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
+          timeoutMs: 60000,
+        }),
       });
-      if (!canceled && current())
+      if (!canceled && current()) {
+        setCompleted((previous) => ({
+          ...previous,
+          ...Object.fromEntries(
+            Object.entries(accepted)
+              .filter(([, item]) => item.sourceComplete === true)
+              .map(([token]) => [token, true]),
+          ),
+        }));
         setStatuses((previous) => ({
           ...previous,
           ...Object.fromEntries(
             Object.keys(accepted).map((token) => [token, "SERVER_ACCEPTED" as const]),
           ),
         }));
+      }
     };
     // A failed GET is not a failed Save; explicit confirm/recovery retains its original identity.
     void recover().catch(() => {});
@@ -105,6 +118,7 @@ export function useUniversalP1Admission(
     enabledFamilies,
     busyToken,
     statuses,
+    completed,
     async readOriginal(result, token) {
       if (!current() || !permits(result, token)) throw Error("OWNING_REVIEW_REQUIRED");
       const [
@@ -170,7 +184,11 @@ export function useUniversalP1Admission(
           ),
         });
         const outcome = await consumer.confirm(model, result, token, review);
-        if (current()) setStatuses((s) => ({ ...s, [token]: outcome.status }));
+        if (current()) {
+          setStatuses((s) => ({ ...s, [token]: outcome.status }));
+          if (outcome.status === "SERVER_ACCEPTED")
+            setCompleted((previous) => ({ ...previous, [token]: true }));
+        }
       } catch (error) {
         const code =
           error &&

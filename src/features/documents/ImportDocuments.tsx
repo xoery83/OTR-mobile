@@ -127,6 +127,8 @@ export function ImportDocumentsList({
 
 export function ImportDocumentDetail({
   document,
+  linkedItems,
+  linksUnavailable = false,
   accountId,
   tripId,
   original,
@@ -137,6 +139,8 @@ export function ImportDocumentDetail({
   onOpenActivity,
 }: {
   document: ImportDocument;
+  linkedItems?: number | null;
+  linksUnavailable?: boolean;
   accountId: string;
   tripId: string | null;
   original?: { captureId: string; sha256: string; text: string } | null;
@@ -154,6 +158,11 @@ export function ImportDocumentDetail({
         <UiText accessibilityRole="alert">{t("importDocuments.unavailable")}</UiText>
       </View>
     );
+  const canOpenOriginal =
+    document.custody !== "UNAVAILABLE" &&
+    (document.kind === "TEXT" ||
+      (document.kind === "FILE" && document.declaredContentType === "text/plain") ||
+      process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true");
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -172,9 +181,10 @@ export function ImportDocumentDetail({
         <UiText style={s.meta}>{t("importDocuments.custodyExplanation")}</UiText>
         <UiButton
           label={t("importDocuments.openOriginal")}
-          disabled={opening || document.custody === "UNAVAILABLE"}
+          disabled={opening || !canOpenOriginal}
           onPress={() => {
-            if (isCurrent()) onOpenOriginal(document.captureId);
+            if (!opening && canOpenOriginal && isCurrent())
+              onOpenOriginal(document.captureId);
           }}
         />
         {error ? (
@@ -189,6 +199,13 @@ export function ImportDocumentDetail({
           </UiText>
         ) : null}
       </UiSection>
+      {linksUnavailable ? (
+        <UiText style={s.meta}>{t("importDocuments.itemLinksUnavailable")}</UiText>
+      ) : linkedItems !== null && linkedItems !== undefined ? (
+        <UiText style={s.meta}>
+          {t("importDocuments.importedItems", { count: linkedItems })}
+        </UiText>
+      ) : null}
       {document.jobId && document.batchId && document.inputId && onOpenActivity ? (
         <UiButton
           label={t("importDocuments.openBatch")}

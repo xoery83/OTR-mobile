@@ -470,30 +470,34 @@ it.each(["TRAIN", "TAXI"])(
   },
 );
 
-it("offers P6 only under its own opt-in, with explicit original and Trip Review before confirmation", () => {
-  const f = fixture();
-  Object.assign(f.result.candidates[0], { kind: "P6", subtype: "ACTIVITY" });
-  f.result.quality!.decisions[0].kind = "P6";
-  const confirm = vi.fn(async () => {});
-  renderToStaticMarkup(
-    createElement(UniversalResultView, {
-      ...f.props,
-      admission: {
-        enabled: true,
-        enabledFamilies: ["P6"],
-        statuses: {},
-        busyToken: null,
-        confirm,
-        readOriginal: vi.fn(async () => "original"),
-      },
-    }),
-  );
-  const button = state.buttons.find((b) => b.label === t("capture.ai.p6Confirm"));
-  expect(button?.disabled).toBe(true);
-  button!.onPress();
-  expect(confirm).not.toHaveBeenCalled();
-  expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
-});
+it.each(["2026-11-03", "November 3, 2026"])(
+  "offers P6 dated %s only under its own opt-in and explicit original/Trip Review",
+  (dateRaw) => {
+    const f = fixture();
+    f.result.candidates[0].fields.find((f) => f.path === "activity.date")!.raw = dateRaw;
+    Object.assign(f.result.candidates[0], { kind: "P6", subtype: "ACTIVITY" });
+    f.result.quality!.decisions[0].kind = "P6";
+    const confirm = vi.fn(async () => {});
+    renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        admission: {
+          enabled: true,
+          enabledFamilies: ["P6"],
+          statuses: {},
+          busyToken: null,
+          confirm,
+          readOriginal: vi.fn(async () => "original"),
+        },
+      }),
+    );
+    const button = state.buttons.find((b) => b.label === t("capture.ai.p6Confirm"));
+    expect(button?.disabled).toBe(true);
+    button!.onPress();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(state.buttons.some((b) => b.label === t("capture.ai.p1Confirm"))).toBe(false);
+  },
+);
 
 it.each([
   "PENDING",

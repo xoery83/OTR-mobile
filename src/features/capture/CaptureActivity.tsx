@@ -91,7 +91,14 @@ export function CaptureActivity({
       void import("@/data/operations/universalActivityReader")
         .then(async (reader) => {
           if (!current()) return;
-          const observations = await reader.readDefaultUniversalActivities(next, current);
+          const observations = await reader.readDefaultUniversalActivities(
+            next,
+            current,
+            (batchId, activity) => {
+              if (current())
+                setTaskActivities((previous) => ({ ...previous, [batchId]: activity }));
+            },
+          );
           if (current()) setTaskActivities(observations);
         })
         .catch(() => {});

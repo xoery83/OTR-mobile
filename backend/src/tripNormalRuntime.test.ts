@@ -1,3 +1,4 @@
+import { coreClosedCapabilities } from "../../src/domain/trip/tripCoreV2Commands";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
@@ -30,6 +31,11 @@ function fixture() {
     publishSourceCandidates: vi.fn(),
     commands: { withLockedCommand: vi.fn() },
     readOperation: vi.fn().mockResolvedValue(null),
+    read: {
+      collection: vi.fn(),
+      item: vi.fn(),
+      capabilities: vi.fn(async () => coreClosedCapabilities),
+    },
   };
   const runtime = createNormalDevTripPorts(
     config,
@@ -105,4 +111,25 @@ it("normal P1 policy exposes only the exact approved manual commands and family"
     }),
   ).toBe(false);
   expect(isNormalP1Gate({ ...gate, enabled_families: ["P1", "P2"] })).toBe(false);
+});
+
+it("preserves exact capability operation through the finite adapter without changing Manual or actor guards", async () => {
+  const f = fixture(),
+    trip = randomUUID(),
+    operation = randomUUID();
+  await f.runtime.coreConnection.read!.capabilities!(actor, trip);
+  await f.runtime.coreConnection.read!.capabilities!(actor, trip, operation);
+  expect(f.core.read.capabilities.mock.calls).toEqual([
+    [actor, trip],
+    [actor, trip, operation],
+  ]);
+  await expect(
+    f.runtime.coreConnection.read!.capabilities!(randomUUID(), trip, operation),
+  ).rejects.toThrow("FORBIDDEN");
+  expect(f.core.read.capabilities).toHaveBeenCalledTimes(2);
+  f.expire();
+  await expect(
+    f.runtime.coreConnection.read!.capabilities!(actor, trip, operation),
+  ).rejects.toThrow("CLOSED");
+  expect(f.core.read.capabilities).toHaveBeenCalledTimes(2);
 });

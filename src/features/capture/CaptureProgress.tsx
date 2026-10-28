@@ -62,6 +62,7 @@ export function CaptureProgress({
   } catch {
     error = true;
   }
+  const hasUniversalReader = Boolean(isCurrent && model?.allInputsAccepted);
   const body = (
     <ScrollView
       ref={scroll}
@@ -103,13 +104,15 @@ export function CaptureProgress({
             )}
           </UiText>
           <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
-          <UiText style={styles.secondary}>
-            {t(
-              model?.processingEvents?.length
-                ? "capture.processing.localValidation"
-                : "capture.processingUnavailable",
-            )}
-          </UiText>
+          {model?.processingEvents?.length || !hasUniversalReader ? (
+            <UiText style={styles.secondary}>
+              {t(
+                model?.processingEvents?.length
+                  ? "capture.processing.localValidation"
+                  : "capture.processingUnavailable",
+              )}
+            </UiText>
+          ) : null}
           {model?.localInterpretationResults?.length ? (
             <UiText style={styles.secondary}>
               {t("capture.processing.localPartial")}
@@ -130,9 +133,11 @@ export function CaptureProgress({
               )}
             </UiText>
           ) : null}
-          <UiText style={styles.secondary}>
-            {t("capture.progress.outcomesUnavailable")}
-          </UiText>
+          {!hasUniversalReader ? (
+            <UiText style={styles.secondary}>
+              {t("capture.progress.outcomesUnavailable")}
+            </UiText>
+          ) : null}
           {isCurrent && model?.allInputsAccepted ? (
             <Suspense
               fallback={
@@ -255,7 +260,8 @@ export function CaptureProgress({
   );
   return (
     <>
-      {typeof __DEV__ !== "undefined" && __DEV__ ? (
+      {(typeof __DEV__ !== "undefined" && __DEV__) ||
+      process.env.EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING === "true" ? (
         <View style={styles.paging}>
           <UiButton
             variant="secondary"

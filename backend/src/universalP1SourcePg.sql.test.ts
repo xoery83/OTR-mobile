@@ -1,3 +1,6 @@
+import { createSustainedDevTripPorts } from "./tripSustainedRuntime";
+import { coreHttpBoundary } from "./tripCoreV2Http";
+import { createCorePgReader } from "./tripCoreV2PgRead";
 import { appendFileSync, readFileSync } from "node:fs";
 import { createCoreUniversalSourceRead } from "./universalCoreSourceRead";
 import { universalP1Identity } from "./universalP1Source";
@@ -42,7 +45,13 @@ it
       f = await universalP1SourceFixture(
         actor,
         trip,
-        family !== "P1" ? "2026-11-03" : reviewed ? "Nov 1, 2026" : "2026-11-03",
+        process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container && family === "P6"
+          ? "November 3, 2026"
+          : family !== "P1"
+            ? "2026-11-03"
+            : reviewed
+              ? "Nov 1, 2026"
+              : "2026-11-03",
         family,
       ),
       admin = session(container!);
@@ -277,7 +286,10 @@ it
               mode: "CONTINUOUS_MINIMUMS",
               version: 1,
               tripId: trip,
-              families: ["P1", "P3", "P4", "P5", "P6"],
+              families:
+                process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container
+                  ? ["P1", "P2", "P3", "P4", "P5", "P6"]
+                  : ["P1", "P3", "P4", "P5", "P6"],
               expiresAt: new Date(Date.now() + 900000).toISOString(),
             }),
           ],
@@ -649,6 +661,50 @@ it
           },
           { sustainedDev: true, reviewedP1: true },
         );
+      if (process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container) {
+        const reader = createCorePgReader(connection, f.deps.hash, undefined, {
+          sustainedDev: true,
+          reviewedP1: true,
+        });
+        const runtime = createSustainedDevTripPorts(
+          {
+            create: {} as never,
+            metadata: {} as never,
+            core: { hash: f.deps.hash, read: reader } as never,
+          },
+          true,
+        )!;
+        const capabilities = runtime.coreConnection.read!.capabilities!;
+        const response = await coreHttpBoundary(
+          new Request(
+            `http://owned/v2/trips/${trip}/core/capabilities?operationId=${command.operationId}`,
+          ),
+          actor,
+          async () => true,
+          runtime.coreConnection,
+        );
+        expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({
+          enabledFamilies: [family],
+          sourceEvidenceAvailable: true,
+        });
+        expect((await capabilities(actor, trip)).sourceEvidenceAvailable).toBe(false);
+        expect(await capabilities(actor, trip, command.operationId)).toMatchObject({
+          enabledCommands: ["CREATE_ITEM"],
+          enabledFamilies: [family],
+          enabledAdmissionModes: ["REVIEWED_SOURCE"],
+          sourceEvidenceAvailable: true,
+        });
+        expect(
+          (await capabilities(actor, trip, randomUUID())).sourceEvidenceAvailable,
+        ).toBe(false);
+        expect(
+          (await capabilities(randomUUID(), trip, command.operationId)).activationState,
+        ).toBe("CLOSED");
+        expect(
+          (await capabilities(actor, randomUUID(), command.operationId)).activationState,
+        ).toBe("CLOSED");
+      }
       publicationReads = 0;
       corruptOnRead = 3;
       await expect(
@@ -776,13 +832,15 @@ it
         );
         const rollback = readFileSync(
             new URL(
-              process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
-                ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
-                : family === "P6"
-                  ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
-                  : family === "P5"
-                    ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                    : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container
+                ? "../../docs/ops/universal-product-20261028/authority/FULL_MONTH_REVIEW_ROLLBACK_CANDIDATE.sql"
+                : process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+                  ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
+                  : family === "P6"
+                    ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                    : family === "P5"
+                      ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                      : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",
@@ -915,13 +973,15 @@ it
         await admin.lease.query(
           readFileSync(
             new URL(
-              process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
-                ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
-                : family === "P6"
-                  ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
-                  : family === "P5"
-                    ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
-                    : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
+              process.env.OTR_UNIVERSAL_FULL_MONTH_SQL_FIXTURE === container
+                ? "../../docs/ops/universal-product-20261028/authority/FULL_MONTH_REVIEW_ROLLBACK_CANDIDATE.sql"
+                : process.env.OTR_UNIVERSAL_CONTINUOUS_REVIEW_SQL_FIXTURE
+                  ? "../../docs/ops/universal-product-20261028/authority/FIVE_FAMILY_ROLLBACK_CANDIDATE.sql"
+                  : family === "P6"
+                    ? "../../docs/ops/universal-p6-formal-save-20261028/P6_DEV_ROLLBACK.sql"
+                    : family === "P5"
+                      ? "../../docs/ops/universal-p5-formal-save-20261028/P5_DEV_ROLLBACK.sql"
+                      : "../../docs/ops/universal-p456-formal-save-20261027/P4_DEV_ROLLBACK.sql",
               import.meta.url,
             ),
             "utf8",

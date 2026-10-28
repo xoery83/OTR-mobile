@@ -76,3 +76,92 @@ Activity inventory now projects existing Backend context Task states through seq
 ## Import-owned Documents navigation
 
 Composer now offers separate Personal Inbox and Trip Documents subviews via the existing attachment menu. Detail returns to its own scoped list, and a retained document's real Job link reopens existing Activity/Results. TripPrior is only a read-scope choice; no Capture trip assignment, sharing or all-Batch Item link is created. Normal Auth and repository loading are lazy until the document view is opened. Public Navigation/Session/DayFeed/Sync files remain untouched. Twenty-eight targeted menu/component/lifecycle tests, TypeScript/UIguard and scoped lint pass (one existing require-style warning); independent Review NO_BLOCKER. Real AD5 navigation/QuickLook remains pending Build42.
+
+## Activity repair and current Native compatibility
+
+`8881d093` separates authorized Task context from original-byte reads; Results still require original validation. Red→green and logger failure identity checks PASS, independent NO_BLOCKER. `fee149c2` corrects received-input/private-Inbox captions (27 directed tests). Temporary shared startup logs removed at71606178 after simulator identity repair. AD5 My Trips/QA Trip cold launch and private Inbox text-original navigation PASS; PDF/image and sustained Save remain pending.
+
+Joined Native P4/Auth source4ea0202 passes49 directed tests, types and both Backend builds. Software-only image61b0dd3f deployed with unchanged Envab5/six mounts/HC; independently verified healthy, NativeP4 e624/41aa retained. Read-only Source connection and persisted Task mirror PASS; this is not a normal QA API503 retest. No SQL activation/model calls/new objects. Native's separately approved P4 read-state f1378 supersedes c8d64; old fixed activation must abort, and exact one-hash compatibility is being qualified independently. Auth/Owner still hold GUI; local product work continues.
+
+## Actual Source read contention repair
+
+Normal AD5 reopen reproduced503 as controlled BINDING/BUSY. 1072af7d retains the existing Source role connection limit1 and introduces Import-only bounded FIFO lease wait (4 outstanding/10-second wait), preserving fresh sessions and all original auth/transaction handling. An initial request-local-handle candidate was rejected by independent review before deployment because the real role limit is1; only serialized candidate was committed/deployed. Five directed suites17PASS, actual network-none256MiB PG Source login capacity1 concurrent request tests7PASS, private APFS-cloned dependencies typecheck/lint and independent NO_BLOCKER. No shared dependency directory or other worktree was modified.
+
+Actual software5e551e2c/container43c4f20a is healthy; Envab5/six mounts and Native P4 SQL remain unchanged, previous2cc/61b intact. Durable receipt authority/CONTINUOUS_SOURCE_SERIAL_DEPLOY_RECEIPT.json. Final AD5 read pending Auth/Owner GUI; no new Task/model/Save. The exact one-CAS P4 compatibility Gate fdd2730d was Owner-approved and recorded4503cc5b; activation not yet executed. Activity incremental status rendering is being tested independently while GUI is occupied.
+
+## Actual normal Results recovery and next receipt preflight
+
+At19:14 AD5 normally reopened the same11:41:07 Batch: actual RESULTS_READY, Harbour QA Gallery Visit/2026-11-03 and Submitted text source appeared. No Analyze/new Provider/Save. Source BUSY default-closed recovery is NATIVE_READ_RECOVERY_PASS. Existing Core receipt recovery subsequently hit ApiClient default15-second timeout; the same hook confirmation already allows60s over Backend's fixed30s lease. Minimal Import-only budget alignment has47 directed tests/types and independent NO_BLOCKER; actual receipt test awaits JS-only Import47, preserving existing native identity/data. No shared Core Reader/Schema/permissions changed.
+
+Activity partial rendering25148a8d has29 directed tests/types/UIguard. Two Import Updates keys6b09a319 were added during Auth-granted dictionary Writer window then returned. Source projection/section/old-route adapterfa28eb2b has43 directed tests/types/UIguard/independent NO_BLOCKER; latest20 processing records only, no fake unread/Save/Review state or database. Native product acceptance pending.
+
+
+## Import47 actual cold recovery
+
+Source c7db4852, JS cb78d822, unchanged native42 code with original simulator
+identity: AD5 cold My Trips/QA Trip and same retained P6 Results plus server-accepted
+receipt PASS at20:08. No Analyze, new model call, reconfirm or Create. All prior
+rows across31 business tables remain preserved; no Session/Keychain copy.
+Native subsequently received GUI/normal Core window for P4 Edit. This is retained
+read recovery, not continuous new-Batch Save acceptance; SourceSave remains CLOSED.
+
+
+## Documents exact Source association — LOCAL_PASS
+
+Authenticated existing Source Plan GET now has a strict Mobile read DTO and a
+Documents adapter. Only the exact retained input/Source revision and completed
+owning slot with receipt/committed revision yields the stable saved Item. READY,
+Evidence Pending and other Sources in the same Batch never count as saved.
+Personal Inbox remains private with no inferred Trip association; missing link
+metadata stays separate from original viewing. Repository-selected Batch only.
+35 joined directed tests, TypeScript, scoped lint/UIguard and independent
+NO_BLOCKER PASS. No Backend/Schema/authority change. Actual Hosted closed-policy
+Plan read and Native association display remain pending; not SERVER_VERIFIED.
+
+
+## First normal continuous preparation and pending-marker repair
+
+Build50 AD5 Trip Documents/original/exact accepted Source Plan Item count1 and
+same retained Results/receipt NATIVE_E2E_PASS. Exact approved native-P4-compatible
+scope activation independently verified unchanged six function OID/Owner/ACL;
+then safely CLOSED/scopeNULL/two airportsfalse, independently verified.
+Normal App accepted Batchbb571a30 and Task0d4a0592. Source/Task Prepare and actual
+Task PUBLISHED/Attempt SUCCEEDED, INSTALLED, metering COMPLETE verified. Initial
+running GET returned the immutable UNKNOWN request marker; it was provisional,
+not final Provider failure. Three RED checks reproduced premature client result
+installation; minimal continuous-only pending-state branch retains queued/null for
+existing GET polling. True owning UNKNOWN stays visible.54 joined tests/types/lint
+and independent NO_BLOCKER PASS. No Provider retry, budget reset or Task mutation.
+Actual retained original ends in a Chinese-IME residual R. Model conservatively
+retained unresolved content; no forced Review/Save or Item created. Original and
+result remain intact. Next clean Native input must be verified before dispatch.
+
+
+## Fresh Batch initial status — LOCAL_PASS, not deployed
+
+Actual fresh Batches showed an unavailable-service message before the first Start:
+Source lookup had no binding, while generic context catch translated that normal
+absence into503. A dedicated authenticated unprepared-Batch outcome now maps only
+that case to404/no-store, using the existing Native not-found path. BUSY, Auth and
+an existing binding with missing Task mirror stay503; GET creates no Task/send.
+Two RED assertions→54 joined tests, types, both Backend builds and independent
+NO_BLOCKER PASS; lint has0 errors/4 pre-existing duplicate-import warnings.
+Current clean Task859445fb remains on original1072 Host; no live deployment or
+restart while it is running, and Save scope remains independently CLOSED.
+
+
+## Full English month evidence — exact protected delta pending approval
+
+The same clean Task859445fb is PUBLISHED/SUCCEEDED; normal Native Results expose
+name and November2 date. Existing shared Review parser accepts only ISO/Nov, so
+Form returnsnull.13 RED software checks→121 joined tests/types/UIguard PASS for
+explicit full English months, preserving strict calendar/year/no-timezone rules.
+Independent review identified the actual SQL guard has the same abbreviated-only
+evidence check. Actual current six-function+NativeP4 isolated PG reproduced INSERT
+P1_SOURCE_EVIDENCE_INVALID, then one scoped predicate repair passed Source Review,
+Plan, Admission, Core receipt, finalization/replay/closed recovery and protected
+rollback.21 checks, OID/Owner/ACL and Nativef137 unchanged. Candidate/Source/Task
+unchanged, no new model calls. Precise default-CLOSED install/compatible activation/
+rollback packet: authority/FULL_MONTH_SOURCE_EVIDENCE_GATE.md. NOT_INSTALLED;
+Owner approval required, ordinary code/DEV image authorization does not install
+this protected evidence function. Source Save remains independently CLOSED.

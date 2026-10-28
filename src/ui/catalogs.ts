@@ -1,4 +1,10 @@
 export const en = {
+  "importDocuments.importedItems": "Saved items linked through this Import Batch: {count}",
+  "importDocuments.itemLinksUnavailable": "Related saved items could not be checked.",
+  "updates.importActivity": "Recent Import activity",
+  "updates.importSaved": "Saved items: {count} · Open results",
+  "updates.importCoverage":
+    "Open a processing record to check its current results. These records do not have read or unread status.",
   "importDocuments.trip": "Trip Documents",
   "importDocuments.inbox": "Personal Inbox",
   "importDocuments.loading": "Loading documents…",
@@ -281,7 +287,7 @@ export const en = {
   "updates.unreadOnly": "Unread only",
   "updates.search": "Search local updates",
   "updates.coverage":
-    "Only available personal Capture intake notices are shown. Other sources and remote coverage are not available.",
+    "Local notices cover personal Capture intake. Import processing records are shown separately.",
   "updates.unavailable":
     "Some current updates could not be checked. Refresh to try again.",
   "updates.emptyAll": "No matching notices in the loaded local records.",
@@ -3005,6 +3011,11 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "importDocuments.importedItems": "通过本次导入关联的已保存事项：{count}",
+  "importDocuments.itemLinksUnavailable": "暂时无法核对关联的已保存事项。",
+  "updates.importActivity": "近期导入动态",
+  "updates.importSaved": "已保存 {count} 项 · 查看结果",
+  "updates.importCoverage": "打开解析记录可查看当前结果。这些记录暂不区分已读和未读。",
   "importDocuments.trip": "行程文档",
   "importDocuments.inbox": "个人收件箱",
   "importDocuments.loading": "正在读取文档…",
@@ -3262,7 +3273,7 @@ export const zhHans: Record<MessageKey, string> = {
   "updates.category.MESSAGES": "消息",
   "updates.unreadOnly": "仅未读",
   "updates.search": "搜索本地更新",
-  "updates.coverage": "仅显示本地可用的个人材料接收通知。其他来源及远端记录暂不可用。",
+  "updates.coverage": "本地通知涵盖个人采集接收情况；导入解析记录单独显示。",
   "updates.unavailable": "暂时无法验证部分更新。请刷新重试。",
   "updates.emptyAll": "已加载的本地记录中没有匹配通知。",
   "updates.emptyAttention": "已加载的记录中没有匹配的材料接收处理事项。",

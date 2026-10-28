@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
 import { previewImportOriginal } from "./importOriginalPreview";
@@ -18,7 +18,11 @@ const original = {
     byteCount: bytes.length,
   } as ImportDocument,
 };
+beforeEach(() => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
+});
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.clearAllMocks();
   vi.useRealTimers();
 });
@@ -67,5 +71,13 @@ it("closes when the retained page becomes inactive and leaves retained bytes unt
 });
 it("does not open an already invalid page", async () => {
   await previewImportOriginal(original, () => false);
+  expect(bridge.previewImportOriginal).not.toHaveBeenCalled();
+});
+
+it("keeps unverified native binary preview closed by default", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", undefined);
+  await expect(previewImportOriginal(original, () => true)).rejects.toThrow(
+    "IMPORT_PREVIEW_UNAVAILABLE",
+  );
   expect(bridge.previewImportOriginal).not.toHaveBeenCalled();
 });

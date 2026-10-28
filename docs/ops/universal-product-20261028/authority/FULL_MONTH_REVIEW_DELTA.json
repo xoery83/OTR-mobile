@@ -1,0 +1,13 @@
+{
+  "signature": "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)",
+  "beforeMd5": "488f5fe1537d450b610ef7c5e22eb53b",
+  "afterMd5": "115bc244cd9ccd196936828739187531",
+  "beforeClause": "AND e->>'raw'=to_char((e->'normalization'->>'value')::date,'Mon FMDD, YYYY')",
+  "afterClause": "AND (e->>'raw'=to_char((e->'normalization'->>'value')::date,'Mon FMDD, YYYY')\n       OR (actor='f4b059c5-8241-4ffb-aa15-37fa25474543'::uuid AND trip='825f79b2-4a9d-4535-a62e-43000ca50c4a'::uuid\n        AND continuous_candidate IS NOT NULL\n        AND e->>'raw'=to_char((e->'normalization'->>'value')::date,'FMMonth FMDD, YYYY')))",
+  "qaAccountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "qaTripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "otherFiveFunctionsChanged": false,
+  "oidOwnerAclChanged": false,
+  "scopeOrExpiryChanged": false,
+  "hostedInstalled": false
+}

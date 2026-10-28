@@ -32,6 +32,8 @@ import {
   coreSourcePreparationResultV2Schema,
   coreSourceFinalizeV2Schema,
   coreSourceFinalizeResultV2Schema,
+  coreSourcePlanReadV2Schema,
+  type CoreSourcePlanReadV2,
   type CoreSourcePrepareV2,
   type CoreSourcePreparationResultV2,
   type CoreSourceFinalizeV2,
@@ -44,6 +46,12 @@ import {
   type CoreReadPage,
 } from "../../domain/trip/tripCoreV2Read";
 import type { CoreSyncTransport } from "../sync/tripCoreV2SyncWorker";
+export type CoreSourcePlanReadTransport = {
+  sourcePlan(
+    context: AccountRequestContext,
+    planId: string,
+  ): Promise<CoreSourcePlanReadV2 | null>;
+};
 export type CoreReadTransport = {
   collection(
     ctx: AccountRequestContext,
@@ -94,7 +102,8 @@ export function createCoreV2Transport(
 ): CoreSyncTransport &
   CoreReadTransport &
   CoreCandidatePublicationTransport &
-  CoreSourcePlanTransport {
+  CoreSourcePlanTransport &
+  CoreSourcePlanReadTransport {
   const api = (ctx: AccountRequestContext, maximum = 1048576) =>
     createAuthenticatedApiClient(
       {
@@ -231,6 +240,28 @@ export function createCoreV2Transport(
       await assertAccountRequestContext(ctx, getAccountId);
       return result;
     },
+    async sourcePlan(ctx, planId) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      coreUuid.parse(planId);
+      try {
+        const value = await api(ctx).get(
+          path(ctx) + "/source-plans/" + planId,
+          coreSourcePlanReadV2Schema,
+          headers,
+        );
+        await assertAccountRequestContext(ctx, getAccountId);
+        if (
+          value.plan.accountId !== ctx.accountId ||
+          value.plan.tripId !== ctx.tripId ||
+          value.plan.planId !== planId
+        )
+          throw Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
+        return value;
+      } catch (error) {
+        if (error instanceof ApiClientError && error.status === 404) return null;
+        throw error;
+      }
+    },
     async finalizeSourceSlot(ctx, planId, input) {
       await assertAccountRequestContext(ctx, getAccountId);
       const result = await api(ctx).post(
@@ -314,10 +345,13 @@ export function createCoreV2Transport(
       await assertAccountRequestContext(ctx, getAccountId);
       return result;
     },
-    async capabilities(ctx) {
+    async capabilities(ctx, operationId) {
       await assertAccountRequestContext(ctx, getAccountId);
+      if (operationId !== undefined) coreUuid.parse(operationId);
       const result = await api(ctx).get(
-        path(ctx) + "/capabilities",
+        path(ctx) +
+          "/capabilities" +
+          (operationId === undefined ? "" : "?operationId=" + operationId),
         coreCapabilitiesSchema,
         headers,
       );

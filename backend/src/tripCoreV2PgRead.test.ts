@@ -266,3 +266,56 @@ it.each(["P2", "P3", "P4", "P5", "P6"] as const)(
     expect(c.sourceEvidenceAvailable).toBe(true);
   },
 );
+
+it("binds Source capability reads to one transaction-local operation and validates before acquiring", async () => {
+  const f = fixture(),
+    operation = randomUUID();
+  f.actor.personId = randomUUID();
+  const base = f.lease.query.getMockImplementation()!;
+  let selected = "";
+  const query = vi.fn(async (sql: string, values?: readonly unknown[]) => {
+    if (sql.includes("set_config('otr.core.operation'")) {
+      selected = String(values?.[0]);
+      return { rows: [] };
+    }
+    if (sql.includes("trip_sustained_import_p1_capabilities"))
+      return {
+        rows: [
+          {
+            runtime_enabled: selected === operation,
+            enabled_commands: ["CREATE_ITEM"],
+            enabled_families: ["P1"],
+            enabled_admission_modes: ["REVIEWED_SOURCE"],
+          },
+        ],
+      };
+    return base(sql);
+  });
+  const acquire = vi.fn(async (work: any) => {
+    selected = "";
+    return work({ ...f.lease, query });
+  });
+  const reader = createCorePgReader(
+    { withLease: acquire },
+    async (v) => createHash("sha256").update(v).digest("hex"),
+    undefined,
+    { sustainedDev: true, reviewedP1: true },
+  );
+  expect(
+    (await reader.capabilities(f.actor.accountId, f.actor.tripId, operation))
+      .sourceEvidenceAvailable,
+  ).toBe(true);
+  expect(
+    (await reader.capabilities(f.actor.accountId, f.actor.tripId, randomUUID()))
+      .sourceEvidenceAvailable,
+  ).toBe(false);
+  expect(
+    (await reader.capabilities(f.actor.accountId, f.actor.tripId))
+      .sourceEvidenceAvailable,
+  ).toBe(false);
+  const calls = acquire.mock.calls.length;
+  await expect(
+    reader.capabilities(f.actor.accountId, f.actor.tripId, "bad"),
+  ).rejects.toThrow();
+  expect(acquire).toHaveBeenCalledTimes(calls);
+});

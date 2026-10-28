@@ -13,6 +13,8 @@ const f = vi.hoisted(() => ({
   settle: vi.fn(),
   recover: vi.fn(),
   execute: vi.fn(),
+  sourceConnection: vi.fn(),
+  host: vi.fn(),
 }));
 vi.mock("node:sqlite", () => ({
   DatabaseSync: class {
@@ -30,7 +32,7 @@ vi.mock("./tripPublicationCatalogPgConnection", () => ({
   createPublicationCatalogPgConnection: () => ({ close: vi.fn() }),
 }));
 vi.mock("./tripCoreV2PgConnection", () => ({
-  createSourcePgConnection: () => ({}),
+  createSourcePgConnection: f.sourceConnection,
   createModelTaskPgConnection: () => ({}),
 }));
 vi.mock("./supabaseGateway", () => ({
@@ -43,7 +45,7 @@ vi.mock("./universalTaskBootstrap", () => ({
   initializeUniversalTaskDatabase: () => ({ getFirstAsync: f.read }),
 }));
 vi.mock("./universalContinuousHost", () => ({
-  createUniversalContinuousHost: () => ({ executeQueued: f.execute }),
+  createUniversalContinuousHost: f.host,
 }));
 vi.mock("./universalOriginalSource", () => ({
   createUniversalOriginalSourceConnection: () => ({}),
@@ -64,6 +66,8 @@ beforeEach(() => {
     ino: 1,
     dev: 1,
   });
+  f.sourceConnection.mockReturnValue({});
+  f.host.mockImplementation(() => ({ executeQueued: f.execute }));
   f.canRead.mockResolvedValue(true);
   f.claim.mockResolvedValue(true);
   f.execute.mockResolvedValue({ status: "CANDIDATES_READY" });
@@ -110,3 +114,52 @@ for (const kind of [intelligenceWakeKind, "INTELLIGENCE_CONTINUATION"]) {
     }
   });
 }
+
+it("overlapping activity and batch reads do not share an occupied Source connection", async () => {
+  const actor = randomUUID(),
+    trip = randomUUID();
+  f.auth.mockResolvedValue({ id: actor });
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  f.sourceConnection.mockImplementation(() => {
+    let occupied = false;
+    return {
+      async withLease(work: () => Promise<unknown>) {
+        if (occupied) throw Error("CORE_CONNECTION_BUSY");
+        occupied = true;
+        try {
+          await blocked;
+          return await work();
+        } finally {
+          occupied = false;
+        }
+      },
+    };
+  });
+  f.host.mockImplementation(({ runtime }) => ({
+    readContext: (batch: string) =>
+      runtime.sourceConnection.withLease(async () => ({ batch })),
+  }));
+  const runtime = await loadDevUniversalContinuousRuntime({
+    OTR_DEV_UNIVERSAL_CONTINUOUS_HOST: "enabled",
+  });
+  try {
+    const request = () =>
+      new Request("https://example.test", {
+        headers: { Authorization: "Bearer synthetic-test-only" },
+      });
+    const inventory = await runtime!.forRequest(request(), actor, trip);
+    const detail = await runtime!.forRequest(request(), actor, trip);
+    const first = inventory.universalImportPort.readContext(actor, "inventory", trip);
+    const second = detail.universalImportPort.readContext(actor, "detail", trip);
+    const reads = Promise.all([first, second]);
+    release();
+    await expect(reads).resolves.toEqual([{ batch: "inventory" }, { batch: "detail" }]);
+    expect(f.execute).not.toHaveBeenCalled();
+  } finally {
+    release();
+    await runtime?.close();
+  }
+});

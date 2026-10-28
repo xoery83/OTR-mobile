@@ -92,3 +92,62 @@ removal; UNKNOWN retains access. Tokens stay memory-only in the host DEV runner.
 6. **Integration delta:** Native snapshot consumer/Guest business principal and
    whole-dataset adoption; native OAuth credentials/configuration; actual mailbox;
    coordinated Native restore and serial main integration.
+
+## Email OTP follow-through — 28 October
+
+**Latest authorized execution supersedes the preparation status below.** Owner
+verified auth.xoery.art in Resend and completed Wix DNS. DEV Custom SMTP and both
+Token-only templates are saved, preserving the existing encrypted Key without
+reading it. Real inbox delivery, native signup/Session/cold restore, Account
+isolation, resend/throttling, actual elapsed-expiry rejection and normal logout/
+server Session absence are recorded in EMAIL_OTP_HOSTED_DEV_E2E.json. The stricter
+temporary expiry is restored to3600 seconds/eight digits. Expired-code error text
+was below the visible long form; source repaird3d334d4 is reviewed/tested. Native52
+source9c818005/JS2bb56d528ddc564f431a58e2f4b1fef2597641ad5daa749d0a866ec7b189dffe
+now passes real guaranteed-wrong-code rejection with the alert visible above the
+input, keyboard dismissed, challenge cancelled and A/four Trips preserved.
+Its native code/identity sections match49 byte-for-byte; signature is verified.
+Independent readback confirms no Email Account Session was created by the
+negative. Device returned to Native; no other QA device operated by Auth.
+No Apple activation or business
+permission change. The following paragraphs retain the earlier preparation facts.
+
+Owner paused Apple until further notice. No Apple package/config/console candidate
+is committed or enabled. Google actual native Session/switch/cold/logout evidence
+and main integration are in GOOGLE_DEV_E2E.json / GOOGLE_MAIN_INTEGRATION.json.
+
+The Hosted Free DEV project has custom SMTP off and a ConfirmationURL Magic Link
+template. Its supported template-edit menu requires Pro, custom SMTP or a Send
+Email Hook. Default delivery is team-only; do not add a mailbox to the project
+team merely to bypass recipient restrictions, pay for Pro or report a link as OTP.
+No Hosted OTP was sent and no SMTP Secret was read or saved by this lane.
+
+Local acceptance uses an isolated Supabase project `otr-auth-mailpit-20261028`:
+API54331, database54332, Mailpit54334, SMTP54335. Existing canonical local stack
+is unchanged. Business migrations/seeds and unrelated services are disabled;
+email confirmations enabled, six-digit OTP, one-hour expiry, local request interval
+one second. Both confirmation and magic_link templates use the supplied HTML
+with `{{ .Token }}` and no link. Template content_path must be the repository HTML
+absolute path: this Docker host cannot serve an unshared /private/tmp bind mount.
+Confirm the Auth container's template endpoint actually serves that file.
+
+Run `node --import tsx scripts/auth/mailpit-otp-e2e.ts` with isolated CLI status
+in `/private/tmp/otr-auth-mailpit-20261028/status.private.json` (mode0600). The runner
+uses only its public client key for normal /otp, /verify, self-read, refresh and
+current-session logout; admin/service-role credentials never authenticate users.
+Its injected transport maps the fixed nominal DEV origin exclusively to the local
+loopback project; the production DEV-project guard is unchanged. Generated codes
+are read from this project's actual Mailpit messages, used transiently, never
+recorded. EMAIL_OTP_MAILPIT_E2E.json proves new registration, wrong/used code
+rejection, existing-user canonical ID stability, memory Repository reconstruction,
+Account selection, refresh, scoped logout/revoked refresh and other-account
+Session preservation. This is local acceptance, not Hosted delivery or Native
+Keychain/cold-start proof. Actual expired-code timing is not exercised here.
+
+Minimal free proposal: Resend Free, proposed auth.xoery.art subdomain and
+noreply@auth.xoery.art sender; SMTP smtp.resend.com:465 / implicit TLS / username
+resend. A domain-scoped Sending key belongs only in Supabase's secure SMTP password
+field. Do not put it in Native, environment examples, logs or Git. Owner approval
+of service/subdomain, account terms, exact generated DNS records and credential
+creation remains pending. No purchase, sender registration or DNS change occurred.
+See EMAIL_SMTP_CANDIDATE.json for the dated allowance and official references.

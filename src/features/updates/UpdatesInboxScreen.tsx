@@ -1,3 +1,4 @@
+import { ImportUpdatesSection } from "./ImportUpdatesSection";
 import {
   useCallback,
   useLayoutEffect,
@@ -255,6 +256,27 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        <ImportUpdatesSection
+          filter={filter}
+          generation={generation}
+          onOpen={(jobId, originGeneration) => {
+            if (
+              !active.current ||
+              intent.current !== renderedIntent ||
+              generation !== getAccountGeneration() ||
+              originGeneration !== generation
+            )
+              return;
+            router.push({
+              pathname: "/capture",
+              params: {
+                jobId,
+                origin: "UPDATES",
+                originGeneration: String(originGeneration),
+              },
+            });
+          }}
+        />
         <UiText style={styles.secondary}>{t("updates.coverage")}</UiText>
         {loading ? (
           <UiText accessibilityLiveRegion="polite" style={styles.secondary}>

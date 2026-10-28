@@ -1,0 +1,17 @@
+{
+  "status": "LOCAL_PASS_DEFAULT_CLOSED_INTEGRATION_BLOCKER_FIXED",
+  "base": "ea67b852",
+  "reason": "New Swift binary preview lacks actual new-Native lifecycle acceptance; retain text/Updates independently.",
+  "redTests": 2,
+  "directedTestsPassed": 25,
+  "checks": [
+    "typecheck",
+    "UI guard",
+    "scoped ESLint",
+    "independent NO_BLOCKER"
+  ],
+  "guard": "EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED=true only; absent by default in current QA config",
+  "nativeBinaryAcceptance": "NOT_READY",
+  "databaseOrBusinessAuthorityChanged": false,
+  "sourceGateActivated": false
+}

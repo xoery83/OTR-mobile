@@ -2,6 +2,8 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { afterEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
+import { CaptureProgress } from "./CaptureProgress";
+import { fixture } from "@/data/repositories/__fixtures__/captureBatchAssessment";
 import { CaptureTray } from "./CaptureContent";
 import { CaptureActivityList, captureJobTitle } from "./CaptureActivity";
 import { emptyCaptureStaging } from "./captureStaging";
@@ -14,6 +16,7 @@ const state = vi.hoisted(() => ({
   scheme: "light" as "light" | "dark",
   buttons: [] as Record<string, any>[],
 }));
+vi.mock("./UniversalCaptureResults", () => ({ UniversalCaptureResults: () => null }));
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
 // Native file-lease bootstrap is outside the CaptureTray presentation suite.
 vi.mock("@/native/capturePicker", () => ({ pickCaptureMaterial: vi.fn() }));
@@ -337,3 +340,30 @@ it("derived actions govern recovery; explicit forward/reverse lineage opens the 
 });
 
 vi.mock("./CaptureComposer", () => ({ CaptureComposer: () => null }));
+
+it("normal Universal progress delegates availability to its owning reader while legacy intake stays explicit", async () => {
+  const f = fixture(),
+    request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  const props = {
+    model,
+    accountId: await f.getAccount(),
+    busy: false,
+    reading: false,
+    error: false,
+    canRetry: false,
+    onRetry: vi.fn(),
+    onRecover: vi.fn(),
+    onOpenJob: vi.fn(),
+    onActivity: vi.fn(),
+    onNewImport: vi.fn(),
+  };
+  const normal = renderToStaticMarkup(
+    createElement(CaptureProgress, { ...props, isCurrent: () => true }),
+  );
+  expect(normal).not.toContain(t("capture.processingUnavailable"));
+  expect(normal).not.toContain(t("capture.progress.outcomesUnavailable"));
+  const legacy = renderToStaticMarkup(createElement(CaptureProgress, props));
+  expect(legacy).toContain(t("capture.processingUnavailable"));
+  expect(legacy).toContain(t("capture.progress.outcomesUnavailable"));
+});

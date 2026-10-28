@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_PASS_NOT_DEV",
+  "rootCause": "Continuous capability SQL requires requested_family or existing operation context; generic GET omitted both.",
+  "itemId": "9c8fe13e-0675-8795-acd7-c96561dccbd3",
+  "operationId": "6590fee8-5310-8995-b5ab-72310aa3e2c4",
+  "candidateFamily": "P1",
+  "implementation": "Reviewed Source only forwards existing operation to the authenticated capability read; existing SQL resolves same Actor/Trip slot. Manual unchanged.",
+  "redFailures": 2,
+  "directedTests": 85,
+  "types": "PASS",
+  "lint": "PASS",
+  "backendBuilds": "PASS",
+  "isolatedPg": "PASS network-none/256MiB, full existing Source/Core chain with exact and foreign context",
+  "independentReview": "NO_BLOCKER",
+  "authorityChanges": [],
+  "providerCalls": 0,
+  "currentItemOrReceipt": "NONE independently read before repair",
+  "scope": "CLOSED independently verified",
+  "rejectedCandidate": "REJECTED_CAPABILITY_AGGREGATE.patch retained, never deployed"
+}

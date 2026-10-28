@@ -180,3 +180,93 @@ export const coreUniversalP1PublishResultSchema = z.strictObject({
 });
 
 export type CoreSourceFinalizeResultV2 = z.infer<typeof coreSourceFinalizeResultV2Schema>;
+
+// Existing GET source-plans/:id payload; read-only status is not Admission or Core Save authority.
+export const coreSourcePlanReadV2Schema = z
+  .strictObject({
+    captureVersion: z.literal(2),
+    plan: coreSourcePreparationResultV2Schema.shape.plan,
+    status: z.strictObject({
+      planId: uuid,
+      status: z.enum(["COMPLETE", "REVIEW", "PARTIAL", "PENDING"]),
+      reviewCount: z.number().int().min(0).max(64),
+      slots: z
+        .array(
+          z.strictObject({
+            slotId: uuid,
+            operationId: uuid,
+            targetKind,
+            targetId: uuid.nullable(),
+            outcome: z.enum([
+              "COMPLETE",
+              "EVIDENCE_PENDING",
+              "APPLIED",
+              "NO_CHANGE",
+              "REJECTED",
+              "CONFLICT",
+              "DEPENDENCY_PENDING",
+              "PENDING",
+            ]),
+            errorCode: key.nullable(),
+            domainReceiptId: uuid.nullable(),
+            committedRevision: revision.nullable(),
+          }),
+        )
+        .max(64),
+    }),
+  })
+  .superRefine((value, ctx) => {
+    const fail = () =>
+      ctx.addIssue({ code: "custom", message: "Source plan status identity mismatch" });
+    if (value.status.planId !== value.plan.planId) fail();
+    for (const slots of [value.plan.slots, value.status.slots]) {
+      if (
+        new Set(slots.map((s) => s.slotId)).size !== slots.length ||
+        new Set(slots.map((s) => s.operationId)).size !== slots.length
+      )
+        fail();
+    }
+    for (const slot of value.plan.slots) {
+      const purpose = slot.outputPurpose;
+      if (
+        !value.plan.candidateIds.includes(slot.candidateId) ||
+        slot.target.kind !== slot.targetKind ||
+        purpose.planId !== value.plan.planId ||
+        purpose.slotId !== slot.slotId ||
+        purpose.sourceId !== value.plan.sourceId ||
+        purpose.sourceRevision !== value.plan.sourceRevision ||
+        purpose.targetKind !== slot.targetKind ||
+        purpose.targetId !== slot.target.existingId
+      )
+        fail();
+      if (
+        "accountId" in purpose &&
+        (purpose.accountId !== value.plan.accountId ||
+          purpose.tripId !== value.plan.tripId ||
+          purpose.candidateId !== slot.candidateId ||
+          purpose.operationId !== slot.operationId)
+      )
+        fail();
+    }
+    for (const status of value.status.slots) {
+      const slot = value.plan.slots.find((s) => s.slotId === status.slotId);
+      if (
+        slot &&
+        (slot.operationId !== status.operationId ||
+          slot.targetKind !== status.targetKind ||
+          (status.targetId !== null && slot.target.existingId !== status.targetId))
+      )
+        fail();
+      if (
+        ["COMPLETE", "EVIDENCE_PENDING"].includes(status.outcome) &&
+        (!slot ||
+          slot.state !== status.outcome ||
+          !status.domainReceiptId ||
+          slot.intentSha256 === null ||
+          status.committedRevision === null ||
+          status.targetId === null)
+      )
+        fail();
+    }
+  });
+export type CoreSourcePlanReadV2 = z.infer<typeof coreSourcePlanReadV2Schema>;

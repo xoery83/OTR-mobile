@@ -28,7 +28,7 @@ export type CoreSyncTransport = {
     import("../../domain/trip/tripCoreV2SourceContract").CoreSourceFinalizeResultV2
   >;
 
-  capabilities(context: AccountRequestContext): Promise<unknown>;
+  capabilities(context: AccountRequestContext, operationId?: string): Promise<unknown>;
   receipt(
     context: AccountRequestContext,
     operationId: string,
@@ -116,7 +116,9 @@ export function createCoreV2SyncWorker(
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
           await corePhase("CORE_CAPABILITIES_READ", () =>
-            transport.capabilities(context),
+            sourceItem
+              ? transport.capabilities(context, operation.id)
+              : transport.capabilities(context),
           ),
         );
         await assertAccountRequestContext(context, getAccountId);

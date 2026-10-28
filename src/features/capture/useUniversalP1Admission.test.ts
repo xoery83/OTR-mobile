@@ -6,6 +6,9 @@ const hooks = vi.hoisted(() => ({
   slots: [] as unknown[],
   cursor: 0,
   layout: [] as (() => void)[],
+  effects: [] as (() => void)[],
+  transport: vi.fn(),
+  accepted: vi.fn(),
 }));
 vi.mock("react", () => ({
   useRef(initial: unknown) {
@@ -14,22 +17,26 @@ vi.mock("react", () => ({
     return hooks.slots[i];
   },
   useState: (initial: unknown) => [initial, vi.fn()],
-  useEffect: () => {},
+  useEffect: (effect: () => void) => hooks.effects.push(effect),
   useLayoutEffect: (effect: () => void) => hooks.layout.push(effect),
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 1 }));
-function Harness(batchId: string, current = () => true) {
+function Harness(batchId: string, current = () => true, result?: UniversalImportResult) {
   hooks.cursor = 0;
   hooks.layout = [];
   const actions = useUniversalP1Admission(
     { batch: { accountId: "qa", batchId } } as CaptureJobReadModel,
     current,
+    result,
   );
   hooks.layout.forEach((effect) => effect());
   return actions;
 }
 beforeEach(() => {
   hooks.slots = [];
+  hooks.effects = [];
+  hooks.transport.mockReset();
+  hooks.accepted.mockReset();
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P4_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P5_ADMISSION_ENABLED", "false");
@@ -101,4 +108,31 @@ it("keeps P6 closed until its own opt-in", () => {
   expect(Harness("batch-a").enabledFamilies).toEqual([]);
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED", "true");
   expect(Harness("batch-a").enabledFamilies).toEqual(["P6"]);
+});
+
+vi.mock("@/data/auth/authRepository", () => ({ requireAdoptedUserId: async () => "qa" }));
+vi.mock("@/data/repositories/tripCoreSha256", () => ({ tripCoreSha256Hex: vi.fn() }));
+vi.mock("@/data/api/tripCoreV2Transport", () => ({
+  createCoreV2Transport: hooks.transport,
+}));
+vi.mock("@/data/operations/universalP1AdmissionConsumer", () => ({
+  readUniversalAcceptedItems: hooks.accepted,
+}));
+it("receipt-only cold recovery keeps the same Core request budget as explicit confirmation", async () => {
+  const transport = { receipt: vi.fn() };
+  hooks.transport.mockReturnValue(transport);
+  hooks.accepted.mockResolvedValue({});
+  Harness("batch-a", () => true, {} as UniversalImportResult);
+  hooks.effects.forEach((effect) => effect());
+  await vi.waitFor(() => expect(hooks.accepted).toHaveBeenCalledOnce());
+  expect(hooks.transport).toHaveBeenCalledWith(
+    expect.any(Function),
+    expect.any(Function),
+    { timeoutMs: 60000 },
+  );
+  expect(hooks.accepted).toHaveBeenCalledWith(
+    expect.any(Object),
+    expect.any(Object),
+    expect.objectContaining({ transport }),
+  );
 });

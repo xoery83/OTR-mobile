@@ -59,13 +59,11 @@ it("does not label offline or unprepared batches failed", async () => {
 it("rejects a context from another Batch or Actor", async () => {
   const f = fixture();
   const binding = await f.context({}, randomUUID());
-  f.context
-    .mockResolvedValueOnce(binding)
-    .mockResolvedValueOnce({
-      ...binding,
-      batchId: f.jobs[1].batch.batchId,
-      actorId: randomUUID(),
-    });
+  f.context.mockResolvedValueOnce(binding).mockResolvedValueOnce({
+    ...binding,
+    batchId: f.jobs[1].batch.batchId,
+    actorId: randomUUID(),
+  });
   expect(await readUniversalActivities(f.jobs, f)).toEqual({});
 });
 it("discards the whole observation on late account transition and stops further GETs", async () => {
@@ -95,4 +93,66 @@ it("skips incomplete intake and wrong account inventory", async () => {
     }),
   ).toEqual({});
   expect(f.context).not.toHaveBeenCalled();
+});
+
+it("reports each validated observation before slower older batches finish", async () => {
+  const f = fixture();
+  let release!: (value: UniversalExecutionContext) => void;
+  const second = new Promise<UniversalExecutionContext>((resolve) => {
+    release = resolve;
+  });
+  const binding = await f.context({}, f.jobs[1].batch.batchId);
+  f.context.mockClear();
+  f.context
+    .mockImplementationOnce(async () => ({
+      ...binding,
+      batchId: f.jobs[0].batch.batchId,
+    }))
+    .mockImplementationOnce(() => second);
+  const onObservation = vi.fn();
+  const work = readUniversalActivities(f.jobs, { ...f, onObservation });
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(onObservation).toHaveBeenCalledExactlyOnceWith(
+    f.jobs[0].batch.batchId,
+    f.activity,
+  );
+  release(binding);
+  await work;
+  expect(onObservation).toHaveBeenCalledTimes(2);
+});
+
+it("does not emit late observations after account invalidation", async () => {
+  const f = fixture();
+  const binding = await f.context({}, f.jobs[0].batch.batchId);
+  f.context.mockImplementationOnce(async () => {
+    advanceAccountGeneration();
+    return binding;
+  });
+  const onObservation = vi.fn();
+  expect(await readUniversalActivities(f.jobs, { ...f, onObservation })).toEqual({});
+  expect(onObservation).not.toHaveBeenCalled();
+});
+
+it("reads completion details only after a valid READY observation and preserves it when details fail", async () => {
+  const f = fixture(),
+    onObservation = vi.fn(),
+    onReady = vi.fn().mockRejectedValue(Error("OFFLINE"));
+  const pending = await f.context({}, f.jobs[1].batch.batchId);
+  f.context
+    .mockResolvedValueOnce({ ...pending, batchId: f.jobs[0].batch.batchId })
+    .mockResolvedValueOnce({
+      ...pending,
+      activity: { ...f.activity, state: "PROCESSING" },
+    });
+  const observed = await readUniversalActivities(f.jobs, {
+    ...f,
+    onObservation,
+    onReady,
+  });
+  expect(onReady).toHaveBeenCalledOnce();
+  expect(onObservation).toHaveBeenCalledTimes(2);
+  expect(observed[f.jobs[0].batch.batchId].state).toBe("RESULTS_READY");
+  expect(onObservation.mock.invocationCallOrder[0]).toBeLessThan(
+    onReady.mock.invocationCallOrder[0],
+  );
 });

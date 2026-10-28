@@ -1,3 +1,10 @@
+<!-- Import capability context repair, 28 October 2026 -->
+Reviewed Source dispatch may read existing `GET /v2/trips/:tripId/core/capabilities?operationId=<uuid>`
+for its exact durable operation. The normal authenticated Actor and Trip remain authoritative;
+unknown/duplicate query keys and invalid UUIDs are rejected. The existing SQL resolves family
+only from that Actor/Trip/operation slot. This read grants no Admission, READY status or Mutation;
+all existing Source/Core guards still run. Manual requests omit operationId and are unchanged.
+
 # OTR Mobile 2.0 API Contract Draft
 
 ## Universal existing Task context and Native consumer candidate — 24 October 2026
@@ -438,6 +445,21 @@ Response shape:
   state.
 
 ## Documents / Tickets
+
+A normal authorized Universal context GET for a Batch not yet prepared returns
+404 `TASK_NOT_FOUND` with `Cache-Control: no-store`; it does not prepare work.
+Missing existing Task mirrors, Auth failures and busy/unavailable services retain
+503. Explicit Start remains the only Native action that may prepare/dispatch.
+
+Import Documents reads existing `GET /v2/trips/:tripId/core/source-plans/:planId`
+through the authenticated Core transport. The strict read DTO binds plan/status,
+Actor Account/Trip, Source/revision, slot/operation/target and completed receipt.
+Only a COMPLETE owning slot links a saved Item to the exact retained input; a
+preview, READY slot or another Source in the same Batch does not. The current
+surface follows the repository-selected Batch and reports unavailable metadata
+separately from original access. Personal Inbox does not infer Trip associations.
+This adds no document mutation, cloud-custody claim or business authority.
+
 
 `GET /trips/:id/documents?since=:cursor` - `NEW`
 
@@ -1244,3 +1266,9 @@ Universal P2 publication metadata also pins `proposedPlanSha256` using the exist
 DEV candidate, default CLOSED and pending the precise Person SQL/ACL authorization. Normal authenticated `POST /v2/trips/:tripId/people` consumes `personCloudCreateSchema`, with an exact `Idempotency-Key` equal to `operationId`; `GET /v2/trips/:tripId/person-create-operations/:operationId` returns the immutable typed receipt or exact `PERSON_CREATE_NOT_FOUND`. Both require current Trip read authorization plus owning SQL creation/result qualification, have private/no-store responses, and bind Actor/Trip/Operation/Person without name-based identity inference. The 8 KiB request limit applies before Node buffers the body.
 
 Only a new explicit `CLOUD_SHARED_AUTHORED` intent can use this contract. Existing private name intents are not upgraded. The created Person is unlinked, has no Account, invitation or access grant, and retains its stable Person ID. This is an owning Person creation extension, not an extension of SET_PARTICIPATION, Invite or Claim. Receipt/readback validation and local SQLite74 qualification precede P1 dependency resolution. No endpoint or local receipt implies a DEV deployment or Cloud acceptance.
+
+## Import Updates — existing Task read projection (2026-10-28 candidate)
+
+The Import-owned Updates section reads the latest20 Account Capture jobs through the existing repository, then existing normal Auth/Trip context GETs. Only validated current RESULTS_READY/FAILED/UNKNOWN/STALE observations become one stable `universal-import:<Batch>` row. Routine progress/canceled/unobserved work is not a notification. Newer states replace or remove that Batch row rather than append retries. Current Trip/query filters apply; other Accounts never contribute.
+
+These are partial recent processing records with no invented unread state, Save outcome or formal Review authority. They appear in All/Activity, outside unread/Needs Attention filters until an owning read-marker/action-resolution contract exists. Existing Capture-intake notification markers and badge/read actions remain separate and unchanged. Open rechecks the original Account generation and repository Job/Batch/Trip identity, then uses the existing Capture/Results route; it cannot dispatch/prepare/charge/resolve a Review or create an Item. No new database/schema/platform or remote endpoint. Formal Save/Review events and full unread integration remain pending owning-state qualification.

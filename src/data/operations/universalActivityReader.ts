@@ -4,14 +4,21 @@ import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import type {
   UniversalTaskActivity,
   UniversalExecutionContext,
+  UniversalImportResult,
 } from "../api/universalImportContracts";
 
-// Sequential context GETs over the already paginated inventory; no Results/dispatch/mutation.
+// Sequential context GETs; completion reads are opt-in and never dispatch or mutate.
 export async function readUniversalActivities(
   jobs: readonly CaptureJobReadModel[],
   dependencies: {
     getAccountId(): Promise<string>;
     isCurrent(): boolean;
+    onObservation?(batchId: string, activity: UniversalTaskActivity): void;
+    onReady?(
+      job: CaptureJobReadModel,
+      context: Awaited<ReturnType<typeof captureAccountRequestContext>>,
+      binding: UniversalExecutionContext,
+    ): Promise<void>;
     context(
       context: Awaited<ReturnType<typeof captureAccountRequestContext>>,
       batchId: string,
@@ -41,7 +48,12 @@ export async function readUniversalActivities(
         binding.batchId !== job.batch.batchId
       )
         continue;
-      if (binding.activity) observed[job.batch.batchId] = binding.activity;
+      if (binding.activity) {
+        observed[job.batch.batchId] = binding.activity;
+        dependencies.onObservation?.(job.batch.batchId, binding.activity);
+        if (binding.activity.state === "RESULTS_READY" && current())
+          await dependencies.onReady?.(job, context, binding);
+      }
     } catch {
       // Older/offline Hosts and unprepared Batches have no Task observation, never a fabricated failure.
     }
@@ -51,6 +63,8 @@ export async function readUniversalActivities(
 export async function readDefaultUniversalActivities(
   jobs: readonly CaptureJobReadModel[],
   isCurrent: () => boolean,
+  onObservation?: (batchId: string, activity: UniversalTaskActivity) => void,
+  onResult?: (job: CaptureJobReadModel, result: UniversalImportResult) => Promise<void>,
 ) {
   const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
   if (!baseUrl || !isCurrent()) return {};
@@ -68,5 +82,18 @@ export async function readDefaultUniversalActivities(
     getAccountId: requireActiveUserId,
     isCurrent,
     context: transport.context,
+    onObservation,
+    ...(onResult
+      ? {
+          onReady: async (
+            job: CaptureJobReadModel,
+            context: Awaited<ReturnType<typeof captureAccountRequestContext>>,
+            binding: UniversalExecutionContext,
+          ) => {
+            const result = await transport.result(context, binding);
+            if (isCurrent()) await onResult(job, result);
+          },
+        }
+      : {}),
   });
 }
