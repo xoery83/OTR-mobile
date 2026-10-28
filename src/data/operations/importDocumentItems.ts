@@ -1,5 +1,4 @@
 import {
-  captureAccountRequestContext,
   assertAccountRequestContext,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
@@ -24,7 +23,7 @@ export type ImportDocumentItem = {
 export async function readImportDocumentItems(
   context: AccountRequestContext,
   document: ImportDocument,
-  bindings: readonly { sourceId: string; sourceRevision: number; tripId?: string }[],
+  bindings: readonly { sourceId: string; sourceRevision: number }[],
   model: CaptureJobReadModel,
   result: UniversalImportResult,
   deps: {
@@ -42,10 +41,7 @@ export async function readImportDocumentItems(
   const input = model.inputs.find((i) => i.id === document.inputId);
   if (
     document.accountId !== context.accountId ||
-    result.accountId !== context.accountId ||
-    result.tripId !== context.tripId ||
-    (document.tripId !== context.tripId &&
-      !(document.tripId === null && bindings.some((b) => b.tripId === context.tripId))) ||
+    document.tripId !== context.tripId ||
     document.batchId !== model.batch.batchId ||
     document.jobId !== model.batch.jobId ||
     !input ||
@@ -59,10 +55,7 @@ export async function readImportDocumentItems(
     (b) =>
       b.inputId === document.inputId &&
       bindings.some(
-        (link) =>
-          link.sourceId === b.sourceId &&
-          link.sourceRevision === b.revision &&
-          (document.tripId !== null || link.tripId === context.tripId),
+        (link) => link.sourceId === b.sourceId && link.sourceRevision === b.revision,
       ),
   );
   if (!sources.length) throw Error("DOCUMENTS_SOURCE_UNAVAILABLE");
@@ -145,7 +138,7 @@ export async function readDefaultImportDocumentItems(
   expected: ImportDocument,
   isCurrent: () => boolean,
 ) {
-  if (!isCurrent()) return null;
+  if (scope !== "TRIP" || !isCurrent()) return null;
   const [
     { requireAdoptedUserId },
     { getDefaultImportDocumentsRepository },
@@ -173,26 +166,18 @@ export async function readDefaultImportDocumentItems(
   const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
   if (!baseUrl) throw Error("DOCUMENTS_UNAVAILABLE");
   const model = await reopenDefaultCaptureJob(document.jobId);
-  await assertAccountRequestContext(context, requireAdoptedUserId);
-  if (!isCurrent()) throw Error("DOCUMENTS_STALE");
-  const tripId = scope === "TRIP" ? context.tripId : model.batch.context.tripPrior?.id;
-  if (!tripId || !bindings.some((b) => b.tripId === tripId)) return null;
-  const sourceContext = await captureAccountRequestContext(tripId, requireAdoptedUserId);
-  await assertAccountRequestContext(context, requireAdoptedUserId);
-  if (sourceContext.accountId !== context.accountId)
-    throw Error("DOCUMENTS_SCOPE_MISMATCH");
   const universal = createUniversalImportTransport(requireAdoptedUserId, {
     baseUrl,
     assertCurrent: () => {
       if (!isCurrent()) throw Error("DOCUMENTS_STALE");
     },
   });
-  const binding = await universal.context(sourceContext, document.batchId),
-    result = await universal.result(sourceContext, binding);
+  const binding = await universal.context(context, document.batchId),
+    result = await universal.result(context, binding);
   const items = await readImportDocumentItems(
-    sourceContext,
+    context,
     document,
-    bindings.filter((b) => b.tripId === tripId),
+    bindings,
     model,
     result,
     {

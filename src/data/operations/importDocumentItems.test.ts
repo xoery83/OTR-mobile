@@ -200,24 +200,3 @@ it("rejects replaced Capture payload, wrong Account and late invalidation withou
   });
   await expect(h.read()).rejects.toThrow();
 });
-
-it("reads a private Inbox original's saved Item through its own qualified Source Trip", async () => {
-  const f = await fixture();
-  f.document.tripId = null;
-  Object.assign(f.bindings[0], { tripId: f.context.tripId });
-  expect(await f.read()).toEqual([
-    expect.objectContaining({
-      itemId: f.identity("item"),
-      sourceId: f.bindings[0].sourceId,
-    }),
-  ]);
-  expect(f.document.tripId).toBeNull();
-});
-
-it("does not use a private original or Batch prior to authorize an unrelated Source Trip", async () => {
-  const f = await fixture();
-  f.document.tripId = null;
-  Object.assign(f.bindings[0], { tripId: randomUUID() });
-  await expect(f.read()).rejects.toThrow("DOCUMENTS_SCOPE_MISMATCH");
-  expect(f.deps.transport.sourcePlan).not.toHaveBeenCalled();
-});

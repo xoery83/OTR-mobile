@@ -25,16 +25,6 @@ src/
 
 Feature modules may compose UI, hooks, and repositories. Domain modules must not import UI, SQLite, Expo APIs, or API clients. Repositories coordinate local reads/writes and enqueue sync operations.
 
-## Private Import original and saved Item projection
-
-An Account-private Inbox original may display its own formally saved Item count
-without moving the original into Trip Documents or sharing it. The reader uses
-existing exact Capture/payload/hash/length → admitted Source bindings, requires
-current cached Actor access for that Source Trip, then rechecks the same owning
-Task and completed Source Plan through normal Backend Auth. A historical Batch
-Trip prior only selects a matching already-qualified binding; it is not authority.
-No new custody, mutation, Source/Document identity, ACL or database schema is added.
-
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from

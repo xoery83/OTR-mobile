@@ -415,19 +415,3 @@ it("carries the scoped original filename to native display, never a temporary ID
   await settle();
   expect(h.preview.mock.calls[0][2]).toBe("synthetic-roundtrip.pdf");
 });
-
-it("reads qualified saved links for a private Inbox detail without moving its scope", async () => {
-  h.associations.mockResolvedValue([{ itemId: "qualified-item" }]);
-  Harness(doc.captureId);
-  await settle();
-  Harness(doc.captureId);
-  await vi.waitFor(() => expect(Harness(doc.captureId).props.linkedItems).toBe(1));
-  expect(h.associations).toHaveBeenCalledWith(
-    expect.objectContaining({ accountId: "qa", tripId: "" }),
-    "PERSONAL_INBOX",
-    doc,
-    expect.any(Function),
-  );
-  expect(Harness(doc.captureId).props.tripId).toBeNull();
-  expect(h.original).not.toHaveBeenCalled();
-});

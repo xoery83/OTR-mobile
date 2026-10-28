@@ -1,10 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { t } from "@/ui/locale";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import {
-  captureAccountRequestContext,
-  type AccountRequestContext,
-} from "@/data/auth/accountRequestContext";
+import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type {
   ImportDocument,
   ImportDocumentScope,
@@ -50,7 +47,6 @@ function ScopedDocuments(props: Props) {
     [opening, setOpening] = useState(false);
   const [error, setError] = useState(false),
     [hasMore, setHasMore] = useState(false);
-  const documentContext = useRef<AccountRequestContext | null>(null);
   const generation = useRef(getAccountGeneration()),
     alive = useRef(true),
     sequence = useRef(0);
@@ -91,10 +87,7 @@ function ScopedDocuments(props: Props) {
       setError(false);
       if (props.captureId) {
         const next = await repository.read(context, props.scope, props.captureId);
-        if (current() && request === sequence.current) {
-          documentContext.current = context;
-          setDocument(next);
-        }
+        if (current() && request === sequence.current) setDocument(next);
       } else {
         const tail = more ? documents.at(-1) : undefined;
         const next = await repository.list(
@@ -224,10 +217,10 @@ function ScopedDocuments(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
   useEffect(() => {
-    const context = documentContext.current;
-    if (!document || !context || !visible) return;
+    if (!document || props.scope !== "TRIP" || !visible) return;
     let canceled = false;
     void (async () => {
+      const { context } = await reader();
       if (canceled || !current()) return;
       setLinkedItems(null);
       setLinksUnavailable(false);
