@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
   read: vi.fn(),
   original: vi.fn(),
   associations: vi.fn(),
+  preview: vi.fn(),
 }));
 vi.mock("react", () => ({
   useState(initial: unknown) {
@@ -49,9 +50,7 @@ vi.mock("@/data/operations/importDocumentItems", () => ({
   readDefaultImportDocumentItems: h.associations,
 }));
 vi.mock("@/native/importOriginalPreview", () => ({
-  previewImportOriginal: vi.fn(async () => {
-    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
-  }),
+  previewImportOriginal: h.preview,
 }));
 vi.mock("./ImportDocuments", () => ({
   ImportDocumentsList: vi.fn(),
@@ -115,6 +114,7 @@ beforeEach(() => {
   h.list.mockResolvedValue([doc]);
   h.read.mockResolvedValue(doc);
   h.associations.mockReset().mockResolvedValue([]);
+  h.preview.mockReset().mockRejectedValue(Error("IMPORT_PREVIEW_UNAVAILABLE"));
   h.original.mockResolvedValue({
     document: doc,
     bytes: new TextEncoder().encode("retained original"),
@@ -395,3 +395,23 @@ it.each([
     }
   },
 );
+
+it("carries the scoped original filename to native display, never a temporary ID", async () => {
+  const pdf = {
+    ...doc,
+    kind: "FILE",
+    declaredContentType: "application/pdf",
+    originalFilename: "synthetic-roundtrip.pdf",
+  };
+  h.read.mockResolvedValue(pdf);
+  h.original.mockResolvedValue({
+    document: pdf,
+    bytes: new TextEncoder().encode("%PDF"),
+  });
+  h.preview.mockResolvedValue(undefined);
+  Harness(doc.captureId);
+  await settle();
+  (Harness(doc.captureId).props.onOpenOriginal as (id: string) => void)(doc.captureId);
+  await settle();
+  expect(h.preview.mock.calls[0][2]).toBe("synthetic-roundtrip.pdf");
+});

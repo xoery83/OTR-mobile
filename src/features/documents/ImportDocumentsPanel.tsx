@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { t } from "@/ui/locale";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type {
@@ -19,6 +20,7 @@ type Props = {
   previewOriginal?(
     original: { document: ImportDocument; bytes: Uint8Array },
     isCurrent: () => boolean,
+    displayName: string,
   ): Promise<void>;
 };
 
@@ -149,7 +151,11 @@ function ScopedDocuments(props: Props) {
           props.previewOriginal ??
           (await import("@/native/importOriginalPreview")).previewImportOriginal;
         if (!current() || request !== sequence.current) return;
-        await preview(retained, () => current() && request === sequence.current);
+        await preview(
+          retained,
+          () => current() && request === sequence.current,
+          retained.document.originalFilename ?? t("capture.unnamed"),
+        );
       }
     } catch (error) {
       if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true") {

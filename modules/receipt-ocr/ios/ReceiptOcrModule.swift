@@ -76,7 +76,7 @@ public class ReceiptOcrModule: Module {
       ]
     }
 
-    AsyncFunction("previewImportOriginal") { (data: Data, token: String, promise: Promise) in
+    AsyncFunction("previewImportOriginal") { (data: Data, token: String, displayName: String, promise: Promise) in
       DispatchQueue.main.async {
         if self.cancelledImportPreviews.remove(token) != nil { promise.resolve(nil); return }
         let reject: (String) -> Void = { reason in
@@ -105,7 +105,7 @@ public class ReceiptOcrModule: Module {
           .appendingPathComponent("otr-import-" + token).appendingPathExtension(suffix)
         do { try data.write(to: file, options: [.atomic, .completeFileProtection]) }
         catch { reject("WRITE"); return }
-        let preview = ImportOriginalPreviewController(file: file) { failed in
+        let preview = ImportOriginalPreviewController(file: file, title: String(displayName.prefix(255))) { failed in
           try? FileManager.default.removeItem(at: file)
           if self.importPreview?.token == token { self.importPreview = nil }
           if failed { reject("PRESENTATION_REJECTED") }
@@ -285,14 +285,24 @@ private final class DraftPreviewController: QLPreviewController {
   }
 }
 
+private final class ImportOriginalPreviewItem: NSObject, QLPreviewItem {
+  let previewItemURL: URL?
+  let previewItemTitle: String?
+  init(file: URL, title: String?) {
+    previewItemURL = file
+    previewItemTitle = title
+    super.init()
+  }
+}
+
 // Owns only the disposable preview copy; the durable Capture original remains in its repository.
 private final class ImportOriginalPreviewController: QLPreviewController, QLPreviewControllerDataSource {
-  private let file: URL
+  private let item: ImportOriginalPreviewItem
   private var finish: ((Bool) -> Void)?
   private var presented = false
   private var closeRequested = false
-  init(file: URL, finish: @escaping (Bool) -> Void) {
-    self.file = file
+  init(file: URL, title: String? = nil, finish: @escaping (Bool) -> Void) {
+    self.item = ImportOriginalPreviewItem(file: file, title: title)
     self.finish = finish
     super.init(nibName: nil, bundle: nil)
     dataSource = self
@@ -302,7 +312,7 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
   func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
   func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-    file as NSURL
+    item
   }
   func failIfPresentationPending() {
     guard !presented, finish != nil else { return }

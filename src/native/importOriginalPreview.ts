@@ -6,13 +6,18 @@ import { subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
 
 type Preview = {
-  previewImportOriginal(bytes: Uint8Array, token: string): Promise<void>;
+  previewImportOriginal(
+    bytes: Uint8Array,
+    token: string,
+    displayName: string,
+  ): Promise<void>;
   closeImportOriginal(token: string): Promise<void>;
 };
 // Called only with the repository's scoped, verified original, never a caller-provided URI.
 export async function previewImportOriginal(
   original: { document: ImportDocument; bytes: Uint8Array },
   isCurrent: () => boolean,
+  displayName = original.document.originalFilename ?? "",
 ): Promise<void> {
   if (!isCurrent()) return;
   // Keep the new Native adapter closed until its actual binary lifecycle is qualified.
@@ -56,7 +61,7 @@ export async function previewImportOriginal(
   }, 100);
   try {
     if (!isCurrent()) return;
-    await native.previewImportOriginal(new Uint8Array(bytes), token);
+    await native.previewImportOriginal(new Uint8Array(bytes), token, displayName);
   } finally {
     clearInterval(timer);
     unsubscribe();

@@ -100,3 +100,13 @@ it("a failed QA logger neither blocks the native preview nor replaces a missing 
     info.mockRestore();
   }
 });
+
+it("passes the document display name separately from the opaque private file token", async () => {
+  bridge.previewImportOriginal.mockResolvedValueOnce(undefined);
+  await previewImportOriginal(original, () => true, "synthetic-roundtrip.pdf");
+  expect(bridge.previewImportOriginal).toHaveBeenCalledWith(
+    expect.any(Uint8Array),
+    "single-preview-token",
+    "synthetic-roundtrip.pdf",
+  );
+});
