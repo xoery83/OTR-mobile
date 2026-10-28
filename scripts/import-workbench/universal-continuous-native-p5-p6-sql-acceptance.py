@@ -50,5 +50,6 @@ extra = r'''
 '''
 needle = " print(json.dumps({'status':'CONTINUOUS_P2_PG_PASS_NOT_DEV'"
 assert source.count(needle) == 1
-source = source.replace(needle, extra + needle)
+if os.environ.get('OTR_UNIVERSAL_P2_MULTI_SOURCE_SQL') != '1':
+    source = source.replace(needle, extra + needle)
 exec(compile(source, str(base), 'exec'), {'__file__': str(base), '__name__': '__main__'})

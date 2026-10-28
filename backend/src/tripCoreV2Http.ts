@@ -445,6 +445,33 @@ export async function coreHttpBoundary(
       );
     }
     const code = error instanceof Error ? error.message : "INTERNAL_ERROR";
+    if (path === "universal-p1-candidates") {
+      try {
+        const category = [
+          "CORE_CONNECTION_TIMEOUT",
+          "CORE_CONNECTION_BUSY",
+          "CORE_SCOPE_MISMATCH",
+          "CONTRACT_UNSUPPORTED",
+          "INPUT_STALE",
+          "UNIVERSAL_BINDING_SCOPE",
+          "UNIVERSAL_SELECTION_UNAVAILABLE",
+          "UNIVERSAL_SELECTION_STALE",
+          "SOURCE_INTEGRITY_FAILURE",
+          "IMPORT_EVIDENCE_INVALID",
+          "P1_SOURCE_EVIDENCE_INVALID",
+          "P1_SOURCE_CANDIDATE_INVALID",
+          "P2_SOURCE_CANDIDATE_INVALID",
+          "CORE_CAPABILITY_CLOSED",
+        ].includes(code)
+          ? code
+          : "FAILED";
+        console.info(
+          JSON.stringify({ event: "core_source_publication_failed", category }),
+        );
+      } catch {
+        // Fixed diagnostic categories cannot replace the original failure response.
+      }
+    }
     if (
       path === "universal-p1-candidates" &&
       [
