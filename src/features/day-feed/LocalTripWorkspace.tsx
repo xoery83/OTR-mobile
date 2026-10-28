@@ -254,6 +254,17 @@ function LocalTripContent({
         ticket !== request.current
       )
         return;
+      if (!session?.identity) {
+        setMetadataEditable(false);
+        setTrips([]);
+        setRemoteTrips([]);
+        setSelected(null);
+        setRemoteSelected(null);
+        setEligibleToday({});
+        setStatus(tripId ? "UNAVAILABLE" : "READY");
+        onKnownTrip("NONE");
+        return;
+      }
       const repo = await readLocalTripRepository();
       const local = tripId ? await repo.getTrip(tripId) : null;
       const qaAccountId = session?.identity?.userId ?? null;

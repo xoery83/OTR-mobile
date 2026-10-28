@@ -369,7 +369,16 @@ beforeEach(() => {
   vi.mocked(readLocalSession).mockReset();
   vi.mocked(readCommittedLocalSession)
     .mockReset()
-    .mockImplementation(async () => (await readLocalSession()) ?? null);
+    .mockImplementation(
+      async () =>
+        (await readLocalSession()) ??
+        ({
+          identity: {
+            userId: "10000000-0000-4000-8000-000000000001",
+            displayName: "Account",
+          },
+        } as never),
+    );
   state.cleanups.forEach((cleanup) => cleanup());
   state.cleanups = [];
   state.effects = [];
@@ -1638,8 +1647,35 @@ it("waits for the account apply snapshot before opening the new account Trip rep
   render();
   await flush();
   expect(state.repo).not.toHaveBeenCalled();
-  finish(null);
+  finish({ identity: { userId: "b", displayName: "B" } });
   await flush();
   expect(repo.listTrips).toHaveBeenCalledOnce();
   expect(render()).not.toContain("localTrip.unavailable");
+});
+
+it("signed-out My Trips does not open account repositories or retain the previous account list", async () => {
+  const repo = repository([trip("old-a", "Private Account A Trip")]);
+  state.repo.mockResolvedValue(repo);
+  render();
+  await flush();
+  expect(render()).toContain("Private Account A Trip");
+  state.repo.mockClear();
+  state.discovery.mockClear();
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  advanceAccountGeneration();
+  render();
+  await flush();
+  expect(state.repo).not.toHaveBeenCalled();
+  expect(state.discovery).not.toHaveBeenCalled();
+  expect(render()).not.toContain("Private Account A Trip");
+  expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
+});
+it("a signed-out direct Trip route cannot read the previous account cache", async () => {
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  props.tripId = "old-a";
+  render();
+  await flush();
+  expect(state.repo).not.toHaveBeenCalled();
+  expect(state.discovery).not.toHaveBeenCalled();
+  expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });
