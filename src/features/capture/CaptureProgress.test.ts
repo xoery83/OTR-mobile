@@ -48,45 +48,57 @@ beforeEach(() => {
   state.scrollTo.mockClear();
   setUiLocale("en");
 });
-afterEach(() => vi.unstubAllGlobals());
-
-it.each([true, false])("offers bounded deterministic paging only in DEV=%s", (dev) => {
-  vi.stubGlobal("__DEV__", dev);
-  renderToStaticMarkup(
-    createElement(CaptureProgress, {
-      model: null,
-      accountId: "qa",
-      busy: false,
-      reading: false,
-      error: false,
-      canRetry: false,
-      onRetry: vi.fn(),
-      onRecover: vi.fn(),
-      onOpenJob: vi.fn(),
-      onActivity: vi.fn(),
-      onNewImport: vi.fn(),
-    }),
-  );
-  const up = state.buttons.find((b) => b.label === t("capture.progress.pageUp"));
-  const down = state.buttons.find((b) => b.label === t("capture.progress.pageDown"));
-  expect(!!up).toBe(dev);
-  expect(!!down).toBe(dev);
-  if (!dev) return;
-  state.scrollProps.onLayout({ nativeEvent: { layout: { height: 800 } } });
-  state.scrollProps.onContentSizeChange(400, 2200);
-  down.onPress();
-  down.onPress();
-  down.onPress();
-  expect(state.scrollTo.mock.calls.map(([p]) => p)).toEqual([
-    { y: 640, animated: false },
-    { y: 1280, animated: false },
-    { y: 1400, animated: false },
-  ]);
-  state.scrollProps.onScroll({ nativeEvent: { contentOffset: { y: 730 } } });
-  up.onPress();
-  up.onPress();
-  expect(state.scrollTo.mock.calls.slice(-2).map(([p]) => p.y)).toEqual([90, 0]);
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
+
+it.each([
+  [true, undefined, true],
+  [false, undefined, false],
+  [false, "true", true],
+  [false, "false", false],
+] as const)(
+  "offers bounded paging for DEV=%s with QA opt-in %s",
+  (dev, optIn, enabled) => {
+    vi.stubGlobal("__DEV__", dev);
+    vi.stubEnv("EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING", optIn);
+    renderToStaticMarkup(
+      createElement(CaptureProgress, {
+        model: null,
+        accountId: "qa",
+        busy: false,
+        reading: false,
+        error: false,
+        canRetry: false,
+        onRetry: vi.fn(),
+        onRecover: vi.fn(),
+        onOpenJob: vi.fn(),
+        onActivity: vi.fn(),
+        onNewImport: vi.fn(),
+      }),
+    );
+    const up = state.buttons.find((b) => b.label === t("capture.progress.pageUp"));
+    const down = state.buttons.find((b) => b.label === t("capture.progress.pageDown"));
+    expect(!!up).toBe(enabled);
+    expect(!!down).toBe(enabled);
+    if (!enabled) return;
+    state.scrollProps.onLayout({ nativeEvent: { layout: { height: 800 } } });
+    state.scrollProps.onContentSizeChange(400, 2200);
+    down.onPress();
+    down.onPress();
+    down.onPress();
+    expect(state.scrollTo.mock.calls.map(([p]) => p)).toEqual([
+      { y: 640, animated: false },
+      { y: 1280, animated: false },
+      { y: 1400, animated: false },
+    ]);
+    state.scrollProps.onScroll({ nativeEvent: { contentOffset: { y: 730 } } });
+    up.onPress();
+    up.onPress();
+    expect(state.scrollTo.mock.calls.slice(-2).map(([p]) => p.y)).toEqual([90, 0]);
+  },
+);
 it("shows retained C3 validation history in normal Job detail while interpretation stays unavailable", async () => {
   const f = fixture();
   const request = await f.submit();

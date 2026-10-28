@@ -260,7 +260,8 @@ export function CaptureProgress({
   );
   return (
     <>
-      {typeof __DEV__ !== "undefined" && __DEV__ ? (
+      {(typeof __DEV__ !== "undefined" && __DEV__) ||
+      process.env.EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING === "true" ? (
         <View style={styles.paging}>
           <UiButton
             variant="secondary"

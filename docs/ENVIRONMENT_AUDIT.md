@@ -91,3 +91,8 @@ See `docs/IOS_DEVICE_RUNBOOK.md` for the repeatable physical-device workflow.
 ## Native Folder Policy
 
 The generated `ios/` and `android/` directories remain ignored. Native settings required by this project must be represented in Expo config or config plugins so prebuild regeneration is safe. Do not commit generated native output until the project deliberately adopts a committed-native-folder policy.
+
+Import simulator QA may explicitly set `EXPO_PUBLIC_OTR_CAPTURE_QA_PAGING=true`
+to expose the existing bounded Progress paging controls in a minified bundle.
+Default is hidden outside DEV; this affects only scroll position and grants no
+Auth, Source, Admission, storage or business authority.
