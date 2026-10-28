@@ -1,0 +1,11 @@
+{
+  "status": "UNAPPROVED_NOT_INSTALLED",
+  "independentReview": "NO_BLOCKER",
+  "artifactHashVerification": "PARENT_AND_INDEPENDENT_PASS",
+  "sourceManifestSHA256": "5c8292b3fd0a4a63075e2dffcacc371d618b18eefe412e4f2a4aa5a70d0a32df",
+  "review": "Exact live definition/expression/validated equality; no CAS fallback; old predicates preserved; six non-flight NAME exact-empty allowance only; no business DML/functions/roles/RLS/GRANT; rollback refuses before DDL when exception facts exist; CHECK OID replacement explicit.",
+  "isolatedPg": "P5 agent7Core+17harness PASS; independent reviewer inspected logs/hashes, did not rerun PG",
+  "privateReproDirectory": "/private/tmp/otr-p5-check-dispatch-live-20261029",
+  "oldCandidate": "p5-check-dispatch-candidate remains immutable/DRIFT_BLOCKED. Do not use its install or rollback for the new packet.",
+  "installation": "Requires precise NEW Owner Schema approval plus fresh serial live preflight. No DEV changes executed."
+}
