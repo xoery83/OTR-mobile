@@ -7,5 +7,6 @@
   "isolatedPg": "P5 agent7Core+17harness PASS; independent reviewer inspected logs/hashes, did not rerun PG",
   "privateReproDirectory": "/private/tmp/otr-p5-check-dispatch-live-20261029",
   "oldCandidate": "p5-check-dispatch-candidate remains immutable/DRIFT_BLOCKED. Do not use its install or rollback for the new packet.",
-  "installation": "Requires precise NEW Owner Schema approval plus fresh serial live preflight. No DEV changes executed."
+  "installation": "Requires precise NEW Owner Schema approval plus fresh serial live preflight. No DEV changes executed.",
+  "packaging": "Install/rollback/catalog and their hashes are byte-identical. Full isolated harness and its original hashed scripts remain in privateReproDirectory; manifest records private artifacts as well as retained packet files."
 }
