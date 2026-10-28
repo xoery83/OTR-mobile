@@ -6,76 +6,53 @@ Owner continuous delivery authorization applies to this independent lane. Base m
 Import released the central catalog editing window after `75de43cc`. No shared
 runtime, deployment, business policy, database permission or QA device changed.
 
-## First source slice
+## Current qualification
 
-- Existing fixed-DEV Auth adapter now requests Email OTP and verifies entered codes.
-  Verification returns provisional credentials; the existing account transition
-  installs them. Requests are bounded, cancelable and never automatically resent.
-- Apple/Google ID-token exchange ports exist; native credential acquisition and
-  actual Provider configuration remain unavailable. No inert Provider UI or fake
-  sign-in is substituted.
-- Refresh rejects inconsistent Account identity before persistence; explicit Auth
-  rejection codes are distinguished from gateway/configuration/network failures.
-- Account-keyed secure sessions reject mismatched stored/token identities and
-  missing active entries without falling through to another legacy account.
-- Reviewed historical `059d4bc9` Guest/principal and provisional-sign-in foundations
-  are reused. Guest is not Account, has no cloud authority, and cannot be converted
-  by an ordinary session write. Auth snapshot is exported under the apply gate;
-  Native startup consumption and Guest business ownership remain an integration
-  delta. Existing legacy Account adoption is not Guest dataset adoption.
-- Normal Account UI uses Email OTP; QA password/remembered selectors require a DEV
-  build. The form supports resend/change/cancel/autofill, canonical EN/ZH copy and
-  focus cancellation. An aborted originating screen cannot install after Sync
-  drains or navigate after completion.
-- Reviewed online logout checks and retained-account pause recovery are reused.
-  This first slice removes local credentials only; remote Session revocation is
-  the next owning increment, not an asserted acceptance result.
+First source slice `cfae2b18` is integrated/pushed to main. Scoped remote logout
+and hosted-error recovery are fixed at `6b4bc3c5`; their real DEV receipt is
+`SESSION_DEV_E2E.json`: normal approved Synthetic password login, independent
+Account self-read, repository reconstruction, five callers/one refresh, wrong
+Account denial, local-scope revoke, independent exact Session absence and all14
+baseline Sessions preserved. Revoked refresh returns400/refresh_token_not_found.
+This is **HOST_ONLY**, not OTP delivery, native Keychain cold start or Google E2E.
+First failed attempt remains accurately reconciled in its separate receipt.
 
-## Evidence and remaining qualification
+Google Provider is now enabled (public DEV settings HTTP200,28 October04:37UTC).
+Owner supplied iOS/Web Client IDs for `com.xoery.otrmobile`. Native public SDK16.1.5,
+Expo reversed scheme, server audience, guarded branded control and provisional ID
+Token exchange are connected. Apple nonce remains required; native Google follows
+the official no-custom-nonce flow. Native acquisition clears only SDK-local state;
+Supabase remains the Session authority. No Secret is stored in Native or Git.
+A binary lacking the native module stays launchable and reports unavailable.
+Cancellation, missing token, SDK/cleanup errors never install a Session.
 
-First source slice is fixed at `cfae2b18` and fast-forward integrated/pushed to main;
-all six pre-existing primary-checkout dirty entries remain unchanged. Exact local
-integration evidence is in `MAIN_INTEGRATION.json`; no DEV deployment or device
-operation accompanies it.
+Google source: Auth/Domain16 suites128 tests, TypeScript/UI guard and Expo plugin
+introspection PASS before independent review. Introspection confirms the exact
+bundle and reversed URL scheme. This does **not** qualify an installed binary.
+The original dependency tree has an existing optional Expo/worklets peer conflict;
+installation used legacy peer resolution in this independent dependency directory.
+The committed lock preserves every existing package entry/version and adds only
+Google SDK (no runtime dependencies); shared node_modules is untouched.
 
-The next candidate adds normal authenticated `/logout?scope=local`, outside the
-Account apply gate and before local removal. Only the captured Account/generation
-can supply a token. Network/UNKNOWN keeps local access; explicit invalid-session
-rejection permits the requested online local logout. No global logout is used.
-Independent remote-logout source review:15 Auth/Domain suites115 tests/types/diff
-PASS before the subsequent hosted-error-envelope compatibility repair.
+Remaining: independent Google review, serial main integration, coordinated unified
+native rebuild and actual Google interaction → cold start → logout → Account
+isolation. Use the canonical bundle; retained physical `.formsqa` needs another iOS
+client and is not a substitute. No Google test identity or personal interaction has
+yet been supplied. Email positive OTP delivery remains pending a usable mailbox;
+Apple Provider remains disabled/PROVIDER_CONFIGURATION_PENDING. No JWT/OTP bypass,
+admin login, device Session/Keychain copying, business write or privilege change.
+Phase1 remains CLOUD_PENDING until real Provider/native evidence exists.
 
-First finite real host Session attempt reached revoked-refresh negative, then
-failed the negative check. Its exact failure cause was not retained; it did not resend Logout. Independent SQL proves the exact
-new Session absent and all11 original QA Sessions preserved; the run is reconciled
-closed, **not E2E PASS** (`SESSION_DEV_ATTEMPT_1_RECONCILED.json`). A safe nonexistent
-token probe independently demonstrates hosted numeric `code` plus string
-`error_code`; the old attempt's unretained error is not reconstructed. The adapter
-now accepts both finite rejection-code envelopes while unknown/conflicting codes
-retain offline continuity. A fresh pinned-source run is required for full scoped
-Session evidence. The runner refuses unresolved prior work and dirty Auth source,
-pins the new Session across refresh/cleanup, rejects redirects and never retries
-uncertain Logout. Tokens stay in process memory, never copied from QA devices.
+## Preserved implementation boundaries
 
-Independent review: Auth/Domain 13 suites / 104 tests, TypeScript, UI guard and diff
-check PASS. Root also ran adjacent startup/Person/Capture checks: 17 suites / 162
-tests including the final cancellation case. No blanket full-repo test
-claim. UI guard uses its unchanged baseline (473 historical occurrences), 157
-strict representative files. Headless iOS JS/Hermes export bundles 2,197 modules; no Native visual or installed-app acceptance claimed.
-
-`DEV_AUTH_CONFIGURATION_AND_NEGATIVE.json` records actual public settings HTTP200
-and one normal invalid-OTP HTTP403. Email enabled; Apple/Google disabled; signup
-allowed and confirmation required. This is negative/configuration evidence only,
-not OTP delivery, registration or positive login. Owner says no configured QA
-mailbox/provider identities yet and will supply later; no broad credential request
-is outstanding. Historical Forms QA password login/cold acceptance remains scoped
-to its old unchanged path and is not OTP proof.
-
-Next: own fresh host-only normal Session/refresh/self-read/revoke check using the
-Native-approved existing Synthetic credential source; then coordinated Native
-observation and real OTP delivery when a mailbox exists. No other device token,
-Keychain or Session may be copied. Apple/Google remain
-`PROVIDER_CONFIGURATION_PENDING`; Phase 1 stays `CLOUD_PENDING`.
+Email request/verify is bounded, cancelable and provisional; normal UI has resend,
+change, cancel and OTP autofill. Password/remembered QA selectors remain DEV-only.
+Account-keyed secure sessions deny mismatched identity and foreign legacy fallback.
+Refresh rejection is explicit; unknown/network errors preserve offline access.
+Existing Guest/principal/provisional foundations remain separate from business
+adoption. Native bootstrap Guest consumption and whole-dataset adoption are still
+owning deltas. Remote logout revokes only the captured current Session before local
+removal; UNKNOWN retains access. Tokens stay memory-only in the host DEV runner.
 
 ## Data Path Checklist
 
@@ -96,4 +73,4 @@ Keychain or Session may be copied. Apple/Google remain
    remain pending; mock credentials never qualify them.
 6. **Integration delta:** Native snapshot consumer/Guest business principal and
    whole-dataset adoption; native OAuth credentials/configuration; actual mailbox;
-   remote revoke; coordinated Native restore and serial main integration.
+   coordinated Native restore and serial main integration.

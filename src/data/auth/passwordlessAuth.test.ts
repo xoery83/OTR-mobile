@@ -209,6 +209,25 @@ describe("passwordless DEV authentication", () => {
     },
   );
 
+  it("allows native Google without a custom nonce but still requires Apple's nonce", async () => {
+    const config = options();
+    await authenticateSupabaseDevProvider(
+      { provider: "google", idToken: "native-google-token" },
+      config,
+    );
+    expect(config.fetchImplementation).toHaveBeenCalledWith(
+      `${config.url}/auth/v1/token?grant_type=id_token`,
+      expect.objectContaining({
+        body: JSON.stringify({ provider: "google", id_token: "native-google-token" }),
+      }),
+    );
+    const invalid = { provider: "apple", idToken: "apple-token" } as Parameters<
+      typeof authenticateSupabaseDevProvider
+    >[0];
+    await expect(authenticateSupabaseDevProvider(invalid, config)).rejects.toThrow();
+    expect(config.fetchImplementation).toHaveBeenCalledOnce();
+  });
+
   it("does not turn a disabled provider into a fake successful login", async () => {
     await expect(
       authenticateSupabaseDevProvider(

@@ -15,6 +15,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 export function EmailOtpSignIn({
   onAuthenticated,
@@ -42,6 +43,7 @@ export function EmailOtpSignIn({
     | "auth.invalidCode"
     | "auth.rateLimited"
     | "auth.adoptionPending"
+    | "auth.nativeUpdateRequired"
     | "account.loginFailed"
     | null
   >(null);
@@ -58,7 +60,7 @@ export function EmailOtpSignIn({
     }, [flow, onBusyChange]),
   );
 
-  async function submit(verify: boolean) {
+  async function submit(verify: boolean, provider: "email_otp" | "google" = "email_otp") {
     if (pending.current) return;
     pending.current = true;
     setBusy(true);
@@ -67,7 +69,16 @@ export function EmailOtpSignIn({
     try {
       if (process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT !== "dev")
         throw new Error("AUTH_PROVIDER_UNAVAILABLE");
-      if (verify && challenge) {
+      if (provider === "google") {
+        const result = await flow.verify({ provider });
+        if (!alive.current || result.status === "CANCELLED") return;
+        if (result.status === "UNAVAILABLE") {
+          setErrorKey("auth.nativeUpdateRequired");
+          return;
+        }
+        setInstalling(true);
+        await onAuthenticated(result.session, generation);
+      } else if (verify && challenge) {
         const result = await flow.verify({
           provider: "email_otp",
           email: challenge,
@@ -87,6 +98,8 @@ export function EmailOtpSignIn({
         setCode("");
       }
     } catch (caught) {
+      if (caught instanceof Error && caught.message === "GOOGLE_SIGN_IN_CANCELLED")
+        return;
       if (alive.current)
         setErrorKey(
           caught instanceof SupabaseDevAuthError && caught.kind === "rate_limited"
@@ -118,6 +131,9 @@ export function EmailOtpSignIn({
 
   return (
     <UiSection title={t("auth.emailTitle")}>
+      {!challenge ? (
+        <GoogleSignInButton disabled={busy} onPress={() => void submit(true, "google")} />
+      ) : null}
       {challenge ? (
         <>
           <UiText style={styles.body}>{t("auth.codeSent", { email: challenge })}</UiText>

@@ -237,15 +237,24 @@ export async function verifySupabaseDevEmailOtp(
 }
 
 export async function authenticateSupabaseDevProvider(
-  input: { provider: "apple" | "google"; idToken: string; nonce: string },
+  input:
+    | { provider: "apple"; idToken: string; nonce: string }
+    | { provider: "google"; idToken: string; nonce?: string },
   options: DevAuthOptions = {},
 ) {
   const credential = z
-    .strictObject({
-      provider: z.enum(["apple", "google"]),
-      idToken: z.string().min(1),
-      nonce: z.string().min(1),
-    })
+    .discriminatedUnion("provider", [
+      z.strictObject({
+        provider: z.literal("apple"),
+        idToken: z.string().min(1),
+        nonce: z.string().min(1),
+      }),
+      z.strictObject({
+        provider: z.literal("google"),
+        idToken: z.string().min(1),
+        nonce: z.string().min(1).optional(),
+      }),
+    ])
     .parse(input);
   return sessionFromToken(
     await authRequest(
