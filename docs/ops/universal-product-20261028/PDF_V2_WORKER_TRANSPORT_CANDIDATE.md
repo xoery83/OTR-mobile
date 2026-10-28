@@ -24,7 +24,7 @@ fixed local worker. A transport response is never Source verification or admissi
 Prior54-test candidate received one independent resource blocker: releasing the
 slot after termination UNKNOWN. Directed RED reproduced it; quarantine repair
 and known-terminated retry regression now pass6 suites56 tests, types and scoped lint.
-Independent re-review of this fix remains required. Tests exercise real local Unix
+Independent focused re-review reports NO_BLOCKER for the current-process quarantine; Host restart/orphan cleanup is still unqualified. Tests exercise real local Unix
 sockets and TCP refusal, concurrency, actual chunked ingress and response limits,
 private errors, and owning verifier/proof/registration/HTTP regressions. Test worker
 sentinels prove transport only; no actual Docker/DEV PDF execution is claimed.
