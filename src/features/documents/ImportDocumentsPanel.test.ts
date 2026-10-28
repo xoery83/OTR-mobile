@@ -95,6 +95,7 @@ function Harness(captureId?: string, isCurrent = () => true) {
   return output;
 }
 const settle = async () => {
+  await new Promise<void>((resolve) => setImmediate(resolve));
   for (let i = 0; i < 12; i++) await Promise.resolve();
 };
 beforeEach(() => {

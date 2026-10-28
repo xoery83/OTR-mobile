@@ -111,8 +111,11 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     universalImportSnapshotSchema.parse(catalog);
     let registered = false,
       sourceCurrent = true,
-      authorized = true;
+      authorized = true,
+      manifestAvailable = true;
     const sourceQuery = vi.fn(async (q: string) => {
+      if (!manifestAvailable && q.includes("trip_source_read_sustained_universal_inputs"))
+        throw Error("ORIGINAL_TEMPORARY_COPY_UNAVAILABLE");
       if (!sourceCurrent && q.startsWith("SELECT")) throw Error("INPUT_STALE");
       if (q.includes("trip_source_find_sustained_universal_binding"))
         return { rows: [{ binding: registered ? binding : null }] };
@@ -191,12 +194,13 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
       ),
     }));
     const context = await captureAccountRequestContext(trip, async () => actor);
+    const revokedAuthFailure = new Error("AUTH_REVOKED_FIXTURE");
     const hostDeps: Parameters<typeof createUniversalContinuousHost>[0] = {
       enabled: true,
       context,
       db,
       assertCurrentAuth: async () => {
-        if (!authorized) throw Error("AUTH_REVOKED_FIXTURE");
+        if (!authorized) throw revokedAuthFailure;
       },
       catalogConnection,
       bootstrapLedger: async () => ({
@@ -274,6 +278,35 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
       rowRevision: 2,
       recordedAt: now,
     });
+    manifestAvailable = false;
+    const materialReads = () =>
+      sourceQuery.mock.calls.filter(([query]) =>
+        query.includes("trip_source_read_sustained_universal_inputs"),
+      ).length;
+    const beforeStatusRead = materialReads();
+    await expect(host.readContext(batch)).resolves.toMatchObject({
+      taskId,
+      activity: { state: "PENDING" },
+    });
+    expect(materialReads()).toBe(beforeStatusRead);
+    authorized = false;
+    const failedLogger = vi.spyOn(console, "info").mockImplementationOnce(() => {
+      throw Error("FIXTURE_LOG_SINK_FAILED");
+    });
+    try {
+      await expect(host.readContext(batch)).rejects.toBe(revokedAuthFailure);
+    } finally {
+      failedLogger.mockRestore();
+    }
+    authorized = true;
+    sourceCurrent = false;
+    await expect(host.readContext(batch)).rejects.toThrow("INPUT_STALE");
+    sourceCurrent = true;
+    await expect(host.readResult(batch, taskId)).rejects.toThrow(
+      "ORIGINAL_TEMPORARY_COPY_UNAVAILABLE",
+    );
+    expect(sends).not.toHaveBeenCalled();
+    manifestAvailable = true;
     expect(await host.readResult(batch, taskId)).toBeNull();
     expect(await host.readPublished(batch, taskId)).toBeNull();
     expect(sends).not.toHaveBeenCalled();

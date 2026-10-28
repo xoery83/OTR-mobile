@@ -203,7 +203,7 @@ export function ImportDocumentDetail({
 }
 const styles = (colors: UiColors) =>
   StyleSheet.create({
-    body: { flex: 1, backgroundColor: colors.background },
+    body: { flexGrow: 0, flexShrink: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.card },
     title: { color: colors.textPrimary, ...visual.type.row },
     copy: { color: colors.textPrimary, ...visual.type.row },

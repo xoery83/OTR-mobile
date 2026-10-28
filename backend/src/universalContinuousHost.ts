@@ -165,16 +165,54 @@ export function createUniversalContinuousHost(deps: {
       throw Error("UNIVERSAL_TASK_CHANGED");
     return state;
   }
+  async function readBoundTask(batch: string, taskId?: string) {
+    let stage: "AUTH" | "BINDING" | "TASK" = "AUTH";
+    try {
+      await current();
+      stage = "BINDING";
+      const binding = await (deps.publishedSource ?? source).lookup(actor, trip, batch);
+      if (!binding || (taskId && binding.taskId !== taskId))
+        throw Error("UNIVERSAL_TASK_UNAVAILABLE");
+      stage = "TASK";
+      const state = await existing(binding);
+      if (!state) throw Error("OWNING_TASK_READER_UNAVAILABLE");
+      return { binding, ...state };
+    } catch (error) {
+      // Fixed categories only: no SQL, paths, identity values or original contents.
+      const message = error instanceof Error ? error.message : "";
+      const category =
+        message === "CORE_CONNECTION_BUSY"
+          ? "BUSY"
+          : [
+                "UNIVERSAL_TASK_UNAVAILABLE",
+                "OWNING_TASK_READER_UNAVAILABLE",
+                "UNIVERSAL_SOURCE_RUN_UNAVAILABLE",
+              ].includes(message)
+            ? "NOT_FOUND"
+            : ["UNIVERSAL_TASK_CHANGED", "INPUT_STALE"].includes(message)
+              ? "STALE"
+              : message === "CORE_SCOPE_MISMATCH"
+                ? "SCOPE"
+                : "FAILED";
+      try {
+        console.info(
+          JSON.stringify({
+            event: "universal_task_binding_read_failed",
+            stage,
+            category,
+          }),
+        );
+      } catch {
+        /* Diagnostics cannot replace the owning failure. */
+      }
+      throw error;
+    }
+  }
   async function found(batch: string, taskId?: string) {
-    await current();
-    const binding = await (deps.publishedSource ?? source).lookup(actor, trip, batch);
-    if (!binding || (taskId && binding.taskId !== taskId))
-      throw Error("UNIVERSAL_TASK_UNAVAILABLE");
-    const state = await existing(binding);
-    if (!state) throw Error("OWNING_TASK_READER_UNAVAILABLE");
+    const state = await readBoundTask(batch, taskId);
     const sourceManifest = await readManifest(state.task);
     await current();
-    return { binding, ...state, sourceManifest };
+    return { ...state, sourceManifest };
   }
   async function marker(task: Task, lockedManifest?: UniversalManifest) {
     const dispatch = prepareUniversalDispatch(
@@ -284,7 +322,8 @@ export function createUniversalContinuousHost(deps: {
       return { status: "QUEUED" as const, context: bindingContext };
     },
     async readContext(batch: string) {
-      const state = await found(batch);
+      const state = await readBoundTask(batch);
+      await current();
       return {
         version: "otr.backend.universal-context/1" as const,
         actorId: actor,

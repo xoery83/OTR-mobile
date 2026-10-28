@@ -272,12 +272,11 @@ export function CaptureActivityList({
           ) : null}
           <UiButton
             label={t("capture.jobView", {
-              summary:
-                expectedAccountId && (loading || scopedError)
-                  ? t("capture.progress.batchTitle", {
-                      count: job.counts.selected,
-                    })
-                  : captureJobTitle(job),
+              summary: expectedAccountId
+                ? t("capture.progress.batchTitle", {
+                    count: job.counts.selected,
+                  })
+                : captureJobTitle(job),
             })}
             variant="secondary"
             disabled={!job.availableActions.canReopen}

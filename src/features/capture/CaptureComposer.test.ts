@@ -346,7 +346,12 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
     const html = renderToStaticMarkup(createElement(CaptureComposer, props));
     expect(html).toContain(t("capture.activityRefresh"));
     expect(html).toContain(t("capture.activityReturn"));
-    expect(html).toContain(t("capture.jobView", { summary: captureJobTitle(job) }));
+    expect(html).not.toContain(captureJobTitle(job));
+    expect(html).toContain(
+      t("capture.jobView", {
+        summary: t("capture.progress.batchTitle", { count: job.counts.selected }),
+      }),
+    );
     expect(state.nodes.filter((node) => node.visible === true)).toHaveLength(1);
     expect(
       state.buttons.some((button) => button.label === t("capture.composer.submit")),
@@ -354,7 +359,10 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
     state.buttons
       .find(
         (button) =>
-          button.label === t("capture.jobView", { summary: captureJobTitle(job) }),
+          button.label ===
+          t("capture.jobView", {
+            summary: t("capture.progress.batchTitle", { count: job.counts.selected }),
+          }),
       )
       .onPress();
     expect(onOpenJob).toHaveBeenLastCalledWith(request.jobId);
@@ -522,4 +530,20 @@ it("Trip context lists only Trips while preserving the normal target action and 
     { id: "one", name: "QA Trip" },
     expect.any(Function),
   );
+});
+
+it("keeps Personal Inbox and Trip Documents as separate Import menu destinations", () => {
+  const onDocuments = vi.fn();
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  button("capture.composer.addAttachments").onPress();
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  const row = (key: "importDocuments.inbox" | "importDocuments.trip") =>
+    state.buttons.find((b) => b.children?.[1]?.props?.children === t(key));
+  row("importDocuments.inbox").onPress();
+  expect(onDocuments).toHaveBeenLastCalledWith("PERSONAL_INBOX");
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  button("capture.composer.addAttachments").onPress();
+  render(empty, 0, { onDocuments, tripName: "QA Trip" });
+  row("importDocuments.trip").onPress();
+  expect(onDocuments).toHaveBeenLastCalledWith("TRIP");
 });
