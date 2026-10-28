@@ -102,7 +102,7 @@ it.each(["P3", "P2"] as const)(
           runMetadata: vi.fn(),
           runP1,
           runPerson: vi.fn(),
-          isP1Item: async () => false,
+          isManualItem: async () => false,
           participantsReady: async (_trip, c) => p1SharedParticipantsReady(c, []),
         },
         scope,

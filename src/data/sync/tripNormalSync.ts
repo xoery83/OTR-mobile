@@ -74,7 +74,7 @@ type Deps = {
   /** Existing Core worker must still enforce capabilities, Actor, Person and receipt contracts. */
   runP1(target: TripCreateTarget): Promise<unknown>;
   runPerson(target: TripCreateTarget): Promise<unknown>;
-  isP1Item(tripId: string, itemId: string): Promise<boolean>;
+  isManualItem(tripId: string, itemId: string, family: "P1" | "P3"): Promise<boolean>;
   participantsReady(tripId: string, command: CoreCommand): Promise<boolean>;
 };
 // One wake composes existing exact-target runners; no timer, retry loop or historical replay.
@@ -210,19 +210,28 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command))
             )
               continue;
-            const p1 =
+            const manual =
               isReviewedSourceCreate(command) ||
               (command.command === "CREATE_ITEM"
-                ? (command.payload as { family: string }).family === "P1"
+                ? ["P1", "P3"].includes((command.payload as { family: string }).family)
                 : [
                     "SET_ITEM_TEXT",
                     "SET_ITEM_SCHEDULE",
                     "SET_ITEM_PLACE",
                     "SET_ITEM_PARTICIPATION",
                   ].includes(command.command) &&
-                  (await deps.isP1Item(row.trip_id, command.target.id)));
+                  (await deps.isManualItem(row.trip_id, command.target.id, "P1"))) ||
+              ([
+                "SET_ITEM_TEXT",
+                "SET_ITEM_SCHEDULE",
+                "SET_ITEM_PLACE",
+                "SET_ITEM_PARTICIPATION",
+                "SET_STAY_DETAILS",
+              ].includes(command.command) &&
+                command.admission.mode === "MANUAL" &&
+                (await deps.isManualItem(row.trip_id, command.target.id, "P3")));
             await guard();
-            if (p1) {
+            if (manual) {
               const ready = await deps.participantsReady(row.trip_id, command);
               await guard();
               if (ready) {

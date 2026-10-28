@@ -275,7 +275,8 @@ function editable(
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
     !row ||
-    (!snapshot.predictedIds.has(itemId) && !(family === "P1" && snapshot.cert)) ||
+    (!snapshot.predictedIds.has(itemId) &&
+      !(["P1", "P3"].includes(family) && snapshot.cert)) ||
     row.experience_family !== family ||
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
@@ -380,7 +381,7 @@ export function createManualItemRepository(
         command.admission.mode !== "MANUAL" ||
         command.target.id !== itemId ||
         command.tripId !== context.tripId ||
-        (command.payload as { family?: string }).family !== "P1"
+        (command.payload as { family?: string }).family !== family
       )
         continue;
       const receipt = await validateCoreReceipt(
@@ -434,7 +435,7 @@ export function createManualItemRepository(
               p.command.admission.mode === "MANUAL",
           ) &&
           !(
-            family === "P1" &&
+            ["P1", "P3"].includes(family) &&
             snapshot.cert &&
             (await acceptedManualCreate(context, itemId!))
           )
@@ -660,6 +661,7 @@ export function createManualItemRepository(
             Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
         );
         place.authored_label = fields.location || null;
+        if (family === "P3") place.authored_address = fields.location || null;
         if (placeDraft && !state.attempt?.place) {
           const parts = placeDraft.addressComponents;
           place.authored_address = placeDraft.binding.location;
