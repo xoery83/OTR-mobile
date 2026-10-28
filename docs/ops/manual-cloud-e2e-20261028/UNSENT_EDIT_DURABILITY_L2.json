@@ -1,8 +1,9 @@
 {
-  "status": "L2_PASS_NATIVE_OFFLINE_PENDING",
+  "status": "L2_SQLITE_CLOSE_REOPEN_PASS_NATIVE_OFFLINE_PENDING",
   "validation": {
-    "suites": 5,
-    "tests": 119,
+    "suites": 1,
+    "tests": 34,
+    "includesThreeFileBackedFamilyCases": true,
     "typecheck": "PASS",
     "scopedLint": "PASS",
     "runtimeChanged": false
@@ -12,19 +13,26 @@
     "P3",
     "P4"
   ],
-  "procedure": "Use existing real SQLite fixture and normal accepted-MANUAL receipt provenance; make two consecutive unsent same-Item edits, recreate Core/repository objects against the same SQLite database between edits, retry exact first operation and attempt stale overwrite.",
+  "procedure": "Use a newly generated isolated file-backed SQLite fixture and normal accepted-MANUAL provenance. First unsent Edit then close/reopen the actual SQLite connection before creating fresh Core/repository objects; second unsent Edit; exact first-operation retry; stale overwrite rejected; close/reopen SQLite again before latest read. No device database copied.",
   "assertions": [
-    "First pending title/note are readable after repository recreation.",
+    "First pending title/note survive actual SQLite close/reopen with fresh Core/repository objects.",
     "Second pending note preserves first title.",
     "Both immutable operation IDs and sequential base revisions are retained.",
     "Exact first retry creates no operation or Item.",
     "Stale original draft rejects MANUAL_PLAN_CONFLICT.",
-    "Reopened latest fields remain correct and one same-ID Item exists."
+    "After a second SQLite close/reopen, latest fields and both operation IDs remain correct with one same-ID Item."
   ],
   "limits": [
     "No real phone connectivity change or DEV request occurred.",
-    "Repository recreation against in-memory SQLite is not process/database-close cold restoration.",
-    "Existing Sync/worker tests in the joined run are local checks, not live server permission/replay proof."
+    "Node SQLite close/reopen is local L2 evidence, not native process-kill or real server reconnect/permission proof.",
+    "Prior joined Sync/worker checks remain local evidence; unchanged runtime was not redeployed."
   ],
-  "dev": "No Host/SQL/config/Authority/Provider change; Import AD5 business window preserved."
+  "dev": "No Host/SQL/config/Authority/Provider change; Import AD5 business window preserved.",
+  "previousValidation": {
+    "suites": 5,
+    "tests": 119,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "runtimeChanged": false
+  }
 }
