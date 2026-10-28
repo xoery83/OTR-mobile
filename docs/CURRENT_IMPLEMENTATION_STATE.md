@@ -82,6 +82,17 @@ public-port memory/gate checks pass. This does not wire Native Guest business
 access or implement adoption. Next: typed local Guest repository scope/full census;
 shared startup/Core/migration writers coordinate before any consumer changes.
 
+Owner29 October requires AUTH-02 A Guest Local Foundation before B adoption.
+The separate `openGuestLocalWorkspace/v1` candidate reuses migrations74 and the
+existing Trip/Core/P1/Day factories in `otr-guest-<UUID>.db`, bound to Guest kind,
+UUID and transition generation. It exposes no Accepted/Cloud dispatch or photos.
+6 suites139 checks/types/scopedlint/UIguard pass; independent disk8/8 NO_BLOCKER.
+This is headless evidence only: Native sole Writer must wire startup/consumers,
+exclude Account openers and all normalSync/transport (global queue notifications
+still exist), then verify a fresh unauthenticated QA app's normal Trip/P1 UI and
+cold recovery. No Native Guest or adoption acceptance, cloud upload or conversion.
+See `adr/2026-10-29-guest-local-vault.md` and Phase2 INTAKE.
+
 ## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
 
 Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.

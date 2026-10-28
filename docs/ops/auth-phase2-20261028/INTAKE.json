@@ -55,7 +55,7 @@
       "constraint": "No upload or ownership conversion until authorized; retain originals until verified; no partial visible migration or same-name Trip merge"
     }
   ],
-  "nextSlice": "Define the minimum typed local Guest repository scope and complete inventory with owning repositories, then coordinate Native startup and consumer wiring; never route Guest through formal Account authority",
+  "nextSlice": "Owner A first: Native fresh Guest normal UI Trip + minimal P1 + Day Feed + SQLite cold restore; only then B legal Account adoption.",
   "singleWriters": {
     "authPortsAndRepository": "Auth lane",
     "startupNavigationAndManualConsumers": "Native lane",
@@ -77,5 +77,23 @@
     "uiGuard": "PASS",
     "scopedLint": "PASS",
     "independentReview": "THREE_SUITES_38_TESTS_AND_PUBLIC_PORT_MEMORY_GATE_CHECKS_PASS"
+  },
+  "guestLocalFoundation": {
+    "status": "SOURCE_HEADLESS_REVIEWED_NATIVE_WIRING_PENDING_NOT_ADOPTION",
+    "decision": "docs/adr/2026-10-29-guest-local-vault.md",
+    "port": "openGuestLocalWorkspace/v1",
+    "implementation": "src/data/auth/guestLocalWorkspace.ts",
+    "reuse": "Existing migrations74, transaction serializer and Trip/Core/P1/local Day repositories; separate Guest SQLite filename; no Session or transport assembly",
+    "validation": {
+      "directedSuites": 6,
+      "directedTests": 139,
+      "diskGuestTests": 8,
+      "typecheck": "PASS",
+      "scopedLint": "PASS",
+      "uiGuard": "PASS",
+      "independentReview": "NO_BLOCKER_8_DISK_TESTS_INDEPENDENTLY_PASS"
+    },
+    "native": "PENDING; no normalSync/transport or global Account opener; syncAllowed flag alone is not a dispatch gate",
+    "remaining": "Native startup/consumers by sole Native Writer; independent GuestQA bundle actual UI + cold recovery; full data inventory and legal adoption later"
   }
 }
