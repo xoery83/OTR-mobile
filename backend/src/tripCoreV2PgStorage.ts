@@ -266,8 +266,8 @@ export function createCorePgStorage(
           )
             throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
           await lease.query(
-            "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
-            [scope.actorAccountId, scope.tripId],
+            "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true),set_config('otr.core.operation',$3,true)",
+            [scope.actorAccountId, scope.tripId, scope.operationId],
           );
           const finiteScope = async () => {
             const allowed = (
