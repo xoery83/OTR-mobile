@@ -1,5 +1,5 @@
 import { readReviewedP1Gate, readCoreGate, type CoreGateMode } from "./tripSustainedGate";
-import { isReviewedP1Gate, isNormalP1Gate, normalP1Commands } from "./tripNormalP1Policy";
+import { isReviewedP1Gate, normalManualCapabilities } from "./tripNormalP1Policy";
 import { randomUUID } from "node:crypto";
 import {
   coreUuid,
@@ -266,8 +266,8 @@ export function createCorePgStorage(
           )
             throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
           await lease.query(
-            "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
-            [scope.actorAccountId, scope.tripId],
+            "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true),set_config('otr.core.operation',$3,true)",
+            [scope.actorAccountId, scope.tripId, scope.operationId],
           );
           const finiteScope = async () => {
             const allowed = (
@@ -389,7 +389,8 @@ export function createCorePgStorage(
               const activation = sourceP1
                 ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
                 : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
-              const normal = isNormalP1Gate(activation);
+              const manual = normalManualCapabilities(activation);
+              const normal = manual !== null;
               const finiteFamily =
                 command.command === "CREATE_SPARSE_FLIGHT"
                   ? "P2"
@@ -424,8 +425,11 @@ export function createCorePgStorage(
                     command.admission.policyVersion !== null
                   : normal
                     ? command.admission.mode !== "MANUAL" ||
-                      finiteFamily !== "P1" ||
-                      !(normalP1Commands as readonly string[]).includes(command.command)
+                      !manual!.families.includes(String(finiteFamily)) ||
+                      !(manual!.commands as readonly string[]).includes(
+                        command.command,
+                      ) ||
+                      (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3")
                     : command.command !== "CREATE_ITEM" ||
                       command.admission.mode !== "MANUAL" ||
                       (finiteFamily !== "P1" && finiteFamily !== "P3")

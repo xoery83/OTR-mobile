@@ -2,7 +2,7 @@ import { randomUUID, createHash } from "node:crypto";
 import { it, expect, vi } from "vitest";
 import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
-import { normalP1Commands } from "./tripNormalP1Policy";
+import { normalP1Commands, normalP3Commands } from "./tripNormalP1Policy";
 import { emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
@@ -86,7 +86,7 @@ it("keeps fresh closed writes unavailable without an invented receipt or root mu
     ),
   ).toBe(false);
   const scope = f.queries.find((q) => q.sql.includes("set_config('otr.core.actor'"))!;
-  expect(scope.params).toEqual([actor, trip]);
+  expect(scope.params).toEqual([actor, trip, operation]);
   expect(f.queries.findIndex((q) => q.sql.includes("SELECT id,body"))).toBeLessThan(
     f.queries.findIndex((q) => q.sql.includes("SELECT runtime_enabled")),
   );
@@ -158,9 +158,16 @@ it("scope expiry after receipt lookup rolls back current replay without deleting
   expect(f.queries.some((q) => q.sql.startsWith("DELETE"))).toBe(false);
 });
 
-it.each(["PRIVATE", "SELECTED_PERSONS", "GROUP"])(
-  "normal P1 scope never edits another Creator's %s Item, even for organizer",
-  async (visibility) => {
+it.each(
+  ["P1", "P3"].flatMap((family) =>
+    ["PRIVATE", "SELECTED_PERSONS", "GROUP"].map((visibility) => ({
+      family,
+      visibility,
+    })),
+  ),
+)(
+  "normal $family scope never edits another Creator's $visibility Item, even for organizer",
+  async ({ family, visibility }) => {
     const f = fixture(),
       query = f.lease.query;
     f.lease.query = async (sql, params) => {
@@ -171,8 +178,10 @@ it.each(["PRIVATE", "SELECTED_PERSONS", "GROUP"])(
         return {
           rows: [
             {
-              enabled_commands: [...normalP1Commands],
-              enabled_families: ["P1"],
+              runtime_enabled: true,
+              enabled_commands:
+                family === "P3" ? [...normalP3Commands] : [...normalP1Commands],
+              enabled_families: family === "P3" ? ["P1", "P3"] : ["P1"],
               enabled_admission_modes: ["MANUAL"],
             },
           ],
@@ -199,7 +208,7 @@ it.each(["PRIVATE", "SELECTED_PERSONS", "GROUP"])(
       {
         id,
         trip_id: trip,
-        experience_family: "P1",
+        experience_family: family,
         owner_account_id: randomUUID(),
         visibility,
       } as never,

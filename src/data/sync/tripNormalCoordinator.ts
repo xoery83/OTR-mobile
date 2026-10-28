@@ -209,7 +209,7 @@ export function createNativeNormalTripSyncRunner(
           }
           return result;
         },
-        isP1Item: async (tripId, itemId) => {
+        isManualItem: async (tripId, itemId, family) => {
           const context = await core.captureContext(tripId);
           const pending = await core.pending(context);
           if (
@@ -217,12 +217,12 @@ export function createNativeNormalTripSyncRunner(
               ({ command }) =>
                 command.command === "CREATE_ITEM" &&
                 command.target.id === itemId &&
-                (command.payload as { family: string }).family === "P1",
+                (command.payload as { family: string }).family === family,
             )
           )
             return true;
           return (await core.readGraph(context)).itinerary_events.some(
-            (item) => item.id === itemId && item.experience_family === "P1",
+            (item) => item.id === itemId && item.experience_family === family,
           );
         },
         participantsReady: async (tripId, command) => {
