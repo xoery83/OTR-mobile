@@ -223,23 +223,37 @@ function pinManifest(
     )
   )
     throw new Error("SOURCE_BINDING_INVALID");
-  const prepared = sources.map((s, index) =>
-    prepare(
-      {
-        id: `S${index}`,
-        name: s.representationId,
-        mime: s.mime,
-        bytes: s.bytes,
-        prepared: s.prepared,
-        ...(s.mime === "text/plain" ? { preparedText: s.bytes.toString("utf8") } : {}),
-      },
-      "B_PREPARED",
-      {
-        mimes: ["text/plain", "text/html", "image/png", "image/jpeg"],
-        modalities: ["TEXT", "IMAGE"],
-      },
-    ),
-  );
+  const prepared = sources
+    .map((s, index) =>
+      prepare(
+        {
+          id: `S${index}`,
+          name: s.representationId,
+          mime: s.mime,
+          bytes: s.bytes,
+          prepared: s.prepared,
+          ...(s.mime === "text/plain"
+            ? { preparedText: new TextDecoder().decode(s.bytes) }
+            : {}),
+        },
+        "B_PREPARED",
+        {
+          mimes: ["text/plain", "text/html", "image/png", "image/jpeg"],
+          modalities: ["TEXT", "IMAGE"],
+        },
+      ),
+    )
+    .map((entry) =>
+      entry.status === "READY" && entry.bytes.length === 0
+        ? {
+            status: "UNSUPPORTED" as const,
+            reason: "PREPARED_SOURCE_EMPTY",
+            sourceId: entry.sourceId,
+            originalSha256: entry.originalSha256,
+            originalBytes: entry.originalBytes,
+          }
+        : entry,
+    );
   const bindings = sources.map((s, index) => ({
     alias: `S${index}`,
     inputId: s.inputId,
