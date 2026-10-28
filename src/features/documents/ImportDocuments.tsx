@@ -1,3 +1,4 @@
+import { isImportOriginalPreviewAvailable } from "@/native/importOriginalPreview";
 import { ScrollView, StyleSheet, View } from "react-native";
 import type {
   ImportDocument,
@@ -166,7 +167,7 @@ export function ImportDocumentDetail({
     document.custody !== "UNAVAILABLE" &&
     (document.kind === "TEXT" ||
       (document.kind === "FILE" && document.declaredContentType === "text/plain") ||
-      process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true");
+      isImportOriginalPreviewAvailable());
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"

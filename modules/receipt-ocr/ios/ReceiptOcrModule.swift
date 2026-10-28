@@ -17,6 +17,7 @@ public class ReceiptOcrModule: Module {
 
   public func definition() -> ModuleDefinition {
     Name("ReceiptOcr")
+    Constant("importOriginalPreviewContractVersion") { 2 }
 
     OnCreate {
 #if DEBUG && targetEnvironment(simulator)

@@ -327,3 +327,10 @@ absent by default and therefore fails closed. Worker/runtime composition remains
 absent until the bounded
 worker/custody/profile path and exact protected eligibility are qualified. The
 adapter handles scoped metadata only; originals retain their existing custody.
+
+The local Documents original viewer may open through the native adapter only when
+its exact version-2 three-argument/token-close contract is advertised and both
+methods exist. Older unversioned binaries remain closed in ordinary builds; the
+explicit paired QA fallback is retained for already-qualified lifecycle fixtures.
+This is local scoped custody reading, not PDF/OCR interpretation, cloud retention,
+sharing or Source authority.

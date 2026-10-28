@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
-import { previewImportOriginal } from "./importOriginalPreview";
+import {
+  previewImportOriginal,
+  isImportOriginalPreviewAvailable,
+} from "./importOriginalPreview";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
 const bridge = vi.hoisted(() => ({
+  importOriginalPreviewContractVersion: undefined as number | undefined,
   previewImportOriginal: vi.fn(),
   closeImportOriginal: vi.fn(async () => {}),
 }));
@@ -19,6 +23,7 @@ const original = {
   } as ImportDocument,
 };
 beforeEach(() => {
+  bridge.importOriginalPreviewContractVersion = undefined;
   vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", "true");
 });
 afterEach(() => {
@@ -109,4 +114,51 @@ it("passes the document display name separately from the opaque private file tok
     "single-preview-token",
     "synthetic-roundtrip.pdf",
   );
+});
+
+it("opens the versioned three-argument bridge without a QA feature flag", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", undefined);
+  bridge.importOriginalPreviewContractVersion = 2;
+  bridge.previewImportOriginal.mockResolvedValueOnce(undefined);
+  await expect(
+    previewImportOriginal(original, () => true, "retained.pdf"),
+  ).resolves.toBeUndefined();
+  expect(bridge.previewImportOriginal).toHaveBeenCalledExactlyOnceWith(
+    expect.any(Uint8Array),
+    "single-preview-token",
+    "retained.pdf",
+  );
+});
+it("rejects an explicitly incompatible bridge even in the paired QA bundle", async () => {
+  bridge.importOriginalPreviewContractVersion = 3;
+  await expect(previewImportOriginal(original, () => true)).rejects.toThrow(
+    "IMPORT_PREVIEW_UNAVAILABLE",
+  );
+  expect(bridge.previewImportOriginal).not.toHaveBeenCalled();
+});
+
+it("requires the exact protocol and both methods for ordinary availability", () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", undefined);
+  expect(isImportOriginalPreviewAvailable()).toBe(false);
+  bridge.importOriginalPreviewContractVersion = 2;
+  expect(isImportOriginalPreviewAvailable()).toBe(true);
+  const close = bridge.closeImportOriginal;
+  try {
+    Reflect.set(bridge, "closeImportOriginal", undefined);
+    expect(isImportOriginalPreviewAvailable()).toBe(false);
+  } finally {
+    Reflect.set(bridge, "closeImportOriginal", close);
+  }
+});
+it("does not log bridge diagnostics in ordinary versioned preview", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED", undefined);
+  bridge.importOriginalPreviewContractVersion = 2;
+  bridge.previewImportOriginal.mockResolvedValueOnce(undefined);
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    await previewImportOriginal(original, () => true);
+    expect(info).not.toHaveBeenCalled();
+  } finally {
+    info.mockRestore();
+  }
 });
