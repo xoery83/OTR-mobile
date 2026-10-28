@@ -18,6 +18,11 @@ const secureStoreAdapter: SecureSessionStorage = {
 
 const authRepository = createAuthRepository(secureStoreAdapter, createUuid);
 
+// UI account readers must not choose Guest identity or adopt legacy credentials.
+export function readCommittedLocalSession() {
+  return withAccountApplyGate(authRepository.readAdoptedLocalSession);
+}
+
 export function readLocalAuthSnapshot() {
   return withAccountApplyGate(authRepository.readLocalAuthSnapshot);
 }

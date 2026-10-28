@@ -46,6 +46,30 @@ function jwt(payload: Record<string, unknown>) {
 }
 
 describe("auth repository", () => {
+  it("account-only observation does not create a Guest or block fresh formal login", async () => {
+    const storage = createMemoryStorage();
+    const repository = createAuthRepository(storage);
+    await expect(repository.readAdoptedLocalSession()).resolves.toBeNull();
+    expect(await storage.getItem("otr.mobile.launch.v1")).toBeNull();
+    await repository.writeLocalSession(session(accountA));
+    await expect(repository.readAdoptedLocalSession()).resolves.toEqual(
+      session(accountA),
+    );
+  });
+
+  it("account-only observation leaves legacy adoption to startup", async () => {
+    const storage = createMemoryStorage();
+    const raw = JSON.stringify(session(accountA));
+    await storage.setItem("otr.mobile.session.v1", raw);
+    const repository = createAuthRepository(storage);
+    await expect(repository.readAdoptedLocalSession()).rejects.toThrow(
+      "SESSION_NOT_ADOPTED",
+    );
+    expect(await storage.getItem("otr.mobile.session.v1")).toBe(raw);
+    expect(await storage.getItem("otr.mobile.accounts.v2")).toBeNull();
+    expect(await storage.getItem("otr.mobile.launch.v1")).toBeNull();
+  });
+
   it("rejects inconsistent legacy identity before adoption and preserves the original record", async () => {
     const storage = createMemoryStorage();
     const raw = JSON.stringify({

@@ -47,3 +47,14 @@ unavailable. Use the cancellation value from the pinned9.2.0 public header
 (kGIDSignInErrorCodeCanceled=-5), still gated by kGIDSignInErrorDomain. No nonce or
 Session behavior changes. Recompile is required; syntax parsing alone was never
 claimed as native type/link acceptance.
+
+Real Build46 acceptance:19:20:04NZ native ID-token exchange200; independent Auth
+readback finds the new canonical Google Account and its Session, and a real cold
+restart retains B with a legitimate empty Trip list. Immediate switch initially
+showed stale A menu/unavailable list, fixed by Native consumer1ed0aa40 generation
+fences. Independent Review blocks using launch readLocalAuthSnapshot in those
+consumers: fresh empty storage would create Guest and prevent formal login.
+Auth therefore exposes readCommittedLocalSession: apply-gated, adopted Session
+only, no Guest choice or legacy migration. Native consumes this port while keeping
+generation fences. Genuine Guest adoption rules remain unchanged.48 stays held
+until the port replacement; no account/ledger role is fabricated for B.
