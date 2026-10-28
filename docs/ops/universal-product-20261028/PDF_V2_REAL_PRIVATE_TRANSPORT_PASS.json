@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_REAL_PRODUCER_TRANSPORT_PASS",
+  "image": "sha256:d27ddd7b09410b0a3b220b2768c0f6b2b25c32da528a42041bc50ea19eefc1b7",
+  "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+  "originalBytes": 950,
+  "originalReadCount": 2,
+  "pages": 2,
+  "textSha256": "3b123e3e614785e19e6fa993b32a81aff7e2cbbb578e4baaa3fb5156fbaaf413",
+  "textBytes": 127,
+  "elapsedMs": 4676,
+  "knownTerminationMarkerReleased": true,
+  "hostInstalled": false,
+  "sqlOrSourceAuthority": false,
+  "providerCalls": 0
+}

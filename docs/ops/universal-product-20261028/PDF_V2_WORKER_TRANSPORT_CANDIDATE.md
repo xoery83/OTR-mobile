@@ -49,3 +49,13 @@ instances, retained UNKNOWN/unclassified failures, known-terminated explicit ret
 and missing-directory refusal are tested. No real process-kill/orphan Host test
 is claimed; private-directory permissions and no manual in-flight marker deletion
 remain required in the protected Host deployment packet.
+
+Actual continuation: one short child-process SIGKILL leaves the marker and rejects
+a reconstructed worker (7 marker tests PASS). Separately, the real frozen Linux
+image through private Unix IPC + persistent marker + owning double-read verifier
+processed the exact retained950-byte/two-page synthetic PDF:127UTF-8 bytes,
+textSHA3b123e3e…,4676ms; known termination released the marker. No sentinels in
+this parser run, no Provider/SQL/Source registration or DEV Host installation.
+PDF_V2_REAL_PRIVATE_TRANSPORT_PASS.json. Readonly DEV preflight confirms the fixed
+image exists and zero matching worker containers, but Host Node is absent; do not
+infer an executable service binding. PDF_V2_HOST_READONLY_PREFLIGHT.json.

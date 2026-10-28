@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -95,3 +97,48 @@ it("also retains unexpected failures whose termination cannot be established", a
   );
   expect(run).not.toHaveBeenCalled();
 });
+
+it("a real process exit cannot release its retained marker for a replacement", async () => {
+  const path = await marker();
+  const child = spawn(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--input-type=module",
+      "--eval",
+      `import { createSourcePdfV2WorkerLease } from ${JSON.stringify(new URL("./sourcePdfV2LinuxWorker.ts", import.meta.url).href)};
+     await createSourcePdfV2WorkerLease(${JSON.stringify(path)}, async () => {
+       process.stdout.write("LOCKED\\n");
+       await new Promise(() => { setInterval(() => {}, 1000); });
+     })(new Uint8Array([37,80,68,70]));`,
+    ],
+    { stdio: ["ignore", "pipe", "pipe"] },
+  );
+  const exited = once(child, "exit");
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(Error("TEST_CHILD_NOT_READY")), 5000);
+      child.stdout.once("data", (data) => {
+        clearTimeout(timer);
+        if (data.toString() === "LOCKED\n") resolve();
+        else reject(Error("TEST_CHILD_OUTPUT"));
+      });
+      child.once("exit", () => {
+        clearTimeout(timer);
+        reject(Error("TEST_CHILD_EXITED"));
+      });
+    });
+    child.kill("SIGKILL");
+    await exited;
+    const run = vi.fn();
+    await expect(createSourcePdfV2WorkerLease(path, run)(bytes)).rejects.toThrow(
+      "PDF_V2_WORKER_UNAVAILABLE",
+    );
+    expect(run).not.toHaveBeenCalled();
+    expect(await readFile(path, "utf8")).toBe("");
+  } finally {
+    child.kill("SIGKILL");
+    await exited;
+  }
+}, 10000);

@@ -9,8 +9,9 @@
   "hostInstalled": false,
   "sourceAuthorityChanged": false,
   "notClaimed": [
-    "Actual Host process-kill/orphan reconciliation",
+    "Actual DEV Host worker process-kill/orphan reconciliation",
     "Private Host directory/socket ownership qualification",
     "DEV PDF Task/Admission"
-  ]
+  ],
+  "additionalValidation": "7 worker-marker tests PASS, including actual one-child SIGKILL and replacement refusal; actual frozen Docker producer through Unix IPC + two independent original reads PASS"
 }
