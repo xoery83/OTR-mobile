@@ -18,3 +18,5 @@ Use the current unified Forms QA build, normal Synthetic account and independent
 Reuse existing manualPlanRepository, tripNormalSync, QueueActivity and Core worker tests; directed results are L2, never Native/Cloud evidence. Independently record Create, Edit, SERVER_ACCEPTED, SERVER_VERIFIED, recovery and negative results. Existing historical P1 E2E remains historical until this pass runs. No unsupported photo/document/expense-link or participants-only visibility implementation is added to this test task.
 
 Directed baseline on unified6710a380: manualPlanRepository, tripNormalSync, tripNormalQueueActivity and tripCoreV2SyncWorker —4suites95PASS. These shared checks do not complete any P1 Native row above.
+
+UI/domain directed baseline on current consumer-fix branch: P1PlanEditor, PlanParticipantsField, TripCalendarRangeField, DayFeedCalendarSheet, coreP1Renderer, P1Row, p1InsertionTime, localInsertionTime and p1CivilMove —9suites88PASS. Log retained privately at /private/tmp/otr-manual-p4-cloud-20261028/p1-full-ui-directed.log. These cover local behavior only; actual FormsQA/Cloud matrix remains pending the next serial business window.
