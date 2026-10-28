@@ -81,7 +81,7 @@
   "clientBuild": 81,
   "readbackSha256": "b9fecdb01b1213684e7ff4fd443a453f0116f0450c73ced11da76ccb50ce62ae",
   "notClaimed": [
-    "Five-item Updates saved count and same-Batch Results recovery still pending",
+    "Five-item Results duplicate-disabled completion recovery still pending",
     "Documents five original/saved-link UI still pending",
     "Complete ordinary-user Beta",
     "Binary Source ingress",
@@ -112,5 +112,17 @@
     "javascriptSHA256": "847f3c3ddcb4625dde6b469cea5cb711cd11adb10f90da9932ebf53a11c9272a",
     "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
     "sessionOrKeychainReadOrCopied": false
+  },
+  "postSaveSameTaskAllCallCount": 1,
+  "postSaveUsageVerified": true,
+  "taskCallReadbackSha256": "819a7f754ba01e6e4442e9a4f88113bc4186b489a38ea0b7ba71df950df17330",
+  "updatesCold": {
+    "status": "NATIVE_E2E_PASS",
+    "count": 5,
+    "displayTimeLocal": "2026-10-29 08:37:32 NZDT",
+    "sameBatchEvent": true,
+    "openSameBatchActivity": true,
+    "interpretationAt": "2026-10-29 06:14:12 NZDT",
+    "serverCommittedAtUsed": true
   }
 }
