@@ -13,7 +13,15 @@
   ],
   "reportedScope": "TEXT CRLF evidence reanchor software only; Manual/Core/Reader/Auth/SQL/RLS/Authority unchanged",
   "rollback": "0821fb52/image86585487/container37505d7b retained",
-  "lease": "Host returned; Import AD5 same-scope Synthetic TEXT validation pending. Native coordinates before business writes.",
+  "lease": "SQL/business testing window returned after Source close; Import now AD5 Reader/cold and local Activity only.",
   "nativeDevice": "phone60 remains sourceb1106689; do not confuse app source with DEV source",
-  "protectedCandidates": "P2/P5/P6 Cloud authority remain unapproved/uninstalled"
+  "protectedCandidates": "P2/P5/P6 Cloud authority remain unapproved/uninstalled",
+  "sourceCloseHandoff": {
+    "sourceFlag": false,
+    "scope": null,
+    "airportsEnabled": false,
+    "sixFunctionHashes": "reported unchanged by deployment owner",
+    "evidenceSource": "Universal coordination message, independently checked by Universal; not rerun by Native",
+    "universalFiniteResult": "Same TEXT Task formal P1 Save APPLIED, SourceSlot COMPLETE, unique server Item/Receipt. This is Import evidence, not Manual proof."
+  }
 }
