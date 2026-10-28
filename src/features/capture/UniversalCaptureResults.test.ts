@@ -530,3 +530,21 @@ it.each([
     expect(html).not.toContain(t("capture.ai.queued"));
   },
 );
+
+it("shows each unresolved source and reason once without changing sealed results", () => {
+  const f = fixture();
+  const reason = "Transport type TRAIN stated but no origin/destination place given";
+  f.result.unresolved = [
+    { sourceId: "S0", reason },
+    { sourceId: "S0", reason },
+    { sourceId: "S1", reason },
+    { sourceId: "S0", reason: "Cancellation needs review" },
+  ];
+  const before = JSON.stringify(f.result);
+  const html = renderToStaticMarkup(createElement(UniversalResultView, f.props));
+  expect(html.split(reason).length - 1).toBe(2);
+  expect(html).toContain("Cancellation needs review");
+  expect(html).toContain("行程.txt");
+  expect(html).toContain(t("capture.ai.submittedText"));
+  expect(JSON.stringify(f.result)).toBe(before);
+});

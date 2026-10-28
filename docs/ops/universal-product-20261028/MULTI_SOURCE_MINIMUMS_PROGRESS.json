@@ -1,0 +1,36 @@
+{
+  "status": "NATIVE_RESULTS_READY_SAVE_PENDING",
+  "batchId": "3bdff8ee-9bef-4c7e-a1b6-5f0d22f29539",
+  "taskId": "a180447c-001d-8036-9af3-9518d06cc3e9",
+  "accountId": "f4b059c5-8241-4ffb-aa15-37fa25474543",
+  "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+  "intake": "Normal Native target picker and Files multiselect; exact five fixed UTF8 originals retained; one Analyze only.",
+  "candidates": [
+    "P3 Harbour QA Beta Hotel / 2026-11-02 to 2026-11-03",
+    "P5 TRAIN Coastal QA Beta Train / CQ102 / 2026-11-02",
+    "P4 COASTLINE QA BETA RENTALS / 2026-11-02 to 2026-11-03",
+    "P6 Harbour QA Beta Experience / 2026-11-03",
+    "Sparse P2 NZ502 / AKL to CHC / 2026-11-02"
+  ],
+  "nativeReview": "Each own retained original displayed and reviewed with QA Trip; NEW selected; final confirmation not clicked.",
+  "firstFailure": "Pre-activation Source replay rejected optional TRAIN missing-place and Sparse Flight missing-time warnings.",
+  "repairCommit": "612361f2",
+  "repairValidation": {
+    "red": "2 FAIL / 46 PASS",
+    "regression": "8 suites / 164 PASS",
+    "types": "PASS",
+    "captureBuild": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "gate": "Source Save stayed CLOSED throughout; no business writes for this Batch yet.",
+  "resourceHandoff": "Host/SQL returned to Native. Native cherry-picked repair as e126eabf on combined profile081198f0, excludes BOM. Actual new deployment and function postimages pending.",
+  "recovery": "Reuse this sealed Task and deterministic Item/operation IDs. UNKNOWN reads same IDs, no Analyze/reset/replacement.",
+  "negative": "Earlier Account-only intake ef9a1860 has tripPrior NULL and correctly disabled Analyze; original objects retained.",
+  "notClaimed": [
+    "SERVER_ACCEPTED",
+    "SERVER_VERIFIED",
+    "Native saved Item recovery",
+    "Independent final multi-Source usage readback"
+  ]
+}
