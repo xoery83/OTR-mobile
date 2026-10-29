@@ -4,6 +4,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it, vi } from "vitest";
+import { z } from "zod";
 import { captureAccountRequestContext } from "../../src/data/auth/accountRequestContext";
 import {
   createIntelligenceWakeQueue,
@@ -371,6 +372,38 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
             event: "universal_execution_phase_failed",
             phase: "PROVIDER_SELECTION",
             kind: "OTHER",
+          }),
+        );
+        expect(sends).not.toHaveBeenCalled();
+        expect(
+          sql
+            .prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts")
+            .get(),
+        ).toEqual({ n: 0 });
+      } finally {
+        log.mockRestore();
+      }
+    }
+    const schemaFailure = z.string().safeParse(1).error!;
+    for (const [failure, kind] of [
+      [schemaFailure, "SCHEMA"],
+      [TypeError("PRIVATE_ORIGINAL"), "TYPE"],
+    ] as const) {
+      const log = vi.spyOn(console, "info").mockImplementation(() => {});
+      fakeRuntime.mockRejectedValueOnce(failure);
+      try {
+        await expect(
+          host.executeQueued(batch, taskId, {
+            operationId: first.id,
+            owner: first.claimOwner!,
+            baseVersion: first.baseVersion!,
+          }),
+        ).rejects.toBe(failure);
+        expect(log).toHaveBeenCalledExactlyOnceWith(
+          JSON.stringify({
+            event: "universal_execution_phase_failed",
+            phase: "RUNTIME_PREPARATION",
+            kind,
           }),
         );
         expect(sends).not.toHaveBeenCalled();
