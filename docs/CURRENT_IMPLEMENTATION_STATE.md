@@ -127,6 +127,23 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
+30 October Auth source candidate: trusted getUser classification now preserves
+strict false→NORMAL_ACCOUNT / true→ANONYMOUS / missing or invalid→UNKNOWN; normal
+predicate denies unknown/id-only. Gateway delta is import+return only. No global
+anonymous ban, Session/Principal/cache change or Source/Provider gate modification.
+Direct/independent2 suites38 PASS/NO_BLOCKER, types/lint/backend build PASS. Native
+owns normal Trip/Core route consumption and precise SQL candidate; not deployed or
+real-DEV-qualified yet. NORMAL_ACCOUNT_QUALIFICATION_PORT.json pins interface.
+
+Native finite Google receipt source9a14be10 now reports actual own-profile/Trip,
+explicit old Person→unlinked, two original P1 Creates and normal Edit/cold PASS;
+Auth inspected its sanitized Actor/Person/operation/revision identity chain only.
+Record: docs/ops/general-account-cloud-sync-20261029/CURRENT_GOOGLE_P1_RECEIPT.json
+at fixed9a14be10. This is neither Guest Adoption nor General Account rollout PASS;
+raw Owner records/tokens were not copied. Previous pending notes below describe
+the earlier source checkpoint and are superseded only within this finite scope.
+
+
 Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account
 secure slots, repositories and apply-generation gate. Apple is Owner-paused. No
 new Auth authority, copied Session/Keychain/SQLite, pricing, Schema/RLS/GRANT or

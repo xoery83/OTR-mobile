@@ -1,0 +1,56 @@
+{
+  "schemaId": "otr.auth.normal-account-qualification/1",
+  "status": "SOURCE_PASS_NORMAL_ROUTE_CONSUMER_PENDING",
+  "interface": {
+    "module": "backend/src/authAccountQualification.ts",
+    "classifier": "classifySupabaseAuthAccount(trustedGetUserResponse)",
+    "predicate": "isNormalAccount(trustedGatewayActor)",
+    "type": "AuthenticatedAccount { id, accountClass? }",
+    "classes": [
+      "NORMAL_ACCOUNT",
+      "ANONYMOUS",
+      "UNKNOWN"
+    ]
+  },
+  "rules": {
+    "NORMAL_ACCOUNT": "valid canonical UUID and getUser.is_anonymous strictly false",
+    "ANONYMOUS": "getUser.is_anonymous strictly true",
+    "UNKNOWN": "classification missing, null or nonboolean; not allowed by normal predicate",
+    "invalidUUID": "return null",
+    "legacyIdOnly": "not normal-qualified"
+  },
+  "preserved": [
+    "global authenticate accepts existing verified identities",
+    "three Universal runtime callers still use original user.id and canReadTrip",
+    "no Provider/Profile/email/name/role inference",
+    "no Native Principal/Session/offline-cache changes",
+    "no Trip role or entitlement authority"
+  ],
+  "validation": {
+    "red": "existing Gateway dropped is_anonymous; expected accountClass was absent",
+    "direct": {
+      "suites": 2,
+      "tests": 38,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 2,
+      "tests": 38,
+      "result": "NO_BLOCKER_PASS"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "backendBuild": "PASS"
+  },
+  "ownership": {
+    "gatewayDelta": "import and validateAccessToken return only; Root confirmed no concurrent writer",
+    "normalRouteConsumer": "Native unique app/Trip/Core writer",
+    "sqlCandidate": "Native owns precise protected candidate; not executed by Auth"
+  },
+  "activation": {
+    "normalRoutesGatedByThisCommit": false,
+    "devDeployed": false,
+    "schemaRlsGrantChanged": false,
+    "realDEVQualificationE2e": false
+  }
+}
