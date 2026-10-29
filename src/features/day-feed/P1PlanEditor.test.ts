@@ -1,3 +1,7 @@
+import { createElement, type ReactNode } from "react";
+import { createRequire } from "node:module";
+import { beforeEach, expect, it, vi } from "vitest";
+import { P1PlanEditor } from "./P1PlanEditor";
 import { createGuestP1DraftInventory } from "@/data/auth/guestP1DraftInventory";
 vi.mock("./TripCalendarRangeField", () => ({
   TripCalendarRangeField: (p: any) => {
@@ -25,10 +29,6 @@ vi.mock("@/data/auth/accountRequestContext", () => ({
   }),
 }));
 vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
-import { createElement, type ReactNode } from "react";
-import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
-import { P1PlanEditor } from "./P1PlanEditor";
 
 vi.mock("@/data/auth/guestP1DraftInventory", async (original) => ({
   ...(await original<typeof import("@/data/auth/guestP1DraftInventory")>()),
@@ -813,3 +813,41 @@ it.each(["account change", "unmount"])(
     expect(p.onClose).not.toHaveBeenCalled();
   },
 );
+
+it.each(["tripCreate.startTime", "tripCreate.endTime"])(
+  "blocks P1 handoff while the unconfirmed %s picker is open",
+  async (label) => {
+    const { p, repo } = await withPlace();
+    const oldOpen = node(label).onPress;
+    oldOpen();
+    const inventory = liveInventory();
+    await expect(inventory.freeze(guestScope())).rejects.toThrow(
+      "GUEST_P1_DRAFT_NOT_READY",
+    );
+    render(p);
+    state.nodes.find((entry) => entry.header?.title === label)!.header.onLeft();
+    const lease = await inventory.freeze(guestScope());
+    oldOpen();
+    await lease.assertCurrent();
+    expect(JSON.parse(lease.entries[0].canonicalText).fields).toMatchObject({
+      startTime: null,
+      endTime: null,
+    });
+    expect(repo.save).not.toHaveBeenCalled();
+    await lease.resume();
+  },
+);
+it("blocks unconfirmed P1 range selection and rejects late range opening after freeze", async () => {
+  await withPlace();
+  const calendar = node("tripCreate.itemDate");
+  expect(calendar.onOpenChange(true)).toBe(true);
+  const inventory = liveInventory();
+  await expect(inventory.freeze(guestScope())).rejects.toThrow(
+    "GUEST_P1_DRAFT_NOT_READY",
+  );
+  calendar.onOpenChange(false);
+  const lease = await inventory.freeze(guestScope());
+  expect(calendar.onOpenChange(true)).toBe(false);
+  await lease.assertCurrent();
+  await lease.resume();
+});

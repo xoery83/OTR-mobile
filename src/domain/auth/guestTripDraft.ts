@@ -1,3 +1,4 @@
+import { isTripCoverAssetId } from "../trip/tripCoverAssets";
 import { z } from "zod";
 import { coreUuid } from "../trip/tripCoreV2";
 import { localPersonNameSlotSchema } from "../trip/localTripPerson";
@@ -91,3 +92,13 @@ export const guestTripDraftSnapshotSchema = z
       context.addIssue({ code: "custom", message: "GUEST_TRIP_DRAFT_SCOPE" });
   });
 export type GuestTripDraftSnapshot = z.infer<typeof guestTripDraftSnapshotSchema>;
+
+// Qualification only: unknown/photo refs remain in the original draft for recovery.
+export function guestTripDraftHasOnlyStaticCovers(snapshot: GuestTripDraftSnapshot) {
+  return (
+    snapshot.mode === "CREATE" ||
+    [snapshot.value.fields.beforeCover, snapshot.value.fields.draftCover].every(
+      (value) => value === null || isTripCoverAssetId(value),
+    )
+  );
+}

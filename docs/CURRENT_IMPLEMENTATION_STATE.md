@@ -117,7 +117,19 @@ dirty/full diff preserved. GUEST_B_TRIP_DRAFT_MAIN_INTEGRATION.json and private
 final refs snapshot pin this integration. Native Edit/freeze/checkpoint-screen
 reconstruction pending; no login/publisher consumer or
 Native checkpoint-to-screen restoration. GUEST_B_TRIP_LIVE_DRAFT_REVIEW.json tracks
-finite readiness. Full-file/all-family/all-live-draft aggregation remains missing.
+finite readiness. General file/all-family aggregation remains unsupported.
+
+Latest local handoff assembly uses the actual frozen Guest vault, Trip/P1 draft
+registries and canonical journal verifier. Schema74/current Trip/P1 capability
+qualifies zero registered business files only with owning Capture empty, whole
+census/ownership checks and static-only stored/deferred/live cover references.
+Unknown families/photo references block the whole dataset. Final table hash must
+match qualification; output is immutable and cloudAuthority=false. UI resume and
+vault release serialize with publication markers; open P1 date/time pickers block
+freeze. Directed6 suites202/types/scopedlint/UIguard PASS; independent prior4
+suites118 NO_BLOCKER; final queued-marker race additionally PASS. This has no Native
+consumer, physical-disk absence claim, login/adoption activation or DEV publication.
+See GUEST_B_HANDOFF_INVENTORY_REVIEW.json and ADR dated2026-10-29.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/

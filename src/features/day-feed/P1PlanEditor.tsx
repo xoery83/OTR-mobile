@@ -44,14 +44,19 @@ function TimeField({
   value,
   disabled,
   onChange,
+  onOpenChange,
 }: {
   label: string;
   value: string | null;
   disabled: boolean;
   onChange(value: string | null): void;
+  onOpenChange?(open: boolean): boolean | void;
 }) {
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
+  const changeOpen = (next: boolean) => {
+    if (onOpenChange?.(next) !== false) setOpen(next);
+  };
   const [selected, setSelected] = useState(new Date());
   return (
     <View style={styles.timeField}>
@@ -61,6 +66,7 @@ function TimeField({
         value={value ?? t("tripCreate.notSet")}
         disabled={disabled}
         onPress={() => {
+          if (onOpenChange?.(true) === false) return;
           const date = new Date();
           if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
           setSelected(date);
@@ -72,20 +78,20 @@ function TimeField({
         animationType="slide"
         presentationStyle="pageSheet"
         allowSwipeDismissal
-        onRequestClose={() => setOpen(false)}
+        onRequestClose={() => changeOpen(false)}
       >
         <SafeAreaView edges={["bottom"]} style={styles.timeSheet}>
           <SheetHeader
             category="picker"
             safeTop={false}
             title={label}
-            onLeft={() => setOpen(false)}
+            onLeft={() => changeOpen(false)}
             onRight={() => {
               if (!disabled)
                 onChange(
                   `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
                 );
-              setOpen(false);
+              changeOpen(false);
             }}
             rightDisabled={disabled}
           />
@@ -104,7 +110,7 @@ function TimeField({
             disabled={disabled}
             onPress={() => {
               onChange(null);
-              setOpen(false);
+              changeOpen(false);
             }}
           />
         </SafeAreaView>
@@ -177,6 +183,7 @@ export function P1PlanEditor({
   const frozenRef = useRef(false);
   const firstAttemptRef = useRef<ManualPlanFields | null>(null);
   const handoffRef = useRef<symbol | null>(null);
+  const pickerOpen = useRef({ date: false, start: false, end: false });
   const [handoffFrozen, setHandoffFrozen] = useState(false);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened || preview ? "READY" : "LOADING",
@@ -238,6 +245,11 @@ export function P1PlanEditor({
       (!sourceRef.current || sourceRef.current.generation === generation),
     [generation],
   );
+  function changePickerOpen(which: "date" | "start" | "end", open: boolean) {
+    if (!current() || handoffRef.current) return false;
+    pickerOpen.current[which] = open;
+    return true;
+  }
   useEffect(() => {
     if (preview) return;
     return guestP1DraftInventory.register({
@@ -254,7 +266,8 @@ export function P1PlanEditor({
           frozenRef.current ||
           firstAttemptRef.current ||
           handoffRef.current ||
-          placeSearchRef.current
+          placeSearchRef.current ||
+          Object.values(pickerOpen.current).some(Boolean)
         )
           throw Error("GUEST_P1_DRAFT_NOT_READY");
         const snapshot = {
@@ -276,6 +289,7 @@ export function P1PlanEditor({
           isCurrent: () =>
             current() &&
             handoffRef.current === ticket &&
+            !Object.values(pickerOpen.current).some(Boolean) &&
             sourceRef.current === openedSource,
           resume() {
             if (handoffRef.current !== ticket) return;
@@ -586,6 +600,7 @@ export function P1PlanEditor({
                 </View>
                 <TripCalendarRangeField
                   label={t("tripCreate.itemDate")}
+                  onOpenChange={(open) => changePickerOpen("date", open)}
                   presentation="field"
                   value={{ start: fields.startDate, end: fields.endDate ?? "" }}
                   referenceRange={{ start: tripStartDate ?? "", end: tripEndDate ?? "" }}
@@ -605,12 +620,14 @@ export function P1PlanEditor({
                 <View style={styles.times}>
                   <TimeField
                     label={t("tripCreate.startTime")}
+                    onOpenChange={(open) => changePickerOpen("start", open)}
                     value={fields.startTime}
                     disabled={saving || frozen}
                     onChange={(startTime) => change({ startTime })}
                   />
                   <TimeField
                     label={t("tripCreate.endTime")}
+                    onOpenChange={(open) => changePickerOpen("end", open)}
                     value={fields.endTime}
                     disabled={saving || frozen || !fields.startDate}
                     onChange={(endTime) =>

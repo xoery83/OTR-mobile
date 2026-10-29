@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
-import { guestTripDraftSnapshotSchema } from "./guestTripDraft";
+import {
+  guestTripDraftSnapshotSchema,
+  guestTripDraftHasOnlyStaticCovers,
+} from "./guestTripDraft";
 
 function createDraft() {
   const tripId = randomUUID();
@@ -107,3 +110,47 @@ it("rejects a foreign Trip hidden inside an otherwise valid Edit CAS baseline", 
   raw.value.context.metadataBase.tripId = tripId;
   expect(guestTripDraftSnapshotSchema.safeParse(raw).success).toBe(true);
 });
+
+it.each([
+  [null, "coast", true],
+  ["owner-photo-a348f66b8ca5", null, true],
+  [`photo-${randomUUID()}`, "coast", false],
+  [null, "unknown-retained-cover", false],
+  ["coast", `photo-${randomUUID()}`, false],
+] as const)(
+  "qualifies raw draft cover references %s -> %s without changing stored input",
+  (beforeCover, draftCover, expected) => {
+    const tripId = randomUUID();
+    const raw = {
+      schemaId: "otr.auth.guest-trip-draft/1",
+      draftId: randomUUID(),
+      tripId,
+      mode: "EDIT",
+      value: {
+        fields: {
+          before: { name: "Guest", destination: null, startDate: null, endDate: null },
+          beforeCover,
+          draftCover,
+          coverChanged: beforeCover !== draftCover,
+          initialDestinations: [],
+          destinationItems: [],
+          destinationsBefore: [],
+          name: "",
+          destination: "",
+          start: "",
+          end: "",
+        },
+        context: {
+          tripId,
+          syncFormatVersion: 2,
+          metadataBase: null,
+          deferredMetadataBase: null,
+          deferredActionId: null,
+        },
+      },
+    };
+    const snapshot = guestTripDraftSnapshotSchema.parse(raw);
+    expect(guestTripDraftHasOnlyStaticCovers(snapshot)).toBe(expected);
+    expect(snapshot).toEqual(raw);
+  },
+);

@@ -1,3 +1,6 @@
+import { createGuestHandoffInventory } from "./guestHandoffInventory";
+import { createGuestTripDraftInventory } from "./guestTripDraftInventory";
+import { createGuestP1DraftInventory } from "./guestP1DraftInventory";
 import {
   createGuestAdoptionRecovery,
   type GuestRecoveryFiles,
@@ -24,7 +27,7 @@ import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { runMigrations } from "../db/migrationRunner";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { createGuestLocalWorkspaceOpener } from "./guestLocalWorkspace";
-import { advanceAccountGeneration } from "./accountGeneration";
+import { advanceAccountGeneration, getAccountGeneration } from "./accountGeneration";
 import type { LaunchIdentity } from "./guestPrincipalRepository";
 import type { CoreDatabase } from "../repositories/tripCoreV2Repository";
 import type { MigrationDatabase } from "../db/migrationRunner";
@@ -1013,4 +1016,447 @@ it("does not apply one Guest's recovery hold or files to another Guest scope", a
   expect(await b.inspectPublicationRequests()).toEqual([]);
   await b.trips.createTrip(tripInput());
   expect(await b.trips.listTrips()).toHaveLength(1);
+});
+
+it.each(["local_trip_containers", "account_trip_cover_preferences"])(
+  "blocks retained/unknown cover refs in %s without rewriting the original",
+  async (table) => {
+    const f = fixture(),
+      workspace = await f.newOpener()(),
+      trip = tripInput();
+    await workspace.trips.createTrip(trip);
+    const sql = f.opened[0].sql;
+    for (const cover of [`photo-${randomUUID()}`, "unknown-retained-cover"]) {
+      sql.prepare(`UPDATE ${table} SET selected_cover_asset_id=?`).run(cover);
+      if (table === "local_trip_containers")
+        sql
+          .prepare(
+            "UPDATE account_trip_cover_preferences SET selected_cover_asset_id=NULL",
+          )
+          .run();
+      const census = await workspace.readCensus(completeExternalInventory(workspace));
+      expect(census.readyForServerPreflight).toBe(false);
+      expect(census.blockers).toContain("UNSUPPORTED_GUEST_COVER_REFERENCE");
+      expect(
+        sql.prepare(`SELECT selected_cover_asset_id AS cover FROM ${table}`).get(),
+      ).toEqual({ cover });
+    }
+  },
+);
+it("permits registered static owner-photo assets without treating their names as retained device photos", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    trip = tripInput();
+  await workspace.trips.createTrip(trip);
+  await workspace.trips.selectBuiltInCover(trip.tripId, "owner-photo-a348f66b8ca5");
+  expect(
+    (await workspace.readCensus(completeExternalInventory(workspace)))
+      .readyForServerPreflight,
+  ).toBe(true);
+});
+it("checks cover references inside the owning deferred operation even when both Trip cover columns are null", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    trip = { ...tripInput(), syncFormatVersion: 2 as const, destinations: [] };
+  await workspace.trips.createTrip(trip);
+  const base = await workspace.trips.readDeferredMetadataEditBase(trip.tripId);
+  const action = {
+    localActionVersion: 1 as const,
+    actionId: randomUUID(),
+    operationId: randomUUID(),
+    tripId: trip.tripId,
+    before: base.metadata,
+    after: { ...base.metadata, name: "Guest edited" },
+  };
+  await workspace.trips.deferMetadataUpdate(action);
+  const sql = f.opened[0].sql;
+  const original = sql
+    .prepare("SELECT payload_json AS payload FROM sync_operations WHERE id=?")
+    .get(action.actionId) as { payload: string };
+  for (const cover of [`photo-${randomUUID()}`, "unknown-retained-cover"]) {
+    const payload = JSON.stringify({
+      ...JSON.parse(original.payload),
+      cover: { before: null, after: cover },
+    });
+    sql
+      .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+      .run(payload, action.actionId);
+    const census = await workspace.readCensus(completeExternalInventory(workspace));
+    expect(census.readyForServerPreflight).toBe(false);
+    expect(census.blockers).toContain("UNSUPPORTED_GUEST_COVER_REFERENCE");
+    expect(
+      sql
+        .prepare("SELECT payload_json AS payload FROM sync_operations WHERE id=?")
+        .get(action.actionId),
+    ).toEqual({ payload });
+  }
+});
+
+it("derives a scoped registered-files-zero qualification from real frozen readers, not supplied COMPLETE metadata", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    trip = tripInput();
+  await workspace.trips.createTrip(trip);
+  const draft = await workspace.plan.createDraft(trip.tripId);
+  await workspace.plan.save(draft, {
+    ...draft.fields,
+    title: "Qualified Guest P1",
+    startDate: trip.startDate,
+  });
+  expect("readRegisteredFileQualification" in workspace).toBe(false);
+  const lease = await workspace.freezeForInventory();
+  const proof = await lease.readRegisteredFileQualification();
+  expect(proof).toMatchObject({
+    schemaId: "otr.auth.guest-registered-file-qualification/1",
+    scope: workspace.scope,
+    capabilityVersion: "otr.auth.guest-trip-p1-no-file-producers/1",
+    coverage: "CURRENT_GUEST_TRIP_P1_REGISTERED_FILES",
+    registeredFileCount: 0,
+    entries: [],
+    physicalDiskEmptyClaim: false,
+    accountDirectoriesInspected: false,
+  });
+  expect(proof.sourceTablesSha256).toMatch(/^[a-f0-9]{64}$/);
+  await lease.release();
+  await expect(lease.readRegisteredFileQualification()).rejects.toThrow(
+    "GUEST_INVENTORY_FREEZE_RELEASED",
+  );
+});
+it.each(["unknown family", "Capture", "photo cover"])(
+  "keeps registered-file qualification closed for %s even if a caller supplies empty metadata",
+  async (reason) => {
+    const f = fixture(),
+      workspace = await f.newOpener()(),
+      trip = tripInput();
+    await workspace.trips.createTrip(trip);
+    if (reason === "unknown family")
+      f.opened[0].sql.exec(
+        "CREATE TABLE unknown_file_refs(id TEXT); INSERT INTO unknown_file_refs VALUES('retained-unknown-reference')",
+      );
+    if (reason === "Capture") await captureFixture(f);
+    if (reason === "photo cover")
+      f.opened[0].sql
+        .prepare("UPDATE account_trip_cover_preferences SET selected_cover_asset_id=?")
+        .run(`photo-${randomUUID()}`);
+    const lease = await workspace.freezeForInventory();
+    await expect(
+      (lease.readRegisteredFileQualification as any)(
+        completeExternalInventory(workspace),
+      ),
+    ).rejects.toThrow("GUEST_REGISTERED_FILES_QUALIFICATION_REQUIRED");
+    await lease.release();
+    expect(await workspace.trips.listTrips()).toHaveLength(1);
+  },
+);
+it("rejects registered-file qualification after a same-UUID switch to Account kind", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const lease = await workspace.freezeForInventory();
+  f.setPrincipal({ kind: "ACCOUNT", accountId: f.guestId });
+  await expect(lease.readRegisteredFileQualification()).rejects.toThrow(
+    "GUEST_LOCAL_SCOPE_CHANGED",
+  );
+  f.setPrincipal({ kind: "GUEST", localId: f.guestId });
+  await lease.release();
+});
+
+async function handoffFixture() {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const trip = { ...tripInput(), syncFormatVersion: 2 as const, destinations: [] };
+  await workspace.trips.createTrip(trip);
+  const base = await workspace.trips.readDeferredMetadataEditBase(trip.tripId);
+  const action = {
+    localActionVersion: 1 as const,
+    actionId: randomUUID(),
+    operationId: randomUUID(),
+    tripId: trip.tripId,
+    before: base.metadata,
+    after: { ...base.metadata, name: "Guest deferred metadata" },
+  };
+  await workspace.trips.deferMetadataUpdate(action);
+  const plan = await workspace.plan.createDraft(trip.tripId);
+  const saved = await workspace.plan.save(plan, {
+    ...plan.fields,
+    title: "Guest committed P1",
+    startDate: trip.startDate,
+  });
+  const draft = await workspace.plan.read(trip.tripId, saved.itemId);
+  const assertScope = async (scope: typeof workspace.scope) => {
+    if (
+      scope.localId !== workspace.scope.localId ||
+      scope.generation !== workspace.scope.generation ||
+      scope.generation !== getAccountGeneration()
+    )
+      throw Error("OLD_UI_SCOPE");
+  };
+  const trips = createGuestTripDraftInventory(assertScope),
+    p1 = createGuestP1DraftInventory(assertScope);
+  const tripResume = vi.fn(),
+    p1Resume = vi.fn();
+  const tripSnapshot = {
+    schemaId: "otr.auth.guest-trip-draft/1" as const,
+    draftId: randomUUID(),
+    tripId: trip.tripId,
+    mode: "EDIT" as const,
+    value: {
+      fields: {
+        before: {
+          name: action.after.name,
+          destination: null,
+          startDate: trip.startDate,
+          endDate: trip.endDate,
+        },
+        beforeCover: null as string | null,
+        draftCover: null as string | null,
+        coverChanged: false,
+        initialDestinations: [],
+        destinationItems: [],
+        destinationsBefore: [],
+        name: "  Unsubmitted Trip edit  ",
+        destination: "",
+        start: trip.startDate,
+        end: trip.endDate,
+      },
+      context: {
+        tripId: trip.tripId,
+        syncFormatVersion: 2 as const,
+        metadataBase: null,
+        deferredMetadataBase: action.after,
+        deferredActionId: randomUUID(),
+      },
+    },
+  };
+  trips.register({
+    freeze: () => ({
+      snapshot: structuredClone(tripSnapshot),
+      isCurrent: () => true,
+      resume: tripResume,
+    }),
+  });
+  p1.register({
+    freeze: () => ({
+      snapshot: {
+        schemaId: "otr.auth.guest-p1-draft/1",
+        tripId: trip.tripId,
+        itemId: draft.itemId,
+        mode: "EDIT",
+        fields: { ...draft.fields, title: "  Unsubmitted P1 edit  " },
+        initialFields: draft.fields,
+        firstAttempt: null,
+        placeSelection: null,
+      },
+      isCurrent: () => true,
+      resume: p1Resume,
+    }),
+  });
+  const deps = { openWorkspace: async () => workspace, tripDrafts: trips, p1Drafts: p1 };
+  return { f, workspace, trip, trips, p1, tripResume, p1Resume, tripSnapshot, deps };
+}
+it("combines actual Guest Trip/P1/deferred SQL with both UI snapshots and a calculated file qualification under one held source", async () => {
+  const f = await handoffFixture();
+  const inventory = await createGuestHandoffInventory(f.deps)();
+  expect(inventory.cloudAuthority).toBe(false);
+  expect(inventory.census.readyForServerPreflight).toBe(true);
+  expect(inventory.census.tripIds).toEqual([f.trip.tripId]);
+  expect(inventory.census.totals).toMatchObject({
+    trips: 1,
+    people: 1,
+    p1Items: 1,
+    files: 0,
+    fileBytes: 0,
+    liveDrafts: 2,
+  });
+  expect(inventory.drafts).toHaveLength(2);
+  expect(
+    inventory.drafts.map((entry) => JSON.parse(entry.canonicalText).schemaId).sort(),
+  ).toEqual(["otr.auth.guest-p1-draft/1", "otr.auth.guest-trip-draft/1"]);
+  expect(Object.isFrozen(inventory.census.totals)).toBe(true);
+  expect(Object.isFrozen(inventory.drafts[0])).toBe(true);
+  await expect(f.workspace.trips.listTrips()).rejects.toThrow("GUEST_INVENTORY_FROZEN");
+  await inventory.assertCurrent();
+  await Promise.all([
+    inventory.resumeGuestBeforePublication(),
+    inventory.resumeGuestBeforePublication(),
+  ]);
+  expect(f.tripResume).toHaveBeenCalledOnce();
+  expect(f.p1Resume).toHaveBeenCalledOnce();
+  await expect(inventory.assertCurrent()).rejects.toThrow(
+    "GUEST_HANDOFF_INVENTORY_RELEASED",
+  );
+  expect(await f.workspace.trips.listTrips()).toHaveLength(1);
+  expect(
+    f.f.opened[0].sql.prepare("SELECT count(*) AS n FROM sync_operations").get(),
+  ).toEqual({ n: 3 });
+});
+it.each(["live photo ref", "unconfirmed picker", "unknown persisted family"])(
+  "resumes the same source and every frozen editor after unsupported %s",
+  async (reason) => {
+    const f = await handoffFixture();
+    if (reason === "live photo ref")
+      f.tripSnapshot.value.fields.beforeCover = `photo-${randomUUID()}`;
+    if (reason === "unconfirmed picker")
+      f.p1.register({
+        freeze() {
+          throw Error("UNCONFIRMED_PICKER");
+        },
+      });
+    if (reason === "unknown persisted family")
+      f.f.opened[0].sql.exec(
+        "CREATE TABLE unsupported_guest_file(value TEXT); INSERT INTO unsupported_guest_file VALUES('retain original')",
+      );
+    await expect(createGuestHandoffInventory(f.deps)()).rejects.toThrow();
+    expect(f.tripResume).toHaveBeenCalledOnce();
+    expect(f.p1Resume).toHaveBeenCalledOnce();
+    expect(await f.workspace.trips.listTrips()).toHaveLength(1);
+  },
+);
+it("requires authoritative status and retains all source/UI locks after a publish-request marker", async () => {
+  const f = await handoffFixture(),
+    inventory = await createGuestHandoffInventory(f.deps)();
+  const recovery = createGuestAdoptionRecovery({
+    scope: inventory.scope,
+    files: f.f.files,
+    assertGuest: async () => undefined,
+  });
+  const input = {
+    schemaId: "otr.auth.guest-adoption-recovery/2" as const,
+    sourceKind: "GUEST" as const,
+    sourceGuestLocalId: inventory.scope.localId,
+    adoptionId: randomUUID(),
+    targetAccountId: randomUUID(),
+    checkpoint: "PREPARED" as const,
+    inventorySha256: inventory.census.inventorySha256!,
+    tripIds: [...inventory.census.tripIds],
+    drafts: [...inventory.drafts],
+  };
+  const prepared = await recovery.prepare(input);
+  await recovery.requestPublication(
+    input.adoptionId,
+    input.targetAccountId,
+    prepared!.preparationSha256,
+  );
+  await expect(inventory.assertCurrent()).rejects.toThrow(
+    "GUEST_HANDOFF_STATUS_REQUIRED",
+  );
+  await expect(inventory.resumeGuestBeforePublication()).rejects.toThrow(
+    "GUEST_HANDOFF_STATUS_REQUIRED",
+  );
+  expect(f.tripResume).not.toHaveBeenCalled();
+  expect(f.p1Resume).not.toHaveBeenCalled();
+  await expect(f.workspace.trips.listTrips()).rejects.toThrow(
+    "GUEST_PUBLICATION_STATUS_REQUIRED",
+  );
+});
+it("rejects a source row changed between qualification and final census and releases the invalid inventory", async () => {
+  const f = await handoffFixture();
+  const openWorkspace = async () => ({
+    ...f.workspace,
+    freezeForInventory: async () => {
+      const lease = await f.workspace.freezeForInventory();
+      return {
+        ...lease,
+        readRegisteredFileQualification: async () => {
+          const proof = await lease.readRegisteredFileQualification();
+          f.f.opened[0].sql
+            .prepare("UPDATE local_trip_containers SET name='retained concurrent change'")
+            .run();
+          return proof;
+        },
+      };
+    },
+  });
+  await expect(
+    createGuestHandoffInventory({ ...f.deps, openWorkspace })(),
+  ).rejects.toThrow("GUEST_HANDOFF_DATASET_CHANGED_OR_UNSUPPORTED");
+  expect(f.tripResume).toHaveBeenCalledOnce();
+  expect(f.p1Resume).toHaveBeenCalledOnce();
+  expect((await f.workspace.trips.getTrip(f.trip.tripId))!.name).toBe(
+    "retained concurrent change",
+  );
+});
+
+it("retires superseded editor leases after an Account transition without unlocking another Guest scope", async () => {
+  const f = await handoffFixture(),
+    inventory = await createGuestHandoffInventory(f.deps)();
+  f.f.setPrincipal({ kind: "ACCOUNT", accountId: randomUUID() });
+  advanceAccountGeneration();
+  await expect(inventory.resumeGuestBeforePublication()).rejects.toThrow(
+    "GUEST_HANDOFF_INVENTORY_RECOVERY_REQUIRED",
+  );
+  expect(f.tripResume).toHaveBeenCalledOnce();
+  expect(f.p1Resume).toHaveBeenCalledOnce();
+  await expect(inventory.assertCurrent()).rejects.toThrow(
+    "GUEST_HANDOFF_INVENTORY_RELEASED",
+  );
+  f.f.setPrincipal({ kind: "GUEST", localId: f.f.guestId });
+  const recovered = await f.f.newOpener()();
+  expect((await recovered.trips.listTrips())[0].id).toBe(f.trip.tripId);
+});
+
+it("serializes a queued publication marker after UI resume under the source release gate", async () => {
+  const f = await handoffFixture(),
+    events: string[] = [];
+  let finishResume!: () => void;
+  const waiting = new Promise<void>((resolve) => {
+    finishResume = resolve;
+  });
+  const inventory = await createGuestHandoffInventory({
+    ...f.deps,
+    tripDrafts: {
+      freeze: async (scope) => {
+        const lease = await f.trips.freeze(scope);
+        return {
+          ...lease,
+          resume: async () => {
+            events.push("UI_RESUME_BEGIN");
+            await waiting;
+            await lease.resume();
+            events.push("UI_RESUMED");
+          },
+        };
+      },
+    },
+  })();
+  const create = f.f.files.create.bind(f.f.files);
+  f.f.files.create = async (...args) => {
+    if (args[1] === "publish-requested") events.push("PUBLISH_MARKER");
+    return create(...args);
+  };
+  const recovery = createGuestAdoptionRecovery({
+    scope: inventory.scope,
+    files: f.f.files,
+    assertGuest: async () => undefined,
+  });
+  const input = {
+    schemaId: "otr.auth.guest-adoption-recovery/2" as const,
+    sourceKind: "GUEST" as const,
+    sourceGuestLocalId: inventory.scope.localId,
+    adoptionId: randomUUID(),
+    targetAccountId: randomUUID(),
+    checkpoint: "PREPARED" as const,
+    inventorySha256: inventory.census.inventorySha256!,
+    tripIds: [...inventory.census.tripIds],
+    drafts: [...inventory.drafts],
+  };
+  const prepared = await recovery.prepare(input);
+  const resuming = inventory.resumeGuestBeforePublication();
+  await vi.waitFor(() => expect(events).toContain("UI_RESUME_BEGIN"));
+  const publishing = recovery.requestPublication(
+    input.adoptionId,
+    input.targetAccountId,
+    prepared!.preparationSha256,
+  );
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(events).not.toContain("PUBLISH_MARKER");
+  finishResume();
+  await Promise.all([resuming, publishing]);
+  expect(events.indexOf("UI_RESUMED")).toBeLessThan(events.indexOf("PUBLISH_MARKER"));
+  await expect(inventory.assertCurrent()).rejects.toThrow(
+    "GUEST_HANDOFF_INVENTORY_RELEASED",
+  );
+  await expect(f.workspace.trips.listTrips()).rejects.toThrow(
+    "GUEST_PUBLICATION_STATUS_REQUIRED",
+  );
+  // Ordering fixture only: no network publisher; cancelled inventory cannot grant publication.
 });

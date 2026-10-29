@@ -1,3 +1,4 @@
+import { readGuestRegisteredFileQualification } from "./guestRegisteredFileQualification";
 import {
   createGuestAdoptionRecovery,
   type GuestRecoveryFiles,
@@ -171,19 +172,37 @@ export function createGuestLocalWorkspaceOpener(deps: {
               await assertCurrent();
               return result;
             },
+            readRegisteredFileQualification() {
+              return readGuestRegisteredFileQualification({
+                scope,
+                assertCurrent,
+                readCensus,
+                readCaptureInventory,
+              });
+            },
             async readCaptureInventory() {
               await assertCurrent();
               const result = await readCaptureInventory();
               await assertCurrent();
               return result;
             },
-            async release() {
+            // Internal UI resumes only; never network or business writes under this gate.
+            async release(resumeEditors?: () => Promise<void>) {
               return withAccountApplyGate(async () => {
                 if (released) return false;
                 await assertCurrent();
                 assertGuestPublicationNotRequested(localId);
+                let resumeError: unknown;
+                try {
+                  await resumeEditors?.();
+                } catch (error) {
+                  resumeError = error;
+                }
+                await assertCurrent();
+                assertGuestPublicationNotRequested(localId);
                 released = true;
                 inventoryFreezes.delete(localId);
+                if (resumeError) throw resumeError;
                 return true;
               });
             },

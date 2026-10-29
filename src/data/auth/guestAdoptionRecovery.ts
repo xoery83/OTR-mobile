@@ -80,6 +80,57 @@ const scopeSchema = z.strictObject({
 const canonical = (value: unknown) => canonicalCoreJson(value as Json);
 const sha = (text: string) => tripCoreSha256Hex(new TextEncoder().encode(text));
 
+export async function verifyGuestAdoptionDrafts(
+  input: Pick<
+    GuestAdoptionPreparation,
+    "schemaId" | "sourceGuestLocalId" | "tripIds" | "drafts"
+  >,
+) {
+  const value = guestAdoptionPreparationSchema
+    .pick({
+      schemaId: true,
+      sourceGuestLocalId: true,
+      tripIds: true,
+      drafts: true,
+    })
+    .strip()
+    .parse(input);
+  if (
+    new Set(value.tripIds).size !== value.tripIds.length ||
+    new Set(value.drafts.map((entry) => entry.id)).size !== value.drafts.length
+  )
+    throw Error("GUEST_ADOPTION_RECOVERY_DUPLICATE");
+  for (const entry of value.drafts) {
+    const body = (
+      value.schemaId === "otr.auth.guest-adoption-recovery/1"
+        ? draft
+        : z.union([draft, guestTripDraftSnapshotSchema])
+    ).parse(JSON.parse(entry.canonicalText));
+    const isP1 = body.schemaId === "otr.auth.guest-p1-draft/1";
+    const id = isP1 ? body.itemId : body.draftId;
+    if (
+      !isP1 &&
+      body.mode === "EDIT" &&
+      body.value.context.metadataBase &&
+      body.value.context.metadataBase.actorAccountId !== value.sourceGuestLocalId
+    )
+      throw Error("GUEST_ADOPTION_RECOVERY_DRAFT_SCOPE");
+    // An unsubmitted Trip Create remains recovery material, never a published Trip shell.
+    const tripBound =
+      !isP1 && body.mode === "CREATE"
+        ? !value.tripIds.includes(body.tripId)
+        : value.tripIds.includes(body.tripId);
+    if (
+      id !== entry.id ||
+      !tripBound ||
+      canonical(body) !== entry.canonicalText ||
+      new TextEncoder().encode(entry.canonicalText).byteLength !== entry.bytes ||
+      (await sha(entry.canonicalText)) !== entry.sha256
+    )
+      throw Error("GUEST_ADOPTION_RECOVERY_DRAFT_PIN");
+  }
+}
+
 // Local recovery material only. A checkpoint never authorizes upload or Session installation.
 export function createGuestAdoptionRecovery(deps: {
   scope: Scope;
@@ -115,40 +166,7 @@ export function createGuestAdoptionRecovery(deps: {
     const parsed = JSON.parse(raw) as unknown;
     assertBinding(binding.strip().parse(parsed), adoptionId, targetAccountId);
     const value = guestAdoptionPreparationSchema.parse(parsed);
-    if (
-      new Set(value.tripIds).size !== value.tripIds.length ||
-      new Set(value.drafts.map((entry) => entry.id)).size !== value.drafts.length
-    )
-      throw Error("GUEST_ADOPTION_RECOVERY_DUPLICATE");
-    for (const entry of value.drafts) {
-      const body = (
-        value.schemaId === "otr.auth.guest-adoption-recovery/1"
-          ? draft
-          : z.union([draft, guestTripDraftSnapshotSchema])
-      ).parse(JSON.parse(entry.canonicalText));
-      const isP1 = body.schemaId === "otr.auth.guest-p1-draft/1";
-      const id = isP1 ? body.itemId : body.draftId;
-      if (
-        !isP1 &&
-        body.mode === "EDIT" &&
-        body.value.context.metadataBase &&
-        body.value.context.metadataBase.actorAccountId !== scope.localId
-      )
-        throw Error("GUEST_ADOPTION_RECOVERY_DRAFT_SCOPE");
-      // An unsubmitted Trip Create remains recovery material, never a published Trip shell.
-      const tripBound =
-        !isP1 && body.mode === "CREATE"
-          ? !value.tripIds.includes(body.tripId)
-          : value.tripIds.includes(body.tripId);
-      if (
-        id !== entry.id ||
-        !tripBound ||
-        canonical(body) !== entry.canonicalText ||
-        new TextEncoder().encode(entry.canonicalText).byteLength !== entry.bytes ||
-        (await sha(entry.canonicalText)) !== entry.sha256
-      )
-        throw Error("GUEST_ADOPTION_RECOVERY_DRAFT_PIN");
-    }
+    await verifyGuestAdoptionDrafts(value);
     if (canonical(value) !== raw) throw Error("GUEST_ADOPTION_RECOVERY_NONCANONICAL");
     return { preparation: value, preparationSha256: await sha(raw) };
   }

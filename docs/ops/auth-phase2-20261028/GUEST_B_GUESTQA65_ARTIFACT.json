@@ -57,7 +57,8 @@
     "sharedDeviceHubReadsRejected": 2,
     "resolution": "Owner explicitly confirmed currently visible FormsQA/GuestQA before fresh binding",
     "oneLaterApprovalTimeout": "actual UI read confirmed no action; one normal retry succeeded",
-    "noAlternativeScreenReadBypass": true
+    "noAlternativeScreenReadBypass": true,
+    "initialSharedWindowObservation": "A stale DeviceHub binding yielded an unrelated status-only AX diff. Further reads were stopped/rejected; Owner confirmed GuestQA before fresh binding. No unrelated business objects or credentials were inspected or recorded."
   },
   "limits": [
     "Native normal Edit not performed in this bounded window",
@@ -66,6 +67,6 @@
     "transient Create was explicitly discarded, never saved; not a new Golden A Create acceptance"
   ],
   "guiReturnedToSourceThenNative": true,
-  "otherBundleOrSessionRead": false,
-  "dataCopied": false
+  "dataCopied": false,
+  "otherAppSessionKeychainDatabaseAccess": false
 }
