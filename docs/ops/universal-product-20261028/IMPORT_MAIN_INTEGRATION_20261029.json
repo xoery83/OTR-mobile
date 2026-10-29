@@ -1,7 +1,7 @@
 {
   "sourceCommit": "9bcb225d97173812d7d962a1b9df0c6eb5240491",
   "joinedMain": "ee2466584ea025ff9f4d815603a2c6b1dc20c9f7",
-  "integration": "Private merge; primary FF-only with fresh remote precheck; pending final documentation FF/push",
+  "integration": "Primary FF-only and normal push, remote independently verified",
   "privateChecks": {
     "suites": 10,
     "tests": 127,
@@ -19,5 +19,7 @@
   "allOriginalDirtyFilesAndFullTrackedDiff": "EXACTLY_PRESERVED",
   "devDeployment": "curated7e985 only; latest main not deployed",
   "mixedE2E": "NOT_COMPLETE; retained success ABSTAIN but Native Results body unavailable",
-  "pendingReadOptimization": "Uncommitted local two-line candidate excluded from this integration"
+  "pendingReadOptimization": "Uncommitted local two-line candidate excluded from this integration",
+  "finalMain": "11c7feaab8b3b56d100b178d5a63efb2c7966ef6",
+  "remoteVerified": true
 }

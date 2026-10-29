@@ -432,7 +432,59 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     const published = await host.readPublished(batch, taskId);
     expect(published?.result).toEqual(result);
     expect(published?.resultSha256).toMatch(/^[a-f0-9]{64}$/);
+    const beforeRead = sourceQuery.mock.calls.filter(([q]) =>
+      q.includes("trip_source_read_sustained_universal_inputs"),
+    ).length;
     expect(await host.readResult(batch, taskId)).toEqual(result);
+    expect(
+      sourceQuery.mock.calls.filter(([q]) =>
+        q.includes("trip_source_read_sustained_universal_inputs"),
+      ).length - beforeRead,
+    ).toBe(2);
+    const sourceRead = sourceQuery.getMockImplementation()!;
+    for (const corrupt of ["MATERIAL", "SECOND_SNAPSHOT"] as const) {
+      let reads = 0;
+      sourceQuery.mockImplementation(async (q) => {
+        const rows = await sourceRead(q);
+        if (q.includes("trip_source_read_sustained_universal_inputs")) {
+          reads++;
+          const row = rows.rows[0];
+          if (!row || !("manifest" in row) || !row.manifest)
+            throw Error("MANIFEST_FIXTURE_MISSING");
+          if (corrupt === "MATERIAL" && reads === 1)
+            row.manifest.representations[0].text += "tampered";
+          if (corrupt === "SECOND_SNAPSHOT" && reads === 2)
+            row.manifest.representations[0].revision++;
+        }
+        return rows;
+      });
+      try {
+        await expect(host.readResult(batch, taskId)).rejects.toThrow(
+          corrupt === "MATERIAL"
+            ? "UNIVERSAL_SOURCE_MATERIAL_INVALID"
+            : "UNIVERSAL_SOURCE_CHANGED",
+        );
+      } finally {
+        sourceQuery.mockImplementation(sourceRead);
+      }
+    }
+    const readMaterial = stores.custody.read;
+    const custodyRead = vi
+      .spyOn(stores.custody, "read")
+      .mockImplementation(async (input) => {
+        const bytes = await readMaterial(input);
+        authorized = false;
+        return bytes;
+      });
+    try {
+      await expect(host.readResult(batch, taskId)).rejects.toThrow(
+        "AUTH_REVOKED_FIXTURE",
+      );
+    } finally {
+      authorized = true;
+      custodyRead.mockRestore();
+    }
+    expect(sends).toHaveBeenCalledTimes(1);
     const noSecondSource = {
       withLease: async () => {
         throw Error("SECOND_SOURCE_TRANSACTION_FORBIDDEN");

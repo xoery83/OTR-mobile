@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_PASS_NOT_DEPLOYED",
+  "actualFailure": "Native has RESULTS_READY Activity but no displayed sealed Result",
+  "retainedResult": "Same bcff/401a ABSTAIN0; wire schema PASS, independent Provider count1; no reparse",
+  "focusedFinding": "readResult called found(), then recomputed the same manifest through marker; each canonical read internally reads twice",
+  "red": "One existing fixture failed: 4 snapshots instead of2",
+  "change": "Reuse found sourceManifest within same authenticated GET only; no cross-request cache",
+  "green": {
+    "suites": 3,
+    "tests": 20,
+    "typecheck": true,
+    "scopedLintErrors": 0,
+    "preexistingLintWarnings": 4
+  },
+  "securityNegatives": [
+    "First manifest material/hash tampered rejects",
+    "Second canonical snapshot revision changes rejects",
+    "Auth revoked during receipt material read rejects",
+    "Provider send stays1"
+  ],
+  "independentReview": "NO_BLOCKER",
+  "nativeActualFix": "NOT_YET_PROVEN",
+  "deployment": "Must wait for Native finite window CLOSED_VERIFIED; no DEPLOY/Source writes during that window",
+  "businessAuthorityOrBudgetChanged": false
+}

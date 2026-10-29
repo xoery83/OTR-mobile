@@ -226,7 +226,8 @@ export function createUniversalContinuousHost(deps: {
     return { dispatch, bytes: Buffer.from(JSON.stringify(dispatch.dispatchMarker)) };
   }
   async function readResult(batch: string, taskId: string) {
-    return readState(await found(batch, taskId));
+    const state = await found(batch, taskId);
+    return readState(state, state.sourceManifest);
   }
   async function readState(
     state: Awaited<ReturnType<typeof found>>,

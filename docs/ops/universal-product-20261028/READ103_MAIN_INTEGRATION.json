@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "d3a5e4e09d10cca5ffb9ac075062e9b4da547499",
+  "retainedAuthMain": "72331060b2b99185c13ff7fe235e222b99599d76",
+  "readImplementation": "1822be4cdcba504c137d14d3f2c8480cb16acef0",
+  "privateChecks": {
+    "suites": 6,
+    "tests": 91,
+    "typecheck": true
+  },
+  "actualPrimarySmoke": {
+    "suites": 6,
+    "tests": 91
+  },
+  "independentReadChangeReview": "NO_BLOCKER",
+  "nativeReadRecovery": "REAL_REFRESH_AND_COLD_PASS; ABSTAIN0; same one Provider call",
+  "mainUpdate": "FF_ONLY; fresh remote base matched; original six dirty/full diff/untracked hashes preserved",
+  "pendingExpirySlice": "UNCOMMITTED_AND_EXCLUDED",
+  "devImageQualification": "curated1822 c8f9; latest main not automatically deployed"
+}

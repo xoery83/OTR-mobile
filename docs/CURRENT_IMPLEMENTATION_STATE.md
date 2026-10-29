@@ -1,372 +1,188 @@
-# Active Universal Import product completion — 2026-10-29
-
-Import uses stable `universal-product-20261028`; host composition is separately fixed in `universal-product-p2-host`. Six historical Golden Slices remain accepted and do not certify ordinary-user Beta. Import owns Source/Task/Admission/Documents/Activity; Native owns shared Core/Reader/Sync/Navigation; Auth owns identity. Do not repeat the historical audit.
-
-## Actual current environment
-
-- DEV only `tuqigdxrvrerfewsxqgm`, service `otr-dev-backend`, current1dc default-closed Enrichment software plus Source88 phase diagnostic, image `sha256:1dc308c8c89fa8840379d23ad93540913953a351bed15eeb4f7d76a2cabb6f3a`, containerea942fd2. Previous750e/da051 stopped and retained as immediate rollback. Prior curated-e973ffe0-p2-16644f85/artifact1f8e1b5e/dab8/0f9 is preserved rollback. Root independently verified actual bundle1e5a85d4, Envab5dc0e7/no duplicate keys, six mounts/Userotr/healthy; Native health200/unauth401 handoff retained. Prior71da/image98f retained for coordinated recovery; never restore it over Native P2 independently.
-- QA Account `f4b059c5-8241-4ffb-aa15-37fa25474543`, Trip `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Existing continuous minimum authority plus Owner-approved16644f85 Source single-hash compatibility installed: shared read-stateef17d1618d87006e8379164244a7645f, evidence115bc244; six actual OID/Owner/ACL unchanged. Scope remains P1/P3/P4/P6 minima, P5TRAIN, SparseP2 AKL/CHC2026-11-02 only, expires2026-11-01T08:48:56Z.
-- Current continuous Source minimum business scope ACTIVE after Native returned maintenance and fresh independent runtime/six witnesses/Closed checks. Exact approvedfa8 activation and independent readback preserve original Actor/Trip/families/Nov1 expiry/budget; airports2 enabled only within original restricted resolver. Nonterminal Sources before/after0, no unexpected execution, objects, Provider calls or temporary admin grants. SQL expiry denies new Save/resolver use, original CLOSE stays available. `authority/CONTINUOUS_NATIVE_P2_ACTIVATION_RECEIPT.json`. Use only newef17 activation; do not run old20c7 CAS or overwrite shared functions. New protected PDF/OCR/Authority/Schema/RLS/GRANT still needs its precise qualification.
-- AD5 Native95/e6970e55 uses exactly Native91 ordinary JS882b5587, preview QA flagfalse/protocol2; actual native d549e362/bridge e8593710, public simulator identity preserved. Normal cold first PDF6315ms, background privacy/temp0 and exact950byte hash, explicit reopen1128ms PASS; five actual UIKit checks PASS. Ordinary PNG17547bytes also renders2327ms with QA fallbackfalse; background temp0/exact durable SHA retained, not OCR/Source qualification. Retained QA89/87 rollbacks. Installation verified31 business tables, exact accepted operations/PDF and five completed operations unchanged; no Session/Keychain access/copy. Launch root My Trips; Native owns FormsQA/phone, no8097 or parallel heavy builds.
-- Import0e6e2d4e was normally fast-forwarded/pushed and independently verified on main; post-merge5suites123PASS, original dirty primary files byte-identical (`MAIN_PRODUCT_THIRD_INTEGRATION.json`). Fresh fetch independently confirms origin/mainfddf3277e3c2ca39b1ab030ebd3012a775d10be7; Import merged it into its independent branch, then normally FF/pushed main2ded03a4576e715150b27a96414d936e48a12ec8 after Native/Auth lease; remote verified,6suites60PASS, six original dirty entries/status/full bytes unchanged. MAIN_PRODUCT_FOURTH_INTEGRATION.json. Latest accepted Auth74c64030 merged into Import and normal FF/pushed main901cf45662a3eec9e4fbfb526e2d3d822b1bc2fa; fresh remote match,8suites117PASS before/after, types/UIguard PASS; six primary dirty entries/full bytes/binary diff unchanged. MAIN_PRODUCT_FIFTH_INTEGRATION.json. Native95 normal PDF reader accepted; new PDF route/worker pieces remain unbound/default-closed, no Host/SQL activation. Preserve Native unmerged P2 and other worktrees, original six dirty primary entries, and serial main lease. Earlier Import normal pushes d2dc5205/a82ab46b remain accepted, with byte-identical dirty-file protection.
-
-## Current in-flight checkpoint — 29 October, 15:50 NZDT
-
-- Fresh observed origin/main4d69e0e3 includes serial Native/Auth updates; Root safely merged it into private17043e28, joined Import6suites63PASS. Six primary dirty files remain their owners’ work. Native has a coordinated software build/stage window; Root does not deploy concurrently.
-- Ordinary AD5 JS-only97, source3ce503a0/native95 binary unchanged, picked two Synthetic files normally and submitted Batch1f5eed5d/job1b473da8. Both original byte counts/hashes independently match. TXT Sourcefd248419 is ADMITTED/Source queue COMPLETED; PDF has no Source binding and remains local INBOX. Same Taskb8b7dc53 is PENDING; first wake RETRYABLE/SYNC_FAILED, zero Attempt and independent Supabase call count0. Results/Save are **not** PASS. Preserve both originals/old Task; no reset, replacement or blind paid retry. `MIXED_INPUT_NATIVE97_FIRST_FAIL.json`.
-- Focused diagnostic28908a9e: before2RED, after3suites11PASS/types/scopedlint and independentNO_BLOCKER. Only11 static safe error classes logged, arbitrary/private messages UNCLASSIFIED, logger cannot prevent settle/rethrow. Exact runtime parent matches actualDEV e973 blobcb73bbdd. Given to Native for one curated build with its software delta; default-closed switch now coordinated, no new permissions or root-cause-fixed claim. Initial combined-command typecheck report was incorrect;257811b9 fixes only test tuples and evidence, separate tsc0 confirmed. `MIXED_WAKE_DIAGNOSTIC_REVIEW.json`. AD5 Activity normally dismissed and GUI returned.
-
-- PDF V4 owning preparation/causal factories reused from historicalfa0144df, plus only generic type exports on existingStage/Storage.7RED→44 softwarePASS (7 optional realSQL skipped); extended52PASS/1 optionalworker skipped, separatetypes/scopedlint/backendbuild0 and independentNO_BLOCKER. No startup caller/route/Host/SQL/Authority activation, no oldscope reuse or actualPDFSource/Save. `PDF_V4_OWNING_PREPARATION_REUSE.json`.
-
-- Ordinary AD5 JS-only99/bf44cbf1 installed with33 business tables/originals/Batches/accepted receipts byte-preserved, sameNative95/noQApreview. Same16:21 MixedBatchf68bc4fa resumed from Recent normally; Source4fda07fa ADMITTED, one-Sourced Run37aaf31e/Taskc2704309 actually established04:08:57Z. First wake04:10:32 RETRYABLE/SYNC_FAILED/0Attempt,750e logsUNCLASSIFIED; not Results/SavePASS. Provider scope6/grant/config16/Nov1 expiry independently eligible; globalruntimefalse intentionally supported. No new object on Resume/no oldTask reset. Safe Native diagnostic44PASS/types/UIguard/lint/review fixedbf44. Phase-only Backend diagnostic88f457aa:1RED→11PASS/types/lint0errors(4 existing warnings)/independentNO_BLOCKER; not deployed. GUI returnedNative; no newAnalyze during its finiteEnrichment window. `MIXED_INPUT_NATIVE99_WAKE_FAIL.json`.
-
-- Source88 phase-only diagnostic now deployed under Standing software authorization after Native returned Host lease: image1dc308c8/ea942fd2, server1098 unchanged/capture1e5a85d4; independent200/401, fullEnvab5/Hoste89/sixMounta1eb/fourconfig bytes unchanged,750e/da051 retained stopped. Actual curated baseline reproduced1098/a49 exactly before one-file patch; unmatching whole8fb archive stopped before upload. Independent stage+finalswap ReviewNO_BLOCKER; same Docker OOM creation normalization as prior successful release, strict healthyHost hash retained. No SQL/Role/Scope/Budget/Provider activation or new E2E claim. Software window returnedNative; next obtain phase from samec270Task before any replacement. `PHASE88_DEV_DEPLOYMENT_RECEIPT.json`.
-- Pre-Result Not processed filename/count clarity fixedc941ef3a,1RED→67PASS/types/UIguard/scopedlint and independentNO_BLOCKER, not yet installed. Existing Results still uses actualbinding difference; no fakeSource/Review/candidate/request, no new copy. `MIXED_EARLY_UNPROCESSED_NOTICE_REVIEW.json`.
-
-## Real product acceptance
-
-- Normal P1 original57-byte Gallery Tour: formal Review→Plan→Admission→Core/APPLIED/Source COMPLETE, independent PRIVATE/SELF name/Nov2 readback, duplicate identity protection and real MyTrips/Day/cold PASS. `CONTINUOUS_PRODUCT_P1_SERVER_VERIFIED.json`, `CONTINUOUS_PRODUCT_P1_COMPLETION_UI.json`. Later normal whitespace TEXT60-byte input separately passed changed-hash evidence re-anchoring, Save and cold recovery (`TEXT_NORMALIZATION_NATIVE_E2E.json`). No inferred Place/Person/Booking/clock.
-- Same normal five-file Batch `3bdff8ee-9bef-4c7e-a1b6-5f0d22f29539`, Task `a180447c-001d-8036-9af3-9518d06cc3e9`: **five unique formal Items, five APPLIED receipts, five COMPLETE SourceSlots, five one-to-one own Source associations**. P3 Harbour QA Beta Hotel Nov2→3; P5 TRAIN Coastal QA Beta Train/CQ102/Coastal QA Rail Nov2; P4 COASTLINE QA BETA RENTALS Nov2→3; P6 Harbour QA Beta Experience Nov3; SparseP2 NZ502 Nov2. Normal original/Trip/NEW/confirmation, no manual bypass. `MULTI_SOURCE_FIVE_ITEMS_SERVER_VERIFIED.json` contains full IDs/receipts.
-- P2 Item39d99271/op00453802/receipt5fe7d480 is genuinely SPARSE, not Qualified/Journey/Booking/Ticket; no invented clocks/zones/Place. P3 Itema7fa63cf/op3f569a35/receipt87f2d69a. QA81 actual cold MyTrips→sameTrip→Day displays NZ502/Nov2 and Beta Hotel/check-in/Only me; prior P4/P5/P6 Day/cold also PASS. Same five Item identities and completed queue operations independently retained. `MULTI_SOURCE_FIVE_ITEMS_NATIVE_E2E.json`. This certifies formal Save/Day/cold, not the entire product checklist.
-- The five-file Batch used exactly one paid call4713443f:1858input+413output=2271tokens/cached1280, estimated$0.000676680 (not invoice). Post-Save usage remains one START/COMPLETION for that same call. No model calls for Save, retries or recovery; old UNKNOWN/holds and malformed IME-tail Batch remain untouched. Task six-minute latency remains a Beta concern.
-- Activity uses persisted Task state and pending-only bounded GETs. Actual cold terminal Results recovery and one-item Updates saved event/open-same-Batch PASS (`ACTIVITY_TERMINAL_RECOVERY_NATIVE.json`, `CONTINUOUS_PRODUCT_UPDATES_NATIVE.json`). QA81 cold Updates now shows saved5 at actual last committedAt08:37:32 and opens the same Batch normally; QA83 same-Batch Results all5 accepted and P2 final confirm disabled even after original/Trip/NEW review PASS. QA87 formal P2/P3 Documents originals and own Item count1 PASS; P3 first related lookup unavailable, same-document readonly reopen recovered (cause unobserved). P4/P5/P6 Documents original and own Item count1 also PASS; all five formal documents are verified on QA87. No simulated completion, invented unread/Review authority or duplicate events.
-- Documents separate Account-private Inbox, explicit Trip Documents, Activity. Repository original custody/hash/access and exact completed Source→Item association implemented; text original and single saved-link UI PASS. No all-Batch→all-Item relation, automatic sharing or cloud-backup claim. Actual local PDF950bytes/two pages and repository PNG17547bytes original viewer/background close/temp0/cold reopen PASS (`PDF_LOCAL_NATIVE_READER_PASS.json`, `IMAGE_LOCAL_NATIVE_READER_PASS.json`). Alternate-Account device masking remains pending. These are local custody/reader checks, not binary interpretation or Admission.
-
-## Fixed focused repairs and next work
-
-- Deployed Source context/operation repairs and bounded FIFO Source reader retain original Auth/Trip/RLS and single Source role connection. Multi-source hotfix0d579007→hoste973 filters only current Source materials/seals while retaining full Run pins/hash/validity and owning Universal reconstruction; generic Legacy single-source restrictions stay intact. Real isolated network-none256MiB PG two-Source Save/closed recovery/replay and stale/missing/foreign negatives PASS;94 host contracts/types/build and independent NO_BLOCKER. This actual path now saved the same P2. HTTP diagnostics expose only14 fixed categories, never request data. Earlier Hosted P3 failure cause was not observed and is not invented.
-- BOM normalization b4863df7 is LOCAL_PASS142/review only, not live-BOM-qualified or deployed. UI unresolved source+reason dedup e12319b4 and transient per-item receipt read isolation08d11dd1 are installed in QA81. They do not modify sealed Results or Source evidence. Complete Source recovery still requires exact receipt/Plan/Candidate/Slot/Actor/Trip/Source revision and identity checks.
-- New58fd3eb0 progressive receipt presentation:1RED→61PASS/types/UIguard/scopedlint; independent NO_BLOCKER; QA83 matched JS actual progressive count3 while later reads pending, then five accepted Results and duplicate-disabled P2 PASS. Existing sequential read-only GETs emit each verified receipt to Results/Updates before later slow requests finish. Unfinished Source is not counted saved; generation/current/Account fences retained. No extra concurrent work, Mutation or Provider calls. Joined Auth-main tests79PASS.
-- Correction: earlier same-name Inbox Batchef9a at06:00:51 was incorrectly selected instead of formal Batch3bd at06:04:11. Private Inbox extensiona36e8899 was fully reverted6aba69f2; never Backend-deployed or main-merged, no business data changed. It is not delivery progress. Exact Batch/Source qualification stays unchanged.
-- PDF boundary592477e0 is fixed default-closed LOCAL_PASS:3suites33/types/scopedlint and independent NO_BLOCKER. Parent Auth routec933a29b separately adds exact normal Backend routing;3RED→69PASS/types/lint/capturebundle and independent NO_BLOCKER, absent owning port remains503. No worker/runtime startup composition, profile activation, SQL or DEV PDF E2E. Source-owned contract is PDF_V2_HTTP_CANDIDATE.md; shared API doc remains Native-owned.
-- Documentsaae1e594 adds visible loading and explicit readonly retry after the actual transient P3 association failure; existing repository/Source/Account gates unchanged. 1RED→27PASS/types/UIguard/lint and independent NO_BLOCKER. QA89 actual MyTrips cold→sameP3Document Loading→ownItem1 and original read PASS; explicit failure/retry remains LOCAL_PASS, no live failure forced.31 business tables, exact five completed operations and original PDF preserved. DOCUMENT_ASSOCIATION_RECOVERY_REVIEW.json.
-- Native preview protocol882b5587/35tests/types/UIguard/lint/independent NO_BLOCKER; Native91 compiled and exact protocol2 detected with QA fallbackfalse. Actual same950bytePDF renders after explicit retry and background temp0/hash unchanged, but first open after cold fails reproducibly2x with native PRESENTATION_REJECTED. NORMAL_ORIGINAL_PREVIEW_FIRST_FAIL.json; no normal cold PASS. Native93 diagnosed legitimate UIKit still beingPresented/owned/active at5s. Fixe6970e55 awaits actual completion within20s and immediately hides/removes only its own disposable copy on close. Native95 normal cold first opening6315ms, two-page render, background temp0/durable hash unchanged and explicit reopen1128ms PASS; allfive actual UIKit checks PASS. NORMAL_ORIGINAL_PREVIEW_NATIVE95_PASS.json. Physical phone and alternate-Account privacy remain unverified.
-- PDF private parse-only worker transport2ac161a2 is unbound; independent review found termination UNKNOWN releasing the slot. Fixedc5f91879: quarantine/no second run, 1RED→56PASS/types/lint, independent NO_BLOCKER limited to current process; future host restart/orphan cleanup and deployment/Source eligibility still require exact qualification. A follow-on unbound persistent exclusive worker marker now survives adapter reconstruction/UNKNOWN;5RED→6suites59PASS/types/lint and independent NO_BLOCKER. No stale-marker auto-clear, listener, Host install or default call change; actual Host process-loss/private-directory qualification remains pending. Follow-on7marker tests include real child SIGKILL/replacement refusal PASS. Real frozen local Docker worker through Unix IPC/persistent marker/twice-read verifier accepts exact950byte/two-page retained fixture,127UTF8bytes/textSHA3b123e3e/4676ms; no model/SQL/Source registration. DEV readonly: frozenimage present/worker count0/Host Node absent; execution binding remains CLOSED. PDF_V2_REAL_PRIVATE_TRANSPORT_PASS.json. No Docker socket exposure/Host listener/SQL activation.
-- Source Native P2 compatibility2347e2e5/review6478fc3a passes21 isolated controls and actual Source P2/P5/P6 chains; included in same Owner-approved16644f85 package (human reply in Native thread). Only20c7→ef17 CAS; handoff/fresh live checks/exact activation and independent readback now PASS.
-- PDF material qualification helper is unbound LOCAL_PASS:4suites44/types/lint and independent NO_BLOCKER. Same owning lease/locks selects unique V2 DERIVED TEXT, reuses unchanged V2 Core proof, and separates expected ORIGINAL identity/hash/bytes from derived Run representation/seal/page-map; retains4MiB limit. Existing Source/Core contract supports DERIVED pins; Native readAdmittedInputPin and Capture result matching still assume ORIGINAL and need exact dual-identity wiring. No HTTP/role/Task/Source activation; real PG selection verification remains required. PDF_V2_MATERIAL_QUALIFICATION_REVIEW.json.
-- Source read-only DEV check confirms allnine V2 functions/three tables and24 V4 upload functions already installed; global PDF gatefalse. V4 profile2a9b has a historical single-Capture scope for a different Actor and is not reused/modified. Existing evidence115bc requires ORIGINAL TEXT, so a qualified DERIVED PDF branch/scoped eligibility still needs its exact protected delta; never reopen global gate. PDF_EXISTING_DEV_PORTS_READONLY.json.
-- Reused missing V4 stage/storage/profile components from fixed347a8895 (two target blobs matched before applying only Source changes); no historical caller/scope merge.6suites83PASS/1 pre-existing optional fixture skip/types/lint; independent NO_BLOCKER. Worker DI and byte-copy pin preserved;1RED→GREEN V4 temporary worker error nowUNAVAILABLE, oldV1–V3 unchanged. Factories unbound, no deploy/SQL/Provider. PDF_V4_REUSED_COMPONENT_REVIEW.json.
-- Material selection adds13 real PG typed-selection checks PASS in a new networknone/256MiB disposable database; not full Source schema/RLS/role acceptance. New compressed one-page P6 QA PDF1700bytes/SHAb180ca4b is dated2026-11-02, visually checked and real frozen V2 parser accepts149UTF8bytes/SHA8b3ba863/2124ms; unchanged V1 literal profile correctly rejects it. No Batch/Source/Task/Provider created; input is prepared only, not a Candidate/Save. P6_PDF_INPUT_LOCAL_QUALIFICATION.json.
-- Mixed-input partial scope now LOCAL_PASS:3RED→6suites112/types/UIguard, extra exact Task/unhandled-set guard4suites68 and scopedlint; independent NO_BLOCKER. Existing selected plans/unhandled IDs process all current TEXT/UTF8FILE, retain non-text inputs without Source IDs, list Not processed in Results; Account/Trip/intake/input hash and required text coverage still fail closed. Actual SQLite original PDF/full C3/supported plans survive reopen. No backend/SQL/Authority change or paid call. Next verify normal AD5 mixed TXT+PDF path; unprocessed PDF is not PDF parsing PASS. MIXED_INPUT_PARTIAL_SCOPE_REVIEW.json.
-- Next: verified Native95 preview is integrated on main901cf456; continue Source PDF original/custody/Task wiring and ordinary user-path validation under the restored restricted continuous scope. GUI/API waits must not block independent coding. PDF/photo/mixed binary Source ingress is still NOT_READY: existing V2 PDF registration/seal/extractor ports exist but are not routed; current Backend image lacks its isolated Docker-worker composition. Preserve original/derived hashes/page seals and Local Durable semantics; do not relabel PDF/OCR as text, mount a privileged Docker socket, weaken RLS or invent a second Source/Task/Auth/Core. Prepare minimal default-closed wiring/tests and one precise protected delta where necessary. No full ordinary-user Beta claim until sustained Save availability, these input paths, recovery and privacy are actually accepted.
-
-Earlier historical handoff follows unchanged; its integration-pending entries are superseded by main1c7e7fc8.
-
-# Current implementation state — 28 October 2026
-
-## Auth / Identity — Phase2 preparation, Adoption NOT_READY
-
-Use existing Supabase Auth, secure per-Account Session, generation/apply gate and
-repositories/Sync. Own worktree writes work normally. No copied Session/Keychain/DB,
-second authority, invented pricing or unapproved Schema/RLS/GRANT. Apple Owner-paused.
-
-Phase1 Email/Google L3 accepted: normal Provider login, independent Account/Session
-readback, cold restore, A/B cache isolation and current-login server logout. Token-
-only eight-digit Email OTP through Verified Resend auth.xoery.art; wrong403/resend429
-and expiry PASS. Temporary60-second expiry test restored3600 seconds; JWT unchanged.
-Native52 visible-error repair accepted. Finite evidence/limits:
-ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json and EMAIL_OTP_HOSTED_DEV_E2E.json.
-
-Native normal-account sync reported missing profiles for verified38e/4eb and the
-actual trips_created_by_fkey dependency; its exact HTTP classification is pending.
-Auth self-profile candidate reuses normal sameJWT/self INSERT with empty optional
-Display Name and default role, never overwrites existing rows or invokes Claim.
-Versioned POST/account-only DTO, bounded Backend boundary and scoped Auth Repository
-have directed/independent2 suites21 PASS/NO_BLOCKER and types/lint PASS. Native owns
-shared mount/DI and sync preflight, failure pauses sync rather than offline launch.
-Auth reviewed Native exact route/DI/sync preflight NO_BLOCKER (Native direct44;
-its runtime deployment/readback still pending). Explicit anonymous/absent Auth user
-now rejects before Profile DML; direct2 suites22/independent supplement1 PASS, types/
-lint PASS. ACCOUNT_PROFILE_BOOTSTRAP_PORT.json pins interface; no Auth DEV success claim.
-
-Golden A accepted: GuestQA63/source7e35baf6, fresh no-Session normal Trip create/edit →
-P1 → Day → same-version cold restore, SQLite74 independent readback. No Account DB,
-Cloud/Accepted receipt, fixture insertion or copied credentials; original FormsQA
-root unchanged. Sourcef62e5bf7 integrated. GUEST_A_NATIVE_RECEIPT.json is authoritative.
-Guest workspace exposes Trip/P1/Day/built-in cover; other Guest fronts unassembled.
-
-Golden B default-closed preparation (ops/auth-phase2-20261028):
-
-- Full SQLite census hashes/counts; foreign scope rejects, unknown/nonempty families
-  block whole dataset. External metadata is not an actual files/drafts collector.
-- P1 live-ref freeze/resume and immutable draft recovery checkpoints accepted locally.
-  Publish-request always requires server status; no local success/post-request cancel.
-- Preflight DTO/HTTP boundary unmounted, missing adapter503; no real grant/reservation.
-- Capture-only owning BLOB inventory validates owner/creator/hash/length/UTF8; global
-  census still blocks nonempty Capture. It is not full-files COMPLETE.
-- Auth provisional store/read/revoke reuses canonical secure slot, binds actual
-  Session current/previous fingerprints, refresh CAS and Guest/adoption/target.
-  No index/launch activation. UNKNOWN retained, duplicates coalesced, ACK persisted
-  before exact-slot deletion. Directed/independent111 tests PASS; real Keychain/
-  Provider refresh/revoke/Native caller unverified.
-- Latest local28e705ab: process-local inventory freeze on existing workspace; queued
-  writes blocked, lease pins checked, old cleanup cannot unlock new scope. Current
-  Guest can clear obsolete-generation fences. Directed88/independent32 real SQLite
-  tests/types/lint PASS. Checkpoint holds now restore before SQLite open/migration;
-  opens/markers serialize on the gate. Directed129/independent117 PASS; Native
-  recovery UI/server terminal status/publisher remain closed.
-
-Source confirms current Capture/Documents producers Account-only; originals are
-registered SQLite BLOBs. This excludes physical-disk absence and Photo/Ledger proof.
-Never inspect/reclassify Account files by prefix.
-
-Latest joined Auth source2b8ab469 includes accepted Native mainfd682864. Directed
-9 suites195 assertions/types PASS; default-closed status metadata remains unmounted.
-Independent readback review confirms all Guest baseline/postcold fields identical
-except phase. Main source2b8ab469 integrated after NO_BLOCKER; actual primary3 suites86 PASS.
-Primary six original dirty files/full diff independently unchanged. Final
-main/remote verification belongs to
-GUEST_B_QA64_MAIN_INTEGRATION.json and its private final verification snapshot.
-Native delegated the exact Core/TripCreate/Metadata transaction ports to Auth;
-Root confirmed no competing PgStorage Writer. Original candidates ab33fc9f,
-2c04394d and1a34e1c1 were replayed only as seven exact source/test files onto
-accepted dd53870c; every parent and replayed file byte-verified, no whole Native
-branch merge. Directed8 suites148/types/lint/two Backend builds PASS; independent7
-suites131 NO_BLOCKER. Disposable network-none local PG1 PASS, fixture removed.
-Existing principal/Actor/CAS/Source/receipt guards retained. Not deployed or mounted;
-cross-Gateway authority still absent. GUEST_B_PG_TRANSACTION_REPLAY.json records
-limits. Exact source db97ccfc integrated after actual primary8 suites148 PASS;
-GUEST_B_PG_PORTS_MAIN_INTEGRATION.json records preserved six dirty files/full diff.
-Auth holds only these PgStorage ports and delegated Guest recovery UI/Repo;
-no SQL/Host/GUI/main lease held outside explicit serial windows.
-
-GuestQA64/source d771c7e0 in-place runtime regression PASS: normal original Trip/P1
-and same-version cold recovery. Independent Guest-only SQLite74 readback retains
-exact Trip/Person/P1 intent/three queue records; cloud receipts remain zero and no
-Account DB exists. GUI returned to Native. This is existing-data regression, not
-Adoption or new Create/Edit acceptance. GUEST_B_GUESTQA64_ARTIFACT.json records limits.
-
-Native delegated Trip Workspace/Basic/Create fields/Calendar and directly required
-optional callback forwarding to Auth; Enrichment remains Native-owned. Foreground
-sourceffb0e1b5 is main-integrated with actual primary73/independent91 PASS; final
-main/origin/remote4d69e0e3 verified, six original dirty/full diff unchanged.
-
-New local actual Trip live-draft collector reuses P1 freeze/resume. Strict raw
-Create/Edit snapshots retain original fields/Person/operation IDs and owning
-baselines; synchronous fields/blockers and generation/alive/lock guards prevent
-before-render loss, stale callbacks and late Discard. Open child/name pickers and
-UNKNOWN save block handoff. Journal v2 retains Trip/P1 canonical bytes on disk;
-v1 remains P1-only. Unsubmitted Trip Create is not a persisted/published Trip.
-Directed11 suites239/types/scopedlint/UIguard PASS; independent NO_BLOCKER
-(8 suites168 + overlapping3 suites71). GuestQA65/source5da59fa2 normal Create/nickname/dateCancel/Stay/Discard and
-original Trip/P1 cold PASS; all independent Guest SQLite baseline fields unchanged.
-Actual primary11 suites239 PASS after source5f036de4 integration; original six
-dirty/full diff preserved. GUEST_B_TRIP_DRAFT_MAIN_INTEGRATION.json and private
-final refs snapshot pin this integration. Native Edit/freeze/checkpoint-screen
-reconstruction pending; no login/publisher consumer or
-Native checkpoint-to-screen restoration. GUEST_B_TRIP_LIVE_DRAFT_REVIEW.json tracks
-finite readiness. General file/all-family aggregation remains unsupported.
-
-Latest local handoff assembly uses the actual frozen Guest vault, Trip/P1 draft
-registries and canonical journal verifier. Schema74/current Trip/P1 capability
-qualifies zero registered business files only with owning Capture empty, whole
-census/ownership checks and static-only stored/deferred/live cover references.
-Unknown families/photo references block the whole dataset. Final table hash must
-match qualification; output is immutable and cloudAuthority=false. UI resume and
-vault release serialize with publication markers; open P1 date/time pickers block
-freeze. Directed6 suites202/types/scopedlint/UIguard PASS; independent prior4
-suites118 NO_BLOCKER; final queued-marker race independently1/1 PASS on fixed a85d1efd. Actual primary6
-suites202 PASS; six dirty files/full diff preserved. Main integration receipt:
-GUEST_B_HANDOFF_MAIN_INTEGRATION.json. This has no Native
-consumer, physical-disk absence claim, login/adoption activation or DEV publication.
-See GUEST_B_HANDOFF_INVENTORY_REVIEW.json and ADR dated2026-10-29.
-
-P1 CREATE checkpoint restoration now reuses Repository open/current/WeakMap and
-existing opened editor input. Original Item ID/raw incomplete fields/initial
-baseline survive real journal verification and SQLite close/reopen; restore alone
-writes no business data, normal Save remains PENDING/local. Same-UUID Account,
-foreign Guest/generation, existing Item, non-P1, EDIT v1 and publication hold reject;
-identity loss at transaction result rolls writes back. Directed7 suites252/types/
-scopedlint/UIguard PASS; independent4 suites159 NO_BLOCKER. No actual Native recovery
-routing/GUI/provider consumer or cloud proof. EDIT must gain owning revision first.
-Actual primary7 suites252 PASS after fixedc2a29bac integration; six original dirty
-files/full diff preserved. GUEST_B_P1_RESTORE_MAIN_INTEGRATION.json records it.
-See GUEST_B_P1_CREATE_RESTORE_REVIEW.json and ADR dated2026-10-29.
-
-Current Guest source projection reads only under the vault freeze through owning
-Trip/Person/Core readers/parsers. Canonical JSON+SHA retains original identities,
-original/current metadata, full queue/People correspondence, deferred dependencies,
-P1 intents, static covers, Ledger initialization settings and source timestamps.
-No target Account, capability transfer, SQL-file copy, upload or authority. Actual
-census table hashes before/after must match. Directed/independent3 suites107/types/
-scopedlint PASS/NO_BLOCKER; source-only proof, not Native/Cloud/Adoption. See
-GUEST_B_SOURCE_PROJECTION_REVIEW.json. Fixed source49f0b673 joined accepted main11c7
-as6c1ec431; joined4 suites121/types PASS, actual primary3 suites107 PASS. Six original
-dirty files/full diff preserved; GUEST_B_SOURCE_MAIN_INTEGRATION.json records this
-source-only integration. Next persist the semantic source so UNKNOWN recovery
-never needs to unlock the original Guest DB.
-
-Journal v3 now retains the exact frozen semantic source in the existing immutable
-recovery files; canonical/SHA/bytes and owning Guest/Trip/Person/queue/Metadata/P1
-contracts are reverified on every read/write. v1/v2 stay unchanged/readable without
-synthesized source. Real file close/reopen recovers source with the original Guest
-SQLite still locked after publication; corrupt source also refuses before DB open.
-Directed/independent3 suites130 PASS/NO_BLOCKER, types/scopedlint PASS. Local recovery
-only, no Native route/publisher/Session installation/DEV authority. See
-GUEST_B_DURABLE_SOURCE_REVIEW.json and ADR2026-10-29-guest-durable-semantic-source.
-Fixed72db43fb integrated with actual primary3 suites130 PASS; six original dirty
-files/full diff preserved. GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json pins scope.
-
-The frozen inventory now has a single checkpoint assembler into existing journal v3;
-target IDs are pinned before awaits and source leases checked around preparation.
-No caller source override, publication, automatic unlock or Session installation.
-Direct6 new cases PASS; independent3 suites135 plus cancelled supplement1 PASS and
-NO_BLOCKER; types/lint PASS. Initial two existing 5s timeouts passed unchanged in a
-single-worker30s rerun. GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json pins local-only proof;
-no production Native caller yet. The same helper now derives strict preflight
-resource facts from that exact frozen source/files/drafts, never caller counts or
-a Trip shell for an unsaved draft; direct6/independent2 targeted PASS/NO_BLOCKER.
-
-Provisional preflight/status client now uses the existing Guest verification secure
-slot, keeping launch Guest. Actual dispatch and result check kind/UUID/generation;
-401 refresh uses existing Supabase path with active persistence disabled and old-
-refresh CAS into the same slot, coalesced by binding/generation. Strict DTO/grant
-pins; NOT_FOUND never unlocks source. Direct17/independent4 suites115 PASS/NO_BLOCKER,
-types/lint PASS. Unit Provider wire/memory storage only, no real Keychain, Native
-consumer, Backend activation or Adoption E2E. GUEST_B_PROVISIONAL_TRANSPORT_REVIEW.json.
-
-Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
-ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
-Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.
-TripCreate/Core principal guards differ: do not fake atomic authority. No Owner OTP
-needed before runnable slice. Phase3–6 queued; continue safe preparation meanwhile.
-
-## Active checkpoint: Manual Cloud P3 first, then P4/P2/P5/P6
-
-Owner28 October follow-up authorizes normal Push of unified main and sequential Manual P3→P4→P2→P5→P6 Cloud E2E. main1c7e7fc8 safely pushed and remote SHA verified; no deployment. Implement exact normal Core capability candidates first; new protected SQL/RLS/GRANT/business authority still needs precise authorization. Enrichment/paid DeepSeek/Import Admission/Production remain closed. Historical Native and Universal handoffs remain fixed at e18b8e05 and817583e0; see `ops/native-universal-integration-20261028/README.md` and adjacent baseline/conflict receipts.
-
-Input main817583e0 contains the independently accepted Universal P1–P6 limited formal Import Save slices. Nativee18b8e05 contains P1–P6 local Forms, Browse/Focus/Immersive, Day Shell/Home/navigation/retention, Calendar/place/keyboard/Expense-prefill and related tests. The independent Host0f222171 is retained on codex/flight-enrichment-host; it has no real paid-query E2E. All original branches, six unrelated primary-checkout dirty entries and private QA data are preserved.
-
-Integration uses `codex/native-universal-integration-20261028` in the dedicated native-universal-integration worktree. Native snapshot lineage is explicitly bridged, not rewritten. Main Source/Admission/Actor/Receipt/normal Sync owning semantics are retained; Native atomic local Manual batch/Reader and Shell/UI are additive. Sparse accepted Home Items use lawful Details without fake zones. Independent Review found the real unknown-zone Today empty-string issue; it is repaired to explicit FLOATING. Production SQLite registry/runner remain identical to main, schema74; no migration or new database rights.
-
-## Existing local Native capabilities
-
-- P1 plan, P2 single Flight, P3 Stay, P4 Rental, P5 supported Transport modes and P6 Activity Create/Edit/Save/Cancel/read/recovery are retained through existing repositories. Local-only remains local-only.
-- Day range capsule, Today/Tomorrow headers/backgrounds, four per-Trip Header styles, structured-place destination resolver, mixed civil ordering, sparse batch loading/tail/top handling, native Back/Edit, retained Home/Day slots and semantic loading skeletons are retained.
-- P1 Focus plus uses approved insertion-time advice and existing quick-add/Form. P1 move and same-day P3 clock move remain subject to their existing legal writer/qualification constraints; P2 never moves. Complete physical gesture matrix remains pending.
-- P3 software keyboard was Owner-accepted. P4 representative native/locale/theme checks and P5/P6 local vertical simulator checks exist; no full visual matrix claim. P6 normal Edit→Home immediate name refresh and cold restoration were observed in R39.
-- Shared four-action Immersive footer hides empty modules. Add Expense uses existing Ledger with Trip/date/name defaults; unsupported photo/attachment/link actions stay disabled. A live Modal theme hot-switch limitation remains.
-
-## Current validation and device state
-
-Joined directed checks:55 suites917 assertions PASS; TypeScript/UIguard/scoped lint/default-CLOSED Backend build PASS. Independent protected review109PASS and Core review were completed; its Floating Today finding is fixed and covered by directed tests. Repaired stale Schema62/mock/UI-test expectations retain real data/identity/foreign-key/cold-recovery assertions through existing schema74. Forms QA real local P1–P6 Create/Edit/Cancel and Details readback passed on the integrated build; cold startup retains the session and all three Trips. Smoke found valid P6 commands blocking local P2 identity coverage: minimal Manual-only whitelist repair c6886504 plus 35 directed checks and independent15/15 review PASS. AD5 in-place update/cold startup retains its account, 22 local Trips,88 accepted Core Items and all original row hashes; real Reader shows six accepted families. Existing Batch history and recovered Source suggestions read without Analyze/paid calls. Final delivery build40, schema74, DEV API; exact source/JS identities are pinned in the private build-identity receipt.
-
-Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA and AD5 AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A retain their own app/account/data. Pre-update integrityOK/schema74 for both; AD5 has88 accepted Core Items, Forms has local journal-backed items. Separate local rollback artifacts retained, no Keychain/session copying or reset. Physical phone read-only signing check found the existing independent formsqa bundle/Team/profile; it is currently unreachable. Owner explicitly deferred it on28 October (先完成模拟器). No phone install/uninstall or data change; no physical PASS. One heavy build at a time, no new simulator or shared Metro.
-
-## DEV and independent uncompleted business
-
-Latest DEV baseline is P3 sourceeb77fc08/image248ddc05/container6ab4b657, cloned from the exact restored P6 configuration. Env345601e9, original six mounts/HC, health200/unauthenticated401 and bundle645a162e are verified; original healthy container49a111 is retained for rollback. No Provider/Import gate expansion. All six client Admission flags are explicitly false; Enrichment Host is not enabled. Existing default-closed read paths and current account-fenced normal sync cutoff are preserved, historical QA queues never flushed.
-
-Forms QA CreateTrip has real Server Accepted/independent readback. Existing Manual P1 capability is separate from this integration smoke. Manual P3 actual Native Create/Edit, SERVER_ACCEPTED, independent SERVER_VERIFIED and cold recovery passed on a new normal Synthetic Trip; full Cloud L3 still lacks Native offline/reconnect and live cross-account negative. P2/P4/P5/P6 ports remain pending unique Writer work. Import P1–P6 PASS never supplies Manual permission.
-
-Enrichment latest finite window2210 configured/read back successfully but normal capability stayedfalse. No paid lookup occurred. Business/runtime/admin/token were all safely closed/restored/removed. Host0f222171 adds safe diagnostic stages,38tests/typesPASS, not deployed here. Public cache remains MISS/no-write. Next Enrichment activation requires a separately authorized coordinated fresh window and must not restore obsolete service images.
-
-Other remaining scope: sustained Import authority, qualified Journey/Booking/Ticket, unsupported Transport subtypes, advanced Activity/Contact/Instructions/Documents/Media/Item-expense association, full visual/gesture matrix, Auth/Invite/Updates/Flexible/TTR/NOW. Participants-only visibility is only a discussion, not implemented. Do not expand this integration into those features.
-
-Manual P3 follow-through: normal Sync wake/activity and Accepted same-Creator provenance now prepared; typed street address retains legacy label. Eight directed suites103PASS, types/default-CLOSED buildPASS and owned isolated PostgreSQL Create/Edit/receipt/replay/read/NULL-negatives/exact rollback/ACL PASS. Owner approved and installed the exact four-function sustained QA-only SQL. Actual P3 Create/text/schedule/place/participation produced five APPLIED receipts and one Item at revision5; Native cold recovery and retry/replay passed. See ops/manual-cloud-e2e-20261028/P3_DEV_RECEIPT.json for precise remaining L3 negatives and deployment recovery. Next P4; other families remain unenabled. Auth independently advanced main to cfae2b18 after the original1c7e7 Push; do not overwrite it.
-
-P4 candidate776c98f0 extends existing normal queue/wake/activity and same-Creator Accepted Edit with the exact P1/P3/P4 capability profile and Rental command fence. Joined10suites108PASS/types/UIguard/build/owned network-none PG PASS. Independent SQL Review repaired Rental child event_id/role reparenting; real raw-writer negatives and rollback/OID/ACL passed. P3 full L3 negative gaps remain explicit.
-
-P4 exact authority now Owner-approved and INSTALLED: live four postimages/OID/owner/ACL PASS; five Source functions/native policy unchanged. DEV sourcea78ed2ee/image41aa2091, exact environment ab5dc0e7/six mounts/health preserved, retained original36b268. Normal account capability P1/P3/P4 PASS; old Trip P4 closed, own probe Session revoked. Build44 verified (sourcea78ed2ee, embedded JS f7ed1ff8, standard simulated identity); Owner/Auth currently holds Forms QA Google login, so no Native installation/testing until handoff. P4 actual Create/Edit/server Item readback/cold/offline remain pending. See ops/manual-cloud-e2e-20261028/P4_DEV_RECEIPT.json. Main advanced independently to Auth docs d77f34d6; do not overwrite.
-
-Unified Build45 compiled/linked/signed and registered local nonce module: source14a64451 (Auth5ccef1c2 + P4 + Import4ea), JS3ab4dcd7, canonical simulated identity and schema74. Owner explicitly ended Google interaction and authorized in-place update/tests; artifact handed to Auth for installation/real login/cold recovery, then normal Synthetic account restoration and return to Native P4. No installation or live Google/P4 PASS claimed by this build receipt. Actual latest DEV is Import1072af7d/image5e551e2c/container43c4f20a with envab5/six mounts/HC/P4 SQL retained; Source read concurrency software repair does not require rebuilding Native45. DEV lease remains Universal. See ops/manual-cloud-e2e-20261028/UNIFIED_BUILD45.json.
-
-Build45 was installed in place with149 original table hashes retained/integrityOK, but startup failed before Auth: eager Expo devtools socket in embedded environment. Existing Metro embedded resolver was not enabled by that packaging environment. Build46 retains the same business source (4875dc6f/docs-only after14a), standard Debug identity/QA controls/scope and six closed Admission flags; explicit ignored Xcode environment enables existing embedded resolver. Compile/strict-signature/nonce-module/QA-scope PASS; eager socket absent, remaining lazy LogBox diagnostic matches working43. JS a76f2327. Artifact handed to Auth for in-place launch/live authentication, not yet Native PASS. See UNIFIED_BUILD45.json and UNIFIED_BUILD46.json in ops/manual-cloud-e2e-20261028.
-
-Auth observed Build46 launch PASS, normal Google ID-token exchange200, Cancel/reopen and Google B cold Session restore; original Synthetic A remains remembered and its Trips are not shown under B. Initial B menu stale identity/MyTrips unavailable disappear on cold launch: consumer transition race. Native1ed0aa40 fixes GlobalMenu generation-dependent gated identity/actor read and waits for the same apply-gated snapshot before MyTrips repository loading;52 directed tests/types/UIguard PASS, no Auth/authority changes. Build48 source1ed0aa40/JSa7b9b142 is compiled/signed, same nonce module/embedded QA identity and scope; handed to Auth for immediate A↔B isolation regression and normal A restoration. Actual P4 Native remains pending device handoff. See ops/manual-cloud-e2e-20261028/UNIFIED_BUILD48.json.
-
-Owner additionally requests full P1 regression in the same Manual Cloud delivery. Matrix: ops/manual-cloud-e2e-20261028/P1_FULL_REGRESSION.md. Cover normal Create/Edit/readback, date-only/floating/cross-day, cancel/recovery, offline/reconnect, replay/conflict, account/creator/participant isolation, real Reader/interactions and cold restoration. Fresh Native results remain pending Auth handoff; old P1 E2E is not a substitute. No new Gate/authority is requested.
-
-P4 actual Native49 normal Manual Create/Edit→SERVER_ACCEPTED→independent Supabase readback→cold recovery now PASS: same Item32117276, final revision5/five APPLIED receipts, title/pickup10:17/place/Supplier/actual model/Notes edited, return Nov1/17:22/place preserved; true Reader/Focus/Immersive latest/no pending dot. Stale Notes draft protection/Discard/reopen recovered. Full L3 remains pending real offline/replay/live permission negatives. GUI/business window returned to Universal; no Host/SQL changes in this Native window. P1 Owner full regression matrix fixed6710a380 with95 shared Repository/Queue/Sync testsPASS; actual comprehensive Native P1 pending next serial window. Evidence: ops/manual-cloud-e2e-20261028/P4_DEV_RECEIPT.json and P1_FULL_REGRESSION.md.
-
-P1 full regression has begun on Native49: real date-only Create Nov2/Everyone → Queue COMPLETED → MANUAL APPLIED → independent server readback same Item1a0f631a/revision1, no invented clock. This is one new Create scenario only; Edit/cold/offline/replay/permissions/complete visual interactions remain pending. Current GUI/normalCore lease returned to Universal, later Auth OTP coordinated separately; Native has no draft or active write. See P1_FULL_REGRESSION_RECEIPT.json.
-
-Next natural JS-only build52 is ready/not installed: source9c818005 (Auth OTP error visibility d3d334d4, signed-out consumer guard7e4beb3f, retained P1/P4), Hermes JS2bb56d52. Native49 __text/__entitlements/__ents_der hashes identical, strict signature/canonical simulated identity/nonce module/embedded mode/QA scope preserved; no Xcode/Pods or data/Session copying.56 directed consumer/Auth tests/types/UIguard PASS. Artifact handed to Auth for only guaranteed-wrong-code visibility then cancel/recover A, after explicit GUI handoff from Import; native visibility remains pending, no repeated OTP E2E. P1 next Native Edit/negative/cold scenarios continue after that short window. Main independently advancedAuth0a6e7a9a; do not overwrite it. Receipt: ops/manual-cloud-e2e-20261028/UNIFIED_BUILD52.json.
-
-P1 Native52 same-Item Edit/cold checkpoint: four normal edit commands plus Create all COMPLETED/APPLIED; independent server revision5 agrees on title/place/note/selected participant and Nov2 22:37→Nov3 01:41. Cold Details retains latest same Item, no pending dot, original A/four Trips. Full P1 regression IN_PROGRESS (offline/replay/conflict/live permission/complete gesture/visual pending); undated Trip fallback sort/scroll/Focus+ defects recorded. GUI/normalCore returned to Universal, no Host/SQL/Gate/Provider changes. Main Auth780881bb must be preserved at next integration. See P1_FULL_REGRESSION_RECEIPT.json.
-
-Physical FormsQA Build56 (sameBundle/Team in-place, sourcee60af84e/JSa5c9b1eb) retains oldSession/twoTrips;54 cold/read-only P1/P3 smokePASS. New normal Trip657b9bed (Oct29→Nov3) has independent serverCreate receipt; actual phoneP3 a575f6a9 Oct29→Oct31 date-only/Everyone has APPLIED eabd4f56, independent serverrevision1 and HomeWidget/noPendingDot. This phoneItem Edit/cold/offline/live permission negatives remain pending. Native normalCore window returned to Import after this exact safe checkpoint; Import holds Host/SQL/Core reader/worker candidate window, do not concurrently change those. See PHONE56_CREATE_RECEIPT.json.
-
-Phone56 same P3a575f6a9 Edit now SERVER_ACCEPTED/SERVER_VERIFIED: SET_ITEM_TEXT9f8b6e87 + SET_ITEM_SCHEDULEe8149793 APPLIED; revision3, real picker defaults17:00/10:00, note Phone P3 edited note. Immersive immediately refreshed and normal process cold recovery retained sameTrip/latest clocks/note/Everyone/noPendingDot. Full native offline/live permission negatives remain pending. Actual DEV now Import0821fb52/image86585487/container37505d7b, scopes independently CLOSED; preserve exact-operation capability forwarding on future integration. Native has a short normalCore window for same approved account; no Host/SQL lease.
-
-Phone56 actual P4 Create c7a7d517 on newTrip657b9bed now APPLIED d43d9fa8 and independently serververified revision1; Oct29/01:16→Oct31/01:19, both stored Rental places Forms QA Pickup via same-return checkbox, oneP4/no queue patch or duplicate creation. First read was Pending/noItem; later accepted. Retry cause/Native queue state not claimed: SQLite diagnostic copy was auto-review rejected and NOT executed; safer independent server read used. Same phoneItem Edit/cold and offline/replay/live permissions pending. Short normalCore window returned to Import for read-only completion UI before resuming P4. See PHONE56_P4_RECEIPT.json.
-
-Phone56 same P4c7a7d517 Edit now APPLIED dd167736 (SET_ITEM_TEXT), independent serverrevision2/new title verified; normal process cold recovery preserves sameTrip/Item/title/Oct29–31/clocks/places/noPendingDot. No queue/database patch or new object. Native offline/replay/live permission negatives remain pending; same-return checkbox reopens unchecked despite equal persisted places, a local form restoration defect. normalCore returned to Import at this safe checkpoint. See PHONE56_P4_RECEIPT.json.
-
-Night Native candidates: e4f6327e restores P4 same-return checkbox from nonempty equal saved endpoints (both pre-opened and repository-loaded);12 editor tests/types/UIguard/lint PASS, not yet installed onphone56. P5 isolated subagent candidate is parent-reviewed and integrated as Native-only readiness: complete existing MANUAL Create receipt verifier shared with P1/P3/P4, accepted same-Creator/revision Edit and precise Create/text/participation/transport-details Queue selection;101 directed tests/types/UIguard/scoped lint PASS. Backend/SQL/DEV Authority unchanged and P5 Cloud remains closed. See P5_NATIVE_READINESS.md. P2 full authored endpoint Cloud remains an owning-port gap, confirmed by Universal; existing local command cannot be promoted or treated as proof.
-
-P5 Backend LOCAL candidate now recognizes exact cumulative Manual P1/P3/P4/P5 and fences SET_TRANSPORT_DETAILS toP5, preserving Source/exact-operation and same-Creator guards.5 expected RED→29PASS, full types/default Backend build/scoped lint PASS; independent reviewer29PASS/NO_BLOCKER. No DEV/SQL/runtime Gate/device change. Four-function exact candidate+isolatedPG+Owner capability approval still required; see P5_BACKEND_READINESS.md. normalCore remains returned to Import; Native phone56 remains unmodified.
-
-P5 actual isolated PostgreSQL follow-through: five-function candidate (the existing service statement guard is additionally required) passes real Core Create/Edit/Receipt/full Reader/replay/raw-writer and function OID/ACL/data-preserving rollback, with explicit Synthetic known service facts. Current Manual Form is still BLOCKED: all five inherited operator/service nonempty CHECKs reject its intentionally unknown empty values. No fake facts or constraint changes applied. Candidate SQL/rollback and reproducible P5 network-none fixture are retained; P5_SQL_READINESS.json separates Core L2 from Form Cloud. Any version-dispatched constraint delta needs precise Owner Schema approval and a rollback policy preserving accepted unknown facts. No DEV business/permission/config/write or phone update performed.
-
-P6 independent candidate now ready for precise approval, NOT_INSTALLED/NOT_DEPLOYED: Native complete accepted-MANUAL provenance/revision Edit and exact Queue selection, independent P1/P3/P4/P6 Backend profile (P5 remains closed), four-function QA-only SQL/CAS/rollback. Parent9suites165PASS/types/UIguard/scoped lint/build; independent Backend37PASS/function review NO_BLOCKER. Real network-none PG Create/Edit/full Reader/ENTRY clear/replay/raw identity+context negatives/wrongAccount/data-preserving OID/ACL rollback PASS. No new Schema/roles/RLS/GRANT; sustained P6 business capability still requires exact Owner approval. See P6_AUTHORITY_REVIEW.md/P6_READINESS.json. Native phone remains56 with its original data/Session; no Cloud P6 PASS claimed.
-
-Native branch compatibility merge: accepted origin/main d2dc5205 safely merged into private Native parent3b158e32 without conflicts or main/remote writes. Retains0821/7129 exact-operation/Auth and all Manual candidates;14suites245checks/types/UIguard/defaultBackendbuild PASS, independent narrow review7suites115PASS/NO_BLOCKER. Not deployed or installed, P5/P6 Authority still closed. See MAIN_COMPATIBILITY_20261029.json. Phone56 normal P1 regression has a coordinated10min window on sameTrip657b; do not mistake its installed e60af84e source for this newer local merge.
-
-Phone56 P1 normal Create/Edit now APPLIED/independently SERVER_VERIFIED on sameTrip657b, Item30a5b3e4/revision3: date-only Oct29→03:28 civil clock plus note, no invented zone/instant; cold Widget/Details sameItem/latest/Everyone/noPendingDot. Exact pending-at-kill, explicit replay/offline/live permissions remain unproved. Actual dated DayFeed sorting FAIL persists (17:00 Stay before01:16 Rental/03:28 Plan): next Native presentation-only repair must cover accepted civil rows as well as local rows. normalCore window returned; no Host/SQL/Gate/Provider changes. See PHONE56_P1_RECEIPT.json.
-
-Native civil-order repair prepared after phone56 failure: formal accepted TNS now uses existing civil-clock presentation sort; pending rows weave into the same TNS band, qualified order/Base tail and original identities preserved. Existing insertion-time suggestions consume that same civil order, including accepted P1. Six directed suites68PASS/types/UIguard/scoped lint PASS; independent7suites75PASS/NO_BLOCKER. Phone58 JS-only in-place update (source4ce1067f, JS58326dfe) retains original56/54 native/profile/Session/oldTrips. Actual sameTrip DayFeed order P4 01:16→P1 03:28→P3 17:00 and latest P1 Focus note/Everyone/noPending PASS; no cloud mutation during this verification. Core/Backend/SQL/Authority unchanged; mixed pending/offline live proof remains pending; UNKNOWN-context P1 Focus+ eligibility is a separate unresolved presentation gap. See CIVIL_ORDER_REPAIR_20261029.json.
-
-P5 separate five-CHECK representation candidate now retained under ops/manual-cloud-e2e-20261028/p5-check-dispatch-candidate; network-none actual Core unknown-empty Create/Edit/Receipt/Reader/replay plus subtype/NULL/whitespace/length/legacy/Flight negatives PASS, independent exact-predicate/CAS/hash/rollback review NO_BLOCKER. Install ba6170b7 / rollback abe15e81. UNAPPROVED/NOT_INSTALLED: fresh live definitions/identities/ACL/NOTNULL/triggers preflight and separate Owner Schema approval required. DROP/ADD changes CHECK OIDs. After accepted exception rows, old CHECK rollback refuses before DDL, retains facts and reports SCHEMA_ROLLBACK_PENDING; close owning P5 writes separately. No DEV access in this candidate stage; P6 remains independent.
-
-Phone58 P4 same-return regression now PASS: same accepted Item c7a7d517 opens Edit with checked Same as pickup, both saved Forms QA Pickup and original dates/clocks; Cancel caused no mutation. P1 UNKNOWN/floating Focus+ local repair forwards existing appearanceToday only to quick-add eligibility, validates dates and preserves START/status/Past/known-end checks; Reader/NOW/Map/time facts/Save authority unchanged. RED→8suites93PASS/types/UIguard/scoped lint, independent6suites42PASS/NO_BLOCKER; physical update pending. See FLOATING_FOCUS_INSERT_20261029.json.
-
-Phone60 JS-only in-place update (sourceb1106689, JSc5b87f55; original56/54 native/profile retained) now verifies floating accepted P1 Focus+ end-to-end UI: both controls visible; lower→normal P1 Form Oct29/04:18, upper→Oct29/02:28, both Cancel return same Focus without Save. Session, old Trips/latest accepted fields and civil order retained. No new Cloud write or rights; real offline/replay/live permission L3 negatives still pending. See FLOATING_FOCUS_INSERT_20261029.json.
-
-Latest DEV handoff from Universal: sourceea09a9f1/image251ab67f/containerd833f499, TEXT CRLF software-only evidence reanchor; reported health401-negative/bundlefbf77316 PASS and originalEnvab5dc0e7/six mounts/HostConfig preserved. Native did not independently rerun these deploy checks. Manual/Core/Reader/Auth/SQL/RLS/rights unchanged; prior0821/image8658/container37505d7b retained. Host/SQL/business window returned after same TEXT Source Save and exact close. Universal reports independent Source flagfalse/scopeNULL/two airportsfalse/six-function hashes unchanged; it now does only AD5 Reader/cold and local Activity. This is attributed Import evidence, not a new Native permission or independent Manual PASS. Phone60 source remainsb1106689. See DEV_HANDOFF_EA09A9F1.json.
-
-P1/P3/P4 additional unsent-edit durability L2 checks now PASS: existing real SQLite accepted-MANUAL fixture, two unsent edits across fresh Core/repository objects preserve latest title/note and sequential immutable operations; exact retry adds no object/operation, stale draft rejects. Five joined Repository/normal Sync/worker suites119PASS/types/scoped lint, no runtime code or DEV changes. This is not real phone offline or database-close/process cold proof; those live negatives remain pending. See UNSENT_EDIT_DURABILITY_L2.json.
-
-P5 fresh DEV READ ONLY catalog preflight found exact CAS drift against the isolated CHECK packet: all five live predicates have flattened AND trees, while clone definitions retain nested BETWEEN expansion. Semantics appear equivalent but old candidate is DRIFT_BLOCKED; no CAS relaxation or installation. Five columns remain NOTNULL, all nine user triggers O, table59481/owner/ACL recorded; zero Schema/business/authority writes. Existing P5 subagent prepares a NEW unapproved live-preimage packet in /private/tmp and must reprove exact rollback in isolated PG. See p5-check-dispatch-candidate/LIVE_CAS_DRIFT_20261029.json. Phone60 offline test preflight hit Connection Interrupted→iPhone in Use before any setting/form change; no network setting changed or write sent, business window immediately returned. Live offline/permission/replay remain pending.
-
-New P5 LIVE-preimage CHECK candidate is now fixed under ops/manual-cloud-e2e-20261028/p5-check-dispatch-live-candidate (installc5a7e44a / rollback9658e11d). Exact live flat-AND definition+expression+validated CAS, no normalization; old packet stays immutable/DRIFT_BLOCKED. Isolated7Core+17harness PASS includes unknown-empty Create/Edit/receipt/Reader/replay, all value/type negatives, old-packet/repeat-install rejection, exact live restoration and data-preserving refusal. Parent/independent artifact hashes PASS and independent NO_BLOCKER. UNAPPROVED/NOT_INSTALLED: new precise Schema approval/fresh serial preflight still required; CHECK OIDs change and accepted empty facts prevent exact old constraint rollback. Main pointer independently checked local main=origin/main=a82ab46b after Universal non-force push; own branch only, no Manual candidate merged or phone update. Main window returned, Import prepares separate normal multi-Source Batch.
-
-Unsent-edit L2 strengthened to real file-backed SQLite close/reopen: the same P1/P3/P4 cases now close/reopen after first unsent edit and again after second edit/immutable retry/stale rejection, using newly generated disposable test files, never copying device SQLite/Session. All34 Repository tests/types/scoped lint PASS; current receipt supersedes the earlier in-memory limitation. This still is not phone offline, native process-kill or live server replay/permission proof. Mirror remains iPhone in Use; no retry/settings changes this stage. Runtime/DEV/rights unchanged. See UNSENT_EDIT_DURABILITY_L2.json.
-
-Owner explicitly confirmed P5/P6 precise DEV approval on29Oct (OWNER_P5_P6_APPROVAL_20261029.json): QA3f/new normal Trips at existing cutoff only, P5 five functions + new exact-live five CHECKs, P6 four-function additive union; no P2/Production/new role/RLS/GRANT. Accepted maina82 merged on own branch9fc56b2f, no Source/BOM candidate drift. Combined Backend profile retains all old exact profiles and recognizes approved P5+P6 union; joined8suites155PASS/types/UIguard/capturebuild/lint, independent3suites56PASS. Additive P6 exact post-P5 install47220079/rollback17dc04e1 plus fifth unchanged statement-guard witness passed real isolated coexistence/negative/exact rollback and independent Review. P5 atomic wrapperbc355416 preserves approved CHECKc5a7 and functionfa16 bodies in one transaction, independent framing review PASS. Actual Host/SQL mutation awaits Universal window return; not deployed or Native Cloud PASS yet.
-
-ACTUAL29Oct P5/P6 DEPLOYMENT COMPLETE (not Native E2E): Owner approval8aacea4c, sourcee126eabf includes Native exact combined profile081198f0 + reviewed Source612361f2. DEVimage6c5c9a6f/container7931b617, bundle2e22edea, originalEnvab5/six mounts/HostConfig/config+mountedfile pins/health200/unauth401 independently PASS; exact oldd833/251 retained. P5 fiveCHECK+fivefunction atomicbc355416 installed and postimages/OID-owner-ACL/NOTNULL/triggers independently verified; P6 four-function additive47220079 likewise verified, P5statement/CHECKs and otherSource functions retained. Final readstate20c7bc156f4d80aac889b7ed8f52ce0a; Sourcefalse/scopeNULL/airport0. HostSQL returned to Import with actual definitions/hashes. OnlyQA3f/new normal V2 Trips/Creator; P2 remains closed. Phone60 normal P5/P6 Form business proof is next. Historical candidate NOT_APPROVED/NOT_INSTALLED labels are superseded only by this exact approval/deployment receipt: P5_P6_DEV_DEPLOYMENT_20261029.json.
-
-Forms QA simulator JS-only Build82 (sourcef9813e1d/JSfa6ae203; original52 Native binary retained) preserves normal QA3f Session/four Trips. Normal P5 TRAIN Create60129d46 and same-Item text Edit0943836e both Queue COMPLETED/APPLIED and independent Supabase VERIFIED: Item12fd8484, revision2, authored origin Forms QA Departure/Oct29, unknown clocks/operator/service preserved. Immediate real Details shows Create and Edit; actual process restart and accepted local revision2 verified. Cold Details/Day Feed visual remains pending short GUI return from Auth Guest A; real offline/replay/permission negatives and other subtypes not certified. Native GUI handed to Auth for20min; no HostSQL lease held. See P5_SIM82_CREATE_EDIT_RECEIPT.json. Phone60 pending P5 is separate and not claimed recovered.
-
-FormsQA82 P5/P6 actual Native Create/Edit/independent SERVER_VERIFIED/cold Reader checkpoint PASS: P5 Item12fd8484 rev2/twoAPPLIED; P6 Item768afe4c rev3/threeAPPLIED (text plus genuine SET_ACTIVITY_DETAILS session/admission). Actual terminate/launch→same Trip→Day/Focus/Immersive show latest fields/Everyone/noPending; P5 coldDetails also verified. Same four original Trips and Session retained, SQLite integrityOK. This is not full offline/replay/live permission PASS. Separate direct-API replay proposal was rejected by auto-review before execution; no credential read/token/API replay from that script. Continue through normal Repository/Queue. GUI returned Import for AD5 reads; root no draft/Mutation. See P5_SIM82_CREATE_EDIT_RECEIPT.json and P6_SIM82_CREATE_EDIT_RECEIPT.json.
-
-P2 dormant Core candidate b3685197: SET_AUTHORED_FLIGHT_DETAILS only MANUAL/sameCreator/existingSPARSE/exactrevision, shared original authored validator, no fake qualification/service/instant. 56 directed tests/types/lint/backend build plus independent42PASS/NO_BLOCKER; present P5/P6 Backend profile still rejects this extra command. Not enabled, deployed, main-merged or wired to Form/normalQueue; formal MANUAL Create provenance and exact Backend/SQL candidate remain next. Owner P5/P6 authority receipt excludes this new P2 port. Phone60 remains previousJS; simulator82 sourcef981 unchanged by candidate. Main independently advancedAuth9f78a503; do not overwrite; own branch has not merged Guest A yet. Latest DEV e973/image98f/container71da is attributed Universal software-only handoff retaining NativeSQL/Env, not independently reverified runtime by Native.
-
-P2 dormant preparation continued: Backend79c998b5 + Native60471a40 fixed, default formal flag unset; existing Form/Repository now has precise Queue candidate without converting historical LOCAL journals. 291tests+independent119/parent210 PASS. Main7ea safely merged on own32177d3f; OwnerSave label and Auth handoffFrozen preserved, four suites68/types/UIguard PASS. New command advertisement is parser-negotiated only, keeping older phone60's existing capabilities parseable; 36+independent50 checks/build/lint0errors. SQL candidate remains BLOCKED/NOT_INSTALLED while independent raw fakeCreate update/child/receipt negatives are resolved; no P2 cloud claim. Source writer will include read-state CAS-only compatibility in same future exact Owner packet. Actual Account page had no second remembered identity: A/B live isolation not executed, no login/signout/credentials read. Main/origin remain Auth7ea, this lane has not pushed its dormant work.
-
-Previously uncertain phone60 P5 normal Save is now independently SERVER_VERIFIED without touching phone: Trip657b9bed/Item1c0486a8, operation10351074 APPLIED, same title Forms QA Phone Train1029/revision1/one object. Earlier no-object read was before completion; no retry/Create was submitted during reconciliation. Native phone queue/noPending/Edit/cold still not reverified while Owner away. See P5_PHONE_CREATE_RECONCILED.json.
-
-Phone60 P5 same-Item normal Edit now APPLIED/independent SERVER_VERIFIED revision2: Item1c0486a8, SET_ITEM_TEXT2b412703, title Forms QA Phone Train 1029 Edited. Actual terminate-existing cold launch → same Trip → Details retains latest title/origin/date/Everyone/noPendingDot; existing Trips/Session preserved without install or device database access. Initial Pending later resolved through normal scheduler, no duplicate Save/replay. Real offline/live replay/permissions and other subtype fields remain pending. See P5_PHONE_EDIT_COLD_RECEIPT.json. P6 phone normal Create/Edit follows.
-
-Phone60 P6 actual normal Create/Edit → three APPLIED receipts → independent SERVER_VERIFIED same Itemda8f50a9/revision3 → cold Home/Details PASS. Latest title, Synthetic morning session, admission instruction, Oct29 date/Everyone/noPendingDot retained. First Edit read was still revision1; later cold recovery/final read revision3, but exact acceptance-versus-kill timing unproved, not guaranteed unsent-at-kill or offline. Existing Session/Trips/Items preserved, no deviceDB access/install. Real offline/replay/live permission negatives and Ticket/media/full optional matrix pending. See P6_PHONE_CREATE_EDIT_COLD_RECEIPT.json.
-
-Owner explicitly approved precise P2 persistent DEV Sparse/Authored port and single Source read-state hash compatibility for16644f85; receiptP2_OWNER_APPROVAL_20261029.json. Five-function installb19a0257/rollback03e65a9e andSourcefa8df199,11 fresh live MD5/OID/Owner/ACL matches, independent78tests/NO_BLOCKER; NOT_INSTALLED until serial HostSQL. Curated Backend on actualDEV e973 plus exact three fixed Native deltas built102tests/types/twoesbuildPASS;203Source files byte-identical. No latestmain candidate deployed.
-
-Phone60 REAL App-only cellular outage: normal existing P1/P3/P4/P5/P6 titleEdits saved once, independent server unchanged, actual offline cold latestnames/pending retained. Original cellular ON restored (global networking untouched); existing Queue naturally produced exactly5APPLIED/5sameIDs/revision+1, no duplicate Item. P1rev4/P3rev4/P4rev3/P5rev3/P6rev4. Online final cold Home latestnames/noPending observed; final P3 Day visual pending. Not offlineCreate/repeatedPOST/livecrossAccount proof. Existing normal retry backoff was retained; no code fix or status patch needed. See PHONE60_OFFLINE_FIVE_RECEIPT.json.
-
-ACTUAL P2 DEV deployment now COMPLETE (not Native Cloud PASS): Owner-approved16644f85 exactSQLb19a0257 installed;11 live postMD5/OID/Owner/ACL independently matched. Curated actuale973+fixedNative3patch artifact1f8e1b5e, image dab8df27/container0f9c4b6f/capture36fa9f8d, health200/401/Envab5/sixmounts/HostConfig+configfilehashes independentlyPASS; old71da/98f retained. Sourceclosed/NULL/airport0, readstateef17, otherSourcewitness unchanged. HostSQL window returnedUniversal; Sourcecompatfa8df approved but no activation byNative. Next JS-only phone formalP2 flag/build then normal Create/Edit/Reader/cold; phone60 stilloldJS. SeeP2_DEV_DEPLOYMENT_RECEIPT.json. Fivefamily offline final onlinecold Day P3 latest/noPending also observed; complete offlineEdit/reconnect finite checkpointPASS, other negative matrices remain pending.
-
-Phone92 JS-only in-place update (sourcec40c8efc/JS16258c83/originalNative60/56/54/Profile/entitlements retained) enables approved QA formalP2 only; Session/oldTrips/fiveofflineAccepted Items preserved. Actual normal P2 Create NZ9292/Oct29/AKL→NSN/12→13/PacificAuckland/Everyone now twoAPPLIED receipts (CREATE_SPARSE_FLIGHT+SET_AUTHORED_FLIGHT_DETAILS), independent sameItema55c4f13/rev2/TRANSPORT/fullfields/zeroService/SPARSE/noUTC PASS. Real Reader grid has samefields, but acceptedP2 still falls through obsoletegenericFlightFocus/Modal without normalDetailsEditicon and12:00 sortsafter17:00Stay. Minimal presentation candidate inprivate repair, noCloudEdit/cold/fullE2E PASS yet. SeeP2_PHONE_CREATE_RECEIPT.json.
-
-P2 minimal accepted Sparse Native repair now parent7suites111PASS/types/UIguard/scopedlint and independent5suites27PASS/NO_BLOCKER: existing FlightLegRow Focus→existingP2Detail→owningRepo Edit, Qualified fallback unchanged; same-day ORIGIN+DESTINATION uses actual ORIGIN civil sort, no Reader/instant/authority change. Physical phone92 sameItema55c4f13 Edit/cold remains next, no new Cloud completion claim. See P2_NATIVE_DETAILS_REPAIR.json.
-
-Phone93 in-place JS-only (9cb40a69/JSd9d25bcc, originalNative/profile/Session retained) now actual P2 minimum Create/Edit/Accepted/independentRead/coldPASS: sameItema55c4f13 revision4, NZ9293/AKL→NSN/Oct29/12→14/PacificAuckland/Everyone; Edit SET_AUTHORED_FLIGHT_DETAILS5c8b4bf8 plus participationab16b87e APPLIED. Cold DayFeed and existingP2Detail latest/noPending,12:00beforeP3at17:00, Focus Details/navigation restored. ZeroService/SPARSE/noinventedUTC retained. This is minimum authoredP2, not Qualified/Booking/Journey or full offline/replay/livepermissions. All P1–P6 now have finite normal physical Create/Edit/readback/cold evidence; remaining negative matrices stay open. See P2_PHONE_CREATE_EDIT_COLD_RECEIPT.json. Main/origin advancedUniversal901cf456 separately; ownbranch has not merged this newer main.
-
-Phone93 P2 REAL App-only offline Edit/reconnect finite checkpointPASS: originalCellularON→OFF/systemalert, normalSaveonceNZ9294, independentserverstillNZ9293/rev4, actualofflinecold latest/Pending/Session retained. OriginalCellularONrestored/visuallygreen; normalQueue then exactlytwoAPPLIED(details8fca1db6/participationae3db5eb), sameoneItema55c4f13/rev6/zeroService/SPARSE, noSaveRepeat/directAPI/Queuepatch. FinalonlinecoldDay latestNZ9294/12→14/noPendingPASS. Allsixfamilies now have actualofflineEdit/reconnect proof, notofflineCreate/live-response-loss/crossAccount/fullsubtypePASS. SeeP2_PHONE_OFFLINE_RECEIPT.json.
-
-Manual Sync Reliability representative simulation/DEV checkpoints now PASS on existing FormsQA94/95: P3 offline-CoreTransport normal Create69fc+Edit86db/cold persistence→same85ef/rev2/twoAPPLIED; P2 validated-response loss af250/5e851 coldPending→receipt-first recovery with exactlyoneCreatePOST/receipt then details/rev2, finalcoldnormalDetails; B38e normalOTP immediately/cold emptyMyTrips, actualthreeCore404 NOT_VISIBLE, independentAdataunchanged/noProbeReceipt. A immutablePendingbc3f survives B normalnetwork/cold, onlynormalrememberedA return accepts sameP6/rev4, A fourTrips andschema74/integrityOKretained. Existing9suites181+other4suites60PASS; privatefault/independentreviewsPASS. No runtime/rights changes; one targetedSparse regression added. Simulator fault injection is not physical outage; no deliberateDEVduplicatePOST or unapprovedsameTriprolevariation. PrivateQA-hook removal/ordinarySmoke and serialmain integration remain next. See ops/manual-sync-reliability-20261029/REPRESENTATIVE_RECEIPTS.json.
-
-Manual Sync Reliability closure: actual representative simulator/DEV P3 offline-CoreTransport Create+Edit/cold→sameItem/twoAPPLIED, P2 validated-response loss/coldPending→original receipt-first/no duplicate Create, normal second-account B isolation/three404 negatives and A original pending onlyaccepted afterAreturn PASS. Independently matched evidence/4suites86checks NO_BLOCKER. Accepted main901 merged752241d4; merged Native14suites256 + Backend6suites94/types/UIguard/build/lint PASS. Two tests only (Sparse ID regression/oldCodec batched mock); no runtime authority/Schema/DEV change. Ordinary nohook96 JS7bbf49be in-place cold originalfourTrips/P3/P2/P6 latest Details/Everyone/noPending PASS, same3IDs/5COMPLETED/schema74/integrityOK; retainedNative52 notSourceSwift95 parity. No physicaloutage/newDEVduplicatePOST/directRLSrole/sharedOrganizer claim. See ops/manual-sync-reliability-20261029/VALIDATION_MATRIX.md. GUI returnedImport; final serialmain push next. AI Scan notstarted.
-
-
-Import explicit Resume local repair: status GET no longer makes the Analyze action unreachable; one explicit click waits for the current owning GET, with no parallel dispatch or automatic retry. Hidden/Account/Batch transitions cancel the click, including hide→show and A→B→A before completion (two RED regressions fixed). Three suites/71 tests, typecheck/UI guard/scoped lint and independent NO_BLOCKER. Not yet installed or Native-verified. Same mixed Batch f68/Task c270 remains the target; phase-only DEV image1dc is restored after Native safely closed its independent window. No new objects or Provider call. See EXPLICIT_RESUME_READ_GUARD_REVIEW.json.
-
-
-Native101 ordinary JS-only installed with unchanged Native95 binary/33 business tables/originals/receipts. My Trips normal cold root, exact16:21 mixed Batch reopen, early PDF Not processed and one explicit Resume while GET busy observed. Same f68/c270 queue now retryable/P0001, Attempt0 and independent Supabase call_count0; deadline04:18:57Z retained, no new objects or model calls. Phase88 narrows to RUNTIME_PREPARATION/OTHER but does not prove the original unexpired root cause. Six existing static SQL denial codes added to the diagnostic allowlist only (six RED→two suites15PASS, typecheck/lint0, independent NO_BLOCKER); not yet deployed. GUI returned FormsQA. See MIXED_NATIVE101_RESUME_RECEIPT.json.
-
-
-Static SQL refusal diagnostic source7e985 deployed on actual curated1dc with one source diff/1676 files checked: new default image750a459b/container4847b7c4, server1098 unchanged/capture7020. Actual Config1c9f/HostConfige89/Envab5/sixmounts/fourfile hashes and independenthealth200/unauth401 PASS; old1dc/ea942 stopped+retained exactrollback, noSQL/role/Secret/budget/Authority change or Provider call. Native given new HANDOFF_VERIFIED default and Hostwindow returned; no fresh Task yet. See STATIC_SQL_CODES_DEV_DEPLOYMENT_RECEIPT.json.
-
-
-Fresh mixed ordinary Native101 Batchc31/Taskbcff now actual oneAttempt401a SUCCEEDED/TaskPUBLISHED/QueueCOMPLETED at06:34:21Z. Supabase independently onecall; usage1506in/75out/1581total/cached1280, cost165480nanos estimate. Retained ResultSHA verified/wire schemaPASS, ABSTAIN0candidates: no legal kind/subtype from Plan text; no Review/Core save invented. PDF remains Not processed, excluded from sole TXT binding. Native Activity finished observed but Results body still unavailable, NATIVE_RESULTS_PENDING. No reparse; same accepted Result is next recovery target. Older expired Batches preserved. Main joinedee246 privately9bcb; independent NO_BLOCKER/10suites127+type/UIguard, actualprimary FF Smoke5suites86; six original dirty entries/full diff preserved. Local Results redundant-double-read candidate is uncommitted and excluded from this integration. See MIXED_FRESH101_INTERPRETATION_RECEIPT.json and IMPORT_MAIN_INTEGRATION_20261029.json.
+# Current implementation state — 29 October 2026
+
+## Active delivery
+
+Universal Import product completion is active in the stable worktree
+`/Users/xoery/.codex/worktrees/universal-product-20261028/otr-mobile-canonical`.
+The `universal-product-p2-host` checkout is an older image host (`e973ffe0`), not
+the delivery checkout. Reuse the attached delivery worktree; preserve untracked
+Python caches and other worktrees. Start from this handoff and the specific
+receipts below, not a new historical audit. Previous detailed handoff prose is
+recoverable in Git `72331060`; all underlying receipts remain in `docs/ops/`.
+
+Universal owns Source/Task/Provider/Admission, Import Activity/Results/Review,
+Documents custody and Import event projection. Native owns shared Navigation,
+Day Feed, Core/Queue/Sync and manual forms. Auth owns identity. Public interfaces,
+DEV service/SQL changes and main updates require serial Writer coordination.
+
+## Verified Import behavior
+
+- Historical minimal P1–P6 formal Save Golden Slices remain accepted. Sparse P2
+  only; no Qualified Segment/Journey/Booking/Ticket. These do not certify all-user
+  Beta or binary interpretation.
+- Normal restricted-QA product P1 and the five-file P2–P6 Batch completed real
+  Source Review→Plan→Admission→Core, independent readback, Day Feed and cold
+  recovery. The five accepted Items each have their own legitimate Source;
+  no Cartesian Batch-to-Item links. P5 is TRAIN. The account/Trip, exact supported
+  types and original 2026-11-01T08:48:56Z expiry remain the approved boundary.
+- Current mixed Batch `c31cd292-bb97-4902-857c-d5cc63c86d2c` / Task
+  `bcff4ba9-5136-886f-a214-00b75229c745` has one real Attempt
+  `401a0382-221c-84c9-9c05-53d678c18dc6`: SUCCEEDED, Task PUBLISHED, wake COMPLETED.
+  The Result is ABSTAIN/zero candidates: the Plan text does not establish a legal
+  kind/subtype. Do not invent Review or Save. PDF is retained/Not processed and
+  absent from the sole TXT Source binding.
+- Actual normal AD5 JS101 refresh and cold My Trips→same 19:27:30 Batch→Results
+  passed under the read optimization. Original/input IDs and both blob hashes
+  remain exact; no Analyze/Save on recovery. Independent call count remains one:
+  1506 input +75 output tokens, cached1280; recorded estimate165480nanos
+  (US$0.00016548, not invoice). No new Item was created from ABSTAIN.
+- Explicit Start can coalesce one user click behind a status GET; hidden,
+  Account/generation or Batch transitions cancel the intent, including leave and
+  return before GET completes. It is not a second queue or automatic retry.
+- PDF/image Local Durable original viewing, background cleanup and normal cold
+  reopening have separate Native acceptance. Local originals are not permanent
+  cloud backups. Trip Documents, Personal Inbox and Import Activity remain
+  separate. Saved Updates use real completion receipts and Batch event identity.
+
+Authoritative receipts under `docs/ops/universal-product-20261028/`:
+`CONTINUOUS_PRODUCT_P1_SERVER_VERIFIED.json`,
+`MULTI_SOURCE_FIVE_ITEMS_SERVER_VERIFIED.json`,
+`MULTI_SOURCE_FIVE_ITEMS_NATIVE_E2E.json`, `MIXED_FRESH101_INTERPRETATION_RECEIPT.json`,
+`RESULT_READ_REUSE_REVIEW.json`, `RESULT_READ_REUSE_NATIVE_RECEIPT.json`,
+`PDF_LOCAL_NATIVE_READER_PASS.json`, `IMAGE_LOCAL_NATIVE_READER_PASS.json`.
+
+## Code, DEV and integration
+
+- Read optimization source `1822be4c`: same authenticated GET reuses the manifest
+  already validated by the canonical two-read/hash guard, instead of running that
+  guard twice. Material tampering, second snapshot drift and Auth revocation during
+  receipt read still reject; no cross-request cache. Three suites20 tests,
+  typecheck/lint0errors and independent NO_BLOCKER. Native recovery above is real;
+  it is not a precise latency benchmark or proof of every earlier failure cause.
+- Last Import-verified DEV image:
+  `sha256:c8f9dbce0b15c13ab46a921d7fed4a467812606a59d84d56672a423714df7f9a`,
+  container `d32e8370295c0d3622bcf3c8be76e234c6eb1574f612fd7617ccd09452a852af`.
+  Server bundle1098…, capture9c0915…, Configc91f…, HostConfige89…, Envab5…,
+  original six mounts/four config hashes, health200/unauth401 independently passed.
+  Previous750a/4847 is stopped/retained rollback. No SQL or permission change.
+  Native now owns its next diagnostic deployment: always obtain its newest actual
+  image/config before deployment or rollback; do not restore an older image over it.
+- Root read receipt uses only Synthetic QA Account
+  `f4b059c5-8241-4ffb-aa15-37fa25474543` / Trip
+  `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Source sustained scope and Provider
+  budget/expiry have not been enlarged. Fresh-check actual gates before mutations;
+  no Root temporary admin or Provider window is open.
+- Last completed Import main push: `11c7feaa`; original primary six dirty entries,
+  full tracked/index diff and untracked bytes were preserved. Auth subsequently
+  integrated its local-only Source/journal work through main `72331060`.
+  Root privately joined that main at `c66d968b`. Read implementation/evidence
+  source `d3a5e4e0` passed actual-primary six-suite91-test Smoke and exact original
+  six-dirty/full-diff preservation under a serial FF integration; verify fresh refs
+  before the next main update.
+  Latest main is not automatically the source of the curated DEV image.
+
+## Remaining checkpoints
+
+1. Close the expired zero-Attempt lifecycle through the existing continuation
+   Repository and real owning queue claim. GET must continue projecting persisted
+   Task state. Do not fake FAILED in the client, reset a deadline/identity, terminate
+   UNKNOWN/existing attempts or release their budget. Stop invalid terminal-task
+   wake actions while preserving read-only recovery. This is the next local slice.
+2. PDF/OCR Source→Task/Admission remains NOT_READY. Reuse the restored V4
+   preparation/causal/storage ports, V2 proof reader and fixed qpdf/Poppler worker.
+   They remain unbound/default closed. Existing V4 scope is pinned to historical
+   objects and cannot be borrowed. Global PDF gate remains closed; normal scoped
+   binding, legitimate ORIGINAL/DERIVED identities, exact evidence qualification
+   and isolated Host execution need a precise reviewed owning packet. No evidence
+   currently justifies new Schema/RLS/GRANT.
+3. Complete the remaining input failure/offline/Account/Document permission matrix;
+   distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
+   benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN
+   calls, holds, originals and receipts; no blind replacement or automatic resend.
+
+## Other lanes and resource safety
+
+Native thread `01a17101-8b2d-7240-ab67-f4c34a5d90d9` owns its manual E2E and current
+normal TripCreate diagnostics. Its separately approved two-account rollout updated
+`trip_sustained_dev_scope_allowed` OID66180 to MD5
+`8b7e35a4e6f8512f1aa90c5cb98f9ed7`, preserving Owner/ACL and Source scope. Never
+reverse it to the former account literal. Its next software image must retain the
+Import read change. Root does not inspect those users' data or copy credentials.
+
+Auth thread `01a1803b-c5a7-7ab0-a90f-fb4f87609201` owns Guest journal v3/source
+projection and the separate normal-JWT self-profile port candidate `2b2fd000`.
+That Profile port is not an Import acceptance result or broad authority. Native
+owns its Backend mount/DI. Do not integrate unaccepted private candidates for them.
+
+AD5 `AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A` is Import; Forms QA/phone are Native.
+Use short coordinated Device Hub access, preserve My Trips root, original Native95
+binary compatibility and SQLite74. Do not copy Session/Keychain, operate Production
+or real-user data from this lane. Keep heavy builds serialized and bounded.
+
+## Auth / Identity — current checkpoint, Adoption NOT_READY
+
+Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account
+secure slots, repositories and apply-generation gate. Apple is Owner-paused. No
+new Auth authority, copied Session/Keychain/SQLite, pricing, Schema/RLS/GRANT or
+production access. Auth has no device/Host/SQL lease. Native owns shared mount/DI,
+normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned.
+
+- Email/Google login L3 accepted within Phase1 evidence: normal Provider login,
+  independent Account/Session readback, cold restore, A/B isolation and current-
+  login logout. Token-only eight-digit OTP uses Verified Resend `auth.xoery.art`;
+  wrong403/resend429/expiry PASS; temporary expiry restored3600s. Native52 visible
+  error repair accepted. `ops/auth-phase1-20261028/{GOOGLE_DEV_E2E,
+  EMAIL_OTP_HOSTED_DEV_E2E}.json` records limits, not full People/Beta acceptance.
+- Golden A accepted: GuestQA63/source7e35baf6, genuinely no formal Session, normal
+  Native Trip Create/Edit→P1→Day→same-version cold, SQLite74 independent readback;
+  no Account DB or cloud receipts. `GUEST_A_NATIVE_RECEIPT.json`. GuestQA65 then
+  accepted finite unsaved-editor/old Trip+P1 cold regression, not Adoption/new
+  cloud data. `GUEST_B_GUESTQA65_ARTIFACT.json` pins unchanged actual source.
+- Main through72331060 includes frozen current schema74/fileless Trip/P1 source,
+  full supported-table census, Trip/P1 live-draft journal and immutable journalv3
+  semantic source. Other nonempty/unknown families or unqualified files block the
+  whole dataset; registered-file proof is not physical-disk absence. All original
+  Trip/Person/operation/Core hashes, metadata dependencies, static covers, Ledger
+  initialization and timestamps retained. Source/canonical journal proof is local
+  only, never authority. Actual-primary source107 and journal130 tests PASS;
+  independent NO_BLOCKER, original six primary dirty files/full diff preserved.
+- Current default-closed Auth source candidate bdc6c44f (not yet main-integrated):
+  checkpoint assembler b869 pins target and original freeze lease; c945 derives
+  strict preflight resource facts from same source/files/drafts, not caller counts
+  or unsaved Trip shells. Directed6/independent135+cancel1 and facts supplement2
+  PASS/NO_BLOCKER. Initial two unchanged 5s old-test timeouts passed single-worker
+  30s rerun. No production Native consumer or publication follows.
+- Provisional metadata client7365 uses the existing secure Guest verification slot
+  while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
+  result. 401 refresh reuses existing Supabase path with active persistence off,
+  old-refresh CAS and binding/generation coalescing. Strict DTO/grant pins;
+  NOT_FOUND never unlocks. Direct17/independent4suites115/types/lint PASS. Unit
+  JWT-shaped fixtures, memory storage and simulated wire are not Provider/Keychain
+  or Adoption L3. Backend preflight/status still unmounted/default closed.
+- Native discovered verified38e/4eb accounts lack profiles, and actual Trip FK
+  requires them. Auth normal-JWT self-profile port2b2 plus anonymous guardbdc6
+  reads own ID→insert-if-absent `{id,display_name:""}`→readback, omits role, never
+  overwrites a profile or borrows Claim. Anonymous/absent user rejects. Direct22,
+  independent21+anonymous1/types/lint PASS. Auth read-only review of Native exact
+  route/DI/sync preflight NO_BLOCKER (Native direct44). Native alone deploys and
+  verifies normal same-operation retry; no actual profile/Trip success claimed yet.
+  Failure pauses sync, never offline launch. `ACCOUNT_PROFILE_BOOTSTRAP_PORT.json`.
+- Held Core/TripCreate/MetadataV2 ports db97/main ee246 retain three distinct
+  session_user fences. Directed148/independent131 and disposable real-PG1 PASS
+  prove leases, not composite publication authority. Do not bypass these fences.
+  P1 CREATE local checkpoint restoration is accepted; EDITv1 lacks owning revision
+  and remains closed. Full Native recovery route, server preflight/reservation,
+  protected atomic publication/cancellation, Person/Creator mappings and authorized
+  receipt readback remain missing. No real Adoption E2E or Phase3–6 completion.
+
+Next: finish Native normal-account Profile/Trip recovery readback; integrate only
+reviewed default-closed Auth source with fresh main/dirty-file checks. Continue
+Golden B server authority and Native recovery through unique Writers, then actual
+Guest→Account/negative/duplicate/UNKNOWN/cold E2E. Owner approval is required only
+for an exact protected execution delta, not routine coding. No Owner OTP before a
+runnable real scenario; no invented commercial limits.
+
+Auth receipt directory: `docs/ops/auth-phase2-20261028/`. Start with
+`GUEST_B_SOURCE_MAIN_INTEGRATION.json`, `GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json`,
+`GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json`, `GUEST_B_PROVISIONAL_TRANSPORT_REVIEW.json`
+and `GUEST_B_ATOMIC_PORT_CANDIDATE.md`; prior detailed state is preserved in Git.

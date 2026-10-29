@@ -1,0 +1,122 @@
+{
+  "status": "DEV_DEPLOYMENT_AND_NATIVE_READ_RECOVERY_PASS",
+  "sourceCommit": "1822be4cdcba504c137d14d3f2c8480cb16acef0",
+  "service": "otr-dev-backend",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "build": {
+    "sourceCommit": "1822be4cdcba504c137d14d3f2c8480cb16acef0",
+    "baselineImage": "sha256:750a459b1178d3807128973f7cfc8594d059809d8c9c1eea47bd1ad8b757f208",
+    "baselineBundles": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "70204682527d8e114ae231f5d20e0b9fcfc8b28e173f465ee24d6bea16cacae5"
+    },
+    "newBundles": {
+      "server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "server-capture.mjs": "9c0915f6ed02e2ee27291d04d7de87575cfa71d7927870b215d8877cff335630"
+    },
+    "onlyChangedSource": [
+      "backend/src/universalContinuousHost.ts"
+    ],
+    "checkedFiles": 1676,
+    "noEnvCopied": true,
+    "noDependenciesInstalled": true,
+    "deployed": false
+  },
+  "deployment": {
+    "status": "DEFAULT_CLOSED_DEPLOYED",
+    "container": "d32e8370295c0d3622bcf3c8be76e234c6eb1574f612fd7617ccd09452a852af",
+    "image": "sha256:c8f9dbce0b15c13ab46a921d7fed4a467812606a59d84d56672a423714df7f9a",
+    "configSHA256": "c91f046168394cad90d98be4d42dc484ef85bd016881f004b5a9d0703f162153",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "mountFilesUnchanged": true,
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedContainer": "4847b7c4de8af60934e0b26b2e84558122a07f8001000150ba2f1ce84f1b8703",
+    "source": "curated-750a-source-read-1822be4c"
+  },
+  "independentVerification": {
+    "status": "INDEPENDENT_DEFAULT_CLOSED_VERIFIED",
+    "container": "d32e8370295c0d3622bcf3c8be76e234c6eb1574f612fd7617ccd09452a852af",
+    "image": "sha256:c8f9dbce0b15c13ab46a921d7fed4a467812606a59d84d56672a423714df7f9a",
+    "configSHA256": "c91f046168394cad90d98be4d42dc484ef85bd016881f004b5a9d0703f162153",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "environmentUnchanged": true,
+    "mountFilesSHA256": {
+      "/run/otr/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+      "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+      "/run/otr/universal-runtime.json": "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+      "/run/otr/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a"
+    },
+    "bundles": {
+      "/app/server.mjs": "1098adabe629f9b78bfecf0f26f3819968926f7610fdfc8831e91468343937e7",
+      "/app/server-capture.mjs": "9c0915f6ed02e2ee27291d04d7de87575cfa71d7927870b215d8877cff335630"
+    },
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedOldStopped": true,
+    "noEnrichmentActivation": true
+  },
+  "privilegeDifference": "NONE; no SQL/Role/RLS/GRANT/Secret/budget/Source authority change",
+  "nativeScopeFunctionPreserved": "Native installed 8b7e35a4e6f8512f1aa90c5cb98f9ed7; no SQL or inverse package executed",
+  "rollback": "Retained750a/4847; not required",
+  "native": {
+    "build": 101,
+    "newInstall": false,
+    "coldRoot": "My Trips",
+    "sameBatch": "c31cd292-bb97-4902-857c-d5cc63c86d2c",
+    "sameTask": "bcff4ba9-5136-886f-a214-00b75229c745",
+    "sameAttempt": "401a0382-221c-84c9-9c05-53d678c18dc6",
+    "result": "ABSTAIN/0 candidates",
+    "unresolved": "No legal kind/subtype supported by source text",
+    "unsupportedPdf": "Not processed(1); excluded from model; original retained",
+    "explicitReadRefresh": "PASS; ready/not unavailable/not waiting observed within46489ms upper bound",
+    "coldReadRecovery": "PASS; same result/ready/not unavailable/not waiting observed within34489ms upper bound",
+    "preservation": {
+      "sameBatchAndInputIDs": true,
+      "exactOriginalHashesPreserved": true,
+      "originalCount": 2,
+      "sessionOrKeychainReadOrCopied": false
+    },
+    "analyzeOrSaveClicked": false
+  },
+  "independentProviderCallCountAfterCold": 1,
+  "taskAfterCold": [
+    {
+      "task": {
+        "task_id": "bcff4ba9-5136-886f-a214-00b75229c745",
+        "import_id": "c31cd292-bb97-4902-857c-d5cc63c86d2c",
+        "created_at": "2026-10-29T06:28:32.344836Z",
+        "policy_snapshot": "{\"budget_currency\":\"USD\",\"budget_nanos\":\"50000000\",\"deadline\":\"2026-10-29T06:38:32.344Z\",\"max_attempts\":1,\"network_required\":true,\"privacy\":\"REMOTE_ALLOWED\",\"region\":\"CN\",\"route\":\"DIRECT\",\"version\":1}",
+        "work_disposition": "PUBLISHED",
+        "current_attempt_id": "401a0382-221c-84c9-9c05-53d678c18dc6"
+      },
+      "attempts": [
+        {
+          "attempt_id": "401a0382-221c-84c9-9c05-53d678c18dc6",
+          "execution_observation": "TERMINAL",
+          "execution_outcome": "SUCCEEDED",
+          "safe_failure_code": null,
+          "started_at": "2026-10-29T06:30:39.074Z",
+          "ended_at": null,
+          "updated_at": "2026-10-29T06:34:21.088Z"
+        }
+      ],
+      "queue": [
+        {
+          "status": "COMPLETED",
+          "attempt_count": 0,
+          "last_error_code": null,
+          "last_attempt_at": "2026-10-29T06:28:58.096Z"
+        }
+      ]
+    }
+  ],
+  "newCoreItemCount": 0,
+  "notClaimed": [
+    "PDF/OCR interpretation",
+    "Save from ABSTAIN",
+    "Precise HTTP latency benchmark",
+    "Proof that redundant reads caused all earlier failures"
+  ]
+}
