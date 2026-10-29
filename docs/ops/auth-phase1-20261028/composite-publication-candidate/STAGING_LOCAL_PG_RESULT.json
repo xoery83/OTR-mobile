@@ -1,0 +1,24 @@
+{
+  "status": "LOCAL_PRIVATE_STAGE_PG_PASS_NOT_AUTHORITY_OR_ADOPTION",
+  "checks": [
+    "candidate refuses default database before any DDL",
+    "candidate also requires explicit disposable fixture marker",
+    "private immutable staging table installs only in owned disposable database",
+    "actual validated synthetic plan persists once; exact duplicate is idempotent",
+    "foreign Account colliding adoption cannot replace the stored actor or read its own result",
+    "UPDATE and DELETE of accepted staging source are refused",
+    "SQL independently rejects changed exact plan hash",
+    "missing preparation text fails closed rather than passing NULL CHECK",
+    "stage insert rolls back without creating a durable partial record",
+    "existing local roles denied staging read: anon,authenticated,service_role",
+    "fixture lacks roles (not created or claimed tested): otr_trip_create_gateway,otr_trip_metadata_gateway,otr_trip_core_v2_gateway",
+    "RLS enabled with no policy; existing Gateway/Writer role attributes unchanged",
+    "concurrent cross-Account same-adoption inserts retain exactly one immutable stage"
+  ],
+  "network": "none",
+  "hostedWrites": 0,
+  "providerCalls": 0,
+  "businessTripWrites": 0,
+  "candidateSha256": "25224995ab080841df4edeaa22959185ba8164b93c97f9f21ee3db50d770905f",
+  "testCount": 13
+}

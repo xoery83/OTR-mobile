@@ -1,0 +1,22 @@
+{
+  "status": "INTEGRATED_AND_NONFORCE_PUSH_VERIFIED",
+  "sourceCommit": "0f382616",
+  "actualMain": "ecf06003fb74252ec9aaea97b132e04ef03ab7a3",
+  "previousMain": "b2534f3df641ee4226e713ce17cc0e26dc9f296e",
+  "directedTests": "scratch and actual primary each4 suites88 tests PASS; both typechecks PASS",
+  "independentReview": "4 suites88 PASS/NO_BLOCKER",
+  "sixOriginalDirtyFilesPreserved": true,
+  "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+  "indexDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "originalFileHashes": {
+    "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+    "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+    "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+    "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+    "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+    "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+  },
+  "runtimeChange": false,
+  "schemaRlsGrantChange": false,
+  "limits": "Unmounted metadata boundaries only; not a real preflight grant, server reservation or Adoption E2E"
+}
