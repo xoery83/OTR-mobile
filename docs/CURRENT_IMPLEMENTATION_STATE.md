@@ -108,7 +108,11 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    `PDF_V4_PREPARATION_HTTP_LOCAL_PASS.json`. Explicit Native transport also passed
    six suites77 tests/types/lint and independent Review, reusing normal Auth,
    immutable Capture custody and the original read quota; no caller is wired.
-   `PDF_V4_NATIVE_TRANSPORT_LOCAL_PASS.json`. No actual PDF Source/Task/Save PASS.
+   `PDF_V4_NATIVE_TRANSPORT_LOCAL_PASS.json`. The same Original Source adapter also
+   has an explicit default-closed PDF metadata option: only PENDING, never VERIFIED;
+   same RPC/receipt verifier, no bytes/IO/Task authority. Six suites64 tests/types/
+   lint and independent Review passed. `PDF_PENDING_ORIGINAL_LOCAL_PASS.json`.
+   No actual PDF Source/Task/Save PASS.
 3. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN

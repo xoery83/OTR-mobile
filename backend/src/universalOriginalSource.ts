@@ -1,3 +1,4 @@
+import { CAPTURE_CUSTODY_MAX_BYTES } from "../../src/domain/capture/captureCustody";
 import { z } from "zod";
 import {
   createRequestBoundary,
@@ -30,14 +31,32 @@ const fileAcquisition = flightTextAcquisitionSchema.extend({
     }),
   }),
 });
+const pendingPdfAcquisition = fileAcquisition.extend({
+  payload: fileAcquisition.shape.payload.extend({
+    original: fileAcquisition.shape.payload.shape.original.extend({
+      material_kind: z.literal("BINARY"),
+      original_filename: z
+        .string()
+        .min(1)
+        .max(255)
+        .regex(/\.pdf$/i),
+      mime_type: z.literal("application/pdf"),
+      encoding: z.null(),
+      text_content: z.null(),
+      byte_count: z.number().int().positive().max(CAPTURE_CUSTODY_MAX_BYTES),
+    }),
+  }),
+});
 export const universalOriginalAcquisitionSchema = z.union([
   flightTextAcquisitionSchema,
   fileAcquisition,
+  pendingPdfAcquisition,
 ]);
 // Explicit optional candidate: no instance is installed by default startup.
 export function createUniversalOriginalSourceConnection(
   connection: CorePgConnection,
   hash: ImportHash,
+  options: { pendingPdf?: boolean } = {},
 ) {
   async function execute(query: string, params: unknown[]) {
     return connection.withLease(async (lease) => {
@@ -63,6 +82,11 @@ export function createUniversalOriginalSourceConnection(
     const q = universalOriginalAcquisitionSchema.parse(raw);
     if (q.actor_account_id !== actor || q.trip_id !== trip)
       throw new Error("SOURCE_ACCESS_DENIED");
+    if (q.payload.original.material_kind === "BINARY") {
+      if (options.pendingPdf !== true) throw Error("UNIVERSAL_SOURCE_SCOPE_CLOSED");
+      // Metadata only. Actual bytes must pass the existing Stage/upload/verify/seal path.
+      return q;
+    }
     const bytes = new TextEncoder().encode(q.payload.original.text_content);
     if (
       bytes.length !== q.payload.original.byte_count ||
@@ -80,7 +104,12 @@ export function createUniversalOriginalSourceConnection(
         "SELECT public.trip_source_acquire_universal_original($1::uuid,$2) AS result",
         [actor, canonicalEventJson(q as Json)],
       )) as Record<string, Json>;
-      await verifySourceAcquisitionResult(q, r, hash);
+      await verifySourceAcquisitionResult(
+        q,
+        r,
+        hash,
+        q.payload.original.material_kind === "BINARY" ? "PENDING" : "NOT_APPLICABLE",
+      );
       return r;
     },
     async lookup(actor: string, trip: string, raw: unknown) {
@@ -89,7 +118,13 @@ export function createUniversalOriginalSourceConnection(
         "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
         [actor, canonicalEventJson(q as Json)],
       )) as Record<string, Json> | null;
-      if (r !== null) await verifySourceAcquisitionResult(q, r, hash);
+      if (r !== null)
+        await verifySourceAcquisitionResult(
+          q,
+          r,
+          hash,
+          q.payload.original.material_kind === "BINARY" ? "PENDING" : "NOT_APPLICABLE",
+        );
       return r;
     },
   };

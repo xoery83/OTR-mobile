@@ -1224,6 +1224,18 @@ must be installed separately before Runtime verification. The port interface and
 fixture tests do not establish that deployment or grant dispatch permission.
 
 
+## Universal Source pending PDF metadata (default-closed candidate)
+
+The existing Original Source acquisition/lookup adapter may explicitly opt into
+PDF FILE/BINARY metadata, within the existing Capture4MiB bound and strict null
+encoding/text/locator fields. Default composition remains text-only. This forwards
+only the existing ACQUIRE_SOURCE command to its owning RPC; it does not register
+upload work, start a parser, verify bytes, create a Task or grant Admission. Its
+receipt must remain PENDING with no verified timestamp; VERIFIED or text-only
+NOT_APPLICABLE cannot masquerade as a PDF acquisition receipt. Normal Actor/Trip
+checks and existing SQL eligibility still apply. Configuring this software option
+cannot activate the protected PDF scope; no current Runtime enables it.
+
 ## Source PDF V4 preparation HTTP (unbound implementation candidate)
 
 Candidate POST routes use

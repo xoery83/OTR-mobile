@@ -1,0 +1,32 @@
+{
+  "status": "LOCAL_PASS_DEFAULT_CLOSED",
+  "scope": "Existing Original Source acquisition/lookup pending PDF metadata only",
+  "reuses": [
+    "Same ACQUIRE_SOURCE command",
+    "Same trip_source_acquire_universal_original / trip_source_lookup_universal_original RPCs",
+    "Same Subject/Trip validation and receipt hash verifier",
+    "Existing FILE/BINARY/PENDING Source contract and Capture4MiB bound"
+  ],
+  "defaults": "All existing Runtime constructors omit pendingPdf; PDF is rejected before SQL. Request JSON cannot enable it.",
+  "softwareOption": "Trusted composition may set pendingPdf:true; that is not SQL eligibility or byte verification.",
+  "receipt": "PENDING only, error_code NULL and verified timestamp NULL; VERIFIED/NOT_APPLICABLE reject even with a valid result hash.",
+  "validation": {
+    "initialRed": 5,
+    "focusedSuites": 6,
+    "tests": 64,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "notClaimed": [
+    "Actual SQL eligibility or acquisition",
+    "Original bytes verified",
+    "Stage/upload/parser execution",
+    "Task/Provider dispatch",
+    "Source Review/Admission/Core Save",
+    "Cloud backup or sharing"
+  ],
+  "protectedChanges": 0,
+  "devCalls": 0,
+  "providerCalls": 0
+}

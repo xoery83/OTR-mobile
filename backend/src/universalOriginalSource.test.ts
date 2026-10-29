@@ -46,7 +46,11 @@ async function envelope(file: boolean) {
     },
   };
 }
-async function result(q: Awaited<ReturnType<typeof envelope>>) {
+async function result(
+  q: Awaited<ReturnType<typeof envelope>>,
+  remote = "NOT_APPLICABLE",
+  verifiedAt: string | null = null,
+) {
   const r = {
     contract_version: 1,
     operation_id: q.operation_id,
@@ -61,10 +65,10 @@ async function result(q: Awaited<ReturnType<typeof envelope>>) {
     result_material_revision: 1,
     representation_id: q.payload.original.id,
     result_representation_row_revision: 1,
-    result_remote_state: "NOT_APPLICABLE",
+    result_remote_state: remote,
     result_retention_state: "RETAINED",
     result_action_id: randomUUID(),
-    result_verified_at: null,
+    result_verified_at: verifiedAt,
     result_sha256: "",
   };
   r.result_sha256 = await importDigest(
@@ -83,7 +87,7 @@ async function result(q: Awaited<ReturnType<typeof envelope>>) {
       r.result_remote_state,
       r.result_retention_state,
       r.result_action_id,
-      null,
+      r.result_verified_at,
     ],
     hash,
   );
@@ -196,4 +200,127 @@ it("maps the actual UTF8 FILE helper error to422 before SQL, rather than retryab
   );
   expect(response.status).toBe(422);
   expect(lease).not.toHaveBeenCalled();
+});
+
+async function pendingPdfFixture(remote = "PENDING", verifiedAt: string | null = null) {
+  const base = await envelope(true),
+    r = await result(base, remote, verifiedAt);
+  const q = {
+    ...base,
+    payload: {
+      ...base.payload,
+      original: {
+        ...base.payload.original,
+        material_kind: "BINARY",
+        original_filename: "Retained.pdf",
+        mime_type: "application/pdf",
+        encoding: null,
+        text_content: null,
+        byte_count: 1700,
+        payload_sha256: "b".repeat(64),
+      },
+    },
+  };
+  const query = vi.fn(async (sql: string) => ({
+    rows: sql.startsWith("SELECT") ? [{ result: r }] : [],
+  }));
+  const lease = vi.fn(async (work: any) => work({ query, retire: vi.fn() }));
+  return { q, r, query, lease, connection: { withLease: lease } };
+}
+it("pending PDF metadata is closed before SQL unless explicitly composed", async () => {
+  const f = await pendingPdfFixture();
+  const source = createUniversalOriginalSourceConnection(f.connection, hash);
+  await expect(source.acquire(actor, trip, f.q)).rejects.toThrow(
+    "UNIVERSAL_SOURCE_SCOPE_CLOSED",
+  );
+  expect(f.lease).not.toHaveBeenCalled();
+});
+it("explicit pending metadata uses the same owning acquire/lookup and never claims verified bytes", async () => {
+  const f = await pendingPdfFixture();
+  const source = createUniversalOriginalSourceConnection(f.connection, hash, {
+    pendingPdf: true,
+  });
+  expect(await source.acquire(actor, trip, f.q)).toEqual(f.r);
+  expect(await source.lookup(actor, trip, f.q)).toEqual(f.r);
+  expect(
+    f.query.mock.calls.filter(([sql]) => sql.startsWith("SELECT")).map(([sql]) => sql),
+  ).toEqual([
+    "SELECT public.trip_source_acquire_universal_original($1::uuid,$2) AS result",
+    "SELECT public.trip_source_lookup_universal_original($1::uuid,$2) AS result",
+  ]);
+});
+it.each(["VERIFIED", "NOT_APPLICABLE"])(
+  "PDF acquisition cannot turn %s into a valid pending receipt",
+  async (remote) => {
+    const f = await pendingPdfFixture(remote);
+    const source = createUniversalOriginalSourceConnection(f.connection, hash, {
+      pendingPdf: true,
+    });
+    await expect(source.acquire(actor, trip, f.q)).rejects.toThrow("REPLAY_UNAVAILABLE");
+  },
+);
+it("a PENDING receipt cannot already contain verification evidence", async () => {
+  const f = await pendingPdfFixture("PENDING", "2026-10-29T00:00:00.000000Z");
+  const source = createUniversalOriginalSourceConnection(f.connection, hash, {
+    pendingPdf: true,
+  });
+  await expect(source.acquire(actor, trip, f.q)).rejects.toThrow("REPLAY_UNAVAILABLE");
+});
+it.each(["actor", "trip", "media", "encoding", "text", "locator", "oversize"] as const)(
+  "pending metadata refuses %s drift without SQL",
+  async (drift) => {
+    const f = await pendingPdfFixture();
+    let q: any = f.q;
+    if (drift === "actor") q = { ...q, actor_account_id: randomUUID() };
+    else if (drift === "trip") q = { ...q, trip_id: randomUUID() };
+    else
+      q = {
+        ...q,
+        payload: {
+          ...q.payload,
+          original: {
+            ...q.payload.original,
+            ...(drift === "media"
+              ? { mime_type: "image/jpeg" }
+              : drift === "encoding"
+                ? { encoding: "UTF-8" }
+                : drift === "text"
+                  ? { text_content: "fake OCR" }
+                  : drift === "locator"
+                    ? { locator_uri: "https://other.invalid/file.pdf" }
+                    : { byte_count: 4194305 }),
+          },
+        },
+      };
+    const source = createUniversalOriginalSourceConnection(f.connection, hash, {
+      pendingPdf: true,
+    });
+    await expect(source.acquire(actor, trip, q)).rejects.toThrow();
+    expect(f.lease).not.toHaveBeenCalled();
+  },
+);
+it("the pending-PDF software option cannot be enabled by request JSON", async () => {
+  const f = await pendingPdfFixture();
+  const c = createUniversalOriginalSourceConnection(f.connection, hash);
+  const response = await universalOriginalSourceBoundary(
+    request("acquire", { ...f.q, pendingPdf: true }),
+    actor,
+    async () => true,
+    c,
+  );
+  expect(response.status).toBe(422);
+  expect(f.lease).not.toHaveBeenCalled();
+});
+it("normal HTTP keeps a composed text-only Source port closed to pending PDF", async () => {
+  const f = await pendingPdfFixture();
+  const c = createUniversalOriginalSourceConnection(f.connection, hash);
+  const response = await universalOriginalSourceBoundary(
+    request("acquire", f.q),
+    actor,
+    async () => true,
+    c,
+  );
+  expect(response.status).toBe(503);
+  expect((await response.json()).error.code).toBe("SOURCE_CAPABILITY_CLOSED");
+  expect(f.lease).not.toHaveBeenCalled();
 });
