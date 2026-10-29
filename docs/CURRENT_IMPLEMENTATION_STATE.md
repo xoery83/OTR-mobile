@@ -83,11 +83,14 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
 
 ## Remaining checkpoints
 
-1. Close the expired zero-Attempt lifecycle through the existing continuation
-   Repository and real owning queue claim. GET must continue projecting persisted
-   Task state. Do not fake FAILED in the client, reset a deadline/identity, terminate
-   UNKNOWN/existing attempts or release their budget. Stop invalid terminal-task
-   wake actions while preserving read-only recovery. This is the next local slice.
+1. Expired zero-Attempt lifecycle repair is LOCAL_PASS, not deployed. Existing
+   continuation Repository `wait` closes it only under the real owning queue claim;
+   GET still projects persisted state. Native terminal states stop Source prepare/
+   dispatch while preserving read-only recovery. Six suites101 tests, typecheck,
+   UI guard and independent NO_BLOCKER passed. See
+   `UNSTARTED_TASK_DEADLINE_LOCAL_PASS.json`. Next obtain Native's latest actual
+   curated image and perform targeted same-current-run Task verification; no
+   deadline/identity reset, historical sweep, UNKNOWN termination or paid resend.
 2. PDF/OCR Source→Task/Admission remains NOT_READY. Reuse the restored V4
    preparation/causal/storage ports, V2 proof reader and fixed qpdf/Poppler worker.
    They remain unbound/default closed. Existing V4 scope is pinned to historical

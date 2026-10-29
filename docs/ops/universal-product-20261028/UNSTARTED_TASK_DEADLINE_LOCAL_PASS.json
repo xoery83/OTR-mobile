@@ -1,0 +1,31 @@
+{
+  "status": "LOCAL_PASS",
+  "runtimeAcceptance": "NOT_YET_DEPLOYED",
+  "baseline": "ef5d7ea6b6e81b8b0b3a50e0afcf0f08dec78551",
+  "firstFailure": "Expired zero-Attempt Task remained PENDING/RETRYABLE; terminal Native states could still request Source preparation.",
+  "repair": "Use existing owning continuation wait deadline transition only after Actor/Trip/Source and actual current queue claim validation. GET projects stored state. Native terminal observations remain read-only.",
+  "invariants": [
+    "No new Task/Attempt or Provider send",
+    "Task ID/deadline/policy unchanged",
+    "No termination of existing Attempt/UNKNOWN/running responsibility",
+    "No budget/hold refund or release",
+    "No Schema/RLS/GRANT/Role/Admission change"
+  ],
+  "validation": {
+    "focusedSuites": 6,
+    "tests": 101,
+    "result": "PASS",
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "lint": "0 errors; four pre-existing duplicate-import warnings",
+    "independentReview": "NO_BLOCKER; p1_source_review_independent"
+  },
+  "negativeChecks": [
+    "Unclaimed queue wake rejected",
+    "Read-only GET remains PENDING before actual expiration transition",
+    "Repeated claimed wake preserves terminal revision and zero sends",
+    "Completed result remains recoverable after deadline",
+    "RESULTS_READY/FAILED/CANCELED/STALE do not prepare or execute"
+  ],
+  "next": "Apply only this Host delta to latest Native-compatible actual curated DEV source after serial handoff; verify same current-run expired Task, zero calls, and Native recovery. No historical sweep."
+}

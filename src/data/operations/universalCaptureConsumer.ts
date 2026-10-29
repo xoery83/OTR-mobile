@@ -58,6 +58,10 @@ export function createUniversalCaptureConsumer(dependencies: {
   let dispatchUncertain = false;
   let queued = false;
   let activity: UniversalTaskActivity | null = null;
+  const terminalActivity = () =>
+    activity !== null &&
+    ["RESULTS_READY", "FAILED", "CANCELED", "STALE"].includes(activity.state);
+
   const current = () => {
     if (!dependencies.isCurrent()) throw Error("UNIVERSAL_CAPTURE_STALE");
   };
@@ -78,6 +82,7 @@ export function createUniversalCaptureConsumer(dependencies: {
       if (
         !allowDispatch ||
         dispatchUncertain ||
+        terminalActivity() ||
         !dependencies.prepareSources ||
         !(
           error instanceof ApiClientError &&
@@ -134,11 +139,16 @@ export function createUniversalCaptureConsumer(dependencies: {
       if (dependencies.continuous) {
         // Explicit Start may wake the same durable Task after a Backend restart.
         // Recovery GET never prepares work or resends a Provider call.
-        if (allowDispatch && !preparedThisAction && dependencies.prepareSources) {
+        if (
+          allowDispatch &&
+          !terminalActivity() &&
+          !preparedThisAction &&
+          dependencies.prepareSources
+        ) {
           await dependencies.prepareSources(context, model);
           current();
         }
-        queued = true;
+        queued = !terminalActivity();
         return null;
       }
       if (!allowDispatch || dispatchUncertain) return null;
@@ -161,6 +171,7 @@ export function createUniversalCaptureConsumer(dependencies: {
     }
     if (
       allowDispatch &&
+      !terminalActivity() &&
       dependencies.continuous &&
       !preparedThisAction &&
       dependencies.prepareSources &&
@@ -194,7 +205,7 @@ export function createUniversalCaptureConsumer(dependencies: {
       return queued;
     },
     get canDispatch() {
-      return !dispatchUncertain;
+      return !dispatchUncertain && !terminalActivity();
     },
     start: (model: CaptureJobReadModel) => read(model, true),
     recover: (model: CaptureJobReadModel) => read(model, false),

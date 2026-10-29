@@ -27,7 +27,7 @@ import { persistenceDigest } from "./externalIntegrationPersistence";
 const fakeRuntime = vi.hoisted(() => vi.fn());
 vi.mock("./universalRuntime", () => ({ createUniversalBackendRuntime: fakeRuntime }));
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
-it("normal preparation, targeted claim, publication and repeat wake use one synthetic send; GET never sends", async () => {
+it.each([false, true])("fences deadline and recovery (%s)", async (expired) => {
   const sql = new DatabaseSync(":memory:"),
     db = initializeUniversalTaskDatabase(sql);
   try {
@@ -172,7 +172,10 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     };
     const sends = vi.fn(async () => ({
       output: { v: 2, items: [], bookings: [], tickets: [], links: [], issues: [] },
-      providerReceipt: { outcome: "SETTLED" as const, requestId: "synthetic-no-network" },
+      providerReceipt: {
+        outcome: "SETTLED" as const,
+        requestId: "synthetic-no-network",
+      },
     }));
     fakeRuntime.mockImplementation(async (p: UniversalRuntimeProvisioning) => ({
       status: "CONFIGURED_NOT_ACTIVATED",
@@ -339,6 +342,11 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
       ))!;
     }
     const first = await operation();
+    if (expired) {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(Date.parse(now) + 600001);
+    }
+    if (expired) expect((await host.readContext(batch)).activity?.state).toBe("PENDING");
     await expect(
       host.executeQueued(batch, taskId, {
         operationId: first.id,
@@ -348,6 +356,61 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     ).rejects.toThrow("QUEUE_SCOPE");
     expect(sends).not.toHaveBeenCalled();
     expect(await queue.claim(context, first, "fixture-worker")).toBe(true);
+    if (expired) {
+      const originalPolicy = sql
+        .prepare("SELECT policy_snapshot FROM intelligence_continuations WHERE task_id=?")
+        .get(taskId);
+      expect(
+        await host.executeQueued(batch, taskId, {
+          operationId: first.id,
+          owner: first.claimOwner!,
+          baseVersion: first.baseVersion!,
+        }),
+      ).toBeNull();
+      await queue.settle(context, first);
+      expect((await host.readContext(batch)).activity).toMatchObject({
+        state: "FAILED",
+        attemptCount: 0,
+        rowRevision: 3,
+      });
+      expect(
+        sql
+          .prepare(
+            "SELECT work_disposition,safe_reason,policy_snapshot FROM intelligence_continuations WHERE task_id=?",
+          )
+          .get(taskId),
+      ).toEqual({
+        work_disposition: "FAILED",
+        safe_reason: "DEADLINE_EXHAUSTED",
+        ...originalPolicy,
+      });
+      expect(
+        sql.prepare("SELECT count(*) AS n FROM intelligence_continuation_attempts").get(),
+      ).toEqual({ n: 0 });
+      expect((await operation()).status).toBe("COMPLETED");
+      await db.runAsync(
+        "UPDATE sync_operations SET status='RETRYABLE',claim_owner=NULL WHERE id=?",
+        first.id,
+      );
+      const replay = await operation();
+      expect(await queue.claim(context, replay, "expired-replay")).toBe(true);
+      expect(
+        await host.executeQueued(batch, taskId, {
+          operationId: replay.id,
+          owner: replay.claimOwner!,
+          baseVersion: replay.baseVersion!,
+        }),
+      ).toBeNull();
+      await queue.settle(context, replay);
+      expect((await host.readContext(batch)).activity).toMatchObject({
+        state: "FAILED",
+        rowRevision: 3,
+      });
+      expect(fakeRuntime).not.toHaveBeenCalled();
+      expect(sends).not.toHaveBeenCalled();
+      return;
+    }
+
     const selectionFailure = Error("PRIVATE_SOURCE_ORIGINAL_NAME");
     for (const loggerThrows of [false, true]) {
       const log = vi.spyOn(console, "info").mockImplementation(() => {
@@ -527,6 +590,8 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
     sourceCurrent = true;
 
     expect(sends).toHaveBeenCalledTimes(1);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.parse(now) + 600001);
     // Re-delivery of this same durable Queue operation still reads its accepted result.
     await db.runAsync(
       "UPDATE sync_operations SET status='RETRYABLE',claim_owner=NULL WHERE id=?",
@@ -553,6 +618,7 @@ it("normal preparation, targeted claim, publication and repeat wake use one synt
       sql.prepare("SELECT count(*) AS n FROM intelligence_continuations").get(),
     ).toMatchObject({ n: 1 });
   } finally {
+    vi.useRealTimers();
     sql.close();
     fakeRuntime.mockReset();
   }

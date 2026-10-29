@@ -1224,6 +1224,19 @@ must be installed separately before Runtime verification. The port interface and
 fixture tests do not establish that deployment or grant dispatch permission.
 
 
+## Universal Import — unstarted deadline recovery (implementation candidate)
+
+A status GET remains read-only and projects the persisted owning Task/revision.
+An actual targeted wake may close an expired, zero-Attempt PENDING/WAITING Task
+through the existing continuation Repository `wait` deadline branch after normal
+Actor/Trip/Source and current queue-claim checks. It records FAILED with
+DEADLINE_EXHAUSTED; it does not reset the ID/deadline or initiate a Provider call.
+Existing Attempt/UNKNOWN/running/result-pending responsibility is not terminated
+by this path. Completed/failed/canceled/stale observations do not authorize a new
+Source preparation; Native retains read-only Results/original recovery. No wire
+state enum, Schema, GRANT or Admission authority is added. Runtime acceptance
+must be recorded separately from local tests.
+
 ## Universal Import — bounded Source P1 integration (2026-10-26)
 
 Universal intake/results use authenticated `/v2/import-batches/{batchId}/interpretations` Context/Result/prepare routes and existing owning Source/Task repositories. Candidates and observations do not grant admission. Original text material is acquired/read only through the account/Trip-scoped original-source interface.

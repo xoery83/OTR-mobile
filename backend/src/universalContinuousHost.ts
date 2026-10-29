@@ -4,6 +4,7 @@ import { universalInstruction, universalAdvisoryInstruction } from "./universalP
 import { COMPACT_PROMPT_VERSION } from "../frozen-workbench/scripts/import-workbench/real-llm-compact";
 import { createHash } from "node:crypto";
 import type { AccountRequestContext } from "../../src/data/auth/accountRequestContext";
+import type { SyncOperation } from "../../src/data/sync/syncOperationRepository";
 import { createIntelligenceContinuationRepository } from "../../src/data/repositories/intelligenceContinuationRepository";
 import {
   taskMutableColumns,
@@ -377,12 +378,8 @@ export function createUniversalContinuousHost(deps: {
       try {
         const state = await found(batch, taskId);
         phase = "QUEUE_READ";
-        const q = await deps.db.getFirstAsync<{
-          status: string;
-          claim_owner: string;
-          base_version: number;
-        }>(
-          "SELECT status,claim_owner,base_version FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?",
+        const q = await deps.db.getFirstAsync<SyncOperation>(
+          "SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,entity_type AS entityType,entity_id AS entityId,operation_type AS operationType,idempotency_key AS idempotencyKey,base_version AS baseVersion,payload_json AS payloadJson,status,attempt_count AS attemptCount,next_attempt_at AS nextAttemptAt,claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='INTELLIGENCE_CONTINUATION' AND entity_id=?",
           claim.operationId,
           actor,
           trip,
@@ -392,10 +389,42 @@ export function createUniversalContinuousHost(deps: {
           !q ||
           state.task.sync_operation_id !== claim.operationId ||
           q.status !== "PROCESSING" ||
-          q.claim_owner !== claim.owner ||
-          q.base_version !== claim.baseVersion
+          q.claimOwner !== claim.owner ||
+          q.baseVersion !== claim.baseVersion
         )
           throw Error("INTELLIGENCE_QUEUE_SCOPE");
+        if (!state.attempts.length) {
+          if (["FAILED", "CANCELED", "STALE"].includes(state.task.work_disposition))
+            return null;
+          if (
+            state.task.current_attempt_id === null &&
+            state.task.cancellation_disposition === "NONE" &&
+            ["PENDING", "WAITING"].includes(state.task.work_disposition) &&
+            state.task.policy_snapshot.deadline !== null &&
+            Date.parse(state.task.policy_snapshot.deadline) <= Date.now()
+          ) {
+            phase = "TASK_DEADLINE";
+            await current();
+            await repository(state.task).wait(
+              context,
+              taskId,
+              state.task.row_revision,
+              [
+                {
+                  reason: "POLICY_BLOCKED",
+                  dependency_id: null,
+                  capability: null,
+                  policy_sha256: state.task.policy_sha256,
+                },
+              ],
+              true,
+              undefined,
+              q,
+            );
+            await current();
+            return null;
+          }
+        }
         // Existing attempts, including UNKNOWN, never get a second Provider send.
         if (state.attempts.length) {
           phase = "SETTLED_RECOVERY";

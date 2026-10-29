@@ -361,3 +361,31 @@ it("recovers the legitimate text result while a non-text file remains explicitly
   expect(await f.consumer.recover(f.model)).toBe(f.result);
   expect(f.transport.execute).not.toHaveBeenCalled();
 });
+
+it.each(["RESULTS_READY", "FAILED", "CANCELED", "STALE"] as const)(
+  "keeps %s read-only even when its Result is missing",
+  async (state) => {
+    const prepare = vi.fn(async () => {}),
+      f = fixture(prepare, true);
+    const binding = await f.transport.context();
+    f.transport.context.mockResolvedValue({
+      ...binding,
+      activity: {
+        state,
+        recordedAt: "2026-10-29T00:00:00Z",
+        updatedAt: "2026-10-29T00:01:00Z",
+        completedAt: null,
+        rowRevision: 3,
+        attemptCount: state === "RESULTS_READY" ? 1 : 0,
+        waitReason: null,
+      },
+    });
+    f.transport.result.mockRejectedValue(absent());
+    expect(await f.consumer.start(f.model)).toBeNull();
+    expect(f.consumer.queued).toBe(false);
+    expect(f.consumer.canDispatch).toBe(false);
+    expect(await f.consumer.recover(f.model)).toBeNull();
+    expect(prepare).not.toHaveBeenCalled();
+    expect(f.transport.execute).not.toHaveBeenCalled();
+  },
+);
