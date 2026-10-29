@@ -1,6 +1,7 @@
 import {
   getNativeTripQaQueueActivity,
   hasNativeTripQaScope,
+  isGeneralAccountCloudSyncEnabled,
   runNativeTripQaSync,
 } from "./nativeTripQaScope";
 import {
@@ -50,7 +51,7 @@ export async function setIntelligenceSchedulingAdapter(
   adapter: IntelligenceSchedulingAdapter | null,
 ) {
   intelligenceScheduling = adapter;
-  if (adapter && !hasNativeTripQaScope()) {
+  if (adapter && !hasNativeTripQaScope() && !isGeneralAccountCloudSyncEnabled()) {
     await adapter.resume("COLD_START");
     if (intelligenceScheduling === adapter) kickLedgerOperationalSync();
   }
@@ -59,6 +60,8 @@ async function scheduledQueueActivity() {
   if (hasNativeTripQaScope()) return getNativeTripQaQueueActivity();
   const ledger = await getLedgerQueueActivity();
   const extras = [];
+  if (isGeneralAccountCloudSyncEnabled())
+    extras.push(await getNativeTripQaQueueActivity());
   if (await isTripMetadataSyncEnabled())
     extras.push(
       await getTripMetadataQueueActivity(
@@ -66,7 +69,8 @@ async function scheduledQueueActivity() {
         await requireActiveUserId(),
       ),
     );
-  if (intelligenceScheduling) extras.push(await intelligenceScheduling.activity());
+  if (intelligenceScheduling && !isGeneralAccountCloudSyncEnabled())
+    extras.push(await intelligenceScheduling.activity());
   const times = [ledger, ...extras]
     .map((activity) => activity.nextActionableAt)
     .filter((time): time is number => time !== null);
@@ -230,9 +234,15 @@ export function runLedgerOperationalSync(
 
 async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
   if (hasNativeTripQaScope()) {
-    const completion = await runNativeTripQaSync();
+    const completion = await runNativeTripQaSync({
+      manualRetry: origin === "DATA_HEALTH",
+    });
     if (completion) notifyLedgerReadCompletion(completion);
     return;
+  }
+  if (isGeneralAccountCloudSyncEnabled()) {
+    const normal = await runNativeTripQaSync({ manualRetry: origin === "DATA_HEALTH" });
+    if (normal) notifyLedgerReadCompletion(normal);
   }
   const completion = await captureEligibleScopes();
   // Receipt mapping commits before any dependent Expense can be selected for dispatch.
@@ -244,7 +254,9 @@ async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
     runLedgerSettlementPaymentSync(),
     runLedgerReviewSync(),
     runPersonalSettlementReviewSync(),
-    ...(intelligenceScheduling ? [intelligenceScheduling.run()] : []),
+    ...(intelligenceScheduling && !isGeneralAccountCloudSyncEnabled()
+      ? [intelligenceScheduling.run()]
+      : []),
   ])
     .then(async () => {
       try {
@@ -344,7 +356,11 @@ export async function pauseLedgerOperationalSync() {
 
 export function allowLedgerOperationalSync() {
   paused = false;
-  if (intelligenceScheduling && !hasNativeTripQaScope())
+  if (
+    intelligenceScheduling &&
+    !hasNativeTripQaScope() &&
+    !isGeneralAccountCloudSyncEnabled()
+  )
     void intelligenceScheduling
       .resume("RECONNECT")
       .then(() => kickLedgerOperationalSync())

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   qaConfigured: false,
+  generalEnabled: false,
   qaRun: vi.fn(),
   qaActivity: vi.fn(),
   openDatabase: vi.fn(),
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("./nativeTripQaScope", () => ({
   hasNativeTripQaScope: () => mocks.qaConfigured,
+  isGeneralAccountCloudSyncEnabled: () => mocks.generalEnabled,
   runNativeTripQaSync: mocks.qaRun,
   getNativeTripQaQueueActivity: mocks.qaActivity,
 }));
@@ -94,6 +96,7 @@ describe("Ledger mutation sync kick", () => {
     setTripCreateSyncRunner(null);
     vi.clearAllMocks();
     mocks.qaConfigured = false;
+    mocks.generalEnabled = false;
     mocks.qaRun.mockResolvedValue(null);
     mocks.qaActivity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
     mocks.metadataEnabled.mockResolvedValue(false);
@@ -117,6 +120,30 @@ describe("Ledger mutation sync kick", () => {
       nextActionableAt: null,
     });
     mocks.generation = 7;
+  });
+
+  it("composes normal Manual sync with the existing Ledger executors without enabling AI", async () => {
+    mocks.generalEnabled = true;
+    const ai = {
+      resume: vi.fn().mockResolvedValue(undefined),
+      run: vi.fn(),
+      activity: vi.fn(),
+    };
+    await setIntelligenceSchedulingAdapter(ai as never);
+    await runLedgerOperationalSync();
+    expect(mocks.qaRun).toHaveBeenCalledExactlyOnceWith({ manualRetry: false });
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    expect(runLedgerReceiptSync).toHaveBeenCalledOnce();
+    expect(ai.resume).not.toHaveBeenCalled();
+    expect(ai.run).not.toHaveBeenCalled();
+    await setIntelligenceSchedulingAdapter(null);
+  });
+  it("passes explicit Health intent to scoped sync without changing automatic retry behavior", async () => {
+    mocks.qaConfigured = true;
+    await runLedgerOperationalSync({ origin: "DATA_HEALTH" });
+    expect(mocks.qaRun).toHaveBeenLastCalledWith({ manualRetry: true });
+    await runLedgerOperationalSync();
+    expect(mocks.qaRun).toHaveBeenLastCalledWith({ manualRetry: false });
   });
 
   it.each(["expired", "malformed", "active"])(

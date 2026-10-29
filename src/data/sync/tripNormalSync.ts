@@ -21,6 +21,7 @@ import type { createTripDeferredMetadataRepository } from "../repositories/tripD
 export const normalTripSyncScopeSchema = z.strictObject({
   accountId: z.uuid(),
   newTripsFrom: z.iso.datetime(),
+  manualOnly: z.boolean().optional(),
 });
 export type NormalTripSyncScope = z.infer<typeof normalTripSyncScopeSchema>;
 type Row = {
@@ -211,7 +212,8 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               command.tripId !== row.trip_id ||
               command.target.id !== operation.entity_id ||
               command.target.kind !== "ITEM" ||
-              (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command))
+              (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command)) ||
+              (adopted.manualOnly === true && command.admission.mode !== "MANUAL")
             )
               continue;
             const manual =
@@ -285,11 +287,13 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
       }
     }
     // A reviewed Source can target an authorized cloud Trip without a local Create operation.
-    const sourceRows = await deps.database.getAllAsync<Row>(
-      cloudSourceP1QueueSql,
-      scope.accountId,
-      adopted.newTripsFrom,
-    );
+    const sourceRows = adopted.manualOnly
+      ? []
+      : await deps.database.getAllAsync<Row>(
+          cloudSourceP1QueueSql,
+          scope.accountId,
+          adopted.newTripsFrom,
+        );
     await guard();
     for (const operation of sourceRows) {
       const command = cloudSourceP1Command(operation);

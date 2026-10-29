@@ -90,23 +90,31 @@ it.each(["P3", "P2"] as const)(
       expect(p1SharedParticipantsReady(command, [])).toBe(true);
       expect(p1SharedParticipantsReady(validateCoreCommand(manual), [])).toBe(false);
       const runP1 = vi.fn(async () => {});
-      const wake = createNormalTripSyncWake(
-        {
-          database,
-          account,
-          enabled: () => true,
-          deferred: { materializeDeferredMetadata: vi.fn() },
-          recoverP1Readback: vi.fn(),
-          recoverTripReadback: vi.fn(),
-          runCreate: vi.fn(),
-          runMetadata: vi.fn(),
-          runP1,
-          runPerson: vi.fn(),
-          isManualItem: async () => false,
-          participantsReady: async (_trip, c) => p1SharedParticipantsReady(c, []),
-        },
-        scope,
-      );
+      const dependencies = {
+        database,
+        account,
+        enabled: () => true,
+        deferred: { materializeDeferredMetadata: vi.fn() },
+        recoverP1Readback: vi.fn(),
+        recoverTripReadback: vi.fn(),
+        runCreate: vi.fn(),
+        runMetadata: vi.fn(),
+        runP1,
+        runPerson: vi.fn(),
+        isManualItem: async () => false,
+        participantsReady: async (
+          _trip: string,
+          c: ReturnType<typeof validateCoreCommand>,
+        ) => p1SharedParticipantsReady(c, []),
+      };
+      const manualScope = { ...scope, manualOnly: true };
+      expect(
+        (await getNormalTripQueueActivity(database, manualScope)).actionableNow,
+      ).toBe(0);
+      const manualWake = createNormalTripSyncWake(dependencies, manualScope);
+      expect((await manualWake("AUTHENTICATED_ONLINE")).runnerCalls).toBe(0);
+      expect(runP1).not.toHaveBeenCalled();
+      const wake = createNormalTripSyncWake(dependencies, scope);
       expect((await wake("AUTHENTICATED_ONLINE")).runnerCalls).toBe(1);
       expect(runP1).toHaveBeenCalledExactlyOnceWith({
         accountId: context.accountId,

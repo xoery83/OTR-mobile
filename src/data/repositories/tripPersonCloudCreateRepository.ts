@@ -1,3 +1,9 @@
+import {
+  localPersonCreateKind,
+  localPersonCreateSchema,
+} from "@/domain/trip/localTripPerson";
+import { coreUuid } from "@/domain/trip/tripCoreV2";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { structuredTripCreateRequestSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import type { LedgerReadDatabase } from "./ledgerReadRepository";
 import {
@@ -131,6 +137,178 @@ export function createTripPersonCloudCreateRepository(
             input,
             clock,
           );
+        }),
+      );
+      announceLedgerQueueWorkAvailable();
+      return request!;
+    },
+    // Explicit confirmation only: preserves the old local intent and every Person reference.
+    async confirmLocalShared(input: {
+      tripId: string;
+      localOperationId: string;
+      operationId: string;
+      confirmedDisplayNameSha256: string;
+      dataOwnership: "CLOUD_SHARED_AUTHORED";
+    }) {
+      input = { ...input };
+      coreUuid.parse(input.tripId);
+      coreUuid.parse(input.localOperationId);
+      coreUuid.parse(input.operationId);
+      if (
+        input.dataOwnership !== "CLOUD_SHARED_AUTHORED" ||
+        input.localOperationId === input.operationId ||
+        !/^[a-f0-9]{64}$/.test(input.confirmedDisplayNameSha256)
+      )
+        throw Error("PERSON_EXPLICIT_CONFIRMATION_REQUIRED");
+      const scope = await captureAccountRequestContext(input.tripId, account);
+      let request: PersonCloudCreate | undefined;
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(scope, account);
+          const creator = await requireLocalTripPersonCreator(database, scope, account);
+          const old = await database.getFirstAsync<{
+            owner_user_id: string;
+            trip_id: string;
+            entity_id: string;
+            entity_type: string;
+            operation_type: string;
+            idempotency_key: string;
+            payload_json: string;
+            status: string;
+            attempt_count: number;
+            claim_owner: string | null;
+            lease_expires_at: string | null;
+            last_request_id: string | null;
+            last_attempt_at: string | null;
+            first_failed_at: string | null;
+            next_attempt_at: string | null;
+            last_error_code: string | null;
+            created_at: string;
+            updated_at: string;
+          }>(
+            "SELECT * FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=?",
+            input.localOperationId,
+            scope.accountId,
+            scope.tripId,
+          );
+          if (!old || old.payload_json.length > 8192)
+            throw Error("PERSON_LOCAL_CONFIRMATION_MISMATCH");
+          const local = localPersonCreateSchema.parse(JSON.parse(old.payload_json));
+          if (
+            old.entity_type !== "TRIP_PERSON" ||
+            old.operation_type !== localPersonCreateKind ||
+            old.idempotency_key !== input.localOperationId ||
+            local.operationId !== input.localOperationId ||
+            local.accountId !== scope.accountId ||
+            local.tripId !== scope.tripId ||
+            local.personId !== old.entity_id ||
+            local.personId === creator.personId ||
+            local.tripCreateOperationId !== creator.operationId ||
+            (await tripCoreSha256Hex(new TextEncoder().encode(local.displayName))) !==
+              input.confirmedDisplayNameSha256
+          )
+            throw Error("PERSON_LOCAL_CONFIRMATION_MISMATCH");
+          structuredTripCreateRequestSchema.parse({
+            ...JSON.parse(creator.payload),
+            operationId: creator.operationId,
+          });
+          request = personCloudCreateSchema.parse({
+            version: 1,
+            operationId: input.operationId,
+            tripId: scope.tripId,
+            personId: local.personId,
+            tripCreateOperationId: creator.operationId,
+            displayName: local.displayName,
+            dataOwnership: input.dataOwnership,
+          });
+          const prior = await database.getFirstAsync<{
+            owner_user_id: string;
+            trip_id: string;
+            entity_id: string;
+            entity_type: string;
+            operation_type: string;
+            idempotency_key: string;
+            payload_json: string;
+          }>("SELECT * FROM sync_operations WHERE id=?", input.operationId);
+          const other = await database.getFirstAsync<{ id: string }>(
+            "SELECT id FROM sync_operations WHERE entity_type='TRIP_PERSON' AND operation_type=? AND entity_id=? AND id<>? LIMIT 1",
+            personCloudCreateKind,
+            local.personId,
+            input.operationId,
+          );
+          if (other) throw Error("PERSON_CONFIRMATION_OPERATION_COLLISION");
+          if (prior) {
+            if (
+              old.status !== "COMPLETED" ||
+              old.last_error_code !== "PERSON_SHARED_CONFIRMED" ||
+              prior.owner_user_id !== scope.accountId ||
+              prior.trip_id !== scope.tripId ||
+              prior.entity_id !== local.personId ||
+              prior.entity_type !== "TRIP_PERSON" ||
+              prior.operation_type !== personCloudCreateKind ||
+              prior.idempotency_key !== input.operationId ||
+              prior.payload_json !== json(request)
+            )
+              throw Error("PERSON_CONFIRMATION_OPERATION_COLLISION");
+            await assertAccountRequestContext(scope, account);
+            return;
+          }
+          const person = await database.getFirstAsync<{
+            display_name: string;
+            status: string;
+            role: string | null;
+            participation_revision: number | null;
+            participation_active: number | null;
+          }>(
+            "SELECT * FROM ledger_members WHERE id=? AND journey_id=?",
+            local.personId,
+            scope.tripId,
+          );
+          if (
+            old.status !== "DEPENDENCY_BLOCKED" ||
+            old.attempt_count !== 0 ||
+            old.last_error_code !== "PERSON_CREATE_HOSTED_UNAVAILABLE" ||
+            old.claim_owner !== null ||
+            old.lease_expires_at !== null ||
+            old.last_request_id !== null ||
+            old.last_attempt_at !== null ||
+            old.first_failed_at !== null ||
+            old.next_attempt_at !== null ||
+            old.updated_at !== old.created_at ||
+            !person ||
+            person.display_name !== local.displayName ||
+            person.status !== "local" ||
+            person.role !== null ||
+            person.participation_revision !== null ||
+            person.participation_active !== null
+          )
+            throw Error("PERSON_LOCAL_CONFIRMATION_UNSAFE");
+          const now = clock();
+          const changed = await database.runAsync(
+            "UPDATE sync_operations SET status='COMPLETED',failure_category=NULL,last_error_code='PERSON_SHARED_CONFIRMED',updated_at=? WHERE id=? AND owner_user_id=? AND trip_id=? AND entity_type='TRIP_PERSON' AND operation_type='TRIP_PERSON_CREATE' AND entity_id=? AND idempotency_key=? AND status='DEPENDENCY_BLOCKED' AND attempt_count=0 AND claim_owner IS NULL AND lease_expires_at IS NULL AND payload_json=?",
+            now,
+            input.localOperationId,
+            scope.accountId,
+            scope.tripId,
+            local.personId,
+            input.localOperationId,
+            old.payload_json,
+          );
+          if (changed.changes !== 1) throw Error("PERSON_LOCAL_CONFIRMATION_CAS");
+          await database.runAsync(
+            "INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,dependency_operation_id,last_error_code,created_at,updated_at) VALUES(?,?,'TRIP_PERSON',?,?,?,?,?,'DEPENDENCY_BLOCKED',0,?,'PERSON_CREATE_DEPENDENCY',?,?)",
+            request.operationId,
+            scope.tripId,
+            request.personId,
+            personCloudCreateKind,
+            request.operationId,
+            json(request),
+            scope.accountId,
+            creator.operationId,
+            now,
+            now,
+          );
+          await assertAccountRequestContext(scope, account);
         }),
       );
       announceLedgerQueueWorkAvailable();

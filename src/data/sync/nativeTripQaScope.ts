@@ -38,13 +38,43 @@ const finiteConfiguration = z
     )
       context.addIssue({ code: "custom", message: "INVALID_FINITE_QA_SCOPE" });
   });
-const sustainedConfiguration = z.strictObject({
-  version: z.literal(2),
-  accountId: coreUuid,
-  normal: z.strictObject({ newTripsFrom: z.iso.datetime() }),
-  viewIsolationStartedAt: z.iso.datetime().optional(),
-  preserveLocalTripViews: z.boolean().optional(),
-});
+const sustainedConfiguration = z
+  .strictObject({
+    version: z.literal(2),
+    accountId: coreUuid,
+    normal: z.strictObject({ newTripsFrom: z.iso.datetime() }),
+    viewIsolationStartedAt: z.iso.datetime().optional(),
+    preserveLocalTripViews: z.boolean().optional(),
+    additionalAccounts: z
+      .array(
+        z.strictObject({
+          accountId: coreUuid,
+          normal: z.strictObject({ newTripsFrom: z.iso.datetime() }),
+          recoverUnsentLegacyTrips: z.boolean().optional(),
+          confirmedLocalTravelers: z
+            .array(
+              z.strictObject({
+                tripId: coreUuid,
+                localOperationId: coreUuid,
+                operationId: coreUuid,
+                confirmedDisplayNameSha256: z.string().regex(/^[a-f0-9]{64}$/),
+              }),
+            )
+            .max(4)
+            .optional(),
+        }),
+      )
+      .max(2)
+      .optional(),
+  })
+  .refine(
+    (scope) =>
+      new Set([
+        scope.accountId,
+        ...(scope.additionalAccounts ?? []).map((a) => a.accountId),
+      ]).size ===
+      1 + (scope.additionalAccounts?.length ?? 0),
+  );
 const configuration = z.union([finiteConfiguration, sustainedConfiguration]);
 
 // Presence keeps historical queues quarantined even after expiry or malformed config.
@@ -52,11 +82,37 @@ export function hasNativeTripQaScope() {
   return Boolean(process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE);
 }
 
-function readConfiguration() {
+// Normal Manual rollout is an environment gate, never an Account allowlist or Backend grant.
+export function isGeneralAccountCloudSyncEnabled() {
+  return (
+    !hasNativeTripQaScope() &&
+    process.env.EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED === "true" &&
+    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
+    process.env.EXPO_PUBLIC_OTR_API_BASE_URL === "https://api-dev.xoery.art"
+  );
+}
+
+function readConfiguration(accountId?: string | null) {
   const raw = process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE;
-  if (!raw) return null;
+  if (!raw)
+    return isGeneralAccountCloudSyncEnabled() && coreUuid.safeParse(accountId).success
+      ? {
+          ...sustainedConfiguration.parse({
+            version: 2,
+            accountId,
+            normal: { newTripsFrom: "1970-01-01T00:00:00.000Z" },
+            preserveLocalTripViews: true,
+          }),
+          manualOnly: true as const,
+        }
+      : null;
   try {
-    return configuration.parse(JSON.parse(raw));
+    const scope = configuration.parse(JSON.parse(raw));
+    if (scope.version === 2 && accountId && scope.accountId !== accountId) {
+      const selected = scope.additionalAccounts?.find((a) => a.accountId === accountId);
+      if (selected) return { ...scope, ...selected };
+    }
+    return scope;
   } catch {
     return null;
   }
@@ -79,6 +135,13 @@ async function readNormalDispatchSession(
 ) {
   await assertAccountRequestContext(actor, requireActiveUserId);
   if (!enabled()) return null;
+  if (isGeneralAccountCloudSyncEnabled()) {
+    const { readCommittedLocalPrincipal } = await import("../auth/authRepository");
+    const principal = await readCommittedLocalPrincipal();
+    await assertAccountRequestContext(actor, requireActiveUserId);
+    if (principal?.kind !== "ACCOUNT" || principal.accountId !== actor.accountId)
+      return null;
+  }
   try {
     await sessionAccessToken({ expectedUserId: actor.accountId });
   } catch (error) {
@@ -98,9 +161,10 @@ async function readNormalDispatchSession(
 // Exact finite QA and historical queues remain unscheduled.
 export async function getNativeTripQaQueueActivity() {
   const idle = { actionableNow: 0, nextActionableAt: null };
-  const scope = readConfiguration();
-  if (!scope?.normal || !scopeEnabled(scope)) return idle;
+  if (!hasNativeTripQaScope() && !isGeneralAccountCloudSyncEnabled()) return idle;
   const actor = await captureAccountScope(requireActiveUserId);
+  const scope = readConfiguration(actor.accountId);
+  if (!scope?.normal || !scopeEnabled(scope)) return idle;
   if (actor.accountId !== scope.accountId) return idle;
   const session = await readNormalDispatchSession(actor, () => scopeEnabled(scope));
   if (stateFromSessionAndNetwork(session, true) !== "AUTHENTICATED_ONLINE") return idle;
@@ -113,6 +177,7 @@ export async function getNativeTripQaQueueActivity() {
   const activity = await getNormalTripQueueActivity(database, {
     accountId: actor.accountId,
     newTripsFrom: scope.normal.newTripsFrom,
+    ...("manualOnly" in scope && scope.manualOnly ? { manualOnly: true } : {}),
   });
   await assertAccountRequestContext(actor, requireActiveUserId);
   return scopeEnabled(scope) ? activity : idle;
@@ -120,7 +185,7 @@ export async function getNativeTripQaQueueActivity() {
 
 // Local opt-in only. It cannot enable dispatch or upgrade an existing queued request.
 export function nativeTripQaCreateFormat(accountId: string | null): 2 | undefined {
-  const scope = readConfiguration();
+  const scope = readConfiguration(accountId);
   return process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
     scope?.accountId === accountId
     ? 2
@@ -129,7 +194,7 @@ export function nativeTripQaCreateFormat(accountId: string | null): 2 | undefine
 
 // Only a fresh authored action opts into Person cloud creation; retained v1 names stay private.
 export function nativeTripAuthoredCloudTravelers(accountId: string | null) {
-  const scope = readConfiguration();
+  const scope = readConfiguration(accountId);
   return (
     !!scope && scope.version === 2 && scope.accountId === accountId && scopeEnabled(scope)
   );
@@ -137,7 +202,7 @@ export function nativeTripAuthoredCloudTravelers(accountId: string | null) {
 
 // Dormant explicit Native opt-in. This never enables Backend authority or upgrades retained journals.
 export function nativeTripQaFormalManualFlightScope(accountId: string) {
-  const scope = readConfiguration();
+  const scope = readConfiguration(accountId);
   return process.env.EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED === "true" &&
     scope?.version === 2 &&
     scope.accountId === accountId &&
@@ -147,7 +212,9 @@ export function nativeTripQaFormalManualFlightScope(accountId: string) {
         newTripsFrom: new Date(
           Math.max(
             Date.parse(scope.normal.newTripsFrom),
-            Date.parse("2026-10-28T02:16:48Z"),
+            "manualOnly" in scope && scope.manualOnly
+              ? 0
+              : Date.parse("2026-10-28T02:16:48Z"),
           ),
         ).toISOString(),
       }
@@ -158,7 +225,7 @@ export function nativeTripQaFormalManualFlightScope(accountId: string) {
 export function filterNativeTripQaList<
   T extends { id: string; syncFormatVersion?: 2; createdAt?: string | null },
 >(accountId: string | null, trips: readonly T[]): readonly T[] {
-  const scope = readConfiguration();
+  const scope = readConfiguration(accountId);
   if (!scope || scope.accountId !== accountId) return trips;
   // View-only retention never changes the normal runner's new-trip cutoff or queue eligibility.
   if (scope.version === 2 && scope.preserveLocalTripViews) return trips;
@@ -182,7 +249,7 @@ export function filterNativeTripQaList<
 }
 
 export function kickNativeTripQaSync() {
-  if (!hasNativeTripQaScope()) return;
+  if (!hasNativeTripQaScope() && !isGeneralAccountCloudSyncEnabled()) return;
   void import("./ledgerOperationalSync")
     .then(({ kickLedgerOperationalSync }) => kickLedgerOperationalSync())
     .catch(() => undefined);
@@ -190,8 +257,8 @@ export function kickNativeTripQaSync() {
 
 // Read-only QA evidence: never refresh Auth, dispatch work or expose payloads/credentials.
 export async function readNativeTripQaDiagnostic() {
-  const scope = readConfiguration();
   const session = await readLocalSession();
+  const scope = readConfiguration(session?.identity?.userId);
   const accountMatches = !!scope && session?.identity?.userId === scope.accountId;
   const [{ isLedgerOperationalSyncPaused }, { readLastApiFailure }] = await Promise.all([
     import("./ledgerOperationalSync"),
@@ -207,6 +274,12 @@ export async function readNativeTripQaDiagnostic() {
     enabled: !!scope && scopeEnabled(scope),
     sessionState: stateFromSessionAndNetwork(session, true),
     paused: isLedgerOperationalSyncPaused(),
+    confirmedTravelerRecoveryAvailable:
+      accountMatches &&
+      !!scope &&
+      "confirmedLocalTravelers" in scope &&
+      Array.isArray(scope.confirmedLocalTravelers) &&
+      scope.confirmedLocalTravelers.length > 0,
   };
   const creates: {
     tripId: string;
@@ -217,6 +290,24 @@ export async function readNativeTripQaDiagnostic() {
     attempts: number;
     failureCategory: string | null;
     errorCode: string | null;
+  }[] = [];
+  let operations: {
+    operationId: string;
+    itemId: string;
+    type: string;
+    status: string;
+    attempts: number;
+    errorCode: string | null;
+    failureCategory: string | null;
+    nextAttemptAt: string | null;
+    selection?: {
+      valid: boolean;
+      command?: string;
+      admission?: string;
+      intentState?: string | null;
+      personCount?: number;
+      participantsReady?: boolean;
+    };
   }[] = [];
   if (scope?.normal && accountMatches) {
     const actor = await captureAccountScope(requireActiveUserId);
@@ -239,6 +330,68 @@ export async function readNativeTripQaDiagnostic() {
       scope.normal.newTripsFrom,
     );
     await assertAccountRequestContext(actor, requireActiveUserId);
+    const queue = await database.getAllAsync<{
+      id: string;
+      entity_id: string;
+      operation_type: string;
+      status: string;
+      attempt_count: number;
+      last_error_code: string | null;
+      failure_category: string | null;
+      next_attempt_at: string | null;
+      trip_id: string;
+      payload_json: string;
+      intent_state: string | null;
+    }>(
+      "SELECT op.id,op.entity_id,op.operation_type,op.status,op.attempt_count,op.last_error_code,op.failure_category,op.next_attempt_at,op.trip_id,op.payload_json,i.state AS intent_state FROM sync_operations op JOIN local_trip_containers trip ON trip.id=op.trip_id AND trip.account_id=op.owner_user_id LEFT JOIN trip_core_pending_intents i ON i.account_id=op.owner_user_id AND i.operation_id=op.id AND i.trip_id=op.trip_id WHERE trip.account_id=? AND trip.created_at>=? AND op.operation_type IN ('CORE_V2_COMMAND','TRIP_NORMAL_READBACK','TRIP_PERSON_CLOUD_CREATE','TRIP_PERSON_CREATE') ORDER BY op.created_at DESC,op.rowid DESC LIMIT 12",
+      scope.accountId,
+      scope.normal.newTripsFrom,
+    );
+    await assertAccountRequestContext(actor, requireActiveUserId);
+    const safeCode = (value: string | null) =>
+      value && /^[A-Z0-9_]{1,80}$/.test(value) ? value : null;
+    operations = queue.map((row) => ({
+      operationId: row.id,
+      itemId: row.entity_id,
+      type: safeCode(row.operation_type) ?? "UNKNOWN",
+      status: safeCode(row.status) ?? "UNKNOWN",
+      attempts: row.attempt_count,
+      errorCode: safeCode(row.last_error_code),
+      failureCategory: safeCode(row.failure_category),
+      nextAttemptAt:
+        row.next_attempt_at && Number.isFinite(Date.parse(row.next_attempt_at))
+          ? row.next_attempt_at
+          : null,
+    }));
+    const { validateCoreCommand } = await import("@/domain/trip/tripCoreV2Commands");
+    const { createTripPersonRepository } =
+      await import("../repositories/tripPersonRepository");
+    const { p1SharedParticipantsReady } =
+      await import("./p1SharedParticipantQualification");
+    for (let index = 0; index < queue.length; index++) {
+      const row = queue[index];
+      if (row.operation_type !== "CORE_V2_COMMAND") continue;
+      operations[index].selection = { valid: false };
+      try {
+        if (!row.payload_json || row.payload_json.length > 65536) continue;
+        const command = validateCoreCommand(JSON.parse(row.payload_json));
+        const people = await createTripPersonRepository(
+          database,
+          requireActiveUserId,
+        ).listTripPersons(row.trip_id);
+        await assertAccountRequestContext(actor, requireActiveUserId);
+        operations[index].selection = {
+          valid: true,
+          command: command.command,
+          admission: command.admission.mode,
+          intentState: safeCode(row.intent_state),
+          personCount: people.length,
+          participantsReady: p1SharedParticipantsReady(command, people),
+        };
+      } catch {
+        await assertAccountRequestContext(actor, requireActiveUserId);
+      }
+    }
     for (const row of rows) {
       let formatVersion: number | null = null;
       try {
@@ -263,26 +416,71 @@ export async function readNativeTripQaDiagnostic() {
       });
     }
   }
-  return { gate, creates, lastApiFailure: readLastApiFailure() };
+  return { gate, creates, operations, lastApiFailure: readLastApiFailure() };
 }
 
-export async function runNativeTripQaSync() {
-  const parsed = readConfiguration();
+export async function runNativeTripQaSync(input: { manualRetry?: boolean } = {}) {
+  if (!hasNativeTripQaScope() && !isGeneralAccountCloudSyncEnabled()) return null;
+  const actor = await captureAccountScope(requireActiveUserId);
+  const parsed = readConfiguration(actor.accountId);
   if (!parsed) return null;
   const scope = Object.freeze(parsed);
   const enabled = () => scopeEnabled(scope);
-  if (!enabled()) return null;
-  const actor = await captureAccountScope(requireActiveUserId);
   if (actor.accountId !== scope.accountId || !enabled()) return null;
   if (scope.normal) {
     const session = await readNormalDispatchSession(actor, enabled);
     if (stateFromSessionAndNetwork(session, true) !== "AUTHENTICATED_ONLINE") return null;
+    if ("recoverUnsentLegacyTrips" in scope && scope.recoverUnsentLegacyTrips === true) {
+      const { readLocalTripRepository } = await import("../repositories/tripRepository");
+      const repository = await readLocalTripRepository();
+      await assertAccountRequestContext(actor, requireActiveUserId);
+      if (!enabled()) return null;
+      await repository.enrollUnsentStructuredTrips(
+        actor.accountId,
+        scope.normal.newTripsFrom,
+      );
+      await assertAccountRequestContext(actor, requireActiveUserId);
+      if (!enabled()) return null;
+    }
+    if (
+      input.manualRetry === true &&
+      "confirmedLocalTravelers" in scope &&
+      Array.isArray(scope.confirmedLocalTravelers) &&
+      scope.confirmedLocalTravelers.length
+    ) {
+      const { readCommittedLocalPrincipal } = await import("../auth/authRepository");
+      const principal = await readCommittedLocalPrincipal();
+      await assertAccountRequestContext(actor, requireActiveUserId);
+      if (principal?.kind !== "ACCOUNT" || principal.accountId !== actor.accountId)
+        throw Error("PERSON_ACCOUNT_PRINCIPAL_REQUIRED");
+      const { readInitializedDatabase } = await import("../db/database");
+      const { createTripPersonCloudCreateRepository } =
+        await import("../repositories/tripPersonCloudCreateRepository");
+      const database = await readInitializedDatabase();
+      await assertAccountRequestContext(actor, requireActiveUserId);
+      for (const confirmation of scope.confirmedLocalTravelers) {
+        if (!enabled()) throw Error("TRIP_SYNC_PORT_CLOSED");
+        await createTripPersonCloudCreateRepository(
+          database,
+          requireActiveUserId,
+        ).confirmLocalShared({
+          ...confirmation,
+          dataOwnership: "CLOUD_SHARED_AUTHORED",
+        });
+        await assertAccountRequestContext(actor, requireActiveUserId);
+      }
+    }
     const { createNativeNormalTripSyncRunner } = await import("./tripNormalCoordinator");
     await assertAccountRequestContext(actor, requireActiveUserId);
     if (!enabled()) return null;
     const result = await createNativeNormalTripSyncRunner(
-      { accountId: scope.accountId, newTripsFrom: scope.normal.newTripsFrom },
+      {
+        accountId: scope.accountId,
+        newTripsFrom: scope.normal.newTripsFrom,
+        ...("manualOnly" in scope && scope.manualOnly ? { manualOnly: true } : {}),
+      },
       enabled,
+      input.manualRetry === true,
     )(stateFromSessionAndNetwork(session, true));
     await assertAccountRequestContext(actor, requireActiveUserId);
     if (!enabled()) return null;

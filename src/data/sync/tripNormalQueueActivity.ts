@@ -145,6 +145,7 @@ export async function getNormalTripQueueActivity(
             )
               continue;
             const c = validateCoreCommand(JSON.parse(op.payload_json));
+            if (scope.manualOnly && c.admission.mode !== "MANUAL") continue;
             if (
               c.tripId !== create.trip_id ||
               c.operationId !== op.id ||
@@ -246,11 +247,13 @@ export async function getNormalTripQueueActivity(
       /* Invalid owning Create does not authorize this Trip's queue. */
     }
   }
-  const sourceRows = await database.getAllAsync<Row>(
-    cloudSourceP1QueueSql,
-    scope.accountId,
-    scope.newTripsFrom,
-  );
+  const sourceRows = scope.manualOnly
+    ? []
+    : await database.getAllAsync<Row>(
+        cloudSourceP1QueueSql,
+        scope.accountId,
+        scope.newTripsFrom,
+      );
   for (const op of sourceRows) {
     if (op.failure_category === "AUTH") continue;
     const command = cloudSourceP1Command(op);

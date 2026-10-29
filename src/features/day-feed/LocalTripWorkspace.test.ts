@@ -307,6 +307,7 @@ const trip = (id: string, name: string): Trip => ({
   deletedAt: null,
 });
 const repository = (list: Trip[] = []): TripRepository => ({
+  enrollUnsentStructuredTrips: vi.fn(async () => 0),
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
   readDeferredMetadataEditBase: vi.fn(),

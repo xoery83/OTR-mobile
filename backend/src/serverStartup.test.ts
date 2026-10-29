@@ -73,7 +73,7 @@ beforeEach(() => {
   vi.stubEnv("OTR_DEV_BACKEND_BIND_ADDRESS", undefined);
   vi.stubEnv("OTR_DEV_BACKEND_PORT", "8787");
   fixtures.validateAccessToken.mockImplementation(async (token: string) =>
-    token === "valid" ? { id: actor } : null,
+    token === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" as const } : null,
   );
   fixtures.canReadTrip.mockResolvedValue(true);
   fixtures.createGateway.mockReturnValue({

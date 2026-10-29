@@ -53,7 +53,7 @@ export function createAccountProfileBootstrapPort(config: {
         identityError ||
         !identity.user ||
         identity.user.id !== accountId ||
-        identity.user.is_anonymous === true
+        identity.user.is_anonymous !== false
       )
         throw Error("ACCOUNT_PROFILE_IDENTITY_REQUIRED");
       async function read() {

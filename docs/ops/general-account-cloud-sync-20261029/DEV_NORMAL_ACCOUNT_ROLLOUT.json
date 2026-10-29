@@ -1,0 +1,146 @@
+{
+  "status": "DEV_INSTALLED_INDEPENDENTLY_VERIFIED_NOT_GENERAL_E2E_PASS",
+  "source": "2db8a651",
+  "host": {
+    "status": "INDEPENDENT_DEFAULT_CLOSED_VERIFIED",
+    "container": "76c7846d534dbac3b2262fb02117c7a96d727681082444a3c744b62eacf12b87",
+    "image": "sha256:81ad4fdea800b38c1701dc9b6bafa0885ab31fad3de9798e94977ecd55454ed2",
+    "configSHA256": "65a0302680cf7c8e1eba8cb5a243253c5f9832ca408e07dff79d0cd233f03e7d",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "environmentUnchanged": true,
+    "mountFilesSHA256": {
+      "/run/otr/universal-runtime.json": "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+      "/run/otr/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+      "/run/otr/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765",
+      "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5"
+    },
+    "bundles": {
+      "/app/server.mjs": "b64b90d8d347b942c68fda9afe2dda01ab6037111d120212e3837edf2b41571a",
+      "/app/server-capture.mjs": "2077c8a3b3c73ad22764b553013bd3d543d5e315d0d702391ff259f6d1588a5b"
+    },
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedOldStopped": true,
+    "noEnrichmentActivation": true
+  },
+  "functionsBefore": [
+    {
+      "name": "assert_trip_core_v2_aggregate",
+      "oid": "65418",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "82eb172c0e6cab2a44995e36a5c3087e"
+    },
+    {
+      "name": "trip_core_finite_read_state_guard",
+      "oid": "65713",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "ef17d1618d87006e8379164244a7645f"
+    },
+    {
+      "name": "trip_core_guard_write",
+      "oid": "65263",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "3c58afd4336449f895f03dd141eaab32"
+    },
+    {
+      "name": "trip_sustained_core_capabilities",
+      "oid": "66181",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "d20961b9f9ce6da6f6991b81cd0e2bf5"
+    },
+    {
+      "name": "trip_sustained_dev_scope_allowed",
+      "oid": "66180",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "8b7e35a4e6f8512f1aa90c5cb98f9ed7"
+    }
+  ],
+  "functionsAfter": [
+    {
+      "name": "assert_trip_core_v2_aggregate",
+      "oid": "65418",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "82eb172c0e6cab2a44995e36a5c3087e"
+    },
+    {
+      "name": "trip_core_finite_read_state_guard",
+      "oid": "65713",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "ef17d1618d87006e8379164244a7645f"
+    },
+    {
+      "name": "trip_core_guard_write",
+      "oid": "65263",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "3c58afd4336449f895f03dd141eaab32"
+    },
+    {
+      "name": "trip_sustained_core_capabilities",
+      "oid": "66181",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "d20961b9f9ce6da6f6991b81cd0e2bf5"
+    },
+    {
+      "name": "trip_sustained_dev_scope_allowed",
+      "oid": "66180",
+      "owner": "16388",
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "0f3b543bab2431ee35c519ad8ce01ea9"
+    }
+  ],
+  "allPoliciesUnchanged": true,
+  "normalReceiptCountsUnchangedAtInstall": true,
+  "newSchemaRlsGrantRole": 0,
+  "review": {
+    "nativeSql": "existing p3_scoped_review NO_BLOCKER / independent4s101PASS / manifest verified",
+    "auth": "Auth owner NO_BLOCKER fixed2db8a651; exact867e classifier / global authenticate unchanged",
+    "additionalPostDenyTests": "16PASS request-body spoof and anonymous/unknown/id-only POST Trip/Core refusal"
+  },
+  "curatedValidation": "6 suites55PASS/server+capture bundlesPASS",
+  "limits": [
+    "new Google and new Email OTP Native signup not yet verified",
+    "general Native Build108 not yet installed",
+    "legacy QA smoke and serial main integration pending",
+    "not a shared Organizer/collaborator or downstream sync claim"
+  ],
+  "paidCalls": 0
+}

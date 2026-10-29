@@ -1,0 +1,133 @@
+{
+  "actorAccountId": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+  "tripId": "a788cb44-fbde-43b7-8bdf-c89cb940cec9",
+  "verifiedAt": "2026-10-29T11:25:35.685Z",
+  "sameOriginalItemIds": [
+    {
+      "id": "0070a1fa-a28c-4b87-b9d9-798bcd2ecb41",
+      "family": "P1",
+      "revision": 1,
+      "ownerMatches": true,
+      "descriptionSha256": "1ffb73055caa753539ae93a8c006e9bc694de311a9343b8efe12649e49923bf0"
+    },
+    {
+      "id": "e234ae3a-59d6-46b3-8363-e0119808a70d",
+      "family": "P1",
+      "revision": 3,
+      "ownerMatches": true,
+      "descriptionSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    }
+  ],
+  "person": [
+    {
+      "id": "0e13228c-95ac-440c-8fa5-98857f584c78",
+      "status": "unlinked",
+      "userId": null,
+      "participationRevision": 0,
+      "participationActive": true
+    }
+  ],
+  "receipts": [
+    {
+      "operationId": "27f1eb9b-872f-4f7b-b8a6-3cc13e0d2458",
+      "command": "SET_ITEM_TEXT",
+      "outcome": "APPLIED",
+      "receiptSha256": "c1160f88eef33c07a3ceddc2615dfb459f73521d4598bff4383c049a6101587c",
+      "intentSha256": "dbfc6303c0d1b1c996b630eede21c35b6da908145bc1be46e14c26087db3c494",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "e234ae3a-59d6-46b3-8363-e0119808a70d",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T11:08:42.884998Z"
+    },
+    {
+      "operationId": "c16a402e-1646-4d33-af75-c654afd3adce",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "b07565f9bc3fa5eafa994b62791f7b916e2be0e4872f2901a333b21c9e0711c1",
+      "intentSha256": "56f9568b9cd6613088cba5f01c861c0d904fe0e40c43ace732c0374db28e0912",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "0070a1fa-a28c-4b87-b9d9-798bcd2ecb41",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T10:54:29.383187Z"
+    },
+    {
+      "operationId": "db53355b-443a-416f-9cb7-f0f4700ba24c",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "9084897c6e747e9a756293d1a376ccc71761285841986286fb7e705e433a943b",
+      "intentSha256": "be0a75ff3dc096f924dde2905d6052172719a728d9da31e709d8fd8f688ffff6",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "e234ae3a-59d6-46b3-8363-e0119808a70d",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T10:55:09.904622Z"
+    },
+    {
+      "operationId": "2671ed25-fbfb-4394-9f85-3b3b15e08ccd",
+      "command": "SET_ITEM_TEXT",
+      "outcome": "APPLIED",
+      "receiptSha256": "8e9fc5a238391d714872a7547858eb21f5d4650e92cabedbf96e1199d8a14893",
+      "intentSha256": "20f356d01678cf8bf169ed0bd6c97233f43f196f0e5bef04fdc54674c4dff771",
+      "targetVector": [
+        {
+          "baseRevision": 2,
+          "committedRevision": 3,
+          "id": "e234ae3a-59d6-46b3-8363-e0119808a70d",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T11:19:02.058897Z"
+    }
+  ],
+  "scope": "CURRENT_GOOGLE_P1_FINITE_PASS_NOT_GENERAL_ROLLOUT",
+  "nativeBuild": 106,
+  "nativeJsSource": "f164abbb",
+  "personRepositorySource": "75a2df3e",
+  "normalTripCreateOperationId": "4db7eef5-4d00-4903-a334-960883fb0c68",
+  "normalOwnProfileBootstrap": "normal self JWT, no admin insert",
+  "legacyPersonOperationId": "4e863733-aea3-408d-88a5-02dea7603b9e",
+  "personCloudOperationId": "02c94b4e-c536-49cf-8266-5ae16a06cd08",
+  "ownerExplicitPersonConfirmation": true,
+  "nativeCreateCold": true,
+  "nativeEditColdLatestFieldsNoPending": true,
+  "editAutoSyncWithoutManualReplay": true,
+  "testDescriptionRestoredThroughNormalEdit": true,
+  "originalItemCount": 2,
+  "finalItemCount": 2,
+  "sessionAndTripPreserved": true,
+  "independentReview": {
+    "reviewer": "Auth owning writer",
+    "repository": "75a2df3e NO_BLOCKER",
+    "scope": "source review; actual DEV evidence reported separately"
+  },
+  "validation": {
+    "directedTests": 79,
+    "types": true,
+    "uiGuard": true,
+    "scopedLint": true,
+    "receiptHashValidatorCount": 4
+  },
+  "notClaimed": [
+    "General Account enablement",
+    "new Google signup without allowlist",
+    "new Email OTP signup without allowlist",
+    "Guest Adoption",
+    "physical outage in this checkpoint",
+    "new DEV repeated POST or cross-account negative in this checkpoint",
+    "old QA actual smoke in this checkpoint"
+  ]
+}

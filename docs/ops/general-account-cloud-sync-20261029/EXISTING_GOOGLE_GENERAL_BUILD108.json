@@ -1,0 +1,54 @@
+{
+  "status": "EXISTING_GOOGLE_GENERAL_BUILD_NATIVE_TRIP_SERVER_VERIFIED",
+  "tripId": "23afbfa3-8818-4a29-9e11-22d1022811ad",
+  "operationId": "ed03e29a-65f8-4749-80c7-5d60ac544512",
+  "accountId": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+  "acceptedAt": "2026-10-29T12:33:28.994239+00:00",
+  "formVersion": 2,
+  "scopeFunctionMd5": "0f3b543bab2431ee35c519ad8ce01ea9",
+  "normalAuthFlagVerified": true,
+  "singleTripReceipt": true,
+  "linkedOwner": {
+    "owner": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+    "people": [
+      {
+        "accountId": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+        "personId": "69cb88ac-71db-41fa-8a9d-fa3974d371cd",
+        "role": "owner",
+        "status": "linked"
+      }
+    ],
+    "receiptCount": 1
+  },
+  "phone": {
+    "build": 108,
+    "source": "2db8a651",
+    "bundleId": "com.xoery.otrmobile.formsqa",
+    "jsSha256": "dbf17ec71132750989c8d759d806a6546b30b03548514249703e6fbc181f84ed",
+    "retainedNative": "93/60/56/54",
+    "generalAccountScope": true,
+    "legacyConsentDescriptorRemoved": true,
+    "inPlace": true
+  },
+  "applicationDatabaseUuidRetained": true,
+  "legacyOriginalTripAndTwoP1ColdUi": {
+    "sessionRetained": true,
+    "sameOriginalTripAndItemTitlesVisible": true,
+    "latestP1NotesRestoredEmpty": true,
+    "everyoneRetained": true,
+    "noPendingIndicator": true
+  },
+  "buildPackaging": {
+    "expoDevVirtualEnvMergesIgnoredEnvDespiteNoDotenv": true,
+    "exactTrackedSourceStaged": true,
+    "onlyApprovedPublicEnvNoQaDescriptor": true,
+    "originalWorktreeEnvSha256": "014db7781028873f46624b3379f8424f2d36adf77de7efe15e8ceac92e601f62",
+    "originalWorktreeEnvUnchanged": true
+  },
+  "limits": [
+    "new Google and Hosted Email OTP signup await legitimate user normal interaction",
+    "Mac automatically locked after normal newTrip Create; newTrip native cold not yet observed",
+    "existing Google already has an old policy row; this proves general Native config and strict Auth route, not a new-account no-policy E2E",
+    "ordinary P2-P6 and oldQA actual smoke pending; historic minimum E2E not repeated"
+  ]
+}

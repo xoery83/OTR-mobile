@@ -1,3 +1,4 @@
+import { classifySupabaseAuthAccount } from "./authAccountQualification";
 import {
   readPublicationCatalog,
   publicationCatalogBody,
@@ -821,7 +822,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
     async validateAccessToken(token) {
       const { data, error } = await auth.auth.getUser(token);
-      return error || !data.user ? null : { id: data.user.id };
+      return error || !data.user ? null : classifySupabaseAuthAccount(data.user);
     },
 
     async canReadTrip(userId, tripId) {
