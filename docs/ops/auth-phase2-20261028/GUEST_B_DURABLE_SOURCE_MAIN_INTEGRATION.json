@@ -1,0 +1,21 @@
+{
+  "schemaId": "otr.auth.guest-durable-source-main/1",
+  "status": "LOCAL_RECOVERY_INTEGRATED_PUBLICATION_CLOSED",
+  "sourceCommit": "72db43fb2d06f63b46f7aa5918ce382adebe1b01",
+  "previousMain": "c2e19f4d39ccd867558ebad82495538289e4e842",
+  "review": "GUEST_B_DURABLE_SOURCE_REVIEW.json",
+  "actualPrimary": {
+    "suites": 3,
+    "tests": 130,
+    "result": "PASS"
+  },
+  "preservation": {
+    "sixDirtyFilesIdentical": true,
+    "statusIdentical": true,
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffIdentical": true
+  },
+  "devDeployment": false,
+  "nativeRecoveryL3": false,
+  "cloudAdoptionL3": false
+}

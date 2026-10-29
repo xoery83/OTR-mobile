@@ -192,6 +192,8 @@ SQLite still locked after publication; corrupt source also refuses before DB ope
 Directed/independent3 suites130 PASS/NO_BLOCKER, types/scopedlint PASS. Local recovery
 only, no Native route/publisher/Session installation/DEV authority. See
 GUEST_B_DURABLE_SOURCE_REVIEW.json and ADR2026-10-29-guest-durable-semantic-source.
+Fixed72db43fb integrated with actual primary3 suites130 PASS; six original dirty
+files/full diff preserved. GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json pins scope.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
