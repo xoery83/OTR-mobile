@@ -47,7 +47,12 @@
     "allOriginalBaselineFieldsIdenticalExceptPhase": true,
     "canonicalAccountDatabasePresent": false
   },
-  "additionalLogicalCensus": "149-table scope checked separately; no unsupported nonempty business family; not physical disk/full-files proof",
+  "additionalLogicalCensus": {
+    "actualGuestTableCount": 148,
+    "unsupportedNonempty": {},
+    "fullFilesComplete": false,
+    "physicalDiskScanned": false
+  },
   "reviewIncidents": {
     "sharedDeviceHubReadsRejected": 2,
     "resolution": "Owner explicitly confirmed currently visible FormsQA/GuestQA before fresh binding",
