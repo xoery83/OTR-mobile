@@ -9,7 +9,7 @@ import type { GuestAdoptionPreflightRequest } from "../../src/domain/auth/guestA
 afterEach(() => vi.useRealTimers());
 const path = "https://example.invalid/v1/auth/guest-adoptions/preflight";
 function fixture() {
-  const user = { id: randomUUID() };
+  const user = { id: randomUUID(), accountClass: "NORMAL_ACCOUNT" as const };
   const input: GuestAdoptionPreflightRequest = {
     contractVersion: 1,
     adoptionId: randomUUID(),
@@ -195,3 +195,21 @@ it("rejects oversize/malformed bodies, path/query/method and absent identity wit
   ).toBe(401);
   expect(f.preflight).not.toHaveBeenCalled();
 });
+
+// A valid canonical UUID alone never proves a formal adoption target.
+it.each(["ANONYMOUS", "UNKNOWN", undefined] as const)(
+  "rejects target classification %s before owning adapter access",
+  async (accountClass) => {
+    const f = fixture();
+    const response = await guestAdoptionPreflightBoundary(
+      f.request(),
+      { id: f.user.id, accountClass },
+      f.port,
+    );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      error: { code: "NORMAL_ACCOUNT_REQUIRED", message: "NORMAL_ACCOUNT_REQUIRED" },
+    });
+    expect(f.preflight).not.toHaveBeenCalled();
+  },
+);

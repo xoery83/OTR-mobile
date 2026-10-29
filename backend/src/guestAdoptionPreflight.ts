@@ -11,6 +11,7 @@ import {
   type GuestAdoptionPreflightRequest,
 } from "../../src/domain/auth/guestAdoptionPreflight";
 import type { AuthenticatedUser } from "./app";
+import { isNormalAccount } from "./authAccountQualification";
 
 export type GuestAdoptionPreflightPort = {
   preflight(
@@ -44,6 +45,7 @@ export async function guestAdoptionPreflightBoundary(
   if (request.method !== "POST") return failure(405, "GUEST_ADOPTION_METHOD_NOT_ALLOWED");
   const actor = coreUuid.safeParse(user.id);
   if (!actor.success) return failure(401, "AUTHENTICATION_REQUIRED");
+  if (!isNormalAccount(user)) return failure(403, "NORMAL_ACCOUNT_REQUIRED");
   const actorAccountId = actor.data;
   if (!port) return failure(503, "GUEST_ADOPTION_PREFLIGHT_CLOSED");
   const boundary = createRequestBoundary(15000, request.signal);
