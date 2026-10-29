@@ -18,6 +18,7 @@ export function TripMetadataFields({
   onDestination,
   onRange,
   destinationEntry,
+  onCalendarOpenChange,
 }: {
   destinationEntry?: ReactNode;
   name: string;
@@ -27,6 +28,7 @@ export function TripMetadataFields({
   onName(value: string): void;
   onDestination(value: string): void;
   onRange(value: TripDateRange): void;
+  onCalendarOpenChange?(open: boolean): boolean | void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -54,7 +56,12 @@ export function TripMetadataFields({
           />
         </>
       )}
-      <TripCalendarRangeField value={range} onChange={onRange} disabled={disabled} />
+      <TripCalendarRangeField
+        value={range}
+        onChange={onRange}
+        disabled={disabled}
+        onOpenChange={onCalendarOpenChange}
+      />
     </View>
   );
 }

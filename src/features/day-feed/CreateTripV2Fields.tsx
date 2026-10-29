@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
@@ -25,6 +25,8 @@ export function CreateTripV2Fields({
   travelers,
   onTravelers,
   disabled,
+  onCalendarOpenChange,
+  onNameEditorOpenChange,
 }: {
   name: string;
   onName(value: string): void;
@@ -37,6 +39,8 @@ export function CreateTripV2Fields({
   travelers: readonly LocalPersonNameSlot[];
   onTravelers(value: LocalPersonNameSlot[]): void;
   disabled: boolean;
+  onCalendarOpenChange?(open: boolean): boolean | void;
+  onNameEditorOpenChange?(open: boolean): boolean | void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
@@ -46,7 +50,16 @@ export function CreateTripV2Fields({
     personId: string | null;
     value: string;
   } | null>(null);
+  const editorRef = useRef(editor);
+  const changeEditor = (next: Parameters<typeof setEditor>[0]) => {
+    const value = typeof next === "function" ? next(editorRef.current) : next;
+    if (value === editorRef.current || onNameEditorOpenChange?.(value !== null) === false)
+      return;
+    editorRef.current = value;
+    setEditor(value);
+  };
   const done = () => {
+    const editor = editorRef.current;
     if (!editor || disabled) return;
     if (editor.self) onSelfNickname(editor.value);
     else if (editor.personId)
@@ -62,7 +75,7 @@ export function CreateTripV2Fields({
         ...travelers,
         { personId: createUuid(), operationId: createUuid(), displayName: editor.value },
       ]);
-    setEditor(null);
+    changeEditor(null);
   };
   return (
     <View style={styles.fields}>
@@ -83,6 +96,7 @@ export function CreateTripV2Fields({
         onChange={onRange}
         disabled={disabled}
         presentation="field"
+        onOpenChange={onCalendarOpenChange}
       />
       <View style={styles.section}>
         <UiText style={styles.label}>{t("createTripV2.travelers")}</UiText>
@@ -91,7 +105,7 @@ export function CreateTripV2Fields({
           accessibilityLabel={t("createTripV2.editName")}
           disabled={disabled}
           onPress={() =>
-            setEditor({
+            changeEditor({
               self: true,
               personId: null,
               value: selfNickname || knownSelfName,
@@ -114,7 +128,7 @@ export function CreateTripV2Fields({
               disabled={disabled}
               style={styles.person}
               onPress={() =>
-                setEditor({
+                changeEditor({
                   self: false,
                   personId: person.personId,
                   value: person.displayName,
@@ -148,7 +162,7 @@ export function CreateTripV2Fields({
           accessibilityLabel={t("createTripV2.addTraveler")}
           disabled={disabled || travelers.length >= 100}
           style={styles.row}
-          onPress={() => setEditor({ self: false, personId: null, value: "" })}
+          onPress={() => changeEditor({ self: false, personId: null, value: "" })}
         >
           <AppIcon name="plus.circle" color={colors.accent} />
           <UiText style={styles.action}>{t("createTripV2.addTraveler")}</UiText>
@@ -159,7 +173,7 @@ export function CreateTripV2Fields({
         visible={!!editor}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setEditor(null)}
+        onRequestClose={() => changeEditor(null)}
       >
         <SafeAreaProvider style={styles.body}>
           <SheetHeader
@@ -168,7 +182,7 @@ export function CreateTripV2Fields({
               editor?.self ? "createTripV2.editName" : "createTripV2.editTraveler",
             )}
             leftLabel={t("common.cancel")}
-            onLeft={() => setEditor(null)}
+            onLeft={() => changeEditor(null)}
             rightLabel={t("common.done")}
             rightDisabled={disabled}
             onRight={done}
@@ -186,7 +200,7 @@ export function CreateTripV2Fields({
               maxLength={256}
               editable={!disabled}
               onChangeText={(value) =>
-                setEditor((current) => (current ? { ...current, value } : null))
+                changeEditor((current) => (current ? { ...current, value } : null))
               }
             />
             <UiText style={styles.meta}>{t("createTripV2.optional")}</UiText>

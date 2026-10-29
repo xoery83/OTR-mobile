@@ -845,6 +845,9 @@ it("recovers an obsolete prepublication freeze only through a new current Guest 
 async function preparedPublication(
   f: ReturnType<typeof fixture>,
   workspace: Awaited<ReturnType<ReturnType<typeof f.newOpener>>>,
+  schemaId:
+    | "otr.auth.guest-adoption-recovery/1"
+    | "otr.auth.guest-adoption-recovery/2" = "otr.auth.guest-adoption-recovery/1",
 ) {
   const recovery = createGuestAdoptionRecovery({
     scope: workspace.scope,
@@ -852,7 +855,7 @@ async function preparedPublication(
     assertGuest: async () => undefined,
   });
   const preparation = {
-    schemaId: "otr.auth.guest-adoption-recovery/1" as const,
+    schemaId,
     sourceKind: "GUEST" as const,
     sourceGuestLocalId: f.guestId,
     adoptionId: randomUUID(),
@@ -865,40 +868,46 @@ async function preparedPublication(
   const prepared = await recovery.prepare(preparation);
   return { recovery, preparation, prepared: prepared! };
 }
-it("restores a publication hold from a disk checkpoint without relying on process memory", async () => {
-  const f = fixture(),
-    original = await f.newOpener()();
-  await original.trips.createTrip(tripInput());
-  const { preparation, prepared } = await preparedPublication(f, original);
-  expect(hasGuestPublicationHold(f.guestId)).toBe(false);
-  // Component recovery fixture only: no server request, Provider identity or Adoption PASS.
-  await f.files.create(
-    preparation.adoptionId,
-    "publish-requested",
-    canonicalCoreJson({
-      schemaId: preparation.schemaId,
-      sourceKind: "GUEST",
-      sourceGuestLocalId: f.guestId,
-      adoptionId: preparation.adoptionId,
-      targetAccountId: preparation.targetAccountId,
-      checkpoint: "PUBLISH_REQUESTED",
-      preparationSha256: prepared.preparationSha256,
-    } as Json),
-  );
-  f.close();
-  advanceAccountGeneration();
-  const opensBefore = f.open.mock.calls.length;
-  await expect(f.newOpener()()).rejects.toThrow("GUEST_PUBLICATION_STATUS_REQUIRED");
-  expect(f.open).toHaveBeenCalledTimes(opensBefore);
-  const readonly = new DatabaseSync(f.databasePath, { readOnly: true });
-  try {
-    expect(
-      readonly.prepare("SELECT count(*) AS n FROM local_trip_containers").get(),
-    ).toEqual({ n: 1 });
-  } finally {
-    readonly.close();
-  }
-});
+it.each([
+  "otr.auth.guest-adoption-recovery/1",
+  "otr.auth.guest-adoption-recovery/2",
+] as const)(
+  "restores a publication hold from %s disk checkpoint without process memory",
+  async (schemaId) => {
+    const f = fixture(),
+      original = await f.newOpener()();
+    await original.trips.createTrip(tripInput());
+    const { preparation, prepared } = await preparedPublication(f, original, schemaId);
+    expect(hasGuestPublicationHold(f.guestId)).toBe(false);
+    // Component recovery fixture only: no server request, Provider identity or Adoption PASS.
+    await f.files.create(
+      preparation.adoptionId,
+      "publish-requested",
+      canonicalCoreJson({
+        schemaId: preparation.schemaId,
+        sourceKind: "GUEST",
+        sourceGuestLocalId: f.guestId,
+        adoptionId: preparation.adoptionId,
+        targetAccountId: preparation.targetAccountId,
+        checkpoint: "PUBLISH_REQUESTED",
+        preparationSha256: prepared.preparationSha256,
+      } as Json),
+    );
+    f.close();
+    advanceAccountGeneration();
+    const opensBefore = f.open.mock.calls.length;
+    await expect(f.newOpener()()).rejects.toThrow("GUEST_PUBLICATION_STATUS_REQUIRED");
+    expect(f.open).toHaveBeenCalledTimes(opensBefore);
+    const readonly = new DatabaseSync(f.databasePath, { readOnly: true });
+    try {
+      expect(
+        readonly.prepare("SELECT count(*) AS n FROM local_trip_containers").get(),
+      ).toEqual({ n: 1 });
+    } finally {
+      readonly.close();
+    }
+  },
+);
 it("immediately fences existing Guest repository references and refuses inventory release after publication request", async () => {
   const f = fixture(),
     workspace = await f.newOpener()(),

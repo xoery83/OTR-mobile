@@ -1,3 +1,15 @@
+import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
+import {
+  advanceAccountGeneration,
+  getAccountGeneration,
+} from "@/data/auth/accountGeneration";
+vi.mock("@/data/auth/guestTripDraftInventory", async (original) => {
+  const m = await original<typeof import("@/data/auth/guestTripDraftInventory")>();
+  return {
+    ...m,
+    guestTripDraftInventory: m.createGuestTripDraftInventory(async () => {}),
+  };
+});
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
 import * as ImagePicker from "expo-image-picker";
@@ -18,12 +30,30 @@ const state = vi.hoisted(() => ({
   refs: [] as { current: any }[],
   refCursor: 0,
   alert: vi.fn(),
+  effectCursor: 0,
+  effects: [] as { deps?: readonly unknown[]; cleanup?: () => void }[],
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useCallback: (callback: unknown) => callback,
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
-  useEffect: (effect: () => void) => effect(),
+  useEffect: (effect: () => void | (() => void), deps?: readonly unknown[]) => {
+    const i = state.effectCursor++,
+      prior = state.effects[i];
+    if (
+      prior &&
+      deps &&
+      prior.deps?.length === deps.length &&
+      deps.every((value, index) => Object.is(value, prior.deps![index]))
+    )
+      return;
+    prior?.cleanup?.();
+    const cleanup = effect();
+    state.effects[i] = {
+      deps,
+      cleanup: typeof cleanup === "function" ? cleanup : undefined,
+    };
+  },
   useLayoutEffect: (effect: () => void) => effect(),
   useState: (initial: unknown) => {
     const i = state.cursor++;
@@ -105,10 +135,14 @@ const render = (
   tripOverride: Parameters<typeof TripBasicEditor>[0]["trip"] = trip,
   capabilities: Pick<
     Parameters<typeof TripBasicEditor>[0],
-    "currencyAvailable" | "coverAvailable"
+    | "currencyAvailable"
+    | "coverAvailable"
+    | "guestLocal"
+    | "readGuestRecoveryContext"
+    | "onHandoffFrozenChange"
   > = {},
 ) => {
-  state.cursor = state.refCursor = 0;
+  state.cursor = state.refCursor = state.effectCursor = 0;
   return elements(
     TripBasicEditor({
       ...capabilities,
@@ -123,6 +157,9 @@ const flush = async () => {
   for (let i = 0; i < 5; i++) await Promise.resolve();
 };
 beforeEach(() => {
+  state.effects.forEach((effect) => effect.cleanup?.());
+  state.effects = [];
+  state.effectCursor = 0;
   vi.mocked(ImagePicker.launchImageLibraryAsync).mockClear();
   vi.mocked(readLocalTripPhotoRepository).mockClear();
   state.alert.mockReset();
@@ -658,3 +695,160 @@ it("Guest metadata editing has no photo callback or Account currency navigation 
   expect(ImagePicker.launchImageLibraryAsync).not.toHaveBeenCalled();
   expect(readLocalTripPhotoRepository).not.toHaveBeenCalled();
 });
+
+it("freezes actual Trip Edit raw values with its owning baseline context and resumes without saving", async () => {
+  const save = vi.fn(),
+    notify = vi.fn();
+  const capabilities = {
+    guestLocal: true,
+    coverAvailable: false,
+    readGuestRecoveryContext: () => ({
+      tripId: trip.id,
+      syncFormatVersion: 2 as const,
+      metadataBase: null,
+      deferredMetadataBase: null,
+      deferredActionId: "00000000-0000-4000-8000-000000000099",
+    }),
+    onHandoffFrozenChange: notify,
+  };
+  let view = render(save, undefined, trip, capabilities);
+  const originalFields = view.find((node) => node.type === TripMetadataFields)!
+    .props as any;
+  originalFields.onName("  未保存编辑  ");
+  view = render(save, undefined, trip, capabilities);
+  const staleSave = view.find((node) => node.type === SheetHeader)!.props
+    .onRight as () => void;
+  const scope = {
+    kind: "GUEST" as const,
+    localId: trip.id,
+    generation: getAccountGeneration(),
+  };
+  const lease = await guestTripDraftInventory.freeze(scope);
+  expect(JSON.parse(lease.entries[0].canonicalText)).toMatchObject({
+    mode: "EDIT",
+    tripId: trip.id,
+    value: {
+      fields: { name: "  未保存编辑  ", before },
+      context: { deferredActionId: "00000000-0000-4000-8000-000000000099" },
+    },
+  });
+  originalFields.onName("must not replace raw edit");
+  expect(originalFields.onCalendarOpenChange(true)).toBe(false);
+  staleSave();
+  view = render(save, undefined, trip, capabilities);
+  expect(view.find((node) => node.type === TripMetadataFields)!.props.disabled).toBe(
+    true,
+  );
+  expect(save).not.toHaveBeenCalled();
+  await lease.assertCurrent();
+  await lease.resume();
+  view = render(save, undefined, trip, capabilities);
+  expect(view.find((node) => node.type === TripMetadataFields)!.props.name).toBe(
+    "  未保存编辑  ",
+  );
+  expect(notify.mock.calls).toEqual([[true], [false]]);
+});
+it.each(["calendar", "unknown save", "changed owning context"])(
+  "keeps Trip Edit handoff closed for %s",
+  async (reason) => {
+    const save = vi.fn().mockRejectedValue(Error("UNKNOWN"));
+    let context = "initial";
+    const capabilities = {
+      guestLocal: true,
+      coverAvailable: false,
+      readGuestRecoveryContext: () => ({
+        tripId: trip.id,
+        syncFormatVersion: 2 as const,
+        metadataBase: null,
+        deferredMetadataBase: null,
+        deferredActionId:
+          context === "initial" ? null : "00000000-0000-4000-8000-000000000099",
+      }),
+    };
+    let view = render(save, undefined, trip, capabilities);
+    const fields = view.find((node) => node.type === TripMetadataFields)!.props as any;
+    const scope = {
+      kind: "GUEST" as const,
+      localId: trip.id,
+      generation: getAccountGeneration(),
+    };
+    if (reason === "calendar") fields.onCalendarOpenChange(true);
+    if (reason === "unknown save") {
+      fields.onName("Changed");
+      view = render(save, undefined, trip, capabilities);
+      (view.find((node) => node.type === SheetHeader)!.props.onRight as () => void)();
+      await flush();
+      render(save, undefined, trip, capabilities);
+    }
+    if (reason === "changed owning context") {
+      const lease = await guestTripDraftInventory.freeze(scope);
+      context = "changed";
+      await expect(lease.assertCurrent()).rejects.toThrow("GUEST_DRAFT_HANDOFF_CHANGED");
+      await expect(lease.resume()).rejects.toThrow("GUEST_DRAFT_HANDOFF_CHANGED");
+    } else
+      await expect(guestTripDraftInventory.freeze(scope)).rejects.toThrow(
+        "GUEST_TRIP_EDIT_DRAFT_NOT_READY",
+      );
+  },
+);
+
+it("collects the actual Edit keystroke before render and fences callbacks after invalid resume", async () => {
+  const capabilities = {
+    guestLocal: true,
+    coverAvailable: false,
+    readGuestRecoveryContext: () => ({
+      tripId: trip.id,
+      syncFormatVersion: 2 as const,
+      metadataBase: null,
+      deferredMetadataBase: null,
+      deferredActionId: null,
+    }),
+  };
+  const view = render(undefined, undefined, trip, capabilities);
+  const fields = view.find((node) => node.type === TripMetadataFields)!.props as any;
+  fields.onName("  未render的编辑  ");
+  fields.onRange({ start: "2026-12-01", end: "" });
+  const lease = await guestTripDraftInventory.freeze({
+    kind: "GUEST",
+    localId: trip.id,
+    generation: getAccountGeneration(),
+  });
+  expect(JSON.parse(lease.entries[0].canonicalText).value.fields).toMatchObject({
+    name: "  未render的编辑  ",
+    start: "2026-12-01",
+    end: "",
+  });
+  advanceAccountGeneration();
+  await expect(lease.resume()).rejects.toThrow("GUEST_DRAFT_HANDOFF_CHANGED");
+  const previous = JSON.stringify(state.values);
+  fields.onName("old callback");
+  fields.onDestination("old destination");
+  fields.onRange({ start: "", end: "" });
+  expect(JSON.stringify(state.values)).toBe(previous);
+});
+it.each(["onQueryDirty", "onBusy"])(
+  "blocks Edit handoff synchronously on destination %s",
+  async (callback) => {
+    const capabilities = {
+      guestLocal: true,
+      coverAvailable: false,
+      readGuestRecoveryContext: () => ({
+        tripId: trip.id,
+        syncFormatVersion: 2 as const,
+        metadataBase: null,
+        deferredMetadataBase: null,
+        deferredActionId: null,
+      }),
+    };
+    const view = render(undefined, undefined, trip, capabilities);
+    const fields = view.find((node) => node.type === TripMetadataFields)!.props as any;
+    fields.destinationEntry.props[callback](true);
+    await expect(
+      guestTripDraftInventory.freeze({
+        kind: "GUEST",
+        localId: trip.id,
+        generation: getAccountGeneration(),
+      }),
+    ).rejects.toThrow("GUEST_TRIP_EDIT_DRAFT_NOT_READY");
+  },
+);

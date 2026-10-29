@@ -98,16 +98,21 @@ exact Trip/Person/P1 intent/three queue records; cloud receipts remain zero and 
 Account DB exists. GUI returned to Native. This is existing-data regression, not
 Adoption or new Create/Edit acceptance. GUEST_B_GUESTQA64_ARTIFACT.json records limits.
 
-Native delegated LocalTripWorkspace/TripBasicEditor/CreateTripV2Fields narrow Writer
-to Auth; Enrichment remains Native-owned. Focused foreground repair retains an
-already-loaded same-Guest presentation only for exact inventory/publication fences,
-with second principal/generation check. Initial Create unavailability uses existing
-alert copy. 2 initial RED + initial-unavailable RED -> 3 suites73 PASS/types/UIguard;
-independent 3 suites91 PASS/NO_BLOCKER; actual primary3 suites73 PASS after
-sourceffb0e1b5 integration. Six original dirty files/full diff unchanged. Final
-remote verification is private GUEST_B_FOREGROUND_MAIN_VERIFIED.json. Full Trip
-live-draft collector still absent. Native also released TripCalendarRangeField
-for optional open/block signals; default existing date behavior must be preserved.
+Native delegated Trip Workspace/Basic/Create fields/Calendar and directly required
+optional callback forwarding to Auth; Enrichment remains Native-owned. Foreground
+sourceffb0e1b5 is main-integrated with actual primary73/independent91 PASS; final
+main/origin/remote4d69e0e3 verified, six original dirty/full diff unchanged.
+
+New local actual Trip live-draft collector reuses P1 freeze/resume. Strict raw
+Create/Edit snapshots retain original fields/Person/operation IDs and owning
+baselines; synchronous fields/blockers and generation/alive/lock guards prevent
+before-render loss, stale callbacks and late Discard. Open child/name pickers and
+UNKNOWN save block handoff. Journal v2 retains Trip/P1 canonical bytes on disk;
+v1 remains P1-only. Unsubmitted Trip Create is not a persisted/published Trip.
+Directed11 suites239/types/scopedlint/UIguard PASS; independent NO_BLOCKER
+(8 suites168 + overlapping3 suites71). Native regression pending; no login/publisher consumer or
+Native checkpoint-to-screen restoration. GUEST_B_TRIP_LIVE_DRAFT_REVIEW.json tracks
+finite readiness. Full-file/all-family/all-live-draft aggregation remains missing.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/

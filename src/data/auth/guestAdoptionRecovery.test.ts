@@ -446,3 +446,160 @@ it.each(["{broken", ""])(
     expect(readFileSync(f.path(input.adoptionId), "utf8")).toBe(broken);
   },
 );
+
+function tripDraftEntry(mode: "CREATE" | "EDIT", tripId: string) {
+  const id = randomUUID();
+  const value =
+    mode === "CREATE"
+      ? {
+          operation: { tripId, operationId: randomUUID() },
+          name: "  未保存的Trip  ",
+          start: "",
+          end: "",
+          destinations: [],
+          selfNickname: "旅行昵称",
+          knownSelfName: "",
+          travelers: [],
+        }
+      : {
+          fields: {
+            before: {
+              name: "Saved Guest Trip",
+              destination: null,
+              startDate: null,
+              endDate: null,
+            },
+            beforeCover: null,
+            draftCover: null,
+            coverChanged: false,
+            initialDestinations: [],
+            destinationItems: [],
+            destinationsBefore: [],
+            name: "  尚未提交的修改  ",
+            destination: "",
+            start: "",
+            end: "",
+          },
+          context: {
+            tripId,
+            syncFormatVersion: 2,
+            metadataBase: null,
+            deferredMetadataBase: null,
+            deferredActionId: null,
+          },
+        };
+  const canonicalText = canonical({
+    schemaId: "otr.auth.guest-trip-draft/1",
+    draftId: id,
+    tripId,
+    mode,
+    value,
+  });
+  return {
+    id,
+    canonicalText,
+    sha256: hash(canonicalText),
+    bytes: Buffer.byteLength(canonicalText),
+  };
+}
+it("version2 reopens exact Trip Create/Edit and P1 snapshots without submitting the unsaved Trip", async () => {
+  const f = fixture(),
+    input = preparation(f.scope.localId);
+  input.schemaId = "otr.auth.guest-adoption-recovery/2";
+  const unsavedTrip = randomUUID();
+  input.drafts.push(
+    tripDraftEntry("CREATE", unsavedTrip),
+    tripDraftEntry("EDIT", input.tripIds[0]),
+  );
+  const prepared = await f.open().prepare(input);
+  const reopened = await f.open().read(input.adoptionId, input.targetAccountId);
+  expect(reopened).toEqual(prepared);
+  expect(reopened!.preparation.drafts).toEqual(input.drafts);
+  expect(reopened!.preparation.tripIds).not.toContain(unsavedTrip);
+  const cancelled = await f
+    .open()
+    .cancelBeforePublication(input.adoptionId, input.targetAccountId);
+  expect(cancelled!.nextAction).toBe("REMAIN_GUEST");
+  expect(cancelled!.preparation.drafts).toEqual(input.drafts);
+});
+it.each([
+  "version1",
+  "create collision",
+  "foreign edit",
+  "credential field",
+  "hash",
+  "entry id",
+])("retains originals and rejects invalid Trip recovery: %s", async (reason) => {
+  const f = fixture(),
+    input = preparation(f.scope.localId);
+  input.schemaId =
+    reason === "version1"
+      ? "otr.auth.guest-adoption-recovery/1"
+      : "otr.auth.guest-adoption-recovery/2";
+  const entry = tripDraftEntry(
+    reason === "foreign edit" ? "EDIT" : "CREATE",
+    reason === "create collision" ? input.tripIds[0] : randomUUID(),
+  );
+  if (reason === "credential field") {
+    const body = JSON.parse(entry.canonicalText);
+    body.value.accessToken = "synthetic-forbidden-field";
+    entry.canonicalText = canonical(body);
+    entry.sha256 = hash(entry.canonicalText);
+    entry.bytes = Buffer.byteLength(entry.canonicalText);
+  }
+  if (reason === "hash") entry.sha256 = "b".repeat(64);
+  if (reason === "entry id") entry.id = randomUUID();
+  input.drafts.push(entry);
+  await expect(f.open().prepare(input)).rejects.toThrow();
+  expect(existsSync(f.path(input.adoptionId))).toBe(false);
+});
+it("refuses a cross-version transition even when every other binding and hash matches", async () => {
+  const f = fixture(),
+    input = preparation(f.scope.localId);
+  input.schemaId = "otr.auth.guest-adoption-recovery/2";
+  const prepared = await f.open().prepare(input);
+  await f
+    .open()
+    .requestPublication(
+      input.adoptionId,
+      input.targetAccountId,
+      prepared!.preparationSha256,
+    );
+  const path = f.path(input.adoptionId, "publish-requested");
+  const transition = JSON.parse(readFileSync(path, "utf8"));
+  transition.schemaId = "otr.auth.guest-adoption-recovery/1";
+  writeFileSync(path, canonical(transition));
+  await expect(f.open().read(input.adoptionId, input.targetAccountId)).rejects.toThrow(
+    "GUEST_ADOPTION_RECOVERY_CHECKPOINT_PIN",
+  );
+  expect(existsSync(f.path(input.adoptionId))).toBe(true);
+});
+
+it("rejects another Account actor inside a Trip Edit baseline before creating recovery files", async () => {
+  const f = fixture(),
+    input = preparation(f.scope.localId);
+  input.schemaId = "otr.auth.guest-adoption-recovery/2";
+  const entry = tripDraftEntry("EDIT", input.tripIds[0]);
+  const body = JSON.parse(entry.canonicalText);
+  body.value.context.metadataBase = {
+    formatVersion: 3,
+    actorAccountId: randomUUID(),
+    tripId: input.tripIds[0],
+    metadataRevision: 0,
+    metadata: {
+      name: "Other Account baseline",
+      destination: null,
+      destinations: [],
+      startDate: null,
+      endDate: null,
+    },
+  };
+  entry.canonicalText = canonical(body);
+  entry.bytes = Buffer.byteLength(entry.canonicalText);
+  entry.sha256 = hash(entry.canonicalText);
+  input.drafts.push(entry);
+  await expect(f.open().prepare(input)).rejects.toThrow(
+    "GUEST_ADOPTION_RECOVERY_DRAFT_SCOPE",
+  );
+  expect(existsSync(f.path(input.adoptionId))).toBe(false);
+});

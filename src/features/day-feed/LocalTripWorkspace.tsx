@@ -1,3 +1,5 @@
+import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
+import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
 import {
   filterNativeTripQaList,
   nativeTripQaCreateFormat,
@@ -166,28 +168,14 @@ function LocalTripContent({
   const [travelers, setTravelers] = useState<LocalPersonNameSlot[]>([]);
   const [selfNickname, setSelfNickname] = useState("");
   const [knownSelfName, setKnownSelfName] = useState("");
-  useEffect(() => {
-    let active = true;
-    void Promise.resolve()
-      .then(readCommittedLocalSession)
-      .then((session) => {
-        const identity = session?.identity,
-          value = identity?.displayName.trim();
-        if (
-          active &&
-          generation === getAccountGeneration() &&
-          value &&
-          value !== "Account" &&
-          value !== identity?.email?.split("@")[0]
-        )
-          setKnownSelfName(value);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [generation]);
+
   const [createDraftId] = useState(createUuid);
+  const createHandoff = useRef<symbol | null>(null);
+  const [createFrozen, setCreateFrozen] = useState(false);
+  const createCalendarOpen = useRef(false);
+  const createNameEditorOpen = useRef(false);
+  const editorHandoff = useRef(false);
+  const [editorFrozen, setEditorFrozen] = useState(false);
   const [destinations, setDestinations] = useState<
     readonly TripDestinationDraftSelection[]
   >([]);
@@ -248,6 +236,128 @@ function LocalTripContent({
       request.current += 1;
     };
   }, []);
+  const createValue = {
+    name,
+    start,
+    end,
+    destinations,
+    selfNickname,
+    knownSelfName,
+    travelers,
+  };
+  const createDraftValue = useRef(createValue);
+  const createInteractions = useRef({
+    busy: destinationBusy,
+    query: destinationQueryDirty,
+  });
+  const createSaveFailed = useRef(error);
+  function changeCreate<Key extends keyof typeof createValue>(
+    field: Key,
+    value: (typeof createValue)[Key],
+    set: (value: (typeof createValue)[Key]) => void,
+  ) {
+    if (!alive.current || generation !== getAccountGeneration() || createHandoff.current)
+      return;
+    createDraftValue.current = { ...createDraftValue.current, [field]: value };
+    set(value);
+  }
+  const createDraftReady = useRef(false);
+  useLayoutEffect(() => {
+    createDraftValue.current = createValue;
+    createInteractions.current = { busy: destinationBusy, query: destinationQueryDirty };
+    createSaveFailed.current = error;
+    createDraftReady.current =
+      guest === true &&
+      mode === "CREATE" &&
+      status === "READY" &&
+      !saving &&
+      !error &&
+      !destinationBusy &&
+      !destinationQueryDirty;
+  });
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve()
+      .then(readCommittedLocalSession)
+      .then((session) => {
+        const identity = session?.identity,
+          value = identity?.displayName.trim();
+        if (
+          active &&
+          generation === getAccountGeneration() &&
+          value &&
+          value !== "Account" &&
+          value !== identity?.email?.split("@")[0]
+        ) {
+          if (!createHandoff.current) {
+            createDraftValue.current = {
+              ...createDraftValue.current,
+              knownSelfName: value,
+            };
+            setKnownSelfName(value);
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [generation]);
+  useEffect(() => {
+    if (guest !== true || mode !== "CREATE") return;
+    return guestTripDraftInventory.register({
+      freeze() {
+        if (
+          !alive.current ||
+          generation !== getAccountGeneration() ||
+          !createDraftReady.current ||
+          busy.current ||
+          createHandoff.current ||
+          createSaveFailed.current ||
+          createInteractions.current.busy ||
+          createInteractions.current.query ||
+          createCalendarOpen.current ||
+          createNameEditorOpen.current
+        )
+          throw Error("GUEST_TRIP_CREATE_DRAFT_NOT_READY");
+        const operation = tripOperation.current;
+        const value = JSON.parse(
+          JSON.stringify({ operation, ...createDraftValue.current }),
+        ) as Json;
+        const encoded = JSON.stringify(createDraftValue.current);
+        const snapshot = guestTripDraftSnapshotSchema.parse({
+          schemaId: "otr.auth.guest-trip-draft/1",
+          draftId: createDraftId,
+          tripId: tripOperation.current.tripId,
+          mode: "CREATE",
+          value,
+        });
+        const token = Symbol("Guest Trip Create draft");
+        createHandoff.current = token;
+        setCreateFrozen(true);
+        return {
+          snapshot,
+          isCurrent: () =>
+            alive.current &&
+            generation === getAccountGeneration() &&
+            createHandoff.current === token &&
+            tripOperation.current === operation &&
+            createDraftReady.current &&
+            !createSaveFailed.current &&
+            !createInteractions.current.busy &&
+            !createInteractions.current.query &&
+            !createCalendarOpen.current &&
+            !createNameEditorOpen.current &&
+            JSON.stringify(createDraftValue.current) === encoded,
+          resume() {
+            if (createHandoff.current !== token) return;
+            createHandoff.current = null;
+            if (alive.current) setCreateFrozen(false);
+          },
+        };
+      },
+    });
+  }, [guest, mode, generation, createDraftId]);
   const load = useCallback(async () => {
     const captured = generation,
       ticket = ++request.current;
@@ -408,6 +518,7 @@ function LocalTripContent({
   const save = async () => {
     if (
       busy.current ||
+      createHandoff.current ||
       destinationBusy ||
       !alive.current ||
       generation !== getAccountGeneration()
@@ -415,6 +526,7 @@ function LocalTripContent({
       return;
     busy.current = true;
     setSaving(true);
+    createSaveFailed.current = false;
     setError(false);
     const captured = generation,
       owner = Symbol("trip-ui-save");
@@ -476,6 +588,7 @@ function LocalTripContent({
       void kickLocalTripSync().catch(() => undefined);
       onOpen(trip.id);
     } catch {
+      createSaveFailed.current = true;
       if (current()) setError(true);
     } finally {
       if (saveOwner.current === owner) {
@@ -486,7 +599,13 @@ function LocalTripContent({
     }
   };
   const closeCreate = () => {
-    if (busy.current || !alive.current || generation !== getAccountGeneration()) return;
+    if (
+      busy.current ||
+      createHandoff.current ||
+      !alive.current ||
+      generation !== getAccountGeneration()
+    )
+      return;
     if (
       !name.trim() &&
       !destinations.length &&
@@ -505,7 +624,12 @@ function LocalTripContent({
         text: t("actionIsland.discard"),
         style: "destructive",
         onPress: () => {
-          if (!busy.current && alive.current && generation === getAccountGeneration())
+          if (
+            !busy.current &&
+            !createHandoff.current &&
+            alive.current &&
+            generation === getAccountGeneration()
+          )
             onBackToTrips();
         },
       },
@@ -924,9 +1048,9 @@ function LocalTripContent({
           <Modal
             visible={coverOpen}
             presentationStyle="pageSheet"
-            allowSwipeDismissal={!editorSaving && !editorDirty}
+            allowSwipeDismissal={!editorSaving && !editorDirty && !editorFrozen}
             onRequestClose={() => {
-              if (!editorBusy.current) {
+              if (!editorBusy.current && !editorHandoff.current) {
                 if (editorDismiss.current) editorDismiss.current();
                 else setCoverOpen(false);
               }
@@ -940,8 +1064,31 @@ function LocalTripContent({
                     ...selected,
                     selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
                   }}
+                  guestLocal={guest === true}
+                  readGuestRecoveryContext={() => {
+                    if (
+                      !alive.current ||
+                      generation !== getAccountGeneration() ||
+                      editorBusy.current
+                    )
+                      throw Error("GUEST_TRIP_EDIT_CONTEXT_CHANGED");
+                    return JSON.parse(
+                      JSON.stringify({
+                        tripId: selected.id,
+                        syncFormatVersion: selected.syncFormatVersion ?? null,
+                        metadataBase: metadataEditBase.current,
+                        deferredMetadataBase: deferredMetadataEditBase.current,
+                        deferredActionId: deferredMetadataActionId.current,
+                      }),
+                    ) as Json;
+                  }}
+                  onHandoffFrozenChange={(frozen) => {
+                    editorHandoff.current = frozen;
+                    setEditorFrozen(frozen);
+                  }}
                   onClose={() => {
-                    if (!editorBusy.current) setCoverOpen(false);
+                    if (!editorBusy.current && !editorHandoff.current)
+                      setCoverOpen(false);
                   }}
                   registerDismiss={(handler) => {
                     editorDismiss.current = handler;
@@ -1174,10 +1321,11 @@ function LocalTripContent({
                   title={t("createTripV2.title")}
                   leftLabel={t("common.cancel")}
                   onLeft={closeCreate}
-                  leftDisabled={saving}
+                  leftDisabled={saving || createFrozen}
                   rightLabel={t("createTripV2.create")}
                   rightDisabled={
                     saving ||
+                    createFrozen ||
                     destinationBusy ||
                     status !== "READY" ||
                     !name.trim() ||
@@ -1199,20 +1347,42 @@ function LocalTripContent({
                   >
                     <CreateTripV2Fields
                       name={name}
-                      onName={setName}
+                      onName={(value) => {
+                        changeCreate("name", value, setName);
+                      }}
                       range={{ start, end }}
                       onRange={(range) => {
-                        setStart(range.start);
-                        setEnd(range.end);
+                        changeCreate("start", range.start, setStart);
+                        changeCreate("end", range.end, setEnd);
                       }}
                       selfNickname={selfNickname}
                       knownSelfName={knownSelfName}
+                      onCalendarOpenChange={(open) => {
+                        if (
+                          !alive.current ||
+                          generation !== getAccountGeneration() ||
+                          createHandoff.current
+                        )
+                          return false;
+                        createCalendarOpen.current = open;
+                      }}
+                      onNameEditorOpenChange={(open) => {
+                        if (
+                          !alive.current ||
+                          generation !== getAccountGeneration() ||
+                          createHandoff.current
+                        )
+                          return false;
+                        createNameEditorOpen.current = open;
+                      }}
                       onSelfNickname={(value) => {
-                        setSelfNickname(value);
+                        changeCreate("selfNickname", value, setSelfNickname);
                       }}
                       travelers={travelers}
-                      onTravelers={setTravelers}
-                      disabled={saving}
+                      onTravelers={(value) => {
+                        changeCreate("travelers", value, setTravelers);
+                      }}
+                      disabled={saving || createFrozen}
                       destinationEntry={
                         <CreateTripDestinations
                           name={name}
@@ -1220,11 +1390,21 @@ function LocalTripContent({
                           generation={generation}
                           items={destinations}
                           onChange={(items) => {
-                            setDestinations(items);
+                            changeCreate("destinations", items, setDestinations);
                           }}
-                          onQueryDirty={setDestinationQueryDirty}
-                          onBusy={setDestinationBusy}
-                          disabled={saving}
+                          onQueryDirty={(query) => {
+                            if (!alive.current || generation !== getAccountGeneration())
+                              return;
+                            createInteractions.current.query = query;
+                            setDestinationQueryDirty(query);
+                          }}
+                          onBusy={(busy) => {
+                            if (!alive.current || generation !== getAccountGeneration())
+                              return;
+                            createInteractions.current.busy = busy;
+                            setDestinationBusy(busy);
+                          }}
+                          disabled={saving || createFrozen}
                         />
                       }
                     />

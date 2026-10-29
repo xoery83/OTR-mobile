@@ -1,3 +1,4 @@
+import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
 import {
   noteGuestPublicationRequested,
   noteInspectedGuestPublications,
@@ -40,7 +41,10 @@ const draftEntry = z.strictObject({
   bytes: z.number().int().nonnegative().safe(),
 });
 const binding = z.strictObject({
-  schemaId: z.literal("otr.auth.guest-adoption-recovery/1"),
+  schemaId: z.enum([
+    "otr.auth.guest-adoption-recovery/1",
+    "otr.auth.guest-adoption-recovery/2",
+  ]),
   sourceKind: z.literal("GUEST"),
   sourceGuestLocalId: coreUuid,
   adoptionId: coreUuid,
@@ -117,10 +121,28 @@ export function createGuestAdoptionRecovery(deps: {
     )
       throw Error("GUEST_ADOPTION_RECOVERY_DUPLICATE");
     for (const entry of value.drafts) {
-      const body = draft.parse(JSON.parse(entry.canonicalText));
+      const body = (
+        value.schemaId === "otr.auth.guest-adoption-recovery/1"
+          ? draft
+          : z.union([draft, guestTripDraftSnapshotSchema])
+      ).parse(JSON.parse(entry.canonicalText));
+      const isP1 = body.schemaId === "otr.auth.guest-p1-draft/1";
+      const id = isP1 ? body.itemId : body.draftId;
       if (
-        body.itemId !== entry.id ||
-        !value.tripIds.includes(body.tripId) ||
+        !isP1 &&
+        body.mode === "EDIT" &&
+        body.value.context.metadataBase &&
+        body.value.context.metadataBase.actorAccountId !== scope.localId
+      )
+        throw Error("GUEST_ADOPTION_RECOVERY_DRAFT_SCOPE");
+      // An unsubmitted Trip Create remains recovery material, never a published Trip shell.
+      const tripBound =
+        !isP1 && body.mode === "CREATE"
+          ? !value.tripIds.includes(body.tripId)
+          : value.tripIds.includes(body.tripId);
+      if (
+        id !== entry.id ||
+        !tripBound ||
         canonical(body) !== entry.canonicalText ||
         new TextEncoder().encode(entry.canonicalText).byteLength !== entry.bytes ||
         (await sha(entry.canonicalText)) !== entry.sha256
@@ -153,6 +175,7 @@ export function createGuestAdoptionRecovery(deps: {
       assertBinding(record, adoptionId, prepared.preparation.targetAccountId);
       if (
         record.checkpoint !== checkpoint ||
+        record.schemaId !== prepared.preparation.schemaId ||
         record.preparationSha256 !== prepared.preparationSha256 ||
         canonical(record) !== text
       )
