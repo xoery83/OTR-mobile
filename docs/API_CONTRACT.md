@@ -1224,6 +1224,17 @@ must be installed separately before Runtime verification. The port interface and
 fixture tests do not establish that deployment or grant dispatch permission.
 
 
+## Universal PDF original and material provenance (unbound candidate)
+
+An owning Source manifest/result may carry optional `pdfSource` alongside the
+existing text material binding: exact PDF original representation/hash/byte count,
+V2 seal/page-map hashes and transform-options hash. The text binding remains the
+sealed DERIVED representation and byte hash; Native compares the retained PDF
+against the separate original identity/size. Metadata alone never qualifies a
+Source. Task transform pins use the owning derivative's transform-options hash.
+Unqualified or mismatched parent/profile remains closed; normal TEXT JSON stays
+unchanged. No SQL, authority, parser or Runtime activation is included.
+
 ## Universal Source pending PDF metadata (default-closed candidate)
 
 The existing Original Source acquisition/lookup adapter may explicitly opt into

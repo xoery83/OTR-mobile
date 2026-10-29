@@ -29,7 +29,13 @@ export function assertUniversalCaptureResult(
           (i) =>
             i.id === b.inputId &&
             i.state === "ACCEPTED" &&
-            i.contentSha256 === b.originalSha256,
+            i.contentSha256 === (b.pdfSource?.original.sha256 ?? b.originalSha256) &&
+            (!b.pdfSource ||
+              (i.kind === "FILE" &&
+                i.declaredContentType === "application/pdf" &&
+                i.contentByteCount === b.pdfSource.original.byteCount &&
+                b.mime === "text/plain" &&
+                b.pdfSource.original.representationId !== b.representationId)),
         ),
     ) ||
     inputs.some(

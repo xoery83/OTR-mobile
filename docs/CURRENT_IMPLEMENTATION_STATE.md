@@ -1,4 +1,4 @@
-# Current implementation state — 29 October 2026
+# Current implementation state — 30 October 2026
 
 ## Active delivery
 
@@ -72,7 +72,13 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Source sustained scope and Provider
   budget/expiry have not been enlarged. Fresh-check actual gates before mutations;
   no Root temporary admin or Provider window is open.
-- Last completed Import main push: `11c7feaa`; original primary six dirty entries,
+- Latest Import integration: main/origin/remote `e13a95076ca08722464e7dd0ca5e210aa74b9ee1`
+  contains the actual expiry/cold receipt. Actual-primary six suites262 tests and
+  typecheck PASS; original six dirty entries/full diff/untracked bytes exact.
+  Missing Google Sign-In16.1.5 was restored only from the locked tarball after
+  SHA512 verification, without dependency/lockfile changes. Auth owns main Writer
+  again. New PDF software candidates after this commit remain private/local only.
+- Earlier completed Import main push: `11c7feaa`; original primary six dirty entries,
   full tracked/index diff and untracked bytes were preserved. Auth subsequently
   integrated its local-only Source/journal work through main `72331060`.
   Root privately joined that main at `c66d968b`. Read implementation/evidence
@@ -112,7 +118,11 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    has an explicit default-closed PDF metadata option: only PENDING, never VERIFIED;
    same RPC/receipt verifier, no bytes/IO/Task authority. Six suites64 tests/types/
    lint and independent Review passed. `PDF_PENDING_ORIGINAL_LOCAL_PASS.json`.
-   No actual PDF Source/Task/Save PASS.
+   Original/derived provenance is now an additive default-closed software bridge:
+   exact PDF original identity/hash/size stays separate from sealed text material;
+   Task transform must match and cannot lose provenance on readback. Six suites84
+   tests, types/lint and independent NO_BLOCKER passed after directed RED→GREEN.
+   `PDF_SOURCE_PROVENANCE_LOCAL_PASS.json`. No actual PDF Source/Task/Save PASS.
 3. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN

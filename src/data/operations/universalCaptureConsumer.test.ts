@@ -389,3 +389,60 @@ it.each(["RESULTS_READY", "FAILED", "CANCELED", "STALE"] as const)(
     expect(f.transport.execute).not.toHaveBeenCalled();
   },
 );
+it("matches a PDF original separately from its sealed text material and keeps recovery read-only", async () => {
+  const f = fixture(undefined, true);
+  Object.assign(f.model.inputs[0], {
+    kind: "FILE",
+    declaredContentType: "application/pdf",
+    contentSha256: "c".repeat(64),
+    contentByteCount: 1700,
+  });
+  Object.assign(f.result.sourceBindings[0], {
+    representationId: randomUUID(),
+    mime: "text/plain",
+    pdfSource: {
+      original: {
+        representationId: randomUUID(),
+        sha256: "c".repeat(64),
+        byteCount: 1700,
+      },
+      sealSha256: "d".repeat(64),
+      pageMapSha256: "e".repeat(64),
+      transformOptionsSha256: "f".repeat(64),
+    },
+  });
+  expect(await f.consumer.recover(f.model)).toBe(f.result);
+  expect(f.transport.execute).not.toHaveBeenCalled();
+});
+
+it.each(["hash", "size", "kind", "media", "parent"])(
+  "withholds PDF results on original %s mismatch without dispatch",
+  async (failure) => {
+    const f = fixture(undefined, true);
+    Object.assign(f.model.inputs[0], {
+      kind: "FILE",
+      declaredContentType: "application/pdf",
+      contentSha256: "c".repeat(64),
+      contentByteCount: 1700,
+    });
+    const representationId = randomUUID();
+    Object.assign(f.result.sourceBindings[0], {
+      representationId,
+      mime: "text/plain",
+      pdfSource: {
+        original: {
+          representationId: failure === "parent" ? representationId : randomUUID(),
+          sha256: failure === "hash" ? "d".repeat(64) : "c".repeat(64),
+          byteCount: failure === "size" ? 1701 : 1700,
+        },
+        sealSha256: "d".repeat(64),
+        pageMapSha256: "e".repeat(64),
+        transformOptionsSha256: "f".repeat(64),
+      },
+    });
+    if (failure === "kind") f.model.inputs[0].kind = "TEXT";
+    if (failure === "media") f.model.inputs[0].declaredContentType = "image/png";
+    await expect(f.consumer.recover(f.model)).rejects.toThrow("ORIGINALS_MISMATCH");
+    expect(f.transport.execute).not.toHaveBeenCalled();
+  },
+);

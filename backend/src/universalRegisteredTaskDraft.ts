@@ -99,7 +99,9 @@ export async function buildUniversalRegisteredTaskDraft(
     payload_sha256: p.payload_sha256,
     byte_count: p.byte_count,
     input_id: p.id,
-    transform_sha256: null,
+    transform_sha256:
+      representations.find((r) => r.inputId === p.id)?.pdfSource
+        ?.transformOptionsSha256 ?? null,
   }));
   const policy = {
     version: 1 as const,

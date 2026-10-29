@@ -420,3 +420,32 @@ it("retains a BOM-only original as ABSTAIN without a Provider call", async () =>
   expect(body.unresolved[0].reason).toBe("PREPARED_SOURCE_EMPTY");
   expect(x.provider.interpret).not.toHaveBeenCalled();
 });
+
+it("pins PDF provenance independently of material and withholds metadata from model text", async () => {
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  const material = source("Activity: Museum walk\n", 0);
+  const pdfSource = {
+    original: { representationId: randomUUID(), sha256: "c".repeat(64), byteCount: 1700 },
+    sealSha256: "d".repeat(64),
+    pageMapSha256: "e".repeat(64),
+    transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+  };
+  Object.assign(material, { pdfSource });
+  const manifest = {
+    accountId: account,
+    tripId: trip,
+    batchId: batch,
+    representations: [material],
+  };
+  const request = { version: UNIVERSAL_IMPORT_VERSION, tripId: trip, taskId: task };
+  const before = prepareUniversalDispatch(actor, batch, request, manifest);
+  expect(before.bindings[0]).toMatchObject({
+    originalSha256: sha(material.bytes),
+    pdfSource,
+  });
+  expect(before.ready[0].bytes).toEqual(material.bytes);
+  pdfSource.original.sha256 = "f".repeat(64);
+  expect(before.bindings[0].pdfSource?.original.sha256).toBe("c".repeat(64));
+  const after = prepareUniversalDispatch(actor, batch, request, manifest);
+  expect(after.requestSha256).not.toBe(before.requestSha256);
+});

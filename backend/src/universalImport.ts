@@ -1,3 +1,5 @@
+import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -40,6 +42,7 @@ export type BoundRepresentation = {
   representationId: string;
   revision: number;
   originalSha256: string;
+  pdfSource?: z.infer<typeof universalPdfSourceProvenanceSchema>;
   mime: string;
   bytes: Buffer;
   prepared?: Source["prepared"];
@@ -107,6 +110,7 @@ export type UniversalResult = {
     revision: number;
     mime: string;
     originalSha256: string;
+    pdfSource?: z.infer<typeof universalPdfSourceProvenanceSchema>;
     submittedSha256: string | null;
     status: string;
   }[];
@@ -219,7 +223,12 @@ function pinManifest(
         !Number.isInteger(s.revision) ||
         s.revision < 1 ||
         !/^[a-f0-9]{64}$/.test(s.originalSha256) ||
-        sha(s.bytes) !== s.originalSha256,
+        sha(s.bytes) !== s.originalSha256 ||
+        (s.pdfSource !== undefined &&
+          (!universalPdfSourceProvenanceSchema.safeParse(s.pdfSource).success ||
+            s.mime !== "text/plain" ||
+            s.pdfSource.original.representationId === s.representationId ||
+            s.pdfSource.transformOptionsSha256 !== PDF_V2_OPTIONS_SHA)),
     )
   )
     throw new Error("SOURCE_BINDING_INVALID");
@@ -262,6 +271,7 @@ function pinManifest(
     revision: s.revision,
     mime: s.mime,
     originalSha256: s.originalSha256,
+    ...(s.pdfSource ? { pdfSource: structuredClone(s.pdfSource) } : {}),
     submittedSha256:
       prepared[index].status === "READY" ? prepared[index].submittedSha256 : null,
     status: prepared[index].status,

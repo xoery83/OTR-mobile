@@ -1,3 +1,5 @@
+import { universalPdfSourceProvenanceSchema } from "../../src/data/api/universalImportContracts";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { Task } from "../../src/domain/intelligence/persistence";
@@ -34,6 +36,7 @@ const manifestSchema = z.strictObject({
         byteCount: z.number().int().positive().max(4194304),
         mime: z.enum(["text/plain", "text/html", "image/jpeg", "image/png"]),
         text: z.string().nullable(),
+        pdfSource: universalPdfSourceProvenanceSchema.optional(),
       }),
     )
     .min(1)
@@ -124,6 +127,16 @@ export function createUniversalSourceReader(deps: {
         pin.byte_count !== r.byteCount
       )
         throw new Error("UNIVERSAL_SOURCE_BINDING_INVALID");
+      if (pin.transform_sha256 === PDF_V2_OPTIONS_SHA && !r.pdfSource)
+        throw Error("UNIVERSAL_SOURCE_MATERIAL_INVALID");
+      if (
+        r.pdfSource &&
+        (r.mime !== "text/plain" ||
+          r.pdfSource.original.representationId === r.representationId ||
+          r.pdfSource.transformOptionsSha256 !== PDF_V2_OPTIONS_SHA ||
+          pin.transform_sha256 !== r.pdfSource.transformOptionsSha256)
+      )
+        throw Error("UNIVERSAL_SOURCE_MATERIAL_INVALID");
       const raw =
         r.text !== null
           ? Buffer.from(r.text)
@@ -151,6 +164,7 @@ export function createUniversalSourceReader(deps: {
         representationId: r.representationId,
         revision: r.revision,
         originalSha256: r.sha256,
+        ...(r.pdfSource ? { pdfSource: structuredClone(r.pdfSource) } : {}),
         mime: r.mime,
         bytes,
       });
