@@ -1224,6 +1224,58 @@ must be installed separately before Runtime verification. The port interface and
 fixture tests do not establish that deployment or grant dispatch permission.
 
 
+## Universal PDF original and material provenance (unbound candidate)
+
+An owning Source manifest/result may carry optional `pdfSource` alongside the
+existing text material binding: exact PDF original representation/hash/byte count,
+V2 seal/page-map hashes and transform-options hash. The text binding remains the
+sealed DERIVED representation and byte hash; Native compares the retained PDF
+against the separate original identity/size. Metadata alone never qualifies a
+Source. Task transform pins use the owning derivative's transform-options hash.
+Unqualified or mismatched parent/profile remains closed; normal TEXT JSON stays
+unchanged. The shared owning lifecycle snapshot can read this DERIVED text only
+with one exact published provenance binding and the existing V2 PDF proof reader:
+original/derived hashes and identities, seal/page map, current rows, custody and
+current gate must all match. It never relabels a PDF as ORIGINAL TEXT. No SQL,
+authority, parser or Runtime activation is included.
+
+## Universal Source pending PDF metadata (default-closed candidate)
+
+The existing Original Source acquisition/lookup adapter may explicitly opt into
+PDF FILE/BINARY metadata, within the existing Capture4MiB bound and strict null
+encoding/text/locator fields. Default composition remains text-only. This forwards
+only the existing ACQUIRE_SOURCE command to its owning RPC; it does not register
+upload work, start a parser, verify bytes, create a Task or grant Admission. Its
+receipt must remain PENDING with no verified timestamp; VERIFIED or text-only
+NOT_APPLICABLE cannot masquerade as a PDF acquisition receipt. Normal Actor/Trip
+checks and existing SQL eligibility still apply. Configuring this software option
+cannot activate the protected PDF scope; no current Runtime enables it.
+
+## Source PDF V4 preparation HTTP (unbound implementation candidate)
+
+Candidate POST routes use
+`/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/{stage,dispatch,observe-retained}`.
+The enclosing Backend must authenticate bearer identity; the adapter checks current
+Trip access and uses the existing causal owner's account-generation reader, never
+an Actor/generation supplied by request JSON. Stage delegates raw PDF bytes to the
+existing bounded private Stage; dispatch and observe-retained accept no body and
+reuse the existing durable dispatch/causal observation ports. Responses expose only
+operation/Source identities and the completed transport step, never Stage paths,
+resource/run tokens, provider configuration, internal bindings or custody evidence.
+Transport acknowledgement is not Source verification, Admission or Save. Missing
+ports fail closed before body consumption. The parent handler authenticates and
+delegates only through this optional port; normal startup does not supply it. No
+worker service, SQL activation, budget or permission change is part of this
+candidate; those require separately qualified composition and authority.
+`operationId` must identify an already reserved owning upload operation, not the
+Source acquisition operation or a new transport-generated ID.
+The corresponding Native transport is explicit-only: existing Account context and
+Session token, same durable Source operation identity, raw owned bytes within the
+existing Capture4MiB limit, bounded response and no automatic write retry. The
+causal observation POST consumes any existing explicit QA read allocation rather
+than bypassing it; no allocation or limit increases. A transport observation does
+not replace the owning Source operation receipt, custody verification or seal.
+
 ## Universal Import — unstarted deadline recovery (implementation candidate)
 
 A status GET remains read-only and projects the persisted owning Task/revision.

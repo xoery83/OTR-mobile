@@ -1,3 +1,4 @@
+import { createAccountProfileRepository } from "../auth/accountProfileRepository";
 import { hasAcceptedManualCreate } from "../repositories/acceptedManualCreate";
 import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
@@ -35,6 +36,7 @@ const coldReadbackSeen = new Set<string>();
 export function createNativeNormalTripSyncRunner(
   input: NormalTripSyncScope,
   enabled: () => boolean = () => false,
+  manualRetry = false,
 ) {
   return async (authState: string) => {
     if (!enabled() || authState !== "AUTHENTICATED_ONLINE")
@@ -164,7 +166,31 @@ export function createNativeNormalTripSyncRunner(
           await assertAccountRequestContext(account, requireActiveUserId);
           return result;
         },
-        runCreate: (target) => createNativeTripCreateSyncRunner(target, enabled)(),
+        runCreate: async (target) => {
+          const local = await repository.getTrip(target.tripId);
+          await assertAccountRequestContext(account, requireActiveUserId);
+          if (!enabled()) throw Error("TRIP_SYNC_PORT_CLOSED");
+          if (!local) throw Error("TRIP_LOCAL_RECORD_MISSING");
+          if (local.serverId !== target.tripId) {
+            await createAccountProfileRepository(requireActiveUserId, {
+              timeoutMs: 20000,
+            }).ensure(account);
+            await assertAccountRequestContext(account, requireActiveUserId);
+            if (!enabled()) throw Error("TRIP_SYNC_PORT_CLOSED");
+          }
+          // Explicit Data Health retry preserves the original operation, payload and receipt-first worker.
+          if (manualRetry) {
+            await createSyncOperationRepository(
+              database,
+              requireActiveUserId,
+              undefined,
+              target,
+            ).reactivateLongLivedFailures();
+            await assertAccountRequestContext(account, requireActiveUserId);
+            if (!enabled()) throw Error("TRIP_SYNC_PORT_CLOSED");
+          }
+          return createNativeTripCreateSyncRunner(target, enabled)();
+        },
         runMetadata: (target) => createNativeTripMetadataSyncRunner(enabled, target)(),
         runP1: async (target) => {
           const transport = createCoreV2Transport(

@@ -1,3 +1,10 @@
+import { isNormalAccount, type AuthenticatedAccount } from "./authAccountQualification";
+import {
+  accountProfileBootstrapBoundary,
+  type AccountProfileBootstrapPort,
+} from "./accountProfileBootstrap";
+import { accountProfileBootstrapPath } from "@/data/api/accountProfileContracts";
+import { sourcePdfV4PreparationBoundary } from "./sourcePdfV4PreparationHttp";
 import { sourcePdfV2Boundary } from "./sourcePdfV2Http";
 import {
   captureRemoteProcessingBoundary,
@@ -186,7 +193,7 @@ import {
 import { deriveServerId, type SyncEntityType } from "./serverId";
 import type { RateDemandScanResult } from "./rateDemandScanner";
 
-export type AuthenticatedUser = { id: string };
+export type AuthenticatedUser = AuthenticatedAccount;
 
 export type StoredCreate = {
   id: string;
@@ -631,6 +638,7 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
+  sourcePdfV4PreparationPort?: Parameters<typeof sourcePdfV4PreparationBoundary>[3];
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   universalImportPort?: UniversalPort;
@@ -650,6 +658,7 @@ export type BackendDependencies = {
   flightEnrichmentService?: ReturnType<typeof createFlightEnrichmentService>;
   flightEnrichmentEnabled?: boolean;
   captureMaterialCustody?: CaptureMaterialCustody;
+  accountProfileBootstrapPort?: AccountProfileBootstrapPort;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
   tripMetadataV2Port?: TripMetadataV2Port;
@@ -1081,6 +1090,20 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
 export async function authenticate(request: Request, gateway: DevBackendGateway) {
   const user = await gateway.validateAccessToken(getBearerToken(request));
   if (!user) throw new HttpError(401, "INVALID_SESSION", "The session is invalid.");
+  return user;
+}
+
+export async function authenticateNormalAccount(
+  request: Request,
+  gateway: DevBackendGateway,
+) {
+  const user = await authenticate(request, gateway);
+  if (!isNormalAccount(user))
+    throw new HttpError(
+      403,
+      "NORMAL_ACCOUNT_REQUIRED",
+      "A registered account is required.",
+    );
   return user;
 }
 
@@ -2406,6 +2429,7 @@ function reportingFilters(url: URL): ReportingFilters {
 
 export function createDevBackendHandler({
   sourcePdfV2Port,
+  sourcePdfV4PreparationPort,
   captureRemoteProcessing,
   tripPersonCloudCreatePort,
   universalImportPort,
@@ -2414,6 +2438,7 @@ export function createDevBackendHandler({
   flightEnrichmentEnabled = false,
   universalOriginalSourcePort,
   captureMaterialCustody,
+  accountProfileBootstrapPort,
   tripCreatePort,
   tripMetadataPort,
   tripMetadataV2Port,
@@ -2504,7 +2529,15 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (
+      if (url.pathname === accountProfileBootstrapPath) {
+        route = accountProfileBootstrapPath;
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await accountProfileBootstrapBoundary(
+          request,
+          actor,
+          accountProfileBootstrapPort,
+        );
+      } else if (
         /^\/v1\/trips\/[^/]+\/flight-enrichment(?:\/capabilities)?$/.test(url.pathname)
       ) {
         route = "/v1/trips/:tripId/flight-enrichment";
@@ -2556,6 +2589,20 @@ export function createDevBackendHandler({
               runtime?.universalImportPort ?? universalImportPort,
             );
       } else if (
+        /^\/v2\/trips\/[^/]+\/sources\/[^/]+\/representations\/[^/]+\/pdf-v4\/[^/]+\/(?:stage|dispatch|observe-retained)$/.test(
+          url.pathname,
+        )
+      ) {
+        route =
+          "/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await sourcePdfV4PreparationBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          sourcePdfV4PreparationPort,
+        );
+      } else if (
         /^\/v2\/trips\/[^/]+\/sources\/pdf-v2\/(?:verify-original|register-derived|seal)$/.test(
           url.pathname,
         )
@@ -2588,7 +2635,7 @@ export function createDevBackendHandler({
         )
       ) {
         route = "/v2/trips/:tripId/people/:resource";
-        const actor = await authenticate(request, gateway);
+        const actor = await authenticateNormalAccount(request, gateway);
         response = await tripPersonCloudCreateBoundary(
           request,
           actor.id,
@@ -2605,7 +2652,7 @@ export function createDevBackendHandler({
         );
       } else if (url.pathname === "/v2/trips" && request.method === "GET") {
         route = "/v2/trips:list";
-        const actor = await authenticate(request, gateway);
+        const actor = await authenticateNormalAccount(request, gateway);
         response = await tripDiscoveryBoundary(
           request,
           actor.id,
@@ -2618,7 +2665,7 @@ export function createDevBackendHandler({
         /^\/v2\/trip-metadata-operations\/[^/]+$/.test(url.pathname)
       ) {
         route = "/v2/trips/:tripId/metadata";
-        const actor = await authenticate(request, gateway);
+        const actor = await authenticateNormalAccount(request, gateway);
         response = ["2", "3"].includes(
           request.headers.get("OTR-Trip-Metadata-Version") ?? "",
         )
@@ -2629,7 +2676,7 @@ export function createDevBackendHandler({
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)
       ) {
         route = "/v2/trips:create";
-        const actor = await authenticate(request, gateway);
+        const actor = await authenticateNormalAccount(request, gateway);
         response = await tripCreateBoundary(request, actor.id, tripCreatePort);
       } else if (/^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original$/.test(url.pathname)) {
         route = "/v2/trips/:tripId/documents/:documentId/original";
@@ -2653,7 +2700,7 @@ export function createDevBackendHandler({
         );
       } else if (/^\/v2\/trips\/[^/]+\/core\//.test(url.pathname)) {
         route = "/v2/trips/:tripId/core/:resource";
-        const actor = await authenticate(request, gateway);
+        const actor = await authenticateNormalAccount(request, gateway);
         response = await coreHttpBoundary(
           request,
           actor.id,

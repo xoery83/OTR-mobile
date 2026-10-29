@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_PASS",
+  "runtime": "UNBOUND_DEFAULT_CLOSED",
+  "baseCommit": "ee307598",
+  "scope": "PDF ORIGINAL versus sealed DERIVED text provenance in existing manifest/result/Task and Native recovery",
+  "tests": {
+    "suites": 6,
+    "passed": 84,
+    "directedRed": [
+      "missing/wrong Task transform accepted (2 failures)",
+      "PDF transform with missing provenance accepted (1 failure)"
+    ],
+    "regression": "Existing ordinary TEXT/null transform unchanged; canonical material and model input unchanged"
+  },
+  "review": "Independent NO_BLOCKER after provenance downgrade repair",
+  "permissions": "No SQL/Schema/RLS/GRANT/Role/Secret/Provider/Runtime activation",
+  "remaining": "Owning SQL must qualify the retained original, sealed derivative, current Actor/Trip and exact evidence; no actual PDF Source/Task/Save claim"
+}

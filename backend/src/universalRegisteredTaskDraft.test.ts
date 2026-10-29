@@ -85,14 +85,51 @@ it("rejects changed Source/representation bytes before creating Task or Provider
     buildUniversalRegisteredTaskDraft(f.binding, f.manifest, f.selection),
   ).rejects.toThrow("SOURCE_BINDING");
 });
-it('accepts owning PostgreSQL offset timestamps without losing fractional evidence or changing Task identity', async () => {
-  const f=fixture(2);
-  f.binding.createdAt='2026-10-25T08:55:01.123456Z';
-  const expected=await buildUniversalRegisteredTaskDraft(f.binding,f.manifest,f.selection);
-  for(const stamp of ['2026-10-25T08:55:01.123456+00:00','2026-10-25T21:55:01.123456+13:00']) {
-    const actual=await buildUniversalRegisteredTaskDraft({...f.binding,createdAt:stamp},f.manifest,f.selection);
+it("accepts owning PostgreSQL offset timestamps without losing fractional evidence or changing Task identity", async () => {
+  const f = fixture(2);
+  f.binding.createdAt = "2026-10-25T08:55:01.123456Z";
+  const expected = await buildUniversalRegisteredTaskDraft(
+    f.binding,
+    f.manifest,
+    f.selection,
+  );
+  for (const stamp of [
+    "2026-10-25T08:55:01.123456+00:00",
+    "2026-10-25T21:55:01.123456+13:00",
+  ]) {
+    const actual = await buildUniversalRegisteredTaskDraft(
+      { ...f.binding, createdAt: stamp },
+      f.manifest,
+      f.selection,
+    );
     expect(actual).toEqual(expected);
-    expect(actual.task.created_at).toBe('2026-10-25T08:55:01.123456Z');
+    expect(actual.task.created_at).toBe("2026-10-25T08:55:01.123456Z");
     expect(actual.attempt.updated_at).toBe(actual.task.created_at);
   }
+});
+it("keeps a qualified PDF derivative transform in the existing Task pin without replacing its original identity", async () => {
+  const f = fixture();
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  Object.assign(f.manifest.representations[0], {
+    pdfSource: {
+      original: {
+        representationId: randomUUID(),
+        sha256: "d".repeat(64),
+        byteCount: 1700,
+      },
+      sealSha256: "e".repeat(64),
+      pageMapSha256: "f".repeat(64),
+      transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+    },
+  });
+  const draft = await buildUniversalRegisteredTaskDraft(
+    f.binding,
+    f.manifest,
+    f.selection,
+  );
+  expect(draft.task.input_pins[0]).toMatchObject({
+    representation_id: f.binding.inputs[0].representation_id,
+    payload_sha256: f.binding.inputs[0].payload_sha256,
+    transform_sha256: PDF_V2_OPTIONS_SHA,
+  });
 });

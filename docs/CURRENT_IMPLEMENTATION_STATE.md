@@ -1,4 +1,14 @@
-# Current implementation state — 29 October 2026
+# General Account Cloud Sync — Native P0, 30 October 2026
+
+Main-compatible code6aa553d3 passed Auth and Native composition NO_BLOCKER (independent8s234PASS), joined18s439PASS/7conditionalPG skips/types/UIguard/lint/server+capture builds, then actual primary7s124PASS/1conditionalPG skip/types/capture build. Original six dirty/index/untracked file bytes verified retained at serial fast-forward. Final normal Push pending final identity check. New signup and Mac unlock remain genuine user-interaction blockers; General Account full PASS is not claimed.
+
+Native fixed2db8a651/38bd8cb3: exact normal Auth qualification, DEV MANUAL-only existing Coordinator/timer without account allowlist, Profile mount/DI/preflight and explicit legacy-person consent recovery included. Original Google Trip/two P1 Create/Edit/readback/cold PASS preserved; phone108 general-only JS installed in place with same Session/appDBUUID and no old QA/consent descriptor. Its cold UI shows original latest P1 fields/Everyone/noPending. New normal UI Synthetic Trip23afbfa3/op ed03e29a is independently accepted once, same Google linked Owner/Person69cb88ac, no business bypass. This is existing-Google proof, not fresh signup PASS.
+
+DEV exact software81ad4fde/76c7846d and existing scope functionOID66180 MD50f3b543b installed/independently verified. Other four functions/policies/Source/Provider unchanged, no new Schema/RLS/GRANT/Role; old094/a055 retained. OriginalEnv/Host/sixmounts/fourfiles/health200/auth401 exact. Host/SQL returned. Auth+Native/SQL independent NO_BLOCKER;233 directed/101 independent/24 isolatedPG/55 actual-curated checks PASS. See ops/general-account-cloud-sync-20261029/DEV_NORMAL_ACCOUNT_ROLLOUT.json.
+
+Fresh Google signup and Hosted Email OTP require an unused legitimate identity/mailbox and normal Owner interaction; no account reset, fabricated session or local-Mailpit-as-Hosted claim. Mac locked during UI test; do not claim new Trip cold or full General E2E until resumed. Existing QA smoke, representative normal P2–P6 and negative/recovery evidence remain. Enrichment/AI Scan paused, no paid calls. Latest37c5 Source PDF route retained; this integration excludes unmerged Enrichment and Root private candidates. Legacy private traveler recovery requires exact explicit consent; attempted/UNKNOWN identities immutable.
+
+# Current implementation state — 30 October 2026
 
 ## Active delivery
 
@@ -72,7 +82,18 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Source sustained scope and Provider
   budget/expiry have not been enlarged. Fresh-check actual gates before mutations;
   no Root temporary admin or Provider window is open.
-- Last completed Import main push: `11c7feaa`; original primary six dirty entries,
+- Latest Import software integration: main/origin/remote
+  `c6b15be8baa7c78de827a77b8b6ceb4a71479018`, actual-primary15 suites228 tests,
+  typecheck and capture bundle PASS. PDF software remains optional/default closed;
+  no DEV deployment/SQL/authority activation occurred. Original six dirty entries,
+  full tracked/index/untracked bytes exact. `PDF_SOFTWARE_MAIN_INTEGRATION.json`.
+- Previous Import integration `e13a95076ca08722464e7dd0ca5e210aa74b9ee1`
+  contains the actual expiry/cold receipt. Actual-primary six suites262 tests and
+  typecheck PASS; original six dirty entries/full diff/untracked bytes exact.
+  Missing Google Sign-In16.1.5 was restored only from the locked tarball after
+  SHA512 verification, without dependency/lockfile changes. Auth owns main Writer
+  again. New PDF software candidates after this commit remain private/local only.
+- Earlier completed Import main push: `11c7feaa`; original primary six dirty entries,
   full tracked/index diff and untracked bytes were preserved. Auth subsequently
   integrated its local-only Source/journal work through main `72331060`.
   Root privately joined that main at `c66d968b`. Read implementation/evidence
@@ -100,7 +121,29 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    objects and cannot be borrowed. Global PDF gate remains closed; normal scoped
    binding, legitimate ORIGINAL/DERIVED identities, exact evidence qualification
    and isolated Host execution need a precise reviewed owning packet. No evidence
-   currently justifies new Schema/RLS/GRANT.
+   currently justifies new Schema/RLS/GRANT. Existing V4 preparation now has a
+   default-closed HTTP candidate: normal parent Auth/Trip, owning generation,
+   Stage/dispatch/causal-read delegation, no internal capabilities in responses.
+   Eight suites121 tests/types/lint/bundle and independent NO_BLOCKER passed;
+   server/serverCapture do not provide its optional port. See
+   `PDF_V4_PREPARATION_HTTP_LOCAL_PASS.json`. Explicit Native transport also passed
+   six suites77 tests/types/lint and independent Review, reusing normal Auth,
+   immutable Capture custody and the original read quota; no caller is wired.
+   `PDF_V4_NATIVE_TRANSPORT_LOCAL_PASS.json`. The same Original Source adapter also
+   has an explicit default-closed PDF metadata option: only PENDING, never VERIFIED;
+   same RPC/receipt verifier, no bytes/IO/Task authority. Six suites64 tests/types/
+   lint and independent Review passed. `PDF_PENDING_ORIGINAL_LOCAL_PASS.json`.
+   Original/derived provenance is now an additive default-closed software bridge:
+   exact PDF original identity/hash/size stays separate from sealed text material;
+   Task transform must match and cannot lose provenance on readback. Six suites84
+   tests, types/lint and independent NO_BLOCKER passed after directed RED→GREEN.
+   `PDF_SOURCE_PROVENANCE_LOCAL_PASS.json` (ef00fc8d). The owning lifecycle snapshot
+   also reuses the existing V2 seal proof for exact DERIVED text: five suites75
+   tests/types/lint and independent NO_BLOCKER, with ordinary ORIGINAL TEXT kept.
+   `PDF_LIFECYCLE_SNAPSHOT_LOCAL_PASS.json`. Actual eligibility remains closed.
+   A Source-gateway catalog-only diagnostic was rejected by auto-review as a new
+   credential use; no execution/bypass occurred, and exact read-only approval is
+   pending while other local work continues. No actual PDF Source/Task/Save PASS.
 3. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN
@@ -127,13 +170,18 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
-30 October Auth source candidate: trusted getUser classification now preserves
+30 October: Auth867 classification and normal Profile/Trip/Metadata/Person/Core
+consumers are integrated through Native6aa/mainf3a9a21d. Classifier/Gateway retain
 strict false→NORMAL_ACCOUNT / true→ANONYMOUS / missing or invalid→UNKNOWN; normal
-predicate denies unknown/id-only. Gateway delta is import+return only. No global
-anonymous ban, Session/Principal/cache change or Source/Provider gate modification.
-Direct/independent2 suites38 PASS/NO_BLOCKER, types/lint/backend build PASS. Native
-owns normal Trip/Core route consumption and precise SQL candidate; not deployed or
-real-DEV-qualified yet. NORMAL_ACCOUNT_QUALIFICATION_PORT.json pins interface.
+predicate denies unknown/id-only. No global anonymous ban, Session/cache or
+Source/Provider gate change. Auth2s38 independent PASS; Native/main integration
+and conditional skips are recorded in MAIN_INTEGRATION_REVIEW.json. DEV81ad is a
+separate curated runtime. Existing Google general-build108 proved the strict Auth
+branch and one new synthetic Trip/linked owner; it still has an old policy row,
+so this is not fresh Google/Email no-policy signup proof. Legitimate signup and
+newTrip native cold wait for Owner interaction/unlock, not a credential transfer.
+NORMAL_ACCOUNT_QUALIFICATION_PORT.json records the earlier source-only review.
+
 
 Native finite Google receipt source9a14be10 now reports actual own-profile/Trip,
 explicit old Person→unlinked, two original P1 Creates and normal Edit/cold PASS;

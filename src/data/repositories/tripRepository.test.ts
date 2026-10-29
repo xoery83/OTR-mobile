@@ -74,7 +74,15 @@ function local(path = ":memory:", initialize = true, clock?: () => string) {
       return row as T | null;
     },
     async getAllAsync<T>(query: string, ...args: unknown[]) {
-      return sql.prepare(query).all(...(args as never[])) as T[];
+      const rows = sql.prepare(query).all(...(args as never[])) as T[];
+      if (abaRead && query.includes("FROM local_trip_containers")) {
+        abaRead = false;
+        account = accountB;
+        advanceAccountGeneration();
+        account = accountA;
+        advanceAccountGeneration();
+      }
+      return rows;
     },
     async runAsync(query: string, ...args: unknown[]) {
       if (failQueue && query.startsWith("INSERT INTO sync_operations")) {
@@ -3522,4 +3530,124 @@ it("keeps structured Trip pending until current independent readback and authore
   expect((await f.repo.listTrips()).find((t) => t.id === tripId)?.syncStatus).toBe(
     "SYNCED",
   );
+});
+
+it("explicit rollout enrolls only never-dispatched V1 Trip, preserving Trip/operation/Item and destination identities", async () => {
+  const f = local();
+  const create = {
+    ...input(),
+    destination: null,
+    destinations: [
+      { destinationId: randomUUID(), displayLabel: "Nelson", source: "MANUAL" as const },
+    ],
+  };
+  await f.repo.createTrip(create);
+  const item = await f.repo.addItem(create.tripId, {
+    operationId: randomUUID(),
+    itemId: randomUUID(),
+    family: "P1",
+    title: "Nelson Visit",
+    startDate: "2027-01-15",
+  });
+  const originalIntents = f.sql.prepare("SELECT * FROM trip_core_pending_intents").all();
+  expect(await f.repo.enrollUnsentStructuredTrips(accountA, "2026-10-12T00:00:00Z")).toBe(
+    1,
+  );
+  const op = f.sql
+    .prepare("SELECT * FROM sync_operations WHERE id=?")
+    .get(create.operationId)!;
+  expect(JSON.parse(op.payload_json as string)).toMatchObject({
+    formatVersion: 2,
+    tripId: create.tripId,
+    name: "Local trip",
+    destinations: create.destinations,
+  });
+  expect(op).toMatchObject({
+    id: create.operationId,
+    idempotency_key: create.operationId,
+    status: "DEPENDENCY_BLOCKED",
+    attempt_count: 0,
+  });
+  expect(f.sql.prepare("SELECT * FROM trip_core_pending_intents").all()).toEqual(
+    originalIntents,
+  );
+  expect((await f.repo.getTrip(create.tripId))?.syncFormatVersion).toBe(2);
+  expect(await f.repo.enrollUnsentStructuredTrips(accountA, "2026-10-12T00:00:00Z")).toBe(
+    0,
+  );
+  expect(item).toBeDefined();
+});
+it.each(["attempted", "unknown", "accepted", "cutoff", "edited"])(
+  "rollout preserves %s historical requests byte-for-byte",
+  async (kind) => {
+    const f = local();
+    const create = { ...input(), destination: null };
+    await f.repo.createTrip(create);
+    if (kind === "attempted")
+      f.sql.prepare("UPDATE sync_operations SET attempt_count=1").run();
+    if (kind === "unknown")
+      f.sql.prepare("UPDATE sync_operations SET status='PROCESSING'").run();
+    if (kind === "accepted")
+      f.sql.prepare("UPDATE local_trip_containers SET accepted_at=?").run(stamp);
+    if (kind === "edited")
+      f.sql.prepare("UPDATE local_trip_containers SET name='changed'").run();
+    const before = f.sql.prepare("SELECT * FROM sync_operations").all();
+    expect(
+      await f.repo.enrollUnsentStructuredTrips(
+        accountA,
+        kind === "cutoff" ? "2026-10-14T00:00:00Z" : "2026-10-12T00:00:00Z",
+      ),
+    ).toBe(0);
+    expect(f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
+  },
+);
+it("rollout rejects another Account and rolls back a same-ID account generation change", async () => {
+  const f = local();
+  const create = { ...input(), destination: null };
+  await f.repo.createTrip(create);
+  const before = f.sql.prepare("SELECT * FROM sync_operations").all();
+  f.switchTo(accountB);
+  await expect(
+    f.repo.enrollUnsentStructuredTrips(accountA, "2026-10-12T00:00:00Z"),
+  ).rejects.toThrow("TRIP_CREATE_ACCOUNT_MISMATCH");
+  f.switchTo(accountA);
+  f.abaNextRead();
+  await expect(
+    f.repo.enrollUnsentStructuredTrips(accountA, "2026-10-12T00:00:00Z"),
+  ).rejects.toThrow("Account changed");
+  expect(f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
+});
+
+it.each(["{", JSON.stringify({ unknown: true })])(
+  "a malformed retained rollout row %s cannot block a valid Trip",
+  async (raw) => {
+    const f = local();
+    const bad = { ...input(), destination: null },
+      good = { ...input(), destination: null };
+    await f.repo.createTrip(bad);
+    await f.repo.createTrip(good);
+    f.sql
+      .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+      .run(raw, bad.operationId);
+    expect(
+      await f.repo.enrollUnsentStructuredTrips(accountA, "2026-10-12T00:00:00Z"),
+    ).toBe(1);
+    expect(
+      f.sql
+        .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+        .get(bad.operationId)?.payload_json,
+    ).toBe(raw);
+    expect((await f.repo.getTrip(good.tripId))?.syncFormatVersion).toBe(2);
+  },
+);
+it("does not enroll an operation with any previous claim marker", async () => {
+  const f = local();
+  const create = { ...input(), destination: null };
+  await f.repo.createTrip(create);
+  f.sql.prepare("UPDATE sync_operations SET last_attempt_at=?").run(stamp);
+  const before = f.sql.prepare("SELECT * FROM sync_operations").all();
+  expect(await f.repo.enrollUnsentStructuredTrips(accountA, "2026-10-12T00:00:00Z")).toBe(
+    0,
+  );
+  expect(f.sql.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
 });

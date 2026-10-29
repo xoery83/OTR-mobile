@@ -1,0 +1,121 @@
+{
+  "status": "CANDIDATE_NOT_INSTALLED",
+  "functionsBefore": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "82eb172c0e6cab2a44995e36a5c3087e",
+      "name": "assert_trip_core_v2_aggregate",
+      "oid": "65418",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "ef17d1618d87006e8379164244a7645f",
+      "name": "trip_core_finite_read_state_guard",
+      "oid": "65713",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "3c58afd4336449f895f03dd141eaab32",
+      "name": "trip_core_guard_write",
+      "oid": "65263",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "d20961b9f9ce6da6f6991b81cd0e2bf5",
+      "name": "trip_sustained_core_capabilities",
+      "oid": "66181",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "8b7e35a4e6f8512f1aa90c5cb98f9ed7",
+      "name": "trip_sustained_dev_scope_allowed",
+      "oid": "66180",
+      "owner": "16388"
+    }
+  ],
+  "functionsAfter": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "82eb172c0e6cab2a44995e36a5c3087e",
+      "name": "assert_trip_core_v2_aggregate",
+      "oid": "65418",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "ef17d1618d87006e8379164244a7645f",
+      "name": "trip_core_finite_read_state_guard",
+      "oid": "65713",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "3c58afd4336449f895f03dd141eaab32",
+      "name": "trip_core_guard_write",
+      "oid": "65263",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "d20961b9f9ce6da6f6991b81cd0e2bf5",
+      "name": "trip_sustained_core_capabilities",
+      "oid": "66181",
+      "owner": "16388"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "0f3b543bab2431ee35c519ad8ce01ea9",
+      "name": "trip_sustained_dev_scope_allowed",
+      "oid": "66180",
+      "owner": "16388"
+    }
+  ],
+  "receiptBaseline": {
+    "manualCore": 63,
+    "tripCreates": 12
+  },
+  "sourceAndAllPolicies": "UNCHANGED_WITNESSES",
+  "ownerAuthorization": "General Account Cloud Sync Enablement 2026-10-29",
+  "newSchemaRlsGrantRole": 0,
+  "rollback": "Exact restore only before any new Manual/Core or Trip acceptance; otherwise atomically refuse without deleting data or rewriting receipts. Stop normal writes and prepare reviewed forward recovery.",
+  "sha256": {
+    "before.sql": "aef12ec8ce0364c95e0192a5323e96a4c04800f4933db79baa544b193ce9896e",
+    "install.sql": "ecf4a8beb36044d62e5481abd1822b3c9dad9f043281cb37aee26b1beb051d5f",
+    "after.sql": "b60851799d70f258ae0f6c509781032e874e61e996a27f014b9c5d6c2926df45",
+    "rollback.sql": "7042bfd210b9dd10b7ef786036b9b4d62626acfd3c3a4feb290f31eed44c76c2"
+  }
+}

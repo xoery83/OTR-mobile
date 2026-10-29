@@ -96,3 +96,80 @@ it("rejects binary custody bytes which do not match the owning hash", async () =
 it("ordinary startup composition stays CLOSED without owning provisioning", async () => {
   expect(await createUniversalBackendRuntime()).toEqual({ status: "CLOSED" });
 });
+
+it("preserves separately pinned PDF original metadata across the same owning two-read check", async () => {
+  const f = fixture();
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  const pdfSource = {
+    original: { representationId: randomUUID(), sha256: "c".repeat(64), byteCount: 1700 },
+    sealSha256: "d".repeat(64),
+    pageMapSha256: "e".repeat(64),
+    transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+  };
+  Object.assign(f.r, { pdfSource });
+  Object.assign(f.task.input_pins[0], { transform_sha256: PDF_V2_OPTIONS_SHA });
+  const result = await f.read(f.task);
+  expect(result.representations[0]).toMatchObject({
+    originalSha256: f.r.sha256,
+    pdfSource,
+  });
+  expect(f.readBinary).not.toHaveBeenCalled();
+});
+it("PDF original metadata drift between snapshots refuses material", async () => {
+  const f = fixture();
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  const meta = {
+    original: { representationId: randomUUID(), sha256: "c".repeat(64), byteCount: 1700 },
+    sealSha256: "d".repeat(64),
+    pageMapSha256: "e".repeat(64),
+    transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+  };
+  Object.assign(f.r, { pdfSource: meta });
+  Object.assign(f.task.input_pins[0], { transform_sha256: PDF_V2_OPTIONS_SHA });
+  let reads = 0;
+  f.query.mockImplementation(async (sql) => {
+    if (!sql.startsWith("SELECT")) return { rows: [] };
+    if (++reads === 2) meta.original.sha256 = "f".repeat(64);
+    return { rows: [{ manifest: structuredClone(f.manifest) }] };
+  });
+  await expect(f.read(f.task)).rejects.toThrow("UNIVERSAL_SOURCE_CHANGED");
+});
+
+it.each([
+  "missing-transform",
+  "wrong-transform",
+  "same-parent",
+  "wrong-profile",
+  "wrong-media",
+])("rejects PDF %s before reading material", async (failure) => {
+  const f = fixture();
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  const pdfSource = {
+    original: { representationId: randomUUID(), sha256: "c".repeat(64), byteCount: 1700 },
+    sealSha256: "d".repeat(64),
+    pageMapSha256: "e".repeat(64),
+    transformOptionsSha256: PDF_V2_OPTIONS_SHA,
+  };
+  Object.assign(f.r, { pdfSource });
+  Object.assign(f.task.input_pins[0], {
+    transform_sha256:
+      failure === "missing-transform"
+        ? null
+        : failure === "wrong-transform"
+          ? "a".repeat(64)
+          : PDF_V2_OPTIONS_SHA,
+  });
+  if (failure === "same-parent")
+    pdfSource.original.representationId = f.r.representationId;
+  if (failure === "wrong-profile") pdfSource.transformOptionsSha256 = "a".repeat(64);
+  if (failure === "wrong-media") f.r.mime = "text/html";
+  await expect(f.read(f.task)).rejects.toThrow("UNIVERSAL_SOURCE_MATERIAL_INVALID");
+  expect(f.readBinary).not.toHaveBeenCalled();
+});
+
+it("does not let a pinned PDF derivative lose its original provenance", async () => {
+  const f = fixture();
+  const { PDF_V2_OPTIONS_SHA } = await import("./sourcePdfV2Contracts");
+  Object.assign(f.task.input_pins[0], { transform_sha256: PDF_V2_OPTIONS_SHA });
+  await expect(f.read(f.task)).rejects.toThrow("UNIVERSAL_SOURCE_MATERIAL_INVALID");
+});

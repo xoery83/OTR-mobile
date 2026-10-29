@@ -116,3 +116,67 @@ it.each(["rejected", "invalid UUID"])("does not authenticate %s user", async (mo
   });
   expect(await gateway.validateAccessToken("unit-token")).toBeNull();
 });
+
+it.each(["ANONYMOUS", "UNKNOWN", undefined] as const)(
+  "rejects non-normal class %s before any normal business port",
+  async (accountClass) => {
+    const { createDevBackendHandler, authenticateNormalAccount } = await import("./app");
+    const id = randomUUID();
+    const gateway = {
+      validateAccessToken: vi.fn(async () => ({ id, accountClass })),
+    } as unknown as import("./app").DevBackendGateway;
+    const handle = createDevBackendHandler({ gateway });
+    const trip = randomUUID(),
+      op = randomUUID();
+    for (const path of [
+      "/v1/account/profile/bootstrap",
+      "/v2/trips",
+      `/v2/trips/${trip}/people`,
+      `/v2/trips/${trip}/person-create-operations/${op}`,
+      `/v2/trips/${trip}/metadata`,
+      `/v2/trip-metadata-operations/${op}`,
+      `/v2/trip-create-operations/${op}`,
+      `/v2/trips/${trip}/core/capabilities`,
+    ]) {
+      const response = await handle(
+        new Request("https://dev.invalid" + path, {
+          headers: { Authorization: "Bearer verified-token" },
+        }),
+      );
+      expect(response.status, path).toBe(403);
+      expect(await response.json()).toMatchObject({
+        error: { code: "NORMAL_ACCOUNT_REQUIRED" },
+      });
+    }
+    const mutation = vi.fn();
+    const writer = createDevBackendHandler({
+      gateway,
+      tripCreatePort: { create: mutation, receipt: mutation },
+    });
+    for (const path of ["/v2/trips", `/v2/trips/${trip}/core/commands`]) {
+      const response = await writer(
+        new Request("https://dev.invalid" + path, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer verified-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ accountClass: "NORMAL_ACCOUNT", actorAccountId: id }),
+        }),
+      );
+      expect(response.status, path).toBe(403);
+      expect(await response.json()).toMatchObject({
+        error: { code: "NORMAL_ACCOUNT_REQUIRED" },
+      });
+    }
+    expect(mutation).not.toHaveBeenCalled();
+    await expect(
+      authenticateNormalAccount(
+        new Request("https://dev.invalid", {
+          headers: { Authorization: "Bearer verified-token" },
+        }),
+        gateway,
+      ),
+    ).rejects.toThrow();
+  },
+);

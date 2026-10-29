@@ -1,0 +1,36 @@
+{
+  "status": "GENERAL_ACCOUNT_ISOLATED_PG_PASS",
+  "checks": [
+    "existing Source Review early branch preserved",
+    "candidate installs dormant with no active gate",
+    "normal V2 Create accepts future Trip/op without exact-request gate",
+    "exact replay receipt immutable",
+    "exact install passes five hash/ACL pins with local-only identity mapping",
+    "repeat install is refused",
+    "Account 38e normal Create receipt and all P1/P2-P6 selectors PASS",
+    "Account 38e DETAILS remains closed without retained Manual Flight proof",
+    "Account 38e actual Person Create/replay PASS",
+    "Account 38e foreign Trip/unlisted/disabled deny",
+    "Account 4eb normal Create receipt and all P1/P2-P6 selectors PASS",
+    "Account 4eb DETAILS remains closed without retained Manual Flight proof",
+    "Account 4eb actual Person Create/replay PASS",
+    "Account 4eb foreign Trip/unlisted/disabled deny",
+    "General exact five function/ACL/policy CAS install passes",
+    "General repeat install refuses",
+    "General pre-acceptance rollback restores function/OID/ACL exactly",
+    "Unlisted formal Account has no policy row",
+    "Unlisted normal CreateTrip real command and same-op replay PASS",
+    "Anonymous and missing Auth refuse actual Trip owning command",
+    "All six existing family selectors retain own normal Trip; foreign Creator/Trip and missing P2 proof refuse",
+    "Normal Person owning command/unlinked identity and replay PASS without manual policy",
+    "Post-acceptance rollback atomically refuses and retains facts and accepted capability",
+    "Explicit disable/revoke deny remains; policy/Source exact witnesses unchanged"
+  ],
+  "fixtureReceiptWitness": {
+    "tripCreates": 4,
+    "manualCore": 0
+  },
+  "network": "none",
+  "devTouched": false,
+  "harnessSha256": "dde6ff3c800ad56b390c2ee1d5bbdb8bbb82bea21526cc406c5aa9884fced060"
+}

@@ -123,6 +123,7 @@ export async function verifySourceAcquisitionResult(
   },
   r: Record<string, Json>,
   hash: ImportHash,
+  expectedRemoteState: "NOT_APPLICABLE" | "PENDING" = "NOT_APPLICABLE",
 ) {
   if (
     r.operation_id !== q.operation_id ||
@@ -133,7 +134,9 @@ export async function verifySourceAcquisitionResult(
     r.command !== "ACQUIRE_SOURCE" ||
     r.outcome !== "APPLIED" ||
     r.result_material_revision !== 1 ||
-    r.result_remote_state !== "NOT_APPLICABLE" ||
+    r.result_remote_state !== expectedRemoteState ||
+    r.error_code !== null ||
+    r.result_verified_at !== null ||
     r.result_retention_state !== "RETAINED" ||
     r.result_sha256 !==
       (await importDigest(

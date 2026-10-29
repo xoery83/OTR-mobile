@@ -4,6 +4,17 @@ const uuid = z.uuid(),
   sha = z.string().regex(/^[a-f0-9]{64}$/);
 const text = z.string().max(65536),
   token = z.string().min(1).max(2048);
+// Owning sealed-PDF provenance only; metadata is not a custody or Admission proof.
+export const universalPdfSourceProvenanceSchema = z.strictObject({
+  original: z.strictObject({
+    representationId: uuid,
+    sha256: sha,
+    byteCount: z.number().int().positive().max(4194304),
+  }),
+  sealSha256: sha,
+  pageMapSha256: sha,
+  transformOptionsSha256: sha,
+});
 // Observation of the existing owning Task, never a new Activity or Admission authority.
 export const universalTaskActivitySchema = z.strictObject({
   state: z.enum([
@@ -139,6 +150,7 @@ export const universalResultSchema = z
           revision: z.number().int().positive(),
           mime: token,
           originalSha256: sha,
+          pdfSource: universalPdfSourceProvenanceSchema.optional(),
           submittedSha256: sha.nullable(),
           status: token,
         }),

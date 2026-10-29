@@ -107,7 +107,7 @@ it("mounts the route behind the existing bearer-token authentication boundary", 
     storage = port(input);
   const gateway = {
     validateAccessToken: vi.fn(async (token: string) =>
-      token === "valid" ? { id: actor } : null,
+      token === "valid" ? { id: actor, accountClass: "NORMAL_ACCOUNT" as const } : null,
     ),
   } as unknown as DevBackendGateway;
   const handle = createDevBackendHandler({ gateway, tripCreatePort: storage });

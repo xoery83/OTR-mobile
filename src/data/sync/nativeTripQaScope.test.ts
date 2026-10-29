@@ -10,6 +10,7 @@ import {
   getNativeTripQaQueueActivity,
   nativeTripAuthoredCloudTravelers,
   readNativeTripQaDiagnostic,
+  isGeneralAccountCloudSyncEnabled,
 } from "./nativeTripQaScope";
 
 const a = "10000000-0000-4000-8000-000000000001";
@@ -24,6 +25,9 @@ const state = vi.hoisted(() => ({
   editFactory: vi.fn(),
   normal: vi.fn(),
   normalFactory: vi.fn(),
+  enroll: vi.fn(),
+  confirm: vi.fn(),
+  principalKind: "ACCOUNT",
   session: vi.fn(),
   token: vi.fn(),
   activity: vi.fn(),
@@ -34,6 +38,10 @@ vi.mock("./ledgerOperationalSync", () => ({
 }));
 vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
+  readCommittedLocalPrincipal: async () => ({
+    kind: state.principalKind,
+    accountId: state.account,
+  }),
   readLocalSession: state.session,
 }));
 vi.mock("../auth/sessionAccessToken", () => ({
@@ -48,8 +56,14 @@ vi.mock("./tripCreateCoordinator", () => ({
 vi.mock("./tripMetadataCoordinator", () => ({
   createNativeTripMetadataSyncRunner: state.editFactory,
 }));
+vi.mock("../repositories/tripRepository", () => ({
+  readLocalTripRepository: async () => ({ enrollUnsentStructuredTrips: state.enroll }),
+}));
 vi.mock("./tripNormalCoordinator", () => ({
   createNativeNormalTripSyncRunner: state.normalFactory,
+}));
+vi.mock("../repositories/tripPersonCloudCreateRepository", () => ({
+  createTripPersonCloudCreateRepository: () => ({ confirmLocalShared: state.confirm }),
 }));
 vi.mock("../db/database", () => ({
   readInitializedDatabase: async () => state.database,
@@ -70,8 +84,10 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-23T03:01:00Z"));
   state.account = a;
+  state.principalKind = "ACCOUNT";
   state.database.getAllAsync.mockResolvedValue([]);
   state.normalFactory.mockReturnValue(state.normal);
+  state.enroll.mockResolvedValue(0);
   state.activity.mockResolvedValue({
     actionableNow: 0,
     nextActionableAt: null,
@@ -144,6 +160,50 @@ it("reports only gate and own fresh-Trip metadata without payload, token refresh
     "2026-10-23T03:00:00Z",
   ]);
   expect(state.token).not.toHaveBeenCalled();
+  expect(state.normalFactory).not.toHaveBeenCalled();
+});
+it("bounds diagnostic command reads to the current adopted Account without payloads", async () => {
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+    }),
+  );
+  state.database.getAllAsync.mockResolvedValueOnce([]).mockResolvedValueOnce([
+    {
+      id: create,
+      entity_id: trip,
+      operation_type: "CORE_V2_COMMAND",
+      status: "RETRYABLE",
+      attempt_count: 2,
+      last_error_code: "UNTRUSTED / token",
+      failure_category: "NETWORK",
+      next_attempt_at: "2026-10-23T03:02:00Z",
+      payload_json: "PRIVATE_PAYLOAD_SENTINEL",
+    },
+  ]);
+  const result = await readNativeTripQaDiagnostic();
+  expect(result.operations).toEqual([
+    {
+      operationId: create,
+      itemId: trip,
+      type: "CORE_V2_COMMAND",
+      selection: { valid: false },
+      status: "RETRYABLE",
+      attempts: 2,
+      errorCode: null,
+      failureCategory: "NETWORK",
+      nextAttemptAt: "2026-10-23T03:02:00Z",
+    },
+  ]);
+  expect(state.database.getAllAsync.mock.calls[1]).toEqual([
+    expect.stringMatching(/trip.account_id=\? .*LIMIT 12$/),
+    a,
+    "2026-10-23T03:00:00Z",
+  ]);
+  expect(JSON.stringify(result)).not.toMatch(/PRIVATE_PAYLOAD_SENTINEL|UNTRUSTED/);
   expect(state.normalFactory).not.toHaveBeenCalled();
 });
 it("does not inspect queues for an invalid scope or another active Account", async () => {
@@ -239,6 +299,7 @@ it("can retain existing local Trip views without admitting their historical queu
   expect(state.normalFactory).toHaveBeenCalledWith(
     { accountId: a, newTripsFrom: cutoff },
     expect.any(Function),
+    false,
   );
   expect(state.createFactory).not.toHaveBeenCalled();
 });
@@ -387,6 +448,7 @@ it("reuses the existing scoped lifecycle for an explicit bounded normal profile 
   expect(state.normalFactory).toHaveBeenCalledWith(
     { accountId: a, newTripsFrom: config.normal.newTripsFrom },
     expect.any(Function),
+    false,
   );
   expect(state.normal).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
   expect(state.createFactory).not.toHaveBeenCalled();
@@ -644,4 +706,209 @@ it("formal P2 uses max of existing normal cutoff and its frozen cohort without c
   expect(nativeTripQaFormalManualFlightScope(a)?.newTripsFrom).toBe(
     "2026-11-01T00:00:00.000Z",
   );
+});
+
+const b = "20000000-0000-4000-8000-000000000001";
+const c = "30000000-0000-4000-8000-000000000001";
+const ownerRollout = () => ({
+  version: 2,
+  accountId: a,
+  normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+  preserveLocalTripViews: true,
+  additionalAccounts: [
+    {
+      accountId: b,
+      recoverUnsentLegacyTrips: true,
+      normal: { newTripsFrom: "2026-10-22T03:00:00Z" },
+    },
+    {
+      accountId: c,
+      recoverUnsentLegacyTrips: true,
+      normal: { newTripsFrom: "2026-10-21T03:00:00Z" },
+    },
+  ],
+});
+it.each([b, c])(
+  "selects only the active approved Account and its own cutoff %s",
+  async (accountId) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(ownerRollout()));
+    vi.stubEnv("EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED", "true");
+    state.account = accountId;
+    state.session.mockResolvedValue({
+      accessToken: "synthetic",
+      identity: { userId: accountId },
+      expiresAt: "2026-10-24T03:00:00Z",
+    });
+    const expected = ownerRollout().additionalAccounts.find(
+      (v) => v.accountId === accountId,
+    )!;
+    expect(nativeTripQaCreateFormat(accountId)).toBe(2);
+    expect(nativeTripAuthoredCloudTravelers(accountId)).toBe(true);
+    expect(nativeTripQaFormalManualFlightScope(accountId)?.accountId).toBe(accountId);
+    await runNativeTripQaSync();
+    expect(state.enroll).toHaveBeenCalledWith(accountId, expected.normal.newTripsFrom);
+    expect(state.normalFactory).toHaveBeenCalledWith(
+      { accountId, newTripsFrom: expected.normal.newTripsFrom },
+      expect.any(Function),
+      false,
+    );
+    await getNativeTripQaQueueActivity();
+    expect(state.activity).toHaveBeenCalledWith(state.database, {
+      accountId,
+      newTripsFrom: expected.normal.newTripsFrom,
+    });
+    expect((await readNativeTripQaDiagnostic()).gate.accountMatches).toBe(true);
+  },
+);
+it("rejects duplicate rollout Account identities without dispatch", async () => {
+  const scope = ownerRollout();
+  scope.additionalAccounts[1].accountId = b;
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
+  expect(nativeTripQaCreateFormat(a)).toBeUndefined();
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(state.normalFactory).not.toHaveBeenCalled();
+});
+it("does not enable an unlisted Account or reuse another Account scope", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(ownerRollout()));
+  state.account = trip;
+  expect(nativeTripQaCreateFormat(trip)).toBeUndefined();
+  expect(nativeTripAuthoredCloudTravelers(trip)).toBe(false);
+  expect(nativeTripQaFormalManualFlightScope(trip)).toBeNull();
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(state.normalFactory).not.toHaveBeenCalled();
+});
+
+it("does not enroll retained legacy Trips without the explicit per-Account opt-in", async () => {
+  const scope = ownerRollout();
+  scope.additionalAccounts = scope.additionalAccounts.map(
+    ({ recoverUnsentLegacyTrips: _flag, ...v }) => ({
+      ...v,
+      recoverUnsentLegacyTrips: false,
+    }),
+  );
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
+  state.account = b;
+  state.session.mockResolvedValue({
+    accessToken: "synthetic",
+    identity: { userId: b },
+    expiresAt: "2026-10-24T03:00:00Z",
+  });
+  await runNativeTripQaSync();
+  expect(state.enroll).not.toHaveBeenCalled();
+  expect(state.normalFactory).toHaveBeenCalledWith(
+    { accountId: b, newTripsFrom: scope.additionalAccounts[0].normal.newTripsFrom },
+    expect.any(Function),
+    false,
+  );
+});
+
+it("passes only an explicit Data Health manual retry to the existing normal runner", async () => {
+  const scope = ownerRollout();
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
+  await runNativeTripQaSync({ manualRetry: true });
+  expect(state.normalFactory).toHaveBeenCalledWith(
+    { accountId: a, newTripsFrom: scope.normal.newTripsFrom },
+    expect.any(Function),
+    true,
+  );
+});
+
+it("only an explicit manual retry consumes this Account's exact legacy traveler confirmation", async () => {
+  const additional = "10000000-0000-4000-8000-000000000009";
+  const confirmation = {
+    tripId: trip,
+    localOperationId: create,
+    operationId: edit,
+    confirmedDisplayNameSha256: "a".repeat(64),
+  };
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+      additionalAccounts: [
+        {
+          accountId: additional,
+          normal: { newTripsFrom: "2026-10-23T03:00:00Z" },
+          confirmedLocalTravelers: [confirmation],
+        },
+      ],
+    }),
+  );
+  state.account = additional;
+  state.session.mockResolvedValue({
+    accessToken: "synthetic",
+    expiresAt: "2026-10-24T03:00:00Z",
+    identity: { userId: additional },
+  });
+  state.token.mockResolvedValue({ token: "synthetic", userId: additional });
+  await runNativeTripQaSync();
+  expect(state.confirm).not.toHaveBeenCalled();
+  state.principalKind = "GUEST";
+  await expect(runNativeTripQaSync({ manualRetry: true })).rejects.toThrow(
+    "PERSON_ACCOUNT_PRINCIPAL_REQUIRED",
+  );
+  expect(state.confirm).not.toHaveBeenCalled();
+  state.principalKind = "ACCOUNT";
+  await runNativeTripQaSync({ manualRetry: true });
+  expect(state.confirm).toHaveBeenCalledExactlyOnceWith({
+    ...confirmation,
+    dataOwnership: "CLOUD_SHARED_AUTHORED",
+  });
+  state.confirm.mockClear();
+  state.account = a;
+  state.session.mockResolvedValue({
+    accessToken: "synthetic",
+    expiresAt: "2026-10-24T03:00:00Z",
+    identity: { userId: a },
+  });
+  state.token.mockResolvedValue({ token: "synthetic", userId: a });
+  await runNativeTripQaSync({ manualRetry: true });
+  expect(state.confirm).not.toHaveBeenCalled();
+});
+
+it.each([a, trip, edit])(
+  "normal Account %s needs no QA record for Manual sync",
+  async (accountId) => {
+    vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "");
+    vi.stubEnv("EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED", "true");
+    state.account = accountId;
+    state.session.mockResolvedValue({
+      accessToken: "synthetic",
+      expiresAt: "2026-10-24T03:00:00Z",
+      identity: { userId: accountId },
+    });
+    state.token.mockResolvedValue({ token: "synthetic", userId: accountId });
+    expect(hasNativeTripQaScope()).toBe(false);
+    expect(isGeneralAccountCloudSyncEnabled()).toBe(true);
+    expect(nativeTripQaCreateFormat(accountId)).toBe(2);
+    expect(nativeTripAuthoredCloudTravelers(accountId)).toBe(true);
+    expect(nativeTripQaCreateFormat(null)).toBeUndefined();
+    expect(nativeTripAuthoredCloudTravelers(null)).toBe(false);
+    await runNativeTripQaSync();
+    expect(state.normalFactory).toHaveBeenCalledWith(
+      { accountId, newTripsFrom: "1970-01-01T00:00:00.000Z", manualOnly: true },
+      expect.any(Function),
+      false,
+    );
+    expect(state.enroll).not.toHaveBeenCalled();
+    expect(state.confirm).not.toHaveBeenCalled();
+  },
+);
+it("general DEV scope remains closed for Guest, unavailable Auth, Production or malformed QA config", async () => {
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "");
+  vi.stubEnv("EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED", "true");
+  state.principalKind = "GUEST";
+  expect(await runNativeTripQaSync()).toBeNull();
+  expect(state.normalFactory).not.toHaveBeenCalled();
+  expect(state.token).not.toHaveBeenCalled();
+  state.principalKind = "ACCOUNT";
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://production.invalid");
+  expect(isGeneralAccountCloudSyncEnabled()).toBe(false);
+  expect(await runNativeTripQaSync()).toBeNull();
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://api-dev.xoery.art");
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", "{}");
+  expect(isGeneralAccountCloudSyncEnabled()).toBe(false);
+  expect(await runNativeTripQaSync()).toBeNull();
 });

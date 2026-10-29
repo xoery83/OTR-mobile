@@ -336,3 +336,7 @@ The approved thirteen-case Updates Delta defines a relevant authorized inbox. Th
 ## CP-UX-01 Camera source — bounded local implementation (2026-10-15)
 
 The approved Camera entry uses the existing native picker, retained pre-submit tray and C3 submission lifecycle. Camera is an explicit acquisition source; it is never relabelled Files or Photos. Permission denial and cancellation retain the current draft. This addition does not add a provider, uploader, review engine or new submission outcome. Actual Camera availability and device behaviour remain separately unverified.
+
+## Normal Account DEV Cloud Sync — Owner authorization 29 October 2026
+
+Owner authorized normal registered DEV Accounts with the existing Trip/Item permissions to use Trip and P1–P6 Manual Cloud Create/Edit, automatic Queue dispatch and cold recovery without a per-account QA allowlist. Existing Auth, ACL, receipt/idempotency and environment gates remain mandatory. This does not authorize Guest Adoption, Import Source/Admission, paid AI, Qualified Flight/Booking/Ticket, or unsupported optional owning fields. Legacy private local travelers require explicit sharing confirmation; attempted/UNKNOWN intent identity is immutable. See `ops/general-account-cloud-sync-20261029` for finite evidence and rollout readiness; this scope statement is not an E2E PASS.

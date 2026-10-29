@@ -265,3 +265,36 @@ it("proposed64-read extension requires preserved72 entries and explicit matching
     )("GET", route, base),
   ).toThrow("QA_READ_BUDGET_CLOSED");
 });
+
+it("PDF causal observation POST consumes the same ledger/quota across restart; writes do not", () => {
+  const f = fixture();
+  const path =
+    "/v2/trips/10000000-0000-4000-8000-000000000001/sources/20000000-0000-4000-8000-000000000001/representations/30000000-0000-4000-8000-000000000001/pdf-v4/40000000-0000-4000-8000-000000000001/observe-retained";
+  f.reserve("POST", path, base);
+  expect(JSON.parse(f.read()!).entries[0]).toMatchObject({
+    method: "POST",
+    route: "/v2/trips/:id/sources/:id/representations/:id/pdf-v4/:id/observe-retained",
+  });
+  f.reserve("POST", path.replace("/observe-retained", "/stage"), base);
+  f.reserve("POST", path.replace("/observe-retained", "/dispatch"), base);
+  expect(f.writes()).toBe(1);
+  const restarted = createQaGetReservation(
+    () => raw,
+    () => f.store,
+  );
+  for (let n = 1; n < 72; n++) restarted("POST", path, base);
+  expect(() => restarted("POST", path, base)).toThrow("QA_READ_BUDGET_EXHAUSTED");
+  expect(f.read()).not.toMatch(/10000000|20000000|30000000|40000000/);
+});
+it("a forged PDF dispatch POST in a read ledger remains invalid", () => {
+  const f = fixture();
+  f.reserve("GET", route, base);
+  const ledger = JSON.parse(f.read()!);
+  ledger.entries[0] = {
+    ...ledger.entries[0],
+    method: "POST",
+    route: "/v2/trips/:id/sources/:id/representations/:id/pdf-v4/:id/dispatch",
+  };
+  const forged = fixture(JSON.stringify(ledger));
+  expect(() => forged.reserve("GET", route, base)).toThrow("QA_READ_BUDGET_CLOSED");
+});

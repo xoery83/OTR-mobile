@@ -1,0 +1,58 @@
+CREATE OR REPLACE FUNCTION public.trip_sustained_dev_scope_allowed(actor uuid, trip uuid, operation uuid, kind text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE principal record;policy record;r record;owner_id oid;
+BEGIN
+ IF current_user<>'postgres' OR actor IS NULL OR kind IS NULL OR kind NOT IN ('CREATE','METADATA','CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS','PERSON') THEN RETURN false;END IF;
+ IF session_user<>(CASE kind WHEN 'CREATE' THEN 'otr_trip_create_gateway' WHEN 'METADATA' THEN 'otr_trip_metadata_gateway' WHEN 'PERSON' THEN 'otr_trip_person_command_gateway' ELSE 'otr_trip_core_v2_gateway' END) THEN RETURN false;END IF;
+ SELECT oid INTO owner_id FROM pg_roles WHERE rolname='postgres';
+ SELECT * INTO principal FROM pg_roles WHERE rolname=session_user;
+ IF NOT principal.rolcanlogin OR principal.rolconnlimit<>1 OR principal.rolvaliduntil IS NOT NULL AND principal.rolvaliduntil<>'infinity'::timestamptz
+ OR principal.rolsuper OR principal.rolcreatedb OR principal.rolcreaterole OR principal.rolinherit OR principal.rolbypassrls OR principal.rolreplication
+ OR EXISTS(SELECT 1 FROM pg_shdepend WHERE refclassid='pg_authid'::regclass AND refobjid=principal.oid AND deptype='o')
+ OR EXISTS(SELECT 1 FROM pg_auth_members m WHERE (m.roleid=principal.oid OR m.member=principal.oid) AND NOT (
+ (m.member=owner_id AND m.roleid=principal.oid AND m.admin_option AND NOT m.inherit_option)
+ OR(kind='PERSON' AND m.member=owner_id AND m.roleid=principal.oid AND m.grantor=owner_id AND NOT m.admin_option AND NOT m.inherit_option AND NOT m.set_option
+ AND EXISTS(SELECT 1 FROM pg_auth_members paired WHERE paired.roleid=m.roleid AND paired.member=m.member AND paired.grantor='supabase_admin'::regrole AND paired.admin_option AND NOT paired.inherit_option AND NOT paired.set_option))
+ OR(kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS') AND m.member=principal.oid AND m.roleid='otr_trip_core_v2_writer'::regrole AND NOT m.admin_option AND NOT m.inherit_option AND m.set_option)))
+ THEN RETURN false;END IF;
+ SELECT * INTO policy FROM public.trip_sustained_dev_policy WHERE actor_account_id=actor FOR SHARE;
+ IF NOT FOUND OR NOT policy.enabled OR policy.revoked_at IS NOT NULL THEN RETURN false;END IF;
+ IF kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS') AND EXISTS(SELECT 1 FROM pg_roles WHERE rolname='otr_trip_core_v2_writer' AND (rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolbypassrls OR rolreplication)) THEN RETURN false;END IF;
+ IF trip IS NULL THEN
+  IF operation IS NULL OR kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS','PERSON') THEN RETURN false;END IF;
+  IF kind='CREATE' THEN SELECT actor_account_id,trip_id INTO r FROM public.trip_create_receipts WHERE operation_id=operation;
+  ELSE SELECT actor_account_id,trip_id INTO r FROM public.trip_metadata_update_receipts WHERE operation_id=operation;END IF;
+  IF NOT FOUND THEN RETURN true;END IF;
+  IF r.actor_account_id<>actor THEN RETURN false;END IF;trip:=r.trip_id;
+ END IF;
+ IF kind='CREATE' AND NOT EXISTS(SELECT 1 FROM public.trips WHERE id=trip) THEN
+  RETURN NOT EXISTS(SELECT 1 FROM public.trip_create_receipts WHERE operation_id=operation);
+ END IF;
+ RETURN EXISTS(SELECT 1 FROM public.trip_create_receipts receipt JOIN public.trips t ON t.id=receipt.trip_id AND t.created_by=receipt.actor_account_id
+  WHERE receipt.actor_account_id=actor AND receipt.trip_id=trip AND receipt.request_payload->'formatVersion'='2'::jsonb AND receipt.created_at>=policy.adoption_cutoff AND (kind NOT IN ('CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS') OR (actor IN ('3f7e964e-79d3-4028-a585-470e798e41ec'::uuid,'38e4c610-4a53-4bd2-976e-42de679a8f9b'::uuid,'4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4'::uuid) AND receipt.created_at>='2026-10-28T02:16:48Z'::timestamptz)))
+ AND EXISTS(SELECT 1 FROM public.journey_members WHERE trip_id=trip AND user_id=actor AND status='linked' AND role='owner') AND (kind<>'CORE_P2_DETAILS' OR (
+ EXISTS(SELECT 1 FROM public.itinerary_events event JOIN public.trip_flight_intents flight ON flight.event_id=event.id AND flight.trip_id=event.trip_id
+ WHERE event.id=nullif(current_setting('otr.core.target_item',true),'')::uuid AND event.trip_id=trip AND event.owner_account_id=actor AND event.experience_family='P2' AND flight.qualification='SPARSE' AND NOT EXISTS(SELECT 1 FROM public.trip_booking_item_links link WHERE link.trip_id=trip AND link.item_id=event.id AND link.active) AND NOT EXISTS(SELECT 1 FROM public.itinerary_transport_services service WHERE service.trip_id=trip AND service.event_id=event.id))
+ AND EXISTS(SELECT 1 FROM public.trip_core_command_receipts rr
+ WHERE rr.actor_account_id=actor AND rr.trip_id=trip AND rr.outcome IN ('APPLIED','NO_CHANGE')
+ AND rr.command_version=2 AND rr.intent_version=2 AND rr.receipt_version=2
+ AND rr.canonical_intent_text::jsonb->>'command'='CREATE_SPARSE_FLIGHT'
+ AND rr.canonical_intent_text::jsonb->>'contractVersion'='2' AND rr.canonical_intent_text::jsonb->>'intentVersion'='2'
+ AND rr.canonical_intent_text::jsonb->>'tripId'=trip::text AND rr.canonical_intent_text::jsonb->>'operationId'=rr.operation_id::text
+ AND rr.canonical_intent_text::jsonb#>>'{target,kind}'='ITEM'
+ AND rr.canonical_intent_text::jsonb#>>'{target,id}'=current_setting('otr.core.target_item',true)
+ AND rr.canonical_intent_text::jsonb#>>'{admission,mode}'='MANUAL'
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(rr.canonical_intent_text::jsonb->'baseVector') v WHERE v->>'kind'='ITEM' AND v->>'id'=current_setting('otr.core.target_item',true) AND v->'revision' IS NOT DISTINCT FROM 'null'::jsonb)
+ AND rr.canonical_intent_text::jsonb#>'{admission,sourceIntentId}' IS NOT DISTINCT FROM 'null'::jsonb
+ AND rr.canonical_intent_text::jsonb#>'{admission,policyVersion}' IS NOT DISTINCT FROM 'null'::jsonb
+ AND rr.intent_sha256=encode(sha256(convert_to('otr-trip-core-intent-v2'||E'\n'||rr.canonical_intent_text,'UTF8')),'hex')
+ AND rr.body->>'actorAccountId'=actor::text AND rr.body->>'tripId'=trip::text AND rr.body->>'operationId'=rr.operation_id::text
+ AND rr.body->>'command'='CREATE_SPARSE_FLIGHT' AND rr.body->>'intentSha256'=rr.intent_sha256 AND rr.body->>'receiptSha256'=rr.receipt_sha256 AND rr.body->>'outcome'=rr.outcome
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(rr.body#>'{result,created}') v WHERE v->>'kind'='ITEM' AND v->>'id'=current_setting('otr.core.target_item',true))
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(rr.body->'targetVector') v WHERE v->>'kind'='ITEM' AND v->>'id'=current_setting('otr.core.target_item',true) AND v->>'committedRevision'='1')
+ )));
+END $function$

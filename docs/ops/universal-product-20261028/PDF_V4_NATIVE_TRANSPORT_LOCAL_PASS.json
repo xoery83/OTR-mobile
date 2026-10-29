@@ -1,0 +1,47 @@
+{
+  "status": "LOCAL_PASS_EXPLICIT_ONLY",
+  "scope": "Native transport to existing PDF V4 preparation; no default caller or Runtime activation",
+  "files": [
+    "sourcePdfV4PreparationContracts.ts",
+    "sourcePdfV4PreparationTransport.ts",
+    "sourcePdfV4PreparationTransport.test.ts",
+    "nativeQaReadBudget.ts exact Source read-path classification",
+    "nativeQaReadBudget.test.ts"
+  ],
+  "uses": [
+    "Existing Session access token and Account/generation guard",
+    "Existing Capture custody account/hash/media/4MiB verifier",
+    "Existing request boundary and explicit QA read ledger",
+    "Stable reserved Source upload operation identity; no ID generation"
+  ],
+  "validation": {
+    "newTransportInitiallyAbsent": "RED",
+    "stageRejectionAndReadClassification": "2 directed RED to GREEN",
+    "readLedgerClassification": "1 RED to GREEN",
+    "uncertain503Classification": "1 RED to GREEN",
+    "focusedSuites": 6,
+    "tests": 77,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "negativeChecks": [
+    "Constructor never reads Session or sends",
+    "Foreign account/hash/media and missing/oversize original fail before token/network",
+    "Bytes copied before asynchronous token lookup",
+    "No automatic retry on 401/409/503/network UNKNOWN or timeout",
+    "IO-uncertain503 remains UNCONFIRMED; only explicit closed-code response is known closed",
+    "Cancellation sends nothing; late Account generation cannot apply response",
+    "Response identities/step/extra capability drift reject",
+    "POST observe consumes existing persisted quota across restart; stage/dispatch are not recorded as reads",
+    "Forged dispatch entry cannot become an accepted read ledger",
+    "Local real Backend handler roundtrip keeps owning generation server-side"
+  ],
+  "runtimeCalls": 0,
+  "providerCalls": 0,
+  "quotaLimitChanges": 0,
+  "sourceAuthorityChanges": 0,
+  "schemaRlsGrantRoleSecretChanges": 0,
+  "defaults": "No source callback/import controller/queue or server Runtime invokes the new transport",
+  "remaining": "Owning reserved upload operation, qualified PDF scope/custody, isolated parser Host and proper original/derived Task/evidence binding are still required; no PDF Source/Task/Save PASS."
+}
