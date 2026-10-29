@@ -13,3 +13,9 @@ Do not create another repository, queue, file store or Session authority.
 This is local recovery material, not server authorization. Publication markers
 still require authoritative status, and the original Guest database stays locked.
 No publisher, Native activation, SQL permission or DEV deployment is introduced.
+
+The handoff assembler consumes the actual frozen inventory and constructs v3
+without caller-supplied source/draft/hash fields. Pin adoption/target IDs before
+awaiting, check the original inventory lease around opening/writing recovery, and
+return only after readback. Failure never auto-releases a possibly protected
+source or installs a target Session; existing cancellation/status handling owns it.

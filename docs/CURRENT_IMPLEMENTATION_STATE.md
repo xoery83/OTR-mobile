@@ -204,6 +204,14 @@ GUEST_B_DURABLE_SOURCE_REVIEW.json and ADR2026-10-29-guest-durable-semantic-sour
 Fixed72db43fb integrated with actual primary3 suites130 PASS; six original dirty
 files/full diff preserved. GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json pins scope.
 
+The frozen inventory now has a single checkpoint assembler into existing journal v3;
+target IDs are pinned before awaits and source leases checked around preparation.
+No caller source override, publication, automatic unlock or Session installation.
+Direct6 new cases PASS; independent3 suites135 plus cancelled supplement1 PASS and
+NO_BLOCKER; types/lint PASS. Initial two existing 5s timeouts passed unchanged in a
+single-worker30s rerun. GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json pins local-only proof;
+no production Native caller yet.
+
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
 Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.
