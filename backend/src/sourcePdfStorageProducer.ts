@@ -303,3 +303,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
   };
 }
 export type SourcePdfStorageProducer = ReturnType<typeof createSourcePdfStorageProducer>;
+
+export type SourcePdfStorageProducerFor<
+  B extends PdfBackendBinding | SourcePdfV2UploadBinding,
+> = ReturnType<typeof createProducer<B>>;

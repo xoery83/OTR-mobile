@@ -163,3 +163,7 @@ function createPrivateStage<B extends PdfBackendBinding | SourcePdfV2UploadBindi
   };
 }
 export type SourcePdfPrivateStage = ReturnType<typeof createSourcePdfPrivateStage>;
+
+export type SourcePdfPrivateStageFor<
+  B extends PdfBackendBinding | SourcePdfV2UploadBinding,
+> = ReturnType<typeof createPrivateStage<B>>;

@@ -1,11 +1,20 @@
+import { z } from "zod";
+import {
+  sourcePdfV2UploadBindingSchema,
+  type SourcePdfV2UploadBinding,
+} from "../../src/domain/trip/sourcePdfV2Upload";
 import { authenticate, type DevBackendGateway } from "./app";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import {
   sourcePdfBackendBindingSchema,
   type PdfBackendBinding,
   type SourcePdfStorageProducer,
+  type SourcePdfStorageProducerFor,
 } from "./sourcePdfStorageProducer";
-import type { SourcePdfPrivateStage } from "./sourcePdfPrivateStage";
+import type {
+  SourcePdfPrivateStage,
+  SourcePdfPrivateStageFor,
+} from "./sourcePdfPrivateStage";
 
 export type PdfIngressIdentity = {
   tripId: string;
@@ -14,35 +23,37 @@ export type PdfIngressIdentity = {
   operationId: string;
   accountGeneration: number;
 };
-export type PdfReservedContext = {
-  binding: PdfBackendBinding;
+type PreparationBinding = PdfBackendBinding | SourcePdfV2UploadBinding;
+export type PdfReservedContext<B extends PreparationBinding = PdfBackendBinding> = {
+  binding: B;
   accountGeneration: number;
   dispatchId: string | null;
   ownerRun: string;
   ownerFence: number;
 };
 // Required owning ports, not a proposed Source v2 DTO or a substitute execution ledger.
-export type PdfPreparationAuthority = {
+export type PdfPreparationAuthority<B extends PreparationBinding = PdfBackendBinding> = {
   resolveReserved(
     actorId: string,
     identity: PdfIngressIdentity,
-  ): Promise<PdfReservedContext>;
-  assertCurrent(context: PdfReservedContext): Promise<void>;
+  ): Promise<PdfReservedContext<B>>;
+  assertCurrent(context: PdfReservedContext<B>): Promise<void>;
+  canResumeSealedStage?(context: PdfReservedContext<B>): Promise<boolean>;
   recordStage?(
-    context: PdfReservedContext,
-    sealed: Awaited<ReturnType<SourcePdfPrivateStage["seal"]>>,
+    context: PdfReservedContext<B>,
+    sealed: Awaited<ReturnType<SourcePdfPrivateStageFor<B>["seal"]>>,
   ): Promise<void>;
-  prepareRead?(context: PdfReservedContext): Promise<{
+  prepareRead?(context: PdfReservedContext<B>): Promise<{
     readId: string;
     ackEvidenceSha256: string;
     retainedEvidenceSha256?: string;
   }>;
-  consumeDispatch(context: PdfReservedContext): Promise<{ dispatchId: string } | null>;
+  consumeDispatch(context: PdfReservedContext<B>): Promise<{ dispatchId: string } | null>;
   recordObservation(
-    context: PdfReservedContext,
+    context: PdfReservedContext<B>,
     observation:
-      | Awaited<ReturnType<SourcePdfStorageProducer["upload"]>>
-      | Awaited<ReturnType<SourcePdfStorageProducer["read"]>>,
+      | Awaited<ReturnType<SourcePdfStorageProducerFor<B>["upload"]>>
+      | Awaited<ReturnType<SourcePdfStorageProducerFor<B>["read"]>>,
   ): Promise<string>;
 };
 // No caller in server.ts/app routing. Composition requires reviewed Source ports explicitly.
@@ -52,13 +63,50 @@ export function createSourcePdfBackendPreparation(
   stage: SourcePdfPrivateStage,
   provider: SourcePdfStorageProducer,
 ) {
+  return createPreparation(
+    gateway,
+    authority,
+    stage,
+    provider,
+    sourcePdfBackendBindingSchema,
+  );
+}
+export function createSourcePdfV2BackendPreparation(
+  gateway: DevBackendGateway,
+  authority: PdfPreparationAuthority<SourcePdfV2UploadBinding> &
+    Required<
+      Pick<
+        PdfPreparationAuthority<SourcePdfV2UploadBinding>,
+        "recordStage" | "prepareRead"
+      >
+    >,
+  stage: SourcePdfPrivateStageFor<SourcePdfV2UploadBinding>,
+  provider: SourcePdfStorageProducerFor<SourcePdfV2UploadBinding>,
+) {
+  if (!authority.recordStage) throw new Error("PDF_CAUSAL_STAGE_PORT_REQUIRED");
+  if (!authority.prepareRead) throw new Error("PDF_CAUSAL_READ_PORT_REQUIRED");
+  return createPreparation(
+    gateway,
+    authority,
+    stage,
+    provider,
+    sourcePdfV2UploadBindingSchema,
+  );
+}
+function createPreparation<B extends PreparationBinding>(
+  gateway: DevBackendGateway,
+  authority: PdfPreparationAuthority<B>,
+  stage: SourcePdfPrivateStageFor<B>,
+  provider: SourcePdfStorageProducerFor<B>,
+  bindingSchema: z.ZodType<B>,
+) {
   const busy = new Set<string>();
   async function context(request: Request, identity: PdfIngressIdentity) {
     const actor = await authenticate(request, gateway);
     if (!(await gateway.canReadTrip(actor.id, identity.tripId)))
       throw new Error("PDF_SCOPE_FORBIDDEN");
     const current = await authority.resolveReserved(actor.id, identity);
-    const b = sourcePdfBackendBindingSchema.parse(current.binding);
+    const b = bindingSchema.parse(current.binding);
     if (
       b.actorAccountId !== actor.id ||
       b.tripId !== identity.tripId ||
@@ -71,20 +119,21 @@ export function createSourcePdfBackendPreparation(
     )
       throw new Error("PDF_SCOPE_FORBIDDEN");
     if (
-      b.uploadVersion === 3 &&
+      (b.uploadVersion === 3 || b.uploadVersion === 4) &&
       b.providerInstanceSha256 !== provider.configurationSha256
     )
       throw new Error("PDF_PROVIDER_BINDING_CONFLICT");
     await authority.assertCurrent(current);
     return current;
   }
-  async function dispatch(current: PdfReservedContext) {
+  async function dispatch(current: PdfReservedContext<B>, signal?: AbortSignal) {
     const id = current.binding.attemptId;
     if (busy.has(id)) throw new Error("PDF_DUPLICATE_DISPATCH");
     busy.add(id);
     try {
       await authority.assertCurrent(current);
       const bytes = await stage.reopen(current.binding);
+      signal?.throwIfAborted();
       // Owning port must consume a durable grant before remote IO, including after restart.
       const grant = await authority.consumeDispatch(current);
       if (
@@ -138,7 +187,10 @@ export function createSourcePdfBackendPreparation(
         })();
         const sealed = await stage.seal(current.binding, stream);
         await authority.assertCurrent(current);
-        if (current.binding.uploadVersion === 3 && !authority.recordStage)
+        if (
+          (current.binding.uploadVersion === 3 || current.binding.uploadVersion === 4) &&
+          !authority.recordStage
+        )
           throw new Error("PDF_CAUSAL_STAGE_PORT_REQUIRED");
         await authority.recordStage?.(current, sealed);
         return { context: current, stage: sealed };
@@ -148,13 +200,18 @@ export function createSourcePdfBackendPreparation(
         reader.releaseLock();
       }
     },
-    async upload(request: Request, identity: PdfIngressIdentity) {
-      return dispatch(await context(request, identity));
+    async upload(request: Request, identity: PdfIngressIdentity, signal?: AbortSignal) {
+      const current = await context(request, identity);
+      signal?.throwIfAborted();
+      return dispatch(current, signal);
     },
     async observeRetained(request: Request, identity: PdfIngressIdentity) {
       const current = await context(request, identity);
       if (!current.dispatchId) throw new Error("DISPATCH_ID_REQUIRED");
-      if (current.binding.uploadVersion === 3 && !authority.prepareRead)
+      if (
+        (current.binding.uploadVersion === 3 || current.binding.uploadVersion === 4) &&
+        !authority.prepareRead
+      )
         throw new Error("PDF_CAUSAL_READ_PORT_REQUIRED");
       const permit = await authority.prepareRead?.(current);
       if (permit?.retainedEvidenceSha256)
