@@ -1,0 +1,97 @@
+{
+  "status": "EXISTING_EMAIL_OTP_FIRST_TRIP_P1_CREATE_EDIT_SERVER_VERIFIED_NATIVE_COLD_PASS",
+  "accountId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+  "nativeBuild": 108,
+  "auth": "Owner completed normal Hosted Email OTP UI login; no credential/session copy",
+  "baseline": {
+    "coreReceipts": 0,
+    "createReceipts": 0,
+    "normalAuth": true,
+    "ownedTrips": 0,
+    "profileExists": false,
+    "scopeMd5": "0f3b543bab2431ee35c519ad8ce01ea9"
+  },
+  "tripReceipt": {
+    "acceptedAt": "2026-10-29T17:29:00.260315+00:00",
+    "accountId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+    "operationId": "b84f1062-94ec-44a2-a589-1e809535dc20",
+    "tripId": "8b0a256b-d1be-46a5-ace1-cf126a370e73"
+  },
+  "selfProfileNormalBootstrapVerified": true,
+  "serverEvidence": {
+    "accountId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+    "tripId": "8b0a256b-d1be-46a5-ace1-cf126a370e73",
+    "verifiedAt": "2026-10-29T17:40:22.053Z",
+    "items": [
+      {
+        "id": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+        "family": "P1",
+        "revision": 2,
+        "ownerMatches": true,
+        "noteMatchesP1Edit": true
+      }
+    ],
+    "receipts": [
+      {
+        "operationId": "32966809-0e26-4ab2-a728-1d438192901e",
+        "command": "SET_ITEM_TEXT",
+        "outcome": "APPLIED",
+        "receiptSha256": "c7a0ad9bd369f44e2604d064cfa404e1784aac27c505ad75093da781425259de",
+        "intentSha256": "70bf0ee886527774c77d50423074bc60cb0fd6a79a77dcbf600f0eec1acf10e4",
+        "targetVector": [
+          {
+            "baseRevision": 1,
+            "committedRevision": 2,
+            "id": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+            "kind": "ITEM"
+          }
+        ],
+        "committedAt": "2026-10-29T17:39:26.151775Z"
+      },
+      {
+        "operationId": "3cbc8f1d-f2db-4b64-9d41-9e17a54f339f",
+        "command": "CREATE_ITEM",
+        "outcome": "APPLIED",
+        "receiptSha256": "98bf0427ec5213eef85e2d8f10a15e182a43794ae333b09abd14b681fd6b487e",
+        "intentSha256": "70b3d4aecf897ae1b0307f10a118999bfef04c4fc4ba9759876c072d741f5f56",
+        "targetVector": [
+          {
+            "baseRevision": null,
+            "committedRevision": 1,
+            "id": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+            "kind": "ITEM"
+          }
+        ],
+        "committedAt": "2026-10-29T17:36:35.038125Z"
+      }
+    ],
+    "people": [
+      {
+        "id": "375482d5-fc96-46a4-b115-3ffd1061b0e9",
+        "status": "linked",
+        "userId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+        "role": "owner"
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "googleTripViewsAbsentAfterAccountSwitch": true,
+    "firstTripAndP1CreatedViaNormalUi": true,
+    "automaticDispatchNoManualHealthRetry": true,
+    "editSameItem": true,
+    "coldMethod": "iOS App Switcher visibly dismissed Forms QA card, then Home launch; no uninstall/reset",
+    "coldSessionAndSameTripRestored": true,
+    "coldP1DateAndEveryoneAndLatestNoteRestored": true,
+    "coldNoPendingIndicator": true
+  },
+  "gateChangesThisRun": false,
+  "newSchemaRlsGrantRole": 0,
+  "paidProviderCalls": 0,
+  "limits": [
+    "Existing registered Email OTP account, not fresh Auth signup",
+    "Native account-list isolation is not a real Backend cross-account negative",
+    "P2-P6 ongoing; no full General Account PASS yet",
+    "Physical offline and new-Google signup not tested by this receipt"
+  ],
+  "observedAt": "2026-10-29T17:47:33.950905+00:00"
+}

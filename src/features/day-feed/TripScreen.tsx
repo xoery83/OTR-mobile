@@ -911,26 +911,16 @@ function TripContent({
       });
       return;
     }
-    const header = acceptedHomeHeader(
-      projection.events,
-      (date, zone) => projection.query(date, zone),
-      current.itemId,
-      reviewZone ?? undefined,
-    );
-    if (!header) {
-      const sparseDetails = {
-        P2: { pathname: "/p2-detail", occurrence: "ORIGIN" },
-        P3: { pathname: "/p3-detail", occurrence: "CHECKIN" },
-        P4: { pathname: "/p4-detail", occurrence: "PICKUP" },
-        P5: { pathname: "/p5-detail", occurrence: "ORIGIN" },
-      } as const;
-      if (
-        !(current.family in sparseDetails) ||
-        current.hidden ||
-        ["cancelled", "skipped"].includes(String(current.status))
-      )
-        throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
-      const detail = sparseDetails[current.family as keyof typeof sparseDetails];
+    const details = {
+      P2: { pathname: "/p2-detail", occurrence: "ORIGIN" },
+      P3: { pathname: "/p3-detail", occurrence: "CHECKIN" },
+      P4: { pathname: "/p4-detail", occurrence: "PICKUP" },
+      P5: { pathname: "/p5-detail", occurrence: "ORIGIN" },
+    } as const;
+    if (current.family in details) {
+      if (current.hidden || ["cancelled", "skipped"].includes(String(current.status)))
+        throw new Error("HOME_ITEM_UNAVAILABLE");
+      const detail = details[current.family as keyof typeof details];
       setTrip(result);
       router.push({
         pathname: detail.pathname,
@@ -942,6 +932,13 @@ function TripContent({
       });
       return;
     }
+    const header = acceptedHomeHeader(
+      projection.events,
+      (date, zone) => projection.query(date, zone),
+      current.itemId,
+      reviewZone ?? undefined,
+    );
+    if (!header) throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
     setTrip(result);
     setHomeItem({
       read: result,

@@ -1,0 +1,402 @@
+{
+  "accountId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+  "tripId": "8b0a256b-d1be-46a5-ace1-cf126a370e73",
+  "verifiedAt": "2026-10-29T19:31:47.533Z",
+  "items": [
+    {
+      "id": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+      "family": "P1",
+      "revision": 2,
+      "ownerMatches": true,
+      "noteMatchesP1Edit": true
+    },
+    {
+      "id": "43e08a2b-a7ba-45e7-a7d3-f1914a4ba055",
+      "family": "P4",
+      "revision": 2,
+      "ownerMatches": true,
+      "noteMatchesP1Edit": null
+    },
+    {
+      "id": "8f1258f5-8f8c-4762-83b1-64da726801f0",
+      "family": "P6",
+      "revision": 2,
+      "ownerMatches": true,
+      "noteMatchesP1Edit": null
+    },
+    {
+      "id": "d251c866-6cdf-4bfe-8ebc-9d6a10fa8954",
+      "family": "P5",
+      "revision": 2,
+      "ownerMatches": true,
+      "noteMatchesP1Edit": null
+    },
+    {
+      "id": "e66b7546-2074-4de2-949e-a133411dc029",
+      "family": "P3",
+      "revision": 2,
+      "ownerMatches": true,
+      "noteMatchesP1Edit": null
+    },
+    {
+      "id": "e8aa96d7-51b7-4656-95be-0dc711f4c106",
+      "family": "P2",
+      "revision": 4,
+      "ownerMatches": true,
+      "noteMatchesP1Edit": null
+    }
+  ],
+  "receipts": [
+    {
+      "operationId": "17dbbf9e-563e-4308-8a79-9f7ebb6d7001",
+      "command": "SET_ITEM_SCHEDULE",
+      "outcome": "APPLIED",
+      "receiptSha256": "39f1bebaf481c6ba21b86ddb71bb5a5c62beee614297b7a08627d002b851c1c5",
+      "intentSha256": "1e19e8c391584f2a484eeae69f3ee2b7b5b8daf05380e0b5d67421c00918a502",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "8f1258f5-8f8c-4762-83b1-64da726801f0",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T19:31:16.009797Z"
+    },
+    {
+      "operationId": "1c50d692-e60b-44a0-9cc5-1cc7c97794a6",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "cfde4f2ccf33e8d11be53b87274597afd670277e85f5d953c22fbbe06097c92b",
+      "intentSha256": "74f7701b322f48f4b3e3fdf81ac218876c9798d0621bdaba7673e325fa763a98",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "8f1258f5-8f8c-4762-83b1-64da726801f0",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T19:26:18.019735Z"
+    },
+    {
+      "operationId": "32966809-0e26-4ab2-a728-1d438192901e",
+      "command": "SET_ITEM_TEXT",
+      "outcome": "APPLIED",
+      "receiptSha256": "c7a0ad9bd369f44e2604d064cfa404e1784aac27c505ad75093da781425259de",
+      "intentSha256": "70bf0ee886527774c77d50423074bc60cb0fd6a79a77dcbf600f0eec1acf10e4",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T17:39:26.151775Z"
+    },
+    {
+      "operationId": "3cbc8f1d-f2db-4b64-9d41-9e17a54f339f",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "98bf0427ec5213eef85e2d8f10a15e182a43794ae333b09abd14b681fd6b487e",
+      "intentSha256": "70b3d4aecf897ae1b0307f10a118999bfef04c4fc4ba9759876c072d741f5f56",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T17:36:35.038125Z"
+    },
+    {
+      "operationId": "4d6b617d-6b5a-468f-8d3f-4d5bd96eb61d",
+      "command": "SET_ITEM_SCHEDULE",
+      "outcome": "APPLIED",
+      "receiptSha256": "86bbf382101642aaade4dbdeca6d8e19d31753a521fabe1abd5123789a53b2f5",
+      "intentSha256": "f5927aaf217c60cc312123664ea608b9d09da3bf7055d4313b479ebb7c0ceec8",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "e66b7546-2074-4de2-949e-a133411dc029",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:02:24.82348Z"
+    },
+    {
+      "operationId": "4e66015c-407a-4d74-b5fd-2139e3c9741c",
+      "command": "SET_AUTHORED_FLIGHT_DETAILS",
+      "outcome": "APPLIED",
+      "receiptSha256": "88b8281f94604aab7a8953e3e22cc59afa37a939c738f7668c38bbdd55a95f3d",
+      "intentSha256": "6dee0971d5bcc5d64226c81485444fc090df4698d314f79396e687a3514573b4",
+      "targetVector": [
+        {
+          "baseRevision": 2,
+          "committedRevision": 3,
+          "id": "e8aa96d7-51b7-4656-95be-0dc711f4c106",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:36:16.321743Z"
+    },
+    {
+      "operationId": "5e74a835-ec7b-4773-b3dc-e6673fd1ad35",
+      "command": "SET_ITEM_SCHEDULE",
+      "outcome": "APPLIED",
+      "receiptSha256": "f0255535e60a544d84af294ae2436426d3ec35ea11736e0ab3cbc570b738c9d3",
+      "intentSha256": "76af032c9367a82c490fd7aa6ca2593a74a142f929a6f5d3aa38a0d4b0450bf3",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "43e08a2b-a7ba-45e7-a7d3-f1914a4ba055",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:22:43.553173Z"
+    },
+    {
+      "operationId": "644049ee-39a6-4b90-b1c0-14861ee3d83b",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "4e81bf2603829f700460a386e0bc218a1cf531f312b3f26e0f93aba567ef8985",
+      "intentSha256": "b8e56ba302c9ecca24c90387a2c65ea72298d08e48f62fd129e2ebf8dd8b9ae7",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "43e08a2b-a7ba-45e7-a7d3-f1914a4ba055",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:14:41.462243Z"
+    },
+    {
+      "operationId": "79e45288-d3ad-4db2-bce4-cb21e6745122",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "9ac10475ae6135030a875d90f138301287e86f3993375030a4231832407f1b8a",
+      "intentSha256": "c9ae3afe99bbe7bd2791e19085ba25f9c4af020a1e0f20e794dd75114824b6bc",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "e66b7546-2074-4de2-949e-a133411dc029",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T17:53:09.508909Z"
+    },
+    {
+      "operationId": "87252376-ae0b-4728-ab63-91e1dbec4e89",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "receiptSha256": "ef0cd5f11c59018edc207bfa4d8be7713decb256631cd2300275e9a79d8c65cf",
+      "intentSha256": "7c395ce3d422ca17c3be8f99383985ce035621f0dd9b1031d2a8b1f8b9094a1d",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "d251c866-6cdf-4bfe-8ebc-9d6a10fa8954",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:47:32.016529Z"
+    },
+    {
+      "operationId": "b3879dbc-7265-4701-a476-d1a93ea11711",
+      "command": "SET_ITEM_PARTICIPATION",
+      "outcome": "APPLIED",
+      "receiptSha256": "5b4d20170257fabb985b87d2d91c1b04d52bdbedf5f853a3b318b24580c4b501",
+      "intentSha256": "b9eef375947e3ae31d55714cf61655d261fc069556e7c3d4d0795e2fab5687b5",
+      "targetVector": [
+        {
+          "baseRevision": 3,
+          "committedRevision": 4,
+          "id": "e8aa96d7-51b7-4656-95be-0dc711f4c106",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:36:58.748414Z"
+    },
+    {
+      "operationId": "be6db736-451f-44d4-8136-2d32e6197228",
+      "command": "CREATE_SPARSE_FLIGHT",
+      "outcome": "APPLIED",
+      "receiptSha256": "171fdbbf35d6f11776b1027dfabfe981648ae0bc71ad04064863f2eb155a1d1f",
+      "intentSha256": "c4b8fe6a6bb0faf2336f8f50fe6f1ff69da5992944d76e2cfdf915f3fb0e60f7",
+      "targetVector": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "e8aa96d7-51b7-4656-95be-0dc711f4c106",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:25:21.154847Z"
+    },
+    {
+      "operationId": "e885b113-6b68-497f-b335-338bac07bd7b",
+      "command": "SET_AUTHORED_FLIGHT_DETAILS",
+      "outcome": "APPLIED",
+      "receiptSha256": "7397e7f77af3c62ae5fa108ff9fedc6901b7d5b01dbbe364ab088fb2cd6786ef",
+      "intentSha256": "68b30eeeb318e3e9767e0ffe0b66238fb391bec8f1afec7a66566a4491c3d024",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "e8aa96d7-51b7-4656-95be-0dc711f4c106",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T18:26:02.129339Z"
+    },
+    {
+      "operationId": "edfe4c03-23d9-4a18-99fd-4ea3bd7feb5e",
+      "command": "SET_TRANSPORT_DETAILS",
+      "outcome": "APPLIED",
+      "receiptSha256": "7fd27757713313d87c869b8d99026e5af3666d8f3a1a4ac5888a23566eda2013",
+      "intentSha256": "9a029a5bba5ef60c70475df7c64763ac23e503b6a759fad0fef25a0a4f78371b",
+      "targetVector": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "d251c866-6cdf-4bfe-8ebc-9d6a10fa8954",
+          "kind": "ITEM"
+        }
+      ],
+      "committedAt": "2026-10-29T19:21:19.14753Z"
+    }
+  ],
+  "people": [
+    {
+      "id": "375482d5-fc96-46a4-b115-3ffd1061b0e9",
+      "status": "linked",
+      "userId": "4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4",
+      "role": "owner"
+    }
+  ],
+  "kind": "EXISTING_NORMAL_HOSTED_EMAIL_OTP_FIRST_TRIP_MANUAL_P1_P6",
+  "builds": {
+    "create": 108,
+    "p5EditAndP6CreateEdit": 110,
+    "coldRecovery": 110,
+    "source": "2db8a651 + TripScreen owning Home Details fix",
+    "jsSha256": "0478f873a77e31b2deec64040ae14b1459b2c97e4c340a3867d23b19fad421d9",
+    "retainedNative": "93/60/56/54",
+    "fullLatestMainNativeBinaryClaim": false
+  },
+  "independentReadback": {
+    "mode": "SUPABASE_DEV_READ_ONLY_EXACT_SYNTHETIC_TRIP",
+    "devProject": "tuqigdxrvrerfewsxqgm",
+    "validation": "tripCoreV2Receipt.validateCoreReceipt + canonical intent SHA256 + Actor/Trip/operation/Manual admission checks",
+    "uniqueItems": 6,
+    "appliedReceipts": 14,
+    "fieldAssertions": "PASS",
+    "oneCreateReceiptPerItem": true,
+    "creatorEvidence": "formal MANUAL CREATE receipt actor plus owner_account_id, not legacy created_by",
+    "legacyCreatedByColumn": null
+  },
+  "nativeColdRecovery": {
+    "method": "iOS App Switcher terminate only FormsQA; normal Home launch",
+    "sessionRetained": true,
+    "onlySameFoxmailTripInMyTrips": true,
+    "allSixDayFeedRowsRestored": true,
+    "latestP3Checkin": "17:00",
+    "latestP4Return": "08:07",
+    "latestP5Origin": "08:20",
+    "latestP6Start": "08:30",
+    "p2AirportLabels": [
+      "AKL",
+      "NSN"
+    ],
+    "pendingDotsAbsentAfterCold": true,
+    "p4DetailsSamePickupReturnPlaceAndLatestReturn": true,
+    "p1DescriptionColdReceipt": "EMAIL_OTP_FIRST_TRIP_P1_BUILD108.json"
+  },
+  "manualFields": {
+    "P1": {
+      "itemId": "27d2e720-5db3-4c95-af26-9c01d3aeb676",
+      "revision": 2,
+      "date": "2026-10-30",
+      "time": null,
+      "endDate": null,
+      "endTime": null,
+      "participation": "WHOLE_GROUP",
+      "ownerMatches": true
+    },
+    "P4": {
+      "itemId": "43e08a2b-a7ba-45e7-a7d3-f1914a4ba055",
+      "revision": 2,
+      "date": "2026-10-30",
+      "time": "07:07:00",
+      "endDate": "2026-10-31",
+      "endTime": "08:07:00",
+      "participation": "WHOLE_GROUP",
+      "ownerMatches": true
+    },
+    "P6": {
+      "itemId": "8f1258f5-8f8c-4762-83b1-64da726801f0",
+      "revision": 2,
+      "date": "2026-10-30",
+      "time": "08:30:00",
+      "endDate": null,
+      "endTime": null,
+      "participation": "WHOLE_GROUP",
+      "ownerMatches": true
+    },
+    "P5": {
+      "itemId": "d251c866-6cdf-4bfe-8ebc-9d6a10fa8954",
+      "revision": 2,
+      "date": null,
+      "time": null,
+      "endDate": null,
+      "endTime": null,
+      "participation": "WHOLE_GROUP",
+      "ownerMatches": true
+    },
+    "P3": {
+      "itemId": "e66b7546-2074-4de2-949e-a133411dc029",
+      "revision": 2,
+      "date": "2026-10-30",
+      "time": "17:00:00",
+      "endDate": "2026-10-31",
+      "endTime": null,
+      "participation": "WHOLE_GROUP",
+      "ownerMatches": true
+    },
+    "P2": {
+      "itemId": "e8aa96d7-51b7-4656-95be-0dc711f4c106",
+      "revision": 4,
+      "date": null,
+      "time": null,
+      "endDate": null,
+      "endTime": null,
+      "participation": "WHOLE_GROUP",
+      "ownerMatches": true
+    }
+  },
+  "boundaries": {
+    "normalOwnerNativeUi": true,
+    "manualHealthRetry": false,
+    "directBusinessSqlWrites": false,
+    "newPolicyRowsOrAuthority": false,
+    "providerCalls": 0,
+    "credentialsOrSessionCopied": false,
+    "deviceNetworkChanged": false,
+    "newSignupCovered": false,
+    "backendCrossAccountNegativeNewlyCovered": false,
+    "physicalOfflineNewlyCovered": false,
+    "qualifiedFlightOrBookingTicketCovered": false
+  },
+  "remaining": [
+    "Fresh Google/Email registration not covered: Owner selected an existing registered OTP Account.",
+    "This run did not repeat historical physical offline/replay/Backend ACL negatives.",
+    "TripHome widget omitted P6 while DayFeed correctly showed it; nonblocking presentation followup.",
+    "TripHome timezone-unknown helper remains visible for a Trip with no destination; no timezone/instant was invented."
+  ]
+}
