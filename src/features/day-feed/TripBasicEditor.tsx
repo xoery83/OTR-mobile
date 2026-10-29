@@ -1,3 +1,6 @@
+import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
+import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
+import type { Json } from "@/domain/trip/tripCoreV2Json";
 import { CreateTripDestinations } from "./CreateTripDestinations";
 import { destinationDraft, destinationInputs } from "./tripDestinationDraft";
 import type { LocalTripDestinationsChange } from "@/domain/trip/localTripDestinationUpdate";
@@ -51,6 +54,9 @@ export function TripBasicEditor({
   registerDismiss,
   onDirtyChange,
   onClose,
+  guestLocal = false,
+  readGuestRecoveryContext,
+  onHandoffFrozenChange,
 }: {
   trip: Pick<
     Trip,
@@ -79,6 +85,9 @@ export function TripBasicEditor({
   registerDismiss?(handler: (() => void) | null): void;
   onDirtyChange?(dirty: boolean): void;
   onClose?(): void;
+  guestLocal?: boolean;
+  readGuestRecoveryContext?(): Json;
+  onHandoffFrozenChange?(frozen: boolean): void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -99,6 +108,11 @@ export function TripBasicEditor({
         : null,
   );
   const alive = useRef(true);
+  const draftHandoff = useRef<symbol | null>(null);
+  const [handoffFrozen, setHandoffFrozen] = useState(false);
+  const calendarOpen = useRef(false);
+  const recoveryReader = useRef(readGuestRecoveryContext);
+  const handoffNotify = useRef(onHandoffFrozenChange);
   const [generation] = useState(() => getAccountGeneration());
   const [openedTripId] = useState(trip.id);
   const latestTripId = useRef(trip.id);
@@ -108,6 +122,7 @@ export function TripBasicEditor({
   const current = useCallback(
     () =>
       alive.current &&
+      !draftHandoff.current &&
       generation === getAccountGeneration() &&
       latestTripId.current === openedTripId,
     [generation, openedTripId],
@@ -191,6 +206,109 @@ export function TripBasicEditor({
   }, [onDirtyChange, dirty, destinationQueryDirty]);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySetup, setCurrencySetup] = useState<TripPreparationSetup | null>(null);
+  const draftValues = {
+    before,
+    beforeCover,
+    draftCover,
+    coverChanged,
+    initialDestinations,
+    destinationItems,
+    destinationsBefore,
+    name,
+    destination,
+    start,
+    end,
+  };
+  const liveDraft = useRef(draftValues);
+  const interactions = useRef({ busy: destinationBusy, query: destinationQueryDirty });
+  function changeDraft<Key extends keyof typeof draftValues>(
+    field: Key,
+    value: (typeof draftValues)[Key],
+    set: (value: (typeof draftValues)[Key]) => void,
+  ) {
+    if (!current()) return;
+    liveDraft.current = { ...liveDraft.current, [field]: value };
+    set(value);
+  }
+  const draftReady = useRef(false);
+  useLayoutEffect(() => {
+    recoveryReader.current = readGuestRecoveryContext;
+    handoffNotify.current = onHandoffFrozenChange;
+    liveDraft.current = draftValues;
+    interactions.current = { busy: destinationBusy, query: destinationQueryDirty };
+    draftReady.current =
+      !saving &&
+      !error &&
+      !destinationBusy &&
+      !destinationQueryDirty &&
+      !currencyOpen &&
+      beforeCover !== undefined;
+  });
+  useEffect(() => {
+    if (!guestLocal) return;
+    const unregister = guestTripDraftInventory.register({
+      freeze() {
+        if (
+          !alive.current ||
+          generation !== getAccountGeneration() ||
+          latestTripId.current !== openedTripId ||
+          draftHandoff.current ||
+          !draftReady.current ||
+          busy.current ||
+          interactions.current.busy ||
+          interactions.current.query ||
+          saveIntent.current ||
+          calendarOpen.current ||
+          !recoveryReader.current
+        )
+          throw Error("GUEST_TRIP_EDIT_DRAFT_NOT_READY");
+        const context = recoveryReader.current();
+        const encoded = JSON.stringify(liveDraft.current);
+        const contextText = JSON.stringify(context);
+        const value = JSON.parse(
+          JSON.stringify({ fields: liveDraft.current, context }),
+        ) as Json;
+        const snapshot = guestTripDraftSnapshotSchema.parse({
+          schemaId: "otr.auth.guest-trip-draft/1",
+          draftId: editorId,
+          tripId: openedTripId,
+          mode: "EDIT",
+          value,
+        });
+        const token = Symbol("Guest Trip Edit draft");
+        draftHandoff.current = token;
+        setHandoffFrozen(true);
+        handoffNotify.current?.(true);
+        return {
+          snapshot,
+          isCurrent: () =>
+            alive.current &&
+            generation === getAccountGeneration() &&
+            latestTripId.current === openedTripId &&
+            draftHandoff.current === token &&
+            draftReady.current &&
+            !interactions.current.busy &&
+            !interactions.current.query &&
+            !calendarOpen.current &&
+            !saveIntent.current &&
+            JSON.stringify(liveDraft.current) === encoded &&
+            JSON.stringify(recoveryReader.current?.()) === contextText,
+          resume() {
+            if (draftHandoff.current !== token) return;
+            draftHandoff.current = null;
+            if (alive.current) {
+              setHandoffFrozen(false);
+              handoffNotify.current?.(false);
+            }
+          },
+        };
+      },
+    });
+    return () => {
+      unregister();
+      if (draftHandoff.current) handoffNotify.current?.(false);
+    };
+  }, [guestLocal, generation, openedTripId, editorId]);
   const closeCurrency = () => {
     setCurrencyOpen(false);
     void (async () => {
@@ -259,6 +377,19 @@ export function TripBasicEditor({
     )
       .then(() => {
         if (!current()) return;
+        liveDraft.current = {
+          ...liveDraft.current,
+          before: after,
+          destination: after.destination ?? "",
+          coverChanged: false,
+          ...(destinationAfter
+            ? {
+                destinationsBefore: destinationAfter,
+                initialDestinations: destinationItems,
+              }
+            : {}),
+          ...(cover ? { beforeCover: cover.after } : {}),
+        };
         if (destinationAfter) {
           setDestinationsBefore(destinationAfter);
           setInitialDestinations(destinationItems);
@@ -288,7 +419,7 @@ export function TripBasicEditor({
         onLeft={requestClose}
         rightLabel={t("ui.save")}
         onRight={metadataEditable ? save : undefined}
-        rightDisabled={saving || destinationBusy || !valid || !dirty}
+        rightDisabled={handoffFrozen || saving || destinationBusy || !valid || !dirty}
       />
       <ScrollView
         style={styles.container}
@@ -305,9 +436,13 @@ export function TripBasicEditor({
             name={name}
             destination={destination}
             range={{ start, end }}
-            disabled={!metadataEditable || saving}
-            onName={setName}
-            onDestination={setDestination}
+            disabled={!metadataEditable || saving || handoffFrozen}
+            onName={(value) => {
+              changeDraft("name", value, setName);
+            }}
+            onDestination={(value) => {
+              changeDraft("destination", value, setDestination);
+            }}
             destinationEntry={
               <CreateTripDestinations
                 name={name}
@@ -315,15 +450,29 @@ export function TripBasicEditor({
                 editorId={editorId}
                 generation={generation}
                 items={destinationItems}
-                onChange={setDestinationItems}
-                onQueryDirty={setDestinationQueryDirty}
-                onBusy={setDestinationBusy}
-                disabled={!metadataEditable || saving}
+                onChange={(items) => {
+                  changeDraft("destinationItems", items, setDestinationItems);
+                }}
+                onQueryDirty={(query) => {
+                  if (!alive.current || generation !== getAccountGeneration()) return;
+                  interactions.current.query = query;
+                  setDestinationQueryDirty(query);
+                }}
+                onBusy={(busy) => {
+                  if (!alive.current || generation !== getAccountGeneration()) return;
+                  interactions.current.busy = busy;
+                  setDestinationBusy(busy);
+                }}
+                disabled={!metadataEditable || saving || handoffFrozen}
               />
             }
+            onCalendarOpenChange={(open) => {
+              if (!current()) return false;
+              calendarOpen.current = open;
+            }}
             onRange={(range) => {
-              setStart(range.start);
-              setEnd(range.end);
+              changeDraft("start", range.start, setStart);
+              changeDraft("end", range.end, setEnd);
             }}
           />
         </UiSection>

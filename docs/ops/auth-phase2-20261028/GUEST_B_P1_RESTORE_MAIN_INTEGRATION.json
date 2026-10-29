@@ -1,0 +1,16 @@
+{
+  "schemaId": "otr.auth.guest-p1-restore-main-integration/1",
+  "baseMain": "3f58bbaaa780abb928f11546267891538d1b7479",
+  "sourceCommit": "c2a29bac2ffa20409169cf291aef591152a1eb66",
+  "fixedSourceIndependentReview": "NO_BLOCKER; 4 suites159 PASS",
+  "actualPrimaryTests": {
+    "suites": 7,
+    "tests": 252,
+    "result": "PASS"
+  },
+  "primaryProtectedDirtyEntries": 6,
+  "primaryTrackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+  "integration": "fast-forward; normal push final refs verified separately",
+  "devSchemaRlsGrantDeploymentOrGuiChanged": false,
+  "readiness": "LOCAL_PASS_NATIVE_RECOVERY_PENDING_ADOPTION_NOT_READY"
+}

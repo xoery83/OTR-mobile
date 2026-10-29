@@ -11,9 +11,12 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   nodes: [] as any[],
   calendars: [] as any[],
+  refs: [] as { current: any }[],
+  refCursor: 0,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (!(i in state.hooks)) state.hooks[i] = initial;
@@ -80,9 +83,11 @@ const props = {
     props.travelers = value;
   }),
   disabled: false,
+  onNameEditorOpenChange: undefined as undefined | ((open: boolean) => boolean | void),
+  onCalendarOpenChange: undefined as undefined | ((open: boolean) => boolean | void),
 };
 function render() {
-  state.cursor = 0;
+  state.cursor = state.refCursor = 0;
   state.nodes = [];
   state.calendars = [];
   return renderToStaticMarkup(createElement(CreateTripV2Fields, props));
@@ -91,6 +96,8 @@ const node = (key: string) =>
   state.nodes.find((p) => p.label === key || p.accessibilityLabel === key)!;
 beforeEach(() => {
   state.hooks = [];
+  state.refs = [];
+  props.onNameEditorOpenChange = props.onCalendarOpenChange = undefined;
   props.name = "";
   props.selfNickname = "";
   props.knownSelfName = "";
@@ -163,4 +170,43 @@ it("shows an existing known name without inventing a nickname edit or second tra
   expect(render()).toContain("createTripV2.youName:Alex");
   expect(props.onSelfNickname).not.toHaveBeenCalled();
   expect(props.onTravelers).not.toHaveBeenCalled();
+});
+
+it("blocks opening during handoff and never reopens a cancelled name editor from a late input", () => {
+  const onOpen = vi.fn(() => false as boolean | void);
+  props.onNameEditorOpenChange = onOpen;
+  render();
+  node("createTripV2.editName").onPress();
+  render();
+  expect(
+    state.nodes.some((value) => value.accessibilityLabel === "createTripV2.nickname"),
+  ).toBe(false);
+  onOpen.mockReturnValue(undefined);
+  node("createTripV2.editName").onPress();
+  render();
+  const lateInput = node("createTripV2.nickname").onChangeText;
+  node("common.cancel").onPress();
+  onOpen.mockClear();
+  lateInput("must not reopen");
+  render();
+  expect(
+    state.nodes.some((value) => value.accessibilityLabel === "createTripV2.nickname"),
+  ).toBe(false);
+  expect(onOpen).not.toHaveBeenCalled();
+  expect(props.onSelfNickname).not.toHaveBeenCalled();
+});
+
+it("Done retains the last typed self or traveler name before React renders", () => {
+  render();
+  node("createTripV2.editName").onPress();
+  render();
+  node("createTripV2.nickname").onChangeText("最后输入的昵称");
+  node("common.done").onPress();
+  expect(props.onSelfNickname).toHaveBeenLastCalledWith("最后输入的昵称");
+  render();
+  node("createTripV2.addTraveler").onPress();
+  render();
+  node("createTripV2.nickname").onChangeText("最后输入的同行人");
+  node("common.done").onPress();
+  expect(props.travelers).toMatchObject([{ displayName: "最后输入的同行人" }]);
 });

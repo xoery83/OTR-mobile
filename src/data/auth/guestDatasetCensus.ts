@@ -1,3 +1,5 @@
+import { isTripCoverAssetId } from "@/domain/trip/tripCoverAssets";
+import { retainedDeferredTripMetadataSchema } from "@/domain/trip/tripDeferredMetadata";
 import { z } from "zod";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
@@ -79,6 +81,7 @@ export function createGuestDatasetCensus(
         schemaId: "otr.auth.guest-census/1";
         scope: typeof scope;
         sqliteVersion: number;
+        tripIds: readonly string[];
         tables: { name: string; rows: number; sha256: string | null }[];
         blockers: string[];
         readyForServerPreflight: boolean;
@@ -165,6 +168,40 @@ export function createGuestDatasetCensus(
             `SELECT * FROM ${table}`,
           );
           if (
+            name === "local_trip_containers" ||
+            name === "account_trip_cover_preferences"
+          ) {
+            if (
+              rows.some(
+                (row) =>
+                  row.selected_cover_asset_id !== null &&
+                  !isTripCoverAssetId(row.selected_cover_asset_id),
+              )
+            )
+              blockers.push("UNSUPPORTED_GUEST_COVER_REFERENCE");
+          }
+          if (name === "sync_operations") {
+            for (const row of rows) {
+              if (
+                row.entity_type !== "TRIP_LOCAL_ACTION" ||
+                row.operation_type !== "TRIP_METADATA_DEFERRED"
+              )
+                continue;
+              const action = retainedDeferredTripMetadataSchema.parse(
+                JSON.parse(row.payload_json as string),
+              );
+              if (action.actionId !== row.id || action.tripId !== row.trip_id)
+                throw Error("GUEST_CENSUS_DEFERRED_SCOPE");
+              if (
+                action.cover &&
+                [action.cover.before, action.cover.after].some(
+                  (value) => value !== null && !isTripCoverAssetId(value),
+                )
+              )
+                blockers.push("UNSUPPORTED_GUEST_COVER_REFERENCE");
+            }
+          }
+          if (
             name === "sync_operations" &&
             rows.some(
               (row) =>
@@ -235,6 +272,7 @@ export function createGuestDatasetCensus(
           schemaId: stable.schemaId,
           scope,
           sqliteVersion,
+          tripIds: Object.freeze([...tripIds].sort()),
           tables,
           blockers,
           readyForServerPreflight: blockers.length === 0,

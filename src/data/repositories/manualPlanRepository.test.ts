@@ -1,3 +1,4 @@
+import { noteGuestPublicationRequested } from "../auth/guestPublicationHold";
 import { createManualRentalRepository } from "./manualRentalRepository";
 import { createManualStayRepository } from "./manualStayRepository";
 import { p1CivilMoveItem, p1CivilProposal } from "@/features/day-feed/p1CivilMove";
@@ -9,7 +10,11 @@ import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
-import { advanceAccountGeneration } from "../auth/accountGeneration";
+import {
+  advanceAccountGeneration,
+  getAccountGeneration,
+} from "../auth/accountGeneration";
+import { requireCommittedGuestPrincipal } from "../auth/authRepository";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
 import { createLocalTripPersonRepository } from "./localTripPersonRepository";
@@ -18,9 +23,13 @@ import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { createTripDayFeedReader } from "./tripDayFeedRepository";
 import {
   createManualPlanRepository,
+  createManualItemRepository,
   type ManualPlanFields,
 } from "./manualPlanRepository";
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(),
+  requireCommittedGuestPrincipal: vi.fn(),
+}));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("../files/tripPhotoFileStore", () => ({
   retainTripPhoto: vi.fn(),
@@ -107,7 +116,9 @@ async function fixture(structured = false, fileBacked = false) {
     services: async () => ({}),
   });
   return {
-    sql,
+    get sql() {
+      return sql;
+    },
     coreDatabase: database,
     identity,
     core,
@@ -1120,3 +1131,175 @@ it.each(["P1", "P3", "P4"] as const)(
     ).toHaveLength(1);
   },
 );
+
+it("reopens a Guest P1 Create draft with its original Item ID and no write until normal Save", async () => {
+  const f = await fixture(true, true);
+  vi.mocked(requireCommittedGuestPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: f.originalAccount,
+  } as never);
+  const scope = {
+    kind: "GUEST" as const,
+    localId: f.originalAccount,
+    generation: getAccountGeneration(),
+  };
+  const original = await f.repo().createDraft(f.tripId);
+  const snapshot = {
+    schemaId: "otr.auth.guest-p1-draft/1" as const,
+    tripId: f.tripId,
+    itemId: original.itemId,
+    mode: "CREATE" as const,
+    fields: { ...original.fields, title: "  未完成  ", startDate: "" },
+    initialFields: original.fields,
+    firstAttempt: null,
+    placeSelection: null,
+  };
+  const before = f.sql
+    .prepare("SELECT count(*) AS n FROM trip_core_pending_intents")
+    .get();
+  f.reopenDatabase();
+  const repo = f.repo();
+  const restored = await repo.restoreGuestCreateDraft(scope, snapshot);
+  expect(restored.itemId).toBe(original.itemId);
+  expect(restored.fields).toEqual(snapshot.fields);
+  expect(restored.initialFields).toEqual(snapshot.initialFields);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM trip_core_pending_intents").get(),
+  ).toEqual(before);
+  const saved = await repo.save(restored, {
+    ...snapshot.fields,
+    title: "Restored plan",
+    startDate: "2026-12-30",
+  });
+  expect(saved.itemId).toBe(original.itemId);
+  expect(saved.localStatus).toBe("PENDING");
+});
+
+async function guestRestoreFixture() {
+  const f = await fixture(true);
+  vi.mocked(requireCommittedGuestPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: f.originalAccount,
+  } as never);
+  const original = await f.repo().createDraft(f.tripId);
+  const scope = {
+    kind: "GUEST" as const,
+    localId: f.originalAccount,
+    generation: getAccountGeneration(),
+  };
+  const snapshot = {
+    schemaId: "otr.auth.guest-p1-draft/1" as const,
+    tripId: f.tripId,
+    itemId: original.itemId,
+    mode: "CREATE" as const,
+    fields: { ...original.fields, title: "原始草稿  ", startDate: "2026-12-30" },
+    initialFields: original.fields,
+    firstAttempt: null,
+    placeSelection: null,
+  };
+  return { f, scope, snapshot };
+}
+it.each([
+  "same UUID Account",
+  "another Guest",
+  "stale generation",
+  "Edit",
+  "pending attempt",
+])("refuses Guest Create recovery for %s without writing", async (reason) => {
+  const { f, scope, snapshot } = await guestRestoreFixture();
+  if (reason === "same UUID Account")
+    vi.mocked(requireCommittedGuestPrincipal).mockResolvedValue({
+      kind: "ACCOUNT",
+      localId: f.originalAccount,
+    } as never);
+  if (reason === "another Guest")
+    vi.mocked(requireCommittedGuestPrincipal).mockResolvedValue({
+      kind: "GUEST",
+      localId: randomUUID(),
+    } as never);
+  if (reason === "stale generation") advanceAccountGeneration();
+  const raw =
+    reason === "Edit"
+      ? { ...snapshot, mode: "EDIT" }
+      : reason === "pending attempt"
+        ? { ...snapshot, firstAttempt: snapshot.fields }
+        : snapshot;
+  const before = count(f.sql);
+  await expect(
+    f.repo().restoreGuestCreateDraft(scope, raw as typeof snapshot),
+  ).rejects.toThrow();
+  expect(count(f.sql)).toBe(before);
+});
+it("does not reopen an already saved Item as Guest Create or transfer its WeakMap draft", async () => {
+  const { f, scope, snapshot } = await guestRestoreFixture(),
+    repo = f.repo();
+  const restored = await repo.restoreGuestCreateDraft(scope, snapshot);
+  await expect(f.repo().save(restored, snapshot.fields)).rejects.toThrow(
+    "MANUAL_PLAN_DRAFT_UNAVAILABLE",
+  );
+  await repo.save(restored, snapshot.fields);
+  const before = count(f.sql);
+  await expect(f.repo().restoreGuestCreateDraft(scope, snapshot)).rejects.toThrow(
+    "GUEST_P1_RESTORE_ITEM_EXISTS",
+  );
+  expect(count(f.sql)).toBe(before);
+});
+it("rejects a restored Guest draft after transition to a same UUID formal Account", async () => {
+  const { f, scope, snapshot } = await guestRestoreFixture(),
+    repo = f.repo();
+  const restored = await repo.restoreGuestCreateDraft(scope, snapshot),
+    before = count(f.sql);
+  vi.mocked(requireCommittedGuestPrincipal).mockResolvedValue({
+    kind: "ACCOUNT",
+    localId: f.originalAccount,
+  } as never);
+  await expect(repo.save(restored, snapshot.fields)).rejects.toThrow(
+    "GUEST_P1_RESTORE_SCOPE",
+  );
+  expect(count(f.sql)).toBe(before);
+});
+it("rolls back a restored Create if Guest identity is lost at the transaction result check", async () => {
+  const { f, scope, snapshot } = await guestRestoreFixture(),
+    repo = f.repo();
+  const restored = await repo.restoreGuestCreateDraft(scope, snapshot),
+    before = count(f.sql);
+  vi.mocked(requireCommittedGuestPrincipal)
+    .mockResolvedValueOnce({ kind: "GUEST", localId: f.originalAccount } as never)
+    .mockResolvedValue({ kind: "ACCOUNT", localId: f.originalAccount } as never);
+  await expect(repo.save(restored, snapshot.fields)).rejects.toThrow(
+    "GUEST_P1_RESTORE_SCOPE",
+  );
+  expect(count(f.sql)).toBe(before);
+});
+it("rejects a Guest recovery open when the Account generation changes during repository reads", async () => {
+  const { f, scope, snapshot } = await guestRestoreFixture();
+  f.aba();
+  const before = count(f.sql);
+  await expect(f.repo().restoreGuestCreateDraft(scope, snapshot)).rejects.toThrow();
+  expect(count(f.sql)).toBe(before);
+});
+
+it.each(["P3", "P4", "P6"] as const)(
+  "keeps Guest restore closed for %s",
+  async (family) => {
+    const { f, scope, snapshot } = await guestRestoreFixture();
+    const repo =
+      family === "P3"
+        ? createManualItemRepository("P3", f.coreDatabase, f.identity, f.core)
+        : family === "P4"
+          ? createManualItemRepository("P4", f.coreDatabase, f.identity, f.core)
+          : createManualItemRepository("P6", f.coreDatabase, f.identity, f.core);
+    await expect(repo.restoreGuestCreateDraft(scope, snapshot)).rejects.toThrow(
+      "GUEST_P1_RESTORE_CREATE_ONLY",
+    );
+  },
+);
+it("keeps a published Guest source locked against Create recovery", async () => {
+  const { f, scope, snapshot } = await guestRestoreFixture();
+  const before = count(f.sql);
+  noteGuestPublicationRequested(scope.localId);
+  await expect(f.repo().restoreGuestCreateDraft(scope, snapshot)).rejects.toThrow(
+    "GUEST_PUBLICATION_STATUS_REQUIRED",
+  );
+  expect(count(f.sql)).toBe(before);
+});

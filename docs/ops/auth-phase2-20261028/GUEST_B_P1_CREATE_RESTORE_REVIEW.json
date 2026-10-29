@@ -1,0 +1,47 @@
+{
+  "schemaId": "otr.auth.guest-p1-create-restore-review/1",
+  "status": "LOCAL_PASS_NATIVE_RECOVERY_PENDING",
+  "implementation": [
+    "identical raw P1 schema shared with journal",
+    "P1 CREATE restoration through existing open/current/WeakMap",
+    "original Item UUID/raw fields/initial baseline retained via opened editor",
+    "committed Guest/generation/current actor and publication hold checks",
+    "post-write transaction-result identity check rolls back lost Guest scope",
+    "EDIT and P3/P4/P6 closed"
+  ],
+  "validation": {
+    "direct": {
+      "suites": 7,
+      "tests": 252,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 4,
+      "tests": 159,
+      "result": "NO_BLOCKER"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "uiGuard": "PASS",
+    "diskIntegration": "real journal validation; SQLite close/reopen; same Guest workspace; restore with zero writes; normal Save of original Item ID; zero network"
+  },
+  "negativeCases": [
+    "same UUID Account",
+    "another Guest",
+    "stale generation",
+    "generation ABA during reads",
+    "existing Item",
+    "foreign WeakMap draft",
+    "identity lost during write transaction",
+    "pending attempt",
+    "EDIT v1",
+    "P3/P4/P6",
+    "publication hold"
+  ],
+  "limitations": [
+    "headless component integration; no actual Native recovery routing/GUI",
+    "no live provider/provisional session consumer",
+    "no Backend publication, Schema/RLS/GRANT or DEV change",
+    "Adoption NOT_READY"
+  ]
+}

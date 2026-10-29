@@ -1,3 +1,9 @@
+import {
+  guestP1DraftSnapshotSchema,
+  type GuestP1DraftSnapshot,
+} from "@/domain/auth/guestP1Draft";
+import type { GuestDraftScope } from "../auth/guestDraftInventory";
+import { assertGuestPublicationNotRequested } from "../auth/guestPublicationHold";
 import { hasAcceptedManualCreate } from "./acceptedManualCreate";
 import { z } from "zod";
 import { createUuid } from "@/domain/localId";
@@ -22,10 +28,14 @@ import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { applyCoreCommand, coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import {
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   withAccountApplyGate,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
-import { requireActiveUserId } from "../auth/authRepository";
+import {
+  requireActiveUserId,
+  requireCommittedGuestPrincipal,
+} from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
@@ -119,6 +129,7 @@ export type ManualPlanDraft = Readonly<{
   mode: "CREATE" | "EDIT";
   itemId: string;
   fields: ManualPlanFields;
+  initialFields?: ManualPlanFields;
   participantOptions: readonly { personId: string; displayName: string }[];
 }>;
 export type ManualPlanSaveResult = Readonly<{
@@ -145,6 +156,11 @@ const manualPlaceAcceptanceSchema = z.strictObject({
   draft: appleSelectedPlaceDraftSchema,
 });
 type ManualItemRepository<F extends ManualPlanFields> = {
+  // Closed for every family except P1 CREATE.
+  restoreGuestCreateDraft(
+    scope: GuestDraftScope,
+    snapshot: GuestP1DraftSnapshot,
+  ): Promise<ManualPlanDraft>;
   createDraft(tripId: string): Promise<ManualItemDraft<F>>;
   read(
     tripId: string,
@@ -158,6 +174,7 @@ type ManualItemRepository<F extends ManualPlanFields> = {
   ): Promise<ManualPlanSaveResult>;
 };
 type DraftState = {
+  guestRestoreScope?: GuestDraftScope;
   context: AccountRequestContext;
   fingerprint: string;
   actor: string;
@@ -340,6 +357,22 @@ export function createManualItemRepository(
   newId = createUuid,
 ) {
   const drafts = new WeakMap<ManualItemDraft, DraftState>();
+  async function assertGuestRestore(scope: GuestDraftScope) {
+    if (scope.kind !== "GUEST") throw Error("GUEST_P1_RESTORE_SCOPE");
+    const pin = { accountId: scope.localId, generation: scope.generation };
+    assertAccountRequestGeneration(pin);
+    const principal = await requireCommittedGuestPrincipal();
+    if (principal.kind !== "GUEST" || principal.localId !== scope.localId)
+      throw Error("GUEST_P1_RESTORE_SCOPE");
+    assertAccountRequestGeneration(pin);
+    assertGuestPublicationNotRequested(scope.localId);
+  }
+  async function guestResult<T>(state: DraftState, work: () => Promise<T>) {
+    if (state.guestRestoreScope) await assertGuestRestore(state.guestRestoreScope);
+    const result = await work();
+    if (state.guestRestoreScope) await assertGuestRestore(state.guestRestoreScope);
+    return result;
+  }
   async function current(context: AccountRequestContext) {
     const accepted = await core.readAcceptedSnapshotWithinTransaction(context);
     const snapshot = await readLocalManualSnapshotWithinTransaction(
@@ -356,14 +389,30 @@ export function createManualItemRepository(
     tripId: string,
     itemId?: string,
     expectedRevision?: number,
+    recovery?: { scope: GuestDraftScope; snapshot: GuestP1DraftSnapshot },
   ): Promise<ManualItemDraft> {
     coreUuid.parse(tripId);
     if (itemId) coreUuid.parse(itemId);
+    if (recovery) await assertGuestRestore(recovery.scope);
     const context = await core.captureContext(tripId);
+    if (
+      recovery &&
+      (context.accountId !== recovery.scope.localId ||
+        context.generation !== recovery.scope.generation)
+    )
+      throw Error("GUEST_P1_RESTORE_SCOPE");
     return withAccountApplyGate(async () => {
+      if (recovery) await assertGuestRestore(recovery.scope);
       let draft!: ManualItemDraft;
       await database.withTransactionAsync(async () => {
         const snapshot = await current(context);
+        if (
+          recovery &&
+          snapshot.graph.itinerary_events.some(
+            (row) => row.id === recovery.snapshot.itemId,
+          )
+        )
+          throw Error("GUEST_P1_RESTORE_ITEM_EXISTS");
         const row = itemId ? editable(snapshot, itemId, context.accountId, family) : null;
         // Exact MANUAL CREATE provenance is retained independently from accepted facts.
         if (
@@ -462,8 +511,11 @@ export function createManualItemRepository(
         );
         draft = Object.freeze({
           mode: itemId ? "EDIT" : "CREATE",
-          itemId: itemId ?? newId(),
-          fields: structuredClone(fields),
+          itemId: recovery?.snapshot.itemId ?? itemId ?? newId(),
+          fields: structuredClone(recovery?.snapshot.fields ?? fields),
+          ...(recovery
+            ? { initialFields: structuredClone(recovery.snapshot.initialFields) }
+            : {}),
           participantOptions: (family === "P4" ? [] : members)
             .filter(
               (m) =>
@@ -476,6 +528,7 @@ export function createManualItemRepository(
             .map((m) => ({ personId: m.id, displayName: m.display_name })),
         });
         drafts.set(draft, {
+          guestRestoreScope: recovery?.scope,
           context,
           fingerprint: snapshot.fingerprint,
           actor: json(snapshot.actor),
@@ -486,12 +539,33 @@ export function createManualItemRepository(
           ),
         });
         await assertAccountRequestContext(context, account);
+        if (recovery) await assertGuestRestore(recovery.scope);
       });
       await assertAccountRequestContext(context, account);
+      if (recovery) await assertGuestRestore(recovery.scope);
       return draft;
     });
   }
   return {
+    async restoreGuestCreateDraft(
+      inputScope: GuestDraftScope,
+      input: GuestP1DraftSnapshot,
+    ) {
+      const scope = Object.freeze(
+        z
+          .strictObject({
+            kind: z.literal("GUEST"),
+            localId: coreUuid,
+            generation: z.number().int().nonnegative().safe(),
+          })
+          .parse(inputScope),
+      );
+      const snapshot = guestP1DraftSnapshotSchema.parse(input);
+      // Edit v1 has no owning revision; never silently rebase it onto current state.
+      if (family !== "P1" || snapshot.mode !== "CREATE")
+        throw Error("GUEST_P1_RESTORE_CREATE_ONLY");
+      return open(snapshot.tripId, undefined, undefined, { scope, snapshot });
+    },
     createDraft: (tripId: string) => open(tripId),
     read: (tripId: string, itemId: string, expectedRevision?: number) =>
       open(tripId, itemId, expectedRevision),
@@ -502,6 +576,7 @@ export function createManualItemRepository(
     ): Promise<ManualPlanSaveResult> {
       const state = drafts.get(draft);
       if (!state) throw new Error("MANUAL_PLAN_DRAFT_UNAVAILABLE");
+      if (state.guestRestoreScope) await assertGuestRestore(state.guestRestoreScope);
       const fields: ManualItemFields = (
         family === "P4"
           ? manualRentalFieldsSchema
@@ -574,11 +649,12 @@ export function createManualItemRepository(
             editable(snapshot, draft.itemId, state.context.accountId, family);
             return {
               commands: [],
-              result: async () => ({
-                localStatus: "PENDING" as const,
-                itemId: draft.itemId,
-                operationIds: prior.map((c) => c.operationId),
-              }),
+              result: () =>
+                guestResult(state, async () => ({
+                  localStatus: "PENDING" as const,
+                  itemId: draft.itemId,
+                  operationIds: prior.map((c) => c.operationId),
+                })),
             };
           }
         }
@@ -866,23 +942,24 @@ export function createManualItemRepository(
         };
         return {
           commands,
-          result: async () => {
-            const projected = await current(state.context);
-            const saved = editable(
-              projected,
-              draft.itemId,
-              state.context.accountId,
-              family,
-            );
-            if (json(fieldsFor(saved, projected, family)) !== fieldsText)
-              throw new Error("MANUAL_PLAN_PROJECTION_MISMATCH");
-            await assertAccountRequestContext(state.context, account);
-            return {
-              localStatus: "PENDING" as const,
-              itemId: draft.itemId,
-              operationIds: commands.map((c) => c.operationId),
-            };
-          },
+          result: () =>
+            guestResult(state, async () => {
+              const projected = await current(state.context);
+              const saved = editable(
+                projected,
+                draft.itemId,
+                state.context.accountId,
+                family,
+              );
+              if (json(fieldsFor(saved, projected, family)) !== fieldsText)
+                throw new Error("MANUAL_PLAN_PROJECTION_MISMATCH");
+              await assertAccountRequestContext(state.context, account);
+              return {
+                localStatus: "PENDING" as const,
+                itemId: draft.itemId,
+                operationIds: commands.map((c) => c.operationId),
+              };
+            }),
         };
       });
     },

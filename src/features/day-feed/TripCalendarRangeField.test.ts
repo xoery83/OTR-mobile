@@ -385,3 +385,29 @@ it("P3 keeps choosing checkout after an earlier tap resets check-in", () => {
     end: "2026-11-08",
   });
 });
+
+it("reports open/close and lets a scoped handoff block opening without changing committed dates", () => {
+  const onChange = vi.fn(),
+    onOpenChange = vi.fn(() => false as boolean | void);
+  const value = { start: "2026-12-14", end: "2026-12-21" };
+  const render = () => {
+    state.cursor = 0;
+    return nodes(TripCalendarRangeField({ value, onChange, onOpenChange }));
+  };
+  render()
+    .find((node) => node.type === UiFormRow)!
+    .props.onPress();
+  expect(render().find((node) => node.type === "Modal")!.props.visible).toBe(false);
+  expect(onChange).not.toHaveBeenCalled();
+  onOpenChange.mockReturnValue(undefined);
+  render()
+    .find((node) => node.type === UiFormRow)!
+    .props.onPress();
+  expect(render().find((node) => node.type === "Modal")!.props.visible).toBe(true);
+  render()
+    .find((node) => node.type === SheetHeader)!
+    .props.onLeft();
+  expect(render().find((node) => node.type === "Modal")!.props.visible).toBe(false);
+  expect(onOpenChange.mock.calls).toEqual([[true], [true], [false]]);
+  expect(onChange).not.toHaveBeenCalled();
+});

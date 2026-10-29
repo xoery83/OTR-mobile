@@ -1,0 +1,72 @@
+{
+  "status": "NATIVE_NORMAL_CREATE_CANCEL_AND_EXISTING_DATA_COLD_REGRESSION_PASS_ADOPTION_PENDING",
+  "bundleId": "com.xoery.otrmobile.guestqa",
+  "nativeBaseVersion": 43,
+  "applicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile.guestqa",
+  "machOXMLIdentity": "PASS",
+  "machODERIdentity": "PASS",
+  "noExplicitSharedKeychainGroup": true,
+  "rootOAuthSchemesAbsent": true,
+  "allCloudAdmissionClosed": true,
+  "strictCodeSign": "PASS",
+  "nativeExecutableSHA256": "7a81df75ff4533da9e34db84463015d4b16f0196aa7d33b324c2eb42c2461797",
+  "nativeBaseCommit": "6fe6f3c09d812b97e9594b54641ad244f372cd2f",
+  "consumerSourceCommit": "5da59fa252ea6361ce7726b9a9746c1b8fbdc4e7",
+  "artifactVersion": "65",
+  "embeddedJSSHA256": "6ce5df6f2bc8656eedd9f7e9786d321de37b49c9f32fd52496656f10b23ae599",
+  "jsDevMode": false,
+  "nativeSections": {
+    "__entitlements": "49d2c033ae93928a0d8bc402c73cf808ab15217ea2e4e5d1e1fe8607156e35cd",
+    "__ents_der": "a2b4893cc85ce8882421e65db8490f573d052e30c3344fab5593a37bdf79cc54"
+  },
+  "consumerJS": "FIXED_REVIEWED_5DA59FA2",
+  "newSimulator": false,
+  "copiedSessionOrKeychainOrDatabase": false,
+  "nativeRuntimeStatus": "INSTALLED_IN_PLACE_NORMAL_GUEST_UI_AND_SAME_VERSION_COLD_PASS",
+  "independentArtifactReview": "PASS; Info/JS/hermes98/signature/GuestAppID/native14sections plus debug dylibs byte-identical to ownQA64",
+  "nativeWorkflow": [
+    "normal MyTrips -> Start Trip -> Create Trip Manually",
+    "typed transient Trip name Guest QA65 unsaved",
+    "normal nickname QA65 昵称 Done -> reopen exact value -> Cancel",
+    "normal dates Open -> Cancel; Create input preserved",
+    "Create Cancel -> Stay retains same draft -> Cancel -> Discard named transient draft",
+    "own Guest app terminate/cold -> same Guest Trip -> Day original Guest A Walk"
+  ],
+  "readback": {
+    "schema": 74,
+    "localId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+    "tripId": "f8975f1d-fec6-43c1-bae9-2b84c908e552",
+    "tripCount": 1,
+    "p1IntentCount": 1,
+    "queueCount": 3,
+    "cloudCounts": {
+      "trip_core_read_certificates": 0,
+      "trip_core_trip_core_command_receipts": 0,
+      "local_trip_metadata_confirmations": 0
+    },
+    "allOriginalBaselineFieldsIdenticalExceptPhase": true,
+    "canonicalAccountDatabasePresent": false
+  },
+  "additionalLogicalCensus": {
+    "actualGuestTableCount": 148,
+    "unsupportedNonempty": {},
+    "fullFilesComplete": false,
+    "physicalDiskScanned": false
+  },
+  "reviewIncidents": {
+    "sharedDeviceHubReadsRejected": 2,
+    "resolution": "Owner explicitly confirmed currently visible FormsQA/GuestQA before fresh binding",
+    "oneLaterApprovalTimeout": "actual UI read confirmed no action; one normal retry succeeded",
+    "noAlternativeScreenReadBypass": true,
+    "initialSharedWindowObservation": "A stale DeviceHub binding yielded an unrelated status-only AX diff. Further reads were stopped/rejected; Owner confirmed GuestQA before fresh binding. No unrelated business objects or credentials were inspected or recorded."
+  },
+  "limits": [
+    "Native normal Edit not performed in this bounded window",
+    "no actual Native freeze/resume or checkpoint-to-screen reconstruction",
+    "no Provider verification/Adoption/Cloud receipt",
+    "transient Create was explicitly discarded, never saved; not a new Golden A Create acceptance"
+  ],
+  "guiReturnedToSourceThenNative": true,
+  "dataCopied": false,
+  "otherAppSessionKeychainDatabaseAccess": false
+}

@@ -1,3 +1,11 @@
+import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
+vi.mock("@/data/auth/guestTripDraftInventory", async (original) => {
+  const m = await original<typeof import("@/data/auth/guestTripDraftInventory")>();
+  return {
+    ...m,
+    guestTripDraftInventory: m.createGuestTripDraftInventory(async () => {}),
+  };
+});
 import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
 import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
@@ -143,8 +151,8 @@ vi.mock("react", async (original) => ({
   useEffect: (callback: () => void | (() => void)) => {
     if (state.mount || state.forceEffects) state.effects.push(callback);
   },
-  useLayoutEffect: (callback: () => void | (() => void)) => {
-    if (state.mount) {
+  useLayoutEffect: (callback: () => void | (() => void), deps?: readonly unknown[]) => {
+    if (state.mount || deps === undefined) {
       const cleanup = callback();
       if (cleanup) state.cleanups.push(cleanup);
     }
@@ -1821,3 +1829,127 @@ it("does not hide an initial Guest publication fence behind indefinite loading",
   expect(render()).toContain("tripCreate.unavailable");
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("NONE");
 });
+
+async function mountGuestCreateDraft() {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "00000000-0000-4000-8000-000000000001",
+  });
+  vi.mocked(readCommittedLocalSession).mockResolvedValue(null);
+  state.repo.mockResolvedValue(repository());
+  props.mode = "CREATE";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  await flush();
+  render();
+  return state.nodes.find((node) => node.createFields)!.createFields;
+}
+const guestDraftScope = () => ({
+  kind: "GUEST" as const,
+  localId: "00000000-0000-4000-8000-000000000001",
+  generation: getAccountGeneration(),
+});
+it("freezes actual raw Trip Create fields and resumes the same operation after stale input/save/close callbacks", async () => {
+  const fields = await mountGuestCreateDraft();
+  fields.onName("  未保存旅程  ");
+  fields.onRange({ start: "2026-11-01", end: "" });
+  fields.onSelfNickname("原文昵称");
+  fields.onTravelers([
+    {
+      personId: "00000000-0000-4000-8000-000000000011",
+      operationId: "00000000-0000-4000-8000-000000000012",
+      displayName: "同行人",
+    },
+  ]);
+  render();
+  const staleSave = button("createTripV2.create").onPress;
+  const staleClose = button("common.cancel").onPress;
+  const lease = await guestTripDraftInventory.freeze(guestDraftScope());
+  const snapshot = JSON.parse(lease.entries[0].canonicalText);
+  expect(snapshot).toMatchObject({
+    mode: "CREATE",
+    value: {
+      name: "  未保存旅程  ",
+      selfNickname: "原文昵称",
+      travelers: [{ displayName: "同行人" }],
+    },
+  });
+  fields.onName("must not replace raw draft");
+  staleSave();
+  staleClose();
+  await flush();
+  render();
+  expect(state.nodes.find((node) => node.createFields)?.createFields.disabled).toBe(true);
+  expect((await state.repo.mock.results[0].value).createTrip).not.toHaveBeenCalled();
+  expect(props.onBackToTrips).not.toHaveBeenCalled();
+  await lease.assertCurrent();
+  await lease.resume();
+  render();
+  expect(state.nodes.find((node) => node.createFields)?.createFields.name).toBe(
+    "  未保存旅程  ",
+  );
+  const resumed = await guestTripDraftInventory.freeze(guestDraftScope());
+  expect(JSON.parse(resumed.entries[0].canonicalText)).toEqual(snapshot);
+  await resumed.resume();
+});
+it.each(["calendar", "name editor", "destination query"])(
+  "blocks Guest Trip handoff while %s retains uncommitted child state",
+  async (open) => {
+    const fields = await mountGuestCreateDraft();
+    if (open === "calendar") fields.onCalendarOpenChange(true);
+    if (open === "name editor") fields.onNameEditorOpenChange(true);
+    if (open === "destination query") {
+      state.nodes.find((node) => node.destinations)!.destinations.onQueryDirty(true);
+      render();
+    }
+    await expect(guestTripDraftInventory.freeze(guestDraftScope())).rejects.toThrow(
+      "GUEST_TRIP_CREATE_DRAFT_NOT_READY",
+    );
+  },
+);
+
+it("collects the latest Trip Create keystroke before React renders and fences stale Discard", async () => {
+  const fields = await mountGuestCreateDraft();
+  fields.onName("Latest unsaved input");
+  render();
+  button("common.cancel").onPress();
+  const discard = state.alert.mock.calls
+    .at(-1)![2]
+    .find((action: any) => action.style === "destructive").onPress;
+  fields.onName("  最后一个字符  ");
+  fields.onRange({ start: "2026-12-01", end: "" });
+  const lease = await guestTripDraftInventory.freeze(guestDraftScope());
+  expect(JSON.parse(lease.entries[0].canonicalText).value).toMatchObject({
+    name: "  最后一个字符  ",
+    start: "2026-12-01",
+    end: "",
+  });
+  discard();
+  expect(props.onBackToTrips).not.toHaveBeenCalled();
+  await lease.resume();
+});
+it("rejects old Create field callbacks after an invalid-generation resume", async () => {
+  const fields = await mountGuestCreateDraft();
+  const lease = await guestTripDraftInventory.freeze(guestDraftScope());
+  advanceAccountGeneration();
+  await expect(lease.resume()).rejects.toThrow("GUEST_DRAFT_HANDOFF_CHANGED");
+  const previous = JSON.stringify(state.hooks);
+  fields.onName("old callback");
+  fields.onRange({ start: "2026-11-01", end: "2026-11-02" });
+  fields.onSelfNickname("old nickname");
+  fields.onTravelers([]);
+  expect(JSON.stringify(state.hooks)).toBe(previous);
+});
+it.each(["onQueryDirty", "onBusy"])(
+  "blocks Create handoff synchronously on destination %s",
+  async (callback) => {
+    await mountGuestCreateDraft();
+    state.nodes.find((node) => node.destinations)!.destinations[callback](true);
+    await expect(guestTripDraftInventory.freeze(guestDraftScope())).rejects.toThrow(
+      "GUEST_TRIP_CREATE_DRAFT_NOT_READY",
+    );
+  },
+);

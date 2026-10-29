@@ -105,10 +105,18 @@ except phase. Main source2b8ab469 integrated after NO_BLOCKER; actual primary3 s
 Primary six original dirty files/full diff independently unchanged. Final
 main/remote verification belongs to
 GUEST_B_QA64_MAIN_INTEGRATION.json and its private final verification snapshot.
-Coreab33fc9f, TripCreate2c04394d and MetadataV2 1a34e1c1 are independently reviewed
-private candidates awaiting Native owning acceptance; none is main-integrated or
-DEV-deployed. Never whole-merge Core's Native-parent branch. No public-file/SQL/
-Host Writer lease held; Native live-Trip-draft seam pending.
+Native delegated the exact Core/TripCreate/Metadata transaction ports to Auth;
+Root confirmed no competing PgStorage Writer. Original candidates ab33fc9f,
+2c04394d and1a34e1c1 were replayed only as seven exact source/test files onto
+accepted dd53870c; every parent and replayed file byte-verified, no whole Native
+branch merge. Directed8 suites148/types/lint/two Backend builds PASS; independent7
+suites131 NO_BLOCKER. Disposable network-none local PG1 PASS, fixture removed.
+Existing principal/Actor/CAS/Source/receipt guards retained. Not deployed or mounted;
+cross-Gateway authority still absent. GUEST_B_PG_TRANSACTION_REPLAY.json records
+limits. Exact source db97ccfc integrated after actual primary8 suites148 PASS;
+GUEST_B_PG_PORTS_MAIN_INTEGRATION.json records preserved six dirty files/full diff.
+Auth holds only these PgStorage ports and delegated Guest recovery UI/Repo;
+no SQL/Host/GUI/main lease held outside explicit serial windows.
 
 GuestQA64/source d771c7e0 in-place runtime regression PASS: normal original Trip/P1
 and same-version cold recovery. Independent Guest-only SQLite74 readback retains
@@ -116,16 +124,52 @@ exact Trip/Person/P1 intent/three queue records; cloud receipts remain zero and 
 Account DB exists. GUI returned to Native. This is existing-data regression, not
 Adoption or new Create/Edit acceptance. GUEST_B_GUESTQA64_ARTIFACT.json records limits.
 
-Native delegated LocalTripWorkspace/TripBasicEditor/CreateTripV2Fields narrow Writer
-to Auth; Enrichment remains Native-owned. Focused foreground repair retains an
-already-loaded same-Guest presentation only for exact inventory/publication fences,
-with second principal/generation check. Initial Create unavailability uses existing
-alert copy. 2 initial RED + initial-unavailable RED -> 3 suites73 PASS/types/UIguard;
-independent 3 suites91 PASS/NO_BLOCKER; actual primary3 suites73 PASS after
-sourceffb0e1b5 integration. Six original dirty files/full diff unchanged. Final
-remote verification is private GUEST_B_FOREGROUND_MAIN_VERIFIED.json. Full Trip
-live-draft collector still absent. Native also released TripCalendarRangeField
-for optional open/block signals; default existing date behavior must be preserved.
+Native delegated Trip Workspace/Basic/Create fields/Calendar and directly required
+optional callback forwarding to Auth; Enrichment remains Native-owned. Foreground
+sourceffb0e1b5 is main-integrated with actual primary73/independent91 PASS; final
+main/origin/remote4d69e0e3 verified, six original dirty/full diff unchanged.
+
+New local actual Trip live-draft collector reuses P1 freeze/resume. Strict raw
+Create/Edit snapshots retain original fields/Person/operation IDs and owning
+baselines; synchronous fields/blockers and generation/alive/lock guards prevent
+before-render loss, stale callbacks and late Discard. Open child/name pickers and
+UNKNOWN save block handoff. Journal v2 retains Trip/P1 canonical bytes on disk;
+v1 remains P1-only. Unsubmitted Trip Create is not a persisted/published Trip.
+Directed11 suites239/types/scopedlint/UIguard PASS; independent NO_BLOCKER
+(8 suites168 + overlapping3 suites71). GuestQA65/source5da59fa2 normal Create/nickname/dateCancel/Stay/Discard and
+original Trip/P1 cold PASS; all independent Guest SQLite baseline fields unchanged.
+Actual primary11 suites239 PASS after source5f036de4 integration; original six
+dirty/full diff preserved. GUEST_B_TRIP_DRAFT_MAIN_INTEGRATION.json and private
+final refs snapshot pin this integration. Native Edit/freeze/checkpoint-screen
+reconstruction pending; no login/publisher consumer or
+Native checkpoint-to-screen restoration. GUEST_B_TRIP_LIVE_DRAFT_REVIEW.json tracks
+finite readiness. General file/all-family aggregation remains unsupported.
+
+Latest local handoff assembly uses the actual frozen Guest vault, Trip/P1 draft
+registries and canonical journal verifier. Schema74/current Trip/P1 capability
+qualifies zero registered business files only with owning Capture empty, whole
+census/ownership checks and static-only stored/deferred/live cover references.
+Unknown families/photo references block the whole dataset. Final table hash must
+match qualification; output is immutable and cloudAuthority=false. UI resume and
+vault release serialize with publication markers; open P1 date/time pickers block
+freeze. Directed6 suites202/types/scopedlint/UIguard PASS; independent prior4
+suites118 NO_BLOCKER; final queued-marker race independently1/1 PASS on fixed a85d1efd. Actual primary6
+suites202 PASS; six dirty files/full diff preserved. Main integration receipt:
+GUEST_B_HANDOFF_MAIN_INTEGRATION.json. This has no Native
+consumer, physical-disk absence claim, login/adoption activation or DEV publication.
+See GUEST_B_HANDOFF_INVENTORY_REVIEW.json and ADR dated2026-10-29.
+
+P1 CREATE checkpoint restoration now reuses Repository open/current/WeakMap and
+existing opened editor input. Original Item ID/raw incomplete fields/initial
+baseline survive real journal verification and SQLite close/reopen; restore alone
+writes no business data, normal Save remains PENDING/local. Same-UUID Account,
+foreign Guest/generation, existing Item, non-P1, EDIT v1 and publication hold reject;
+identity loss at transaction result rolls writes back. Directed7 suites252/types/
+scopedlint/UIguard PASS; independent4 suites159 NO_BLOCKER. No actual Native recovery
+routing/GUI/provider consumer or cloud proof. EDIT must gain owning revision first.
+Actual primary7 suites252 PASS after fixedc2a29bac integration; six original dirty
+files/full diff preserved. GUEST_B_P1_RESTORE_MAIN_INTEGRATION.json records it.
+See GUEST_B_P1_CREATE_RESTORE_REVIEW.json and ADR dated2026-10-29.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/

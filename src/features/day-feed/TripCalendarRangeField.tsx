@@ -57,6 +57,7 @@ export function TripCalendarRangeField({
   startWithCheckin = false,
   initialNavigationDate,
   onChange,
+  onOpenChange,
 }: {
   value: TripDateRange;
   disabled?: boolean;
@@ -67,6 +68,7 @@ export function TripCalendarRangeField({
   startWithCheckin?: boolean;
   initialNavigationDate?: string | null;
   onChange(range: TripDateRange): void;
+  onOpenChange?(open: boolean): boolean | void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -74,6 +76,9 @@ export function TripCalendarRangeField({
   const cellSize = Math.max(44, Math.ceil(24 * fontScale));
   const gridWidth = Math.max(width - 2 * visual.space.page, cellSize * 7);
   const [open, setOpen] = useState(false);
+  const changeOpen = (next: boolean) => {
+    if (onOpenChange?.(next) !== false) setOpen(next);
+  };
   const [draft, setDraft] = useState(value);
   const [choosingEnd, setChoosingEnd] = useState(false);
   const today = markToday ? calendarDate(new Date()) : null;
@@ -123,7 +128,7 @@ export function TripCalendarRangeField({
               12,
             ),
           });
-          setOpen(true);
+          changeOpen(true);
         }}
       />
       <Modal
@@ -131,7 +136,7 @@ export function TripCalendarRangeField({
         animationType="slide"
         presentationStyle="pageSheet"
         allowSwipeDismissal
-        onRequestClose={() => setOpen(false)}
+        onRequestClose={() => changeOpen(false)}
       >
         <SafeAreaView edges={["bottom"]} style={styles.sheet}>
           <SheetHeader
@@ -139,10 +144,10 @@ export function TripCalendarRangeField({
             title={label === t("tripForm.dates") ? t("tripForm.dateTitle") : label}
             safeTop={false}
             leftLabel={t("common.cancel")}
-            onLeft={() => setOpen(false)}
+            onLeft={() => changeOpen(false)}
             onRight={() => {
               onChange(draft);
-              setOpen(false);
+              changeOpen(false);
             }}
           />
           <View style={styles.content}>
