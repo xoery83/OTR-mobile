@@ -1,3 +1,21 @@
+# MCP-01 Read-only Foundation — 2026-10-29 / LOCAL_PASS, activation blocked
+
+- Independent worktree `mcp-01-read-only`, base main `ee246658`; four standard
+  Streamable HTTP tools reuse Backend discovery/Core read2/detail. Isolated SDK2.4.0
+  package; no Mobile, DB/schema/ACL/Principal/Session contract or runtime mount change.
+  -14 directed tests +48 owning regressions, scoped types/lint/build/UI guard PASS;
+  independent review NO_BLOCKER for closed local foundation/internal runner.
+  Global types limited by two pre-existing missing Google Sign-In package errors.
+- Auth Owner confirms no resource-bound MCP verifier; public OAuth/client activation
+  remains BLOCKED_BY_OWNING_INTERFACE. Owner cooperating with fresh normal A/B OTP;
+  no copied Session/Keychain. Fixed Import fixture cannot be assumed visible to
+  these Accounts; actual acceptance/cleanup status is in the validation report.
+- Authority/deliverables: `docs/mcp/MCP_01_ARCHITECTURE_INVENTORY.md`, tool contract,
+  auth design, read-only validation, roadmap; deployment instructions `mcp/README.md`.
+  Integration Delta owners/closure in validation report. No MCP-01 full/cloud PASS.
+  Next: complete permitted real reads, owning Auth/fixture contract, serial main
+  review/integration; preserve all parallel work and protected deployment windows.
+
 # Native-05/06 — iPad business slice and closed trigger, 31 October 2026
 
 Physical iPad Air5 freshly verified OS27.2/24B119, exactUDID00008103-00113914020B401E,

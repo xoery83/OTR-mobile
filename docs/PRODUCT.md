@@ -344,3 +344,11 @@ Owner authorized normal registered DEV Accounts with the existing Trip/Item perm
 ## Photo Import preprocessing — Owner decision 30 October 2026
 
 Photo Import uses local OCR only for conservative RELEVANT / IRRELEVANT / UNCERTAIN relevance screening, followed by original-image vision interpretation and existing Results/Review/Admission/Core Save. OCR is not the formal P1–P6 parser or sole model input. Poor/empty OCR is UNCERTAIN; an uncertain image requires explicit AI continuation or Skip, and explicit analysis intent may bypass relevance screening without bypassing Source permissions or cost controls. Retain originals and per-input decisions; one image must not block other sources or replay completed paid work. This decision does not activate a Provider, expand budgets or grant image Source/Save authority. PDF closure remains first. See `docs/ops/universal-product-20261028/photo/PHOTO_PIPELINE_DELTA.md` for inspected code and actual qualification gaps.
+
+## MCP-01 read-only integration — Owner authorized 29 October 2026
+
+A modular standard MCP adapter exposes authorized server-confirmed Trip basics
+and typed P1–P6 Item reads through existing Backend ports. No write tools, local
+pending-data access or additional business scope. Public Remote OAuth activation
+requires the Auth-owned resource/grant contract and actual client/permission E2E.
+See `mcp/MCP_01_ARCHITECTURE_INVENTORY.md` and `mcp/MCP_01_AUTH_DESIGN.md`.
