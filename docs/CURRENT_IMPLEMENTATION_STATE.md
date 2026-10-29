@@ -212,6 +212,14 @@ NO_BLOCKER; types/lint PASS. Initial two existing 5s timeouts passed unchanged i
 single-worker30s rerun. GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json pins local-only proof;
 no production Native caller yet.
 
+Provisional preflight/status client now uses the existing Guest verification secure
+slot, keeping launch Guest. Actual dispatch and result check kind/UUID/generation;
+401 refresh uses existing Supabase path with active persistence disabled and old-
+refresh CAS into the same slot, coalesced by binding/generation. Strict DTO/grant
+pins; NOT_FOUND never unlocks source. Direct17/independent4 suites115 PASS/NO_BLOCKER,
+types/lint PASS. Unit Provider wire/memory storage only, no real Keychain, Native
+consumer, Backend activation or Adoption E2E. GUEST_B_PROVISIONAL_TRANSPORT_REVIEW.json.
+
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
 Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.

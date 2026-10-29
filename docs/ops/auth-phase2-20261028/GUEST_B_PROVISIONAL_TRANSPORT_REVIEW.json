@@ -1,0 +1,37 @@
+{
+  "schemaId": "otr.auth.guest-provisional-metadata-transport-review/1",
+  "status": "LOCAL_PASS_BACKEND_AUTHORITY_CLOSED",
+  "scope": "existing preflight/status metadata DTOs only",
+  "implementation": [
+    "Use same existing provisional secure slot; no Account index or launch install",
+    "Pin Guest kind/UUID/generation and adoption/target binding",
+    "Check current Guest before token, actual dispatch and response application",
+    "401 uses existing Supabase refresh with ordinary persistence disabled, then oldRefresh CAS",
+    "Coalesce refresh per verification store, binding and generation",
+    "Strict input/output pins, counts, digest and grant expiry; missing authority fails closed",
+    "NOT_FOUND retains QUERY_SERVER_STATUS and never unlocks source"
+  ],
+  "validation": {
+    "newDirect": {
+      "suites": 1,
+      "tests": 17,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 4,
+      "tests": 115,
+      "result": "NO_BLOCKER_PASS",
+      "options": "single worker; 30s test timeout"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "limits": "JWT-shaped unit fixtures, in-memory secure storage and simulated Provider/Backend wire; not real Provider authentication or Keychain"
+  },
+  "boundaries": {
+    "backendMountedOrDeployed": false,
+    "publisher": false,
+    "nativeConsumer": false,
+    "realAdoptionE2e": false,
+    "schemaRlsGrantChanged": false
+  }
+}
