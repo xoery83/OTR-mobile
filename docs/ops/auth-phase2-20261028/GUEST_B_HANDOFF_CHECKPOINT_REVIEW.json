@@ -38,5 +38,14 @@
     "cloudPublication": false,
     "devDeployment": false,
     "newSqlAuthority": false
+  },
+  "preflightResourceFacts": {
+    "countsFromSameFrozenSourceAndQualifiedFiles": true,
+    "unsubmittedTripOnlyLiveDraft": true,
+    "callerCountsAccepted": false,
+    "grantsOrPolicyCreated": false,
+    "directTargetedTests": 6,
+    "independentTargetedTests": 2,
+    "result": "NO_BLOCKER_PASS"
   }
 }

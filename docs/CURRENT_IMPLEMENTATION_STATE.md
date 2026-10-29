@@ -210,7 +210,9 @@ No caller source override, publication, automatic unlock or Session installation
 Direct6 new cases PASS; independent3 suites135 plus cancelled supplement1 PASS and
 NO_BLOCKER; types/lint PASS. Initial two existing 5s timeouts passed unchanged in a
 single-worker30s rerun. GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json pins local-only proof;
-no production Native caller yet.
+no production Native caller yet. The same helper now derives strict preflight
+resource facts from that exact frozen source/files/drafts, never caller counts or
+a Trip shell for an unsaved draft; direct6/independent2 targeted PASS/NO_BLOCKER.
 
 Provisional preflight/status client now uses the existing Guest verification secure
 slot, keeping launch Guest. Actual dispatch and result check kind/UUID/generation;

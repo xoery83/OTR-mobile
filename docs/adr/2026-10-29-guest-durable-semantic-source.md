@@ -19,3 +19,6 @@ without caller-supplied source/draft/hash fields. Pin adoption/target IDs before
 awaiting, check the original inventory lease around opening/writing recovery, and
 return only after readback. Failure never auto-releases a possibly protected
 source or installs a target Session; existing cancellation/status handling owns it.
+The matching preflight DTO derives resource facts from that same frozen source,
+registered-file qualification and retained drafts; callers do not supply counts.
+These observed facts are not an entitlement policy, quota reservation or grant.

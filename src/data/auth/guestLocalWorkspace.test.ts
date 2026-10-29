@@ -2070,6 +2070,13 @@ it("assembles a v3 checkpoint from actual held Guest inventory without accepting
     },
   });
   expect(result.nextAction).toBe("RESUME_PREFLIGHT");
+  expect(result.preflight).toEqual({
+    contractVersion: 1,
+    ...original,
+    sourceGuestLocalId: f.f.guestId,
+    inventorySha256: inventory.census.inventorySha256,
+    resources: { trips: 1, people: 1, items: 1, files: 0, fileBytes: 0, liveDrafts: 2 },
+  });
   expect(hasGuestPublicationHold(f.f.guestId)).toBe(false);
   await inventory.resumeGuestBeforePublication();
 });

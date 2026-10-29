@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
+import { guestAdoptionPreflightRequestSchema } from "@/domain/auth/guestAdoptionPreflight";
 import type { createGuestHandoffInventory } from "./guestHandoffInventory";
 import {
   openGuestAdoptionRecovery,
@@ -42,5 +43,19 @@ export async function prepareGuestHandoffCheckpoint(
   await inventory.assertCurrent();
   if (!result || result.nextAction !== "RESUME_PREFLIGHT")
     throw Error("GUEST_HANDOFF_CHECKPOINT_RECOVERY_REQUIRED");
-  return result;
+  const preflight = guestAdoptionPreflightRequestSchema.parse({
+    contractVersion: 1,
+    ...target,
+    sourceGuestLocalId: inventory.scope.localId,
+    inventorySha256: result.preparation.inventorySha256,
+    resources: {
+      trips: source.totals.trips,
+      people: source.totals.people,
+      items: source.totals.p1Items,
+      files: inventory.files.entries.length,
+      fileBytes: inventory.files.entries.reduce((sum, file) => sum + file.bytes, 0),
+      liveDrafts: inventory.drafts.length,
+    },
+  });
+  return { ...result, preflight };
 }
