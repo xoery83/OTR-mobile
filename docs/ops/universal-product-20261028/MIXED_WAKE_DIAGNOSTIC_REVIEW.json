@@ -1,0 +1,39 @@
+{
+  "commit": "28908a9ea457756d8fabd263c10661c291afb313",
+  "status": "LOCAL_PASS_INDEPENDENT_NO_BLOCKER",
+  "scope": [
+    "backend/src/universalContinuousRuntime.ts",
+    "backend/src/universalContinuousRuntime.test.ts"
+  ],
+  "firstFailure": "Same mixed Batch Source ADMITTED; first wake RETRYABLE/SYNC_FAILED with zero Attempt and zero independently verified Provider calls. Existing diagnostic hid the cause.",
+  "rootCauseFixed": false,
+  "red": {
+    "missingSafeDiagnostic": 2
+  },
+  "green": {
+    "suites": 3,
+    "tests": 11,
+    "typecheck": true,
+    "scopedLint": true
+  },
+  "independentReview": {
+    "reviewer": "p1_source_review_independent",
+    "initialBlocker": "Pattern-shaped private strings could enter logs.",
+    "resolved": "Exact static list of 11 error constants; all other values UNCLASSIFIED; classification/logging best-effort.",
+    "result": "NO_BLOCKER"
+  },
+  "negativeCases": [
+    "uppercase private source-shaped message",
+    "uppercase auth-shaped message",
+    "arbitrary original/token message",
+    "logger throws; settle preserves same original error"
+  ],
+  "compatibility": {
+    "devSource": "e973ffe0b2eb4cf67a6abd09980c44bf25dca0a9",
+    "runtimeBeforeBlob": "cb73bbdd8a766e048302ed320a354a237a497aff",
+    "patchParentRuntimeBlobExactMatch": true
+  },
+  "deployment": "Passed exact single Commit to Native for one coordinated curated software deployment; not yet deployed.",
+  "authorityChanges": false,
+  "providerCallsFromPatch": 0
+}
