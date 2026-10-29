@@ -224,6 +224,15 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   reproduced200 before repair and now403 without owning calls; normal missing
   adapter stays503. Directed and independent4 suites88 PASS, types/scoped lint
   PASS/NO_BLOCKER. Routes remain unmounted, no server authority or DEV change.
+- 30 October private composite plan/stage candidate now pins owning stage SHA to
+  immutable v3 preparation plus grant/source/target/inventory and rejects nonempty
+  Draft/file families. Existing PG lease stores exact immutable private source,
+  actor collision/retry fenced; outer timeout/cleanup after COMMIT remains UNKNOWN,
+  late callbacks cannot COMMIT. Direct/independent2s33 PASS, isolated network-none
+  PG13 checks PASS (reviewer read report only; three newer Gateway roles absent in
+  fixture). Local-only SQL has no RPC/runtime grants. Core Writer review and real
+  grant issuer/publication authority remain pending; no Adoption/Hosted PASS.
+  See ops/auth-phase1-20261028/composite-publication-candidate/REVIEW.json.
 - Provisional metadata client7365 uses the existing secure Guest verification slot
   while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
   result. 401 refresh reuses existing Supabase path with active persistence off,
