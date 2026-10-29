@@ -178,8 +178,11 @@ P1 intents, static covers, Ledger initialization settings and source timestamps.
 No target Account, capability transfer, SQL-file copy, upload or authority. Actual
 census table hashes before/after must match. Directed/independent3 suites107/types/
 scopedlint PASS/NO_BLOCKER; source-only proof, not Native/Cloud/Adoption. See
-GUEST_B_SOURCE_PROJECTION_REVIEW.json; next persist this semantic source so UNKNOWN
-recovery never needs to unlock the original Guest DB.
+GUEST_B_SOURCE_PROJECTION_REVIEW.json. Fixed source49f0b673 joined accepted main11c7
+as6c1ec431; joined4 suites121/types PASS, actual primary3 suites107 PASS. Six original
+dirty files/full diff preserved; GUEST_B_SOURCE_MAIN_INTEGRATION.json records this
+source-only integration. Next persist the semantic source so UNKNOWN recovery
+never needs to unlock the original Guest DB.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
