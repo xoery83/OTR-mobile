@@ -33,6 +33,12 @@
   "newCopy": false,
   "fullTripDraftCollector": false,
   "nativeFreezeOrAdoptionE2E": false,
-  "mainIntegration": "PENDING next serial window; does not change previously verified main6d78",
+  "mainIntegration": {
+    "source": "ffb0e1b59a98acccf5cf29c589ce14aa3d3348ef",
+    "baseline": "6d78cd4ec7004bdb18785ab1c073023562822a0d",
+    "actualPrimarySmoke": "3 suites73 PASS",
+    "sixOriginalDirtyFilesAndFullDiff": "UNCHANGED",
+    "finalPushVerification": "private GUEST_B_FOREGROUND_MAIN_VERIFIED.json; this is a pre-final-push snapshot"
+  },
   "devOrSqlChanges": false
 }

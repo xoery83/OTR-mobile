@@ -103,7 +103,11 @@ to Auth; Enrichment remains Native-owned. Focused foreground repair retains an
 already-loaded same-Guest presentation only for exact inventory/publication fences,
 with second principal/generation check. Initial Create unavailability uses existing
 alert copy. 2 initial RED + initial-unavailable RED -> 3 suites73 PASS/types/UIguard;
-independent 3 suites91 PASS/NO_BLOCKER. Full Trip live-draft collector still absent.
+independent 3 suites91 PASS/NO_BLOCKER; actual primary3 suites73 PASS after
+sourceffb0e1b5 integration. Six original dirty files/full diff unchanged. Final
+remote verification is private GUEST_B_FOREGROUND_MAIN_VERIFIED.json. Full Trip
+live-draft collector still absent. Native also released TripCalendarRangeField
+for optional open/block signals; default existing date behavior must be preserved.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
