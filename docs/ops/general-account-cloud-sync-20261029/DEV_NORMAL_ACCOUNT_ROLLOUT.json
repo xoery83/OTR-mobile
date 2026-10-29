@@ -138,7 +138,7 @@
   "curatedValidation": "6 suites55PASS/server+capture bundlesPASS",
   "limits": [
     "new Google and new Email OTP Native signup not yet verified",
-    "general Native Build108 not yet installed",
+    "Build108 was not installed at deployment-verification time; subsequent in-place proof is in EXISTING_GOOGLE_GENERAL_BUILD108.json",
     "legacy QA smoke and serial main integration pending",
     "not a shared Organizer/collaborator or downstream sync claim"
   ],
