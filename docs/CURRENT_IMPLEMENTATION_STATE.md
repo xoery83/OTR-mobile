@@ -7,9 +7,10 @@
   independent review NO_BLOCKER for closed local foundation/internal runner.
   Global types limited by two pre-existing missing Google Sign-In package errors.
 - Auth Owner confirms no resource-bound MCP verifier; public OAuth/client activation
-  remains BLOCKED_BY_OWNING_INTERFACE. Owner cooperating with fresh normal A/B OTP;
-  no copied Session/Keychain. Fixed Import fixture cannot be assumed visible to
-  these Accounts; actual acceptance/cleanup status is in the validation report.
+  remains BLOCKED_BY_OWNING_INTERFACE. Actual fresh A/B OTP and SDK HTTP connection PASS; A discovery/list matches
+  independent Backend, fixed Import Trip NOT_VISIBLE. Both own temporary Sessions
+  revoked; no copied Session/Keychain. Item positive E2E awaits an existing
+  accessible synthetic fixture; exact scope is in the validation report.
 - Authority/deliverables: `docs/mcp/MCP_01_ARCHITECTURE_INVENTORY.md`, tool contract,
   auth design, read-only validation, roadmap; deployment instructions `mcp/README.md`.
   Integration Delta owners/closure in validation report. No MCP-01 full/cloud PASS.

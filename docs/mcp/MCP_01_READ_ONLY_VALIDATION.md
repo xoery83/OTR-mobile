@@ -42,8 +42,17 @@ Trip825f79b2-4a9d-4535-a62e-43000ca50c4a, performs standard Client calls and sep
 Backend hash readback, and attempts only own-session scope=local revocation.
 No refresh, copied old session, business mutation, permission change or fixture
 creation. Initial A code rejected; new normal A login verified Account38e4c610-
-4a53-4bd2-976e-42de679a8f9b, matching accepted Google identity. Final A/B read
-outcomes and cleanup are recorded after completion; no live data PASS yet.
+4a53-4bd2-976e-42de679a8f9b, matching accepted Google identity. B independently
+verified Account4ebd0cbd-6fbb-41fb-8322-7eca5a563cb4. Both standard SDK clients
+connected to the internal Streamable HTTP server with their separate normally
+verified sessions. A tools discovery PASS (four tools); list_trips PASS with
+independent direct Backend list hash comparison. get_trip for the fixed Import
+synthetic Trip returned NOT_VISIBLE; runner reported BLOCKED_BY_OWNING_INTERFACE /
+FIXED_SYNTHETIC_TRIP_NOT_VISIBLE_TO_ACCOUNT_A. It deliberately stopped before
+claiming Item/family consistency or B cross-Item negatives. No Item content was
+returned. Both own fresh sessions subsequently revoked successfully via the
+existing scope=local endpoint; process retains no session file. No expired/public
+resource-token or OAuth/client-product PASS is inferred from these logins.
 
 The fixed Import fixture belongs to QA Accountf4b059c5; A's normal Google Account
 must not be assumed to own it. Missing visible fixture is an owning-data delta,
@@ -60,6 +69,12 @@ exist. Current injected negatives prove handler behavior only.
 | MCP                       | Complete real A/B calls and independent readback/no-side-effects scope; keep public-client status honest                         |
 | Serial main writer        | Rebase/recheck reviewed candidate against current main; integrate only in granted serial window, preserve all dirty primary work |
 | Operations / client owner | Approved HTTPS mount, deployment window and actual ChatGPT/Claude client connections; no shared DEV deployment requested         |
+
+Candidate source is on `codex/mcp-01-read-only`, initial commit18b6cbe6;
+no main merge/push or public mount has occurred. Source size:684 lines for
+contract/read/server/internal modules +44-line internal listener;254-line
+assertion-based DEV runner,488 directed test lines (plus config/docs/lockfile).
+No database migration or Mobile package change.
 
 Current state handoff and this task are the tracker; no second management system.
 
