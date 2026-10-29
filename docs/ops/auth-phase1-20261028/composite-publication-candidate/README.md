@@ -80,3 +80,14 @@ The old fixture lacks the three newer Gateway roles, recorded as untested rather
 than creating roles or claiming their normal permission checks passed. No normal
 OTP/JWT, Hosted session, business publication, Supabase readback or Native Adoption
 is certified by these local component tests.
+
+## Private stage readback candidate
+
+`guestAdoptionCompositeStatus.ts` implements the existing status port for private
+staging existence only. The normal boundary supplies the authenticated actor;
+strict adoption/actor/Guest/inventory predicates never select the retained private
+source text. The existing owning connection requires a finished transaction, so
+readback uses REPEATABLE READ READ ONLY, COMMIT or rollback on error/cancellation.
+Missing and present staging both retain QUERY_SERVER_STATUS. This adapter must not
+be mounted as the complete adoption status service: it has no actual terminal
+publication/cancellation outcome store and cannot authorize source release.

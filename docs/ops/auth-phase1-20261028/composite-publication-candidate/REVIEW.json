@@ -36,6 +36,15 @@
   "fileHashes": {
     "backend/src/guestAdoptionCompositePlan.ts": "84643deaf989f23648bef8de6b703696e2430f2bb08cbdb0b2356823c2c89b98",
     "backend/src/guestAdoptionCompositeStage.ts": "73b47aef9c9105fc5483dd58d387c49cda6f6749a9ae144274a41b81f1e0f029",
-    "docs/ops/auth-phase1-20261028/composite-publication-candidate/staging.local.sql": "25224995ab080841df4edeaa22959185ba8164b93c97f9f21ee3db50d770905f"
+    "docs/ops/auth-phase1-20261028/composite-publication-candidate/staging.local.sql": "25224995ab080841df4edeaa22959185ba8164b93c97f9f21ee3db50d770905f",
+    "backend/src/guestAdoptionCompositeStatus.ts": "b455eb70da0c6627b8ed4beee66991df2e72a15795176900041e2781ee5604ec"
+  },
+  "statusReadbackCandidate": {
+    "status": "PRIVATE_STAGE_EXISTENCE_ONLY_UNMOUNTED",
+    "tests": 11,
+    "independentTests": 11,
+    "independentReview": "NO_BLOCKER_AFTER_OWNING_TRANSACTION_CONTRACT_REPAIR",
+    "realRed": "CORE_TRANSACTION_UNFINISHED reproduced before READ ONLY transaction repair",
+    "limits": "IN_PROGRESS/NOT_FOUND only; no terminal outcome or unlock; not complete Adoption status service"
   }
 }

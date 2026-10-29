@@ -232,7 +232,10 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   PG13 checks PASS (reviewer read report only; three newer Gateway roles absent in
   fixture). Local-only SQL has no RPC/runtime grants. Core Writer review and real
   grant issuer/publication authority remain pending; no Adoption/Hosted PASS.
-  See ops/auth-phase1-20261028/composite-publication-candidate/REVIEW.json.
+  Private stage status adapter uses strict four-way binding and owning read-only
+  transaction; direct/independent11 PASS after real unfinished-lease RED repair.
+  It returns only IN_PROGRESS/NOT_FOUND→QUERY_SERVER_STATUS, not terminal proof;
+  no runtime consumer. See ops/auth-phase1-20261028/composite-publication-candidate/REVIEW.json.
 - Provisional metadata client7365 uses the existing secure Guest verification slot
   while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
   result. 401 refresh reuses existing Supabase path with active persistence off,
