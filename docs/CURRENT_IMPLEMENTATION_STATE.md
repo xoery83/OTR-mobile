@@ -210,6 +210,12 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
+Resend Inbound OTP test tool: source reviewed2s27/types/lint PASS, DEV-only
+scripts/auth helpers use a dedicated QA-team OTR-QA-Inbound credential, not SMTP.
+Owner confirmed QA-only team; host Keychain item not yet visible (metadata44).
+No real OTP/Receiving call yet; lane reuse stays closed until first new Hosted
+user PASS. See ops/auth-inbound-otp-20261030/READINESS.json.
+
 Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account
 secure slots, repositories and apply-generation gate. Apple is Owner-paused. No
 new Auth authority, copied Session/Keychain/SQLite, pricing, Schema/RLS/GRANT or
