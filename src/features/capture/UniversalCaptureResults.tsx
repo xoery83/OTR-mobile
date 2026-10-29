@@ -48,6 +48,7 @@ export function UniversalResultView({
   busy,
   unavailable,
   canStart,
+  canStartDuringRead = false,
   isCurrent,
   start,
   recover,
@@ -62,6 +63,7 @@ export function UniversalResultView({
   unavailable: boolean;
   attempted: boolean;
   canStart: boolean;
+  canStartDuringRead?: boolean;
   isCurrent(): boolean;
   start(): void;
   recover(): void;
@@ -356,7 +358,7 @@ export function UniversalResultView({
       {!result && canStart ? (
         <UiButton
           label={t("capture.ai.process")}
-          disabled={busy || !ready}
+          disabled={(busy && !canStartDuringRead) || !ready}
           onPress={start}
         />
       ) : null}

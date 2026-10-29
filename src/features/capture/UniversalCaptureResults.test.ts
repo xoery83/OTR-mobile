@@ -591,3 +591,23 @@ it("shows unsupported retained input before Results without inventing a Source o
   expect(f.props.start).not.toHaveBeenCalled();
   expect(f.result.sourceBindings).toHaveLength(2);
 });
+
+it.each([true, false])(
+  "only allows an explicit Start during a read when permitted: %s",
+  (canStartDuringRead) => {
+    const f = fixture();
+    renderToStaticMarkup(
+      createElement(UniversalResultView, {
+        ...f.props,
+        result: null,
+        canStart: true,
+        busy: true,
+        canStartDuringRead,
+      }),
+    );
+    const button = state.buttons.find((entry) => entry.label === t("capture.ai.process"));
+    expect(button).toBeDefined();
+    expect(button?.disabled).toBe(!canStartDuringRead);
+    expect(f.props.start).not.toHaveBeenCalled();
+  },
+);

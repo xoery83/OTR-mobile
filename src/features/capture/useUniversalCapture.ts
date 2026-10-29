@@ -21,6 +21,10 @@ export function useUniversalCapture(
   const [attempted, setAttempted] = useState(false);
   const [canStart, setCanStart] = useState(true);
   const [queued, setQueued] = useState(false);
+  const [startPending, setStartPending] = useState(false);
+  const [reading, setReading] = useState(false);
+  const deferredStart = useRef(false),
+    executing = useRef(false);
   const generation = useRef(getAccountGeneration());
   const alive = useRef(true),
     running = useRef(false);
@@ -28,7 +32,16 @@ export function useUniversalCapture(
   const scope = useRef(`${model.batch.accountId}:${model.batch.batchId}`);
   const currentRef = useRef(isCurrent);
   useLayoutEffect(() => {
-    scope.current = `${model.batch.accountId}:${model.batch.batchId}`;
+    const nextScope = `${model.batch.accountId}:${model.batch.batchId}`;
+    if (
+      scope.current !== nextScope ||
+      !isCurrent() ||
+      generation.current !== getAccountGeneration()
+    ) {
+      deferredStart.current = false;
+      setStartPending(false);
+    }
+    scope.current = nextScope;
     currentRef.current = isCurrent;
   }, [isCurrent, model.batch.accountId, model.batch.batchId]);
   const controller = useRef<AbortController | null>(null);
@@ -46,7 +59,16 @@ export function useUniversalCapture(
     };
   }, []);
   async function run(execute: boolean) {
-    if (!current() || running.current) return;
+    if (!current()) return;
+    if (running.current) {
+      if (execute && !executing.current && !deferredStart.current) {
+        deferredStart.current = true;
+        setStartPending(true);
+      }
+      return;
+    }
+    executing.current = execute;
+    setReading(!execute);
     running.current = true;
     setBusy(true);
     setUnavailable(false);
@@ -148,12 +170,21 @@ export function useUniversalCapture(
           ),
         );
     } finally {
+      const continueExplicitStart = deferredStart.current && current();
+      deferredStart.current = false;
+      executing.current = false;
       running.current = false;
-      if (scopeCurrent()) setBusy(false);
+      if (scopeCurrent()) {
+        setBusy(false);
+        setReading(false);
+        setStartPending(false);
+      }
       if (current()) {
         setActivity(consumer.current?.activity ?? null);
         setCanStart(consumer.current?.canDispatch ?? true);
       }
+      // Coalesce only a user's click; invalidation above discards it without any retry timer.
+      if (continueExplicitStart) void run(true);
     }
   }
   useEffect(() => {
@@ -190,6 +221,7 @@ export function useUniversalCapture(
     unavailable,
     attempted,
     canStart,
+    canStartDuringRead: busy && reading && !startPending,
     queued,
     start: () => run(true),
     recover: () => run(false),

@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_PASS",
+  "problem": "Owning status GET held busy and disabled explicit Resume",
+  "implementation": "One explicit click coalesces behind GET; no overlapping request or retry timer",
+  "negativeCases": [
+    "hide then show before GET completes",
+    "Batch A to B to A before GET completes",
+    "account generation changes",
+    "hidden at GET completion"
+  ],
+  "red": {
+    "newBoundaryTestsFailed": 2
+  },
+  "green": {
+    "suites": 3,
+    "tests": 71,
+    "typecheck": true,
+    "uiGuard": true,
+    "scopedLint": true
+  },
+  "independentReview": "NO_BLOCKER after boundary correction",
+  "nativeE2E": "NOT_YET_INSTALLED",
+  "businessAuthorityChanged": false,
+  "providerCalls": 0
+}
