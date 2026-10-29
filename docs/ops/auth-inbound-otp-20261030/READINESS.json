@@ -1,32 +1,34 @@
 {
-  "status": "SOURCE_REVIEW_PASS_REAL_FIRST_USER_PENDING_CREDENTIAL",
+  "status": "HOSTED_FIRST_USER_E2E_PASS_HOST_ONLY_REUSE_RELEASED",
   "domain": "eldouzileu.resend.app",
   "ownerScopeConfirmation": "Entire Resend team exclusively OTR QA; no production/private resources",
   "actualKeyPermission": "full_access; no Receiving-only key, prefix not provider isolation",
   "secretSource": {
     "environmentVariable": "OTR_QA_RESEND_API_KEY",
-    "keychainService": "OTR-QA-Inbound",
+    "keychainService": "OTR_QA_RESEND_API_KEY",
     "keychainAccount": "resend",
     "smtpKeyReadOrReused": false,
-    "lastHostMetadataLookupStatus": 44,
-    "secretValueRead": false
+    "lastHostMetadataLookupStatus": 0,
+    "secretValueRead": "ONLY_IN_PROCESS_FOR_AUTHORIZATION_NEVER_LOGGED",
+    "keychainLabel": "OTR-QA-Inbound"
   },
   "validation": {
     "directSuites": 2,
-    "directTests": 27,
+    "directTests": 28,
     "independentSuites": 2,
-    "independentTests": 27,
+    "independentTests": 28,
     "independentReview": "NO_BLOCKER_AFTER_PROVEN_IDENTITY_AND_UNKNOWN_REVOKE_REPAIRS",
     "typecheck": "PASS",
-    "scopedLint": "PASS"
+    "scopedLint": "PASS",
+    "independentReceiptReview": "NO_BLOCKER_HASHES_MATCH_8496a994_NO_SECRET_FIELDS_HOST_NATIVE_LIMITS_CLEAR"
   },
-  "liveRequestsMade": 0,
-  "realOtpE2e": "NOT_RUN",
-  "nativeReuseReleased": false,
-  "coldEvidenceLimit": "Unit separate-host-process ciphertext/repository mechanics only; no real Session/Native Keychain proof yet",
+  "liveRequestsMade": "Only normal DEV Auth, authorized QA Receiving GET and Backend read negatives; see actual receipt",
+  "realOtpE2e": "FIRST_USER_E2E.json: PASS, exactly one OTP send",
+  "nativeReuseReleased": true,
+  "coldEvidenceLimit": "Real separate host-process encrypted repository+trusted Auth read PASS; Native Keychain/app cold restore not asserted",
   "closedFindings": [
     "Only bind logout credential after trusted fresh-user ownership proof",
     "Reserve logout attempt before wire; never automatically retry UNKNOWN; unresolved run lock retained"
   ],
-  "executionPreflight": "PREFLIGHT.json: RECEIVING_CREDENTIAL_REQUIRED before OTP/Receiving requests"
+  "executionPreflight": "Historical PREFLIGHT.json failure resolved by screenshot-confirmed exact Keychain service/label/account"
 }
