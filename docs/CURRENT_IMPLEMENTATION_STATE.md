@@ -188,27 +188,10 @@ or real-user data from this lane. Keep heavy builds serialized and bounded.
 
 ## Auth / Identity — current checkpoint, Adoption NOT_READY
 
-30 October: Auth867 classification and normal Profile/Trip/Metadata/Person/Core
-consumers are integrated through Native6aa/mainf3a9a21d. Classifier/Gateway retain
-strict false→NORMAL_ACCOUNT / true→ANONYMOUS / missing or invalid→UNKNOWN; normal
-predicate denies unknown/id-only. No global anonymous ban, Session/cache or
-Source/Provider gate change. Auth2s38 independent PASS; Native/main integration
-and conditional skips are recorded in MAIN_INTEGRATION_REVIEW.json. DEV81ad is a
-separate curated runtime. Existing Google general-build108 proved the strict Auth
-branch and one new synthetic Trip/linked owner; it still has an old policy row,
-so this is not fresh Google/Email no-policy signup proof. Legitimate signup and
-newTrip native cold wait for Owner interaction/unlock, not a credential transfer.
-NORMAL_ACCOUNT_QUALIFICATION_PORT.json records the earlier source-only review.
-
-
-Native finite Google receipt source9a14be10 now reports actual own-profile/Trip,
-explicit old Person→unlinked, two original P1 Creates and normal Edit/cold PASS;
-Auth inspected its sanitized Actor/Person/operation/revision identity chain only.
-Record: docs/ops/general-account-cloud-sync-20261029/CURRENT_GOOGLE_P1_RECEIPT.json
-at fixed9a14be10. This is neither Guest Adoption nor General Account rollout PASS;
-raw Owner records/tokens were not copied. Previous pending notes below describe
-the earlier source checkpoint and are superseded only within this finite scope.
-
+30 October closed source candidate is integrated/pushed at main d81bc44f, with
+scratch6s182/actual-primary5s81/types PASS and independent source/range reviews.
+Original six primary dirty files/full bytes preserved; no route/authority/DEV
+activation. See ops/auth-phase2-20261028/AUTH_COMPOSITE_SOURCE_MAIN_INTEGRATION.json.
 
 Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account
 secure slots, repositories and apply-generation gate. Apple is Owner-paused. No
