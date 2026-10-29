@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_PASS",
+  "baseCommit": "ef00fc8d",
+  "change": "Existing owning lifecycle snapshot reads qualified PDF DERIVED text against published original/seal provenance through the unchanged existing V2 proof reader",
+  "tests": {
+    "suites": 5,
+    "passed": 75,
+    "initialRed": "Sealed valid DERIVED text rejected by ORIGINAL-only condition",
+    "negativeCoverage": [
+      "gate closed",
+      "parent",
+      "original hash/size",
+      "seal/page-map",
+      "transform profile",
+      "text mutation",
+      "missing provenance",
+      "false ORIGINAL"
+    ],
+    "ordinaryOriginalText": "UNCHANGED"
+  },
+  "review": "Independent NO_BLOCKER",
+  "actualDev": "NOT_EXECUTED",
+  "runtimeAndSql": "UNCHANGED_CLOSED",
+  "authority": "No new Source/Admission permission, no Schema/RLS/GRANT/Role/Secret/Provider changes"
+}

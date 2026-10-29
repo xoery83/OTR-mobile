@@ -1,3 +1,5 @@
+import { readUniversalPdfSourceMaterial } from "./universalPdfSourceMaterial";
+import { PDF_V2_OPTIONS_SHA } from "./sourcePdfV2Contracts";
 import { isReviewedP1Gate } from "./tripNormalP1Policy";
 import { universalResultSchema } from "../../src/data/api/universalImportContracts";
 import { z } from "zod";
@@ -166,6 +168,7 @@ export async function readP1SourceSnapshot(
   lease: CorePgLease,
   catalog: CoreSourceCatalogV2,
   hash: ImportHash,
+  bindings: UniversalResult["sourceBindings"] = [],
 ) {
   const inputs = catalog.inputs
       .map((i) => flightInputSchema.parse(i))
@@ -190,7 +193,6 @@ export async function readP1SourceSnapshot(
     const r = tripImportCatalogSchemas.trip_source_representations.parse(raw);
     if (
       r.material_kind !== "TEXT" ||
-      r.role !== "ORIGINAL" ||
       r.retention_state !== "RETAINED" ||
       typeof r.text_content !== "string" ||
       r.payload_sha256 !== pin.payload_sha256 ||
@@ -199,6 +201,40 @@ export async function readP1SourceSnapshot(
       (await hash(Buffer.from(r.text_content))) !== pin.payload_sha256
     )
       throw Error("SOURCE_INTEGRITY_FAILURE");
+    const publishedBindings = bindings.filter(
+      (b) =>
+        b.inputId === pin.id &&
+        b.sourceId === pin.source_id &&
+        b.representationId === pin.representation_id &&
+        b.revision === pin.material_revision &&
+        b.originalSha256 === pin.payload_sha256,
+    );
+    const provenance =
+      publishedBindings.length === 1 ? publishedBindings[0].pdfSource : undefined;
+    if (r.role !== "ORIGINAL" || publishedBindings.some((b) => b.pdfSource)) {
+      if (
+        r.role !== "DERIVED" ||
+        !provenance ||
+        provenance.transformOptionsSha256 !== PDF_V2_OPTIONS_SHA
+      )
+        throw Error("OWNING_MATERIAL_QUALIFICATION_REQUIRED");
+      // Existing proof reader retains current-row, global gate, custody and sealed-page checks.
+      const material = await readUniversalPdfSourceMaterial(
+        lease,
+        catalog,
+        provenance.original,
+        hash,
+      );
+      if (
+        material.derived.representationId !== r.id ||
+        material.derived.sha256 !== pin.payload_sha256 ||
+        material.derived.byteCount !== pin.byte_count ||
+        material.derived.text !== r.text_content ||
+        material.sealSha256 !== provenance.sealSha256 ||
+        material.pageMapSha256 !== provenance.pageMapSha256
+      )
+        throw Error("SOURCE_INTEGRITY_FAILURE");
+    }
     representations.push(r);
     materials.push({ pin, text: r.text_content, media_type: "text/plain", form: "TEXT" });
   }
@@ -261,7 +297,12 @@ async function project(
       async () => scope.actorAccountId,
     ),
     catalog,
-    snapshot: await readP1SourceSnapshot(lease, catalog, hash),
+    snapshot: await readP1SourceSnapshot(
+      lease,
+      catalog,
+      hash,
+      published.result.sourceBindings,
+    ),
     ...published,
     selection: {
       action: `CONFIRM_NEW_${universalResultSchema.parse(published.result).candidates.find((c) => c.token === token)?.kind}`,

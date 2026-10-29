@@ -1233,7 +1233,11 @@ sealed DERIVED representation and byte hash; Native compares the retained PDF
 against the separate original identity/size. Metadata alone never qualifies a
 Source. Task transform pins use the owning derivative's transform-options hash.
 Unqualified or mismatched parent/profile remains closed; normal TEXT JSON stays
-unchanged. No SQL, authority, parser or Runtime activation is included.
+unchanged. The shared owning lifecycle snapshot can read this DERIVED text only
+with one exact published provenance binding and the existing V2 PDF proof reader:
+original/derived hashes and identities, seal/page map, current rows, custody and
+current gate must all match. It never relabels a PDF as ORIGINAL TEXT. No SQL,
+authority, parser or Runtime activation is included.
 
 ## Universal Source pending PDF metadata (default-closed candidate)
 

@@ -122,7 +122,13 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    exact PDF original identity/hash/size stays separate from sealed text material;
    Task transform must match and cannot lose provenance on readback. Six suites84
    tests, types/lint and independent NO_BLOCKER passed after directed RED→GREEN.
-   `PDF_SOURCE_PROVENANCE_LOCAL_PASS.json`. No actual PDF Source/Task/Save PASS.
+   `PDF_SOURCE_PROVENANCE_LOCAL_PASS.json` (ef00fc8d). The owning lifecycle snapshot
+   also reuses the existing V2 seal proof for exact DERIVED text: five suites75
+   tests/types/lint and independent NO_BLOCKER, with ordinary ORIGINAL TEXT kept.
+   `PDF_LIFECYCLE_SNAPSHOT_LOCAL_PASS.json`. Actual eligibility remains closed.
+   A Source-gateway catalog-only diagnostic was rejected by auto-review as a new
+   credential use; no execution/bypass occurred, and exact read-only approval is
+   pending while other local work continues. No actual PDF Source/Task/Save PASS.
 3. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN
