@@ -51,6 +51,8 @@ export const clearLocalSession = authRepository.clearLocalSession;
 export const listLocalAccounts = authRepository.listAccounts;
 export const selectLocalAccount = authRepository.selectAccount;
 export const removeLocalAccount = authRepository.removeAccount;
+// Internal adoption token provider; its methods retain Guest/binding/apply-gate checks.
+export const guestVerificationSession = authRepository.guestVerification;
 
 export async function requireActiveUserId() {
   const userId = (await readLocalSession())?.identity?.userId;

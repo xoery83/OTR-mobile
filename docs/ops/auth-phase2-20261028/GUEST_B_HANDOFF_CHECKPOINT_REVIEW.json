@@ -1,0 +1,51 @@
+{
+  "schemaId": "otr.auth.guest-handoff-checkpoint-review/1",
+  "status": "LOCAL_PASS_UNWIRED",
+  "scope": "frozen inventory to existing immutable v3 recovery journal",
+  "implementation": [
+    "pin adoption and target IDs before await",
+    "source, draft and inventory pins supplied by held inventory only",
+    "check source lease before/after recovery open and write/readback",
+    "accept only RESUME_PREFLIGHT, not cancelled or post-publication recovery",
+    "no automatic lock release, Session installation or upload"
+  ],
+  "validation": {
+    "directNewCases": {
+      "tests": 6,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 3,
+      "tests": 135,
+      "result": "PASS",
+      "options": "single worker; 30s timeout"
+    },
+    "independentCancelledSupplement": {
+      "tests": 1,
+      "result": "NO_BLOCKER_PASS"
+    },
+    "initialRegression": {
+      "passed": 133,
+      "total": 135,
+      "failures": "two existing tests exceeded default 5s timeout under concurrent load; same unchanged tests passed single-worker 30s rerun"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "boundaries": {
+    "productionConsumer": false,
+    "nativeL3": false,
+    "cloudPublication": false,
+    "devDeployment": false,
+    "newSqlAuthority": false
+  },
+  "preflightResourceFacts": {
+    "countsFromSameFrozenSourceAndQualifiedFiles": true,
+    "unsubmittedTripOnlyLiveDraft": true,
+    "callerCountsAccepted": false,
+    "grantsOrPolicyCreated": false,
+    "directTargetedTests": 6,
+    "independentTargetedTests": 2,
+    "result": "NO_BLOCKER_PASS"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "schemaId": "otr.auth.account-profile-bootstrap-handoff/1",
+  "status": "LOCAL_PASS_UNMOUNTED_DEV_PENDING",
+  "route": {
+    "method": "POST",
+    "path": "/v1/account/profile/bootstrap",
+    "body": {},
+    "response": {
+      "schemaId": "otr.auth.account-profile-bootstrap/1",
+      "accountId": "authenticated Actor UUID",
+      "ready": true
+    }
+  },
+  "server": {
+    "module": "backend/src/accountProfileBootstrap.ts",
+    "factory": "createAccountProfileBootstrapPort",
+    "boundary": "accountProfileBootstrapBoundary",
+    "config": {
+      "url": "environment.OTR_DEV_SUPABASE_URL",
+      "publishableKey": "environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY"
+    },
+    "secretKeyRequired": false,
+    "mountWriter": "Native",
+    "middleware": "Existing authenticate(request, gateway) before boundary; pass exact same request/Bearer and validated user"
+  },
+  "consumer": {
+    "module": "src/data/auth/accountProfileRepository.ts",
+    "factory": "createAccountProfileRepository(account, options, tokenProvider?)",
+    "method": "ensure(AccountScope)",
+    "writer": "Native normal-sync preflight only; offline launch must not await"
+  },
+  "behavior": [
+    "same normal JWT getUser verifies exact Actor",
+    "read only own profile ID",
+    "insert only absent profile with id and empty optional display_name",
+    "no role/Provider name/email/Person/claim fields",
+    "23505 race requires own-profile readback",
+    "never overwrite existing profile",
+    "failure pauses sync",
+    "Account/generation and foreign response rejected",
+    "Explicit anonymous Supabase identity and absent user rejected before Profile DML"
+  ],
+  "validation": {
+    "direct": {
+      "suites": 2,
+      "tests": 22,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 2,
+      "tests": 21,
+      "result": "NO_BLOCKER"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "anonymousSupplement": {
+      "independentTests": 1,
+      "result": "NO_BLOCKER_PASS"
+    }
+  },
+  "limits": {
+    "sharedBackendMountOrDI": false,
+    "nativeRunnerWired": false,
+    "devDeployed": false,
+    "schemaRlsGrantChanged": false,
+    "actualTripCreateRootCauseCertified": false,
+    "devE2e": false
+  }
+}

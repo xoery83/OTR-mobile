@@ -9,6 +9,7 @@ import {
 } from "./guestAdoptionRecovery";
 import { hasGuestPublicationHold } from "./guestPublicationHold";
 import { verifyGuestSourceCheckpoint } from "./guestTripP1SourceSchema";
+import { prepareGuestHandoffCheckpoint } from "./guestHandoffCheckpoint";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { randomUUID } from "node:crypto";
 import {
@@ -2040,4 +2041,120 @@ it("refuses a corrupted source on journal read before opening any Guest database
   await expect(f.f.newOpener()()).rejects.toThrow("GUEST_ADOPTION_RECOVERY_SOURCE_PIN");
   expect(f.f.open).toHaveBeenCalledTimes(opens);
   expect(hasGuestPublicationHold(f.f.guestId)).toBe(true);
+});
+
+it("assembles a v3 checkpoint from actual held Guest inventory without accepting source fields from a caller", async () => {
+  const f = await handoffFixture(),
+    inventory = await createGuestHandoffInventory(f.deps)();
+  const recovery = createGuestAdoptionRecovery({
+    scope: inventory.scope,
+    files: f.f.files,
+    assertGuest: async () => undefined,
+  });
+  const target = { adoptionId: randomUUID(), targetAccountId: randomUUID() },
+    original = { ...target };
+  const result = await prepareGuestHandoffCheckpoint(inventory, target, async () => {
+    target.targetAccountId = randomUUID();
+    return recovery;
+  });
+  expect(result.preparation).toMatchObject({
+    ...original,
+    schemaId: "otr.auth.guest-adoption-recovery/3",
+    sourceGuestLocalId: f.f.guestId,
+    inventorySha256: inventory.census.inventorySha256,
+    drafts: inventory.drafts,
+    tripIds: inventory.census.tripIds,
+    source: {
+      canonicalText: inventory.source.canonicalText,
+      sha256: inventory.source.sha256,
+    },
+  });
+  expect(result.nextAction).toBe("RESUME_PREFLIGHT");
+  expect(result.preflight).toEqual({
+    contractVersion: 1,
+    ...original,
+    sourceGuestLocalId: f.f.guestId,
+    inventorySha256: inventory.census.inventorySha256,
+    resources: { trips: 1, people: 1, items: 1, files: 0, fileBytes: 0, liveDrafts: 2 },
+  });
+  expect(hasGuestPublicationHold(f.f.guestId)).toBe(false);
+  await inventory.resumeGuestBeforePublication();
+});
+it.each(["released", "superseded", "publication requested"])(
+  "does not write or unlock a %s handoff",
+  async (variant) => {
+    const f = await handoffFixture(),
+      inventory = await createGuestHandoffInventory(f.deps)();
+    const recovery = createGuestAdoptionRecovery({
+      scope: inventory.scope,
+      files: f.f.files,
+      assertGuest: async () => undefined,
+    });
+    const target = { adoptionId: randomUUID(), targetAccountId: randomUUID() };
+    const open = vi.fn(async () => recovery);
+    if (variant === "released") await inventory.resumeGuestBeforePublication();
+    if (variant === "superseded") advanceAccountGeneration();
+    if (variant === "publication requested") {
+      const first = await prepareGuestHandoffCheckpoint(inventory, target, open);
+      await recovery.requestPublication(
+        target.adoptionId,
+        target.targetAccountId,
+        first.preparationSha256,
+      );
+      open.mockClear();
+      target.adoptionId = randomUUID();
+    }
+    await expect(
+      prepareGuestHandoffCheckpoint(inventory, target, open),
+    ).rejects.toThrow();
+    expect(open).not.toHaveBeenCalled();
+    expect(await f.f.files.read(target.adoptionId, "prepared")).toBeNull();
+    if (variant === "publication requested")
+      expect(hasGuestPublicationHold(f.f.guestId)).toBe(true);
+  },
+);
+it("does not return ready or resume Guest UI if its hold was released while recovery was opening", async () => {
+  const f = await handoffFixture(),
+    inventory = await createGuestHandoffInventory(f.deps)();
+  const recovery = createGuestAdoptionRecovery({
+      scope: inventory.scope,
+      files: f.f.files,
+      assertGuest: async () => undefined,
+    }),
+    prepare = vi.spyOn(recovery, "prepare");
+  const target = { adoptionId: randomUUID(), targetAccountId: randomUUID() };
+  await expect(
+    prepareGuestHandoffCheckpoint(inventory, target, async () => {
+      await inventory.resumeGuestBeforePublication();
+      return recovery;
+    }),
+  ).rejects.toThrow("GUEST_HANDOFF_INVENTORY_RELEASED");
+  expect(prepare).not.toHaveBeenCalled();
+  expect(await f.f.files.read(target.adoptionId, "prepared")).toBeNull();
+});
+
+it("refuses to reuse a cancelled checkpoint as a fresh ready handoff and preserves its exact journal", async () => {
+  const f = await handoffFixture(),
+    inventory = await createGuestHandoffInventory(f.deps)();
+  const recovery = createGuestAdoptionRecovery({
+    scope: inventory.scope,
+    files: f.f.files,
+    assertGuest: async () => undefined,
+  });
+  const target = { adoptionId: randomUUID(), targetAccountId: randomUUID() },
+    open = async () => recovery;
+  await prepareGuestHandoffCheckpoint(inventory, target, open);
+  await recovery.cancelBeforePublication(target.adoptionId, target.targetAccountId);
+  const before = await f.f.files.read(target.adoptionId, "cancelled");
+  await expect(prepareGuestHandoffCheckpoint(inventory, target, open)).rejects.toThrow(
+    "GUEST_HANDOFF_CHECKPOINT_RECOVERY_REQUIRED",
+  );
+  expect(await f.f.files.read(target.adoptionId, "cancelled")).toBe(before);
+  expect(
+    (await recovery.read(target.adoptionId, target.targetAccountId))?.nextAction,
+  ).toBe("REMAIN_GUEST");
+  expect(hasGuestPublicationHold(f.f.guestId)).toBe(false);
+  expect(f.tripResume).not.toHaveBeenCalled();
+  expect(f.p1Resume).not.toHaveBeenCalled();
+  await inventory.resumeGuestBeforePublication();
 });

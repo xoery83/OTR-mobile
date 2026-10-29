@@ -121,3 +121,73 @@ AD5 `AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A` is Import; Forms QA/phone are Native.
 Use short coordinated Device Hub access, preserve My Trips root, original Native95
 binary compatibility and SQLite74. Do not copy Session/Keychain, operate Production
 or real-user data from this lane. Keep heavy builds serialized and bounded.
+
+## Auth / Identity — current checkpoint, Adoption NOT_READY
+
+Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account
+secure slots, repositories and apply-generation gate. Apple is Owner-paused. No
+new Auth authority, copied Session/Keychain/SQLite, pricing, Schema/RLS/GRANT or
+production access. Auth has no device/Host/SQL lease. Native owns shared mount/DI,
+normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned.
+
+- Email/Google login L3 accepted within Phase1 evidence: normal Provider login,
+  independent Account/Session readback, cold restore, A/B isolation and current-
+  login logout. Token-only eight-digit OTP uses Verified Resend `auth.xoery.art`;
+  wrong403/resend429/expiry PASS; temporary expiry restored3600s. Native52 visible
+  error repair accepted. `ops/auth-phase1-20261028/{GOOGLE_DEV_E2E,
+  EMAIL_OTP_HOSTED_DEV_E2E}.json` records limits, not full People/Beta acceptance.
+- Golden A accepted: GuestQA63/source7e35baf6, genuinely no formal Session, normal
+  Native Trip Create/Edit→P1→Day→same-version cold, SQLite74 independent readback;
+  no Account DB or cloud receipts. `GUEST_A_NATIVE_RECEIPT.json`. GuestQA65 then
+  accepted finite unsaved-editor/old Trip+P1 cold regression, not Adoption/new
+  cloud data. `GUEST_B_GUESTQA65_ARTIFACT.json` pins unchanged actual source.
+- Main through72331060 includes frozen current schema74/fileless Trip/P1 source,
+  full supported-table census, Trip/P1 live-draft journal and immutable journalv3
+  semantic source. Other nonempty/unknown families or unqualified files block the
+  whole dataset; registered-file proof is not physical-disk absence. All original
+  Trip/Person/operation/Core hashes, metadata dependencies, static covers, Ledger
+  initialization and timestamps retained. Source/canonical journal proof is local
+  only, never authority. Actual-primary source107 and journal130 tests PASS;
+  independent NO_BLOCKER, original six primary dirty files/full diff preserved.
+- Reviewed default-closed Auth source bdc6c44f joined main ef5d7ea6 at26a190cf:
+  checkpoint assembler b869 pins target and original freeze lease; c945 derives
+  strict preflight resource facts from same source/files/drafts, not caller counts
+  or unsaved Trip shells. Directed6/independent135+cancel1 and facts supplement2
+  PASS/NO_BLOCKER. Initial two unchanged 5s old-test timeouts passed single-worker
+  30s rerun. No production Native consumer or publication follows.
+- Provisional metadata client7365 uses the existing secure Guest verification slot
+  while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
+  result. 401 refresh reuses existing Supabase path with active persistence off,
+  old-refresh CAS and binding/generation coalescing. Strict DTO/grant pins;
+  NOT_FOUND never unlocks. Direct17/independent4suites115/types/lint PASS. Unit
+  JWT-shaped fixtures, memory storage and simulated wire are not Provider/Keychain
+  or Adoption L3. Backend preflight/status still unmounted/default closed.
+- Native discovered verified38e/4eb accounts lack profiles, and actual Trip FK
+  requires them. Auth normal-JWT self-profile port2b2 plus anonymous guardbdc6
+  reads own ID→insert-if-absent `{id,display_name:""}`→readback, omits role, never
+  overwrites a profile or borrows Claim. Anonymous/absent user rejects. Direct22,
+  independent21+anonymous1/types/lint PASS. Auth read-only review of Native exact
+  route/DI/sync preflight NO_BLOCKER (Native direct44). Native alone deploys and
+  verifies normal same-operation retry; no actual profile/Trip success claimed yet.
+  Failure pauses sync, never offline launch. `ACCOUNT_PROFILE_BOOTSTRAP_PORT.json`.
+- Held Core/TripCreate/MetadataV2 ports db97/main ee246 retain three distinct
+  session_user fences. Directed148/independent131 and disposable real-PG1 PASS
+  prove leases, not composite publication authority. Do not bypass these fences.
+  P1 CREATE local checkpoint restoration is accepted; EDITv1 lacks owning revision
+  and remains closed. Full Native recovery route, server preflight/reservation,
+  protected atomic publication/cancellation, Person/Creator mappings and authorized
+  receipt readback remain missing. No real Adoption E2E or Phase3–6 completion.
+
+Actual-primary9 suites273 PASS and joined types PASS; original six dirty files/
+full diff preserved. AUTH_PREPARED_MAIN_INTEGRATION.json records source-only scope.
+
+Next: finish Native normal-account Profile/Trip recovery readback. Continue
+Golden B server authority and Native recovery through unique Writers, then actual
+Guest→Account/negative/duplicate/UNKNOWN/cold E2E. Owner approval is required only
+for an exact protected execution delta, not routine coding. No Owner OTP before a
+runnable real scenario; no invented commercial limits.
+
+Auth receipt directory: `docs/ops/auth-phase2-20261028/`. Start with
+`GUEST_B_SOURCE_MAIN_INTEGRATION.json`, `GUEST_B_DURABLE_SOURCE_MAIN_INTEGRATION.json`,
+`GUEST_B_HANDOFF_CHECKPOINT_REVIEW.json`, `GUEST_B_PROVISIONAL_TRANSPORT_REVIEW.json`
+and `GUEST_B_ATOMIC_PORT_CANDIDATE.md`; prior detailed state is preserved in Git.
