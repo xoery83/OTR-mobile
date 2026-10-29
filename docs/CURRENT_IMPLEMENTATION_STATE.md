@@ -95,7 +95,9 @@ branch merge. Directed8 suites148/types/lint/two Backend builds PASS; independen
 suites131 NO_BLOCKER. Disposable network-none local PG1 PASS, fixture removed.
 Existing principal/Actor/CAS/Source/receipt guards retained. Not deployed or mounted;
 cross-Gateway authority still absent. GUEST_B_PG_TRANSACTION_REPLAY.json records
-limits. Auth holds only these PgStorage ports and delegated Guest recovery UI/Repo;
+limits. Exact source db97ccfc integrated after actual primary8 suites148 PASS;
+GUEST_B_PG_PORTS_MAIN_INTEGRATION.json records preserved six dirty files/full diff.
+Auth holds only these PgStorage ports and delegated Guest recovery UI/Repo;
 no SQL/Host/GUI/main lease held outside explicit serial windows.
 
 GuestQA64/source d771c7e0 in-place runtime regression PASS: normal original Trip/P1

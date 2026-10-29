@@ -1,0 +1,17 @@
+{
+  "schemaId": "otr.auth.guest-pg-ports-main-integration/1",
+  "baseMain": "dd53870c0812a2c6938f993381182389bf8f4888",
+  "sourceCommit": "db97ccfc9257d0cb8a32946f510bfd65e1db4479",
+  "independent": "NO_BLOCKER;7 suites131 PASS; seven exact candidate file hashes verified",
+  "actualPrimaryTests": {
+    "suites": 8,
+    "tests": 148,
+    "result": "PASS"
+  },
+  "localPgTransactionTest": "1 PASS; network none; disposable fixture removed",
+  "primaryProtectedDirtyEntries": 6,
+  "primaryTrackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+  "integration": "fast-forward; normal push final refs verified separately",
+  "authorityOrHostedDevChanged": false,
+  "readiness": "SOURCE_LOCAL_PASS_AUTHORITY_CLOSED_ADOPTION_NOT_READY"
+}
