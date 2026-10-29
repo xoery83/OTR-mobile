@@ -1,6 +1,6 @@
 # Hosted DEV inbound OTP QA
 
-Status: SOURCE_REVIEW_PASS / REAL_FIRST_USER_PENDING_CREDENTIAL / NOT_RELEASED_FOR_LANE_REUSE.
+Status: REAL_HOSTED_FIRST_USER_PASS / HOST-ONLY_TOOL_RELEASED / NATIVE_APP_E2E_SEPARATE.
 
 This host-only tool uses the existing approved Supabase DEV OTP/verify/session
 repository, a fresh `otr-qa-<uuid>@eldouzileu.resend.app`, and Resend Receiving.
@@ -21,7 +21,8 @@ restricted proxy holding its broad key; direct enumeration is not supported here
 No automatic fallback from a restricted proxy to a broad key is allowed.
 
 Use a separate OTR-QA-Inbound key, never Supabase's SMTP sending key. Recommended
-macOS Keychain generic password: service OTR-QA-Inbound, account resend. Create it
+macOS Keychain generic password: label OTR-QA-Inbound, service (Where)
+OTR_QA_RESEND_API_KEY, account resend. Create it
 through Keychain Access, not a command containing the key. Inject only into the
 host tool as OTR_QA_RESEND_API_KEY, or use its explicit --keychain option after
 scope approval. No .env file, EXPO_PUBLIC variable, argument, report or chat value.
@@ -84,3 +85,28 @@ new Keychain item; existing SMTP credentials remain untouched.
 Owner screenshot and exact host metadata lookup resolved the item naming:
 label OTR-QA-Inbound, service (Where) OTR_QA_RESEND_API_KEY, account resend.
 The tool now queries that exact triple; no generic Keychain search or SMTP fallback.
+
+
+## Actual first-user acceptance — 30 October 2026
+
+Fixed source8496a994 completed exactly one real OTP request and Receiving delivery
+for a fresh generated mailbox. Account756c31dc-74e3-4112-94b6-b15d14d95aaa was
+created after request, confirmed and independently read through normal Auth /user.
+The existing repository restored the real Session in a separate host process from
+encrypted test storage and re-read the same user. New Account Discovery was200
+empty; the known foreign synthetic Trip returned404 NOT_VISIBLE. Refresh and
+current-session logout passed, then the revoked refresh was rejected. All four
+script hashes and receipt fields passed independent read-only review. No key,
+OTP, JWT or raw email body was logged/committed. See FIRST_USER_E2E.json.
+
+Historical pending paragraphs/preflight above describe earlier stages only; this
+receipt releases the lane-facing host helper. Use a NEW generated mailbox for
+Native's fresh-signup prerequisite, not the already registered first-proof user.
+Native must verify normally inside the app and prove its own Keychain/cold start.
+Guest must retain its provisional verification/adoption boundaries; this tool does
+not publish Guest data, activate an Account early or grant Trip membership.
+
+macOS may request item access. For unattended reuse, configure only this QA item
+for the intended trusted reader, never all apps or the entire Keychain. Business
+and engineering authorization for normal QA use already exists; key rotation,
+team-scope changes or locked Keychain may still require local confirmation.

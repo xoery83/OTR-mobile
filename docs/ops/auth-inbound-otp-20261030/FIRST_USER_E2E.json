@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "runId": "1085b1ce-843d-47ef-80a9-fe8a059d865b",
+  "email": "otr-qa-c948fb2d-380d-467d-b98f-3fc742f0367a@eldouzileu.resend.app",
+  "requestedAt": "2026-10-29T21:51:21.159Z",
+  "projectRef": "tuqigdxrvrerfewsxqgm",
+  "scope": "HOSTED_DEV_FIRST_OTP_USER_HOST_PROCESS_RECOVERY_NOT_NATIVE",
+  "secretsOrOtpRecorded": false,
+  "receivingBoundary": "OWNER_CONFIRMED_DEDICATED_QA_TEAM_KEY_REMAINS_FULL_ACCESS",
+  "phase": "complete",
+  "otpRequestAttempts": 1,
+  "requestAccepted": true,
+  "receivedAt": "2026-10-29T21:51:32.148Z",
+  "receivingMessageId": "d74aeb3e-b6f9-4d24-8dfe-acb0fd537f04",
+  "accountId": "756c31dc-74e3-4112-94b6-b15d14d95aaa",
+  "accountCreatedAt": "2026-10-29T21:51:22.197419Z",
+  "normalOtpVerification": "PASS",
+  "coldRestore": "PASS_SEPARATE_HOST_PROCESS_ENCRYPTED_STORAGE_NOT_NATIVE_KEYCHAIN",
+  "accountIsolation": "PASS_LOCAL_REPOSITORY_AND_HOSTED_EMPTY_DISCOVERY_FOREIGN_TRIP_NOT_VISIBLE",
+  "refresh": "PASS",
+  "logout": "PASS_CURRENT_SESSION_ONLY_REFRESH_REVOKED",
+  "ownSessionCleanup": "LOCAL_SCOPE_REVOKED",
+  "toolHashes": {
+    "resend-inbound-otp.ts": "90507dce59d2369bfc3046f4a1777351d63611dc28b0251761e5a757dda64ba6",
+    "resend-inbound-otp-e2e.ts": "d85a134817d827caf34461f01050e0ebb50edc9357f66b7d1554b4bd38951358",
+    "otp-test-vault.ts": "9b47c92828e8fea33663b58a0fa95b5d5448a4cb0860bb658c2039775bbd3cc0",
+    "otp-test-cleanup.ts": "8d12dbc76eb131aa78f62475b86be5b02ed0e081913e37f41b943c09280085cc"
+  },
+  "nativeE2E": false,
+  "reuseReleased": true
+}
