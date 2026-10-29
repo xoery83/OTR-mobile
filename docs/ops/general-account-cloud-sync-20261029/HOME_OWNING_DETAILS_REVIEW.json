@@ -1,0 +1,23 @@
+{
+  "result": "NO_BLOCKER",
+  "scope": [
+    "src/features/day-feed/TripScreen.tsx",
+    "src/features/day-feed/TripScreen.homeWidgets.test.ts"
+  ],
+  "problem": "Accepted Home Items with a civil Header used generic direct DayFeed preview; P5 content supplied no native Back/Edit or Add Expense callback. Sparse and local entries already used owning Details.",
+  "fix": "Route accepted P2-P5 through existing owning Details after fresh account/generation/Trip/epoch/item-revision/status validation; existing Details independently resolves Reader and Editor authority. No global navigation or data/API changes.",
+  "validation": {
+    "parent": "5 suites 121 PASS; tsc --noEmit; UI guard; scoped ESLint; git diff --check",
+    "independent": "p3_scoped_review: 85/85 Home tests PASS, NO_BLOCKER; no writes or network/device operations",
+    "device": "Build110 Home\u2192P5 native Back/Edit/Add Expense restored; normal same-ID SET_TRANSPORT_DETAILS Edit/APPLIED; six-family cold DayFeed recovery PASS"
+  },
+  "rejectedExperiment": "Build109 explicit p5/p6 root header registration did not fix the real generic-preview entry. Fully reverted; app/_layout.tsx unchanged.",
+  "artifact": "/private/tmp/otr-owner-manual-rollout-20261029/phone110/identity.json",
+  "mainIntegration": {
+    "base": "d81bc44fafa7078e7deca20bae6eac9b043eab7d",
+    "nativeCommit": "0c38a4e3",
+    "method": "two code files via exact 3-way patch; fresh evidence only; prepend bounded state on latest main",
+    "joinedValidation": "5 suites121PASS/types/UIguard/scoped ESLint/diff-check",
+    "wholeBranchMerge": false
+  }
+}
