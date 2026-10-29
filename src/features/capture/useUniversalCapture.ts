@@ -106,6 +106,39 @@ export function useUniversalCapture(
         setUnavailable(next === null && !consumer.current.queued);
       }
     } catch (error) {
+      if (execute && current()) {
+        try {
+          const code =
+            error instanceof ApiClientError
+              ? (error.code ?? "")
+              : error instanceof Error
+                ? error.message
+                : "";
+          console.info(
+            JSON.stringify({
+              event: "universal_capture_failed",
+              code: [
+                "UNIVERSAL_SOURCE_PREPARATION_BLOCKED",
+                "SOURCE_NOT_ADMITTED",
+                "SOURCE_PIN_STALE",
+                "CAPTURE_SOURCE_TRIP_ACCESS",
+                "UNIVERSAL_PREPARATION_UNAVAILABLE",
+                "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
+                "TASK_NOT_FOUND",
+                "UNIVERSAL_CAPTURE_NOT_QUALIFIED",
+                "UNIVERSAL_CAPTURE_ORIGINALS_MISMATCH",
+                "UNIVERSAL_CAPTURE_SCOPE_MISMATCH",
+                "OWNING_TASK_READER_UNAVAILABLE",
+                "INVALID_REQUEST",
+              ].includes(code)
+                ? code
+                : "UNCLASSIFIED",
+            }),
+          );
+        } catch {
+          // Diagnostics cannot change the normal failure or recovery path.
+        }
+      }
       if (current())
         setUnavailable(
           !(

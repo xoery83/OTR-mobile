@@ -150,7 +150,6 @@ it("resumes GET polling after hide, request completion and showing the same moun
   expect(h.start).not.toHaveBeenCalled();
 });
 
-
 it("keeps owning GET recovery alive when Results arrive before terminal Task activity", async () => {
   const result = { status: "CANDIDATES_READY" };
   h.recover.mockResolvedValueOnce(result).mockImplementationOnce(async () => {
@@ -167,3 +166,30 @@ it("keeps owning GET recovery alive when Results arrive before terminal Task act
   expect(h.recover).toHaveBeenCalledTimes(2);
   expect(h.start).not.toHaveBeenCalled();
 });
+
+it.each([
+  ["UNIVERSAL_SOURCE_PREPARATION_BLOCKED", "UNIVERSAL_SOURCE_PREPARATION_BLOCKED", false],
+  ["SOURCE_PRIVATE_ORIGINAL_NAME", "UNCLASSIFIED", false],
+  ["UNIVERSAL_SOURCE_PREPARATION_BLOCKED", "UNIVERSAL_SOURCE_PREPARATION_BLOCKED", true],
+])(
+  "retains a safe failure class for explicit Start without logging material",
+  async (message, code, loggerThrows) => {
+    h.consumer.activity = null;
+    const log = vi.spyOn(console, "info").mockImplementation(() => {
+      if (loggerThrows) throw Error("SYNTHETIC_LOGGER_FAILURE");
+    });
+    try {
+      Harness();
+      await vi.advanceTimersByTimeAsync(0);
+      h.start.mockRejectedValueOnce(Error(message));
+      await Harness().start();
+      expect(Harness().unavailable).toBe(true);
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({ event: "universal_capture_failed", code }),
+      );
+      expect(h.start).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
+  },
+);
