@@ -56,3 +56,42 @@ it("rejects Source result before network when the explicit QA read allocation is
   await expect(t.lookup(context, {})).rejects.toThrow("QA_READ_BUDGET_CLOSED");
   expect(fetcher).not.toHaveBeenCalled();
 });
+
+it.each(["io", "html", "oversize"])(
+  "keeps %s 503 as unconfirmed Source outcome rather than claiming the capability is closed",
+  async (failure) => {
+    const body =
+      failure === "io"
+        ? JSON.stringify({ error: { code: "SOURCE_IO_UNAVAILABLE" } })
+        : failure === "html"
+          ? "<html>gateway unavailable</html>"
+          : JSON.stringify({
+              error: { code: "SOURCE_CAPABILITY_CLOSED" },
+              padding: "x".repeat(5000),
+            });
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(body, {
+          status: 503,
+          headers: {
+            "Content-Type": failure === "html" ? "text/html" : "application/json",
+          },
+        }),
+    );
+    const { t, context } = await setup(fetcher);
+    await expect(t.acquire(context, {})).rejects.toThrow("SOURCE_REQUEST_UNCONFIRMED");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  },
+);
+it("accepts only the explicit bounded Backend closed code as a closed capability", async () => {
+  const fetcher = vi.fn<typeof fetch>(
+    async () =>
+      new Response(JSON.stringify({ error: { code: "SOURCE_CAPABILITY_CLOSED" } }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+  );
+  const { t, context } = await setup(fetcher);
+  await expect(t.acquire(context, {})).rejects.toThrow("SOURCE_CAPABILITY_CLOSED");
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});

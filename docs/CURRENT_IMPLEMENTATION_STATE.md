@@ -69,21 +69,31 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   receipt read still reject; no cross-request cache. Three suites20 tests,
   typecheck/lint0errors and independent NO_BLOCKER. Native recovery above is real;
   it is not a precise latency benchmark or proof of every earlier failure cause.
-- Last Import-verified DEV image:
-  `sha256:c8f9dbce0b15c13ab46a921d7fed4a467812606a59d84d56672a423714df7f9a`,
-  container `d32e8370295c0d3622bcf3c8be76e234c6eb1574f612fd7617ccd09452a852af`.
-  Server bundle1098…, capture9c0915…, Configc91f…, HostConfige89…, Envab5…,
-  original six mounts/four config hashes, health200/unauth401 independently passed.
-  Previous750a/4847 is stopped/retained rollback. No SQL or permission change.
-  Native now owns its next diagnostic deployment: always obtain its newest actual
-  image/config before deployment or rollback; do not restore an older image over it.
+- Current DEV image after Native's normal-account rollout:
+  `sha256:81ad4fdea800b38c1701dc9b6bafa0885ab31fad3de9798e94977ecd55454ed2`,
+  container `76c7846d534dbac3b2262fb02117c7a96d727681082444a3c744b62eacf12b87`.
+  Root independently checked only actual container/image/healthy. Native reports
+  curated `/private/tmp/otr-owner-manual-rollout-20261029/backend-general-normal`,
+  serverb64b90d8/capture2077c8a3, Config65a03026, unchanged Envab5/Hoste89/six
+  mounts/four files, health200/auth401 and Enrichment closed. Old094/a055 is
+  stopped/retained, not the automatic rollback target for future Import work.
+  Preserve the new normal-account behavior and fresh-check complete hashes before
+  any deployment. `NATIVE_NORMAL_ROLLOUT_HANDOFF.json` distinguishes reported SQL
+  from Root's container-only verification; full General E2E is not claimed.
 - Root read receipt uses only Synthetic QA Account
   `f4b059c5-8241-4ffb-aa15-37fa25474543` / Trip
   `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Source sustained scope and Provider
   budget/expiry have not been enlarged. Fresh-check actual gates before mutations;
   no Root temporary admin or Provider window is open.
-- Latest Import software integration: main/origin/remote
-  `c6b15be8baa7c78de827a77b8b6ceb4a71479018`, actual-primary15 suites228 tests,
+- Latest Import integration: main/origin/remote
+  `89680f071d4133869fa2003edec65e7c2c2382c7` joins accepted Native General
+  `f3a9a21d` and the reviewed Source503 repair3d5c6881. Actual-primary six suites96
+  tests/typecheck and independent NO_BLOCKER; original six dirty/full tracked/
+  index/untracked bytes exact. `SOURCE_503_MAIN_INTEGRATION.json`. No deployment,
+  Source/Provider authority change or execution of the pending catalog diagnostic.
+- Previous PDF software integration: main/origin/remote
+  `37c5e08913bacb304243100e785633cb6b4c59a0` (software code c6b15be8),
+  actual-primary15 suites228 tests,
   typecheck and capture bundle PASS. PDF software remains optional/default closed;
   no DEV deployment/SQL/authority activation occurred. Original six dirty entries,
   full tracked/index/untracked bytes exact. `PDF_SOFTWARE_MAIN_INTEGRATION.json`.
@@ -92,7 +102,7 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   typecheck PASS; original six dirty entries/full diff/untracked bytes exact.
   Missing Google Sign-In16.1.5 was restored only from the locked tarball after
   SHA512 verification, without dependency/lockfile changes. Auth owns main Writer
-  again. New PDF software candidates after this commit remain private/local only.
+  again at that checkpoint. Source503 repair is now integrated above, not installed.
 - Earlier completed Import main push: `11c7feaa`; original primary six dirty entries,
   full tracked/index diff and untracked bytes were preserved. Auth subsequently
   integrated its local-only Source/journal work through main `72331060`.
@@ -111,10 +121,9 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    AD5 JS107/Native95 displays failed state, hides Analyze after the owning read,
    retains originals and restores the same state through GET and cold My Trips.
    No UNKNOWN/hold/old Batch sweep. See `UNSTARTED_TASK_DEADLINE_NATIVE_RECEIPT.json`.
-   Actual DEV09465509 retains Native8e269985 Profile/FK base; server9b13037
-   unchanged, capture6cb771…, same Env/HostConfig/6mounts/4files, 200/401 PASS.
-   Prior8e269985/c92b9 stopped/retained. Native has Host/SQL Writer back; always
-   obtain its newest actual image before deploying or rolling back.
+   This acceptance ran on09465509 with Native8e269985 Profile/FK base; that image
+   is now retained after Native81ad4fde rollout above. Preserve the new actual
+   deployment, not the older acceptance image. No current Root service lease.
 2. PDF/OCR Source→Task/Admission remains NOT_READY. Reuse the restored V4
    preparation/causal/storage ports, V2 proof reader and fixed qpdf/Poppler worker.
    They remain unbound/default closed. Existing V4 scope is pinned to historical
@@ -144,7 +153,15 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    A Source-gateway catalog-only diagnostic was rejected by auto-review as a new
    credential use; no execution/bypass occurred, and exact read-only approval is
    pending while other local work continues. No actual PDF Source/Task/Save PASS.
-3. Complete the remaining input failure/offline/Account/Document permission matrix;
+3. Source uncertainty classification now preserves non-closed503 as
+   `SOURCE_REQUEST_UNCONFIRMED` rather than claiming dispatch was disabled. Only
+   an explicit bounded Backend closed code is CLOSED. Four suites76 tests/types/
+   lint and independent NO_BLOCKER; SQLite UNKNOWN/cold recovery proves one acquire,
+   same operation and receipt-only completion. `SOURCE_503_UNCERTAINTY_LOCAL_PASS.json`.
+   Now main-integrated on the accepted General baseline with actual-primary six
+   suites96/typecheck and independent Review. Still no new Native installation or
+   actual deployed failure/recovery acceptance.
+4. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN
    calls, holds, originals and receipts; no blind replacement or automatic resend.
@@ -152,11 +169,12 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
 ## Other lanes and resource safety
 
 Native thread `01a17101-8b2d-7240-ab67-f4c34a5d90d9` owns its manual E2E and current
-normal TripCreate diagnostics. Its separately approved two-account rollout updated
-`trip_sustained_dev_scope_allowed` OID66180 to MD5
-`8b7e35a4e6f8512f1aa90c5cb98f9ed7`, preserving Owner/ACL and Source scope. Never
-reverse it to the former account literal. Its next software image must retain the
-Import read change. Root does not inspect those users' data or copy credentials.
+normal-account E2E. It reports `trip_sustained_dev_scope_allowed` OID66180 now
+MD5 `0f3b543bab2431ee35c519ad8ce01ea9`, replacing8b7e while preserving Owner/ACL,
+Source policy/guards, four other functions, policy rows and receipt counts. Root
+has not queried SQL for this handoff. Never restore older allowlist functions or
+images over it. Native returned its service window and uses phone108; Root has no
+Host/SQL/main/GUI lease and does not inspect those users' data or copy credentials.
 
 Auth thread `01a1803b-c5a7-7ab0-a90f-fb4f87609201` owns Guest journal v3/source
 projection and the separate normal-JWT self-profile port candidate `2b2fd000`.

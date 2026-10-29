@@ -1,0 +1,24 @@
+{
+  "status": "LOCAL_PASS",
+  "baseCommit": "37c5e089",
+  "problem": "Existing original Source transport mislabeled all HTTP503 as capability closed, including uncertain IO/gateway responses",
+  "directedRed": {
+    "failures": 3,
+    "cases": [
+      "SOURCE_IO_UNAVAILABLE",
+      "proxy HTML",
+      "oversized closed-looking body"
+    ]
+  },
+  "change": "Only explicit bounded JSON SOURCE_CAPABILITY_CLOSED maps to CLOSED; other503 stay SOURCE_REQUEST_UNCONFIRMED. No retry or journal mutation added.",
+  "tests": {
+    "suites": 4,
+    "passed": 76,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "sqliteRecovery": "OUTCOME_UNKNOWN -> cold receipt lookup -> ADMITTED; acquire called once, original identity retained"
+  },
+  "review": "Independent NO_BLOCKER",
+  "runtime": "NOT_DEPLOYED",
+  "scope": "No SQL/Schema/RLS/GRANT/Role/Secret/Provider or permission changes"
+}
