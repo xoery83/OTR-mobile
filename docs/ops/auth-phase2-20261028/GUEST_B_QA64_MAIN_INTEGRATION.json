@@ -1,0 +1,31 @@
+{
+  "status": "LOCAL_MAIN_INTEGRATED_SMOKE_PASS_FINAL_PUSH_VERIFICATION_PENDING",
+  "baselineMain": "fd6828643c7ee513ba9d91dca15c0739bc2a89c9",
+  "integratedSource": "2b8ab46947efdb464abf175fd7e6752bd29ba1de",
+  "scope": "reviewed Guest inventory/publication fences, closed status boundary, Bootstrap testmock, finite GuestQA64 regression evidence",
+  "independentReview": "NO_BLOCKER; Auth delta only; independent 76/76 PASS",
+  "joinedValidation": {
+    "suites": 9,
+    "tests": 195,
+    "typecheck": "PASS"
+  },
+  "actualPrimarySmoke": {
+    "suites": 3,
+    "tests": 86,
+    "result": "PASS"
+  },
+  "primaryPreservation": {
+    "originalSixDirtyFiles": "PASS; exact names and bytes unchanged",
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "excludedPrivateTransactionCommits": [
+    "ab33fc9f",
+    "2c04394d",
+    "1a34e1c1"
+  ],
+  "protectedSqlOrAuthorityChanged": false,
+  "devDeployed": false,
+  "adoptionStatus": "NOT_READY; Native full draft/file collector and atomic server authority/receipt still absent",
+  "finalVerification": "Private GUEST_B_QA64_MAIN_VERIFIED.json must confirm actual main/origin/remote after final docs commit and normal push; this committed snapshot is not final push proof"
+}

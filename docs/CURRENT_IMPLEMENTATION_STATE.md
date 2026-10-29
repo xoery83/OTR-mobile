@@ -80,14 +80,17 @@ Source confirms current Capture/Documents producers Account-only; originals are
 registered SQLite BLOBs. This excludes physical-disk absence and Photo/Ledger proof.
 Never inspect/reclassify Account files by prefix.
 
-Last independently verified main/origin/remote74c6403027e13824be020f483915526d4136c998:
-Auth-only sourceb8c2987d normal-pushed; actual primary111 tests PASS; six dirty files/
-full diff preserved. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is pre-final-push
-snapshot. Freeze28e705ab remains local. Main/Push returned; reacquire/verify before
-integration. Coreab33fc9f (122 tests + isolated PG rollback) and TripCreate2c04394d (30 tests)
-were independently reviewed and handed back to Native. Focused commits only; never
-whole-merge Core's Native-parent branch. No public-file/SQL/Host lease held; Native
-live-Trip-draft seam pending. GuestQA-only GUI permitted for bounded regression.
+Latest joined Auth source2b8ab469 includes accepted Native mainfd682864. Directed
+9 suites195 assertions/types PASS; default-closed status metadata remains unmounted.
+Independent readback review confirms all Guest baseline/postcold fields identical
+except phase. Main source2b8ab469 integrated after NO_BLOCKER; actual primary3 suites86 PASS.
+Primary six original dirty files/full diff independently unchanged. Final
+main/remote verification belongs to
+GUEST_B_QA64_MAIN_INTEGRATION.json and its private final verification snapshot.
+Coreab33fc9f, TripCreate2c04394d and MetadataV2 1a34e1c1 are independently reviewed
+private candidates awaiting Native owning acceptance; none is main-integrated or
+DEV-deployed. Never whole-merge Core's Native-parent branch. No public-file/SQL/
+Host Writer lease held; Native live-Trip-draft seam pending.
 
 GuestQA64/source d771c7e0 in-place runtime regression PASS: normal original Trip/P1
 and same-version cold recovery. Independent Guest-only SQLite74 readback retains
