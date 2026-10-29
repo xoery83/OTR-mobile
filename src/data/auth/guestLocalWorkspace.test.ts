@@ -1255,7 +1255,18 @@ async function handoffFixture() {
     }),
   });
   const deps = { openWorkspace: async () => workspace, tripDrafts: trips, p1Drafts: p1 };
-  return { f, workspace, trip, trips, p1, tripResume, p1Resume, tripSnapshot, deps };
+  return {
+    f,
+    workspace,
+    trip,
+    trips,
+    p1,
+    tripResume,
+    p1Resume,
+    tripSnapshot,
+    saved,
+    deps,
+  };
 }
 it("combines actual Guest Trip/P1/deferred SQL with both UI snapshots and a calculated file qualification under one held source", async () => {
   const f = await handoffFixture();
@@ -1360,8 +1371,8 @@ it("rejects a source row changed between qualification and final census and rele
       const lease = await f.workspace.freezeForInventory();
       return {
         ...lease,
-        readRegisteredFileQualification: async () => {
-          const proof = await lease.readRegisteredFileQualification();
+        readTripP1Source: async () => {
+          const proof = await lease.readTripP1Source();
           f.f.opened[0].sql
             .prepare("UPDATE local_trip_containers SET name='retained concurrent change'")
             .run();
@@ -1548,4 +1559,236 @@ it("restores a journal-verified Guest Create after actual file close/reopen and 
   const census = await reopened.readCensus();
   expect(census.totals.p1Items).toBe(1);
   expect(network).not.toHaveBeenCalled();
+});
+
+it("projects persisted Guest Trip/P1 domain source with original operation identities only under the freeze", async () => {
+  const f = await handoffFixture();
+  const vault = await f.workspace.freezeForInventory();
+  const source = await vault.readTripP1Source();
+  expect(source.schemaId).toBe("otr.auth.guest-trip-p1-source/1");
+  expect(source.sourceGuestLocalId).toBe(f.f.guestId);
+  expect(source.cloudAuthority).toBe(false);
+  const projected = JSON.parse(source.canonicalText);
+  expect(projected.trips).toHaveLength(1);
+  expect(projected.trips[0].create.tripId).toBe(f.trip.tripId);
+  expect(projected.trips[0].create.operationId).toBe(f.trip.operationId);
+  expect(projected.trips[0].metadata.name).toBe("Guest deferred metadata");
+  expect(projected.trips[0].deferredMetadata).toHaveLength(1);
+  expect(projected.trips[0].coreIntents).toHaveLength(1);
+  expect(projected.trips[0].coreIntents[0].command.target.id).toBe(f.saved.itemId);
+  expect(source.totals.queueOperations).toBe(3);
+  await vault.release();
+  await expect(vault.readTripP1Source()).rejects.toThrow(
+    "GUEST_INVENTORY_FREEZE_RELEASED",
+  );
+});
+
+it.each([
+  "dispatched queue",
+  "claimed queue",
+  "linked Person",
+  "unrecorded Person",
+  "intent hash readback",
+  "queue payload",
+  "metadata predecessor",
+  "operation collision",
+  "unrecorded metadata",
+])("preserves source and refuses a complete domain projection for %s", async (reason) => {
+  const f = await handoffFixture(),
+    sql = f.f.opened[0].sql;
+  if (reason === "dispatched queue")
+    sql.exec(
+      "UPDATE sync_operations SET attempt_count=1 WHERE operation_type='CORE_V2_COMMAND'",
+    );
+  if (reason === "claimed queue")
+    sql.exec(
+      "UPDATE sync_operations SET claim_owner='unknown-worker' WHERE operation_type='CORE_V2_COMMAND'",
+    );
+  if (reason === "linked Person") sql.exec("UPDATE ledger_members SET status='linked'");
+  if (reason === "unrecorded Person")
+    sql
+      .prepare(
+        "INSERT INTO ledger_members(id,journey_id,display_name,status,updated_at) VALUES(?,?,?,'local',?)",
+      )
+      .run(randomUUID(), f.trip.tripId, "保留的同行人", new Date(0).toISOString());
+  if (reason === "intent hash readback") {
+    const prepare = sql.prepare.bind(sql);
+    vi.spyOn(sql, "prepare").mockImplementation((query) => {
+      const statement = prepare(query);
+      if (query.startsWith("SELECT operation_id,queue_operation_id,intent_sha256"))
+        return {
+          all: (...args: never[]) =>
+            statement
+              .all(...args)
+              .map((row) => ({ ...row, intent_sha256: "b".repeat(64) })),
+        } as never;
+      return statement;
+    });
+  }
+  if (reason === "queue payload") {
+    const row = sql
+      .prepare(
+        "SELECT id,payload_json FROM sync_operations WHERE operation_type='CORE_V2_COMMAND'",
+      )
+      .get() as { id: string; payload_json: string };
+    const command = JSON.parse(row.payload_json);
+    command.payload.title = "Different queue text";
+    sql
+      .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+      .run(JSON.stringify(command), row.id);
+  }
+  if (reason === "operation collision") {
+    const row = sql
+      .prepare(
+        "SELECT id,payload_json FROM sync_operations WHERE operation_type='TRIP_METADATA_DEFERRED'",
+      )
+      .get() as { id: string; payload_json: string };
+    const core = sql
+      .prepare("SELECT operation_id FROM trip_core_pending_intents")
+      .get() as { operation_id: string };
+    const action = JSON.parse(row.payload_json);
+    action.operationId = core.operation_id;
+    sql
+      .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+      .run(JSON.stringify(action), row.id);
+  }
+  if (reason === "metadata predecessor") {
+    const row = sql
+      .prepare(
+        "SELECT id,payload_json FROM sync_operations WHERE operation_type='TRIP_METADATA_DEFERRED'",
+      )
+      .get() as { id: string; payload_json: string };
+    const action = JSON.parse(row.payload_json);
+    action.dependencyOperationId = randomUUID();
+    sql
+      .prepare("UPDATE sync_operations SET payload_json=? WHERE id=?")
+      .run(JSON.stringify(action), row.id);
+  }
+  if (reason === "unrecorded metadata")
+    sql.exec("UPDATE local_trip_containers SET name='Preserve unmatched Trip name'");
+  const before = [
+    "sync_operations",
+    "trip_core_pending_intents",
+    "local_trip_containers",
+    "ledger_members",
+  ].map((table) => sql.prepare("SELECT * FROM " + table).all());
+  const lease = await f.workspace.freezeForInventory();
+  await expect(lease.readTripP1Source()).rejects.toThrow();
+  const after = [
+    "sync_operations",
+    "trip_core_pending_intents",
+    "local_trip_containers",
+    "ledger_members",
+  ].map((table) => sql.prepare("SELECT * FROM " + table).all());
+  expect(after).toEqual(before);
+  await lease.release();
+});
+it("accounts for the normal Guest traveler creation records without connecting them to an Account", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const person = {
+    operationId: randomUUID(),
+    personId: randomUUID(),
+    displayName: "旅人 Å",
+  };
+  const trip = {
+    ...tripInput(),
+    syncFormatVersion: 2 as const,
+    destinations: [],
+    travelers: [person],
+  };
+  await workspace.trips.createTrip(trip);
+  const lease = await workspace.freezeForInventory(),
+    source = await lease.readTripP1Source();
+  const body = JSON.parse(source.canonicalText);
+  expect(source.totals.people).toBe(2);
+  expect(source.totals.queueOperations).toBe(2);
+  expect(body.trips[0].people).toEqual([
+    expect.objectContaining({
+      ...person,
+      accountId: f.guestId,
+      tripCreateOperationId: trip.operationId,
+    }),
+  ]);
+  expect(body.targetAccountId).toBeUndefined();
+  expect(body.cloudAuthority).toBe(false);
+  await lease.release();
+});
+
+it("retains Ledger initialization settings and source timestamps as data, without manufacturing a new cloud policy", async () => {
+  const f = await handoffFixture();
+  f.f.opened[0].sql.exec(
+    "UPDATE ledger_journeys SET settlement_currency='JPY',settlement_scale=0,valuation_policy='REFERENCE_RATE'",
+  );
+  const trip = await f.workspace.trips.getTrip(f.trip.tripId);
+  const lease = await f.workspace.freezeForInventory(),
+    source = await lease.readTripP1Source();
+  const body = JSON.parse(source.canonicalText);
+  expect(body.trips[0].ledgerInitialization).toMatchObject({
+    id: f.trip.tripId,
+    settlementCurrency: "JPY",
+    settlementScale: 0,
+    valuationPolicy: "REFERENCE_RATE",
+  });
+  expect(body.trips[0].sourceTimeline).toEqual({
+    createdAt: trip!.createdAt,
+    updatedAt: trip!.updatedAt,
+  });
+  expect(body.cloudAuthority).toBe(false);
+  await lease.release();
+});
+it("orders every retained Metadata action by its owning dependency, even when queue timestamps tie", async () => {
+  const f = await handoffFixture();
+  const before = await f.workspace.trips.readDeferredMetadataEditBase(f.trip.tripId);
+  const next = {
+    localActionVersion: 1 as const,
+    actionId: randomUUID(),
+    operationId: randomUUID(),
+    tripId: f.trip.tripId,
+    before: before.metadata,
+    after: { ...before.metadata, name: "第二次改名" },
+  };
+  await f.workspace.trips.deferMetadataUpdate(next);
+  f.f.opened[0].sql.exec(
+    "UPDATE sync_operations SET created_at='2026-10-29T00:00:00.000Z'",
+  );
+  const lease = await f.workspace.freezeForInventory(),
+    source = await lease.readTripP1Source();
+  const trip = JSON.parse(source.canonicalText).trips[0];
+  expect(trip.metadata.name).toBe("第二次改名");
+  expect(trip.deferredMetadata).toHaveLength(2);
+  expect(trip.deferredMetadata[1].dependencyOperationId).toBe(
+    trip.deferredMetadata[0].operationId,
+  );
+  expect(trip.deferredMetadata[1].operationId).toBe(next.operationId);
+  expect(source.totals.queueOperations).toBe(4);
+  await lease.release();
+});
+
+it("does not read a frozen Guest source after a same-UUID formal Account transition", async () => {
+  const f = await handoffFixture(),
+    lease = await f.workspace.freezeForInventory();
+  f.f.setPrincipal({ kind: "ACCOUNT", accountId: f.f.guestId } as LaunchIdentity);
+  await expect(lease.readTripP1Source()).rejects.toThrow("GUEST_LOCAL_SCOPE_CHANGED");
+  f.f.setPrincipal({ kind: "GUEST", localId: f.f.guestId });
+  await lease.release();
+});
+it("preserves a normal legacy Guest Trip Create without inventing structured destinations", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const input = { ...tripInput(), destination: "京 都" };
+  await workspace.trips.createTrip(input);
+  const lease = await workspace.freezeForInventory(),
+    source = await lease.readTripP1Source();
+  const trip = JSON.parse(source.canonicalText).trips[0];
+  expect(trip.create.destination).toBe("京 都");
+  expect(trip.create.formatVersion).toBeUndefined();
+  expect(trip.metadata.destination).toBe("京 都");
+  expect(trip.metadata.destinations).toBeUndefined();
+  expect(source.sha256).toBe(
+    await tripCoreSha256Hex(new TextEncoder().encode(source.canonicalText)),
+  );
+  expect(Object.isFrozen(source)).toBe(true);
+  expect(Object.isFrozen(source.totals)).toBe(true);
+  await lease.release();
 });

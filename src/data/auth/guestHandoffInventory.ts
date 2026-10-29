@@ -83,7 +83,8 @@ export function createGuestHandoffInventory(deps: {
     try {
       trips = await deps.tripDrafts.freeze(scope);
       p1 = await deps.p1Drafts.freeze(scope);
-      const files = await vault.readRegisteredFileQualification();
+      const source = await vault.readTripP1Source();
+      const files = source.files;
       const drafts = Object.freeze(
         [...trips.entries, ...p1.entries].map((entry) => Object.freeze({ ...entry })),
       );
@@ -130,6 +131,7 @@ export function createGuestHandoffInventory(deps: {
         scope,
         census: stable,
         files,
+        source,
         drafts,
         assertCurrent,
         resumeGuestBeforePublication,

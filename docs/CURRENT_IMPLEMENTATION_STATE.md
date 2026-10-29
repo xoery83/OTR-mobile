@@ -153,6 +153,16 @@ Actual primary7 suites252 PASS after fixedc2a29bac integration; six original dir
 files/full diff preserved. GUEST_B_P1_RESTORE_MAIN_INTEGRATION.json records it.
 See GUEST_B_P1_CREATE_RESTORE_REVIEW.json and ADR dated2026-10-29.
 
+Current Guest source projection reads only under the vault freeze through owning
+Trip/Person/Core readers/parsers. Canonical JSON+SHA retains original identities,
+original/current metadata, full queue/People correspondence, deferred dependencies,
+P1 intents, static covers, Ledger initialization settings and source timestamps.
+No target Account, capability transfer, SQL-file copy, upload or authority. Actual
+census table hashes before/after must match. Directed/independent3 suites107/types/
+scopedlint PASS/NO_BLOCKER; source-only proof, not Native/Cloud/Adoption. See
+GUEST_B_SOURCE_PROJECTION_REVIEW.json; next persist this semantic source so UNKNOWN
+recovery never needs to unlock the original Guest DB.
+
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
 Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.
