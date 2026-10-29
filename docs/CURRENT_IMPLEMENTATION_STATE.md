@@ -266,3 +266,6 @@ Import explicit Resume local repair: status GET no longer makes the Analyze acti
 
 
 Native101 ordinary JS-only installed with unchanged Native95 binary/33 business tables/originals/receipts. My Trips normal cold root, exact16:21 mixed Batch reopen, early PDF Not processed and one explicit Resume while GET busy observed. Same f68/c270 queue now retryable/P0001, Attempt0 and independent Supabase call_count0; deadline04:18:57Z retained, no new objects or model calls. Phase88 narrows to RUNTIME_PREPARATION/OTHER but does not prove the original unexpired root cause. Six existing static SQL denial codes added to the diagnostic allowlist only (six RED→two suites15PASS, typecheck/lint0, independent NO_BLOCKER); not yet deployed. GUI returned FormsQA. See MIXED_NATIVE101_RESUME_RECEIPT.json.
+
+
+Static SQL refusal diagnostic source7e985 deployed on actual curated1dc with one source diff/1676 files checked: new default image750a459b/container4847b7c4, server1098 unchanged/capture7020. Actual Config1c9f/HostConfige89/Envab5/sixmounts/fourfile hashes and independenthealth200/unauth401 PASS; old1dc/ea942 stopped+retained exactrollback, noSQL/role/Secret/budget/Authority change or Provider call. Native given new HANDOFF_VERIFIED default and Hostwindow returned; no fresh Task yet. See STATIC_SQL_CODES_DEV_DEPLOYMENT_RECEIPT.json.
