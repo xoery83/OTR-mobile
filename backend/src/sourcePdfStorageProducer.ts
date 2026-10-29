@@ -34,16 +34,22 @@ export type PdfReadBinding = PdfRequestBinding & {
 };
 // Internal observations only. Nothing here means WRITER_TERMINAL, VERIFIED or FINAL.
 export function createSourcePdfStorageProducer(config: PdfStorageConfig) {
-  return createProducer(
+  const producer = createProducer(
     config,
     sourcePdfBackendBindingSchema,
     async (bytes) => verifySourcePdf(bytes),
     65536,
   );
+  return {
+    configurationSha256: producer.configurationSha256,
+    upload: producer.upload,
+    read: producer.read,
+  };
 }
 export function createSourcePdfV2StorageProducer(
   config: PdfStorageConfig,
   runWorker?: Parameters<typeof verifySourcePdfV2UploadBytes>[1],
+  custodyScope?: { accountId: string; tripId: string },
 ) {
   return createProducer(
     config,
@@ -51,6 +57,7 @@ export function createSourcePdfV2StorageProducer(
     (bytes) => verifySourcePdfV2UploadBytes(bytes, runWorker),
     PDF_UPLOAD_QPDF_V4.maxByteCount,
     PDF_UPLOAD_QPDF_V4.profileId,
+    custodyScope,
   );
 }
 function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
@@ -59,9 +66,17 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
   verify: (bytes: Uint8Array) => Promise<unknown>,
   maxBytes: number,
   profileId?: string,
+  suppliedCustodyScope?: { accountId: string; tripId: string },
 ) {
   type RequestBinding = { binding: B; dispatchId: string };
   type ReadBinding = RequestBinding & { readId?: string; ackEvidenceSha256?: string };
+  const custodyScope = suppliedCustodyScope
+    ? Object.freeze(
+        z
+          .strictObject({ accountId: coreUuid, tripId: coreUuid })
+          .parse(suppliedCustodyScope),
+      )
+    : undefined;
   const origin = new URL(config.origin);
   if (
     origin.origin !== config.origin ||
@@ -93,6 +108,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
       bucket: "trip-source-material",
       protocol: "STANDARD_POST_NO_RETRY/1",
       ...(profileId ? { profileId } : {}),
+      ...(custodyScope ? { custodyScope } : {}),
     }),
   );
   function bound(raw: RequestBinding) {
@@ -108,7 +124,12 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
       ),
     };
   }
-  function io(method: "POST" | "GET", key: string, body?: Uint8Array) {
+  function io(
+    method: "POST" | "GET",
+    key: string,
+    body?: Uint8Array,
+    readLimit = maxBytes,
+  ) {
     return new Promise<{
       status: number;
       headers: Record<string, string>;
@@ -160,7 +181,7 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
           let count = 0;
           r.on("data", (p: Buffer) => {
             count += p.length;
-            if (count > (method === "GET" ? maxBytes : 4096)) {
+            if (count > (method === "GET" ? Math.min(maxBytes, readLimit) : 4096)) {
               q.destroy();
               r.destroy();
               finish(null);
@@ -243,6 +264,54 @@ function createProducer<B extends PdfBackendBinding | SourcePdfV2UploadBinding>(
         };
       return { kind: "COMPLETE_ACK" as const, ...observation };
     },
+    async readOriginal(supplied: {
+      accountId: string;
+      tripId: string;
+      sourceId: string;
+      representationId: string;
+      sha256: string;
+      byteCount: number;
+    }) {
+      if (!custodyScope) throw Error("PDF_CUSTODY_SCOPE_CLOSED");
+      const scope = z
+        .strictObject({
+          accountId: coreUuid,
+          tripId: coreUuid,
+          sourceId: coreUuid,
+          representationId: coreUuid,
+          sha256: coreHash,
+          byteCount: z.number().int().positive().max(4194304),
+        })
+        .parse(supplied);
+      if (
+        scope.accountId !== custodyScope.accountId ||
+        scope.tripId !== custodyScope.tripId
+      )
+        throw Error("PDF_CUSTODY_SCOPE_DENIED");
+      const result = await io(
+        "GET",
+        `v1/${scope.tripId}/${scope.sourceId}/${scope.representationId}/payload`,
+        undefined,
+        scope.byteCount,
+      );
+      const headerNames =
+        result?.rawHeaders
+          .filter((_, index) => index % 2 === 0)
+          .map((name) => name.toLowerCase()) ?? [];
+      if (
+        !result ||
+        result.status !== 200 ||
+        headerNames.filter((name) => name === "content-type").length !== 1 ||
+        headerNames.includes("content-encoding") ||
+        headerNames.includes("content-range") ||
+        result.headers["content-type"]?.split(";")[0].trim().toLowerCase() !==
+          "application/pdf" ||
+        result.body.length !== scope.byteCount ||
+        pdfHash(result.body) !== scope.sha256
+      )
+        throw Error("PDF_CUSTODY_ORIGINAL_UNCONFIRMED");
+      return Uint8Array.from(result.body);
+    },
     async read(raw: ReadBinding) {
       const causal = raw.binding.uploadVersion === 3 || raw.binding.uploadVersion === 4;
       if (
@@ -306,4 +375,4 @@ export type SourcePdfStorageProducer = ReturnType<typeof createSourcePdfStorageP
 
 export type SourcePdfStorageProducerFor<
   B extends PdfBackendBinding | SourcePdfV2UploadBinding,
-> = ReturnType<typeof createProducer<B>>;
+> = Pick<ReturnType<typeof createProducer<B>>, "configurationSha256" | "upload" | "read">;

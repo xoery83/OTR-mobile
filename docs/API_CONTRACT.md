@@ -1254,7 +1254,7 @@ cannot activate the protected PDF scope; no current Runtime enables it.
 ## Source PDF V4 preparation HTTP (unbound implementation candidate)
 
 Candidate POST routes use
-`/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/{stage,dispatch,observe-retained}`.
+`/v2/trips/:tripId/sources/:sourceId/representations/:representationId/pdf-v4/:operationId/{reserve,finish,stage,dispatch,observe-retained}`.
 The enclosing Backend must authenticate bearer identity; the adapter checks current
 Trip access and uses the existing causal owner's account-generation reader, never
 an Actor/generation supplied by request JSON. Stage delegates raw PDF bytes to the
@@ -1267,8 +1267,19 @@ ports fail closed before body consumption. The parent handler authenticates and
 delegates only through this optional port; normal startup does not supply it. No
 worker service, SQL activation, budget or permission change is part of this
 candidate; those require separately qualified composition and authority.
-`operationId` must identify an already reserved owning upload operation, not the
-Source acquisition operation or a new transport-generated ID.
+`operationId` is the existing durable `UPLOAD_ORIGINAL` command identity, never
+the Source acquisition ID or a transport-generated replacement. `reserve` admits
+that identity; stage/dispatch/observe-retained/finish use its reservation.
+Optional reserve/finish accept only the frozen bounded16KiB `UPLOAD_ORIGINAL`
+Source command, not caller resource/attempt/run capabilities. The existing V4
+causal authority owns admission, idempotent journal lookup and final receipt;
+Backend creates internal resource identities. Route/Actor/Trip/representation,
+4MiB scope and current generation are checked, including after awaited writes.
+UNKNOWN never triggers an automatic retry/new operation. A completed result may
+include only the existing strict Source upload receipt; other transport steps
+remain observations. Missing reservation composition remains closed. These routes
+do not install SQL, activate the historical PDF scope or invoke a worker.
+
 The corresponding Native transport is explicit-only: existing Account context and
 Session token, same durable Source operation identity, raw owned bytes within the
 existing Capture4MiB limit, bounded response and no automatic write retry. The

@@ -1,3 +1,4 @@
+import { enterSourcePdfContinuousScope } from "./sourcePdfContinuousScope";
 import {
   sourcePdfV2SealRequestSchema as sourcePdfSealRequestSchema,
   sourcePdfV2SealSchema as sourcePdfSealSchema,
@@ -21,6 +22,7 @@ export function createSourcePdfV2Authority(
   hash: ImportHash,
   readOriginal: SourcePdfCustodyReader,
   runWorker?: Parameters<typeof createSourcePdfV2LinuxVerifier>[1],
+  options: { continuousSourceScope?: true } = {},
 ) {
   const verify = createSourcePdfV2LinuxVerifier(readOriginal, runWorker);
   return {
@@ -59,6 +61,12 @@ export function createSourcePdfV2Authority(
             began = false;
             return receipt;
           }
+          if (options.continuousSourceScope)
+            await enterSourcePdfContinuousScope(lease, {
+              actorAccountId: accountId,
+              tripId,
+              sourceId: request.sourceId,
+            });
           const context = (
             await lease.query(
               "SELECT public.trip_source_pdf_v2_context($1::uuid,$2::uuid,$3::jsonb) AS context",

@@ -16,6 +16,14 @@ Fresh Google signup and Hosted Email OTP require an unused legitimate identity/m
 
 # Current implementation state — 30 October 2026
 
+PDF Source optional software now includes normal reserve/finish, same-transaction
+context opt-in and bounded original GET, all default closed/unbound. It reuses
+existing Auth/Trip, Source journal, V2 verifier and Native transport; no runtime,
+SQL/GRANT/Role/Secret activation or PDF E2E is included. See ADR
+`2026-10-30-pdf-source-runtime-ports.md`; joined-main validation is recorded under
+`docs/ops/universal-product-20261028/`.
+
+
 ## Active delivery
 
 Universal Import product completion is active in the stable worktree

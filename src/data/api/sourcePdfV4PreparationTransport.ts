@@ -15,10 +15,15 @@ import { createRequestBoundary, readBoundedJson } from "./requestBoundary";
 import { reserveNativeQaGet } from "./nativeQaReadBudget";
 import {
   sourcePdfV4PreparationIdentitySchema,
+  sourcePdfV4CommandObservationSchema,
   sourcePdfV4PreparationObservationSchema,
   type SourcePdfV4PreparationIdentity,
 } from "./sourcePdfV4PreparationContracts";
+import { sourcePdfV2UploadCommandSchema } from "../../domain/trip/sourcePdfV2Upload";
+import { canonicalCoreJson } from "../../domain/trip/tripCoreV2Json";
 const observations = {
+  reserve: "RESERVATION_OBSERVED",
+  finish: "FINISH_OBSERVED",
   stage: "STAGED",
   dispatch: "DISPATCH_OBSERVED",
   "observe-retained": "READ_OBSERVED",
@@ -48,9 +53,25 @@ export function createSourcePdfV4PreparationTransport(
     raw: SourcePdfV4PreparationIdentity,
     action: keyof typeof observations,
     bytes?: Uint8Array,
+    rawCommand?: unknown,
   ) {
     const identity = sourcePdfV4PreparationIdentitySchema.parse(raw);
     z.uuid().parse(context.tripId);
+    const command =
+      action === "reserve" || action === "finish"
+        ? sourcePdfV2UploadCommandSchema.parse(rawCommand)
+        : undefined;
+    if (
+      command &&
+      (command.actor_account_id !== context.accountId ||
+        command.trip_id !== context.tripId ||
+        command.source_id !== identity.sourceId ||
+        command.payload.representation_id !== identity.representationId ||
+        command.operation_id !== identity.operationId ||
+        command.payload.byte_count > 4194304)
+    )
+      throw Error("SOURCE_CAPTURE_SCOPE_INVALID");
+    const commandBody = command ? canonicalCoreJson(command) : undefined;
     const boundary = createRequestBoundary(90000, options.signal, () => {
       options.assertRequestCurrent?.();
       assertAccountRequestGeneration(context);
@@ -75,6 +96,7 @@ export function createSourcePdfV4PreparationTransport(
             headers: {
               Authorization: `Bearer ${session.token}`,
               "Accept-Encoding": "identity",
+              ...(commandBody ? { "Content-Type": "application/json" } : {}),
               ...(bytes
                 ? {
                     "Content-Type": "application/pdf",
@@ -82,7 +104,11 @@ export function createSourcePdfV4PreparationTransport(
                   }
                 : {}),
             },
-            ...(bytes ? { body: Uint8Array.from(bytes).buffer } : {}),
+            ...(bytes
+              ? { body: Uint8Array.from(bytes).buffer }
+              : commandBody
+                ? { body: commandBody }
+                : {}),
           });
         } catch {
           throw Error("SOURCE_REQUEST_UNCONFIRMED");
@@ -121,14 +147,27 @@ export function createSourcePdfV4PreparationTransport(
         response.headers.get("Vary") !== "Authorization"
       )
         throw Error("SOURCE_RESPONSE_INVALID");
-      const result = sourcePdfV4PreparationObservationSchema.parse(
-        await readBoundedJson(response, 4096, boundary),
-      );
+      const result = (
+        command
+          ? sourcePdfV4CommandObservationSchema
+          : sourcePdfV4PreparationObservationSchema
+      ).parse(await readBoundedJson(response, 4096, boundary));
       if (
         result.sourceId !== identity.sourceId ||
         result.representationId !== identity.representationId ||
         result.operationId !== identity.operationId ||
         result.observation !== observations[action]
+      )
+        throw Error("SOURCE_RESPONSE_INVALID");
+      if (
+        command &&
+        "receipt" in result &&
+        result.receipt &&
+        (result.receipt.operation_id !== command.operation_id ||
+          result.receipt.operation_key !== command.operation_key ||
+          result.receipt.operation_sha256 !== command.operation_sha256 ||
+          result.receipt.source_id !== command.source_id ||
+          result.receipt.representation_id !== command.payload.representation_id)
       )
         throw Error("SOURCE_RESPONSE_INVALID");
       await boundary.run(() => assertAccountRequestContext(context, getAccountId));
@@ -138,6 +177,16 @@ export function createSourcePdfV4PreparationTransport(
     }
   }
   return {
+    reserve: (
+      context: AccountRequestContext,
+      identity: SourcePdfV4PreparationIdentity,
+      command: unknown,
+    ) => request(context, identity, "reserve", undefined, command),
+    finish: (
+      context: AccountRequestContext,
+      identity: SourcePdfV4PreparationIdentity,
+      command: unknown,
+    ) => request(context, identity, "finish", undefined, command),
     async stage(
       context: AccountRequestContext,
       identity: SourcePdfV4PreparationIdentity,
