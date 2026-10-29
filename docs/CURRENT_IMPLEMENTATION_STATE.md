@@ -133,6 +133,16 @@ GUEST_B_HANDOFF_MAIN_INTEGRATION.json. This has no Native
 consumer, physical-disk absence claim, login/adoption activation or DEV publication.
 See GUEST_B_HANDOFF_INVENTORY_REVIEW.json and ADR dated2026-10-29.
 
+P1 CREATE checkpoint restoration now reuses Repository open/current/WeakMap and
+existing opened editor input. Original Item ID/raw incomplete fields/initial
+baseline survive real journal verification and SQLite close/reopen; restore alone
+writes no business data, normal Save remains PENDING/local. Same-UUID Account,
+foreign Guest/generation, existing Item, non-P1, EDIT v1 and publication hold reject;
+identity loss at transaction result rolls writes back. Directed7 suites252/types/
+scopedlint/UIguard PASS; independent4 suites159 NO_BLOCKER. No actual Native recovery
+routing/GUI/provider consumer or cloud proof. EDIT must gain owning revision first.
+See GUEST_B_P1_CREATE_RESTORE_REVIEW.json and ADR dated2026-10-29.
+
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
 Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.

@@ -1,3 +1,5 @@
+import * as authRepository from "./authRepository";
+import { guestP1DraftSnapshotSchema } from "@/domain/auth/guestP1Draft";
 import { createGuestHandoffInventory } from "./guestHandoffInventory";
 import { createGuestTripDraftInventory } from "./guestTripDraftInventory";
 import { createGuestP1DraftInventory } from "./guestP1DraftInventory";
@@ -43,7 +45,9 @@ vi.mock("../db/database", () => ({
 }));
 vi.mock("./authRepository", () => ({
   requireActiveUserId: accountOpener,
-  requireCommittedGuestPrincipal: accountOpener,
+  requireCommittedGuestPrincipal: vi.fn(() => {
+    throw Error("GUEST_PRINCIPAL_NOT_CONFIGURED");
+  }),
 }));
 vi.mock("../files/tripPhotoFileStore", () => ({
   retainTripPhoto: accountOpener,
@@ -1459,4 +1463,89 @@ it("serializes a queued publication marker after UI resume under the source rele
     "GUEST_PUBLICATION_STATUS_REQUIRED",
   );
   // Ordering fixture only: no network publisher; cancelled inventory cannot grant publication.
+});
+
+it("restores a journal-verified Guest Create after actual file close/reopen and saves only through its new workspace repository", async () => {
+  const network = vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+    throw Error("NETWORK_FORBIDDEN");
+  });
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const input = { ...tripInput(), syncFormatVersion: 2 as const, destinations: [] };
+  await workspace.trips.createTrip(input);
+  const draft = await workspace.plan.createDraft(input.tripId);
+  const snapshot = {
+    schemaId: "otr.auth.guest-p1-draft/1" as const,
+    tripId: input.tripId,
+    itemId: draft.itemId,
+    mode: "CREATE" as const,
+    fields: { ...draft.fields, title: "  恢复的草稿  ", startDate: "2026-" },
+    initialFields: draft.fields,
+    firstAttempt: null,
+    placeSelection: null,
+  };
+  const canonicalText = canonicalCoreJson(snapshot as Json),
+    bytes = new TextEncoder().encode(canonicalText);
+  const adoptionId = randomUUID(),
+    targetAccountId = randomUUID();
+  const openJournal = (scope: typeof workspace.scope) =>
+    createGuestAdoptionRecovery({
+      scope,
+      files: f.files,
+      assertGuest: async () => {
+        if (scope.localId !== f.guestId || scope.generation !== getAccountGeneration())
+          throw Error("WRONG_GUEST");
+      },
+    });
+  // Component checkpoint fixture; this digest grants neither inventory nor server authority.
+  await openJournal(workspace.scope).prepare({
+    schemaId: "otr.auth.guest-adoption-recovery/2",
+    sourceKind: "GUEST",
+    sourceGuestLocalId: f.guestId,
+    adoptionId,
+    targetAccountId,
+    checkpoint: "PREPARED",
+    inventorySha256: "a".repeat(64),
+    tripIds: [input.tripId],
+    drafts: [
+      {
+        id: draft.itemId,
+        canonicalText,
+        sha256: await tripCoreSha256Hex(bytes),
+        bytes: bytes.byteLength,
+      },
+    ],
+  });
+  await openJournal(workspace.scope).cancelBeforePublication(adoptionId, targetAccountId);
+  const baseline = f.opened[0].sql
+    .prepare("SELECT count(*) AS n FROM trip_core_pending_intents")
+    .get();
+  f.close();
+  advanceAccountGeneration();
+  const reopened = await f.newOpener()();
+  const recovered = await openJournal(reopened.scope).read(adoptionId, targetAccountId);
+  expect(recovered?.nextAction).toBe("REMAIN_GUEST");
+  const raw = guestP1DraftSnapshotSchema.parse(
+    JSON.parse(recovered!.preparation.drafts[0].canonicalText),
+  );
+  vi.spyOn(authRepository, "requireCommittedGuestPrincipal").mockResolvedValue({
+    kind: "GUEST",
+    localId: f.guestId,
+  } as never);
+  const restored = await reopened.plan.restoreGuestCreateDraft(reopened.scope, raw);
+  expect(restored.itemId).toBe(draft.itemId);
+  expect(restored.fields).toEqual(snapshot.fields);
+  expect(restored.initialFields).toEqual(snapshot.initialFields);
+  expect(
+    f.opened[0].sql.prepare("SELECT count(*) AS n FROM trip_core_pending_intents").get(),
+  ).toEqual(baseline);
+  const saved = await reopened.plan.save(restored, {
+    ...restored.fields,
+    startDate: "2026-10-29",
+  });
+  expect(saved.itemId).toBe(draft.itemId);
+  expect(saved.localStatus).toBe("PENDING");
+  const census = await reopened.readCensus();
+  expect(census.totals.p1Items).toBe(1);
+  expect(network).not.toHaveBeenCalled();
 });

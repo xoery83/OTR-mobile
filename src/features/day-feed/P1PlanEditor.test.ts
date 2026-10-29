@@ -851,3 +851,28 @@ it("blocks unconfirmed P1 range selection and rejects late range opening after f
   await lease.assertCurrent();
   await lease.resume();
 });
+
+it("renders a restored Create through opened and retains its original dirty baseline for the next freeze", async () => {
+  const baseline = fields();
+  const draft = {
+    mode: "CREATE",
+    itemId: "00000000-0000-4000-8000-000000000089",
+    fields: { ...baseline, title: "  恢复中  ", startDate: "2027-" },
+    initialFields: baseline,
+    participantOptions: [],
+  };
+  const repository = { save: vi.fn() };
+  const p = { ...props(), opened: { repository, draft } };
+  await open(p, repository);
+  expect(node("tripCreate.planName").value).toBe("  恢复中  ");
+  node("common.cancel").onPress();
+  expect(state.alert).toHaveBeenCalled();
+  expect(p.onClose).not.toHaveBeenCalled();
+  const lease = await liveInventory().freeze(guestScope());
+  const snapshot = JSON.parse(lease.entries[0].canonicalText);
+  expect(snapshot.itemId).toBe(draft.itemId);
+  expect(snapshot.fields).toEqual(draft.fields);
+  expect(snapshot.initialFields).toEqual(baseline);
+  expect(repository.save).not.toHaveBeenCalled();
+  await lease.resume();
+});

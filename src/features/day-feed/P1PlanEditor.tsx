@@ -177,7 +177,11 @@ export function P1PlanEditor({
   );
   const fieldsRef = useRef(fields);
   const initialRef = useRef(
-    opened ? JSON.stringify(opened.draft.fields) : preview ? JSON.stringify(preview) : "",
+    opened
+      ? JSON.stringify(opened.draft.initialFields ?? opened.draft.fields)
+      : preview
+        ? JSON.stringify(preview)
+        : "",
   );
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
