@@ -10,7 +10,7 @@
     "independentReview": "NO_BLOCKER_AFTER_BINDING_AND_OUTER_COMMIT_REPAIRS",
     "typecheck": "PASS",
     "scopedLint": "PASS",
-    "localPgChecks": 13,
+    "localPgChecks": 14,
     "localPgIndependentlyRerun": false,
     "localPgReportReadOnlyReviewed": true
   },
@@ -34,10 +34,12 @@
   ],
   "sqlGuard": "Local disposable database name and explicit marker required; no RPC or runtime privileges",
   "fileHashes": {
-    "backend/src/guestAdoptionCompositePlan.ts": "84643deaf989f23648bef8de6b703696e2430f2bb08cbdb0b2356823c2c89b98",
+    "backend/src/guestAdoptionCompositePlan.ts": "4b12f0003f79b9bc0380784942bc4cef428380014f3c1628986a67ebbf7c9b76",
     "backend/src/guestAdoptionCompositeStage.ts": "73b47aef9c9105fc5483dd58d387c49cda6f6749a9ae144274a41b81f1e0f029",
-    "docs/ops/auth-phase1-20261028/composite-publication-candidate/staging.local.sql": "25224995ab080841df4edeaa22959185ba8164b93c97f9f21ee3db50d770905f",
-    "backend/src/guestAdoptionCompositeStatus.ts": "b455eb70da0c6627b8ed4beee66991df2e72a15795176900041e2781ee5604ec"
+    "docs/ops/auth-phase1-20261028/composite-publication-candidate/staging.local.sql": "d9b039f599700f562eb0e9aea91c7ab415b3a4f93354573482871627f30258e3",
+    "backend/src/guestAdoptionCompositeStatus.ts": "b455eb70da0c6627b8ed4beee66991df2e72a15795176900041e2781ee5604ec",
+    "src/data/auth/guestAdoptionPreparation.ts": "213e67a0f2470b85d8a05fbdff80e65e598386073c5771506e803cca5b98d47e",
+    "src/data/auth/guestAdoptionRecovery.ts": "1f940bbaceb2728cda15e7c6343f317c645564ee60144389d7ae5b71ce984633"
   },
   "statusReadbackCandidate": {
     "status": "PRIVATE_STAGE_EXISTENCE_ONLY_UNMOUNTED",
@@ -46,5 +48,19 @@
     "independentReview": "NO_BLOCKER_AFTER_OWNING_TRANSACTION_CONTRACT_REPAIR",
     "realRed": "CORE_TRANSACTION_UNFINISHED reproduced before READ ONLY transaction repair",
     "limits": "IN_PROGRESS/NOT_FOUND only; no terminal outcome or unlock; not complete Adoption status service"
+  },
+  "draftRetentionSupplement": {
+    "status": "PRIVATE_DRAFT_BYTES_ONLY_NOT_RESTORE_OR_PUBLICATION",
+    "draftTests": 10,
+    "independentSuites": 4,
+    "independentTests": 70,
+    "existingWorkspaceCallerRegression": 101,
+    "existingRecoveryRegression": 27,
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER",
+    "codecMove": "Existing draft verifier body identical; old exports and journal1/2/3 unchanged",
+    "planVersion": "saved-only1/draft-bearing2",
+    "limits": "P1 EDITv1 remains without owning revision/restore; no new source unlock/Account promotion/runtime authority"
   }
 }

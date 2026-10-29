@@ -13,12 +13,13 @@
     "existing local roles denied staging read: anon,authenticated,service_role",
     "fixture lacks roles (not created or claimed tested): otr_trip_create_gateway,otr_trip_metadata_gateway,otr_trip_core_v2_gateway",
     "RLS enabled with no policy; existing Gateway/Writer role attributes unchanged",
-    "concurrent cross-Account same-adoption inserts retain exactly one immutable stage"
+    "concurrent cross-Account same-adoption inserts retain exactly one immutable stage",
+    "version2 exact P1/Trip Create/Edit draft bytes survive independent PG read without creating a Trip shell"
   ],
   "network": "none",
   "hostedWrites": 0,
   "providerCalls": 0,
   "businessTripWrites": 0,
-  "candidateSha256": "25224995ab080841df4edeaa22959185ba8164b93c97f9f21ee3db50d770905f",
-  "testCount": 13
+  "candidateSha256": "d9b039f599700f562eb0e9aea91c7ab415b3a4f93354573482871627f30258e3",
+  "testCount": 14
 }

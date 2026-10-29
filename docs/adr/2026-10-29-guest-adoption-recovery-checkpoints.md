@@ -30,3 +30,13 @@ must not recursively change their own source manifest digest. Capture/Document
 originals remain separately owned. Import confirmed there is no accepted Guest
 producer or Guest file collector; Account BLOB stores must not be borrowed.
 Completing this journal does not remove the full-file/all-live-draft blockers.
+
+30 October: share the existing preparation schema and draft verification as a
+pure Auth codec between local journal and closed private Backend staging. Keep
+all journal1/2/3 shapes, public exports and local lifecycle unchanged. Private
+staging may retain validated Draft bytes without publishing a Trip/Item or
+claiming post-Adoption restore support. A draft-bearing plan is version2; saved
+fileless plans remain version1. The grant's liveDraft count must exactly match the
+same immutable checkpoint. Unsupported files still reject the entire candidate.
+Publication and Account activation remain closed until owning restore/mapping and
+atomic-authority contracts are available; validating a draft is no restore proof.

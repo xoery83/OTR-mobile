@@ -102,7 +102,7 @@ export function fixture() {
     expiresAt: new Date(Date.now() + 60000).toISOString(),
     resources: { trips: 1, people: 1, items: 1, files: 0, fileBytes: 0, liveDrafts: 0 },
   };
-  async function source() {
+  async function source(drafts: unknown[] = []) {
     const { guestFilelessCapabilityVersion } =
       await import("../../src/data/auth/guestRegisteredFileQualification");
     body.capabilityVersion = guestFilelessCapabilityVersion;
@@ -119,7 +119,7 @@ export function fixture() {
       targetAccountId: user.id,
       inventorySha256: grant.inventorySha256,
       tripIds: [trip],
-      drafts: [],
+      drafts,
       source: {
         canonicalText,
         sha256: hash(canonicalText),
@@ -128,4 +128,82 @@ export function fixture() {
     });
   }
   return { user, body, grant, source, person };
+}
+
+// Raw unsubmitted fixtures deliberately retain incomplete dates and whitespace.
+export function draftEntries(f: ReturnType<typeof fixture>) {
+  const trip = f.body.trips[0],
+    tripId = trip.create.tripId;
+  const fields = {
+    title: "  未提交 Å  ",
+    startDate: "2026-",
+    startTime: null,
+    endDate: null,
+    endTime: null,
+    location: null,
+    description: " 原文 ",
+    participation: { mode: "SELF", people: [], selfPersonId: f.person },
+  };
+  const itemId = randomUUID(),
+    draftId = randomUUID(),
+    newTripId = randomUUID();
+  const p1 = {
+    schemaId: "otr.auth.guest-p1-draft/1",
+    tripId,
+    itemId,
+    mode: "CREATE",
+    fields,
+    initialFields: { ...fields, title: "" },
+    firstAttempt: null,
+    placeSelection: null,
+  };
+  const createTrip = {
+    schemaId: "otr.auth.guest-trip-draft/1",
+    draftId,
+    tripId: newTripId,
+    mode: "CREATE",
+    value: {
+      operation: { operationId: randomUUID(), tripId: newTripId },
+      name: "  未完成 Trip  ",
+      start: "2026-",
+      end: "",
+      destinations: [],
+      selfNickname: "  Å  ",
+      knownSelfName: "旅人",
+      travelers: [],
+    },
+  };
+  const editId = randomUUID();
+  const editTrip = {
+    schemaId: "otr.auth.guest-trip-draft/1",
+    draftId: editId,
+    tripId,
+    mode: "EDIT",
+    value: {
+      fields: {
+        before: trip.metadata,
+        beforeCover: null,
+        draftCover: null,
+        coverChanged: false,
+        initialDestinations: [],
+        destinationItems: [],
+        destinationsBefore: [],
+        name: "  编辑草稿  ",
+        destination: "",
+        start: "2026-",
+        end: "",
+      },
+      context: {
+        tripId,
+        syncFormatVersion: null,
+        metadataBase: null,
+        deferredMetadataBase: null,
+        deferredActionId: null,
+      },
+    },
+  };
+  return [p1, createTrip, editTrip].map((body) => ({
+    id: "itemId" in body ? body.itemId : body.draftId,
+    ...seal(body),
+  }));
 }

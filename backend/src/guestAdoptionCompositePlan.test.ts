@@ -44,7 +44,7 @@ it.each(["ANONYMOUS", "UNKNOWN", undefined] as const)(
     ).rejects.toThrow("NORMAL_ACCOUNT_REQUIRED");
   },
 );
-it.each(["files", "fileBytes", "liveDrafts"] as const)(
+it.each(["files", "fileBytes"] as const)(
   "refuses the whole dataset with %s instead of dropping it",
   async (kind) => {
     const f = fixture();
@@ -54,7 +54,7 @@ it.each(["files", "fileBytes", "liveDrafts"] as const)(
     );
   },
 );
-it.each(["trips", "people", "items"] as const)(
+it.each(["trips", "people", "items", "liveDrafts"] as const)(
   "refuses preflight/source %s mismatch",
   async (kind) => {
     const f = fixture();

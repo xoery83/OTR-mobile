@@ -225,12 +225,16 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   adapter stays503. Directed and independent4 suites88 PASS, types/scoped lint
   PASS/NO_BLOCKER. Routes remain unmounted, no server authority or DEV change.
 - 30 October private composite plan/stage candidate now pins owning stage SHA to
-  immutable v3 preparation plus grant/source/target/inventory and rejects nonempty
-  Draft/file families. Existing PG lease stores exact immutable private source,
+  immutable v3 preparation plus grant/source/target/inventory. Shared pure journal
+  codec retains validated P1/Trip Draft bytes in private plan/2 (saved-only stays
+  plan/1), with exact grant draft count; files/unqualified photo refs still reject.
+  Draft byte preservation does not qualify post-Adoption restore/publication. Existing PG lease stores exact immutable private source,
   actor collision/retry fenced; outer timeout/cleanup after COMMIT remains UNKNOWN,
   late callbacks cannot COMMIT. Direct/independent2s33 PASS, isolated network-none
   PG13 checks PASS (reviewer read report only; three newer Gateway roles absent in
-  fixture). Local-only SQL has no RPC/runtime grants. Core Writer review and real
+  fixture). Draft supplement direct10/independent4s70 PASS, unchanged journal27
+  and owning SQLite workspace101 PASS; isolated PG14 now also reads back all three
+  draft types exactly. Local-only SQL has no RPC/runtime grants. Core Writer review and real
   grant issuer/publication authority remain pending; no Adoption/Hosted PASS.
   Private stage status adapter uses strict four-way binding and owning read-only
   transaction; direct/independent11 PASS after real unfinished-lease RED repair.
