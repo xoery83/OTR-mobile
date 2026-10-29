@@ -105,7 +105,10 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
    Stage/dispatch/causal-read delegation, no internal capabilities in responses.
    Eight suites121 tests/types/lint/bundle and independent NO_BLOCKER passed;
    server/serverCapture do not provide its optional port. See
-   `PDF_V4_PREPARATION_HTTP_LOCAL_PASS.json`. No actual PDF Source/Task/Save PASS.
+   `PDF_V4_PREPARATION_HTTP_LOCAL_PASS.json`. Explicit Native transport also passed
+   six suites77 tests/types/lint and independent Review, reusing normal Auth,
+   immutable Capture custody and the original read quota; no caller is wired.
+   `PDF_V4_NATIVE_TRANSPORT_LOCAL_PASS.json`. No actual PDF Source/Task/Save PASS.
 3. Complete the remaining input failure/offline/Account/Document permission matrix;
    distinguish LOCAL_PASS, SERVER_VERIFIED and NATIVE_E2E_PASS. No repeated model
    benchmark or full six-slice audit. Preserve all older expired Batches, UNKNOWN

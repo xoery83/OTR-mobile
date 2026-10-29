@@ -1240,6 +1240,14 @@ ports fail closed before body consumption. The parent handler authenticates and
 delegates only through this optional port; normal startup does not supply it. No
 worker service, SQL activation, budget or permission change is part of this
 candidate; those require separately qualified composition and authority.
+`operationId` must identify an already reserved owning upload operation, not the
+Source acquisition operation or a new transport-generated ID.
+The corresponding Native transport is explicit-only: existing Account context and
+Session token, same durable Source operation identity, raw owned bytes within the
+existing Capture4MiB limit, bounded response and no automatic write retry. The
+causal observation POST consumes any existing explicit QA read allocation rather
+than bypassing it; no allocation or limit increases. A transport observation does
+not replace the owning Source operation receipt, custody verification or seal.
 
 ## Universal Import — unstarted deadline recovery (implementation candidate)
 
