@@ -35,5 +35,12 @@
   },
   "deployment": "Passed exact single Commit to Native for one coordinated curated software deployment; not yet deployed.",
   "authorityChanges": false,
-  "providerCallsFromPatch": 0
+  "providerCallsFromPatch": 0,
+  "typecheckCorrection": {
+    "initialReportIncorrect": true,
+    "reason": "Combined shell ended with successful lint, hiding TS2345 on heterogeneous it.each tuples.",
+    "repair": "All test cases use explicit third boolean plus default false; production code unchanged.",
+    "finalSeparateTypecheckExitCode": 0,
+    "finalLog": "pdf-v4-owning-preparation-types-final.log"
+  }
 }

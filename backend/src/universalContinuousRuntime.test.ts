@@ -165,14 +165,14 @@ it("overlapping activity and batch reads do not share an occupied Source connect
 });
 
 it.each([
-  ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED"],
-  ["private original contents and Bearer synthetic-token", "UNCLASSIFIED"],
-  ["SOURCE_PRIVATE_ORIGINAL_NAME", "UNCLASSIFIED"],
-  ["AUTH_BEARERABC123", "UNCLASSIFIED"],
+  ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED", false],
+  ["private original contents and Bearer synthetic-token", "UNCLASSIFIED", false],
+  ["SOURCE_PRIVATE_ORIGINAL_NAME", "UNCLASSIFIED", false],
+  ["AUTH_BEARERABC123", "UNCLASSIFIED", false],
   ["UNIVERSAL_CONFIGURATION_CHANGED", "UNIVERSAL_CONFIGURATION_CHANGED", true],
 ])(
   "reports a safe targeted failure class without logging request material",
-  async (message, code, loggerThrows) => {
+  async (message, code, loggerThrows = false) => {
     const actor = randomUUID(),
       trip = randomUUID(),
       batch = randomUUID(),
