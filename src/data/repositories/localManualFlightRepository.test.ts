@@ -1159,3 +1159,14 @@ it("normal V2 Trip between P1 and P2 cutoffs remains local with no formal intent
     vi.unstubAllEnvs();
   }
 });
+
+it('formal sparse number/date-only Create is durable with unknown destination and original operation IDs', async () => {
+  const f = fixture(), {repo, tripId} = await normalFormalTrip(f), draft = await repo.createDraft(tripId);
+  const segment = {...emptyFlightSegment('sparse', '2026-10-29'), flightNumberLiteral:'NZ9401'};
+  const plan = sparseFlightSavePlan([segment]);
+  expect(plan.kind).toBe('READY');
+  if(plan.kind !== 'READY')throw Error('PLAN_NOT_READY');
+  const result = await repo.save(draft, plan.fields, ()=>true);
+  expect(result.itemId).toBe(draft.itemId);
+  expect((await f.core.pending(await f.core.captureContext(tripId))).map(p=>p.command.operationId)).toEqual(draft.formalOperationIds);
+});

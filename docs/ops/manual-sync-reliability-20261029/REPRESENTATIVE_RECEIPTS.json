@@ -1,0 +1,252 @@
+{
+  "status": "REPRESENTATIVE_NATIVE_DEV_SCENARIOS_PASS_MAIN_AND_ORDINARY_SMOKE_PENDING",
+  "date": "2026-10-29",
+  "base": "2c8da312",
+  "mainBeforeIntegration": "901cf45662a3eec9e4fbfb526e2d3d822b1bc2fa",
+  "device": "OTR Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "privateQaBuilds": [
+    94,
+    95
+  ],
+  "accountA": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "accountB": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+  "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+  "offlineCreate": {
+    "layer": "Native UI plus simulated Core Transport outage; not physical network outage",
+    "normalCreateAndSubsequentEdit": true,
+    "serverAbsentDuringOutage": true,
+    "offlineColdOriginalQueueAndLatestFields": true,
+    "originalCreateOperationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d",
+    "originalEditOperationId": "86db3aaa-9ee1-4241-9e58-d2605c6e7b9b",
+    "accepted": {
+      "items": [
+        {
+          "id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+          "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+          "owner_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+          "semantic_revision": 2,
+          "experience_family": "P3",
+          "title": "Forms QA Offline Create Stay 1029 Edited",
+          "participation_mode": "WHOLE_GROUP",
+          "start_local_date": "2026-10-29",
+          "end_local_date": "2026-10-31"
+        }
+      ],
+      "receipts": [
+        {
+          "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d",
+          "outcome": "APPLIED",
+          "receiptSHA256": "aebdecb8322315de77c42c151fa6f7088ca56a740f852ed0aff55382c991927c",
+          "command": "CREATE_ITEM",
+          "intentSha256": "bc09f51b81ccab2b0ef401a9c18ffeaf169696cacef6ac2d4799531997295e08",
+          "actorAccountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+          "targetVector": [
+            {
+              "baseRevision": null,
+              "committedRevision": 1,
+              "id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+              "kind": "ITEM"
+            }
+          ]
+        },
+        {
+          "operationId": "86db3aaa-9ee1-4241-9e58-d2605c6e7b9b",
+          "outcome": "APPLIED",
+          "receiptSHA256": "a5314e9a932fa4dea77593ef33eb1d8e2f265254003d50ca4f56c7675e7b83f1",
+          "command": "SET_ITEM_TEXT",
+          "intentSha256": "04606a01ac90ae602fa8937786be2509cee0b55565c9c5158e3e931ce8fa5fb3",
+          "actorAccountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+          "targetVector": [
+            {
+              "baseRevision": 1,
+              "committedRevision": 2,
+              "id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+              "kind": "ITEM"
+            }
+          ]
+        }
+      ]
+    },
+    "coldAfterAcceptance": true
+  },
+  "lostResponse": {
+    "layer": "Validated real DEV APPLIED response deliberately withheld by private Native transport hook; not packet loss",
+    "originalCreateOperationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4",
+    "itemId": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+    "exactlyOneCreatePost": true,
+    "exactlyOneCreateReceipt": true,
+    "coldPendingBeforeRecovery": true,
+    "noFalseCompletedBeforeRecovery": true,
+    "receiptFirstRecoveryNoReplacementOperation": true,
+    "accepted": {
+      "items": [
+        {
+          "id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+          "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+          "owner_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+          "semantic_revision": 2,
+          "experience_family": "P2",
+          "title": "NZ9401",
+          "participation_mode": "WHOLE_GROUP",
+          "start_local_date": null,
+          "end_local_date": null
+        }
+      ],
+      "receipts": [
+        {
+          "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4",
+          "outcome": "APPLIED",
+          "receiptSHA256": "b1aa616acd6b9c58ead894200d44a7277aa82a65b3e4a1a964d90d86256bc154",
+          "command": "CREATE_SPARSE_FLIGHT",
+          "intentSha256": "4975117a01ae34841f0e03685189fb08bb97709608c8b1d12f434a7b2740e1a3",
+          "actorAccountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+          "targetVector": [
+            {
+              "baseRevision": null,
+              "committedRevision": 1,
+              "id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+              "kind": "ITEM"
+            }
+          ]
+        },
+        {
+          "operationId": "d1602f8c-a0ad-4ad3-80b7-1bb76fc95fb3",
+          "outcome": "APPLIED",
+          "receiptSHA256": "4d5c0022c91f00450362669b3fa8e01194f123333028460bb6aa1411818d54f6",
+          "command": "SET_AUTHORED_FLIGHT_DETAILS",
+          "intentSha256": "7c939c988ff0ac30958c238f2bced5c5575ead460e24c3e1b5c8defd6ca69d43",
+          "actorAccountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+          "targetVector": [
+            {
+              "baseRevision": 1,
+              "committedRevision": 2,
+              "id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+              "kind": "ITEM"
+            }
+          ]
+        }
+      ]
+    },
+    "coldAcceptedDetailsEveryoneNoPending": true,
+    "preCommitAttempt": "Earlier stale draft was cancelled only after proving zero Queue rows/no loss witness; a fresh normal draft then succeeded. No UNKNOWN operation was replaced."
+  },
+  "isolation": {
+    "normalLogin": "Existing verified DEV QA B via normal Email OTP; no copied Session/Token/password",
+    "immediateAndColdBMyTripsEmptyWithoutAFourTrips": true,
+    "backendProbes": {
+      "accountId": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+      "results": [
+        {
+          "name": "privateTripRead",
+          "operationId": null,
+          "outcome": "SERVER_DENIED",
+          "kind": "http",
+          "status": 404,
+          "code": "NOT_VISIBLE"
+        },
+        {
+          "name": "privateItemEdit",
+          "operationId": "92e5f1c6-159f-4e4f-8b7b-c2cd1425534f",
+          "outcome": "SERVER_DENIED",
+          "kind": "http",
+          "status": 404,
+          "code": "NOT_VISIBLE"
+        },
+        {
+          "name": "crossTripTargetEdit",
+          "operationId": "921289b7-b971-48b1-a0b7-1b4917846841",
+          "outcome": "SERVER_DENIED",
+          "kind": "http",
+          "status": 404,
+          "code": "NOT_VISIBLE"
+        }
+      ]
+    },
+    "independentBeforeRestoreA": {
+      "item": {
+        "id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+        "owner": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "participation": "WHOLE_GROUP",
+        "revision": 3,
+        "title": "Forms QA Simulator Activity 1029 Edited",
+        "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7"
+      },
+      "pendingAReceipt": 0,
+      "probeReceipts": 0
+    },
+    "independentAfterRestoreA": {
+      "item": {
+        "id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+        "owner": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "participation": "WHOLE_GROUP",
+        "revision": 4,
+        "title": "Forms QA Account A Pending Isolation 1029",
+        "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7"
+      },
+      "pendingAReceipt": 1,
+      "probeReceipts": 0
+    },
+    "aPendingOperationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56",
+    "aPendingImmutableWhileBActiveAndFaultsRemoved": true,
+    "normalRememberedASelectionPreservesFourTrips": true,
+    "aOriginalOperationOnlyAcceptedAfterReturnToA": true
+  },
+  "nativeAcceptedReadback": {
+    "rows": [
+      {
+        "cache_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "id": "5e851d1e-a474-4e3f-b71e-76ee58995b50",
+        "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+        "owner_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "semantic_revision": 2,
+        "experience_family": "P2",
+        "title": "NZ9401",
+        "participation_mode": "WHOLE_GROUP",
+        "start_local_date": null,
+        "end_local_date": null
+      },
+      {
+        "cache_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+        "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+        "owner_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "semantic_revision": 4,
+        "experience_family": "P6",
+        "title": "Forms QA Account A Pending Isolation 1029",
+        "participation_mode": "WHOLE_GROUP",
+        "start_local_date": "2026-10-29",
+        "end_local_date": null
+      },
+      {
+        "cache_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "id": "85ef0df8-d9b2-42b7-98c3-e94404ff2033",
+        "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+        "owner_account_id": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "semantic_revision": 2,
+        "experience_family": "P3",
+        "title": "Forms QA Offline Create Stay 1029 Edited",
+        "participation_mode": "WHOLE_GROUP",
+        "start_local_date": "2026-10-29",
+        "end_local_date": "2026-10-31"
+      }
+    ],
+    "integrity": "ok",
+    "schema": 74
+  },
+  "validation": {
+    "sharedExistingContracts": "9 suites / 181 tests PASS",
+    "otherManualRepositories": "4 suites / 60 tests PASS",
+    "newSparseNumberDateRegression": "30 tests PASS including one new case",
+    "privateFaultBoundaryAndWorkerAccountTests": "3 suites / 63 tests PASS",
+    "independentFaultReview": "NO_BLOCKER; 13 private + 45 Worker checks",
+    "independentIsolationReview": "NO_BLOCKER after evidence-write fix; six mock checks"
+  },
+  "productionChange": "One regression test only; runtime Queue/Worker/Core/Auth/Backend/Schema/RLS/GRANT unchanged in this closure. Private QA hooks/routes are not product files.",
+  "remaining": [
+    "No physical network outage this simulator-only round; prior physical offline Edit receipts remain separate.",
+    "No deliberate duplicate POST sent to DEV; actual retry proved receipt-first no redispatch. Existing isolated Core/PG replay evidence is reused, not relabeled live duplicate POST.",
+    "Shared-trip Organizer/non-Creator/selected-private participants variants outside current approved running authority were not enabled. Actual live denial is unshared B/cross-Trip.",
+    "Backend HTTP business denial verified; this is not an independent direct SQL RLS-role exercise.",
+    "Ordinary no-hook build restoration/main integration smoke still pending at this checkpoint."
+  ]
+}
