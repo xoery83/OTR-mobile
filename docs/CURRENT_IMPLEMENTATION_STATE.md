@@ -83,18 +83,17 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
 
 ## Remaining checkpoints
 
-1. Expired zero-Attempt lifecycle repair `66498648` is DEV_DEPLOYED; Native
-   lifecycle verification remains pending. Existing
-   continuation Repository `wait` closes it only under the real owning queue claim;
-   GET still projects persisted state. Native terminal states stop Source prepare/
-   dispatch while preserving read-only recovery. Six suites101 tests, typecheck,
-   UI guard and independent NO_BLOCKER passed. See
-   `UNSTARTED_TASK_DEADLINE_LOCAL_PASS.json`. Actual DEV image `09465509` preserves Native Profile baseline `8e269985`;
-   200/401/config/mount independent checks passed. AD5 JS107/Native95 installed,
-   33 scoped tables/Queue exact; My Trips/session/QA Trip cold read restored. See
-   `UNSTARTED_TASK_DEADLINE_DEPLOY_RECEIPT.json`. Complete normal same-current-run
-   Task verification; no
-   deadline/identity reset, historical sweep, UNKNOWN termination or paid resend.
+1. Expired zero-Attempt lifecycle `66498648` is NATIVE_E2E_PASS for the same
+   current-run Batch f68bc4fa / Task c2704309 only. Owning claim closed it through
+   existing `wait`: PENDING/revision2→FAILED/DEADLINE_EXHAUSTED/revision3, Queue
+   COMPLETED, zero Attempt and independent Provider calls0; ID/policy/deadline exact.
+   AD5 JS107/Native95 displays failed state, hides Analyze after the owning read,
+   retains originals and restores the same state through GET and cold My Trips.
+   No UNKNOWN/hold/old Batch sweep. See `UNSTARTED_TASK_DEADLINE_NATIVE_RECEIPT.json`.
+   Actual DEV09465509 retains Native8e269985 Profile/FK base; server9b13037
+   unchanged, capture6cb771…, same Env/HostConfig/6mounts/4files, 200/401 PASS.
+   Prior8e269985/c92b9 stopped/retained. Native has Host/SQL Writer back; always
+   obtain its newest actual image before deploying or rolling back.
 2. PDF/OCR Source→Task/Admission remains NOT_READY. Reuse the restored V4
    preparation/causal/storage ports, V2 proof reader and fixed qpdf/Poppler worker.
    They remain unbound/default closed. Existing V4 scope is pinned to historical
