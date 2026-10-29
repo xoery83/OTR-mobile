@@ -1,7 +1,12 @@
 import { randomUUID, createHash } from "node:crypto";
 import { it, expect, vi } from "vitest";
-import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
-import { executeCoreCommandV2 } from "./tripCoreV2Commands";
+import {
+  createCorePgStorage,
+  withCorePgStorageTransaction,
+  type CorePgLease,
+  type CorePgTransactionContext,
+} from "./tripCoreV2PgStorage";
+import { executeCoreCommandV2, type CoreCommandTransaction } from "./tripCoreV2Commands";
 import {
   normalP1Commands,
   normalP3Commands,
@@ -71,6 +76,256 @@ function fixture(principal = "otr_trip_core_v2_gateway", active = true) {
     storage: createCorePgStorage({ withLease: async (work) => work(lease) }, hash),
   };
 }
+const commandScope = () => ({
+  actorAccountId: actor,
+  tripId: trip,
+  operationId: randomUUID(),
+  baseVector: [],
+});
+it("composes two sequential owning commands on exactly one lease and one outer transaction", async () => {
+  const f = fixture();
+  const connection = {
+    async withLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+      return work(f.lease);
+    },
+  };
+  const withLease = vi.spyOn(connection, "withLease");
+  const result = await withCorePgStorageTransaction(
+    connection,
+    hash,
+    async ({ storage }) => {
+      expect(
+        await storage.withLockedCommand(commandScope(), (tx) => tx.readReceipt()),
+      ).toBeNull();
+      expect(
+        await storage.withLockedCommand(commandScope(), (tx) => tx.readReceipt()),
+      ).toBeNull();
+      expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+      return "whole callback completed";
+    },
+  );
+  expect(result).toBe("whole callback completed");
+  expect(withLease).toHaveBeenCalledOnce();
+  expect(f.queries.filter((q) => q.sql.startsWith("BEGIN"))).toHaveLength(1);
+  expect(f.queries.filter((q) => q.sql === "COMMIT")).toHaveLength(1);
+  expect(
+    f.queries.filter((q) => q.sql.includes("trip_core_lock_actor_scope")),
+  ).toHaveLength(2);
+});
+it("rejects the wrong Gateway before exposing the transaction callback", async () => {
+  const f = fixture("service_role"),
+    work = vi.fn();
+  await expect(
+    withCorePgStorageTransaction({ withLease: (fn) => fn(f.lease) }, hash, work),
+  ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
+  expect(work).not.toHaveBeenCalled();
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+});
+it("rolls back earlier work when a later command fails even if the callback catches it", async () => {
+  const f = fixture();
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ storage }) => {
+        await storage.withLockedCommand(commandScope(), (tx) => tx.readReceipt());
+        await storage
+          .withLockedCommand(commandScope(), async () => {
+            throw Error("CAS_FAILURE");
+          })
+          .catch(() => {});
+        return "must not be committed";
+      },
+    ),
+  ).rejects.toThrow("CAS_FAILURE");
+  expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+});
+it("stops escaped storage, transaction and lease ports before any post-commit query", async () => {
+  const f = fixture();
+  let escaped!: CorePgTransactionContext;
+  let transaction!: CoreCommandTransaction;
+  await withCorePgStorageTransaction(
+    { withLease: (fn) => fn(f.lease) },
+    hash,
+    async (context) => {
+      escaped = context;
+      await context.storage.withLockedCommand(commandScope(), async (tx) => {
+        transaction = tx;
+      });
+    },
+  );
+  const queries = f.queries.length;
+  await expect(
+    escaped.storage.withLockedCommand(commandScope(), async () => null),
+  ).rejects.toThrow("CORE_TRANSACTION_RELEASED");
+  await expect(escaped.lease.query("SELECT 1")).rejects.toThrow(
+    "CORE_TRANSACTION_RELEASED",
+  );
+  await expect(transaction.readReceipt()).rejects.toThrow("CORE_TRANSACTION_RELEASED");
+  expect(() => escaped.lease.retire()).toThrow("CORE_TRANSACTION_RELEASED");
+  expect(f.queries).toHaveLength(queries);
+});
+it.each(["BEGIN", "COMMIT", "ROLLBACK", "SAVEPOINT nested"])(
+  "rejects inner transaction ownership %s without suppressing it",
+  async (sql) => {
+    const f = fixture();
+    await expect(
+      withCorePgStorageTransaction(
+        { withLease: (fn) => fn(f.lease) },
+        hash,
+        async ({ lease }) => {
+          await lease.query(sql);
+        },
+      ),
+    ).rejects.toThrow("CORE_TRANSACTION_OWNER_REQUIRED");
+    expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+    expect(f.queries.filter((q) => q.sql.startsWith("BEGIN"))).toHaveLength(1);
+    expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+  },
+);
+it("refuses overlapping commands and cannot commit after the overlap was caught", async () => {
+  const f = fixture();
+  let release!: () => void, started!: () => void;
+  const ready = new Promise<void>((resolve) => (started = resolve));
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ storage }) => {
+        const first = storage.withLockedCommand(commandScope(), async () => {
+          started();
+          await new Promise<void>((resolve) => (release = resolve));
+        });
+        await ready;
+        await expect(
+          storage.withLockedCommand(commandScope(), async () => null),
+        ).rejects.toThrow("CORE_TRANSACTION_COMMAND_BUSY");
+        release();
+        await first;
+      },
+    ),
+  ).rejects.toThrow("CORE_TRANSACTION_COMMAND_BUSY");
+  expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+});
+it("does not commit callback work that returned without awaiting a Core command", async () => {
+  const f = fixture();
+  let pending!: Promise<unknown>;
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ storage }) => {
+        pending = storage.withLockedCommand(commandScope(), (tx) => tx.readReceipt());
+      },
+    ),
+  ).rejects.toThrow("CORE_TRANSACTION_WORK_PENDING");
+  await expect(pending).rejects.toThrow("CORE_TRANSACTION_RELEASED");
+  expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+});
+it("rolls back a caught pre-SQL method validation failure", async () => {
+  const f = fixture();
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ storage }) =>
+        storage.withLockedCommand(commandScope(), async (tx) => {
+          await tx.commit(null, {} as never, "invalid").catch(() => undefined);
+        }),
+    ),
+  ).rejects.toThrow();
+  expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+});
+it("rejects a previous command's method while the outer transaction is still active", async () => {
+  const f = fixture();
+  let old!: CoreCommandTransaction;
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ storage }) => {
+        await storage.withLockedCommand(commandScope(), async (tx) => {
+          old = tx;
+        });
+        await storage.withLockedCommand(commandScope(), async () => {
+          await old.readReceipt().catch(() => undefined);
+        });
+      },
+    ),
+  ).rejects.toThrow("CORE_COMMAND_RELEASED");
+  expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+});
+it("does not commit an unawaited transaction method", async () => {
+  const f = fixture();
+  let pending!: Promise<unknown>;
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ storage }) =>
+        storage.withLockedCommand(commandScope(), async (tx) => {
+          pending = tx.readReceipt();
+        }),
+    ),
+  ).rejects.toThrow("CORE_TRANSACTION_WORK_PENDING");
+  await pending.catch(() => undefined);
+  expect(f.queries.some((q) => q.sql === "COMMIT")).toBe(false);
+});
+it.each([
+  "/* note */ COMMIT",
+  "-- note\nCOMMIT",
+  "SELECT 1; COMMIT",
+  "PREPARE TRANSACTION 'probe'",
+])("rejects disguised transaction control %s", async (sql) => {
+  const f = fixture();
+  await expect(
+    withCorePgStorageTransaction(
+      { withLease: (fn) => fn(f.lease) },
+      hash,
+      async ({ lease }) => {
+        await lease.query(sql).catch(() => undefined);
+      },
+    ),
+  ).rejects.toThrow("CORE_TRANSACTION_OWNER_REQUIRED");
+  expect(f.queries.some((q) => q.sql === sql || q.sql === "COMMIT")).toBe(false);
+});
+it("does not commit a method paused in receipt hashing before its first SQL", async () => {
+  const f = await manualSparseFixture();
+  let release!: () => void, started!: () => void, pending!: Promise<unknown>;
+  const waiting = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const ready = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const delayedHash = async (bytes: Uint8Array) => {
+    started();
+    await waiting;
+    return hash(bytes);
+  };
+  try {
+    await expect(
+      withCorePgStorageTransaction(
+        { withLease: (fn) => fn(f.lease) },
+        delayedHash,
+        async ({ storage }) =>
+          storage.withLockedCommand(commandScope(), async (tx) => {
+            pending = tx.commit(null, f.receipt as never, "intent");
+            await ready;
+          }),
+      ),
+    ).rejects.toThrow("CORE_TRANSACTION_WORK_PENDING");
+    expect(f.queries.some((q) => q.sql === "COMMIT" || q.sql.startsWith("INSERT"))).toBe(
+      false,
+    );
+  } finally {
+    release();
+  }
+  await expect(pending).rejects.toThrow("CORE_TRANSACTION_RELEASED");
+});
 it("checks dedicated principal and rolls back before any foreign actor/table access", async () => {
   const f = fixture("service_role");
   await expect(
@@ -306,7 +561,10 @@ it("accepts a reviewed Sparse P2 only through its exact source capability and ow
     },
   );
   expect(verify).toHaveBeenCalledExactlyOnceWith(
-    f.lease,
+    expect.objectContaining({
+      query: expect.any(Function),
+      retire: expect.any(Function),
+    }),
     expect.objectContaining({ accountId: actor, tripId: trip }),
     c,
     "a".repeat(64),
@@ -530,7 +788,7 @@ async function manualSparseFixture(change?: string) {
       },
       (tx) => tx.verifyAdmission(c, "a".repeat(64), g),
     );
-  return { ...f, verify, graph };
+  return { ...f, verify, graph, receipt };
 }
 it("dormant exact Manual P2 profile admits Sparse Create without an existing root", async () => {
   const f = await manualSparseFixture();

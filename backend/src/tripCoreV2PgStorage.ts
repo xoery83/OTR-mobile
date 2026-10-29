@@ -239,7 +239,154 @@ async function persist(lease: CorePgLease, before: CoreGraph, mutation: CoreMuta
     }
   }
 }
-// Unprovisioned port. The writer principal cannot be replaced by service_role or a UI credential.
+async function assertCorePgPrincipal(lease: CorePgLease) {
+  const identity = (
+    await lease.query("SELECT session_user AS principal,current_user AS role")
+  ).rows[0];
+  if (
+    identity?.principal !== "otr_trip_core_v2_gateway" ||
+    identity.role !== "otr_trip_core_v2_gateway"
+  )
+    throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
+}
+
+export type CorePgTransactionContext = Readonly<{
+  storage: CoreCommandStorage;
+  lease: CorePgLease;
+}>;
+
+// Backend-internal composition only; this adds no principal, capability or publisher grant.
+export function withCorePgStorageTransaction<T>(
+  connection: CorePgConnection,
+  hash: ImportHash,
+  work: (context: CorePgTransactionContext) => Promise<T>,
+  admission?: CorePgAdmission,
+  gateMode?: CoreGateMode,
+): Promise<T> {
+  return connection.withLease(async (lease) => {
+    let began = false;
+    const state = {
+      active: true,
+      queries: 0,
+      busy: false,
+      failure: null as { cause: unknown } | null,
+    };
+    function assertActive() {
+      if (!state.active) throw Error("CORE_TRANSACTION_RELEASED");
+    }
+    function observed<T>(promise: Promise<T>): Promise<T> {
+      void promise.catch((cause: unknown) => {
+        state.failure ??= { cause };
+      });
+      return promise;
+    }
+    const scopedLease: CorePgLease = {
+      retire() {
+        assertActive();
+        state.failure ??= { cause: Error("CORE_CONNECTION_RETIRED") };
+        lease.retire();
+      },
+      query(sql, parameters) {
+        return observed(
+          (async () => {
+            assertActive();
+            // Trusted Backend SQL only: fail on accidental inner transaction ownership, never suppress it.
+            if (
+              /^(?:BEGIN|START\s+TRANSACTION|PREPARE\s+TRANSACTION|COMMIT|END|ROLLBACK|ABORT|SAVEPOINT|RELEASE)\b/i.test(
+                sql.trimStart(),
+              ) ||
+              /;|--|\/\*/.test(sql)
+            )
+              throw Error("CORE_TRANSACTION_OWNER_REQUIRED");
+            state.queries++;
+            try {
+              const result = await lease.query(sql, parameters);
+              assertActive();
+              return result;
+            } finally {
+              state.queries--;
+            }
+          })(),
+        );
+      },
+    };
+    const inner = createCorePgStorageOnLease(scopedLease, hash, admission, gateMode);
+    const storage: CoreCommandStorage = {
+      withLockedCommand(scope, commandWork) {
+        return observed(
+          (async () => {
+            assertActive();
+            if (state.busy) throw Error("CORE_TRANSACTION_COMMAND_BUSY");
+            state.busy = true;
+            try {
+              return await inner.withLockedCommand(scope, async (tx) => {
+                let active = true,
+                  pending = 0;
+                const scopedTx = new Proxy(tx, {
+                  get(target, key, receiver) {
+                    const value: unknown = Reflect.get(target, key, receiver);
+                    if (typeof value !== "function") return value;
+                    return (...args: unknown[]) =>
+                      observed(
+                        (async () => {
+                          assertActive();
+                          if (!active) throw Error("CORE_COMMAND_RELEASED");
+                          pending++;
+                          try {
+                            return await Reflect.apply(value, target, args);
+                          } finally {
+                            pending--;
+                          }
+                        })(),
+                      );
+                  },
+                });
+                try {
+                  const result = await commandWork(scopedTx);
+                  if (pending) throw Error("CORE_TRANSACTION_WORK_PENDING");
+                  return result;
+                } finally {
+                  active = false;
+                }
+              });
+            } finally {
+              state.busy = false;
+            }
+          })(),
+        );
+      },
+    };
+    try {
+      await lease.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+      began = true;
+      await lease.query(
+        "SET LOCAL statement_timeout='5000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL TIME ZONE 'UTC'",
+      );
+      await assertCorePgPrincipal(lease);
+      const result = await work(Object.freeze({ storage, lease: scopedLease }));
+      if (state.busy || state.queries) throw Error("CORE_TRANSACTION_WORK_PENDING");
+      if (state.failure) throw state.failure.cause;
+      state.active = false;
+      await lease.query("COMMIT");
+      began = false;
+      return result;
+    } catch (error) {
+      state.active = false;
+      if (began) {
+        try {
+          await lease.query("ROLLBACK");
+        } catch {
+          lease.retire();
+        }
+      }
+      throw error;
+    } finally {
+      state.active = false;
+    }
+  });
+}
+
+// The normal single-command port retains its public behavior and owns one transaction.
 export function createCorePgStorage(
   connection: CorePgConnection,
   hash: ImportHash,
@@ -251,509 +398,488 @@ export function createCorePgStorage(
       coreUuid.parse(scope.actorAccountId);
       coreUuid.parse(scope.tripId);
       coreUuid.parse(scope.operationId);
-      return connection.withLease(async (lease) => {
-        let began = false;
-        try {
-          await lease.query("BEGIN ISOLATION LEVEL READ COMMITTED");
-          began = true;
+      return withCorePgStorageTransaction(
+        connection,
+        hash,
+        // Single-command rejection receipts keep their established catch/commit behavior.
+        ({ lease }) =>
+          createCorePgStorageOnLease(lease, hash, admission, gateMode).withLockedCommand(
+            scope,
+            work,
+          ),
+        admission,
+        gateMode,
+      );
+    },
+  };
+}
+
+function createCorePgStorageOnLease(
+  lease: CorePgLease,
+  hash: ImportHash,
+  admission?: CorePgAdmission,
+  gateMode?: CoreGateMode,
+): CoreCommandStorage {
+  return {
+    async withLockedCommand(scope, work) {
+      coreUuid.parse(scope.actorAccountId);
+      coreUuid.parse(scope.tripId);
+      coreUuid.parse(scope.operationId);
+      await assertCorePgPrincipal(lease);
+      await lease.query(
+        "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true),set_config('otr.core.operation',$3,true)",
+        [scope.actorAccountId, scope.tripId, scope.operationId],
+      );
+      const finiteScope = async () => {
+        const allowed = (
           await lease.query(
-            "SET LOCAL statement_timeout='5000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL TIME ZONE 'UTC'",
-          );
-          const identity = (
-            await lease.query("SELECT session_user AS principal,current_user AS role")
-          ).rows[0];
-          if (
-            identity?.principal !== "otr_trip_core_v2_gateway" ||
-            identity.role !== "otr_trip_core_v2_gateway"
+            "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
+            [scope.actorAccountId, scope.tripId],
           )
-            throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
-          await lease.query(
-            "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true),set_config('otr.core.operation',$3,true)",
-            [scope.actorAccountId, scope.tripId, scope.operationId],
-          );
-          const finiteScope = async () => {
-            const allowed = (
-              await lease.query(
-                "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
-                [scope.actorAccountId, scope.tripId],
-              )
-            ).rows[0]?.allowed;
-            if (allowed !== true) throw new Error("CORE_CAPABILITY_CLOSED");
-          };
-          await finiteScope();
-          // Join the established Source/C locks before membership rows to avoid reversed lock order.
-          await lease.query("SELECT public.trip_import_scope_lock($1::uuid,$2::uuid)", [
-            scope.actorAccountId,
-            scope.tripId,
-          ]);
-          const actor = await lockCorePgActor(lease, scope.actorAccountId, scope.tripId);
-          await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
-            "otr-core2-operation:" + scope.actorAccountId + ":" + scope.operationId,
-          ]);
-          let locked: CoreGraph | undefined,
-            collision = false,
-            verified: { command: CoreCommand; intentSha256: string } | undefined;
-          const tx: CoreCommandTransaction = {
-            actor,
-            async authoritativeClock() {
-              const clock = (
-                await lease.query("SELECT to_jsonb(transaction_timestamp()) AS instant")
-              ).rows[0]?.instant;
-              if (typeof clock !== "string") throw new Error("CORE_CLOCK_UNAVAILABLE");
-              return clock.replace(/\+00:00$/, "Z");
-            },
-            async readReceipt() {
-              const row = (
-                await lease.query(
-                  "SELECT id,body FROM public.trip_core_command_receipts WHERE actor_account_id=$1::uuid AND operation_id=$2::uuid",
-                  [scope.actorAccountId, scope.operationId],
-                )
-              ).rows[0];
-              return row
-                ? {
-                    domainReceiptId: row.id as string,
-                    receiptText: json(row.body),
-                  }
-                : null;
-            },
-            async hasLegacyOperation() {
-              return (
-                (
-                  await lease.query(
-                    "SELECT 1 FROM public.trip_event_operation_receipts WHERE actor_account_id=$1::uuid AND operation_key=$2::uuid LIMIT 1",
-                    [scope.actorAccountId, scope.operationId],
-                  )
-                ).rows.length > 0
-              );
-            },
-            async enabledCommands() {
-              if (gateMode?.sustainedDev && gateMode.reviewedP1) {
-                const reviewed = await readReviewedP1Gate(
-                  lease,
-                  actor.accountId,
-                  actor.tripId,
-                );
-                if (
-                  ["P1", "P2", "P3", "P4", "P5", "P6"].some((family) =>
-                    isReviewedP1Gate(
-                      reviewed,
-                      family as "P1" | "P2" | "P3" | "P4" | "P5" | "P6",
-                    ),
-                  )
-                )
-                  return reviewed.enabled_commands as CoreCommandName[];
+        ).rows[0]?.allowed;
+        if (allowed !== true) throw new Error("CORE_CAPABILITY_CLOSED");
+      };
+      await finiteScope();
+      // Join the established Source/C locks before membership rows to avoid reversed lock order.
+      await lease.query("SELECT public.trip_import_scope_lock($1::uuid,$2::uuid)", [
+        scope.actorAccountId,
+        scope.tripId,
+      ]);
+      const actor = await lockCorePgActor(lease, scope.actorAccountId, scope.tripId);
+      await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
+        "otr-core2-operation:" + scope.actorAccountId + ":" + scope.operationId,
+      ]);
+      let locked: CoreGraph | undefined,
+        collision = false,
+        verified: { command: CoreCommand; intentSha256: string } | undefined;
+      const tx: CoreCommandTransaction = {
+        actor,
+        async authoritativeClock() {
+          const clock = (
+            await lease.query("SELECT to_jsonb(transaction_timestamp()) AS instant")
+          ).rows[0]?.instant;
+          if (typeof clock !== "string") throw new Error("CORE_CLOCK_UNAVAILABLE");
+          return clock.replace(/\+00:00$/, "Z");
+        },
+        async readReceipt() {
+          const row = (
+            await lease.query(
+              "SELECT id,body FROM public.trip_core_command_receipts WHERE actor_account_id=$1::uuid AND operation_id=$2::uuid",
+              [scope.actorAccountId, scope.operationId],
+            )
+          ).rows[0];
+          return row
+            ? {
+                domainReceiptId: row.id as string,
+                receiptText: json(row.body),
               }
-              const r = await readCoreGate(
+            : null;
+        },
+        async hasLegacyOperation() {
+          return (
+            (
+              await lease.query(
+                "SELECT 1 FROM public.trip_event_operation_receipts WHERE actor_account_id=$1::uuid AND operation_key=$2::uuid LIMIT 1",
+                [scope.actorAccountId, scope.operationId],
+              )
+            ).rows.length > 0
+          );
+        },
+        async enabledCommands() {
+          if (gateMode?.sustainedDev && gateMode.reviewedP1) {
+            const reviewed = await readReviewedP1Gate(
+              lease,
+              actor.accountId,
+              actor.tripId,
+            );
+            if (
+              ["P1", "P2", "P3", "P4", "P5", "P6"].some((family) =>
+                isReviewedP1Gate(
+                  reviewed,
+                  family as "P1" | "P2" | "P3" | "P4" | "P5" | "P6",
+                ),
+              )
+            )
+              return reviewed.enabled_commands as CoreCommandName[];
+          }
+          const r = await readCoreGate(
+            lease,
+            actor.accountId,
+            actor.tripId,
+            gateMode,
+            "runtime_enabled,enabled_commands",
+          );
+          return r?.runtime_enabled ? (r.enabled_commands as CoreCommandName[]) : [];
+        },
+        async readLockedGraph(command) {
+          await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+          for (const v of command.baseVector) {
+            if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") continue;
+            const table = coreKindTables[v.kind];
+            await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
+              "otr-core2-identity:" + v.id,
+            ]);
+            const row = (
+              await lease.query(
+                `SELECT trip_id${["ITEM", "BOOKING"].includes(v.kind) ? ",business_contract_version" : ""} FROM public.${quoted(table)} WHERE id=$1::uuid FOR UPDATE`,
+                [v.id],
+              )
+            ).rows[0];
+            if (
+              row &&
+              (row.trip_id !== actor.tripId ||
+                (v.revision === null &&
+                  ["ITEM", "BOOKING"].includes(v.kind) &&
+                  row.business_contract_version !== 2))
+            )
+              collision = true;
+          }
+          await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
+            "otr-core2-trip:" + actor.tripId,
+          ]);
+          locked = await readCorePgGraph(lease, actor.tripId);
+          await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+          return locked;
+        },
+        async verifyAdmission(command, intent, graph) {
+          const sourceP1 =
+            gateMode?.sustainedDev &&
+            gateMode.reviewedP1 &&
+            command.admission.mode === "REVIEWED_SOURCE";
+          const activation = sourceP1
+            ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
+            : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
+          const manual = normalManualCapabilities(activation);
+          const normal = manual !== null;
+          const finiteFamily =
+            command.command === "CREATE_SPARSE_FLIGHT"
+              ? "P2"
+              : command.command === "CREATE_ITEM"
+                ? (command.payload as { family?: string }).family
+                : graph.itinerary_events.find((item) => item.id === command.target.id)
+                    ?.experience_family;
+          const reviewed =
+            sourceP1 &&
+            isReviewedP1Gate(
+              activation,
+              finiteFamily === "P2"
+                ? "P2"
+                : finiteFamily === "P3"
+                  ? "P3"
+                  : finiteFamily === "P4"
+                    ? "P4"
+                    : finiteFamily === "P6"
+                      ? "P6"
+                      : finiteFamily === "P5"
+                        ? "P5"
+                        : "P1",
+            );
+          if (
+            reviewed
+              ? command.command !==
+                  (finiteFamily === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
+                !["P1", "P2", "P3", "P4", "P5", "P6"].includes(String(finiteFamily)) ||
+                !command.admission.sourceIntentId ||
+                command.admission.policyVersion !== null
+              : normal
+                ? command.admission.mode !== "MANUAL" ||
+                  !manual!.families.includes(String(finiteFamily)) ||
+                  !(manual!.commands as readonly string[]).includes(command.command) ||
+                  (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
+                  (command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
+                    finiteFamily !== "P2") ||
+                  (finiteFamily === "P2" &&
+                    ![
+                      "CREATE_SPARSE_FLIGHT",
+                      "SET_AUTHORED_FLIGHT_DETAILS",
+                      "SET_ITEM_PARTICIPATION",
+                    ].includes(command.command)) ||
+                  (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
+                  (command.command === "SET_RENTAL_DETAILS" && finiteFamily !== "P4") ||
+                  (command.command === "SET_TRANSPORT_DETAILS" &&
+                    finiteFamily !== "P5") ||
+                  (command.command === "SET_ACTIVITY_DETAILS" && finiteFamily !== "P6")
+                : command.command !== "CREATE_ITEM" ||
+                  command.admission.mode !== "MANUAL" ||
+                  (finiteFamily !== "P1" && finiteFamily !== "P3")
+          )
+            throw new Error("CORE_CAPABILITY_CLOSED");
+          if (
+            normal &&
+            command.command !== "CREATE_ITEM" &&
+            command.command !== "CREATE_SPARSE_FLIGHT" &&
+            graph.itinerary_events.find((item) => item.id === command.target.id)
+              ?.owner_account_id !== actor.accountId
+          )
+            throw new Error("CORE_CREATOR_REQUIRED");
+          if (
+            normal &&
+            finiteFamily === "P2" &&
+            command.command !== "CREATE_SPARSE_FLIGHT"
+          ) {
+            if (
+              graph.trip_flight_intents.find(
+                (intent) => intent.event_id === command.target.id,
+              )?.qualification !== "SPARSE" ||
+              graph.itinerary_transport_services.some(
+                (service) => service.event_id === command.target.id,
+              ) ||
+              graph.trip_booking_item_links.some(
+                (link) => link.item_id === command.target.id && link.active,
+              )
+            )
+              throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+            const retained = (
+              await lease.query(
+                "SELECT operation_id,canonical_intent_text,intent_sha256,receipt_sha256,body,outcome FROM public.trip_core_command_receipts WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND body->>'command'='CREATE_SPARSE_FLIGHT' AND outcome='APPLIED'",
+                [actor.accountId, actor.tripId],
+              )
+            ).rows;
+            let manualCreate = false;
+            for (const row of retained) {
+              const created = validateCoreCommand(
+                JSON.parse(String(row.canonical_intent_text)),
+              );
+              if (
+                created.command !== "CREATE_SPARSE_FLIGHT" ||
+                created.admission.mode !== "MANUAL" ||
+                created.target.id !== command.target.id ||
+                created.tripId !== actor.tripId
+              )
+                continue;
+              const receipt = await validateCoreReceipt(
+                typeof row.body === "string" ? JSON.parse(row.body) : row.body,
+                hash,
+              );
+              if (
+                created.operationId === row.operation_id &&
+                (await coreHashValue("otr-trip-core-intent-v2", created, hash)) ===
+                  row.intent_sha256 &&
+                receipt.actorAccountId === actor.accountId &&
+                receipt.tripId === actor.tripId &&
+                receipt.operationId === created.operationId &&
+                receipt.command === created.command &&
+                receipt.intentSha256 === row.intent_sha256 &&
+                receipt.receiptSha256 === row.receipt_sha256 &&
+                receipt.outcome === "APPLIED" &&
+                receipt.result.created.some(
+                  (target) => target.kind === "ITEM" && target.id === command.target.id,
+                )
+              ) {
+                manualCreate = true;
+                break;
+              }
+            }
+            if (!manualCreate) throw new Error("MANUAL_FLIGHT_CREATE_RECEIPT_REQUIRED");
+          }
+          await lease.query(
+            "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true),set_config('otr.core.target_item',$4,true),set_config('otr.core.operation',$5,true),set_config('otr.core.source_intent',$6,true)",
+            [
+              command.command,
+              finiteFamily,
+              command.admission.mode,
+              command.target.id,
+              command.operationId,
+              command.admission.sourceIntentId ?? "",
+            ],
+          );
+          if (collision) throw new Error("REVISION_CONFLICT");
+          if (command.command === "SET_ORDINARY_ORDER") {
+            const bindings = (
+              await lease.query(
+                "SELECT public.trip_core_read_person_bindings($1::uuid,$2::uuid) AS bindings",
+                [actor.accountId, actor.tripId],
+              )
+            ).rows[0]?.bindings as {
+              person_id: string;
+              account_id: string | null;
+              active: boolean;
+              participating: boolean;
+            }[];
+            if (
+              !bindings?.some(
+                (b) =>
+                  b.person_id === actor.personId &&
+                  b.account_id === actor.accountId &&
+                  b.active &&
+                  b.participating,
+              )
+            )
+              throw new Error("INVALID_SELF_PERSON");
+          }
+
+          const gate = sourceP1
+            ? activation
+            : await readCoreGate(
                 lease,
                 actor.accountId,
                 actor.tripId,
                 gateMode,
-                "runtime_enabled,enabled_commands",
+                "enabled_families,enabled_admission_modes",
               );
-              return r?.runtime_enabled ? (r.enabled_commands as CoreCommandName[]) : [];
-            },
-            async readLockedGraph(command) {
-              await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
-              for (const v of command.baseVector) {
-                if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") continue;
-                const table = coreKindTables[v.kind];
-                await lease.query(
-                  "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
-                  ["otr-core2-identity:" + v.id],
-                );
-                const row = (
-                  await lease.query(
-                    `SELECT trip_id${["ITEM", "BOOKING"].includes(v.kind) ? ",business_contract_version" : ""} FROM public.${quoted(table)} WHERE id=$1::uuid FOR UPDATE`,
-                    [v.id],
-                  )
-                ).rows[0];
-                if (
-                  row &&
-                  (row.trip_id !== actor.tripId ||
-                    (v.revision === null &&
-                      ["ITEM", "BOOKING"].includes(v.kind) &&
-                      row.business_contract_version !== 2))
-                )
-                  collision = true;
-              }
-              await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
-                "otr-core2-trip:" + actor.tripId,
-              ]);
-              locked = await readCorePgGraph(lease, actor.tripId);
-              await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
-              return locked;
-            },
-            async verifyAdmission(command, intent, graph) {
-              const sourceP1 =
-                gateMode?.sustainedDev &&
-                gateMode.reviewedP1 &&
-                command.admission.mode === "REVIEWED_SOURCE";
-              const activation = sourceP1
-                ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
-                : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
-              const manual = normalManualCapabilities(activation);
-              const normal = manual !== null;
-              const finiteFamily =
-                command.command === "CREATE_SPARSE_FLIGHT"
-                  ? "P2"
-                  : command.command === "CREATE_ITEM"
-                    ? (command.payload as { family?: string }).family
-                    : graph.itinerary_events.find((item) => item.id === command.target.id)
-                        ?.experience_family;
-              const reviewed =
-                sourceP1 &&
-                isReviewedP1Gate(
-                  activation,
-                  finiteFamily === "P2"
-                    ? "P2"
-                    : finiteFamily === "P3"
-                      ? "P3"
-                      : finiteFamily === "P4"
-                        ? "P4"
-                        : finiteFamily === "P6"
-                          ? "P6"
-                          : finiteFamily === "P5"
-                            ? "P5"
-                            : "P1",
-                );
-              if (
-                reviewed
-                  ? command.command !==
-                      (finiteFamily === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
-                    !["P1", "P2", "P3", "P4", "P5", "P6"].includes(
-                      String(finiteFamily),
-                    ) ||
-                    !command.admission.sourceIntentId ||
-                    command.admission.policyVersion !== null
-                  : normal
-                    ? command.admission.mode !== "MANUAL" ||
-                      !manual!.families.includes(String(finiteFamily)) ||
-                      !(manual!.commands as readonly string[]).includes(
-                        command.command,
-                      ) ||
-                      (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
-                      (command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
-                        finiteFamily !== "P2") ||
-                      (finiteFamily === "P2" &&
-                        ![
-                          "CREATE_SPARSE_FLIGHT",
-                          "SET_AUTHORED_FLIGHT_DETAILS",
-                          "SET_ITEM_PARTICIPATION",
-                        ].includes(command.command)) ||
-                      (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
-                      (command.command === "SET_RENTAL_DETAILS" &&
-                        finiteFamily !== "P4") ||
-                      (command.command === "SET_TRANSPORT_DETAILS" &&
-                        finiteFamily !== "P5") ||
-                      (command.command === "SET_ACTIVITY_DETAILS" &&
-                        finiteFamily !== "P6")
-                    : command.command !== "CREATE_ITEM" ||
-                      command.admission.mode !== "MANUAL" ||
-                      (finiteFamily !== "P1" && finiteFamily !== "P3")
-              )
-                throw new Error("CORE_CAPABILITY_CLOSED");
-              if (
-                normal &&
-                command.command !== "CREATE_ITEM" &&
-                command.command !== "CREATE_SPARSE_FLIGHT" &&
-                graph.itinerary_events.find((item) => item.id === command.target.id)
-                  ?.owner_account_id !== actor.accountId
-              )
-                throw new Error("CORE_CREATOR_REQUIRED");
-              if (
-                normal &&
-                finiteFamily === "P2" &&
-                command.command !== "CREATE_SPARSE_FLIGHT"
-              ) {
-                if (
-                  graph.trip_flight_intents.find(
-                    (intent) => intent.event_id === command.target.id,
-                  )?.qualification !== "SPARSE" ||
-                  graph.itinerary_transport_services.some(
-                    (service) => service.event_id === command.target.id,
-                  ) ||
-                  graph.trip_booking_item_links.some(
-                    (link) => link.item_id === command.target.id && link.active,
-                  )
-                )
-                  throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
-                const retained = (
-                  await lease.query(
-                    "SELECT operation_id,canonical_intent_text,intent_sha256,receipt_sha256,body,outcome FROM public.trip_core_command_receipts WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND body->>'command'='CREATE_SPARSE_FLIGHT' AND outcome='APPLIED'",
-                    [actor.accountId, actor.tripId],
-                  )
-                ).rows;
-                let manualCreate = false;
-                for (const row of retained) {
-                  const created = validateCoreCommand(
-                    JSON.parse(String(row.canonical_intent_text)),
-                  );
-                  if (
-                    created.command !== "CREATE_SPARSE_FLIGHT" ||
-                    created.admission.mode !== "MANUAL" ||
-                    created.target.id !== command.target.id ||
-                    created.tripId !== actor.tripId
-                  )
-                    continue;
-                  const receipt = await validateCoreReceipt(
-                    typeof row.body === "string" ? JSON.parse(row.body) : row.body,
-                    hash,
-                  );
-                  if (
-                    created.operationId === row.operation_id &&
-                    (await coreHashValue("otr-trip-core-intent-v2", created, hash)) ===
-                      row.intent_sha256 &&
-                    receipt.actorAccountId === actor.accountId &&
-                    receipt.tripId === actor.tripId &&
-                    receipt.operationId === created.operationId &&
-                    receipt.command === created.command &&
-                    receipt.intentSha256 === row.intent_sha256 &&
-                    receipt.receiptSha256 === row.receipt_sha256 &&
-                    receipt.outcome === "APPLIED" &&
-                    receipt.result.created.some(
-                      (target) =>
-                        target.kind === "ITEM" && target.id === command.target.id,
-                    )
-                  ) {
-                    manualCreate = true;
-                    break;
-                  }
-                }
-                if (!manualCreate)
-                  throw new Error("MANUAL_FLIGHT_CREATE_RECEIPT_REQUIRED");
-              }
-              await lease.query(
-                "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true),set_config('otr.core.target_item',$4,true),set_config('otr.core.operation',$5,true),set_config('otr.core.source_intent',$6,true)",
-                [
-                  command.command,
-                  finiteFamily,
-                  command.admission.mode,
-                  command.target.id,
-                  command.operationId,
-                  command.admission.sourceIntentId ?? "",
-                ],
-              );
-              if (collision) throw new Error("REVISION_CONFLICT");
-              if (command.command === "SET_ORDINARY_ORDER") {
-                const bindings = (
-                  await lease.query(
-                    "SELECT public.trip_core_read_person_bindings($1::uuid,$2::uuid) AS bindings",
-                    [actor.accountId, actor.tripId],
-                  )
-                ).rows[0]?.bindings as {
-                  person_id: string;
-                  account_id: string | null;
-                  active: boolean;
-                  participating: boolean;
-                }[];
-                if (
-                  !bindings?.some(
-                    (b) =>
-                      b.person_id === actor.personId &&
-                      b.account_id === actor.accountId &&
-                      b.active &&
-                      b.participating,
-                  )
-                )
-                  throw new Error("INVALID_SELF_PERSON");
-              }
-
-              const gate = sourceP1
-                ? activation
-                : await readCoreGate(
-                    lease,
-                    actor.accountId,
-                    actor.tripId,
-                    gateMode,
-                    "enabled_families,enabled_admission_modes",
-                  );
-              const family =
-                command.command === "CREATE_SPARSE_FLIGHT"
-                  ? "P2"
-                  : ((command.payload as { family?: string }).family ??
-                    (command.target.kind === "ITEM"
-                      ? graph.itinerary_events.find((r) => r.id === command.target.id)
-                          ?.experience_family
-                      : undefined));
-              if (
-                !gate ||
-                !(gate.enabled_admission_modes as string[]).includes(
-                  command.admission.mode,
-                ) ||
-                (family &&
-                  !(gate.enabled_families as string[]).includes(family as string))
-              )
-                throw new Error("CORE_CAPABILITY_CLOSED");
-              const requiresTemporalAuthority = (value: unknown): boolean => {
-                if (!value || typeof value !== "object") return false;
-                return Object.entries(value).some(
-                  ([key, child]) =>
-                    ([
-                      "source_instant",
-                      "sourceInstant",
-                      "interpretation_key",
-                      "interpretationKey",
-                    ].includes(key) &&
-                      child !== null) ||
-                    requiresTemporalAuthority(child),
-                );
-              };
-              if (
-                requiresTemporalAuthority(command.payload) ||
-                command.admission.mode !== "MANUAL" ||
-                command.baseVector.some((v) => v.kind === "SOURCE") ||
-                [
-                  "CREATE_DOCUMENT",
-                  "AUTHORIZE_DOCUMENT_COPY",
-                  "LINK_EXPENSE",
-                  "UNLINK_EXPENSE",
-                ].includes(command.command) ||
-                (command.command === "APPEND_INSTRUCTION" &&
-                  (command.payload as { sourceRepresentationId: string | null })
-                    .sourceRepresentationId !== null)
-              ) {
-                if (!admission) throw new Error("OWNING_CAPABILITY_REQUIRED");
-                const owning = await admission.verify(
-                  lease,
-                  actor,
-                  command,
-                  intent,
-                  graph,
-                );
-                verified = { command, intentSha256: intent };
-                return owning;
-              }
-            },
-            async admissionAudit() {
-              return verified && admission?.audit
-                ? admission.audit(lease, actor, verified.command, verified.intentSha256)
-                : { evidenceRefs: [], authorizationRefs: [] };
-            },
-            async lifecycleGraphHash(command, graph) {
-              return "graphHash" in (command.payload as object)
-                ? coreLifecycleGraphHash(graph, actor, command, hash)
-                : undefined;
-            },
-            async canReadReceipt(receipt) {
-              if (!actor.active) return false;
-              const privateProof = (value: unknown): boolean => {
-                if (!value || typeof value !== "object") return false;
-                return Object.entries(value).some(
-                  ([key, child]) =>
-                    (["evidence_ref", "source_representation_id"].includes(key) &&
-                      child !== null) ||
-                    (!key.includes(".") &&
-                      key.endsWith("provenance_refs") &&
-                      child !== null &&
-                      typeof child === "object" &&
-                      Object.keys(child).length > 0) ||
-                    privateProof(child),
-                );
-              };
-              if (
-                (receipt.audit.evidenceRefs.length || privateProof(receipt.audit)) &&
-                (!admission?.canReadAudit ||
-                  !(await admission.canReadAudit(lease, actor, receipt)))
-              )
-                return false;
-              let graph = locked;
-              if (!graph) {
-                await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
-                graph = await readCorePgGraph(lease, actor.tripId);
-                await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
-              }
-              for (const v of receipt.targetVector) {
-                if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") return false;
-                const row = graph[coreKindTables[v.kind as CoreKind]].find(
-                  (r) => r.id === v.id,
-                );
-                if (
-                  row &&
-                  v.kind === "ORDER" &&
-                  (row.nodes as { eventId: string }[]).some((n) => {
-                    const item = graph!.itinerary_events.find((x) => x.id === n.eventId);
-                    return !item || !coreCanRead(graph!, actor, "ITEM", item);
-                  })
-                )
-                  return false;
-                if (!row) {
-                  if (
-                    v.baseRevision === null &&
-                    ["REJECTED", "CONFLICT"].includes(receipt.outcome)
-                  )
-                    continue;
-                  return false;
-                }
-                if (!coreCanRead(graph, actor, v.kind as CoreKind, row)) return false;
-                if (
-                  v.kind === "DOCUMENT" &&
-                  (!admission || !(await admission.canReadOriginal(lease, actor, row)))
-                )
-                  return false;
-              }
-              if (
-                receipt.command.includes("FLIGHT") &&
-                receipt.command !== "CREATE_SPARSE_FLIGHT" &&
-                receipt.command !== "SET_AUTHORED_FLIGHT_DETAILS" &&
-                (!admission ||
-                  !(await admission.canReadSourceReceipt(
-                    lease,
-                    actor,
-                    receipt.operationId,
-                  )))
-              )
-                return false;
-              return true;
-            },
-            async commit(mutation, receipt, canonicalIntent) {
-              await validateCoreReceipt(receipt, hash);
-              await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
-              await lease.query("SELECT set_config('otr.core.actor',$1,true)", [
-                actor.accountId,
-              ]);
-              if (mutation) await persist(lease, locked!, mutation);
-              const id = randomUUID();
-              await lease.query(
-                "INSERT INTO public.trip_core_command_receipts(id,trip_id,actor_account_id,operation_id,intent_version,command_version,receipt_version,intent_sha256,canonical_intent_text,receipt_sha256,body,outcome,committed_at) VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,2,2,2,$5,$6,$7,$8::jsonb,$9,$10::timestamptz)",
-                [
-                  id,
-                  actor.tripId,
-                  actor.accountId,
-                  scope.operationId,
-                  receipt.intentSha256,
-                  canonicalIntent,
-                  receipt.receiptSha256,
-                  json(receipt),
-                  receipt.outcome,
-                  receipt.committedAt,
-                ],
-              );
-              if (mutation)
-                await lease.query(
-                  "INSERT INTO public.trip_core_read_state(trip_id) VALUES($1::uuid) ON CONFLICT(trip_id) DO UPDATE SET revision=trip_core_read_state.revision+1",
-                  [actor.tripId],
-                );
-              await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
-              if (mutation) locked = mutation.graph;
-              return id;
-            },
+          const family =
+            command.command === "CREATE_SPARSE_FLIGHT"
+              ? "P2"
+              : ((command.payload as { family?: string }).family ??
+                (command.target.kind === "ITEM"
+                  ? graph.itinerary_events.find((r) => r.id === command.target.id)
+                      ?.experience_family
+                  : undefined));
+          if (
+            !gate ||
+            !(gate.enabled_admission_modes as string[]).includes(
+              command.admission.mode,
+            ) ||
+            (family && !(gate.enabled_families as string[]).includes(family as string))
+          )
+            throw new Error("CORE_CAPABILITY_CLOSED");
+          const requiresTemporalAuthority = (value: unknown): boolean => {
+            if (!value || typeof value !== "object") return false;
+            return Object.entries(value).some(
+              ([key, child]) =>
+                ([
+                  "source_instant",
+                  "sourceInstant",
+                  "interpretation_key",
+                  "interpretationKey",
+                ].includes(key) &&
+                  child !== null) ||
+                requiresTemporalAuthority(child),
+            );
           };
-          const result = await work(tx);
-          await finiteScope();
-          await lease.query("COMMIT");
-          began = false;
-          return result;
-        } catch (error) {
-          if (began) {
-            try {
-              await lease.query("ROLLBACK");
-            } catch {
-              lease.retire();
-            }
+          if (
+            requiresTemporalAuthority(command.payload) ||
+            command.admission.mode !== "MANUAL" ||
+            command.baseVector.some((v) => v.kind === "SOURCE") ||
+            [
+              "CREATE_DOCUMENT",
+              "AUTHORIZE_DOCUMENT_COPY",
+              "LINK_EXPENSE",
+              "UNLINK_EXPENSE",
+            ].includes(command.command) ||
+            (command.command === "APPEND_INSTRUCTION" &&
+              (command.payload as { sourceRepresentationId: string | null })
+                .sourceRepresentationId !== null)
+          ) {
+            if (!admission) throw new Error("OWNING_CAPABILITY_REQUIRED");
+            const owning = await admission.verify(lease, actor, command, intent, graph);
+            verified = { command, intentSha256: intent };
+            return owning;
           }
-          throw error;
-        }
-      });
+        },
+        async admissionAudit() {
+          return verified && admission?.audit
+            ? admission.audit(lease, actor, verified.command, verified.intentSha256)
+            : { evidenceRefs: [], authorizationRefs: [] };
+        },
+        async lifecycleGraphHash(command, graph) {
+          return "graphHash" in (command.payload as object)
+            ? coreLifecycleGraphHash(graph, actor, command, hash)
+            : undefined;
+        },
+        async canReadReceipt(receipt) {
+          if (!actor.active) return false;
+          const privateProof = (value: unknown): boolean => {
+            if (!value || typeof value !== "object") return false;
+            return Object.entries(value).some(
+              ([key, child]) =>
+                (["evidence_ref", "source_representation_id"].includes(key) &&
+                  child !== null) ||
+                (!key.includes(".") &&
+                  key.endsWith("provenance_refs") &&
+                  child !== null &&
+                  typeof child === "object" &&
+                  Object.keys(child).length > 0) ||
+                privateProof(child),
+            );
+          };
+          if (
+            (receipt.audit.evidenceRefs.length || privateProof(receipt.audit)) &&
+            (!admission?.canReadAudit ||
+              !(await admission.canReadAudit(lease, actor, receipt)))
+          )
+            return false;
+          let graph = locked;
+          if (!graph) {
+            await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+            graph = await readCorePgGraph(lease, actor.tripId);
+            await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+          }
+          for (const v of receipt.targetVector) {
+            if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") return false;
+            const row = graph[coreKindTables[v.kind as CoreKind]].find(
+              (r) => r.id === v.id,
+            );
+            if (
+              row &&
+              v.kind === "ORDER" &&
+              (row.nodes as { eventId: string }[]).some((n) => {
+                const item = graph!.itinerary_events.find((x) => x.id === n.eventId);
+                return !item || !coreCanRead(graph!, actor, "ITEM", item);
+              })
+            )
+              return false;
+            if (!row) {
+              if (
+                v.baseRevision === null &&
+                ["REJECTED", "CONFLICT"].includes(receipt.outcome)
+              )
+                continue;
+              return false;
+            }
+            if (!coreCanRead(graph, actor, v.kind as CoreKind, row)) return false;
+            if (
+              v.kind === "DOCUMENT" &&
+              (!admission || !(await admission.canReadOriginal(lease, actor, row)))
+            )
+              return false;
+          }
+          if (
+            receipt.command.includes("FLIGHT") &&
+            receipt.command !== "CREATE_SPARSE_FLIGHT" &&
+            receipt.command !== "SET_AUTHORED_FLIGHT_DETAILS" &&
+            (!admission ||
+              !(await admission.canReadSourceReceipt(lease, actor, receipt.operationId)))
+          )
+            return false;
+          return true;
+        },
+        async commit(mutation, receipt, canonicalIntent) {
+          await validateCoreReceipt(receipt, hash);
+          await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+          await lease.query("SELECT set_config('otr.core.actor',$1,true)", [
+            actor.accountId,
+          ]);
+          if (mutation) await persist(lease, locked!, mutation);
+          const id = randomUUID();
+          await lease.query(
+            "INSERT INTO public.trip_core_command_receipts(id,trip_id,actor_account_id,operation_id,intent_version,command_version,receipt_version,intent_sha256,canonical_intent_text,receipt_sha256,body,outcome,committed_at) VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,2,2,2,$5,$6,$7,$8::jsonb,$9,$10::timestamptz)",
+            [
+              id,
+              actor.tripId,
+              actor.accountId,
+              scope.operationId,
+              receipt.intentSha256,
+              canonicalIntent,
+              receipt.receiptSha256,
+              json(receipt),
+              receipt.outcome,
+              receipt.committedAt,
+            ],
+          );
+          if (mutation)
+            await lease.query(
+              "INSERT INTO public.trip_core_read_state(trip_id) VALUES($1::uuid) ON CONFLICT(trip_id) DO UPDATE SET revision=trip_core_read_state.revision+1",
+              [actor.tripId],
+            );
+          await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+          if (mutation) locked = mutation.graph;
+          return id;
+        },
+      };
+      const result = await work(tx);
+      await finiteScope();
+      return result;
     },
   };
 }

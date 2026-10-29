@@ -1,0 +1,54 @@
+{
+  "base": "dd53870c0812a2c6938f993381182389bf8f4888",
+  "exactCandidateFiles": {
+    "ab33fc9f": {
+      "backend/src/tripCoreV2PgStorage.ts": "d8b26ca70a65b4c69d68a294b0bc98df73c2f1ff8ff476fd762be56137547d41",
+      "backend/src/tripCoreV2PgStorage.test.ts": "7febf7bafd81780a6f7ffefb34d64501d4c7b7b34e753dc7857992edc9f2a5ac",
+      "backend/src/tripCoreV2PgStorageTransaction.sql.test.ts": "064b3c04c8523903e5c06d3069dff7cc0fb112b9b9e435b00e604db0526eeb89"
+    },
+    "2c04394d": {
+      "backend/src/tripCreatePgStorage.ts": "3c8fa4c7cac79773f3e7b40c39ad664b74a330048f6be24c11a328596af99a72",
+      "backend/src/tripCreatePgStorage.test.ts": "273ced0ed6a63206b554820ae775cc944f28fe8a6238ab4df9f1faa2b835f83e"
+    },
+    "1a34e1c1": {
+      "backend/src/tripMetadataV2PgStorage.ts": "b7b20f1e0b812c479d308524bed47d1755ef07dda16361c28fca3adcca72424d",
+      "backend/src/tripMetadataV2PgStorage.test.ts": "eb8e4c6bc81a4799d52599e43ad139e61d09e2e0705b57b036de34ce06bf6084"
+    }
+  },
+  "wholeBranchMerged": false,
+  "devOrAuthorityChanged": false,
+  "schemaId": "otr.auth.guest-pg-transaction-replay/1",
+  "status": "SOURCE_LOCAL_PASS_AUTHORITY_CLOSED",
+  "validation": {
+    "direct": {
+      "suites": 8,
+      "tests": 148,
+      "result": "PASS"
+    },
+    "independent": {
+      "suites": 7,
+      "tests": 131,
+      "result": "NO_BLOCKER"
+    },
+    "realLocalPg": {
+      "tests": 1,
+      "result": "PASS",
+      "network": "none",
+      "memory": "512m",
+      "fixtureRemoved": true,
+      "scope": "commit/rollback, transaction ownership and lifetime fencing only"
+    },
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "backendBuild": "PASS",
+    "captureBackendBuild": "PASS"
+  },
+  "uniqueWriter": "Native delegated exact transaction/DI ports; Root confirmed no conflicting PgStorage writer",
+  "limitations": [
+    "existing Core/TripCreate/Metadata database principals remain different",
+    "no same-session cross-Gateway publication authority",
+    "no Bootstrap/HTTP mount or DEV deployment",
+    "no SQL/role/GRANT change or Guest Adoption E2E"
+  ],
+  "next": "Prepare reviewed atomic publication authority candidate under exact Owner Gate; keep all execution closed."
+}

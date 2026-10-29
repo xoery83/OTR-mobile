@@ -87,10 +87,16 @@ except phase. Main source2b8ab469 integrated after NO_BLOCKER; actual primary3 s
 Primary six original dirty files/full diff independently unchanged. Final
 main/remote verification belongs to
 GUEST_B_QA64_MAIN_INTEGRATION.json and its private final verification snapshot.
-Coreab33fc9f, TripCreate2c04394d and MetadataV2 1a34e1c1 are independently reviewed
-private candidates awaiting Native owning acceptance; none is main-integrated or
-DEV-deployed. Never whole-merge Core's Native-parent branch. No public-file/SQL/
-Host Writer lease held; Native live-Trip-draft seam pending.
+Native delegated the exact Core/TripCreate/Metadata transaction ports to Auth;
+Root confirmed no competing PgStorage Writer. Original candidates ab33fc9f,
+2c04394d and1a34e1c1 were replayed only as seven exact source/test files onto
+accepted dd53870c; every parent and replayed file byte-verified, no whole Native
+branch merge. Directed8 suites148/types/lint/two Backend builds PASS; independent7
+suites131 NO_BLOCKER. Disposable network-none local PG1 PASS, fixture removed.
+Existing principal/Actor/CAS/Source/receipt guards retained. Not deployed or mounted;
+cross-Gateway authority still absent. GUEST_B_PG_TRANSACTION_REPLAY.json records
+limits. Auth holds only these PgStorage ports and delegated Guest recovery UI/Repo;
+no SQL/Host/GUI/main lease held outside explicit serial windows.
 
 GuestQA64/source d771c7e0 in-place runtime regression PASS: normal original Trip/P1
 and same-version cold recovery. Independent Guest-only SQLite74 readback retains
