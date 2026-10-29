@@ -1,0 +1,67 @@
+{
+  "status": "MAIN_INTEGRATED_PUSH_VERIFIED",
+  "baseMain": "8b6871f8622b44e68d8ed62c9e7b2f97327349ed",
+  "main": "11387bdc1baecb289661c5de9e5078569e526284",
+  "sourceProof": "8496a9943c59c1ae13eafe4aaddb1f957afc7837",
+  "fourScriptsByteIdenticalToRealProof": true,
+  "tests": {
+    "scratch": "2 suites / 28 PASS",
+    "independent": "2 suites / 28 PASS",
+    "actualPrimary": "2 suites / 28 PASS",
+    "scratchTypecheck": "PASS",
+    "actualPrimaryTypecheck": "PASS",
+    "scopedLint": "PASS",
+    "rangeReview": "NO_BLOCKER"
+  },
+  "before": {
+    "phase": "before",
+    "main": "8b6871f8622b44e68d8ed62c9e7b2f97327349ed",
+    "status": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+    ],
+    "originalFileHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "verified": {
+    "phase": "verified",
+    "main": "11387bdc1baecb289661c5de9e5078569e526284",
+    "status": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+    ],
+    "originalFileHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "remoteMain": "11387bdc1baecb289661c5de9e5078569e526284",
+    "normalNonForcePushVerified": true
+  },
+  "newLiveOtpOrCredentialReadsDuringIntegration": false,
+  "nativeFreshSignupAndColdRestore": "PENDING_SEPARATE_NATIVE_EVIDENCE",
+  "guestAdoption": "NOT_READY",
+  "sameCaseRelogin": "NOT_RELEASED",
+  "mainWriter": "RETURNED"
+}
