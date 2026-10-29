@@ -22,7 +22,12 @@
     "tests": 121,
     "typecheck": "PASS",
     "scopedLint": "PASS",
-    "captureBundle": "PASS",
+    "captureBundle": {
+      "status": "PASS",
+      "separateExitCode": 0,
+      "sha256": "a6b900f6b88f15b2d2dbcdf4d6ab43255973579a201de8ef6f992d387131faa7",
+      "note": "Initial shell command rejected an unquoted external glob before esbuild ran; corrected quoting, then verified this separate build exit0."
+    },
     "independentReview": "NO_BLOCKER"
   },
   "safety": [
