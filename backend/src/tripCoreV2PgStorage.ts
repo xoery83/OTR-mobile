@@ -25,6 +25,8 @@ import {
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { coreLifecycleGraphHash } from "../../src/domain/trip/tripCoreV2Lifecycle";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
+import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
+import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import type {
   CoreCommand,
   CoreCommandName,
@@ -429,8 +431,22 @@ export function createCorePgStorage(
                       !(manual!.commands as readonly string[]).includes(
                         command.command,
                       ) ||
+                      (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
+                      (command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
+                        finiteFamily !== "P2") ||
+                      (finiteFamily === "P2" &&
+                        ![
+                          "CREATE_SPARSE_FLIGHT",
+                          "SET_AUTHORED_FLIGHT_DETAILS",
+                          "SET_ITEM_PARTICIPATION",
+                        ].includes(command.command)) ||
                       (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
-                      (command.command === "SET_RENTAL_DETAILS" && finiteFamily !== "P4")
+                      (command.command === "SET_RENTAL_DETAILS" &&
+                        finiteFamily !== "P4") ||
+                      (command.command === "SET_TRANSPORT_DETAILS" &&
+                        finiteFamily !== "P5") ||
+                      (command.command === "SET_ACTIVITY_DETAILS" &&
+                        finiteFamily !== "P6")
                     : command.command !== "CREATE_ITEM" ||
                       command.admission.mode !== "MANUAL" ||
                       (finiteFamily !== "P1" && finiteFamily !== "P3")
@@ -439,10 +455,73 @@ export function createCorePgStorage(
               if (
                 normal &&
                 command.command !== "CREATE_ITEM" &&
+                command.command !== "CREATE_SPARSE_FLIGHT" &&
                 graph.itinerary_events.find((item) => item.id === command.target.id)
                   ?.owner_account_id !== actor.accountId
               )
                 throw new Error("CORE_CREATOR_REQUIRED");
+              if (
+                normal &&
+                finiteFamily === "P2" &&
+                command.command !== "CREATE_SPARSE_FLIGHT"
+              ) {
+                if (
+                  graph.trip_flight_intents.find(
+                    (intent) => intent.event_id === command.target.id,
+                  )?.qualification !== "SPARSE" ||
+                  graph.itinerary_transport_services.some(
+                    (service) => service.event_id === command.target.id,
+                  ) ||
+                  graph.trip_booking_item_links.some(
+                    (link) => link.item_id === command.target.id && link.active,
+                  )
+                )
+                  throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+                const retained = (
+                  await lease.query(
+                    "SELECT operation_id,canonical_intent_text,intent_sha256,receipt_sha256,body,outcome FROM public.trip_core_command_receipts WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND body->>'command'='CREATE_SPARSE_FLIGHT' AND outcome='APPLIED'",
+                    [actor.accountId, actor.tripId],
+                  )
+                ).rows;
+                let manualCreate = false;
+                for (const row of retained) {
+                  const created = validateCoreCommand(
+                    JSON.parse(String(row.canonical_intent_text)),
+                  );
+                  if (
+                    created.command !== "CREATE_SPARSE_FLIGHT" ||
+                    created.admission.mode !== "MANUAL" ||
+                    created.target.id !== command.target.id ||
+                    created.tripId !== actor.tripId
+                  )
+                    continue;
+                  const receipt = await validateCoreReceipt(
+                    typeof row.body === "string" ? JSON.parse(row.body) : row.body,
+                    hash,
+                  );
+                  if (
+                    created.operationId === row.operation_id &&
+                    (await coreHashValue("otr-trip-core-intent-v2", created, hash)) ===
+                      row.intent_sha256 &&
+                    receipt.actorAccountId === actor.accountId &&
+                    receipt.tripId === actor.tripId &&
+                    receipt.operationId === created.operationId &&
+                    receipt.command === created.command &&
+                    receipt.intentSha256 === row.intent_sha256 &&
+                    receipt.receiptSha256 === row.receipt_sha256 &&
+                    receipt.outcome === "APPLIED" &&
+                    receipt.result.created.some(
+                      (target) =>
+                        target.kind === "ITEM" && target.id === command.target.id,
+                    )
+                  ) {
+                    manualCreate = true;
+                    break;
+                  }
+                }
+                if (!manualCreate)
+                  throw new Error("MANUAL_FLIGHT_CREATE_RECEIPT_REQUIRED");
+              }
               await lease.query(
                 "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true),set_config('otr.core.target_item',$4,true),set_config('otr.core.operation',$5,true),set_config('otr.core.source_intent',$6,true)",
                 [
@@ -615,6 +694,7 @@ export function createCorePgStorage(
               if (
                 receipt.command.includes("FLIGHT") &&
                 receipt.command !== "CREATE_SPARSE_FLIGHT" &&
+                receipt.command !== "SET_AUTHORED_FLIGHT_DETAILS" &&
                 (!admission ||
                   !(await admission.canReadSourceReceipt(
                     lease,

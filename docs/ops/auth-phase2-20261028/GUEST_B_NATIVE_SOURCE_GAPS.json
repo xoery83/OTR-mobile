@@ -1,0 +1,39 @@
+{
+  "status": "READ_ONLY_ACTUAL_GUEST_A_BASELINE_NOT_ADOPTION",
+  "guestLocalId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+  "schema": 74,
+  "tripCount": 1,
+  "p1IntentCount": 1,
+  "queue": [
+    {
+      "entity": "TRIP",
+      "operation": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED"
+    },
+    {
+      "entity": "TRIP_CORE_V2",
+      "operation": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED"
+    },
+    {
+      "entity": "TRIP_LOCAL_ACTION",
+      "operation": "TRIP_METADATA_DEFERRED",
+      "status": "DEPENDENCY_BLOCKED"
+    }
+  ],
+  "cloudCounts": {
+    "trip_core_read_certificates": 0,
+    "trip_core_trip_core_command_receipts": 0,
+    "local_trip_metadata_confirmations": 0
+  },
+  "actor": "local Guest only; not a formal or temporary cloud principal",
+  "sessionOrKeychainRead": false,
+  "databaseFileCopied": false,
+  "guiOrAppLifecycleOperated": false,
+  "metadataGap": "Deferred Trip metadata is part of actual source; needs owning reconciliation, not omission",
+  "notProved": [
+    "whole files/live-draft inventory",
+    "Cloud upload or adoption",
+    "GuestQA64 Native UI"
+  ]
+}

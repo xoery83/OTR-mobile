@@ -1,0 +1,34 @@
+{
+  "privateSource": "/private/tmp/otr-manual-sync-reliability-20261029/source",
+  "hookSha256": "688b1aa8c8dfc4034139deec02ec958cb4734a7839ced489a5f350ddfeef26de",
+  "isolationRouteSha256": "56c6ac731fb25522561d853d5def844888305a3cdbe564051dba3ac07ed5f3ae",
+  "runtimeHooksInProductBranch": false,
+  "build94": {
+    "base": "2c8da31207d802185fa90b042516e1cfd7fb8cc6",
+    "build": 94,
+    "bundleId": "com.xoery.otrmobile",
+    "jsSHA256": "2195334f2fdb71720025c43af7421a221b3ebab8bb849da8cb6dc7b1f0dcb8b8",
+    "purpose": "PRIVATE_QA_ONLY_CORE_TRANSPORT_FAULTS",
+    "sourceHookSHA256": "688b1aa8c8dfc4034139deec02ec958cb4734a7839ced489a5f350ddfeef26de",
+    "noDatabaseSessionCopy": true,
+    "ordinaryBundleMustRestore": true
+  },
+  "build95": {
+    "base": "2c8da31207d802185fa90b042516e1cfd7fb8cc6",
+    "build": 95,
+    "jsSHA256": "9aa55a649beed1cf1a0ee603a5c5fe482513302b3c66e9da48bd303099119ac7",
+    "purpose": "PRIVATE_QA_ONLY_NORMAL_B_LOGIN_DENIAL_PROBES",
+    "noAuthContractOrPermissionsChange": true,
+    "independentReview": "NO_BLOCKER; six mock tests"
+  },
+  "controls": "Two new empty/text Documents flags, removed; exclusive once markers retained harmless until no-hook package installed; no database or Auth writes by fault control.",
+  "ordinaryRestoration": {
+    "build": 96,
+    "source": "752241d4401fae9ff0eabc0ce7d48006de20be58",
+    "jsSHA256": "7bbf49be2690b0551254f4b441c98b02b0a7cb3cb44654e99ff896833d0d1906",
+    "privateMarkersAbsent": true,
+    "actualColdSmoke": "PASS",
+    "nativeBinaryRetained": 52,
+    "schema": 74
+  }
+}

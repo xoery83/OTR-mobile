@@ -1,0 +1,68 @@
+{
+  "status": "DORMANT_NATIVE_CANDIDATE_LOCAL_PASS_NOT_INTEGRATED_NOT_DEPLOYED",
+  "base": "7b701e495c5ca13af51f1f1fe04db4c42c21d348",
+  "coreDependency": "b3685197 SET_AUTHORED_FLIGHT_DETAILS/authoredFlightDetails schema",
+  "patchSHA256": "0e69bb50371f73fb6c1affe6c50d1771cd77023719fc09fbae0a42ca421a0bf1",
+  "scope": "Existing ManualFlight Repository/atomic Core batch/normal Queue selectors-worker/config only; no UI consumers/Backend/SQL/API/migration/second queue",
+  "formalDefault": "CLOSED unless EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED exactly true plus existing sustained QA Account/DEV/normal scope and retained V2 Trip root",
+  "p2CohortFloor": "max(config.normal.newTripsFrom,2026-10-28T02:16:48Z); P1 cutoff unchanged",
+  "eligibility": "Own visible/manageable SPARSE; zero services/no active Booking; full accepted MANUAL SparseCreate receipt provenance or verified pending Manual SparseCreate; Source/Qualified never Edit",
+  "outcome": "LOCAL_COMMITTED is durable pending queue only; MANUAL_QUEUE/PENDING/operationIds, no fabricated LocalCoreReceipt/Cloud receipt",
+  "historicalLocal": "Same eligible Trip old local journals and old drafts stay local; no automatic upgrade/replay",
+  "tests": {
+    "suites": 11,
+    "tests": 291,
+    "result": "PASS",
+    "typescript": "PASS",
+    "scopedEslint": "PASS",
+    "uiGuard": "PASS",
+    "applyCheck": "PASS",
+    "formalSQLite": "Actual same-ID Create/Edit/field readback/rollback/frozen retry/disk close-reopen/recovery",
+    "negative": "Source/Qualified/foreignCreator/services/activeBooking/stale/Account/oldV2betweenCutoffs; root schedule/place excluded; dispatcher immutable provenance; worker capability/family; default absent and later cutoff preserved"
+  },
+  "boundary": {
+    "sharedTreeEdits": false,
+    "mainPush": false,
+    "backendChanges": false,
+    "devCalls": 0,
+    "deviceChanges": false,
+    "hostChanges": false,
+    "schemaChanges": false,
+    "buildFlagActivated": false,
+    "cloudL3": "NOT_RUN"
+  },
+  "remaining": [
+    "Parent independent review and serial integration to later Auth/Guest/Source main",
+    "Existing Backend79c998b5 and precise owning P2 SQL acceptance/deployment separately",
+    "Explicit future embedded build allowlist, still no current device flag set",
+    "Real Manual P2 Cloud/independent server readback/device cold-offline-replay-permission acceptance"
+  ],
+  "files": {
+    "P2_FORMAL_NATIVE_DORMANT.patch": "0e69bb50371f73fb6c1affe6c50d1771cd77023719fc09fbae0a42ca421a0bf1",
+    "SOURCE_FILES.json": "0099f9f37c29632d3e86661c35c0af3da09711ad2e3e7dbbdfc7d2e2c65626d4",
+    "HANDOFF.md": "9af78736c4827ad08ce891ff72f26d5092d14231f4b90ea8dea0c63c51340e54",
+    "tests.log": "8678fc521368a15407f0f25cb8766cdc7c179932ea4d83ec6cd8ca9313a513f1",
+    "typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ui-guard.log": "9c0a331417dc0296b8a8a5a18698c472900276f742bbe11db18b5d99e3f2329c",
+    "eligibility-tests.log": "4ec71b79fc454b7304c9e8e19f1e9bdb33b2cf363cdcb0703cbb3d94ddd75ea4",
+    "cutoff-tests.log": "82a10784c402c8ec67751046d5e6a629955fd4823a382697e1914016ca1fefe1"
+  },
+  "sourceFiles": {
+    "src/data/repositories/manualFlightFormalPersistence.ts": "8e3fe493e834ca1a7c00c1a74cb77efad9d2d9eee12ffb267d35641ea693c2e3",
+    "src/data/repositories/localManualFlightRepository.ts": "72b4017480a49c737809be06df122015d8d16a85ff490b5fa2668432926493e7",
+    "src/data/repositories/acceptedManualCreate.ts": "6f64d96267297c2b1da1a9d6aa57162ffa4d24b0bd0daf39be1c4e5a4bd5ae53",
+    "src/data/repositories/tripCoreV2Repository.ts": "0decc2ce913a1f4f98bb12c581a4d781410d96ed66e045cb7039781f82e5712a",
+    "src/data/repositories/localManualFlightRepository.test.ts": "8b1923ab6470d553575c68c76df73e650e028cdd8fddc0c8aa8597b468eadd68",
+    "src/data/sync/nativeTripQaScope.ts": "9f5941e47924854a45e976400e566f063d715676a3716a75c400f4be76822582",
+    "src/data/sync/nativeTripQaScope.test.ts": "39101f832a5740d01af80231cea52916f98580bfcd79f91c4388e036bf1397ff",
+    "src/data/sync/tripNormalSync.ts": "44ad1e09933c308a16619d871ef3d975ee2bc9dd7961e5a922c62d1549cd888d",
+    "src/data/sync/tripNormalSync.test.ts": "271c886f9b3732418de85fffb5a3cdfae2346c0b4c924960922d021360fe6f77",
+    "src/data/sync/tripNormalQueueActivity.ts": "c31e086f4fb5cc64b5109a579300712ef8bcd3a5c80723fca093214e8db263a3",
+    "src/data/sync/tripNormalQueueActivity.test.ts": "2f68e8c3cb21795247968ac813bc36fa8030a7c7022c3830b6dc2279d911fb34",
+    "src/data/sync/tripNormalCoordinator.ts": "f3bb614ba9500bb02a5109f18b91dfab8e059526cf7c49497f3175d535fc3fc1",
+    "src/data/sync/tripNormalCoordinator.manualFlight.test.ts": "13ac1cf72451d4cfaa286f1d417004c5ad3a57ee9a77450a588f8ebf4b931cb8",
+    "src/data/sync/tripCoreV2SyncWorker.ts": "e2c115c5490b739df5b5cbb86a63400b250128541a75d450cde2520b223b955b",
+    "src/data/sync/tripCoreV2SyncWorker.test.ts": "8a48445e770e4ca86702dad8550ad91ea7765fc2aff3974e2b65c52caf7987da"
+  }
+}

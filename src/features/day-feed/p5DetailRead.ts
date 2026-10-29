@@ -80,7 +80,7 @@ export async function loadP5Detail(
   try {
     const repository = await ports.repository();
     if (!current()) return null;
-    const draft = await repository.read(tripId, itemId);
+    const draft = await repository.read(tripId, itemId, Number(item.itemRevision));
     if (draft.itemId === itemId) editor = { repository, draft };
   } catch {
     /* Read authority never grants edit authority. */

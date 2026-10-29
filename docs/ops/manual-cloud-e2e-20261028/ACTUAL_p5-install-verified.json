@@ -1,0 +1,67 @@
+{
+  "status": "P5_APPROVED_FUNCTIONS_AND_CHECKS_INSTALLED_INDEPENDENTLY_VERIFIED",
+  "targetFunctions": 5,
+  "functionOidOwnerAclPreserved": true,
+  "otherSourceFunctionDefinitionsUnchanged": true,
+  "checks": 5,
+  "checkOidsChangedAsApproved": true,
+  "tableOwnerAclOidPreserved": true,
+  "notNullAndTriggersPreserved": true,
+  "sourceClosed": {
+    "enabledAirports": 0,
+    "flag": false,
+    "scope": null
+  },
+  "functions": [
+    {
+      "signature": "trip_core_finite_read_state_guard()",
+      "oid": "65713",
+      "md5": "a8303ea7a07caab331395413f7264345"
+    },
+    {
+      "signature": "trip_core_guard_historical_source_association()",
+      "oid": "65660",
+      "md5": "fb315854dee6942f552a647fb851abfb"
+    },
+    {
+      "signature": "trip_core_guard_write()",
+      "oid": "65263",
+      "md5": "c4f66610702189dd7f81cce864e1f22a"
+    },
+    {
+      "signature": "trip_core_publication_guard()",
+      "oid": "65649",
+      "md5": "6ff1c65d9389341e889eb8258c6659af"
+    },
+    {
+      "signature": "trip_core_resolve_airport(text,text,text,date)",
+      "oid": "65546",
+      "md5": "40f537b189fd972423e63b2be4023a12"
+    },
+    {
+      "signature": "trip_core_service_statement_guard()",
+      "oid": "65415",
+      "md5": "5ba5af84c52b81bea3d2dc78caadd634"
+    },
+    {
+      "signature": "trip_sustained_core_capabilities(uuid,uuid)",
+      "oid": "66181",
+      "md5": "ec0b1bea49391c8eb13e3f82676695c7"
+    },
+    {
+      "signature": "trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)",
+      "oid": "66180",
+      "md5": "1d109f974d800c02f1796a540fda8199"
+    },
+    {
+      "signature": "trip_sustained_import_p1_capabilities(uuid,uuid)",
+      "oid": "66408",
+      "md5": "9f01606ec37c03662c7d9d828cae9ef9"
+    },
+    {
+      "signature": "trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)",
+      "oid": "66410",
+      "md5": "115bc244cd9ccd196936828739187531"
+    }
+  ]
+}

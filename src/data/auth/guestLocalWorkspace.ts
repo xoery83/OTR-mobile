@@ -1,8 +1,23 @@
-import { createGuestDatasetCensus } from "./guestDatasetCensus";
+import {
+  createGuestAdoptionRecovery,
+  type GuestRecoveryFiles,
+} from "./guestAdoptionRecovery";
+import { createGuestRecoveryFiles } from "./guestRecoveryFiles";
+import {
+  assertGuestPublicationNotRequested,
+  hasGuestPublicationHold,
+} from "./guestPublicationHold";
+import {
+  createGuestDatasetCensus,
+  guestExternalInventorySchema,
+} from "./guestDatasetCensus";
 import { createGuestCaptureInventory } from "./guestCaptureInventory";
 import type { LaunchIdentity } from "./guestPrincipalRepository";
 import { getAccountGeneration } from "./accountGeneration";
-import { assertAccountRequestGeneration } from "./accountRequestContext";
+import {
+  assertAccountRequestGeneration,
+  withAccountApplyGate,
+} from "./accountRequestContext";
 import { requireCommittedGuestPrincipal } from "./authRepository";
 import {
   createMigratedDatabaseOpener,
@@ -21,11 +36,14 @@ import { createTripLocalManualReader } from "../repositories/tripLocalManualRead
 import { createTripDayFeedReader } from "../repositories/tripDayFeedRepository";
 
 type GuestDatabase = CoreDatabase & MigrationDatabase;
+// One process-local fence across openers; publication recovery is a separate durable contract.
+const inventoryFreezes = new Map<string, { token: symbol; generation: number }>();
 
 export function createGuestLocalWorkspaceOpener(deps: {
   // Read committed state only; never call the startup principal chooser here.
   readPrincipal(): Promise<LaunchIdentity | null>;
   open(name: string): Promise<GuestDatabase>;
+  recoveryFiles(localId: string): GuestRecoveryFiles;
 }) {
   const databases = new Map<
     string,
@@ -46,6 +64,17 @@ export function createGuestLocalWorkspaceOpener(deps: {
       return localId;
     }
     await localOwner();
+    const recovery = createGuestAdoptionRecovery({
+      scope,
+      files: deps.recoveryFiles(localId),
+      assertGuest: async () => {
+        await localOwner();
+      },
+    });
+    await recovery.inspectPublicationRequests();
+    await localOwner();
+    // Do not migrate or open the original dataset while server publication status is unknown.
+    assertGuestPublicationNotRequested(localId);
     let open = databases.get(localId);
     if (!open) {
       open = createMigratedDatabaseOpener(
@@ -57,18 +86,38 @@ export function createGuestLocalWorkspaceOpener(deps: {
       );
       databases.set(localId, open);
     }
-    const database = await open();
-    await localOwner();
-    const core = createTripCoreV2Repository(database, localOwner, tripCoreSha256Hex);
+    const database = await withAccountApplyGate(async () => {
+      await localOwner();
+      assertGuestPublicationNotRequested(localId);
+      const database = await open();
+      await localOwner();
+      assertGuestPublicationNotRequested(localId);
+      const prior = inventoryFreezes.get(localId);
+      // Only a newly verified current Guest scope may discard an obsolete inventory lease.
+      if (prior && prior.generation !== generation && !hasGuestPublicationHold(localId))
+        inventoryFreezes.delete(localId);
+      return database;
+    });
+    async function repositoryOwner() {
+      assertGuestPublicationNotRequested(localId);
+      if (inventoryFreezes.has(localId)) throw Error("GUEST_INVENTORY_FROZEN");
+      const owner = await localOwner();
+      assertGuestPublicationNotRequested(localId);
+      if (inventoryFreezes.has(localId)) throw Error("GUEST_INVENTORY_FROZEN");
+      return owner;
+    }
+    const readCensus = createGuestDatasetCensus(database, localOwner, scope);
+    const readCaptureInventory = createGuestCaptureInventory(database, localOwner, scope);
+    const core = createTripCoreV2Repository(database, repositoryOwner, tripCoreSha256Hex);
     // A Guest has no Account profile name; explicit local creator input stays local.
     const repository = createTripRepository(
       database,
-      localOwner,
+      repositoryOwner,
       core,
       undefined,
       async () => "",
     );
-    const localManual = createTripLocalManualReader(database, localOwner, core);
+    const localManual = createTripLocalManualReader(database, repositoryOwner, core);
     const trips = {
       createTrip: repository.createTrip,
       getTrip: repository.getTrip,
@@ -93,10 +142,56 @@ export function createGuestLocalWorkspaceOpener(deps: {
       kind: "GUEST_LOCAL" as const,
       scope,
       syncAllowed: false as const,
-      readCensus: createGuestDatasetCensus(database, localOwner, scope),
-      readCaptureInventory: createGuestCaptureInventory(database, localOwner, scope),
+      readCensus,
+      readCaptureInventory,
+      inspectPublicationRequests: recovery.inspectPublicationRequests,
+      async freezeForInventory() {
+        return withAccountApplyGate(async () => {
+          await localOwner();
+          if (inventoryFreezes.has(localId)) throw Error("GUEST_INVENTORY_FREEZE_ACTIVE");
+          const token = Symbol("Guest inventory freeze");
+          inventoryFreezes.set(localId, { token, generation });
+          let released = false;
+          async function assertCurrent() {
+            await localOwner();
+            if (released || inventoryFreezes.get(localId)?.token !== token)
+              throw Error("GUEST_INVENTORY_FREEZE_RELEASED");
+          }
+          return Object.freeze({
+            schemaId: "otr.auth.guest-inventory-freeze/1" as const,
+            scope,
+            assertCurrent,
+            async readCensus(external?: Parameters<typeof readCensus>[0]) {
+              const snapshot =
+                external === undefined
+                  ? undefined
+                  : guestExternalInventorySchema.parse(external);
+              await assertCurrent();
+              const result = await readCensus(snapshot);
+              await assertCurrent();
+              return result;
+            },
+            async readCaptureInventory() {
+              await assertCurrent();
+              const result = await readCaptureInventory();
+              await assertCurrent();
+              return result;
+            },
+            async release() {
+              return withAccountApplyGate(async () => {
+                if (released) return false;
+                await assertCurrent();
+                assertGuestPublicationNotRequested(localId);
+                released = true;
+                inventoryFreezes.delete(localId);
+                return true;
+              });
+            },
+          });
+        });
+      },
       trips,
-      plan: createManualPlanRepository(database, localOwner, core),
+      plan: createManualPlanRepository(database, repositoryOwner, core),
       days: createTripDayFeedReader({
         account: localOwner,
         localManual,
@@ -118,6 +213,7 @@ export type GuestLocalWorkspace = Awaited<
 
 export const openGuestLocalWorkspace = createGuestLocalWorkspaceOpener({
   readPrincipal: requireCommittedGuestPrincipal,
+  recoveryFiles: createGuestRecoveryFiles,
   async open(name) {
     // Defer Native module evaluation for headless repository tests.
     // eslint-disable-next-line @typescript-eslint/no-require-imports

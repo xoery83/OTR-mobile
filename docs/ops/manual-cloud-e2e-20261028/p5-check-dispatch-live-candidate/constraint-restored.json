@@ -1,0 +1,42 @@
+[
+  {
+    "name": "itinerary_transport_services_operator_issuer_check",
+    "type": "c",
+    "table": "itinerary_transport_services",
+    "validated": true,
+    "definition": "CHECK (((char_length(operator_issuer) >= 1) AND (char_length(operator_issuer) <= 128) AND (btrim(operator_issuer) <> ''::text)))",
+    "expression": "((char_length(operator_issuer) >= 1) AND (char_length(operator_issuer) <= 128) AND (btrim(operator_issuer) <> ''::text))"
+  },
+  {
+    "name": "itinerary_transport_services_operator_literal_check",
+    "type": "c",
+    "table": "itinerary_transport_services",
+    "validated": true,
+    "definition": "CHECK (((char_length(operator_literal) >= 1) AND (char_length(operator_literal) <= 255) AND (btrim(operator_literal) <> ''::text)))",
+    "expression": "((char_length(operator_literal) >= 1) AND (char_length(operator_literal) <= 255) AND (btrim(operator_literal) <> ''::text))"
+  },
+  {
+    "name": "itinerary_transport_services_operator_value_check",
+    "type": "c",
+    "table": "itinerary_transport_services",
+    "validated": true,
+    "definition": "CHECK (((char_length(operator_value) >= 1) AND (char_length(operator_value) <= 128) AND (btrim(operator_value) <> ''::text)))",
+    "expression": "((char_length(operator_value) >= 1) AND (char_length(operator_value) <= 128) AND (btrim(operator_value) <> ''::text))"
+  },
+  {
+    "name": "itinerary_transport_services_service_literal_check",
+    "type": "c",
+    "table": "itinerary_transport_services",
+    "validated": true,
+    "definition": "CHECK (((char_length(service_literal) >= 1) AND (char_length(service_literal) <= 255) AND (btrim(service_literal) <> ''::text)))",
+    "expression": "((char_length(service_literal) >= 1) AND (char_length(service_literal) <= 255) AND (btrim(service_literal) <> ''::text))"
+  },
+  {
+    "name": "itinerary_transport_services_service_number_check",
+    "type": "c",
+    "table": "itinerary_transport_services",
+    "validated": true,
+    "definition": "CHECK (((char_length(service_number) >= 1) AND (char_length(service_number) <= 64) AND (btrim(service_number) <> ''::text)))",
+    "expression": "((char_length(service_number) >= 1) AND (char_length(service_number) <= 64) AND (btrim(service_number) <> ''::text))"
+  }
+]

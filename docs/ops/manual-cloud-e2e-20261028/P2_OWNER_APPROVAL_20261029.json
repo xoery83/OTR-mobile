@@ -1,0 +1,11 @@
+{
+  "status": "OWNER_APPROVED_EXACT_DEV_P2_PERSISTENT_CAPABILITY_AND_SOURCE_SINGLE_HASH_COMPATIBILITY",
+  "candidateCommit": "16644f85",
+  "ownerAnswer": "\u6279\u51c6\u8be5\u7cbe\u786e DEV P2 \u6301\u7eed\u80fd\u529b\u53ca\u5355\u54c8\u5e0c\u517c\u5bb9",
+  "scopeDocument": "P2_AUTHORITY_REVIEW.md",
+  "installSHA256": "b19a0257471cad173533c1c6b2f81cfa3fe38cbccbfb252d77496469540bb733",
+  "rollbackSHA256": "03e65a9e640322784f0364a3404a733af8aa4aa834e88639a4e42fbdc1f3821c",
+  "sourceCompatibilitySHA256": "fa8df1999e40e211ea5e9eb4627bb546345aba84e0a8877c4d7b9e2dc6527c61",
+  "installed": false,
+  "providerQueriesAuthorizedByThis": false
+}

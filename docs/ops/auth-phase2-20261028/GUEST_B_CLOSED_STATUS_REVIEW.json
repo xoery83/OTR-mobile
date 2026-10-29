@@ -1,0 +1,26 @@
+{
+  "status": "SOURCE_REVIEW_PASS_UNMOUNTED_CLOSED",
+  "baseline": "d771c7e0ea3aa5842d763d071a019553af38a347",
+  "directedAndIndependent": "Status20 + existingPreflight21 = 2 suites41 tests PASS; types/scopedlint/diff PASS",
+  "binding": "Existing authenticated Account pinned before await; strict sourceGuest/adoption/target/inventory; cloned input; returned pins verified",
+  "recoverySemantics": {
+    "IN_PROGRESS": "QUERY_SERVER_STATUS",
+    "NOT_FOUND": "QUERY_SERVER_STATUS; missing row is not proof of cancellation",
+    "PUBLISHED": "READ_PUBLICATION_RECEIPT; pointer alone never activates Account",
+    "CANCELLED": "READ_CANCELLATION_RECEIPT; pointer alone never releases source"
+  },
+  "bounds": "8192 bytes/15000ms/request Abort; private no-store; fixed sanitized errors",
+  "unchanged": [
+    "app/bootstrap route registration",
+    "DB journal/RLS/GRANT/roles",
+    "Guest files and Session authority",
+    "commercial policy"
+  ],
+  "unverified": [
+    "actual scoped status reader and immutable receipt fetch",
+    "server terminal proof and safe release",
+    "real UNKNOWN/Native recovery",
+    "atomic publication/Adoption DEV E2E"
+  ],
+  "nativeArtifact": "GuestQA64 remains fixed d771; no Native client imports this new Backend-only candidate"
+}

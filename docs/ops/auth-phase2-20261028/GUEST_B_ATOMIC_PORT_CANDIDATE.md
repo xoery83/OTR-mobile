@@ -7,6 +7,7 @@ permission model or a claim that publication is ready.
 Existing owning types:
 
 - `backend/src/tripCreate.ts`: `TripCreatePort`.
+- `backend/src/tripMetadataV2.ts`: `TripMetadataV2Port`.
 - `backend/src/tripCoreV2Commands.ts`: `CoreCommandStorage`,
   `CoreCommandTransaction`, `executeCoreCommandV2`.
 - `backend/src/tripCoreV2PgStorage.ts`: `CorePgLease`.
@@ -26,13 +27,16 @@ type GuestPublicationScope = {
 // Backend-internal callback, never a client-supplied mutation/SQL executor.
 type GuestPublicationTransaction = {
   trips: TripCreatePort;
+  metadata: TripMetadataV2Port;
   core: CoreCommandStorage;
   // Stable source Person -> actual owning server Person mapping, not name matching.
-  personMappings(tripId: string): Promise<readonly {
-    tripId: string;
-    sourcePersonId: string;
-    targetPersonId: string;
-  }[]>;
+  personMappings(tripId: string): Promise<
+    readonly {
+      tripId: string;
+      sourcePersonId: string;
+      targetPersonId: string;
+    }[]
+  >;
 };
 
 interface GuestAtomicPublicationPort {
@@ -96,3 +100,36 @@ source freeze; normalized sealed manifest export; actual atomic storage/authorit
 protected cancellation/status; Native login/adoption/recovery and Supabase readback.
 The already integrated local recovery journal has no local success state, keeps
 Guest originals and requires status query once publish intent is recorded.
+
+## Focused owning-interface progress — 29 October
+
+Core extraction ab33fc9f and TripCreate extraction 2c04394d are independently
+reviewed private candidates handed back to Native; no deployment or publication
+permission follows. Do not whole-merge the Core candidate's unaccepted Native
+parent history. Normal owning SQL/principal/receipt logic remains unchanged.
+
+A fresh read-only check of the actual GuestA vault confirms schema74, Trip1,
+P1 intent1, queue3, zero Cloud receipts/read certificates. Its third queue entry is
+TRIP_LOCAL_ACTION:TRIP_METADATA_DEFERRED, created by the normal Native Trip edit.
+Do not omit it, overwrite the original Create intent, or label a deferred action
+server-Applied. Its stable identity/baseline must be reconciled by the owning
+Metadata pipeline and included in whole-dataset verification. The delegated MetadataV2 held-transaction candidate is fixed at 1a34e1c1
+(13 storage + 9 handler checks, types/lint/build and independent review PASS). Its
+normal query/method/error-classification AST remains identical to the owning
+baseline. The narrow Writer lease has been returned. This is a private candidate
+awaiting Native acceptance, not main integration, actual PG composition or DEV
+publication authority.
+
+TripCreate, MetadataV2 and Core use three different session_user principals today.
+A single physical transaction is necessary but does not itself grant composite
+business authority. Precise protected role/function changes remain a separate
+closed candidate/Gate, including mappings and empty Ledger initialization.
+
+Full live-Trip draft coverage is also still blocked. Read-only intake identifies
+LocalTripWorkspace create fields/operation refs and TripBasicEditor baseline,
+destination, cover and saveIntent state; child name/calendar/destination pickers
+need owning freeze/block signals. Guest already disables Photo/Currency access.
+Foreground load currently clears selected presentation on any repository error;
+Native handoff must preserve frozen presentation when a known Auth fence rejects
+reads, otherwise a mounted P1 draft can be unmounted. This is not a new Form design
+or permission to edit Native-owned code without its unique Writer coordination.

@@ -87,6 +87,8 @@ vi.mock("./WindowedDayList", () => ({
     );
   },
 }));
+vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create({}) }));
 vi.mock("@/ui/locale", () => ({
   t: (key: string) => key,
@@ -703,4 +705,53 @@ it("accepted plus local keeps P2 Focus stable and detail action opens the real I
   expect(render(props)).toContain("FLIGHT NZ99:F");
   state.nodes.find((n) => n.accessibilityLabel === "NZ99").onOpen();
   expect(open).toHaveBeenCalledWith(item.itemId, local);
+});
+
+it("places pending civil rows in the accepted day band rather than after qualified content", () => {
+  const accepted = structuredClone(fixture.after);
+  accepted.boundaries = accepted.boundaries.filter(
+    (boundary) => boundary.role === "START",
+  );
+  Object.assign(accepted.boundaries[0], {
+    instant: null,
+    source_instant: null,
+    local_time: "17:00",
+    quality: "UNKNOWN",
+    clock_precision: "MINUTE",
+    source_instant_precision: null,
+  });
+  const query = itemsForLocalDate(
+    { ...fixture.day, events: [accepted] },
+    syntheticDate,
+    "UTC",
+  );
+  const local = localManual("pending-clock");
+  const pending = local.rows(syntheticDate)[0];
+  pending.displayTime = { localTime: "03:28", comparable: false };
+  local.rows = () => [pending];
+  render({
+    dates: [syntheticDate],
+    localManual: local,
+    query: () => ({
+      ...query,
+      coreRows: [
+        {
+          itemRef: accepted.id,
+          family: "P1",
+          position: "TNS",
+          rowKey: {
+            itemId: accepted.id,
+            projectionRole: "START",
+            localDate: syntheticDate,
+          },
+          displayTime: { localTime: "17:00", comparable: false },
+        },
+      ],
+    }),
+  });
+  const keys = state.window.rows.map((row: any) => row.key);
+  expect(keys.indexOf(`local:${JSON.stringify(pending.rowKey)}`)).toBeLessThan(
+    keys.indexOf(JSON.stringify([accepted.id, "START", syntheticDate])),
+  );
+  expect(keys.filter((key: string) => key.startsWith("day:"))).toHaveLength(1);
 });

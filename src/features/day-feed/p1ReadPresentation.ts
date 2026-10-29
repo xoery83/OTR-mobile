@@ -1,4 +1,8 @@
-import { acceptedBoundaryAnchor, type DayEvent } from "@/domain/trip/dayReadModel";
+import {
+  acceptedBoundaryAnchor,
+  validateCalendarDate,
+  type DayEvent,
+} from "@/domain/trip/dayReadModel";
 
 // Presentation facts only; callers must supply actor-visible owning-reader results.
 export type P1ReadFacts = Readonly<{
@@ -68,18 +72,40 @@ export function p1InsertionEligible(
   role: "START" | "END",
   context: string,
   now?: string,
+  insertionToday?: string | null,
 ) {
   const startDate =
     event.boundaries?.find((b) => b.role === "START")?.local_date ??
     event.clocks?.start?.local_date;
+  // Only the quick-add affordance uses appearance context; Reader/NOW stay unchanged.
+  let insertionContext = context;
+  if (context === "UNKNOWN" && startDate && insertionToday) {
+    try {
+      validateCalendarDate(startDate);
+      validateCalendarDate(insertionToday);
+      insertionContext =
+        startDate < insertionToday
+          ? "PAST"
+          : startDate === insertionToday
+            ? "TODAY"
+            : "FUTURE";
+    } catch {
+      // Missing/invalid display dates cannot enable an affordance.
+    }
+  }
   const end = event.boundaries?.find((b) => b.role === "END");
   const finish = end && acceptedBoundaryAnchor(end);
   return (
     role === "START" &&
     !["cancelled", "skipped"].includes(event.status) &&
-    ["FUTURE", "TODAY"].includes(context) &&
+    ["FUTURE", "TODAY"].includes(insertionContext) &&
     !!startDate &&
-    !(context === "TODAY" && finish && now && Date.parse(finish) <= Date.parse(now))
+    !(
+      insertionContext === "TODAY" &&
+      finish &&
+      now &&
+      Date.parse(finish) <= Date.parse(now)
+    )
   );
 }
 

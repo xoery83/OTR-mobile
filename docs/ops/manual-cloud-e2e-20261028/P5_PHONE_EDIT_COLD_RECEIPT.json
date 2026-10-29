@@ -1,0 +1,41 @@
+{
+  "status": "PHONE_NORMAL_CREATE_EDIT_SERVER_VERIFIED_COLD_RECOVERY_PASS",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "build": 60,
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "itemId": "1c0486a8-8265-4b4d-8b5a-7849c7fbd4ac",
+  "title": "Forms QA Phone Train 1029 Edited",
+  "revision": 2,
+  "receipts": [
+    {
+      "command": "CREATE_ITEM",
+      "operationId": "10351074-58b3-4c6f-9268-67aed4ff1e8f",
+      "outcome": "APPLIED",
+      "receiptSHA256": "d65e450120f18d39eeae51120d97ffd0a69c43fa30ccebc0ea6f79178f29d80c"
+    },
+    {
+      "command": "SET_ITEM_TEXT",
+      "operationId": "2b412703-e2d4-4e42-8310-65794554f11c",
+      "outcome": "APPLIED",
+      "receiptSHA256": "18540d98b232467e7a5ebf8c52c0a05545c7f1112871fd94697a8fdc856f6fc3"
+    }
+  ],
+  "readSHA256": "5e2f6313390677dfbb089ac635d9659aa9df58f4955e9602b4fc8c1bb4818dd3",
+  "normalUiEdit": true,
+  "coldLaunch": "devicectl terminate-existing, then normal MyTrips \u2192 same Trip \u2192 same P5 Details",
+  "coldUi": {
+    "latestTitle": true,
+    "originLabel": "Forms QA Departure",
+    "date": "2026-10-29",
+    "participants": "Everyone",
+    "pendingDot": false
+  },
+  "preservation": "No install, uninstall, Session/container/SQLite copy or Queue patch; same historical Trips retained",
+  "remaining": [
+    "Real offline/reconnect",
+    "Live repeated dispatch",
+    "Cross-account/Creator permission negatives",
+    "Other Transport subtypes/details field matrix"
+  ],
+  "observedPending": "Initial server read revision1; later normal scheduler accepted Edit revision2. Detail pending dot cleared on cold recovery. No manual replay or additional Save."
+}

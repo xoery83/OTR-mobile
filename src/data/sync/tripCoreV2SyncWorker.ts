@@ -45,7 +45,10 @@ async function corePhase<T>(phase: string, read: () => Promise<T>): Promise<T> {
   } catch (error) {
     try {
       if (error instanceof Error && !Object.isFrozen(error)) {
-        const diagnostic = error as Error & { kind?: unknown; status?: unknown };
+        const diagnostic = error as Error & {
+          kind?: unknown;
+          status?: unknown;
+        };
         const kind = ["http", "network", "timeout", "validation"].includes(
           String(diagnostic.kind),
         )
@@ -138,6 +141,26 @@ export function createCoreV2SyncWorker(
               : (await repository.readGraph(context)).itinerary_events.find(
                   (r) => r.id === command.target.id,
                 )?.experience_family;
+        if (
+          command.command === "SET_AUTHORED_FLIGHT_DETAILS" ||
+          (family === "P2" && command.command === "SET_ITEM_PARTICIPATION")
+        ) {
+          const graph = await repository.readGraph(context);
+          const item = graph.itinerary_events.find((r) => r.id === command.target.id);
+          if (
+            family !== "P2" ||
+            item?.owner_account_id !== context.accountId ||
+            graph.itinerary_transport_services.some(
+              (service) => service.event_id === command.target.id,
+            ) ||
+            graph.trip_booking_item_links.some(
+              (link) => link.item_id === command.target.id && link.active,
+            ) ||
+            graph.trip_flight_intents.find((r) => r.event_id === command.target.id)
+              ?.qualification !== "SPARSE"
+          )
+            throw new SyncDependencyError("CORE_FAMILY_CLOSED");
+        }
         if (family && !capabilities.enabledFamilies.includes(family as never))
           throw new SyncDependencyError("CORE_FAMILY_CLOSED");
         result = await corePhase("CORE_SUBMIT", () => transport.submit(context, command));

@@ -19,3 +19,15 @@ Deployment incident: historical Compose omitted four Universal environment keys,
 Next: P4 normal Manual queue/Accepted Edit/capability candidate; coordinate shared Core functions with Universal unique Writer. P2/P5/P6 remain unenabled.
 
 P4 fixed candidate776c98f0 is locally joined with actual running Import host3a7ab13c at5c16c7ce. Joined10suites108PASS/types/UIguard/default-CLOSED buildPASS; P4 owned PG and default P3 regression PASS. Exact P4 authority question is pending Owner; no P4 Hosted changes or Cloud claim. Current FormsQA Build41/P3 is retained. Import is independently investigating its new AD5 binary startup-read failure without resetting data; this line will not install that binary into FormsQA before resolution. See P4_JOINED_READINESS.json.
+
+## P4 approved DEV execution
+
+Owner approved candidate776c98f0 exact four-function SQL (install SHA5eb86f88). Installation and independent live postimage/OID/owner/ACL verification PASS; five other Source functions and native policy are unchanged. Backend sourcea78ed2ee/image41aa2091/container e6248648 preserves the current Import environment SHAab5dc0e7, all six mounts and health configuration; retained original36b268 remains available. Normal Forms QA login advertises exact MANUAL P1/P3/P4 with SET_RENTAL_DETAILS; old Trip remains P1-only. Probe Session was independently revoked; no token persisted. See P4_DEV_RECEIPT.json.
+
+Build44 compiled and identity-verified; it includes accepted Auth453de9c3 and current Import3a7ab13c. Owner currently holds Forms QA for Google login; no install, interruption or screen inspection is permitted until Auth returns the device. Actual Native P4 Create/Edit, independent Item readback, cold recovery and negative/retry/offline checks remain pending; capability PASS is not Cloud E2E PASS.
+
+## P4 actual Native Create/Edit and cold recovery
+
+Forms QA49 on normal Synthetic account and existing independently created Trip9a96 saved P4 Item32117276 through the existing Form/Repository/Queue. Five APPLIED receipts: CREATE_ITEM, SET_ITEM_TEXT, SET_ITEM_SCHEDULE, SET_RENTAL_DETAILS and a subsequent Notes SET_ITEM_TEXT. Independent DEV Supabase readback confirms final semantic revision5, edited title/pickup10:17/pickup label/Supplier/actual model/Notes, with original return Nov1/17:22/place preserved. Real Day/Focus/Immersive and process cold recovery display the same latest Item without pending dot. A stale Notes draft was rejected without losing input; Discard/reopen after stable Accepted recovery succeeded. Initial native AX-only text manipulation was not accepted as a Notes edit; final Notes was verified from actual keyboard input and server receipt.
+
+This proves Create/Edit/SERVER_ACCEPTED/independent SERVER_VERIFIED/Native cold recovery, not full Cloud L3: real Native offline reconnect, repeated dispatch and live mutation-permission negatives remain. Capability old-Trip exclusion and owning isolated PG negatives remain separate evidence. GUI/normal business window returned to Universal after this slice; no Source/Provider gate changed. Fixed implementation776c98f0, actual Native source6710a380. See P4_DEV_RECEIPT.json.

@@ -1,3 +1,4 @@
+import { hasAcceptedManualCreate } from "./acceptedManualCreate";
 import { z } from "zod";
 import { createUuid } from "@/domain/localId";
 import {
@@ -152,7 +153,7 @@ function editable(snapshot: Snapshot, itemId: string, accountId: string) {
   const row = snapshot.graph.itinerary_events.find((r) => r.id === itemId);
   if (
     !row ||
-    !snapshot.predictedIds.has(itemId) ||
+    (!snapshot.predictedIds.has(itemId) && !snapshot.cert) ||
     row.experience_family !== "P5" ||
     row.owner_account_id !== accountId ||
     row.hidden_at !== null ||
@@ -193,7 +194,11 @@ export function createManualTransportRepository(
     if (!snapshot) throw new Error("MANUAL_TRANSPORT_UNAVAILABLE");
     return snapshot;
   }
-  async function open(tripId: string, itemId?: string): Promise<ManualTransportDraft> {
+  async function open(
+    tripId: string,
+    itemId?: string,
+    expectedRevision?: number,
+  ): Promise<ManualTransportDraft> {
     coreUuid.parse(tripId);
     if (itemId) coreUuid.parse(itemId);
     const context = await core.captureContext(tripId);
@@ -204,12 +209,22 @@ export function createManualTransportRepository(
           row = itemId ? editable(snapshot, itemId, context.accountId) : null;
         if (
           row &&
+          expectedRevision !== undefined &&
+          row.semantic_revision !== expectedRevision
+        )
+          throw new Error("MANUAL_TRANSPORT_CONFLICT");
+        if (
+          row &&
           !(await core.pending(context)).some(
             (p) =>
               snapshot.operations.some((o) => o.operationId === p.command.operationId) &&
               p.command.target.id === itemId &&
               p.command.command === "CREATE_ITEM" &&
               p.command.admission.mode === "MANUAL",
+          ) &&
+          !(
+            snapshot.cert &&
+            (await hasAcceptedManualCreate(database, context, itemId!, "P5"))
           )
         )
           throw new Error("MANUAL_TRANSPORT_UNAVAILABLE");
@@ -258,7 +273,8 @@ export function createManualTransportRepository(
   }
   return {
     createDraft: (tripId: string) => open(tripId),
-    read: (tripId: string, itemId: string) => open(tripId, itemId),
+    read: (tripId: string, itemId: string, expectedRevision?: number) =>
+      open(tripId, itemId, expectedRevision),
     async save(
       draft: ManualTransportDraft,
       input: ManualTransportFields,

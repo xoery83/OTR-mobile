@@ -234,6 +234,7 @@ function LocalTripContent({
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(false);
   const [menuMembersTrip, setMenuMembersTrip] = useState<string | null>(null);
+  const loadedGuest = useRef<string | null>(null);
   const request = useRef(0),
     busy = useRef(false),
     tripOperation = useRef({ operationId: createUuid(), tripId: createUuid() });
@@ -250,6 +251,7 @@ function LocalTripContent({
   const load = useCallback(async () => {
     const captured = generation,
       ticket = ++request.current;
+    let guestLocalId: string | null = null;
     try {
       const session = await readCommittedLocalSession();
       const principal = await readLocalTripPrincipal();
@@ -260,6 +262,7 @@ function LocalTripContent({
       )
         return;
       const isGuest = principal?.kind === "GUEST";
+      guestLocalId = isGuest ? principal.localId : null;
       setGuest(isGuest);
       if (!session?.identity && !isGuest) {
         setMetadataEditable(false);
@@ -301,6 +304,7 @@ function LocalTripContent({
         ticket !== request.current
       )
         return;
+      loadedGuest.current = guestLocalId;
       setMetadataEditable(canEditMetadata);
       setTrips(list);
       setRemoteTrips(
@@ -356,13 +360,32 @@ function LocalTripContent({
           })();
         }
       }
-    } catch {
+    } catch (error) {
+      if (
+        guestLocalId &&
+        loadedGuest.current === guestLocalId &&
+        error instanceof Error &&
+        (error.message === "GUEST_INVENTORY_FROZEN" ||
+          error.message === "GUEST_PUBLICATION_STATUS_REQUIRED")
+      ) {
+        const current = await readLocalTripPrincipal().catch(() => null);
+        // Keep mounted drafts only while the same Guest's Auth fence pauses reads.
+        if (
+          alive.current &&
+          captured === getAccountGeneration() &&
+          ticket === request.current &&
+          current?.kind === "GUEST" &&
+          current.localId === guestLocalId
+        )
+          return;
+      }
       if (
         !alive.current ||
         captured !== getAccountGeneration() ||
         ticket !== request.current
       )
         return;
+      loadedGuest.current = null;
       setTrips([]);
       setRemoteTrips([]);
       setSelected(null);
@@ -1205,9 +1228,13 @@ function LocalTripContent({
                         />
                       }
                     />
-                    {error ? (
+                    {status === "UNAVAILABLE" || error ? (
                       <Text accessibilityRole="alert" style={styles.status}>
-                        {t("tripCreate.saveFailed")}
+                        {t(
+                          status === "UNAVAILABLE"
+                            ? "tripCreate.unavailable"
+                            : "tripCreate.saveFailed",
+                        )}
                       </Text>
                     ) : null}
                   </ScrollView>

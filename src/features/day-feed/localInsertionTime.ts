@@ -1,5 +1,6 @@
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import type { CoreBoundaryView, CoreDayRow } from "@/domain/trip/tripCoreV2Day";
+import { localDayDisplayOrder } from "./localDayDisplayOrder";
 import { p1InsertionTime, type InsertionTimeRow } from "./p1InsertionTime";
 // Advisory form defaults from existing Reader order; never a Core Event or time authority.
 export function localInsertionTime(
@@ -9,8 +10,7 @@ export function localInsertionTime(
   date: string,
   side: "BEFORE" | "AFTER",
 ) {
-  const rows: InsertionTimeRow[] = read
-    .rows(date)
+  const rows: InsertionTimeRow[] = localDayDisplayOrder(read.rows(date))
     .filter((row) => row.position !== "BASE")
     .map((row) => {
       const item = read.items.find((i) => i.itemId === row.itemRef);

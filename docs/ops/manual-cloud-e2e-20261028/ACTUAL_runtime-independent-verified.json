@@ -1,0 +1,15 @@
+{
+  "status": "INDEPENDENT_RUNTIME_VERIFIED",
+  "source": "e126eabfc1d538f7db722f6f2dca75088a8a595c",
+  "image": "sha256:6c5c9a6f380f538392832abda7eb4afe434f9fa689dbf6f150c134ed903c755f",
+  "containerId": "7931b617d892e4974b1820541ed8d02783567b48f39130cd938efc1d7bd01ada",
+  "bundleSHA256": "2e22edea49eaae77410e40d1e1a1e138335e4165f46c9ba8aa2ee9a3a5a77a6f",
+  "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+  "mountCount": 6,
+  "hostConfigAndFilesPreserved": true,
+  "httpStatuses": [
+    200,
+    401
+  ],
+  "retainedContainerId": "d833f49940a80b4e2d68c1e0abde667f9a8151f1dff5a30fa9fef12e7a7ac955"
+}

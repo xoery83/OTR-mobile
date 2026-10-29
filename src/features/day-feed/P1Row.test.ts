@@ -285,3 +285,31 @@ it.each(["B", "I"] as const)("does not show quick-add outside Focus (%s)", (dept
   expect(node("Add above")).toBeUndefined();
   expect(node("Add below")).toBeUndefined();
 });
+
+it("floating accepted Focus exposes quick-add from an explicit appearance date only", () => {
+  const plan = event();
+  plan.boundaries.forEach((boundary) => {
+    boundary.instant = null;
+    boundary.source_instant = null;
+    boundary.zone_id = null;
+  });
+  const onInsert = vi.fn();
+  renderToStaticMarkup(
+    createElement(P1Row, {
+      event: plan,
+      depth: "F",
+      context: "UNKNOWN",
+      insertionToday: "2027-01-16",
+      onDepth: vi.fn(),
+      onInsert,
+    }),
+  );
+  node("Add above").onPress();
+  node("Add below").onPress();
+  expect(onInsert.mock.calls).toEqual([["BEFORE"], ["AFTER"]]);
+  expect(
+    plan.boundaries.every(
+      (boundary) => boundary.instant === null && boundary.zone_id === null,
+    ),
+  ).toBe(true);
+});

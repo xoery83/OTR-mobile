@@ -474,11 +474,17 @@ export function createTripCoreV2Repository(
               "Account changed during Ledger request.",
             ].includes(message)
           )
-            return { status: "UNAVAILABLE", reason: "ACCESS_UNAVAILABLE" } as const;
+            return {
+              status: "UNAVAILABLE",
+              reason: "ACCESS_UNAVAILABLE",
+            } as const;
           throw error;
         }
         if (!current)
-          return { status: "UNAVAILABLE", reason: "CONTINUITY_UNKNOWN" } as const;
+          return {
+            status: "UNAVAILABLE",
+            reason: "CONTINUITY_UNKNOWN",
+          } as const;
         if (current.status === "UNAVAILABLE")
           return { status: "UNAVAILABLE", reason: current.reason } as const;
         if (
@@ -522,7 +528,10 @@ export function createTripCoreV2Repository(
       result.status === "CURRENT"
         ? handedOff
           ? { status: "CURRENT" as const }
-          : { status: "UNAVAILABLE" as const, reason: "ACCESS_UNAVAILABLE" as const }
+          : {
+              status: "UNAVAILABLE" as const,
+              reason: "ACCESS_UNAVAILABLE" as const,
+            }
         : result,
     );
   }
@@ -607,7 +616,10 @@ export function createTripCoreV2Repository(
   // Both preparation reads and post-write verification share this owning transaction.
   async function commitManualBatch<T>(
     ctx: AccountRequestContext,
-    prepare: () => Promise<{ commands: readonly unknown[]; result(): Promise<T> }>,
+    prepare: () => Promise<{
+      commands: readonly unknown[];
+      result(): Promise<T>;
+    }>,
   ): Promise<T> {
     return withAccountApplyGate(async () => {
       await assertContext(ctx);
@@ -626,6 +638,8 @@ export function createTripCoreV2Repository(
               c.admission.mode !== "MANUAL" ||
               ![
                 "CREATE_ITEM",
+                "CREATE_SPARSE_FLIGHT",
+                "SET_AUTHORED_FLIGHT_DETAILS",
                 "SET_ITEM_TEXT",
                 "SET_ITEM_SCHEDULE",
                 "SET_ITEM_PLACE",
@@ -644,15 +658,17 @@ export function createTripCoreV2Repository(
         )
           throw new Error("MANUAL_BATCH_INVALID");
         if (commands.length) {
-          const creation = commands.find((c) => c.command === "CREATE_ITEM");
+          const isCreation = (c: (typeof commands)[number]) =>
+            c.command === "CREATE_ITEM" || c.command === "CREATE_SPARSE_FLIGHT";
+          const creation = commands.find(isCreation);
           let family: unknown;
           if (creation) {
-            if (
-              commands[0] !== creation ||
-              commands.filter((c) => c.command === "CREATE_ITEM").length !== 1
-            )
+            if (commands[0] !== creation || commands.filter(isCreation).length !== 1)
               throw new Error("MANUAL_BATCH_INVALID");
-            family = (creation.payload as { family: string }).family;
+            family =
+              creation.command === "CREATE_SPARSE_FLIGHT"
+                ? "P2"
+                : (creation.payload as { family: string }).family;
           } else {
             const snapshot = await readLocalManualSnapshotWithinTransaction(
               database,
@@ -666,7 +682,18 @@ export function createTripCoreV2Repository(
             )?.experience_family;
           }
           if (
-            !["P1", "P3", "P4", "P5", "P6"].includes(String(family)) ||
+            !["P1", "P2", "P3", "P4", "P5", "P6"].includes(String(family)) ||
+            (family !== "P2" &&
+              commands.some((c) => c.command === "SET_AUTHORED_FLIGHT_DETAILS")) ||
+            (family === "P2" &&
+              commands.some(
+                (c) =>
+                  ![
+                    "CREATE_SPARSE_FLIGHT",
+                    "SET_AUTHORED_FLIGHT_DETAILS",
+                    "SET_ITEM_PARTICIPATION",
+                  ].includes(c.command),
+              )) ||
             (family !== "P3" && commands.some((c) => c.command === "SET_STAY_DETAILS")) ||
             (family !== "P4" &&
               commands.some((c) => c.command === "SET_RENTAL_DETAILS")) ||
@@ -760,7 +787,10 @@ export function createTripCoreV2Repository(
           current.access_revision !== ctx.accessRevision
         )
           throw new Error("CORE_READ_SUPERSEDED");
-        const old = await database.getFirstAsync<{ epoch: string; revision: number }>(
+        const old = await database.getFirstAsync<{
+          epoch: string;
+          revision: number;
+        }>(
           "SELECT epoch,revision FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
           ctx.accountId,
           ctx.tripId,

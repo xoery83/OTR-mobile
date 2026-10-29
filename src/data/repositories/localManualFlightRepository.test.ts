@@ -1,3 +1,4 @@
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import {
   emptyFlightSegment,
   sparseFlightSavePlan,
@@ -33,6 +34,7 @@ vi.mock("../files/tripPhotoFileStore", () => ({
   discardRetainedTripPhoto: vi.fn(),
 }));
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const opened = new Set<DatabaseSync>(),
   directories: string[] = [];
@@ -182,8 +184,12 @@ it("queue failure rolls back, retains exact attempt IDs and input, and retry com
     f.repo.save(d, { ...fields, departureDate: "2027-02-07" }, () => true),
   ).rejects.toThrow("DRAFT_FROZEN");
   const result = await f.repo.save(d, fields, () => true);
+  if (!("receipt" in result)) throw Error("LOCAL_RECEIPT_REQUIRED");
   expect(result.receipt.operationId).toBe(d.operationId);
-  expect((await f.repo.recover(d))?.receipt).toEqual(result.receipt);
+  const restoredReceipt = await f.repo.recover(d);
+  expect(
+    restoredReceipt && "receipt" in restoredReceipt ? restoredReceipt.receipt : null,
+  ).toEqual(result.receipt);
 });
 it("rejects invalid/closed/foreign intents and permits a second explicitly Manual sparse flight", async () => {
   const f = fixture(),
@@ -196,7 +202,10 @@ it("rejects invalid/closed/foreign intents and permits a second explicitly Manua
   const second = await f.repo.createDraft(d.tripId);
   await expect(
     f.repo.save(second, { ...fields, flightNumberLiteral: "NZ5070" }, () => true),
-  ).resolves.toMatchObject({ status: "LOCAL_COMMITTED", itemId: second.itemId });
+  ).resolves.toMatchObject({
+    status: "LOCAL_COMMITTED",
+    itemId: second.itemId,
+  });
   f.switchAccount();
   await expect(f.repo.recover(d)).rejects.toThrow("ACCOUNT_CHANGED");
   expect(
@@ -374,7 +383,10 @@ it("saves a Flight beside verified pending P6 activity commands without changing
   await activity.save(edit, {
     ...edit.fields,
     title: "Museum edited",
-    activityDetails: { ...edit.fields.activityDetails, sessionLabel: "Morning" },
+    activityDetails: {
+      ...edit.fields.activityDetails,
+      sessionLabel: "Morning",
+    },
   });
   const before = f.sql
     .prepare(
@@ -424,7 +436,11 @@ it("does not infer non-Flight coverage from an unpinned SET or corrupted Manual 
         command: "SET_ITEM_TEXT",
         target: { kind: "ITEM", id: itemId },
         baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
-        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
         payload: { title: "Unknown", description: null },
       });
     await expect(f.repo.save(d, fields, () => true)).rejects.toThrow();
@@ -439,7 +455,11 @@ it("preserves explicit P1-style Everyone participation through normal sparse sav
     d = await draft(f);
   const input = {
     ...fields,
-    participation: { mode: "WHOLE_GROUP" as const, people: [], selfPersonId: null },
+    participation: {
+      mode: "WHOLE_GROUP" as const,
+      people: [],
+      selfPersonId: null,
+    },
   };
   const saved = await f.repo.save(d, input, () => true);
   expect(await f.repo.save(d, input, () => true)).toEqual(saved);
@@ -448,7 +468,10 @@ it("preserves explicit P1-style Everyone participation through normal sparse sav
   await expect(
     f.repo.save(
       d,
-      { ...input, participation: { mode: "SELF", people: [], selfPersonId: null } },
+      {
+        ...input,
+        participation: { mode: "SELF", people: [], selfPersonId: null },
+      },
       () => true,
     ),
   ).rejects.toThrow("LOCAL_MANUAL_OUTCOME_MISMATCH");
@@ -595,6 +618,7 @@ it("persists full authored airports, unresolved DST clocks, same-ID Edit, anothe
   };
   const result = await f.repo.save(edit, edited, () => true);
   expect(result.itemId).toBe(d.itemId);
+  if (!("receipt" in result)) throw Error("LOCAL_RECEIPT_REQUIRED");
   expect(result.receipt.localRevision).toBe(2);
   const second = await f.repo.createDraft(d.tripId);
   await f.repo.save(second, value, () => true);
@@ -674,11 +698,475 @@ it("rejects stale full edits, a foreign Account and malformed authored temporal 
       next,
       {
         ...value,
-        origin: { ...value.origin!, time: { ...value.origin!.time, zone_id: "+05:30" } },
+        origin: {
+          ...value.origin!,
+          time: { ...value.origin!.time, zone_id: "+05:30" },
+        },
       },
       () => true,
     ),
   ).rejects.toThrow();
   f.switchAccount();
   await expect(f.repo.save(next, value, () => true)).rejects.toThrow();
+});
+
+async function normalFormalTrip(f: ReturnType<typeof fixture>) {
+  const tripId = randomUUID();
+  await f.trips.createTrip({
+    tripId,
+    operationId: randomUUID(),
+    syncFormatVersion: 2,
+    destinations: [],
+    name: "Formal QA Trip",
+    destination: null,
+    startDate: null,
+    endDate: null,
+  });
+  const repo = createLocalManualFlightRepository(f.core, f.account, randomUUID, {
+    database: f.db,
+    scope: (accountId) =>
+      accountId === f.accountId
+        ? { accountId, newTripsFrom: "2020-01-01T00:00:00.000Z" }
+        : null,
+  });
+  return { repo, tripId };
+}
+const formalFields = () => ({
+  ...fields,
+  origin: {
+    airportCode: "AKL",
+    name: "Auckland International Airport",
+    terminal: "I",
+    time: {
+      ...coreDateBoundary("2027-02-06"),
+      local_time: "23:10",
+      clock_precision: -1,
+      quality: "ESTIMATED" as const,
+      zone_id: "Pacific/Auckland",
+    },
+  },
+  destination: {
+    airportCode: "NRT",
+    name: "Tokyo Narita",
+    terminal: "2",
+    time: {
+      ...coreDateBoundary("2027-02-07"),
+      local_time: "06:20",
+      clock_precision: -1,
+      quality: "ESTIMATED" as const,
+      zone_id: "Asia/Tokyo",
+    },
+  },
+});
+it("explicit formal P2 commits Sparse+authored same-ID atomically and preserves every supplied field without qualification", async () => {
+  const f = fixture(),
+    { repo, tripId } = await normalFormalTrip(f),
+    draft = await repo.createDraft(tripId);
+  expect(draft.persistence).toBe("FORMAL_MANUAL");
+  const saved = await repo.save(draft, formalFields(), () => true);
+  expect(saved).toMatchObject({
+    status: "LOCAL_COMMITTED",
+    authority: "MANUAL_QUEUE",
+    localStatus: "PENDING",
+    itemId: draft.itemId,
+  });
+  expect("receipt" in saved).toBe(false);
+  const pending = await f.core.pending(await f.core.captureContext(tripId));
+  expect(
+    pending.map((p) => [
+      p.command.command,
+      p.command.target.id,
+      p.command.baseVector[0].revision,
+    ]),
+  ).toEqual([
+    ["CREATE_SPARSE_FLIGHT", draft.itemId, null],
+    ["SET_AUTHORED_FLIGHT_DETAILS", draft.itemId, 1],
+  ]);
+  const read = await repo.readForForm(tripId, draft.itemId);
+  expect(read.details.qualification).toBe("SPARSE");
+  const restored = flightSegmentFromRead(read);
+  expect(restored).toMatchObject({
+    originCode: "AKL",
+    originName: "Auckland International Airport",
+    originTerminal: "I",
+    departureTime: "23:10",
+    departureZone: "Pacific/Auckland",
+    destinationCode: "NRT",
+    destinationName: "Tokyo Narita",
+    destinationTerminal: "2",
+    arrivalDate: "2027-02-07",
+    arrivalTime: "06:20",
+    arrivalZone: "Asia/Tokyo",
+  });
+  expect(await repo.save(draft, formalFields(), () => true)).toEqual(saved);
+  expect(await repo.recover(JSON.parse(JSON.stringify(draft)))).toEqual(saved);
+  expect(
+    f.sql.prepare("SELECT COUNT(*) n FROM local_core_authority_commits").get()!.n,
+  ).toBe(0);
+  await expect(
+    repo.save(
+      draft,
+      {
+        ...formalFields(),
+        origin: { ...formalFields().origin, terminal: "CHANGED" },
+      },
+      () => true,
+    ),
+  ).rejects.toThrow("LOCAL_MANUAL_DRAFT_FROZEN");
+});
+it("formal P2 queue failure rolls back both commands and exact draft retry preserves IDs", async () => {
+  const f = fixture(),
+    { repo, tripId } = await normalFormalTrip(f),
+    draft = await repo.createDraft(tripId);
+  f.failQueue();
+  await expect(repo.save(draft, formalFields(), () => true)).rejects.toThrow(
+    "QUEUE_FAILURE",
+  );
+  expect(await f.core.pending(await f.core.captureContext(tripId))).toEqual([]);
+  const saved = await repo.save(draft, formalFields(), () => true);
+  expect("operationIds" in saved && saved.operationIds).toEqual(draft.formalOperationIds);
+});
+it("formal P2 default remains local and opted-in repository never upgrades existing local journal targets", async () => {
+  const f = fixture(),
+    localDraft = await draft(f);
+  await f.repo.save(localDraft, formalFields(), () => true);
+  const { repo } = await normalFormalTrip(f);
+  const edit = await repo.createDraft(localDraft.tripId, localDraft.itemId, 1);
+  expect(edit.persistence).toBeUndefined();
+  await repo.save(edit, { ...formalFields(), flightNumberLiteral: "NZ5070" }, () => true);
+  expect(
+    (await f.core.pending(await f.core.captureContext(localDraft.tripId))).length,
+  ).toBe(0);
+});
+it("formal P2 refuses stale open drafts, changed account, closed intent and old Trip cutoff", async () => {
+  const f = fixture(),
+    { repo, tripId } = await normalFormalTrip(f),
+    d = await repo.createDraft(tripId);
+  await expect(repo.save(d, formalFields(), () => false)).rejects.toThrow(
+    "LOCAL_MANUAL_INTENT_CLOSED",
+  );
+  f.switchAccount();
+  await expect(repo.save(d, formalFields(), () => true)).rejects.toThrow(
+    "LOCAL_MANUAL_ACCOUNT_CHANGED",
+  );
+  const g = fixture(),
+    normal = await normalFormalTrip(g);
+  const closed = createLocalManualFlightRepository(g.core, g.account, randomUUID, {
+    database: g.db,
+    scope: (accountId) => ({
+      accountId,
+      newTripsFrom: "2099-01-01T00:00:00Z",
+    }),
+  });
+  expect((await closed.createDraft(normal.tripId)).persistence).toBeUndefined();
+});
+
+async function acceptedFormalFlight(f: ReturnType<typeof fixture>, source = false) {
+  const { repo, tripId } = await normalFormalTrip(f),
+    draft = await repo.createDraft(tripId);
+  await repo.save(draft, formalFields(), () => true);
+  const ctx = await f.core.captureContext(tripId);
+  const { readLocalManualSnapshotWithinTransaction } =
+    await import("./tripLocalManualReadRepository");
+  const snapshot = (await readLocalManualSnapshotWithinTransaction(
+    f.db,
+    f.account,
+    f.core,
+    ctx,
+    null,
+  ))!;
+  const { executeCoreCommandV2 } =
+    await import("../../../backend/src/tripCoreV2Commands");
+  const { emptyCoreGraph } = await import("../../domain/trip/tripCoreV2Mutation");
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  let graph = emptyCoreGraph();
+  const commands = (await f.core.pending(ctx)).map((x) => x.command);
+  for (const command of commands) {
+    const result = await executeCoreCommandV2(
+      {
+        withLockedCommand: async (_scope, work) =>
+          work({
+            actor: snapshot.actor,
+            readReceipt: async () => null,
+            hasLegacyOperation: async () => false,
+            canReadReceipt: async () => true,
+            enabledCommands: async () => [
+              "CREATE_SPARSE_FLIGHT",
+              "SET_AUTHORED_FLIGHT_DETAILS",
+            ],
+            readLockedGraph: async () => graph,
+            verifyAdmission: async () => {},
+            lifecycleGraphHash: async () => undefined,
+            commit: async (m) => {
+              if (m) graph = m.graph;
+              return randomUUID();
+            },
+          }),
+      },
+      f.accountId,
+      tripId,
+      command,
+      localTestHash,
+      () => localTestStamp,
+    );
+    if (result.projection !== "FULL") throw Error("FULL_RECEIPT_REQUIRED");
+    await f.core.applyReceipt(ctx, result.receipt);
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(command.operationId);
+  }
+  const bundle = await buildCoreActorCollection(
+    graph,
+    snapshot.actor,
+    {
+      epoch: randomUUID(),
+      revision: 2,
+      accessRevision: 1,
+      generatedAt: localTestStamp,
+    },
+    [
+      {
+        person_id: snapshot.actor.personId!,
+        account_id: f.accountId,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+    ],
+    localTestHash,
+  );
+  await f.core.refresh(ctx, { collection: async () => bundle });
+  if (source) {
+    // A readable Source Item is not a manual Create receipt. Remove only the fixture's manual proof.
+    f.sql.exec("DROP TRIGGER trip_core_intent_binding_immutable");
+    f.sql
+      .prepare(
+        "UPDATE trip_core_pending_intents SET canonical_intent_text=json_set(canonical_intent_text,'$.admission.mode','REVIEWED_SOURCE','$.admission.sourceIntentId',?) WHERE operation_id=?",
+      )
+      .run(randomUUID(), draft.operationId);
+  }
+  return { repo, tripId, itemId: draft.itemId };
+}
+it("accepted same-Creator SPARSE edit requires completed immutable MANUAL SparseCreate proof and remains SPARSE", async () => {
+  const f = fixture(),
+    { repo, tripId, itemId } = await acceptedFormalFlight(f);
+  const read = await repo.readForForm(tripId, itemId);
+  expect(read.itemRevision).toBe(2);
+  const edit = await repo.createDraft(tripId, itemId, 2);
+  await repo.save(
+    edit,
+    {
+      ...formalFields(),
+      flightNumberLiteral: "NZ5071",
+      origin: { ...formalFields().origin, terminal: "D" },
+    },
+    () => true,
+  );
+  const pending = await f.core.pending(await f.core.captureContext(tripId));
+  expect(
+    pending.map((p) => [
+      p.command.command,
+      p.command.target.id,
+      p.command.baseVector[0].revision,
+    ]),
+  ).toEqual([
+    ["SET_AUTHORED_FLIGHT_DETAILS", itemId, 2],
+    ["SET_ITEM_PARTICIPATION", itemId, 3],
+  ]);
+  expect((await repo.readForForm(tripId, itemId)).details.qualification).toBe("SPARSE");
+  expect(flightSegmentFromRead(await repo.readForForm(tripId, itemId))).toMatchObject({
+    flightNumberLiteral: "NZ5071",
+    originTerminal: "D",
+  });
+  await expect(repo.createDraft(tripId, itemId, 2)).rejects.toThrow(
+    "MANUAL_FLIGHT_READ_CHANGED",
+  );
+});
+it.each(["Source", "Qualified", "Creator", "Service", "ActiveBooking"])(
+  "accepted P2 %s never receives Manual Edit permission",
+  async (kind) => {
+    const f = fixture(),
+      { tripId, itemId } = await acceptedFormalFlight(f, kind === "Source");
+    const core = {
+      ...f.core,
+      manualReadSnapshot: async (
+        ...args: Parameters<typeof f.core.manualReadSnapshot>
+      ) => {
+        const value = await f.core.manualReadSnapshot(...args);
+        if (kind === "Qualified")
+          value.graph.trip_flight_intents.find(
+            (r) => r.event_id === itemId,
+          )!.qualification = "QUALIFIED";
+        if (kind === "Service")
+          value.graph.itinerary_transport_services.push({ event_id: itemId } as never);
+        if (kind === "ActiveBooking")
+          value.graph.trip_booking_item_links.push({
+            item_id: itemId,
+            active: true,
+          } as never);
+        if (kind === "Creator")
+          value.graph.itinerary_events.find((r) => r.id === itemId)!.owner_account_id =
+            randomUUID();
+        return value;
+      },
+    };
+    const repo = createLocalManualFlightRepository(core, f.account, randomUUID, {
+      database: f.db,
+      scope: (accountId) => ({
+        accountId,
+        newTripsFrom: "2020-01-01T00:00:00Z",
+      }),
+    });
+    await expect(repo.createDraft(tripId, itemId, 2)).rejects.toThrow();
+  },
+);
+it("formal P2 pending save and all fields recover through actual SQLite close/reopen without local journal promotion", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-formal-p2-"));
+  directories.push(folder);
+  const path = join(folder, "local.sqlite"),
+    f = fixture(path),
+    { repo, tripId } = await normalFormalTrip(f),
+    d = await repo.createDraft(tripId);
+  const result = await repo.save(d, formalFields(), () => true),
+    accountId = f.accountId;
+  f.close();
+  const cold = fixture(path, false, accountId),
+    coldRepo = createLocalManualFlightRepository(cold.core, cold.account, randomUUID, {
+      database: cold.db,
+      scope: (id) => ({
+        accountId: id,
+        newTripsFrom: "2020-01-01T00:00:00Z",
+      }),
+    }),
+    restored = JSON.parse(JSON.stringify(d));
+  expect(await coldRepo.recover(restored)).toEqual(result);
+  expect(await coldRepo.save(restored, formalFields(), () => true)).toEqual(result);
+  expect(
+    flightSegmentFromRead(await coldRepo.readForForm(tripId, d.itemId)),
+  ).toMatchObject({
+    originCode: "AKL",
+    destinationCode: "NRT",
+    originTerminal: "I",
+    arrivalDate: "2027-02-07",
+  });
+});
+it("owning formal batch denies P2 root schedule/place and cross-family authored payload without queue writes", async () => {
+  const f = fixture(),
+    { repo, tripId } = await normalFormalTrip(f),
+    d = await repo.createDraft(tripId);
+  await repo.save(d, formalFields(), () => true);
+  const ctx = await f.core.captureContext(tripId),
+    before = f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n;
+  for (const command of ["SET_ITEM_SCHEDULE", "SET_ITEM_PLACE"]) {
+    const { corePlaceSchema } = await import("../../domain/trip/tripCoreV2");
+    await expect(
+      f.core.commitManualBatch(ctx, async () => ({
+        commands: [
+          {
+            contractVersion: 2,
+            intentVersion: 2,
+            operationId: randomUUID(),
+            tripId,
+            command,
+            target: { kind: "ITEM", id: d.itemId },
+            baseVector: [{ kind: "ITEM", id: d.itemId, revision: 2 }],
+            admission: {
+              mode: "MANUAL",
+              sourceIntentId: null,
+              policyVersion: null,
+            },
+            payload:
+              command === "SET_ITEM_SCHEDULE"
+                ? { schedule: { start: coreDateBoundary("2027-02-06") } }
+                : {
+                    place: Object.fromEntries(
+                      Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+                    ),
+                  },
+          },
+        ],
+        result: async () => null,
+      })),
+    ).rejects.toThrow("MANUAL_BATCH_INVALID");
+  }
+  expect(f.sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n).toBe(
+    before,
+  );
+});
+it("enabling formal scope on the same eligible V2 Trip never promotes its existing local Flight journal", async () => {
+  const f = fixture(),
+    { repo, tripId } = await normalFormalTrip(f);
+  const local = await f.repo.createDraft(tripId);
+  await f.repo.save(local, formalFields(), () => true);
+  const before = f.sql
+    .prepare("SELECT COUNT(*) n FROM local_core_authority_commits")
+    .get()!.n;
+  const edit = await repo.createDraft(tripId, local.itemId, 1);
+  expect(edit.persistence).toBeUndefined();
+  await repo.save(edit, { ...formalFields(), flightNumberLiteral: "NZ5077" }, () => true);
+  expect((await f.core.pending(await f.core.captureContext(tripId))).length).toBe(0);
+  expect(
+    f.sql.prepare("SELECT COUNT(*) n FROM local_core_authority_commits").get()!.n,
+  ).toBe(Number(before) + 1);
+});
+
+it("normal V2 Trip between P1 and P2 cutoffs remains local with no formal intents", async () => {
+  const f = fixture(),
+    tripId = randomUUID();
+  const trips = createTripRepository(
+    f.db,
+    f.account,
+    f.core,
+    () => "2026-10-27T12:00:00.000Z",
+  );
+  await trips.createTrip({
+    tripId,
+    operationId: randomUUID(),
+    syncFormatVersion: 2,
+    destinations: [],
+    name: "Between cutoffs",
+    destination: null,
+    startDate: null,
+    endDate: null,
+  });
+  try {
+    vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "dev");
+    vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://api-dev.xoery.art");
+    vi.stubEnv("EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED", "true");
+    vi.stubEnv(
+      "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+      JSON.stringify({
+        version: 2,
+        accountId: f.accountId,
+        normal: { newTripsFrom: "2026-10-27T06:30:00Z" },
+      }),
+    );
+    const { nativeTripQaFormalManualFlightScope } =
+      await import("../sync/nativeTripQaScope");
+    const repo = createLocalManualFlightRepository(f.core, f.account, randomUUID, {
+      database: f.db,
+      scope: nativeTripQaFormalManualFlightScope,
+    });
+    const d = await repo.createDraft(tripId);
+    expect(d.persistence).toBeUndefined();
+    await repo.save(d, formalFields(), () => true);
+    expect(await f.core.pending(await f.core.captureContext(tripId))).toEqual([]);
+    expect(
+      f.sql.prepare("SELECT COUNT(*) n FROM local_core_authority_commits").get()!.n,
+    ).toBe(1);
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
+
+it('formal sparse number/date-only Create is durable with unknown destination and original operation IDs', async () => {
+  const f = fixture(), {repo, tripId} = await normalFormalTrip(f), draft = await repo.createDraft(tripId);
+  const segment = {...emptyFlightSegment('sparse', '2026-10-29'), flightNumberLiteral:'NZ9401'};
+  const plan = sparseFlightSavePlan([segment]);
+  expect(plan.kind).toBe('READY');
+  if(plan.kind !== 'READY')throw Error('PLAN_NOT_READY');
+  const result = await repo.save(draft, plan.fields, ()=>true);
+  expect(result.itemId).toBe(draft.itemId);
+  expect((await f.core.pending(await f.core.captureContext(tripId))).map(p=>p.command.operationId)).toEqual(draft.formalOperationIds);
 });

@@ -1,3 +1,7 @@
+import {
+  noteGuestPublicationRequested,
+  noteInspectedGuestPublications,
+} from "./guestPublicationHold";
 import { z } from "zod";
 import { coreParticipationSchema, coreUuid } from "@/domain/trip/tripCoreV2";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
@@ -182,6 +186,25 @@ export function createGuestAdoptionRecovery(deps: {
       throw Error("GUEST_ADOPTION_RECOVERY_WRITE_UNVERIFIED");
   }
   return {
+    inspectPublicationRequests() {
+      return pinned(async () => {
+        try {
+          const requested = [];
+          for (const id of await deps.files.listAttempts()) {
+            const state = await read(id);
+            if (state?.nextAction === "QUERY_SERVER_STATUS") requested.push(state);
+          }
+          noteInspectedGuestPublications(
+            scope.localId,
+            requested.map((state) => state.preparation.adoptionId),
+          );
+          return requested;
+        } catch (error) {
+          noteGuestPublicationRequested(scope.localId);
+          throw error;
+        }
+      });
+    },
     read: (adoptionId: string, targetAccountId?: string) =>
       pinned(() => read(adoptionId, targetAccountId)),
     async prepare(input: GuestAdoptionPreparation) {
@@ -221,6 +244,7 @@ export function createGuestAdoptionRecovery(deps: {
         )
           throw Error("GUEST_ADOPTION_PREPARATION_REQUIRED");
         const { preparation: p } = prior;
+        noteGuestPublicationRequested(scope.localId);
         await immutable(
           adoptionId,
           "publish-requested",

@@ -205,17 +205,26 @@ export async function coreHttpBoundary(
         : failure(404, "NOT_VISIBLE");
     }
     if (!(await canReadTrip(actor, trip))) return failure(404, "NOT_VISIBLE");
-    if (path === "capabilities" && request.method === "GET")
-      return reply(
-        200,
-        connection?.read?.capabilities
-          ? coreCapabilitiesSchema.parse(
-              await (capabilityOperation === null
-                ? connection.read.capabilities(actor, trip)
-                : connection.read.capabilities(actor, trip, capabilityOperation)),
-            )
-          : coreClosedCapabilities,
-      );
+    if (path === "capabilities" && request.method === "GET") {
+      const capabilities = connection?.read?.capabilities
+        ? coreCapabilitiesSchema.parse(
+            await (capabilityOperation === null
+              ? connection.read.capabilities(actor, trip)
+              : connection.read.capabilities(actor, trip, capabilityOperation)),
+          )
+        : coreClosedCapabilities;
+      // Older v2 clients reject unknown command enums; this only narrows the DTO.
+      const response = reply(200, {
+        ...capabilities,
+        enabledCommands: capabilities.enabledCommands.filter(
+          (command) =>
+            command !== "SET_AUTHORED_FLIGHT_DETAILS" ||
+            request.headers.get("X-OTR-Core-Authored-Flight") === "1",
+        ),
+      });
+      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight");
+      return response;
+    }
     if (path === "commands" && request.method === "POST") {
       const input = await body(request);
       if (unsupportedVersion(input, "contractVersion"))

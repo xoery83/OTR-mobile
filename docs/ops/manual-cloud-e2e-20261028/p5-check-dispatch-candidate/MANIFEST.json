@@ -1,0 +1,38 @@
+{
+  "status": "UNAPPROVED_NOT_INSTALLED_ISOLATED_L2_PASS",
+  "scope": "FIVE_EXISTING_CHECKS_ONLY",
+  "devTouched": false,
+  "sharedTreeEdited": false,
+  "network": "none",
+  "image": "otr-core-v2-server84-fixture:20261012",
+  "authorityFiles": "Exact separate parent candidate copied solely for disposable fixture, never modified/deployed",
+  "preimageSource": "DISPOSABLE_PG_CLONE_NOT_DEV",
+  "changedConstraintOids": "DROP_ADD_REPLACES_FIVE_OIDS; live OIDs must be recorded before any approved install",
+  "tests": {
+    "actualCoreP5UnknownFields": "Create/Edit/Receipt/Reader/replay PASS",
+    "sixSupportedSubtypes": "PASS_CHECK_MATRIX",
+    "fiveIndependentEmptyFacts": "PASS",
+    "whitespaceNullOverlength": "REJECT_PASS",
+    "legacyFlightNonName": "REJECT_PASS",
+    "beforeNewFactsExactDefinitionValidatedRollback": "PASS",
+    "afterNewFactsRollback": "REFUSED_DATA_PRESERVED_PASS",
+    "authorityRollback": "ACCEPTED_P5_DATA_RETAINED_OID_OWNER_ACL_PASS"
+  },
+  "rollbackLimitation": "No exact old CHECK restore once exception rows exist; close P5 via separately owning authority, retain data and report schema rollback pending",
+  "sha256": {
+    "prepare_checks.py": "7c405bd6070e776d554cb0e642ee0fa42ad5995fc1049bbff45c02042aad46ab",
+    "checks-install.sql": "ba6170b768a23d71f8ae2fc8e1913b649bf327e77cf9747d263e759c859397aa",
+    "checks-rollback.sql": "abe15e8172c6bf8ca87eb50c27485fe6c1a1e8f132b5ee6bfa81763252e8ca4c",
+    "constraint-preimages.json": "fb122487e85c6c27a354d86e72f8f942c9f39a1934793bb07473455bdee1873d",
+    "constraint-postimages.json": "c9226d4be90b2e2c1dc2a74f0d84042ffcdbe2f1b99e08f84b0aa80c4947a43c",
+    "constraint-restored.json": "fb122487e85c6c27a354d86e72f8f942c9f39a1934793bb07473455bdee1873d",
+    "run_isolated.py": "e6e3d76bd59b9c9a56c3b78bd1a72f1dab90690caa672174e72fe05473a8fc91",
+    "p5.mts": "2730dba5c55b6a053fbbc9c35ca33ddc420a9c502c841703140a44397fb3d361",
+    "test_injection.py": "28a53742a5f337974058c00f3f5546be717fb26699896e23c76740b966dc1ce8",
+    "test_after.py": "816757a04f5fa4c43d638016fbe06a6766fc41c47db4a413e1ca371dd223b821",
+    "authority-install.sql": "fa16c2fc575543c1184101e3187b3dc999c95212e933504c1d713543b4b5df04",
+    "authority-install.rollback.sql": "e3531ac758edd2806b7704932848acdce1a91a5840debab54c02dde3ddcdaa3d",
+    "isolated.log": "58e23c203b4d77da4dc2ccce62a67ad759bfc77b4e42e04f50020ea570376239",
+    "CLOSE_ROLLBACK.md": "bbae5f3246f59aca596de44e1e0000979e29749db78c5374df5967ae45f87c01"
+  }
+}

@@ -76,3 +76,31 @@ it("fresh direct entry selects a covering interval or next qualified item, exclu
     p1FreshEntryFocus([ended, next], "2027-01-16T12:00:00Z", new Set(["next"])),
   ).toBe(null);
 });
+
+it("uses an explicit appearance date only for floating quick-add eligibility, without qualifying clocks", () => {
+  const event = place("floating", "Plan", "2027-01-16", "10:30");
+  event.boundaries.forEach((boundary) => {
+    boundary.instant = null;
+    boundary.source_instant = null;
+    boundary.zone_id = null;
+  });
+  const bytes = JSON.stringify(event);
+  expect(p1InsertionEligible(event, "START", "UNKNOWN", undefined, "2027-01-16")).toBe(
+    true,
+  );
+  expect(p1InsertionEligible(event, "START", "UNKNOWN", undefined, "2027-01-15")).toBe(
+    true,
+  );
+  expect(p1InsertionEligible(event, "START", "UNKNOWN", undefined, "2027-01-17")).toBe(
+    false,
+  );
+  expect(p1InsertionEligible(event, "START", "UNKNOWN")).toBe(false);
+  expect(p1InsertionEligible(event, "START", "UNKNOWN", undefined, "bad")).toBe(false);
+  expect(p1InsertionEligible(event, "END", "UNKNOWN", undefined, "2027-01-16")).toBe(
+    false,
+  );
+  expect(p1InsertionEligible(event, "START", "PAST", undefined, "2027-01-16")).toBe(
+    false,
+  );
+  expect(JSON.stringify(event)).toBe(bytes);
+});

@@ -1,0 +1,22 @@
+{
+  "status": "BUILD_VERIFIED_NOT_INSTALLED",
+  "build": 46,
+  "sourceCommit": "4875dc6fbf32e68a832ccbf5d9ee601ab513ebc5",
+  "bundleId": "com.xoery.otrmobile",
+  "simulatedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile",
+  "embeddedBundleSHA256": "a76f23271fd78ad167c5d7a1aa3197f13ad1d82b17b63c8e200f68999c8f5b93",
+  "eagerExpoDevtoolsSocketRemoved": true,
+  "inactiveLogboxDiagnosticLiteralRetained": true,
+  "devModeRetained": true,
+  "existingQaScopeRetained": true,
+  "allSixAdmissionFlagsClosed": true,
+  "configurationSHA256": "be972d2e295586424d3eb501f3c7945e0243a7d8409ac2b4f3bcf47e024254f2",
+  "comparison": {
+    "old43Available": true,
+    "old43EmbeddedSocketListener": false,
+    "old43LogboxErrorLiteralCount": 1
+  },
+  "authLiveE2E": "PENDING",
+  "p4NativeE2E": "PENDING",
+  "packagingRepair": "Explicit ignored .xcode.env.local exports existing embedded Metro flag and unchanged approved public DEV configuration; business source unchanged"
+}

@@ -1,0 +1,77 @@
+{
+  "status": "NATIVE_GUEST_EXISTING_DATA_COLD_REGRESSION_PASS_ADOPTION_NOT_READY",
+  "bundleId": "com.xoery.otrmobile.guestqa",
+  "nativeBaseVersion": 43,
+  "applicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile.guestqa",
+  "machOXMLIdentity": "PASS",
+  "machODERIdentity": "PASS",
+  "noExplicitSharedKeychainGroup": true,
+  "rootOAuthSchemesAbsent": true,
+  "allCloudAdmissionClosed": true,
+  "strictCodeSign": "PASS",
+  "nativeExecutableSHA256": "c28dfb0022ee0b7ce76e7c125bb12baae38e0c4354719720847dccf0516e498c",
+  "nativeBaseCommit": "6fe6f3c09d812b97e9594b54641ad244f372cd2f",
+  "consumerSourceCommit": "d771c7e0ea3aa5842d763d071a019553af38a347",
+  "artifactVersion": "64",
+  "embeddedJSSHA256": "cd49dc3d65b4e8b3c2ec939ae4cf65cf71409080f107d5b73954565017221b10",
+  "jsDevMode": false,
+  "nativeSections": {
+    "__entitlements": "49d2c033ae93928a0d8bc402c73cf808ab15217ea2e4e5d1e1fe8607156e35cd",
+    "__ents_der": "a2b4893cc85ce8882421e65db8490f573d052e30c3344fab5593a37bdf79cc54"
+  },
+  "consumerJS": "FIXED_REVIEWED_D771C7E0",
+  "newSimulator": false,
+  "copiedSessionOrKeychainOrDatabase": false,
+  "independentArtifactReview": "PASS; native identity/signatures/JS SHA/Hermes98 checked only",
+  "nativeRuntimeStatus": "INSTALLED_IN_PLACE_NORMAL_TRIP_P1_AND_SAME_VERSION_COLD_PASS",
+  "scope": "own GuestQA code artifact; no Session/Keychain/SQLite copied; never a Provider/Cloud/Adoption receipt",
+  "nativeEvidence": {
+    "deviceId": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+    "ui": [
+      "My Trips: Guest A 20261029 Edited",
+      "same Trip -> Day: Guest A Walk",
+      "terminate own GuestQA process -> cold launch -> My Trips -> same Trip -> Day: Guest A Walk"
+    ],
+    "readback": {
+      "schema": 74,
+      "guestLocalId": "d6b17e95-b6cd-4816-9c61-daa9d0acdc8f",
+      "tripId": "f8975f1d-fec6-43c1-bae9-2b84c908e552",
+      "tripCount": 1,
+      "p1PendingIntentCount": 1,
+      "queueCount": 3,
+      "allComparedBaselineFieldsUnchanged": [
+        "schema",
+        "localId",
+        "canonicalAccountDatabasePresent",
+        "integrity",
+        "trips",
+        "intents",
+        "commands",
+        "operations",
+        "localPersonBindings",
+        "cloudReadbackCounts"
+      ],
+      "cloudCounts": {
+        "trip_core_read_certificates": 0,
+        "trip_core_trip_core_command_receipts": 0,
+        "local_trip_metadata_confirmations": 0
+      },
+      "canonicalAccountDatabasePresent": false
+    },
+    "guiReturnedToNative": true,
+    "otherBundleOrSessionRead": false,
+    "databaseCopied": false,
+    "newWriteDuringRegression": false
+  },
+  "limits": [
+    "Regression of already accepted Golden A, not a new Create/Edit scenario",
+    "No pending-publication Native recovery, provisional Provider or Adoption E2E",
+    "No read or hash claim for other Apps/private data in this window"
+  ],
+  "independentReadbackReview": {
+    "status": "PASS",
+    "reviewer": "auth_phase1_review",
+    "comparison": "all original baseline/postcold fields identical except phase",
+    "limit": "artifact consistency only; no repeat on-device observation or Provider/Adoption verification"
+  }
+}

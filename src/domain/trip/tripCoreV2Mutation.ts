@@ -1,3 +1,4 @@
+import { authoredFlightDetailsSchema } from "./authoredFlightDetails";
 import {
   isVerifiedLocalOperation,
   localBookedFlightPayloadSchema,
@@ -617,11 +618,17 @@ function executeCoreMutation(
     r.event_type = "transport";
   };
   switch (q.command) {
+    case "SET_AUTHORED_FLIGHT_DETAILS":
     case "SAVE_AUTHORED_FLIGHT_LOCAL": {
-      if (!local || q.admission.mode !== "MANUAL")
+      const formal = q.command === "SET_AUTHORED_FLIGHT_DETAILS";
+      if (!formal && (!local || q.admission.mode !== "MANUAL"))
         throw new Error("LOCAL_CAPABILITY_REQUIRED");
-      const b = localAuthoredFlightPayloadSchema.parse(p);
+      const b = formal
+        ? authoredFlightDetailsSchema.parse(p)
+        : localAuthoredFlightPayloadSchema.parse(p);
       const existing = g.itinerary_events.find((x) => x.id === q.target.id);
+      if (formal && (!existing || existing.owner_account_id !== actor.accountId))
+        throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
       const intent = g.trip_flight_intents.find((x) => x.event_id === q.target.id);
       if (
         existing &&
@@ -632,8 +639,10 @@ function executeCoreMutation(
         ? root("ITEM", q.target.id, true)
         : newItem("P2", b.flightNumberLiteral);
       if (existing) touch("ITEM", r);
-      setParticipants(r, b.participation);
-      if (!existing) setAcl("ITEM", r, b.acl);
+      if ("participation" in b && "acl" in b) {
+        setParticipants(r, b.participation);
+        if (!existing) setAcl("ITEM", r, b.acl);
+      }
       mark("ITEM", r, { title: b.flightNumberLiteral });
       for (const [input, role] of [
         ["origin", "ORIGIN"],

@@ -1,3 +1,8 @@
+import {
+  createFormalManualFlightPersistence,
+  type FormalManualFlightOptions,
+  type FormalManualFlightSaved,
+} from "./manualFlightFormalPersistence";
 import { z } from "zod";
 import { validateCalendarDate } from "../../domain/trip/dayReadModel";
 import { coreDefaults, coreUuid } from "../../domain/trip/tripCoreV2";
@@ -27,6 +32,8 @@ export type ManualFlightDraft = Readonly<{
   operationId: string;
   itemId: string;
   expectedRevision?: number;
+  persistence?: "FORMAL_MANUAL";
+  formalOperationIds?: readonly string[];
 }>;
 export const manualFlightFieldsSchema = corePayloadSchemas.CREATE_SPARSE_FLIGHT.pick({
   flightNumberLiteral: true,
@@ -47,6 +54,9 @@ type Core = Pick<
   | "commitLocal"
   | "combinedSnapshot"
   | "acceptedSnapshot"
+  | "readAcceptedSnapshotWithinTransaction"
+  | "manualReadSnapshot"
+  | "commitManualBatch"
 >;
 export type ManualFlightRead = CoreFlightDayProjection["items"][number];
 export type ManualFlightSaved = {
@@ -87,7 +97,11 @@ export function createLocalManualFlightRepository(
   core: Core,
   account: () => Promise<string>,
   newId = createUuid,
+  formalOptions?: FormalManualFlightOptions,
 ) {
+  const formal = formalOptions
+    ? createFormalManualFlightPersistence(core, account, formalOptions, newId)
+    : null;
   // Attempt identity lives with the existing form draft; only a committed journal is durable.
   const attempts = new WeakMap<
     ManualFlightDraft,
@@ -108,7 +122,13 @@ export function createLocalManualFlightRepository(
       throw new Error("LOCAL_MANUAL_ACCOUNT_CHANGED");
     return ctx;
   }
-  async function recover(draft: ManualFlightDraft): Promise<ManualFlightSaved | null> {
+  async function recover(
+    draft: ManualFlightDraft,
+  ): Promise<ManualFlightSaved | FormalManualFlightSaved | null> {
+    if (draft.persistence === "FORMAL_MANUAL") {
+      if (!formal) throw new Error("MANUAL_FLIGHT_FORMAL_CLOSED");
+      return formal.recover(draft);
+    }
     const ctx = await context(draft);
     const snapshot = await core.combinedSnapshot(ctx);
     await assertAccountRequestContext(ctx, account);
@@ -131,6 +151,19 @@ export function createLocalManualFlightRepository(
       itemId?: string,
       expectedRevision?: number,
     ): Promise<ManualFlightDraft> {
+      if (formal) {
+        try {
+          const draft = await formal.createDraft(tripId, itemId, expectedRevision);
+          if (draft) return draft;
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            error.message !== "MANUAL_FLIGHT_FORMAL_CLOSED"
+          )
+            throw error;
+          // Ineligible old Trips retain the legacy local journal; never upgrade them.
+        }
+      }
       const ctx = await core.captureContext(coreUuid.parse(tripId));
       await assertAccountRequestContext(ctx, account);
       if (itemId) {
@@ -168,9 +201,23 @@ export function createLocalManualFlightRepository(
       const ctx = await core.captureContext(coreUuid.parse(tripId));
       const observed = await createCoreP6DayFeedReader(core)(tripId);
       await assertAccountRequestContext(ctx, account);
-      const item = observed?.projection.items.find(
+      let item = observed?.projection.items.find(
         (entry) => entry.itemId === coreUuid.parse(itemId),
       );
+      if (formal) {
+        try {
+          item = (await formal.readPending(tripId, itemId)) ?? item;
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            !["MANUAL_FLIGHT_FORMAL_CLOSED", "MANUAL_FLIGHT_EDIT_UNAVAILABLE"].includes(
+              error.message,
+            )
+          )
+            throw error;
+          // Source/legacy read authority remains readable without gaining Manual Edit.
+        }
+      }
       if (!item || item.family !== "P2" || item.hidden || item.tripId !== tripId)
         throw new Error("MANUAL_FLIGHT_READ_UNAVAILABLE");
       if (expectedRevision !== undefined && item.itemRevision !== expectedRevision)
@@ -181,7 +228,20 @@ export function createLocalManualFlightRepository(
       draft: ManualFlightDraft,
       fields: ManualFlightFields,
       current: () => boolean,
-    ): Promise<ManualFlightSaved> {
+    ): Promise<ManualFlightSaved | FormalManualFlightSaved> {
+      if (draft.persistence === "FORMAL_MANUAL") {
+        if (!formal) throw new Error("MANUAL_FLIGHT_FORMAL_CLOSED");
+        const parsedFields = manualFlightFieldsSchema.parse(fields);
+        return formal.save(
+          draft,
+          {
+            ...parsedFields,
+            flightNumberLiteral: parsedFields.flightNumberLiteral.trim(),
+            departureDate: validateCalendarDate(parsedFields.departureDate),
+          },
+          current,
+        );
+      }
       const parsed = payload(fields);
       const normalized = manualFlightFieldsSchema.parse({
         flightNumberLiteral: parsed.flightNumberLiteral,
@@ -195,7 +255,7 @@ export function createLocalManualFlightRepository(
       const ctx = await context(draft);
       if (!current()) throw new Error("LOCAL_MANUAL_INTENT_CLOSED");
       const saved = await recover(draft);
-      if (saved) {
+      if (saved && "receipt" in saved) {
         const snapshot = await core.combinedSnapshot(ctx);
         await assertAccountRequestContext(ctx, account);
         const intent = snapshot?.graph.trip_flight_intents.find(
@@ -304,5 +364,11 @@ export async function readLocalManualFlightRepository() {
   return createLocalManualFlightRepository(
     createTripCoreV2Repository(database, requireActiveUserId, tripCoreSha256Hex),
     requireActiveUserId,
+    createUuid,
+    {
+      database,
+      scope: (await import("../sync/nativeTripQaScope"))
+        .nativeTripQaFormalManualFlightScope,
+    },
   );
 }

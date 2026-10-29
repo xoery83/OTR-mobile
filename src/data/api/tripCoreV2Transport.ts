@@ -353,7 +353,7 @@ export function createCoreV2Transport(
           "/capabilities" +
           (operationId === undefined ? "" : "?operationId=" + operationId),
         coreCapabilitiesSchema,
-        headers,
+        { ...headers, "X-OTR-Core-Authored-Flight": "1" },
       );
       await assertAccountRequestContext(ctx, getAccountId);
       return result;

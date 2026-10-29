@@ -1,0 +1,30 @@
+{
+  "status": "PRIVATE_CANDIDATE_VALIDATED_NOT_INSTALLED",
+  "sourceSHA": "a89dd0a5772a20e7650b71fab5742954a5d076e7",
+  "scope": "Exact approved P6 union with approved P5; QA 3f7e964e-79d3-4028-a585-470e798e41ec; normal new Trip receipts since 2026-10-28T02:16:48Z",
+  "changes": "Four CREATE OR REPLACE functions; unchanged fifth P5 guard CAS witness; no Schema/RLS/GRANT/role/table changes",
+  "preimage": "Exact P5 postimages; fresh live preflight still required",
+  "rollback": "Exactly P5; retains P5 capability, statement guard, CHECKs, all accepted facts; closes future P6 writes",
+  "validation": {
+    "backend": "3 suites 56 tests; full typecheck; scoped eslint; backend build; apply-check",
+    "postgres": "Owned network-none PG: P5 unknown-empty create/edit/replay; old P6 CAS rejection, repeat install refusal; P6 seven commands/full Reader/ENTRY clear; reparent/role/delete/wrong-command/missing-context/other-account/stale revision negatives; P5 retained under union; exact rollback retains facts, P5 Edit/Reader enabled, P6 closed; five function OID/owner/ACL/definition restored"
+  },
+  "notVerified": "No DEV, Native E2E, device or Cloud L3 by child",
+  "files": {
+    "install.sql": "4722007978a59f7f8d62b4323c06b6a7f988bda508c740f011bacae7f01f4a80",
+    "install.rollback.sql": "17dc04e1d02d96d491ed951be98893e2e6e5e5b4fb11720821ea805abf14836f",
+    "preimages.json": "ed3f4f4fe49ba2b08f3e925863a251d9a87a87f3900424bcc5767737ea22e371",
+    "postimages.json": "c1fdc432d4e6d6abf48f17e2049f95bc36cd429e8c43218102a89cfda168a4d1",
+    "BACKEND_COMBINED_PROFILE.patch": "c6ef9b23eca1fb2c929a59df501fbf99469833b4ab892f8ee5a1450552fde93c",
+    "FUNCTION_DIFF.txt": "ecac9c3028a7ec9571f7e7015f54ae2bb4405cc3f016819dd72af4f1586f167b",
+    "isolated.log": "7ffaa114a53bf636882222b4213766c4370da7d923f5adfb7204c32abb1f415f",
+    "prepare.py": "cd244263b1f28f4cf2e3ed537d2d6eba859f8b770e2c558d12d623a31a539c09",
+    "make_run.py": "d7525946502eb1510f37c302aeffcaeeb24a7492c204c74ecf1d8b2ed02dbc72",
+    "combined.mts": "7062d01bdf3097bd77150fdef0ebd1fd861a2704c044e277297152552988cbc9",
+    "owned-run.py": "06b869710e3afadefaa57c4615df631e4b74b45a09f15753fd2c92fc34ec7489",
+    "tests.log": "6ea2f0c1ac97477e5d894a5eb66f3e8d0a9f54a2cf33e90e49668eb67034e14c",
+    "typecheck-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "backend-build.log": "62c7ae945378978804494841d1d649a8ca9ba278ed57148628c0eb8bb9f950f5"
+  }
+}

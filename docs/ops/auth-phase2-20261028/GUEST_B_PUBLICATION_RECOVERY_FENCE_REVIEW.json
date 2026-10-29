@@ -1,0 +1,24 @@
+{
+  "status": "SOURCE_REVIEW_PASS_NATIVE_REGRESSION_PENDING",
+  "directed": "7 suites129 tests PASS; typecheck/scopedlint/diff PASS",
+  "independentReview": "7 suites117 tests PASS; no remaining source blocker",
+  "coldSafety": [
+    "valid disk publish-request is restored without process-memory state",
+    "hold prevents actual SQLite open/migrations, not merely later mutation",
+    "opening/migration checks and publication markers serialize on existing apply gate",
+    "already-open repository references check hold before/after identity awaits",
+    "inventory release cannot drop publication hold",
+    "corrupt/unknown recovery retains fail-closed hold",
+    "Guest recovery files and holds are independently scoped"
+  ],
+  "componentEvidence": "Real Node SQLite/checkpoint files; manually constructed marker is a component recovery input only, not proof of server publication or a Native E2E",
+  "testFixtureRepair": "02b33251 Native-delegated bootstrap Auth Snapshot mock only; production Bootstrap unchanged, test Writer returned",
+  "notCertified": [
+    "Native pending-publication recovery UI",
+    "server-authoritative terminal status and release",
+    "whole-dataset files/live-drafts handoff",
+    "real Provider provisional refresh/revocation",
+    "atomic Guest publication/Adoption DEV E2E"
+  ],
+  "authority": "No second journal, device-clock conclusion, local post-publication cancel, override/reset, Schema/RLS/GRANT or cloud activation"
+}

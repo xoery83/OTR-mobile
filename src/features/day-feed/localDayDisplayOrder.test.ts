@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
-import { localDayDisplayOrder } from "./localDayDisplayOrder";
+import { localDayDisplayOrder, mixedDayDisplayOrder } from "./localDayDisplayOrder";
 it("orders authored civil clocks across families while preserving Base slots and untimed stability", () => {
   const row = (title: string, time?: string, base = false) =>
     ({
@@ -52,4 +52,38 @@ it("preserves qualified instant order across zones and hides arrival-only Flight
       },
     ]),
   ).toEqual([]);
+});
+
+it("weaves pending and accepted civil clocks ahead of qualified rows and Base", () => {
+  const entry = (id: string, position: CoreDayRow["position"], clock?: string) => ({
+    id,
+    position,
+    owning: {
+      position,
+      displayTime: clock
+        ? { localTime: clock, comparable: position === "TIMELINE" }
+        : undefined,
+    } as CoreDayRow,
+  });
+  const rows = [
+    entry("accepted-stay", "TNS", "17:00"),
+    entry("qualified", "TIMELINE", "09:00"),
+    entry("base", "BASE"),
+    entry("pending", "TNS", "03:28"),
+    entry("date-only", "TNS"),
+  ];
+  expect(
+    mixedDayDisplayOrder(
+      rows,
+      (row) => row.position,
+      (row) => row.owning,
+    ).map((row) => row.id),
+  ).toEqual(["date-only", "pending", "accepted-stay", "qualified", "base"]);
+  expect(rows.map((row) => row.id)).toEqual([
+    "accepted-stay",
+    "qualified",
+    "base",
+    "pending",
+    "date-only",
+  ]);
 });

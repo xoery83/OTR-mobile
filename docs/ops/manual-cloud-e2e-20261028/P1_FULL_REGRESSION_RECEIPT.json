@@ -1,0 +1,63 @@
+{
+  "build": 49,
+  "sourceCommit": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+  "itemId": "1a0f631a-91c7-402a-a202-a5a3f99419b8",
+  "operationId": "c7879eb1-c281-4e72-b24b-ea438e6f6f2c",
+  "revision": 5,
+  "create": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "title": "Forms QA Cloud Plan 1028 Edited",
+  "startDate": "2026-11-02",
+  "startTime": "22:37",
+  "participation": "SELECTED_MEMBERS",
+  "receiptSHA256": "dcc3103bfe0311220855b7b39301560d69d0546cab0a1b076ef161ae58a9e5da",
+  "fullP1Regression": "IN_PROGRESS",
+  "edit": "SERVER_ACCEPTED_SERVER_VERIFIED",
+  "coldRecovery": "PASS_SAME_ITEM_LATEST_FIELDS_NO_PENDING_DOT",
+  "editBuild": 52,
+  "editSourceCommit": "9c81800559e93fde58337167d49f13dc17462f7d",
+  "endDate": "2026-11-03",
+  "endTime": "01:41",
+  "place": "Forms QA Plan Place",
+  "note": "P1 edited note",
+  "editReceipts": [
+    {
+      "command": "SET_ITEM_TEXT",
+      "operationId": "514f0c32-96b9-4c43-a56f-ca0cc4da2e3c",
+      "outcome": "APPLIED",
+      "receiptSHA256": "8c6b4ead274a0ff3e9041e5ef442978d9b5e13756dc1febf36ef18d2244c3d14"
+    },
+    {
+      "command": "SET_ITEM_SCHEDULE",
+      "operationId": "6d604629-b452-40b7-88ae-435424b960a7",
+      "outcome": "APPLIED",
+      "receiptSHA256": "b3cdbb67653d66a7f90c7c2027b2767adab4341b44b661f7f2426c6d4599729a"
+    },
+    {
+      "command": "SET_ITEM_PLACE",
+      "operationId": "64231b7f-2e48-4479-99a8-18b1ed017288",
+      "outcome": "APPLIED",
+      "receiptSHA256": "9e7f20c1d3aec27a22ec42e8469d6e9600c088c138de0172db564655c8df1f10"
+    },
+    {
+      "command": "SET_ITEM_PARTICIPATION",
+      "operationId": "90e2b4fe-e5a8-460d-ae90-fabc5a19e282",
+      "outcome": "APPLIED",
+      "receiptSHA256": "be491aeb5890dcf5060c44d1d219ed991823d3ed719558ab4070e8ef582ab147"
+    }
+  ],
+  "queue": "FIVE_COMPLETED",
+  "participantEmptySelection": "DONE_DISABLED",
+  "remaining": [
+    "Native offline/reconnect",
+    "duplicate dispatch/retry",
+    "stale edit conflict",
+    "live account/creator/trip negatives",
+    "full Reader gesture and EN/ZH light/dark matrix"
+  ],
+  "observedIssues": [
+    "Undated Trip fallback mixed P3/P4 civil ordering",
+    "Undated Trip fallback bottom Focus scrolling/quick-add visibility"
+  ]
+}

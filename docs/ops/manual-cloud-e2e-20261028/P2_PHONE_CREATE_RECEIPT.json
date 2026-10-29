@@ -1,0 +1,207 @@
+{
+  "status": "PHONE_NORMAL_P2_CREATE_AUTHORED_DETAILS_ACCEPTED_VERIFIED_NATIVE_EDIT_UI_REPAIR_PENDING",
+  "build": {
+    "source": "c40c8efc1ab0cc38d877f1fc69a9f5506f221c85",
+    "build": 92,
+    "bundleId": "com.xoery.otrmobile.formsqa",
+    "jsSHA256": "16258c835bd6d831f5ae557d49b07fa00bb4a57ced7bba5b43bb5200f9c9ef31",
+    "nativeTextSHA256": "eb7cf3bfc1d62bc3e4b5656025ff1d0f1b1c7ef6c8a2a4dcb4f5332d456f3dc5",
+    "nativeBaseline": "phone60/56/54 retained Native code; JS-only",
+    "profileRetained": true,
+    "entitlementsRetained": true,
+    "formalP2Enabled": "QA normal Account/Trip scope only; protected SQL Owner approved",
+    "importAdmissionFlags": "all false",
+    "backend": "curated-e973ffe0-p2-16644f85; exact five-function approved SQL installed"
+  },
+  "item": {
+    "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+    "owner": "3f7e964e-79d3-4028-a585-470e798e41ec",
+    "revision": 2,
+    "shape": "TRANSPORT",
+    "title": "NZ9292",
+    "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+  },
+  "intents": [
+    {
+      "event_id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+      "flight_number_literal": "NZ9292",
+      "qualification": "SPARSE",
+      "trip_id": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+    }
+  ],
+  "endpoints": [
+    {
+      "accepted_address": null,
+      "accepted_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_region": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "authored_address": null,
+      "authored_address_country": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_postal_code": null,
+      "authored_address_region": null,
+      "authored_label": "Nelson Airport",
+      "authored_text": null,
+      "basis": "DERIVED_CIVIL",
+      "candidate_address": null,
+      "candidate_confidence": null,
+      "candidate_error_code": null,
+      "candidate_input_revision": null,
+      "candidate_label": null,
+      "candidate_latitude": null,
+      "candidate_longitude": null,
+      "candidate_observed_at": null,
+      "candidate_place_id": null,
+      "candidate_provider": null,
+      "candidate_provider_place_id": null,
+      "candidate_state": null,
+      "civil_resolution": "PENDING",
+      "clock_precision": -1,
+      "event_id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+      "instant": null,
+      "interpretation_input_sha256": null,
+      "interpretation_key": null,
+      "local_date": "2026-10-29",
+      "local_time": "13:00:00",
+      "location_input_revision": null,
+      "provenance_refs": null,
+      "quality": "ESTIMATED",
+      "resolution_offset_seconds": null,
+      "role": "DESTINATION",
+      "source_instant": null,
+      "source_instant_precision": null,
+      "spatial_provenance_refs": null,
+      "supplied_offset_seconds": null,
+      "trip_id": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+      "zone_id": "Pacific/Auckland"
+    },
+    {
+      "accepted_address": null,
+      "accepted_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_region": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "authored_address": null,
+      "authored_address_country": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_postal_code": null,
+      "authored_address_region": null,
+      "authored_label": "Auckland International Airport",
+      "authored_text": null,
+      "basis": "DERIVED_CIVIL",
+      "candidate_address": null,
+      "candidate_confidence": null,
+      "candidate_error_code": null,
+      "candidate_input_revision": null,
+      "candidate_label": null,
+      "candidate_latitude": null,
+      "candidate_longitude": null,
+      "candidate_observed_at": null,
+      "candidate_place_id": null,
+      "candidate_provider": null,
+      "candidate_provider_place_id": null,
+      "candidate_state": null,
+      "civil_resolution": "PENDING",
+      "clock_precision": -1,
+      "event_id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+      "instant": null,
+      "interpretation_input_sha256": null,
+      "interpretation_key": null,
+      "local_date": "2026-10-29",
+      "local_time": "12:00:00",
+      "location_input_revision": null,
+      "provenance_refs": null,
+      "quality": "ESTIMATED",
+      "resolution_offset_seconds": null,
+      "role": "ORIGIN",
+      "source_instant": null,
+      "source_instant_precision": null,
+      "spatial_provenance_refs": null,
+      "supplied_offset_seconds": null,
+      "trip_id": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+      "zone_id": "Pacific/Auckland"
+    }
+  ],
+  "details": [
+    {
+      "airport_code": "AKL",
+      "event_id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+      "pier": null,
+      "platform": null,
+      "role": "ORIGIN",
+      "terminal": null,
+      "trip_id": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+    },
+    {
+      "airport_code": "NSN",
+      "event_id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+      "pier": null,
+      "platform": null,
+      "role": "DESTINATION",
+      "terminal": null,
+      "trip_id": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+    }
+  ],
+  "services": 0,
+  "receipts": [
+    {
+      "command": "CREATE_SPARSE_FLIGHT",
+      "operationId": "fdd776d5-2586-423b-9689-0ee77765254d",
+      "outcome": "APPLIED",
+      "receiptSHA256": "18c7881c2fb99a557221d4061454bdfdc1dda9d5eab0bca25348d9acf365f442",
+      "targets": [
+        {
+          "baseRevision": null,
+          "committedRevision": 1,
+          "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+          "kind": "ITEM"
+        }
+      ]
+    },
+    {
+      "command": "SET_AUTHORED_FLIGHT_DETAILS",
+      "operationId": "4085b10b-0685-48fc-bfd8-d138751c2a37",
+      "outcome": "APPLIED",
+      "receiptSHA256": "19de73eee087bf332f4ec9b5626d4bba6962bb91f848101abbaea70735bce501",
+      "targets": [
+        {
+          "baseRevision": 1,
+          "committedRevision": 2,
+          "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+          "kind": "ITEM"
+        }
+      ]
+    }
+  ],
+  "readSHA256": "a45ad6e9043f0c6902fa4da1a51e56145ded01aa48df2d50c3fb43375eb7d31a",
+  "nativeUi": {
+    "normalCreateForm": true,
+    "dateAirportsLocalClocksEveryoneEntered": true,
+    "realDayFeedGridMatchesAcceptedFields": true,
+    "genericFocusFallbackObserved": true,
+    "genericImmersiveFieldsVisible": true,
+    "approvedDetailsEditIconMissing": true,
+    "civilSort12After17Observed": true
+  },
+  "remaining": [
+    "Restore existing FlightLegRow/normal P2Details route for accepted authored P2",
+    "Same Item Edit Accepted/independent readback",
+    "Cold recovery and negative matrix"
+  ],
+  "qualificationBoundary": "SPARSE authored endpoint facts with zero Service; no fake Qualified proof/UTC/Booking/Journey/Ticket."
+}

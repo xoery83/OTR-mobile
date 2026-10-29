@@ -97,7 +97,7 @@ it("binds Edit to the exact Repository draft rather than granting it from readab
     repository: async () => repository,
     generation: () => 5,
   });
-  expect(repository.read).toHaveBeenCalledWith(tripId, itemId);
+  expect(repository.read).toHaveBeenCalledWith(tripId, itemId, 1);
   expect(result?.editor).toEqual({ repository, draft });
 });
 

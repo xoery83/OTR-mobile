@@ -39,6 +39,8 @@ import { visual } from "@/ui/visual";
 import { TripCalendarRangeField } from "./TripCalendarRangeField";
 
 type Opened = { repository: ManualRentalRepository; draft: ManualRentalDraft };
+const sameRentalLocation = (fields: ManualRentalFields | undefined) =>
+  !!fields?.pickupLocation.trim() && fields.pickupLocation === fields.returnLocation;
 
 function TimeField({
   label,
@@ -154,8 +156,10 @@ export function P4RentalEditor({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
-  const [sameReturnLocation, setSameReturnLocation] = useState(false);
-  const sameReturnRef = useRef(false);
+  const [sameReturnLocation, setSameReturnLocation] = useState(
+    sameRentalLocation(opened?.draft.fields),
+  );
+  const sameReturnRef = useRef(sameReturnLocation);
   const generation = getAccountGeneration();
   const identity = useRef({ tripId, itemId, opened });
   useLayoutEffect(() => {
@@ -213,6 +217,8 @@ export function P4RentalEditor({
           if (!itemId && initialDate) value.startDate = initialDate;
           setSource({ repository, draft });
           fieldsRef.current = value;
+          sameReturnRef.current = sameRentalLocation(value);
+          setSameReturnLocation(sameReturnRef.current);
           setFields(value);
           initialRef.current = JSON.stringify(value);
           setStatus("READY");
