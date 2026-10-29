@@ -1,0 +1,28 @@
+{
+  "status": "ACTUAL_PRIMARY_INTEGRATED_239_PASS_FINAL_PUSH_VERIFICATION_PENDING",
+  "baselineMain": "4d69e0e3e9a2249ff2599794a0d1b02f6b94eb3f",
+  "integratedSource": "5f036de47086edfcd324049852528f98f528a09d",
+  "reviewedCode": "5da59fa252ea6361ce7726b9a9746c1b8fbdc4e7",
+  "actualPrimary": {
+    "suites": 11,
+    "tests": 239,
+    "result": "PASS"
+  },
+  "independent": "NO_BLOCKER; 8suite168 + overlapping3suite71; artifact identity PASS separately",
+  "nativeFiniteEvidence": "GUEST_B_GUESTQA65_ARTIFACT.json; no actual Native freeze/Edit/checkpoint rebuild/Adoption claim",
+  "preservedPrimary": {
+    "sixOriginalDirtyFiles": "EXACT_NAMES_AND_BYTES_UNCHANGED",
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "privateTransactionCandidatesMerged": false,
+  "sqlOrGrantOrDevChanged": false,
+  "loginAdoptionPublisherEnabled": false,
+  "remaining": [
+    "full files/all-live-draft aggregation",
+    "Native checkpoint-to-screen reconstruction",
+    "atomic server staging/publication/receipt and precise protected Gate",
+    "real OTP Adoption/negative/UNKNOWN/cold DEV E2E"
+  ],
+  "finalRemoteVerification": "private GUEST_B_TRIP_DRAFT_MAIN_VERIFIED.json confirms final main/origin/remote after final docs commit and normal push; this is pre-final-push snapshot"
+}

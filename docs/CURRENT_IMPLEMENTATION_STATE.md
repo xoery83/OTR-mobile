@@ -112,7 +112,10 @@ v1 remains P1-only. Unsubmitted Trip Create is not a persisted/published Trip.
 Directed11 suites239/types/scopedlint/UIguard PASS; independent NO_BLOCKER
 (8 suites168 + overlapping3 suites71). GuestQA65/source5da59fa2 normal Create/nickname/dateCancel/Stay/Discard and
 original Trip/P1 cold PASS; all independent Guest SQLite baseline fields unchanged.
-Native Edit/freeze/checkpoint-screen reconstruction pending; no login/publisher consumer or
+Actual primary11 suites239 PASS after source5f036de4 integration; original six
+dirty/full diff preserved. GUEST_B_TRIP_DRAFT_MAIN_INTEGRATION.json and private
+final refs snapshot pin this integration. Native Edit/freeze/checkpoint-screen
+reconstruction pending; no login/publisher consumer or
 Native checkpoint-to-screen restoration. GUEST_B_TRIP_LIVE_DRAFT_REVIEW.json tracks
 finite readiness. Full-file/all-family/all-live-draft aggregation remains missing.
 
