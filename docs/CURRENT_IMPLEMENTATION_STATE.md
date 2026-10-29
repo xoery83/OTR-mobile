@@ -69,7 +69,9 @@ Golden B default-closed preparation (ops/auth-phase2-20261028):
 - Latest local28e705ab: process-local inventory freeze on existing workspace; queued
   writes blocked, lease pins checked, old cleanup cannot unlock new scope. Current
   Guest can clear obsolete-generation fences. Directed88/independent32 real SQLite
-  tests/types/lint PASS. No durable publication lock/Native activation.
+  tests/types/lint PASS. Checkpoint holds now restore before SQLite open/migration;
+  opens/markers serialize on the gate. Directed129/independent117 PASS; Native
+  recovery UI/server terminal status/publisher remain closed.
 
 Source confirms current Capture/Documents producers Account-only; originals are
 registered SQLite BLOBs. This excludes physical-disk absence and Photo/Ledger proof.
@@ -79,9 +81,10 @@ Last independently verified main/origin/remote74c6403027e13824be020f483915526d41
 Auth-only sourceb8c2987d normal-pushed; actual primary111 tests PASS; six dirty files/
 full diff preserved. GUEST_B_VERIFICATION_MAIN_INTEGRATION.json is pre-final-push
 snapshot. Freeze28e705ab remains local. Main/Push returned; reacquire/verify before
-integration. Core focusedab33fc9f independently122 tests + isolated real PG rollback
-PASS, handed back to Native; do NOT whole-merge its Native-parent branch. No public
-Core/Trip/SQL/Host/GUI lease held. Native TripCreate DI/live-Trip-draft seams requested.
+integration. Coreab33fc9f (122 tests + isolated PG rollback) and TripCreate2c04394d (30 tests)
+were independently reviewed and handed back to Native. Focused commits only; never
+whole-merge Core's Native-parent branch. No public-file/SQL/Host lease held; Native
+live-Trip-draft seam pending. GuestQA-only GUI permitted for bounded regression.
 
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/

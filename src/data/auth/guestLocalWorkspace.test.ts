@@ -1,5 +1,19 @@
+import {
+  createGuestAdoptionRecovery,
+  type GuestRecoveryFiles,
+} from "./guestAdoptionRecovery";
+import { hasGuestPublicationHold } from "./guestPublicationHold";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -95,10 +109,34 @@ function fixture() {
     expect(name).toMatch(/^otr-guest-[0-9a-f-]+\.db$/);
     return connect(name);
   });
+  function recoveryFiles(localId: string): GuestRecoveryFiles {
+    const recoveryRoot = join(directory, "auth-recovery", localId);
+    return {
+      async listAttempts() {
+        return existsSync(recoveryRoot) ? readdirSync(recoveryRoot) : [];
+      },
+      async read(id, checkpoint) {
+        const file = join(recoveryRoot, id, checkpoint + ".json");
+        return existsSync(file) ? readFileSync(file, "utf8") : null;
+      },
+      async create(id, checkpoint, text) {
+        const folder = join(recoveryRoot, id);
+        mkdirSync(folder, { recursive: true });
+        writeFileSync(join(folder, checkpoint + ".json"), text, { flag: "wx" });
+      },
+    };
+  }
+  const files = recoveryFiles(guestId);
   const newOpener = () =>
-    createGuestLocalWorkspaceOpener({ readPrincipal: async () => principal, open });
+    createGuestLocalWorkspaceOpener({
+      readPrincipal: async () => principal,
+      open,
+      recoveryFiles,
+    });
   return {
     guestId,
+    files,
+    databasePath: join(directory, `otr-guest-${guestId}.db`),
     opened,
     open,
     newOpener,
@@ -802,4 +840,168 @@ it("recovers an obsolete prepublication freeze only through a new current Guest 
   );
   await lease.release();
   await current.trips.createTrip(tripInput());
+});
+
+async function preparedPublication(
+  f: ReturnType<typeof fixture>,
+  workspace: Awaited<ReturnType<ReturnType<typeof f.newOpener>>>,
+) {
+  const recovery = createGuestAdoptionRecovery({
+    scope: workspace.scope,
+    files: f.files,
+    assertGuest: async () => undefined,
+  });
+  const preparation = {
+    schemaId: "otr.auth.guest-adoption-recovery/1" as const,
+    sourceKind: "GUEST" as const,
+    sourceGuestLocalId: f.guestId,
+    adoptionId: randomUUID(),
+    targetAccountId: randomUUID(),
+    checkpoint: "PREPARED" as const,
+    inventorySha256: "a".repeat(64),
+    tripIds: [],
+    drafts: [],
+  };
+  const prepared = await recovery.prepare(preparation);
+  return { recovery, preparation, prepared: prepared! };
+}
+it("restores a publication hold from a disk checkpoint without relying on process memory", async () => {
+  const f = fixture(),
+    original = await f.newOpener()();
+  await original.trips.createTrip(tripInput());
+  const { preparation, prepared } = await preparedPublication(f, original);
+  expect(hasGuestPublicationHold(f.guestId)).toBe(false);
+  // Component recovery fixture only: no server request, Provider identity or Adoption PASS.
+  await f.files.create(
+    preparation.adoptionId,
+    "publish-requested",
+    canonicalCoreJson({
+      schemaId: preparation.schemaId,
+      sourceKind: "GUEST",
+      sourceGuestLocalId: f.guestId,
+      adoptionId: preparation.adoptionId,
+      targetAccountId: preparation.targetAccountId,
+      checkpoint: "PUBLISH_REQUESTED",
+      preparationSha256: prepared.preparationSha256,
+    } as Json),
+  );
+  f.close();
+  advanceAccountGeneration();
+  const opensBefore = f.open.mock.calls.length;
+  await expect(f.newOpener()()).rejects.toThrow("GUEST_PUBLICATION_STATUS_REQUIRED");
+  expect(f.open).toHaveBeenCalledTimes(opensBefore);
+  const readonly = new DatabaseSync(f.databasePath, { readOnly: true });
+  try {
+    expect(
+      readonly.prepare("SELECT count(*) AS n FROM local_trip_containers").get(),
+    ).toEqual({ n: 1 });
+  } finally {
+    readonly.close();
+  }
+});
+it("immediately fences existing Guest repository references and refuses inventory release after publication request", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()(),
+    lease = await workspace.freezeForInventory();
+  const { recovery, preparation, prepared } = await preparedPublication(f, workspace);
+  await recovery.requestPublication(
+    preparation.adoptionId,
+    preparation.targetAccountId,
+    prepared.preparationSha256,
+  );
+  await expect(lease.release()).rejects.toThrow("GUEST_PUBLICATION_STATUS_REQUIRED");
+  await expect(workspace.trips.createTrip(tripInput())).rejects.toThrow(
+    "GUEST_PUBLICATION_STATUS_REQUIRED",
+  );
+  await expect(
+    recovery.cancelBeforePublication(preparation.adoptionId, preparation.targetAccountId),
+  ).rejects.toThrow("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
+  expect((await lease.readCensus()).totals.trips).toBe(0);
+});
+it("keeps recovery corruption fail-closed for both new and already-open Guest handles", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  await f.files.create(randomUUID(), "prepared", "{}");
+  await expect(f.newOpener()()).rejects.toThrow();
+  await expect(workspace.trips.createTrip(tripInput())).rejects.toThrow(
+    "GUEST_PUBLICATION_STATUS_REQUIRED",
+  );
+});
+it("does not treat a cancelled prepublication attempt as a publication request", async () => {
+  const f = fixture(),
+    workspace = await f.newOpener()();
+  const { recovery, preparation } = await preparedPublication(f, workspace);
+  await recovery.cancelBeforePublication(
+    preparation.adoptionId,
+    preparation.targetAccountId,
+  );
+  const restored = await f.newOpener()();
+  expect(await restored.inspectPublicationRequests()).toEqual([]);
+  await restored.trips.createTrip(tripInput());
+});
+
+it("serializes opening and migration checks before a queued publication checkpoint", async () => {
+  const f = fixture(),
+    original = await f.newOpener()();
+  const { recovery, preparation, prepared } = await preparedPublication(f, original);
+  let entered!: () => void, release!: () => void;
+  const ready = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const waiting = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const events: string[] = [];
+  f.open.mockImplementationOnce(async (name) => {
+    events.push("OPEN_ENTER");
+    entered();
+    await waiting;
+    events.push("OPEN_FINISHED");
+    return f.connect(name);
+  });
+  f.afterRead(() => {
+    events.push("MIGRATIONS_CHECKED");
+  });
+  const create = f.files.create;
+  f.files.create = async (id, checkpoint, text) => {
+    if (checkpoint === "publish-requested") events.push("PUBLISH_REQUESTED");
+    await create(id, checkpoint, text);
+  };
+  const opening = f.newOpener()();
+  await ready;
+  const publishing = recovery.requestPublication(
+    preparation.adoptionId,
+    preparation.targetAccountId,
+    prepared.preparationSha256,
+  );
+  expect(hasGuestPublicationHold(f.guestId)).toBe(false);
+  release();
+  const opened = await opening;
+  await publishing;
+  expect(events).toEqual([
+    "OPEN_ENTER",
+    "OPEN_FINISHED",
+    "MIGRATIONS_CHECKED",
+    "PUBLISH_REQUESTED",
+  ]);
+  await expect(opened.trips.createTrip(tripInput())).rejects.toThrow(
+    "GUEST_PUBLICATION_STATUS_REQUIRED",
+  );
+});
+
+it("does not apply one Guest's recovery hold or files to another Guest scope", async () => {
+  const f = fixture(),
+    a = await f.newOpener()();
+  const { recovery, preparation, prepared } = await preparedPublication(f, a);
+  await recovery.requestPublication(
+    preparation.adoptionId,
+    preparation.targetAccountId,
+    prepared.preparationSha256,
+  );
+  f.setPrincipal({ kind: "GUEST", localId: randomUUID() });
+  advanceAccountGeneration();
+  const b = await f.newOpener()();
+  expect(await b.inspectPublicationRequests()).toEqual([]);
+  await b.trips.createTrip(tripInput());
+  expect(await b.trips.listTrips()).toHaveLength(1);
 });
