@@ -80,3 +80,7 @@ The finite --e2e/--keychain execution preflight on fixed source f06beaa6 returne
 RECEIVING_CREDENTIAL_REQUIRED before any OTP/Receiving call or Account creation.
 PREFLIGHT.json records the boundary. Next required action is saving the independent
 new Keychain item; existing SMTP credentials remain untouched.
+
+Owner screenshot and exact host metadata lookup resolved the item naming:
+label OTR-QA-Inbound, service (Where) OTR_QA_RESEND_API_KEY, account resend.
+The tool now queries that exact triple; no generic Keychain search or SMTP fallback.

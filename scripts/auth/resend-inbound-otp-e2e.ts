@@ -148,15 +148,25 @@ async function coldRestore(
   }
   requireTrue(JSON.parse(output).accountId === accountId, "COLD_PROCESS_IDENTITY_FAILED");
 }
+export const inboundKeychainArgs = [
+  "find-generic-password",
+  "-s",
+  "OTR_QA_RESEND_API_KEY",
+  "-a",
+  "resend",
+  "-l",
+  "OTR-QA-Inbound",
+  "-w",
+] as const;
 function readReceivingKey(keychain: boolean) {
   let receivingKey = process.env.OTR_QA_RESEND_API_KEY;
   if (!receivingKey && keychain) {
     try {
-      receivingKey = execFileSync(
-        "/usr/bin/security",
-        ["find-generic-password", "-s", "OTR-QA-Inbound", "-a", "resend", "-w"],
-        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 15000 },
-      ).trim();
+      receivingKey = execFileSync("/usr/bin/security", [...inboundKeychainArgs], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 15000,
+      }).trim();
     } catch {
       throw new OtpQaError("RECEIVING_CREDENTIAL_REQUIRED");
     }
