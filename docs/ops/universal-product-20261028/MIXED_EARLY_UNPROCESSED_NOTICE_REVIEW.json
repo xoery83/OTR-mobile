@@ -1,0 +1,17 @@
+{
+  "status": "LOCAL_PASS_NOT_INSTALLED",
+  "problem": "Normal mixed-input processing can fail or wait before Results; current unsupported PDF then had no immediate processing-scope explanation.",
+  "change": "Reuse existing Not processed count/filenames before Results; do not show the past parsing-pass description until a real Result exists. Result path still uses actual sourceBindings difference.",
+  "red": 1,
+  "passedTests": 67,
+  "checks": {
+    "typecheck": 0,
+    "uiGuard": 0,
+    "scopedLint": 0
+  },
+  "independentReview": "NO_BLOCKER",
+  "newCopyOrCatalogChanges": false,
+  "newSourceCandidateReviewAuthority": false,
+  "newRequestsOrAutomaticActions": false,
+  "nativeE2ePass": false
+}

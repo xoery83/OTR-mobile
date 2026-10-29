@@ -565,3 +565,29 @@ it("lists unprocessed originals separately without inventing a candidate or Revi
   expect(html).toContain("Not processed (1)");
   expect(f.result.sourceBindings).toHaveLength(2);
 });
+
+it("shows unsupported retained input before Results without inventing a Source or Review", () => {
+  const f = fixture();
+  const model = {
+    ...f.props.model,
+    inputs: [
+      { ...f.props.model.inputs[0], declaredContentType: "text/plain" },
+      f.props.model.inputs[1],
+      {
+        id: randomUUID(),
+        kind: "FILE",
+        originalFilename: "Retained-before-task.pdf",
+        declaredContentType: "application/pdf",
+      },
+    ],
+  } as CaptureJobReadModel;
+  const html = renderToStaticMarkup(
+    createElement(UniversalResultView, { ...f.props, model, result: null, busy: true }),
+  );
+  expect(html).toContain("Not processed (1)");
+  expect(html).toContain("Retained-before-task.pdf");
+  expect(html).not.toContain(t("capture.ai.retainedUnprocessedDescription"));
+  expect(html).not.toContain("Museum walk");
+  expect(f.props.start).not.toHaveBeenCalled();
+  expect(f.result.sourceBindings).toHaveLength(2);
+});

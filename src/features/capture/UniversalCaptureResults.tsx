@@ -1,3 +1,4 @@
+import { isUnsupportedUniversalInputMetadata } from "@/domain/capture/universalInputSupport";
 import { UniversalP1SourceReviewForm } from "./UniversalP1SourceReviewForm";
 import {
   useUniversalP1Admission,
@@ -84,7 +85,7 @@ export function UniversalResultView({
     ? model.inputs.filter(
         (input) => !result.sourceBindings.some((b) => b.inputId === input.id),
       )
-    : [];
+    : model.inputs.filter(isUnsupportedUniversalInputMetadata);
   const ready = model.allInputsAccepted && !!model.batch.context.tripPrior;
   return (
     <UiSection title={t("capture.ai.title")}>
@@ -95,6 +96,23 @@ export function UniversalResultView({
         </UiText>
       ) : queued ? (
         <UiText style={s.meta}>{t("capture.ai.queued")}</UiText>
+      ) : null}
+      {unprocessed.length ? (
+        <View style={s.group}>
+          <UiText style={s.heading}>
+            {t("capture.ai.retainedUnprocessedTitle", { count: unprocessed.length })}
+          </UiText>
+          {result ? (
+            <UiText style={s.meta}>
+              {t("capture.ai.retainedUnprocessedDescription")}
+            </UiText>
+          ) : null}
+          {unprocessed.map((input) => (
+            <UiText key={input.id} style={s.copy}>
+              {input.originalFilename ?? t("capture.unnamed")}
+            </UiText>
+          ))}
+        </View>
       ) : null}
       {result ? (
         <>
@@ -121,21 +139,6 @@ export function UniversalResultView({
                 </View>
               );
             })}
-          {unprocessed.length ? (
-            <View style={s.group}>
-              <UiText style={s.heading}>
-                {t("capture.ai.retainedUnprocessedTitle", { count: unprocessed.length })}
-              </UiText>
-              <UiText style={s.meta}>
-                {t("capture.ai.retainedUnprocessedDescription")}
-              </UiText>
-              {unprocessed.map((input) => (
-                <UiText key={input.id} style={s.copy}>
-                  {input.originalFilename ?? t("capture.unnamed")}
-                </UiText>
-              ))}
-            </View>
-          ) : null}
           <UiText style={s.meta}>
             {t(
               result.providerOutcome === "LOCAL_FIXTURE"
