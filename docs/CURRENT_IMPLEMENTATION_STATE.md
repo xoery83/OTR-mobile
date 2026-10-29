@@ -127,7 +127,9 @@ Unknown families/photo references block the whole dataset. Final table hash must
 match qualification; output is immutable and cloudAuthority=false. UI resume and
 vault release serialize with publication markers; open P1 date/time pickers block
 freeze. Directed6 suites202/types/scopedlint/UIguard PASS; independent prior4
-suites118 NO_BLOCKER; final queued-marker race additionally PASS. This has no Native
+suites118 NO_BLOCKER; final queued-marker race independently1/1 PASS on fixed a85d1efd. Actual primary6
+suites202 PASS; six dirty files/full diff preserved. Main integration receipt:
+GUEST_B_HANDOFF_MAIN_INTEGRATION.json. This has no Native
 consumer, physical-disk absence claim, login/adoption activation or DEV publication.
 See GUEST_B_HANDOFF_INVENTORY_REVIEW.json and ADR dated2026-10-29.
 

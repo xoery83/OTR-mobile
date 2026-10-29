@@ -1,0 +1,18 @@
+{
+  "schemaId": "otr.auth.guest-handoff-main-integration/1",
+  "baseMain": "f2a02ecf5ef8e9c6ba75e54a07b0f7fb94557ed7",
+  "sourceCommit": "a85d1efd11bf380815407f6247348418cc72c05a",
+  "independentFixedSource": "NO_BLOCKER; additional race 1/1 PASS",
+  "actualPrimaryTests": {
+    "suites": 6,
+    "tests": 202,
+    "result": "PASS"
+  },
+  "primaryProtectedDirtyEntries": 6,
+  "primaryTrackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+  "integration": "fast-forward; normal push final refs verified separately",
+  "publicationEnabled": false,
+  "devSchemaRlsGrantOrDeploymentChanged": false,
+  "nativeWindowUsed": false,
+  "readiness": "LOCAL_PASS_ADOPTION_NOT_READY"
+}
