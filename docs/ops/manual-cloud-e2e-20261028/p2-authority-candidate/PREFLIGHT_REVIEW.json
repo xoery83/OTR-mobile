@@ -1,0 +1,123 @@
+{
+  "status": "READ_ONLY_LIVE_PREFLIGHT_MATCH_NOT_AUTHORIZED_NOT_INSTALLED",
+  "candidateInstallSHA256": "b19a0257471cad173533c1c6b2f81cfa3fe38cbccbfb252d77496469540bb733",
+  "liveFunctions": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "20c7bc156f4d80aac889b7ed8f52ce0a",
+      "oid": "65713",
+      "owner": "postgres",
+      "signature": "public.trip_core_finite_read_state_guard()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "fb315854dee6942f552a647fb851abfb",
+      "oid": "65660",
+      "owner": "postgres",
+      "signature": "public.trip_core_guard_historical_source_association()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "8777698675e9e3039c8c0d4c4c6112f0",
+      "oid": "65263",
+      "owner": "postgres",
+      "signature": "public.trip_core_guard_write()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "6ff1c65d9389341e889eb8258c6659af",
+      "oid": "65649",
+      "owner": "postgres",
+      "signature": "public.trip_core_publication_guard()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "40f537b189fd972423e63b2be4023a12",
+      "oid": "65546",
+      "owner": "postgres",
+      "signature": "public.trip_core_resolve_airport(text,text,text,date)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "md5": "5ba5af84c52b81bea3d2dc78caadd634",
+      "oid": "65415",
+      "owner": "postgres",
+      "signature": "public.trip_core_service_statement_guard()"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres"
+      ],
+      "md5": "77184d907d0e74c3c3be312a7cefcd0b",
+      "oid": "66181",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_core_capabilities(uuid,uuid)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "6b762f146bb0c931a0635672f3ba78b6",
+      "oid": "66180",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_dev_scope_allowed(uuid,uuid,uuid,text)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_gateway=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "9f01606ec37c03662c7d9d828cae9ef9",
+      "oid": "66408",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_import_p1_capabilities(uuid,uuid)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "115bc244cd9ccd196936828739187531",
+      "oid": "66410",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_core_v2_writer=X/postgres"
+      ],
+      "md5": "85de45080c08f58afa4d187994cb76c7",
+      "oid": "65418",
+      "owner": "postgres",
+      "signature": "public.assert_trip_core_v2_aggregate(uuid)"
+    }
+  ],
+  "sourceClosedRequiredBeforeInstall": true,
+  "changes": "Five existing functions; 11 exact identity/definition/ACL witnesses; zero new tables/roles/RLS/GRANT/CHECK",
+  "independentReview": "NO_BLOCKER; all artifact hashes; exact CAS/rollback/Source branches reviewed; Backend 3 suites78 PASS; isolated PG receipts reviewed, not independently rerun",
+  "runtimeScope": "Only DEV Forms QA 3f7e964e-79d3-4028-a585-470e798e41ec normal owned V2 Trips after 2026-10-28T02:16:48Z; authored SPARSE and zero-service only; Qualified/Booking/Ticket/Segment/Journey unchanged"
+}

@@ -1,0 +1,29 @@
+{
+  "status": "OWNER_AUTHORIZED_PREFLIGHT_REQUIRED",
+  "ownerMessage": "\u73b0\u5728\u6388\u6743\u786e\u8ba4\uff01",
+  "context": "Owner confirmed immediately after explanation of precise P5/P6 approvals; no new request for P2 authority.",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripScope": "Existing normal V2 Trip creation qualification at/after2026-10-28T02:16:48Z; same linked owner/Actor/Creator checks.",
+  "P5": {
+    "functions": 5,
+    "functionInstallSHA256": "fa16c2fc575543c1184101e3187b3dc999c95212e933504c1d713543b4b5df04",
+    "checkCount": 5,
+    "checkInstallSHA256": "c5a7e44ab81c77a37157accbc9c7f9dab873fd4469131019df6b757985aa14ea",
+    "checkRollbackSHA256": "9658e11d38402441033c9cf5f80909af000fef12241caa1cc05e15fa217b6a33",
+    "checkScope": "Existing complete predicates OR V2 trip_id nonnull/six supported non-flight subtypes/NAME/exact empty string; preserve NOTNULL/whitespace/length/legacy/Flight/other checks.",
+    "rollbackLimit": "Accepted exception rows prevent exact strict CHECK rollback; close new business writes and retain data rather than inventing facts or deleting rows."
+  },
+  "P6": {
+    "functions": 4,
+    "scope": "Same-account normal Manual P6 Create/Edit minimal Activity/details/ENTRY via existing Core; no Ticket/Voucher/media.",
+    "sequencing": "Rebase four functions on P5 postimages to preserve newly approved P5. Only union of already presented scopes; independent review and isolated PG before install."
+  },
+  "exclusions": [
+    "P2 Flight proof/qualification/Segment/Journey/Booking/Ticket authority",
+    "Production",
+    "new table/role/RLS/GRANT or temporary administrator",
+    "Source activation or borrowing Import rights"
+  ],
+  "safety": "Fresh function/CHECK/table identity/owner/ACL/NOTNULL/triggers CAS, unique Writer Host/SQL window, latest Source/Auth software preserved, readback and rollback before live tests.",
+  "deployed": false
+}

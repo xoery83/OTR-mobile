@@ -1,0 +1,75 @@
+{
+  "status": "MANUAL_CREATE_EDIT_SERVER_ACCEPTED_INDEPENDENT_SERVER_VERIFIED",
+  "device": "OTR Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "build": {
+    "build": 82,
+    "source": "f9813e1d4e51bd9321a814fed605370614533ac7",
+    "bundleId": "com.xoery.otrmobile",
+    "jsSHA256": "fa6ae20365e788d1f477f7cc38067642be8c32621d35b2fca10145e16e6f997d",
+    "nativeBaseline": "FormsQA52 unchanged native binary",
+    "dataCopied": false
+  },
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+  "itemId": "12fd8484-4081-451c-a29a-e96fb9ffdb8c",
+  "revision": 2,
+  "operations": [
+    {
+      "id": "60129d46-6ce5-4ba4-b35a-048d3cb400c5",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "0943836e-705d-4cc6-82ba-4e2cb114f389",
+      "status": "COMPLETED",
+      "last_error_code": null
+    }
+  ],
+  "receipts": [
+    {
+      "operationId": "60129d46-6ce5-4ba4-b35a-048d3cb400c5",
+      "outcome": "APPLIED",
+      "receiptSHA256": "598c6ab52462cafd8085cea2ee35aa38249351d1b103820106eb9b36d4b6e456"
+    },
+    {
+      "operationId": "0943836e-705d-4cc6-82ba-4e2cb114f389",
+      "outcome": "APPLIED",
+      "receiptSHA256": "1af92c929b843e2126d682edae96f25b28ace2a1069aabc8c578c33320cda6a6"
+    }
+  ],
+  "fields": {
+    "title": "Forms QA Simulator Train 1029 Edited",
+    "participation": "WHOLE_GROUP",
+    "transportSubtype": "TRAIN",
+    "departureDate": "2026-10-29",
+    "departureLabel": "Forms QA Departure",
+    "unknownTimeAndServiceFactsPreserved": true
+  },
+  "independentReadSHA256": "acb5ff4e07f7afb00449a29a58e2d0668644e4f56427926d02ee88db994f182d",
+  "native": {
+    "createDetailsVisual": true,
+    "editImmediateVisual": true,
+    "coldRestart": true,
+    "acceptedLocalSnapshotAfterCold": {
+      "id": "12fd8484-4081-451c-a29a-e96fb9ffdb8c",
+      "title": "Forms QA Simulator Train 1029 Edited",
+      "semantic_revision": 2
+    },
+    "coldDetailsVisual": true,
+    "dayFeed": "PENDING",
+    "coldDetailsObserved": {
+      "title": "Forms QA Simulator Train 1029 Edited",
+      "departureDate": "Oct 29, 2026",
+      "departureLabel": "Forms QA Departure",
+      "participants": "Everyone",
+      "pendingDot": false
+    }
+  },
+  "notPassed": [
+    "real offline/replay/permission negatives",
+    "all supported Transport subtypes",
+    "full service-field Edit",
+    "physical phone pending P5 diagnosis"
+  ],
+  "dataProtection": "App-only JS update; retained original Session and four Trips; no data/container/Keychain copies"
+}

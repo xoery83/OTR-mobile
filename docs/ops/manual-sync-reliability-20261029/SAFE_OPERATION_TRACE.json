@@ -1,0 +1,161 @@
+[
+  {
+    "at": "2026-10-29T00:38:32.562Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d"
+  },
+  {
+    "at": "2026-10-29T00:38:32.575Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T00:39:18.692Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d"
+  },
+  {
+    "at": "2026-10-29T00:39:18.696Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T00:40:19.656Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d"
+  },
+  {
+    "at": "2026-10-29T00:40:19.660Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T00:43:14.949Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d"
+  },
+  {
+    "at": "2026-10-29T00:43:14.956Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T00:45:44.749Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d"
+  },
+  {
+    "at": "2026-10-29T00:45:59.899Z",
+    "phase": "SUBMIT_ATTEMPT",
+    "operationId": "69fc8c1d-0338-4d8e-b303-1ccb72cd897d"
+  },
+  {
+    "at": "2026-10-29T00:46:30.350Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "86db3aaa-9ee1-4241-9e58-d2605c6e7b9b"
+  },
+  {
+    "at": "2026-10-29T00:46:45.250Z",
+    "phase": "SUBMIT_ATTEMPT",
+    "operationId": "86db3aaa-9ee1-4241-9e58-d2605c6e7b9b"
+  },
+  {
+    "at": "2026-10-29T00:56:43.030Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T00:56:58.237Z",
+    "phase": "SUBMIT_ATTEMPT",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T00:57:13.014Z",
+    "phase": "VALIDATED_APPLIED_RESPONSE_DROPPED",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T00:57:59.510Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T00:57:59.515Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T00:59:25.835Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T00:59:25.843Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T01:00:51.089Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T01:00:51.099Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T01:06:13.172Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "af250344-b2bd-4a56-8d45-da0f5a1bdbb4"
+  },
+  {
+    "at": "2026-10-29T01:06:37.953Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "d1602f8c-a0ad-4ad3-80b7-1bb76fc95fb3"
+  },
+  {
+    "at": "2026-10-29T01:06:51.994Z",
+    "phase": "SUBMIT_ATTEMPT",
+    "operationId": "d1602f8c-a0ad-4ad3-80b7-1bb76fc95fb3"
+  },
+  {
+    "at": "2026-10-29T01:17:14.783Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56"
+  },
+  {
+    "at": "2026-10-29T01:17:14.789Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T01:17:38.345Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56"
+  },
+  {
+    "at": "2026-10-29T01:17:38.348Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T01:18:16.822Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56"
+  },
+  {
+    "at": "2026-10-29T01:18:16.824Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T01:19:23.753Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56"
+  },
+  {
+    "at": "2026-10-29T01:19:23.757Z",
+    "phase": "CORE_TRANSPORT_UNAVAILABLE"
+  },
+  {
+    "at": "2026-10-29T01:27:32.964Z",
+    "phase": "RECEIPT_LOOKUP",
+    "operationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56"
+  },
+  {
+    "at": "2026-10-29T01:27:48.124Z",
+    "phase": "SUBMIT_ATTEMPT",
+    "operationId": "bc3fb192-8254-4e7f-a5dc-4c7d60990f56"
+  }
+]

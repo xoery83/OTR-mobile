@@ -1,0 +1,152 @@
+{
+  "status": "REAL_PHONE_APP_CELLULAR_OFFLINE_EDIT_RECONNECT_ACCEPTED_COLD_PASS",
+  "device": "00008140-001C2980269B001C",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "build": 60,
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "networkControl": {
+    "method": "Normal iOS Settings \u2192 Apps \u2192 OTR Forms QA \u2192 Cellular Data",
+    "original": true,
+    "duringTest": false,
+    "restored": true,
+    "systemOffAlertObserved": true,
+    "globalNetworkBluetoothWiFiAirplaneChanged": false,
+    "note": "WiFi printer-direct network remained unchanged; iOS cellular-off alert, P3 offline message and independent unchanged server versions verify this app outage."
+  },
+  "scenario": "Normal Edit title of existing P1/P3/P4/P5/P6, each Save once; independent server old versions; terminate/relaunch while offline; local Home/Day new names and pending dots retained; restore only app cellular; normal foreground Queue accepts all five; final terminate/relaunch retains same IDs/latest names/no pending dots. No credential/Queue/SQLite access or manual dispatch.",
+  "coldUi": {
+    "offlineHomeP1P4P5P6LatestPending": true,
+    "offlineDayP3LatestPending": true,
+    "onlineHomeP1P4P5P6LatestNoPending": true,
+    "onlineDayP3LatestNoPending": true
+  },
+  "items": [
+    {
+      "family": "P3",
+      "itemId": "a575f6a9-c9f8-447f-9a25-101a40fde474",
+      "beforeTitle": "Forms QA Phone Stay",
+      "beforeRevision": 3,
+      "afterTitle": "Forms QA Phone Stay Offline 1029",
+      "afterRevision": 4,
+      "receipt": {
+        "command": "SET_ITEM_TEXT",
+        "operationId": "95711e5a-4daa-48ea-a969-4dca6f7bca82",
+        "outcome": "APPLIED",
+        "receiptSHA256": "fd2a6d1dbc87f2d378b7cd98d2d7ed813b81ea3fccc68ae94864fe9a9e79cdab",
+        "targets": [
+          {
+            "baseRevision": 3,
+            "committedRevision": 4,
+            "id": "a575f6a9-c9f8-447f-9a25-101a40fde474",
+            "kind": "ITEM"
+          }
+        ]
+      }
+    },
+    {
+      "family": "P5",
+      "itemId": "1c0486a8-8265-4b4d-8b5a-7849c7fbd4ac",
+      "beforeTitle": "Forms QA Phone Train 1029 Edited",
+      "beforeRevision": 2,
+      "afterTitle": "Forms QA Phone Train Offline 1029",
+      "afterRevision": 3,
+      "receipt": {
+        "command": "SET_ITEM_TEXT",
+        "operationId": "90c3db67-b8ae-48ea-89d6-80f8acdfd7c3",
+        "outcome": "APPLIED",
+        "receiptSHA256": "e2c590d07a817b2ed96b4a10fd7548567b707c778715a53991ebce0b26f11e4b",
+        "targets": [
+          {
+            "baseRevision": 2,
+            "committedRevision": 3,
+            "id": "1c0486a8-8265-4b4d-8b5a-7849c7fbd4ac",
+            "kind": "ITEM"
+          }
+        ]
+      }
+    },
+    {
+      "family": "P6",
+      "itemId": "da8f50a9-29da-4528-8b1e-69b28447bbe3",
+      "beforeTitle": "Forms QA Phone Activity 1029 Edited",
+      "beforeRevision": 3,
+      "afterTitle": "Forms QA Phone Activity Offline 1029",
+      "afterRevision": 4,
+      "receipt": {
+        "command": "SET_ITEM_TEXT",
+        "operationId": "4433e72d-942b-443f-9f98-9b18340340a0",
+        "outcome": "APPLIED",
+        "receiptSHA256": "04f1d87a146351c00dd8ecea3186f1ef2d811a6f86ee8b5d3823bf5d0dcef60a",
+        "targets": [
+          {
+            "baseRevision": 3,
+            "committedRevision": 4,
+            "id": "da8f50a9-29da-4528-8b1e-69b28447bbe3",
+            "kind": "ITEM"
+          }
+        ]
+      }
+    },
+    {
+      "family": "P1",
+      "itemId": "30a5b3e4-ba22-48d3-9cac-aa65b67aa32a",
+      "beforeTitle": "Forms QA Phone Plan",
+      "beforeRevision": 3,
+      "afterTitle": "Forms QA Phone Plan Offline 1029",
+      "afterRevision": 4,
+      "receipt": {
+        "command": "SET_ITEM_TEXT",
+        "operationId": "ae499e62-652d-46cf-97c6-fc9c7f96a420",
+        "outcome": "APPLIED",
+        "receiptSHA256": "5534bbb39641b6b1e14fe234b1ea5e598babcf329d505fff4888e94d1029bb92",
+        "targets": [
+          {
+            "baseRevision": 3,
+            "committedRevision": 4,
+            "id": "30a5b3e4-ba22-48d3-9cac-aa65b67aa32a",
+            "kind": "ITEM"
+          }
+        ]
+      }
+    },
+    {
+      "family": "P4",
+      "itemId": "c7a7d517-e5ce-4633-bdc5-cab2cc488faf",
+      "beforeTitle": "Forms QA Phone Rental Edited",
+      "beforeRevision": 2,
+      "afterTitle": "Forms QA Phone Rental Offline 1029",
+      "afterRevision": 3,
+      "receipt": {
+        "command": "SET_ITEM_TEXT",
+        "operationId": "1bb25f5d-4cd6-414f-8524-e6de1b821b6f",
+        "outcome": "APPLIED",
+        "receiptSHA256": "bdea24c91370016ce619710cd6eb50eb8fe120d8a30d9049b38c6a665a466b24",
+        "targets": [
+          {
+            "baseRevision": 2,
+            "committedRevision": 3,
+            "id": "c7a7d517-e5ce-4633-bdc5-cab2cc488faf",
+            "kind": "ITEM"
+          }
+        ]
+      }
+    }
+  ],
+  "counts": {
+    "itemsBefore": 5,
+    "itemsAfter": 5,
+    "newReceipts": 5,
+    "newReceiptsAllApplied": true
+  },
+  "readEvidence": {
+    "offline-five-server-unchanged.json": "518570d2c088c81b6a1a0bcea23d7b0d9959829322b0f2fb0fc7e0346975d0aa",
+    "offline-five-server-reconnected-latest.json": "1b04eb6c44e48d6857fb36c06a48119df918aee153b6880396f9dfc97056b5eb"
+  },
+  "limitations": [
+    "Tests title Edit of existing accepted objects, not offline Create of every family",
+    "Not a deliberate repeated POST or accepted-response-loss test",
+    "Live cross-account/Creator negatives still pending",
+    "Initial standalone P6 cold debug launch error10004; subsequent normal system launch and final five-item cold commands succeeded, no reproducible App startup failure established"
+  ]
+}

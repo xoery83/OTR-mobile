@@ -1,0 +1,41 @@
+{
+  "build": 54,
+  "sourceCommit": "d612ff1e30997d648635029c0825eae609f3ffc9",
+  "bundleId": "com.xoery.otrmobile.formsqa",
+  "team": "U9D5C58Z94",
+  "jsSHA256": "126a55db8afb0db3c5d0e7427e1b1761316d55bfbc8357d2674de6feebf4063e",
+  "sqliteExpected": 74,
+  "backend": "https://api-dev.xoery.art",
+  "device": "00008140-001C2980269B001C",
+  "install": "IN_PLACE_INSTALLED_INDEPENDENT_VERSION_VERIFIED",
+  "strictCodeSign": "PASS",
+  "embeddedSocketAbsent": true,
+  "googleNonceBridgeCompiled": true,
+  "appUninstalled": false,
+  "dataOrSessionCopied": false,
+  "runtimeSmoke": "PASS_BOUNDED_READ_ONLY",
+  "manualCloudFullL3": "NOT_CLAIMED",
+  "sessionRecovery": "NORMAL_RETAINED_NO_RELOGIN",
+  "tripsRetained": [
+    "Nelson summer trip",
+    "FormsQA1027"
+  ],
+  "observed": [
+    "Home widget uses October 28 local day",
+    "Day calendar rectangular selected block and abbreviated range",
+    "Existing P1/P2/P3/P4 Day rows retained",
+    "P1 Focus/Immersive/Edit field recovery/Cancel/native Back",
+    "P3 Focus/Immersive existing date/time/address/note/participants",
+    "Process terminate/relaunch retains same two Trips"
+  ],
+  "historicalItemSavePerformed": false,
+  "newModelCalls": 0,
+  "remaining": [
+    "P2/P4/P5/P6 full physical Form smoke",
+    "Physical gestures/performance measurements",
+    "Manual Cloud new Create/Edit/offline/permission cases"
+  ],
+  "observedPresentationIssue": [
+    "P1 Edit header Save changes truncates on phone"
+  ]
+}

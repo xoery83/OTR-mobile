@@ -1,0 +1,16 @@
+{
+  "status": "BUILD_VERIFIED_NOT_INSTALLED",
+  "build": 48,
+  "sourceCommit": "1ed0aa40d566dd6b0816432710909621eaa1e91b",
+  "bundleId": "com.xoery.otrmobile",
+  "simulatedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile",
+  "embeddedBundleSHA256": "a7b9b1421cd4b4d78ffbbcb4d1507c7bb234be58f20bf35197a9c71f17bff424",
+  "eagerExpoDevtoolsSocketRemoved": true,
+  "qaScopeRetained": true,
+  "nativeNonceModuleRetained": true,
+  "consumerDirectedTests": 52,
+  "typecheck": "PASS",
+  "uiGuard": "PASS",
+  "nativeAccountSwitchRegression": "PENDING",
+  "p4NativeE2E": "PENDING"
+}

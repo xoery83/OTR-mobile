@@ -1,0 +1,106 @@
+{
+  "status": "MANUAL_CREATE_EDIT_SERVER_ACCEPTED_INDEPENDENT_SERVER_VERIFIED_NATIVE_RECOVERY_PASS",
+  "fullE2E": "IN_PROGRESS_NEGATIVES_PENDING",
+  "device": "OTR Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "build": {
+    "build": 82,
+    "source": "f9813e1d4e51bd9321a814fed605370614533ac7",
+    "bundleId": "com.xoery.otrmobile",
+    "jsSHA256": "fa6ae20365e788d1f477f7cc38067642be8c32621d35b2fca10145e16e6f997d",
+    "nativeBaseline": "FormsQA52 unchanged native binary",
+    "dataCopied": false
+  },
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "tripId": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+  "itemId": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+  "revision": 3,
+  "fields": {
+    "title": "Forms QA Simulator Activity 1029 Edited",
+    "startDate": "2026-10-29",
+    "startTime": null,
+    "participation": "WHOLE_GROUP",
+    "activityDetails": [
+      {
+        "admission_note": "Use the synthetic east entrance",
+        "event_id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+        "session_label": "Synthetic morning session",
+        "trip_id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "b871de08-6b83-4833-bb03-67366b8f319c",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "987d3ff7-b54e-4abd-a51f-3fb2a30c811d",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "98b65f7a-54f9-45dc-8cd9-4d67fb60e08b",
+      "status": "COMPLETED",
+      "last_error_code": null
+    }
+  ],
+  "receipts": [
+    {
+      "operationId": "b871de08-6b83-4833-bb03-67366b8f319c",
+      "outcome": "APPLIED",
+      "receiptSHA256": "44a8db9eb4e3bae2fc4739a7420d0a3929ffdac78f5aba7d3ff978f0dac0deb9"
+    },
+    {
+      "operationId": "987d3ff7-b54e-4abd-a51f-3fb2a30c811d",
+      "outcome": "APPLIED",
+      "receiptSHA256": "481e1e6c5d639f5490392343e36d214dfda4aa563d49cce302242c5748c3c1da"
+    },
+    {
+      "operationId": "98b65f7a-54f9-45dc-8cd9-4d67fb60e08b",
+      "outcome": "APPLIED",
+      "receiptSHA256": "1f80b6e6e51abacae4ee720855bcdf6bc0bca0c9ac58d1d660a355433f60b78f"
+    }
+  ],
+  "independentReadSHA256": "8dec04f87d9b7605a9b5f9f8e8c22635ed7681885a7508be979716003677c670",
+  "native": {
+    "createDetails": true,
+    "editImmediateDetails": true,
+    "actualProcessRestart": true,
+    "dayFeedAfterCold": true,
+    "focusAfterCold": true,
+    "immersiveAfterCold": true,
+    "latestNameSessionAdmissionEveryoneNoPending": true,
+    "acceptedLocalSnapshotAfterCold": {
+      "id": "768afe4c-7a8d-4022-914f-be4816ae30c3",
+      "title": "Forms QA Simulator Activity 1029 Edited",
+      "semantic_revision": 3
+    }
+  },
+  "retainedTrips": [
+    {
+      "id": "034beec1-74ac-4358-b4b9-728651c03db3",
+      "name": "Forms QA P3 20261025"
+    },
+    {
+      "id": "215bbb17-dd5e-4a03-80fd-9df7d4360129",
+      "name": "Forms QA Enrichment 1027"
+    },
+    {
+      "id": "9a96becb-a10b-4c58-b50d-2547dd61b0b7",
+      "name": "Forms QA Manual Cloud 1028"
+    },
+    {
+      "id": "b15408f3-5bda-4a09-a95c-37b9f475871f",
+      "name": "Forms QA Day P1 1025"
+    }
+  ],
+  "databaseIntegrity": "ok",
+  "remaining": [
+    "actual offline/reconnect",
+    "live repeated dispatch/replay",
+    "live cross-account and stale conflict negatives",
+    "ENTRY/media/Ticket/Voucher not part of this minimum"
+  ],
+  "autoReviewBoundary": "Separate direct-API replay script rejected before execution; no credential read/login/replay performed by that script. Use normal Repository/Queue for remaining tests."
+}

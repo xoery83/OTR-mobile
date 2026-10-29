@@ -334,6 +334,7 @@ it("does not treat unavailable, forged target/status or foreign Plan as a comple
 });
 
 it("sends only the validated operation capability context; Manual URL is unchanged", async () => {
+  const advertised: (string | null)[] = [];
   const urls: string[] = [],
     operation = randomUUID();
   const capabilities = vi.fn(async () => coreClosedCapabilities);
@@ -360,6 +361,7 @@ it("sends only the validated operation capability context; Manual URL is unchang
       baseUrl: "http://core.local",
       fetchImplementation: async (input, init) => {
         urls.push(String(input));
+        advertised.push(new Headers(init?.headers).get("X-OTR-Core-Authored-Flight"));
         return handler(new Request(input, init));
       },
     },
@@ -371,6 +373,7 @@ it("sends only the validated operation capability context; Manual URL is unchang
   expect(urls.map((u) => new URL(u).search)).toEqual(["", "?operationId=" + operation]);
   await expect(transport.capabilities(context, "bad")).rejects.toThrow();
   expect(urls).toHaveLength(2);
+  expect(advertised).toEqual(["1", "1"]);
   expect(capabilities.mock.calls).toEqual([
     [actor, trip],
     [actor, trip, operation],

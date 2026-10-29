@@ -4,6 +4,7 @@ import { advanceAccountGeneration } from "../auth/accountGeneration";
 import {
   filterNativeTripQaList,
   nativeTripQaCreateFormat,
+  nativeTripQaFormalManualFlightScope,
   hasNativeTripQaScope,
   runNativeTripQaSync,
   getNativeTripQaQueueActivity,
@@ -35,7 +36,9 @@ vi.mock("../auth/authRepository", () => ({
   requireActiveUserId: async () => state.account,
   readLocalSession: state.session,
 }));
-vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: state.token }));
+vi.mock("../auth/sessionAccessToken", () => ({
+  sessionAccessToken: state.token,
+}));
 vi.mock("./transportSelection", () => ({
   getSyncTransportMode: () => process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT ?? "fake",
 }));
@@ -69,7 +72,10 @@ beforeEach(() => {
   state.account = a;
   state.database.getAllAsync.mockResolvedValue([]);
   state.normalFactory.mockReturnValue(state.normal);
-  state.activity.mockResolvedValue({ actionableNow: 0, nextActionableAt: null });
+  state.activity.mockResolvedValue({
+    actionableNow: 0,
+    nextActionableAt: null,
+  });
   state.token.mockResolvedValue({ token: "synthetic", userId: a });
   state.session.mockResolvedValue({
     accessToken: "synthetic",
@@ -320,7 +326,11 @@ it("keeps new owning V2 local creates visible after expiry while historical pend
       syncFormatVersion: 2 as const,
       createdAt: "2026-10-22T00:00:00Z",
     },
-    { id: "new-local", syncFormatVersion: 2 as const, createdAt: "2026-10-24T00:00:00Z" },
+    {
+      id: "new-local",
+      syncFormatVersion: 2 as const,
+      createdAt: "2026-10-24T00:00:00Z",
+    },
     { id: "legacy", createdAt: "2026-10-24T00:00:00Z" },
     { id: "invalid-date", syncFormatVersion: 2 as const, createdAt: "invalid" },
   ];
@@ -414,7 +424,10 @@ it("keeps finite targets unscheduled while normal retries use the owning selecto
     edits: [],
   };
   vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(scope));
-  state.activity.mockResolvedValue({ actionableNow: 1, nextActionableAt: null });
+  state.activity.mockResolvedValue({
+    actionableNow: 1,
+    nextActionableAt: null,
+  });
   expect(await getNativeTripQaQueueActivity()).toEqual({
     actionableNow: 1,
     nextActionableAt: null,
@@ -478,7 +491,10 @@ it("sustained adoption has no Trip targets or expiring dispatch window", async (
   state.normal.mockResolvedValue({ tripIds: [trip] });
   expect(nativeTripAuthoredCloudTravelers(a)).toBe(true);
   expect(nativeTripAuthoredCloudTravelers("other")).toBe(false);
-  expect(await runNativeTripQaSync()).toMatchObject({ accountId: a, journeyIds: [trip] });
+  expect(await runNativeTripQaSync()).toMatchObject({
+    accountId: a,
+    journeyIds: [trip],
+  });
   expect(state.normal).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
   expect(state.createFactory).not.toHaveBeenCalled();
   expect(state.editFactory).not.toHaveBeenCalled();
@@ -521,13 +537,20 @@ it("refreshes expired session with the existing provider before normal dispatch 
   state.session.mockImplementation(async () => session);
   state.token.mockImplementation(async (request) => {
     expect(request).toEqual({ expectedUserId: a });
-    session = { ...session, accessToken: "refreshed", expiresAt: "2026-10-23T04:00:00Z" };
+    session = {
+      ...session,
+      accessToken: "refreshed",
+      expiresAt: "2026-10-23T04:00:00Z",
+    };
     return { token: "refreshed", userId: a };
   });
   state.normal.mockResolvedValue({ tripIds: [trip] });
   expect(await runNativeTripQaSync()).toMatchObject({ journeyIds: [trip] });
   expect(state.normal).toHaveBeenCalledWith("AUTHENTICATED_ONLINE");
-  state.activity.mockResolvedValue({ actionableNow: 1, nextActionableAt: null });
+  state.activity.mockResolvedValue({
+    actionableNow: 1,
+    nextActionableAt: null,
+  });
   expect(await getNativeTripQaQueueActivity()).toEqual({
     actionableNow: 1,
     nextActionableAt: null,
@@ -584,4 +607,41 @@ it("preserves explicit auth-required rejection instead of treating invalid sessi
   state.token.mockRejectedValue(rejected);
   await expect(runNativeTripQaSync()).rejects.toBe(rejected);
   expect(state.normalFactory).not.toHaveBeenCalled();
+});
+
+it("formal Manual P2 requires explicit flag and matching sustained normal scope; no Source/finite/Account fallback", () => {
+  sustainedScope();
+  vi.stubEnv("EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED", "false");
+  expect(nativeTripQaFormalManualFlightScope(a)).toBeNull();
+  vi.stubEnv("EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED", "true");
+  expect(nativeTripQaFormalManualFlightScope(a)).toMatchObject({
+    accountId: a,
+  });
+  expect(nativeTripQaFormalManualFlightScope(trip)).toBeNull();
+  vi.stubEnv("EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE", JSON.stringify(fixture()));
+  expect(nativeTripQaFormalManualFlightScope(a)).toBeNull();
+  sustainedScope();
+  vi.stubEnv("EXPO_PUBLIC_OTR_SYNC_TRANSPORT", "fake");
+  expect(nativeTripQaFormalManualFlightScope(a)).toBeNull();
+});
+
+it("formal P2 uses max of existing normal cutoff and its frozen cohort without changing P1 scope", () => {
+  sustainedScope();
+  vi.stubEnv("EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED", "true");
+  const original = process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE;
+  expect(nativeTripQaFormalManualFlightScope(a)?.newTripsFrom).toBe(
+    "2026-10-28T02:16:48.000Z",
+  );
+  expect(process.env.EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE).toBe(original);
+  vi.stubEnv(
+    "EXPO_PUBLIC_OTR_NATIVE_QA_SCOPE",
+    JSON.stringify({
+      version: 2,
+      accountId: a,
+      normal: { newTripsFrom: "2026-11-01T00:00:00Z" },
+    }),
+  );
+  expect(nativeTripQaFormalManualFlightScope(a)?.newTripsFrom).toBe(
+    "2026-11-01T00:00:00.000Z",
+  );
 });

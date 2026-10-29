@@ -424,3 +424,65 @@ it("negotiates Reviewed Source against its exact durable operation", async () =>
     op,
   );
 });
+
+it.each(["SPARSE", "QUALIFIED", "P5", "Service", "ActiveBooking"])(
+  "authored Flight worker requires own SPARSE P2 under exact Manual capability (%s)",
+  async (kind) => {
+    const f = await fixture();
+    const { coreDateBoundary } = await import("../../domain/trip/tripCoreV2Temporal");
+    const command = {
+      ...JSON.parse(f.operation.payloadJson),
+      command: "SET_AUTHORED_FLIGHT_DETAILS",
+      baseVector: [{ kind: "ITEM", id, revision: 1 }],
+      payload: {
+        flightNumberLiteral: "NZ5069",
+        origin: {
+          airportCode: "AKL",
+          name: "Auckland",
+          terminal: null,
+          time: coreDateBoundary("2026-12-14"),
+        },
+        destination: {
+          airportCode: null,
+          name: null,
+          terminal: null,
+          time: { ...coreDateBoundary("2026-12-14"), local_date: null },
+        },
+      },
+    };
+    f.operation.payloadJson = canonicalCoreJson(command as Json);
+    f.repo.pending = async () => [{ command }] as never;
+    f.repo.readGraph = async () =>
+      ({
+        itinerary_events: [
+          {
+            id,
+            experience_family: kind === "P5" ? "P5" : "P2",
+            owner_account_id: actor,
+          },
+        ],
+        itinerary_transport_services: kind === "Service" ? [{ event_id: id }] : [],
+        trip_booking_item_links:
+          kind === "ActiveBooking" ? [{ item_id: id, active: true }] : [],
+        trip_flight_intents: [
+          { event_id: id, qualification: kind === "P5" ? "SPARSE" : kind },
+        ],
+      }) as never;
+    vi.mocked(f.transport.capabilities).mockResolvedValue({
+      ...coreClosedCapabilities,
+      activationState: "ENABLED",
+      enabledFamilies: ["P2"],
+      enabledCommands: ["SET_AUTHORED_FLIGHT_DETAILS"],
+      enabledAdmissionModes: ["MANUAL"],
+    });
+    vi.mocked(f.transport.submit).mockResolvedValue({
+      projection: "FULL",
+      receipt: { outcome: "APPLIED" },
+    } as never);
+    if (kind === "SPARSE")
+      await expect(f.worker.push(f.operation)).resolves.toBeUndefined();
+    else await expect(f.worker.push(f.operation)).rejects.toThrow("CORE_FAMILY_CLOSED");
+    expect(f.transport.submit).toHaveBeenCalledTimes(kind === "SPARSE" ? 1 : 0);
+    expect(f.transport.finalizeSourceOperation).toBeUndefined();
+  },
+);

@@ -88,6 +88,7 @@ export function P1Row({
   context = "UNKNOWN",
   occurrence = "START",
   instant,
+  insertionToday,
   onInsert,
   hideDivider = false,
   showHeader = true,
@@ -105,6 +106,7 @@ export function P1Row({
   context?: "FUTURE" | "TODAY" | "PAST" | "UNKNOWN";
   occurrence?: "START" | "END";
   instant?: string;
+  insertionToday?: string | null;
   onInsert?(side: "BEFORE" | "AFTER"): void;
   hideDivider?: boolean;
   showHeader?: boolean;
@@ -183,7 +185,9 @@ export function P1Row({
         ? activeActions?.navigate
         : undefined;
   const insert =
-    focused && onInsert && p1InsertionEligible(event, occurrence, context, instant);
+    focused &&
+    onInsert &&
+    p1InsertionEligible(event, occurrence, context, instant, insertionToday);
   const countLabel = (kind: "photos" | "attachments" | "expenses") =>
     t(count[kind] === 1 ? `fidelity.${kind}.one` : `fidelity.${kind}`, {
       count: formatUiNumber(count[kind] ?? 0),

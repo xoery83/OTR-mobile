@@ -1,3 +1,4 @@
+import { hasAcceptedManualCreate } from "../repositories/acceptedManualCreate";
 import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
 import {
@@ -123,7 +124,9 @@ export function createNativeNormalTripSyncRunner(
         deferred: repository,
         recoverTripReadback: recoverReadback,
         recoverP1Readback: async (tripId) => {
-          const row = await database.getFirstAsync<{ create_operation_id: string }>(
+          const row = await database.getFirstAsync<{
+            create_operation_id: string;
+          }>(
             "SELECT create_operation_id FROM local_trip_containers WHERE account_id=? AND id=?",
             account.accountId,
             tripId,
@@ -191,7 +194,9 @@ export function createNativeNormalTripSyncRunner(
             (item) => item.command.operationId === target.operationId,
           );
           if (intent?.state === "APPLIED") {
-            const row = await database.getFirstAsync<{ create_operation_id: string }>(
+            const row = await database.getFirstAsync<{
+              create_operation_id: string;
+            }>(
               "SELECT create_operation_id FROM local_trip_containers WHERE account_id=? AND id=?",
               account.accountId,
               target.tripId,
@@ -215,15 +220,34 @@ export function createNativeNormalTripSyncRunner(
           if (
             pending.some(
               ({ command }) =>
-                command.command === "CREATE_ITEM" &&
+                (command.command === "CREATE_ITEM" ||
+                  (family === "P2" && command.command === "CREATE_SPARSE_FLIGHT")) &&
                 command.target.id === itemId &&
-                (command.payload as { family: string }).family === family,
+                (family !== "P2" || command.admission.mode === "MANUAL") &&
+                (command.command === "CREATE_SPARSE_FLIGHT" ||
+                  (command.payload as { family: string }).family === family),
             )
           )
             return true;
-          return (await core.readGraph(context)).itinerary_events.some(
+          const graph = await core.readGraph(context);
+          const item = graph.itinerary_events.find(
             (item) => item.id === itemId && item.experience_family === family,
           );
+          if (family === "P2")
+            return (
+              !!item &&
+              item.owner_account_id === context.accountId &&
+              !graph.itinerary_transport_services.some(
+                (service) => service.event_id === itemId,
+              ) &&
+              !graph.trip_booking_item_links.some(
+                (link) => link.item_id === itemId && link.active,
+              ) &&
+              graph.trip_flight_intents.find((intent) => intent.event_id === itemId)
+                ?.qualification === "SPARSE" &&
+              (await hasAcceptedManualCreate(database, context, itemId, "P2"))
+            );
+          return !!item;
         },
         participantsReady: async (tripId, command) => {
           const context = await core.captureContext(tripId);

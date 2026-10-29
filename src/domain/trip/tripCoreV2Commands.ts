@@ -1,3 +1,4 @@
+import { authoredFlightDetailsSchema } from "./authoredFlightDetails";
 import { z } from "zod";
 import { ordinaryOrderPayload } from "./tripCoreOrdinaryOrder";
 import * as f from "./tripCoreV2";
@@ -192,6 +193,7 @@ export const corePayloadSchemas = {
     participation: f.coreParticipationSchema,
     acl: f.coreAclSchema,
   }),
+  SET_AUTHORED_FLIGHT_DETAILS: authoredFlightDetailsSchema,
   QUALIFY_FLIGHT: z.strictObject(fullFlight),
   UPDATE_FLIGHT_FACTS: z.strictObject({
     changes: z
@@ -415,6 +417,8 @@ export function validateCoreCommand(input: unknown): CoreCommand {
   )
     throw new Error("INVALID_BASE_VECTOR");
   const a = q.admission;
+  if (q.command === "SET_AUTHORED_FLIGHT_DETAILS" && a.mode !== "MANUAL")
+    throw new Error("INVALID_PROVENANCE");
   if (
     a.mode === "MANUAL"
       ? a.sourceIntentId !== null || a.policyVersion !== null

@@ -1,0 +1,97 @@
+{
+  "status": "PHONE93_P2_OFFLINE_EDIT_RECONNECT_ACCEPTED_VERIFIED_COLD_PASS",
+  "itemId": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+  "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9",
+  "accountId": "3f7e964e-79d3-4028-a585-470e798e41ec",
+  "build": {
+    "source": "9cb40a693845258b71ce51c6f38e3f47f6f7b9d0",
+    "build": 93,
+    "bundleId": "com.xoery.otrmobile.formsqa",
+    "jsSHA256": "d9d25bcc315fd84f2bf82759529333291cb3157cc6fc799d79813ed053152123",
+    "profileRetained": true,
+    "debugDylibRetained": true,
+    "formalP2Enabled": true,
+    "importAdmissionFlags": "all false",
+    "nativeTextSHA256": "eb7cf3bfc1d62bc3e4b5656025ff1d0f1b1c7ef6c8a2a4dcb4f5332d456f3dc5",
+    "nativeBaseline": "phone60/56/54 retained Native code; JS-only",
+    "entitlementsRetained": true,
+    "backend": "curated-e973ffe0-p2-16644f85; approved five-function SQL installed",
+    "installation": "devicectl success; no uninstall/data reset"
+  },
+  "outage": {
+    "method": "Normal iOS Settings > Apps > OTR Forms QA > Cellular Data ON to OFF; explicit system alert observed.",
+    "onlyFormsQaChanged": true,
+    "globalWifiBluetoothAirplaneUntouched": true,
+    "originalCellularOnRestoredAndVisuallyConfirmed": true
+  },
+  "normalOfflineEdit": {
+    "saveCount": 1,
+    "flightNumber": "NZ9294",
+    "otherFieldsRetained": "AKL/NSN/Oct29/12:00/14:00/PacificAuckland/Everyone",
+    "independentServerUnchangedWhileOffline": [
+      {
+        "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+        "owner": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "revision": 4,
+        "shape": "TRANSPORT",
+        "title": "NZ9293",
+        "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+      }
+    ],
+    "actualOfflineProcessColdRestart": true,
+    "offlineColdSessionTripAndPendingLatestRetained": true
+  },
+  "reconnect": {
+    "normalForegroundOnly": true,
+    "noRepeatedSaveDirectApiReplayOrQueuePatch": true,
+    "sameSingleItem": [
+      {
+        "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+        "owner": "3f7e964e-79d3-4028-a585-470e798e41ec",
+        "revision": 6,
+        "shape": "TRANSPORT",
+        "title": "NZ9294",
+        "tripId": "657b9bed-a3c2-4f4e-a263-9e4bae2248a9"
+      }
+    ],
+    "newReceipts": [
+      {
+        "command": "SET_AUTHORED_FLIGHT_DETAILS",
+        "operationId": "8fca1db6-aa88-4fb1-9baa-26ffa173acd7",
+        "outcome": "APPLIED",
+        "receiptSHA256": "ce5fe2147c3a6e84a2ae08df6f3ce470f0713c49459cf7a7044ae213f55f2abd",
+        "targets": [
+          {
+            "baseRevision": 4,
+            "committedRevision": 5,
+            "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+            "kind": "ITEM"
+          }
+        ]
+      },
+      {
+        "command": "SET_ITEM_PARTICIPATION",
+        "operationId": "ae3db5eb-c3d6-4a64-8f2c-cf344ce770e6",
+        "outcome": "APPLIED",
+        "receiptSHA256": "1ab8a2544fa056a7e24a56d0b027a62c5b9740f0ee0037bff18048cbb6bd2346",
+        "targets": [
+          {
+            "baseRevision": 5,
+            "committedRevision": 6,
+            "id": "a55c4f13-864a-44cc-b691-1d9f3a329cf8",
+            "kind": "ITEM"
+          }
+        ]
+      }
+    ],
+    "independentReadSHA256": "39fae6fecad9ba3b0242c5f0355bb7ed777ee40a1ff521ddb8a109cc8ead636a",
+    "actualFinalOnlineColdRestart": true,
+    "dayReaderLatestNoPending": true
+  },
+  "remaining": [
+    "Offline Create for each family",
+    "Deliberate response-loss/repeated transport dispatch live proof",
+    "Live cross-account/Creator negatives",
+    "Qualified Flight/Segment/Journey/Booking/Ticket are outside this authored Sparse minimum"
+  ]
+}

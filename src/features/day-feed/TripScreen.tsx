@@ -13,7 +13,6 @@ import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import { TripDayHeading } from "./TripDayHeading";
 import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
-import { p1InsertionTime } from "./p1InsertionTime";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import {
   DayFeedIntroduction,
@@ -1844,6 +1843,12 @@ function TripContent({
               visibleTrip.observed?.projection.version === 2
                 ? createCoreExperienceRenderer(visibleTrip.observed.projection, {
                     instant: new Date().toISOString(),
+                    insertionToday: appearanceToday,
+                    onOpenFlight: (itemId) =>
+                      router.push({
+                        pathname: "/p2-detail",
+                        params: { tripId: requested, itemId },
+                      }),
                     onOpenActivity: (itemId, occurrence, date) =>
                       router.push({
                         pathname: "/p6-detail",
@@ -1939,11 +1944,16 @@ function TripContent({
                     onInsert: (itemId, side, date) => {
                       const projection = visibleTrip.observed!.projection;
                       if (projection.version !== 2) return;
-                      const query = projection.query(date, dayContext);
-                      const rows = [...query.timed, ...query.nonComparable].map(
-                        (item) => item.event,
+                      const suggestion = localInsertionTime(
+                        {
+                          items: projection.items,
+                          rows: (day) => projection.query(day, dayContext).coreRows ?? [],
+                        },
+                        itemId,
+                        "START",
+                        date,
+                        side,
                       );
-                      const suggestion = p1InsertionTime(rows, itemId, side, date);
                       setInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,

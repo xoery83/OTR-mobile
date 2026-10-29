@@ -1,0 +1,10 @@
+{
+  "status": "UNAPPROVED_NOT_INSTALLED",
+  "independentReview": "NO_BLOCKER",
+  "reviewScope": "Exact five CHECK predicates, all-row old-predicate rollback preflight, complete definition/validated CAS, data preservation, constraint OID replacement and fresh-live/Owner gate requirements.",
+  "independentManifestSHA256Verification": "PASS",
+  "isolatedPg": "Agent executed network-none PG; independent reviewer inspected results and hashes without rerunning PG.",
+  "privateReproDirectory": "/private/tmp/otr-p5-check-dispatch-20261029",
+  "livePreimages": "NOT_CAPTURED; isolated clone preimages are not DEV schema proof",
+  "deployment": "NONE"
+}

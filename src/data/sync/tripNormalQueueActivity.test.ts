@@ -1,5 +1,5 @@
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
-import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "@/domain/trip/tripCoreV2";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
@@ -24,7 +24,10 @@ function fixture() {
     },
     async runAsync(q: string, ...a: unknown[]) {
       const r = sql.prepare(q).run(...(a as never[]));
-      return { changes: r.changes, lastInsertRowId: r.lastInsertRowid } as never;
+      return {
+        changes: r.changes,
+        lastInsertRowId: r.lastInsertRowid,
+      } as never;
     },
     async withTransactionAsync(work: () => Promise<void>) {
       sql.exec("BEGIN");
@@ -325,7 +328,11 @@ it.each(["P3", "P4"])(
         command: "CREATE_ITEM",
         target: { kind: "ITEM", id: itemId },
         baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
-        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
         payload: {
           family,
           ...(family === "P4" ? { details: {}, places: {} } : {}),
@@ -369,5 +376,382 @@ it.each(["P3", "P4"])(
     expect(
       (await getNormalTripQueueActivity(f.db, f.scope, f.now + 30001)).actionableNow,
     ).toBe(1);
+  },
+);
+
+it.each(["P5", "P4"])(
+  "P5 queue activity uses exact family, retains backoff and rejects root schedule/place: %s",
+  async (family) => {
+    const f = fixture(),
+      itemId = randomUUID();
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(f.createId);
+    const db = {
+      ...f.db,
+      getFirstAsync: async <T>(query: string, ...args: unknown[]) =>
+        query.startsWith("SELECT experience_family")
+          ? ({ experience_family: family } as T)
+          : f.db.getFirstAsync<T>(query, ...args),
+    };
+    for (const name of [
+      "SET_ITEM_TEXT",
+      "SET_TRANSPORT_DETAILS",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+    ]) {
+      const operationId = randomUUID();
+      const payload =
+        name === "SET_ITEM_TEXT"
+          ? { title: "Updated" }
+          : name === "SET_TRANSPORT_DETAILS"
+            ? {
+                service: {
+                  service_key: "a".repeat(32),
+                  transport_subtype: "TRAIN",
+                  attribution: "UNSPECIFIED",
+                  operator_namespace: "NAME",
+                  operator_issuer: "",
+                  operator_value: "",
+                  operator_literal: "",
+                  service_number: "",
+                  service_literal: "",
+                  codeshare_operating_key: null,
+                },
+              }
+            : name === "SET_ITEM_SCHEDULE"
+              ? {
+                  schedule: {
+                    start: coreDateBoundary("2026-11-02"),
+                    end: coreDateBoundary("2026-11-03"),
+                  },
+                }
+              : { place: {} };
+      f.operation(
+        operationId,
+        "CORE_V2_COMMAND",
+        "TRIP_CORE_V2",
+        {
+          contractVersion: 2,
+          intentVersion: 2,
+          operationId,
+          tripId: f.tripId,
+          command: name,
+          target: { kind: "ITEM", id: itemId },
+          baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+          admission: {
+            mode: "MANUAL",
+            sourceIntentId: null,
+            policyVersion: null,
+          },
+          payload,
+        },
+        "RETRYABLE",
+        itemId,
+      );
+      f.sql
+        .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
+        .run(new Date(f.now + 15000).toISOString(), operationId);
+      const allowed =
+        (family === "P5" && ["SET_ITEM_TEXT", "SET_TRANSPORT_DETAILS"].includes(name)) ||
+        (family === "P4" && ["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE"].includes(name));
+      expect(await getNormalTripQueueActivity(db, f.scope, f.now)).toEqual({
+        actionableNow: 0,
+        nextActionableAt: allowed ? f.now + 15000 : null,
+      });
+      expect(
+        (await getNormalTripQueueActivity(db, f.scope, f.now + 15001)).actionableNow,
+      ).toBe(allowed ? 1 : 0);
+      f.sql
+        .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+        .run(operationId);
+    }
+  },
+);
+
+it("P5 Create wakes existing normal scheduler without borrowing Import admission", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    itemId = randomUUID();
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(f.createId);
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_members(id,journey_id,display_name,status,updated_at) VALUES(?,?,'QA member','linked',?)",
+    )
+    .run(randomUUID(), f.tripId, new Date(f.now).toISOString());
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(journey_id,user_id,capabilities_json,updated_at) VALUES(?,?,'{}',?)",
+    )
+    .run(f.tripId, f.scope.accountId, new Date(f.now).toISOString());
+  const place = Object.fromEntries(
+    Object.keys(corePlaceSchema.shape).map((k) => [k, null]),
+  );
+  f.operation(
+    operationId,
+    "CORE_V2_COMMAND",
+    "TRIP_CORE_V2",
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P5",
+        core: { title: "Transport" },
+        endpoints: {
+          origin: {
+            time: coreDateBoundary("2026-11-02"),
+            place: { ...place, authored_label: "Station" },
+          },
+          destination: {
+            time: { ...coreDateBoundary("2026-11-02"), local_date: null },
+            place,
+          },
+        },
+        service: {
+          service_key: "a".repeat(32),
+          transport_subtype: "TRAIN",
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "",
+          operator_value: "",
+          operator_literal: "",
+          service_number: "",
+          service_literal: "",
+          codeshare_operating_key: null,
+        },
+        ...coreDefaults("organizer"),
+      },
+    },
+    "PENDING",
+    itemId,
+  );
+  expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
+});
+
+const p6DispatchPayloads = {
+  SET_ITEM_TEXT: { title: "Updated activity" },
+  SET_ITEM_SCHEDULE: {
+    schedule: {
+      start: coreDateBoundary("2026-11-02"),
+      end: coreDateBoundary("2026-11-03"),
+    },
+  },
+  SET_ITEM_PLACE: {
+    place: Object.fromEntries(
+      Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+    ),
+  },
+  SET_ITEM_PARTICIPATION: {
+    participation: coreDefaults("organizer").participation,
+  },
+  SET_ACTIVITY_DETAILS: {
+    details: { session_label: "Morning", admission_note: null },
+    entryPlace: null,
+  },
+  SET_TRANSPORT_DETAILS: { annotations: {} },
+  SET_RENTAL_DETAILS: { details: {}, places: {} },
+};
+const p6DispatchCommands = [
+  "SET_ITEM_TEXT",
+  "SET_ITEM_SCHEDULE",
+  "SET_ITEM_PLACE",
+  "SET_ITEM_PARTICIPATION",
+  "SET_ACTIVITY_DETAILS",
+];
+
+it.each(["P6", "P4", "P5"])(
+  "P6 Activity details queue retains exact family and retry due time: %s",
+  async (family) => {
+    const f = fixture(),
+      itemId = randomUUID();
+    f.sql
+      .prepare(
+        "INSERT INTO ledger_members(id,journey_id,display_name,status,updated_at) VALUES(?,?,'QA member','linked',?)",
+      )
+      .run(randomUUID(), f.tripId, new Date(f.now).toISOString());
+    f.sql
+      .prepare(
+        "INSERT INTO ledger_actor_context(journey_id,user_id,capabilities_json,updated_at) VALUES(?,?,'{}',?)",
+      )
+      .run(f.tripId, f.scope.accountId, new Date(f.now).toISOString());
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(f.createId);
+    const db = {
+      ...f.db,
+      getFirstAsync: async <T>(query: string, ...args: unknown[]) =>
+        query.startsWith("SELECT experience_family")
+          ? ({ experience_family: family } as T)
+          : f.db.getFirstAsync<T>(query, ...args),
+    };
+    for (const [name, payload] of Object.entries(p6DispatchPayloads)) {
+      const operationId = randomUUID();
+      f.operation(
+        operationId,
+        "CORE_V2_COMMAND",
+        "TRIP_CORE_V2",
+        {
+          contractVersion: 2,
+          intentVersion: 2,
+          operationId,
+          tripId: f.tripId,
+          command: name,
+          target: { kind: "ITEM", id: itemId },
+          baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+          admission: {
+            mode: "MANUAL",
+            sourceIntentId: null,
+            policyVersion: null,
+          },
+          payload,
+        },
+        "RETRYABLE",
+        itemId,
+      );
+      f.sql
+        .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
+        .run(new Date(f.now + 15000).toISOString(), operationId);
+      const allowed =
+        family === "P6"
+          ? p6DispatchCommands.includes(name)
+          : family === "P4"
+            ? [
+                "SET_ITEM_TEXT",
+                "SET_ITEM_SCHEDULE",
+                "SET_ITEM_PARTICIPATION",
+                "SET_RENTAL_DETAILS",
+              ].includes(name)
+            : [
+                "SET_ITEM_TEXT",
+                "SET_ITEM_PARTICIPATION",
+                "SET_TRANSPORT_DETAILS",
+              ].includes(name);
+      expect(await getNormalTripQueueActivity(db, f.scope, f.now)).toEqual({
+        actionableNow: 0,
+        nextActionableAt: allowed ? f.now + 15000 : null,
+      });
+      expect(
+        (await getNormalTripQueueActivity(db, f.scope, f.now + 15001)).actionableNow,
+      ).toBe(allowed ? 1 : 0);
+      f.sql
+        .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+        .run(operationId);
+    }
+  },
+);
+
+it("minimum P6 Create wakes the existing scheduler with qualified participants", async () => {
+  const f = fixture(),
+    operationId = randomUUID(),
+    itemId = randomUUID();
+  f.sql
+    .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+    .run(f.createId);
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_members(id,journey_id,display_name,status,updated_at) VALUES(?,?,'QA member','linked',?)",
+    )
+    .run(randomUUID(), f.tripId, new Date(f.now).toISOString());
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(journey_id,user_id,capabilities_json,updated_at) VALUES(?,?,'{}',?)",
+    )
+    .run(f.tripId, f.scope.accountId, new Date(f.now).toISOString());
+  f.operation(
+    operationId,
+    "CORE_V2_COMMAND",
+    "TRIP_CORE_V2",
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId,
+      tripId: f.tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P6",
+        core: { title: "Museum" },
+        schedule: { start: coreDateBoundary("2026-11-02") },
+        ...coreDefaults("organizer"),
+      },
+    },
+    "PENDING",
+    itemId,
+  );
+  expect((await getNormalTripQueueActivity(f.db, f.scope, f.now)).actionableNow).toBe(1);
+});
+
+it.each(["P2", "P5"])(
+  "normal authored-flight queue activity requires P2 target and keeps original due time (%s)",
+  async (family) => {
+    const f = fixture(),
+      operationId = randomUUID(),
+      itemId = randomUUID();
+    f.sql
+      .prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?")
+      .run(f.createId);
+    const db = {
+      ...f.db,
+      getFirstAsync: async <T>(query: string, ...args: unknown[]) =>
+        query.startsWith("SELECT experience_family")
+          ? ({ experience_family: family } as T)
+          : f.db.getFirstAsync<T>(query, ...args),
+    };
+    f.operation(
+      operationId,
+      "CORE_V2_COMMAND",
+      "TRIP_CORE_V2",
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId,
+        tripId: f.tripId,
+        command: "SET_AUTHORED_FLIGHT_DETAILS",
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: 1 }],
+        admission: {
+          mode: "MANUAL",
+          sourceIntentId: null,
+          policyVersion: null,
+        },
+        payload: {
+          flightNumberLiteral: "NZ5069",
+          origin: {
+            airportCode: "AKL",
+            name: "Auckland",
+            terminal: null,
+            time: coreDateBoundary("2026-11-02"),
+          },
+          destination: {
+            airportCode: null,
+            name: null,
+            terminal: null,
+            time: { ...coreDateBoundary("2026-11-02"), local_date: null },
+          },
+        },
+      },
+      "RETRYABLE",
+      itemId,
+    );
+    f.sql
+      .prepare("UPDATE sync_operations SET next_attempt_at=? WHERE id=?")
+      .run(new Date(f.now + 15000).toISOString(), operationId);
+    expect(await getNormalTripQueueActivity(db, f.scope, f.now)).toEqual({
+      actionableNow: 0,
+      nextActionableAt: family === "P2" ? f.now + 15000 : null,
+    });
+    expect(
+      (await getNormalTripQueueActivity(db, f.scope, f.now + 15001)).actionableNow,
+    ).toBe(family === "P2" ? 1 : 0);
   },
 );

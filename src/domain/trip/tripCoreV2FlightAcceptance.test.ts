@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { applyCoreCommand, emptyCoreGraph } from "./tripCoreV2Mutation";
 import { coreDefaults } from "./tripCoreV2";
+import { coreDateBoundary } from "./tripCoreV2Temporal";
 import { flightCommandLeaves, type FlightValues } from "./flightAdmission";
 import intents from "../../data/repositories/__fixtures__/tripImportIntents.json";
 const target = randomUUID(),
@@ -77,6 +78,115 @@ function proofs(values: FlightValues) {
 }
 
 describe("Core v2 Flight mutation acceptance after owning source verification", () => {
+  it("retains authored endpoints on the same sparse Item without qualifying a service", () => {
+    const graph = sparse();
+    const date = String(graph.itinerary_events[0].start_local_date);
+    const endpoint = (code: string, name: string) => ({
+      airportCode: code,
+      name,
+      terminal: null,
+      time: {
+        ...coreDateBoundary(date),
+        local_time: "09:30",
+        clock_precision: -1,
+        quality: "ESTIMATED",
+        zone_id: "Pacific/Auckland",
+      },
+    });
+    const payload = {
+      flightNumberLiteral: "NZ123",
+      origin: endpoint("AKL", "Auckland"),
+      destination: endpoint("NSN", "Nelson"),
+    };
+    const result = applyCoreCommand(
+      graph,
+      command("SET_AUTHORED_FLIGHT_DETAILS", payload, 1),
+      actor,
+      now,
+    );
+    expect(result.graph.itinerary_events[0]).toMatchObject({
+      id: target,
+      title: "NZ123",
+      semantic_revision: 2,
+    });
+    expect(result.graph.trip_flight_intents[0]).toMatchObject({
+      qualification: "SPARSE",
+      flight_number_literal: "NZ123",
+    });
+    expect(result.graph.itinerary_transport_services).toEqual([]);
+    expect(result.graph.itinerary_transport_endpoints).toHaveLength(2);
+    expect(result.graph.itinerary_transport_endpoints[0]).toMatchObject({
+      local_time: "09:30:00",
+      instant: null,
+      source_instant: null,
+      civil_resolution: "PENDING",
+    });
+    expect(() =>
+      applyCoreCommand(
+        result.graph,
+        command("SET_AUTHORED_FLIGHT_DETAILS", payload, 1),
+        actor,
+        now,
+      ),
+    ).toThrow("REVISION_CONFLICT");
+    expect(() =>
+      applyCoreCommand(
+        graph,
+        command("SET_AUTHORED_FLIGHT_DETAILS", payload, 1, true),
+        actor,
+        now,
+        true,
+      ),
+    ).toThrow("INVALID_PROVENANCE");
+    const foreign = structuredClone(graph);
+    foreign.itinerary_events[0].owner_account_id = randomUUID();
+    foreign.itinerary_events[0].visibility = "GROUP";
+    expect(() =>
+      applyCoreCommand(
+        foreign,
+        command("SET_AUTHORED_FLIGHT_DETAILS", payload, 1),
+        { ...actor, canManageShared: true },
+        now,
+      ),
+    ).toThrow("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+    expect(() =>
+      applyCoreCommand(
+        graph,
+        command(
+          "SET_AUTHORED_FLIGHT_DETAILS",
+          {
+            ...payload,
+            origin: {
+              ...payload.origin,
+              time: {
+                ...payload.origin.time,
+                source_instant: "2026-12-14T09:30:00Z",
+                source_instant_precision: 0,
+              },
+            },
+          },
+          1,
+        ),
+        actor,
+        now,
+      ),
+    ).toThrow();
+    const qualified = applyCoreCommand(
+      graph,
+      command("QUALIFY_FLIGHT", full(), 1, true),
+      actor,
+      now,
+      true,
+    ).graph;
+    expect(() =>
+      applyCoreCommand(
+        qualified,
+        command("SET_AUTHORED_FLIGHT_DETAILS", payload, 2),
+        actor,
+        now,
+      ),
+    ).toThrow("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+  });
   it("saves sparse Flight without inventing qualified endpoints or services", () => {
     const g = sparse();
     expect(g.itinerary_events).toHaveLength(1);
@@ -89,6 +199,14 @@ describe("Core v2 Flight mutation acceptance after owning source verification", 
     expect(g.itinerary_transport_endpoints).toHaveLength(0);
     expect(g.itinerary_transport_services).toHaveLength(0);
     expect(g.trip_flight_intents[0].qualification).toBe("SPARSE");
+  });
+  it("rejects manual qualification even with a complete valid Source proof payload", () => {
+    const graph = sparse();
+    const before = structuredClone(graph);
+    expect(() =>
+      applyCoreCommand(graph, command("QUALIFY_FLIGHT", full(), 1), actor, now, true),
+    ).toThrow("INVALID_PROVENANCE");
+    expect(graph).toEqual(before);
   });
   it("qualifies the same UUID atomically without moving participation/visibility or unrelated objects", () => {
     const g = sparse();

@@ -1,0 +1,237 @@
+{
+  "status": "CREATE_EDIT_SERVER_VERIFIED_NATIVE_COLD_RECOVERY_PASS",
+  "sourceCommit": "a78ed2ee5d4045b5ac9e64a68615f1e868a177fe",
+  "fixedP4Candidate": "776c98f0",
+  "approvedInstallSHA256": "5eb86f885e799d8fd77c736fb5c189d54b73f2e9e274519154f21d73f3453e35",
+  "approvedRollbackSHA256": "69bfa5f029acbb4d0961d04092ee3d054b3bd6f8cfbdd8bd27e60f35d19233c5",
+  "backend": {
+    "containerId": "e624864800feabec0e53300a6ac09450cca11150d28d3c82ab5a071c98c73a2a",
+    "retainedContainerId": "36b268e0783a30b4d4edb46e35c670dd18ca32d977f0b0629961d88d9b37e453",
+    "image": "sha256:41aa209168b1155060686dca783e7fa5d48c8976de92f6c6d1bd7380956e6211",
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "health": "healthy"
+  },
+  "authority": {
+    "changedApprovedFunctions": [
+      "trip_core_finite_read_state_guard",
+      "trip_core_guard_write",
+      "trip_sustained_core_capabilities",
+      "trip_sustained_dev_scope_allowed"
+    ],
+    "unchangedOtherSourceFunctions": 5,
+    "nativePolicyUnchanged": true,
+    "manifest": [
+      {
+        "name": "trip_core_finite_read_state_guard",
+        "signature": "",
+        "oid": "65713",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "f1378cb07c1f1882651a558dbe612909",
+        "sha256": "f8f241b7c96d8e8069f9ee6228eefdf3cda75da45e087a264f218a15c953b7d8"
+      },
+      {
+        "name": "trip_core_guard_historical_source_association",
+        "signature": "",
+        "oid": "65660",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "fb315854dee6942f552a647fb851abfb",
+        "sha256": "e95c3fe18de978988a2a8bbd95385399b255b3406b61b3246b5465ead11c5ecb"
+      },
+      {
+        "name": "trip_core_guard_write",
+        "signature": "",
+        "oid": "65263",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "24ebd53b031765b518cc9f253d1fc5b1",
+        "sha256": "2d989c3b8c8ab19098ffab0fa25c1960553f43541f63cf82d2a593ca01b488a7"
+      },
+      {
+        "name": "trip_core_publication_guard",
+        "signature": "",
+        "oid": "65649",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "6ff1c65d9389341e889eb8258c6659af",
+        "sha256": "a3ca54f50f9b6f9df27addba705283110e09341b568c6a8b01c5f35d823442aa"
+      },
+      {
+        "name": "trip_core_resolve_airport",
+        "signature": "text, text, text, date",
+        "oid": "65546",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_gateway=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "40f537b189fd972423e63b2be4023a12",
+        "sha256": "b75fe0588b2e9e08b421a4434833f81ef624ca4dd44a7f96e7aac9c1bdb20968"
+      },
+      {
+        "name": "trip_sustained_core_capabilities",
+        "signature": "uuid, uuid",
+        "oid": "66181",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_gateway=X/postgres"
+        ],
+        "md5": "fa26e9d043f4f059dcf05824759215c8",
+        "sha256": "972e9e3ee4aca09f78cbe893929539b7d41ebd5d2a297948ae9b05f24886b77c"
+      },
+      {
+        "name": "trip_sustained_dev_scope_allowed",
+        "signature": "uuid, uuid, uuid, text",
+        "oid": "66180",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "a443a587d0d590e705a4252f679fa2af",
+        "sha256": "19e60fb80871dcdb00f37d399345b9ad8eeeb78faccef2cbc1d6c7d841f32827"
+      },
+      {
+        "name": "trip_sustained_import_p1_capabilities",
+        "signature": "uuid, uuid",
+        "oid": "66408",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_gateway=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "9f01606ec37c03662c7d9d828cae9ef9",
+        "sha256": "e8c1e45c9c3cc547d4ebe1c3c9c83fca84d4f2001332d242fd35b38c3c4a6ff9"
+      },
+      {
+        "name": "trip_sustained_import_p1_guard",
+        "signature": "text, text, jsonb, jsonb, uuid, uuid",
+        "oid": "66410",
+        "owner": "postgres",
+        "acl": [
+          "postgres=X/postgres",
+          "otr_trip_core_v2_writer=X/postgres"
+        ],
+        "md5": "488f5fe1537d450b610ef7c5e22eb53b",
+        "sha256": "7e4a62454d39861ea61e8cd6036d4fffc08f6c3fe3f1791cb3a2d1d51c27a5d7"
+      }
+    ]
+  },
+  "normalCapability": {
+    "normalIdentity": "3f7e964e-79d3-4028-a585-470e798e41ec",
+    "tokenPersisted": false,
+    "newTripCapability": {
+      "contractVersion": 2,
+      "commandVersion": 2,
+      "readVersion": 2,
+      "captureVersion": 2,
+      "activationState": "ENABLED",
+      "enabledCommands": [
+        "CREATE_ITEM",
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_ITEM_PARTICIPATION",
+        "SET_STAY_DETAILS",
+        "SET_RENTAL_DETAILS"
+      ],
+      "enabledFamilies": [
+        "P1",
+        "P3",
+        "P4"
+      ],
+      "enabledAdmissionModes": [
+        "MANUAL"
+      ],
+      "maximumRequestBytes": 32768,
+      "maximumAffectedRoots": 32,
+      "maximumRelations": 64,
+      "resolverAvailable": false,
+      "sourceEvidenceAvailable": false,
+      "operationalCustodyAvailable": false
+    },
+    "oldTripP4Closed": true,
+    "ownProbeSessionRevoked": true
+  },
+  "native": {
+    "build": 49,
+    "sourceCommit": "6710a380e9d2f31d2ff6c7a4131687213cb7b2c8",
+    "create": "SERVER_ACCEPTED_SERVER_VERIFIED",
+    "edit": "SERVER_ACCEPTED_SERVER_VERIFIED",
+    "coldRecovery": "PASS_SAME_ID_LATEST_FIELDS",
+    "queue": "FIVE_COMPLETED_APPLIED",
+    "reader": "REAL_DAY_FOCUS_IMMERSIVE_PASS",
+    "staleDraft": "REJECTED_INPUT_RETAINED_DISCARD_REOPEN_RECOVERED",
+    "nativeCrossAccountMutationNegative": "NOT_RUN",
+    "offlineReconnect": "NOT_RUN",
+    "realOperationReplay": "NOT_RUN"
+  },
+  "cloudL3": "PENDING",
+  "noNewTablesRolesRLSGrants": true,
+  "providerImportActivation": false,
+  "fullCloudL3": "PENDING_NATIVE_OFFLINE_REPLAY_PERMISSION_NEGATIVES",
+  "item": {
+    "itemId": "32117276-df49-4c2d-a260-6a210ff2b625",
+    "revision": 5,
+    "title": "Forms QA Cloud Rental 1028 Edited",
+    "notes": "p4 manual cloud edited",
+    "startTime": "10:17:00",
+    "endTime": "17:22:00",
+    "supplier": "QA Supplier",
+    "model": "QA Compact",
+    "pickup": "Forms QA Pickup Edited",
+    "return": "Forms QA Return",
+    "receipts": [
+      {
+        "operationId": "00758b87-a215-4e67-bf42-38cbf80d43f4",
+        "command": "CREATE_ITEM",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "3006e6f8-ca0c-4a10-8633-87f5ab3e3bb5",
+        "command": "SET_ITEM_TEXT",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "827f7fcd-3221-43db-9eef-1ead3fad041e",
+        "command": "SET_ITEM_SCHEDULE",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "92f606d7-6488-4a0e-8cc4-9ae14ebfab5c",
+        "command": "SET_RENTAL_DETAILS",
+        "outcome": "APPLIED"
+      },
+      {
+        "operationId": "c87250dd-a88d-43f9-9c47-a3ca7f1ca5cf",
+        "command": "SET_ITEM_TEXT",
+        "outcome": "APPLIED"
+      }
+    ],
+    "coldRecoveryObserved": true,
+    "pendingDotAbsentAfterCold": true
+  },
+  "remaining": [
+    "Native offline pending/reconnect",
+    "Real repeated dispatch/idempotent receipt readback",
+    "Live account/creator/trip mutation negatives; capability exclusion and isolated PG negatives already passed",
+    "No unsupported Booking/Contact/Instructions/media claim"
+  ],
+  "privateEvidenceDirectory": "/private/tmp/otr-manual-p4-cloud-20261028"
+}

@@ -3,6 +3,9 @@ import { createManualStayRepository } from "./manualStayRepository";
 import { p1CivilMoveItem, p1CivilProposal } from "@/features/day-feed/p1CivilMove";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
@@ -26,9 +29,18 @@ vi.mock("../files/tripPhotoFileStore", () => ({
   discardRetainedTripPhoto: vi.fn(),
 }));
 const opened: DatabaseSync[] = [];
-afterEach(() => opened.splice(0).forEach((s) => s.close()));
-async function fixture(structured = false) {
-  const sql = new DatabaseSync(":memory:");
+const testDirectories: string[] = [];
+afterEach(() => {
+  opened.splice(0).forEach((s) => s.close());
+  testDirectories.splice(0).forEach((path) => rmSync(path, { recursive: true }));
+});
+async function fixture(structured = false, fileBacked = false) {
+  const directory = fileBacked
+    ? mkdtempSync(join(tmpdir(), "otr-manual-durability-test-"))
+    : null;
+  if (directory) testDirectories.push(directory);
+  const filename = directory ? join(directory, "fixture.sqlite") : ":memory:";
+  let sql = new DatabaseSync(filename);
   opened.push(sql);
   sql.exec("PRAGMA foreign_keys=ON");
   for (const m of migrations) sql.exec(m.sql);
@@ -105,6 +117,14 @@ async function fixture(structured = false) {
     read,
     days,
     originalAccount,
+    reopenDatabase() {
+      if (!directory) throw Error("FILE_BACKED_TEST_REQUIRED");
+      sql.close();
+      opened.splice(opened.indexOf(sql), 1);
+      sql = new DatabaseSync(filename);
+      opened.push(sql);
+      sql.exec("PRAGMA foreign_keys=ON");
+    },
     failNext(n: number) {
       inserts = 0;
       failAt = n;
@@ -664,8 +684,9 @@ async function acceptedPlanFixture(
   foreignOwner = false,
   withPerson = false,
   family: "P1" | "P3" | "P4" = "P1",
+  fileBacked = false,
 ) {
-  const f = await fixture(true);
+  const f = await fixture(true, fileBacked);
   const repo =
       family === "P4"
         ? createManualRentalRepository(f.coreDatabase, f.identity, f.core)
@@ -1032,3 +1053,70 @@ it("reopens receipted accepted P4 at the same ID, preserves rental facts, and re
     ).read(unproven.tripId, unproven.itemId),
   ).rejects.toThrow();
 });
+
+it.each(["P1", "P3", "P4"] as const)(
+  "retains two unsent accepted %s edits across database close/reopen without duplicate operations or stale overwrite",
+  async (family) => {
+    const f = await acceptedPlanFixture(false, false, family, true);
+    const hash = async (bytes: Uint8Array) =>
+      createHash("sha256").update(bytes).digest("hex");
+    const open = (core = f.core) =>
+      family === "P4"
+        ? createManualRentalRepository(f.coreDatabase, f.identity, core)
+        : family === "P3"
+          ? createManualStayRepository(f.coreDatabase, f.identity, core)
+          : createManualPlanRepository(f.coreDatabase, f.identity, core);
+    const repo = open();
+    const firstDraft = await repo.read(f.tripId, f.itemId, f.revision);
+    const staleDraft = await repo.read(f.tripId, f.itemId, f.revision);
+    const firstFields = {
+      ...firstDraft.fields,
+      title: `${family} pending title`,
+      description: "First unsent note",
+    };
+    const first = await repo.save(firstDraft, firstFields);
+    f.reopenDatabase();
+    const freshCore = createTripCoreV2Repository(f.coreDatabase, f.identity, hash);
+    const freshRepo = open(freshCore);
+    const secondDraft = await freshRepo.read(f.tripId, f.itemId);
+    expect(secondDraft.fields).toMatchObject({
+      title: firstFields.title,
+      description: "First unsent note",
+    });
+    const second = await freshRepo.save(secondDraft, {
+      ...secondDraft.fields,
+      description: "Latest unsent note",
+    });
+    const beforeRetry = await freshCore.pending(await freshCore.captureContext(f.tripId));
+    expect(beforeRetry.map((intent) => intent.command.operationId)).toEqual([
+      ...first.operationIds,
+      ...second.operationIds,
+    ]);
+    expect(beforeRetry.map((intent) => intent.command.baseVector[0].revision)).toEqual([
+      f.revision,
+      f.revision + 1,
+    ]);
+    expect(await repo.save(firstDraft, firstFields)).toEqual(first);
+    await expect(
+      repo.save(staleDraft, { ...staleDraft.fields, title: "Stale overwrite" }),
+    ).rejects.toThrow("MANUAL_PLAN_CONFLICT");
+    f.reopenDatabase();
+    const reopened = await open(
+      createTripCoreV2Repository(f.coreDatabase, f.identity, hash),
+    ).read(f.tripId, f.itemId);
+    expect(reopened.fields).toMatchObject({
+      title: firstFields.title,
+      description: "Latest unsent note",
+    });
+    const afterRetry = await freshCore.pending(await freshCore.captureContext(f.tripId));
+    expect(afterRetry.map((intent) => intent.command.operationId)).toEqual(
+      beforeRetry.map((intent) => intent.command.operationId),
+    );
+    const snapshot = await freshCore.combinedSnapshot(
+      await freshCore.captureContext(f.tripId),
+    );
+    expect(
+      snapshot?.graph.itinerary_events.filter((item) => item.id === f.itemId),
+    ).toHaveLength(1);
+  },
+);

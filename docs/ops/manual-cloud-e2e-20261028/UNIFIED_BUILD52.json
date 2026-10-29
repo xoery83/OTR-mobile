@@ -1,0 +1,20 @@
+{
+  "status": "JS_ONLY_READY_NOT_INSTALLED",
+  "build": 52,
+  "sourceCommit": "9c81800559e93fde58337167d49f13dc17462f7d",
+  "bundleId": "com.xoery.otrmobile",
+  "jsSHA256": "2bb56d528ddc564f431a58e2f4b1fef2597641ad5daa749d0a866ec7b189dffe",
+  "nativeBaselineBuild": 49,
+  "simulatedApplicationIdentifier": "U9D5C58Z94.com.xoery.otrmobile",
+  "nativeSectionsUnchanged": {
+    "__text": "07c1488b985980cd7ae7d2d10a92fd36b66c26a38541f2dcd142f242c6cacdb7",
+    "__entitlements": "6f0e8ee56d0ebf0c8a224ced3563da0a33387cfb909499221b84a0eb0b22d94c",
+    "__ents_der": "18f34df1da4a0a4ca6621abfed2260ede435f67e660a45c18377a97d2575a009"
+  },
+  "strictCodeSign": "PASS",
+  "embeddedSocketAbsent": true,
+  "qaScopePreserved": true,
+  "noAppDataOrSessionCopied": true,
+  "authErrorVisibilityNative": "PENDING",
+  "p1FullRegression": "IN_PROGRESS"
+}
