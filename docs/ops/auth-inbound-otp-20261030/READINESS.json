@@ -1,0 +1,31 @@
+{
+  "status": "SOURCE_REVIEW_PASS_REAL_FIRST_USER_PENDING_CREDENTIAL",
+  "domain": "eldouzileu.resend.app",
+  "ownerScopeConfirmation": "Entire Resend team exclusively OTR QA; no production/private resources",
+  "actualKeyPermission": "full_access; no Receiving-only key, prefix not provider isolation",
+  "secretSource": {
+    "environmentVariable": "OTR_QA_RESEND_API_KEY",
+    "keychainService": "OTR-QA-Inbound",
+    "keychainAccount": "resend",
+    "smtpKeyReadOrReused": false,
+    "lastHostMetadataLookupStatus": 44,
+    "secretValueRead": false
+  },
+  "validation": {
+    "directSuites": 2,
+    "directTests": 27,
+    "independentSuites": 2,
+    "independentTests": 27,
+    "independentReview": "NO_BLOCKER_AFTER_PROVEN_IDENTITY_AND_UNKNOWN_REVOKE_REPAIRS",
+    "typecheck": "PASS",
+    "scopedLint": "PASS"
+  },
+  "liveRequestsMade": 0,
+  "realOtpE2e": "NOT_RUN",
+  "nativeReuseReleased": false,
+  "coldEvidenceLimit": "Unit separate-host-process ciphertext/repository mechanics only; no real Session/Native Keychain proof yet",
+  "closedFindings": [
+    "Only bind logout credential after trusted fresh-user ownership proof",
+    "Reserve logout attempt before wire; never automatically retry UNKNOWN; unresolved run lock retained"
+  ]
+}

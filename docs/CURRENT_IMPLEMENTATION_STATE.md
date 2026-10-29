@@ -207,6 +207,12 @@ scratch6s182/actual-primary5s81/types PASS and independent source/range reviews.
 Original six primary dirty files/full bytes preserved; no route/authority/DEV
 activation. See ops/auth-phase2-20261028/AUTH_COMPOSITE_SOURCE_MAIN_INTEGRATION.json.
 
+Resend Inbound OTP test tool: source reviewed2s27/types/lint PASS, DEV-only
+scripts/auth helpers use a dedicated QA-team OTR-QA-Inbound credential, not SMTP.
+Owner confirmed QA-only team; host Keychain item not yet visible (metadata44).
+No real OTP/Receiving call yet; lane reuse stays closed until first new Hosted
+user PASS. See ops/auth-inbound-otp-20261030/READINESS.json.
+
 Auth owns `auth-identity-delivery-20261028`; use existing Supabase Auth, per-Account
 secure slots, repositories and apply-generation gate. Apple is Owner-paused. No
 new Auth authority, copied Session/Keychain/SQLite, pricing, Schema/RLS/GRANT or
