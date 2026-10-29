@@ -113,9 +113,12 @@ P1 intent1, queue3, zero Cloud receipts/read certificates. Its third queue entry
 TRIP_LOCAL_ACTION:TRIP_METADATA_DEFERRED, created by the normal Native Trip edit.
 Do not omit it, overwrite the original Create intent, or label a deferred action
 server-Applied. Its stable identity/baseline must be reconciled by the owning
-Metadata pipeline and included in whole-dataset verification. A MetadataV2 held-
-transaction/DI candidate lease has been requested from the unique Native Writer;
-no Metadata production file has been edited by Auth yet.
+Metadata pipeline and included in whole-dataset verification. The delegated MetadataV2 held-transaction candidate is fixed at 1a34e1c1
+(13 storage + 9 handler checks, types/lint/build and independent review PASS). Its
+normal query/method/error-classification AST remains identical to the owning
+baseline. The narrow Writer lease has been returned. This is a private candidate
+awaiting Native acceptance, not main integration, actual PG composition or DEV
+publication authority.
 
 TripCreate, MetadataV2 and Core use three different session_user principals today.
 A single physical transaction is necessary but does not itself grant composite
