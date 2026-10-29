@@ -89,6 +89,12 @@ were independently reviewed and handed back to Native. Focused commits only; nev
 whole-merge Core's Native-parent branch. No public-file/SQL/Host lease held; Native
 live-Trip-draft seam pending. GuestQA-only GUI permitted for bounded regression.
 
+GuestQA64/source d771c7e0 in-place runtime regression PASS: normal original Trip/P1
+and same-version cold recovery. Independent Guest-only SQLite74 readback retains
+exact Trip/Person/P1 intent/three queue records; cloud receipts remain zero and no
+Account DB exists. GUI returned to Native. This is existing-data regression, not
+Adoption or new Create/Edit acceptance. GUEST_B_GUESTQA64_ARTIFACT.json records limits.
+
 Next: full-file/live-draft proof, durable publication recovery, owning same-transaction
 ports, atomic server candidate and precise protected Gate, then actual GuestQA OTP/
 Google adoption/DEV readback/Creator/Person/negative/idempotency/UNKNOWN/cold E2E.
