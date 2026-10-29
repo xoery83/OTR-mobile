@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_PASS_UNBOUND",
+  "reusedCommit": "347a889573baad1e53fd93b2db8845116388eaeb",
+  "preimagesByteMatched": [
+    "sourcePdfPrivateStage.ts blob329acd39",
+    "sourcePdfStorageProducer.ts blob1ea7e2ea"
+  ],
+  "scope": "Existing V4 profile/schema/stage/storage factories and tests only; no historical caller/scope restoration",
+  "changesBeyondHistorical": "Trusted private worker DI; standalone bytes verifier pins copy before await; V4 worker failure UNAVAILABLE instead of UNSUPPORTED",
+  "red": "1 V4 transient-failure regression failed before repair",
+  "validation": "6 suites83PASS/1 pre-existing optional fixture skipped; types/scopedlint PASS",
+  "independentReview": "NO_BLOCKER p1_source_review_independent",
+  "defaults": "V1\u2013V3 factory/profile/configuration hash/64KiB bounds unchanged; V4 never default startup",
+  "deployed": false,
+  "sqlModified": false,
+  "providerCalls": 0,
+  "remaining": "Existing Source evidence115bc still only ORIGINAL TEXT; requires exact qualified DERIVED branch and scoped PDF eligibility. V1 stage cannot stand in for General PDF; historical V4 fixed scope cannot be borrowed."
+}

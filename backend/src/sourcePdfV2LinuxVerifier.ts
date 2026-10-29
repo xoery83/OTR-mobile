@@ -57,22 +57,35 @@ export function createSourcePdfV2LinuxVerifier(
         throw new Error("PDF_V2_ORIGINAL_MISMATCH");
       return new Uint8Array(bytes);
     }
-    const decoded = extractionSchema.parse(await runWorker(await read()));
-    const { toleratedUnreferencedZeroOffsetObjects, ...extraction } = decoded;
-    const result = await validatePdfExtractionContent(extraction, scope, async (b) =>
-      hash(b),
-    );
+    const result = await verifySourcePdfV2LinuxBytes(await read(), runWorker);
     await read();
-    return {
-      ...result,
-      profileId: profile.id,
-      profileSha256: SOURCE_PDF_V2_LINUX_PROFILE_SHA,
-      producer: profile.producer,
-      transformKey: "otr.pdf.qpdf-poppler",
-      transformVersion: "2",
-      transformOptionsSha256: hash(profile.textPolicy),
-      pageMapSha256: hash(canonicalCoreJson(result.pages)),
-      toleratedUnreferencedZeroOffsetObjects,
-    };
+    return result;
+  };
+}
+
+// Pending acquisition validates owned bytes before a Source exists; it mints no Source identity.
+export async function verifySourcePdfV2LinuxBytes(
+  bytes: Uint8Array,
+  runWorker = runSourcePdfV2LinuxWorker,
+) {
+  const owned = new Uint8Array(bytes);
+  if (!owned.length || owned.length > profile.maxOriginalBytes)
+    throw Error("PDF_V2_INPUT_LIMIT");
+  const expected = { sha256: hash(owned), byteCount: owned.length };
+  const decoded = extractionSchema.parse(await runWorker(owned));
+  const { toleratedUnreferencedZeroOffsetObjects, ...extraction } = decoded;
+  const result = await validatePdfExtractionContent(extraction, expected, async (b) =>
+    hash(b),
+  );
+  return {
+    ...result,
+    profileId: profile.id,
+    profileSha256: SOURCE_PDF_V2_LINUX_PROFILE_SHA,
+    producer: profile.producer,
+    transformKey: "otr.pdf.qpdf-poppler",
+    transformVersion: "2",
+    transformOptionsSha256: hash(profile.textPolicy),
+    pageMapSha256: hash(canonicalCoreJson(result.pages)),
+    toleratedUnreferencedZeroOffsetObjects,
   };
 }

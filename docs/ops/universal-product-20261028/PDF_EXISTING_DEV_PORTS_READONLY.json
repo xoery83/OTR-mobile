@@ -1,0 +1,90 @@
+{
+  "status": "READONLY_METADATA_VERIFIED",
+  "pdfFunctions": {
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres}",
+        "installed": true,
+        "md5": "ceab4280b4f6f708a7a472acd3a5a0c1",
+        "owner": "postgres",
+        "signature": "public.guard_trip_source_mutation()"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "546ac108fa533eb0dca292041a176eb0",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_commit(jsonb,text)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "6de43da305d898bd0e3cee964eed8f95",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_context(uuid,uuid,jsonb)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "c1138df2728bf97503f2e620073980ec",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_lookup(uuid,uuid,uuid,text)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "60b5d3f6863d3c15e328eb3e8d63922e",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_map_valid(jsonb,text)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "bef456977f47cde4ffe0def824d9fe73",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_original_begin(uuid,text,uuid)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "16011b515ae59834921d7d8c7fd806ba",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_original_finish(uuid,text,uuid,text,bigint)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "343077acc27e80e2883b61ec1fc04620",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_registration_commit(jsonb,text,text)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "efb66568aaeb12bc131c4906d4e806be",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_registration_context(uuid,uuid,jsonb)"
+      },
+      {
+        "acl": "{otr_trip_source_writer=X/otr_trip_source_writer,otr_trip_source_command_gateway=X/otr_trip_source_writer}",
+        "installed": true,
+        "md5": "539e713233f0de973649398f28187af7",
+        "owner": "otr_trip_source_writer",
+        "signature": "public.trip_source_pdf_v2_registration_lookup(uuid,uuid,uuid,text)"
+      }
+    ],
+    "pdfGateTable": "trip_source_pdf_gate",
+    "pdfRegistrationTable": "trip_source_pdf_registrations",
+    "pdfSealTable": "trip_source_pdf_seals"
+  },
+  "pdfGlobalGate": false,
+  "v4FunctionCount": 24,
+  "v4ProfileId": "PDF_PRIVATE_UPLOAD_QPDF_POPPLER_V4",
+  "v4ProfileSha256": "2a9b397d3f8368144517e0a3bf73595e71b6cba7b37341045eceef47ef059f3d",
+  "v4Scope": "Existing historical single-Capture identity; not authorized/reused/modified for this QA",
+  "writes": 0,
+  "notClaimed": [
+    "Current QA PDF authority",
+    "PDF Task/Save"
+  ]
+}
