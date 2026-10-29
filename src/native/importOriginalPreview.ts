@@ -6,6 +6,7 @@ import { subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
 
 type Preview = {
+  importOriginalPreviewContractVersion?: number;
   previewImportOriginal(
     bytes: Uint8Array,
     token: string,
@@ -13,6 +14,28 @@ type Preview = {
   ): Promise<void>;
   closeImportOriginal(token: string): Promise<void>;
 };
+function previewBridge() {
+  const native = requireNativeModule<Preview>("ReceiptOcr");
+  if (
+    typeof native.previewImportOriginal !== "function" ||
+    typeof native.closeImportOriginal !== "function" ||
+    (native.importOriginalPreviewContractVersion !== 2 &&
+      !(
+        native.importOriginalPreviewContractVersion === undefined &&
+        process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true"
+      ))
+  )
+    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
+  return native;
+}
+export function isImportOriginalPreviewAvailable() {
+  try {
+    previewBridge();
+    return true;
+  } catch {
+    return false;
+  }
+}
 // Called only with the repository's scoped, verified original, never a caller-provided URI.
 export async function previewImportOriginal(
   original: { document: ImportDocument; bytes: Uint8Array },
@@ -20,9 +43,6 @@ export async function previewImportOriginal(
   displayName = original.document.originalFilename ?? "",
 ): Promise<void> {
   if (!isCurrent()) return;
-  // Keep the new Native adapter closed until its actual binary lifecycle is qualified.
-  if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED !== "true")
-    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
   const { bytes, document } = original;
   if (
     !bytes.length ||
@@ -31,23 +51,19 @@ export async function previewImportOriginal(
     bytes.length !== document.byteCount
   )
     throw Error("IMPORT_ORIGINAL_INTEGRITY");
-  const native = requireNativeModule<Preview>("ReceiptOcr");
+  const native = previewBridge();
   try {
-    console.info(
-      JSON.stringify({
-        event: "import_original_preview_bridge",
-        previewMethod: typeof native.previewImportOriginal === "function",
-        closeMethod: typeof native.closeImportOriginal === "function",
-      }),
-    );
+    if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true")
+      console.info(
+        JSON.stringify({
+          event: "import_original_preview_bridge",
+          previewMethod: typeof native.previewImportOriginal === "function",
+          closeMethod: typeof native.closeImportOriginal === "function",
+        }),
+      );
   } catch {
     // Diagnostics must not change preview behavior.
   }
-  if (
-    typeof native.previewImportOriginal !== "function" ||
-    typeof native.closeImportOriginal !== "function"
-  )
-    throw Error("IMPORT_PREVIEW_UNAVAILABLE");
   const token = randomUUID();
   let closing = false;
   const close = () => {

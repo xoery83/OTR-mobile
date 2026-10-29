@@ -1,0 +1,84 @@
+{
+  "status": "INDEPENDENT_SOURCE_SCOPE_ACTIVE_VERIFIED",
+  "activationSha256": "fa8df1999e40e211ea5e9eb4627bb546345aba84e0a8877c4d7b9e2dc6527c61",
+  "closeSha256": "ea7c0d33d0d244ec34e9c9b752e8ee68933fe2faf70b04d768e1e7a6440d0df6",
+  "ownerApproval": "Native thread human approved16644f85 exact Source single-hash compatibility; original continuous business scope retained",
+  "runtime": {
+    "service": "otr-dev-backend",
+    "project": "tuqigdxrvrerfewsxqgm",
+    "containerId": "0f9c4b6f97ca6c282836d7e9478ce4a54f4ba8d49591d720ab8754548491b8a0",
+    "image": "sha256:dab8df27d38d042588b01f388cbd638c13993fb8802241f67169c73cf50e4eed",
+    "healthy": true,
+    "environmentSHA256": "ab5dc0e7026482daa398a7cdc5046ea1a414f65c37ee081386a8e238acb73057",
+    "mountCount": 6,
+    "user": "otr",
+    "independentReadonlyCheck": true
+  },
+  "scope": {
+    "mode": "CONTINUOUS_MINIMUMS",
+    "version": 1,
+    "tripId": "825f79b2-4a9d-4535-a62e-43000ca50c4a",
+    "families": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6"
+    ],
+    "expiresAt": "2026-11-01T08:48:56Z"
+  },
+  "allSixFunctionWitnessesUnchangedByActivation": true,
+  "sixWitnesses": [
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "9f01606ec37c03662c7d9d828cae9ef9",
+      "oid": "66408",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_import_p1_capabilities(uuid,uuid)"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "115bc244cd9ccd196936828739187531",
+      "oid": "66410",
+      "owner": "postgres",
+      "signature": "public.trip_sustained_import_p1_guard(text,text,jsonb,jsonb,uuid,uuid)"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "fb315854dee6942f552a647fb851abfb",
+      "oid": "65660",
+      "owner": "postgres",
+      "signature": "public.trip_core_guard_historical_source_association()"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "6ff1c65d9389341e889eb8258c6659af",
+      "oid": "65649",
+      "owner": "postgres",
+      "signature": "public.trip_core_publication_guard()"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "ef17d1618d87006e8379164244a7645f",
+      "oid": "65713",
+      "owner": "postgres",
+      "signature": "public.trip_core_finite_read_state_guard()"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "md5": "40f537b189fd972423e63b2be4023a12",
+      "oid": "65546",
+      "owner": "postgres",
+      "signature": "public.trip_core_resolve_airport(text,text,text,date)"
+    }
+  ],
+  "nonterminalSourcesBeforeAndAfter": 0,
+  "newSchemaRlsGrantsRoles": false,
+  "providerCalls": 0,
+  "newObjects": 0,
+  "sourceScopeActive": true,
+  "sqlExpiryDeniesNewSaveAndResolverUse": true,
+  "physicalCloseRemainsAvailable": true,
+  "readbackSha256": "aa1fb3467958e095bb1f8bbc0076f96936ef75bfec8db177d9aee362a0227c3a"
+}
