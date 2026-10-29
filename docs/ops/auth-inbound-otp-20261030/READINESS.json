@@ -27,5 +27,6 @@
   "closedFindings": [
     "Only bind logout credential after trusted fresh-user ownership proof",
     "Reserve logout attempt before wire; never automatically retry UNKNOWN; unresolved run lock retained"
-  ]
+  ],
+  "executionPreflight": "PREFLIGHT.json: RECEIVING_CREDENTIAL_REQUIRED before OTP/Receiving requests"
 }
