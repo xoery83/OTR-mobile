@@ -8,6 +8,7 @@ import {
   type GuestRecoveryFiles,
 } from "./guestAdoptionRecovery";
 import { hasGuestPublicationHold } from "./guestPublicationHold";
+import { verifyGuestSourceCheckpoint } from "./guestTripP1SourceSchema";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { randomUUID } from "node:crypto";
 import {
@@ -1583,6 +1584,162 @@ it("projects persisted Guest Trip/P1 domain source with original operation ident
   );
 });
 
+it("checks the actual frozen source's canonical bytes using owning contracts before retaining it", async () => {
+  const f = await handoffFixture();
+  const vault = await f.workspace.freezeForInventory();
+  const source = await vault.readTripP1Source();
+  const record = {
+    canonicalText: source.canonicalText,
+    sha256: source.sha256,
+    bytes: Buffer.byteLength(source.canonicalText),
+  };
+  const body = await verifyGuestSourceCheckpoint(record, {
+    sourceGuestLocalId: f.f.guestId,
+    tripIds: [f.trip.tripId],
+  });
+  expect(body.trips[0].coreIntents[0].command.target.id).toBe(f.saved.itemId);
+  expect(body.trips[0].deferredMetadata).toHaveLength(1);
+  expect(body.cloudAuthority).toBe(false);
+  await vault.release();
+});
+
+it("version3 cold recovery retains exact semantic source while publication keeps original Guest SQLite closed", async () => {
+  const f = await handoffFixture();
+  const inventory = await createGuestHandoffInventory(f.deps)();
+  const input = {
+    schemaId: "otr.auth.guest-adoption-recovery/3" as const,
+    sourceKind: "GUEST" as const,
+    sourceGuestLocalId: f.f.guestId,
+    adoptionId: randomUUID(),
+    targetAccountId: randomUUID(),
+    checkpoint: "PREPARED" as const,
+    inventorySha256: inventory.census.inventorySha256!,
+    tripIds: [...inventory.census.tripIds],
+    drafts: [...inventory.drafts],
+    source: {
+      canonicalText: inventory.source.canonicalText,
+      sha256: inventory.source.sha256,
+      bytes: Buffer.byteLength(inventory.source.canonicalText),
+    },
+  };
+  const openRecovery = () =>
+    createGuestAdoptionRecovery({
+      scope: inventory.scope,
+      files: f.f.files,
+      assertGuest: async () => undefined,
+    });
+  const prepared = await openRecovery().prepare(input);
+  await openRecovery().requestPublication(
+    input.adoptionId,
+    input.targetAccountId,
+    prepared!.preparationSha256,
+  );
+  f.f.close();
+  const opens = f.f.open.mock.calls.length;
+  await expect(f.f.newOpener()()).rejects.toThrow("GUEST_PUBLICATION_STATUS_REQUIRED");
+  expect(f.f.open).toHaveBeenCalledTimes(opens);
+  const recovered = await openRecovery().read(input.adoptionId, input.targetAccountId);
+  expect(recovered?.nextAction).toBe("QUERY_SERVER_STATUS");
+  expect(recovered?.preparation).toEqual(input);
+  await expect(
+    openRecovery().cancelBeforePublication(input.adoptionId, input.targetAccountId),
+  ).rejects.toThrow("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
+  expect(f.f.open).toHaveBeenCalledTimes(opens);
+  expect(f.tripResume).not.toHaveBeenCalled();
+  expect(f.p1Resume).not.toHaveBeenCalled();
+});
+
+it.each([
+  "wrong hash",
+  "wrong bytes",
+  "wrong Guest",
+  "wrong Trip",
+  "unknown credential field",
+  "cloud authority",
+  "foreign Person",
+  "missing queue",
+  "duplicate queue",
+  "invalid command",
+  "Core hash",
+  "non-P1",
+  "metadata chain",
+  "wrong totals",
+  "non-static cover",
+  "missing v3 source",
+  "source on v2",
+])(
+  "refuses %s without writing a source checkpoint or changing Guest business data",
+  async (reason) => {
+    const f = await handoffFixture();
+    const inventory = await createGuestHandoffInventory(f.deps)();
+    const body = JSON.parse(inventory.source.canonicalText);
+    if (reason === "wrong Guest") body.sourceGuestLocalId = randomUUID();
+    if (reason === "wrong Trip") body.trips[0].create.tripId = randomUUID();
+    if (reason === "unknown credential field") body.session = "FORBIDDEN_FIXTURE_VALUE";
+    if (reason === "cloud authority") body.cloudAuthority = true;
+    if (reason === "foreign Person")
+      body.trips[0].people.push({
+        version: 1,
+        operationId: randomUUID(),
+        personId: randomUUID(),
+        tripId: f.trip.tripId,
+        accountId: randomUUID(),
+        tripCreateOperationId: f.trip.operationId,
+        displayName: "Other",
+      });
+    if (reason === "missing queue") body.trips[0].queueOperationIds.pop();
+    if (reason === "duplicate queue")
+      body.trips[0].queueOperationIds.push(body.trips[0].queueOperationIds[0]);
+    if (reason === "invalid command") body.trips[0].coreIntents[0].command.payload = {};
+    if (reason === "Core hash") body.trips[0].coreIntents[0].sha256 = "0".repeat(64);
+    if (reason === "non-P1") body.trips[0].coreIntents[0].command.payload.family = "P2";
+    if (reason === "metadata chain")
+      body.trips[0].deferredMetadata[0].dependencyOperationId = randomUUID();
+    if (reason === "wrong totals") body.totals.people++;
+    if (reason === "non-static cover")
+      body.trips[0].selectedCoverAssetId = "file:///private/not-a-cover";
+    const text = canonicalCoreJson(body),
+      sha256 = await tripCoreSha256Hex(new TextEncoder().encode(text));
+    const input = {
+      schemaId:
+        reason === "source on v2"
+          ? ("otr.auth.guest-adoption-recovery/2" as const)
+          : ("otr.auth.guest-adoption-recovery/3" as const),
+      sourceKind: "GUEST" as const,
+      sourceGuestLocalId: f.f.guestId,
+      adoptionId: randomUUID(),
+      targetAccountId: randomUUID(),
+      checkpoint: "PREPARED" as const,
+      inventorySha256: inventory.census.inventorySha256!,
+      tripIds: [...inventory.census.tripIds],
+      drafts: [...inventory.drafts],
+      ...(reason === "missing v3 source"
+        ? {}
+        : {
+            source: {
+              canonicalText: text,
+              sha256: reason === "wrong hash" ? "0".repeat(64) : sha256,
+              bytes: Buffer.byteLength(text) + (reason === "wrong bytes" ? 1 : 0),
+            },
+          }),
+    };
+    const before = await f.f.opened[0].sql
+      .prepare("SELECT count(*) AS count FROM sync_operations")
+      .get();
+    const recovery = createGuestAdoptionRecovery({
+      scope: inventory.scope,
+      files: f.f.files,
+      assertGuest: async () => undefined,
+    });
+    await expect(recovery.prepare(input)).rejects.toThrow();
+    expect(await f.f.files.read(input.adoptionId, "prepared")).toBeNull();
+    expect(
+      f.f.opened[0].sql.prepare("SELECT count(*) AS count FROM sync_operations").get(),
+    ).toEqual(before);
+    await inventory.resumeGuestBeforePublication();
+  },
+);
+
 it.each([
   "dispatched queue",
   "claimed queue",
@@ -1791,4 +1948,96 @@ it("preserves a normal legacy Guest Trip Create without inventing structured des
   expect(Object.isFrozen(source)).toBe(true);
   expect(Object.isFrozen(source.totals)).toBe(true);
   await lease.release();
+});
+
+it.each(["empty", "legacy", "two Trips and People"])(
+  "accepts an owning %s source without inventing Account or default Ledger values",
+  async (variant) => {
+    const f = fixture(),
+      workspace = await f.newOpener()();
+    const ids: string[] = [];
+    if (variant !== "empty") {
+      const trip = tripInput();
+      ids.push(trip.tripId);
+      await workspace.trips.createTrip({ ...trip, destination: "京 都" });
+    }
+    if (variant === "two Trips and People") {
+      const trip = tripInput();
+      ids.push(trip.tripId);
+      await workspace.trips.createTrip({
+        ...trip,
+        syncFormatVersion: 2,
+        destinations: [],
+        travelers: [
+          { operationId: randomUUID(), personId: randomUUID(), displayName: "旅人 Å" },
+        ],
+      });
+      f.opened[0].sql.exec(
+        "UPDATE ledger_journeys SET settlement_currency='JPY',settlement_scale=0,valuation_policy='REFERENCE_RATE'",
+      );
+    }
+    const lease = await workspace.freezeForInventory(),
+      source = await lease.readTripP1Source();
+    const body = await verifyGuestSourceCheckpoint(
+      {
+        canonicalText: source.canonicalText,
+        sha256: source.sha256,
+        bytes: Buffer.byteLength(source.canonicalText),
+      },
+      { sourceGuestLocalId: f.guestId, tripIds: ids },
+    );
+    expect(body.totals.trips).toBe(ids.length);
+    expect(body.totals.people).toBe(variant === "two Trips and People" ? 3 : ids.length);
+    if (variant === "two Trips and People")
+      expect(
+        body.trips.every(
+          (trip) =>
+            trip.ledgerInitialization.settlementCurrency === "JPY" &&
+            trip.ledgerInitialization.settlementScale === 0,
+        ),
+      ).toBe(true);
+    await lease.release();
+  },
+);
+
+it("refuses a corrupted source on journal read before opening any Guest database", async () => {
+  const f = await handoffFixture(),
+    inventory = await createGuestHandoffInventory(f.deps)();
+  const input = {
+    schemaId: "otr.auth.guest-adoption-recovery/3" as const,
+    sourceKind: "GUEST" as const,
+    sourceGuestLocalId: f.f.guestId,
+    adoptionId: randomUUID(),
+    targetAccountId: randomUUID(),
+    checkpoint: "PREPARED" as const,
+    inventorySha256: inventory.census.inventorySha256!,
+    tripIds: [...inventory.census.tripIds],
+    drafts: [...inventory.drafts],
+    source: {
+      canonicalText: inventory.source.canonicalText,
+      sha256: inventory.source.sha256,
+      bytes: Buffer.byteLength(inventory.source.canonicalText),
+    },
+  };
+  const openRecovery = () =>
+    createGuestAdoptionRecovery({
+      scope: inventory.scope,
+      files: f.f.files,
+      assertGuest: async () => undefined,
+    });
+  await openRecovery().prepare(input);
+  const corrupted = { ...input, source: { ...input.source, sha256: "0".repeat(64) } };
+  const root = join(f.f.databasePath, "..");
+  writeFileSync(
+    join(root, "auth-recovery", f.f.guestId, input.adoptionId, "prepared.json"),
+    canonicalCoreJson(corrupted),
+  );
+  f.f.close();
+  const opens = f.f.open.mock.calls.length;
+  await expect(
+    openRecovery().read(input.adoptionId, input.targetAccountId),
+  ).rejects.toThrow("GUEST_ADOPTION_RECOVERY_SOURCE_PIN");
+  await expect(f.f.newOpener()()).rejects.toThrow("GUEST_ADOPTION_RECOVERY_SOURCE_PIN");
+  expect(f.f.open).toHaveBeenCalledTimes(opens);
+  expect(hasGuestPublicationHold(f.f.guestId)).toBe(true);
 });
