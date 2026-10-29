@@ -75,8 +75,10 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
 - Last completed Import main push: `11c7feaa`; original primary six dirty entries,
   full tracked/index diff and untracked bytes were preserved. Auth subsequently
   integrated its local-only Source/journal work through main `72331060`.
-  Root privately joined that main at `c66d968b`. Public main integration of the
-  read optimization/evidence is next, after fresh remote and serial lease checks.
+  Root privately joined that main at `c66d968b`. Read implementation/evidence
+  source `d3a5e4e0` passed actual-primary six-suite91-test Smoke and exact original
+  six-dirty/full-diff preservation under a serial FF integration; verify fresh refs
+  before the next main update.
   Latest main is not automatically the source of the curated DEV image.
 
 ## Remaining checkpoints
