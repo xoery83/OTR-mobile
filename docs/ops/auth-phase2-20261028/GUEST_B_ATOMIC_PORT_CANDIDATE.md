@@ -1,6 +1,6 @@
 # Guest B atomic publication port — Core Writer review candidate v1
 
-Status: **NOT IMPLEMENTED / NOT AUTHORIZED FOR DEV EXECUTION**. This is an
+Status: **COMPOSITE PUBLICATION NOT IMPLEMENTED / NOT AUTHORIZED FOR DEV EXECUTION**. This is an
 engineering interface request under approved AUTH Final V1, not a replacement
 permission model or a claim that publication is ready.
 
@@ -83,11 +83,14 @@ Required behavior of the returned owning ports:
    Return final results only after outer COMMIT. Commit response loss/UNKNOWN must
    use an authenticated same-Account adoption-status read, never a new adoption ID.
 
-Actual source observations: `createTripPgStorage` and `createCorePgStorage` each
-own transactions; Core additionally checks its exact Gateway principal, with
-existing SQL `session_user` fences. No accepted caller-held complete seam has yet
-been confirmed by Core's Writer. Do not intercept COMMIT, substitute service_role,
-strip principal checks or borrow Manual/Source QA qualification.
+Current source observations: accepted held-transaction seams exist for Core,
+TripCreate and MetadataV2 (exact replay db97ccfc, main ee246658; directed148,
+independent131 and disposable real-PG transaction1 PASS). Standalone factories
+still own their transactions. The held ports preserve all normal SQL/principal
+checks; Core, TripCreate and MetadataV2 require three different session_user
+principals. These seams do not authorize their cross-Gateway composition. Do not
+intercept COMMIT, substitute service_role, strip principal checks or borrow
+Manual/Source QA qualification.
 
 Any required new Role/RLS/GRANT, staging/publication functions or modifications of
 protected actor/principal fences need an exact preimage/diff, isolated PG negatives,
@@ -95,41 +98,36 @@ independent Core review and applicable Owner execution approval before DEV insta
 Auth can prepare candidates; only the unique Writer changes shared Core sources.
 Backend bootstrap/config/Host integration remains separately serialized.
 
-Still missing: owning Guest file/all-live-draft collectors and consistent full
-source freeze; normalized sealed manifest export; actual atomic storage/authority;
+Still missing: actual atomic storage/authority and explicit Person/Creator mapping;
 protected cancellation/status; Native login/adoption/recovery and Supabase readback.
-The already integrated local recovery journal has no local success state, keeps
-Guest originals and requires status query once publish intent is recorded.
+Current schema74/fileless Trip/P1-only source is frozen and projected through
+owning readers. Immutable journal v3 retains semantic source, drafts and hashes
+across cold recovery while source SQLite stays locked after publish intent. Other
+nonempty/unknown families and unqualified files still block the whole dataset.
+The journal has no local success state or publication permission.
 
 ## Focused owning-interface progress — 29 October
 
-Core extraction ab33fc9f and TripCreate extraction 2c04394d are independently
-reviewed private candidates handed back to Native; no deployment or publication
-permission follows. Do not whole-merge the Core candidate's unaccepted Native
-parent history. Normal owning SQL/principal/receipt logic remains unchanged.
+Original Core ab33fc9f, TripCreate2c04394d and MetadataV2 1a34e1c1 were replayed
+as seven byte-verified source/test files onto accepted dd53870c, rather than merging
+unaccepted Native history. Their accepted source and limitations are recorded in
+GUEST_B_PG_TRANSACTION_REPLAY.json and GUEST_B_PG_PORTS_MAIN_INTEGRATION.json.
 
-A fresh read-only check of the actual GuestA vault confirms schema74, Trip1,
-P1 intent1, queue3, zero Cloud receipts/read certificates. Its third queue entry is
-TRIP_LOCAL_ACTION:TRIP_METADATA_DEFERRED, created by the normal Native Trip edit.
-Do not omit it, overwrite the original Create intent, or label a deferred action
-server-Applied. Its stable identity/baseline must be reconciled by the owning
-Metadata pipeline and included in whole-dataset verification. The delegated MetadataV2 held-transaction candidate is fixed at 1a34e1c1
-(13 storage + 9 handler checks, types/lint/build and independent review PASS). Its
-normal query/method/error-classification AST remains identical to the owning
-baseline. The narrow Writer lease has been returned. This is a private candidate
-awaiting Native acceptance, not main integration, actual PG composition or DEV
-publication authority.
+Actual GuestA SQLite74 retains Trip1/P1intent1/queue3 with zero Cloud receipts. The
+third operation is TRIP_LOCAL_ACTION:TRIP_METADATA_DEFERRED from normal Native edit.
+Canonical source retains its stable dependency/before/after identity, current Trip
+metadata, original Create, People, P1 hashes, Ledger initialization and timestamps.
+Never omit it or relabel it server-Applied.
 
-TripCreate, MetadataV2 and Core use three different session_user principals today.
-A single physical transaction is necessary but does not itself grant composite
-business authority. Precise protected role/function changes remain a separate
-closed candidate/Gate, including mappings and empty Ledger initialization.
+Native Guest UI live-draft freeze and local journal capture are accepted within
+their recorded limits. P1 CREATE can restore through the owning repository; EDIT
+v1 lacks an owning revision and stays closed. Full Native recovery routing and
+Provider/publisher consumers are not accepted. GuestQA65 is finite existing-data
+and unsaved-editor/cold regression, not actual adoption. All UI/Repo/PgStorage
+Writer leases were returned to Native; coordinate new edits explicitly.
 
-Full live-Trip draft coverage is also still blocked. Read-only intake identifies
-LocalTripWorkspace create fields/operation refs and TripBasicEditor baseline,
-destination, cover and saveIntent state; child name/calendar/destination pickers
-need owning freeze/block signals. Guest already disables Photo/Currency access.
-Foreground load currently clears selected presentation on any repository error;
-Native handoff must preserve frozen presentation when a known Auth fence rejects
-reads, otherwise a mounted P1 draft can be unmounted. This is not a new Form design
-or permission to edit Native-owned code without its unique Writer coordination.
+Three distinct Gateway principal fences still prevent the complete atomic
+publisher. Precise protected role/function changes, complete source-to-server
+identity mappings and Ledger initialization must be reviewed separately before
+requesting an exact Owner execution Gate. Physical one-lease PG tests alone cannot
+supply that business authority.
