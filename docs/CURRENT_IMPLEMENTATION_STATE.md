@@ -1,3 +1,13 @@
+# General Account Cloud Sync — Native P0, 30 October 2026
+
+Main-compatible code6aa553d3 passed Auth and Native composition NO_BLOCKER (independent8s234PASS), joined18s439PASS/7conditionalPG skips/types/UIguard/lint/server+capture builds, then actual primary7s124PASS/1conditionalPG skip/types/capture build. Original six dirty/index/untracked file bytes verified retained at serial fast-forward. Final normal Push pending final identity check. New signup and Mac unlock remain genuine user-interaction blockers; General Account full PASS is not claimed.
+
+Native fixed2db8a651/38bd8cb3: exact normal Auth qualification, DEV MANUAL-only existing Coordinator/timer without account allowlist, Profile mount/DI/preflight and explicit legacy-person consent recovery included. Original Google Trip/two P1 Create/Edit/readback/cold PASS preserved; phone108 general-only JS installed in place with same Session/appDBUUID and no old QA/consent descriptor. Its cold UI shows original latest P1 fields/Everyone/noPending. New normal UI Synthetic Trip23afbfa3/op ed03e29a is independently accepted once, same Google linked Owner/Person69cb88ac, no business bypass. This is existing-Google proof, not fresh signup PASS.
+
+DEV exact software81ad4fde/76c7846d and existing scope functionOID66180 MD50f3b543b installed/independently verified. Other four functions/policies/Source/Provider unchanged, no new Schema/RLS/GRANT/Role; old094/a055 retained. OriginalEnv/Host/sixmounts/fourfiles/health200/auth401 exact. Host/SQL returned. Auth+Native/SQL independent NO_BLOCKER;233 directed/101 independent/24 isolatedPG/55 actual-curated checks PASS. See ops/general-account-cloud-sync-20261029/DEV_NORMAL_ACCOUNT_ROLLOUT.json.
+
+Fresh Google signup and Hosted Email OTP require an unused legitimate identity/mailbox and normal Owner interaction; no account reset, fabricated session or local-Mailpit-as-Hosted claim. Mac locked during UI test; do not claim new Trip cold or full General E2E until resumed. Existing QA smoke, representative normal P2–P6 and negative/recovery evidence remain. Enrichment/AI Scan paused, no paid calls. Latest37c5 Source PDF route retained; this integration excludes unmerged Enrichment and Root private candidates. Legacy private traveler recovery requires exact explicit consent; attempted/UNKNOWN identities immutable.
+
 # Current implementation state — 30 October 2026
 
 ## Active delivery

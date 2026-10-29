@@ -6,7 +6,10 @@ import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
-import { captureAccountRequestContext } from "../auth/accountRequestContext";
+import {
+  captureAccountRequestContext,
+  withAccountApplyGate,
+} from "../auth/accountRequestContext";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripRepository } from "./tripRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
@@ -47,6 +50,7 @@ async function fixture(
   let account = randomUUID();
   const originalAccount = account;
   let failWrite = false;
+  let confirmationFault: "archive" | "insert" | "aba" | null = null;
   const db = serializeDatabaseTransactions({
     async getFirstAsync<T>(q: string, ...a: unknown[]) {
       return (sql.prepare(q).get(...(a as never[])) ?? null) as T;
@@ -59,6 +63,18 @@ async function fixture(
       if (failWrite && q.includes("INSERT INTO ledger_members")) {
         failWrite = false;
         advanceAccountGeneration();
+      }
+      if (
+        confirmationFault &&
+        ((confirmationFault === "archive" && q.includes("PERSON_SHARED_CONFIRMED")) ||
+          (confirmationFault !== "archive" &&
+            q.includes("INSERT INTO sync_operations") &&
+            a.includes(personCloudCreateKind)))
+      ) {
+        const selected = confirmationFault;
+        confirmationFault = null;
+        if (selected === "aba") advanceAccountGeneration();
+        else throw Error("CONFIRMATION_TEST_WRITE_FAILURE");
       }
       return r as never;
     },
@@ -130,6 +146,9 @@ async function fixture(
     personRepo,
     authored,
     accept,
+    failConfirmation(at: "archive" | "insert" | "aba") {
+      confirmationFault = at;
+    },
     failNextMemberWrite() {
       failWrite = true;
     },
@@ -347,5 +366,247 @@ it("a changed local name prevents receipt installation rather than falsely quali
   );
   expect(
     f.sql.prepare("SELECT count(*) AS n FROM trip_person_cloud_create_receipts").get(),
+  ).toMatchObject({ n: 0 });
+});
+it("explicit local confirmation preserves identity, original intent and receipt-first recovery", async () => {
+  const f = await fixture();
+  const slot = {
+    operationId: randomUUID(),
+    personId: randomUUID(),
+    displayName: "Confirmed traveler",
+  };
+  await createLocalTripPersonRepository(f.db, f.readAccount).initialize(f.trip, [slot]);
+  for (let i = 0; i < 2; i++)
+    await f.trips.addItem(f.trip, {
+      operationId: randomUUID(),
+      itemId: randomUUID(),
+      family: "P1",
+      title: `Preserved ${i}`,
+      startDate: "2026-10-29",
+    });
+  const beforeItems = f.sql
+    .prepare("SELECT * FROM trip_core_pending_intents ORDER BY operation_id")
+    .all();
+  const original = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(slot.operationId) as { payload_json: string };
+  const input = {
+    tripId: f.trip,
+    localOperationId: slot.operationId,
+    operationId: randomUUID(),
+    confirmedDisplayNameSha256: createHash("sha256")
+      .update(slot.displayName)
+      .digest("hex"),
+    dataOwnership: "CLOUD_SHARED_AUTHORED" as const,
+  };
+  const request = await f.repo.confirmLocalShared(input);
+  expect(request.personId).toBe(slot.personId);
+  expect(await f.repo.confirmLocalShared(input)).toEqual(request);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT payload_json,status,last_error_code,attempt_count FROM sync_operations WHERE id=?",
+      )
+      .get(slot.operationId),
+  ).toMatchObject({
+    ...original,
+    status: "COMPLETED",
+    last_error_code: "PERSON_SHARED_CONFIRMED",
+    attempt_count: 0,
+  });
+  const scope = await captureAccountRequestContext(f.trip, f.readAccount);
+  expect(
+    (
+      await readLocalTripPersonRosterWithinTransaction(
+        f.db,
+        scope,
+        f.readAccount,
+        f.create,
+      )
+    ).filter((p) => p.personId === slot.personId),
+  ).toHaveLength(1);
+  expect(
+    (await f.personRepo.listTripPersons(f.trip)).find((p) => p.personId === slot.personId)
+      ?.localState,
+  ).toBe("LOCAL_PENDING");
+  f.reopen();
+  expect(await f.repo.confirmLocalShared(input)).toEqual(request);
+  f.sql.prepare("UPDATE sync_operations SET status='COMPLETED' WHERE id=?").run(f.create);
+  await f.repo.resume(scope, request.operationId);
+  const receipt = f.accept(request);
+  const transport = {
+    receipt: vi.fn().mockResolvedValueOnce(null).mockResolvedValue(receipt),
+    create: vi.fn().mockResolvedValue(receipt),
+  };
+  await createSyncEngine(
+    createSyncOperationRepository(f.db, f.readAccount, undefined, {
+      accountId: f.account,
+      tripId: f.trip,
+      operationId: request.operationId,
+    }),
+    createPersonCloudSyncWorker(f.repo, transport, f.readAccount),
+    undefined,
+    (op) => op.operationType === personCloudCreateKind,
+  ).run("AUTHENTICATED_ONLINE");
+  expect(await f.repo.confirmLocalShared(input)).toEqual(request);
+  await expect(
+    f.repo.confirmLocalShared({ ...input, operationId: randomUUID() }),
+  ).rejects.toThrow();
+  expect(
+    f.sql.prepare("SELECT * FROM trip_core_pending_intents ORDER BY operation_id").all(),
+  ).toEqual(beforeItems);
+  expect(transport.create).toHaveBeenCalledTimes(1);
+  expect(transport.receipt).toHaveBeenCalledTimes(2);
+  f.reopen();
+  expect(
+    (await f.personRepo.listTripPersons(f.trip)).find(
+      (p) => p.personId === slot.personId,
+    ),
+  ).toMatchObject({ participation: { isParticipating: true, revision: 0 } });
+  expect(
+    f.sql
+      .prepare("SELECT count(*) AS n FROM ledger_members WHERE id=?")
+      .get(slot.personId),
+  ).toMatchObject({ n: 1 });
+});
+it.each(["name", "attempted", "claimed", "modified", "foreign", "collision"])(
+  "refuses unsafe local confirmation %s without partial conversion",
+  async (kind) => {
+    const f = await fixture();
+    const slot = {
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName: "Private traveler",
+    };
+    await createLocalTripPersonRepository(f.db, f.readAccount).initialize(f.trip, [slot]);
+    const input = {
+      tripId: f.trip,
+      localOperationId: slot.operationId,
+      operationId: randomUUID(),
+      confirmedDisplayNameSha256: createHash("sha256")
+        .update(slot.displayName)
+        .digest("hex"),
+      dataOwnership: "CLOUD_SHARED_AUTHORED" as const,
+    };
+    if (kind === "name") input.confirmedDisplayNameSha256 = "0".repeat(64);
+    if (kind === "attempted")
+      f.sql
+        .prepare("UPDATE sync_operations SET attempt_count=1 WHERE id=?")
+        .run(slot.operationId);
+    if (kind === "claimed")
+      f.sql
+        .prepare("UPDATE sync_operations SET claim_owner='other' WHERE id=?")
+        .run(slot.operationId);
+    if (kind === "modified")
+      f.sql
+        .prepare("UPDATE ledger_members SET display_name='newer' WHERE id=?")
+        .run(slot.personId);
+    if (kind === "collision") input.operationId = f.create;
+    if (kind === "foreign") f.switchAccount();
+    await expect(f.repo.confirmLocalShared(input)).rejects.toThrow();
+    expect(
+      f.sql
+        .prepare("SELECT status FROM sync_operations WHERE id=?")
+        .get(slot.operationId),
+    ).toMatchObject({ status: "DEPENDENCY_BLOCKED" });
+    expect(
+      f.sql
+        .prepare("SELECT count(*) AS n FROM sync_operations WHERE operation_type=?")
+        .get(personCloudCreateKind),
+    ).toMatchObject({ n: 0 });
+  },
+);
+
+it.each(["archive", "insert", "aba"] as const)(
+  "confirmation %s fault rolls back both old archive and new Cloud intent",
+  async (at) => {
+    const f = await fixture();
+    const slot = {
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName: "Confirmed traveler",
+    };
+    await createLocalTripPersonRepository(f.db, f.readAccount).initialize(f.trip, [slot]);
+    const before = f.sql
+      .prepare("SELECT * FROM sync_operations WHERE id=?")
+      .get(slot.operationId);
+    f.failConfirmation(at);
+    await expect(
+      f.repo.confirmLocalShared({
+        tripId: f.trip,
+        localOperationId: slot.operationId,
+        operationId: randomUUID(),
+        confirmedDisplayNameSha256: createHash("sha256")
+          .update(slot.displayName)
+          .digest("hex"),
+        dataOwnership: "CLOUD_SHARED_AUTHORED",
+      }),
+    ).rejects.toThrow();
+    expect(
+      f.sql.prepare("SELECT * FROM sync_operations WHERE id=?").get(slot.operationId),
+    ).toEqual(before);
+    expect(
+      f.sql
+        .prepare("SELECT count(*) AS n FROM sync_operations WHERE operation_type=?")
+        .get(personCloudCreateKind),
+    ).toMatchObject({ n: 0 });
+  },
+);
+
+it("snapshots explicit confirmation before awaiting the Account apply gate", async () => {
+  const f = await fixture();
+  const a = {
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName: "Confirmed A",
+    },
+    b = {
+      operationId: randomUUID(),
+      personId: randomUUID(),
+      displayName: "Unconfirmed B",
+    };
+  await createLocalTripPersonRepository(f.db, f.readAccount).initialize(f.trip, [a, b]);
+  const beforeB = f.sql
+    .prepare("SELECT * FROM sync_operations WHERE id=?")
+    .get(b.operationId);
+  const originalOperationId = randomUUID();
+  const input = {
+    tripId: f.trip,
+    localOperationId: a.operationId,
+    operationId: originalOperationId,
+    confirmedDisplayNameSha256: createHash("sha256").update(a.displayName).digest("hex"),
+    dataOwnership: "CLOUD_SHARED_AUTHORED" as const,
+  };
+  let release!: () => void, entered!: () => void;
+  const ready = new Promise<void>((r) => {
+    entered = r;
+  });
+  const gate = withAccountApplyGate(async () => {
+    entered();
+    await new Promise<void>((r) => {
+      release = r;
+    });
+  });
+  await ready;
+  const pending = f.repo.confirmLocalShared(input);
+  input.localOperationId = b.operationId;
+  input.operationId = randomUUID();
+  input.confirmedDisplayNameSha256 = createHash("sha256")
+    .update(b.displayName)
+    .digest("hex");
+  release();
+  await gate;
+  const result = await pending;
+  expect(result.personId).toBe(a.personId);
+  expect(result.operationId).toBe(originalOperationId);
+  expect(
+    f.sql.prepare("SELECT * FROM sync_operations WHERE id=?").get(b.operationId),
+  ).toEqual(beforeB);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE entity_id=? AND operation_type=?",
+      )
+      .get(b.personId, personCloudCreateKind),
   ).toMatchObject({ n: 0 });
 });

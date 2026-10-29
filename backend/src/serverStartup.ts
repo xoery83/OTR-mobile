@@ -1,3 +1,4 @@
+import { createAccountProfileBootstrapPort } from "./accountProfileBootstrap";
 import { createServer } from "node:http";
 
 import { z } from "zod";
@@ -103,6 +104,10 @@ export function startDevBackend(
   );
   const handle = createDevBackendHandler({
     gateway,
+    accountProfileBootstrapPort: createAccountProfileBootstrapPort({
+      url: environment.OTR_DEV_SUPABASE_URL,
+      publishableKey: environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY,
+    }),
     captureMaterialCustody: startOptions.captureMaterialCustody,
     captureRemoteProcessing: startOptions.captureRemoteProcessing,
     tripCreatePort: startOptions.tripCreatePort,

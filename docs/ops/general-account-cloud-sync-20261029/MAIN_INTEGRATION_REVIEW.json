@@ -1,0 +1,51 @@
+{
+  "status": "REVIEWED_CODE_IN_ACTUAL_MAIN_PRIMARY_SMOKE_PASS_PUSH_PENDING",
+  "codeCommit": "6aa553d32cb7c481c7264e8b81a2d05067832b8e",
+  "parentMain": "37c5e08913bacb304243100e785633cb6b4c59a0",
+  "nativeFixed": "2db8a651",
+  "followup": "38bd8cb3",
+  "review": {
+    "authComposition": "NO_BLOCKER exact compare; no globalAuth/Guest/Source modification",
+    "nativeComposition": "NO_BLOCKER independent8 suites234PASS"
+  },
+  "integrationValidation": {
+    "passedSuites": 18,
+    "passedAssertions": 439,
+    "conditionalPgSkippedAssertions": 7,
+    "typecheck": true,
+    "uiGuard": true,
+    "scopedLint": true,
+    "backendAndCaptureBuild": true
+  },
+  "actualPrimaryValidation": {
+    "passedSuites": 7,
+    "passedAssertions": 124,
+    "conditionalPgSkippedAssertions": 1,
+    "typecheck": true,
+    "captureBuild": true
+  },
+  "logSha256": {
+    "main-tests2.log": "517311a2a4e9a3ab63ee8800edeb19a7c496bc7d871f22740461ac8241adb121",
+    "main-types2.log": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e",
+    "main-ui.log": "9c0a331417dc0296b8a8a5a18698c472900276f742bbe11db18b5d99e3f2329c",
+    "main-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "main-build.log": "09087c9d16a2982d2b2e9c082e5db7ce980c3206e9566e9388a5a9d844ef6243",
+    "main-capture.log": "3d40fc95f491bb75adef337301f42275c075deb233c289338196b0c5ef0396f5",
+    "primary-smoke.log": "fb4620229f6d5bbf70b35a21bd3ad6d0ee6ab9030720522c7c48f2d286884f62",
+    "primary-types.log": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e",
+    "primary-capture.log": "cbafd52f86701b3d69bc887cc4764f887bfdc3d52a13a8d650b95768a0c93c4f"
+  },
+  "sourcePdfV4RoutePreserved": true,
+  "unmergedEnrichmentExcluded": true,
+  "primaryOriginalDirtyContentSnapshot": "private main-before.json / full status/index/tracked diff and untracked SHA256, verified at FF",
+  "noSecretPayloadPatternsInDiff": true,
+  "notGeneralE2ePass": true,
+  "remaining": [
+    "legitimate new Google native signup",
+    "legitimate new Hosted Email OTP native signup",
+    "normal P2-P6/account-isolation/offline real branch followthrough after Mac unlock",
+    "oldQA actual regression",
+    "newTrip native cold proof"
+  ],
+  "pausedNativeReason": "Mac locked; existing Google real upstream and original twoP1 cold verified; do not fabricate new signup or device evidence"
+}

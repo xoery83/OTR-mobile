@@ -17,7 +17,12 @@ const persons: TripPerson[] = [
   },
 ];
 const command = (participation: unknown) =>
-  ({ tripId: trip, payload: { participation } }) as CoreCommand;
+  ({
+    tripId: trip,
+    target: { kind: "ITEM", id: randomUUID() },
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { participation },
+  }) as CoreCommand;
 it("withholds Whole Group instead of silently dropping local-only named travelers", () => {
   const c = command({ mode: "WHOLE_GROUP", people: [], selfPersonId: null });
   expect(p1SharedParticipantsReady(c, persons)).toBe(false);

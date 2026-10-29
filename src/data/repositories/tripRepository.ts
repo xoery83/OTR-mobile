@@ -1,3 +1,4 @@
+import { structuredTripCreateRequestSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { authoredCloudTravelersSchema } from "@/domain/trip/tripPersonCloudCreate";
 import { retainAuthoredCloudTravelerWithinTransaction } from "./tripPersonCloudCreateRepository";
 import { retainTripMetadataConfirmation } from "./tripMetadataConfirmation";
@@ -440,6 +441,87 @@ export function createTripRepository(
         });
         return result!;
       });
+    },
+    // Explicit rollout only: the original initialization-blocked request has never been dispatched.
+    async enrollUnsentStructuredTrips(expectedAccountId: string, newTripsFrom: string) {
+      coreUuid.parse(expectedAccountId);
+      if (!Number.isFinite(Date.parse(newTripsFrom)))
+        throw Error("TRIP_ROLLOUT_CUTOFF_INVALID");
+      const scope = await captureAccountScope(account);
+      if (scope.accountId !== expectedAccountId)
+        throw Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      let enrolled = 0;
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const rows = await database.getAllAsync<
+            Row & { payload_json: string; operation_id: string }
+          >(
+            `SELECT trip.*,op.id AS operation_id,op.payload_json FROM local_trip_containers trip
+             JOIN sync_operations op ON op.id=trip.create_operation_id AND op.owner_user_id=trip.account_id
+             AND op.trip_id=trip.id AND op.entity_id=trip.id AND op.idempotency_key=op.id
+             WHERE trip.account_id=? AND trip.created_at>=? AND trip.accepted_at IS NULL
+             AND op.entity_type='TRIP' AND op.operation_type='CREATE_TRIP'
+             AND op.status='DEPENDENCY_BLOCKED' AND op.last_error_code='TRIP_INITIALIZATION_REQUIRED'
+             AND op.attempt_count=0 AND op.first_failed_at IS NULL AND op.last_request_id IS NULL
+             AND op.claim_owner IS NULL AND op.lease_expires_at IS NULL
+             AND op.last_attempt_at IS NULL AND op.failure_category IS NULL AND op.next_attempt_at IS NULL
+             AND op.updated_at=op.created_at
+             AND NOT EXISTS(SELECT 1 FROM sync_operations edit WHERE edit.owner_user_id=trip.account_id
+               AND edit.trip_id=trip.id AND edit.operation_type IN ('UPDATE_TRIP_METADATA','TRIP_METADATA_DEFERRED','TRIP_DESTINATIONS_LOCAL_SAVE'))`,
+            scope.accountId,
+            newTripsFrom,
+          );
+          for (const row of rows) {
+            if (row.payload_json.length > 8192) continue;
+            let parsed;
+            try {
+              parsed = tripCreateRequestSchema.safeParse({
+                ...JSON.parse(row.payload_json),
+                operationId: row.operation_id,
+              });
+            } catch {
+              continue;
+            }
+            if (!parsed.success) continue;
+            const original = parsed.data;
+            if (
+              "formatVersion" in original ||
+              original.tripId !== row.id ||
+              original.destination !== null ||
+              original.name !== row.name ||
+              original.startDate !== row.start_date ||
+              original.endDate !== row.end_date
+            )
+              continue;
+            const destinations = await initializeLocalTripDestinations(
+              database,
+              scope.accountId,
+              row.id,
+              undefined,
+              false,
+              row.created_at,
+            );
+            const { operationId: _operationId, ...payload } =
+              structuredTripCreateRequestSchema.parse({
+                ...original,
+                formatVersion: 2,
+                destinations: destinations.map(({ ordinal: _ordinal, ...item }) => item),
+              });
+            const changed = await database.runAsync(
+              "UPDATE sync_operations SET payload_json=? WHERE owner_user_id=? AND id=? AND payload_json=? AND status='DEPENDENCY_BLOCKED' AND last_error_code='TRIP_INITIALIZATION_REQUIRED' AND attempt_count=0",
+              canonicalCoreJson(payload as Json),
+              scope.accountId,
+              row.operation_id,
+              row.payload_json,
+            );
+            if (changed.changes !== 1) throw Error("TRIP_ROLLOUT_CAS_FAILED");
+            enrolled++;
+          }
+          await assertAccountRequestContext(scope, account);
+        });
+      });
+      return enrolled;
     },
     async addItem(tripId: string, input: CreateTripItemInput) {
       const context = await core.captureContext(tripId);

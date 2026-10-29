@@ -22,7 +22,12 @@ function fixture(mode = "new") {
       return Response.json({
         id: mode === "foreign identity" ? randomUUID() : accountId,
         email: "fixture@example.invalid",
-        is_anonymous: mode === "anonymous identity",
+        is_anonymous:
+          mode === "missing flag"
+            ? undefined
+            : mode === "invalid flag"
+              ? "false"
+              : mode === "anonymous identity",
       });
     expect(url.pathname).toBe("/rest/v1/profiles");
     if (request.method === "GET") {
@@ -84,6 +89,8 @@ it.each(["new", "existing", "race"])(
 it.each([
   "foreign identity",
   "anonymous identity",
+  "missing flag",
+  "invalid flag",
   "foreign profile",
   "missing readback",
   "denied",
@@ -92,7 +99,10 @@ it.each([
   await expect(
     f.port.ensure(f.accountId, "fixture-normal-session", new AbortController().signal),
   ).rejects.toThrow();
-  if (mode.startsWith("foreign") || mode === "anonymous identity")
+  if (
+    mode.startsWith("foreign") ||
+    ["anonymous identity", "missing flag", "invalid flag"].includes(mode)
+  )
     expect(f.calls.some((request) => request.method === "POST")).toBe(false);
 });
 it("rejects Production/config redirection and aborted requests without dispatch", async () => {
