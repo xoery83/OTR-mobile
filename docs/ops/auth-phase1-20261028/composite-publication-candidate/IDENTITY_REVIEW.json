@@ -1,0 +1,23 @@
+{
+  "status": "IDENTITY_MAPPING_CANDIDATE_REVIEWED_AUTHORITY_NONE",
+  "scope": "Explicit source Creator/Person mapping against future owning-transaction TripCreate readbacks, no publisher",
+  "validation": {
+    "direct": "3 suites / 50 PASS",
+    "independent": "3 suites / 50 PASS",
+    "typecheck": "PASS",
+    "scopedLint": "PASS",
+    "independentReview": "NO_BLOCKER_CANDIDATE_ONLY"
+  },
+  "fileHashes": {
+    "backend/src/guestAdoptionCompositeIdentity.ts": "494e96dd40d0fc451f703cc291f02216eeb9825cc56a8710cfd8cea187f6a82e",
+    "backend/src/guestAdoptionCompositeIdentity.test.ts": "3cbcdbe9d8c7ec9e5afedd894d8f973c7a75bf481156512f6cdad3833a44d2be"
+  },
+  "boundaries": [
+    "No runtime consumer, SQL, role, RLS, GRANT, bootstrap or Native changes",
+    "Client receipt cannot become trusted via this function",
+    "Unlinked People still need actual owning initialization/receipt",
+    "Drafts retained in original plan; P1 EDIT restore closed",
+    "No Hosted Adoption, terminal receipt or Account promotion proven"
+  ],
+  "nativeWriterReview": "30 October: candidate-only guestAdoptionComposite* scope reaffirmed; existing principal checks remain unchanged"
+}

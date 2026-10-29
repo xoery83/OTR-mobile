@@ -108,3 +108,35 @@ Trip ID set and never turns into a published shell. P1 EDITv1 still has no ownin
 revision/restore qualification: preserving its bytes does not authorize restoring
 or publishing it. Full publication remains blocked until all owning Draft restore
 paths are verified. No new Draft repository, sync engine or identity promotion.
+
+## Explicit Person identity mapping candidate — 30 October
+
+`guestAdoptionCompositeIdentity.ts` qualifies the same immutable preparation and
+staging grant through the existing plan verifier, then checks every initial Trip
+creation field against the owning transaction's TripCreate readback. It maps only
+the explicit source Creator Person to that result's actual linked Owner Person.
+Other source People retain their own IDs; equal names never connect an Account.
+Cross-Trip/reused target Person IDs, extra/missing/duplicate Trip receipts, wrong
+Account/operation/initial metadata and source/grant changes reject the dataset.
+
+Only the known participation/selfPerson and ACL Person leaves are transformed.
+Operation IDs, Item IDs, base vectors and all other payload text remain exact.
+Each resulting intent retains its source hash and separately hashes the mapped
+canonical command. The canonical identity candidate pins the entire original
+plan hash, including retained drafts and every source operation. It records no
+APPLIED outcome and omits no source Person operation from the original plan.
+
+This is pure `authority: NONE` preparation, not receipt authentication or a
+publisher. Its input readbacks must eventually be obtained by the actual owning
+transaction after real initialization, never a client-supplied list. Unlinked
+People still require their owning initialization and receipts; mapping does not
+claim they exist on the server. Source Creator/Person names, Ledger parameters,
+deferred metadata dependencies and all drafts remain in the original sealed plan.
+P1 EDIT restore remains closed. There is no route, SQL/role/grant, Native consumer,
+Session promotion, Hosted readback or Adoption E2E associated with this candidate.
+
+Native reaffirmed this exact candidate-only file scope and the three-principal
+composition gap on 30 October. Direct identity/plan/draft regression: 3 suites /
+50 tests PASS; independent 3 suites / 50 tests and typecheck PASS, NO_BLOCKER
+within candidate-only scope. See `IDENTITY_REVIEW.json`; final integration is
+recorded separately.

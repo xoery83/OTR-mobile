@@ -271,6 +271,12 @@ normal Sync and Core; all delegated Guest UI/Repo/PgStorage leases were returned
   transaction; direct/independent11 PASS after real unfinished-lease RED repair.
   It returns only IN_PROGRESS/NOT_FOUND→QUERY_SERVER_STATUS, not terminal proof;
   no runtime consumer. See ops/auth-phase1-20261028/composite-publication-candidate/REVIEW.json.
+- 30 October explicit identity candidate revalidates immutable plan/source and all
+  owning TripCreate initial fields, maps source Creator to the actual Owner Person,
+  and retains unlinked People, operation IDs, base vectors and source/mapped hashes.
+  Direct/independent identity/plan/draft3s50/types PASS, NO_BLOCKER; authority NONE. It neither proves
+  caller-supplied receipts nor initializes People/Ledger, restores Drafts or publishes.
+  Native reaffirmed candidate-only delegation; three-principal authority remains pending.
 - Provisional metadata client7365 uses the existing secure Guest verification slot
   while launch stays Guest. Checks kind/UUID/generation around token/dispatch/
   result. 401 refresh reuses existing Supabase path with active persistence off,
