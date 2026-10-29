@@ -72,7 +72,12 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
   `825f79b2-4a9d-4535-a62e-43000ca50c4a`. Source sustained scope and Provider
   budget/expiry have not been enlarged. Fresh-check actual gates before mutations;
   no Root temporary admin or Provider window is open.
-- Latest Import integration: main/origin/remote `e13a95076ca08722464e7dd0ca5e210aa74b9ee1`
+- Latest Import software integration: main/origin/remote
+  `c6b15be8baa7c78de827a77b8b6ceb4a71479018`, actual-primary15 suites228 tests,
+  typecheck and capture bundle PASS. PDF software remains optional/default closed;
+  no DEV deployment/SQL/authority activation occurred. Original six dirty entries,
+  full tracked/index/untracked bytes exact. `PDF_SOFTWARE_MAIN_INTEGRATION.json`.
+- Previous Import integration `e13a95076ca08722464e7dd0ca5e210aa74b9ee1`
   contains the actual expiry/cold receipt. Actual-primary six suites262 tests and
   typecheck PASS; original six dirty entries/full diff/untracked bytes exact.
   Missing Google Sign-In16.1.5 was restored only from the locked tarball after

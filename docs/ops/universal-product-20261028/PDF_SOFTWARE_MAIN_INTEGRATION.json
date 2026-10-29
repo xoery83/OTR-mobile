@@ -1,0 +1,21 @@
+{
+  "status": "MAIN_PUSH_VERIFIED",
+  "main": "c6b15be8baa7c78de827a77b8b6ceb4a71479018",
+  "originMain": "c6b15be8baa7c78de827a77b8b6ceb4a71479018",
+  "remote": "c6b15be8baa7c78de827a77b8b6ceb4a71479018",
+  "normalNonForcePush": true,
+  "actualPrimaryTests": {
+    "suites": 15,
+    "passed": 228
+  },
+  "actualPrimaryTypecheck": "PASS",
+  "captureBundle": "PASS",
+  "captureBundleSha256": "415cfe3f58039f4fba1314e689c3f0ec3e4b2f670c56ab905547a9283031d215",
+  "dirtyEntriesPreserved": 6,
+  "trackedIndexUntrackedBytesExact": true,
+  "actualDevDeployment": false,
+  "sqlChanged": false,
+  "pdfAuthorityActivated": false,
+  "scope": "Default-closed PDF preparation HTTP/Native transport, pending Source metadata, original/derived provenance and sealed lifecycle snapshot",
+  "businessAcceptance": "LOCAL_PASS software only; no actual PDF Source/Task/Save acceptance"
+}
