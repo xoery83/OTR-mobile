@@ -1,0 +1,20 @@
+{
+  "status": "HANDOFF_RECORDED",
+  "source": "Authorized Native Feature coordination message",
+  "currentImage": "sha256:81ad4fdea800b38c1701dc9b6bafa0885ab31fad3de9798e94977ecd55454ed2",
+  "container": "76c7846d534dbac3b2262fb02117c7a96d727681082444a3c744b62eacf12b87",
+  "curated": "/private/tmp/otr-owner-manual-rollout-20261029/backend-general-normal",
+  "rootIndependentCheck": "docker inspect: exact container/image/healthy only; no Env/runtime config/credentials/SQL read",
+  "nativeReportedSql": {
+    "function": "trip_sustained_dev_scope_allowed",
+    "oid": 66180,
+    "md5": "0f3b543bab2431ee35c519ad8ce01ea9",
+    "sourcePolicyAndGuards": "UNCHANGED",
+    "ownerAndAcl": "UNCHANGED"
+  },
+  "old094": "STOPPED_RETAINED; do not restore over normal-account rollout",
+  "fullGeneralE2e": "NOT_CLAIMED",
+  "rootLeases": [],
+  "pdfCatalogRead": "APPROVAL_PENDING_NOT_EXECUTED",
+  "rootSoftwareOnlyHeadBeforeHandoff": "8ebcfaa2"
+}

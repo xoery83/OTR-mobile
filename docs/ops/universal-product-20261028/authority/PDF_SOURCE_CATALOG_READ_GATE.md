@@ -9,8 +9,11 @@ management path while approval is pending.
 ## Exact proposed scope
 
 - Existing DEV service `otr-dev-backend`, project `tuqigdxrvrerfewsxqgm` only.
-- Expected current image `sha256:09465509122ece6e0092c87036aa4e8d68836efec7e9a00276e1f2e56b3c981a`;
-  fresh-match actual service/image before running; drift aborts.
+- Expected current image `sha256:81ad4fdea800b38c1701dc9b6bafa0885ab31fad3de9798e94977ecd55454ed2`;
+  fresh-match actual service/image before running; drift aborts. This pending
+  document was updated after Native's separately completed normal-account rollout;
+  the six catalog reads and requested principal remain unchanged. It does not
+  authorize restoring094 or executing the preflight before Owner approval.
 - Inside that existing container, use only the configured Source gateway connection
   as `otr_trip_source_command_gateway`. No credential, Session or Keychain is
   printed, copied out, changed, or used for another role/project.
