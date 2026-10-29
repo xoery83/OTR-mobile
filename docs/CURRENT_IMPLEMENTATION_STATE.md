@@ -67,6 +67,15 @@ and expiry PASS. Temporary60-second expiry test restored3600 seconds; JWT unchan
 Native52 visible-error repair accepted. Finite evidence/limits:
 ops/auth-phase1-20261028/GOOGLE_DEV_E2E.json and EMAIL_OTP_HOSTED_DEV_E2E.json.
 
+Native normal-account sync reported missing profiles for verified38e/4eb and the
+actual trips_created_by_fkey dependency; its exact HTTP classification is pending.
+Auth self-profile candidate reuses normal sameJWT/self INSERT with empty optional
+Display Name and default role, never overwrites existing rows or invokes Claim.
+Versioned POST/account-only DTO, bounded Backend boundary and scoped Auth Repository
+have directed/independent2 suites21 PASS/NO_BLOCKER and types/lint PASS. Native owns
+shared mount/DI and sync preflight, failure pauses sync rather than offline launch.
+No mount/deploy/DEV success yet; ACCOUNT_PROFILE_BOOTSTRAP_PORT.json pins interface.
+
 Golden A accepted: GuestQA63/source7e35baf6, fresh no-Session normal Trip create/edit →
 P1 → Day → same-version cold restore, SQLite74 independent readback. No Account DB,
 Cloud/Accepted receipt, fixture insertion or copied credentials; original FormsQA
