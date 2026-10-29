@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_PASS_UNBOUND",
+  "red": "New reader missing implementation; original V2 proof9 tests remained PASS",
+  "validation": "4 suites44PASS; typecheck/scopedlint PASS",
+  "independentReview": "NO_BLOCKER",
+  "reviewer": "p1_source_review_independent",
+  "scope": "Same caller-held Source lease/catalog/locks; unique retained V2 DERIVED selection; exact expected ORIGINAL identity/hash/bytes; unchanged V2 Core proof; exact seal/page-map hash; existing4MiB Universal bound",
+  "sourceSelection": "Existing Source input-valid and Core PDF path support DERIVED Run pin; do not relabel original PDF as text",
+  "remainingNativeMismatch": [
+    "readAdmittedInputPin currently fixes ORIGINAL",
+    "assertUniversalCaptureResult currently equates Capture original SHA with selected representation SHA"
+  ],
+  "notClaimed": [
+    "Real PG selection/role acceptance",
+    "DEV PDF Source/Task/Save",
+    "Host worker deployment",
+    "Independent Auth or Source authority"
+  ],
+  "binding": "No HTTP/startup/Task/Provider/role/transaction binding; old proof function unchanged; test fixture extracted for reuse"
+}

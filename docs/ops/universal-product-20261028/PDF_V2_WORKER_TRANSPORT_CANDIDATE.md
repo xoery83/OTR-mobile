@@ -59,3 +59,9 @@ this parser run, no Provider/SQL/Source registration or DEV Host installation.
 PDF_V2_REAL_PRIVATE_TRANSPORT_PASS.json. Readonly DEV preflight confirms the fixed
 image exists and zero matching worker containers, but Host Node is absent; do not
 infer an executable service binding. PDF_V2_HOST_READONLY_PREFLIGHT.json.
+
+Next unbound Source slice reuses existing V2 Core proof in its caller-held owning
+lease/catalog and Source locks. It uniquely selects retained DERIVED TEXT parented
+to the exact expected ORIGINAL, preserves both identities/hashes and seal/page-map
+proof, and keeps the current Universal4MiB original limit. No client-supplied
+derived choice, Run/Task identity, model call, endpoint or permission activation.
