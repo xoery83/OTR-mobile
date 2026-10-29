@@ -1,0 +1,87 @@
+{
+  "status": "DEV_DEPLOYED_NATIVE_VERIFICATION_PENDING",
+  "sourceCommit": "66498648",
+  "joinedMain": "b33348cab5056656b09099b3cb32e533cf721ea7",
+  "curatedSourceDelta": [
+    "backend/src/universalContinuousHost.ts"
+  ],
+  "actualBaseSource": "/private/tmp/otr-owner-manual-rollout-20261029/backend-profile-normal",
+  "deployment": {
+    "status": "DEFAULT_CLOSED_DEPLOYED",
+    "container": "a055940bd0c95f30b431be5acd6662aaaa45ecde84986ede72a89e3363ced10f",
+    "image": "sha256:09465509122ece6e0092c87036aa4e8d68836efec7e9a00276e1f2e56b3c981a",
+    "configSHA256": "ca11aa2087c7a6d8cf43bca1941474b71be9eb8586da2d3789d4bd73ef9d9de6",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "mountsSHA256": "a1ebc180de952af45e7870f4b22b497315c24eb64c3a06d20de778af94b99361",
+    "mountFilesUnchanged": true,
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedContainer": "c92b9d8d7df42f1d0c3bc1bc4886357a22e00d498287c9dbd5002538f0376824",
+    "source": "curated-8e269985-plus-deadline-66498648"
+  },
+  "independentVerification": {
+    "status": "INDEPENDENT_DEFAULT_CLOSED_VERIFIED",
+    "container": "a055940bd0c95f30b431be5acd6662aaaa45ecde84986ede72a89e3363ced10f",
+    "image": "sha256:09465509122ece6e0092c87036aa4e8d68836efec7e9a00276e1f2e56b3c981a",
+    "configSHA256": "ca11aa2087c7a6d8cf43bca1941474b71be9eb8586da2d3789d4bd73ef9d9de6",
+    "hostConfigSHA256": "e89fe490cfd0a143b4751e761cebbbe8deaaacabc3ac53b27fa5c95cd525d2d7",
+    "environmentUnchanged": true,
+    "mountFilesSHA256": {
+      "/run/otr/trip-create-runtime.json": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+      "/run/otr/universal-runtime.json": "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+      "/run/otr/catalog-reader.json": "575d8ab2d4b3185f0f99ed778c665b02b6aef8ece1bd7849541cb39567850c4a",
+      "/run/otr/capture-custody.json": "38f84a8fbbe4ef690509f42a040df64ad063c982569c1c2a25fb98f49d6c3765"
+    },
+    "bundles": {
+      "/app/server.mjs": "9b13037c4e72a6118c67a04733583963d7dccd40649ce673df0176958447c99b",
+      "/app/server-capture.mjs": "6cb77186413066a01acc17c2bc0c86a18fc9ef345ca64566360a3ed5476fc13b"
+    },
+    "health": 200,
+    "unauthenticated": 401,
+    "retainedOldStopped": true,
+    "noEnrichmentActivation": true
+  },
+  "validation": {
+    "actualCuratedSuites": 3,
+    "actualCuratedTests": 22,
+    "joinedMainSuites": 6,
+    "joinedMainTests": 262,
+    "typecheck": "PASS",
+    "independentReview": "NO_BLOCKER"
+  },
+  "nativeArtifact": {
+    "build": 107,
+    "source": "87db1485",
+    "nativeBuild": 95,
+    "newNativeBuild": false,
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "javascriptSHA256": "29361088a425459d74eccfb578f72d3edf059588d18961700ff952d1eda2f353",
+    "nativeSHA256": "d549e36267574a8d9995599c0d27f695e7288eac4b03e15f9ade05e9a0f40445",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "install": {
+    "status": "INSTALLED_SESSION_RECOVERY_PENDING",
+    "checks": {
+      "bundleId": true,
+      "nativeSHA256": true,
+      "qaScopedTables": true,
+      "queueRowHashes": true
+    },
+    "scopedTables": 33,
+    "dataContainerRelocatedByInstaller": true,
+    "beforeContainerId": "6BAC931C-DD3C-43EB-B5CD-CFB3977A2866",
+    "afterContainerId": "05AF423D-F42C-4EE1-9F77-4EA7D1CD0BC9",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "coldSession": "Normal App launches My Trips and opens original QA Trip; no Session/Keychain file read or copy",
+  "actualTaskCheck": {
+    "batchId": "f68bc4fa-fef5-4f92-a976-e1a78cd0fbd7",
+    "taskId": "c2704309-b6f2-8cad-8622-e8f69b5ae6ce",
+    "before": "PENDING/revision2, zero Attempt, same deadline04:18:57.367Z",
+    "afterFirstLegacyClick": "Still PENDING/revision2, no new queue claim or Attempt; UI request incomplete. No lifecycle PASS claimed."
+  },
+  "permissionChanges": [],
+  "providerCallsAdded": 0,
+  "scope": "Only approved Synthetic QA; no protected SQL or roles, no historical sweeps",
+  "remaining": "Normal AD5 wake/readback of same Task; terminal UI/cold recovery; serial main integration."
+}

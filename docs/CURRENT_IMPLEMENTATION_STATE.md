@@ -83,13 +83,17 @@ Authoritative receipts under `docs/ops/universal-product-20261028/`:
 
 ## Remaining checkpoints
 
-1. Expired zero-Attempt lifecycle repair is LOCAL_PASS, not deployed. Existing
+1. Expired zero-Attempt lifecycle repair `66498648` is DEV_DEPLOYED; Native
+   lifecycle verification remains pending. Existing
    continuation Repository `wait` closes it only under the real owning queue claim;
    GET still projects persisted state. Native terminal states stop Source prepare/
    dispatch while preserving read-only recovery. Six suites101 tests, typecheck,
    UI guard and independent NO_BLOCKER passed. See
-   `UNSTARTED_TASK_DEADLINE_LOCAL_PASS.json`. Next obtain Native's latest actual
-   curated image and perform targeted same-current-run Task verification; no
+   `UNSTARTED_TASK_DEADLINE_LOCAL_PASS.json`. Actual DEV image `09465509` preserves Native Profile baseline `8e269985`;
+   200/401/config/mount independent checks passed. AD5 JS107/Native95 installed,
+   33 scoped tables/Queue exact; My Trips/session/QA Trip cold read restored. See
+   `UNSTARTED_TASK_DEADLINE_DEPLOY_RECEIPT.json`. Complete normal same-current-run
+   Task verification; no
    deadline/identity reset, historical sweep, UNKNOWN termination or paid resend.
 2. PDF/OCR Source→Task/Admission remains NOT_READY. Reuse the restored V4
    preparation/causal/storage ports, V2 proof reader and fixed qpdf/Poppler worker.
