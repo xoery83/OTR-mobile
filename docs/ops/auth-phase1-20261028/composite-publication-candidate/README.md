@@ -9,13 +9,16 @@ The first internal step qualifies the existing frozen schema74 source against a
 owning locked staging row's preflight grant and exact preparation SHA, plus the
 trusted normal Account. Consume the existing immutable v3 PREPARED checkpoint,
 revalidate canonical bytes/SHA/size, pin adoption/target/Guest/inventory to the
-grant, require drafts empty and validate the full source. The owning staging row
+grant and validate the full source. Version1 plans have no drafts; version2 plans
+retain all drafts after the same pure journal codec verifies their identities,
+canonical bytes, hashes, sizes and scope. Grant liveDraft counts must match. The owning staging row
 must have bound that exact preparation hash; a request-supplied grant/hash is not
 an authorized staging row. Its storage/authority is still unimplemented. It retains exact source
 canonical bytes/hash and every original operation/queue identity. This plan is
-not a grant, reservation, staging receipt or publication capability. File or live
-Draft counts above zero reject the entire candidate, never omit those resources.
-The current plan covers the saved, fileless Golden A Trip/P1 dataset only.
+not a grant, reservation, staging receipt or publication capability. Nonzero registered file counts or unqualified photo references reject the entire
+candidate, never omit those resources. The current fileless Trip/P1 source may
+carry raw valid Drafts as private recovery material only; no additional published
+Trip shell, Item, quota grant or post-Adoption restore qualification is implied.
 
 ## Exact delegated operation set for Core review
 
@@ -91,3 +94,17 @@ readback uses REPEATABLE READ READ ONLY, COMMIT or rollback on error/cancellatio
 Missing and present staging both retain QUERY_SERVER_STATUS. This adapter must not
 be mounted as the complete adoption status service: it has no actual terminal
 publication/cancellation outcome store and cannot authorize source release.
+
+
+## Draft preservation supplement
+
+The existing local journal preparation schema and draft verifier now live in a
+pure Auth codec, retaining old public exports and journal1/2/3 compatibility. This
+reuses the same checks in private staging without importing Session/Native storage.
+Draft-bearing plan/2 retains canonical P1 and Trip Create/Edit snapshot bytes,
+including incomplete dates, whitespace and Unicode. Draft count is pinned to the
+same preparation and preflight grant. A Trip Create draft is not part of the saved
+Trip ID set and never turns into a published shell. P1 EDITv1 still has no owning
+revision/restore qualification: preserving its bytes does not authorize restoring
+or publishing it. Full publication remains blocked until all owning Draft restore
+paths are verified. No new Draft repository, sync engine or identity promotion.

@@ -18,7 +18,7 @@ CREATE TABLE otr_auth_guest_composite.sealed_stages (
  plan_text text NOT NULL,
  staged_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  CHECK(plan_sha256=encode(sha256(convert_to(plan_text,'UTF8')),'hex')),
- CHECK((plan_text::jsonb->>'schemaId') IS NOT DISTINCT FROM 'otr.auth.guest-composite-plan/1'),
+ CHECK(coalesce((plan_text::jsonb->>'schemaId') IN ('otr.auth.guest-composite-plan/1','otr.auth.guest-composite-plan/2'),false)),
  CHECK((plan_text::jsonb->>'authority') IS NOT DISTINCT FROM 'NONE'),
  CHECK((plan_text::jsonb#>>'{grant,adoptionId}') IS NOT DISTINCT FROM adoption_id::text),
  CHECK((plan_text::jsonb#>>'{grant,targetAccountId}') IS NOT DISTINCT FROM actor_account_id::text),

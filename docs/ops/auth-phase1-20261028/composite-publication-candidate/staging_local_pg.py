@@ -53,9 +53,10 @@ try:
     checks.append('candidate also requires explicit disposable fixture marker')
     sql("SET ROLE postgres; SET otr.auth.composite_fixture='LOCAL_DISPOSABLE';" + candidate)
     checks.append('private immutable staging table installs only in owned disposable database')
-    generated = subprocess.run(['node', '--import', 'tsx', '-e', "const {fixture}=require('./backend/src/guestAdoptionCompositePlan.fixture.ts'); const {prepareGuestAdoptionCompositePlan}=require('./backend/src/guestAdoptionCompositePlan.ts'); (async()=>{const f=fixture(),p=await f.source(); const plan=await prepareGuestAdoptionCompositePlan(f.user,{grant:f.grant,preparationSha256:p.sha256},p);process.stdout.write(JSON.stringify(plan));})().catch(()=>{process.exitCode=1;});"], cwd=ROOT, capture_output=True, text=True, timeout=30)
+    generated = subprocess.run(['node', '--import', 'tsx', '-e', "const {fixture,draftEntries}=require('./backend/src/guestAdoptionCompositePlan.fixture.ts'); const {prepareGuestAdoptionCompositePlan}=require('./backend/src/guestAdoptionCompositePlan.ts'); (async()=>{const f=fixture(),p=await f.source(); const plan=await prepareGuestAdoptionCompositePlan(f.user,{grant:f.grant,preparationSha256:p.sha256},p);const d=fixture(),entries=draftEntries(d);d.grant.resources.liveDrafts=entries.length;const q=await d.source(entries);const drafts=await prepareGuestAdoptionCompositePlan(d.user,{grant:d.grant,preparationSha256:q.sha256},q);process.stdout.write(JSON.stringify({saved:plan,drafts}));})().catch(()=>{process.exitCode=1;});"], cwd=ROOT, capture_output=True, text=True, timeout=30)
     assert generated.returncode == 0, 'SYNTHETIC_PLAN_GENERATION_FAILED'
-    plan = json.loads(generated.stdout)
+    generated_plans = json.loads(generated.stdout)
+    plan = generated_plans['saved']
     sql('SET ROLE postgres;' + insertion(plan))
     sql('SET ROLE postgres;' + insertion(plan))
     assert sql('SET ROLE postgres;SELECT count(*) FROM otr_auth_guest_composite.sealed_stages;') == '1'
@@ -103,6 +104,16 @@ try:
         for run in runs: run.result()
     assert sql('SET ROLE postgres;SELECT count(*) FROM otr_auth_guest_composite.sealed_stages WHERE adoption_id=' + quote(race_id) + '::uuid;') == '1'
     checks.append('concurrent cross-Account same-adoption inserts retain exactly one immutable stage')
+    drafts_plan = generated_plans['drafts']
+    sql('SET ROLE postgres;' + insertion(drafts_plan))
+    draft_actor = json.loads(drafts_plan['canonicalText'])['grant']['targetAccountId']
+    retained = json.loads(sql('SET ROLE postgres;SELECT to_jsonb(plan_text) FROM otr_auth_guest_composite.sealed_stages WHERE actor_account_id=' + quote(draft_actor) + '::uuid;'))
+    assert retained == drafts_plan['canonicalText']
+    prepared = json.loads(json.loads(retained)['preparation']['canonicalText'])
+    assert len(prepared['drafts']) == 3
+    assert json.loads(prepared['drafts'][0]['canonicalText'])['fields']['title'] == '  未提交 Å  '
+    assert len(prepared['tripIds']) == 1
+    checks.append('version2 exact P1/Trip Create/Edit draft bytes survive independent PG read without creating a Trip shell')
     result = {'status':'LOCAL_PRIVATE_STAGE_PG_PASS_NOT_AUTHORITY_OR_ADOPTION', 'checks':checks,
               'network':'none', 'hostedWrites':0, 'providerCalls':0, 'businessTripWrites':0,
               'candidateSha256':sha(candidate), 'testCount':len(checks)}
