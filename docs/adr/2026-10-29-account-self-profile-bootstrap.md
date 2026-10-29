@@ -16,3 +16,6 @@ Claim function, service-role business mutation, new RLS/GRANT or Auth trigger.
 Failure pauses sync; local launch and offline cached data do not wait for this
 network operation. Shared Backend mount/DI and Native runner remain their unique
 writers' responsibility until explicitly delegated.
+
+Explicit Supabase anonymous identities are not formal Accounts and are rejected
+before Profile access. This does not change existing normal Provider or RLS rules.

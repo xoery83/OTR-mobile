@@ -74,7 +74,10 @@ Display Name and default role, never overwrites existing rows or invokes Claim.
 Versioned POST/account-only DTO, bounded Backend boundary and scoped Auth Repository
 have directed/independent2 suites21 PASS/NO_BLOCKER and types/lint PASS. Native owns
 shared mount/DI and sync preflight, failure pauses sync rather than offline launch.
-No mount/deploy/DEV success yet; ACCOUNT_PROFILE_BOOTSTRAP_PORT.json pins interface.
+Auth reviewed Native exact route/DI/sync preflight NO_BLOCKER (Native direct44;
+its runtime deployment/readback still pending). Explicit anonymous/absent Auth user
+now rejects before Profile DML; direct2 suites22/independent supplement1 PASS, types/
+lint PASS. ACCOUNT_PROFILE_BOOTSTRAP_PORT.json pins interface; no Auth DEV success claim.
 
 Golden A accepted: GuestQA63/source7e35baf6, fresh no-Session normal Trip create/edit →
 P1 → Day → same-version cold restore, SQLite74 independent readback. No Account DB,

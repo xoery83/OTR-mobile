@@ -49,7 +49,12 @@ export function createAccountProfileBootstrapPort(config: {
       });
       const { data: identity, error: identityError } =
         await client.auth.getUser(accessToken);
-      if (identityError || identity.user.id !== accountId)
+      if (
+        identityError ||
+        !identity.user ||
+        identity.user.id !== accountId ||
+        identity.user.is_anonymous === true
+      )
         throw Error("ACCOUNT_PROFILE_IDENTITY_REQUIRED");
       async function read() {
         const { data, error } = await client

@@ -37,12 +37,13 @@
     "23505 race requires own-profile readback",
     "never overwrite existing profile",
     "failure pauses sync",
-    "Account/generation and foreign response rejected"
+    "Account/generation and foreign response rejected",
+    "Explicit anonymous Supabase identity and absent user rejected before Profile DML"
   ],
   "validation": {
     "direct": {
       "suites": 2,
-      "tests": 21,
+      "tests": 22,
       "result": "PASS"
     },
     "independent": {
@@ -51,7 +52,11 @@
       "result": "NO_BLOCKER"
     },
     "typecheck": "PASS",
-    "scopedLint": "PASS"
+    "scopedLint": "PASS",
+    "anonymousSupplement": {
+      "independentTests": 1,
+      "result": "NO_BLOCKER_PASS"
+    }
   },
   "limits": {
     "sharedBackendMountOrDI": false,

@@ -22,6 +22,7 @@ function fixture(mode = "new") {
       return Response.json({
         id: mode === "foreign identity" ? randomUUID() : accountId,
         email: "fixture@example.invalid",
+        is_anonymous: mode === "anonymous identity",
       });
     expect(url.pathname).toBe("/rest/v1/profiles");
     if (request.method === "GET") {
@@ -80,17 +81,20 @@ it.each(["new", "existing", "race"])(
     );
   },
 );
-it.each(["foreign identity", "foreign profile", "missing readback", "denied"])(
-  "refuses %s without claiming bootstrap ready",
-  async (mode) => {
-    const f = fixture(mode);
-    await expect(
-      f.port.ensure(f.accountId, "fixture-normal-session", new AbortController().signal),
-    ).rejects.toThrow();
-    if (mode.startsWith("foreign"))
-      expect(f.calls.some((request) => request.method === "POST")).toBe(false);
-  },
-);
+it.each([
+  "foreign identity",
+  "anonymous identity",
+  "foreign profile",
+  "missing readback",
+  "denied",
+])("refuses %s without claiming bootstrap ready", async (mode) => {
+  const f = fixture(mode);
+  await expect(
+    f.port.ensure(f.accountId, "fixture-normal-session", new AbortController().signal),
+  ).rejects.toThrow();
+  if (mode.startsWith("foreign") || mode === "anonymous identity")
+    expect(f.calls.some((request) => request.method === "POST")).toBe(false);
+});
 it("rejects Production/config redirection and aborted requests without dispatch", async () => {
   for (const url of [
     "https://other.supabase.co",
