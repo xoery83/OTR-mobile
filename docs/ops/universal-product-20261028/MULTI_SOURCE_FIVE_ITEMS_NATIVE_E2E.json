@@ -81,8 +81,6 @@
   "clientBuild": 81,
   "readbackSha256": "b9fecdb01b1213684e7ff4fd443a453f0116f0450c73ced11da76ccb50ce62ae",
   "notClaimed": [
-    "Five-item Results duplicate-disabled completion recovery still pending",
-    "Documents five original/saved-link UI still pending",
     "Complete ordinary-user Beta",
     "Binary Source ingress",
     "P2 Qualified/Journey/Booking/Ticket"
@@ -124,5 +122,44 @@
     "openSameBatchActivity": true,
     "interpretationAt": "2026-10-29 06:14:12 NZDT",
     "serverCommittedAtUsed": true
+  },
+  "resultsRecovery": {
+    "status": "NATIVE_E2E_PASS",
+    "build": 83,
+    "acceptedCandidates": 5,
+    "p2DuplicateFinalConfirmDisabled": true,
+    "sameItemIdentityRetained": true,
+    "unresolvedSourceReasonObservations": 2
+  },
+  "documentsRecovery": {
+    "build": 87,
+    "sourceCommit": "6aba69f21cac0c2054e2e8a5d9cc66417808a804",
+    "formalCaptureCreatedAtLocal": "2026-10-29 06:04:11 NZDT",
+    "P2": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "P3": {
+      "original": "PASS",
+      "ownSavedItemCount": 1,
+      "firstRelatedLookup": "UNAVAILABLE",
+      "sameDocumentReadonlyReopen": "RECOVERED",
+      "failureCause": "NOT_OBSERVED"
+    },
+    "P4": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "P5": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "P6": {
+      "original": "PASS",
+      "ownSavedItemCount": 1
+    },
+    "status": "FIVE_ORIGINALS_AND_OWN_ITEM_ASSOCIATION_NATIVE_E2E_PASS",
+    "privateLocalCustodyWithNoCloudBackupClaim": true,
+    "sourceScopeClosedDuringRead": true
   }
 }

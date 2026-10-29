@@ -1,0 +1,37 @@
+{
+  "status": "CAPTURE_FAMILY_READ_ONLY_SOURCE_PREPARATION_NOT_ALL_FILES_OR_ADOPTION_PASS",
+  "baseline": "98c4e0c2",
+  "owningSeam": "Source Writer explicitly confirmed createLocalCaptureTransactionStore(database,deps).load(ownerId,captureId); Auth owns outer Guest-gated read transaction",
+  "scope": [
+    "isolated Guest vault/committed kind/generation",
+    "all Capture/payload owner metadata checked before bytes",
+    "assigned Trip requires local Guest creator proof and no cloud acceptance",
+    "original metadata/BLOB/hash/length/TEXT UTF8 checks reused",
+    "opaque Capture IDs retained per owning contract",
+    "shared payload bytes counted once, every Capture revision and full metadata hash retained",
+    "orphan payload retained and blocked; no writes/newId/clock/nested transaction exposed"
+  ],
+  "validation": {
+    "guestDiskTests": 27,
+    "newCaptureCases": 8,
+    "directedSuites": 6,
+    "directedTests": 168,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS, no errors or warnings",
+    "independentReview": "27 real SQLite disk tests PASS; NO_BLOCKER"
+  },
+  "actualARead": "GUEST_B_REAL_CAPTURE_INVENTORY.json: Node readOnly adapter on actual accepted GuestQA63 vault, Capture payload/ref counts zero only; no Native SecureStore/Session inspection or file producer",
+  "coverage": "CAPTURE_ONLY; CAPTURE_COMPLETE is not ALL_FILES_COMPLETE. Physical filesystem/history absence is not asserted.",
+  "globalAdoptionGate": "Whole census still blocks nonempty Capture tables; missing all-file/live-draft collectors and consistent full source freeze remain blockers.",
+  "activation": {
+    "nativeFileProducerOrUI": false,
+    "rawBytesReturned": false,
+    "accountStoreUsed": false,
+    "sourcePublicModuleEdited": false,
+    "schemaRlsGrantRoleChanges": false,
+    "backendDeployment": false,
+    "sessionOrUpload": false
+  },
+  "next": "Owning Ledger receipt/Trip photo/pending-file inventories and normalized full source snapshot, then reviewed atomic server transaction/authority and real Adoption E2E"
+}

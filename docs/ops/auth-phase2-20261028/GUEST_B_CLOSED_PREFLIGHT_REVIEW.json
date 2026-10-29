@@ -1,0 +1,36 @@
+{
+  "status": "UNMOUNTED_METADATA_BOUNDARY_CANDIDATE_NOT_SERVER_PREFLIGHT_OR_ADOPTION_PASS",
+  "sourceBaseline": "fddf3277e3c2ca39b1ab030ebd3012a775d10be7",
+  "request": "contractVersion1/adoption UUID/source Guest UUID/target Account UUID/inventory digest/resource counts only",
+  "authority": "Existing Backend JWT middleware Account ID is pinned before async read. Local Guest ID is provenance, not actor. Target must equal authenticated Account.",
+  "safety": [
+    "no names/notes/files/token request fields",
+    "missing port503 closed",
+    "strict input and grant parsing",
+    "adoption/source/target/digest/counts/expiry pins",
+    "port gets cloned request, caller actor is immutable scalar",
+    "8192-byte transport bound and15-second cancellable deadline",
+    "private no-store response and no secret exception detail"
+  ],
+  "commercialRulesAdded": false,
+  "validation": {
+    "newBoundaryTests": 21,
+    "directedSuites": 3,
+    "directedTests": 44,
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "scopedLint": "PASS, no errors or warnings",
+    "independentReview": "21 tests PASS; NO_BLOCKER"
+  },
+  "evidenceBoundary": "L2 fake owning port only; no Supabase/JWT login/PG reservation/expiry policy or receipt was created by these tests",
+  "activation": {
+    "appBootstrapReferences": false,
+    "httpRouteMounted": false,
+    "owningPreflightAdapter": false,
+    "newPgAuthority": false,
+    "upload": false,
+    "nativeSessionInstallation": false,
+    "hostDeployment": false
+  },
+  "next": "GUEST_B_ATOMIC_PORT_CANDIDATE.md requests one caller-held transaction retaining owning Trip/Core/Person/Ledger checks; unique Core Writer and exact protected Gate remain required"
+}

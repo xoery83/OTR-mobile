@@ -17,6 +17,7 @@ public class ReceiptOcrModule: Module {
 
   public func definition() -> ModuleDefinition {
     Name("ReceiptOcr")
+    Constant("importOriginalPreviewContractVersion") { 2 }
 
     OnCreate {
 #if DEBUG && targetEnvironment(simulator)
@@ -113,10 +114,8 @@ public class ReceiptOcrModule: Module {
         }
         self.importPreview = (token, preview)
         presenter.present(preview, animated: true) { preview.didPresent() }
-        // UIKit presentation completion, not the next run-loop turn, owns readiness.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-          preview.failIfPresentationPending()
-        }
+        // Cold Quick Look can still be presenting at 5s; readiness remains UIKit-owned.
+        preview.awaitPresentation(presenter: presenter)
       }
     }
 
@@ -301,6 +300,9 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   private var finish: ((Bool) -> Void)?
   private var presented = false
   private var closeRequested = false
+#if DEBUG && targetEnvironment(simulator)
+  private let presentationStartedAt = ProcessInfo.processInfo.systemUptime
+#endif
   init(file: URL, title: String? = nil, finish: @escaping (Bool) -> Void) {
     self.item = ImportOriginalPreviewItem(file: file, title: title)
     self.finish = finish
@@ -314,18 +316,44 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
   func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
     item
   }
+#if DEBUG && targetEnvironment(simulator)
+  func logPendingPresentation(presenter: UIViewController) {
+    guard !presented, finish != nil else { return }
+    let flags = [isViewLoaded, viewIfLoaded?.window != nil,
+      presentingViewController != nil, presenter.presentedViewController === self,
+      isBeingPresented, presenter.viewIfLoaded?.window?.isKeyWindow == true,
+      UIApplication.shared.applicationState == .active]
+      .map { $0 ? "1" : "0" }.joined(separator: ",")
+    NSLog("import_original_preview_pending %@", flags)
+  }
+#endif
+  func awaitPresentation(presenter: UIViewController) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
+      guard let self else { return }
+#if DEBUG && targetEnvironment(simulator)
+      self.logPendingPresentation(presenter: presenter)
+#endif
+      self.failIfPresentationPending()
+    }
+  }
   func failIfPresentationPending() {
     guard !presented, finish != nil else { return }
+    let alreadyClosed = closeRequested
     closePrivateOriginal()
-    complete(true)
+    complete(!alreadyClosed)
   }
   func didPresent() {
+#if DEBUG && targetEnvironment(simulator)
+    NSLog("import_original_preview_presented_ms %d",
+      Int((ProcessInfo.processInfo.systemUptime - presentationStartedAt) * 1000))
+#endif
     presented = true
     if closeRequested { closePrivateOriginal() }
   }
   func closePrivateOriginal() {
     closeRequested = true
     viewIfLoaded?.isHidden = true
+    if let file = item.previewItemURL { try? FileManager.default.removeItem(at: file) }
     guard presented else { return }
     dismiss(animated: false) { self.complete() }
   }
@@ -350,12 +378,36 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
 #if DEBUG && targetEnvironment(simulator)
 // Exercises the actual controller offscreen; no Capture bytes, file writes or public test port.
 private func runImportPreviewPrivateCloseChecks() {
+  var prematureFailure = false
+  let delayed = ImportOriginalPreviewController(
+    file: FileManager.default.temporaryDirectory.appendingPathComponent("otr-import-qa-delay-" + UUID().uuidString + ".pdf")
+  ) { failed in prematureFailure = failed }
+  delayed.awaitPresentation(presenter: UIViewController())
+  DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+    let passed = !prematureFailure
+    delayed.didPresent()
+    delayed.closePrivateOriginal()
+    NSLog("import_original_preview_state DELAYED_READY %@", passed ? "PASS" : "FAIL")
+  }
+  for loadBeforeClose in [true, false] {
+    var failedClose: Bool?
+    let closing = ImportOriginalPreviewController(
+      file: FileManager.default.temporaryDirectory.appendingPathComponent("otr-import-qa-cancel-" + UUID().uuidString + ".pdf")
+    ) { failed in failedClose = failed }
+    if loadBeforeClose { closing.loadViewIfNeeded() }
+    closing.closePrivateOriginal()
+    closing.loadViewIfNeeded()
+    let hidden = closing.view.isHidden
+    closing.failIfPresentationPending()
+    let passed = hidden && failedClose == false
+    NSLog("import_original_preview_state PENDING_CANCEL %@", passed ? "PASS" : "FAIL")
+  }
   for loadedBeforeTimeout in [true, false] {
     var finishes = 0
     var hiddenAtFinish = false
     weak var subject: ImportOriginalPreviewController?
     let controller = ImportOriginalPreviewController(
-      file: FileManager.default.temporaryDirectory.appendingPathComponent("otr-import-qa-state-test.pdf")
+      file: FileManager.default.temporaryDirectory.appendingPathComponent("otr-import-qa-state-test-" + UUID().uuidString + ".pdf")
     ) { _ in
       finishes += 1
       hiddenAtFinish = subject?.viewIfLoaded?.isHidden ?? true

@@ -8,7 +8,11 @@ import { setUiLocale, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const ui = vi.hoisted(() => ({
+  previewAvailable: false,
   buttons: [] as { label: string; onPress(): void; disabled?: boolean }[],
+}));
+vi.mock("@/native/importOriginalPreview", () => ({
+  isImportOriginalPreviewAvailable: () => ui.previewAvailable,
 }));
 vi.mock("react-native", () => ({
   View: "div",
@@ -29,6 +33,7 @@ vi.mock("@/ui/controls", () => ({
   },
 }));
 beforeEach(() => {
+  ui.previewAvailable = false;
   ui.buttons = [];
   setUiLocale("en");
 });
@@ -183,4 +188,59 @@ it("keeps binary original opening disabled without explicit qualified Native con
   } finally {
     vi.unstubAllEnvs();
   }
+});
+
+it("shows pending associations and offers a scoped readonly retry after failure", () => {
+  const { doc } = fixture();
+  const retry = vi.fn();
+  let current = true;
+  const props = {
+    document: doc,
+    accountId: doc.accountId,
+    tripId: doc.tripId,
+    opening: false,
+    error: false,
+    isCurrent: () => current,
+    onOpenOriginal: vi.fn(),
+    onRetryLinks: retry,
+  };
+  const pending = renderToStaticMarkup(
+    createElement(ImportDocumentDetail, { ...props, linksLoading: true }),
+  );
+  expect(pending).toContain(t("common.loading"));
+  expect(pending).not.toContain(t("importDocuments.importedItems", { count: 0 }));
+  renderToStaticMarkup(
+    createElement(ImportDocumentDetail, { ...props, linksUnavailable: true }),
+  );
+  const button = ui.buttons.find((b) => b.label === t("capture.activityRefresh"))!;
+  button.onPress();
+  expect(retry).toHaveBeenCalledOnce();
+  current = false;
+  button.onPress();
+  expect(retry).toHaveBeenCalledOnce();
+});
+
+it("opens a repository original only through an available versioned Native adapter", () => {
+  ui.previewAvailable = true;
+  const f = fixture(),
+    onOpenOriginal = vi.fn();
+  let current = true;
+  renderToStaticMarkup(
+    createElement(ImportDocumentDetail, {
+      document: { ...f.doc, kind: "FILE", declaredContentType: "application/pdf" },
+      accountId: f.doc.accountId,
+      tripId: null,
+      opening: false,
+      error: false,
+      isCurrent: () => current,
+      onOpenOriginal,
+    }),
+  );
+  const open = ui.buttons.find((b) => b.label === t("importDocuments.openOriginal"))!;
+  expect(open.disabled).toBe(false);
+  open.onPress();
+  expect(onOpenOriginal).toHaveBeenCalledExactlyOnceWith(f.doc.captureId);
+  current = false;
+  open.onPress();
+  expect(onOpenOriginal).toHaveBeenCalledOnce();
 });

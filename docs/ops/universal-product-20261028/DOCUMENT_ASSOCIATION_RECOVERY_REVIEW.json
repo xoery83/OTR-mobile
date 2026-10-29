@@ -1,0 +1,42 @@
+{
+  "commit": "aae1e5945bcfcbe805fa1c8a626f5b8e8f493e43",
+  "reviewer": "p1_source_review_independent",
+  "review": "NO_BLOCKER",
+  "directedValidation": "1 RED /13 PASS before repair; 3 suites27PASS after repair",
+  "types": "PASS",
+  "uiGuard": "PASS",
+  "scopedLint": "PASS",
+  "native": {
+    "status": "NATIVE_LOADING_AND_SUCCESS_PASS",
+    "artifact": {
+      "build": 89,
+      "sourceCommit": "aae1e5945bcfcbe805fa1c8a626f5b8e8f493e43",
+      "newNativeBuild": false,
+      "retainedNativeBuild": 75,
+      "nativeSHA256": "9809e7304ea00e346ead443a6c241d22ebf5a2762722f3d588c31a1f70ad18ff",
+      "nativeModuleSHA256": "eaf342a830e949cc36ccfd0e884be17f056e79a5dda35007cfa8109b3306c895",
+      "binaryPreviewExplicitQaEnabled": true,
+      "samePublicSimulatorIdentity": true,
+      "javascriptSHA256": "614468478a3ff452921e7664bdf65764b052877b8d707ed162d9d423dbb26e5c",
+      "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+      "sessionOrKeychainReadOrCopied": false
+    },
+    "install": {
+      "build": 89,
+      "installed": true,
+      "launched": false,
+      "businessTablesVerified": 31,
+      "allPriorRowsAndExactReviewedOperationPreserved": true,
+      "sessionOrKeychainReadOrCopied": false
+    },
+    "coldRoot": "My Trips",
+    "sameFormalP3Original": "PASS",
+    "loadingVisible": true,
+    "ownSavedItemCountAfterLoading": 1,
+    "retainedOriginalReadableAfterLoading": true,
+    "newProviderCall": false,
+    "newMutation": false,
+    "samePageFailureRetry": "LOCAL_PASS; no forced live failure performed"
+  },
+  "authorityChanged": false
+}

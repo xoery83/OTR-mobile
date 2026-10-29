@@ -75,3 +75,15 @@ it("contains reader private errors", async () => {
     })(scope),
   ).rejects.toThrow(/^PDF_V2_CUSTODY_UNAVAILABLE$/);
 });
+
+it("an explicitly composed private worker still requires both original reads and exact producer output", async () => {
+  const read = vi.fn().mockResolvedValue(bytes);
+  const worker = vi.fn().mockResolvedValue(extraction());
+  const result = await createSourcePdfV2LinuxVerifier(read, worker)(scope);
+  expect(result.text).toBe("NZ5069");
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(worker).toHaveBeenCalledExactlyOnceWith(bytes);
+  expect(runSourcePdfV2LinuxWorker).not.toHaveBeenCalled();
+  worker.mockResolvedValueOnce({ testOnlyTransportResult: true });
+  await expect(createSourcePdfV2LinuxVerifier(read, worker)(scope)).rejects.toThrow();
+});

@@ -1,0 +1,19 @@
+{
+  "candidateCommit": "2ac161a2",
+  "initialIndependentReview": "BLOCKED_RESOURCE_SAFETY",
+  "finding": "Termination UNKNOWN could release concurrency slot before the old worker was proven stopped",
+  "fixCommit": "c5f91879",
+  "red": "1 failed /9 passed",
+  "validation": "6 suites56PASS; types/scoped lint PASS",
+  "independentReview": "NO_BLOCKER after focused re-review",
+  "reviewer": "p1_source_review_independent",
+  "scope": "Current process stays quarantined; no automatic reset or second run after UNKNOWN",
+  "notClaimed": [
+    "Cross-restart orphan cleanup",
+    "Host service/socket/mount qualification",
+    "DEV parser execution",
+    "PDF Source/Task/Admission"
+  ],
+  "deployed": false,
+  "listening": false
+}

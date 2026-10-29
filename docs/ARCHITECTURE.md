@@ -316,3 +316,29 @@ Real dispatch/credentials/secrets, public ChatGPT/Claude/MCP, production OAuth/J
 Admin Portal, billing, participant/member augmentation, booking persistence,
 CXE adaptive runtime, Product Intelligence/training and notification sending remain
 unimplemented or unactivated. Independent final closure review is the next checkpoint.
+
+## PDF V2 Source adapter preparation
+
+A default-closed HTTP adapter reuses the existing PDF V2 original verification,
+derived registration and seal authorities. It adds no independent Source, Task,
+Auth or worker authority. The parent Backend owns normal bearer authentication
+and delegates only the three exact PDF metadata routes; its optional port is
+absent by default and therefore fails closed. Worker/runtime composition remains
+absent until the bounded
+worker/custody/profile path and exact protected eligibility are qualified. The
+adapter handles scoped metadata only; originals retain their existing custody.
+
+The local Documents original viewer may open through the native adapter only when
+its exact version-2 three-argument/token-close contract is advertised and both
+methods exist. Older unversioned binaries remain closed in ordinary builds; the
+explicit paired QA fallback is retained for already-qualified lifecycle fixtures.
+This is local scoped custody reading, not PDF/OCR interpretation, cloud retention,
+sharing or Source authority.
+
+PDF execution preparation reuses the fixed qpdf-poppler worker through a private
+Unix-socket, parse-only transport candidate. The Backend image cannot currently
+launch Docker; the candidate does not expose the Docker socket to Backend or add
+Source/Task authority. Only bytes and bounded producer output cross this port;
+existing original rereads, output validation and owning SQL still decide proof.
+No listener/startup, host mount or service activation is installed. A future host
+execution/mount change requires its exact protected deployment review and approval.

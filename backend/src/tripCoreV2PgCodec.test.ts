@@ -56,8 +56,13 @@ it("restores PostgreSQL trailing-zero precision without modifying authored title
   const lease: CorePgLease = {
     retire() {},
     async query(sql) {
-      const table = /FROM public\."([^"]+)"/.exec(sql)?.[1] as keyof CoreGraph;
-      return { rows: table ? graph[table].map((fact) => ({ fact })) : [] };
+      const tables = [...sql.matchAll(/FROM public\."([^"]+)"/g)]
+        .map((match) => match[1] as keyof CoreGraph);
+      return {
+        rows: tables.flatMap((table) =>
+          graph[table].map((fact) => ({ core_table: table, fact })),
+        ),
+      };
     },
   };
   const decoded = await readCorePgGraph(lease, actor.tripId);

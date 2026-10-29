@@ -1,0 +1,15 @@
+{
+  "status": "CORRECTED",
+  "mistake": "Earlier same-name account Inbox capture was mistaken for the formally saved Batch document",
+  "unqualifiedEarlierBatchId": "ef9a1860-d03b-4caf-b979-627d4d5ea43d",
+  "earlierCreatedAtLocal": "2026-10-29 06:00:51 NZDT",
+  "formalBatchId": "3bdff8ee-9bef-4c7e-a1b6-5f0d22f29539",
+  "formalCreatedAtLocal": "2026-10-29 06:04:11 NZDT",
+  "withdrawnCommit": "a36e8899",
+  "revertCommit": "6aba69f2",
+  "backendDeployed": false,
+  "businessDataModified": false,
+  "withdrawnCodeCountedAsDelivery": false,
+  "currentQA87TreeMatchesAcceptedMain": "7ea7a83b",
+  "rule": "No linking by filename or common Batch alone; retain exact Source/Candidate/Item authority"
+}

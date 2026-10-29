@@ -1,0 +1,48 @@
+{
+  "mainBefore": "fddf3277e3c2ca39b1ab030ebd3012a775d10be7",
+  "candidate": "2ded03a4576e715150b27a96414d936e48a12ec8",
+  "mainAfter": "2ded03a4576e715150b27a96414d936e48a12ec8",
+  "originMainVerified": "2ded03a4576e715150b27a96414d936e48a12ec8",
+  "normalNonForcePush": true,
+  "postMergeSmoke": "6 suites60PASS",
+  "changedPaths": [
+    "backend/src/sourcePdfV2Http.test.ts",
+    "backend/src/sourcePdfV2Http.ts",
+    "docs/ARCHITECTURE.md",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/ops/universal-product-20261028/DOCUMENT_ASSOCIATION_RECOVERY_REVIEW.json",
+    "docs/ops/universal-product-20261028/DOCUMENT_BATCH_SELECTION_CORRECTION.json",
+    "docs/ops/universal-product-20261028/MAIN_PRODUCT_THIRD_INTEGRATION.json",
+    "docs/ops/universal-product-20261028/MULTI_SOURCE_FIVE_ITEMS_NATIVE_E2E.json",
+    "docs/ops/universal-product-20261028/PDF_V2_HTTP_CANDIDATE.md",
+    "docs/ops/universal-product-20261028/PDF_V2_HTTP_REVIEW.json",
+    "docs/ops/universal-product-20261028/PROGRESSIVE_RECEIPT_RECOVERY_REVIEW.json",
+    "src/features/documents/ImportDocuments.test.ts",
+    "src/features/documents/ImportDocuments.tsx",
+    "src/features/documents/ImportDocumentsPanel.test.ts",
+    "src/features/documents/ImportDocumentsPanel.tsx"
+  ],
+  "dirtyProtected": {
+    "entries": [
+      " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+      "?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+      "?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+      "?? docs/beta/visual-acceptance/assets.zip",
+      "?? scripts/dev/__pycache__/"
+    ],
+    "hashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "docs/beta/visual-acceptance/assets.zip": "63306e729fbb97a36f7fc595ce60c507998302002671f078acf50720381be529",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "trackedDiff": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a"
+  },
+  "dirtyByteIdentical": true,
+  "backendDeployed": false,
+  "sqlModified": false,
+  "uncommittedPdfParentRouteTestIncluded": false
+}

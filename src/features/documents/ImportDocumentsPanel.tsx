@@ -36,6 +36,8 @@ export function ImportDocumentsPanel(props: Props) {
 function ScopedDocuments(props: Props) {
   const [linkedItems, setLinkedItems] = useState<number | null>(null);
   const [linksUnavailable, setLinksUnavailable] = useState(false);
+  const [linksLoading, setLinksLoading] = useState(props.scope === "TRIP");
+  const [linksRetry, setLinksRetry] = useState(0);
   const [documents, setDocuments] = useState<ImportDocument[]>([]);
   const [document, setDocument] = useState<ImportDocument | null>(null);
   const [original, setOriginal] = useState<{
@@ -220,10 +222,11 @@ function ScopedDocuments(props: Props) {
     if (!document || props.scope !== "TRIP" || !visible) return;
     let canceled = false;
     void (async () => {
+      setLinksLoading(true);
+      setLinksUnavailable(false);
       const { context } = await reader();
       if (canceled || !current()) return;
       setLinkedItems(null);
-      setLinksUnavailable(false);
       const { readDefaultImportDocumentItems } =
         await import("@/data/operations/importDocumentItems");
       if (canceled || !current()) return;
@@ -234,21 +237,29 @@ function ScopedDocuments(props: Props) {
         () => !canceled && current(),
       );
       if (!canceled && current()) setLinkedItems(items === null ? null : items.length);
-    })().catch(() => {
-      if (!canceled && current()) setLinksUnavailable(true);
-    });
+    })()
+      .catch(() => {
+        if (!canceled && current()) setLinksUnavailable(true);
+      })
+      .finally(() => {
+        if (!canceled && current()) setLinksLoading(false);
+      });
     return () => {
       canceled = true;
     };
     // Parent scope remounts on Account/Trip/Capture identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [document, visible]);
+  }, [document, visible, linksRetry]);
   if (props.captureId && document)
     return (
       <ImportDocumentDetail
         document={document}
         linkedItems={linkedItems}
         linksUnavailable={linksUnavailable}
+        linksLoading={linksLoading}
+        onRetryLinks={() => {
+          if (current() && !linksLoading) setLinksRetry((value) => value + 1);
+        }}
         accountId={props.accountId}
         tripId={props.scope === "TRIP" ? props.tripId : null}
         original={original}

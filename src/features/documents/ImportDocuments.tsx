@@ -1,3 +1,4 @@
+import { isImportOriginalPreviewAvailable } from "@/native/importOriginalPreview";
 import { ScrollView, StyleSheet, View } from "react-native";
 import type {
   ImportDocument,
@@ -129,6 +130,8 @@ export function ImportDocumentDetail({
   document,
   linkedItems,
   linksUnavailable = false,
+  linksLoading = false,
+  onRetryLinks,
   accountId,
   tripId,
   original,
@@ -141,6 +144,8 @@ export function ImportDocumentDetail({
   document: ImportDocument;
   linkedItems?: number | null;
   linksUnavailable?: boolean;
+  linksLoading?: boolean;
+  onRetryLinks?(): void;
   accountId: string;
   tripId: string | null;
   original?: { captureId: string; sha256: string; text: string } | null;
@@ -162,7 +167,7 @@ export function ImportDocumentDetail({
     document.custody !== "UNAVAILABLE" &&
     (document.kind === "TEXT" ||
       (document.kind === "FILE" && document.declaredContentType === "text/plain") ||
-      process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true");
+      isImportOriginalPreviewAvailable());
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -199,8 +204,23 @@ export function ImportDocumentDetail({
           </UiText>
         ) : null}
       </UiSection>
-      {linksUnavailable ? (
-        <UiText style={s.meta}>{t("importDocuments.itemLinksUnavailable")}</UiText>
+      {linksLoading ? (
+        <UiText accessibilityLiveRegion="polite" style={s.meta}>
+          {t("common.loading")}
+        </UiText>
+      ) : linksUnavailable ? (
+        <View>
+          <UiText style={s.meta}>{t("importDocuments.itemLinksUnavailable")}</UiText>
+          {onRetryLinks ? (
+            <UiButton
+              label={t("capture.activityRefresh")}
+              variant="text"
+              onPress={() => {
+                if (isCurrent()) onRetryLinks();
+              }}
+            />
+          ) : null}
+        </View>
       ) : linkedItems !== null && linkedItems !== undefined ? (
         <UiText style={s.meta}>
           {t("importDocuments.importedItems", { count: linkedItems })}

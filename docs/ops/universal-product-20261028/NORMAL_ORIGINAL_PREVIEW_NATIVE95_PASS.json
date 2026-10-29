@@ -1,0 +1,69 @@
+{
+  "status": "NATIVE_E2E_PASS_LOCAL_ORIGINAL_READER",
+  "implementationCommit": "e6970e559c65298c2f02cf77ea3e648bed708c9d",
+  "artifact": {
+    "build": 95,
+    "sourceCommit": "e6970e559c65298c2f02cf77ea3e648bed708c9d",
+    "javascriptSourceCommit": "882b5587",
+    "newNativeBuild": true,
+    "nativeBuild": 95,
+    "nativePreviewContractVersion": 2,
+    "nativeSHA256": "d549e36267574a8d9995599c0d27f695e7288eac4b03e15f9ade05e9a0f40445",
+    "nativeModuleSHA256": "e8593710b304245c383e185872a1a3316e84a62f68e554eb885a8a1196e83533",
+    "binaryPreviewExplicitQaEnabled": false,
+    "samePublicSimulatorIdentity": true,
+    "javascriptSHA256": "901f184f80903d6142f4d66cf5fe5fd7680d659aad12d910156f9058bd9712b1",
+    "publicEnvironmentSHA256": "60ada4fa028533d934d671ef9d158c4f069a7004c0c205f51fd79705e72569e8",
+    "sessionOrKeychainReadOrCopied": false
+  },
+  "actualUIKitChecks": [
+    {
+      "pid": 36335,
+      "result": "import_original_preview_state PENDING_CANCEL PASS"
+    },
+    {
+      "pid": 36335,
+      "result": "import_original_preview_state PENDING_CANCEL PASS"
+    },
+    {
+      "pid": 36335,
+      "result": "import_original_preview_state LOADED_TIMEOUT PASS"
+    },
+    {
+      "pid": 36335,
+      "result": "import_original_preview_state TIMEOUT_LATE_LOAD PASS"
+    },
+    {
+      "pid": 36335,
+      "result": "import_original_preview_state DELAYED_READY PASS"
+    }
+  ],
+  "normalColdLaunch": {
+    "nativeBuild": 95,
+    "normalLaunchPid": 44280,
+    "qaPreviewFlag": false,
+    "normalColdFirstOpen": "PDF_RENDERED_TWO_PAGES_WITH_RETAINED_FILENAME",
+    "afterNormalBackground": true,
+    "disposablePreviewCopies": 0,
+    "durablePdfBytes": 950,
+    "durablePdfSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+  },
+  "normalPresentationDiagnostics": [
+    "import_original_preview_presented_ms 6315",
+    "import_original_preview_presented_ms 1128"
+  ],
+  "explicitReopenAfterBackground": "PASS",
+  "foregroundDoesNotAutoReopenPrivateOriginal": "PASS",
+  "root": "My Trips",
+  "independentReview": "NO_BLOCKER e6970e55; actual UIKit and normal UI checks performed by Delivery Owner",
+  "notClaimed": [
+    "PDF interpretation/Source/Admission",
+    "Photo OCR qualification",
+    "Alternate-Account device privacy PASS",
+    "Physical iPhone original preview acceptance"
+  ],
+  "limits": [
+    "Observed cold first presentation6315ms; original5s timer rejected legitimate in-progress UIKit presentation. New20s bound still requires actual UIKit completion.",
+    "No new Provider call, business Item, Host deployment or permission change."
+  ]
+}

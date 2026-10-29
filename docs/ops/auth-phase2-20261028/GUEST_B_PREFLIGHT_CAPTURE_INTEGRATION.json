@@ -1,0 +1,35 @@
+{
+  "status": "HISTORICAL_POST_FF_SMOKE_SNAPSHOT_BEFORE_FINAL_DOC_COMMIT_AND_PUSH",
+  "mainBefore": "2ded03a4576e715150b27a96414d936e48a12ec8",
+  "sourceMain": "48d0a5b4530bcb0f30f66e6cde5437c74160e76d",
+  "sourceCommits": [
+    "98c4e0c2",
+    "11b3ee56"
+  ],
+  "scope": "unmounted closed metadata preflight plus Guest-only Capture family reader; no global collector/adoption authorization",
+  "validation": {
+    "independentPreflight": 21,
+    "independentGuestDisk": 27,
+    "directedBeforeMerge": "6 suites168 PASS",
+    "joinedLatestMain": "6 suites159/types/UIguard PASS",
+    "actualPrimaryMainSmoke": "6 suites101 PASS",
+    "scopedLint": "PASS, no errors or warnings"
+  },
+  "sharedWriters": "Native/Import notified; Import main2ded preserved; Auth never edited Source public store or app.ts/Core/P1/Bootstrap",
+  "preservation": {
+    "sixOriginalDirtyFilesByteIdentical": true,
+    "trackedDiffSha256": "42f6fe4931a60cdf94e347b0dd17b8ae0a41f5869ad036e7e641bdaf9218923a",
+    "cachedDiffUnchanged": true
+  },
+  "activation": {
+    "preflightAdapter": false,
+    "httpRouteMounted": false,
+    "nativeFileProducer": false,
+    "completeAllFilesInventory": false,
+    "schemaRlsGrantRoleOrDeploymentChange": false,
+    "sessionOrGuestUpload": false
+  },
+  "actualDataRead": "GuestQA63 accepted A vault through readOnly Node adapter: Capture registered payload/ref0 only, not physical disk/history or Native Capture production proof",
+  "remaining": "owning Ledger/photo/pending-file collectors and consistent full source/drafts freeze, Core unique Writer transaction extraction, exact protected authority candidate, actual Provider/Native/Backend/Supabase Adoption E2E",
+  "remoteVerification": "Final docs+source normal push and independent main/origin/ls-remote verification retained privately in GUEST_B_CAPTURE_MAIN_VERIFIED.json; this snapshot is historical, not current remote state"
+}

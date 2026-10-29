@@ -20,8 +20,9 @@ export function createSourcePdfV2Authority(
   connection: CorePgConnection,
   hash: ImportHash,
   readOriginal: SourcePdfCustodyReader,
+  runWorker?: Parameters<typeof createSourcePdfV2LinuxVerifier>[1],
 ) {
-  const verify = createSourcePdfV2LinuxVerifier(readOriginal);
+  const verify = createSourcePdfV2LinuxVerifier(readOriginal, runWorker);
   return {
     async seal(accountId: string, tripId: string, input: SourcePdfSealRequest) {
       const request = sourcePdfSealRequestSchema.parse(input);
